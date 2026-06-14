@@ -237,6 +237,15 @@ public partial class @this
             if (lifted is { Success: true } && lifted.Peek() is global::app.type.item.@this wrapper)
                 return wrapper;
         }
+        // A CLR enum IS plang's `choice` (a closed named set) — lift it to its
+        // own item so it renders itself (the name) instead of parking in a clr
+        // that has no wire form. The generic choice<T> is closed over the enum
+        // type; build it for this runtime enum.
+        if (v is System.Enum)
+        {
+            var choiceType = typeof(global::app.type.choice.@this<>).MakeGenericType(v.GetType());
+            return (global::app.type.item.@this)System.Activator.CreateInstance(choiceType, v)!;
+        }
         // Unowned — rung 2: a strongly-typed C# object plang holds as `item`
         // with kind naming the class. The carrier's Peek answers the real
         // instance, so generic consumers keep seeing the object itself.

@@ -55,6 +55,34 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     [global::app.Out, global::app.Store]
     public string Mime => _mime ??= (Path?.MimeType ?? "application/octet-stream");
 
+    /// <summary>
+    /// The image renders itself, per wire format. The portable form is base64
+    /// (json/plang/any). A text stream can't carry base64 readably — it emits
+    /// the source location when wired, else a scannable label. A protobuf
+    /// stream carries the raw bytes.
+    /// </summary>
+    public override void Write(global::app.channel.serializer.IWriter writer)
+    {
+        switch (writer.Format)
+        {
+            case "text":
+                if (Path != null)
+                {
+                    try { writer.String(Path.Relative); return; }
+                    catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
+                    { /* fall through to bare label */ }
+                }
+                writer.String($"[image: {Mime} {Bytes.Length}B]");
+                return;
+            case "protobuf":
+                writer.Bytes(Bytes);
+                return;
+            default:
+                writer.String(System.Convert.ToBase64String(Bytes));
+                return;
+        }
+    }
+
     /// <summary>An image's entity: kind is the format token from its own mime
     /// ("image/gif" → "gif"), canonicalised through the registry when reachable.</summary>
     protected internal override global::app.type.@this Mint()

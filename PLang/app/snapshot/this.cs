@@ -60,4 +60,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>The nested sub-sections on this node, by name — read-only.</summary>
     public IReadOnlyDictionary<string, @this> Sections => _sections;
+
+    /// <summary>The snapshot renders itself (Rule #9) — it walks its sections +
+    /// entries into the format-agnostic writer. The structural walk lives in the
+    /// snapshot's own serializer; this is the value-side entry the writer calls.</summary>
+    public override void Write(global::app.channel.serializer.IWriter writer)
+        => global::app.snapshot.serializer.Default.Write(this, writer);
 }

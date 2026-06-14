@@ -31,4 +31,7 @@ public sealed partial class @this : global::app.type.item.@this
         => System.Threading.Tasks.Task.FromResult(!string.IsNullOrEmpty(Source));
 
     public override string ToString() => Source;
+
+    /// <summary>The code renders itself as its source text — uniform across formats.</summary>
+    public override void Write(global::app.channel.serializer.IWriter writer) => writer.String(Source);
 }

@@ -117,6 +117,24 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>In-memory raw bytes; empty until <see cref="BytesAsync"/> ran.</summary>
     public byte[] Bytes => _bytes ?? System.Array.Empty<byte>();
 
+    /// <summary>
+    /// The file renders itself as its CONTENT (the bare-scalar contract:
+    /// <c>write out %file%</c> emits what was read, never the location). The
+    /// content was pre-materialised by the serialize chokepoint's <c>Load()</c>
+    /// pass (file is <c>ILoadable</c>). Text-ish mime emits the UTF-8 text form;
+    /// anything else emits the bytes.
+    /// </summary>
+    public override void Write(global::app.channel.serializer.IWriter writer)
+    {
+        var mime = Path.MimeType;
+        if (mime.StartsWith("text/", System.StringComparison.OrdinalIgnoreCase)
+            || mime.Contains("json", System.StringComparison.OrdinalIgnoreCase)
+            || mime.Contains("xml", System.StringComparison.OrdinalIgnoreCase))
+            writer.String(ContentText());
+        else
+            writer.Bytes(Bytes);
+    }
+
     /// <summary>Stat byte-size — the file's `!size` (<c>number</c>); never reads content.</summary>
     public global::app.type.number.@this Size =>
         Path is global::app.type.path.file.@this fp ? fp.Size : global::app.type.number.@this.From(0);

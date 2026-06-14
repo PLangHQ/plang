@@ -139,11 +139,6 @@ public sealed class Writer : IWriter
             case System.Guid g: Guid(g); return;
             case System.Enum e: Enum(e); return;
             case byte[] bytes: Bytes(bytes); return;
-            // A scalar leaf renders its own bare wire form — the value owns the
-            // mapping (OBP Rule 9), the writer never type-switches per scalar. One
-            // dispatch covers every leaf (text/number/bool/date-family/duration/
-            // binary/null/choice) and any future one with no edit here.
-            case app.type.item.@this leaf when leaf.IsLeaf: leaf.Write(this); return;
             case app.data.TypedValueNode typed:
                 // Per-(type, format) renderer dispatch. The build gate (PLNG)
                 // makes this lookup total for built-in [PlangType] types;
@@ -186,6 +181,13 @@ public sealed class Writer : IWriter
                 foreach (var item in nativeList.Items) Value(item);
                 EndArray();
                 return;
+            // A value renders itself — leaves (text/number/bool/date-family/…) and
+            // structured types (path/file/url/code/directory/image) own their wire
+            // form via Write (OBP Rule 9: the value owns the mapping, the writer
+            // never type-switches per type). dict/list are matched above by their
+            // own cases. A type that reaches here without a Write override throws
+            // loudly from the base — the build gate forbids that for value types.
+            case app.type.item.@this v: v.Write(this); return;
             case System.Collections.IEnumerable list:
                 BeginArray(-1);
                 foreach (var item in list) Value(item);

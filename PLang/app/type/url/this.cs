@@ -106,4 +106,16 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     internal void Release() => _bytes = null;
 
     public override string ToString() => Path.ToString();
+
+    /// <summary>
+    /// The url renders itself as its fetched CONTENT (same bare-scalar contract
+    /// as file), pre-materialised by the serialize chokepoint's <c>Load()</c>
+    /// pass. An unfetched url renders its location — write-out alone is not
+    /// consent to fetch.
+    /// </summary>
+    public override void Write(global::app.channel.serializer.IWriter writer)
+    {
+        if (!IsLoaded) { writer.String(ToString()); return; }
+        writer.String(ContentText());
+    }
 }

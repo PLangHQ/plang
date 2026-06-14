@@ -55,6 +55,18 @@ public sealed class clr : @this, module.IContext
     /// remain; tracked on the slice list.)</summary>
     public override object? Peek() => Value;
 
+    /// <summary>
+    /// A clr carrier has no wire form of its own — it is the rung-2 "I don't
+    /// have a plang type" parking spot, and per the type rule a value that
+    /// crosses the wire must be a real item that renders itself. Reaching here
+    /// means a producer parked a non-item CLR object in a clr and then tried to
+    /// serialize it; name the carried type so the producer is findable.
+    /// </summary>
+    public override void Write(global::app.channel.serializer.IWriter writer)
+        => throw new System.NotSupportedException(
+            $"clr carrier wrapping '{Value.GetType().FullName}' (declared '{_declared ?? "?"}') reached the wire — "
+            + "it has no plang type to render itself. Wrap it in a real item type, or fix the producer that parked it in a clr.");
+
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
 
     public override string ToString() => Value.ToString() ?? "";

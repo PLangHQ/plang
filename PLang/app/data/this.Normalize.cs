@@ -205,7 +205,13 @@ public partial class @this
             {
                 var typeName = types.ResolveName(t);
                 if (typeName != null && types.Renderers.Has(typeName))
-                    return new TypedValueNode(value, typeName);
+                    // The value renders itself. An item already IS a value the
+                    // writer dispatches (item.Write) — pass it through unchanged so
+                    // it survives Data/dict/list boxing (Lift keeps an item as-is;
+                    // wrapping it in a marker would clr-box it on the next rebuild).
+                    // A non-item with a renderer (error today) keeps the marker
+                    // until it becomes a real item.
+                    return value is app.type.item.@this ? value : new TypedValueNode(value, typeName);
             }
         }
 

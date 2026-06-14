@@ -76,4 +76,22 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         Path is global::app.type.path.file.@this fp && fp.Exists;
 
     public override string ToString() => Path.ToString();
+
+    /// <summary>
+    /// The directory renders itself as a FLAT LISTING of its children's
+    /// locations, never their contents. An unlisted directory renders its
+    /// location (the reference face); the listing was pre-materialised by the
+    /// serialize chokepoint's <c>Load()</c> pass.
+    /// </summary>
+    public override void Write(global::app.channel.serializer.IWriter writer)
+    {
+        var listed = Listed;
+        if (listed == null) { writer.String(ToString()); return; }
+        var items = listed.Items;
+        writer.BeginArray(items.Count);
+        foreach (var entry in items)
+            if (entry.Peek() is global::app.type.path.@this p) p.Write(writer);
+            else writer.String(entry.Peek()?.ToString() ?? "");
+        writer.EndArray();
+    }
 }

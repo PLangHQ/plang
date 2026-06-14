@@ -55,6 +55,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Canonical string form — base64. The type owns both directions.</summary>
     public string ToBase64() => System.Convert.ToBase64String(Bytes);
 
+    /// <summary>The hash renders itself as its base64 digest — uniform across
+    /// formats (the algorithm rides as the value's kind on the type envelope).</summary>
+    public override void Write(global::app.channel.serializer.IWriter writer) => writer.String(ToBase64());
+
     /// <summary>
     /// Parse a base64 digest into a <c>hash</c> of the given algorithm. The
     /// byte↔base64 conversion lives here (OBP — it's hash behavior), so callers
