@@ -202,6 +202,18 @@ public sealed class @this : item.@this
     public item.@this Build(object? value)
     {
         if (value is null) return new item.absent(Name, Kind);
+
+        // A name-reference type (variable): the value NAMES a slot — it is an address,
+        // not a value to build. Resolve the name to the variable (the type owns this,
+        // the way text owns %ref% interpolation at its door). %x% and bare x collapse
+        // to the same Variable{Name=x}.
+        if (typeof(app.variable.IRawNameResolvable).IsAssignableFrom(ClrType))
+        {
+            var rawName = value is item.@this iv ? iv.Clr<string>() ?? iv.ToString()
+                : value as string ?? value.ToString();
+            return app.variable.@this.Resolve(rawName ?? "", Context!);
+        }
+
         // A container / domain value is already native (dict, list, path, image, …) —
         // only scalars need a family to coerce them to a kind.
         if (value is item.@this { IsLeaf: false } native) return native;
