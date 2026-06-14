@@ -964,3 +964,28 @@ this.cs:179) and the other error-as-value paths at the new type.
 - The test runners **segfault at teardown** AFTER printing results (intermittent),
   which sometimes eats the summary line so a green suite reads as "NO SUMMARY".
   Cosmetic for now (re-run prints it); worth rooting out before close.
+
+## 2026-06-14 — FromWireShape is a parallel wire reader (OBP smell, before close)
+`data.@this.FromWireShape` (+ WireSlot / IsWireShape / TypeFromWire) reconstructs
+a Data from an ALREADY-PARSED dict by reaching into "value"/"type" keys by hand —
+a SECOND implementation of what Wire.ReadBody does from bytes (and what json.Parse
+does for a marked JsonElement). It exists because the .pr loader parses to native
+dicts first, then hand-rebuilds params (action/this.FromWire.cs:31) instead of
+deserializing through the Wire converter. REAL FIX: load .pr as Deserialize<Goal>
+(params born as Data via Wire), then FromWireShape + the WireSlot/IsWireShape/
+TypeFromWire helpers all delete. Ingi: "a Data should only be reconstructed in one
+place, never by reaching into its slots by string key."
+
+## 2026-06-14 — Construction builds EAGERLY; defer to Value() (the real Judge-killer)
+The Data (name,value,type) ctor / Data.Ok(value,type) build the typed value
+EAGERLY at construction (Lift+Build/Judge). The model is store-raw / type-on-read.
+The expensive cases ARE lazy (file/url=source, dict/list=type-on-read, Stage 11) —
+only cheap already-in-hand C# values build now (deferring a constant buys nothing),
+so it's a purity deviation, not a cost. BUT it's why Judge can't be deleted: the
+no-context construction is pervasive (screamer: variable 99, text 71, hash 50,
+identity 40, … 50+ types) and Build needs context (catalog) it doesn't have.
+REAL FIX: don't build at construction — store raw value + declared type, build at
+the FIRST Value() read where the Data has been wired into an actor and ALWAYS has
+context. Then the no-context ctor case disappears, Build is universal, and Judge +
+its Resolve branch delete. This is the lazy-source / born-typed-deferred refactor —
+its own run, not a tail.
