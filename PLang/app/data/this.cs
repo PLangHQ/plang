@@ -308,7 +308,15 @@ public partial class @this
     /// </summary>
     internal void Declare(type declared)
     {
-        if (declared is { IsNull: false } && !declared.Polymorphic)
+        if (declared is not { IsNull: false } || declared.Polymorphic) return;
+        if (_context != null)
+        {
+            // The type builds its value, born at its kind (same path as the ctor /
+            // wire read). No context in scope → kind-blind reconciliation fallback.
+            declared.Context ??= _context;
+            _type = declared.Build(_type);
+        }
+        else
             _type = declared.Judge(_type);
     }
 
