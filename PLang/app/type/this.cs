@@ -187,6 +187,30 @@ public sealed class @this : item.@this
     }
 
     /// <summary>
+    /// Build a born-native plang VALUE of this type from a plain value — the read's
+    /// one creator. The type owns its construction (kind-aware), and its context
+    /// comes from the entity itself (stamped at read time), so the caller just hands
+    /// the value: <c>typeRef.Build(5)</c> with <c>{number,int}</c> → <c>number(int 5)</c>,
+    /// in one step. A container / domain value is already its native form and rides
+    /// through whole; a scalar is built (and re-kinded if it arrived at the wrong
+    /// precision) by its family. No lift-then-fix, no <c>clr</c> label.
+    /// </summary>
+    /// <remarks>Named <c>Build</c>, not <c>Create</c>: the static
+    /// <see cref="Create(string, string?, bool, actor.context.@this?)"/> already owns
+    /// that name for making a type ENTITY from a name. (A string is an object, so an
+    /// instance <c>Create(object)</c> would be ambiguous with it.)</remarks>
+    public item.@this Build(object? value)
+    {
+        if (value is null) return new item.absent(Name, Kind);
+        // A container / domain value is already native (dict, list, path, image, …) —
+        // only scalars need a family to coerce them to a kind.
+        if (value is item.@this { IsLeaf: false } native) return native;
+
+        var built = Convert(value, Context!);   // the family returns the born-native wrapper
+        return built.Success && built.Peek() is item.@this it ? it : new item.absent(Name, Kind);
+    }
+
+    /// <summary>
     /// The driving type for a comparison between a value of this type and
     /// <paramref name="other"/> — the higher-ranked (more specific) of the two
     /// (number outranks text, the date family outranks text, text is the floor).
