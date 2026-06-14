@@ -1313,3 +1313,32 @@ signing/code/Ed25519.cs, actor/context/this.cs, module/test/run.cs) + the CLR-ty
 `Get<T>` test callers (MemoryStackCloneTests `Get<List<string>>`/`Get<Dictionary>`,
 ExecutorTests `Get<string>`) to the `Data<T>` ask / native collection ops, then delete
 GetValue. Part of the same born-typed completion as the type-converter removal above.
+
+## 2026-06-14 — clr-dissolution follow-ups (after the value-renders-itself commit)
+The "value renders itself" change (writer dispatches `item.Write`; killed the
+IsLeaf-gate + TypedValueNode arm for items; enum→choice in Lift) dissolved two
+clr sources. Remaining, in priority order:
+
+1. **Static renderers are now dead for items.** image/file/code/directory/url +
+   hash each have an instance `Write`; their `serializer/<fmt>.cs` static
+   `Write` is no longer reached for items (only via the TypedValueNode case,
+   which items no longer hit). They still hold a duplicate copy of the render
+   logic. Make them delegate to `value.Write(writer)` (path's pattern) or delete
+   them once *SerializerTests are confirmed to route through the channel, not the
+   static directly. snapshot's instance Write delegates the OTHER way (to its
+   static walk) — fine, single-source, but inconsistent direction; unify later.
+2. **error is the last non-item with a renderer.** A non-item POCO with a
+   renderer nested in a dict still hits the rebox→clr (TypedValueNode can't be a
+   Data value). Real production case: `error` (IError). Make `app.type.error.@this`
+   a real item (already a separate todo above) — then NO non-item has a renderer,
+   TypedValueNode dies entirely, and the writer's TypedValueNode arm + the
+   renderer registry can both go. Test `Normalize_NestedRegisteredValueInsideUnregistered_TagsInner`
+   (pre-existing red) encodes the old non-item-tagging behavior; revisit when error becomes an item.
+3. **Write should be abstract / build-gated.** Today item.Write is virtual with a
+   throwing default. Once actions stop being `:item` (next), make Write abstract
+   for value types — or gate it via the generator (PLNG) for `app/type/**` so a
+   value type missing a Write/Read fails the build, not at runtime.
+4. **Actions should not be `:item`.** Confirmed inert: the catalog discovers
+   types by `@this`-naming (+[PlangType]), not by `:item`; RunAction constrains
+   `ICodeGenerated`, not `item`. Drop `:item` from the 132 action records (via the
+   generator) so `item` = value types only — which unblocks abstract Write (#3).
