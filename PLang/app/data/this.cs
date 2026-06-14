@@ -203,28 +203,28 @@ public partial class @this
                 + "This is the implicit-operator double-wrap accident: return the inner value via its own factory, never `return innerDataInstance;`."
                 + System.Environment.StackTrace);
 
-        // A raw C# container should never reach a value — container values are
-        // born NATIVE off the wire (list.@this/dict.@this with text leaves, built
-        // by the wire reader / json.Parse). A raw List/Dictionary here means a
-        // C#-composition path skipped the wire; parked as a clr carrier its no-op
-        // door can't deep-render nested %var%.
-        //
-        // TODO(remove): this Lift is a TEMPORARY bridge. The real fix is that every
-        // container-producing seam builds native (LLM result, Variable.Set, the
-        // Normalize/Diff/Reconstruct transients) so no raw container ever reaches
-        // here. When that's done, delete this conversion and restore the throw
-        // below as the invariant. Tracked in todos.md "Raw C# container in Data".
-        //   throw new System.InvalidOperationException(
-        //       $"A raw C# container ({v.GetType().Name}) was used as a Data value. "
-        //       + "Container values are native off the wire (list.@this/dict.@this); build the "
-        //       + "native type or parse the literal as JSON — never hand a raw List/Dictionary to a Data.");
+        // A sequence of Data builds a native list DIRECTLY, preserving the actual
+        // Data instances — their names, types and signatures. Routing it through
+        // serialize/parse (below) would strip entry names at the Out view and break
+        // name-keyed semantics (merge-by-name).
+        if (v is System.Collections.Generic.IEnumerable<@this> dataSeq)
+            return new global::app.type.list.@this(dataSeq) { Context = context! };
+
+        // Other raw C# containers narrow to their native plang type (list.@this /
+        // dict.@this). The check is the NON-generic IList: a List<int> implements
+        // IList but NOT IList<object?> (generic invariance), so the old generic check
+        // leaked every strongly-typed list into the clr carrier. byte[] is an IList
+        // too — exclude it; bytes are the binary leaf, not a list. A container that
+        // cannot be narrowed is a producer handing raw to a Data — fail loud rather
+        // than parking an un-serializable clr (clr-dissolution role 5).
         if (v is System.Collections.IDictionary
-            or System.Collections.Generic.IList<object?>
-            or System.Collections.ArrayList)
+            || (v is System.Collections.IList && v is not byte[]))
             return global::app.type.item.serializer.json.Parse(
                        System.Text.Json.JsonSerializer.SerializeToElement(v))
                    as global::app.type.item.@this
-               ?? new global::app.type.item.clr(v);
+               ?? throw new System.InvalidOperationException(
+                   $"A raw C# container ({v.GetType().Name}) could not be narrowed to a native plang list/dict. "
+                   + "Container values build native off the wire — never hand a raw List/Dictionary to a Data.");
 
         var (family, _) = global::app.type.convert.@this.OwnerOf(v.GetType());
         if (family != null && typeof(global::app.type.item.@this).IsAssignableFrom(family))
