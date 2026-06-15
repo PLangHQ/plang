@@ -28,7 +28,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public static string Shape => "object";
 
     /// <summary>The inner schema this signature attests — the <c>value</c> slot.</summary>
-    public global::app.data.@this Inner { get; }
+    public global::app.data.@this Value { get; }
 
     /// <summary>Signing algorithm — the layer's <c>algorithm</c> wire field (<c>ed25519</c> default).</summary>
     public string Algorithm { get; }
@@ -48,11 +48,12 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>Contracts asserted by this signature (e.g. <c>["C0"]</c>).</summary>
     public System.Collections.Generic.IReadOnlyList<string>? Contracts { get; }
 
-    /// <summary>Hash algorithm of the digest the signature covers.</summary>
-    public string HashAlgorithm { get; }
+    /// <summary>Optional headers carried by the signature.</summary>
+    public System.Collections.Generic.IReadOnlyDictionary<string, object>? Headers { get; }
 
-    /// <summary>Base64 digest of the inner value's canonical bytes.</summary>
-    public string HashValue { get; }
+    /// <summary>The digest the signature covers — the typed crypto hash (it owns
+    /// its algorithm and bytes, so the module reads them off without a cast).</summary>
+    public global::app.module.crypto.type.hash.@this Hash { get; }
 
     /// <summary>Base64 signature bytes over the digest.</summary>
     public string Sig { get; }
@@ -63,22 +64,22 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         string nonce,
         System.DateTimeOffset created,
         string identity,
-        string hashAlgorithm,
-        string hashValue,
+        global::app.module.crypto.type.hash.@this hash,
         string sig,
         System.DateTimeOffset? expires = null,
-        System.Collections.Generic.IReadOnlyList<string>? contracts = null)
+        System.Collections.Generic.IReadOnlyList<string>? contracts = null,
+        System.Collections.Generic.IReadOnlyDictionary<string, object>? headers = null)
     {
-        Inner = value;
+        Value = value;
         Algorithm = string.IsNullOrEmpty(algorithm) ? "ed25519" : algorithm;
         Nonce = nonce ?? "";
         Created = created;
         Identity = identity ?? "";
-        HashAlgorithm = string.IsNullOrEmpty(hashAlgorithm) ? "keccak256" : hashAlgorithm;
-        HashValue = hashValue ?? "";
+        Hash = hash;
         Sig = sig ?? "";
         Expires = expires;
         Contracts = contracts;
+        Headers = headers;
     }
 
     protected internal override global::app.type.@this Mint()
@@ -92,7 +93,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>The CLR exit door hands back the attested inner Data.</summary>
     internal override object? Clr(System.Type target)
-        => target.IsAssignableFrom(typeof(global::app.data.@this)) ? Inner : ClrConvert(Inner, target);
+        => target.IsAssignableFrom(typeof(global::app.data.@this)) ? Value : ClrConvert(Value, target);
 
     public override string ToString() => $"signature({Algorithm}) over {Identity}";
 
@@ -118,13 +119,21 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             foreach (var c in Contracts) w.String(c);
             w.EndArray();
         }
+        // hash sub-object {type, value} — read straight off the typed hash.
         w.Name("hash");
         w.BeginObject();
-        w.Name("type"); w.String(HashAlgorithm);
-        w.Name("value"); w.String(HashValue);
+        w.Name("type"); w.String(Hash.Algorithm);
+        w.Name("value"); w.String(Hash.ToBase64());
         w.EndObject();
+        if (Headers is { Count: > 0 })
+        {
+            w.Name("headers");
+            w.BeginObject();
+            foreach (var kv in Headers) { w.Name(kv.Key); w.Value(kv.Value); }
+            w.EndObject();
+        }
         w.Name("signature"); w.String(Sig);
-        w.Name("value"); w.Value(Inner);
+        w.Name("value"); w.Value(Value);
         w.EndObject();
     }
 

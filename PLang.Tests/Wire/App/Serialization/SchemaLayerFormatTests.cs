@@ -31,8 +31,7 @@ public class SchemaLayerFormatTests
             nonce: "9f",
             created: new System.DateTimeOffset(2026, 6, 15, 10, 0, 0, System.TimeSpan.Zero),
             identity: "alice",
-            hashAlgorithm: "keccak256",
-            hashValue: "ZGlnZXN0",
+            hash: new global::app.module.crypto.type.hash.@this(System.Convert.FromBase64String("ZGlnZXN0"), "keccak256"),
             sig: "c2ln");
 
         var json = Render(sig);
@@ -60,7 +59,7 @@ public class SchemaLayerFormatTests
         var sig = new global::app.type.signature.@this(
             value: inner, algorithm: "ed25519", nonce: "n",
             created: System.DateTimeOffset.UnixEpoch, identity: "id",
-            hashAlgorithm: "keccak256", hashValue: "aA", sig: "bB");
+            hash: new global::app.module.crypto.type.hash.@this(new byte[] { 0x68 }, "keccak256"), sig: "bB");
 
         using var doc = JsonDocument.Parse(Render(sig));
         await Assert.That(doc.RootElement.TryGetProperty("expires", out _)).IsFalse();
