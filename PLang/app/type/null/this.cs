@@ -37,6 +37,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// </summary>
     public static bool IsNullValue(object? value) => value is null or @this;
 
+    /// <summary>The null citizen — the one value that IS null.</summary>
+    public override bool IsNull => true;
+
     /// <summary>Null is always falsy.</summary>
     public override bool IsTruthy() => false;
 

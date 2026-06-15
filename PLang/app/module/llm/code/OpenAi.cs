@@ -10,6 +10,9 @@ using app.module.settings;
 using app.type.path;
 using app.module.http;
 using PlangHttpMethod = app.module.http.HttpMethod;
+using number = global::app.type.number.@this;
+using text = global::app.type.text.@this;
+using item = global::app.type.item.@this;
 
 namespace app.module.llm.code;
 
@@ -160,7 +163,9 @@ public sealed class OpenAi : ILlm
         {
             cacheKey = ComputeCacheKey(messages, model, (await action.Temperature.Value())!.ToDouble(), schema, await FormatOf(action));
             var cached = await settings.Get(CacheTable, cacheKey);
-            if (cached.Success && cached.Peek() != null)
+            // A missing key returns the null citizen (Ok(null) → Peek is null.this),
+            // which is a real instance — test .IsNull, not a C# != null reference check.
+            if (cached.Success && cached.Peek() is { IsNull: false })
             {
                 return RestoreFromCache(cached);
             }
@@ -241,45 +246,36 @@ public sealed class OpenAi : ILlm
             if (!httpResult.Success)
                 return httpResult;
 
-            // --- Parse response ---
-            // http.request returns plain Data with the body as its lazy value
-            // (http.response dissolved). Touching .Value materializes the body
-            // (json → object) through the reader.
-            var responseBody = await httpResult.Value();
-            var (responseJson, parseEx) = ParseApiResponse(responseBody);
-            if (responseJson == null)
-            {
-                if (parseEx != null)
-                    return global::app.data.@this.FromError(ActionError.FromException(parseEx, "ParseError", 500));
-                return global::app.data.@this.FromError(new ActionError("Failed to parse LLM API response", "ParseError", 500));
-            }
+            // --- Parse response: navigate the channel-deserialized body (a dict);
+            // no JsonElement. http returns plain Data whose lazy value materializes
+            // (json → plang dict) through the reader; Value<dict> hands it typed.
+            var dict = await httpResult.Value<dict>();
+            if (dict == null)
+                return global::app.data.@this.FromError(new ActionError("LLM response was not an object", "EmptyResponse", 500));
 
-            // Extract usage
-            var usage = responseJson.Value.TryGetProperty("usage", out var usageProp) ? usageProp : (JsonElement?)null;
-            if (usage != null)
+            // Usage / cost. (Token counters + cost math stay CLR/decimal here for now
+            // — the class-wide native-plang-types migration is a tracked follow-up;
+            // see Documentation/Runtime2/native-plang-types-migration.md.)
+            if (dict.Get<item>("usage") != null)
             {
-                int callPrompt     = usage.Value.TryGetProperty("prompt_tokens",     out var pt) ? pt.GetInt32() : 0;
-                int callCompletion = usage.Value.TryGetProperty("completion_tokens", out var ct) ? ct.GetInt32() : 0;
-                int callCached     = 0;
-                if (usage.Value.TryGetProperty("prompt_tokens_details", out var ptd)
-                 && ptd.TryGetProperty("cached_tokens", out var ctok)
-                 && ctok.ValueKind == JsonValueKind.Number)
-                    callCached = ctok.GetInt32();
+                number callPrompt     = dict.Get<number>("usage.prompt_tokens") ?? 0;
+                number callCompletion = dict.Get<number>("usage.completion_tokens") ?? 0;
+                number callCached     = dict.Get<number>("usage.prompt_tokens_details.cached_tokens") ?? 0;
 
-                totalPromptTokens     += callPrompt;
-                totalCompletionTokens += callCompletion;
-                totalCachedTokens     += callCached;
+                totalPromptTokens     += callPrompt.ToInt32();
+                totalCompletionTokens += callCompletion.ToInt32();
+                totalCachedTokens     += callCached.ToInt32();
 
                 // Cost: prompt_tokens includes the cached portion, so bill cached
                 // separately and subtract it from the non-cached input bucket.
                 var price = PriceFor(model);
                 if (price is { } p)
                 {
-                    int nonCachedInput = Math.Max(0, callPrompt - callCached);
+                    int nonCachedInput = Math.Max(0, callPrompt.ToInt32() - callCached.ToInt32());
                     totalCost = (totalCost ?? 0m)
-                        + (decimal)nonCachedInput   * p.input  / 1_000_000m
-                        + (decimal)callCached       * p.cached / 1_000_000m
-                        + (decimal)callCompletion   * p.output / 1_000_000m;
+                        + (decimal)nonCachedInput            * p.input  / 1_000_000m
+                        + (decimal)callCached.ToInt32()      * p.cached / 1_000_000m
+                        + (decimal)callCompletion.ToInt32()  * p.output / 1_000_000m;
                 }
                 else if (!unknownModelLogged)
                 {
@@ -288,23 +284,18 @@ public sealed class OpenAi : ILlm
                 }
             }
 
-            // Get first choice
-            if (!responseJson.Value.TryGetProperty("choices", out var choices) || choices.GetArrayLength() == 0)
+            // First choice
+            if (dict.Get<item>("choices[0]") == null)
                 return global::app.data.@this.FromError(new ActionError("No choices in LLM response", "EmptyResponse", 500));
 
-            var choice = choices[0];
-            var message = choice.GetProperty("message");
-            var content = message.TryGetProperty("content", out var contentProp) && contentProp.ValueKind != JsonValueKind.Null
-                ? contentProp.GetString() : null;
+            string? content = dict.Get<text>("choices[0].message.content")?.ToString();
 
             // Check finish_reason BEFORE parsing content — a truncated response
             // is not a JSON bug, it's the model running out of output budget. The
             // same goes for content_filter (model refused) and other non-"stop"
             // terminations. Surface these as dedicated errors so callers don't
             // waste time parsing incomplete JSON.
-            var finishReason = choice.TryGetProperty("finish_reason", out var frProp)
-                && frProp.ValueKind == JsonValueKind.String
-                ? frProp.GetString() : null;
+            var finishReason = dict.Get<text>("choices[0].finish_reason")?.ToString();
             var isTerminal = finishReason != null
                 && finishReason != "stop"
                 && finishReason != "tool_calls";
@@ -335,14 +326,15 @@ public sealed class OpenAi : ILlm
                 });
             }
 
-            // --- Tool calls? ---
-            if (message.TryGetProperty("tool_calls", out var toolCallsProp) && toolCallsProp.GetArrayLength() > 0)
+            // --- Tool calls? ---  just more of the dict.
+            var toolCallsValue = dict.Get<global::app.type.list.@this>("choices[0].message.tool_calls");
+            if (toolCallsValue != null && toolCallsValue.Count.ToInt32() > 0)
             {
                 if (toolCallCount >= (await action.MaxToolCalls.Value())!.ToInt64())
                     break; // hit limit
 
                 lastContent = content;
-                var toolCalls = ParseToolCalls(toolCallsProp);
+                var toolCalls = ParseToolCalls(dict);
 
                 // Slice to remaining budget — never execute more tools than the limit allows
                 int remaining = (await action.MaxToolCalls.Value())!.ToInt32() - toolCallCount;
@@ -950,9 +942,11 @@ public sealed class OpenAi : ILlm
     private static async Task<string> ResolveConfigAsync(IStore settings, string settingKey,
         string? envVar, string? defaultValue)
     {
-        // Try settings store
+        // Try settings store. A missing key returns the null citizen (Peek is
+        // null.this, not C# null) — test .IsNull, or a missing setting reads as the
+        // literal string "null" and (e.g.) the endpoint becomes "null:443".
         var result = await settings.Get("LlmConfig", settingKey);
-        if (result.Success && result.Peek() != null)
+        if (result.Success && result.Peek() is { IsNull: false })
         {
             var val = (await result.Value()) is global::app.type.item.clr { Value: data.@this d }
                 ? (await d.Value())?.ToString()
@@ -972,36 +966,23 @@ public sealed class OpenAi : ILlm
 
     // --- Response parsing ---
 
-    private static (JsonElement? Result, Exception? Error) ParseApiResponse(object? value)
-    {
-        if (value == null) return (null, null);
-
-        if (value is JsonElement je)
-            return (je, null);
-
-        try
-        {
-            var json = JsonSerializer.Serialize(value);
-            using var doc = JsonDocument.Parse(json);
-            return (doc.RootElement.Clone(), null);
-        }
-        catch (JsonException ex)
-        {
-            return (null, ex);
-        }
-    }
-
-    private static List<ToolCall> ParseToolCalls(JsonElement toolCallsElement)
+    // Tool calls are just part of the response dict — navigate them.
+    private static List<ToolCall> ParseToolCalls(dict response)
     {
         var result = new List<ToolCall>();
-        foreach (var tc in toolCallsElement.EnumerateArray())
-        {
-            var id = tc.TryGetProperty("id", out var idProp) ? idProp.GetString() ?? "" : "";
-            var func = tc.GetProperty("function");
-            var name = func.TryGetProperty("name", out var nameProp) ? nameProp.GetString() ?? "" : "";
-            var args = func.TryGetProperty("arguments", out var argsProp) ? argsProp.GetString() ?? "" : "";
+        var arr = response.Get<global::app.type.list.@this>("choices[0].message.tool_calls");
+        if (arr == null) return result;
 
-            result.Add(new ToolCall { Id = id, Name = name, Arguments = args });
+        int count = arr.Count.ToInt32();
+        for (int i = 0; i < count; i++)
+        {
+            var b = $"choices[0].message.tool_calls[{i}]";
+            result.Add(new ToolCall
+            {
+                Id        = response.Get<text>($"{b}.id")?.ToString() ?? "",
+                Name      = response.Get<text>($"{b}.function.name")?.ToString() ?? "",
+                Arguments = response.Get<text>($"{b}.function.arguments")?.ToString() ?? ""
+            });
         }
         return result;
     }

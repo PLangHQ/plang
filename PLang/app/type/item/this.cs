@@ -320,6 +320,14 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual bool IsLeaf => false;
 
     /// <summary>
+    /// True only for the null value (the <c>null</c> citizen). Every other value is
+    /// present, so the default is false. Consumers test a value's nullness with
+    /// <c>value.IsNull</c> instead of a C# <c>!= null</c> reference check — a typed
+    /// null is a real instance, so <c>!= null</c> wrongly reads it as present.
+    /// </summary>
+    public virtual bool IsNull => false;
+
+    /// <summary>
     /// Render this value's bare wire form into the format-neutral
     /// <see cref="global::app.channel.serializer.IWriter"/> — the leaf-serializer
     /// behavior (OBP Rule 9: the value owns its wire shape, the writer never

@@ -137,6 +137,56 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         => _map.ContainsKey(key) ? Slot(key) : null;
 
     /// <summary>
+    /// Typed path navigation over the materialized structure: dotted keys +
+    /// <c>[index]</c> (e.g. <c>Get&lt;text&gt;("choices[0].message.content")</c>,
+    /// <c>Get&lt;number&gt;("usage.prompt_tokens")</c>). Sync — walks the in-memory
+    /// dict/list; returns the value as <typeparamref name="T"/> (converting through
+    /// the type system when a segment is still raw), or null when the path misses.
+    /// </summary>
+    public T? Get<T>(string path) where T : global::app.type.item.@this
+    {
+        object? cur = this;
+        foreach (var seg in PathSegments(path))
+        {
+            cur = cur switch
+            {
+                @this d => d.Get(seg)?.Peek(),
+                global::app.type.list.@this l when int.TryParse(seg, out var idx) => l.At(idx)?.Peek(),
+                _ => null
+            };
+            if (cur == null) return null;
+        }
+        if (cur is T typed) return typed;
+        var (converted, _) = global::app.type.catalog.@this.TryConvert(cur, typeof(T), _context);
+        return converted as T;
+    }
+
+    // Split a navigation path into segments: "choices[0].message.content" →
+    // choices, 0, message, content. Dots separate keys; [n] is an index segment.
+    private static System.Collections.Generic.IEnumerable<string> PathSegments(string path)
+    {
+        int i = 0;
+        while (i < path.Length)
+        {
+            if (path[i] == '.') { i++; continue; }
+            if (path[i] == '[')
+            {
+                int end = path.IndexOf(']', i);
+                if (end < 0) { yield return path[(i + 1)..]; yield break; }
+                yield return path[(i + 1)..end];
+                i = end + 1;
+            }
+            else
+            {
+                int next = path.IndexOfAny(new[] { '.', '[' }, i);
+                if (next < 0) { yield return path[i..]; yield break; }
+                yield return path[i..next];
+                i = next;
+            }
+        }
+    }
+
+    /// <summary>
     /// Adds or replaces the entry for <paramref name="value"/>'s name. Build-at-edge
     /// surface — the parse seam and NormalizeObject call this to assemble a dict.
     /// Last-wins on a duplicate key (json object semantics), order preserved at the

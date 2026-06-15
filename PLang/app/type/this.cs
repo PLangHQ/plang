@@ -285,9 +285,10 @@ public sealed class @this : item.@this
     /// </summary>
     public static @this Null { get; } = new("null", typeof(object));
 
-    /// <summary>True when this is the <see cref="Null"/> sentinel type.</summary>
+    /// <summary>True when this is the <see cref="Null"/> sentinel type. Overrides the
+    /// value-level <c>item.IsNull</c>: a type-entity's null-ness is "names the null type".</summary>
     [JsonIgnore]
-    public bool IsNull => Name == "null";
+    public override bool IsNull => Name == "null";
 
     /// <summary>
     /// True for the bare polymorphic stamps ({object} / {item}, no kind, not
