@@ -89,7 +89,7 @@ public class ExecuteVerbTests
             Verb: new Verb { Read = new Read() },
             Match: global::app.type.path.permission.Match.Exact);
         var grantData = new global::app.data.@this<global::app.type.path.permission.@this>("", permission) { Context = app.User.Context };
-        await app.User.Permission.Add(grantData);
+        await app.User.Permission.Add(grantData, persist: true);
         // Execute should NOT be covered.
         var executeMatch = await app.User.Permission.Find(p, new Verb { Execute = new ExecuteVerb() });
         await Assert.That(executeMatch).IsNull();

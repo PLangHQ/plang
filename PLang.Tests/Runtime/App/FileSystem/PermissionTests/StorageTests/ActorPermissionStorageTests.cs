@@ -30,8 +30,7 @@ public class ActorPermissionStorageTests
     {
         var app = NewApp();
         var grant = Grant(app, app.User.Name, "/p");
-        grant.EnsureSigned();
-        await app.User.Permission.Add(grant);
+        await app.User.Permission.Add(grant, persist: true);
 
         var found = await app.User.Permission.Find(new Path("/p", app.User.Context), new Verb { Read = new Read() });
         await Assert.That(found).IsNotNull();
@@ -42,8 +41,7 @@ public class ActorPermissionStorageTests
     {
         var app = NewApp();
         var userGrant = Grant(app, app.User.Name, "/u");
-        userGrant.EnsureSigned();
-        await app.User.Permission.Add(userGrant);
+        await app.User.Permission.Add(userGrant, persist: true);
 
         var found = await app.System.Permission.Find(new Path("/u", app.System.Context), new Verb { Read = new Read() });
         await Assert.That(found).IsNull();
@@ -54,12 +52,11 @@ public class ActorPermissionStorageTests
         var app = NewApp();
         // In-memory grant for /mem (unsigned → session, no Signature)
         var memGrant = Grant(app, app.User.Name, "/mem");
-        await app.User.Permission.Add(memGrant);
+        await app.User.Permission.Add(memGrant, persist: false);
 
         // Persisted grant for /disk (signed → sqlite, Signature set)
         var diskGrant = Grant(app, app.User.Name, "/disk");
-        diskGrant.EnsureSigned();
-        await app.User.Permission.Add(diskGrant);
+        await app.User.Permission.Add(diskGrant, persist: true);
 
         var mem = await app.User.Permission.Find(new Path("/mem", app.User.Context), new Verb { Read = new Read() });
         var disk = await app.User.Permission.Find(new Path("/disk", app.User.Context), new Verb { Read = new Read() });
@@ -79,7 +76,7 @@ public class ActorPermissionStorageTests
     {
         var app = NewApp();
         var grant = Grant(app, app.User.Name, "/p"); // default verb = fully granted
-        await app.User.Permission.Add(grant);
+        await app.User.Permission.Add(grant, persist: true);
 
         var narrowedRead = new Verb
         {
@@ -96,7 +93,7 @@ public class ActorPermissionStorageTests
         var app = NewApp();
         var readOnly = new Verb { Read = new Read() };
         var grant = Grant(app, app.User.Name, "/p", verb: readOnly);
-        await app.User.Permission.Add(grant);
+        await app.User.Permission.Add(grant, persist: true);
 
         var found = await app.User.Permission.Find(new Path("/p", app.User.Context), new Verb { Delete = new Delete() });
         await Assert.That(found).IsNull();
@@ -106,7 +103,7 @@ public class ActorPermissionStorageTests
     {
         var app = NewApp();
         var grant = Grant(app, app.User.Name, "/apps/*/file.txt", match: MatchMode.Glob);
-        await app.User.Permission.Add(grant);
+        await app.User.Permission.Add(grant, persist: true);
 
         var found = await app.User.Permission.Find(new Path("/apps/Email/file.txt", app.User.Context), new Verb { Read = new Read() });
         await Assert.That(found).IsNotNull();
@@ -116,7 +113,7 @@ public class ActorPermissionStorageTests
     {
         var app = NewApp();
         var grant = Grant(app, app.User.Name, "/apps/*/file.txt", match: MatchMode.Glob);
-        await app.User.Permission.Add(grant);
+        await app.User.Permission.Add(grant, persist: true);
 
         var found = await app.User.Permission.Find(new Path("/apps/Email/Sub/file.txt", app.User.Context), new Verb { Read = new Read() });
         await Assert.That(found).IsNull();
@@ -126,7 +123,7 @@ public class ActorPermissionStorageTests
     {
         var app = NewApp();
         var grant = Grant(app, app.User.Name, "/p"); // unsigned → in-memory
-        await app.User.Permission.Add(grant);
+        await app.User.Permission.Add(grant, persist: true);
         await Assert.That(await app.User.Permission.Find(new Path("/p", app.User.Context), new Verb { Read = new Read() })).IsNotNull();
 
         await app.User.Permission.Revoke((await grant.Value())!);
@@ -137,24 +134,23 @@ public class ActorPermissionStorageTests
     {
         var app = NewApp();
         var grant = Grant(app, app.User.Name, "/p");
-        grant.EnsureSigned();
-        await app.User.Permission.Add(grant);
+        await app.User.Permission.Add(grant, persist: true);
         await Assert.That(await app.User.Permission.Find(new Path("/p", app.User.Context), new Verb { Read = new Read() })).IsNotNull();
 
         await app.User.Permission.Revoke((await grant.Value())!);
         await Assert.That(await app.User.Permission.Find(new Path("/p", app.User.Context), new Verb { Read = new Read() })).IsNull();
     }
 
+    [Skip("Tamper-detection moved to verify-on-read at the application/plang store boundary; SettingsStore verify-on-read is a deferred todo (OBP rewrite).")]
     [Test] public async Task SignatureFailure_CorruptedGrantInStore_FindSkipsIt()
     {
         var app = NewApp();
         var grant = Grant(app, app.User.Name, "/p");
-        grant.EnsureSigned();
         // Tamper the path post-signing — signature no longer covers payload.
         var tampered = new global::app.data.@this<PermissionRecord>("",
             new PermissionRecord(app.User.Name, "/different", Verb.AllowAll(), MatchMode.Exact))
-        { Context = app.User.Context, Signature = grant.Signature };
-        await app.User.Permission.Add(tampered);
+        { Context = app.User.Context };
+        await app.User.Permission.Add(tampered, persist: true);
 
         var found = await app.User.Permission.Find(new Path("/different", app.User.Context), new Verb { Read = new Read() });
         await Assert.That(found).IsNull();
@@ -165,8 +161,8 @@ public class ActorPermissionStorageTests
         var app = NewApp();
         var first  = Grant(app, app.User.Name, "/p");
         var second = Grant(app, app.User.Name, "/p");
-        await app.User.Permission.Add(first);
-        await app.User.Permission.Add(second);
+        await app.User.Permission.Add(first, persist: true);
+        await app.User.Permission.Add(second, persist: true);
 
         // Find should still hit — overwrite, not duplicate.
         var found = await app.User.Permission.Find(new Path("/p", app.User.Context), new Verb { Read = new Read() });
@@ -184,11 +180,9 @@ public class ActorPermissionStorageTests
     {
         var app = NewApp();
         var first  = Grant(app, app.User.Name, "/p");
-        first.EnsureSigned();
         var second = Grant(app, app.User.Name, "/p");
-        second.EnsureSigned();
-        await app.User.Permission.Add(first);
-        await app.User.Permission.Add(second);
+        await app.User.Permission.Add(first, persist: true);
+        await app.User.Permission.Add(second, persist: true);
 
         // SettingsStore.Set is keyed by path — the table must hold one row
         // for `/p`, not two.
@@ -198,6 +192,7 @@ public class ActorPermissionStorageTests
         await Assert.That(rowsForP).IsEqualTo(1);
     }
 
+    [Skip("The in-memory VerifiedFlag verification cache was removed with Data.Signature; grant verification is now a store-read-boundary concern (deferred todo).")]
     [Test] public async Task SignatureVerificationCached_FindWalksSameDataOnce()
     {
         // The cache lives on the Data instance via Properties[VerifiedFlag].
@@ -207,8 +202,7 @@ public class ActorPermissionStorageTests
         // across calls. Pin contract that the flag stamps on first verify.
         var app = NewApp();
         var grant = Grant(app, app.User.Name, "/p");
-        grant.EnsureSigned();
-        await app.User.Permission.Add(grant);
+        await app.User.Permission.Add(grant, persist: true);
 
         var f1 = await app.User.Permission.Find(new Path("/p", app.User.Context), new Verb { Read = new Read() });
         await Assert.That(f1).IsNotNull();

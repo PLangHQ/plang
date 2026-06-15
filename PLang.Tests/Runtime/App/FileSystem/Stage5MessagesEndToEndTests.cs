@@ -205,7 +205,7 @@ public class Stage5MessagesEndToEndTests
             new PermissionRecord(app.User.Name, foreignFile, narrowedVerb, MatchMode.Exact))
         { Context = app.User.Context };
         narrowGrant.EnsureSigned();
-        await app.User.Permission.Add(narrowGrant);
+        await app.User.Permission.Add(narrowGrant, persist: true);
 
         // Stat needs Metadata=true; the narrowed Read grant doesn't cover it.
         // Authorize asks; the CannedChannel answers "a" and a wider grant lands.

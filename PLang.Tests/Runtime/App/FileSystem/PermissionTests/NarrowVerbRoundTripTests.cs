@@ -23,7 +23,7 @@ public class NarrowVerbRoundTripTests
         var perm = new PermissionRecord(app.User.Name, "/p", narrowRead, MatchMode.Exact);
         var grant = new global::app.data.@this<PermissionRecord>("", perm) { Context = app.User.Context };
         // No EnsureSigned → in-memory path.
-        await app.User.Permission.Add(grant);
+        await app.User.Permission.Add(grant, persist: true);
 
         var found = await app.User.Permission.Find(new Path("/p", app.User.Context), narrowRead);
         await Assert.That(found).IsNotNull();
@@ -37,7 +37,7 @@ public class NarrowVerbRoundTripTests
         var perm = new PermissionRecord(app.User.Name, "/p", narrowRead, MatchMode.Exact);
         var grant = new global::app.data.@this<PermissionRecord>("", perm) { Context = app.User.Context };
         grant.EnsureSigned();  // → sqlite path
-        await app.User.Permission.Add(grant);
+        await app.User.Permission.Add(grant, persist: true);
 
         var found = await app.User.Permission.Find(new Path("/p", app.User.Context), narrowRead);
         await Assert.That(found).IsNotNull();

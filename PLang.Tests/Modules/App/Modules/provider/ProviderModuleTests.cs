@@ -68,7 +68,7 @@ public class ProviderModuleTests
             Verb: verb,
             Match: global::app.type.path.permission.Match.Exact);
         var data = new global::app.data.@this<global::app.type.path.permission.@this>("", permission) { Context = Ctx };
-        await _app.System.Permission.Add(data);
+        await _app.System.Permission.Add(data, persist: true);
     }
 
     #region Load

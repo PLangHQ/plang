@@ -1080,3 +1080,16 @@ absent. The permission model (Ingi: "sign %answer% → store → read validates,
 runs on load. Fold this into the planned OBP rewrite of SettingsStore (per-actor store
 or context-threaded Load). Until then, `permission.TryCover` trusts loaded grants
 without re-verifying (see `actor/permission/this.cs` SECURITY REVIEW comment).
+
+## 2026-06-15 — new-model signing test coverage (replaces deleted old-mechanism tests)
+The signature-as-layer rewrite deleted tests that pinned the removed in-memory
+mechanisms (sign-if-missing wire walk, Data.Signature POCO + SigningOptions, the
+MarkOuterForHash canonicalization carve-out, multi-actor Data.Signature forwarding):
+SigningSerializationTests, RawSignatureDeletionTests, Cut3_SignWireVerifyTests,
+Cut3_MultiActorForwardingTests, CanonicalizationTests, Cut3_SignThenWireThenVerify,
+SignedDataSurvivesVariableSetListTests. The new boundary model is partly covered
+(WireConverterSigningTests rewritten to layer round-trip + tamper-fails;
+SchemaLayerFormatTests for shape + ToSigningBytes determinism). STILL TO ADD:
+multi-actor forwarding under the layer model, store verify-on-read (rides the
+SettingsStore todo), and signed-then-compressed (archive-over-signature) once
+archive becomes a real layer.
