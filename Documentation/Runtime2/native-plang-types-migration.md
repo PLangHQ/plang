@@ -35,12 +35,14 @@ caused: the LLM cache false-hit (missing key → null citizen → "cached" → n
 and `ResolveConfigAsync` resolving a missing `llm.endpoint` to the literal string
 `"null"` → http to `null:443`. Fixed both with `cached.Peek() is { IsNull: false }`.
 
-**The real fix (FOLLOW-UP, not yet done):** make `Peek()` **non-nullable** — always
-return the null citizen, never C# null (`item.@this? Peek()` → `item.@this Peek()`,
-`=> _type ?? null.@this.Instance`). Then consumers write `!Peek().IsNull` cleanly.
-Ripple to sweep: **~21 `Peek() == null` / `!= null` sites** (they invert — same bug
-class) + ~42 `?.`/`??` sites that assume nullable. Audit each: a C#-null check against
-a value is the smell.
+**DONE (2026-06-15):** `Data.Peek()` is now **non-nullable** — `item.@this Peek() =>
+_type ?? @null.@this.Instance`. Absent/no-value reads as the null citizen; absent-ness
+is still distinguished via `IsInitialized`. Swept all `Peek() == null`/`!= null` sites
+→ `.IsNull` / `!.IsNull` (and `X?.Peek() == null` → `(X?.Peek()?.IsNull ?? true)`).
+Result: Modules 62→49, no regressions. (Note: `item.@this.Peek()` is a *different*
+`object?`-returning method — untouched.) The `Peek()?.X ?? default` sites still
+compile (redundant `?.`); a present-but-null value now stringifies to "null" rather
+than hitting the default — harmless in practice (no test moved), tidy opportunistically.
 
 ### 3. http I/O through the channel (done, `http/code/Default.cs`)
 - Request body: `Serializers.GetOrDefault(contentType).SerializeAsync(ms, action.Body)`
