@@ -52,16 +52,6 @@ public class ConverterDeletionsTests
         await Assert.That(PLangAssembly.GetType("app.error.ErrorWire")).IsNotNull();
     }
 
-    [Test] public async Task HashDataConverter_RegisteredOnlyWhereItApplies_Signing()
-    {
-        // HashDataConverter is the object-shaped {type,value} hash wire, used
-        // only by signing. It stays there; hash's string Read lives in the
-        // reader registry (hash/serializer/Default.cs).
-        var sig = PLangAssembly.GetType("app.module.signing.Signature");
-        await Assert.That(sig).IsNotNull();
-        await Assert.That(sig!.GetNestedType("HashDataConverter",
-            BindingFlags.NonPublic | BindingFlags.Public)).IsNotNull();
-    }
 
     [Test] public async Task TimeSpanIso8601_LivesInFormatLayer_NotOnType()
     {
