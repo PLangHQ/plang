@@ -38,15 +38,16 @@ public sealed class source : @this, module.IContext
         => new(_type, _kind, _strict);
 
     /// <summary>
-    /// In memory now = the raw source form. A text- or bytes-declared byte raw
-    /// decodes utf-8 when valid (their scalar face is the text; mojibake-ing
-    /// binary is worse than handing back bytes); a structured declaration
-    /// (table/xlsx, image/png) keeps its bytes — the parse stays behind
-    /// <see cref="Ready"/>.
+    /// In memory now = the raw source form. A byte raw declared <c>text</c> decodes
+    /// to its text face — that is the declaration speaking, not a content guess. A
+    /// <c>binary</c>/<c>bytes</c> raw STAYS bytes: peeking never sniffs "is this valid
+    /// UTF-8?" (access-driven resolution; binary's face is its bytes — decode to text
+    /// is the explicit <c>as text</c>). A structured declaration (table/xlsx,
+    /// image/png) keeps its bytes — the parse stays behind <see cref="Ready"/>.
     /// </summary>
     public override object? Peek()
     {
-        if (_raw is byte[] b && _type.ToLowerInvariant() is "text" or "bytes" or "binary")
+        if (_raw is byte[] b && _type.ToLowerInvariant() is "text")
         {
             try { return new System.Text.UTF8Encoding(false, throwOnInvalidBytes: true).GetString(b); }
             catch (System.Text.DecoderFallbackException) { return b; }

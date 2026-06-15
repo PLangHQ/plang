@@ -1053,3 +1053,12 @@ Tests [Skip]'d pending this: DataWrappedActionList_DoesNotRecurseIntoActions,
 DataWrappedActionList_SubActionParametersRemainRaw, FullVarMatch_MissingVariable_
 ReturnsErrorOrNotFound, IsNotNullProp_NullValue_RejectedWithError,
 SnapshotOnError_SensitiveProperty_NullPrValue_StaysNull.
+
+## 2026-06-15 — unify the byte[] type name: "bytes" vs "binary"
+byte[] has two PLang names: the primitive map (app/type/primitive/this.cs) calls it
+"bytes" (so type.Create("bytes") works), but the binary value type names itself
+"binary" (binary.Mint() → "binary", OwnedClr → "binary"). One CLR type, two names —
+a raw byte[] declared "bytes" and an actual binary.@this value disagree. Unify on one
+(likely "binary", the value type's own name; "bytes" becomes an alias or is dropped).
+Surfaced while removing the source.Peek UTF-8 content-sniff (bytes/binary no longer
+auto-decode to text — a binary value's face stays bytes; decode is the explicit `as text`).

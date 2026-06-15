@@ -13,20 +13,22 @@ namespace PLang.Tests.App.LazyDeserialize.AccessResolutionTests;
 //   if text, the string. No structured parse on scalar access.
 public class ScalarAccessTests
 {
-    [Test] public async Task Scalar_BytesValue_DecodesUtf8_WhenValidUtf8()
+    // A binary value is NOT guessed as text, even when the bytes happen to be
+    // valid UTF-8 — its face stays bytes (decode to text is the explicit `as text`).
+    [Test] public async Task Scalar_BytesValue_StaysBytes_NotGuessedAsText()
     {
-        var d = data.FromRaw(Encoding.UTF8.GetBytes("héllo"), type.Create("bytes"));
-        await Assert.That(d.Peek()?.ToString()).IsEqualTo("héllo");
+        var d = data.FromRaw(Encoding.UTF8.GetBytes("héllo"), type.Create("bytes")); // 6 valid-UTF-8 bytes
+        await Assert.That(d.Peek()?.ToString()).IsEqualTo("(6 bytes)");
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
 
-    // Non-utf-8 bytes stay bytes — silently corrupting them into a
-    // mojibake string is worse than leaving them as bytes.
+    // Bytes stay bytes regardless of content — no UTF-8 guess either way.
     [Test] public async Task Scalar_BytesValue_StaysBytes_WhenInvalidUtf8()
     {
         byte[] invalid = { 0xFF, 0xFE, 0x00, 0x80 };
         var d = data.FromRaw(invalid, type.Create("bytes"));
-        await Assert.That(d.Peek() is byte[]).IsTrue();
+        await Assert.That(d.Peek()?.ToString()).IsEqualTo("(4 bytes)");
+        await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
 
     [Test] public async Task Scalar_TextValue_ReturnsString_NoStructuredParse()
