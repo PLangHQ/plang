@@ -656,97 +656,7 @@ public class DataTests
         await Assert.That(outValue.ToString()).IsEqualTo("Out");
     }
 
-    // --- Phase 4: Envelope pipeline ---
-
-    // Postponed: Wrap() builds a category outer via an item.clr courier (and has no
-    // production callers — the archive/@schema layer model replaces it). Lands with clr removal.
-    [Skip("Wrap() courier rides item.clr — replaced by the @schema layer model")]
-    [Test]
-    public async Task Wrap_MimeType_CreatesKindEnvelope()
-    {
-        await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine);
-
-        var data = new Data("file", new byte[] { 1, 2, 3 }, Type.FromMime("image/jpeg"));
-        data.Context = context;
-
-        var wrapped = data.Wrap();
-
-        await Assert.That(wrapped).IsNotEqualTo(data);
-        await Assert.That(wrapped.Type!.Name).IsEqualTo("image");
-        await Assert.That((await wrapped.Value())).IsTypeOf<Data>();
-        await Assert.That(wrapped.Context).IsEqualTo(context);
-        var inner = (Data)((global::app.type.item.clr)(await wrapped.Value())!).Value;
-        await Assert.That(inner.Type!.Name).IsEqualTo("image/jpeg");
-    }
-
-    [Test]
-    public async Task Wrap_PlangPrimitive_ReturnsSelf()
-    {
-        await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine);
-
-        var data = new Data("count", 42);
-        data.Context = context;
-
-        var wrapped = data.Wrap();
-
-        // "int" has no Kind — returns self
-        await Assert.That(wrapped).IsEqualTo(data);
-    }
-
-    [Test]
-    public async Task Wrap_NoContext_ReturnsSelf()
-    {
-        var data = new Data("file", new byte[] { 1, 2, 3 }, Type.FromMime("image/jpeg"));
-
-        var wrapped = data.Wrap();
-
-        await Assert.That(wrapped).IsEqualTo(data);
-    }
-
-    [Test]
-    public async Task Unwrap_Envelope_ReturnsInner()
-    {
-        var inner = new Data("", "Hello", Type.FromMime("text/plain"));
-        var envelope = new Data("", null);
-        // courier nesting — the documented no-lift bypass; the carrier label
-        // carries the declared category
-        envelope.SetValueDirect(new global::app.type.item.clr(inner, "text"));
-
-        var unwrapped = envelope.Unwrap();
-
-        await Assert.That(unwrapped.Type!.Name).IsEqualTo("text/plain");
-        await Assert.That((await unwrapped.Value())?.ToString()).IsEqualTo("Hello");
-    }
-
-    [Test]
-    public async Task Unwrap_FlatData_ReturnsSelf()
-    {
-        var data = new Data("test", "Hello");
-
-        var unwrapped = data.Unwrap();
-
-        await Assert.That(unwrapped).IsEqualTo(data);
-    }
-
-    [Test]
-    public async Task Unwrap_StampsContext()
-    {
-        await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine);
-
-        var inner = new Data("", "Hello", Type.FromMime("text/plain"));
-        var envelope = new Data("", null);
-        // courier nesting — the documented no-lift bypass; the carrier label
-        // carries the declared category
-        envelope.SetValueDirect(new global::app.type.item.clr(inner, "text"));
-        envelope.Context = context;
-
-        var unwrapped = envelope.Unwrap();
-
-        await Assert.That(unwrapped.Context).IsEqualTo(context);
-    }
+    // --- Phase 4: Compress / Decompress pipeline ---
 
     [Test]
     public async Task Compress_CompressibleType_CreatesArchivedEnvelope()
@@ -754,16 +664,11 @@ public class DataTests
         await using var engine = new global::app.@this("/test");
         var context = new global::app.actor.context.@this(engine);
 
-        // Create a "text" envelope (text is compressible)
-        var inner = new Data("", "Hello, this is a test string for compression!", Type.FromMime("text/plain"));
-        inner.Context = context;
-        var wrapped = new Data("", null);
-        // courier nesting — the documented no-lift bypass; the carrier label
-        // carries the declared category
-        wrapped.SetValueDirect(new global::app.type.item.clr(inner, "text"));
-        wrapped.Context = context;
+        // text/plain is compressible (kind "text").
+        var data = new Data("", "Hello, this is a test string for compression!", Type.FromMime("text/plain"));
+        data.Context = context;
 
-        var compressed = wrapped.Compress();
+        var compressed = data.Compress();
 
         // Flat shape — the compressed bytes ride as an `archive` item.
         await Assert.That(compressed.Type!.Name).IsEqualTo("archive");
@@ -776,18 +681,13 @@ public class DataTests
         await using var engine = new global::app.@this("/test");
         var context = new global::app.actor.context.@this(engine);
 
-        // "image" is not compressible
-        var inner = new Data("", new byte[] { 1, 2, 3 }, Type.FromMime("image/jpeg"));
-        inner.Context = context;
-        var wrapped = new Data("", null);
-        // courier nesting — the documented no-lift bypass; the carrier label
-        // carries the declared category
-        wrapped.SetValueDirect(new global::app.type.item.clr(inner, "image"));
-        wrapped.Context = context;
+        // image/jpeg is not compressible (kind "image").
+        var data = new Data("", new byte[] { 1, 2, 3 }, Type.FromMime("image/jpeg"));
+        data.Context = context;
 
-        var result = wrapped.Compress();
+        var result = data.Compress();
 
-        await Assert.That(result).IsEqualTo(wrapped);
+        await Assert.That(result).IsEqualTo(data);
     }
 
     [Test]
@@ -867,11 +767,9 @@ public class DataTests
     [Test]
     public async Task Decrypt_EncryptedType_ReturnsSelf_NoCryptoYet()
     {
-        var inner = new Data("", new byte[] { 1, 2 }, Type.FromName("ed25519"));
-        var encrypted = new Data("", null);
-        // courier nesting — the documented no-lift bypass; the carrier label
-        // carries the declared category
-        encrypted.SetValueDirect(new global::app.type.item.clr(inner, "encrypted"));
+        // A Data declared as "encrypted" — Decrypt is a no-op until a crypto
+        // service exists, returning self.
+        var encrypted = new Data("", new byte[] { 1, 2 }, Type.FromName("encrypted"));
 
         var result = encrypted.Decrypt();
 
@@ -880,7 +778,7 @@ public class DataTests
     }
 
     [Test]
-    public async Task WrapCompressChain_TextData()
+    public async Task CompressChain_TextData()
     {
         await using var engine = new global::app.@this("/test");
         var context = new global::app.actor.context.@this(engine);
@@ -888,34 +786,10 @@ public class DataTests
         var data = new Data("msg", "Hello, PLang!", Type.FromMime("text/plain"));
         data.Context = context;
 
-        var envelope = data.Wrap().Compress();
+        var envelope = data.Compress();
 
         // text/plain → Kind "text" (compressible) → archive envelope
         await Assert.That(envelope.Type!.Name).IsEqualTo("archive");
-    }
-
-    // Postponed: the Wrap/Unwrap legs build an item.clr category courier (Wrap has no
-    // production callers). Compress/Decompress alone round-trip (covered above);
-    // the full Wrap pipeline lands with the @schema layer model that replaces clr.
-    [Skip("Wrap/Unwrap courier rides item.clr — replaced by the @schema layer model")]
-    [Test]
-    public async Task FullPipeline_WrapCompressUnwrap_RoundTrip()
-    {
-        await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine);
-
-        var original = new Data("doc", "Report content here", Type.FromMime("text/plain"));
-        original.Context = context;
-
-        // Outbound: Wrap → Compress → Encrypt (encrypt is no-op)
-        var outbound = original.Wrap().Compress().Encrypt();
-        outbound.Context = context;
-
-        // Inbound: Decrypt → Decompress → Unwrap
-        var inbound = outbound.Decrypt().Decompress().Unwrap();
-
-        await inbound.IsSuccess();
-        await Assert.That((await inbound.Value())?.ToString()).IsEqualTo("Report content here");
     }
 
     // --- Phase 4 fixes: error paths + edge cases ---

@@ -64,44 +64,15 @@ public partial class @this
                 $"Signing failed during lazy Signature populate: {result.Error?.Message ?? "unknown"}.");
     }
 
-    // --- Outbound pipeline: Wrap → Compress → Encrypt ---
+    // --- Outbound pipeline: Compress → Encrypt ---
 
     /// <summary>
-    /// Wraps content in a category outer. Outer type = Kind (e.g. "image", "text"),
-    /// inner = this Data. Requires context for Kind resolution via App.Types.
-    /// Returns self if no context, no type, or Kind is unknown.
-    /// </summary>
-    public @this Wrap()
-    {
-        if (Type == null)
-            return this;
-
-        // family-Kind accessor is gone — the family lives on the format registry
-        // under the type's Name. The wrap outer carries the family ("image" for
-        // an "image/jpeg" body).
-        var family = _context?.App.Format.FamilyOf(Type.Name);
-        if (family == null)
-            return this;
-
-        // The wrap outer is the compress courier — it deliberately carries this
-        // Data sealed inside. Per the born-typed ruling this nesting belongs in
-        // an owning wrapper type (an `archive`, like `encryption` seals its
-        // inner Data); until that type exists the construction uses the
-        // explicit no-lift bypass rather than the seam.
-        var outer = new @this("");
-        outer.SetValueDirect(new global::app.type.item.clr(this, family));
-        outer.Context = _context;
-        return outer;
-    }
-
-    /// <summary>
-    /// Compresses if the current type is compressible. After Wrap(), the type is the category
-    /// (e.g. "spreadsheet"). Checks compressibility through context → App.Types.
-    /// Routes through the registered application/plang serializer (so the bytes
-    /// inside the archive are the same canonical wire shape any other transport
-    /// would emit — including the inner Signature, fixing today's strip-Signature
-    /// bug). Wraps a single layer: <c>{type=archived, value=byte[]}</c>.
-    /// Returns self if not compressible or no context.
+    /// Compresses if the current type is compressible. Checks compressibility
+    /// through context → App.Types. Routes through the registered
+    /// application/plang serializer (so the bytes inside the archive are the
+    /// same canonical wire shape any other transport would emit — including the
+    /// inner Signature, fixing today's strip-Signature bug). The compressed bytes
+    /// ride as an <c>archive</c> item. Returns self if not compressible or no context.
     /// </summary>
     public @this Compress() => CompressAsync().GetAwaiter().GetResult();
 
@@ -231,33 +202,6 @@ public partial class @this
         {
             return FromError(new ServiceError("Decompression failed: " + ex.Message, "DecompressError", 500));
         }
-    }
-
-    /// <summary>
-    /// Strips the category outer, returning the inner Data.
-    /// If Value is a Data, returns it. Otherwise returns self (already flat).
-    ///
-    /// <para>
-    /// Side effect: when Value IS a Data, this writes <c>inner.Context = _context</c>
-    /// so subsequent calls on the returned Data resolve against the unwrapping
-    /// actor's scope. Inner is a shared reference (it lives in the outer's Value
-    /// graph), so two consumers Unwrapping the same outer from different actor
-    /// contexts will trash inner.Context to whichever ran last. In practice
-    /// Context here is a "default for further calls" hint rather than identity,
-    /// so the race is benign; a future tightening would clone-and-rebind on
-    /// Unwrap when the forwarding case starts requiring isolated provenance.
-    /// </para>
-    /// </summary>
-    public @this Unwrap()
-    {
-        // A nested Data rides the rung-2 carrier (the SetValueDirect courier
-        // debt) — unwrap reaches through it.
-        if (Peek() is global::app.type.item.clr { Value: @this inner })
-        {
-            inner.Context = _context;
-            return inner;
-        }
-        return this;
     }
 
     // --- GZip helpers ---
