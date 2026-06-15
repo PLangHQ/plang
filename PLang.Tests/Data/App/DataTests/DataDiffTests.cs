@@ -119,7 +119,10 @@ public class DataDiffTests
         await Assert.That(diff).IsNotNull();
         await Assert.That(diff!["match"]).IsEqualTo(false);
 
-        var missing = diff["missingFields"] as List<string>;
+        // The field list round-trips as a native list, so read it as a sequence
+        // rather than casting to the CLR List<string> it was built from.
+        var missing = (diff["missingFields"] as System.Collections.IEnumerable)?
+            .Cast<object?>().Select(x => x?.ToString()).ToList();
         await Assert.That(missing).IsNotNull();
         await Assert.That(missing!).Contains("action");
     }
@@ -139,7 +142,10 @@ public class DataDiffTests
         await Assert.That(diff).IsNotNull();
         await Assert.That(diff!["match"]).IsEqualTo(false);
 
-        var extra = diff["extraFields"] as List<string>;
+        // The field list round-trips as a native list, so read it as a sequence
+        // rather than casting to the CLR List<string> it was built from.
+        var extra = (diff["extraFields"] as System.Collections.IEnumerable)?
+            .Cast<object?>().Select(x => x?.ToString()).ToList();
         await Assert.That(extra).IsNotNull();
         await Assert.That(extra!).Contains("extra");
     }
@@ -191,8 +197,10 @@ public class DataDiffTests
 
         await Assert.That(diff).IsNotNull();
         await Assert.That(diff!["match"]).IsEqualTo(false);
-        await Assert.That(diff["expectedLength"]).IsEqualTo(3);
-        await Assert.That(diff["actualLength"]).IsEqualTo(2);
+        // Numbers round-trip through the value model as the number type, so read
+        // the count rather than asserting a boxed CLR int.
+        await Assert.That(System.Convert.ToInt32(diff["expectedLength"])).IsEqualTo(3);
+        await Assert.That(System.Convert.ToInt32(diff["actualLength"])).IsEqualTo(2);
     }
 
     [Test]

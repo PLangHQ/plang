@@ -40,7 +40,11 @@ public partial class @this
 
     private static string SerializeForComparison(@this data)
     {
-        return JsonSerializer.Serialize(data.Peek(), _camelCaseIndented);
+        // Peek() is statically typed `item.@this`; serializing it directly would
+        // bind STJ to the abstract base's contract (its infra properties) — identical
+        // for every value, so all comparisons would match. Cast to object so STJ uses
+        // the runtime type and the value's own [JsonConverter] (text→"hello", etc.).
+        return JsonSerializer.Serialize((object?)data.Peek(), _camelCaseIndented);
     }
 
     private static Dictionary<string, object?> CompareElements(
