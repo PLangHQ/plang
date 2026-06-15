@@ -110,10 +110,6 @@ public class OutAttributeInventoryTests
         await Assert.That(HasOut(t, "Error")).IsTrue();
         await Assert.That(HasOut(t, "Type")).IsTrue();
     }
-    [Test] public async Task Data_Signature_HasOut()
-    {
-        await Assert.That(HasOut(typeof(global::app.data.@this), "Signature")).IsTrue();
-    }
     [Test] public async Task Data_Properties_HasOut_FormerlyJsonIgnore()
     {
         await Assert.That(HasOut(typeof(global::app.data.@this), "Properties")).IsTrue();

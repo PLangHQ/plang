@@ -119,13 +119,6 @@ public sealed class Default : IHttp
         var requestMessage = new HttpRequestMessage(httpMethod, resolvedUrl) { Content = httpContent };
         ApplyHeaders(requestMessage, headers);
 
-        var signResult = await SignRequestAsync(action.Context, unsigned, (action.SignOptions == null ? null : await action.SignOptions.Value()), resolvedUrl, httpMethod.Method);
-        if (signResult != null)
-        {
-            if (!signResult.Success) return signResult;
-            ApplySignature(requestMessage, signResult);
-        }
-
         var completionOption = (action.OnStream == null ? null : await action.OnStream.Value()) != null
             ? HttpCompletionOption.ResponseHeadersRead
             : HttpCompletionOption.ResponseContentRead;
@@ -168,13 +161,6 @@ public sealed class Default : IHttp
             : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.Headers.Value()), config);
         var requestMessage = new HttpRequestMessage(SysHttpMethod.Get, resolvedUrl);
         ApplyHeaders(requestMessage, headers);
-
-        var signResult = await SignRequestAsync(action.Context, unsigned, (action.SignOptions == null ? null : await action.SignOptions.Value()), resolvedUrl, "GET");
-        if (signResult != null)
-        {
-            if (!signResult.Success) return signResult;
-            ApplySignature(requestMessage, signResult);
-        }
 
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(action.Context.CancellationToken);
         cts.CancelAfter(TimeSpan.FromSeconds(timeout));
@@ -223,13 +209,6 @@ public sealed class Default : IHttp
         var httpMethod = ToSystemMethod((await action.Method.Value())!.Value);
         var requestMessage = new HttpRequestMessage(httpMethod, resolvedUrl) { Content = httpContent };
         ApplyHeaders(requestMessage, headers);
-
-        var signResult = await SignRequestAsync(action.Context, unsigned, (action.SignOptions == null ? null : await action.SignOptions.Value()), resolvedUrl, httpMethod.Method);
-        if (signResult != null)
-        {
-            if (!signResult.Success) return signResult;
-            ApplySignature(requestMessage, signResult);
-        }
 
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(action.Context.CancellationToken);
         cts.CancelAfter(TimeSpan.FromSeconds(timeout));
@@ -358,48 +337,6 @@ public sealed class Default : IHttp
             AllowAutoRedirect = config.Resolve("FollowRedirects", true),
             MaxAutomaticRedirections = config.Resolve("MaxRedirects", 10)
         });
-
-    // --- Signing ---
-
-    /// <summary>
-    /// Signs a request via app.RunAction&lt;sign&gt;().
-    /// Returns null if unsigned, the sign result Data on success (navigate .Signature for Signature).
-    /// </summary>
-    private static async Task<data.@this?> SignRequestAsync(
-        actor.context.@this context,
-        bool unsigned,
-        signing.sign? signOptions,
-        string url,
-        string method)
-    {
-        if (unsigned) return null;
-
-        // Body is intentionally excluded from the request signature for now — the
-        // signing scheme is being reworked; signing url+method+headers keeps the
-        // path working without forcing the body to materialize as a string here.
-        var httpSign = new signing.sign
-        {
-            Context = context,
-            Data = new data.@this("", ""),
-            Headers = new data.@this<global::app.type.dict.@this>("", global::app.type.dict.@this.FromRaw(new Dictionary<string, object>
-            {
-                ["url"] = url,
-                ["method"] = method
-            }, context)),
-            Contracts = signOptions?.Contracts,
-            Expires = signOptions?.Expires
-        };
-
-        return await context.App.RunAction<signing.sign>(httpSign, context);
-    }
-
-    private void ApplySignature(HttpRequestMessage request, data.@this signResult)
-    {
-        var signatureJson = JsonSerializer.Serialize(signResult.Signature, _caseInsensitiveRead);
-        request.Headers.TryAddWithoutValidation("X-Signature", signatureJson);
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/plang"));
-    }
-
     // --- Header helpers ---
 
     private static Dictionary<string, string> MergeHeaders(
@@ -607,7 +544,7 @@ public sealed class Default : IHttp
             return verifyResult;
         }
 
-        await context.Variable.Set("!ServiceIdentity", data.Signature?.Identity);
+        await context.Variable.Set("!ServiceIdentity", (data?.Peek() as global::app.type.signature.@this)?.Identity?.ToString());
 
         BuildProperties(data, request, response);
         return data;
@@ -625,31 +562,15 @@ public sealed class Default : IHttp
         try { data = JsonSerializer.Deserialize<data.@this>(errorBody, _transportInOptions); }
         catch (JsonException) { /* not valid data.@this JSON — try legacy format below */ }
 
-        if (data?.Signature != null)
+        // A signed response body reads back as a `signature` layer wrapping the
+        // inner data (the read boundary auto-verifies; verify peels it).
+        if (data?.Peek() is global::app.type.signature.@this layer)
         {
             var verifyAction = new signing.verify { Context = context, Data = data };
             var verifyResult = await app.RunAction<signing.verify>(verifyAction, context);
             if (verifyResult.Success)
-                await context.Variable.Set("!ServiceIdentity", data.Signature.Identity);
-            return;
+                await context.Variable.Set("!ServiceIdentity", layer.Identity.ToString());
         }
-
-        // Legacy: look for a "signature" field in arbitrary JSON
-        using var doc = JsonDocument.Parse(errorBody);
-        if (!doc.RootElement.TryGetProperty("signature", out var sigElement))
-            return;
-
-        var signedData = JsonSerializer.Deserialize<Signature>(sigElement.GetRawText(),
-            _caseInsensitiveRead);
-        if (signedData == null) return;
-
-        var legacyData = new data.@this("");
-        legacyData.Signature = signedData;
-
-        var legacyVerify = new signing.verify { Context = context, Data = legacyData };
-        var legacyResult = await app.RunAction<signing.verify>(legacyVerify, context);
-        if (legacyResult.Success)
-            await context.Variable.Set("!ServiceIdentity", signedData.Identity);
     }
 
     /// <summary>
@@ -934,7 +855,7 @@ public sealed class Default : IHttp
                 continue;
             }
 
-            await context.Variable.Set("!ServiceIdentity", data.Signature?.Identity);
+            await context.Variable.Set("!ServiceIdentity", (data?.Peek() as global::app.type.signature.@this)?.Identity?.ToString());
             await RunCallbackAsync(onStream, data, null, "chunk", app, context, ct);
         }
     }

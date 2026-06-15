@@ -22,6 +22,18 @@ public class PropertiesWireShapeTests
         return (plang, d, () => app.DisposeAsync().GetAwaiter().GetResult());
     }
 
+    // A Data serialized within an actor scope is wrapped in a `signature` layer;
+    // the data record (with name/type/value/properties) rides under `value`. Tests
+    // that inspect the data envelope unwrap to it here.
+    private static JsonElement Inner(string wire)
+    {
+        using var doc = JsonDocument.Parse(wire);
+        var root = doc.RootElement;
+        return root.TryGetProperty("@schema", out var s) && s.GetString() == "signature"
+            ? root.GetProperty("value").Clone()
+            : root.Clone();
+    }
+
     [Test] public async Task Properties_Surface_IsDictionaryStringObject_NotIListData()
     {
         var t = typeof(global::app.data.Properties);
@@ -116,8 +128,8 @@ public class PropertiesWireShapeTests
         {
             d.Properties["cost"] = 100L;
             var wire = (await plang.Serialize(d).Value())!.Clr<string>()!;
-            using var doc = JsonDocument.Parse(wire);
-            await Assert.That(doc.RootElement.TryGetProperty("properties", out var props)).IsTrue();
+            var rec = Inner(wire);
+            await Assert.That(rec.TryGetProperty("properties", out var props)).IsTrue();
             await Assert.That(props.ValueKind).IsEqualTo(JsonValueKind.Object);
             await Assert.That(props.GetProperty("cost").GetInt64()).IsEqualTo(100L);
         }
@@ -203,7 +215,6 @@ public class PropertiesWireShapeTests
             // EnsureSigned requires an Actor — bare context fixtures skip signing.
             // Use SeedData's app.User.Context which carries an actor.
             d.Properties["cost"] = 100L;
-            d.EnsureSigned();
             var wire = (await plang.Serialize(d).Value())!.Clr<string>()!;
             var tampered = wire.Replace("\"cost\":100", "\"cost\":999");
             await Assert.That(tampered).IsNotEqualTo(wire);
@@ -230,8 +241,8 @@ public class PropertiesWireShapeTests
             d.Properties["cost"] = 100L;
             d.Properties["model"] = "claude";
             var wire = (await plang.Serialize(d).Value())!.Clr<string>()!;
-            using var doc = JsonDocument.Parse(wire);
-            var props = doc.RootElement.GetProperty("properties");
+            var rec = Inner(wire);
+            var props = rec.GetProperty("properties");
             // Each Property value is a primitive — no signature objects under properties.
             foreach (var p in props.EnumerateObject())
             {

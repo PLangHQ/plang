@@ -55,6 +55,10 @@ public class SignActionTests
         return await _app.RunAction<sign>(action, Ctx);
     }
 
+    // sign now returns a Data whose value IS the signature layer (no Data.Signature).
+    private static global::app.type.signature.@this Layer(Data result)
+        => (global::app.type.signature.@this)result.Peek();
+
     #region Happy Path & Field Population
 
     [Test]
@@ -63,14 +67,13 @@ public class SignActionTests
         var result = await SignData(new { message = "hello" });
 
         await result.IsSuccess();
-        var sd = result.Signature;
+        var sd = Layer(result);
         await Assert.That(sd).IsNotNull();
-        await Assert.That(sd!.Type).IsNotEmpty();
-        await Assert.That(sd.Algorithm).IsNotEmpty();
-        await Assert.That(sd.Nonce).IsNotEmpty();
-        await Assert.That(sd.Identity).IsNotEmpty();
-        await Assert.That(sd.Hash).IsNotNull();
-        await Assert.That(sd.Value).IsNotNull();
+        await Assert.That(sd.Algorithm.ToString()).IsNotEmpty();
+        await Assert.That(sd.Nonce.ToString()).IsNotEmpty();
+        await Assert.That(sd.Identity.ToString()).IsNotEmpty();
+        await Assert.That(sd.Hash.Bytes.Length).IsGreaterThan(0);
+        await Assert.That(sd.Signature.Value.Length).IsGreaterThan(0);
     }
 
     [Test]
@@ -79,9 +82,8 @@ public class SignActionTests
         var result = await SignData(new { message = "hello" });
 
         await result.IsSuccess();
-        var sd = result.Signature!;
-        await Assert.That(sd.Type).IsEqualTo("signature");
-        await Assert.That(sd.Algorithm).IsEqualTo("ed25519");
+        await Assert.That(result.Type?.Name).IsEqualTo("signature");
+        await Assert.That(Layer(result).Algorithm.ToString()).IsEqualTo("ed25519");
     }
 
     [Test]
@@ -94,7 +96,7 @@ public class SignActionTests
         var result = await SignData("test data");
 
         await result.IsSuccess();
-        await Assert.That(result.Signature!.Identity).IsEqualTo(publicKey);
+        await Assert.That(Layer(result).Identity.ToString()).IsEqualTo(publicKey);
     }
 
     #endregion
@@ -109,7 +111,7 @@ public class SignActionTests
         var after = DateTimeOffset.UtcNow;
 
         await result.IsSuccess();
-        var created = result.Signature!.Created;
+        var created = Layer(result).Created.Value;
         await Assert.That(created >= before.AddSeconds(-1)).IsTrue();
         await Assert.That(created <= after.AddSeconds(1)).IsTrue();
     }
@@ -124,7 +126,7 @@ public class SignActionTests
         var result = await SignData("test");
 
         await result.IsSuccess();
-        await Assert.That(result.Signature!.Contracts).IsNull();
+        await Assert.That(Layer(result).Contracts).IsNull();
     }
 
     [Test]
@@ -133,9 +135,10 @@ public class SignActionTests
         var result = await SignData("test", contracts: new List<string> { "C0", "C1" });
 
         await result.IsSuccess();
-        await Assert.That(result.Signature!.Contracts!.Count).IsEqualTo(2);
-        await Assert.That(result.Signature!.Contracts).Contains("C0");
-        await Assert.That(result.Signature!.Contracts).Contains("C1");
+        var contracts = System.Linq.Enumerable.ToList(Layer(result).ContractStrings());
+        await Assert.That(contracts.Count).IsEqualTo(2);
+        await Assert.That(contracts).Contains("C0");
+        await Assert.That(contracts).Contains("C1");
     }
 
     #endregion
@@ -148,9 +151,9 @@ public class SignActionTests
         var result = await SignData("test", expires: TimeSpan.FromSeconds(5));
 
         await result.IsSuccess();
-        var sd = result.Signature!;
+        var sd = Layer(result);
         await Assert.That(sd.Expires).IsNotNull();
-        var diff = (sd.Expires!.Value - sd.Created).TotalMilliseconds;
+        var diff = (sd.Expires!.Value - sd.Created.Value).TotalMilliseconds;
         await Assert.That(diff).IsGreaterThanOrEqualTo(4900);
         await Assert.That(diff).IsLessThanOrEqualTo(5100);
     }
@@ -161,23 +164,12 @@ public class SignActionTests
         var result = await SignData("test");
 
         await result.IsSuccess();
-        await Assert.That(result.Signature!.Expires).IsNull();
+        await Assert.That(Layer(result).Expires).IsNull();
     }
 
     #endregion
 
-    #region Headers & Hash
-
-    [Test]
-    public async Task Sign_Headers_IncludedWhenProvided()
-    {
-        var headers = new Dictionary<string, object> { { "method", "POST" } };
-        var result = await SignData("test", headers: headers);
-
-        await result.IsSuccess();
-        await Assert.That(result.Signature!.Headers).IsNotNull();
-        await Assert.That(result.Signature!.Headers!["method"].ToString()).IsEqualTo("POST");
-    }
+    #region Hash
 
     [Test]
     public async Task Sign_Hash_IsBytes()
@@ -185,10 +177,9 @@ public class SignActionTests
         var result = await SignData("test");
 
         await result.IsSuccess();
-        var hash = result.Signature!.Hash;
+        var hash = Layer(result).Hash;
         await Assert.That(hash).IsNotNull();
-        await Assert.That((await hash.Value()) is global::app.module.crypto.type.hash.@this).IsTrue();
-        await Assert.That(((global::app.module.crypto.type.hash.@this)(await hash.Value())!).Bytes.Length).IsGreaterThan(0);
+        await Assert.That(hash.Bytes.Length).IsGreaterThan(0);
     }
 
     #endregion
@@ -201,12 +192,9 @@ public class SignActionTests
         var result = await SignData("test");
         await result.IsSuccess();
 
-        var sd = result.Signature!;
-        var sigBytes = Convert.FromBase64String(sd.Value!);
-        var signingBytes = sd.ToSigningBytes();
-
+        var sd = Layer(result);
         var provider = new Ed25519();
-        var verifyResult = provider.Verify(signingBytes, sigBytes, sd.Identity);
+        var verifyResult = provider.Verify(sd.ToSigningBytes(), sd.Signature.Value, sd.Identity.ToString());
         await verifyResult.IsSuccess();
         await Assert.That((await verifyResult.Value())!.Value).IsTrue();
     }
@@ -227,7 +215,7 @@ public class SignActionTests
 
         var result = await SignData("test");
         await result.IsSuccess();
-        await Assert.That(result.Signature).IsNotNull();
+        await Assert.That(result.Peek() is global::app.type.signature.@this).IsTrue();
         await Assert.That(mock.SignCalled).IsTrue();
     }
 
@@ -240,8 +228,9 @@ public class SignActionTests
     {
         var result = await SignData("test", contracts: new List<string>());
         await result.IsSuccess();
-        await Assert.That(result.Signature!.Contracts).IsNotNull();
-        await Assert.That(result.Signature!.Contracts!.Count).IsEqualTo(0);
+        var sd = Layer(result);
+        await Assert.That(sd.Contracts).IsNotNull();
+        await Assert.That(System.Linq.Enumerable.Count(sd.ContractStrings())).IsEqualTo(0);
     }
 
     #endregion

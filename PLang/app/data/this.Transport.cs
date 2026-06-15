@@ -22,47 +22,10 @@ public partial class @this
     /// </summary>
     private const long MaxDecompressedSize = 100 * 1024 * 1024;
 
-    private app.module.signing.Signature? _signature;
-
-    /// <summary>
-    /// Cryptographic signature attached to this Data. After stage 2a.7,
-    /// ICallback is gone — no auto-populate on read. Callers seal explicitly
-    /// via <see cref="EnsureSigned"/> when needed (e.g. wire serializer).
-    /// Verify-style "if (Signature == null)" checks fail-closed.
-    /// </summary>
-    [JsonIgnore]
-    [In]
-    [Out, Store]
-    public app.module.signing.Signature? Signature
-    {
-        get => _signature;
-        set => _signature = value;
-    }
-
-    /// <summary>
-    /// Explicitly populates <see cref="Signature"/> via the configured signing pipeline if
-    /// not already set. No-op when a signature is already present. Called by the wire
-    /// converter's sign-if-missing walk and by callers that need to seal a Data before
-    /// it crosses a wire boundary. Throws <see cref="InvalidOperationException"/> when
-    /// this Data has no Context.
-    /// </summary>
-    public void EnsureSigned()
-    {
-        if (_signature != null) return;
-        if (_context == null)
-            throw new InvalidOperationException(
-                "Data.Signature cannot be lazily populated without a Context — " +
-                "set Context (or use the Variables.Set path which wires it) before reading Signature.");
-
-        var action = new app.module.signing.sign
-        {
-            Data = this,
-        };
-        var result = _context.App.RunAction(action, _context).GetAwaiter().GetResult();
-        if (!result.Success)
-            throw new InvalidOperationException(
-                $"Signing failed during lazy Signature populate: {result.Error?.Message ?? "unknown"}.");
-    }
+    // Signing is no longer carried in memory: a Data does NOT hold a Signature
+    // property. Provenance is an I/O-boundary concern — a Data crossing the
+    // application/plang boundary is wrapped in a `signature` layer at write
+    // (Wire.Write), peeled + auto-verified at read. Nothing in memory signs.
 
     // --- Outbound pipeline: Compress → Encrypt ---
 

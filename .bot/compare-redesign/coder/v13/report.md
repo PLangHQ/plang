@@ -138,3 +138,32 @@ sign/verify/Ed25519/Wire at once). Steps in `schema-layer-design.md`
 - `signature.@this.Value` hides the base `Value(asking)` method (CS0108) — a tolerated
   warning, same as `archive.Value`; Ingi wants `Value` for consistency, leave it.
 - Production C# edits via Edit/Write only; test edits may be shell-batched.
+
+---
+## Ingi clarifications (continuation on `compare-redesign-signature-wip`)
+
+**Permission model (confirmed + a real gap found).** Flow: user answers → `sign
+%answer% → %signedAnswer%` → stored in DB → on **read from DB it must validate;
+invalid → nothing returned (absent)**. So `TryCover` correctly drops the in-memory
+re-verify. BUT the gap: `SettingsStore`/`Sqlite.cs` uses a **context-less**
+`new plang.@this()`, and `IStore.Load(...)` takes no actor context. Write-signing
+works (uses the grant Data's own context), but **read does NOT auto-verify**
+(`ReadSignatureLayer` skips verify when the Wire `_context` is null). FIX: thread an
+actor read-context into `SettingsStore.Get/Load` (or make the store per-actor) so
+`verify` runs on grant load and an invalid signature yields absent. SettingsStore is
+the app-level singleton `app.this.cs:178`.
+
+**HTTP — FULLY REMOVE (not adapt).** Ingi: signing is the channel I/O border's job,
+keyed to **`application/plang`** (NOT application/json — json is plain/unsigned). An
+http request/response whose content-type is `application/plang` is signed/verified by
+the channel's plang serializer (the rewired `Wire`) automatically. So delete ALL
+signing code from the http module: `SignRequestAsync`, `ApplySignature`, the
+`!ServiceIdentity` extraction, `TryExtractSignedErrorIdentity`, and their call sites
+in `http/code/Default.cs` + `path/http/this.cs`. The body already serializes through
+the content-type's channel serializer.
+
+**Remaining continuation (this branch):**
+1. Thread actor read-context into SettingsStore so grant loads verify (permission gap above).
+2. Fully remove http-module signing (above).
+3. Migrate ~25 test files off `Data.Signature`/`EnsureSigned` to boundary signing.
+4. Build green → merge to compare-redesign.

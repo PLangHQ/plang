@@ -31,133 +31,107 @@ public class Ed25519 : ISigning
         if (!identityResult.Success) return identityResult;
         var identity = (Identity)(await identityResult.Value())!;
 
-        // Hash the data
-        var hash = await app.RunAction<Hash>(new Hash { Data = action.Data, Algorithm = new data.@this<global::app.type.text.@this>("", "keccak256") }, action.Context);
-        if (!hash.Success) return hash;
+        // Hash the inner data — the digest binds the value into the signed bytes.
+        var hashResult = await app.RunAction<Hash>(new Hash { Data = action.Data, Algorithm = new data.@this<global::app.type.text.@this>("", "keccak256") }, action.Context);
+        if (!hashResult.Success) return hashResult;
+        if (await hashResult.Value() is not global::app.module.crypto.type.hash.@this hash)
+            return global::app.data.@this.FromError(new ActionError("Hashing produced no digest", "DataHashMismatch", 500));
 
         var now = (DateTimeOffset)(await action.Context.Variable.GetValue("NowUtc"))!;
         var nonce = (await action.Context.Variable.GetValue("GUID"))!.ToString()!;
+        DateTimeOffset? expires = (action.Expires == null ? null : await action.Expires.Value()) is { } expiry
+            ? now.Add(expiry.Value) : null;
+        var contracts = action.Contracts == null ? null : await action.Contracts.Value();
 
-        var signedData = new Signature
-        {
-            Type = "signature",
-            Algorithm = Name,
-            Nonce = nonce,
-            Created = now,
-            Expires = (action.Expires == null ? null : await action.Expires.Value()) is { } expiry ? now.Add(expiry) : null,
-            Contracts = action.Contracts == null ? null
-                : global::app.type.item.@this.Lower<List<string>>(await action.Contracts.Value()),
-            Headers = action.Headers == null ? null
-                : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.Headers.Value()),
-            Hash = hash
-        };
+        // Build the unsigned layer wrapping the data, compute its signing bytes,
+        // sign with the identity's private key, stamp the signature in.
+        var layer = new global::app.type.signature.@this(
+            value: action.Data!,
+            algorithm: new global::app.type.text.@this(Name),
+            nonce: new global::app.type.text.@this(nonce),
+            created: new global::app.type.datetime.@this(now),
+            identity: new global::app.type.text.@this(identity.PublicKey),
+            hash: hash,
+            signature: new global::app.type.binary.@this(Array.Empty<byte>()),
+            expires: expires is { } e ? new global::app.type.datetime.@this(e) : null,
+            contracts: contracts);
 
-        signedData.Identity = identity.PublicKey;
-        var signingBytes = signedData.ToSigningBytes();
-        var signResult = Sign(signingBytes, identity.PrivateKey);
+        var signResult = Sign(layer.ToSigningBytes(), identity.PrivateKey);
         if (!signResult.Success) return signResult;
-        signedData.Value = Convert.ToBase64String((await signResult.Value())!.Value);
+        var signed = layer.Signed((await signResult.Value())!);
 
-        action.Data!.Signature = signedData;
-        return action.Data;
+        return global::app.data.@this.Ok(signed);
     }
 
     public virtual async Task<data.@this<global::app.type.@bool.@this>> VerifyAsync(verify action)
     {
-        if (action.Data?.Signature == null)
+        if (action.Data?.Peek() is not global::app.type.signature.@this layer)
             return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Data has no signature", "NoSignature", 400));
 
-        var signedData = action.Data.Signature;
         var app = action.Context.App;
-        var now = (DateTimeOffset)await action.Context.Variable.GetValue("NowUtc")!;
+        // NowUtc may be unset when verify runs at the deserialize boundary (the
+        // read context isn't mid-step) — fall back to the wall clock rather than
+        // NRE on an unbox of a missing runtime variable.
+        var now = await action.Context.Variable.GetValue("NowUtc") is DateTimeOffset nowUtc
+            ? nowUtc : DateTimeOffset.UtcNow;
         var signingSettings = app.Config.For<Config>(action.Context);
         long effectiveTimeout = action.TimeoutMs == null
             ? signingSettings.Resolve<long>("TimeoutMs", 300_000)
             : (await action.TimeoutMs.Value())?.ToInt64() ?? signingSettings.Resolve<long>("TimeoutMs", 300_000);
         var skipFreshness = (action.SkipFreshnessCheck == null ? null : (await action.SkipFreshnessCheck.Value())?.Value) ?? false;
 
-        // 1. Type check
-        if (signedData.Type != "signature")
-            return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError($"Invalid signed data type: '{signedData.Type}'", "InvalidType", 400));
-
-        // 2. Wire-freshness check (Created too old). Anti-replay primitive for
+        // 1. Wire-freshness check (Created too old). Anti-replay primitive for
         // transient signed messages — skipped for long-lived artifacts (grants)
-        // whose intrinsic lifetime is governed by step 3's Expires.
+        // whose intrinsic lifetime is governed by step 2's Expires.
         if (!skipFreshness)
         {
-            var age = now - signedData.Created;
+            var age = now - layer.Created.Value;
             if (age.TotalMilliseconds > effectiveTimeout)
                 return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError($"Signature timed out (age: {age.TotalMilliseconds:F0}ms, timeout: {effectiveTimeout}ms)", "TimedOut", 400));
         }
 
-        // 3. Expiry check (signature's intrinsic lifetime — null = permanent).
-        if (signedData.Expires.HasValue && now > signedData.Expires.Value)
+        // 2. Expiry check (signature's intrinsic lifetime — null = permanent).
+        if (layer.Expires is { } exp && now > exp.Value)
             return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Signature has expired", "Expired", 400));
 
-        // 4. Nonce replay check — paired with step 2 (wire-freshness). For
+        // 3. Nonce replay check — paired with step 1 (wire-freshness). For
         // stored artifacts the same nonce naturally re-presents on every read,
-        // which isn't replay; skip alongside step 2.
+        // which isn't replay; skip alongside step 1.
         if (!skipFreshness)
         {
-            var nonceCacheKey = $"nonce:{signedData.Nonce}";
+            var nonceCacheKey = $"nonce:{layer.Nonce}";
             var cacheSettings = new CacheSettings { DurationMs = effectiveTimeout };
             var nonceAdded = await app.Cache.TryAddAsync(nonceCacheKey, global::app.data.@this.Ok(true), cacheSettings);
             if (!nonceAdded)
                 return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Nonce has already been used", "NonceReplay", 400));
         }
 
-        // 5. Contract matching
-        var expectedContracts = action.Contracts == null ? null
-            : global::app.type.item.@this.Lower<List<string>>(await action.Contracts.Value());
-        if (!ContractsMatch(signedData.Contracts, expectedContracts))
+        // 4. Contract matching — Contracts may be an unset/absent slot (the
+        // boundary-verify path never sets it), so guard the resolved value too.
+        var contractsList = action.Contracts == null ? null : await action.Contracts.Value();
+        var expectedContracts = contractsList == null ? null
+            : System.Linq.Enumerable.ToList(System.Linq.Enumerable.Select(
+                contractsList.Items, d => d.Peek().ToString() ?? ""));
+        if (!ContractsMatch(System.Linq.Enumerable.ToList(layer.ContractStrings()), expectedContracts))
             return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Contract mismatch", "ContractMismatch", 400));
 
-        // 6. Header matching — optional param: an absent slot binds non-null Uninitialized
-        // (null model), so gate on the resolved value. The C# null check stays
-        // for direct C# composition, where `init` can set the property to null.
-        if (action.Headers != null
-            && global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.Headers.Value()) is { } expectedHeaders)
-        {
-            if (signedData.Headers == null)
-                return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Signed data has no headers but verification expects headers", "HeaderMismatch", 400));
-
-            foreach (var kvp in expectedHeaders)
-            {
-                if (!signedData.Headers.TryGetValue(kvp.Key, out var signedValue))
-                    return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError($"Header mismatch for '{kvp.Key}'", "HeaderMismatch", 400));
-
-                // Constant-time comparison to prevent timing side-channel attacks
-                var expectedBytes = System.Text.Encoding.UTF8.GetBytes(kvp.Value?.ToString() ?? "");
-                var actualBytes = System.Text.Encoding.UTF8.GetBytes(signedValue?.ToString() ?? "");
-                if (!CryptographicOperations.FixedTimeEquals(expectedBytes, actualBytes))
-                    return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError($"Header mismatch for '{kvp.Key}'", "HeaderMismatch", 400));
-            }
-        }
-
-        // 7. Data hash verification — the stored digest is a hash value that
-        // carries its own algorithm.
-        if ((signedData.Hash == null ? null : await signedData.Hash.Value()) is not global::app.module.crypto.type.hash.@this storedHash || storedHash.Bytes.Length == 0)
+        // 5. Data hash verification — rehash the inner value, compare to the
+        // signed digest (which carries its own algorithm).
+        var storedHash = layer.Hash;
+        if (storedHash.Bytes.Length == 0)
             return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Missing data hash", "DataHashMismatch", 400));
 
-        if ((action.Data == null ? null : await action.Data.Value()) != null)
-        {
-            var rehash = await app.RunAction<Hash>(
-                new Hash { Data = action.Data, Algorithm = new data.@this<global::app.type.text.@this>("", storedHash.Algorithm) }, action.Context);
-            if (!rehash.Success) return global::app.data.@this<global::app.type.@bool.@this>.From(rehash);
-            if (await rehash.Value() is not global::app.module.crypto.type.hash.@this rehashValue || !rehashValue.DigestEquals(storedHash))
-                return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
-        }
+        var rehash = await app.RunAction<Hash>(
+            new Hash { Data = layer.Value, Algorithm = new data.@this<global::app.type.text.@this>("", storedHash.Algorithm) }, action.Context);
+        if (!rehash.Success) return global::app.data.@this<global::app.type.@bool.@this>.From(rehash);
+        if (await rehash.Value() is not global::app.module.crypto.type.hash.@this rehashValue || !rehashValue.DigestEquals(storedHash))
+            return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
 
-        // 8. Signature verification
-        if (string.IsNullOrEmpty(signedData.Value))
+        // 6. Signature verification — over the layer's canonical signing bytes.
+        if (layer.Signature.Value.Length == 0)
             return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Missing signature", "SignatureInvalid", 400));
 
-        byte[] signatureBytes;
-        try { signatureBytes = Convert.FromBase64String(signedData.Value); }
-        catch (FormatException) { return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Invalid base64 signature", "SignatureInvalid", 400)); }
-
-        var signingBytes = signedData.ToSigningBytes();
-        var verifyResult = Verify(signingBytes, signatureBytes, signedData.Identity);
+        var verifyResult = Verify(layer.ToSigningBytes(), layer.Signature.Value, layer.Identity.ToString());
         if (!verifyResult.Success) return global::app.data.@this<global::app.type.@bool.@this>.From(verifyResult);
 
         return global::app.data.@this<global::app.type.@bool.@this>.Ok(true);

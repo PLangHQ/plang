@@ -1,8 +1,10 @@
 namespace PLang.Tests.App.Serialization;
 
-// data-serialize-cleanup — Stage 2
-// Sign-if-missing during the wire converter walk. Each Data the converter visits during
-// serialization: if Signature is null, call EnsureSigned; if populated, leave alone.
+// Boundary signing (signature-as-layer). Signing is no longer a per-Data
+// "sign-if-missing" walk with a Data.Signature property — a Data crossing the
+// application/plang boundary within an actor scope is wrapped in a `signature`
+// LAYER on write (hoisted top-level), and the layer is auto-verified + peeled on
+// read. These pin that boundary behavior.
 
 public class WireConverterSigningTests
 {
@@ -10,138 +12,64 @@ public class WireConverterSigningTests
         => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-wire-sig-" + Guid.NewGuid().ToString("N")[..8]));
 
-    [Test] public async Task WireConverter_OnUnsignedData_FiresEnsureSignedAndEmitsSignature()
-    {
-        await using var app = NewSignedApp();
-        var plang = (global::app.channel.serializer.plang.@this)
+    private static global::app.channel.serializer.plang.@this Plang(global::app.@this app)
+        => (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
 
+    [Test] public async Task Serialize_WithinActorScope_WrapsInSignatureLayer()
+    {
+        await using var app = NewSignedApp();
         var data = new global::app.data.@this("greeting", "hello") { Context = app.User.Context };
-        await Assert.That(data.Signature).IsNull();
 
-        var json = (await plang.Serialize(data).Value())!.Clr<string>()!;
+        var json = (await Plang(app).Serialize(data).Value())!.Clr<string>()!;
 
-        await Assert.That(data.Signature).IsNotNull().Because("Converter must EnsureSigned before emit");
-        await Assert.That(json).Contains("\"signature\"");
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        // Top-level object IS the signature layer (hoisted past the data envelope).
+        await Assert.That(doc.RootElement.GetProperty("@schema").GetString()).IsEqualTo("signature");
+        await Assert.That(doc.RootElement.TryGetProperty("signature", out _)).IsTrue();
+        // The inner value rides under `value` as a @schema:data record.
+        var inner = doc.RootElement.GetProperty("value");
+        await Assert.That(inner.GetProperty("@schema").GetString()).IsEqualTo("data");
+        await Assert.That(inner.GetProperty("value").GetString()).IsEqualTo("hello");
     }
 
-    [Test] public async Task WireConverter_OnSignedData_LeavesSignatureUnchanged()
+    [Test] public async Task Serialize_ThenDeserialize_AutoVerifies_AndPeelsToInnerData()
     {
         await using var app = NewSignedApp();
-        var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channel.Serializers.GetByMimeType("application/plang");
-
-        var data = new global::app.data.@this("x", "y") { Context = app.User.Context };
-        data.EnsureSigned();
-        var firstSigBytes = data.Signature!.Value;
-
-        plang.Serialize(data);
-        var secondSigBytes = data.Signature!.Value;
-
-        await Assert.That(secondSigBytes).IsEqualTo(firstSigBytes);
-    }
-
-    [Test] public async Task EnsureSigned_CalledTwice_DoesNotProduceTwoSignatures()
-    {
-        await using var app = NewSignedApp();
-        var data = new global::app.data.@this("x", "y") { Context = app.User.Context };
-        data.EnsureSigned();
-        var sig = data.Signature;
-        data.EnsureSigned();
-        await Assert.That(ReferenceEquals(sig, data.Signature)).IsTrue()
-            .Because("EnsureSigned is idempotent — second call is a no-op when Signature is already set.");
-    }
-
-    [Test] public async Task WireConverter_OnListDataInsideValue_SignsEachElement()
-    {
-        await using var app = NewSignedApp();
-        var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channel.Serializers.GetByMimeType("application/plang");
-
-        var inner1 = new global::app.data.@this("a", "1") { Context = app.User.Context };
-        var inner2 = new global::app.data.@this("b", "2") { Context = app.User.Context };
-        // Pre-sign inner elements (proves the on-wire visibility of each
-        // element's signature; the sign-if-missing rule fires per Data anyway,
-        // but the explicit EnsureSigned isolates the test from recursive
-        // signing during the outer's hash-canonicalisation walk).
-        inner1.EnsureSigned();
-        inner2.EnsureSigned();
-        var outer = new global::app.data.@this("list", new List<global::app.data.@this> { inner1, inner2 })
-            { Context = app.User.Context };
-
-        var json = (await plang.Serialize(outer).Value())!.Clr<string>()!;
-
-        await Assert.That(inner1.Signature).IsNotNull();
-        await Assert.That(inner2.Signature).IsNotNull();
-        await Assert.That(outer.Signature).IsNotNull();
-        await Assert.That(JsonContains(json, inner1.Signature!.Value!)).IsTrue();
-        await Assert.That(JsonContains(json, inner2.Signature!.Value!)).IsTrue();
-    }
-
-    // STJ escapes `+` and `/` as + / / in default options — flatten both
-    // sides before substring-search so the test doesn't depend on escape choice.
-    private static bool JsonContains(string json, string raw)
-    {
-        var jsonFlat = json.Replace("\\u002B", "+").Replace("\\u002F", "/");
-        return jsonFlat.Contains(raw);
-    }
-
-    [Test] public async Task BeforeWriteHandler_MutatesData_MutationIncludedInCanonicalSign()
-    {
-        await using var app = NewSignedApp();
-        var data = new global::app.data.@this("x", "before") { Context = app.User.Context };
-        // Mutate BEFORE serialize — the converter signs the mutated value.
-        data.SetValue("after");
-        var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var json = (await plang.Serialize(data).Value())!.Clr<string>()!;
-        await Assert.That(json).Contains("after");
-        await Assert.That(json).DoesNotContain("before");
-        await Assert.That(data.Signature).IsNotNull();
-    }
-
-    [Test] public async Task ApplicationPlang_Read_PopulatesSignature_WithoutAutoVerify()
-    {
-        await using var app = NewSignedApp();
-        var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channel.Serializers.GetByMimeType("application/plang");
-
         var data = new global::app.data.@this("greeting", "hello") { Context = app.User.Context };
-        var json = (await plang.Serialize(data).Value())!.Clr<string>()!;
+        var json = (await Plang(app).Serialize(data).Value())!.Clr<string>()!;
 
-        var roundTripped = plang.Deserialize(json);   // Deserialize returns the reconstruction itself
+        var roundTripped = Plang(app).Deserialize(json);
         await roundTripped.IsSuccess();
-        await Assert.That(roundTripped!.Signature).IsNotNull()
-            .Because("Read reconstructs Signature into the Data, populated-but-unverified.");
+        // Read peeled the verified layer down to the inner data.
+        await Assert.That((await roundTripped.Value())?.ToString()).IsEqualTo("hello");
     }
 
-    [Test] public async Task WireConverter_OnByteArrayValue_EmitsBytesWithoutNestedDataWrap()
+    [Test] public async Task Deserialize_TamperedInnerValue_FailsVerification()
     {
         await using var app = NewSignedApp();
-        var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channel.Serializers.GetByMimeType("application/plang");
+        var data = new global::app.data.@this("greeting", "hello") { Context = app.User.Context };
+        var json = (await Plang(app).Serialize(data).Value())!.Clr<string>()!;
 
+        // Flip the signed inner value — the signature no longer covers the payload.
+        var tampered = json.Replace("hello", "HELLO");
+        await Assert.That(tampered).IsNotEqualTo(json);
+
+        var result = Plang(app).Deserialize(tampered);
+        await Assert.That(result.Success).IsFalse()
+            .Because("Auto-verify on read must reject a payload whose inner value was tampered.");
+    }
+
+    [Test] public async Task Serialize_ByteArrayValue_InnerEmitsBase64_NotNestedData()
+    {
+        await using var app = NewSignedApp();
         var bytes = new byte[] { 1, 2, 3, 4 };
         var data = new global::app.data.@this("blob", bytes) { Context = app.User.Context };
-        var json = (await plang.Serialize(data).Value())!.Clr<string>()!;
+        var json = (await Plang(app).Serialize(data).Value())!.Clr<string>()!;
 
-        // Byte[] serializes to base64 string in JSON — the value slot must NOT be a
-        // nested {name, type, value} Data object.
-        await Assert.That(json).Contains("\"value\":\"" + Convert.ToBase64String(bytes) + "\"");
-    }
-
-    [Test] public async Task WireConverter_DoesNotWalkProperties_AsDataNodes()
-    {
-        // Pre-Stage-4 Properties is still IList<Data> — but the wire converter shouldn't
-        // walk into Properties even today (they're [JsonIgnore]). Stage 4 turns Properties
-        // into Dictionary<string, object?>; the don't-walk-Properties rule is preserved.
-        await using var app = NewSignedApp();
-        var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channel.Serializers.GetByMimeType("application/plang");
-
-        var data = new global::app.data.@this("x", "y") { Context = app.User.Context };
-        var json = (await plang.Serialize(data).Value())!.Clr<string>()!;
-        // Properties is [JsonIgnore] and stays off the wire pre-Stage-4.
-        await Assert.That(json).DoesNotContain("\"properties\"");
+        // The inner data's value is the base64 string, not a nested {name,type,value}.
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        var inner = doc.RootElement.GetProperty("value");
+        await Assert.That(inner.GetProperty("value").GetString()).IsEqualTo(Convert.ToBase64String(bytes));
     }
 }

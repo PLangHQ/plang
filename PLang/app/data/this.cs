@@ -722,7 +722,6 @@ public partial class @this
             Returned = Returned,
             ReturnDepth = ReturnDepth,
             Warnings = Warnings != null ? new List<Info>(Warnings) : null,
-            Signature = Signature,
             Properties = Properties,
         };
         clone._type = answer ?? global::app.type.item.@this.Absent;
@@ -1022,7 +1021,6 @@ public partial class @this
             Returned = Returned,
             ReturnDepth = ReturnDepth,
             Warnings = Warnings != null ? new List<Info>(Warnings) : null,
-            Signature = Signature,
             Properties = Properties.Clone()
         };
         // The instance is shared by reference — values are immutable, so
@@ -1046,7 +1044,6 @@ public partial class @this
             Returned = Returned,
             ReturnDepth = ReturnDepth,
             Warnings = Warnings != null ? new List<Info>(Warnings) : null,
-            Signature = Signature,
             Properties = Properties.Clone()
         };
         clone._type = _type.DeepClone();
@@ -1165,7 +1162,6 @@ public class @this<T> : @this
         copy.Returned = source.Returned;
         copy.ReturnDepth = source.ReturnDepth;
         copy.Warnings = source.Warnings != null ? new List<Info>(source.Warnings) : null;
-        copy.Signature = source.Signature;
         copy.Properties = source.Properties;
         copy.Snapshot = source.Snapshot;
         return copy;

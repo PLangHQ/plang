@@ -334,10 +334,6 @@ public partial class Set : IContext, IBuildValidatable
     private static void CopyProperties(data.@this source, data.@this target)
     {
         if (ReferenceEquals(source, target)) return;
-        // Signature is result metadata that must survive the binding-mint: the
-        // re-mint builds a fresh Data from the raw value, so `sign … write to %x%`
-        // would otherwise drop the signature before `verify %x%` ever sees it.
-        if (source.Signature != null) target.Signature = source.Signature;
         if (source.Properties.Count == 0) return;
         foreach (var p in source.Properties)
             target.Properties[p.Key] = p.Value;

@@ -72,18 +72,4 @@ public class Cut1_JsonRoundTripTests
         await Assert.That(json).Contains("\"properties\":{\"k\":\"vp\"}");
     }
 
-    [Test] public async Task Cut1_SignaturePresent_VerifiesAfterRoundTrip()
-    {
-        // Signing requires a Context with Actor wired — exercised in PLang test
-        // goal suites. Here, pin that a Data with an in-memory Signature emits
-        // the signature field through the Normalize pipeline.
-        var d = new Data("rec", "payload");
-        d.Signature = new global::app.module.signing.Signature
-        {
-            Identity = "ident", Nonce = "n1", Algorithm = "ed25519"
-        };
-        var json = NormalizePipelineHelper.SerializeRecord(d);
-        await Assert.That(json).Contains("\"signature\":");
-        await Assert.That(json).Contains("ident");
-    }
 }

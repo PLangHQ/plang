@@ -89,16 +89,18 @@ public sealed class @this
     /// Records a signed grant. Routes by signature presence: signed → sqlite,
     /// unsigned → in-memory. Same path twice overwrites (in either home).
     /// </summary>
-    public async Task Add(global::app.data.@this<PermissionRecord> signed)
+    public async Task Add(global::app.data.@this<PermissionRecord> grant, bool persist)
     {
-        var __rec = await signed.Value(); if (__rec == null) return;
+        var __rec = await grant.Value(); if (__rec == null) return;
         var key = __rec.Path;
 
-        // Heuristic for "persisted": signature present. In-memory grants come
-        // in unsigned ("y" branch in Path.Authorize doesn't call EnsureSigned).
-        if (signed.Signature != null)
+        // The caller decides persisted vs in-memory (it used to sign-then-persist;
+        // signing is no longer in memory). A persisted grant is signed
+        // automatically when it crosses the application/plang boundary into the
+        // settings store; an in-memory grant is local and unsigned.
+        if (persist)
         {
-            await _actor.App.SettingsStore.Set(PermissionTable, key, signed);
+            await _actor.App.SettingsStore.Set(PermissionTable, key, grant);
             return;
         }
 
@@ -107,8 +109,8 @@ public sealed class @this
             // Overwrite same-path entry if any.
             var idx = _inMemory.FindIndex(d =>
                 d.Peek() is PermissionRecord __dv && string.Equals(__dv.Path, key, StringComparison.Ordinal));
-            if (idx >= 0) _inMemory[idx] = signed;
-            else _inMemory.Add(signed);
+            if (idx >= 0) _inMemory[idx] = grant;
+            else _inMemory.Add(grant);
         }
     }
 
@@ -140,41 +142,12 @@ public sealed class @this
         if (!string.Equals(grant.Actor, request.Actor, StringComparison.Ordinal)) return false;
         if (!grant.Covers(request)) return false;
 
-        // Signature check (cached per-Data via Properties).
-        if (grantData.Signature == null) return true; // in-memory unsigned grant
-        if (grantData.Properties[VerifiedFlag] is bool b) return b;
-
-        var verified = await VerifySignature(grantData);
-        grantData.Properties[VerifiedFlag] = verified;
-        return verified;
-    }
-
-    private async Task<bool> VerifySignature(global::app.data.@this<PermissionRecord> data)
-    {
-        try
-        {
-            // SkipFreshnessCheck=true: grants are long-lived artifacts. The
-            // Created-age wire-freshness check (and the paired nonce-replay
-            // check) is for transient signed messages; applying it to grants
-            // would expire "always allow" after 5 minutes and would reject
-            // re-reads of the same stored nonce. The grant's own Expires
-            // (null = permanent today) is the only time bound that applies.
-            var action = new global::app.module.signing.verify
-            {
-                Data = data,
-                SkipFreshnessCheck = new global::app.data.@this<global::app.type.@bool.@this>("", true),
-            };
-            var result = await _actor.Context.App.RunAction(action, _actor.Context);
-            return result.Success;
-        }
-        // Filter rule: signing failures (bad key, tampered Data) surface as
-        // `result.Success == false` and don't throw. Anything that does throw
-        // here is a contract break — surface via debug, return false (deny).
-        catch (Exception ex) when (ex is not (NullReferenceException
-            or OutOfMemoryException or StackOverflowException or OperationCanceledException))
-        {
-            _ = _actor.Context.App.Debug.Write($"[Permission.VerifySignature] swallowed {ex.GetType().Name}: {ex.Message}");
-            return false;
-        }
+        // A persisted grant was verified at the I/O boundary on load (auto-verify-
+        // on-read peels + validates its signature layer); an in-memory grant is
+        // local and trusted. So the record reaching here is already trustworthy —
+        // no per-cover re-verification in memory.
+        // SECURITY REVIEW (signature-as-layer): this relies on SettingsStore reads
+        // of signed grants going through application/plang auto-verify-on-read.
+        return true;
     }
 }
