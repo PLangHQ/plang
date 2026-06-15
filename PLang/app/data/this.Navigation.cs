@@ -281,6 +281,11 @@ public partial class @this
             return FromError(Error);
         }
 
+        // The door may author its own parse failure WITHOUT throwing (source.Value
+        // catches and sets MaterializeFailed). Surface that as the navigation error
+        // rather than navigating an Absent value to a generic NotFound.
+        if (Error is { Key: "MaterializeFailed" }) return FromError(Error);
+
         // A nested Data riding the rung-2 carrier (the SetValueDirect courier
         // debt) — navigate into the inner Data, it's the real object.
         if (val is global::app.type.item.clr { Value: @this dataVal })

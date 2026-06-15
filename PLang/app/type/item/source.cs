@@ -84,11 +84,13 @@ public sealed class source : @this, module.IContext
         }
         catch (System.Exception ex) when (ex is System.Text.Json.JsonException or System.FormatException or System.InvalidOperationException)
         {
-            // SOURCE authors its own failure story — the declared form did not
-            // parse as its declared {type, kind}.
+            // SOURCE authors its own failure story — the declared form did not parse
+            // as its declared {type, kind}. Keyed MaterializeFailed and naming the
+            // binding so navigation / set / read all surface one actionable error at
+            // first touch, never thrown to the courier.
             asking.Fail(new global::app.error.Error(
-                $"content declared {_type}{(_kind != null ? $"/{_kind}" : "")} did not parse: {ex.Message}",
-                "SourceParseFailed", 400) { Exception = ex });
+                $"failed to read %{asking.Name}% as {_type}{(_kind != null ? $"/{_kind}" : "")}: {ex.Message}",
+                "MaterializeFailed", 400) { Exception = ex });
             return Absent;
         }
 

@@ -121,7 +121,19 @@ public sealed class @this
             if (parameters.Length != 3) continue;
             if (parameters[2].ParameterType != typeof(ReadContext)) continue;
 
-            Read del = (raw, k, ctx) => method.Invoke(null, new object?[] { raw, k, ctx });
+            // Reflection wraps a thrown exception in TargetInvocationException;
+            // unwrap so callers (source.Value's parse-failure catch) see the real
+            // JsonException/FormatException and author their own error, rather than
+            // a reflection wrapper leaking to the courier.
+            Read del = (raw, k, ctx) =>
+            {
+                try { return method.Invoke(null, new object?[] { raw, k, ctx }); }
+                catch (System.Reflection.TargetInvocationException tie) when (tie.InnerException != null)
+                {
+                    System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(tie.InnerException).Throw();
+                    throw; // unreachable — Throw() always rethrows
+                }
+            };
 
             _generated[(typeName, kind)] = del;
         }

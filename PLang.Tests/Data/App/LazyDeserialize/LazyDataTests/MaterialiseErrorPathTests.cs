@@ -45,7 +45,9 @@ public class MaterialiseErrorPathTests
         await using var app = NewApp();
         var d = MalformedJson(app.User.Context, "cfg");
         object? v = (await d.Value()); // must not throw
-        await Assert.That(v).IsNull();
+        // A failed materialize answers the typed absence (Value is never C# null),
+        // and the failure is cached on Error.
+        await Assert.That(v is global::app.type.item.absent).IsTrue();
         await Assert.That(d.Error).IsNotNull();
     }
 

@@ -26,7 +26,9 @@ public class ReadFailureTests
         var d = data.FromRaw("{not valid json", type.Create("object", "json", context: ctx), ctx, "bad");
         // Touch must NOT throw — the failure is cached as Data.Error.
         var v = await d.Value();
-        await Assert.That(v).IsNull();
+        // A failed materialize answers the typed absence (Value is never C# null),
+        // and the failure is cached on Error.
+        await Assert.That(v is global::app.type.item.absent).IsTrue();
         await Assert.That(d.Error).IsNotNull();
         await Assert.That(d.Error!.Message).Contains("bad"); // names the source
     }
