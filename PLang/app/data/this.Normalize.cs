@@ -99,7 +99,6 @@ public partial class @this
                 if (ReferenceEquals(innerNormalized, nested.Peek())) return nested;
                 var copy = new @this(nested.Name, innerNormalized, nested.Type);
                 copy.Properties = nested.Properties;
-                copy.Signature = nested.Signature;
                 return copy;
             }
             finally { visited.Remove(nested); }

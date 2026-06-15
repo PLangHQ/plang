@@ -90,8 +90,10 @@ public partial class @this
         {
             Context = Context,
         };
-        if (persist) d.EnsureSigned();
-        await actor.Permission.Add(d);
+        // Signing is no longer in-memory: a persisted grant is signed when it
+        // crosses the application/plang boundary into the settings store. The
+        // caller's `persist` intent decides persisted vs in-memory.
+        await actor.Permission.Add(d, persist);
         return data.@this.Ok();
     }
 

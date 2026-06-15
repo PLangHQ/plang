@@ -107,12 +107,9 @@ public sealed class Writer : IWriter
             _writer.WriteEndObject();
         }
 
-        if (record.Signature != null)
-        {
-            _writer.WritePropertyName("signature");
-            JsonSerializer.Serialize(_writer, record.Signature, _options);
-        }
-
+        // Signing is no longer a Data property — a signed payload is a `signature`
+        // layer wrapping the data record (emitted hoisted at the wire boundary),
+        // not a `signature` field inside the envelope.
         _writer.WriteEndObject();
     }
 

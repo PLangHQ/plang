@@ -395,7 +395,7 @@ public sealed class Default : IHttp
 
     private void ApplySignature(HttpRequestMessage request, data.@this signResult)
     {
-        var signatureJson = JsonSerializer.Serialize(signResult.Signature, _caseInsensitiveRead);
+        var signatureJson = JsonSerializer.Serialize(signResult, _caseInsensitiveRead);
         request.Headers.TryAddWithoutValidation("X-Signature", signatureJson);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/plang"));
     }
@@ -607,7 +607,7 @@ public sealed class Default : IHttp
             return verifyResult;
         }
 
-        await context.Variable.Set("!ServiceIdentity", data.Signature?.Identity);
+        await context.Variable.Set("!ServiceIdentity", (data?.Peek() as global::app.type.signature.@this)?.Identity?.ToString());
 
         BuildProperties(data, request, response);
         return data;
@@ -625,31 +625,15 @@ public sealed class Default : IHttp
         try { data = JsonSerializer.Deserialize<data.@this>(errorBody, _transportInOptions); }
         catch (JsonException) { /* not valid data.@this JSON — try legacy format below */ }
 
-        if (data?.Signature != null)
+        // A signed response body reads back as a `signature` layer wrapping the
+        // inner data (the read boundary auto-verifies; verify peels it).
+        if (data?.Peek() is global::app.type.signature.@this layer)
         {
             var verifyAction = new signing.verify { Context = context, Data = data };
             var verifyResult = await app.RunAction<signing.verify>(verifyAction, context);
             if (verifyResult.Success)
-                await context.Variable.Set("!ServiceIdentity", data.Signature.Identity);
-            return;
+                await context.Variable.Set("!ServiceIdentity", layer.Identity.ToString());
         }
-
-        // Legacy: look for a "signature" field in arbitrary JSON
-        using var doc = JsonDocument.Parse(errorBody);
-        if (!doc.RootElement.TryGetProperty("signature", out var sigElement))
-            return;
-
-        var signedData = JsonSerializer.Deserialize<Signature>(sigElement.GetRawText(),
-            _caseInsensitiveRead);
-        if (signedData == null) return;
-
-        var legacyData = new data.@this("");
-        legacyData.Signature = signedData;
-
-        var legacyVerify = new signing.verify { Context = context, Data = legacyData };
-        var legacyResult = await app.RunAction<signing.verify>(legacyVerify, context);
-        if (legacyResult.Success)
-            await context.Variable.Set("!ServiceIdentity", signedData.Identity);
     }
 
     /// <summary>
@@ -934,7 +918,7 @@ public sealed class Default : IHttp
                 continue;
             }
 
-            await context.Variable.Set("!ServiceIdentity", data.Signature?.Identity);
+            await context.Variable.Set("!ServiceIdentity", (data?.Peek() as global::app.type.signature.@this)?.Identity?.ToString());
             await RunCallbackAsync(onStream, data, null, "chunk", app, context, ct);
         }
     }

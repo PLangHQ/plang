@@ -445,9 +445,9 @@ public sealed partial class @this : global::app.type.path.@this
                 }, Context)),
             };
             var signResult = await Context.App.RunAction<module.signing.sign>(sign, Context);
-            if (signResult.Success && signResult.Signature != null)
+            if (signResult.Success)
             {
-                var json = JsonSerializer.Serialize(signResult.Signature);
+                var json = JsonSerializer.Serialize(signResult);
                 request.Headers.TryAddWithoutValidation("X-Signature", json);
             }
         }

@@ -155,6 +155,22 @@ public class Wire : JsonConverter<@this>
         if (_readDepth.Value >= MaxReadDepth)
             throw new JsonException(
                 $"app.data.@this wire shape nested past MaxReadDepth ({MaxReadDepth}) — payload rejected to prevent stack overflow.");
+        // @schema dispatch: probe a struct COPY of the reader for the first
+        // property (the writer always emits @schema first). A `signature` layer
+        // wraps + attests the inner data — buffer it, rebuild via FromWire, run
+        // the verify action (auto-verify on read: a bad signature fails the read),
+        // peel to the inner data. Only the rare signature object buffers; the
+        // common `data` path leaves the original reader untouched for ReadBody.
+        var probe = reader;
+        probe.Read();
+        if (probe.TokenType == JsonTokenType.PropertyName
+            && probe.GetString() == @this.WireSchema)
+        {
+            probe.Read();
+            if (probe.GetString() == global::app.type.signature.@this.WireSchemaSignature)
+                return ReadSignatureLayer(ref reader, options);
+        }
+
         _readDepth.Value++;
         try
         {
@@ -175,36 +191,29 @@ public class Wire : JsonConverter<@this>
         }
     }
 
-    private static void EnsureInnerSigned(object? value)
+    // Reads a `signature` layer object: rebuild it, auto-verify (run the verify
+    // action — a bad/expired/wrong-key signature fails the READ), peel to the
+    // inner data. The peeled data carries the unwrapping actor's context.
+    private @this ReadSignatureLayer(ref Utf8JsonReader reader, JsonSerializerOptions options)
     {
-        if (value is null) return;
-        if (value is @this inner)
+        using var doc = JsonDocument.ParseValue(ref reader);
+        var layer = global::app.type.signature.@this.FromWire(doc.RootElement, options);
+
+        if (_context != null)
         {
-            if (inner.Signature == null && inner.Context?.Actor != null)
-                inner.EnsureSigned();
-            EnsureInnerSigned(inner.Peek());
-            return;
+            var carrier = @this.Ok(layer);
+            carrier.Context = _context;
+            var verifyResult = _context.App
+                .RunAction(new app.module.signing.verify { Data = carrier }, _context)
+                .GetAwaiter().GetResult();
+            if (!verifyResult.Success)
+                return @this.FromError(verifyResult.Error
+                    ?? new app.error.ServiceError("Signature verification failed", "SignatureInvalid", 400));
         }
-        // Native dict: its entries ARE Data — recurse into each so a signed value
-        // held under a key gets sealed before any byte leaves.
-        if (value is app.type.dict.@this nativeDict)
-        {
-            foreach (var entry in nativeDict.Entries) EnsureInnerSigned(entry);
-            return;
-        }
-        // IDictionary's IEnumerable yields DictionaryEntry boxes, not values —
-        // foreach over the dict would walk DictionaryEntry which is neither
-        // Data nor IEnumerable, and inner Datas held as dict values would
-        // never get sealed. Branch on IDictionary first.
-        if (value is System.Collections.IDictionary dict)
-        {
-            foreach (var v in dict.Values) EnsureInnerSigned(v);
-            return;
-        }
-        if (value is System.Collections.IEnumerable seq && value is not string)
-        {
-            foreach (var item in seq) EnsureInnerSigned(item);
-        }
+
+        var inner = layer.Value;
+        inner.Context = _context;
+        return inner;
     }
 
     private static @this WrapAsTyped(@this body, System.Type targetType)
@@ -226,7 +235,6 @@ public class Wire : JsonConverter<@this>
         // The body's instance carries its own type/kind/chain — move it whole.
         typed.SetValueDirect(body.Instance);
         typed.Properties = body.Properties;
-        if (body.Signature != null) typed.Signature = body.Signature;
         return typed;
     }
 
@@ -235,7 +243,6 @@ public class Wire : JsonConverter<@this>
         string name = "";
         object? value = null;
         type? typeRef = null;
-        app.module.signing.Signature? signature = null;
         Properties? properties = null;
         string? deferredRaw = null;   // set when the value slot is captured for lazy materialization
 
@@ -250,7 +257,6 @@ public class Wire : JsonConverter<@this>
                     // the reader — verbatim passthrough for untouched relay Data.
                     var lazy = @this.FromRaw(deferredRaw, typeRef, _context);
                     lazy.Name = name;
-                    if (signature != null) lazy.Signature = signature;
                     if (properties != null) lazy.Properties = properties;
                     return lazy;
                 }
@@ -295,7 +301,6 @@ public class Wire : JsonConverter<@this>
                     // natural type stands (the prior lift path; no kind to honor).
                     data = new @this(name, value, typeRef);
                 }
-                if (signature != null) data.Signature = signature;
                 if (properties != null) data.Properties = properties;
                 return data;
             }
@@ -351,9 +356,6 @@ public class Wire : JsonConverter<@this>
                         using var vdoc = JsonDocument.ParseValue(ref reader);
                         value = global::app.type.item.serializer.json.Parse(vdoc.RootElement);
                     }
-                    break;
-                case "signature":
-                    signature = JsonSerializer.Deserialize<app.module.signing.Signature>(ref reader, options);
                     break;
                 case "properties":
                     properties = ReadPropertiesObject(ref reader);
@@ -456,25 +458,32 @@ public class Wire : JsonConverter<@this>
     public override void Write(Utf8JsonWriter writer, @this data, JsonSerializerOptions options)
     {
         var isHashOuter = IsHashOuter(data);
-        // Sign-if-missing — but only when the Data is wired into a real actor
-        // scope (Context.Actor is non-null). A bare Context with no Actor is
-        // the "internal in-memory serialise" case (test fixtures, .pr
-        // authoring, raw IClass calls); signing has no identity to draw on
-        // and skipping silently keeps those paths working. Production
-        // discipline (Variables.Set / Channels.Register) always sets Actor
-        // before any wire crossing.
-        if (Sign && !isHashOuter && data.Signature == null && data.Context?.Actor != null)
+        // Sign at the I/O boundary: a Data crossing application/plang within a
+        // real actor scope (Context.Actor non-null) is wrapped in a `signature`
+        // layer — ONE layer over the whole payload. Skipped when: signing is off
+        // (snapshot wire), no actor (internal serialise — test fixtures, .pr
+        // authoring, raw IClass calls), the hash-canonicalization pass
+        // (isHashOuter), or the value is already a layer (re-serialise / pre-signed).
+        if (Sign && !isHashOuter && data.Context?.Actor != null
+            && data.Peek() is not global::app.type.signature.@this)
         {
-            data.EnsureSigned();
+            var signResult = data.Context.App
+                .RunAction(new app.module.signing.sign { Data = data }, data.Context)
+                .GetAwaiter().GetResult();
+            if (signResult.Success) data = signResult;
         }
 
-        // Inner Datas in the value graph are emitted inline by json.Writer
-        // (no STJ recursion), so the sign-if-missing check above only fires
-        // for the outer. Walk the graph once here so every Data in scope
-        // gets sealed before any byte leaves. Skip an untouched raw-backed Data:
-        // its value is raw text/bytes (no nested Data to seal), and reading
-        // .Value would materialize it and break verbatim passthrough.
-        if (Sign && !data.RawUntouched) EnsureInnerSigned(data.Peek());
+        // A layer value is HOISTED to top level: write the layer object itself
+        // ({@schema:signature, …, value:<inner record>}), not a data envelope
+        // wrapping it. One hoist rule serves every @schema layer. The inner data
+        // is written by the layer's own Write via json.Writer's nested-record
+        // arm — no STJ recursion, so it is not re-signed.
+        if (data.Peek() is global::app.type.signature.@this)
+        {
+            new app.channel.serializer.json.Writer(writer, options, View,
+                renderers: data.Context?.App?.Type.Renderers).Value(data.Peek());
+            return;
+        }
 
         writer.WriteStartObject();
         // @schema:data — the marker that says this JSON object IS a Data. First key,
@@ -543,12 +552,6 @@ public class Wire : JsonConverter<@this>
                 jsonWriter.Value(normalized);
             }
             writer.WriteEndObject();
-        }
-
-        if (!isHashOuter && data.Signature != null)
-        {
-            writer.WritePropertyName("signature");
-            JsonSerializer.Serialize(writer, data.Signature, options);
         }
 
         writer.WriteEndObject();

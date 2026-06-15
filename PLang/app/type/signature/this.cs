@@ -86,6 +86,12 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         Contracts = contracts;
     }
 
+    /// <summary>A copy of this layer with the signature bytes filled in — used by
+    /// the signing module after it signs <see cref="ToSigningBytes"/> (the layer is
+    /// immutable; build the unsigned form, sign, then stamp the bytes).</summary>
+    public @this Signed(binary signature)
+        => new(Value, Algorithm, Nonce, Created, Identity, Hash, signature, Expires, Contracts);
+
     protected internal override global::app.type.@this Mint()
         => new("signature", typeof(global::app.data.@this)) { Kind = Algorithm.ToString() };
 

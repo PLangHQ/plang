@@ -438,8 +438,9 @@ public sealed partial class @this
     {
         var permission = BuildRequest(Context!.Actor!, verb);
         var d = new data.@this<global::app.type.path.permission.@this>("", permission) { Context = Context };
-        if (persist) d.EnsureSigned();
-        await Context!.Actor!.Permission.Add(d);
+        // Signing is at the I/O boundary now: a persisted grant is signed when it
+        // crosses application/plang into the settings store. `persist` carries intent.
+        await Context!.Actor!.Permission.Add(d, persist);
     }
 
     /// <summary>
