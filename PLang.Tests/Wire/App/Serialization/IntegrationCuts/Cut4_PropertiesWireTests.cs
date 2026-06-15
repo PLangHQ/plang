@@ -22,20 +22,36 @@ public class Cut4_PropertiesWireTests
         return (wire, back, app);
     }
 
+    // A Data serialized within an actor scope is wrapped in a `signature` layer;
+    // the data record (name/type/value/properties) rides under `value`.
+    private static JsonElement Inner(string wire)
+    {
+        using var doc = JsonDocument.Parse(wire);
+        var root = doc.RootElement;
+        return root.TryGetProperty("@schema", out var s) && s.GetString() == "signature"
+            ? root.GetProperty("value").Clone()
+            : root.Clone();
+    }
+
     [Test] public async Task Cut4_WireJson_HasFiveTopLevelFields_IncludingNestedProperties()
     {
         var (wire, _, app) = await WriteAndRead();
         await using (app)
         {
+            // The outbound wire is the signature LAYER; the data record rides under value.
             using var doc = JsonDocument.Parse(wire);
+            await Assert.That(doc.RootElement.GetProperty("@schema").GetString()).IsEqualTo("signature");
+
+            var rec = Inner(wire);
             var fields = new HashSet<string>();
-            foreach (var p in doc.RootElement.EnumerateObject()) fields.Add(p.Name);
+            foreach (var p in rec.EnumerateObject()) fields.Add(p.Name);
             // binding label off the outbound wire
             await Assert.That(fields.Contains("name")).IsFalse();
             await Assert.That(fields.Contains("type")).IsTrue();
             await Assert.That(fields.Contains("value")).IsTrue();
             await Assert.That(fields.Contains("properties")).IsTrue();
-            await Assert.That(fields.Contains("signature")).IsTrue();
+            // The data record no longer carries a `signature` field — signing is the outer layer.
+            await Assert.That(fields.Contains("signature")).IsFalse();
         }
     }
 
@@ -44,13 +60,13 @@ public class Cut4_PropertiesWireTests
         var (wire, _, app) = await WriteAndRead();
         await using (app)
         {
-            using var doc = JsonDocument.Parse(wire);
-            var props = doc.RootElement.GetProperty("properties");
+            var rec = Inner(wire);
+            var props = rec.GetProperty("properties");
             await Assert.That(props.ValueKind).IsEqualTo(JsonValueKind.Object);
             await Assert.That(props.GetProperty("cost").GetInt64()).IsEqualTo(100L);
             await Assert.That(props.GetProperty("model").GetString()).IsEqualTo("claude-opus-4-7");
-            // Not at root.
-            await Assert.That(doc.RootElement.TryGetProperty("cost", out _)).IsFalse();
+            // Not at the data record's root.
+            await Assert.That(rec.TryGetProperty("cost", out _)).IsFalse();
         }
     }
 
