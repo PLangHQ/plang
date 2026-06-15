@@ -183,7 +183,7 @@ public partial class Handle : IContext, IModifier
     private bool MatchesError(IError? error)
     {
         // MatchesError is a sync predicate — read the materialised backing, not the async door.
-        if (StatusCode?.Peek() == null && Key?.Peek() == null && Message?.Peek() == null) return true;
+        if ((StatusCode?.Peek()?.IsNull ?? true) && (Key?.Peek()?.IsNull ?? true) && (Message?.Peek()?.IsNull ?? true)) return true;
         if (error == null) return false;
 
         // The matcher's int boundary is IError.StatusCode — the number lowers

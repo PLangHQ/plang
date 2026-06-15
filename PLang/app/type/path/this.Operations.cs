@@ -94,7 +94,7 @@ public abstract partial class @this
     public virtual async Task<data.@this<global::app.type.text.@this>> ReadAsBase64()
     {
         var bytes = await ReadBytes();
-        if (!bytes.Success || bytes.Peek() == null)
+        if (!bytes.Success || bytes.Peek().IsNull)
             return data.@this<global::app.type.text.@this>.From(bytes);
         return data.@this<global::app.type.text.@this>.Ok(System.Convert.ToBase64String((await bytes.Value())!.Value));
     }
@@ -107,7 +107,7 @@ public abstract partial class @this
     public virtual async Task<data.@this<global::app.type.text.@this>> ReadAsDataUri()
     {
         var bytes = await ReadBytes();
-        if (!bytes.Success || bytes.Peek() == null)
+        if (!bytes.Success || bytes.Peek().IsNull)
             return data.@this<global::app.type.text.@this>.From(bytes);
         var mime = string.IsNullOrEmpty(MimeType) ? "application/octet-stream" : MimeType;
         return data.@this<global::app.type.text.@this>.Ok($"data:{mime};base64,{System.Convert.ToBase64String((await bytes.Value())!.Value)}");

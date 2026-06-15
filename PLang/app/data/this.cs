@@ -391,7 +391,7 @@ public partial class @this
     /// final-form value). ToString, Equals and debug views read here; they
     /// never load. A consumer that needs raw CLR is a .NET edge → Clr.
     /// </summary>
-    public virtual global::app.type.item.@this? Peek() => _type;
+    public virtual global::app.type.item.@this Peek() => _type ?? global::app.type.@null.@this.Instance;
 
     /// <summary>
     /// Construct a source-backed (lazy) Data — the value is a

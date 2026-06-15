@@ -210,7 +210,7 @@ public sealed class Default : IIdentity
         if (!result.Success)
             return data.@this<Identity>.From(result);
 
-        if (result.Peek() == null)
+        if (result.Peek().IsNull)
             return data.@this<Identity>.FromError(new ActionError($"Identity '{name}' not found", "NotFound", 404));
 
         var identity = ConvertToIdentity(result.Peek());

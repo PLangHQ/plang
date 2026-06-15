@@ -580,7 +580,7 @@ public sealed class OpenAi : ILlm
                 var goalResult = await app.RunGoalAsync(execCall, context);
 
                 if (goalResult.Success)
-                    result = goalResult.Peek() != null ? JsonSerializer.Serialize(goalResult.Peek()) : "";
+                    result = !goalResult.Peek().IsNull ? JsonSerializer.Serialize(goalResult.Peek()) : "";
                 else
                     result = "Error: " + (goalResult.Error?.Message ?? "Unknown error");
             }
@@ -649,7 +649,7 @@ public sealed class OpenAi : ILlm
         {
             foreach (var def in parameterDefs)
             {
-                if (!result.Any(r => r.Name == def.Name) && def.Peek() != null)
+                if (!result.Any(r => r.Name == def.Name) && !def.Peek().IsNull)
                     result.Add(new data.@this(def.Name, def.Peek()));
             }
         }
@@ -877,7 +877,7 @@ public sealed class OpenAi : ILlm
             {
                 ["type"] = MapPlangTypeToJsonSchema(param.Type?.Name, param.Type?.Kind)
             };
-            if (param.Peek() == null)
+            if (param.Peek().IsNull)
                 required.Add(param.Name);
         }
 

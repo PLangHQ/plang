@@ -7,7 +7,7 @@ namespace app.variable.navigator;
 /// </summary>
 public sealed class Object : INavigator
 {
-    public bool CanNavigate(global::app.data.@this data) => data.Peek() != null;
+    public bool CanNavigate(global::app.data.@this data) => !data.Peek().IsNull;
 
     public async System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(global::app.data.@this data, string key)
     {

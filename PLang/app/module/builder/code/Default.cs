@@ -991,7 +991,7 @@ public class Default : IBuilder
                 // numeric/bool → string when the parameter is declared string. The LLM
                 // emitting `Key=404 (int)` for a string-declared Key gets normalized here.
                 var conv = context.App.Type.Convert(p.Peek(), targetType, context);
-                if (conv.Peek() != null)
+                if (!conv.Peek().IsNull)
                     p.SetValue(conv.Peek());
                 else if (conv.Error != null)
                     errors.Add($"{a.Module}.{a.ActionName}.{p.Name}: {conv.Error.Message}");

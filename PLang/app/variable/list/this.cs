@@ -289,7 +289,7 @@ public partial class @this
             propertyName = remaining;
         }
 
-        if (!parent.IsInitialized && parent.Peek() == null)
+        if (!parent.IsInitialized && parent.Peek().IsNull)
         {
             // A parse failure on a raw-backed parent stamps MaterializeFailed —
             // surface it rather than masking the real cause with NotFound.

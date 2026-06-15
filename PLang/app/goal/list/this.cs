@@ -372,7 +372,7 @@ public sealed class @this
             var deserializeCtx = context ?? app.System.Context!;
             var prPath = global::app.type.path.@this.Resolve(prFilePath, deserializeCtx);
             var readResult = await prPath.ReadBytes();
-            if (!readResult.Success || readResult.Peek() == null)
+            if (!readResult.Success || readResult.Peek().IsNull)
                 return data.@this.FromError(readResult.Error ?? new Error($"Failed to read goal file: {prFilePath}"));
             var content = System.Text.Encoding.UTF8.GetString((await readResult.Value())!.Value);
             var ext = prPath.Extension;
@@ -402,7 +402,7 @@ public sealed class @this
                     new DeserializeOptions { Value = content, Extension = ext });
                 if (!singleResult.Success)
                     return data.@this.FromError(singleResult.Error!);
-                if (singleResult.Peek() != null)
+                if (!singleResult.Peek().IsNull)
                     goals = new List<goal.@this> { (await singleResult.Value() as goal.@this)! };
             }
 
@@ -443,7 +443,7 @@ public sealed class @this
             context = context ?? app.System.Context!;
             var dirPath = global::app.type.path.@this.Resolve(directory, context);
             var listed = await dirPath.List(pattern, recursive: true);
-            if (!listed.Success || listed.Peek() == null)
+            if (!listed.Success || listed.Peek().IsNull)
                 return data.@this.Ok(0);
 
             var loadedCount = 0;

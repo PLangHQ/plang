@@ -85,7 +85,7 @@ public partial class @this
     /// </summary>
     public @this Merge(@this other)
     {
-        if (other.Peek() == null) return this;
+        if (other.Peek().IsNull) return this;
 
         var myData = global::app.type.item.@this.Lower<List<@this>>(Peek()) ?? new();
         var otherData = global::app.type.item.@this.Lower<List<@this>>(other.Peek()) ?? new();
