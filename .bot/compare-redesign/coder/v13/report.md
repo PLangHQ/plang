@@ -167,3 +167,25 @@ the content-type's channel serializer.
 2. Fully remove http-module signing (above).
 3. Migrate ~25 test files off `Data.Signature`/`EnsureSigned` to boundary signing.
 4. Build green → merge to compare-redesign.
+
+---
+## ✅ COMPLETE + MERGED to compare-redesign (signature-as-layer)
+
+The full integration landed and is GREEN — zero regressions vs baseline:
+Wire 17/19 · Data 21/22 · Types 12/13 · Modules 46/48 · Runtime 54/56 · Gen 0.
+
+**Done:** Data.Signature removed; I/O-boundary signing (Wire signs at the
+application/plang border, hoists the signature layer top-level; read probes
+@schema, auto-verifies, peels); Ed25519 on signature.@this; IWriter object
+surface; signature.@this owns Write/FromWire/ToSigningBytes; permission grants on
+a persist flag; HTTP request-signing removed; full test migration (SignAction/
+VerifyAction on the immutable layer, shape tests unwrap the layer).
+
+**Key bug fixed during the migration:** auto-verify-on-read NRE'd because the
+boundary-verify path runs with an unset Contracts slot whose .Value() is null —
+guarded it; that one fix cleared the whole round-trip cascade.
+
+**Deferred (todos.md):** SettingsStore verify-on-read (rides its OBP rewrite);
+archive-as-layer (compress/hash over signature — a few skipped tests point here,
+and Decompress currently loses the inner value through that path — flagged);
+full response-side HTTP mutual-auth removal.
