@@ -14,6 +14,7 @@ internal static class NormalizeTestExtensions
     public static List<Data> Children(this object? normalized) => normalized switch
     {
         app.type.dict.@this d => d.Entries.ToList(),
+        app.type.list.@this l => l.Items.ToList(),
         List<Data> list => list,
         null => new List<Data>(),
         _ => throw new System.InvalidOperationException(
