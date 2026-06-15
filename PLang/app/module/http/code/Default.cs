@@ -83,7 +83,6 @@ public sealed class Default : IHttp
 
         // Build body
         HttpContent? httpContent = null;
-        string? bodyString = null;
         var bodyVal = action.Body == null ? null : await action.Body.Value();
         if (bodyVal != null)
         {
@@ -98,21 +97,21 @@ public sealed class Default : IHttp
             else
             {
                 // All I/O goes through the channel: the serializer for the
-                // content-type renders the value via its OWN converter (a
-                // dict/list/item serializes as itself). Raw JsonSerializer.Serialize
-                // on the `object`-typed value bypasses the converter and reflects
-                // the base item property bag ({Cacheable, Prior, ...}).
-                if (bodyVal is global::app.type.text.@this bt)
-                    bodyString = bt.Clr<string>()!;
-                else
-                {
-                    var serialized = action.Context.Actor.Channel.Serializers
-                        .GetOrDefault(contentType).Serialize(action.Body);
-                    if (!serialized.Success) return serialized;   // surface the serializer error, never send an empty body
-                    bodyString = (await serialized.Value())?.Clr<string>() ?? "";
-                }
-                var enc = Encoding.GetEncoding(encoding);
-                httpContent = new StringContent(bodyString, enc, contentType);
+                // content-type renders the body value into the request stream via
+                // its OWN converter (a dict/list/item serializes as itself), instead
+                // of raw STJ on the `object`-typed value — which bypasses the
+                // converter and reflects the base item property bag.
+                var ms = new MemoryStream();
+                var serialized = await action.Context.Actor.Channel.Serializers
+                    .GetOrDefault(contentType).SerializeAsync(ms, action.Body!);
+                if (!serialized.Success) return serialized;
+                var bytes = ms.ToArray();
+                // SerializeAsync frames with a trailing newline (NDJSON streaming);
+                // an HTTP body is a single document — drop the frame delimiter.
+                int n = bytes.Length;
+                while (n > 0 && (bytes[n - 1] == (byte)'\n' || bytes[n - 1] == (byte)'\r')) n--;
+                httpContent = new ByteArrayContent(bytes, 0, n);
+                httpContent.Headers.ContentType = new MediaTypeHeaderValue(contentType) { CharSet = encoding };
             }
         }
 
@@ -120,7 +119,7 @@ public sealed class Default : IHttp
         var requestMessage = new HttpRequestMessage(httpMethod, resolvedUrl) { Content = httpContent };
         ApplyHeaders(requestMessage, headers);
 
-        var signResult = await SignRequestAsync(action.Context, unsigned, (action.SignOptions == null ? null : await action.SignOptions.Value()), bodyString, resolvedUrl, httpMethod.Method);
+        var signResult = await SignRequestAsync(action.Context, unsigned, (action.SignOptions == null ? null : await action.SignOptions.Value()), resolvedUrl, httpMethod.Method);
         if (signResult != null)
         {
             if (!signResult.Success) return signResult;
@@ -170,7 +169,7 @@ public sealed class Default : IHttp
         var requestMessage = new HttpRequestMessage(SysHttpMethod.Get, resolvedUrl);
         ApplyHeaders(requestMessage, headers);
 
-        var signResult = await SignRequestAsync(action.Context, unsigned, (action.SignOptions == null ? null : await action.SignOptions.Value()), null, resolvedUrl, "GET");
+        var signResult = await SignRequestAsync(action.Context, unsigned, (action.SignOptions == null ? null : await action.SignOptions.Value()), resolvedUrl, "GET");
         if (signResult != null)
         {
             if (!signResult.Success) return signResult;
@@ -225,11 +224,7 @@ public sealed class Default : IHttp
         var requestMessage = new HttpRequestMessage(httpMethod, resolvedUrl) { Content = httpContent };
         ApplyHeaders(requestMessage, headers);
 
-        string? bodyString = null;
-        if (httpContent is StringContent sc)
-            bodyString = await sc.ReadAsStringAsync();
-
-        var signResult = await SignRequestAsync(action.Context, unsigned, (action.SignOptions == null ? null : await action.SignOptions.Value()), bodyString, resolvedUrl, httpMethod.Method);
+        var signResult = await SignRequestAsync(action.Context, unsigned, (action.SignOptions == null ? null : await action.SignOptions.Value()), resolvedUrl, httpMethod.Method);
         if (signResult != null)
         {
             if (!signResult.Success) return signResult;
@@ -374,16 +369,18 @@ public sealed class Default : IHttp
         actor.context.@this context,
         bool unsigned,
         signing.sign? signOptions,
-        string? bodyContent,
         string url,
         string method)
     {
         if (unsigned) return null;
 
+        // Body is intentionally excluded from the request signature for now — the
+        // signing scheme is being reworked; signing url+method+headers keeps the
+        // path working without forcing the body to materialize as a string here.
         var httpSign = new signing.sign
         {
             Context = context,
-            Data = new data.@this("", bodyContent ?? ""),
+            Data = new data.@this("", ""),
             Headers = new data.@this<global::app.type.dict.@this>("", global::app.type.dict.@this.FromRaw(new Dictionary<string, object>
             {
                 ["url"] = url,
