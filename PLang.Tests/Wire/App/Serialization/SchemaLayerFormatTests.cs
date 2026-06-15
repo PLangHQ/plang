@@ -27,12 +27,12 @@ public class SchemaLayerFormatTests
         var inner = new global::app.data.@this("user", "Ingi", global::app.type.@this.FromName("text"));
         var sig = new global::app.type.signature.@this(
             value: inner,
-            algorithm: "ed25519",
-            nonce: "9f",
-            created: new System.DateTimeOffset(2026, 6, 15, 10, 0, 0, System.TimeSpan.Zero),
-            identity: "alice",
+            algorithm: new global::app.type.text.@this("ed25519"),
+            nonce: new global::app.type.text.@this("9f"),
+            created: new global::app.type.datetime.@this(new System.DateTimeOffset(2026, 6, 15, 10, 0, 0, System.TimeSpan.Zero)),
+            identity: new global::app.type.text.@this("alice"),
             hash: new global::app.module.crypto.type.hash.@this(System.Convert.FromBase64String("ZGlnZXN0"), "keccak256"),
-            sig: "c2ln");
+            signature: new global::app.type.binary.@this(System.Convert.FromBase64String("c2ln")));
 
         var json = Render(sig);
         using var doc = JsonDocument.Parse(json);
@@ -57,9 +57,13 @@ public class SchemaLayerFormatTests
     {
         var inner = new global::app.data.@this("x", "y", global::app.type.@this.FromName("text"));
         var sig = new global::app.type.signature.@this(
-            value: inner, algorithm: "ed25519", nonce: "n",
-            created: System.DateTimeOffset.UnixEpoch, identity: "id",
-            hash: new global::app.module.crypto.type.hash.@this(new byte[] { 0x68 }, "keccak256"), sig: "bB");
+            value: inner,
+            algorithm: new global::app.type.text.@this("ed25519"),
+            nonce: new global::app.type.text.@this("n"),
+            created: new global::app.type.datetime.@this(System.DateTimeOffset.UnixEpoch),
+            identity: new global::app.type.text.@this("id"),
+            hash: new global::app.module.crypto.type.hash.@this(new byte[] { 0x68 }, "keccak256"),
+            signature: new global::app.type.binary.@this(new byte[] { 0x01 }));
 
         using var doc = JsonDocument.Parse(Render(sig));
         await Assert.That(doc.RootElement.TryGetProperty("expires", out _)).IsFalse();
