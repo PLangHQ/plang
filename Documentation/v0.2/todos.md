@@ -1068,3 +1068,15 @@ Deleted Data.Merge — a list operation that lived on Data and lowered to CLR
 List<Data> (OBP smell), with zero production callers (test-only). If merge-by-name
 is needed, add it to the native list type (list.@this), operating on its own Data
 elements (no Lower to CLR) — the type owns its behavior.
+
+## 2026-06-15 — SettingsStore: verify signed reads (+ OBP rewrite)
+The signature-as-layer model makes a Data signed at the application/plang boundary
+and auto-verified on read. SettingsStore (`Sqlite.cs`) serializes grants via the
+plang wire so WRITE signs (using the grant Data's own context), but its serializer
+is context-less (`new plang.@this()`) and `IStore.Load(...)` takes no actor context,
+so READ does NOT auto-verify — an invalid/tampered grant is still returned instead of
+absent. The permission model (Ingi: "sign %answer% → store → read validates, invalid
+→ nothing returned") needs the store's read path to carry an actor context so `verify`
+runs on load. Fold this into the planned OBP rewrite of SettingsStore (per-actor store
+or context-threaded Load). Until then, `permission.TryCover` trusts loaded grants
+without re-verifying (see `actor/permission/this.cs` SECURITY REVIEW comment).
