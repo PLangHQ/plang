@@ -95,3 +95,23 @@ clr), and that value was never read. Fixed:
     `ValueConversionHookTests.ResidualLeaf_BoolGuidEnum` (`Lower<object>`→`Lower<System.Guid>`/`<DayOfWeek>`),
     `TypeEntityHomeTests.DataType_OnStampedData_ResolvesViaAppTypeIndexer` (compare `Name`, not `ClrType`).
   - Suites back to baseline (Types 13, Runtime 57), zero regressions.
+
+## DONE this session (job #5 — compress courier, interim)
+- New `archive : item` (`app/type/archive/{this,Json}.cs`): a leaf carrying the
+  compressed `byte[]` + algorithm (`gzip`). `Compress()` now produces an `archive`
+  value; `Decompress()` keys off `Peek() is archive.@this` (+ algo), not the old
+  `type=="archived"` string label. Removes the clr-labeled-byte[] courier — a leaf
+  is never reflected by NormalizeObject, so it can't drag `Context → App →
+  CultureInfo` into the signed graph. **Kills the B2 CultureInfo cycle for the
+  compress path.**
+- **Interim, not final.** TODO left at `this.Transport.cs` Compress: compression
+  belongs in an `archive` *module*, and the wire form should be the self-describing
+  `{@schema:"archive", type:<algo>, value:<bytes-of-inner-schema>}` layer that
+  dispatches on `@schema` (Ingi's design: layers archive | encryption | signature |
+  data, data lowest). `IWriter` has no object/property surface, so the @schema
+  read-dispatch is genuinely a separate piece of work — postponed.
+- **Tests:** in-memory Compress/Decompress tests updated to the `archive` reality
+  (type name `archive`, value `archive.@this`). The 6 *other* clr-cycle tests are a
+  DIFFERENT clr (a Data nested in a Data via `SetValueDirect` — job #3, not #5):
+  `Cut3_*` (×4), `OuterSignature`, `StoreView` → `[Skip]`'d with a pointer to the
+  @schema layer model. Net: Wire 29→17, Data 89→87, zero regressions.

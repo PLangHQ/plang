@@ -24,7 +24,7 @@ public class Cut2_SignThenCompressTests
 
         using var doc = JsonDocument.Parse(wire);
         // `type` is the structured entity {name, kind?, strict?} on the wire.
-        await Assert.That(doc.RootElement.GetProperty("type").GetProperty("name").GetString()).IsEqualTo("archived");
+        await Assert.That(doc.RootElement.GetProperty("type").GetProperty("name").GetString()).IsEqualTo("archive");
         await Assert.That(doc.RootElement.GetProperty("value").ValueKind).IsEqualTo(JsonValueKind.String);
         await Assert.That(doc.RootElement.TryGetProperty("signature", out _)).IsTrue();
     }
@@ -34,7 +34,7 @@ public class Cut2_SignThenCompressTests
         await using var app = NewApp();
         var d1 = MakeCompressible(app, "Ingi");
         var d2 = d1.Compress();
-        var inner = ((global::app.type.binary.@this)(await d2.Value())!).Value;
+        var inner = ((global::app.type.archive.@this)(await d2.Value())!).Value;
 
         using var gz = new System.IO.Compression.GZipStream(new MemoryStream(inner),
             System.IO.Compression.CompressionMode.Decompress);

@@ -23,8 +23,8 @@ public class CompressFlattenedTests
         await using var app = NewApp();
         var d = NewCompressibleData(app, "the quick brown fox jumps over the lazy dog");
         var archived = d.Compress();
-        await Assert.That(archived.Type?.Name).IsEqualTo("archived");
-        await Assert.That(await archived.Value()).IsTypeOf<global::app.type.binary.@this>();
+        await Assert.That(archived.Type?.Name).IsEqualTo("archive");
+        await Assert.That(await archived.Value()).IsTypeOf<global::app.type.archive.@this>();
     }
 
     [Test] public async Task Compress_OnSimpleData_ValueIsRawByteArray_NotWrappedInData()
@@ -34,7 +34,7 @@ public class CompressFlattenedTests
         var archived = d.Compress();
         // The smell this stage fixes — no nested Data around the gzip payload.
         await Assert.That((await archived.Value()) is global::app.data.@this).IsFalse();
-        await Assert.That((await archived.Value()) is global::app.type.binary.@this).IsTrue();
+        await Assert.That((await archived.Value()) is global::app.type.archive.@this).IsTrue();
     }
 
     [Test] public async Task Decompress_AfterCompress_PreservesNameAndValue()
@@ -66,7 +66,7 @@ public class CompressFlattenedTests
         await using var app = NewApp();
         var d = NewCompressibleData(app, "needs a signature");
         var archived = d.Compress();
-        var bytes = ((global::app.type.binary.@this)(await archived.Value())!).Value;
+        var bytes = ((global::app.type.archive.@this)(await archived.Value())!).Value;
 
         // Gunzip and parse — must be a valid application/plang doc with a signature.
         using var gz = new System.IO.Compression.GZipStream(new MemoryStream(bytes),

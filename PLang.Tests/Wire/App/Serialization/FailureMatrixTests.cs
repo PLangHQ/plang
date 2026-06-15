@@ -71,9 +71,13 @@ public class FailureMatrixTests
         await result.IsSuccess();
     }
 
-    [Test] public async Task Decompress_OnArchivedWithoutByteArrayValue_ReturnsDataWithDecompressError()
+    [Test] public async Task Decompress_OnArchiveWithCorruptBytes_ReturnsDataWithDecompressError()
     {
-        var d = new global::app.data.@this("x", "not bytes", global::app.type.@this.FromName("archived"));
+        // An archive whose bytes are not valid gzip — gunzip throws, surfaced as
+        // a clean DecompressError rather than an unhandled exception. (A Data that
+        // is not an archive at all is a no-op passthrough, not an error.)
+        var d = new global::app.data.@this("x",
+            new global::app.type.archive.@this(new byte[] { 1, 2, 3, 4 }, "gzip"));
         var result = d.Decompress();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("DecompressError");

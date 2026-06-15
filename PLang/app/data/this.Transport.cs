@@ -127,7 +127,17 @@ public partial class @this
         await serializer.SerializeAsync(ms, this, ct);
         var compressed = GZipCompress(ms.ToArray());
 
-        var outer = new @this("", compressed, type.FromName("archived"));
+        // TODO: compression belongs in an `archive` module, not inlined here.
+        // The target shape is a self-describing `@schema:"archive"` layer
+        // {@schema:archive, type:<algo>, value:<bytes-of-inner-schema>} whose
+        // read side dispatches on @schema to pick the decompressor, and whose
+        // value is any other layer (data | encryption | signature; data lowest).
+        // GZipCompress/GZipDecompress and the algorithm choice move there. The
+        // `archive` item below is the interim home — it removes the clr courier
+        // (a clr reflects as a transparent property bag at the wire, dragging
+        // its Context back-reference into the signed graph; an item renders
+        // itself) but is not the final layered design.
+        var outer = new @this("", new global::app.type.archive.@this(compressed, "gzip"));
         outer.Context = _context;
         return outer;
     }
@@ -178,14 +188,17 @@ public partial class @this
     /// </summary>
     public async Task<@this> DecompressAsync(CancellationToken ct = default)
     {
-        if (!string.Equals(Type?.Name, "archived", StringComparison.OrdinalIgnoreCase))
+        if (Peek() is not global::app.type.archive.@this archive)
             return this;
 
-        // Courier read — the in-memory byte form only; anything else (a nested
-        // Data riding the carrier, a missing value) is a corrupt archive.
-        var compressed = global::app.type.item.@this.Lower<byte[]>(Peek());
-        if (compressed == null || compressed.Length == 0)
+        // The archive item carries its own bytes + algorithm — no string label,
+        // no clr carrier to reach through.
+        var compressed = archive.Value;
+        if (compressed.Length == 0)
             return FromError(new ServiceError("Archived Data has no byte[] value", "DecompressError", 500));
+        if (!string.Equals(archive.Algo, "gzip", StringComparison.OrdinalIgnoreCase))
+            return FromError(new ServiceError(
+                $"Unsupported archive algorithm '{archive.Algo}'", "DecompressError", 500));
 
         try
         {

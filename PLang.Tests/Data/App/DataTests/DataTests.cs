@@ -756,9 +756,9 @@ public class DataTests
 
         var compressed = wrapped.Compress();
 
-        // Stage 3: flat shape — archived.Value is byte[] directly, no nested gzip Data.
-        await Assert.That(compressed.Type!.Name).IsEqualTo("archived");
-        await Assert.That(await compressed.Value()).IsTypeOf<global::app.type.binary.@this>();
+        // Flat shape — the compressed bytes ride as an `archive` item.
+        await Assert.That(compressed.Type!.Name).IsEqualTo("archive");
+        await Assert.That(await compressed.Value()).IsTypeOf<global::app.type.archive.@this>();
     }
 
     [Test]
@@ -898,8 +898,8 @@ public class DataTests
 
         var envelope = data.Wrap().Compress();
 
-        // text/plain → Kind "text" (compressible) → archived envelope
-        await Assert.That(envelope.Type!.Name).IsEqualTo("archived");
+        // text/plain → Kind "text" (compressible) → archive envelope
+        await Assert.That(envelope.Type!.Name).IsEqualTo("archive");
     }
 
     [Test]
@@ -927,22 +927,21 @@ public class DataTests
     [Test]
     public async Task Decompress_InvalidInner_ReturnsError()
     {
-        // Stage 3: archived.Value is byte[] directly. A string-valued archived
-        // Data is a malformed envelope.
-        var data = new Data("", "not a byte array", Type.FromName("archived"));
+        // A Data that is not an archive item is not decompressable — Decompress
+        // is a no-op and returns the Data unchanged (mirrors Decrypt / Unwrap).
+        var data = new Data("", "not an archive", Type.FromMime("text/plain"));
 
         var result = data.Decompress();
 
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("DecompressError");
-        await Assert.That(result.Error!.Message).Contains("byte[] value");
+        await result.IsSuccess();
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("not an archive");
     }
 
     [Test]
     public async Task Decompress_NullBytes_ReturnsError()
     {
-        // archived with empty bytes — nothing decompressable
-        var archived = new Data("", System.Array.Empty<byte>(), Type.FromName("archived"));
+        // archive with empty bytes — nothing decompressable
+        var archived = new Data("", new global::app.type.archive.@this(System.Array.Empty<byte>()));
 
         var result = archived.Decompress();
 
@@ -956,7 +955,7 @@ public class DataTests
         await using var engine = new global::app.@this("/test");
         var context = new global::app.actor.context.@this(engine);
         // Random bytes — not valid GZip
-        var archived = new Data("", new byte[] { 0xFF, 0xFE, 0x00, 0x42 }, Type.FromName("archived"));
+        var archived = new Data("", new global::app.type.archive.@this(new byte[] { 0xFF, 0xFE, 0x00, 0x42 }));
         archived.Context = context;
 
         var result = archived.Decompress();
@@ -983,7 +982,7 @@ public class DataTests
 
         await using var engine = new global::app.@this("/test");
         var context = new global::app.actor.context.@this(engine);
-        var archived = new Data("", gzipped, Type.FromName("archived"));
+        var archived = new Data("", new global::app.type.archive.@this(gzipped));
         archived.Context = context;
 
         var result = archived.Decompress();
@@ -1153,7 +1152,7 @@ public class DataTests
         // Stage 3: archived.Value is the gzip byte[] directly (no inner gzip Data).
         await using var engine = new global::app.@this("/test");
         var context = new global::app.actor.context.@this(engine);
-        var archived = new Data("", compressed, Type.FromName("archived"));
+        var archived = new Data("", new global::app.type.archive.@this(compressed));
         archived.Context = context;
 
         var result = archived.Decompress();
