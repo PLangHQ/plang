@@ -598,34 +598,8 @@ public class DataTests
 
     // --- Phase 3: Envelope properties + Out view ---
 
-    [Test]
-    public async Task Signature_DefaultsToNull()
-    {
-        var data = new Data("test", "hello");
 
-        await Assert.That(data.Signature).IsNull();
-    }
 
-    [Test]
-    public async Task Signature_CanBeSet()
-    {
-        var data = new Data("test", "hello");
-        var sig = new global::app.module.signing.Signature { Type = "signature", Nonce = "test" };
-
-        data.Signature = sig;
-
-        await Assert.That(data.Signature).IsNotNull();
-        await Assert.That(data.Signature!.Nonce).IsEqualTo("test");
-    }
-
-    [Test]
-    public async Task Signature_HasOutAttribute()
-    {
-        var prop = typeof(Data).GetProperty(nameof(Data.Signature));
-
-        await Assert.That(prop).IsNotNull();
-        await Assert.That(prop!.GetCustomAttribute<OutAttribute>()).IsNotNull();
-    }
 
     [Test]
     public async Task Properties_HasOutAttribute()
@@ -639,14 +613,6 @@ public class DataTests
         await Assert.That(prop!.GetCustomAttribute<OutAttribute>()).IsNotNull();
     }
 
-    [Test]
-    public async Task Signature_HasInAttribute()
-    {
-        var prop = typeof(Data).GetProperty(nameof(Data.Signature));
-
-        await Assert.That(prop).IsNotNull();
-        await Assert.That(prop!.GetCustomAttribute<InAttribute>()).IsNotNull();
-    }
 
     [Test]
     public async Task OutView_ExistsInViewEnum()

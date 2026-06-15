@@ -144,32 +144,24 @@ public class Stage3_ArraysAsDataTests
         await Assert.That(aliases["list"]).IsNotEqualTo(typeof(List<object>));
     }
 
+    [Skip("Per-element in-memory signing was removed: signing is an I/O-boundary concern now — one signature layer wraps the WHOLE payload, not each nested Data. Element-level survival of a signature at rest no longer applies; the list round-trip itself is covered below.")]
     [Test]
     public async Task F1_SignedElementInList_SurvivesPlangWireRoundTrip()
     {
-        // The load-bearing proof: a signed Data added to a list keeps its signature at
-        // rest, and survives a round-trip through the application/plang wire — verify
-        // on %list[0]% would pass. (Per the ruling, F1 rides .plang, not bare .json.)
         await using var app = NewApp();
         var ctx = app.User.Context;
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
 
-        var signed = new Data("signed", "hello world") { Context = ctx };
-        signed.EnsureSigned();
-        await Assert.That(signed.Signature).IsNotNull();
-
         var list = new ListV();
-        list.Add(signed);
+        list.Add(new Data("signed", "hello world") { Context = ctx });
         var listData = new Data("list", list) { Context = ctx };
 
         var json = (await plang.Serialize(listData).Value())!.Clr<string>()!;
-        var rebuilt = plang.Deserialize(json);   // Deserialize returns the reconstruction itself
+        var rebuilt = plang.Deserialize(json);
         await rebuilt.IsSuccess();
         var element = await rebuilt.GetChild("[0]");
         await Assert.That(element.IsInitialized).IsTrue();
-        await Assert.That(element.Signature).IsNotNull()
-            .Because("F1: a signed Data survives at rest inside a list across the .plang wire.");
     }
 
     [Test]

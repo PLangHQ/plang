@@ -1093,3 +1093,12 @@ SchemaLayerFormatTests for shape + ToSigningBytes determinism). STILL TO ADD:
 multi-actor forwarding under the layer model, store verify-on-read (rides the
 SettingsStore todo), and signed-then-compressed (archive-over-signature) once
 archive becomes a real layer.
+
+## 2026-06-15 — re-cover the Transport [In]/[Out] property filter
+TransportPropertyFilterTests was deleted: it tested app.channel.serializer.filter.Transport
+exclusively via Data.Signature as the [In]/[Out]+[JsonIgnore] example property, which the
+signature-as-layer rewrite removed. The Transport filter (production) still re-includes
+[In]/[Out] JsonIgnore'd properties for application/plang; add a fresh test using a current
+[In] property as the example. Also: RequestActionTests lost its http mutual-auth tests
+(X-Signature header, ServiceIdentity from signed responses) — that feature was removed
+(signing rides the application/plang channel border, not http-module headers).

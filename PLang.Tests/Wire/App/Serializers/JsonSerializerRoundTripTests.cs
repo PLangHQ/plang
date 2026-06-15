@@ -17,8 +17,6 @@ public class JsonSerializerRoundTripTests
         var s = (await json.Serialize(data).Value())!.Clr<string>()!;
 
         await Assert.That(s.Contains("hello")).IsTrue();
-        // Signature stays null — JsonSerializer doesn't access Signature property.
-        await Assert.That(data.Signature).IsNull();
     }
 
     [Test]

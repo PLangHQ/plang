@@ -68,7 +68,7 @@ public class ProvidersSnapshotTests
             Actor: dst.User.Name, Path: resolved.Absolute, Verb: verb,
             Match: global::app.type.path.permission.Match.Exact);
         await dst.User.Permission.Add(
-            new global::app.data.@this<global::app.type.path.permission.@this>("", permission) { Context = dst.User.Context });
+            new global::app.data.@this<global::app.type.path.permission.@this>("", permission) { Context = dst.User.Context }, persist: true);
         dst.Restore(snap, dst.User.Context);
 
         var defaultGrep = dst.Code.Get<global::app.data.code.IGrep>();

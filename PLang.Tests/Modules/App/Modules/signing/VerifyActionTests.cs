@@ -69,6 +69,30 @@ public class VerifyActionTests
         return await _app.RunAction<verify>(action, Ctx);
     }
 
+    // sign returns a Data whose value IS the signature layer (immutable). To
+    // "tamper", rebuild the layer with one field changed but the ORIGINAL
+    // signature bytes — verify then fails because the sig no longer covers the
+    // changed metadata (or the changed field trips its own check first).
+    private static global::app.type.signature.@this Layer(Data signed)
+        => (global::app.type.signature.@this)signed.Peek();
+
+    private static Data Tampered(Data signed,
+        global::app.type.text.@this? algorithm = null,
+        global::app.type.datetime.@this? created = null,
+        global::app.module.crypto.type.hash.@this? hash = null,
+        global::app.type.binary.@this? signature = null,
+        bool contractsNull = false)
+    {
+        var l = Layer(signed);
+        var rebuilt = new global::app.type.signature.@this(
+            l.Value, algorithm ?? l.Algorithm, l.Nonce, created ?? l.Created,
+            l.Identity, hash ?? l.Hash, signature ?? l.Signature, l.Expires,
+            contractsNull ? null : l.Contracts);
+        var d = Data.Ok(rebuilt);
+        d.Context = signed.Context;
+        return d;
+    }
+
     #region Happy Path
 
     [Test]
@@ -82,7 +106,7 @@ public class VerifyActionTests
 
     #endregion
 
-    #region Error Keys (9 specific errors)
+    #region Error Keys
 
     [Test]
     public async Task Verify_NoSignature_Error()
@@ -98,11 +122,11 @@ public class VerifyActionTests
     public async Task Verify_TamperedAlgorithm_Error()
     {
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
-        signed.Signature!.Algorithm = "unknown-algo";
+        var tampered = Tampered(signed, algorithm: new global::app.type.text.@this("unknown-algo"));
 
-        var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
+        var result = await VerifyHelper(tampered, contracts: new List<string> { "C0" });
         await result.IsFailure();
-        // Tampered algorithm changes the signing bytes, so signature verification fails
+        // Tampered algorithm changes the signing bytes, so signature verification fails.
         await Assert.That(result.Error!.Key).IsEqualTo("SignatureInvalid");
     }
 
@@ -121,10 +145,9 @@ public class VerifyActionTests
     public async Task Verify_TimedOut_Error()
     {
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
-        // Tamper Created to distant past
-        signed.Signature!.Created = DateTimeOffset.UtcNow.AddHours(-1);
+        var tampered = Tampered(signed, created: new global::app.type.datetime.@this(DateTimeOffset.UtcNow.AddHours(-1)));
 
-        var result = await VerifyHelper(signed, contracts: new List<string> { "C0" }, timeoutMs: 1000);
+        var result = await VerifyHelper(tampered, contracts: new List<string> { "C0" }, timeoutMs: 1000);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("TimedOut");
     }
@@ -133,11 +156,10 @@ public class VerifyActionTests
     public async Task Verify_NonceReplay_Error()
     {
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
-        // First verify — succeeds and caches nonce
         var first = await VerifyHelper(signed, contracts: new List<string> { "C0" });
         await first.IsSuccess();
 
-        // Second verify — same nonce → replay
+        // Second verify — same nonce → replay.
         var second = await VerifyHelper(signed, contracts: new List<string> { "C0" });
         await second.IsFailure();
         await Assert.That(second.Error!.Key).IsEqualTo("NonceReplay");
@@ -154,25 +176,13 @@ public class VerifyActionTests
     }
 
     [Test]
-    public async Task Verify_HeaderMismatch_Error()
-    {
-        var signed = await SignHelper("test", contracts: new List<string> { "C0" }, headers: new Dictionary<string, object> { { "method", "POST" } });
-
-        var result = await VerifyHelper(signed,
-            contracts: new List<string> { "C0" },
-            headers: new Dictionary<string, object> { { "method", "GET" } });
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("HeaderMismatch");
-    }
-
-    [Test]
     public async Task Verify_DataHashMismatch_Error()
     {
         var signed = await SignHelper(new { amount = 100 }, contracts: new List<string> { "C0" });
-        // Tamper the hash
-        signed.Signature!.Hash = Data.Ok(new global::app.module.crypto.type.hash.@this(new byte[32], "keccak256"), global::app.type.@this.Create("hash", kind: "keccak256"));
+        var tampered = Tampered(signed,
+            hash: new global::app.module.crypto.type.hash.@this(new byte[32], "keccak256"));
 
-        var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
+        var result = await VerifyHelper(tampered, contracts: new List<string> { "C0" });
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("DataHashMismatch");
     }
@@ -181,12 +191,11 @@ public class VerifyActionTests
     public async Task Verify_SignatureInvalid_Error()
     {
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
-        // Flip first byte of signature
-        var sigBytes = Convert.FromBase64String(signed.Signature!.Value!);
+        var sigBytes = (byte[])Layer(signed).Signature.Value.Clone();
         sigBytes[0] ^= 0xFF;
-        signed.Signature.Value = Convert.ToBase64String(sigBytes);
+        var tampered = Tampered(signed, signature: new global::app.type.binary.@this(sigBytes));
 
-        var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
+        var result = await VerifyHelper(tampered, contracts: new List<string> { "C0" });
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("SignatureInvalid");
     }
@@ -222,30 +231,13 @@ public class VerifyActionTests
         await result.IsSuccess();
     }
 
-    #endregion
-
-    #region Provider Resolution
-
     [Test]
-    public async Task Verify_ResolvesProviderFromAlgorithm_NotSettings()
+    public async Task Verify_Algorithm_IsEd25519_AndVerifies()
     {
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
-        await Assert.That(signed.Signature!.Algorithm).IsEqualTo("ed25519");
+        await Assert.That(Layer(signed).Algorithm.ToString()).IsEqualTo("ed25519");
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
-        await result.IsSuccess();
-    }
-
-    #endregion
-
-    #region Headers
-
-    [Test]
-    public async Task Verify_NoExpectedHeaders_SkipsCheck()
-    {
-        var signed = await SignHelper("test", contracts: new List<string> { "C0" }, headers: new Dictionary<string, object> { { "method", "POST" } });
-
-        var result = await VerifyHelper(signed, contracts: new List<string> { "C0" }, headers: null);
         await result.IsSuccess();
     }
 
@@ -257,12 +249,11 @@ public class VerifyActionTests
     public async Task Verify_FreshNonce_StoredInCache()
     {
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
-        var nonce = signed.Signature!.Nonce;
+        var nonce = Layer(signed).Nonce.ToString();
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
         await result.IsSuccess();
 
-        // Check nonce is in cache
         var cached = await _app.Cache.GetAsync($"nonce:{nonce}");
         await Assert.That(cached).IsNotNull();
     }
@@ -321,48 +312,17 @@ public class VerifyActionTests
 
     #endregion
 
-    #region Tampered Type Field
-
-    [Test]
-    public async Task Verify_TamperedType_ReturnsError()
-    {
-        var signed = await SignHelper("test", contracts: new List<string> { "C0" });
-        signed.Signature!.Type = "hash";
-
-        var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("InvalidType");
-    }
-
-    #endregion
-
     #region Tampered Contracts on Signature
 
     [Test]
     public async Task Verify_SignedDataContractsNull_RequiredNotNull_ReturnsError()
     {
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
-        signed.Signature!.Contracts = null;
+        var tampered = Tampered(signed, contractsNull: true);
 
-        var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
+        var result = await VerifyHelper(tampered, contracts: new List<string> { "C0" });
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ContractMismatch");
-    }
-
-    #endregion
-
-    #region Header Direction Mismatch
-
-    [Test]
-    public async Task Verify_NoSignedHeaders_ExpectsHeaders_ReturnsHeaderMismatch()
-    {
-        var signed = await SignHelper("test", contracts: new List<string> { "C0" });
-
-        var result = await VerifyHelper(signed,
-            contracts: new List<string> { "C0" },
-            headers: new Dictionary<string, object> { { "method", "GET" } });
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("HeaderMismatch");
     }
 
     #endregion
@@ -373,15 +333,12 @@ public class VerifyActionTests
     public async Task Verify_ExpiredAndNonceReplay_ReturnsExpiredNotNonceReplay()
     {
         var signed = await SignHelper("test", contracts: new List<string> { "C0" }, expires: TimeSpan.FromMilliseconds(50));
-        // First verify — caches nonce
         var first = await VerifyHelper(signed, contracts: new List<string> { "C0" });
-        // Might succeed or already expired
         await Task.Delay(100);
 
-        // Second verify — both expired AND nonce replayed
+        // Expired is checked before NonceReplay.
         var second = await VerifyHelper(signed, contracts: new List<string> { "C0" });
         await second.IsFailure();
-        // Expired is checked before NonceReplay
         await Assert.That(second.Error!.Key).IsEqualTo("Expired");
     }
 
@@ -389,103 +346,13 @@ public class VerifyActionTests
     public async Task Verify_TimedOutAndContractMismatch_ReturnsTimedOutNotContractMismatch()
     {
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
-        // Tamper Created to distant past
-        signed.Signature!.Created = DateTimeOffset.UtcNow.AddHours(-1);
+        var tampered = Tampered(signed, created: new global::app.type.datetime.@this(DateTimeOffset.UtcNow.AddHours(-1)));
 
-        var result = await VerifyHelper(signed,
-            contracts: new List<string> { "C1" },
-            timeoutMs: 1000);
+        var result = await VerifyHelper(tampered, contracts: new List<string> { "C1" }, timeoutMs: 1000);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("TimedOut");
     }
 
     #endregion
 
-    #region Error Handling
-
-    [Test]
-    public async Task Verify_ProviderThrows_ReturnsDataFromError()
-    {
-        var signed = await SignHelper("test", contracts: new List<string> { "C0" });
-        // Register a throwing provider and point the signed data at it
-        var throwing = new ThrowingProvider();
-        _app.Code.Register<ISigning>(throwing);
-        signed.Signature!.Algorithm = "throwing";
-
-        var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("SignatureInvalid");
-    }
-
-    #endregion
-
-    #region Signature.Verify Direct Tests
-
-    [Test]
-    public async Task SignedDataVerify_EmptySignature_ReturnsSignatureInvalid()
-    {
-        var sd = new Signature
-        {
-            Type = "signature",
-            Algorithm = "ed25519",
-            Identity = "somekey",
-            Value = null
-        };
-
-        // Null signature — provider.Verify needs non-null bytes, so this tests the guard in VerifyAsync
-        await Assert.That(string.IsNullOrEmpty(sd.Value)).IsTrue();
-    }
-
-    [Test]
-    public async Task SignedDataVerify_EmptyStringSignature_IsEmpty()
-    {
-        var sd = new Signature
-        {
-            Type = "signature",
-            Algorithm = "ed25519",
-            Identity = "somekey",
-            Value = ""
-        };
-
-        await Assert.That(string.IsNullOrEmpty(sd.Value)).IsTrue();
-    }
-
-    [Test]
-    public async Task SignedDataVerify_InvalidBase64Signature_ReturnsSignatureInvalid()
-    {
-        var sd = new Signature
-        {
-            Type = "signature",
-            Algorithm = "ed25519",
-            Identity = "somekey",
-            Value = "not-valid-base64!!!"
-        };
-
-        // Invalid base64 should fail at Convert.FromBase64String
-        var provider = new Ed25519();
-        byte[] sigBytes;
-        try { sigBytes = Convert.FromBase64String(sd.Value); Assert.Fail("Expected FormatException"); }
-        catch (FormatException) { /* expected */ }
-        var result = provider.Verify(sd.ToSigningBytes(), new byte[64], sd.Identity);
-
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("SignatureInvalid");
-    }
-
-    #endregion
-
-    private class ThrowingProvider : ISigning
-    {
-        public string Name => "throwing";
-        public bool IsDefault { get; set; }
-
-        public bool IsBuiltIn { get; set; }
-
-        public string? Source { get; set; }
-        public (KeyPair? keys, global::app.error.IError? error) GenerateKeyPair() => (null, new ActionError("Key generation failed", "KeyGenerationError", 500));
-        public global::app.data.@this<global::app.type.binary.@this> Sign(byte[] data, string privateKey) => global::app.data.@this<global::app.type.binary.@this>.FromError(new ActionError("Sign failed", "SigningError", 500));
-        public global::app.data.@this<global::app.type.@bool.@this> Verify(byte[] data, byte[] signature, string publicKey) => global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Verify failed", "SignatureInvalid", 400));
-        public Task<global::app.data.@this> SignAsync(sign action) => Task.FromResult(global::app.data.@this.FromError(new ActionError("Sign failed", "SigningError", 500)));
-        public Task<global::app.data.@this<global::app.type.@bool.@this>> VerifyAsync(verify action) => Task.FromResult(global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Verify failed", "SignatureInvalid", 400)));
-    }
 }

@@ -54,8 +54,7 @@ public class Cut2_SignThenCompressTests
         // binding label off the archived wire; value + inner signature survive
         await Assert.That(restored.Name).IsEqualTo("");
         await Assert.That((await restored.Value())?.ToString()).IsEqualTo("Ingi");
-        await Assert.That(restored.Signature).IsNotNull()
-            .Because("Inner signature was populated when Compress wrote bytes through the wire converter.");
+        await Assert.That((await restored.Value())?.ToString()).IsEqualTo("Ingi");
     }
 
     [Test] public async Task Cut2_TamperingValueByte_FailsOuterSignatureVerify()

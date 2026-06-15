@@ -67,7 +67,7 @@ public class Cut1_PlainRoundTripTests
         var (_, back, app) = await WriteAndRead("greeting", "hello");
         await using (app)
         {
-            await Assert.That(back.Signature).IsNotNull();
+            await Assert.That((await back.Value())?.ToString()).IsEqualTo("hello");
         }
     }
 

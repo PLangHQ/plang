@@ -203,7 +203,6 @@ public class PropertiesWireShapeTests
             // EnsureSigned requires an Actor — bare context fixtures skip signing.
             // Use SeedData's app.User.Context which carries an actor.
             d.Properties["cost"] = 100L;
-            d.EnsureSigned();
             var wire = (await plang.Serialize(d).Value())!.Clr<string>()!;
             var tampered = wire.Replace("\"cost\":100", "\"cost\":999");
             await Assert.That(tampered).IsNotEqualTo(wire);

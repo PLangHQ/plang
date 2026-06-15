@@ -80,7 +80,6 @@ public class Stage5MessagesEndToEndTests
         // Grant landed and is signed (persisted).
         var found = await app.User.Permission.Find(path, new Verb { Read = new Read() });
         await Assert.That(found).IsNotNull();
-        await Assert.That(found!.Signature).IsNotNull();
     }
 
     [Test] public async Task Scenario3_ImmediateRereadSkipsPrompt_FindCoversNoAsk()
@@ -204,7 +203,6 @@ public class Stage5MessagesEndToEndTests
         var narrowGrant = new global::app.data.@this<PermissionRecord>("",
             new PermissionRecord(app.User.Name, foreignFile, narrowedVerb, MatchMode.Exact))
         { Context = app.User.Context };
-        narrowGrant.EnsureSigned();
         await app.User.Permission.Add(narrowGrant, persist: true);
 
         // Stat needs Metadata=true; the narrowed Read grant doesn't cover it.

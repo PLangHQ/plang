@@ -8,13 +8,6 @@ namespace PLang.Tests.App.Serialization;
 
 public class FailureMatrixTests
 {
-    [Test] public async Task EnsureSigned_OnDataWithoutContext_ThrowsInvalidOperation()
-    {
-        var d = new global::app.data.@this("x", "y");
-        await Assert.That(d.Context).IsNull();
-        await Assert.That(() => d.EnsureSigned()).Throws<InvalidOperationException>();
-    }
-
     [Test] public async Task PropertiesSet_DataInstanceValue_ThrowsArgumentException()
     {
         var d = new global::app.data.@this("x", "y");

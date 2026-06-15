@@ -38,7 +38,7 @@ public class HttpPathRedirectTests
             "User", new HttpPath(url, context).Absolute,
             PermVerb.AllowAll(),
             PermMatch.Exact);
-        await context.Actor!.Permission.Add(new global::app.data.@this<PathPermission>("", perm) { Context = context });
+        await context.Actor!.Permission.Add(new global::app.data.@this<PathPermission>("", perm) { Context = context }, persist: true);
     }
 
     [Test]
