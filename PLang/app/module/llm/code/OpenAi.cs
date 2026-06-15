@@ -255,7 +255,7 @@ public sealed class OpenAi : ILlm
 
             // Usage / cost. (Token counters + cost math stay CLR/decimal here for now
             // — the class-wide native-plang-types migration is a tracked follow-up;
-            // see Documentation/Runtime2/native-plang-types-migration.md.)
+            // see .bot/compare-redesign/coder/native-plang-types-migration.md.)
             if (dict.Get<item>("usage") != null)
             {
                 number callPrompt     = dict.Get<number>("usage.prompt_tokens") ?? 0;

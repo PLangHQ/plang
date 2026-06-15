@@ -6,7 +6,7 @@ committed + pushed. Working tree clean.
 ## Read these first (living docs — they hold the real detail)
 - `.bot/compare-redesign/coder/clr-removal-epic.md` — the clr-deletion epic: 6 jobs, inventory, decisions, what's done.
 - `.bot/compare-redesign/coder/test-failure-clusters.md` — the standing red set clustered by root cause; includes the `grep '^failed '` parse-gotcha.
-- `Documentation/Runtime2/native-plang-types-migration.md` — C# classes use native plang types (number/text/list/dict), not CLR. **OpenAi is the pilot.** Holds the `dict.Get<T>(path)` + `.IsNull` patterns.
+- `.bot/compare-redesign/coder/native-plang-types-migration.md` — C# classes use native plang types (number/text/list/dict), not CLR. **OpenAi is the pilot.** Holds the `dict.Get<T>(path)` + `.IsNull` patterns.
 
 ## Where the numbers stand (per-suite failing counts)
 Session moved **Modules 106→49, Runtime 57→48**; Data ~89, Wire 29, Types 13, Generator 7 (those predate this work, mostly untouched).
