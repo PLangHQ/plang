@@ -95,7 +95,45 @@ else is dead (Wrap) or a read-reconstruction of a shape we stop writing.
 - The remaining clr roles (declared-label role 2, POCO role 1, parse-fail role 5)
   are the *other* clr arms — separate from the Data-in-Data epic.
 
+## FINDING (2026-06-15) — archive-layer is COUPLED to signature-layer
+
+"Foundation first" assumed archive-as-real-layer is separable from the signature
+redesign. Tracing the wire contract, **it is not.**
+
+Today a compressed Data serializes as the **data envelope**:
+`{@schema:"data", type:archive, value:"<base64>", signature:…}` (`Cut2_OuterWireJson`
+pins this, passing). The **outer Data signature signs over the archive bytes** —
+that is the sign-then-compress integrity property: `Cut2_TamperingValueByte` flips
+a base64 byte and asserts outer verify FAILS. The integrity lives on the data
+envelope's `signature`, not on the archive.
+
+Flipping archive to a top-level `{@schema:"archive", type, value}` layer **drops
+the data envelope, hence the outer signature** — the tamper-fails-verify contract
+breaks. The only clean way to keep integrity on a top-level archive layer is to
+wrap it in a **signature layer**: `{@schema:"signature", …, value:{@schema:"archive",…}}`.
+That is the signature redesign. So:
+
+> **Archive-as-real-layer cannot preserve the tested integrity contract without
+> the signature layer. The two land together, or archive stays inside today's
+> signed data envelope.**
+
+This vindicates the architect's "build the abstraction with its real consumer"
+rule: the real consumer of the layer machinery is signature.
+
+### Revised increments
+- **Increment 1 (LANDED):** delete the dead `Wrap()`/`Unwrap()` clr courier.
+  (`e86e1e948`.) Real clr-site removal, zero behavior change.
+- **Increment 1.5 (optional, safe):** build the IWriter object surface
+  (`BeginObject`/`PropertyName`/`EndObject`) + the read `@schema` dispatch hook,
+  WITHOUT changing archive's wire shape. Pure machinery, greens nothing, prep for
+  signature. Only worth doing immediately before increment 2.
+- **Increment 2 (the real work):** signature-as-layer + archive-as-top-level-layer
+  TOGETHER. `sign`→signature layer, `verify`→peel, `Data.Signature` removed,
+  archive flips to `{@schema:archive,…}` wrapped by a signature layer when signed.
+  Rewrites Cut2 / OuterSignature / StoreView / the nested-signed-Data family onto
+  the layer shape.
+
 ## Open design decision (for Ingi)
 
-The IWriter layer surface shape, and whether increment 2 (ripping out
-`Data.Signature`) is in-scope now or stays a separate branch. See the question.
+Given the coupling: keep archive inside today's signed data envelope and defer ALL
+layer work until the signature run, or pull signature into scope now. See the question.
