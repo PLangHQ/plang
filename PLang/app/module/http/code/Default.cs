@@ -107,7 +107,7 @@ public sealed class Default : IHttp
                 else
                 {
                     var serialized = action.Context.Actor.Channel.Serializers
-                        .GetOrDefault(contentType).Serialize(new data.@this("", bodyVal));
+                        .GetOrDefault(contentType).Serialize(action.Body);
                     if (!serialized.Success) return serialized;   // surface the serializer error, never send an empty body
                     bodyString = (await serialized.Value())?.Clr<string>() ?? "";
                 }
