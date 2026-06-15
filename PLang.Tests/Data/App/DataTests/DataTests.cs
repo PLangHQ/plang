@@ -1294,14 +1294,14 @@ public class DynamicDataTests
     [Test]
     public async Task IsVariable_StandardVariable_ReturnsTrue()
     {
-        var d = new Data("x", "%var%");
+        var d = new Data("x", new global::app.type.text.@this("%var%", canTemplate: true));
         await Assert.That(d.IsVariable).IsTrue();
     }
 
     [Test]
     public async Task IsVariable_ShortName_ReturnsTrue()
     {
-        var d = new Data("x", "%v%");
+        var d = new Data("x", new global::app.type.text.@this("%v%", canTemplate: true));
         await Assert.That(d.IsVariable).IsTrue();
     }
 
@@ -1345,21 +1345,21 @@ public class DynamicDataTests
     [Test]
     public async Task HasVariableReference_EmbeddedVariable_ReturnsTrue()
     {
-        var d = new Data("x", "hello %name%");
+        var d = new Data("x", new global::app.type.text.@this("hello %name%", canTemplate: true));
         await Assert.That(d.HasVariableReference).IsTrue();
     }
 
     [Test]
     public async Task HasVariableReference_MultipleVariables_ReturnsTrue()
     {
-        var d = new Data("x", "%a% + %b%");
+        var d = new Data("x", new global::app.type.text.@this("%a% + %b%", canTemplate: true));
         await Assert.That(d.HasVariableReference).IsTrue();
     }
 
     [Test]
     public async Task HasVariableReference_SingleVariable_ReturnsTrue()
     {
-        var d = new Data("x", "%var%");
+        var d = new Data("x", new global::app.type.text.@this("%var%", canTemplate: true));
         await Assert.That(d.HasVariableReference).IsTrue();
     }
 
