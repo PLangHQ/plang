@@ -149,7 +149,24 @@ separate POCO and convert. Concretely, the sign/verify increment:
 - `Ed25519` builds/verifies a `signature.@this` directly; the canonical signing bytes
   are the inner data's Out-view wire bytes (no exclude-self carve-out).
 
-## Open design decision (for Ingi)
+## Confirmed layer convention (Ingi, 2026-06-15)
 
-Given the coupling: keep archive inside today's signed data envelope and defer ALL
-layer work until the signature run, or pull signature into scope now. See the question.
+Every layer object carries TWO discriminators, uniform across all layers:
+- **`@schema`** = which layer (`signature` / `archive` / `encryption` / `data`)
+- **`type`** = which algorithm within it (`ed25519` / `gzip` / `aes-256-gcm`)
+
+`{@schema:"signature", type:"ed25519", nonce, created, expires, identity,
+hash:{type,value}, signature, value:<inner>}` mirrors `{@schema:"archive",
+type:"gzip", value}`. **No `headers`** — dropped (verify's header-matching goes
+with it). The C# property for the algorithm stays `Algorithm` (matches the old
+class); it renders to the wire field `type`. Born-native: every field is a plang
+type (`text`/`datetime`/`binary`/`list`/`hash`), not CLR. The inner schema stays
+under `value`. Proven by `SchemaLayerFormatTests` (Wire suite).
+
+## Decision taken — pull signature into scope now (Ingi, 2026-06-15)
+
+Building the full layer model. Progress so far (all committed, tree green):
+IWriter object surface, `signature.@this` layer (born-native, confirmed shape),
+format tests. Remaining: the `@schema` read-dispatch, the `sign`/`verify` rewrite
+through `App.Code.Get<ISigning>()` producing/peeling `signature.@this`, removing
+`Data.Signature` + the Wire sign-if-missing machinery, then archive-as-layer.

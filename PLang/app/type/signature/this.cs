@@ -13,7 +13,7 @@ using hash = global::app.module.crypto.type.hash.@this;
 /// inner schema (the <c>data</c> being attested). Its self-describing wire form
 /// is flat:
 /// <code>
-/// { "@schema":"signature", "algorithm":"ed25519", "nonce":"…", "created":"…",
+/// { "@schema":"signature", "type":"ed25519", "nonce":"…", "created":"…",
 ///   "identity":"…", "hash":{"type":"keccak256","value":"&lt;b64&gt;"},
 ///   "signature":"&lt;b64&gt;", "value":{ "@schema":"data", … } }
 /// </code>
@@ -111,7 +111,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         w.BeginObject();
         w.Name(global::app.data.@this.WireSchema); w.String(WireSchemaSignature);
-        w.Name("algorithm"); w.Value(Algorithm);
+        // `type` = the algorithm within this layer — uniform with every layer
+        // ({@schema:archive, type:gzip}, {@schema:encryption, type:aes-…}).
+        w.Name("type"); w.Value(Algorithm);
         w.Name("nonce"); w.Value(Nonce);
         w.Name("created"); w.Value(Created);
         if (Expires is { } exp) { w.Name("expires"); w.Value(exp); }

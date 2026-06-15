@@ -40,7 +40,8 @@ public class SchemaLayerFormatTests
 
         // The outer object IS the signature layer — flat fields, @schema:signature.
         await Assert.That(root.GetProperty("@schema").GetString()).IsEqualTo("signature");
-        await Assert.That(root.GetProperty("algorithm").GetString()).IsEqualTo("ed25519");
+        // `type` carries the algorithm — uniform with archive's {@schema:archive, type:gzip}.
+        await Assert.That(root.GetProperty("type").GetString()).IsEqualTo("ed25519");
         await Assert.That(root.GetProperty("identity").GetString()).IsEqualTo("alice");
         await Assert.That(root.GetProperty("signature").GetString()).IsEqualTo("c2ln");
         // hash is a flat sub-object {type, value}.
