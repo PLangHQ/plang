@@ -270,33 +270,18 @@ public class Wire : JsonConverter<@this>
                 @this data;
                 if (value is @this innerData)
                 {
+                    // A nested Data in the value slot (the one `@schema:data` slot)
+                    // rides back in as itself — no-lift passthrough.
                     data = new @this(name, null, typeRef);
-                    // The courier label carries the declared category — without
-                    // it the carrier would answer "object" and the declared
-                    // type slot (signed!) would drift on re-serialize.
-                    data.SetValueDirect(typeRef is { IsNull: false }
-                        ? new global::app.type.item.clr(innerData, typeRef.Name, typeRef.Kind)
-                        : innerData);
+                    data.SetValueDirect(innerData);
                 }
                 else if (typeRef is { IsNull: false } && !typeRef.Polymorphic && typeRef.Context != null)
                 {
                     // The declared TYPE builds the value itself — born at its kind in
-                    // one step (5 + {number,int} → number(int)). No lift-then-judge,
-                    // no kind clr-label; the type owns its construction.
+                    // one step (5 + {number,int} → number(int)). No lift-then-judge;
+                    // the type owns its construction.
                     var instance = typeRef.Build(value);
                     data = new @this(name, instance);
-                    // role-2 NAME residual: a domain value rides the wire as its
-                    // property-bag dict ({type: permission, value: {…}}); Build hands
-                    // back the dict, so carry the declared identity on the labeled
-                    // carrier — the signed type slot must survive. Transitional courier
-                    // shape, dies with the schema layers. (The KIND case is gone — Build
-                    // honors the declared precision.)
-                    var instanceEntity = instance.Mint();
-                    var nameDiffers = !string.Equals(instanceEntity.Name, typeRef.Name, StringComparison.OrdinalIgnoreCase)
-                        && instance.Facet(typeRef.Name) == null;
-                    if (nameDiffers)
-                        data.SetValueDirect(new global::app.type.item.clr(
-                            instance.Peek() ?? instance, typeRef.Name, typeRef.Kind));
                 }
                 else
                 {
