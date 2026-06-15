@@ -163,10 +163,51 @@ class); it renders to the wire field `type`. Born-native: every field is a plang
 type (`text`/`datetime`/`binary`/`list`/`hash`), not CLR. The inner schema stays
 under `value`. Proven by `SchemaLayerFormatTests` (Wire suite).
 
+## Confirmed read/write flow (Ingi, 2026-06-15)
+
+**Invoke through the module/action, NOT the code provider.** Signing runs the
+`sign` action (`app.module<signing>.sign(){…}.Run()`); verifying runs the `verify`
+action. The action is the public seam; `ISigning` is its implementation detail.
+(Today's `EnsureSigned` already runs a `sign` action — keep that, change only what
+it produces.)
+
+**Write** — at the `application/plang` output boundary, just before writing: if
+signing applies, run `sign` → returns the data wrapped in a `signature.@this`
+layer. The writer sees the value is a **layer** and emits the layer shape **at top
+level, hoisted past the data envelope** (no `{@schema:data, value:{@schema:signature…}}`
+double-wrap), recursing into `value` for the inner record. **One hoist rule serves
+every layer** (archive/encryption too): `Wire.Write` checks `data.Peek() is <layer>`
+→ `layer.Write(writer)` instead of the data envelope.
+
+**Read** — wire reads `@schema` → dispatches to that layer's deserializer → builds
+`signature.@this` → **auto-verifies** (runs `verify`; a bad/expired/wrong-key
+signature makes the READ fail with an error Data) → peels to `value` → repeats on
+the inner `@schema` until it hits `data`. Layers stack (`signature` over `archive`
+over `data`) and peel+verify in order.
+
+Because the signature covers the inner `value` as a **separate object**, the
+`MarkOuterForHash` exclude-self carve-out + its AsyncLocal ref-count machinery
+**dissolve**.
+
 ## Decision taken — pull signature into scope now (Ingi, 2026-06-15)
 
-Building the full layer model. Progress so far (all committed, tree green):
-IWriter object surface, `signature.@this` layer (born-native, confirmed shape),
-format tests. Remaining: the `@schema` read-dispatch, the `sign`/`verify` rewrite
-through `App.Code.Get<ISigning>()` producing/peeling `signature.@this`, removing
-`Data.Signature` + the Wire sign-if-missing machinery, then archive-as-layer.
+Building the full layer model.
+
+**Foundation LANDED (all committed, tree green — Wire 17 flat):**
+- IWriter object surface (`BeginObject`/`Name`/`EndObject`)
+- `signature.@this` layer — born-native, confirmed `{@schema, type, nonce, created,
+  expires, identity, hash, signature, value}` shape, `Write(IWriter)` owns the layout
+- `SchemaLayerFormatTests` pin the wire shape
+
+**Remaining — one coherent DISRUPTIVE unit (tree red mid-flight; do together so
+auto-verify is wired from the start):**
+1. `@schema` read-dispatch: `signature.@this.FromWire(...)` + a branch in the read
+   path (`item.serializer.json.Parse` Object case / `Wire.ReadBody`) keyed on `@schema`.
+2. `sign` action → produces `signature.@this` wrapping the data (via the module).
+3. Write hoist in `Wire.Write` (layer → top-level).
+4. **Remove `Data.Signature`** + `EnsureSigned`/`EnsureInnerSigned`/`MarkOuterForHash`.
+5. `verify` action → peel+verify a `signature.@this`; auto-verify on read calls it.
+6. `Ed25519` rewritten to build/verify `signature.@this` (no POCO).
+7. Delete `app.module.signing.Signature` POCO.
+8. Migrate the nested-signed-Data tests (`OuterSignature`, `StoreView`, `Cut2/3`,
+   `NestedSignedData*`) onto the layer; then `archive`-as-layer rides the same rails.
