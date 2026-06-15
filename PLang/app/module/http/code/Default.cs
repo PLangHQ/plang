@@ -97,7 +97,20 @@ public sealed class Default : IHttp
             }
             else
             {
-                bodyString = bodyVal is global::app.type.text.@this bt ? bt.Clr<string>()! : JsonSerializer.Serialize(bodyVal);
+                // All I/O goes through the channel: the serializer for the
+                // content-type renders the value via its OWN converter (a
+                // dict/list/item serializes as itself). Raw JsonSerializer.Serialize
+                // on the `object`-typed value bypasses the converter and reflects
+                // the base item property bag ({Cacheable, Prior, ...}).
+                if (bodyVal is global::app.type.text.@this bt)
+                    bodyString = bt.Clr<string>()!;
+                else
+                {
+                    var serialized = action.Context.Actor.Channel.Serializers
+                        .GetOrDefault(contentType).Serialize(new data.@this("", bodyVal));
+                    if (!serialized.Success) return serialized;   // surface the serializer error, never send an empty body
+                    bodyString = (await serialized.Value())?.Clr<string>() ?? "";
+                }
                 var enc = Encoding.GetEncoding(encoding);
                 httpContent = new StringContent(bodyString, enc, contentType);
             }
