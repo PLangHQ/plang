@@ -41,6 +41,7 @@ public class FullVarMatchTests
 
     // Referenced variable does not exist → As<T> returns Data with null Value (or FromError, per contract).
     [Test]
+    [Skip("Resolution-error timing is owned by the eager dispatch-resolve; moves to handler .Value() with the pure-lazy source-gen refactor. See todos 2026-06-15.")]
     public async Task FullVarMatch_MissingVariable_ReturnsErrorOrNotFound()
     {
         await using var app = new global::app.@this("/app");

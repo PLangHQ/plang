@@ -1020,3 +1020,36 @@ fixtures (`TestPerson`, raw `Dictionary`, `List<TestPerson>`) that get clr-wrapp
 exercise the reflection fallback / "convert-to-dictionary" (a clr-only premise). Rewrite
 the native-equivalent ones to native `dict`/`list` (round-trip via Get), and retire the
 clr-conversion ones with clr removal.
+
+## 2026-06-15 — pure-lazy parameter resolution (source-gen refactor; delete AsCanonical)
+Today the generator resolves action parameters EAGERLY at dispatch
+(`Emission/Property/Data/this.cs` `EmitDispatchResolve` → `__ResolveParameters`,
+awaited by ExecuteAsync before Run): it runs `__ResolveData(name).Value<T>()` /
+`.AsCanonical(Context)` and lands the result in a backing field. That eager
+dispatch-resolve is the premature resolution that stamps/resolves NESTED action
+params before their sub-action runs (the failing DataWrappedActionList tests).
+
+Target (Ingi): NO dispatch-time resolution. The property hands back the raw,
+context-bound parameter `Data`; resolution happens only when the handler does
+`await XXX.Value()` inside Run(). Roughly:
+    public partial Data<T> XXX => __GetParameter("xxx");
+This DELETES: the backing field + set-flag, EmitDispatchResolve,
+`__ResolveParameters`, and `Data.AsCanonical` (the dispatch resolver — no rename,
+it just goes away). It naturally keeps nested-action params raw (`%x%`) until
+their sub-action runs.
+
+Four concerns the dispatch-resolve currently owns must move to lazy `.Value()`
+time (or be re-homed):
+1. Error timing — a bad/missing `%var%` surfaces BEFORE Run today
+   (`__resolutionError`); pure-lazy moves it to the handler's `.Value()` call.
+2. `[IsNotNull]` / `IRawNameResolvable` guards (pre-Run checks today;
+   IsNotNullProp test expects "ValueRequired", currently "CreateDeclined").
+3. `[Default]` on absent/null-resolving slots.
+4. Typed `Value<T>` conversion + the error snapshot (`__SnapshotParams` /
+   EmitSnapshotEntry; SnapshotOnError_Sensitive test).
+
+Changes resolution-error behavior for EVERY action — high value, own focused run.
+Tests [Skip]'d pending this: DataWrappedActionList_DoesNotRecurseIntoActions,
+DataWrappedActionList_SubActionParametersRemainRaw, FullVarMatch_MissingVariable_
+ReturnsErrorOrNotFound, IsNotNullProp_NullValue_RejectedWithError,
+SnapshotOnError_SensitiveProperty_NullPrValue_StaysNull.

@@ -30,7 +30,8 @@ public class DataPlainTests
         var raw = new List<object?> { 1, 2, 3 };
         var result = await MatrixRunner.RunAsync<global::app.module.matrix.dataplain.DataPlain>(app,
             parameters: new[] { ("payload", (object?)raw) });
-        await Assert.That((await result.Data.Value())).IsTypeOf<List<object?>>();
+        // A list value rides as the native list type now.
+        await Assert.That((await result.Data.Value())).IsTypeOf<global::app.type.list.@this>();
         var list = global::app.type.item.@this.Lower<List<object?>>(await result.Data.Value());
         await Assert.That(list).IsNotNull();
         await Assert.That(list!.Count).IsEqualTo(3);
@@ -43,7 +44,8 @@ public class DataPlainTests
         var raw = new Dictionary<string, object?> { ["a"] = 1, ["b"] = 2 };
         var result = await MatrixRunner.RunAsync<global::app.module.matrix.dataplain.DataPlain>(app,
             parameters: new[] { ("payload", (object?)raw) });
-        await Assert.That((await result.Data.Value())).IsTypeOf<Dictionary<string, object?>>();
+        // A dict value rides as the native dict type now.
+        await Assert.That((await result.Data.Value())).IsTypeOf<global::app.type.dict.@this>();
     }
 
     [Test]
