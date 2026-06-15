@@ -157,20 +157,36 @@ public class VariablesTests
     }
 
     [Test]
+    public async Task Set_DotPath_ExternalItemClass_OwnsItsWrite_AndMutatesInPlace()
+    {
+        // An external party adds a class as :item — it owns its own child-write.
+        // Unlike a clr-wrapped foreign object, an :item IS the value (stored by
+        // reference, no carrier), so the write mutates the very instance.
+        var stack = new Variables();
+        var person = new PersonItem { Name = "John", Age = 30 };
+        await stack.Set("person", person);
+
+        await stack.Set("person.Name", "Jane");
+
+        await Assert.That(person.Name).IsEqualTo("Jane");
+        var result = await stack.Get("person.Name");
+        await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Jane");
+    }
+
+    [Test]
     public async Task Set_DotPath_SetsNestedProperty()
     {
         var stack = new Variables();
-        var person = new TestPerson
-        {
-            Name = "John",
-            Age = 30,
-            Address = new TestAddress { Street = "Main St", City = "Springfield" }
-        };
-        stack.Set("person", person);
+        var address = new global::app.type.dict.@this();
+        address.Set("Street", "Main St");
+        address.Set("City", "Springfield");
+        var person = new global::app.type.dict.@this();
+        person.Set("Name", "John");
+        person.Set("Address", address);
+        await stack.Set("person", person);
 
-        stack.Set("person.Address.City", "Shelbyville");
+        await stack.Set("person.Address.City", "Shelbyville");
 
-        await Assert.That(person.Address.City).IsEqualTo("Shelbyville");
         var result = await stack.Get("person.Address.City");
         await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Shelbyville");
     }
@@ -179,24 +195,28 @@ public class VariablesTests
     public async Task Set_DotPath_CaseInsensitive()
     {
         var stack = new Variables();
-        var person = new TestPerson { Name = "John", Age = 30 };
-        stack.Set("person", person);
+        var person = new global::app.type.dict.@this();
+        person.Set("Name", "John");
+        await stack.Set("person", person);
 
-        stack.Set("person.name", "Jane");
+        await stack.Set("person.name", "Jane");
 
-        await Assert.That(person.Name).IsEqualTo("Jane");
+        // The dict key is case-insensitive — the lowercase write hits "Name".
+        var result = await stack.Get("person.Name");
+        await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Jane");
     }
 
     [Test]
     public async Task Set_DotPath_DictionaryValue()
     {
         var stack = new Variables();
-        var data = new Dictionary<string, object?> { { "name", "John" }, { "age", 30 } };
-        stack.Set("user", data);
+        var user = new global::app.type.dict.@this();
+        user.Set("name", "John");
+        user.Set("age", 30L);
+        await stack.Set("user", user);
 
-        stack.Set("user.name", "Jane");
+        await stack.Set("user.name", "Jane");
 
-        await Assert.That((data["name"])?.ToString()).IsEqualTo("Jane");
         var result = await stack.Get("user.name");
         await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Jane");
     }
@@ -206,49 +226,31 @@ public class VariablesTests
     {
         var stack = new Variables();
 
-        // Root doesn't exist — creates a dictionary and sets the property
-        stack.Set("nonexistent.prop", "value");
+        // Root doesn't exist — creates a native dict and sets the property
+        await stack.Set("nonexistent.prop", "value");
 
         var root = await stack.Get("nonexistent");
         await Assert.That(root).IsNotNull();
-        await Assert.That((await root!.Value())).IsTypeOf<Dictionary<string, object?>>();
+        await Assert.That((await root!.Value())).IsTypeOf<global::app.type.dict.@this>();
 
         var prop = await stack.Get("nonexistent.prop");
         await Assert.That((await prop!.Value())?.ToString()).IsEqualTo("value");
     }
 
     [Test]
-    public async Task Set_DotPath_ReadOnlyProperty_ConvertsToDictionary()
+    public async Task Set_DotPath_NewProperty_AddsKey()
     {
         var stack = new Variables();
-        var person = new TestPersonGetOnly();
-        stack.Set("person", person);
+        var person = new global::app.type.dict.@this();
+        person.Set("Name", "John");
+        await stack.Set("person", person);
 
-        // Name is get-only — object converts to dictionary, property is set there
-        stack.Set("person.Name", "Jane");
-
-        var result = await stack.Get("person.Name");
-        await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Jane");
-        // Original CLR object is unchanged
-        await Assert.That(person.Name).IsEqualTo("John");
-        // Underlying value is now a dictionary
-        var root = await stack.Get("person");
-        await Assert.That((await root!.Value())).IsTypeOf<Dictionary<string, object?>>();
-    }
-
-    [Test]
-    public async Task Set_DotPath_NewProperty_ConvertsToDictionary()
-    {
-        var stack = new Variables();
-        var person = new TestPerson { Name = "John", Age = 30 };
-        stack.Set("person", person);
-
-        // Street doesn't exist on TestPerson — converts to dict and adds it
-        stack.Set("person.Street", "Main 123");
+        // Street doesn't exist yet — the dict adds it.
+        await stack.Set("person.Street", "Main 123");
 
         var result = await stack.Get("person.Street");
         await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Main 123");
-        // Original properties still accessible
+        // Existing key still readable.
         var name = await stack.Get("person.Name");
         await Assert.That((await name!.Value())?.ToString()).IsEqualTo("John");
     }
@@ -257,13 +259,14 @@ public class VariablesTests
     public async Task Set_DotPath_NewProperty_CaseInsensitive()
     {
         var stack = new Variables();
-        var person = new TestPerson { Name = "John", Age = 30 };
-        stack.Set("person", person);
+        var person = new global::app.type.dict.@this();
+        person.Set("Name", "John");
+        await stack.Set("person", person);
 
-        // Add via lowercase, read via mixed case
-        stack.Set("person.street", "Main 123");
+        // Add via lowercase, read via mixed case.
+        await stack.Set("person.street", "Main 123");
 
-        var result = await stack.Get("person.street");
+        var result = await stack.Get("person.Street");
         await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Main 123");
     }
 
@@ -271,55 +274,35 @@ public class VariablesTests
     public async Task Set_DotPath_WithBracketIndex()
     {
         var stack = new Variables();
-        var items = new List<TestPerson>
-        {
-            new TestPerson { Name = "Alice", Age = 25 },
-            new TestPerson { Name = "Bob", Age = 35 }
-        };
-        stack.Set("people", items);
+        var alice = new global::app.type.dict.@this(); alice.Set("Name", "Alice");
+        var bob = new global::app.type.dict.@this(); bob.Set("Name", "Bob");
+        var people = new global::app.type.list.@this();
+        people.Add(new Data("", alice));
+        people.Add(new Data("", bob));
+        await stack.Set("people", people);
 
-        stack.Set("people[1].Name", "Robert");
+        await stack.Set("people[1].Name", "Robert");
 
-        await Assert.That(items[1].Name).IsEqualTo("Robert");
+        var result = await stack.Get("people[1].Name");
+        await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Robert");
     }
 
     [Test]
     public async Task Set_DotPath_WithVariableIndex()
     {
         var stack = new Variables();
-        var items = new List<TestPerson>
-        {
-            new TestPerson { Name = "Alice", Age = 25 },
-            new TestPerson { Name = "Bob", Age = 35 }
-        };
-        stack.Set("people", items);
-        stack.Set("idx", 0);
+        var alice = new global::app.type.dict.@this(); alice.Set("Name", "Alice");
+        var bob = new global::app.type.dict.@this(); bob.Set("Name", "Bob");
+        var people = new global::app.type.list.@this();
+        people.Add(new Data("", alice));
+        people.Add(new Data("", bob));
+        await stack.Set("people", people);
+        await stack.Set("idx", 0L);
 
-        stack.Set("people[idx].Name", "Alicia");
+        await stack.Set("people[idx].Name", "Alicia");
 
-        await Assert.That(items[0].Name).IsEqualTo("Alicia");
-    }
-
-    [Test]
-    public async Task Set_DotPath_ConvertsListOfObject_ToTypedList()
-    {
-        var stack = new Variables();
-        var holder = new TestItemHolder();
-        stack.Set("holder", holder);
-
-        // Simulate what the LLM produces: List<object> containing dictionaries
-        var items = new List<object>
-        {
-            new Dictionary<string, object?> { ["Name"] = "Alice", ["Score"] = 10 },
-            new Dictionary<string, object?> { ["Name"] = "Bob", ["Score"] = 20 }
-        };
-
-        stack.Set("holder.Items", items);
-
-        await Assert.That(holder.Items).IsNotNull();
-        await Assert.That(holder.Items.Count).IsEqualTo(2);
-        await Assert.That(holder.Items[0].Name).IsEqualTo("Alice");
-        await Assert.That(holder.Items[1].Score).IsEqualTo(20);
+        var result = await stack.Get("people[0].Name");
+        await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Alicia");
     }
 
     [Test]
@@ -1050,35 +1033,21 @@ public class VariablesAccessorTests
     // Equivalent behaviour is covered by DataAsTResolutionTests + the matrix Resolution group.
 }
 
-// --- Test helper classes for Set dot-path tests ---
-
-public class TestPerson
+// --- Test helper: an external class that opts into the value model by inheriting
+// :item — the post-clr extensibility story. It owns its own child-write (the write
+// counterpart of read-navigation), so `set %person.Name%` dispatches to it. Because
+// it IS the value (no clr carrier, no clone), the write lands on the instance.
+public sealed class PersonItem : global::app.type.item.@this
 {
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-    public TestAddress? Address { get; set; }
-}
+    public string? Name { get; set; }
+    public long Age { get; set; }
 
-public class TestAddress
-{
-    public string Street { get; set; } = "";
-    public string City { get; set; } = "";
-}
-
-public record TestPersonReadOnly(string Name, int Age);
-
-public class TestPersonGetOnly
-{
-    public string Name { get; } = "John";
-}
-
-public class TestItemHolder
-{
-    public List<TestItem> Items { get; set; } = new();
-}
-
-public class TestItem
-{
-    public string Name { get; set; } = "";
-    public int Score { get; set; }
+    public override bool Write(string key, object? value)
+    {
+        if (string.Equals(key, "Name", System.StringComparison.OrdinalIgnoreCase))
+        { Name = value?.ToString(); return true; }
+        if (string.Equals(key, "Age", System.StringComparison.OrdinalIgnoreCase))
+        { Age = System.Convert.ToInt64(value); return true; }
+        return false;
+    }
 }

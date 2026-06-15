@@ -262,9 +262,9 @@ public partial class @this
         // Dot/bracket path: navigate to the parent object, set the property with raw value
         if (!_variables.TryGetValue(rootName, out var root))
         {
-            // Root doesn't exist — create it as a dictionary so dot-path properties work
-            var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-            root = new data.@this(rootName, dict);
+            // Root doesn't exist — create it as a native dict so dot-path properties
+            // work and the value owns its own write.
+            root = new data.@this(rootName, new global::app.type.dict.@this());
             root.Context = _context;
             _variables[rootName] = root;
         }
