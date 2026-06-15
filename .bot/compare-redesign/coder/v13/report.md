@@ -50,7 +50,37 @@ boundary is auto-signed (one layer over the whole payload); read auto-verifies+p
 Permissions: a persisted grant was verified on load, so the in-memory `.Signature`
 checks drop. See `schema-layer-design.md` "Signing is I/O-boundary ONLY".
 
-## NEXT — the integration big-bang (one push, can't compile halfway)
+## INTEGRATION DONE in production — on branch `compare-redesign-signature-wip`
+
+Executed the big-bang. **PLang + PlangConsole production code BUILDS CLEAN** with
+the full I/O-boundary signing model. Preserved on `compare-redesign-signature-wip`
+(pushed) so `compare-redesign` stays green. What landed there:
+- `Data.Signature` + `EnsureSigned` removed; `Signature` POCO deleted.
+- `Wire.Write` signs at the boundary (runs `sign` action) + **hoists** the layer
+  top-level; `Wire.Read` probes `@schema` (struct-copy of the reader — no double
+  parse on the data path), `ReadSignatureLayer` rebuilds via `FromWire`, runs the
+  `verify` action (**auto-verify on read**), peels to the inner data.
+- `Ed25519` sign→`Data.Ok(signature.@this)`, verify peels+validates the layer
+  (freshness/expiry/nonce/contracts/rehash-inner/sig over `ToSigningBytes`).
+- `permission.Add(grant, persist)` — persist intent replaces the in-memory
+  signature heuristic; `TryCover` drops in-memory re-verify.
+- clone/normalize/set/json-writer drop `.Signature`; HTTP `.Signature` adapted.
+
+**REMAINING on the WIP branch: ~25 test files** still use the removed
+`Data.Signature`/`EnsureSigned` API (counts: Wire ~65 errs, Runtime ~35,
+ActorPermissionStorage 26, WireConverterSigning 18, TransportPropertyFilter 17,
+Cut3 ×2, Data ~15, …). They test the OLD model and need migrating to boundary
+signing (serialize→layer appears; deserialize→auto-verifies) or deletion. That
+migration is the next focused unit — do it on the WIP branch, then merge to
+compare-redesign when green.
+
+**SECURITY REVIEW flags (in-code `// SECURITY REVIEW:` comments):**
+- `permission.TryCover` no longer re-verifies in memory — relies on
+  auto-verify-on-read covering `SettingsStore` grant loads. Confirm that path.
+- HTTP request signing (`X-Signature`) was ADAPTED to serialize the signed Data,
+  not removed — Ingi wanted it gone; revisit.
+
+## (superseded) NEXT — the integration big-bang (one push, can't compile halfway)
 Deleting `Data.Signature` breaks ~12 files at once. Do all together, build at the end:
 
 1. **`Ed25519.SignAsync`** → build a `signature.@this` wrapping `action.Data`
