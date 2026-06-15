@@ -15,13 +15,19 @@ public partial class list : IContext
     public async Task<data.@this> Run()
     {
         var typeName = Type == null ? null : (await Type.Value())?.Clr<string>();
+
+        System.Collections.Generic.IReadOnlyList<ICode> providers;
         if (string.IsNullOrEmpty(typeName))
-            return Data(Context.App.Code.List());
+            providers = Context.App.Code.List();
+        else
+        {
+            var providerType = Context.App.Code.ResolveType(typeName);
+            if (providerType == null)
+                return Error(new global::app.error.ActionError($"Unknown provider type '{typeName}'", "UnknownType", 400));
+            providers = Context.App.Code.List(providerType);
+        }
 
-        var providerType = Context.App.Code.ResolveType(typeName);
-        if (providerType == null)
-            return Error(new global::app.error.ActionError($"Unknown provider type '{typeName}'", "UnknownType", 400));
-
-        return Context.App.Code.List(providerType);
+        // Providers are plumbing — PLang sees their names (list<text>), not the CLR instances.
+        return Data(providers.Select(p => p.Name).ToList());
     }
 }

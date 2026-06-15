@@ -148,19 +148,19 @@ public sealed partial class @this : IAsyncDisposable
         if (typeDict.Count == 1)
             provider.IsDefault = true;
 
-        return app.data.@this.Ok(provider);
+        // A provider is engine plumbing, never a plang value — the registration
+        // just succeeds. Returning the provider as the value would wrap a CLR
+        // service in a Data (a throwaway clr); the value is never read.
+        return app.data.@this.Ok();
     }
 
     /// <summary>
-    /// Lists all providers for a runtime-resolved type.
+    /// Lists all providers registered for a runtime-resolved type (typed C# access).
     /// </summary>
-    public data.@this List(System.Type providerType)
-    {
-        if (!_providers.TryGetValue(providerType, out var typeDict))
-            return app.data.@this.Ok(Array.Empty<ICode>());
-
-        return app.data.@this.Ok(typeDict.Values.ToList());
-    }
+    public IReadOnlyList<ICode> List(System.Type providerType)
+        => _providers.TryGetValue(providerType, out var typeDict)
+            ? typeDict.Values.ToList()
+            : Array.Empty<ICode>();
 
     /// <summary>
     /// Removes a named provider by runtime-resolved type. Cannot remove the default.
