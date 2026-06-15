@@ -198,6 +198,9 @@ public class Wire : JsonConverter<@this>
     {
         using var doc = JsonDocument.ParseValue(ref reader);
         var layer = global::app.type.signature.@this.FromWire(doc.RootElement, options);
+        // The inner data is re-hashed during verify (canonicalized through the
+        // wire), so it needs the actor context the same way the outer does.
+        layer.Value.Context = _context!;
 
         if (_context != null)
         {

@@ -69,7 +69,11 @@ public class Ed25519 : ISigning
             return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Data has no signature", "NoSignature", 400));
 
         var app = action.Context.App;
-        var now = (DateTimeOffset)await action.Context.Variable.GetValue("NowUtc")!;
+        // NowUtc may be unset when verify runs at the deserialize boundary (the
+        // read context isn't mid-step) — fall back to the wall clock rather than
+        // NRE on an unbox of a missing runtime variable.
+        var now = await action.Context.Variable.GetValue("NowUtc") is DateTimeOffset nowUtc
+            ? nowUtc : DateTimeOffset.UtcNow;
         var signingSettings = app.Config.For<Config>(action.Context);
         long effectiveTimeout = action.TimeoutMs == null
             ? signingSettings.Resolve<long>("TimeoutMs", 300_000)
@@ -102,10 +106,12 @@ public class Ed25519 : ISigning
                 return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Nonce has already been used", "NonceReplay", 400));
         }
 
-        // 4. Contract matching
-        var expectedContracts = action.Contracts == null ? null
+        // 4. Contract matching — Contracts may be an unset/absent slot (the
+        // boundary-verify path never sets it), so guard the resolved value too.
+        var contractsList = action.Contracts == null ? null : await action.Contracts.Value();
+        var expectedContracts = contractsList == null ? null
             : System.Linq.Enumerable.ToList(System.Linq.Enumerable.Select(
-                (await action.Contracts.Value()).Items, d => d.Peek().ToString() ?? ""));
+                contractsList.Items, d => d.Peek().ToString() ?? ""));
         if (!ContractsMatch(System.Linq.Enumerable.ToList(layer.ContractStrings()), expectedContracts))
             return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Contract mismatch", "ContractMismatch", 400));
 
