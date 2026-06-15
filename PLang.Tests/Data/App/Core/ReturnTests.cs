@@ -11,7 +11,8 @@ public class DataResultTests
         var result = Data.Ok();
 
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsNull();
+        // A no-value Ok holds the plang null citizen (a real item), not C# null.
+        await Assert.That((await result.Value())!.IsNull).IsTrue();
         await Assert.That(result.Error).IsNull();
     }
 
@@ -33,7 +34,8 @@ public class DataResultTests
         var result = Data.Ok(null);
 
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsNull();
+        // Ok(null) holds the plang null citizen (a real item), not C# null.
+        await Assert.That((await result.Value())!.IsNull).IsTrue();
     }
 
     [Test]
@@ -165,7 +167,8 @@ public class DataResultTests
 
         var str = result.ToString();
 
-        await Assert.That(str).IsEqualTo("(null)");
+        // A no-value Data renders the plang null citizen — "null", not "(null)".
+        await Assert.That(str).IsEqualTo("null");
     }
 
     [Test]

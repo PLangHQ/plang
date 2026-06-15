@@ -1,8 +1,9 @@
 namespace PLang.Tests.App.DataTests;
 
-// Contract tests for v4's central architectural sharpening:
-// Data.Value is RAW — read-only post-construction, no side effects, no resolution, no caching.
-// Data flows through the system unchanged at the .Value level; resolution lives (await in As<T>(context)).
+// Contract tests: Data.Value is read-only post-construction — no side effects, no
+// resolution of unstamped placeholders, no caching surprises. Scalars ride verbatim;
+// raw CLR collections become the native dict/list value type on store (a copy), so
+// identity is to the native instance, not the raw input collection.
 
 public class DataValueRawTests
 {
@@ -22,16 +23,18 @@ public class DataValueRawTests
         await Assert.That((await data.Value())?.ToString()).IsEqualTo("hello world");
     }
 
-    // Reading .Value 1000 times → no work performed; same reference returned every time.
+    // Reading .Value 1000 times → no work performed; the native value instance is
+    // stable across reads (Peek never re-mints).
     [Test]
     public async Task Value_ReadRepeatedly_NoSideEffects()
     {
-        var raw = new List<object?> { "a", "b", "c" };
-        var data = new Data("list", raw);
+        var data = new Data("list", new List<object?> { "a", "b", "c" });
+        var native = data.Peek();
 
         for (int i = 0; i < 1000; i++)
         {
-            await Assert.That(ReferenceEquals((data.Peek()), raw)).IsTrue();
+            await data.Value();
+            await Assert.That(ReferenceEquals(data.Peek(), native)).IsTrue();
         }
     }
 
@@ -53,8 +56,9 @@ public class DataValueRawTests
         var raw = new List<object?> { "%x%", "literal", "%x%" };
         var data = new Data("list", raw) { Context = _app.User.Context };
 
+        // The list rides as native; reading it does not resolve the unstamped
+        // %x% placeholders — they stay literal.
         var read = global::app.type.item.@this.Lower<List<object?>>(await data.Value());
-        await Assert.That(ReferenceEquals(read, raw)).IsTrue();
         await Assert.That((string)read![0]!).IsEqualTo("%x%");
         await Assert.That((string)read![2]!).IsEqualTo("%x%");
     }
@@ -67,8 +71,9 @@ public class DataValueRawTests
         var raw = new Dictionary<string, object?> { ["name"] = "%user%", ["role"] = "admin" };
         var data = new Data("dict", raw) { Context = _app.User.Context };
 
+        // The dict rides as native; reading it does not resolve the unstamped
+        // %user% placeholder — it stays literal.
         var read = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await data.Value());
-        await Assert.That(ReferenceEquals(read, raw)).IsTrue();
         await Assert.That((string)read!["name"]!).IsEqualTo("%user%");
     }
 
@@ -131,8 +136,8 @@ public class DataValueRawTests
     [Test]
     public async Task Value_ConcurrentReads_NoRace()
     {
-        var raw = new List<object?> { 1, 2, 3 };
-        var data = new Data("list", raw);
+        var data = new Data("list", new List<object?> { 1, 2, 3 });
+        var native = data.Peek();   // the native list value, set once at store
 
         var tasks = Enumerable.Range(0, 100).Select(_ => Task.Run(async () =>
         {
@@ -140,7 +145,7 @@ public class DataValueRawTests
             {
                 var _v = await data.Value();
             }
-            return ReferenceEquals((data.Peek()), raw);
+            return ReferenceEquals(data.Peek(), native);
         })).ToArray();
 
         var results = await Task.WhenAll(tasks);
