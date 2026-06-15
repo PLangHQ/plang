@@ -86,6 +86,9 @@ public class TypeProviderDllRoundtripTests
         public void Decimal(decimal v) { Captured = v.ToString(); }
         public void Bytes(byte[] v) { Captured = System.Convert.ToBase64String(v); }
         public void BeginArray(int c) { }
+        public void BeginObject() { }
+        public void Name(string n) { }
+        public void EndObject() { }
         public void EndArray() { }
         public void BeginRecord(global::app.data.@this r) { }
         public void EndRecord() { }

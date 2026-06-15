@@ -94,6 +94,9 @@ public class TypeSerializersDispatchTests
         public void Decimal(decimal value) { }
         public void Bytes(byte[] value) { }
         public void BeginArray(int count) { }
+        public void BeginObject() { }
+        public void Name(string n) { }
+        public void EndObject() { }
         public void EndArray() { }
         public void BeginRecord(global::app.data.@this record) { }
         public void EndRecord() { }

@@ -30,6 +30,9 @@ public class CodeSerializerTests
         public void Decimal(decimal v) { }
         public void Bytes(byte[] v) { }
         public void BeginArray(int c) { }
+        public void BeginObject() { LastMethod = "BeginObject"; }
+        public void Name(string n) { LastMethod = "Name"; Last = n; }
+        public void EndObject() { LastMethod = "EndObject"; }
         public void EndArray() { }
         public void BeginRecord(global::app.data.@this r) { }
         public void EndRecord() { }

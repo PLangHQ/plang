@@ -48,6 +48,10 @@ public sealed class Writer : IWriter
     public void BeginArray(int count) => _writer.WriteStartArray();
     public void EndArray() => _writer.WriteEndArray();
 
+    public void BeginObject() => _writer.WriteStartObject();
+    public void Name(string name) => _writer.WritePropertyName(name);
+    public void EndObject() => _writer.WriteEndObject();
+
     /// <summary>
     /// Opens the canonical Data envelope. <c>name</c> is always present;
     /// <c>type</c> is written only when non-null; <c>value</c> is opened with

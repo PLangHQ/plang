@@ -226,6 +226,9 @@ public class RuntimeTypeLoadingTests
         public void Decimal(decimal v) { }
         public void Bytes(byte[] v) { }
         public void BeginArray(int c) { }
+        public void BeginObject() { }
+        public void Name(string n) { }
+        public void EndObject() { }
         public void EndArray() { }
         public void BeginRecord(global::app.data.@this r) { }
         public void EndRecord() { }

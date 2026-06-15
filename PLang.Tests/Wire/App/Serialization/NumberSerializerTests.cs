@@ -31,6 +31,9 @@ public class NumberSerializerTests
         public void Decimal(decimal v) { LastMethod = "Decimal"; Last = v; }
         public void Bytes(byte[] v) { LastMethod = "Bytes"; Last = v; }
         public void BeginArray(int c) { }
+        public void BeginObject() { LastMethod = "BeginObject"; }
+        public void Name(string n) { LastMethod = "Name"; Last = n; }
+        public void EndObject() { LastMethod = "EndObject"; }
         public void EndArray() { }
         public void BeginRecord(global::app.data.@this r) { }
         public void EndRecord() { }

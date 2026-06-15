@@ -53,6 +53,22 @@ public interface IWriter
     void EndArray();
 
     /// <summary>
+    /// Begin a free-form object bracket — the surface a <c>@schema</c> layer
+    /// (<c>signature</c> / <c>archive</c> / <c>encryption</c>) uses to render its
+    /// own <c>{@schema, …fields…, value:&lt;inner&gt;}</c> shape. The layer owns
+    /// the layout: between <see cref="BeginObject"/> and <see cref="EndObject"/>
+    /// it calls <see cref="Name"/> then a leaf method (or <see cref="Value"/> for
+    /// the nested <c>value</c> slot) per field. Distinct from
+    /// <see cref="BeginRecord"/>, which is the fixed Data envelope.
+    /// </summary>
+    void BeginObject();
+
+    /// <summary>Write a property name inside the current <see cref="BeginObject"/> bracket.</summary>
+    void Name(string name);
+
+    void EndObject();
+
+    /// <summary>
     /// Begin a Data record bracket. The writer emits the canonical
     /// <c>{name, type, value, properties, signature}</c> envelope shape for
     /// its format and accepts the payload from subsequent calls. Implementations
