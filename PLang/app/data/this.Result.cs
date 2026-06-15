@@ -79,26 +79,4 @@ public partial class @this
     /// </summary>
     public T ToError<T>() where T : @this, new() => new() { Error = Error };
 
-    /// <summary>
-    /// Merge: combines two @this results (logic from Return.Merge).
-    /// Treats Value as List&lt;Data&gt;, merge by Name (replace-or-append).
-    /// </summary>
-    public @this Merge(@this other)
-    {
-        if (other.Peek().IsNull) return this;
-
-        var myData = global::app.type.item.@this.Lower<List<@this>>(Peek()) ?? new();
-        var otherData = global::app.type.item.@this.Lower<List<@this>>(other.Peek()) ?? new();
-
-        foreach (var data in otherData)
-        {
-            var existing = myData.FindIndex(d => string.Equals(d.Name, data.Name, StringComparison.OrdinalIgnoreCase));
-            if (existing >= 0)
-                myData[existing] = data;
-            else
-                myData.Add(data);
-        }
-
-        return new @this("", myData);
-    }
 }

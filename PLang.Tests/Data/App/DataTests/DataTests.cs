@@ -1201,53 +1201,9 @@ public class DataTests
         await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
     }
 
-    // --- v5: Merge tests ---
-
-    [Test]
-    public async Task Merge_TwoLists_CombinesByName()
-    {
-        var list1 = new List<Data> { new Data("x", 1), new Data("y", 2) };
-        var list2 = new List<Data> { new Data("y", 99), new Data("z", 3) };
-
-        var a = new Data("", list1);
-        var b = new Data("", list2);
-
-        var result = a.Merge(b);
-        var merged = global::app.type.item.@this.Lower<List<Data>>(await result.Value());
-
-        await Assert.That(merged).IsNotNull();
-        await Assert.That(merged!.Count).IsEqualTo(3); // x, y (replaced), z
-        await Assert.That((await merged[0].Value())?.ToString()).IsEqualTo("1"); // x unchanged
-        await Assert.That((await merged[1].Value())?.ToString()).IsEqualTo("99"); // y replaced
-        await Assert.That((await merged[2].Value())?.ToString()).IsEqualTo("3"); // z appended
-    }
-
-    [Test]
-    public async Task Merge_NullOtherValue_ReturnsSelf()
-    {
-        var list = new List<Data> { new Data("x", 1) };
-        var a = new Data("", list);
-        var b = new Data("", null);
-
-        var result = a.Merge(b);
-
-        await Assert.That(result).IsSameReferenceAs(a);
-    }
-
-    [Test]
-    public async Task Merge_NonListValues_ReturnsEmptyList()
-    {
-        // Current behavior: non-List values cast to null → empty list, other items added
-        var a = new Data("", "not a list");
-        var b = new Data("", "also not a list");
-
-        var result = a.Merge(b);
-        var merged = global::app.type.item.@this.Lower<List<Data>>(await result.Value());
-
-        // Both cast as List<Data> produce empty lists — result is empty
-        await Assert.That(merged).IsNotNull();
-        await Assert.That(merged!.Count).IsEqualTo(0);
-    }
+    // Data.Merge deleted — it was a list operation living on Data that lowered to
+    // CLR List<Data>, with zero production callers. Merge-by-name belongs on the
+    // native list type if/when needed (see todos: merge onto list.@this).
 }
 
 public class DynamicDataTests

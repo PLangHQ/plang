@@ -1062,3 +1062,9 @@ a raw byte[] declared "bytes" and an actual binary.@this value disagree. Unify o
 (likely "binary", the value type's own name; "bytes" becomes an alias or is dropped).
 Surfaced while removing the source.Peek UTF-8 content-sniff (bytes/binary no longer
 auto-decode to text — a binary value's face stays bytes; decode is the explicit `as text`).
+
+## 2026-06-15 — merge-by-name belongs on list.@this (if needed)
+Deleted Data.Merge — a list operation that lived on Data and lowered to CLR
+List<Data> (OBP smell), with zero production callers (test-only). If merge-by-name
+is needed, add it to the native list type (list.@this), operating on its own Data
+elements (no Lower to CLR) — the type owns its behavior.
