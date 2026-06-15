@@ -66,6 +66,20 @@ migration is the small tail.
 4. **Job 1**: domain tail → `:item`.
 5. **Delete**: clr fallback → clr class → `SetValueDirect` → `Lower<T>` → wire reconstruction (#6).
 
+## DONE — providers off the action value (commit 8fbc6334d)
+The "80% of clr" bucket was a red herring re: *leaks* — the registry holds `ICode`
+fine; only the action **return values** wrapped providers in a Data (→ throwaway
+clr), and that value was never read. Fixed:
+- `code.@this.Register(Type, ICode)` returns `Data.Ok()` (no value), not `Ok(provider)`.
+- `code.@this.List(Type)` returns `IReadOnlyList<ICode>` (typed C#); the `code.list`
+  action projects provider **names → list<text>** for PLang. `Get<T>` was already
+  a typed tuple (never a Data) — unchanged.
+- Verified provider clr-wraps **1221 → 0**; suites flat, zero regressions.
+- NOTE: this was clr-COUNT/OBP cleanup, **not** the J leak. J is a separate root:
+  raw `JsonSerializer.Serialize(itemValue)` in `llm/code/OpenAi.cs:105,984` on an
+  item lacking a `JsonConverter` → leaks base item props `{Cacheable,Prior,IsLeaf}`.
+  dict/list have converters and serialize fine; the leak is items that don't.
+
 ## DONE this session (BCL leaves, bucket #2)
 - **DateTime**: `datetime` now owns `System.DateTime` too (`datetime/this.Owns.cs`);
   conversion already existed (`this.Convert.cs:20`). A C# `DateTime` lifts to
