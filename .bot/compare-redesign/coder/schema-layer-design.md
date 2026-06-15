@@ -163,6 +163,26 @@ class); it renders to the wire field `type`. Born-native: every field is a plang
 type (`text`/`datetime`/`binary`/`list`/`hash`), not CLR. The inner schema stays
 under `value`. Proven by `SchemaLayerFormatTests` (Wire suite).
 
+## Signing is I/O-boundary ONLY — no in-memory provenance (Ingi, 2026-06-15)
+
+`Data.Signature` is **removed entirely and NOT replaced**. Signatures do not ride
+in memory at all:
+- **Clone, set, normalize, HTTP-request-building** etc. drop their `.Signature`
+  handling — they don't carry or propagate a signature. (HTTP request signing and
+  the `!ServiceIdentity`-from-signature feature go away; "http request, clone, etc.
+  don't need signing.")
+- **Signing happens only when a Data crosses the I/O boundary as
+  `application/plang`** — at that boundary it is automatically wrapped in a
+  `signature.@this` layer. (Save a clone to disk as `.plang` → it's signed there.)
+- **Verification happens on read** at the same boundary (auto-verify, peel).
+- **Permissions:** a grant read from disk (`application/plang`) is already verified
+  at the read boundary, so the in-memory `.Signature` checks in `permission` drop —
+  an in-memory grant is local/trusted; a persisted one was verified on load.
+
+Consequence: one signature layer wraps the WHOLE payload at the boundary (not a
+per-nested-Data signature). The `EnsureInnerSigned` graph-walk + `MarkOuterForHash`
+both dissolve.
+
 ## Confirmed read/write flow (Ingi, 2026-06-15)
 
 **Invoke through the module/action, NOT the code provider.** Signing runs the

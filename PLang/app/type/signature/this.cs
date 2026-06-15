@@ -118,7 +118,16 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         w.Name("created"); w.Value(Created);
         if (Expires is { } exp) { w.Name("expires"); w.Value(exp); }
         w.Name("identity"); w.Value(Identity);
-        if (Contracts is not null) { w.Name("contracts"); w.Value(Contracts); }
+        // Contracts are bare strings on the wire (and in ToSigningBytes), not
+        // data records — a list of text renders its elements as records, so emit
+        // the strings directly.
+        if (Contracts is not null)
+        {
+            w.Name("contracts");
+            w.BeginArray(-1);
+            foreach (var c in ContractStrings()) w.String(c);
+            w.EndArray();
+        }
         // hash sub-object {type, value} — read straight off the typed hash.
         w.Name("hash");
         w.BeginObject();

@@ -54,6 +54,37 @@ public class SchemaLayerFormatTests
         await Assert.That(value.GetProperty("value").GetString()).IsEqualTo("Ingi");
     }
 
+    [Test] public async Task SignatureLayer_RoundTrips_ThroughFromWire()
+    {
+        var inner = new global::app.data.@this("user", "Ingi", global::app.type.@this.FromName("text"));
+        var sig = new global::app.type.signature.@this(
+            value: inner,
+            algorithm: new global::app.type.text.@this("ed25519"),
+            nonce: new global::app.type.text.@this("9f"),
+            created: new global::app.type.datetime.@this(new System.DateTimeOffset(2026, 6, 15, 10, 0, 0, System.TimeSpan.Zero)),
+            identity: new global::app.type.text.@this("alice"),
+            hash: new global::app.module.crypto.type.hash.@this(System.Convert.FromBase64String("ZGlnZXN0"), "keccak256"),
+            signature: new global::app.type.binary.@this(System.Convert.FromBase64String("c2ln")),
+            contracts: new global::app.type.list.@this(new[] { global::app.data.@this.Ok(new global::app.type.text.@this("C0")) }));
+
+        var options = new JsonSerializerOptions();
+        options.Converters.Add(new global::app.data.Wire());
+
+        using var doc = JsonDocument.Parse(Render(sig));
+        var back = global::app.type.signature.@this.FromWire(doc.RootElement, options);
+
+        await Assert.That(back.Algorithm.ToString()).IsEqualTo("ed25519");
+        await Assert.That(back.Nonce.ToString()).IsEqualTo("9f");
+        await Assert.That(back.Identity.ToString()).IsEqualTo("alice");
+        await Assert.That(back.Created.Value).IsEqualTo(sig.Created.Value);
+        await Assert.That(back.Hash.Algorithm).IsEqualTo("keccak256");
+        await Assert.That(back.Hash.ToBase64()).IsEqualTo("ZGlnZXN0");
+        await Assert.That(System.Linq.Enumerable.ToList(back.ContractStrings())).IsEquivalentTo(new[] { "C0" });
+        await Assert.That(back.Value.Peek().ToString()).IsEqualTo("Ingi");
+        // ToSigningBytes is deterministic across a round-trip.
+        await Assert.That(back.ToSigningBytes()).IsEquivalentTo(sig.ToSigningBytes());
+    }
+
     [Test] public async Task SignatureLayer_OmitsExpiresAndContracts_WhenAbsent()
     {
         var inner = new global::app.data.@this("x", "y", global::app.type.@this.FromName("text"));
