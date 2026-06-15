@@ -133,6 +133,22 @@ rule: the real consumer of the layer machinery is signature.
   Rewrites Cut2 / OuterSignature / StoreView / the nested-signed-Data family onto
   the layer shape.
 
+## Constraint (Ingi, 2026-06-15) — use `signature.@this` THROUGHOUT, no wrapping/casting
+
+The signing module must speak `app.type.signature.@this` end to end — not produce a
+separate POCO and convert. Concretely, the sign/verify increment:
+- **Deletes `app.module.signing.Signature`** (the POCO). Its fields already live on
+  `signature.@this`. No converting between the two.
+- `ISigning.SignAsync(sign) → signature.@this` (the layer wrapping the data);
+  `VerifyAsync` peels a `signature.@this` and validates. No `Data.Signature`.
+- **Hash stays typed, not split.** `signature.@this` should carry the hash as the
+  crypto hash value type (`app.module.crypto.type.hash.@this`), not as two loose
+  `HashAlgorithm`/`HashValue` strings (my current placeholder) — so the module reads
+  the digest off the value with no cast. Refactor the layer's hash field to the hash
+  type when wiring the module. (Also add `Headers` for parity with the old POCO.)
+- `Ed25519` builds/verifies a `signature.@this` directly; the canonical signing bytes
+  are the inner data's Out-view wire bytes (no exclude-self carve-out).
+
 ## Open design decision (for Ingi)
 
 Given the coupling: keep archive inside today's signed data envelope and defer ALL
