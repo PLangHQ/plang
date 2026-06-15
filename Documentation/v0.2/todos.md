@@ -989,3 +989,34 @@ the FIRST Value() read where the Data has been wired into an actor and ALWAYS ha
 context. Then the no-context ctor case disappears, Build is universal, and Judge +
 its Resolve branch delete. This is the lazy-source / born-typed-deferred refactor —
 its own run, not a tail.
+
+## 2026-06-15 — rename item `Write(IWriter)` → `Output(IWriter)`
+The serialization method `item.@this.Write(global::app.channel.serializer.IWriter)`
+should be renamed `Output(IWriter)` to mark it as the I/O-layer output path. This
+frees the verb `Write` for the child-set introduced on the value model
+(`item.@this.Write(string key, object? value)` — a dict writes its key, a list its
+index; see `Variables.Set` dot-path). Today the two `Write` overloads coexist (output
+vs child-set) — same verb, two meanings. After the rename: `Output` = serialize to a
+wire writer, `Write` = set a child slot. Touches every `item` subtype that overrides
+`Write(IWriter)` (number/text/dict/list/binary/archive/clr/…) and the serializer
+dispatch.
+
+## 2026-06-15 — type-owned navigation: move Navigate onto items, delete the navigator subsystem
+Write is now type-owned (`item.@this.Write(key, value)`; dict writes its key, list its
+index; `Variables.Set` calls it directly). Do the same for READ: move `Navigate(key)`
+onto the value types (`dict.@this`, `list.@this`, …), then DELETE the whole external
+navigator subsystem:
+- `INavigator` + `app/variable/navigator/{Dictionary,List,Object}.cs` (per-type logic
+  that belongs on the type)
+- `ValueNavigators` (static duplicate of the registry — OBP smell #3, "same set stored
+  twice")
+- `app.Navigator` (`navigator/list/@this`) the instance registry
+The reflection `Object` navigator is the clr fallback — it dies with clr removal (only
+`:item` types exist). Read dispatch (`data/this.Navigation.cs` `GetChildValue`) then
+asks the item directly: `item.Navigate(key)`. Risky/hot path — own run.
+
+Also pending in this arc: the remaining `Set_DotPath_*` tests still feed raw CLR
+fixtures (`TestPerson`, raw `Dictionary`, `List<TestPerson>`) that get clr-wrapped and
+exercise the reflection fallback / "convert-to-dictionary" (a clr-only premise). Rewrite
+the native-equivalent ones to native `dict`/`list` (round-trip via Get), and retire the
+clr-conversion ones with clr removal.

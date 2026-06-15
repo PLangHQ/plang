@@ -211,6 +211,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return this;
     }
 
+    /// <summary>A dict owns its child write — set the key (create or overwrite).</summary>
+    public override bool Write(string key, object? value)
+    {
+        Set(key, value);
+        return true;
+    }
+
     // The one mutation seam — last-wins on a duplicate key (json object
     // semantics), order preserved at the position of the first occurrence, and
     // the display casing updated to the latest write (mirrors the prior

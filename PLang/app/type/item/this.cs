@@ -56,6 +56,17 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual object? Peek() => this;
 
     /// <summary>
+    /// Set a child slot by key — the write counterpart of read-navigation. The
+    /// value owns how it stores a child: a <c>dict</c> writes its key, a
+    /// <c>list</c> its index. Returns <c>true</c> when this value handled the
+    /// write (mutated in place), <c>false</c> when it has no settable child for
+    /// <paramref name="key"/> so the caller can fall back. Default: not settable.
+    /// (Distinct from <see cref="Write(global::app.channel.serializer.IWriter)"/>,
+    /// which serializes the value to a wire writer.)
+    /// </summary>
+    public virtual bool Write(string key, object? value) => false;
+
+    /// <summary>
     /// Whether the holding <c>Data</c> may keep (rebind to) <see cref="Value"/>'s
     /// answer. True when the answer depends on nothing but the value itself
     /// (parse). False when the answer depends on outside state (a template

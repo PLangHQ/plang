@@ -141,14 +141,17 @@ public class VariablesTests
     [Test]
     public async Task Set_DotPath_SetsPropertyOnObject()
     {
-        var stack = new Variables();
-        var person = new TestPerson { Name = "John", Age = 30 };
-        stack.Set("person", person);
+        await using var app = new global::app.@this("/test");
+        var stack = app.User.Context.Variable;
 
-        stack.Set("person.Name", "Jane");
+        var person = new global::app.type.dict.@this();
+        person.Set("Name", "John");
+        person.Set("Age", 30L);
+        await stack.Set("person", person);
 
-        await Assert.That(person.Name).IsEqualTo("Jane");
-        // Verify Get also sees the change
+        await stack.Set("person.Name", "Jane");
+
+        // The dict owns its own write; the round-trip read sees the change.
         var result = await stack.Get("person.Name");
         await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Jane");
     }

@@ -352,6 +352,21 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         else if (index == Count) _items.Add(value);
     }
 
+    /// <summary>A list owns its child write — replace the element at the index
+    /// (bare <c>1</c> or bracket <c>[1]</c>). An out-of-range index is not owned.</summary>
+    public override bool Write(string key, object? value)
+    {
+        var idxKey = key;
+        if (idxKey.Length >= 2 && idxKey[0] == '[' && idxKey[^1] == ']')
+            idxKey = idxKey[1..^1];
+        if (int.TryParse(idxKey, out var idx) && idx >= 0 && idx < CountRaw)
+        {
+            SetAt(idx, value as Data ?? new Data(key, value));
+            return true;
+        }
+        return false;
+    }
+
     /// <summary>
     /// The CLR exit door — the list decomposes itself into a raw
     /// <c>List&lt;object?&gt;</c> (each element lowers through its OWN

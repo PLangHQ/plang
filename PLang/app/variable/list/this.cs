@@ -322,6 +322,17 @@ public partial class @this
                 return data.@this.FromError(parent.Error);
             return data.@this.NotFound(name);
         }
+
+        // The value type owns its own write — symmetric to how Navigate owns the
+        // read. Ask the registered navigator first (a dict writes its key, a list
+        // its index); fall back to the reflection path only when the navigator
+        // doesn't own writes for this value (foreign CLR objects, read-only props).
+        // The value owns its own child write — a dict writes its key, a list its
+        // index. Ask the value directly; fall back to the reflection path only when
+        // the value has no settable child (foreign CLR objects, read-only props).
+        if (target.Write(propertyName, rawValue))
+            return root;
+
         var result = SetValueOnObject(target, propertyName, rawValue);
         if (!ReferenceEquals(result, target))
             parent.SetValue(result);
