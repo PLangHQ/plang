@@ -25,19 +25,16 @@ public class TypeEntityHomeTests
 
     [Test] public async Task DataType_OnStampedData_ResolvesViaAppTypeIndexer()
     {
-        // Use a 1:1 primitive (guid) with no @this wrapper to avoid the
-        // name/@this-class duality: scalars-as-native gives text/number/datetime/
-        // date/time/bool/duration all a domain wrapper, so "bool" now resolves to
-        // app.type.bool.@this (legitimately different ClrType than System.Boolean
-        // depending on the door used). guid has no wrapper, so the registry door
-        // and the value door agree.
+        // Every scalar is an item now (text/number/datetime/.../guid all have a
+        // `: item` wrapper), so the value door's ClrType is the wrapper class while
+        // the registry door's ClrType is the bare CLR type — a legitimate
+        // name/@this duality. The stable identity a stamped Data resolves by is the
+        // NAME, so that is what the app.Type indexer round-trips on.
         await using var app = new PLangEngine("/test");
-        // guid has no `: item` wrapper, so it cannot ride a Data<T> — carry it on a bare Data;
-        // the Type is still inferred 1:1 from the CLR value, which is what this test compares.
         var d = new global::app.data.@this("", System.Guid.NewGuid()) { Context = app.User.Context };
         var fromRegistry = app.Type[d.Type!.Name];
         fromRegistry.Context = app.User.Context;
-        await Assert.That(d.Type.ClrType).IsEqualTo(fromRegistry.ClrType);
+        await Assert.That(d.Type.Name).IsEqualTo(fromRegistry.Name);
     }
 
     [Test] public async Task TypeEntity_LivesAt_TypeNamespace_NotAppDataNamespace()

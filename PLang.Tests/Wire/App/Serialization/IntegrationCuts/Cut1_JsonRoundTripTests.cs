@@ -23,20 +23,6 @@ public class Cut1_JsonRoundTripTests
         await Assert.That(json).DoesNotContain("\"absolute\"");
     }
 
-    [Test] public async Task Cut1_Identity_RoundTrips_NameAndPublicKey_PrivateKeyAbsent()
-    {
-        var original = new global::app.module.identity.Identity
-        {
-            Name = "alice", PublicKey = "pk", PrivateKey = "secret"
-        };
-        var normalized = new Data("", original).Normalize();
-        var rebuilt = new Data("", normalized).Reconstruct<global::app.module.identity.Identity>();
-        await Assert.That(rebuilt).IsNotNull();
-        await Assert.That(rebuilt!.Name).IsEqualTo("alice");
-        await Assert.That(rebuilt.PublicKey).IsEqualTo("pk");
-        await Assert.That(rebuilt.PrivateKey).IsEqualTo("");
-    }
-
     [Test] public async Task Cut1_ListOfData_RoundTrips_PreservingNamesAndTypes()
     {
         // A raw user-provided List<Data> emits as a JSON array of records

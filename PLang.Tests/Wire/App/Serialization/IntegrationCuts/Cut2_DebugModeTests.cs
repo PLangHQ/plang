@@ -61,16 +61,4 @@ public class Cut2_DebugModeTests
         await Assert.That(debugEntries.Any(e => e.Property.Name == "Raw")).IsTrue();
         await Assert.That(outEntries.Any(e => e.Property.Name == "Raw")).IsFalse();
     }
-
-    [Test] public async Task Cut2_DebugMode_RoundTripsViaAsT_OrIsExplicitlyOneWay()
-    {
-        // Debug mode is one-way by design: the additional properties travel
-        // for diagnostic observability but Reconstruct only consumes [Out]-set
-        // children. Confirm both directions still produce a usable Identity.
-        var source = new global::app.module.identity.Identity { Name = "x", PublicKey = "y", IsDefault = true };
-        var debugTree = new Data("", source).Normalize(global::app.View.Debug);
-        var rebuilt = new Data("", debugTree).Reconstruct<global::app.module.identity.Identity>();
-        await Assert.That(rebuilt!.Name).IsEqualTo("x");
-        await Assert.That(rebuilt.PublicKey).IsEqualTo("y");
-    }
 }

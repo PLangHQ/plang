@@ -261,7 +261,16 @@ public partial class @this
                         "NormalizeGetterThrew", ex);
                 }
 
-                built.Set(Entry(name, NormalizeValue(raw, mode, visited, depth + 1, types: types)));
+                try
+                {
+                    built.Set(Entry(name, NormalizeValue(raw, mode, visited, depth + 1, types: types)));
+                }
+                catch (NormalizeException ex) when (ex.Key == "NormalizeCycleDetected")
+                {
+                    throw new NormalizeException(
+                        $"{obj.GetType().Name}.{entry.Property.Name} → {ex.Message}",
+                        "NormalizeCycleDetected", ex);
+                }
             }
 
             return built;

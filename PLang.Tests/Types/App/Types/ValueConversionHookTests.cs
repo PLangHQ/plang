@@ -115,7 +115,7 @@ public class ValueConversionHookTests
         await Assert.That(v!.Name).IsEqualTo("MyGoal");
     }
 
-    // ---- Each hook also reachable through the infra door (the Data.As<T> path) ----
+    // ---- Each hook also reachable through the infra door (the Type.Convert → Clr<T> path) ----
 
     [Test]
     public async Task InfraDoor_ReachesEveryHook_FromClrTarget()
@@ -152,9 +152,10 @@ public class ValueConversionHookTests
         await Assert.That((await app.Type.Convert("true", typeof(bool), ctx).Value())?.ToString()).IsEqualTo("true");
 
         var g = System.Guid.NewGuid();
-        await Assert.That(global::app.type.item.@this.Lower<object>(await app.Type.Convert(g.ToString(), typeof(System.Guid), ctx).Value())).IsEqualTo(g);
+        // guid/enum are items now — only .Clr<T> (via Lower<T>) yields the raw CLR value.
+        await Assert.That(global::app.type.item.@this.Lower<System.Guid>(await app.Type.Convert(g.ToString(), typeof(System.Guid), ctx).Value())).IsEqualTo(g);
 
-        await Assert.That(global::app.type.item.@this.Lower<object>(await app.Type.Convert("Monday", typeof(System.DayOfWeek), ctx).Value())).IsEqualTo(System.DayOfWeek.Monday);
+        await Assert.That(global::app.type.item.@this.Lower<System.DayOfWeek>(await app.Type.Convert("Monday", typeof(System.DayOfWeek), ctx).Value())).IsEqualTo(System.DayOfWeek.Monday);
     }
 
     // ---- Plumbing fallback — a hook-less type, non-json source ----

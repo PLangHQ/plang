@@ -1395,3 +1395,15 @@ value renders itself via `item.Write`. Two jobs remain before the file can go:
    catalog `Renderers` property. The static `serializer/<fmt>.cs` Write methods
    (dead once nothing discovers them) go too; KEEP their Read methods (the reader
    registry still needs them).
+
+## 2026-06-15 — DateTime→DateTimeOffset offset policy should be runtime config
+When a C# `System.DateTime` lifts to the `datetime` item (it's backed by
+`DateTimeOffset`), the conversion `new DateTimeOffset(dt)` (`app/type/datetime/this.Convert.cs`)
+applies the **machine-local offset** for a `DateTimeKind.Unspecified`/`Local` value.
+That is nondeterministic across machines — it affects signed-data canonicalization
+(two signers hash different offsets for the same wall-clock DateTime).
+Make the offset policy a **runtime config** so the user decides
+(Unspecified → UTC, vs Unspecified → machine-local). We should pick the better
+**default** when we implement it (UTC is the safer default for reproducible/signed
+data). Context: surfaced during the clr-removal work when `datetime` was given
+ownership of plain `DateTime` (`app/type/datetime/this.Owns.cs`).

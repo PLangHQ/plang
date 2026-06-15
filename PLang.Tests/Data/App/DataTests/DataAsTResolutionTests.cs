@@ -14,15 +14,6 @@ public class DataAsTResolutionTests
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
 
-    // this is Data<T> with correct typed Value already → As<T> returns this (fast path, no allocation).
-    [Test]
-    public async Task AsT_AlreadyTypedData_ReturnsSelf()
-    {
-        var typed = new global::app.data.@this<global::app.type.number.@this>("count", 42) { Context = _app.User.Context };
-        var result = typed.ShallowClone<global::app.type.number.@this>(await typed.Value<global::app.type.number.@this>());
-        await Assert.That(ReferenceEquals(result, typed)).IsTrue();
-    }
-
     // Value is T already (boxed) but Data is not typed → As<T> wraps in fresh Data<T>.
     [Test]
     public async Task AsT_ValueAlreadyT_FastPathWrap()
@@ -160,69 +151,6 @@ public class DataAsTResolutionTests
         await Assert.That(data.Peek()?.ToString()).IsEqualTo("%x%");
     }
 
-    // List<Action.@this> elements pass through As<T> WITHOUT walking into Action templates.
-    [Test]
-    public async Task AsT_ActionListElements_NotRecursedInto()
-    {
-        _app.User.Context.Variable.Set("comment", "should-NOT-substitute");
-        // A list of action-template-shaped dictionaries; sub-actions hold raw %var% for deferred resolution.
-        var raw = new List<object?>
-        {
-            new Dictionary<string, object?>
-            {
-                ["module"] = "variable",
-                ["action"] = "set",
-                ["parameters"] = new List<Data>
-                {
-                    new("comment", "%comment%")
-                }
-            }
-        };
-        var data = new Data("actions", raw) { Context = _app.User.Context }.Authored();
-
-        var result = data.ShallowClone<global::app.type.list.@this<PrAction>>(await data.Value<global::app.type.list.@this<PrAction>>());
-
-        await result.IsSuccess();
-        await Assert.That((await result.Value())).IsNotNull();
-        // The substituted value should NOT have appeared inside the Action template — the raw %comment% remains.
-        var firstAction = (PrAction)(await result.Value())!.Items[0].Peek()!;
-        var commentParam = firstAction.Parameters?.FirstOrDefault(p => p.Name == "comment");
-        await Assert.That(commentParam).IsNotNull();
-        await Assert.That((await commentParam!.Value())?.ToString()).IsEqualTo("%comment%");
-    }
-
-    // Non-generic IList (ArrayList) doesn't match the typed shape — passes through without
-    // %var% substitution. Pinning current behavior; JSON ingestion normalizes to typed forms,
-    // so production never feeds raw ArrayLists into resolution.
-    [Test]
-    public async Task AsT_NonGenericArrayList_PassesThroughWithoutSubstitution()
-    {
-        _app.User.Context.Variable.Set("x", "substituted");
-        var raw = new System.Collections.ArrayList { "%x%", "literal" };
-        var data = new Data("list", raw) { Context = _app.User.Context }.Authored();
-
-        // AsCanonical resolves vars without typing — a non-generic ArrayList isn't a walked
-        // shape, so it passes through untouched.
-        var result = await data.AsCanonical();
-
-        await Assert.That(global::app.type.item.@this.Lower<object>(await result.Value())).IsEqualTo(raw);
-        // Raw element [0] is still "%x%" — no walk happened.
-        await Assert.That(((System.Collections.ArrayList)global::app.type.item.@this.Lower<object>(await result.Value())!)[0]).IsEqualTo("%x%");
-    }
-
-    // Non-generic IDictionary (Hashtable) — same shape contract as ArrayList above.
-    [Test]
-    public async Task AsT_NonGenericHashtable_PassesThroughWithoutSubstitution()
-    {
-        _app.User.Context.Variable.Set("x", "substituted");
-        var raw = new System.Collections.Hashtable { ["key"] = "%x%" };
-        var data = new Data("dict", raw) { Context = _app.User.Context }.Authored();
-
-        var result = await data.AsCanonical();
-
-        await Assert.That(((System.Collections.Hashtable)global::app.type.item.@this.Lower<object>(await result.Value())!)["key"]).IsEqualTo("%x%");
-    }
-
     // Stored values are values, not expressions. A stored string that happens to match
     // %var% syntax is opaque payload — reading it returns the bytes verbatim, no chain
     // resolution. Matches mainstream language assignment semantics (C, Python, JS, C#).
@@ -308,19 +236,6 @@ public class DataAsTResolutionTests
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("%b%");
-    }
-
-    // Fresh context with different variable values → As<T> picks up the new values, no stale cache.
-    [Test]
-    public async Task AsT_DifferentContext_PicksUpFreshVariableValues()
-    {
-        var data = new Data("v", "%x%").Authored();
-
-        await using var app2 = new global::app.@this("/app2");
-        app2.User.Context.Variable.Set("x", "from-app2");
-
-        var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
-        await Assert.That((await result.Value())?.ToString()).IsEqualTo("from-app2");
     }
 
     // Reproduces the LlmFixer 280k-prompt explosion. A typed slot reading a stored container

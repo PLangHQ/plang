@@ -155,7 +155,7 @@ public class TypeMappingDictConversionTests
     }
 
     // JsonObject → typed class. `set ... type=json` mints Data<JsonNode>; downstream handlers
-    // read .As<TypedClass>() and the conversion must work. JsonObject implements
+    // read it as a typed class (via Clr<TypedClass>()) and the conversion must work. JsonObject implements
     // IDictionary<string, JsonNode?>, NOT IDictionary<string, object?>, so it slips past the
     // dict-to-class arm and lands in the JSON-roundtrip arm. Without JsonNode there, this fails.
     [Test]

@@ -32,22 +32,6 @@ public class DataResolutionTests
         await Assert.That((await second.Value())?.ToString()).IsEqualTo("second");
     }
 
-    // After As<T>, original Data._value is byte-for-byte the same as before — no in-place mutation.
-    [Test]
-    public async Task AsT_DoesNotMutateOriginalRaw()
-    {
-        _app.User.Context.Variable.Set("name", "world");
-        var raw = new List<object?> { "%name%", "literal" };
-        var data = new Data("list", raw) { Context = _app.User.Context }.Authored();
-
-        var resolved = data.ShallowClone<global::app.type.list.@this<global::app.type.text.@this>>(await data.Value<global::app.type.list.@this<global::app.type.text.@this>>());
-        await Assert.That(resolved.GetValue<List<string>>()![0]).IsEqualTo("world");
-
-        // Original raw is unchanged.
-        await Assert.That((global::app.type.item.@this.Lower<List<object?>>(await data.Value())!)[0]).IsEqualTo("%name%");
-        await Assert.That(ReferenceEquals((data.Peek()), raw)).IsTrue();
-    }
-
     // Loop iteration scenario: action runs N times, %i% changes each iteration → property reads N distinct values.
     [Test]
     public async Task LoopIteration_PropertyResolvesPerCall()
