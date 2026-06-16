@@ -3,7 +3,10 @@
 **Status:** supersedes the v15 "remove `clr` → hard error" decision and the
 `external` deferral. Settled with Ingi 2026-06-16 after his gut flagged
 "itemizing the runtime objects" as over-engineering, and refined the same day to
-"a C# object is just an `item`".
+"a C# object is just an `item`". **Architect-reviewed** (`host-carrier-review.md`,
+HEAD `805699509`); this rev folds in the four findings — `kind` rule corrected to
+`@this`/namespace-tail, navigation reframed as a repair (already broken on HEAD),
+inventory 7→10, cycle guard + the write-authority open decision.
 
 ## The decision in one line
 
@@ -47,11 +50,12 @@ object except through the carrier's own door or the explicit `.Clr<T>()` exit.
    becomes a real item (it Lifts on the way back). Deep paths
    (`%!callStack.Current.Caller.Tags.owner%`) just recurse the carrier.
 
-2. **write** — reflect-set **iff the property has a setter**. No setter → the
-   write declines (returns false; the caller surfaces the failure). Read-only
-   vs writable is **not a map we author** — it is inherited from the C# shape.
-   `CallStack.Current` is `{ get; }`, so it is read-only, full stop;
-   `App.Serializer` is writable iff it is `{ get; set; }`.
+2. **write** *(DEFERRED — a later, gated step; see "Decision" below)* — reflect-set
+   **iff the property has a setter**. No setter → the write declines (returns
+   false; the caller surfaces the failure). Read-only vs writable is **not a map
+   we author** — it is inherited from the C# shape. `CallStack.Current` is
+   `{ get; }`, so it is read-only, full stop; `App.Serializer` is writable iff it
+   is `{ get; set; }`.
 
 3. **serialize** — the carrier's wire form = reflect its carried object's
    `[Out]` properties into the writer (the property bag). This **is** the
@@ -109,11 +113,20 @@ non-.NET PLang runtime. Two cases, two granularities:
   *Not* `AssemblyQualifiedName` — that pins assembly + version and would churn on
   every bump; `FullName` is the version-independent mapping key.
 
-**Discriminator: the type registry.** A type **registered** as a known PLang type
-→ use its registry name (canonical short). **Not registered** → external → its
-`FullName`. (Impl note: this needs the runtime handle types registered with their
-short names, or a namespace-tail fallback for the `@this`-named infra types so
-`app.@this` reads as `app`, not `@this`.)
+**Discriminator: the `@this`/namespace convention — NOT the registry.**
+(Architect-corrected, verified against HEAD.) The runtime handle types are *not*
+registered (no `[PlangType]`), and routing through `App.Type.Name` falls back to
+`type.Name` → `"@this"` for our `@this`-named classes — so every handle would
+read `kind="@this"`, all indistinguishable. The handles follow
+`app.<concept>.@this`, so **namespace-tail gives the right short name for free**
+(`item.@this.NamespaceTail`, already exists): `app.@this` → `app`,
+`app.callstack.@this` → `callstack`. So the rule is:
+
+- carried type is an `@this`-convention type → `kind = NamespaceTail(clrType)`;
+- otherwise (a genuine external POCO — not `@this`-named, so its namespace tail
+  would be wrong: `MyCompany.Models.Customer` → `Models`) → `kind = clrType.FullName`.
+
+Do **not** route this through `App.Type.Name` — it yields `"@this"`.
 
 The **leaf rule** (see the flow) keeps this safe: the carrier only ever holds the
 *structural* foreign objects. The instant navigation reaches a value a PLang
@@ -193,9 +206,14 @@ The fix:
 
 1. **Own navigate** — add the carrier's reflect-get + re-wrap (move the host
    reflection out of the generic `Object` navigator and into the carrier).
-2. **Own write** — add reflect-set-if-setter; decline otherwise.
+2. **Own write** *(DEFERRED — later step, gated)* — reflect-set-if-setter,
+   decline otherwise. Does **not** ship in the first landing; needs the actor
+   permission gate first (see "Decision — reflect-write is deferred").
 3. **Own serialize** — `Write(IWriter)` reflects `[Out]` props instead of
-   throwing.
+   throwing. **Must carry a cycle/identity guard** — the `[Out]` graph is deeply
+   cyclic (`app → CallStack → Action → Step → Goal → app`); `[Out]` narrows but
+   does not break cycles. Use a reference-equality visited set, the same guard
+   `Data.Normalize` already runs.
 4. **Close the box** — `Peek()` returns the carrier itself; the only raw-object
    door is `.Clr<T>()` (leaf actions only). Then nothing in any relay layer can
    branch on the carried value — the `is clr` smell cannot recur.
@@ -203,9 +221,11 @@ The fix:
    `_declaredStrict` (schema-layer transitional state the comments already mark
    as dying).
 6. **Fix `Mint()` to stamp `item` + kind** — today it puts the carried type's
-   name in the *type name*; instead set `type` = `item` (the apex) and `kind` per
-   the rule above (registry short name for runtime types, else `FullName`).
-   Mirrors `number` stamping its precision as `kind`. See "Type identity" above.
+   name in the *type name*; instead set `type` = `item` (the apex) and
+   `kind = NamespaceTail(clrType)` for `@this`-convention types, else
+   `clrType.FullName`. **Do not route through `App.Type.Name`** — it falls back to
+   `type.Name` = `"@this"` for our handles. Mirrors `number` stamping its
+   precision as `kind`. See "Type identity" above.
 
 ### `Peek` / `Value` vs `Mint` — three questions, don't conflate
 
@@ -252,17 +272,26 @@ reaches a user is `kind` — and that's mechanical: registry short name, else
 **The decisive finding: not one production reach-in reads a live foreign
 object.** Every `is clr { Value: … }` branch reads *parked data* (a nested
 `Data`, a raw `JsonElement`, a raw container). The genuine host use — the
-`%!...%` runtime handles — navigates through the generic reflection navigator
-(`variable/navigator/Object.cs`, reflects over `Peek()`) and branches on `is clr`
-**nowhere**. So closing the box does not touch runtime-handle navigation at all.
+`%!...%` runtime handles — branches on `is clr` **nowhere**; it goes through the
+generic reflection navigator (`variable/navigator/Object.cs`).
+
+**Correction (architect, verified):** that navigator reflects over
+`await data.Value()`, **not** `Peek()` — and a carrier's `Value()` returns the
+carrier *itself* (it doesn't override the door), so reflection runs on the
+wrapper (`Value`/`Context`) and never reaches the host. So **host navigation is
+already broken on HEAD** (`ContextVar_AppProperty_AccessibleViaDotNotation` fails:
+`!app.Name` → `"!app"`; regressed by the door-resolution commit `c3910993a` that
+flipped `data.Value` → `await data.Value()`). This flips the framing below:
+carrier-owns-navigate is a **repair**, not a way to preserve a working path.
 
 ### A. Construction sites — KEEP (carrier is correct here)
 - `data/this.cs:252` — Lift fallback `new clr(v)` (returns the fixed carrier)
 - `data/this.cs:548` — `SetValueDirect` `new clr(value)`
 
-### B. Open-box reach-ins (7) — all read PARKED DATA, not host objects
-Group by carried shape; each shape should land as a real item at Lift, after
-which the reach-in is dead code and gets deleted:
+### B. Open-box reach-ins (10) — all read PARKED DATA, not host objects
+(Architect re-scan: was 7, three were missed — `http/code/Default.cs` was wholly
+unlisted, plus two more.) Group by carried shape; each shape should land as a
+real item at Lift, after which the reach-in is dead code and gets deleted:
 - **nested `Data`** (the Data-in-Data / SetValueDirect courier debt):
   - `data/this.Navigation.cs:291` — `clr { Value: @this dataVal }`
   - `llm/code/OpenAi.cs:951` — `clr { Value: data.@this d }`
@@ -271,10 +300,13 @@ which the reach-in is dead code and gets deleted:
   - `test/discover.cs:294` — `clr { Value: JsonElement }` (goal-name read)
 - **raw container** (Lift already narrows these to native dict/list, so likely
   near-dead already):
-  - `data/this.cs:500-503` — `clr { Value: IDictionary/IList }` (StampedForm)
+  - `data/this.cs:500-503` — `case clr c when c.Value is IDictionary/IList` (StampedForm)
   - `llm/query.cs:33` — `clr { Value: IList }` (Messages validation)
+  - `llm/code/OpenAi.cs:1032` — `clr { Value: Dictionary<string,object?> }` ← was missed
+  - `http/code/Default.cs:951` — `clr { Value: Dictionary or JsonElement }` ← whole file was missed
+  - `test/discover.cs:299` — `clr { Value: IDictionary }` ← was missed
 - **raw `string`**:
-  - `data/this.cs:491-494` — `clr { Value: string }` (StampedForm template scan)
+  - `data/this.cs:491-494` — `case clr ct when ct.Value is string` (StampedForm template scan)
 
 ### C. Courier-label cruft (5) — DELETE with `_declared`/`Labeled`
 All in `type/this.cs` `Judge`: `:451, :452, :464, :482, :483`
@@ -294,24 +326,28 @@ at Lift → their reach-ins die → delete them. Plus delete the courier-label s
 (C). After that, the carrier holds *only* genuine host objects and `Peek()` can
 return self.
 
-**The one navigator change (open design point — see below).** There are *no
-per-call-site* changes: nothing branches on `is clr` to navigate runtime handles
-today. But there is exactly **one** localized change, because closing the box and
-keeping navigation working are coupled. Today the generic `Object` navigator
-reflects over `Peek()`, which works only because the box is open (Peek hands out
-the host object). Once `Peek() => self`, the host reflection has to come from
-somewhere else. Two coherent options:
+**The one navigator change — a repair, not an open call.** There are *no
+per-call-site* changes: nothing branches on `is clr` to navigate runtime handles.
+And — per the correction above — host navigation is **already broken** on HEAD,
+because the generic `Object` navigator reflects over `Value()` (which returns the
+carrier wrapper), not the host. So **carrier-owns-navigate is the fix:** put the
+host-unwrap on the one type that wraps — `clr` overrides the navigation hook to
+reflect-get/-set over its `_value`; the generic `Object` navigator keeps serving
+items that *are* their own object (`error`, domain values, where the item IS the
+object and reflection over it is correct). The earlier "option 2 (navigator uses
+the exit door)" is dropped: it only looked competitive under the false premise
+that navigation works today.
 
-- **(1) Carrier owns navigate** (the OBP-clean choice, and what the fix list
-  above assumes): the reflect-get/-set moves onto `clr`; the generic `Object`
-  navigator steps aside for / delegates to `clr`. Behavior lives on the element.
-- **(2) Navigator uses the exit door**: the generic `Object` navigator stays the
-  reflector but, for a `clr`, reflects over `value.Clr<object>()` instead of
-  `Peek()`. Smaller diff, but reflection-over-host stays in a generic relay
-  rather than on the element.
+## Decision — reflect-write is deferred (Ingi, 2026-06-16)
 
-This is the one genuinely open call in the spec. The fix list takes option (1);
-flag it for the architect.
+**Ship read + serialize now; defer reflect-write and its authorization gate to a
+separate later step.** Navigate-**read** is already gated for untrusted input
+(`skipInfrastructure` keeps `%!app.AbsolutePath%` literal — `SecurityFixTests`),
+so read is safe to land. Reflect-**write** mutating the live singleton
+(`set %!app.serializer% = "json"`) is a new capability that PLang must route
+through the actor permission model like every other capability — so it does not
+ship until that gate is designed. The first landing is the **repair**
+(navigate-read) + **snapshot** (serialize); write comes later, gated.
 
 ## Out of scope (explicitly deferred, unchanged)
 
