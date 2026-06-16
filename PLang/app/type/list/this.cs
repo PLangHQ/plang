@@ -144,6 +144,15 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         }
     }
 
+    /// <summary>Iterates as (index, element) pairs — the list owns how it iterates.</summary>
+    public override System.Collections.Generic.IEnumerable<(Data key, Data value)>
+        EnumerateItems(global::app.actor.context.@this? context)
+    {
+        int i = 0;
+        foreach (var item in Items)
+            yield return (new Data("", i++) { Context = context }, item);
+    }
+
     // IListLeaf — a list dissolves into its container list: its leaves are this list's
     // flattened items. (The mutation-addressing helper Locate still resolves to the
     // concrete list, since editing a nested element needs the mutable surface.)

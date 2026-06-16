@@ -83,6 +83,20 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         => System.Threading.Tasks.ValueTask.FromResult(global::app.data.@this.NotFound(key));
 
     /// <summary>
+    /// Iteration as <c>(key, value)</c> pairs — the value owns how it iterates,
+    /// the courier (<c>Data.EnumerateItems</c>) only delegates here. A leaf is a
+    /// single value: <c>foreach</c> over it yields it once (a scalar is itself;
+    /// text refuses to iterate as characters). Collections (<c>dict</c>,
+    /// <c>list</c>, <c>table</c>) override to yield their elements.
+    /// </summary>
+    public virtual System.Collections.Generic.IEnumerable<(global::app.data.@this key, global::app.data.@this value)>
+        EnumerateItems(global::app.actor.context.@this? context)
+    {
+        yield return (new global::app.data.@this("", 0) { Context = context },
+                      new global::app.data.@this("", this) { Context = context });
+    }
+
+    /// <summary>
     /// Whether the holding <c>Data</c> may keep (rebind to) <see cref="Value"/>'s
     /// answer. True when the answer depends on nothing but the value itself
     /// (parse). False when the answer depends on outside state (a template

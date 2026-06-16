@@ -287,42 +287,29 @@ public abstract class @this : IAsyncDisposable, IDisposable
 
     /// <summary>
     /// Stamps a value-typed payload — <see cref="Mime"/> names a value, not the
-    /// plang container. Text-shaped Mimes keep the raw as a decoded string
-    /// (Decision 3 — no utf-8 re-encode tax on the common path); binary Mimes
-    /// keep the <c>byte[]</c>.
+    /// plang container. Content off I/O is raw bytes: the source holds the
+    /// <c>byte[]</c> typed <c>binary</c> + the kind, and the kind's reader decodes
+    /// on access (json→dict, jpg→image, md→text). No eager bytes-vs-string split.
     /// </summary>
     private global::app.data.@this StampValue(byte[] raw)
     {
         var context = Actor?.Context;
-        var (type, binary) = StampType(context);
-        object value = binary ? raw : ResolveEncoding().GetString(raw);
-        return global::app.data.@this.FromRaw(value, type, context, Name);
+        return global::app.data.@this.FromRaw(raw, StampType(context), context, Name);
     }
 
     /// <summary>
-    /// The <c>{type, kind}</c> the channel's <see cref="Mime"/> stamps, plus
-    /// whether the source form is binary. <c>text/plain</c> (and an unset Mime)
-    /// is <c>{text, null}</c> — text with no specific encoding;
-    /// <c>application/octet-stream</c> and any unknown Mime is <c>{bytes, null}</c>
-    /// — opaque bytes that ride raw until cast. Everything else routes through
-    /// the shape-based <see cref="app.format.list.@this.TypeFromMime"/>.
+    /// The <c>{binary, kind}</c> the channel's <see cref="Mime"/> stamps. Content
+    /// off I/O is raw bytes — it IS binary; the mime's subtype is the kind (the
+    /// decode hint). octet-stream / unset Mime → <c>binary</c> with no kind.
+    /// Everything else routes through <see cref="app.format.list.@this.TypeFromMime"/>.
     /// </summary>
-    private (global::app.type.@this type, bool binary) StampType(global::app.actor.context.@this? context)
+    private global::app.type.@this StampType(global::app.actor.context.@this? context)
     {
-        var mime = Mime ?? "";
-        if (string.IsNullOrEmpty(mime) || mime.Equals("text/plain", System.StringComparison.OrdinalIgnoreCase))
-            return (global::app.type.@this.Create("text", null, context: context), false);
-        if (mime.Equals("application/octet-stream", System.StringComparison.OrdinalIgnoreCase))
-            return (global::app.type.@this.Create("bytes", null, context: context), true);
-
-        var t = Channels?.App?.Format?.TypeFromMime(mime) ?? global::app.type.@this.Null;
-        if (t.IsNull)
-            return (global::app.type.@this.Create("bytes", null, context: context), true);
-        return (t, IsBinaryShape(t.Name));
+        var t = Channels?.App?.Format?.TypeFromMime(Mime ?? "")
+                ?? global::app.type.@this.Create("binary", null, context: context);
+        t.Context = context;
+        return t;
     }
-
-    private static bool IsBinaryShape(string name) =>
-        name is "image" or "audio" or "video" or "bytes";
 
     /// <summary>
     /// Resolves the channel's <see cref="Encoding"/> name to a real

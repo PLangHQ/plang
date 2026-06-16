@@ -582,67 +582,13 @@ public partial class @this
     [JsonIgnore]
     public string? Kind => _type?.Mint().Kind;
 
-    // Strings are atomic in plang, never IEnumerable<char>. Private to the
-    // transitional raw-infra arms of EnumerateItems — the native dict/list
-    // arms are the real iteration surface (the collection types own
-    // iteration; text refuses by not implementing IEnumerable).
-    private static bool IsPlangIterable(object? value) =>
-        value is System.Collections.IEnumerable && value is not string;
-
     /// <summary>
     /// Enumerates as (key, value) Data pairs. Data owns the knowledge of how to iterate:
     /// dictionaries yield (dictKey, dictValue), lists yield (index, element),
     /// single values yield (0, value). All results are Data — callers never see raw objects.
     /// </summary>
     public IEnumerable<(@this key, @this value)> EnumerateItems()
-    {
-        var v = Peek();
-        if (v is app.type.dict.@this nativeDict)
-        {
-            foreach (var entry in nativeDict.Entries)
-                yield return (new @this("", entry.Name) { Context = _context }, entry);
-            yield break;
-        }
-
-        if (v is app.type.list.@this nativeList)
-        {
-            int li = 0;
-            foreach (var item in nativeList.Items)
-                yield return (new @this("", li++) { Context = _context }, item);
-            yield break;
-        }
-
-        // Raw infra collections (the native dict/list above handle value-flow). An
-        // element already a Data passes through; a bare value is wrapped. WrapItem
-        // is gone — native collections hold Data, so there's no general raw→Data path.
-        if (v is IDictionary<string, object?> typedDict)
-        {
-            foreach (var kvp in typedDict)
-                yield return (new @this("", kvp.Key) { Context = _context },
-                              kvp.Value is @this kd ? kd : new @this("", kvp.Value) { Context = _context });
-            yield break;
-        }
-
-        if (v is System.Collections.IDictionary untypedDict)
-        {
-            foreach (System.Collections.DictionaryEntry entry in untypedDict)
-                yield return (new @this("", entry.Key) { Context = _context },
-                              entry.Value is @this ed ? ed : new @this("", entry.Value) { Context = _context });
-            yield break;
-        }
-
-        int index = 0;
-        if (IsPlangIterable(v))
-        {
-            foreach (var item in (System.Collections.IEnumerable)v!)
-                yield return (new @this("", index++) { Context = _context },
-                              item is @this id ? id : new @this("", item) { Context = _context });
-            yield break;
-        }
-
-        if (v != null)
-            yield return (new @this("", 0) { Context = _context }, this);
-    }
+        => _type.EnumerateItems(_context);
 
     /// <summary>Emptiness — the binding answers for absence (uninitialized,
     /// no value); the INSTANCE answers for its own emptiness (text knows

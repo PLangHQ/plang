@@ -438,40 +438,23 @@ public sealed class @this
     /// </summary>
     public global::app.type.@this TypeFromMime(string mime)
     {
-        if (string.IsNullOrWhiteSpace(mime) || mime == "application/octet-stream")
-            return global::app.type.@this.Null;
+        if (string.IsNullOrWhiteSpace(mime) || mime.Equals("application/octet-stream", System.StringComparison.OrdinalIgnoreCase))
+            return new global::app.type.@this("binary");
 
-        // Tabular shape wins before the generic name derivation — csv/xlsx name
-        // the value `table` (a grid), not `text`/`object`.
+        // Content off I/O is raw bytes — it IS binary; the mime's subtype is the
+        // decode hint (the kind). On access the kind names the type the bytes
+        // narrow to (json→item, jpg→image, csv→table) and that type's reader does
+        // the parse — nothing is eagerly typed image/table/item here.
+        //
+        // The tabular map survives only to translate the verbose spreadsheet mimes
+        // (application/vnd.ms-excel → xls) into clean kinds the subtype split can't.
         if (_tabularMimeToKind.TryGetValue(mime, out var tableKind))
-            return new global::app.type.@this("table", tableKind);
+            return new global::app.type.@this("binary", tableKind);
 
         var slash = mime.IndexOf('/');
-        var family = slash > 0 ? mime[..slash].ToLowerInvariant() : "";
         var subtype = slash >= 0 && slash < mime.Length - 1 ? mime[(slash + 1)..] : null;
         var kind = subtype != null ? CanonicaliseKind(subtype) : null;
-
-        // Media families name the value by family — the read lifts the bytes to
-        // a typed value (image today; audio/video are bytes-backed blobs that
-        // still read cleaner as their family than as "bytes").
-        if (family is "image" or "audio" or "video")
-            return new global::app.type.@this(family, kind);
-
-        // Everything else: name = the CLR type the content materializes to,
-        // canonicalised (string→text, object→object, byte[]→bytes). A non-
-        // primitive CLR type keeps its own PLang name (e.g. application/plang-goal
-        // → `goal`) rather than collapsing to `object` — its reader materializes
-        // toward that name. Unknown/no CLR type falls back to `object`.
-        var clr = global::app.type.catalog.@this.ClrFromMime(mime);
-        var name = clr != null
-            ? (global::app.type.catalog.@this.GetPrimitiveName(clr)
-               ?? global::app.type.catalog.@this.GetTypeNameStatic(clr))
-            : "object";
-        // Born-native: aim for a strong value type, else `item`. A json (CLR object) payload
-        // is a value of unknown shape — that IS `item`, not the legacy CLR `object`. So a
-        // read of `.json` stamps {item, json}, not {object, json}.
-        if (string.Equals(name, "object", System.StringComparison.OrdinalIgnoreCase)) name = "item";
-        return new global::app.type.@this(name, kind);
+        return new global::app.type.@this("binary", kind);
     }
 
     /// <summary>

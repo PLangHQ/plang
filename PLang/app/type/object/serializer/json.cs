@@ -21,7 +21,10 @@ public static class json
 
     public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
     {
-        if (raw is not string s) return raw;
+        // Content off I/O rides as binary bytes; the json is text — decode through
+        // the text type (it owns bytes→string), then parse.
+        if (raw is not (string or byte[])) return raw;
+        string s = new global::app.type.text.@this(raw).ToString();
         if (string.IsNullOrEmpty(s)) return null;
         // Narrow the JsonElement graph to born-native items via the json entry
         // parse — leaving JsonElement values would re-serialize as their

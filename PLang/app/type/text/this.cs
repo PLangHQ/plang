@@ -109,6 +109,21 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (canTemplate && HasHoles) Template = "plang";
     }
 
+    /// <summary>
+    /// Construction from a raw form — a string is the value as-is; binary bytes
+    /// off I/O decode as UTF-8. Text is only ever born from a string, so this is
+    /// the one place bytes become that string (a reader handed raw stream bytes
+    /// reaches the text here). <paramref name="canTemplate"/> as above.
+    /// </summary>
+    public @this(object raw, bool canTemplate = false)
+        : this(raw switch
+        {
+            byte[] b => System.Text.Encoding.UTF8.GetString(b),
+            string s => s,
+            _ => raw?.ToString() ?? string.Empty,
+        }, canTemplate)
+    { }
+
     // INBOUND only — the entry lift (`.Ok("x")` constructs). The outbound
     // implicit (text → string) is gone: every site was a silent CLR exit;
     // a reader names the string face (`.Value`) at a real .NET edge.

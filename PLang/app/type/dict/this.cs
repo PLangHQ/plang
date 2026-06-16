@@ -125,6 +125,14 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         }
     }
 
+    /// <summary>Iterates as (key-name, value) pairs — the dict owns how it iterates.</summary>
+    public override System.Collections.Generic.IEnumerable<(Data key, Data value)>
+        EnumerateItems(global::app.actor.context.@this? context)
+    {
+        foreach (var entry in Entries)
+            yield return (new Data("", entry.Name) { Context = context }, entry);
+    }
+
     /// <summary>True when <paramref name="key"/> is present (distinct from a present key whose value is null).</summary>
     public bool Has(string key) => _map.ContainsKey(key);
 

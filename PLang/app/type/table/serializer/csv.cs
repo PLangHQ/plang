@@ -14,13 +14,16 @@ public static class csv
 {
     public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
     {
-        if (raw is not string text) return raw;
+        // Content off I/O rides as binary bytes; the csv is text — decode through
+        // the text type (it owns bytes→string), then parse.
+        if (raw is not (string or byte[])) return raw;
+        string text = new global::app.type.text.@this(raw).ToString();
         if (string.IsNullOrEmpty(text)) return new global::app.type.table.@this(System.Array.Empty<string>(),
-            System.Array.Empty<IReadOnlyDictionary<string, object?>>());
+            System.Array.Empty<IReadOnlyDictionary<string, object?>>(), kind);
 
         List<List<string>> records = Parse(text);
         if (records.Count == 0) return new global::app.type.table.@this(System.Array.Empty<string>(),
-            System.Array.Empty<IReadOnlyDictionary<string, object?>>());
+            System.Array.Empty<IReadOnlyDictionary<string, object?>>(), kind);
 
         List<string> headers = records[0];
         var rows = new List<IReadOnlyDictionary<string, object?>>(records.Count - 1);
@@ -32,7 +35,7 @@ public static class csv
                 row[headers[c]] = c < cells.Count ? cells[c] : null;
             rows.Add(row);
         }
-        return new global::app.type.table.@this(headers, rows);
+        return new global::app.type.table.@this(headers, rows, kind);
     }
 
     // RFC-4180 record/field split. A field is quoted when it opens with '"';
