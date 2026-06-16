@@ -65,6 +65,25 @@ public class HostCarrierKindTests
     }
 
     [Test]
+    public async Task Carrier_ClonesByReference_DoesNotDeepWalkAppGraph()
+    {
+        // A user var bound to a live host handle, then the store is cloned (a
+        // normal goal-call clone). The carrier must share the live app by
+        // reference — deep-cloning it would walk the whole App graph and overflow.
+        var vars = _app.User.Context.Variable;
+        var appData = await (await vars.Get("!app")).Value();   // materialised clr carrier
+        var holder = new global::app.data.@this("x");
+        holder.SetValueDirect(appData);
+        holder.Context = _app.User.Context;
+
+        var clone = holder.Clone();   // must not overflow
+
+        // The carrier is shared by reference, not deep-copied — same live instance
+        // behind both Data. (Reaching this line at all proves no stack overflow.)
+        await Assert.That(clone.Peek()).IsSameReferenceAs(holder.Peek());
+    }
+
+    [Test]
     public async Task Leaf_PeelsOffToRealItem_NotOpaqueItem()
     {
         // !app.Name is a string — it lands as the text family's item, never an item carrier.

@@ -1049,7 +1049,7 @@ public partial class @this
             Warnings = Warnings != null ? new List<Info>(Warnings) : null,
             Properties = Properties.Clone()
         };
-        clone._type = _type.DeepClone();
+        clone._type = _type.Clone();
         clone.Context = _context;
         return clone;
     }

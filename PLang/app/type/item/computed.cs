@@ -41,6 +41,12 @@ public sealed class computed : @this, module.IContext
     /// current computation (no I/O, no parse; the factory is a pure read).</summary>
     public override object? Peek() => Compute().Peek();
 
+    /// <summary>Shared by reference — a computed cell recomputes fresh at each
+    /// use, so there is nothing to copy, and its Context (held to lift the
+    /// result with kind resolution) points back into the App graph; deep-cloning
+    /// would walk the whole runtime and overflow.</summary>
+    protected internal override @this Clone() => this;
+
     public override bool IsTruthy() => Compute().IsTruthy();
     public override string ToString() => Compute().ToString() ?? "";
 

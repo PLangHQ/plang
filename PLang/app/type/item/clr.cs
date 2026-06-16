@@ -67,6 +67,12 @@ public sealed class clr : @this, module.IContext
     /// .NET-boundary code), so no relay layer can reach past the carrier.</summary>
     public override object? Peek() => this;
 
+    /// <summary>Shared by reference — the carrier holds a LIVE host object (the
+    /// app singleton, a CallStack), and the value model says binding it shares
+    /// the same live thing. Deep-cloning would walk the whole App graph (and the
+    /// Context that rides for kind resolution) and overflow.</summary>
+    protected internal override @this Clone() => this;
+
     /// <summary>
     /// A clr carrier has no wire form of its own — it is the rung-2 "I don't
     /// have a plang type" parking spot, and per the type rule a value that

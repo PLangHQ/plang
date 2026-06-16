@@ -55,6 +55,13 @@ public sealed class source : @this, module.IContext
         return _raw;
     }
 
+    /// <summary>Shared by reference — a source is immutable (its raw + declared
+    /// judgement are readonly; Ready parses into a NEW instance rather than
+    /// mutating), and it carries a Context that points back into the App graph,
+    /// so a deep clone would walk the whole runtime and could overflow. Sharing
+    /// the instance is safe precisely because nothing mutates it.</summary>
+    protected internal override @this Clone() => this;
+
     /// <summary>
     /// The parse: raw → value via the reader registry for (type, kind), falling
     /// back to the type's own <c>Convert</c> for a string raw. The answer is a

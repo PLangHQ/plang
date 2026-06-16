@@ -1,3 +1,5 @@
+using Force.DeepCloner;
+
 namespace app.type.item;
 
 /// <summary>
@@ -149,6 +151,21 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         // through the registry when a Context is present. Types whose mate is
         // value-derived (number's tower) override.
         => new(NamespaceTail(GetType()));
+
+    /// <summary>
+    /// How this value clones when its holding <c>Data</c> is cloned. The default
+    /// is a structural deep copy (so a cloned dict/list/text mutates
+    /// independently). A value that holds a <em>live or shared</em> reference —
+    /// a host object behind a carrier, a lazy computation, an immutable declared
+    /// source, all of which also carry a <c>Context</c> pointing back into the
+    /// App graph — overrides this to share itself by reference. Deep-cloning
+    /// those would walk the entire runtime (App → CallStack → Context →
+    /// Variables → …) and overflow the stack; reference-sharing is both the
+    /// correct semantics (a carried host IS shared, per the value model) and the
+    /// thing that keeps the clone bounded.
+    /// </summary>
+    protected internal virtual @this Clone()
+        => Force.DeepCloner.DeepClonerExtensions.DeepClone(this);
 
     /// <summary>
     /// Language tag when this value is a builder-authored template — a value
