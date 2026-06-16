@@ -67,6 +67,44 @@ public sealed class clr : @this, module.IContext
             $"clr carrier wrapping '{Value.GetType().FullName}' (declared '{_declared ?? "?"}') reached the wire — "
             + "it has no plang type to render itself. Wrap it in a real item type, or fix the producer that parked it in a clr.");
 
+    /// <summary>
+    /// The carrier owns navigation into its host (behaviour on the element, never
+    /// in a generic relay). A nested Data riding the carrier navigates as the real
+    /// object; otherwise the host's property is reflected and re-wrapped (a nested
+    /// host re-Lifts to a carrier, a scalar to its real item). Absent → NotFound,
+    /// so the caller falls through. The inheritance walk is bottom-up + DeclaredOnly
+    /// so a shadowing derived property wins and GetProperty never throws Ambiguous.
+    /// </summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(
+        global::app.data.@this parent, string key)
+    {
+        if (Value is global::app.data.@this innerData)
+            return await innerData.GetChild(key);
+
+        System.Reflection.PropertyInfo? prop = null;
+        for (var t = Value.GetType(); t != null && prop == null; t = t.BaseType)
+            prop = t.GetProperty(key, System.Reflection.BindingFlags.Public
+                | System.Reflection.BindingFlags.Instance
+                | System.Reflection.BindingFlags.IgnoreCase
+                | System.Reflection.BindingFlags.DeclaredOnly);
+        if (prop == null) return global::app.data.@this.NotFound(key);
+
+        try
+        {
+            var resolved = prop.GetValue(Value);
+            // Relay an already-Data property value rather than re-boxing it (Rule #7).
+            return resolved is global::app.data.@this d
+                ? d
+                : new global::app.data.@this(key, resolved, parent: parent);
+        }
+        catch (System.Reflection.TargetInvocationException ex)
+        {
+            return global::app.data.@this.FromError(new global::app.error.ServiceError(
+                $"Failed to read '{key}': {(ex.InnerException ?? ex).Message}",
+                "NavigationError", 500) { Exception = ex });
+        }
+    }
+
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
 
     public override string ToString() => Value.ToString() ?? "";

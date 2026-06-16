@@ -67,6 +67,20 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual bool Write(string key, object? value) => false;
 
     /// <summary>
+    /// Read counterpart of <see cref="Write(string, object?)"/>: the value
+    /// navigates to its own child by <paramref name="key"/>. <c>dict</c> does
+    /// key-lookup, <c>list</c> index, the foreign-object carrier reflects its
+    /// host — one dispatch, each value owns its body. The default answers
+    /// <c>NotFound</c> (IsInitialized=false), so a value with no key-navigation
+    /// falls through to the binding's remaining resolution (domain items reflect
+    /// themselves via the legacy navigators there; raw stragglers too) until those
+    /// collapse onto this method as well.
+    /// </summary>
+    public virtual System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(
+        global::app.data.@this parent, string key)
+        => System.Threading.Tasks.ValueTask.FromResult(global::app.data.@this.NotFound(key));
+
+    /// <summary>
     /// Whether the holding <c>Data</c> may keep (rebind to) <see cref="Value"/>'s
     /// answer. True when the answer depends on nothing but the value itself
     /// (parse). False when the answer depends on outside state (a template

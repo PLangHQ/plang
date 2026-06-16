@@ -368,6 +368,34 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     }
 
     /// <summary>
+    /// A list owns its child read — intrinsics (count/length, first, last, random,
+    /// numeric index) win; any other key delegates to the first element
+    /// (<c>%addresses.street%</c> → <c>%addresses[0].street%</c>). Elements are
+    /// already Data, so they return directly. Out-of-range / empty → NotFound.
+    /// </summary>
+    public override async System.Threading.Tasks.ValueTask<Data> Navigate(Data parent, string key)
+    {
+        if (string.Equals(key, "count", System.StringComparison.OrdinalIgnoreCase)
+            || string.Equals(key, "length", System.StringComparison.OrdinalIgnoreCase))
+            return new Data(key, Count, parent: parent);
+
+        if (CountRaw == 0) return Data.NotFound(key);
+
+        if (string.Equals(key, "first", System.StringComparison.OrdinalIgnoreCase))
+            return First!;
+        if (string.Equals(key, "last", System.StringComparison.OrdinalIgnoreCase))
+            return Last!;
+        if (string.Equals(key, "random", System.StringComparison.OrdinalIgnoreCase))
+            return At(System.Random.Shared.Next(CountRaw))!;
+
+        if (int.TryParse(key, out var index))
+            return At(index) ?? Data.NotFound(key);
+
+        // Implicit first: %list.street% → %list[0].street%.
+        return await First!.GetChild(key);
+    }
+
+    /// <summary>
     /// The CLR exit door — the list decomposes itself into a raw
     /// <c>List&lt;object?&gt;</c> (each element lowers through its OWN
     /// <see cref="global::app.type.item.@this.Clr{T}"/>, so nested dict/list recurse),

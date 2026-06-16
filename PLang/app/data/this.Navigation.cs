@@ -286,12 +286,15 @@ public partial class @this
         // rather than navigating an Absent value to a generic NotFound.
         if (Error is { Key: "MaterializeFailed" }) return FromError(Error);
 
-        // A nested Data riding the rung-2 carrier (the SetValueDirect courier
-        // debt) — navigate into the inner Data, it's the real object.
-        if (val is global::app.type.item.clr { Value: @this dataVal })
+        // The value navigates itself to the child — dict by key, list by index,
+        // the foreign-object carrier by reflecting its host. A value with no
+        // key-navigation answers NotFound and falls through to the resolution
+        // below (domain items reflect themselves via the legacy navigators; raw
+        // stragglers too) until those collapse onto Navigate as well.
+        if (val != null)
         {
-            var dataChild = await dataVal.GetChildValue(key);
-            if (dataChild.IsInitialized) return dataChild;
+            var owned = await val.Navigate(this, key);
+            if (owned.IsInitialized) return owned;
         }
 
         // Check Data subclass properties (e.g., DynamicData)

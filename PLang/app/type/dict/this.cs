@@ -218,6 +218,21 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return true;
     }
 
+    /// <summary>
+    /// A dict owns its child read — case-insensitive key lookup. A real key wins;
+    /// <c>count</c> is an intrinsic that only answers when no such key exists
+    /// (a literal <c>{count: "x"}</c> reads "x", not the length). Absent → NotFound,
+    /// so the caller falls through.
+    /// </summary>
+    public override System.Threading.Tasks.ValueTask<Data> Navigate(Data parent, string key)
+    {
+        var entry = Get(key);
+        if (entry != null) return new(entry);
+        if (string.Equals(key, "count", System.StringComparison.OrdinalIgnoreCase))
+            return new(new Data(key, Count, parent: parent));
+        return new(Data.NotFound(key));
+    }
+
     // The one mutation seam — last-wins on a duplicate key (json object
     // semantics), order preserved at the position of the first occurrence, and
     // the display casing updated to the latest write (mirrors the prior
