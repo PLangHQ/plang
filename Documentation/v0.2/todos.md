@@ -1115,3 +1115,39 @@ fix rides the archive-as-layer design: archive becomes {@schema:archive, type, v
 schema bytes>} and the layers compose (archive over signature over data). Until then, verify
 whether async DeserializeAsync peels a signature layer correctly — the value-loss may be a
 genuine bug in that path, not only a shape change.
+
+## 2026-06-16 — add `external` carrier + clone-on-write (deferred; lands when a real external-object need appears)
+
+The `clr` class is being removed (it hard-codes ".NET" into PLang's runtime-independent
+type vocabulary — a Rust runtime has no CLR). Today every value in the runtime is, or
+should be, a real `item.@this`, so no external-object carrier is needed yet. When a host
+module genuinely needs to hand PLang an object PLang has no item for, add it back as
+`app.type.item.external` (NOT `clr`) — the runtime-independent name for "a value whose
+type lives outside PLang's vocabulary."
+
+Settled semantics (Ingi, 2026-06-16) for `external` when it lands:
+- **Behaves identically to every other PLang value: immutable + rebind.** No mutate-in-place.
+- **Clone-on-write navigation.** Read `%x.y%` = reflection get on the live host object.
+  Write `%x.y% = 1` = clone the object (stays its real host type, NOT a dict), reflection-set
+  on the clone, rebind the binding to the clone. The dev's original instance is never
+  mutated; aliases never drift. This keeps immutability AND avoids the expensive
+  clr→dict→reserialize round-trip when handing the object back to a host action.
+  - Nested set (`%x.addr.city% = …`) must **path-copy**: clone every level along the path,
+    not just the root — a shallow clone shares sub-objects, so setting a leaf would mutate
+    the shared original. Standard persistent-structure path-copying.
+  - Clone = shallow `MemberwiseClone` (reachable via reflection), reapplied at each path level.
+  - The set target must be writable (setter / reflection-settable init/field) — else a clear
+    error, not a silent no-op. Genuinely uncloneable handles (Stream, native-state wrappers)
+    are the opaque class you never navigate, so clone-on-write doesn't apply to them.
+- **Identity from the host type**, not a stored declared label (the courier/`_declared`
+  machinery does NOT come back — it died with clr).
+- **The invariant that keeps it honest: no code branches on `is external`.** Every consumer
+  reaches values through the uniform door (`Peek()`/`Clr<T>()`/navigate). `external` needs a
+  concrete name only so the type lattice has a bottom rung; nobody should ever say its name.
+- **Why this over POCO→dict:** dict loses the host type and forces a serialize round-trip
+  on host-action interop ("expensive magic"); clone-on-write keeps the real type and is cheap.
+  Why over reflect-into-live-object: that gives foreign objects mutable reference semantics
+  while PLang values are immutable — an unacceptable behavioral split. Clone-on-write makes
+  them behave the same.
+
+Design record: `.bot/compare-redesign/coder/clr-dissolution-design.md` (DECISION 2026-06-16).

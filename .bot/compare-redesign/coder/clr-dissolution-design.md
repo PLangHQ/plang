@@ -4,6 +4,54 @@
 Sibling to `deserialize-flow-design.md`. No code yet — this is the record before
 any of it becomes work.
 
+> **DECISION 2026-06-16 (supersedes the role-by-role disposition below where they
+> conflict).** Discussed with Ingi. Conclusions:
+>
+> 1. **`clr` the class is removed now.** Every value in today's runtime is, or
+>    should be, a real `item.@this`. A non-item reaching the Lift value slot
+>    becomes a **loud producer error** — not a silent fallback.
+> 2. **The foreign-object carrier comes back later as `external`, not `clr`.**
+>    The name `clr` hard-codes ".NET" into PLang's runtime-independent type
+>    vocabulary (a Rust runtime has no CLR). `external` = "a value whose type
+>    lives outside PLang's vocabulary." Deferred until a real host-object need
+>    appears — see `Documentation/v0.2/todos.md` 2026-06-16.
+> 3. **`external` behaves like every PLang value: immutable + rebind, via
+>    clone-on-write.** This REVERSES the "reflect-into-live-object — rejected"
+>    note in Role 1 below. The rejection was of the *dual-representation* case
+>    (a live object AND a drifting dict view). With a single live object and
+>    **clone-on-write** there is no second representation and nothing drifts:
+>    read `%x.y%` = reflection get; write `%x.y% = 1` = clone (stays the real
+>    host type), reflection-set on the clone, rebind. Nested set path-copies.
+>    This beats POCO→dict (which loses the type and forces an expensive
+>    clr→dict→reserialize round-trip on host-action interop) and beats
+>    mutate-in-place (which would give foreign objects reference semantics while
+>    PLang values are immutable — an unacceptable behavioral split).
+> 4. **The courier/declared-label machinery (`_declared`, `_declaredKind`,
+>    compress/signature labels) dies with `clr` and does NOT return on
+>    `external`** — `external` derives identity from the host type.
+> 5. **Invariant: no code branches on `is clr`/`is external`.** Everyone reaches
+>    values through the uniform door (`Peek()`/`Clr<T>()`/navigate). The leaf
+>    needs a concrete name only so the lattice has a bottom rung.
+>
+> Migration buckets (from the live probe, 2026-06-16) to land BEFORE the class is
+> deleted — each as its own item, **shown to Ingi for validation before
+> converting**:
+> - Engine handles surfaced as `%!...%` context variables (`app`/Engine,
+>   CallStack, Channels, Variables, Serializers, actor.context) — they reach Lift
+>   through the `computed` factories (`item/computed.cs` `Compute()` lifts the
+>   factory result). Each becomes an item (or the factory returns one). The bulk.
+> - Plain-data result records → trivial items: `loop` `{itemCount, completed}`,
+>   `builder.warning` `{Action, Message}`.
+> - The `condition.Operator`-in-a-value smell → fix the producer (comparison error
+>   path) so a behavior object never lands in a Data.
+> - Genuinely foreign / test-only (anonymous types, `System.Object`/`Uri`,
+>   `RuntimeAssembly`, test POCOs) → those tests get adjusted (real items/dicts)
+>   or retired with a pointer to the `external` todo, since `external` is deferred.
+>
+> Already done this session: the two dead `clr` read-couriers in `Wire.ReadBody`
+> (declared-typeRef nested-Data arm + nameDiffers declared-build arm) removed —
+> verified dead by mutation probe, zero regressions.
+
 ## The decision (one line)
 
 `app.type.item.clr` is deleted. Every value in a `Data` slot is a real plang
