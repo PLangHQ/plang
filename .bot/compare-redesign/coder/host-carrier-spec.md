@@ -4,9 +4,10 @@
 `external` deferral. Settled with Ingi 2026-06-16 after his gut flagged
 "itemizing the runtime objects" as over-engineering, and refined the same day to
 "a C# object is just an `item`". **Architect-reviewed** (`host-carrier-review.md`,
-HEAD `805699509`); this rev folds in the four findings — `kind` rule corrected to
-`@this`/namespace-tail, navigation reframed as a repair (already broken on HEAD),
-inventory 7→10, cycle guard + the write-authority open decision.
+HEAD `805699509`); this rev folds in the four findings — navigation reframed as a
+repair (already broken on HEAD), inventory 7→10, cycle guard, write deferred. The
+`kind` rule is settled on **declared `[PlangType]` names** (both registry- and
+namespace-tail derivation were shown to fail — see "What goes in `kind`").
 
 ## The decision in one line
 
@@ -113,20 +114,42 @@ non-.NET PLang runtime. Two cases, two granularities:
   *Not* `AssemblyQualifiedName` — that pins assembly + version and would churn on
   every bump; `FullName` is the version-independent mapping key.
 
-**Discriminator: the `@this`/namespace convention — NOT the registry.**
-(Architect-corrected, verified against HEAD.) The runtime handle types are *not*
-registered (no `[PlangType]`), and routing through `App.Type.Name` falls back to
-`type.Name` → `"@this"` for our `@this`-named classes — so every handle would
-read `kind="@this"`, all indistinguishable. The handles follow
-`app.<concept>.@this`, so **namespace-tail gives the right short name for free**
-(`item.@this.NamespaceTail`, already exists): `app.@this` → `app`,
-`app.callstack.@this` → `callstack`. So the rule is:
+**Discriminator: a declared `[PlangType]` name — NOT derivation.** (Settled with
+Ingi after both the registry *and* namespace-tail derivations were shown to fail.)
+The canonical name cannot be *derived* from the CLR type:
 
-- carried type is an `@this`-convention type → `kind = NamespaceTail(clrType)`;
-- otherwise (a genuine external POCO — not `@this`-named, so its namespace tail
-  would be wrong: `MyCompany.Models.Customer` → `Models`) → `kind = clrType.FullName`.
+| handle | CLR type | namespace-tail gives | `type.Name` gives |
+|--------|----------|----------------------|-------------------|
+| `!app` | `app.@this` | `app` ✓ | `@this` |
+| `!callStack` | `app.callstack.@this` | `callstack` ✓ | `@this` |
+| `!variables` | `app.variable.list.@this` | **`list`** ✗ | `@this` |
+| `!channels` | `app.channel.list.@this` | **`list`** ✗ (collides w/ variables) | `@this` |
+| `!trace` | `app.error.trail.@this` | **`trail`** ✗ (≠ trace) | `@this` |
+| `!test` | `app.tester.@this` | **`tester`** ✗ (≠ test) | `@this` |
 
-Do **not** route this through `App.Type.Name` — it yields `"@this"`.
+The collection handles are `X.list.@this` → both collapse to `list`; `trace`/`test`
+don't even match their namespace. No namespace rule recovers the right name, and
+`type.Name` is always `"@this"`. So the name must be **declared**, via the
+existing `PlangTypeAttribute` the registry already reads:
+
+```
+[PlangType("app")]       on app.@this
+[PlangType("variable")]  on app.variable.list.@this
+[PlangType("channel")]   on app.channel.list.@this
+[PlangType("trace")]     on app.error.trail.@this
+…one per concept handle (~8)
+```
+
+The rule, clean and unambiguous:
+
+- carried type has a `[PlangType]` / registry name → `kind` = that declared name
+  (canonical short — and exactly the cross-runtime vocabulary another-language
+  runtime maps by);
+- no declaration (any third-party POCO) → `kind` = `clrType.FullName`.
+
+(This refines the architect's Fix 1: the **registry was the right discriminator**;
+it was just *empty*. The fix is to populate it on the concept types, not to derive
+from the namespace — derivation is what breaks, per the table above.)
 
 The **leaf rule** (see the flow) keeps this safe: the carrier only ever holds the
 *structural* foreign objects. The instant navigation reaches a value a PLang
@@ -220,12 +243,15 @@ The fix:
 5. **Delete the courier-label cruft** — `_declared` / `Labeled` /
    `_declaredStrict` (schema-layer transitional state the comments already mark
    as dying).
-6. **Fix `Mint()` to stamp `item` + kind** — today it puts the carried type's
+6. **Declare `[PlangType]` on the concept handle types** (~8: `app`, `context`,
+   `variable`, `channel`, `callstack`, `trace`, `test`, `serializers`). This is
+   the canonical-name source AND the discriminator. Required because the name
+   can't be derived (see "What goes in `kind`").
+7. **Fix `Mint()` to stamp `item` + kind** — today it puts the carried type's
    name in the *type name*; instead set `type` = `item` (the apex) and
-   `kind = NamespaceTail(clrType)` for `@this`-convention types, else
-   `clrType.FullName`. **Do not route through `App.Type.Name`** — it falls back to
-   `type.Name` = `"@this"` for our handles. Mirrors `number` stamping its
-   precision as `kind`. See "Type identity" above.
+   `kind` = the type's registered `[PlangType]` name when it has one, else
+   `clrType.FullName`. Mirrors `number` stamping its precision as `kind`.
+   See "Type identity" above.
 
 ### `Peek` / `Value` vs `Mint` — three questions, don't conflate
 
