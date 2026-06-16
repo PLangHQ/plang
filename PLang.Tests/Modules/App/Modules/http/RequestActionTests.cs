@@ -187,7 +187,8 @@ public class RequestActionTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Peek()?.ToString()).Contains("<root>");
+        // Content off I/O rides as binary + kind; the value door narrows it (application/xml → text).
+        await Assert.That((await result.Value())?.ToString()).Contains("<root>");
     }
 
     [Test]
@@ -202,7 +203,8 @@ public class RequestActionTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Peek()?.ToString()).IsEqualTo("Hello World");
+        // Content off I/O rides as binary + kind; the value door narrows it (text/plain → text).
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello World");
     }
 
     [Test]

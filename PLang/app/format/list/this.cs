@@ -348,15 +348,22 @@ public sealed class @this
     private readonly object _derivedLock = new();
     private readonly HashSet<string> _allKinds;
     private readonly ConcurrentDictionary<string, string> _mimeToKind;
+    // MIME → its canonical kind (the primary file-extension form). This is what a
+    // value of that MIME narrows by, so it must round-trip back to a type: the
+    // subtype alone does not (text/plain's subtype is "plain", which names no type;
+    // its extension "txt" does → text). First extension registered for a MIME wins.
+    private readonly ConcurrentDictionary<string, string> _mimeToExtension;
 
     public @this()
     {
         _allKinds = new HashSet<string>(_extensionToKind.Values, StringComparer.OrdinalIgnoreCase);
         _mimeToKind = new ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        _mimeToExtension = new ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var kvp in _extensionToMime)
         {
             if (_extensionToKind.TryGetValue(kvp.Key, out var kind))
                 _mimeToKind.TryAdd(kvp.Value, kind);
+            _mimeToExtension.TryAdd(kvp.Value, kvp.Key.TrimStart('.'));
         }
     }
 
@@ -451,9 +458,12 @@ public sealed class @this
         if (_tabularMimeToKind.TryGetValue(mime, out var tableKind))
             return new global::app.type.@this("binary", tableKind);
 
+        // Kind = the MIME's canonical extension when known (text/plain → txt, so
+        // it narrows back to text), else the canonicalised subtype.
         var slash = mime.IndexOf('/');
         var subtype = slash >= 0 && slash < mime.Length - 1 ? mime[(slash + 1)..] : null;
-        var kind = subtype != null ? CanonicaliseKind(subtype) : null;
+        var kind = _mimeToExtension.TryGetValue(mime, out var ext) ? ext
+            : subtype != null ? CanonicaliseKind(subtype) : null;
         return new global::app.type.@this("binary", kind);
     }
 
