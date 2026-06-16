@@ -1,28 +1,37 @@
-# Host-carrier spec — fix `clr`, don't delete it
+# Foreign-object carrier spec — a C# object is an `item`
 
 **Status:** supersedes the v15 "remove `clr` → hard error" decision and the
 `external` deferral. Settled with Ingi 2026-06-16 after his gut flagged
-"itemizing the engine" as over-engineering.
+"itemizing the runtime objects" as over-engineering, and refined the same day to
+"a C# object is just an `item`".
 
 ## The decision in one line
 
-The engine handles (`%!app%`, `%!callStack%`, `%!serializers%`, `%!channels%`,
-`%!variables%`, `%!context%`, `%!trace%`, `%!test%`) are **windows into the live
-host**, not PLang values. They ride a **single closed foreign-object carrier**
-that reflect-reads, reflect-writes-where-a-setter-exists, and reflect-serializes.
-That carrier is `clr`, **fixed** — not deleted, not turned into per-class items.
+A C# object PLang can't narrow is just an **`item`** — the apex of the value
+lattice (≈ C# `object`), the most un-narrowed value there is. The runtime handles
+(`%!app%`, `%!callStack%`, `%!serializers%`, `%!channels%`, `%!variables%`,
+`%!context%`, `%!trace%`, `%!test%`) are such objects: they report **`type=item`**
+(with `kind` naming the C# type) and ride a **single closed carrier** that
+reflect-reads, reflect-writes-where-a-setter-exists, and reflect-serializes.
+There is **no `host`/`external`/`clr` family** in a plang dev's vocabulary — the
+type is `item`. The carrier class (today named `clr`) is invisible plumbing.
 
-## Why this, not items
+## Why one carrier reporting `item`, not a dedicated item type per class
 
-`item.@this` is the value lattice: truthiness, narrowing, `ICreate`
-("construct yourself from a value"), a leaf/wire form, immutable-rebind. None
-of that means anything for an `Engine` or a `CallStack`. Forcing them into
-`item` only to pass `Lift` makes a live system pretend to be a value. That
-mismatch is the over-engineering. A host object needs three reflective
-operations, nothing more.
+The over-engineering was making each runtime class its **own narrowed item type** —
+a per-class subclass carrying the full value-lattice apparatus (truthiness,
+`ICreate` "construct yourself from a value", a leaf/wire form, immutable-rebind).
+None of that means anything for an `app` or a `CallStack`, and you'd write
+dozens of them.
 
-Items stay for genuine PLang values (text, number, dict, list, …) and the
-domain entities that really are values (`goal`, `step`, `error` — already
+A foreign object isn't a *narrowed* value — it's the **un-narrowed apex**, which
+`item` already is (its own definition: *"the apex ≈ C# `object`, the un-narrowed
+type tag a value carries before it is examined"*). So one carrier holds any
+foreign object and reports `item`. It doesn't pretend to be a `number`-like value
+type; it's honestly "the thing we haven't narrowed."
+
+Dedicated item types stay for genuine PLang values (`text`, `number`, `dict`, …)
+and the domain entities that really are values (`goal`, `step`, `error` — already
 items; leave them).
 
 ## What the carrier is
@@ -46,7 +55,7 @@ object except through the carrier's own door or the explicit `.Clr<T>()` exit.
 
 3. **serialize** — the carrier's wire form = reflect its carried object's
    `[Out]` properties into the writer (the property bag). This **is** the
-   snapshot: `write %!app% to %snapshot%` walks the engine's `[Out]` graph.
+   snapshot: `write %!app% to %snapshot%` walks the app's `[Out]` graph.
    Replaces today's "clr has no wire form → throws".
 
 ### Behavior trace
@@ -54,57 +63,69 @@ object except through the carrier's own door or the explicit `.Clr<T>()` exit.
 ```
 - read %!app.callStack.Current.Depth%      / navigate("Current")→carrier; navigate("Depth")→number
 - set  %!app.callStack.Current.Depth% = 5  / write: Depth has no setter → declines (correct)
-- set  %!app.serializer% = "json"          / write: setter exists → reflect-set the LIVE engine
+- set  %!app.serializer% = "json"          / write: setter exists → reflect-set the LIVE app
 - write %!app% to %snapshot%               / Write(IWriter): reflect [Out] graph → property bag
 ```
 
-Note: writes **mutate the live engine in place** — you are configuring the real
+Note: writes **mutate the live app in place** — you are configuring the real
 running system, not a clone. (This is the deliberate divergence from the old
 `external` clone-on-write note, which only ever applied to genuinely foreign
 *data* you are handed and choose to treat as an immutable value — a separate,
-later concern, not the engine handles.)
+later concern, not the runtime handles.)
 
 ### Reference semantics
 
-`set %x% = %!app%` binds `%x%` to the **same live Engine** (the carrier holds a
-reference to the singleton). `%x.callstack%` reads the same running engine as
+`set %x% = %!app%` binds `%x%` to the **same live app** (the carrier holds a
+reference to the singleton). `%x.callstack%` reads the same running app as
 `%!app.callstack%` — identical current state. To freeze a point-in-time copy you
 **serialize** (the snapshot), you do not bind.
 
-## Type identity — family in `type`, specific in `kind`
+## Type identity — `type=item`, the C# type in `kind`
 
-A host value reports its type the **same way `number` does** — a family name in
-`type`, the specialization in `kind`:
+A foreign value reports the **apex** in `type` and its C# identity in `kind`:
 
 ```
 %n%                              → type=number, kind=int
-%!app%                           → type=host,   kind=app
-%!app.callstack%                 → type=host,   kind=callstack
+%!app%                           → type=item,   kind=app
+%!app.callstack%                 → type=item,   kind=callstack
 %!app.callstack.current.depth%   → type=number, kind=int     ← leaf has a real plang type
 ```
 
-This **dissolves the "uniform vs transparent name" question — you get both**:
+`type=item` is honest: it means "the apex; not narrowed to anything more
+specific" — exactly what a C# object PLang doesn't own *is*. `kind` carries the
+specific identity (the same shape as `number`/`int`: type = the value's lattice
+position, kind = the specialization).
 
-- the **family** (`type=host`) is uniform → you can always tell "this is a host
-  object" with one check, and it is honest that the value has no dedicated type;
-- the **kind** (`=app`) is transparent → the specific host identity is right
-  there for display and for `is`-style checks.
+### What goes in `kind` — a cross-runtime mapping key
 
-The leaf rule (see the flow below) is what makes this safe: the carrier only
-ever holds the *structural* host objects. The instant navigation reaches a value
-a PLang family owns (an `int`, a `string`), it peels off into that real
-item — so `%!app.callstack.current.depth%` is a `number`, never a `host`, never
-a raw `int`.
+`kind` is the C# type's identity, and it doubles as a **mapping key** for a
+non-.NET PLang runtime. Two cases, two granularities:
 
-**Family name:** use `host` (or `external`). `clr` hard-codes ".NET", and since
-the family is now the *visible* `type` a plang dev reads, it must be
-runtime-neutral. Decide before stamping it.
+- **PLang runtime's own objects** (`app`, `callstack`, `variable`, …) — these are
+  PLang *vocabulary*; another-language runtime has its own equivalents and maps
+  by the **canonical short name**. `kind=app`, `kind=callstack`.
+- **External / anybody's custom type** — no shared contract, so the honest
+  identity is the **`FullName`** (`MyCompany.Models.Customer`), globally unique.
+  *Not* `AssemblyQualifiedName` — that pins assembly + version and would churn on
+  every bump; `FullName` is the version-independent mapping key.
 
-## How a C# object becomes a `clr` (the Lift flow)
+**Discriminator: the type registry.** A type **registered** as a known PLang type
+→ use its registry name (canonical short). **Not registered** → external → its
+`FullName`. (Impl note: this needs the runtime handle types registered with their
+short names, or a namespace-tail fallback for the `@this`-named infra types so
+`app.@this` reads as `app`, not `@this`.)
+
+The **leaf rule** (see the flow) keeps this safe: the carrier only ever holds the
+*structural* foreign objects. The instant navigation reaches a value a PLang
+family owns (an `int`, a `string`), it peels off into that real item — so
+`%!app.callstack.current.depth%` is a `number`, never an opaque item, never a
+raw `int`.
+
+## How a C# object becomes an `item` (the Lift flow)
 
 `Lift` (`data/this.cs:194`) is the one chokepoint every slot write passes
-through. A C# object becomes a `host`/`clr` item only by **falling through every
-"does a PLang family own this?" gate** to the fallback:
+through. A C# object becomes a carrier (reporting `item`) only by **falling
+through every "does a PLang family own this?" gate** to the fallback:
 
 ```
   A C# object needs to enter a value slot
@@ -132,27 +153,27 @@ through. A C# object becomes a `host`/`clr` item only by **falling through every
                 │ no
                 ▼
    ╔══════════════════════════════════════════════╗
-   ║  FALLBACK: nothing in PLang owns this object  ║──▶ host/clr item
-   ║         new clr(value)                        ║    type = host   (family)
-   ║   (the Engine, CallStack, a 3rd-party POCO)   ║    kind = the C# type's name
+   ║  FALLBACK: nothing in PLang owns this object  ║──▶ the carrier, reporting `item`
+   ║         new clr(value)                        ║    type = item   (the apex)
+   ║   (app, CallStack, a 3rd-party POCO)   ║    kind = registry short name, else FullName
    ╚══════════════════════════════════════════════╝
 ```
 
 The concrete `%!app%` path, and how a leaf peels off one gate earlier:
 
 ```
-%!app%   = DynamicData, factory = () => app   (the live Engine singleton)
+%!app%   = DynamicData, factory = () => app   (the live app singleton)
    │ read → computed.Compute() → Lift(app)
    ▼  app: not null · not item · not Data · not a collection ·
    │       no family owns app.@this · not an enum
-   new clr(app)  →  host item { Value = live Engine }   type=host kind=app
+   new clr(app)  →  carrier { Value = live app }   type=item kind=app
 
-%!app%            → Lift(Engine)    → host   (no family owns it)
-   .callstack     → Lift(CallStack) → host   (no family owns it)
+%!app%            → Lift(app)    → item (no family owns it)
+   .callstack     → Lift(CallStack) → item (no family owns it)
    .current.depth → Lift(int 3)     → number (the int family owns it) ✔
 ```
 
-So `clr` is purely the **"no PLang family claimed it"** terminal of `Lift`:
+So the carrier is purely the **"no PLang family claimed it"** terminal of `Lift`:
 structural host objects stop there; every scalar with a real type peels off into
 its own item one gate earlier.
 
@@ -163,7 +184,7 @@ Today `clr` is **half-built** — its own comment admits the door was left open:
 raw-shape consumers remain."* Two concrete defects fall out of that:
 
 - **Defect 1 — open box.** `Peek()` returns the raw carried object, so the
-  engine reaches *past* the carrier and branches on `is clr` / `.Value is X`
+  code reaches *past* the carrier and branches on `is clr` / `.Value is X`
   (OBP smell #7). The leak is the half-migration, not the concept.
 - **Defect 2 — no wire form.** `Write(IWriter)` throws, which blocks every
   snapshot.
@@ -181,10 +202,10 @@ The fix:
 5. **Delete the courier-label cruft** — `_declared` / `Labeled` /
    `_declaredStrict` (schema-layer transitional state the comments already mark
    as dying).
-6. **Fix `Mint()` to stamp family + kind** — today it puts the carried type's
-   name in the *type name*; instead set `type` = the family (`host`), `kind` =
-   the carried type's name (mirrors `number` stamping its precision as `kind`).
-   See "Type identity" above.
+6. **Fix `Mint()` to stamp `item` + kind** — today it puts the carried type's
+   name in the *type name*; instead set `type` = `item` (the apex) and `kind` per
+   the rule above (registry short name for runtime types, else `FullName`).
+   Mirrors `number` stamping its precision as `kind`. See "Type identity" above.
 
 ### `Peek` / `Value` vs `Mint` — three questions, don't conflate
 
@@ -219,20 +240,21 @@ outside leaf files.
 
 ## Naming
 
-The C# *class* name (`clr`) is cosmetic and can be renamed last. But the
-**family `type` name a plang dev reads** is not cosmetic — it is now visible
-(`type=host`, per "Type identity"), so it must be runtime-neutral (`host` /
-`external`, never `clr`). Decide the family name before it is stamped into
-`Mint()`; the class rename can follow whenever.
+There is **no user-visible foreign type name to bikeshed** — the type is `item`.
+The earlier `host`/`external`/`clr` debate is moot: that was a *family* name, and
+there is no family. The C# *carrier class* (today `clr`) is pure plumbing a plang
+dev never sees, so rename it freely whenever (or leave it). The only naming that
+reaches a user is `kind` — and that's mechanical: registry short name, else
+`FullName`.
 
 ## Consumer inventory (scan 2026-06-16) — sizing the close-the-box work
 
-**The decisive finding: not one production reach-in reads a live host/engine
+**The decisive finding: not one production reach-in reads a live foreign
 object.** Every `is clr { Value: … }` branch reads *parked data* (a nested
 `Data`, a raw `JsonElement`, a raw container). The genuine host use — the
-`%!...%` engine handles — navigates through the generic reflection navigator
+`%!...%` runtime handles — navigates through the generic reflection navigator
 (`variable/navigator/Object.cs`, reflects over `Peek()`) and branches on `is clr`
-**nowhere**. So closing the box does not touch engine navigation at all.
+**nowhere**. So closing the box does not touch runtime-handle navigation at all.
 
 ### A. Construction sites — KEEP (carrier is correct here)
 - `data/this.cs:252` — Lift fallback `new clr(v)` (returns the fixed carrier)
@@ -273,7 +295,7 @@ at Lift → their reach-ins die → delete them. Plus delete the courier-label s
 return self.
 
 **The one navigator change (open design point — see below).** There are *no
-per-call-site* changes: nothing branches on `is clr` to navigate engine handles
+per-call-site* changes: nothing branches on `is clr` to navigate runtime handles
 today. But there is exactly **one** localized change, because closing the box and
 keeping navigation working are coupled. Today the generic `Object` navigator
 reflects over `Peek()`, which works only because the box is open (Peek hands out
@@ -294,20 +316,21 @@ flag it for the architect.
 ## Out of scope (explicitly deferred, unchanged)
 
 - Clone-on-write value semantics for handed-in foreign *data* (the original
-  `external` story). The engine handles do **not** want this — they mutate in
+  `external` story). The runtime handles do **not** want this — they mutate in
   place. Revisit only if/when a real "treat this host POCO as an immutable
   value" need appears.
 
 ## Migration impact vs v15 plan
 
 - **Dropped from v15:** "flip Lift fallback to a hard error", "delete `clr`",
-  and the whole bucket-1 "engine handles → items" conversion. The Lift fallback
+  and the whole bucket-1 "runtime handles → items" conversion. The Lift fallback
   **stays** and returns the (fixed) carrier.
 - **Kept from v15:** buckets 2 & 3 already done (loop result → dict,
   builder.warning → dict, operator test sites → string). Those were genuine
   plain-data values wrongly parked in `clr`; making them dicts was correct
   regardless.
-- **Still true:** a non-item *value* must never ride a value slot — but a host
-  object is not a value; it rides the carrier, which is itself an item-shaped
-  closed box that renders itself. No producer parks raw data in the carrier;
-  the carrier is reserved for live host objects with no plang type.
+- **Still true:** every value slot holds an `item` — and the carrier *is* an
+  `item` (the apex, `type=item`), so the invariant holds without exception. A raw
+  C# object never rides a slot bare; it rides the carrier. No producer parks plain
+  *data* in the carrier — plain data has a real type (`dict`/`list`/`text`/…); the
+  carrier is reserved for live foreign objects with no plang type of their own.
