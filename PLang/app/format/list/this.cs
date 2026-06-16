@@ -16,6 +16,10 @@ public sealed class @this
     {
         // plang
         [".goal"] = "plang",
+        // A .pr is plang's compiled goal — kind `pr` narrows to the `goal` type,
+        // so a lazily-read .pr (binary/pr off I/O) materialises through the goal
+        // reader instead of resting as bytes.
+        [".pr"] = "goal",
 
         // video
         [".mp4"] = "video",

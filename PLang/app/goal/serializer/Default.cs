@@ -19,8 +19,11 @@ public static class Default
 {
     public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
     {
-        if (raw is not string text) return raw;
-        if (string.IsNullOrEmpty(text) || ctx.Context == null) return null;
+        // Content off I/O rides as binary bytes; the .pr is json text — decode
+        // through the text type (it owns bytes→string), then reconstruct the Goal.
+        if (raw is not (string or byte[]) || ctx.Context == null) return raw;
+        string text = new global::app.type.text.@this(raw).ToString();
+        if (string.IsNullOrEmpty(text)) return null;
         return ctx.Context.App.Type.Convert(text, typeof(global::app.goal.@this), ctx.Context).Peek();
     }
 }
