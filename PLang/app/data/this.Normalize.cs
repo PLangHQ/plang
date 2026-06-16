@@ -85,6 +85,14 @@ public partial class @this
         if (value is app.type.item.@this leaf && leaf.IsLeaf)
             return value;
 
+        // The foreign-object carrier is a CLOSED box (its Peek answers self), so
+        // reflect its HOST, never the carrier's own (Value/Context) surface. Unwrap
+        // to the host and normalize that — the host's [Out] property bag. (When the
+        // serializer fully collapses onto item.Write this branch dissolves, like the
+        // navigator chain did.)
+        if (value is app.type.item.clr carrier)
+            return NormalizeValue(carrier.Clr<object>(), mode, visited, depth, types);
+
         // Nested Data: normalize its Value into a fresh tree. Do NOT mutate the
         // source Data — outbound serialization must be observation-only or
         // domain values (Identity etc.) get replaced with their property-bag

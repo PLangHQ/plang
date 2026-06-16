@@ -50,19 +50,11 @@ public class Cut1_JsonRoundTripTests
     // the value slot, status/headers/duration in Properties), so its round-trip
     // is the generic Data round-trip covered elsewhere, not a record wire shape.
 
-    [Test] public async Task Cut1_NestedDataTree_RoundTrips_DepthN()
-    {
-        var inner = new Data("inner", "leaf");
-        var middle = new Data("middle");
-        middle.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
-        var outer = new Data("outer");
-        outer.SetValueDirect(middle);
-        var json = NormalizePipelineHelper.SerializeRecord(outer);
-        // nesting depth survives via the record envelopes; the binding labels
-        // are off the outbound wire at every depth
-        await Assert.That(json).DoesNotContain("\"name\":");
-        await Assert.That(json).Contains("leaf");
-    }
+    // Retired: nested Data (Data-as-a-value) is not a supported shape — Lift forbids
+    // it ("a bare Data may not be stored as a value") and only the SetValueDirect
+    // courier bypass ever produced it. The host-carrier closure (clr.Peek answers
+    // self) ends the courier's transparent unwrap. Removing the wire-read courier
+    // (Wire.cs SetValueDirect-of-Data) is tracked debt.
 
     [Test] public async Task Cut1_DataWithProperties_Sidecar_RoundTripsAsNestedObject()
     {

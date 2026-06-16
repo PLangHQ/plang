@@ -49,11 +49,11 @@ public sealed class clr : @this, module.IContext
     internal clr Labeled(string typeName, string? kind, bool strict = false)
         => new(Value, typeName, kind, strict) { Context = Context };
 
-    /// <summary>In memory now = the carried CLR object — existing consumers
-    /// keep seeing the real instance, not the carrier. (Tightening the door to
-    /// answer the carrier itself is deferred — too many raw-shape consumers
-    /// remain; tracked on the slice list.)</summary>
-    public override object? Peek() => Value;
+    /// <summary>In memory now = the carrier itself (a closed box, like every
+    /// other item whose <c>Peek</c> answers self). The carried host object is
+    /// reachable ONLY through the explicit <c>.Clr&lt;T&gt;()</c> exit (leaf /
+    /// .NET-boundary code), so no relay layer can reach past the carrier.</summary>
+    public override object? Peek() => this;
 
     /// <summary>
     /// A clr carrier has no wire form of its own — it is the rung-2 "I don't
