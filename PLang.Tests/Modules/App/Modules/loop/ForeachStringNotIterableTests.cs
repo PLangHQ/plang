@@ -1,7 +1,6 @@
 using app.actor.context;
 using app;
 using app.variable;
-using LoopResult = global::app.module.loop.type.loop;
 
 namespace PLang.Tests.App.actions.loop;
 
@@ -50,8 +49,8 @@ public class ForeachStringNotIterableTests
         var result = await step.RunAsync(context);
 
         await result.IsSuccess();
-        var loopResult = global::app.type.item.@this.Lower<LoopResult>(await result.Value());
-        await Assert.That(loopResult!.itemCount).IsEqualTo(1);
+        var loopResult = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
+        await Assert.That((long)loopResult!["itemCount"]!).IsEqualTo(1L);
     }
 
     // Body sees the WHOLE string in %item%, not the first char.
@@ -108,8 +107,8 @@ public class ForeachStringNotIterableTests
         var result = await step.RunAsync(context);
 
         await result.IsSuccess();
-        var loopResult = global::app.type.item.@this.Lower<LoopResult>(await result.Value());
-        await Assert.That(loopResult!.itemCount).IsEqualTo(1);
+        var loopResult = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
+        await Assert.That((long)loopResult!["itemCount"]!).IsEqualTo(1L);
         await Assert.That((await context.Variable.GetValue("item"))).IsEqualTo(42);
     }
 }

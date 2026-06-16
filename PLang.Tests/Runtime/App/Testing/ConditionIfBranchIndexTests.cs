@@ -34,7 +34,7 @@ public class ConditionIfBranchIndexTests
             Parameters = new List<Data>
             {
                 new("Left", left),
-                new("Operator", new Operator(op)),
+                new("Operator", op),
                 new("Right", right)
             }
         };
@@ -110,7 +110,7 @@ public class ConditionIfBranchIndexTests
                     Parameters = new List<Data>
                     {
                         new("Left", "%x%"),
-                        new("Operator", new Operator(br.op)),
+                        new("Operator", br.op),
                         new("Right", br.right)
                     }
                 });
@@ -216,7 +216,7 @@ public class ConditionIfBranchIndexTests
             Parameters = new List<Data>
             {
                 new("Left", "hello"),
-                new("Operator", new Operator(">")),
+                new("Operator", ">"),
                 new("Right", new app.type.dict.@this()) // not orderable
             }
         };

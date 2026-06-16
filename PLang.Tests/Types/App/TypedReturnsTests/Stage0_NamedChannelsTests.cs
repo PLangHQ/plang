@@ -1,4 +1,3 @@
-using BuildWarning = global::app.module.builder.warning.@this;
 using NoopChannel = global::app.channel.type.noop.@this;
 
 namespace PLang.Tests.App.TypedReturnsTests;
@@ -85,22 +84,22 @@ public class Stage0_NamedChannelsTests
         await Assert.That(resolved).IsTypeOf<NoopChannel>();
     }
 
-    // BuildWarning is a sealed record carrying (IClass Action, string Message);
-    // record-equality lets consumers de-dup warnings without manual equality plumbing.
+    // A build warning rides as a native dict {action, message}; structural dict
+    // equality lets consumers de-dup warnings without manual equality plumbing.
     [Test]
-    public async Task BuildWarning_RecordShape_CarriesActionAndMessage()
+    public async Task BuildWarning_DictShape_CarriesActionAndMessage()
     {
-        var action = (global::app.module.IClass)new global::app.module.typedreturns.NoopBuild();
-        var w1 = new BuildWarning(action, "duplicate");
-        var w2 = new BuildWarning(action, "duplicate");
+        var w1 = Warning("file.read", "duplicate");
+        var w2 = Warning("file.read", "duplicate");
 
-        await Assert.That(w1.Action).IsEqualTo(action);
-        await Assert.That(w1.Message).IsEqualTo("duplicate");
-        await Assert.That(w1).IsEqualTo(w2)
-            .Because("Record equality lets consumers de-dup identical warnings.");
+        var raw = global::app.type.item.@this.Lower<Dictionary<string, object?>>(w1)!;
+        await Assert.That((string)raw["action"]!).IsEqualTo("file.read");
+        await Assert.That((string)raw["message"]!).IsEqualTo("duplicate");
+        await Assert.That(w1.AreEqual(w2)).IsTrue()
+            .Because("Structural dict equality lets consumers de-dup identical warnings.");
     }
 
-    // Writing a BuildWarning to a registered "builder" channel succeeds (the
+    // Writing a warning dict to a registered "builder" channel succeeds (the
     // dispatch reaches the real channel rather than the no-op fallback). End-to-
     // end serialization round-trip is a separate concern owned by the channel's
     // serializer; here we assert the routing.
@@ -108,8 +107,7 @@ public class Stage0_NamedChannelsTests
     public async Task BuildWarning_WriteToBuilderChannel_SubscriberReceivesPayload()
     {
         RegisterMemoryChannel("builder");
-        var action = (global::app.module.IClass)new global::app.module.typedreturns.NoopBuild();
-        var payload = new BuildWarning(action, "missing file");
+        var payload = Warning("file.read", "missing file");
 
         var writeResult = await Channels.WriteAsync("builder", payload);
         await writeResult.IsSuccess();
@@ -125,11 +123,15 @@ public class Stage0_NamedChannelsTests
         var sink = Channels.Channel("builder");
         await Assert.That(sink).IsTypeOf<NoopChannel>();
 
-        var action = (global::app.module.IClass)new global::app.module.typedreturns.NoopBuild();
-        var result = await sink.WriteAsync(Data.Ok(new BuildWarning(action, "msg")));
+        var result = await sink.WriteAsync(Data.Ok(Warning("file.read", "msg")));
 
         await result.IsSuccess();
     }
+
+    // The build-warning payload shape: a native dict {action, message}, mirroring
+    // what file.read writes to the "builder" channel.
+    private static global::app.type.dict.@this Warning(string action, string message)
+        => new global::app.type.dict.@this().Set("action", action).Set("message", message);
 
     // Two distinct channel names resolve to two distinct channel instances —
     // they are independent registry entries, not aliases. End-to-end isolation

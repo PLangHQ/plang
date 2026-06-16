@@ -108,7 +108,7 @@ public sealed class @this : IAsyncDisposable
     /// when one exists under <paramref name="name"/>; otherwise a process-wide
     /// no-op sink that accepts writes silently. Use this when the caller wants
     /// to write opportunistically without null-checking — e.g.
-    /// <c>IClass.Build()</c> writing a <c>builder.warning.@this</c> to
+    /// <c>IClass.Build()</c> writing a <c>{action, message}</c> warning dict to
     /// <c>"builder"</c> regardless of whether a build is currently active.
     ///
     /// <para>

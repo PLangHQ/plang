@@ -108,7 +108,8 @@ public partial class Read : IContext
     /// only appears at runtime, when examination narrows). Variable references
     /// and unknown extensions yield bare Ok(). A recognised eager
     /// specialisation (image) keeps its structured stamp. A literal path that
-    /// doesn't exist on disk surfaces a BuildWarning on Channel("builder") but
+    /// doesn't exist on disk surfaces a {action, message} warning dict on
+    /// Channel("builder") but
     /// still returns the inferred type — missing files are non-fatal at build
     /// time.
     /// </summary>
@@ -142,8 +143,13 @@ public partial class Read : IContext
             var exists = await p.ExistsAsync();
             if (exists.Success && !await exists.ToBooleanAsync())
             {
-                var warning = new global::app.module.builder.warning.@this(
-                    this, $"file.read: literal path '{raw}' does not exist on disk");
+                // Advisory build warning as a native dict {action, message} —
+                // `action` is the source attribution (the handler reduces to its
+                // own identity; a live handler has no wire form).
+                string source = __action == null ? "" : $"{__action.Module}.{__action.ActionName}";
+                var warning = new global::app.type.dict.@this()
+                    .Set("action", source)
+                    .Set("message", $"file.read: literal path '{raw}' does not exist on disk");
                 await Context.Actor.Channel.Channel("builder").WriteAsync(data.@this.Ok(warning));
             }
         }

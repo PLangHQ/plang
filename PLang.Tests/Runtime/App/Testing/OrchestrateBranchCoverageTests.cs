@@ -75,7 +75,7 @@ public class OrchestrateBranchCoverageTests
         Parameters = new List<Data>
         {
             new("Left", left),
-            new("Operator", new Operator(op)),
+            new("Operator", op),
             new("Right", right)
         }
     };

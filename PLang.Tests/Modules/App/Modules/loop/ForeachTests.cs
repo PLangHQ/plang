@@ -1,7 +1,6 @@
 using app.actor.context;
 using app;
 using app.variable;
-using LoopResult = global::app.module.loop.type.loop;
 
 namespace PLang.Tests.App.actions.loop;
 
@@ -61,9 +60,9 @@ public class ForeachTests
         var result = await action.RunAsync(context);
 
         await result.IsSuccess();
-        var loopResult = global::app.type.item.@this.Lower<LoopResult>(await result.Value());
-        await Assert.That(loopResult!.itemCount).IsEqualTo(0);
-        await Assert.That(loopResult.completed).IsTrue();
+        var loopResult = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
+        await Assert.That((long)loopResult!["itemCount"]!).IsEqualTo(0L);
+        await Assert.That((bool)loopResult["completed"]!).IsTrue();
     }
 
     [Test]
@@ -170,9 +169,9 @@ public class ForeachTests
         var result = await action.RunAsync(context);
 
         await result.IsSuccess();
-        var loopResult = global::app.type.item.@this.Lower<LoopResult>(await result.Value());
-        await Assert.That(loopResult!.itemCount).IsEqualTo(0);
-        await Assert.That(loopResult.completed).IsTrue();
+        var loopResult = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
+        await Assert.That((long)loopResult!["itemCount"]!).IsEqualTo(0L);
+        await Assert.That((bool)loopResult["completed"]!).IsTrue();
     }
 
     [Test]
@@ -190,8 +189,8 @@ public class ForeachTests
         var result = await action.RunAsync(context);
 
         await result.IsSuccess();
-        var loopResult = global::app.type.item.@this.Lower<LoopResult>(await result.Value());
-        await Assert.That(loopResult!.completed).IsFalse();
-        await Assert.That(loopResult.itemCount).IsEqualTo(0);
+        var loopResult = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
+        await Assert.That((bool)loopResult!["completed"]!).IsFalse();
+        await Assert.That((long)loopResult["itemCount"]!).IsEqualTo(0L);
     }
 }

@@ -19,7 +19,7 @@ public partial class Foreach : IContext, IStep
     public async Task<data.@this> Run()
     {
         if (await Collection.Value() == null)
-            return global::app.data.@this.Ok(new type.loop { itemCount = 0, completed = true });
+            return global::app.data.@this.Ok(Result(itemCount: 0, completed: true));
 
         var variableName = (ItemName == null ? null : (await ItemName.Value())?.Name) ?? "item";
         int count = 0;
@@ -31,7 +31,7 @@ public partial class Foreach : IContext, IStep
         foreach (var (key, item) in Collection.EnumerateItems())
         {
             if (Context.CancellationToken.IsCancellationRequested)
-                return global::app.data.@this.Ok(new type.loop { itemCount = count, completed = false });
+                return global::app.data.@this.Ok(Result(count, completed: false));
 
             await Context.Variable.Set(variableName, item);
             // Optional param: absent slots are non-null Uninitialized (null model), so
@@ -48,11 +48,21 @@ public partial class Foreach : IContext, IStep
             count++;
         }
 
-        var loopResult = global::app.data.@this.Ok(new type.loop { itemCount = count, completed = true });
+        var loopResult = global::app.data.@this.Ok(Result(count, completed: true));
         if (bodyActions.Count > 0)
             loopResult.Handled = true;
         return loopResult;
     }
+
+    /// <summary>
+    /// The foreach result as a native <c>dict</c> — <c>itemCount</c> (how many
+    /// items ran) and <c>completed</c> (false when cancelled or returned early).
+    /// A plain-data result, so it rides as a dict, not a dedicated type.
+    /// </summary>
+    private static global::app.type.dict.@this Result(int itemCount, bool completed)
+        => new global::app.type.dict.@this()
+            .Set("itemCount", (long)itemCount)
+            .Set("completed", completed);
 
     /// <summary>
     /// Gets the actions after this foreach in the same step — they form the loop body.
