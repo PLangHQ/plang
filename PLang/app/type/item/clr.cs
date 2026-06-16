@@ -22,6 +22,13 @@ public sealed class clr : @this, module.IContext
     public clr(object value, string? declaredTypeName = null, string? declaredKind = null, bool declaredStrict = false)
     {
         Value = value ?? throw new System.ArgumentNullException(nameof(value));
+        // Nested Data is not a shape: a Data never rides as a value (Lift forbids
+        // it). The carrier is for foreign host objects only — carrying a Data here
+        // is the courier debt, now abolished. Loud on any regression.
+        if (value is global::app.data.@this)
+            throw new System.InvalidOperationException(
+                "A Data may not be carried in a clr — nested Data is not a supported shape. "
+                + "Return the inner value via its own factory, never wrap a Data.");
         _declared = declaredTypeName;
         _declaredKind = declaredKind;
         _declaredStrict = declaredStrict;

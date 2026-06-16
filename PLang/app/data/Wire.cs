@@ -263,19 +263,12 @@ public class Wire : JsonConverter<@this>
                     if (properties != null) lazy.Properties = properties;
                     return lazy;
                 }
-                // The wire reader reconstructs EXACTLY what was written — a
-                // marked inner Data in the value slot (courier/legacy shapes)
-                // rides back in via the explicit no-lift bypass; the seam's
-                // throw is for new construction, not faithful reads.
+                // Nested Data is not a shape — the wire never carries a Data in a
+                // value slot (Lift/clr forbid it). So the reader only builds from a
+                // real value: the declared type owns construction, else the value's
+                // own natural type stands.
                 @this data;
-                if (value is @this innerData)
-                {
-                    // A nested Data in the value slot (the one `@schema:data` slot)
-                    // rides back in as itself — no-lift passthrough.
-                    data = new @this(name, null, typeRef);
-                    data.SetValueDirect(innerData);
-                }
-                else if (typeRef is { IsNull: false } && !typeRef.Polymorphic && typeRef.Context != null)
+                if (typeRef is { IsNull: false } && !typeRef.Polymorphic && typeRef.Context != null)
                 {
                     // The declared TYPE builds the value itself — born at its kind in
                     // one step (5 + {number,int} → number(int)). No lift-then-judge;

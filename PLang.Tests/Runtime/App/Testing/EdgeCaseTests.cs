@@ -140,38 +140,8 @@ public class EdgeCaseTests
         await Assert.That(output.Contains("FAKE OK")).IsTrue();
     }
 
-    // Variables snapshot where a Data's Value is itself a Data: JSON
-    // serialization during report rendering completes without circular-
-    // reference errors. Defensive case for nested Data in user code.
-    [Test]
-    public async Task Snapshot_DataContainingData_RenderedCorrectly_NoCircularReference()
-    {
-        var inner = new global::app.data.@this("inner", 42);
-        var outer = new global::app.data.@this("outer");
-        outer.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
-
-        var err = new global::app.error.AssertionError(1, 2)
-        {
-            Variables = new Dictionary<string, object?>
-            {
-                ["nested"] = outer
-            }
-        };
-        var run = new global::app.tester.Run(new global::app.tester.test.@this { Goal = new Goal { Name = "N", Path = "/Tests/Nested.test.goal" } });
-        run.Complete(global::app.tester.Status.Fail, err);
-        _app.Tester.Results.Add(run);
-
-        // Report rendering must not throw on nested Data.
-        var action = new global::app.module.test.report { Context = _app.User.Context };
-        await action.Run();
-
-        var jsonPath = System.IO.Path.Combine(_tempDir, ".test", "results.json");
-        await Assert.That(System.IO.File.Exists(jsonPath)).IsTrue();
-        var json = await System.IO.File.ReadAllTextAsync(jsonPath);
-        // Just verify the file is parseable JSON — no circular errors.
-        using var doc = JsonDocument.Parse(json);
-        await Assert.That(doc.RootElement.GetProperty("runs").GetArrayLength()).IsGreaterThan(0);
-    }
+    // Retired: nested Data (Data-as-a-value) is not a supported shape — the
+    // SetValueDirect courier that produced it is now guarded.
 
     // --test={"format":"csv"} → error. Only "json" and "junit" are valid values
     // for the Batch 11 format selector. Robustness on the config surface.

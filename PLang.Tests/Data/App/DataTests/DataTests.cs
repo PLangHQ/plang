@@ -828,46 +828,8 @@ public class DataTests
         await Assert.That(result.Error!.Message).Contains("Deserialization failed");
     }
 
-    // Postponed: multi-level nesting builds Data-in-Data via item.clr couriers —
-    // the same nested-courier family as Cut3/StoreView. Lands with the @schema
-    // layer model (archive | encryption | signature | data) that replaces clr.
-    [Skip("Nested-Data courier still rides item.clr — fixed with the @schema layer model")]
-    [Test]
-    public async Task CompressDecompress_MultiLevelNesting_PreservesAllLevels()
-    {
-        await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine);
-
-        // Two-level nesting: text envelope containing another text envelope
-        var leaf = new Data("", "deep content", Type.FromMime("text/plain"));
-        leaf.Context = context;
-        var mid = new Data("", null);
-        // courier nesting — the documented no-lift bypass; the carrier label
-        // carries the declared category
-        mid.SetValueDirect(new global::app.type.item.clr(leaf, "text"));
-        mid.Context = context;
-        var outer = new Data("", null);
-        // courier nesting — the documented no-lift bypass; the carrier label
-        // carries the declared category
-        outer.SetValueDirect(new global::app.type.item.clr(mid, "document"));
-        outer.Context = context;
-
-        // Compress (document is compressible) and decompress
-        var compressed = outer.Compress();
-        compressed.Context = context;
-        var decompressed = compressed.Decompress();
-
-        await decompressed.IsSuccess();
-        await Assert.That(decompressed.Type!.Name).IsEqualTo("document");
-        await Assert.That((await decompressed.Value())).IsTypeOf<Data>();
-
-        var midResult = (Data)((global::app.type.item.clr)(await decompressed.Value())!).Value;
-        await Assert.That(midResult.Type!.Name).IsEqualTo("text");
-        await Assert.That((await midResult.Value())).IsTypeOf<Data>();
-
-        var leafResult = (Data)((global::app.type.item.clr)(await midResult.Value())!).Value;
-        await Assert.That((await leafResult.Value())?.ToString()).IsEqualTo("deep content");
-    }
+    // Retired: multi-level Data-in-Data nesting via item.clr couriers — nested
+    // Data is not a supported shape (the clr carrier now rejects a Data).
 
     [Test]
     public async Task CompressDecompress_PropertiesNotPreserved()

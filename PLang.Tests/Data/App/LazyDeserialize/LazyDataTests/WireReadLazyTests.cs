@@ -66,32 +66,7 @@ public class WireReadLazyTests
         await Assert.That(m).IsNull();
     }
 
-    // Flipped: envelope-recognition STAYS. A nested Data in a bare untyped value
-    // slot round-trips as a Data (not degraded to a dict) via lean recognition.
-    [Test] public async Task NestedDataInUntypedSlot_RecognizedAsData_NotDict()
-    {
-        var inner = data.Ok("hello");
-        inner.Name = "inner";
-        var outer = data.Ok();
-        outer.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
-        outer.Name = "outer";
-        var back = RoundTrip(outer);
-        await Assert.That((await back.Value())).IsTypeOf<data>();
-        await Assert.That((await (back).Value())?.ToString()).IsEqualTo("hello");
-    }
-
-    // The case LiftDataIfShaped covers: a genuinely nested Data round-trips and
-    // stays a reconstructed Data (so its signature would reach signing.verify),
-    // via the lean envelope-recognition — one parse, no key-shape double-parse.
-    // (Full sign→wire→verify is integration Cut 3.)
-    [Test] public async Task NestedSignedData_RebuiltByContainingTypeReader_NotByKeyGuess()
-    {
-        var inner = data.Ok("payload");
-        inner.Name = "inner";
-        var outer = data.Ok();
-        outer.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
-        outer.Name = "outer";
-        var back = RoundTrip(outer);
-        await Assert.That((await back.Value())).IsTypeOf<data>();
-    }
+    // Retired: nested Data (Data-as-a-value) is not a supported shape — only the
+    // SetValueDirect courier produced it, and that bypass is now guarded. The
+    // wire never carries a nested-Data envelope.
 }
