@@ -1151,3 +1151,14 @@ Settled semantics (Ingi, 2026-06-16) for `external` when it lands:
   them behave the same.
 
 Design record: `.bot/compare-redesign/coder/clr-dissolution-design.md` (DECISION 2026-06-16).
+
+## 2026-06-16 — Test isolation: persisted permission grants pollute `Fixtures/pr/.db`
+HTTP/permission tests (e.g. `HttpPathTests`) call `Permission.Add(..., persist: true)`,
+which writes signed grants to the SettingsStore-backed SQLite dir
+`PLang.Tests/Shared/Fixtures/pr/.db` (untracked, generated). Grants accumulate across
+runs and are NOT cleaned between suites — after enough runs the HTTP/permission tests
+fail en masse with `[ChannelEof] Channel 'input' has no interactive answerer` (the auth
+re-ask), turning a clean ~12-failure Types baseline into ~31. `rm -rf
+PLang.Tests/Shared/Fixtures/pr/.db` restores it. Fix: a per-test/suite teardown that
+clears the permission table (or points the store at a fresh temp dir per run). Cost me
+hours of false "regression" chasing on the host-carrier slice.
