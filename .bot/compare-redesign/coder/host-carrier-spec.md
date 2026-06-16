@@ -64,6 +64,98 @@ running system, not a clone. (This is the deliberate divergence from the old
 *data* you are handed and choose to treat as an immutable value — a separate,
 later concern, not the engine handles.)
 
+### Reference semantics
+
+`set %x% = %!app%` binds `%x%` to the **same live Engine** (the carrier holds a
+reference to the singleton). `%x.callstack%` reads the same running engine as
+`%!app.callstack%` — identical current state. To freeze a point-in-time copy you
+**serialize** (the snapshot), you do not bind.
+
+## Type identity — family in `type`, specific in `kind`
+
+A host value reports its type the **same way `number` does** — a family name in
+`type`, the specialization in `kind`:
+
+```
+%n%                              → type=number, kind=int
+%!app%                           → type=host,   kind=app
+%!app.callstack%                 → type=host,   kind=callstack
+%!app.callstack.current.depth%   → type=number, kind=int     ← leaf has a real plang type
+```
+
+This **dissolves the "uniform vs transparent name" question — you get both**:
+
+- the **family** (`type=host`) is uniform → you can always tell "this is a host
+  object" with one check, and it is honest that the value has no dedicated type;
+- the **kind** (`=app`) is transparent → the specific host identity is right
+  there for display and for `is`-style checks.
+
+The leaf rule (see the flow below) is what makes this safe: the carrier only
+ever holds the *structural* host objects. The instant navigation reaches a value
+a PLang family owns (an `int`, a `string`), it peels off into that real
+item — so `%!app.callstack.current.depth%` is a `number`, never a `host`, never
+a raw `int`.
+
+**Family name:** use `host` (or `external`). `clr` hard-codes ".NET", and since
+the family is now the *visible* `type` a plang dev reads, it must be
+runtime-neutral. Decide before stamping it.
+
+## How a C# object becomes a `clr` (the Lift flow)
+
+`Lift` (`data/this.cs:194`) is the one chokepoint every slot write passes
+through. A C# object becomes a `host`/`clr` item only by **falling through every
+"does a PLang family own this?" gate** to the fallback:
+
+```
+  A C# object needs to enter a value slot
+  (set %x% = …, navigation reflect-get, an action return,
+   or a DynamicData factory like  () => app )
+                │
+                ▼
+        ┌───────────────┐
+        │  Lift(value)  │   the ONE chokepoint — every slot write goes through it
+        └───────┬───────┘
+                ▼
+   is it null? ───────────────────────────── yes ─▶ null citizen (null.@this)
+                │ no
+   is it ALREADY an item.@this? ───────────── yes ─▶ return as-is (text/number/…/clr)
+                │ no
+   is it a bare Data? ──────────────────────── yes ─▶ THROW (double-wrap bug)
+                │ no
+   is it a sequence/dict/list of values? ──── yes ─▶ native list.@this / dict.@this
+                │ no
+   does a TYPE FAMILY own this CLR type? ──── yes ─▶ that family's item
+   (int→number(kind=int), string→text,                int 3 → number
+    bool→bool, DateTime→datetime, byte[]→…)
+                │ no
+   is it a CLR enum? ───────────────────────── yes ─▶ choice<TEnum>
+                │ no
+                ▼
+   ╔══════════════════════════════════════════════╗
+   ║  FALLBACK: nothing in PLang owns this object  ║──▶ host/clr item
+   ║         new clr(value)                        ║    type = host   (family)
+   ║   (the Engine, CallStack, a 3rd-party POCO)   ║    kind = the C# type's name
+   ╚══════════════════════════════════════════════╝
+```
+
+The concrete `%!app%` path, and how a leaf peels off one gate earlier:
+
+```
+%!app%   = DynamicData, factory = () => app   (the live Engine singleton)
+   │ read → computed.Compute() → Lift(app)
+   ▼  app: not null · not item · not Data · not a collection ·
+   │       no family owns app.@this · not an enum
+   new clr(app)  →  host item { Value = live Engine }   type=host kind=app
+
+%!app%            → Lift(Engine)    → host   (no family owns it)
+   .callstack     → Lift(CallStack) → host   (no family owns it)
+   .current.depth → Lift(int 3)     → number (the int family owns it) ✔
+```
+
+So `clr` is purely the **"no PLang family claimed it"** terminal of `Lift`:
+structural host objects stop there; every scalar with a real type peels off into
+its own item one gate earlier.
+
 ## What changes in `clr` (the fix)
 
 Today `clr` is **half-built** — its own comment admits the door was left open:
@@ -89,6 +181,33 @@ The fix:
 5. **Delete the courier-label cruft** — `_declared` / `Labeled` /
    `_declaredStrict` (schema-layer transitional state the comments already mark
    as dying).
+6. **Fix `Mint()` to stamp family + kind** — today it puts the carried type's
+   name in the *type name*; instead set `type` = the family (`host`), `kind` =
+   the carried type's name (mirrors `number` stamping its precision as `kind`).
+   See "Type identity" above.
+
+### `Peek` / `Value` vs `Mint` — three questions, don't conflate
+
+`Mint()` is **not** called by `Peek`/`Value` (verified: its callers are `.Type` /
+`.Kind`, comparison, navigation type-checks, and error messages). The three are
+independent and answer different questions — true for every item, not special to
+`clr`:
+
+| method   | question                              | returns                                   |
+|----------|---------------------------------------|-------------------------------------------|
+| `Peek()` | "what value is in memory now?" (sync) | **the item itself (self)**                |
+| `Value()`| "give me the ready value" (async)     | the item (or a narrowed item)             |
+| `Mint()` | "what is my *type*?"                  | a **separate** `type.@this` `{Name, Kind}`|
+
+`Mint()` builds a `type.@this` **descriptor** — it does **not** mint a new `clr`.
+The `clr` value is constructed once, by `new clr(app)`; reading it (`Peek`/`Value`)
+hands back that same instance (self). Minting is the orthogonal "describe my type"
+step.
+
+**The whole fix, in one line:** `clr` is today the *only* item whose `Peek()`
+returns its raw `_value` instead of `self` — closing the box is simply removing
+that divergence so `clr` behaves like every other item (`Peek() => this`), with
+`.Clr<T>()` as the single door to the raw object.
 
 ## What keeps it from re-rotting
 
@@ -100,9 +219,11 @@ outside leaf files.
 
 ## Naming
 
-`clr` hard-codes ".NET" into a runtime-independent vocabulary. Rename to
-`host` (or `external`) is **cosmetic** — do it whenever; it is not the
-substance and can come last.
+The C# *class* name (`clr`) is cosmetic and can be renamed last. But the
+**family `type` name a plang dev reads** is not cosmetic — it is now visible
+(`type=host`, per "Type identity"), so it must be runtime-neutral (`host` /
+`external`, never `clr`). Decide the family name before it is stamped into
+`Mint()`; the class rename can follow whenever.
 
 ## Consumer inventory (scan 2026-06-16) — sizing the close-the-box work
 
@@ -148,9 +269,27 @@ All in `type/this.cs` `Judge`: `:451, :452, :464, :482, :483`
 Close-the-box ≈ **3 data-shape families that should never ride the carrier**
 (nested `Data`, `JsonElement`, raw containers) → make each land as a real item
 at Lift → their reach-ins die → delete them. Plus delete the courier-label set
-(C). After that, the carrier holds *only* genuine host objects, `Peek()` can
-return self, and the generic navigator is the single reflective door. The
-engine-handle navigation needs **no** changes — it never branched on the box.
+(C). After that, the carrier holds *only* genuine host objects and `Peek()` can
+return self.
+
+**The one navigator change (open design point — see below).** There are *no
+per-call-site* changes: nothing branches on `is clr` to navigate engine handles
+today. But there is exactly **one** localized change, because closing the box and
+keeping navigation working are coupled. Today the generic `Object` navigator
+reflects over `Peek()`, which works only because the box is open (Peek hands out
+the host object). Once `Peek() => self`, the host reflection has to come from
+somewhere else. Two coherent options:
+
+- **(1) Carrier owns navigate** (the OBP-clean choice, and what the fix list
+  above assumes): the reflect-get/-set moves onto `clr`; the generic `Object`
+  navigator steps aside for / delegates to `clr`. Behavior lives on the element.
+- **(2) Navigator uses the exit door**: the generic `Object` navigator stays the
+  reflector but, for a `clr`, reflects over `value.Clr<object>()` instead of
+  `Peek()`. Smaller diff, but reflection-over-host stays in a generic relay
+  rather than on the element.
+
+This is the one genuinely open call in the spec. The fix list takes option (1);
+flag it for the architect.
 
 ## Out of scope (explicitly deferred, unchanged)
 
