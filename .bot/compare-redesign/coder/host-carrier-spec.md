@@ -104,6 +104,54 @@ outside leaf files.
 `host` (or `external`) is **cosmetic** — do it whenever; it is not the
 substance and can come last.
 
+## Consumer inventory (scan 2026-06-16) — sizing the close-the-box work
+
+**The decisive finding: not one production reach-in reads a live host/engine
+object.** Every `is clr { Value: … }` branch reads *parked data* (a nested
+`Data`, a raw `JsonElement`, a raw container). The genuine host use — the
+`%!...%` engine handles — navigates through the generic reflection navigator
+(`variable/navigator/Object.cs`, reflects over `Peek()`) and branches on `is clr`
+**nowhere**. So closing the box does not touch engine navigation at all.
+
+### A. Construction sites — KEEP (carrier is correct here)
+- `data/this.cs:252` — Lift fallback `new clr(v)` (returns the fixed carrier)
+- `data/this.cs:548` — `SetValueDirect` `new clr(value)`
+
+### B. Open-box reach-ins (7) — all read PARKED DATA, not host objects
+Group by carried shape; each shape should land as a real item at Lift, after
+which the reach-in is dead code and gets deleted:
+- **nested `Data`** (the Data-in-Data / SetValueDirect courier debt):
+  - `data/this.Navigation.cs:291` — `clr { Value: @this dataVal }`
+  - `llm/code/OpenAi.cs:951` — `clr { Value: data.@this d }`
+- **raw `JsonElement`** (should be a dict/parsed item):
+  - `llm/code/OpenAi.cs:1013` — `clr { Value: JsonElement }`
+  - `test/discover.cs:294` — `clr { Value: JsonElement }` (goal-name read)
+- **raw container** (Lift already narrows these to native dict/list, so likely
+  near-dead already):
+  - `data/this.cs:500-503` — `clr { Value: IDictionary/IList }` (StampedForm)
+  - `llm/query.cs:33` — `clr { Value: IList }` (Messages validation)
+- **raw `string`**:
+  - `data/this.cs:491-494` — `clr { Value: string }` (StampedForm template scan)
+
+### C. Courier-label cruft (5) — DELETE with `_declared`/`Labeled`
+All in `type/this.cs` `Judge`: `:451, :452, :464, :482, :483`
+(`carrier.Labeled(...)` / `new clr(value, Name, Kind, Strict)`).
+
+### D. Tests
+- `DataTests.cs:864, :868` — cast-and-read `((item.clr)…).Value` (Data-in-Data).
+- Three files carry `[Skip]` reasons that assumed clr *deletion*
+  (`NormalizeTreeShapeTests`, `NormalizeFilterTests`, `DataTests`) — revisit:
+  the "delegate parks in clr and the carrier leaks" skip is *fixed* by closing
+  the box, not by deleting clr.
+
+### What this means for sequencing
+Close-the-box ≈ **3 data-shape families that should never ride the carrier**
+(nested `Data`, `JsonElement`, raw containers) → make each land as a real item
+at Lift → their reach-ins die → delete them. Plus delete the courier-label set
+(C). After that, the carrier holds *only* genuine host objects, `Peek()` can
+return self, and the generic navigator is the single reflective door. The
+engine-handle navigation needs **no** changes — it never branched on the box.
+
 ## Out of scope (explicitly deferred, unchanged)
 
 - Clone-on-write value semantics for handed-in foreign *data* (the original
