@@ -4,10 +4,12 @@
 `external` deferral. Settled with Ingi 2026-06-16 after his gut flagged
 "itemizing the runtime objects" as over-engineering, and refined the same day to
 "a C# object is just an `item`". **Architect-reviewed** (`host-carrier-review.md`,
-HEAD `805699509`); this rev folds in the four findings — navigation reframed as a
-repair (already broken on HEAD), inventory 7→10, cycle guard, write deferred. The
-`kind` rule is settled on **declared `[PlangType]` names** (both registry- and
-namespace-tail derivation were shown to fail — see "What goes in `kind`").
+HEAD `805699509`); findings folded in. **Direction (Ingi): full closure** —
+`Peek() => self` everywhere (one meaning), every raw-`Peek` consumer migrated to
+plang types (`.Clr<T>()` only at true .NET boundaries), `clr` owns its own
+navigate + serialize. Landed **incrementally** (slices below) but taken all the
+way. `kind` rule settled on declared `[PlangType]` names. Reflect-write stays
+deferred with its own gate (orthogonal to closure).
 
 ## The decision in one line
 
@@ -232,11 +234,15 @@ The fix:
 2. **Own write** *(DEFERRED — later step, gated)* — reflect-set-if-setter,
    decline otherwise. Does **not** ship in the first landing; needs the actor
    permission gate first (see "Decision — reflect-write is deferred").
-3. **Own serialize** — `Write(IWriter)` reflects `[Out]` props instead of
-   throwing. **Must carry a cycle/identity guard** — the `[Out]` graph is deeply
-   cyclic (`app → CallStack → Action → Step → Goal → app`); `[Out]` narrows but
-   does not break cycles. Use a reference-equality visited set, the same guard
-   `Data.Normalize` already runs.
+3. **Own serialize — the value, not `Normalize`.** `clr.Write(IWriter)` reflects
+   its host's `[Out]` props into the writer; nested host objects recurse through
+   *their own* carriers' `Write`. The value owns its wire shape (OBP #9) — so
+   `Normalize` stops being the place that reflects the carrier; it asks the value
+   to render itself. (The central "reflect any object" path in `Normalize` is the
+   open-box enabler; once `Peek() => self` it would reflect the *carrier*, so the
+   reflection MUST move onto `clr.Write`.) **Carry a cycle/identity guard** — the
+   `[Out]` graph is deeply cyclic (`app → CallStack → Action → Step → Goal → app`);
+   thread a reference-equality visited set through the write.
 4. **Close the box** — `Peek()` returns the carrier itself; the only raw-object
    door is `.Clr<T>()` (leaf actions only). Then nothing in any relay layer can
    branch on the carried value — the `is clr` smell cannot recur.
@@ -345,24 +351,58 @@ All in `type/this.cs` `Judge`: `:451, :452, :464, :482, :483`
   the "delegate parks in clr and the carrier leaks" skip is *fixed* by closing
   the box, not by deleting clr.
 
-### What this means for sequencing
-Close-the-box ≈ **3 data-shape families that should never ride the carrier**
-(nested `Data`, `JsonElement`, raw containers) → make each land as a real item
-at Lift → their reach-ins die → delete them. Plus delete the courier-label set
-(C). After that, the carrier holds *only* genuine host objects and `Peek()` can
-return self.
+### E. Implicit raw-`Peek()` consumers (~12–16) — the real close-the-box set
+These do **not** branch on `is clr`; they call `.Peek()` on a `Data` and treat
+the result as a **raw C# object** (pattern-match a raw type, reflect, cast, or
+JSON-serialize it). They work *only* because the box is open. They are **smells,
+not reasons to keep it open** — each should use the **plang type**, never reach
+into `.Clr<T>()` (that exit is reserved for code genuinely calling a .NET / 3rd-
+party API). Categorized by the fix:
 
-**The one navigator change — a repair, not an open call.** There are *no
-per-call-site* changes: nothing branches on `is clr` to navigate runtime handles.
-And — per the correction above — host navigation is **already broken** on HEAD,
-because the generic `Object` navigator reflects over `Value()` (which returns the
-carrier wrapper), not the host. So **carrier-owns-navigate is the fix:** put the
-host-unwrap on the one type that wraps — `clr` overrides the navigation hook to
-reflect-get/-set over its `_value`; the generic `Object` navigator keeps serving
-items that *are* their own object (`error`, domain values, where the item IS the
-object and reflection over it is correct). The earlier "option 2 (navigator uses
-the exit door)" is dropped: it only looked competitive under the false premise
-that navigation works today.
+- **→ convert the stored type to an item** (needs per-class sign-off, [[feedback_confirm_class_to_item]]):
+  - `actor/permission/this.cs:111,127` — `Peek() is PermissionRecord` → `PermissionRecord : item`
+  - `data/ShouldExit.cs:30` — `Peek() is IExitsGoal` → the exit decision becomes an item capability
+  - `builder/code/Default.cs:683` — `Peek() as BuildResponse` → BuildResponse to item/Data
+- **→ use the plang value (Data / item / `.Type` / navigate), not raw reflection:**
+  - `condition/code/Default.cs:46-47` — `Peek()?.GetType().Name` → use `.Type`/`Mint().Name`
+  - `debug/this.cs:172,281,303,439,448` — `GetType().GetProperty(...)` → navigate the plang type
+  - `goal/Methods.cs:53,88` and `data/this.Diff.cs:47` — JSON-serialize `Peek()` → serialize the plang object
+  - `module/settings/Sqlite.cs:327,329` — store/convert via the `Data`, not the raw object
+- **→ genuine .NET boundary — `.Clr<T>()` stays correct** (confirm each as reached):
+  - the actual sqlite driver call; the wire byte/`WireSlot` edge (`action/this.FromWire.cs`).
+- **Already fine (item casts, not raw):** `mock/reset.cs:13` (`as mock.@this`), the
+  `as step.@this` / `as Goal` casts — those targets are items, so `Peek()=>self` serves them.
+
+## Direction — full closure (incremental, but all the way)
+
+`Peek()` must have **one meaning: the plang value (self)** — for items it already
+does; for `clr` it must too. A `Peek` that returns the plang type for some values
+and a raw C# object for others is two functions under one name; that split *is*
+the bug. So the destination is **`Peek() => self` everywhere**, every §E consumer
+migrated to plang types, `.Clr<T>()` surviving only at true .NET boundaries.
+
+Incremental rollout is how we *land* it safely — not a reason to stop half-way.
+
+### Implementation slices
+
+1. **Make the handles work + identify (no `Peek` change, no breaks).**
+   Declare `[PlangType]` on the concept handles; fix `clr.Mint()` (`type=item`,
+   kind via `[PlangType]`/FullName); `clr` owns **navigate** (read-child hook
+   reflecting its host — repairs the already-broken `%!app.x%`); add the serialize
+   cycle guard. Verify: `%!app.callstack.current.depth%` → `number`; `%!app%` →
+   `type=item kind=app`; `ContextVar_AppProperty…` goes green. **This is the first
+   slice.**
+2. **`clr` owns serialize via `Write`** (move reflection off `Normalize`) — coupled
+   with the start of the `Peek` flip.
+3. **Flip `Peek() => self`** and migrate §E consumers to plang types, slice by
+   slice (the convert-to-item ones each gated on your sign-off). Delete the §B
+   reach-ins as their data-shape families stop riding the carrier, and the §C
+   courier-label cruft.
+4. **`Peek() => self` is complete** → the box is closed; `.Value (is|as|switch)`
+   outside leaf files greps clean.
+
+(Reflect-**write** stays deferred with its own gate — see next section — and is
+orthogonal to closure.)
 
 ## Decision — reflect-write is deferred (Ingi, 2026-06-16)
 
