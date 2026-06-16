@@ -98,7 +98,7 @@ public class CleanupBindingsTests
     {
         // datetime/date/time/duration don't have a `kind`, so none should
         // declare a static Build(object?) hook.
-        var kinds = new global::app.type.kind.@this();
+        var kinds = new global::app.type.kind.Hooks();
         await Assert.That(kinds.Of(typeof(System.DateTimeOffset), System.DateTimeOffset.UtcNow)).IsNull();
         await Assert.That(kinds.Of(typeof(System.DateOnly), System.DateOnly.MinValue)).IsNull();
         await Assert.That(kinds.Of(typeof(System.TimeOnly), System.TimeOnly.MinValue)).IsNull();

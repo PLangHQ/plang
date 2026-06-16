@@ -68,6 +68,25 @@ public sealed class @this
     }
 
     /// <summary>
+    /// The type whose reader is registered under <paramref name="kind"/> — a
+    /// kind-specific reader names the inner type its kind decodes to
+    /// (<c>json→item</c>, <c>csv→table</c>). Wildcard (<see cref="AnyKind"/>)
+    /// entries read a type uniformly across kinds, so they are not kind-specific
+    /// and never answer here. Null when no kind-specific reader exists (the
+    /// caller falls back to the format family). Runtime registrations win.
+    /// </summary>
+    public string? TypeOf(string? kind)
+    {
+        if (string.IsNullOrEmpty(kind)) return null;
+        EnsureInitialized();
+        foreach (var key in _runtime.Keys)
+            if (string.Equals(key.Kind, kind, System.StringComparison.OrdinalIgnoreCase)) return key.Type;
+        foreach (var key in _generated.Keys)
+            if (string.Equals(key.Kind, kind, System.StringComparison.OrdinalIgnoreCase)) return key.Type;
+        return null;
+    }
+
+    /// <summary>
     /// Runtime registration — for DLLs loaded via <c>code.load</c> that ship
     /// readers for runtime-registered types. Already-registered (type, kind)
     /// entries are replaced (runtime wins).

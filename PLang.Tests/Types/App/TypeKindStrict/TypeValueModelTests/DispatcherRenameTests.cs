@@ -6,7 +6,7 @@ using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.TypeKindStrict.TypeValueModelTests;
 
-// `App.Type.Kinds` (the build-hook dispatcher, app.type.kind.@this) is renamed
+// `App.Type.Kinds` (the build-hook dispatcher, app.type.kind.Hooks) is renamed
 // `KindHooks` so it stops colliding with `type.Kind` (per-value subtype) and
 // `type.Kinds` (advertised vocabulary). Signature unchanged: Of(clrType, value).
 public class DispatcherRenameTests

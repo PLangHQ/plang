@@ -1,56 +1,40 @@
-using System.Collections.Concurrent;
-using System.Reflection;
-
 namespace app.type.kind;
 
 /// <summary>
-/// Owns the per-type build-time <c>static string? Build(object?)</c> hook
-/// — the build-time sibling of <c>Resolve(input, context)</c>. Discovers
-/// the hook by reflection, caches the <see cref="MethodInfo"/>, and serves
-/// it back via <see cref="Of"/>.
+/// A kind value — the subtype token ("json", "jpg", "md") that names HOW a raw
+/// form decodes. Content off I/O rests as <c>binary</c> carrying a kind; on
+/// access the kind names the type the bytes narrow to, and that type's reader
+/// does the parse.
 ///
-/// Why a separate noun: the dispatch + cache is real state with its own
-/// invariants (one cache entry per CLR type, computed lazily, never
-/// invalidated within an App). Folding it into <c>app.type.catalog.@this</c>
-/// would force a verb onto the registry that isn't its concern.
-///
-/// Pairs with the action-handler <c>IClass.Build()</c> — see
-/// <c>Documentation/v0.2/build-vs-runtime.md</c> "Two Builds".
+/// <para>The kind owns that mapping: a kind-specific reader names its owner
+/// (<c>json→item</c>, <c>csv→table</c> — the reader registry); otherwise the
+/// format family answers (<c>jpg→image</c>, <c>md→text</c>). Unknown kinds stay
+/// <c>binary</c> (nothing decodes them).</para>
 /// </summary>
 public sealed class @this
 {
-    private readonly ConcurrentDictionary<System.Type, MethodInfo?> _hookCache = new();
+    public string Name { get; }
+    private readonly actor.context.@this _context;
 
-    /// <summary>
-    /// Returns the kind <paramref name="clrType"/>'s Build hook produces for
-    /// <paramref name="value"/>, or null when the type defines no hook or
-    /// the hook returns null. Never throws — a misbehaving hook surfaces
-    /// as null (the value just gets no kind).
-    /// </summary>
-    public string? Of(System.Type? clrType, object? value)
+    public @this(string name, actor.context.@this context)
     {
-        if (clrType == null) return null;
-        var hook = _hookCache.GetOrAdd(clrType, Discover);
-        if (hook == null) return null;
-        try
-        {
-            return hook.Invoke(null, new[] { value }) as string;
-        }
-        catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
-        {
-            return null;
-        }
+        Name = name;
+        _context = context ?? throw new System.ArgumentNullException(nameof(context));
     }
 
-    private static MethodInfo? Discover(System.Type type)
+    /// <summary>
+    /// The type a value of this kind narrows to once decoded — the reader's
+    /// owner type when a kind-specific reader exists, else the format family,
+    /// else <c>binary</c> (undecodable, stays bytes).
+    /// </summary>
+    public global::app.type.@this Type
     {
-        var m = type.GetMethod("Build",
-            BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy,
-            binder: null,
-            types: new[] { typeof(object) },
-            modifiers: null);
-        if (m == null) return null;
-        if (m.ReturnType != typeof(string)) return null;
-        return m;
+        get
+        {
+            string name = _context.App.Type.Readers.TypeOf(Name)
+                          ?? _context.App.Format.TypeOf(Name)
+                          ?? "binary";
+            return new global::app.type.@this(name, Name) { Context = _context };
+        }
     }
 }

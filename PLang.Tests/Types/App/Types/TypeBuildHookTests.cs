@@ -7,10 +7,10 @@ namespace PLang.Tests.App.Types;
 
 public class TypeBuildHookTests
 {
-    private global::app.type.kind.@this _kinds = null!;
+    private global::app.type.kind.Hooks _kinds = null!;
 
     [Before(Test)]
-    public void Setup() => _kinds = new global::app.type.kind.@this();
+    public void Setup() => _kinds = new global::app.type.kind.Hooks();
 
     [Test]
     public async Task TypeBuild_DiscoveredByReflection_LikeResolve()

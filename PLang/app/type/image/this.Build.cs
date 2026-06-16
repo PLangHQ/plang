@@ -2,7 +2,7 @@ namespace app.type.image;
 
 /// <summary>
 /// Build-time kind hook for <c>image</c>. Discovered by
-/// <see cref="app.type.kind.@this"/>. Reads the kind (extension, no dot,
+/// <see cref="app.type.kind.Hooks"/>. Reads the kind (extension, no dot,
 /// lowercased) from a literal value without constructing the image.
 ///
 /// Inputs:

@@ -10,7 +10,7 @@ namespace app.type.convert;
 /// the hook by reflection on the family class (text.@this, number.@this, …),
 /// caches the <see cref="MethodInfo"/>, and invokes it via <see cref="Of"/>.
 ///
-/// Sibling of <c>app.type.kind.@this</c> (the build-time <c>Build</c> hook):
+/// Sibling of <c>app.type.kind.Hooks</c> (the build-time <c>Build</c> hook):
 /// same discover-cache-invoke shape, different verb. Kept a separate noun because
 /// the dispatch + cache is real state with its own invariants (one entry per CLR
 /// type, lazy, never invalidated within an App).

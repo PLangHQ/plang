@@ -2,7 +2,7 @@ namespace app.type.number;
 
 /// <summary>
 /// Build-time kind hook for <c>number</c>. Discovered by the
-/// <see cref="app.type.kind.@this"/> dispatcher; called once by the
+/// <see cref="app.type.kind.Hooks"/> dispatcher; called once by the
 /// builder when stamping a literal whose declared type is <c>number</c>,
 /// so the kind lands in the <c>.pr</c> alongside <c>type=number</c>.
 ///

@@ -71,6 +71,13 @@ public sealed class source : @this, module.IContext
     public override async System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this asking)
     {
         var read = Context?.App.Type.Readers.Of(_type, _kind);
+        // A binary form off I/O carries only its kind; the kind names the type it
+        // narrows to, and that type's reader does the parse (json→item, jpg→image).
+        if (read == null && _kind != null && Context != null)
+        {
+            string inner = new global::app.type.kind.@this(_kind, Context).Type.Name;
+            read = Context.App.Type.Readers.Of(inner, _kind);
+        }
         object? parsed;
         try
         {

@@ -38,7 +38,7 @@ public sealed partial class @this
     /// <c>Kinds</c> so the word stops colliding with <see cref="@this.Kind"/>
     /// (per-value subtype) and the advertised-vocabulary <c>type.Kinds</c>.
     /// </summary>
-    public kind.@this KindHooks { get; } = new();
+    public kind.Hooks KindHooks { get; } = new();
 
     /// <summary>
     /// Per-type <c>static Convert(object?, string? kind, context)</c> hooks — the

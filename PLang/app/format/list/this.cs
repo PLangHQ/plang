@@ -382,6 +382,18 @@ public sealed class @this
     }
 
     /// <summary>
+    /// The family a kind belongs to (<c>jpg→image</c>, <c>mp3→audio</c>,
+    /// <c>md→text</c>) — the type a value of this kind narrows to when no
+    /// kind-specific reader names a different owner. Derived from the
+    /// extension→family map. Null for an unknown kind.
+    /// </summary>
+    public string? TypeOf(string? kind)
+    {
+        if (string.IsNullOrEmpty(kind)) return null;
+        return _extensionToKind.TryGetValue("." + kind, out var family) ? family : null;
+    }
+
+    /// <summary>
     /// File extension → Kind (e.g. ".jpg" → "image", ".xlsx" → "spreadsheet").
     /// Returns null for unknown or null extensions.
     /// </summary>
