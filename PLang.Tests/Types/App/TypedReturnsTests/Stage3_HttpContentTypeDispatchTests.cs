@@ -60,22 +60,28 @@ public class Stage3_HttpContentTypeDispatchTests
         return result;
     }
 
-    // json body stamps {object, json}; untouched it's the raw string, navigated
+    // json body stamps {binary, json}; untouched it's the raw bytes, navigated
     // it materializes and a key resolves.
     [Test]
-    public async Task Body_ApplicationJson_StampsObjectJson_LazyThenNavigates()
+    public async Task Body_ApplicationJson_StampsBinaryJson_LazyThenNavigates()
     {
         var resp = await Get("https://x/y", r => r.Content = new StringContent("{\"a\":1}", Encoding.UTF8, "application/json"));
-        await Assert.That(resp.Type.Name).IsEqualTo("item");
-        await Assert.That(resp.Peek()?.ToString()).IsEqualTo("{\"a\":1}"); // untouched = raw
+        await Assert.That(resp.Type.Name).IsEqualTo("binary"); // the flip: binary + json kind
+        await Assert.That(resp.Raw is byte[]).IsTrue(); // untouched = raw bytes (Peek is the source carrier)
         await Assert.That((await (await resp.GetChild("a")).Value())?.ToString()).IsEqualTo("1"); // navigate materializes
     }
 
+    // text/html stamps {binary, html}; untouched it's the raw bytes. (There is no
+    // code/html reader, so Value() does not narrow it to a string — the html text
+    // is reached only via an explicit `as text`.)
     [Test]
-    public async Task Body_TextHtml_ScalarIsString()
+    public async Task Body_TextHtml_StampsBinaryHtml()
     {
         var resp = await Get("https://x/p", r => r.Content = new StringContent("<p>hi</p>", Encoding.UTF8, "text/html"));
-        await Assert.That(resp.Peek()?.ToString()).IsEqualTo("<p>hi</p>");
+        await Assert.That(resp.Type.Name).IsEqualTo("binary");
+        // text/html → kind "htm" (canonicalised to the shortest extension form).
+        await Assert.That(resp.Type.Kind).IsEqualTo("htm");
+        await Assert.That(resp.Raw is byte[]).IsTrue(); // untouched = raw bytes
     }
 
     [Test]
@@ -86,42 +92,43 @@ public class Stage3_HttpContentTypeDispatchTests
             r.Content = new ByteArrayContent(bytes);
             r.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/png");
         });
-        await Assert.That(resp.Type.Name).IsEqualTo("image");
-        await Assert.That(resp.Peek()).IsTypeOf<byte[]>();
+        await Assert.That(resp.Type.Name).IsEqualTo("binary"); // the flip: binary + png kind (narrows to image on Value())
+        await Assert.That(resp.Raw is byte[]).IsTrue(); // untouched = raw bytes
     }
 
     [Test]
-    public async Task Body_MissingContentType_StampsBytes()
+    public async Task Body_MissingContentType_StampsBinary()
     {
         var bytes = new byte[] { 1, 2, 3 };
         var resp = await Get("https://x/raw", r => {
             r.Content = new ByteArrayContent(bytes);
             r.Content.Headers.ContentType = null;
         });
-        // The stamp is {bytes} and the raw stays byte[] (scalar access may still
-        // utf-8-decode if the bytes happen to be valid utf-8 — that's the Stage 5
-        // scalar rule; the type/raw is what "stamps bytes" pins).
-        await Assert.That(resp.Type.Name).IsEqualTo("bytes");
+        // No Content-Type → opaque bytes → {binary, null}; the raw stays byte[].
+        await Assert.That(resp.Type.Name).IsEqualTo("binary");
         await Assert.That(resp.Raw).IsTypeOf<byte[]>();
     }
 
     [Test]
-    public async Task Body_TextCsv_StampsTable()
+    public async Task Body_TextCsv_StampsBinary()
     {
         var resp = await Get("https://x/data", r => r.Content = new StringContent("a,b\n1,2", Encoding.UTF8, "text/csv"));
-        await Assert.That(resp.Type.Name).IsEqualTo("table");
-        await Assert.That(resp.Peek()?.ToString()).IsEqualTo("a,b\n1,2"); // untouched = raw csv
+        // The flip: csv body stamps {binary, csv}; untouched it's the raw bytes.
+        await Assert.That(resp.Type.Name).IsEqualTo("binary");
+        await Assert.That(resp.Type.Kind).IsEqualTo("csv");
+        await Assert.That(resp.Raw is byte[]).IsTrue(); // untouched = raw bytes
     }
 
-    // Malformed json no longer falls back at read time — it stays the raw string
-    // (scalar) and would error only on a structured touch (lazy contract).
+    // Malformed json no longer falls back at read time — the untouched value is
+    // the raw bytes and would error only on a structured touch (lazy contract).
     [Test]
-    public async Task Body_BrokenJson_ScalarIsRawString_NoEagerFail()
+    public async Task Body_BrokenJson_UntouchedIsRawBytes_NoEagerFail()
     {
         const string malformed = "{not json";
         var resp = await Get("https://x/broken", r =>
             r.Content = new StringContent(malformed, Encoding.UTF8, "application/json"));
-        await Assert.That(resp.Peek()?.ToString()).IsEqualTo(malformed);
+        await Assert.That(resp.Raw is byte[]).IsTrue();          // untouched = raw bytes, no eager parse
+        await Assert.That(resp.MaterializeCount()).IsEqualTo(0); // malformed json never parsed at read
     }
 
     // status/headers are Properties — read with `!`, never touching the body.

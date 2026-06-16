@@ -55,7 +55,8 @@ public class HttpChannelTests
         var r = await Get(app, handler, "application/json", "{\"a\":1}");
         await r.IsSuccess();
         await Assert.That(r.MaterializeCount()).IsEqualTo(0);            // not deserialized at read
-        await Assert.That(r.Peek()?.ToString()).IsEqualTo("{\"a\":1}"); // raw body held
+        // Content off I/O is raw bytes now — untouched raw body is the byte[].
+        await Assert.That(r.Raw is byte[]).IsTrue();
     }
 
     // Independent #12 — strict deletion probe by absolute name.

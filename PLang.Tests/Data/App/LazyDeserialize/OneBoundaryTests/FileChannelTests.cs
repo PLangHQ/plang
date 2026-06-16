@@ -30,7 +30,8 @@ public class FileChannelTests
         var d = await ch.Read();
         await d.IsSuccess();
         await Assert.That(d.HasRaw).IsTrue();
-        await Assert.That(d.Raw).IsEqualTo((object)"{\"port\":8080}");
+        // Content off I/O is raw bytes now — untouched raw is the byte[].
+        await Assert.That(d.Raw is byte[]).IsTrue();
     }
 
     [Test] public async Task FileChannel_Mime_DerivedFromExtension()
@@ -55,7 +56,7 @@ public class FileChannelTests
         var ch = new filechannel(p);
         var d = await ch.Read();
         await Assert.That(d.MaterializeCount()).IsEqualTo(0); // nothing parsed at read time
-        await Assert.That(d.Type.Name).IsEqualTo("item");
+        await Assert.That(d.Type.Name).IsEqualTo("binary"); // the flip: binary + json kind
         await Assert.That(d.Type.Kind).IsEqualTo("json");
     }
 }

@@ -352,22 +352,15 @@ public sealed class @this
     private readonly object _derivedLock = new();
     private readonly HashSet<string> _allKinds;
     private readonly ConcurrentDictionary<string, string> _mimeToKind;
-    // MIME → its canonical kind (the primary file-extension form). This is what a
-    // value of that MIME narrows by, so it must round-trip back to a type: the
-    // subtype alone does not (text/plain's subtype is "plain", which names no type;
-    // its extension "txt" does → text). First extension registered for a MIME wins.
-    private readonly ConcurrentDictionary<string, string> _mimeToExtension;
 
     public @this()
     {
         _allKinds = new HashSet<string>(_extensionToKind.Values, StringComparer.OrdinalIgnoreCase);
         _mimeToKind = new ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        _mimeToExtension = new ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var kvp in _extensionToMime)
         {
             if (_extensionToKind.TryGetValue(kvp.Key, out var kind))
                 _mimeToKind.TryAdd(kvp.Value, kind);
-            _mimeToExtension.TryAdd(kvp.Value, kvp.Key.TrimStart('.'));
         }
     }
 
@@ -462,12 +455,11 @@ public sealed class @this
         if (_tabularMimeToKind.TryGetValue(mime, out var tableKind))
             return new global::app.type.@this("binary", tableKind);
 
-        // Kind = the MIME's canonical extension when known (text/plain → txt, so
-        // it narrows back to text), else the canonicalised subtype.
+        // Kind = the subtype canonicalised to its file-extension form (jpeg→jpg,
+        // text/plain→its text extension), which narrows back to a type on access.
         var slash = mime.IndexOf('/');
         var subtype = slash >= 0 && slash < mime.Length - 1 ? mime[(slash + 1)..] : null;
-        var kind = _mimeToExtension.TryGetValue(mime, out var ext) ? ext
-            : subtype != null ? CanonicaliseKind(subtype) : null;
+        var kind = subtype != null ? CanonicaliseKind(subtype) : null;
         return new global::app.type.@this("binary", kind);
     }
 
@@ -543,7 +535,12 @@ public sealed class @this
             if (!string.Equals(sub, lower, System.StringComparison.OrdinalIgnoreCase)) continue;
             var ext = kvp.Key;
             if (ext.StartsWith('.')) ext = ext[1..];
-            if (best == null || ext.Length < best.Length) best = ext;
+            // Shortest wins (jpg < jpeg); ties break ordinally so the result is
+            // STABLE — _extensionToMime is a ConcurrentDictionary with no iteration
+            // order, and several extensions can share one MIME (txt/ini/llm → text/plain).
+            if (best == null || ext.Length < best.Length
+                || (ext.Length == best.Length && string.CompareOrdinal(ext, best) < 0))
+                best = ext;
         }
         return best ?? lower;
     }

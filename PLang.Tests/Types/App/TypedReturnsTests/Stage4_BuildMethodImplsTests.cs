@@ -147,20 +147,20 @@ public class Stage4_BuildMethodImplsTests
     {
         var result = await Build("http", "request", ("Url", "https://api/x.json"));
         await result.IsSuccess();
-        await Assert.That(AsType(result).Name).IsEqualTo("item");
+        // The flip: content off I/O is binary; the extension is the kind.
+        await Assert.That(AsType(result).Name).IsEqualTo("binary");
         await Assert.That(AsType(result).Kind).IsEqualTo("json");
     }
 
     [Test]
-    public async Task HttpRequest_Build_LiteralUrlWithUnregisteredExtension_InfersObjectWithExtensionKind()
+    public async Task HttpRequest_Build_LiteralUrlWithUnregisteredExtension_InfersBinaryWithExtensionKind()
     {
-        // .pdf has a known mime (application/pdf) that materializes to object;
-        // the extension is the kind. The name "object" is a registered type, so
-        // the stamp is safe — and it matches what the runtime response-body
-        // derivation produces for the same Content-Type (no build/runtime drift).
+        // .pdf is binary off I/O; the extension is the kind. Matches what the
+        // runtime response-body derivation produces for the same Content-Type
+        // (no build/runtime drift).
         var result = await Build("http", "request", ("Url", "https://x/report.pdf"));
         await result.IsSuccess();
-        await Assert.That(AsType(result).Name).IsEqualTo("item");
+        await Assert.That(AsType(result).Name).IsEqualTo("binary");
         await Assert.That(AsType(result).Kind).IsEqualTo("pdf");
     }
 
