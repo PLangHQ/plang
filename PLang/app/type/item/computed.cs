@@ -7,11 +7,17 @@ namespace app.type.item;
 /// <c>Data</c> never rebinds — there is nothing to keep, by design (the same
 /// rule that keeps a template render from being stored).
 /// </summary>
-public sealed class computed : @this
+public sealed class computed : @this, module.IContext
 {
     private readonly System.Func<object?> _factory;
     private readonly string? _declared;
     private readonly string? _declaredKind;
+
+    /// <summary>Stamped by the holding <c>Data</c> when its Context is set, so the
+    /// computation's result lifts with context — a host object the factory returns
+    /// (<c>%!app%</c>) can then resolve its registry name (its kind) on mint.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public actor.context.@this? Context { get; set; }
 
     public computed(System.Func<object?> factory, string? declaredTypeName = null, string? declaredKind = null)
     {
@@ -41,6 +47,6 @@ public sealed class computed : @this
     private @this Compute()
     {
         var raw = _factory();
-        return global::app.data.@this.Lift(raw);
+        return global::app.data.@this.Lift(raw, Context);
     }
 }

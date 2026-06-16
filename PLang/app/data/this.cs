@@ -248,8 +248,11 @@ public partial class @this
         }
         // Unowned — rung 2: a strongly-typed C# object plang holds as `item`
         // with kind naming the class. The carrier's Peek answers the real
-        // instance, so generic consumers keep seeing the object itself.
-        return new global::app.type.item.clr(v);
+        // instance, so generic consumers keep seeing the object itself. Context
+        // rides along so the carrier can resolve its registry name (the kind)
+        // the first time it mints — without it %!app% would report its raw CLR
+        // FullName instead of "app".
+        return new global::app.type.item.clr(v) { Context = context };
     }
 
     [JsonConstructor]

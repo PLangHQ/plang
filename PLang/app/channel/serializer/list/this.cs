@@ -5,6 +5,7 @@ namespace app.channel.serializer.list;
 /// <summary>
 /// Registry for serializers, allowing lookup by MIME type or file extension.
 /// </summary>
+[global::app.Attributes.PlangType("serializers")]
 public sealed class @this
 {
     private readonly Dictionary<string, ISerializer> _byType = new(StringComparer.OrdinalIgnoreCase);

@@ -13,6 +13,7 @@ namespace app.channel.list;
 /// (Stage 6). App.Run enforces the invariant that every actor that performs I/O has
 /// all three before user code runs.
 /// </summary>
+[global::app.Attributes.PlangType("channel")]
 public sealed class @this : IAsyncDisposable
 {
     private readonly ConcurrentDictionary<string, channel.@this> _channels = new(StringComparer.OrdinalIgnoreCase);

@@ -114,8 +114,19 @@ public sealed partial class @this
         {
             if (_initialized) return;
             SeedClrPrimitives();
+            // An explicitly-aliased [PlangType] name (one that diverges from the
+            // type's own inferred name — e.g. [PlangType("test")] on app.tester.@this,
+            // whose namespace tail is "tester") must not steal the name→type resolve
+            // slot from a type that naturally owns it (app.tester.test.@this). So the
+            // type→name (kind) mapping records immediately, but the alias's name→type
+            // claim is deferred to a second pass that runs after every natural owner
+            // has registered. The kind direction is collision-free (keyed by type);
+            // only the reverse needs the ordering guarantee.
+            var deferredAliases = new List<(string Name, Type Type)>();
             foreach (var assembly in Assemblies)
-                IndexAssembly(assembly);
+                IndexAssembly(assembly, deferredAliases);
+            foreach (var (name, type) in deferredAliases)
+                _nameToType.TryAdd(name, type);
             _initialized = true;
         }
     }
@@ -136,7 +147,7 @@ public sealed partial class @this
     }
 
 
-    private void IndexAssembly(Assembly assembly)
+    private void IndexAssembly(Assembly assembly, List<(string Name, Type Type)> deferredAliases)
     {
         foreach (var type in SafeGetTypes(assembly))
         {
@@ -152,11 +163,19 @@ public sealed partial class @this
 
             if (attrs.Count > 0)
             {
+                var inferred = InferName(type);
                 foreach (var attr in attrs)
                 {
-                    var name = attr.Name ?? InferName(type);
+                    var name = attr.Name ?? inferred;
                     if (name == null) continue;
-                    _nameToType.TryAdd(name, type);
+                    // A name that matches the type's own inference is its natural
+                    // claim — register now. A name the attribute redirects to
+                    // (kind label that diverges from the type's namespace/class)
+                    // is deferred so a natural owner of that name wins the reverse.
+                    if (string.Equals(name, inferred, System.StringComparison.Ordinal))
+                        _nameToType.TryAdd(name, type);
+                    else
+                        deferredAliases.Add((name, type));
                     canonical ??= name;
                 }
             }

@@ -15,6 +15,7 @@ namespace app.error.trail;
 /// Lifecycle: unbounded for the App's lifetime — long-running processes accumulate
 /// linearly. Bounded retention is a future opt-in.
 /// </summary>
+[global::app.Attributes.PlangType("trace")]
 public sealed partial class @this : IReadOnlyList<IError>
 {
     private readonly List<IError> _entries = new();

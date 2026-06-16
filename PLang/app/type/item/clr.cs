@@ -35,20 +35,25 @@ public sealed class clr : @this, module.IContext
     }
 
     /// <summary>
-    /// The carried class's own identity: the registry name when the class is
-    /// registered, else its CLR name — the carrier is transparent. A courier
-    /// label (the compress Wrap outer's declared category) overrides;
-    /// transitional, dies with the schema layers.
+    /// A foreign host object is the apex of the value lattice — the un-narrowed
+    /// <c>item</c> (≈ C# <c>object</c>) — so it reports <c>type=item</c> with its
+    /// C# identity in <c>kind</c>: the declared <see cref="app.Attributes.PlangTypeAttribute"/>
+    /// / registry short name when the class is named PLang vocabulary
+    /// (<c>app</c>, <c>callstack</c>, …), else the version-independent
+    /// <c>FullName</c> (any third-party POCO). This mirrors <c>number</c>/<c>int</c>:
+    /// type = the lattice position, kind = the specialization. A courier label
+    /// (a declared judgement riding the carrier) overrides; transitional, dies
+    /// with the schema layers.
     /// </summary>
     protected internal override global::app.type.@this Mint()
     {
-        var clrType = Value.GetType();
         if (_declared != null)
             return new global::app.type.@this(_declared, _declaredKind, _declaredStrict);
-        var name = Context?.App.Type.Name(clrType)
-                   ?? global::app.type.catalog.@this.GetPrimitiveName(clrType)
-                   ?? clrType.Name.ToLowerInvariant();
-        return new global::app.type.@this(name, clrType);
+        var clrType = Value.GetType();
+        var kind = Context?.App.Type.ResolveName(clrType)
+                   ?? clrType.FullName
+                   ?? clrType.Name;
+        return new global::app.type.@this("item", kind);
     }
 
     /// <summary>A re-declared carrier — same carried object, new label

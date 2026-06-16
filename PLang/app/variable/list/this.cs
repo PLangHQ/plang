@@ -9,6 +9,7 @@ namespace app.variable.list;
 /// <summary>
 /// Thread-safe variable storage for App.
 /// </summary>
+[global::app.Attributes.PlangType("variable")]
 public partial class @this
 {
     // Symmetric write+read for snapshot cloning. Pure config bag — `static readonly`
