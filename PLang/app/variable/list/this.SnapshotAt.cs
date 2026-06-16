@@ -31,6 +31,12 @@ public partial class @this
         var copy = new @this { _context = _context };
         foreach (var kvp in _variables)
         {
+            // Same skip rule as Clone(): per-execution cells are shared live, never
+            // cloned. DynamicData (Now/GUID) and !-prefixed context vars (!app,
+            // !context, …) hold live references back into the App graph — deep-cloning
+            // them walks the whole runtime and overflows the stack. Snapshotting is a
+            // projection of USER variable state, not of infrastructure handles.
+            if (kvp.Value is data.DynamicData || kvp.Key.StartsWith("!")) continue;
             // Carry the live Data instance by clone so mutations on `copy` don't bleed back.
             copy._variables[kvp.Key] = kvp.Value.Clone();
         }
