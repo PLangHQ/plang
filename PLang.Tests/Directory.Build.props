@@ -14,6 +14,20 @@
     <CompilerGeneratedFilesOutputPath>obj/Debug/net10.0/generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
 
+  <!-- Disable EventSource/EventPipe to dodge a .NET 10 runtime teardown bug: an
+       EventProvider finalized at process exit corrupts EventPipe's provider list
+       (coreclr!ep_delete_provider -> dn_list_custom_free -> RtlFreeHeap), crashing
+       the full suite with STATUS_HEAP_CORRUPTION on Windows / SIGSEGV on Linux —
+       after every result has printed (cosmetic, but eats the summary line and the
+       exit code). Scales with EventSource variety, not test count. We use no
+       EventSource/EventListener anywhere, so this is a clean no-op for us.
+       Set as an explicit RuntimeHostConfigurationOption because the SDK's
+       <EventSourceSupport> property does not emit the switch on a plain build.
+       Upstream: https://github.com/dotnet/runtime/issues/36028 -->
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="System.Diagnostics.Tracing.EventSource.IsSupported" Value="false" Trim="true" />
+  </ItemGroup>
+
   <!-- Test packages — every project except Shared (full TUnit injects a test
        entry point, which a class library must not have; Shared gets
        TUnit.Assertions/Core in its own csproj). -->
