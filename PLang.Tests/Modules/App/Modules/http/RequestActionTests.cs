@@ -401,7 +401,7 @@ public class RequestActionTests
     #region JSON Parsing Edge Cases
 
     [Test]
-    public async Task Get_InvalidJson_FallsBackToRawString()
+    public async Task Get_MislabeledJson_BodyRecoverableFromRaw()
     {
         _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
         {
@@ -412,7 +412,9 @@ public class RequestActionTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Peek()?.ToString()).IsEqualTo("not json at all");
+        // A body mislabeled application/json rides as raw bytes (no eager parse) — the
+        // original text is never lost; it stays recoverable from the raw form.
+        await Assert.That(result.Raw is byte[] b && Encoding.UTF8.GetString(b) == "not json at all").IsTrue();
     }
 
     [Test]
