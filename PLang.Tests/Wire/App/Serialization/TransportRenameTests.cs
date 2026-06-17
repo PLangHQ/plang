@@ -31,7 +31,7 @@ public class TransportRenameTests
     {
         // Read the type's XML doc from the source file — Roslyn doesn't bind <summary>
         // text at runtime, so the cheapest test is a substring check on the source.
-        var path = System.IO.Path.Combine(RepoRoot(), "PLang", "app", "module", "signing", "Signature.cs");
+        var path = System.IO.Path.Combine(RepoRoot(), "PLang", "app", "type", "signature", "this.cs");
         var content = await System.IO.File.ReadAllTextAsync(path);
         // Locate the class-level summary block (the first <summary> in the file).
         var summaryStart = content.IndexOf("/// <summary>", StringComparison.Ordinal);
@@ -39,6 +39,6 @@ public class TransportRenameTests
         await Assert.That(summaryStart >= 0 && summaryEnd > summaryStart).IsTrue();
         var summary = content.Substring(summaryStart, summaryEnd - summaryStart);
         await Assert.That(summary.Contains("envelope", StringComparison.OrdinalIgnoreCase)).IsFalse();
-        await Assert.That(summary).Contains("Cryptographic signature attached to a Data");
+        await Assert.That(summary).Contains("cryptographic-attestation");
     }
 }

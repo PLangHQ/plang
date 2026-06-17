@@ -61,7 +61,7 @@ public class ReadFailureTests
         await Assert.That(relayed.MaterializeCount()).IsEqualTo(0); // courier never materialized
 
         // Only the leaf touch materializes — and it surfaces an error, never throws.
-        await Assert.That((await relayed.Value())).IsNull();
+        await Assert.That(await (await relayed.Value())!.IsEmpty()).IsTrue();
         await Assert.That(relayed.Error).IsNotNull();
     }
 }
