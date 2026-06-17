@@ -60,6 +60,15 @@ public sealed class Io
         if (Node.TryGetPropertyValue(key, out var n) && n is JsonArray arr)
             foreach (var item in arr)
                 if (item is JsonObject o)
-                    yield return new Io(o, Options);
+                    yield return new Io(Unwrap(o), Options);
     }
+
+    // A structured list element rides as a Data record ({"@schema":"data", type,
+    // value:{…}}) — the section's own fields live under "value". Peel that one
+    // envelope so the reader sees the fields directly; a bare object passes through.
+    private static JsonObject Unwrap(JsonObject o)
+        => o.TryGetPropertyValue("@schema", out var s) && s?.GetValue<string>() == "data"
+           && o.TryGetPropertyValue("value", out var v) && v is JsonObject inner
+            ? inner
+            : o;
 }
