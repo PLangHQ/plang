@@ -55,7 +55,7 @@ public class Stage5_ListDictOpsTests
         vars.Set("user2", Person("age", 10L));
         var dropped = await WhereAction(ctx, "user2", "age", ">", 20L).Run();
         await dropped.IsSuccess();
-        await Assert.That((await dropped.Value())).IsNull();
+        await Assert.That(await (await dropped.Value())!.IsEmpty()).IsTrue();
     }
 
     [Test]

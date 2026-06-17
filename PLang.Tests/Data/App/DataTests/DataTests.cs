@@ -391,7 +391,7 @@ public class DataTests
         var ov = Data.NotFound("missing");
 
         await Assert.That(ov.Name).IsEqualTo("missing");
-        await Assert.That((await ov.Value())).IsNull();
+        await Assert.That(await (await ov.Value())!.IsEmpty()).IsTrue();
         await Assert.That(ov.IsInitialized).IsFalse();
     }
 

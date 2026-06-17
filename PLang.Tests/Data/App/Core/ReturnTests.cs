@@ -46,7 +46,7 @@ public class DataResultTests
         var result = Data.FromError(error);
 
         await result.IsFailure();
-        await Assert.That((await result.Value())).IsNull();
+        await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Message).IsEqualTo("Test error");
     }
