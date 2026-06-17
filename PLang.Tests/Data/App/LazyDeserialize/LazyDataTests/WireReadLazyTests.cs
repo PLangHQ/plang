@@ -47,9 +47,16 @@ public class WireReadLazyTests
     // type slot.
     [Test] public async Task WireRead_StampsTypeKindFromTypeSlot()
     {
+        // The wire carries {number, kind:int}; the read honors a value's kind when
+        // a Context is present (the realistic runtime path — the context-less
+        // fallback can't resolve a kind and lifts the bare JSON number as long).
+        await using var app = new global::app.@this("/test");
+        var ctx = app.User.Context;
+        var serializer = new plang(ctx);
         var d = data.Ok(5);                 // number / int derived
         d.Name = "n";
-        var back = RoundTrip(d);
+        var back = serializer.Deserialize(serializer.Serialize(d).Peek()!.ToString()!);
+        back.Context = ctx;
         await Assert.That(back.Type.Name).IsEqualTo("number");
         await Assert.That(back.Kind).IsEqualTo("int");
     }
