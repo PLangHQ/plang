@@ -82,6 +82,8 @@ public class Stage3_HttpContentTypeDispatchTests
         // text/html → kind "htm" (canonicalised to the shortest extension form).
         await Assert.That(resp.Type.Kind).IsEqualTo("htm");
         await Assert.That(resp.Raw is byte[]).IsTrue(); // untouched = raw bytes
+        // On access, the kind narrows to a `code` value (html is the code family).
+        await Assert.That(await resp.Value()).IsTypeOf<global::app.type.code.@this>();
     }
 
     [Test]

@@ -97,6 +97,7 @@ public sealed class @this
         [".cpp"] = "code",
         [".h"] = "code",
         [".html"] = "code",
+        [".htm"] = "code",
         [".css"] = "code",
         [".go"] = "code",
         [".rb"] = "code",

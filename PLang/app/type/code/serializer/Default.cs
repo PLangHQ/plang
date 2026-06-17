@@ -13,4 +13,16 @@ public static class Default
         if (value == null) { writer.Null(); return; }
         writer.String(value.Source);
     }
+
+    /// <summary>
+    /// Read side — source text decodes to a <c>code</c> value, the kind naming the
+    /// language (html/css/js). Content off I/O rides as binary bytes; the source is
+    /// text, so it decodes through the text type (which owns bytes→string).
+    /// </summary>
+    public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
+    {
+        if (raw is not (string or byte[])) return raw;
+        string source = new global::app.type.text.@this(raw).ToString();
+        return new global::app.type.code.@this(source, kind ?? "text");
+    }
 }
