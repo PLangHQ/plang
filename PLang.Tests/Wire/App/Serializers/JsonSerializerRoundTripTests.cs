@@ -27,7 +27,7 @@ public class JsonSerializerRoundTripTests
         var json = app.User.Channel.Serializers.GetByMimeType("application/json");
         var raw = "\"hello\"";
         var s = (await json.Deserialize<global::app.type.text.@this>(raw).Value())!;
-        await Assert.That(s.Value).IsEqualTo("hello");
+        await Assert.That(s.ToString()).IsEqualTo("hello");
     }
 
     [Test]

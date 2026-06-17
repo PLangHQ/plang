@@ -116,7 +116,7 @@ public class JsonStreamSerializerTests
 
         var result = (await serializer.Deserialize<global::app.type.text.@this>("\"hello\"").Value())!;
 
-        await Assert.That(result.Value).IsEqualTo("hello");
+        await Assert.That(result.ToString()).IsEqualTo("hello");
     }
 
     [Test]

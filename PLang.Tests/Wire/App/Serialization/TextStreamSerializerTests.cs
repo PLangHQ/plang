@@ -333,7 +333,7 @@ public class TextStreamSerializerTests
         var text = (await serializer.Serialize(Data.Ok(original)).Value())!.Clr<string>()!;
         var result = (await serializer.Deserialize<global::app.type.text.@this>(text).Value())!;
 
-        await Assert.That(result.Value).IsEqualTo(original);
+        await Assert.That(result.ToString()).IsEqualTo(original);
     }
 
     [Test]
