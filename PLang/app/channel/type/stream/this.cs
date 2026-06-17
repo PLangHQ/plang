@@ -57,6 +57,12 @@ public sealed class @this : global::app.channel.type.session.@this
                 Type = Mime,
                 CancellationToken = ct
             });
+            // Line framing is the channel's job (console/pipe ergonomics, NDJSON):
+            // delimit each line-oriented text message with a newline. Binary and the
+            // self-describing plang envelope are not framed.
+            if (serResult.Success && IsLineDelimited(Mime))
+                await Stream.WriteAsync(
+                    System.Text.Encoding.UTF8.GetBytes(System.Environment.NewLine), ct);
             return serResult;
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
@@ -65,6 +71,12 @@ public sealed class @this : global::app.channel.type.session.@this
                 $"Failed to write to channel '{Name}': {ex.Message}", "WriteError") { Exception = ex });
         }
     }
+
+    // Line-oriented text mimes are framed one-message-per-line. Binary
+    // (image/*, octet-stream) and the self-describing plang envelope are not.
+    private static bool IsLineDelimited(string mime)
+        => mime.StartsWith("text/", System.StringComparison.OrdinalIgnoreCase)
+           || mime.Equals("application/json", System.StringComparison.OrdinalIgnoreCase);
 
     public override async Task<global::app.data.@this> Read(CancellationToken ct = default)
     {

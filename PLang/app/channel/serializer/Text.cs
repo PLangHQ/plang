@@ -33,7 +33,12 @@ public sealed class Text : ISerializer
                 && value is not global::app.type.item.@this { IsLeaf: true })
                 return await _jsonFallback.SerializeAsync(stream, data, cancellationToken);
 
-            var bytes = _encoding.GetBytes((value?.ToString() ?? "") + Environment.NewLine);
+            // A null value has no plain-text content — emit nothing (the citizen's
+            // structured-only "null" ToString does not belong in a text channel).
+            // Line framing (the delimiter between messages) is the channel's job,
+            // not the serializer's — emit only the value's bytes here.
+            var content = value == null || value.IsNull ? "" : value.ToString();
+            var bytes = _encoding.GetBytes(content ?? "");
             await stream.WriteAsync(bytes, cancellationToken);
             return global::app.data.@this.Ok();
         }
@@ -73,8 +78,10 @@ public sealed class Text : ISerializer
     public data.@this<global::app.type.text.@this> Serialize(data.@this data)
     {
         var value = data.Peek();
-        if (value == null || value.IsLeaf)
-            return global::app.data.@this<global::app.type.text.@this>.Ok(value?.ToString() ?? "");
+        if (value == null || value.IsNull)
+            return global::app.data.@this<global::app.type.text.@this>.Ok("");
+        if (value.IsLeaf)
+            return global::app.data.@this<global::app.type.text.@this>.Ok(value.ToString() ?? "");
         return _jsonFallback.Serialize(data);
     }
 

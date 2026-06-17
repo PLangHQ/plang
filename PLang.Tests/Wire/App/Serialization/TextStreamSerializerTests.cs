@@ -273,12 +273,14 @@ public class TextStreamSerializerTests
 
         stream.Position = 0;
         var text = Encoding.UTF8.GetString(stream.ToArray());
-        await Assert.That(text).IsEqualTo("hello world" + Environment.NewLine);
+        await Assert.That(text).IsEqualTo("hello world");  // serializer emits bare value; line framing is the channel's job
     }
 
     [Test]
-    public async Task SerializeAsync_Null_WritesNewLine()
+    public async Task SerializeAsync_Null_WritesNothing()
     {
+        // A null value has no plain-text content, and the serializer no longer
+        // frames (the channel does) — so it writes nothing.
         var serializer = new global::app.channel.serializer.Text();
         using var stream = new MemoryStream();
 
@@ -286,7 +288,7 @@ public class TextStreamSerializerTests
 
         stream.Position = 0;
         var text = Encoding.UTF8.GetString(stream.ToArray());
-        await Assert.That(text).IsEqualTo(Environment.NewLine);
+        await Assert.That(text).IsEqualTo("");
     }
 
     [Test]
@@ -345,7 +347,7 @@ public class TextStreamSerializerTests
         stream.Position = 0;
         var result = (await (await serializer.DeserializeAsync<global::app.type.text.@this>(stream)).Value())?.ToString();
 
-        await Assert.That(result).IsEqualTo(original + Environment.NewLine);
+        await Assert.That(result).IsEqualTo(original);
     }
 
     [Test]
@@ -358,7 +360,7 @@ public class TextStreamSerializerTests
 
         stream.Position = 0;
         var bytes = stream.ToArray();
-        await Assert.That(Encoding.ASCII.GetString(bytes)).IsEqualTo("test" + Environment.NewLine);
+        await Assert.That(Encoding.ASCII.GetString(bytes)).IsEqualTo("test");
     }
 
     [Test]

@@ -86,8 +86,9 @@ public sealed class Json : ISerializer
                 await stream.WriteAsync("null"u8.ToArray(), cancellationToken);
                 return global::app.data.@this.Ok();
             }
+            // Line framing between messages is the channel's job, not the
+            // serializer's — emit only the value's JSON here, no trailing newline.
             await JsonSerializer.SerializeAsync(stream, value, value.GetType(), _options, cancellationToken);
-            await stream.WriteAsync(Encoding.UTF8.GetBytes(Environment.NewLine), cancellationToken);
             return global::app.data.@this.Ok();
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
