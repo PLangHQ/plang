@@ -67,7 +67,8 @@ public class VariablesCloneTests
         clone.Set("count", 99);
         clone.Set("name", "modified");
 
-        var originalCount = (long)(await vars.GetValue("count"))!;
+        // 42 fits in int — numbers stay int and escalate to long only on overflow.
+        var originalCount = Convert.ToInt64((await vars.GetValue("count"))!);
         var originalName = (string?)await vars.GetValue("name");
         await Assert.That(originalCount).IsEqualTo(42L);
         await Assert.That(originalName).IsEqualTo("original");

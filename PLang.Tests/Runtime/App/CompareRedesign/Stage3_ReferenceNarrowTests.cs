@@ -243,6 +243,8 @@ public class Stage3_ReferenceNarrowTests : IDisposable
             "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==");
         System.IO.File.WriteAllBytes(TempPath("dot.png"), png);
         var img = await Read("dot.png");
+        // Content off I/O is binary/lazy — the value parses (narrows) only on access.
+        await img.Value();
         await Assert.That(img.Type!.Name).IsEqualTo("image");
         await Assert.That(img.Peek()).IsTypeOf<global::app.type.image.@this>();
     }
