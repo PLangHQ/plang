@@ -44,7 +44,7 @@ public class SkipActionTests
 
         await result.IsSuccess();
         await Assert.That(context.EventOverride).IsNotNull();
-        await Assert.That((await context.EventOverride!.Value())).IsNull();
+        await Assert.That(await (await context.EventOverride!.Value())!.IsEmpty()).IsTrue();
     }
 
     [Test]

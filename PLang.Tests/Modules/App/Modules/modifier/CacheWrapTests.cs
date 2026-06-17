@@ -81,7 +81,7 @@ public class CacheWrapTests
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("cached-value");
         // The underlying action did NOT run (no %y%)
-        await Assert.That((await (await Ctx.Variable.Get("y")).Value())).IsNull();
+        await Assert.That(await (await (await Ctx.Variable.Get("y")).Value())!.IsEmpty()).IsTrue();
     }
 
     [Test]

@@ -55,7 +55,7 @@ public class DataSourceTests
         using var ds = CreateDataSource();
         var result = await ds.Get("settings", "NonExistent");
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsNull();
+        await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
     }
 
     [Test]
@@ -78,7 +78,7 @@ public class DataSourceTests
         await removeResult.IsSuccess();
 
         var result = await ds.Get("settings", "ApiKey");
-        await Assert.That((await result.Value())).IsNull();
+        await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
     }
 
     [Test]
@@ -143,7 +143,7 @@ public class DataSourceTests
         await ds.Set("settings", "NullKey", new Data("NullKey", null));
         var result = await ds.Get("settings", "NullKey");
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsNull();
+        await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
     }
 
     [Test]
@@ -354,7 +354,7 @@ public class DataSourceTests
         using var ds2 = global::app.module.settings.Sqlite.InMemory("disposable_db");
         var result = await ds2.Get("data", "key");
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsNull();
+        await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
     }
 
     [Test]

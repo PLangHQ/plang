@@ -102,6 +102,6 @@ public class ListSetTests
 
         await result.IsSuccess();
         var list = (await memory.GetValue("myList")) as global::app.type.list.@this;
-        await Assert.That((await list!.At(0)!.Value())).IsNull();
+        await Assert.That(await (await list!.At(0)!.Value())!.IsEmpty()).IsTrue();
     }
 }
