@@ -12,14 +12,11 @@ namespace app.type.item;
 public sealed class clr : @this, module.IContext
 {
     public object Value { get; }
-    private readonly string? _declared;
-    private readonly string? _declaredKind;
-    private readonly bool _declaredStrict;
 
     [System.Text.Json.Serialization.JsonIgnore]
     public actor.context.@this? Context { get; set; }
 
-    public clr(object value, string? declaredTypeName = null, string? declaredKind = null, bool declaredStrict = false)
+    public clr(object value)
     {
         Value = value ?? throw new System.ArgumentNullException(nameof(value));
         // Nested Data is not a shape: a Data never rides as a value (Lift forbids
@@ -29,9 +26,6 @@ public sealed class clr : @this, module.IContext
             throw new System.InvalidOperationException(
                 "A Data may not be carried in a clr — nested Data is not a supported shape. "
                 + "Return the inner value via its own factory, never wrap a Data.");
-        _declared = declaredTypeName;
-        _declaredKind = declaredKind;
-        _declaredStrict = declaredStrict;
     }
 
     /// <summary>
@@ -41,25 +35,16 @@ public sealed class clr : @this, module.IContext
     /// / registry short name when the class is named PLang vocabulary
     /// (<c>app</c>, <c>callstack</c>, …), else the version-independent
     /// <c>FullName</c> (any third-party POCO). This mirrors <c>number</c>/<c>int</c>:
-    /// type = the lattice position, kind = the specialization. A courier label
-    /// (a declared judgement riding the carrier) overrides; transitional, dies
-    /// with the schema layers.
+    /// type = the lattice position, kind = the specialization.
     /// </summary>
     protected internal override global::app.type.@this Mint()
     {
-        if (_declared != null)
-            return new global::app.type.@this(_declared, _declaredKind, _declaredStrict);
         var clrType = Value.GetType();
         var kind = Context?.App.Type.ResolveName(clrType)
                    ?? clrType.FullName
                    ?? clrType.Name;
         return new global::app.type.@this("item", kind);
     }
-
-    /// <summary>A re-declared carrier — same carried object, new label
-    /// (the declared judgement lands on the carrier, never on the object).</summary>
-    internal clr Labeled(string typeName, string? kind, bool strict = false)
-        => new(Value, typeName, kind, strict) { Context = Context };
 
     /// <summary>In memory now = the carrier itself (a closed box, like every
     /// other item whose <c>Peek</c> answers self). The carried host object is
@@ -82,7 +67,7 @@ public sealed class clr : @this, module.IContext
     /// </summary>
     public override void Write(global::app.channel.serializer.IWriter writer)
         => throw new System.NotSupportedException(
-            $"clr carrier wrapping '{Value.GetType().FullName}' (declared '{_declared ?? "?"}') reached the wire — "
+            $"clr carrier wrapping '{Value.GetType().FullName}' reached the wire — "
             + "it has no plang type to render itself. Wrap it in a real item type, or fix the producer that parked it in a clr.");
 
     /// <summary>

@@ -441,27 +441,9 @@ public sealed class @this : item.@this
                 if (value is text.@this t) value = t.Kinded(Kind);
                 else if (value is binary.@this b) value = new binary.@this(b.Value) { Kind = Kind };
             }
-            // A declared kind the instance can't carry itself, or a strict
-            // flag, rides the carrier label — the judgement stays with the
-            // value (the load-time enforcer reads through the carrier's Peek).
-            var labelNeeded = Strict || (Kind != null && value.Mint().Kind == null);
-            if (labelNeeded)
-                return value switch
-                {
-                    item.clr carrier => carrier.Labeled(Name, Kind ?? minted.Kind, Strict),
-                    _ when !OwnsDoor(value) => new item.clr(value, Name, Kind ?? minted.Kind, Strict),
-                    _ => value,
-                };
             return value;
         }
         if (value.Facet(Name) != null) return value;
-
-        // Bytes declared as a category (hash output as `binary/keccak256`,
-        // gzip output as `archived`): the binary instance IS the value — the
-        // declaration rides as the carrier label. Only a TEXT form is a parse
-        // source (the "5" declared number, the json declared object).
-        if (value is binary.@this)
-            return new item.clr(value, Name, Kind, Strict);
 
         var backing = value switch
         {
@@ -470,26 +452,17 @@ public sealed class @this : item.@this
             _ => null,
         };
         if (backing == null)
-            // A structured value under a different declared name: the value's
-            // truth stays (the carrier is transparent — Peek answers the
-            // instance) but the declaration survives as the label, so build
-            // validation can still judge the claim and the wire/signed type
-            // slot stays what was declared. Only a value that does NOT own its
-            // own door wraps — file/url/source/computed must stay reachable as
-            // the instance (their Ready does the work).
-            return value switch
-            {
-                item.clr carrier => carrier.Labeled(Name, Kind, Strict),
-                _ when !OwnsDoor(value) => new item.clr(value, Name, Kind, Strict),
-                _ => value,
-            };
+            // A structured value (or binary) under a different declared name keeps
+            // its own truth — the instance wins. This is the no-context fallback;
+            // with no context there is no build-validation or wire-signing to consume
+            // a declared label, and content off I/O is binary/kind (the kind narrows
+            // on access), so the declaration never rides a clr label.
+            return value;
         if (backing is string str && str.Contains('%')
             && System.Text.RegularExpressions.Regex.IsMatch(str, "%[^%]+%"))
             return value;
         return new item.source(backing, Name, Kind, Strict);
     }
-
-    private static bool OwnsDoor(item.@this value) => item.@this.OwnsDoor(value);
 
     /// <summary>
     /// Value equality — the entity is minted on ask now, so two asks yield two
