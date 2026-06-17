@@ -8,14 +8,20 @@ public sealed partial class @this
     /// the first <see cref="BytesAsync"/>. The proving instance for reference-fundamental
     /// laziness (audio/video follow the same shape, each with its own <c>Convert</c>).
     ///
-    /// <para>Returns <c>null</c> to decline any shape that isn't a path-string (a raw
-    /// <c>byte[]</c> blob, etc.) — those are constructed at their own seam (file.read's
-    /// image lift) or kept raw by the caller. Declining lets the dispatcher fall through.</para>
+    /// <para>A raw <c>byte[]</c> declared <c>as image</c> is built here from its magic
+    /// bytes — the explicit declaration is the ask, and <see cref="FromBytes"/> sniffs the
+    /// mime. Bytes whose magic doesn't name an image decline (return <c>null</c>), letting
+    /// the dispatcher fall through. Content off I/O is a different path: it rests as
+    /// <c>binary</c>/kind and narrows through the kind's reader on access, never here.</para>
     /// </summary>
     public static global::app.data.@this? Convert(object? value, string? kind,
         global::app.actor.context.@this context)
     {
         if (value is @this) return global::app.data.@this.Ok(value);
+        // A byte[] declared `as image` becomes the image its magic bytes name — the
+        // explicit declaration is the ask, and we already hold the bytes to sniff.
+        if (value is byte[] bytes)
+            return FromBytes(bytes) is { } image ? global::app.data.@this.Ok(image) : null;
         if (value is not string raw) return null;
 
         try

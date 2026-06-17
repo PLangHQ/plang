@@ -615,13 +615,15 @@ public class EngineTypesTests
         engine.Format.Add(".custom", "custom-kind", "application/custom");
 
         var data = new global::app.data.@this("test", new byte[] { 1 },
-            global::app.type.@this.FromMime("application/custom"));
+            engine.Format.TypeFromMime("application/custom"));
         data.Context = context;
 
-        // Family-Kind accessor went away with the rename; `data.Type.Kind` now
-        // means subtype (set explicitly), not family-derived. Family resolution
-        // is now an explicit registry call against the type's Name.
-        await Assert.That(engine.Format.FamilyOf(data.Type!.Name)).IsEqualTo("custom-kind");
+        // Bytes off I/O are binary; the kind names the subtype. The custom mime
+        // only resolves to its family through the ENGINE'S registry (the runtime
+        // Add), which the static TypeMapping lacks — proving lazy derivation
+        // walks the engine types, not the static map.
+        await Assert.That(data.Type!.Name).IsEqualTo("binary");
+        await Assert.That(engine.Format.TypeOf(data.Type!.Kind!)).IsEqualTo("custom-kind");
     }
 
     // --- Engine integration ---

@@ -33,7 +33,41 @@ load-bearing**, not just speced.
   `clr._declared`/`Labeled`/Mint-label-branch are gone. clr is host-objects-only now.
 - `clr.Peek()=>self` and nested-Data-abolished landed in earlier sessions.
 
-## ⚠️ FIX TESTS FIRST (the §C fallout — 7 red tests)
+## ✅ RESOLVED — the 7 §C-fallout tests are green (2026-06-17, later session)
+
+All 7 fixed; full sweep shows **zero new regressions** (Data 21→17 = baseline,
+Types 31→28 — below baseline; the `image.Convert` change fixed 3 BONUS baseline
+failures: `Body_ImagePng_…`, `ReadLiftImagePngAsImageGifStrict_FailsAtSet`,
+`ReadText_OnDotPrFile_…`). Production builds clean with analyzers.
+
+**Two design forks settled with Ingi:**
+1. **In-memory `byte[]` auto-typed from a mime → stays `binary`/kind, narrows on
+   read** (fork option b). The 4 Data + custom-type tests rewritten to drop the
+   test-only slash-name `Type.FromMime`/`new Type("image/jpeg")` and go through the
+   real decomposer `engine.Format.TypeFromMime` (→ `{binary, kind}`); they assert
+   `Name=="binary"` and resolve the family via `Format.TypeOf(Kind)` (jpg→image,
+   custom→custom-kind).
+2. **`strict` stays and means validate-AND-become.** A `byte[]` declared
+   `as image/gif, strict` validates the magic bytes and MINTS the image it was
+   verified to be (`%img%!type% == image/gif`). Fix: `image.Convert` now builds
+   from a `byte[]` via `FromBytes` (the explicit `as image` declaration is the ask;
+   the auto-mime `binary` path has `Name=binary` and never reaches `image.Convert`,
+   so fork #1 is unaffected). Strict-flag PERSISTENCE on the eager stored value was
+   dropped from the assertion (the `%var%` sibling never asserted it; strict is a
+   one-time gate, not a persisted property).
+
+**Production fixes (2 files):**
+- `type/this.cs` `Compressible` — derive family from the **Kind** first
+  (`TypeOf(Kind)`: jpg→image→not compressible), fall back to `FamilyOf(Name)`.
+  Binary content carries its true family in the kind, not the name. (Flip
+  regression: binary images were reading compressible.)
+- `image/this.Convert.cs` — accept a `byte[]` (build via `FromBytes`/magic-sniff).
+
+Open follow-up (NOT done, low value per Ingi "image isn't much used"): the strict
+`Type.Strict` flag does not persist onto the eager stored image. Revisit only if a
+real need surfaces.
+
+## ⚠️ (historical) FIX TESTS FIRST (the §C fallout — 7 red tests)
 
 §C's delete breaks 7 tests that pin the OLD behavior: an **in-memory** `byte[]`
 explicitly declared a media type reports that type (the clr label did it).

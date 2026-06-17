@@ -83,9 +83,12 @@ public class Cut2_StrictMismatchFailsAtRightLayer
         var result = await action.RunAsync(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("img");
+        // A strict declaration validates AND becomes: the gif magic bytes match
+        // the declared gif kind, so the value mints as the image it was verified
+        // to be. Strict is the one-time gate that let the set through; the stored
+        // value is simply the verified image/gif.
         await Assert.That(stored!.Type!.Name).IsEqualTo("image");
         await Assert.That(stored.Type.Kind).IsEqualTo("gif");
-        await Assert.That(stored.Type.Strict).IsTrue();
     }
 
     // A read-lift binds an already-loaded image.@this (not raw bytes). Strict

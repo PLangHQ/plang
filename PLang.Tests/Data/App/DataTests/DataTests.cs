@@ -459,13 +459,15 @@ public class DataTests
         var context = new global::app.actor.context.@this(engine);
 
         // Context propagation: setting Data.Context stamps the embedded Type
-        // entity so registry-keyed reads (Compressible, ClrType) work.
-        var ov = new Data("test", new byte[] { 1, 2 }, Type.FromMime("image/jpeg"));
+        // entity so registry-keyed reads (TypeOf, Compressible, ClrType) work.
+        // Bytes off I/O are binary; the kind (jpg) names how they narrow.
+        var ov = new Data("test", new byte[] { 1, 2 }, engine.Format.TypeFromMime("image/jpeg"));
         ov.Context = context;
 
-        // Family is no longer on Type.Kind (Kind is the subtype). It lives on
-        // the format registry, keyed by the type's Name.
-        await Assert.That(engine.Format.FamilyOf(ov.Type!.Name)).IsEqualTo("image");
+        // The family lives on the format registry, keyed by the kind (the
+        // subtype) — jpg → image — not by the Name, which is just "binary".
+        await Assert.That(ov.Type!.Name).IsEqualTo("binary");
+        await Assert.That(engine.Format.TypeOf(ov.Type!.Kind!)).IsEqualTo("image");
     }
 
     [Test]
@@ -522,12 +524,16 @@ public class DataTests
     [Test]
     public async Task Type_ExplicitType_NotOverridden()
     {
-        var explicitType = new Type("image/jpeg");
+        await using var engine = new global::app.@this("/test");
+
+        // A declared {binary, jpg} (bytes off I/O, the kind names the decode)
+        // survives the ctor — the value isn't re-derived to a bare binary that
+        // drops the kind.
+        var explicitType = engine.Format.TypeFromMime("image/jpeg");
         var ov = new Data("test", new byte[] { 1, 2, 3 }, explicitType);
 
-        // Explicit type is preserved, not lazily derived
-        await Assert.That(ov.Type).IsEqualTo(explicitType);
-        await Assert.That(ov.Type!.Name).IsEqualTo("image/jpeg");
+        await Assert.That(ov.Type!.Name).IsEqualTo("binary");
+        await Assert.That(ov.Type!.Kind).IsEqualTo("jpg");
     }
 
     [Test]
@@ -550,10 +556,13 @@ public class DataTests
         await using var engine = new global::app.@this("/test");
         var context = new global::app.actor.context.@this(engine);
 
-        var data = new Data("img", new byte[] { 1, 2 }, Type.FromMime("image/jpeg"));
+        var data = new Data("img", new byte[] { 1, 2 }, engine.Format.TypeFromMime("image/jpeg"));
         data.Context = context;
 
-        await Assert.That(engine.Format.FamilyOf(data.Type!.Name)).IsEqualTo("image");
+        // Binary content; the kind (jpg) carries the family. The kind's family
+        // is image, which is not compressible (already-compressed content).
+        await Assert.That(data.Type!.Name).IsEqualTo("binary");
+        await Assert.That(engine.Format.TypeOf(data.Type!.Kind!)).IsEqualTo("image");
         await Assert.That(data.Type!.Compressible).IsFalse();
     }
 
@@ -647,8 +656,9 @@ public class DataTests
         await using var engine = new global::app.@this("/test");
         var context = new global::app.actor.context.@this(engine);
 
-        // image/jpeg is not compressible (kind "image").
-        var data = new Data("", new byte[] { 1, 2, 3 }, Type.FromMime("image/jpeg"));
+        // Bytes off I/O are binary; the kind (jpg) resolves to the image
+        // family, which is not compressible (already-compressed content).
+        var data = new Data("", new byte[] { 1, 2, 3 }, engine.Format.TypeFromMime("image/jpeg"));
         data.Context = context;
 
         var result = data.Compress();

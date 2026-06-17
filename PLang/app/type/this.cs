@@ -140,11 +140,14 @@ public sealed class @this : item.@this
     {
         get
         {
-            // Resolve family from Name through the format registry (the
-            // family-Kind accessor went away with the rename; family-lookup
-            // is now an explicit registry call). Null family → not compressible.
-            var family = Context?.App.Format.FamilyOf(Name);
-            return family != null && (Context?.App.Format.Compressible(family) ?? false);
+            var format = Context?.App.Format;
+            if (format == null) return false;
+            // Binary content carries its true family in the Kind (jpg→image,
+            // mp3→audio): the Name is just "binary". A native value carries it
+            // in the Name (text, archive). Resolve the Kind's family first, fall
+            // back to the Name's. Null family → not compressible.
+            var family = (Kind != null ? format.TypeOf(Kind) : null) ?? format.FamilyOf(Name);
+            return family != null && format.Compressible(family);
         }
     }
 
