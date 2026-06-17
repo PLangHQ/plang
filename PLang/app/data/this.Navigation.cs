@@ -10,21 +10,14 @@ namespace app.data;
 /// </summary>
 public partial class @this
 {
-    private const int MaxNavigationDepth = 100;
-
     /// <summary>
     /// Gets a child value by path (dot notation, index, or method call).
     /// Never returns null — returns Data.NotFound(key) when the path doesn't resolve.
     /// </summary>
-    public virtual async System.Threading.Tasks.ValueTask<@this> GetChild(string path, int depth = 0)
+    public virtual async System.Threading.Tasks.ValueTask<@this> GetChild(string path)
     {
         if (string.IsNullOrEmpty(path))
             return this;
-
-        if (depth > MaxNavigationDepth)
-            return FromError(new ServiceError(
-                $"Navigation path exceeds maximum depth ({MaxNavigationDepth})",
-                "NavigationDepthExceeded", 400));
 
         // Parse next segment — respects parentheses (method calls), brackets, and quotes
         var (segment, remaining) = ParseNextSegment(path);
@@ -61,7 +54,7 @@ public partial class @this
 
                 if (string.IsNullOrEmpty(remaining))
                     return result;
-                return await result.GetChild(remaining, depth + 1);
+                return await result.GetChild(remaining);
             }
         }
 
@@ -88,7 +81,7 @@ public partial class @this
         if (string.IsNullOrEmpty(remaining))
             return child;
 
-        return await child.GetChild(remaining, depth + 1);
+        return await child.GetChild(remaining);
     }
 
     /// <summary>

@@ -911,31 +911,6 @@ public class DataTests
         await Assert.That(((app.type.number.@this)count!).Clr<object>()).IsEqualTo(42L);
     }
 
-    [Test]
-    public async Task GetChild_DeeplyNestedPath_ReturnsDepthError()
-    {
-        // Build a path with 150 dot segments — exceeds MaxNavigationDepth (100)
-        var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-        var current = dict;
-        for (int i = 0; i < 150; i++)
-        {
-            var inner = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-            current["a"] = inner;
-            current = inner;
-        }
-        current["a"] = "leaf";
-
-        var data = new Data("root", dict);
-        var path = string.Join(".", Enumerable.Repeat("a", 151));
-
-        var result = await data.GetChild(path);
-
-        await Assert.That(result).IsNotNull();
-        await result!.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("NavigationDepthExceeded");
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(400);
-    }
-
     // --- v5: Zip bomb test ---
 
     [Test]
