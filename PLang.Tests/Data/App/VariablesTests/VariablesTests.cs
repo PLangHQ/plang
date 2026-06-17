@@ -45,9 +45,10 @@ public class VariablesTests
         var guid1 = await guidObj!.Value();
         var guid2 = await guidObj.Value();
 
-        await Assert.That(guid1).IsTypeOf<Guid>();
-        await Assert.That(guid2).IsTypeOf<Guid>();
-        await Assert.That(guid1).IsNotEqualTo(guid2);
+        // GUID is a typed guid.@this value now, not a raw System.Guid.
+        await Assert.That(guid1).IsTypeOf<global::app.type.guid.@this>();
+        await Assert.That(guid2).IsTypeOf<global::app.type.guid.@this>();
+        await Assert.That(guid1!.ToString()).IsNotEqualTo(guid2!.ToString());
     }
 
     [Test]
@@ -373,7 +374,7 @@ public class VariablesTests
         // Verify the list itself is stored and accessible
         var itemsObj = await stack.Get("items");
         await Assert.That(itemsObj).IsNotNull();
-        await Assert.That((await itemsObj!.Value())).IsTypeOf<List<object>>();
+        await Assert.That((await itemsObj!.Value())).IsTypeOf<global::app.type.list.@this>();
 
         // Access the list directly
         var list = global::app.type.item.@this.Lower<List<object>>(await itemsObj.Value())!;
