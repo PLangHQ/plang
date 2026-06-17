@@ -2,10 +2,9 @@ using System.Text.Json;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using Permission = global::app.type.path.permission.@this;
-using Match = global::app.type.path.permission.Match;
-using Verb = global::app.type.path.permission.verb.@this;
-using Write = global::app.type.path.permission.verb.Write;
+using Permission = global::app.type.permission.@this;
+using Match = global::app.type.permission.Match;
+using Verb = global::app.type.permission.Verb;
 
 namespace PLang.Tests.App.FileSystem.PermissionTests;
 
@@ -13,11 +12,14 @@ namespace PLang.Tests.App.FileSystem.PermissionTests;
 /// dispatch is closed (unknown enum → false); JSON round-trip is lossless.
 public class PermissionCoversTests
 {
+    private static System.Collections.Generic.IReadOnlySet<Verb> Verbs(Verb? verb) =>
+        verb is { } v ? new System.Collections.Generic.HashSet<Verb> { v } : Permission.AllVerbs;
+
     private static Permission Grant(string path, Match match, Verb? verb = null) =>
-        new("user", path, verb ?? Verb.AllowAll(), match);
+        new("user", path, Verbs(verb), match);
 
     private static Permission Request(string path, Verb? verb = null) =>
-        new("user", path, verb ?? Verb.AllowAll(), Match.Exact);
+        new("user", path, Verbs(verb), Match.Exact);
 
     [Test] public async Task ExactMatch_EqualPath_Covers()
     {
@@ -63,23 +65,32 @@ public class PermissionCoversTests
 
     [Test] public async Task PathMatches_ButVerbDoesNot_DoesNotCover()
     {
-        var grantVerb = new Verb { Write = new Write(Overwrite: false) };
+        var grantVerb = global::app.type.permission.Verb.Write;
         var g = Grant("/p", Match.Exact, grantVerb);
         await Assert.That(g.Covers(Request("/p"))).IsFalse();
     }
 
     [Test] public async Task SameRecordShape_GrantRoleAndRequestRole_BothLegible()
     {
-        var grant = new Permission("user", "/apps/*/file.txt", Verb.AllowAll(), Match.Glob);
-        var request = new Permission("user", "/apps/Email/file.txt", Verb.AllowAll(), Match.Exact);
+        var grant = new Permission("user", "/apps/*/file.txt", global::app.type.permission.@this.AllVerbs, Match.Glob);
+        var request = new Permission("user", "/apps/Email/file.txt", global::app.type.permission.@this.AllVerbs, Match.Exact);
         await Assert.That(grant.Covers(request)).IsTrue();
     }
 
     [Test] public async Task JsonRoundTrip_PermissionRecord_RoundTripsEqual()
     {
-        var original = new Permission("user", "/p", Verb.AllowAll(), Match.Glob);
-        var json = JsonSerializer.Serialize(original);
-        var roundtripped = JsonSerializer.Deserialize<Permission>(json);
+        // Permission round-trips through ITS OWN wire (Write/Create via the plang
+        // serializer's persistence path), not raw STJ — the grant owns its wire form.
+        await using var app = new global::app.@this("/test");
+        var ctx = app.User.Context;
+        var original = new Permission("user", "/p", global::app.type.permission.@this.AllVerbs, Match.Glob);
+        var data = new global::app.data.@this<Permission>("", original) { Context = ctx };
+        var serializer = new global::app.channel.serializer.plang.@this(ctx);
+        var stored = serializer.Store(data);
+        await stored.IsSuccess();
+        var loaded = serializer.Load((await stored.Value())!.ToString()!);
+        loaded.Context = ctx;
+        var roundtripped = await loaded.Value<Permission>();
         await Assert.That(roundtripped).IsEqualTo(original);
     }
 }

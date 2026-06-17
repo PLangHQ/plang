@@ -59,16 +59,16 @@ public class ProvidersSnapshotTests
         var dllSrc = typeof(CustomGrep).Assembly.Location;
         var grantPath = dllSrc.StartsWith("/") ? "/" + dllSrc : dllSrc;
         var resolved = global::app.type.path.@this.Resolve(grantPath, dst.User.Context!);
-        var verb = new global::app.type.path.permission.verb.@this
+        var verbs = new HashSet<global::app.type.permission.Verb>
         {
-            Read = new global::app.type.path.permission.verb.Read(),
-            Execute = new global::app.type.path.permission.verb.Execute()
+            global::app.type.permission.Verb.Read,
+            global::app.type.permission.Verb.Execute,
         };
-        var permission = new global::app.type.path.permission.@this(
-            Actor: dst.User.Name, Path: resolved.Absolute, Verb: verb,
-            Match: global::app.type.path.permission.Match.Exact);
+        var permission = new global::app.type.permission.@this(
+            Actor: dst.User.Name, Path: resolved.Absolute, Verbs: verbs,
+            Match: global::app.type.permission.Match.Exact);
         await dst.User.Permission.Add(
-            new global::app.data.@this<global::app.type.path.permission.@this>("", permission) { Context = dst.User.Context }, persist: false);
+            new global::app.data.@this<global::app.type.permission.@this>("", permission) { Context = dst.User.Context }, persist: false);
         dst.Restore(snap, dst.User.Context);
 
         var defaultGrep = dst.Code.Get<global::app.data.code.IGrep>();

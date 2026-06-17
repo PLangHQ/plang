@@ -24,11 +24,11 @@ public class Stage3_PathDemolitionTests
 
     private static async Task Grant(global::app.actor.context.@this context, string url)
     {
-        var perm = new global::app.type.path.permission.@this(
+        var perm = new global::app.type.permission.@this(
             "User", new HttpPath(url, context).Absolute,
-            global::app.type.path.permission.verb.@this.AllowAll(),
-            global::app.type.path.permission.Match.Exact);
-        await context.Actor!.Permission.Add(new global::app.data.@this<global::app.type.path.permission.@this>("", perm) { Context = context }, persist: true);
+            global::app.type.permission.@this.AllVerbs,
+            global::app.type.permission.Match.Exact);
+        await context.Actor!.Permission.Add(new global::app.data.@this<global::app.type.permission.@this>("", perm) { Context = context }, persist: true);
     }
 
     private static async Task<Data> Read(global::app.actor.context.@this context, global::app.type.path.@this p)

@@ -1,4 +1,4 @@
-using PermissionRecord = global::app.type.path.permission.@this;
+using permission = global::app.type.permission.@this;
 
 namespace app.error;
 
@@ -11,12 +11,12 @@ public sealed class PermissionDenied : Error
 {
     public override ErrorCategory Category => ErrorCategory.Application;
 
-    /// <summary>The Permission record that was denied.</summary>
-    public PermissionRecord Permission { get; }
+    /// <summary>The permission grant that was denied.</summary>
+    public permission Permission { get; }
 
-    public PermissionDenied(PermissionRecord permission)
-        : base($"Permission denied: {permission.Actor} on {permission.Path}", "PermissionDenied", 403)
+    public PermissionDenied(permission grant)
+        : base($"Permission denied: {grant.Actor} on {grant.Path}", "PermissionDenied", 403)
     {
-        Permission = permission;
+        Permission = grant;
     }
 }

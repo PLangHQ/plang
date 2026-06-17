@@ -2,8 +2,7 @@ using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using FilePath = global::app.type.path.file.@this;
-using Verb = global::app.type.path.permission.verb.@this;
-using Write = global::app.type.path.permission.verb.Write;
+using Verb = global::app.type.permission.Verb;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.FileSystem.SurfaceTests;
@@ -37,7 +36,7 @@ public class AbsoluteDisciplineTests
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "db.sqlite");
         var p = new FilePath(outOfRoot, app.User.Context);
-        var auth = await p.Authorize(new Verb { Write = new Write() });
+        var auth = await p.Authorize(global::app.type.permission.Verb.Write);
         await auth.IsFailure();
     }
 
@@ -45,7 +44,7 @@ public class AbsoluteDisciplineTests
     {
         var app = NewApp(out var root);
         var p = new FilePath(System.IO.Path.Combine(root, "db.sqlite"), app.User.Context);
-        var auth = await p.Authorize(new Verb { Write = new Write() });
+        var auth = await p.Authorize(global::app.type.permission.Verb.Write);
         await auth.IsSuccess();
         // .Absolute is now safe to read.
         await Assert.That(p.Absolute).IsNotNull();

@@ -83,8 +83,9 @@ public class CompressFlattenedTests
     [Test] public async Task Compress_OnNonCompressibleType_ReturnsSelfUnchanged()
     {
         await using var app = NewApp();
-        // image/png is in _notCompressible — kind "image"
-        var d = new global::app.data.@this("img", new byte[] { 1, 2, 3 }, global::app.type.@this.FromMime("image/png"))
+        // image/png decomposes to binary/png; the kind's family is image, which
+        // is not compressible (already-compressed content).
+        var d = new global::app.data.@this("img", new byte[] { 1, 2, 3 }, app.Format.TypeFromMime("image/png"))
         { Context = app.User.Context };
         var result = d.Compress();
         await Assert.That(ReferenceEquals(d, result)).IsTrue();

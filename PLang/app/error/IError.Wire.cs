@@ -1,6 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using PermissionRecord = global::app.type.path.permission.@this;
+using permission = global::app.type.permission.@this;
 
 namespace app.error;
 
@@ -112,7 +112,7 @@ public sealed class ErrorWire : JsonConverter<IError>
                 Str(el, "table") ?? "",
                 Str(el, "dataKey") ?? ""),
             nameof(PermissionDenied) when el.TryGetProperty("permission", out var p) =>
-                new PermissionDenied(p.Deserialize<PermissionRecord>(o)!),
+                new PermissionDenied(p.Deserialize<permission>(o)!),
             _ => Error.Restore(id, message, key, statusCode, createdUtc, fix, links),
         };
 

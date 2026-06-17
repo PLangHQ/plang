@@ -2,9 +2,7 @@ using Path = global::app.type.path.file.@this;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using Verb = global::app.type.path.permission.verb.@this;
-using Read = global::app.type.path.permission.verb.Read;
-using Write = global::app.type.path.permission.verb.Write;
+using Verb = global::app.type.permission.Verb;
 
 namespace PLang.Tests.App.FileSystem.SurfaceTests;
 
@@ -141,8 +139,8 @@ public class MoveCopyBundledConsentTests
         await src.MoveTo(dst, overwrite: true);
 
         // Both grants landed.
-        await Assert.That(await app.User.Permission.Find(src, new Verb { Read = new Read() })).IsNotNull();
-        await Assert.That(await app.User.Permission.Find(dst, new Verb { Write = new Write() })).IsNotNull();
+        await Assert.That(await app.User.Permission.Find(src, global::app.type.permission.Verb.Read)).IsNotNull();
+        await Assert.That(await app.User.Permission.Find(dst, global::app.type.permission.Verb.Write)).IsNotNull();
     }
 
     private sealed class StatelessChannel : global::app.channel.type.message.@this
@@ -173,8 +171,8 @@ public class MoveCopyBundledConsentTests
         await result.IsFailure();
         await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>();
         // No grants stored, no filesystem mutation.
-        await Assert.That(await app.User.Permission.Find(src, new Verb { Read = new Read() })).IsNull();
-        await Assert.That(await app.User.Permission.Find(dst, new Verb { Write = new Write() })).IsNull();
+        await Assert.That(await app.User.Permission.Find(src, global::app.type.permission.Verb.Read)).IsNull();
+        await Assert.That(await app.User.Permission.Find(dst, global::app.type.permission.Verb.Write)).IsNull();
         await Assert.That(System.IO.File.Exists(srcFile)).IsTrue();
         await Assert.That(System.IO.File.Exists(dstFile)).IsFalse();
     }

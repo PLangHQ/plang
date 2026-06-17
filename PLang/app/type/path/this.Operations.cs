@@ -1,6 +1,6 @@
 using app.type;
 using app.type.catalog;
-using Verb = global::app.type.path.permission.verb.@this;
+using Verb = global::app.type.permission.Verb;
 
 namespace app.type.path;
 

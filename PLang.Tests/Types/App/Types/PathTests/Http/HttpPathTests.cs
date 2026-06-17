@@ -14,7 +14,7 @@ public class HttpPathTests
     {
         var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-http-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(dir);
-        var app = new global::app.@this(dir);
+        var app = TestApp.Create(dir);
         // Pre-grant http access so the Permission gate doesn't prompt during tests.
         return (app, app.User.Context);
     }
@@ -22,11 +22,11 @@ public class HttpPathTests
     /// <summary>Pre-authorize an http URL so the verb under test isn't blocked by the gate.</summary>
     private static async Task Grant(global::app.@this app, global::app.actor.context.@this context, string url)
     {
-        var perm = new global::app.type.path.permission.@this(
+        var perm = new global::app.type.permission.@this(
             "User", new HttpPath(url, context).Absolute,
-            global::app.type.path.permission.verb.@this.AllowAll(),
-            global::app.type.path.permission.Match.Exact);
-        await context.Actor!.Permission.Add(new global::app.data.@this<global::app.type.path.permission.@this>("", perm) { Context = context }, persist: true);
+            global::app.type.permission.@this.AllVerbs,
+            global::app.type.permission.Match.Exact);
+        await context.Actor!.Permission.Add(new global::app.data.@this<global::app.type.permission.@this>("", perm) { Context = context }, persist: true);
     }
 
     [Test] public async Task Get_200_ReadText_ReturnsBody()

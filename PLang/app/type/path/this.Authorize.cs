@@ -1,12 +1,8 @@
 using app.type;
 using app.Utils;
 using app.data;
-using PermissionRecord = global::app.type.path.permission.@this;
-using Verb = global::app.type.path.permission.verb.@this;
-using Read = global::app.type.path.permission.verb.Read;
-using Write = global::app.type.path.permission.verb.Write;
-using Delete = global::app.type.path.permission.verb.Delete;
-using MatchMode = global::app.type.path.permission.Match;
+using Verb = global::app.type.permission.Verb;
+using MatchMode = global::app.type.permission.Match;
 
 namespace app.type.path;
 
@@ -85,8 +81,8 @@ public partial class @this
 
     protected async Task<data.@this> SignAndStore(actor.@this actor, Verb verb, bool persist)
     {
-        var permission = BuildRequest(actor, verb);
-        var d = new data.@this<PermissionRecord>("", permission)
+        var grant = BuildRequest(actor, verb);
+        var d = new data.@this<permission.@this>("", grant)
         {
             Context = Context,
         };
@@ -97,11 +93,8 @@ public partial class @this
         return data.@this.Ok();
     }
 
-    protected PermissionRecord BuildRequest(actor.@this actor, Verb verb) => new(
-        Actor: actor.Name,
-        Path:  Absolute,
-        Verb:  verb,
-        Match: MatchMode.Exact);
+    protected permission.@this BuildRequest(actor.@this actor, Verb verb) =>
+        permission.@this.Request(actor.Name, Absolute, verb, MatchMode.Exact);
 
     // A child app inherits its parent's filesystem scope: paths under the
     // parent's root/os-folder are still in-root from a child's perspective.
@@ -141,14 +134,14 @@ public partial class @this
             || string.Equals(Absolute, rootCandidate, cmp);
     }
 
-    private static string VerbLabel(Verb verb)
+    private static string VerbLabel(Verb verb) => verb switch
     {
-        if (verb.Read    != null) return "read";
-        if (verb.Write   != null) return "write";
-        if (verb.Delete  != null) return "delete";
-        if (verb.Execute != null) return "execute";
-        return "access";
-    }
+        Verb.Read    => "read",
+        Verb.Write   => "write",
+        Verb.Delete  => "delete",
+        Verb.Execute => "execute",
+        _ => "access",
+    };
 
     /// <summary>
     /// Scheme-specific extra text appended to the Authorize prompt before the

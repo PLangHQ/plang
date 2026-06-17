@@ -3,10 +3,7 @@ using app.type;
 using app.error;
 using app.Utils;
 using app.data;
-using Verb = global::app.type.path.permission.verb.@this;
-using ReadVerb = global::app.type.path.permission.verb.Read;
-using WriteVerb = global::app.type.path.permission.verb.Write;
-using DeleteVerb = global::app.type.path.permission.verb.Delete;
+using Verb = global::app.type.permission.Verb;
 
 namespace app.type.path.file;
 
@@ -28,7 +25,7 @@ public sealed partial class @this
     /// </summary>
     public override async Task<data.@this> LoadAssemblyAsync()
     {
-        if (await AuthGate(new Verb { Execute = new global::app.type.path.permission.verb.Execute() }) is { } early)
+        if (await AuthGate(Verb.Execute) is { } early)
             return early;
         try
         {
@@ -59,7 +56,7 @@ public sealed partial class @this
     /// </summary>
     public override async Task<data.@this> ReadText()
     {
-        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return early;
+        if (await AuthGate(Verb.Read) is { } early) return early;
 
 
         // During build: use snapshotted .pr content to avoid reading overwritten files.
@@ -132,7 +129,7 @@ public sealed partial class @this
 
     public override async Task<data.@this<global::app.type.binary.@this>> ReadBytes()
     {
-        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return data.@this<global::app.type.binary.@this>.From(early);
+        if (await AuthGate(Verb.Read) is { } early) return data.@this<global::app.type.binary.@this>.From(early);
         if (!System.IO.File.Exists(Absolute))
             return data.@this<global::app.type.binary.@this>.FromError(new global::app.error.ServiceError($"File not found: {Raw}", "NotFound", 404));
         try
@@ -147,7 +144,7 @@ public sealed partial class @this
 
     public override async Task<data.@this<global::app.type.@bool.@this>> ExistsAsync()
     {
-        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return data.@this<global::app.type.@bool.@this>.From(early);
+        if (await AuthGate(Verb.Read) is { } early) return data.@this<global::app.type.@bool.@this>.From(early);
         return data.@this<global::app.type.@bool.@this>.Ok(System.IO.File.Exists(Absolute) || System.IO.Directory.Exists(Absolute));
     }
 
@@ -170,7 +167,7 @@ public sealed partial class @this
     /// </summary>
     public override async Task<data.@this<global::app.type.list.@this<global::app.type.path.@this>>> List(string pattern, bool recursive)
     {
-        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return data.@this<global::app.type.list.@this<global::app.type.path.@this>>.From(early);
+        if (await AuthGate(Verb.Read) is { } early) return data.@this<global::app.type.list.@this<global::app.type.path.@this>>.From(early);
         if (!System.IO.Directory.Exists(Absolute))
             return data.@this<global::app.type.list.@this<global::app.type.path.@this>>.FromError(new global::app.error.ServiceError($"Directory not found: {Raw}", "NotFound", 404));
         try
@@ -189,7 +186,7 @@ public sealed partial class @this
 
     public override async Task<data.@this<global::app.type.path.@this.StatInfo>> Stat()
     {
-        if (await AuthGate(new Verb { Read = new ReadVerb(Metadata: true) }) is { } early) return data.@this<global::app.type.path.@this.StatInfo>.From(early);
+        if (await AuthGate(Verb.Read) is { } early) return data.@this<global::app.type.path.@this.StatInfo>.From(early);
         if (System.IO.File.Exists(Absolute))
         {
             var info = new System.IO.FileInfo(Absolute);
@@ -207,7 +204,7 @@ public sealed partial class @this
 
     public override async Task<data.@this<global::app.type.path.@this>> WriteText(string content)
     {
-        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return data.@this<global::app.type.path.@this>.From(early);
+        if (await AuthGate(Verb.Write) is { } early) return data.@this<global::app.type.path.@this>.From(early);
         EnsureParentDir();
         await System.IO.File.WriteAllTextAsync(Absolute, content);
         return data.@this<global::app.type.path.@this>.Ok(this);
@@ -222,7 +219,7 @@ public sealed partial class @this
     /// </summary>
     public override async Task<data.@this<global::app.type.path.@this>> Save(data.@this? value)
     {
-        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return data.@this<global::app.type.path.@this>.From(early);
+        if (await AuthGate(Verb.Write) is { } early) return data.@this<global::app.type.path.@this>.From(early);
 
         try
         {
@@ -260,7 +257,7 @@ public sealed partial class @this
 
     public override async Task<data.@this<global::app.type.path.@this>> WriteBytes(byte[] content)
     {
-        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return data.@this<global::app.type.path.@this>.From(early);
+        if (await AuthGate(Verb.Write) is { } early) return data.@this<global::app.type.path.@this>.From(early);
         EnsureParentDir();
         await System.IO.File.WriteAllBytesAsync(Absolute, content);
         return data.@this<global::app.type.path.@this>.Ok(this);
@@ -268,7 +265,7 @@ public sealed partial class @this
 
     public override async Task<data.@this<global::app.type.path.@this>> Append(string content)
     {
-        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return data.@this<global::app.type.path.@this>.From(early);
+        if (await AuthGate(Verb.Write) is { } early) return data.@this<global::app.type.path.@this>.From(early);
         EnsureParentDir();
         await System.IO.File.AppendAllTextAsync(Absolute, content);
         return data.@this<global::app.type.path.@this>.Ok(this);
@@ -276,7 +273,7 @@ public sealed partial class @this
 
     public override async Task<data.@this<global::app.type.path.@this>> Mkdir()
     {
-        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return data.@this<global::app.type.path.@this>.From(early);
+        if (await AuthGate(Verb.Write) is { } early) return data.@this<global::app.type.path.@this>.From(early);
         System.IO.Directory.CreateDirectory(Absolute);
         return data.@this<global::app.type.path.@this>.Ok(this);
     }
@@ -292,7 +289,7 @@ public sealed partial class @this
     /// </summary>
     public override async Task<data.@this<global::app.type.path.@this>> Delete(bool recursive, bool ignoreIfNotFound)
     {
-        if (await AuthGate(new Verb { Delete = new DeleteVerb() }) is { } early) return data.@this<global::app.type.path.@this>.From(early);
+        if (await AuthGate(Verb.Delete) is { } early) return data.@this<global::app.type.path.@this>.From(early);
         try
         {
             if (System.IO.File.Exists(Absolute))
@@ -371,8 +368,8 @@ public sealed partial class @this
     /// </summary>
     private async Task<data.@this<global::app.type.path.@this>> BundledTransfer(@this destination, bool isMove, bool overwrite = true, bool includeSubfolders = true)
     {
-        var sourceVerb = new Verb { Read = new ReadVerb() };
-        var destVerb   = new Verb { Write = new WriteVerb() };
+        var sourceVerb = Verb.Read;
+        var destVerb   = Verb.Write;
 
         var sourceAuth = await TryAuthorizeWithoutAsk(sourceVerb);
         var destAuth   = await destination.TryAuthorizeWithoutAsk(destVerb);
@@ -436,8 +433,8 @@ public sealed partial class @this
 
     private async Task StoreGrant(Verb verb, bool persist)
     {
-        var permission = BuildRequest(Context!.Actor!, verb);
-        var d = new data.@this<global::app.type.path.permission.@this>("", permission) { Context = Context };
+        var grant = BuildRequest(Context!.Actor!, verb);
+        var d = new data.@this<global::app.type.permission.@this>("", grant) { Context = Context };
         // Signing is at the I/O boundary now: a persisted grant is signed when it
         // crosses application/plang into the settings store. `persist` carries intent.
         await Context!.Actor!.Permission.Add(d, persist);

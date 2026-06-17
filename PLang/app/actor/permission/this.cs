@@ -1,6 +1,6 @@
-using PermissionRecord = global::app.type.path.permission.@this;
-using Verb = global::app.type.path.permission.verb.@this;
-using MatchMode = global::app.type.path.permission.Match;
+using Grant = global::app.type.permission.@this;
+using Verb = global::app.type.permission.Verb;
+using MatchMode = global::app.type.permission.Match;
 
 namespace app.actor.permission;
 
@@ -24,7 +24,7 @@ public sealed class @this
     private const string VerifiedFlag = "permission.verified";
 
     private readonly global::app.actor.@this _actor;
-    private readonly List<global::app.data.@this<PermissionRecord>> _inMemory = new();
+    private readonly List<global::app.data.@this> _inMemory = new();
     private readonly object _lock = new();
 
     public @this(global::app.actor.@this actor)
@@ -39,14 +39,14 @@ public sealed class @this
     /// verification is cached via the Data instance's Properties bag — repeat
     /// Find calls on the same in-memory grant don't re-verify.
     /// </summary>
-    public async Task<global::app.data.@this<PermissionRecord>?> Find(path requestPath, Verb verb)
+    public async Task<global::app.data.@this?> Find(path requestPath, Verb verb)
     {
-        var request = new PermissionRecord(
+        var request = Grant.Request(
             _actor.Name, requestPath.Absolute, verb, MatchMode.Exact);
 
         // 1) In-memory grants. Snapshot under the lock; verify outside it so
         //    the async signing-verify call doesn't hold the lock.
-        List<global::app.data.@this<PermissionRecord>> snapshot;
+        List<global::app.data.@this> snapshot;
         lock (_lock) snapshot = new(_inMemory);
         foreach (var grantData in snapshot)
         {
@@ -59,18 +59,18 @@ public sealed class @this
         // grants were ever used.
         try
         {
-            var stored = await _actor.App.SettingsStore.GetAll<global::app.data.@this<PermissionRecord>>(PermissionTable);
+            var stored = await _actor.App.SettingsStore.GetAll<global::app.data.@this>(PermissionTable);
             if (stored.Success && await stored.Value() is { } list)
             {
-                foreach (var grantData in list.Items.Cast<global::app.data.@this<PermissionRecord>>())
+                foreach (var grantData in list.Items.Cast<global::app.data.@this>())
                 {
                     // Stamp Context on grants freshly rehydrated from SQLite — the store
                     // returns Data without a Context wired, and downstream signature/
                     // type-resolution paths require it.  Per the architecture: every
                     // producer stamps Context; SettingsStore is a producer.
                     grantData.Context = _actor.Context;
-                    if (await grantData.Value() is null) continue;
-                    if (!string.Equals((await grantData.Value())!.Actor, _actor.Name, StringComparison.Ordinal)) continue;
+                    if (await grantData.Value<Grant>() is not { } rec) continue;
+                    if (!string.Equals(rec.Actor, _actor.Name, StringComparison.Ordinal)) continue;
                     if (await TryCover(grantData, request)) return grantData;
                 }
             }
@@ -89,9 +89,9 @@ public sealed class @this
     /// Records a signed grant. Routes by signature presence: signed → sqlite,
     /// unsigned → in-memory. Same path twice overwrites (in either home).
     /// </summary>
-    public async Task Add(global::app.data.@this<PermissionRecord> grant, bool persist)
+    public async Task Add(global::app.data.@this grant, bool persist)
     {
-        var __rec = await grant.Value(); if (__rec == null) return;
+        if (await grant.Value<Grant>() is not { } __rec) return;
         var key = __rec.Path;
 
         // The caller decides persisted vs in-memory (it used to sign-then-persist;
@@ -108,7 +108,7 @@ public sealed class @this
         {
             // Overwrite same-path entry if any.
             var idx = _inMemory.FindIndex(d =>
-                d.Peek() is PermissionRecord __dv && string.Equals(__dv.Path, key, StringComparison.Ordinal));
+                d.Peek() is Grant __dv && string.Equals(__dv.Path, key, StringComparison.Ordinal));
             if (idx >= 0) _inMemory[idx] = grant;
             else _inMemory.Add(grant);
         }
@@ -118,13 +118,13 @@ public sealed class @this
     /// Drops a grant. Removes from in-memory if present; also removes from
     /// the persisted table by path key.
     /// </summary>
-    public async Task<bool> Revoke(PermissionRecord match)
+    public async Task<bool> Revoke(Grant match)
     {
         bool removed = false;
         lock (_lock)
         {
             var idx = _inMemory.FindIndex(d =>
-                d.Peek() is PermissionRecord __dv2
+                d.Peek() is Grant __dv2
                 && __dv2.Actor == match.Actor
                 && __dv2.Path == match.Path);
             if (idx >= 0) { _inMemory.RemoveAt(idx); removed = true; }
@@ -135,10 +135,9 @@ public sealed class @this
         return removed;
     }
 
-    private async Task<bool> TryCover(global::app.data.@this<PermissionRecord> grantData, PermissionRecord request)
+    private async Task<bool> TryCover(global::app.data.@this grantData, Grant request)
     {
-        var grant = await grantData.Value();
-        if (grant == null) return false;
+        if (await grantData.Value<Grant>() is not { } grant) return false;
         if (!string.Equals(grant.Actor, request.Actor, StringComparison.Ordinal)) return false;
         if (!grant.Covers(request)) return false;
 

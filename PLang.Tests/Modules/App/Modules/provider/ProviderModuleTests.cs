@@ -57,17 +57,17 @@ public class ProviderModuleTests
         // Use the exact resolved path so the grant's Path key matches the
         // canonical-form path that AuthGate compares against.
         var resolved = global::app.type.path.@this.Resolve("/" + dllPath, Ctx);
-        var verb = new global::app.type.path.permission.verb.@this
+        var verbs = new HashSet<global::app.type.permission.Verb>
         {
-            Read = new global::app.type.path.permission.verb.Read(),
-            Execute = new global::app.type.path.permission.verb.Execute()
+            global::app.type.permission.Verb.Read,
+            global::app.type.permission.Verb.Execute,
         };
-        var permission = new global::app.type.path.permission.@this(
+        var permission = new global::app.type.permission.@this(
             Actor: _app.System.Name,
             Path: resolved.Absolute,
-            Verb: verb,
-            Match: global::app.type.path.permission.Match.Exact);
-        var data = new global::app.data.@this<global::app.type.path.permission.@this>("", permission) { Context = Ctx };
+            Verbs: verbs,
+            Match: global::app.type.permission.Match.Exact);
+        var data = new global::app.data.@this<global::app.type.permission.@this>("", permission) { Context = Ctx };
         await _app.System.Permission.Add(data, persist: true);
     }
 

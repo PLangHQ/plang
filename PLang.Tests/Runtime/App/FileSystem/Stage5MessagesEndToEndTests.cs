@@ -2,10 +2,9 @@ using Path = global::app.type.path.file.@this;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using PermissionRecord = global::app.type.path.permission.@this;
-using Verb = global::app.type.path.permission.verb.@this;
-using Read = global::app.type.path.permission.verb.Read;
-using MatchMode = global::app.type.path.permission.Match;
+using PermissionRecord = global::app.type.permission.@this;
+using Verb = global::app.type.permission.Verb;
+using MatchMode = global::app.type.permission.Match;
 
 namespace PLang.Tests.App.FileSystem;
 
@@ -78,7 +77,7 @@ public class Stage5MessagesEndToEndTests
         var result = await path.ReadText();
         await result.IsSuccess();
         // Grant landed and is signed (persisted).
-        var found = await app.User.Permission.Find(path, new Verb { Read = new Read() });
+        var found = await app.User.Permission.Find(path, global::app.type.permission.Verb.Read);
         await Assert.That(found).IsNotNull();
     }
 
@@ -187,7 +186,7 @@ public class Stage5MessagesEndToEndTests
         var asksBeforeRevoke = ch.AskCount;
 
         // Revoke the persisted grant.
-        var permission = new PermissionRecord(app.User.Name, path.Absolute, Verb.AllowAll(), MatchMode.Exact);
+        var permission = new PermissionRecord(app.User.Name, path.Absolute, global::app.type.permission.@this.AllVerbs, MatchMode.Exact);
         await app.User.Permission.Revoke(permission);
 
         await path.ReadText();              // fresh prompt fires
@@ -197,20 +196,20 @@ public class Stage5MessagesEndToEndTests
     [Test] public async Task Scenario6_NarrowedGrantRejectsWiderRequest()
     {
         var (app, foreignFile) = Setup("a");
-        // Pre-seed a narrowed grant (Read with Metadata=false) — does NOT cover
-        // a request that needs Metadata.
-        var narrowedVerb = new Verb { Read = new Read(Recursive: true, Metadata: false), Write = null, Delete = null };
+        // Pre-seed a narrowed grant — Read only. It does NOT cover a Write
+        // request (verb-set containment: {Write} is not a subset of {Read}).
+        var narrowedVerbs = new System.Collections.Generic.HashSet<global::app.type.permission.Verb> { global::app.type.permission.Verb.Read };
         var narrowGrant = new global::app.data.@this<PermissionRecord>("",
-            new PermissionRecord(app.User.Name, foreignFile, narrowedVerb, MatchMode.Exact))
+            new PermissionRecord(app.User.Name, foreignFile, narrowedVerbs, MatchMode.Exact))
         { Context = app.User.Context };
         await app.User.Permission.Add(narrowGrant, persist: true);
 
-        // Stat needs Metadata=true; the narrowed Read grant doesn't cover it.
+        // WriteText needs Write; the narrowed Read grant doesn't cover it.
         // Authorize asks; the CannedChannel answers "a" and a wider grant lands.
         var path = new Path(foreignFile, app.User.Context);
         var ch = (CannedChannel)app.User.Channel.Resolve("input")!;
-        var statResult = await path.Stat();
-        await statResult.IsSuccess();
-        await Assert.That(ch.AskCount).IsGreaterThan(0); // prompt fired despite the narrow grant
+        var writeResult = await path.WriteText("data");
+        await writeResult.IsSuccess();
+        await Assert.That(ch.AskCount).IsGreaterThan(0); // prompt fired despite the narrow Read grant
     }
 }

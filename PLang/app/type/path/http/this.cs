@@ -3,10 +3,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using app.error;
-using Verb = global::app.type.path.permission.verb.@this;
-using ReadVerb = global::app.type.path.permission.verb.Read;
-using WriteVerb = global::app.type.path.permission.verb.Write;
-using DeleteVerb = global::app.type.path.permission.verb.Delete;
+using Verb = global::app.type.permission.Verb;
 
 namespace app.type.path.http;
 
@@ -107,7 +104,7 @@ public sealed partial class @this : global::app.type.path.@this
     /// strip <c>?token=…</c> before sharing the URL elsewhere gets the same
     /// signal here. Suppressed when there is no query string.
     /// </summary>
-    protected override string AuthorizationHint(global::app.type.path.permission.verb.@this verb)
+    protected override string AuthorizationHint(global::app.type.permission.Verb verb)
     {
         if (string.IsNullOrEmpty(_uri.Query) || _uri.Query == "?") return "";
         return "(note: answering 'a' saves the full URL — query string included — to your local permission store)";
@@ -174,21 +171,21 @@ public sealed partial class @this : global::app.type.path.@this
 
     public override async Task<data.@this> ReadText()
     {
-        var verb = new Verb { Read = new ReadVerb() };
+        var verb = Verb.Read;
         if (await AuthGate(verb) is { } early) return early;
         return await Send(HttpMethod.Get, content: null, readBody: true, verb);
     }
 
     public override async Task<data.@this<global::app.type.binary.@this>> ReadBytes()
     {
-        var verb = new Verb { Read = new ReadVerb() };
+        var verb = Verb.Read;
         if (await AuthGate(verb) is { } early) return data.@this<global::app.type.binary.@this>.From(early);
         return data.@this<global::app.type.binary.@this>.From(await Send(HttpMethod.Get, content: null, readBody: true, verb, asBytes: true));
     }
 
     public override async Task<data.@this<global::app.type.@bool.@this>> ExistsAsync()
     {
-        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return data.@this<global::app.type.@bool.@this>.From(early);
+        if (await AuthGate(Verb.Read) is { } early) return data.@this<global::app.type.@bool.@this>.From(early);
         try
         {
             using var req = new HttpRequestMessage(HttpMethod.Head, _uri);
@@ -215,7 +212,7 @@ public sealed partial class @this : global::app.type.path.@this
     /// </summary>
     public override async Task<data.@this<global::app.type.list.@this<global::app.type.path.@this>>> List(string pattern, bool recursive)
     {
-        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return data.@this<global::app.type.list.@this<global::app.type.path.@this>>.From(early);
+        if (await AuthGate(Verb.Read) is { } early) return data.@this<global::app.type.list.@this<global::app.type.path.@this>>.From(early);
         return data.@this<global::app.type.list.@this<global::app.type.path.@this>>.FromError(new Error(
             "HTTP scheme does not support directory listing.", "NotSupported", 400));
     }
@@ -233,7 +230,7 @@ public sealed partial class @this : global::app.type.path.@this
 
     public override async Task<data.@this<global::app.type.path.@this.StatInfo>> Stat()
     {
-        if (await AuthGate(new Verb { Read = new ReadVerb(Metadata: true) }) is { } early) return data.@this<global::app.type.path.@this.StatInfo>.From(early);
+        if (await AuthGate(Verb.Read) is { } early) return data.@this<global::app.type.path.@this.StatInfo>.From(early);
         try
         {
             using var req = new HttpRequestMessage(HttpMethod.Head, _uri);
@@ -261,7 +258,7 @@ public sealed partial class @this : global::app.type.path.@this
 
     public override async Task<data.@this<global::app.type.path.@this>> WriteText(string content)
     {
-        var verb = new Verb { Write = new WriteVerb() };
+        var verb = Verb.Write;
         if (await AuthGate(verb) is { } early) return data.@this<global::app.type.path.@this>.From(early);
         var sent = await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), readBody: false, verb);
         return sent.Success ? data.@this<global::app.type.path.@this>.Ok(this) : data.@this<global::app.type.path.@this>.From(sent);
@@ -269,7 +266,7 @@ public sealed partial class @this : global::app.type.path.@this
 
     public override async Task<data.@this<global::app.type.path.@this>> WriteBytes(byte[] content)
     {
-        var verb = new Verb { Write = new WriteVerb() };
+        var verb = Verb.Write;
         if (await AuthGate(verb) is { } early) return data.@this<global::app.type.path.@this>.From(early);
         var sent = await Send(HttpMethod.Post, new ByteArrayContent(content), readBody: false, verb);
         return sent.Success ? data.@this<global::app.type.path.@this>.Ok(this) : data.@this<global::app.type.path.@this>.From(sent);
@@ -279,7 +276,7 @@ public sealed partial class @this : global::app.type.path.@this
     /// appending interpret it; others overwrite or 405. "Let the server respond."</summary>
     public override async Task<data.@this<global::app.type.path.@this>> Append(string content)
     {
-        var verb = new Verb { Write = new WriteVerb() };
+        var verb = Verb.Write;
         if (await AuthGate(verb) is { } early) return data.@this<global::app.type.path.@this>.From(early);
         var sent = await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), readBody: false, verb);
         return sent.Success ? data.@this<global::app.type.path.@this>.Ok(this) : data.@this<global::app.type.path.@this>.From(sent);
@@ -291,7 +288,7 @@ public sealed partial class @this : global::app.type.path.@this
     /// </summary>
     public override async Task<data.@this<global::app.type.path.@this>> Mkdir()
     {
-        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return data.@this<global::app.type.path.@this>.From(early);
+        if (await AuthGate(Verb.Write) is { } early) return data.@this<global::app.type.path.@this>.From(early);
         return data.@this<global::app.type.path.@this>.FromError(new Error(
             "HTTP scheme does not support directory creation.", "NotSupported", 400));
     }
@@ -316,7 +313,7 @@ public sealed partial class @this : global::app.type.path.@this
     /// </summary>
     public override async Task<data.@this<global::app.type.path.@this>> Delete(bool recursive, bool ignoreIfNotFound)
     {
-        var verb = new Verb { Delete = new DeleteVerb() };
+        var verb = Verb.Delete;
         if (await AuthGate(verb) is { } early) return data.@this<global::app.type.path.@this>.From(early);
         var sent = await Send(HttpMethod.Delete, content: null, readBody: false, verb);
         return sent.Success ? data.@this<global::app.type.path.@this>.Ok(this) : data.@this<global::app.type.path.@this>.From(sent);

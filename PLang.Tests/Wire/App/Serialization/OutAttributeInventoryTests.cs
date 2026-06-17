@@ -148,10 +148,10 @@ public class OutAttributeInventoryTests
     // 8. permission ----------------------------------------------------------
     [Test] public async Task Permission_Actor_Path_Verb_Match_HaveOut()
     {
-        var t = typeof(global::app.type.path.permission.@this);
+        var t = typeof(global::app.type.permission.@this);
         await Assert.That(HasOut(t, "Actor")).IsTrue();
         await Assert.That(HasOut(t, "Path")).IsTrue();
-        await Assert.That(HasOut(t, "Verb")).IsTrue();
+        await Assert.That(HasOut(t, "Verbs")).IsTrue();
         await Assert.That(HasOut(t, "Match")).IsTrue();
     }
 

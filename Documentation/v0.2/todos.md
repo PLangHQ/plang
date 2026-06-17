@@ -1162,3 +1162,14 @@ re-ask), turning a clean ~12-failure Types baseline into ~31. `rm -rf
 PLang.Tests/Shared/Fixtures/pr/.db` restores it. Fix: a per-test/suite teardown that
 clears the permission table (or points the store at a fresh temp dir per run). Cost me
 hours of false "regression" chasing on the host-carrier slice.
+
+## 2026-06-17 — Remove WrapAsTyped re-box (Wire.cs)
+`Wire.Read` produces base `Data`, then re-boxes into `Data<T>` via `WrapAsTyped`
+(reflection-construct + copy guts) whenever a caller asks for the C# generic
+(`Deserialize<Data<T>>` / `GetAll<Data<T>>` / the `DeserializeAsync<T>` channel API).
+Ingi: this is a smell — the reader should yield base `Data` and consumers should use
+`.Value()` (the `type` stamp carries the truth; the `Data<T>` generic isn't needed at
+the read boundary). The permission registry was converted to base `Data` (2026-06-17);
+the remaining typed-read sites (channel `DeserializeAsync<T>`, any `GetAll<Data<T>>`)
+still rely on WrapAsTyped. Removing it = convert every typed-read site to base-Data +
+`.Value()`. Branch-worthy on its own; audit all `Data<T>` deserialization sites first.

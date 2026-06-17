@@ -206,8 +206,19 @@ public class Wire : JsonConverter<@this>
         {
             var carrier = @this.Ok(layer);
             carrier.Context = _context;
+            // At-rest artifacts (the Store view — permission grants, identities)
+            // re-present the same nonce on every read and outlive the wire-
+            // freshness window by design; their signature's own Expires is the
+            // only time bound. Transport reads (Out view) keep the freshness +
+            // nonce-replay defence.
+            var verifyAction = new app.module.signing.verify
+            {
+                Data = carrier,
+                SkipFreshnessCheck = new @this<global::app.type.@bool.@this>(
+                    "", View == global::app.View.Store),
+            };
             var verifyResult = _context.App
-                .RunAction(new app.module.signing.verify { Data = carrier }, _context)
+                .RunAction(verifyAction, _context)
                 .GetAwaiter().GetResult();
             if (!verifyResult.Success)
                 return @this.FromError(verifyResult.Error

@@ -3,10 +3,9 @@ using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using FilePath = global::app.type.path.file.@this;
 using HttpPath = global::app.type.path.http.@this;
-using PermissionRecord = global::app.type.path.permission.@this;
-using MatchMode = global::app.type.path.permission.Match;
-using Verb = global::app.type.path.permission.verb.@this;
-using ReadVerb = global::app.type.path.permission.verb.Read;
+using PermissionRecord = global::app.type.permission.@this;
+using MatchMode = global::app.type.permission.Match;
+using Verb = global::app.type.permission.Verb;
 
 namespace PLang.Tests.App.Types.PathTests;
 
@@ -96,8 +95,8 @@ public class AbsoluteCanonicalFormTests
         var filePath = FilePath.Resolve("/home/data.json", context);
         var httpPath = new HttpPath("https://api.example.com/data.json", context);
 
-        var grant = new PermissionRecord("User", filePath.Absolute, Verb.AllowAll(), MatchMode.Exact);
-        var request = new PermissionRecord("User", httpPath.Absolute, new Verb { Read = new ReadVerb() }, MatchMode.Exact);
+        var grant = new PermissionRecord("User", filePath.Absolute, global::app.type.permission.@this.AllVerbs, MatchMode.Exact);
+        var request = new PermissionRecord("User", httpPath.Absolute, new System.Collections.Generic.HashSet<global::app.type.permission.Verb> { global::app.type.permission.Verb.Read }, MatchMode.Exact);
 
         await Assert.That(grant.Covers(request)).IsFalse();
     }
@@ -107,8 +106,8 @@ public class AbsoluteCanonicalFormTests
         var (_, context) = MakeApp();
         var request = new HttpPath("https://api.example.com/users", context);
 
-        var grant = new PermissionRecord("User", "https://api.example.com/*", Verb.AllowAll(), MatchMode.Glob);
-        var req = new PermissionRecord("User", request.Absolute, new Verb { Read = new ReadVerb() }, MatchMode.Exact);
+        var grant = new PermissionRecord("User", "https://api.example.com/*", global::app.type.permission.@this.AllVerbs, MatchMode.Glob);
+        var req = new PermissionRecord("User", request.Absolute, new System.Collections.Generic.HashSet<global::app.type.permission.Verb> { global::app.type.permission.Verb.Read }, MatchMode.Exact);
 
         await Assert.That(grant.Covers(req)).IsTrue();
     }

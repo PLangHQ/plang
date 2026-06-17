@@ -2,9 +2,9 @@ using System.Text.Json;
 using HttpPath = global::app.type.path.http.@this;
 using AppEngine = global::app.@this;
 using Ctx = global::app.actor.context.@this;
-using PathPermission = global::app.type.path.permission.@this;
-using PermVerb = global::app.type.path.permission.verb.@this;
-using PermMatch = global::app.type.path.permission.Match;
+using PathPermission = global::app.type.permission.@this;
+using PermVerb = global::app.type.permission.Verb;
+using PermMatch = global::app.type.permission.Match;
 using PLang.Tests.App.Types.PathTests.Contract;
 
 namespace PLang.Tests.App.Types.PathTests.Http;
@@ -36,7 +36,7 @@ public class HttpPathRedirectTests
     {
         var perm = new PathPermission(
             "User", new HttpPath(url, context).Absolute,
-            PermVerb.AllowAll(),
+            global::app.type.permission.@this.AllVerbs,
             PermMatch.Exact);
         await context.Actor!.Permission.Add(new global::app.data.@this<PathPermission>("", perm) { Context = context }, persist: true);
     }

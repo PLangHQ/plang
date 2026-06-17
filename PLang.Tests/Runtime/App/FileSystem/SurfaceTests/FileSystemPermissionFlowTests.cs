@@ -2,10 +2,7 @@ using Path = global::app.type.path.file.@this;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using Verb = global::app.type.path.permission.verb.@this;
-using Read = global::app.type.path.permission.verb.Read;
-using Write = global::app.type.path.permission.verb.Write;
-using Delete = global::app.type.path.permission.verb.Delete;
+using Verb = global::app.type.permission.Verb;
 
 namespace PLang.Tests.App.FileSystem.SurfaceTests;
 
@@ -126,9 +123,9 @@ public class FileSystemPermissionFlowTests
 
         var verb = method switch
         {
-            "WriteText" or "WriteBytes" or "Append" or "Mkdir" => new Verb { Write = new Write() },
-            "Delete" => new Verb { Delete = new Delete() },
-            _ => new Verb { Read = new Read() },
+            "WriteText" or "WriteBytes" or "Append" or "Mkdir" => global::app.type.permission.Verb.Write,
+            "Delete" => global::app.type.permission.Verb.Delete,
+            _ => global::app.type.permission.Verb.Read,
         };
         await Assert.That(await app.User.Permission.Find(path, verb)).IsNotNull();
     }

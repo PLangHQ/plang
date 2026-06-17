@@ -48,18 +48,21 @@ public class NamespaceMoveTests
         await Assert.That(pathType!.Name).IsEqualTo("this");
     }
 
-    [Test] public async Task PermissionType_MovedUnder_AppTypesPathPermission()
+    [Test] public async Task PermissionType_LivesUnder_AppTypePermission()
     {
-        await Assert.That(AppAssembly.GetType("app.type.path.permission.this")).IsNotNull();
-        await Assert.That(AppAssembly.GetType("app.filesystem.permission.this")).IsNull();
+        // Permission is a fundamental type, not a path thing — it references a
+        // resource but is an authorization in its own right.
+        await Assert.That(AppAssembly.GetType("app.type.permission.this")).IsNotNull();
+        await Assert.That(AppAssembly.GetType("app.type.path.permission.this")).IsNull();
     }
 
-    [Test] public async Task VerbTypes_MovedUnder_AppTypesPathPermissionVerb()
+    [Test] public async Task Verb_IsAnEnum_NotSubRecords()
     {
-        await Assert.That(AppAssembly.GetType("app.type.path.permission.verb.this")).IsNotNull();
-        await Assert.That(AppAssembly.GetType("app.type.path.permission.verb.Read")).IsNotNull();
-        await Assert.That(AppAssembly.GetType("app.type.path.permission.verb.Write")).IsNotNull();
-        await Assert.That(AppAssembly.GetType("app.type.path.permission.verb.Delete")).IsNotNull();
+        // The verb model collapsed to a single Verb enum; the grant holds a set.
+        var verb = AppAssembly.GetType("app.type.permission.Verb");
+        await Assert.That(verb).IsNotNull();
+        await Assert.That(verb!.IsEnum).IsTrue();
+        await Assert.That(AppAssembly.GetType("app.type.path.permission.verb.this")).IsNull();
     }
 
     [Test] public async Task ExistingSuite_StaysGreen_AfterRename()

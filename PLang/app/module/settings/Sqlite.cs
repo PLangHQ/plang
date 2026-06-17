@@ -31,11 +31,7 @@ public sealed class Sqlite : IStore
     {
         // Take-over API: authorize before passing .Absolute. Sync-wait
         // — Sqlite ctor is sync and the gate is the bootstrap path.
-        var verb = new global::app.type.path.permission.verb.@this
-        {
-            Write = new global::app.type.path.permission.verb.Write()
-        };
-        var auth = dbPath.Authorize(verb).GetAwaiter().GetResult();
+        var auth = dbPath.Authorize(global::app.type.permission.Verb.Write).GetAwaiter().GetResult();
         if (!auth.Success)
             throw new InvalidOperationException(
                 $"Sqlite path '{dbPath}' is not authorized for write: {auth.Error?.Message}");
