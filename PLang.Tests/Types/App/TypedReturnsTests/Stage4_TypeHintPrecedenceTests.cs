@@ -161,7 +161,7 @@ public class Stage4_TypeHintPrecedenceTests
         var result = await classified.Build();
 
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsNull()
+        await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue()
             .Because("output.ask defers Type to the (type) hint on the write target.");
     }
 }

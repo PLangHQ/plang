@@ -29,7 +29,7 @@ public class ConstructionBornNativeTests
         // JsonValueKind.String → text.@this("..."), not raw GetString().
         object? v = Unwrap("\"hello\"");
         await Assert.That(v).IsTypeOf<TextV>();
-        await Assert.That(((TextV)v!).Value).IsEqualTo("hello");
+        await Assert.That(((TextV)v!).ToString()).IsEqualTo("hello");
         await Assert.That(v is string).IsFalse();
     }
 

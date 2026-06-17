@@ -26,9 +26,9 @@ public class TextWrapperTests
         Text upper = new Text("abc").Upper();
         Text lower = new Text("ABC").Lower();
         Text trimmed = new Text("  x  ").Trim();
-        await Assert.That(upper.Value).IsEqualTo("ABC");
-        await Assert.That(lower.Value).IsEqualTo("abc");
-        await Assert.That(trimmed.Value).IsEqualTo("x");
+        await Assert.That(upper.ToString()).IsEqualTo("ABC");
+        await Assert.That(lower.ToString()).IsEqualTo("abc");
+        await Assert.That(trimmed.ToString()).IsEqualTo("x");
     }
 
     [Test]
@@ -46,11 +46,11 @@ public class TextWrapperTests
     public async Task Text_SubstringAndSplit_BehavioralOps()
     {
         // substring(start, len) returns text; split(sep) returns a list of text.
-        await Assert.That(new Text("hello").Substring(1, 3).Value).IsEqualTo("ell");
+        await Assert.That(new Text("hello").Substring(1, 3).ToString()).IsEqualTo("ell");
         var parts = new Text("a,b,c").Split(",");
         await Assert.That(parts.Count).IsEqualTo(3);
-        await Assert.That(((Text)(await parts.At(0)!.Value())!).Value).IsEqualTo("a");
-        await Assert.That(((Text)(await parts.At(2)!.Value())!).Value).IsEqualTo("c");
+        await Assert.That(((Text)(await parts.At(0)!.Value())!).ToString()).IsEqualTo("a");
+        await Assert.That(((Text)(await parts.At(2)!.Value())!).ToString()).IsEqualTo("c");
     }
 
     [Test]
