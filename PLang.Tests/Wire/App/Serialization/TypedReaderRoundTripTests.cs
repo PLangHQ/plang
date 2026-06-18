@@ -42,6 +42,10 @@ public class TypedReaderRoundTripTests
         await Assert.That(item.Clr<TimeSpan>()).IsEqualTo(d);
     }
 
+    [Test] public async Task Text_Literal_Isolated()
+        => await Assert.That(ReadScalar(new global::app.type.text.serializer.Reader(), "\"hello\"", null).Clr<string>())
+            .IsEqualTo("hello");
+
     [Test] public async Task Number_Int_Isolated()
         => await Assert.That(ReadScalar(new global::app.type.number.serializer.Reader(), "42", "int").Clr<int>())
             .IsEqualTo(42);

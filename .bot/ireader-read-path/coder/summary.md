@@ -69,7 +69,25 @@ public sealed class Reader : ITypeReader
 }
 ```
 
-## What's next (B2+)
+## B2 progress — scalar leaves done (number/text added to bool/guid/duration)
+- **number** — typed reader is the inverse of `Default.Write`'s `NumberKind` switch:
+  pull the matching token, `From(...)` at that exact precision (Int128/UInt128/
+  BigInteger and overflowing ULong ride as a string). No `Convert`, no `ChangeType`.
+- **guid/duration** — born directly from `reader.Guid()`/`reader.TimeSpan()` (Ingi's
+  point: the reader hands the typed token; `Convert` was a needless re-parse). Drops
+  the context dependency too.
+- **text** — borns `text{canTemplate, Kind}` from the string token, same shape as
+  `Default.Read`. The authored-vs-literal `Template` stamp is NOT set here — that
+  rides the reader's mode under the separate **template-stamping-at-read** epic
+  (`.bot/compare-redesign/coder/template-stamping-at-read.md`); until it lands the
+  post-parse seam stamps it, exactly as for the eager path. Mutation-proven live
+  (Cut1 "hello" round-trips through it); full suite green.
+- Tests are isolated reader units (`ReadScalar` drives a reader over a bare token,
+  no Wire/signing) + a bool e2e through Wire. The full-pipeline round-trip with a
+  raw-`int` + signing + `Clr<T>` was a flaky harness (fails on the old path too) —
+  the isolated form is the correct unit shape.
+
+## What's next (B2+ — the structural pieces)
 1. **`number`** — typed reader keyed off `kind` (mirror `Default.Write`'s NumberKind
    switch in reverse: Int/Long→`Long()`, Float→`Float()`, Decimal→`Decimal()`,
    Int128/UInt128/BigInteger→`String()`), then `number.Convert(raw, kind, ctx)`.
