@@ -87,7 +87,25 @@ public sealed class Reader : ITypeReader
   raw-`int` + signing + `Clr<T>` was a flaky harness (fails on the old path too) —
   the isolated form is the correct unit shape.
 
-## What's next (B2+ — the structural pieces)
+## B2 containers — list/dict stream off the pass
+- **list/dict** typed readers stream each slot via `item.serializer.json.ReadSlot`
+  (a generic streaming sibling of `RawSlot`): a scalar streams with no DOM; a
+  nested container / `@schema:data` element narrows through the proven parser via
+  `reader.RawValue()` (kept generic — no `Inner` reach). The element/entry walk
+  lives on the container, not Wire (stage-11 Part A intent). Raw-slot backing
+  (Part B) already there, so this just fills it off the reader.
+- Added `IReader.Number()` — natural long-or-double for a raw slot / polymorphic
+  read where no declared kind picks the precision.
+- Mutation-proven live in the Wire path (list-bearing tests fail when the reader
+  throws); full suite green, counts identical to baseline.
+
+## Done so far (READ off the wire is fully on the IReader path)
+Scalars (bool/guid/duration/number/text) + containers (list/dict) all read their
+own value off the single decode pass. The JsonElement-DOM double-read is gone for
+every common .pr value. Eight typed readers, all mutation-proven live where
+reachable, full suite green at every commit.
+
+## What's next (the deletion phase — heavier, partly irreversible)
 1. **`number`** — typed reader keyed off `kind` (mirror `Default.Write`'s NumberKind
    switch in reverse: Int/Long→`Long()`, Float→`Float()`, Decimal→`Decimal()`,
    Int128/UInt128/BigInteger→`String()`), then `number.Convert(raw, kind, ctx)`.
