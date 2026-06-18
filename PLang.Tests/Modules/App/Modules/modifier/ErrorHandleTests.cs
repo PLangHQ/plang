@@ -289,7 +289,8 @@ public class ErrorHandleTests
         var prAction = new PrAction
         {
             Module = module, ActionName = actionName,
-            Parameters = parameters.Select(p => new global::app.data.@this(p.name, p.value)).ToList()
+            Parameters = parameters.Select(p => new global::app.data.@this(p.name, p.value,
+                PrParam.IsVarNameSlot(module, actionName, p.name) ? new global::app.type.@this("variable") : null)).ToList()
         };
         var step = new Step { Text = $"test step for {name}" };
         step.Actions.Add(prAction);
