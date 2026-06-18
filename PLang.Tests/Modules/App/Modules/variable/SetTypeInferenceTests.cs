@@ -97,8 +97,12 @@ public class SetTypeInferenceTests
         await Assert.That(stored.Type.Name).IsEqualTo("datetime");
     }
 
+    // A CLR list is aliased as the new list's backing — no JSON walk, no copy. The
+    // value door answers the native list.@this; the CLR exit door hands the SAME
+    // List<object?> instance back as long as the list was only read (every slot
+    // still raw).
     [Test]
-    public async Task Set_ListValue_StoresDistinctListInstance()
+    public async Task Set_ListValue_AliasesSourceInstance()
     {
         var context = _app.User.Context;
         var src = new List<object?> { "a", "b" };
@@ -106,14 +110,46 @@ public class SetTypeInferenceTests
         var result = await action.RunAsync(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("list");
-        await Assert.That((await stored.Value())).IsTypeOf<List<object?>>();
-        // Collections are reference semantics — a ref-free authored container
-        // is never walked/copied at resolution; set stores the instance itself.
-        await Assert.That(ReferenceEquals((stored.Peek()), src)).IsTrue();
+        var lst = (await stored.Value()) as global::app.type.list.@this;
+        await Assert.That(lst).IsNotNull();
+        // The CLR exit door returns the aliased backing itself — same ref, O(1).
+        await Assert.That(ReferenceEquals(lst!.Clr<List<object?>>(), src)).IsTrue();
     }
 
+    // No copy at set: a later in-place edit of the SOURCE list is visible through
+    // the plang variable (proof the backing was aliased, never walked/copied).
     [Test]
-    public async Task Set_DictValue_StoresDistinctDictInstance()
+    public async Task Set_ListValue_AliasNotCopied_SourceEditVisible()
+    {
+        var context = _app.User.Context;
+        var src = new List<object?> { "a", "b" };
+        await (await TestAction.Create("variable", "set", ("name", "%list%"), ("value", src)).RunAsync(context)).IsSuccess();
+        src.Add("c");
+        var lst = (await (await context.Variable.Get("list")).Value()) as global::app.type.list.@this;
+        await Assert.That(lst!.CountRaw).IsEqualTo(3);
+    }
+
+    // A write elevates a slot to a Data — the backing diverges from its pristine
+    // all-raw aliased form, so the CLR exit door peels (a NEW list, no longer the
+    // source ref): "modify the list → not the same ref." The written row reads back
+    // narrowed to its type.
+    [Test]
+    public async Task Set_ListIndexWrite_ElevatesSlot_ClrRebuilds()
+    {
+        var context = _app.User.Context;
+        var src = new List<object?> { "a", "b", "c" };
+        var lst = new global::app.type.list.@this(src) { Context = context };
+
+        lst.SetAt(2, new Data("", 9L));
+
+        await Assert.That(ReferenceEquals(lst.Clr<List<object?>>(), src)).IsFalse();
+        await Assert.That((await lst.At(2)!.Value())).IsTypeOf<global::app.type.number.@this>();
+    }
+
+    // A Dictionary<string,object?> is aliased the same way — the CLR exit door
+    // returns the same instance after a pure read.
+    [Test]
+    public async Task Set_DictValue_AliasesSourceInstance()
     {
         var context = _app.User.Context;
         var src = new Dictionary<string, object?> { ["k"] = "v" };
@@ -121,9 +157,11 @@ public class SetTypeInferenceTests
         var result = await action.RunAsync(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("d");
-        await Assert.That((await stored.Value())).IsTypeOf<Dictionary<string, object?>>();
-        // Same rule as the list test above — reference semantics, no copy.
-        await Assert.That(ReferenceEquals((stored.Peek()), src)).IsTrue();
+        var d = (await stored.Value()) as global::app.type.dict.@this;
+        await Assert.That(d).IsNotNull();
+        // A read of a key must not knock the dict off the same-ref fast path.
+        await Assert.That((await d!.Get("k")!.Value())?.ToString()).IsEqualTo("v");
+        await Assert.That(ReferenceEquals(d.Clr<Dictionary<string, object?>>(), src)).IsTrue();
     }
 
     [Test]

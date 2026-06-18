@@ -114,6 +114,22 @@ Test-first. Write/blacken the tests, then implement until green.
 - `AddRaw` stays the wire/literal-parse seam; the new alias ctor is the
   CLR-handoff seam.
 
+## IMPLEMENTED (this session)
+
+Landed with **zero regressions** (verified by clean-baseline diff across all suites):
+- `Lift` aliases a foreign `List<object?>` / `Dictionary<string,object?>` by reference — O(1), no JSON walk. Other CLR container shapes keep the json fallback.
+- `Row`/`Slot` born a FRESH Data per read — cache-back deleted. Backing stays pristine.
+- `_hasWrapped` flag (one flag, three O(1) jobs): all-raw → `.Clr` hands the same instance back (same-ref) AND the context-walk is skipped on assign; a wrapped backing peels.
+- **dict collapsed to a single `_value`** — `_keys`+`_map` deleted (Ingi: one store, like list's `_items`). Built dicts are `OrdinalIgnoreCase`; an aliased foreign dict keeps its own comparer (the dict doesn't police casing — the creation site picks it).
+- `.Clr` decision (Ingi): the collection's CLR IS its backing — all-raw returns `_value` as-is (signature/Data slots ride intact); a wrapped backing peels per-element ONLY because consumers asking for raw `List<object?>`/typed targets expect raw. No per-element peel on the same-ref path, so a `signature` (no raw form) is never wrong-unwrapped there.
+- 5 new tests in `SetTypeInferenceTests` (alias same-ref, source-edit-visible, in-place-write-rebuilds, dict alias).
+
+## FOLLOW-UPS (agreed, deferred — separate diffs)
+
+1. **Move template-stamping to the parser/creation seam; delete `StampedForm` + the type-switch in `data/this.cs`.** Whether a value is an authored template is known at creation (the `.pr` `template="plang"` authored flag), so the parser should mint text/containers already stamped — not retrofit via `.Authored()` walking the value. The type-`switch(instance)` in `data/this.cs` is misplaced behavior (OBP). Interim: `StampedForm` keeps a materialize-once fix so no-cache-back doesn't drop the stamp.
+2. **Rename the `AsT_*` tests** — they exercise the live `Value<T>()` door, not a dead `As<T>` (the `As<T>` method no longer exists; `Value<T>()` replaced it, 12 prod callers).
+3. **Typed-collection `.Clr<List<long>>` / `.Clr<record>`** — zero production callers (production reads collections element-wise / asks `.Clr<object>()`). Consider making it throw with a clear "not possible on a collection" message instead of peel-converting.
+
 ## Done / not-done bookkeeping
 - VarReference template-stamp test: DONE (committed — separate concern, the
   authored seam stamps `Template=plang`).

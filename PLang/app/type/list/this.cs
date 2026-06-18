@@ -26,17 +26,40 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     // Store raw, type on read. A slot holds EITHER a raw CLR value (a scalar
     // literal off the wire, or a native sub-container) OR a Data (dropped in by
-    // `add`/`set` carrying its own type/signature). One Data wraps the whole
-    // list — never a Data per element at rest. A row becomes a Data only when
-    // something reads it (Row materializes + caches back).
+    // `add`/`set` carrying its own type/signature). A row borns a FRESH Data on
+    // read — never cached back, so the backing stays pristine (enumeration-safe,
+    // and an aliased source stays the same instance for the CLR exit door).
     private readonly List<object?> _items;
 
-    public @this() => _items = new();
-    public @this(IEnumerable<Data> items) => _items = new(items);
+    // The backing has diverged from a pure-raw aliased source: at least one slot
+    // holds a Data or an item.@this wrapper (a write elevated it, `add` dropped one
+    // in, or the wire parse built a nested container). Drives three O(1) decisions:
+    // the .Clr same-ref fast path (clean → hand the backing straight back), the
+    // context walk (clean → nothing context-bearing to propagate to), and the
+    // all-raw invariant. Stays false for a freshly-aliased CLR list that is only
+    // read — that is the million-row O(1) case.
+    private bool _hasWrapped;
 
-    // Type-on-read: the row at `i` as a Data, wrapping a raw slot into its
-    // natural type on first touch and caching it back (the narrow). An already-
-    // Data slot returns as-is.
+    // A slot that carries context / must be peeled at the CLR exit door — a Data or
+    // a plang wrapper. A raw CLR scalar or a raw nested container (List/Dictionary)
+    // is NOT one: it rides verbatim and is handed back as-is.
+    private static bool IsWrapped(object? slot)
+        => slot is Data or global::app.type.item.@this;
+
+    public @this() => _items = new();
+    public @this(IEnumerable<Data> items) { _items = new(items); _hasWrapped = true; }
+
+    /// <summary>Aliases a foreign CLR list as this list's backing — O(1), no walk,
+    /// no copy. The handoff contract: the source becomes the backing, so its slots
+    /// are assumed raw CLR values (the all-raw invariant <see cref="_hasWrapped"/> tracks
+    /// from here). A pure read keeps the backing pristine, so the CLR exit door hands
+    /// the same instance back; the first write elevates a slot and the backing diverges.</summary>
+    internal @this(List<object?> backing) => _items = backing;
+
+    // Type-on-read: the row at `i` as a FRESH Data wrapping the raw slot — never
+    // cached back. Leaving the slot raw keeps the backing pristine (enumeration-safe,
+    // and it stays the same instance the source handed over). An already-Data slot
+    // returns as-is.
     private Data Row(int i)
     {
         var raw = _items[i];
@@ -46,9 +69,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             return d;
         }
         var instance = global::app.type.item.serializer.json.BornFromRaw(raw);
-        var data = new Data("", instance) { Context = _context! };
-        _items[i] = data;   // cache-back the narrow
-        return data;
+        return new Data("", instance) { Context = _context! };
     }
 
     // The structural face of a raw-or-Data slot — the item instance for the
@@ -68,6 +89,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     internal @this AddRaw(object? raw)
     {
         if (raw is Data d && _context != null) d.Context = _context;
+        if (IsWrapped(raw)) _hasWrapped = true;   // a Data / nested wrapper diverges the backing
         _items.Add(raw);
         return this;
     }
@@ -83,7 +105,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         set
         {
             _context = value;
-            if (value == null) return;
+            // A clean (all-raw) backing has nothing context-bearing — skip the
+            // walk so assigning a million-row aliased list stays O(1). Reads born
+            // their rows with _context lazily (Row); a wrapped slot is reached
+            // here only when the backing already diverged.
+            if (value == null || !_hasWrapped) return;
             foreach (var slot in _items)
             {
                 if (slot is Data d) d.Context = value;
@@ -201,6 +227,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public @this Add(Data item)
     {
         if (_context != null) item.Context = _context;
+        _hasWrapped = true;
         _items.Add(item);
         return this;
     }
@@ -210,6 +237,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     internal @this Insert(int index, Data item)
     {
         if (_context != null) item.Context = _context;
+        _hasWrapped = true;
         if (index < 0) index = 0;
         if (Locate(index, out int row, out int offset, out @this? inner))
         {
@@ -234,6 +262,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>Removes the leaf at the flattened <paramref name="index"/> (no-op when out of range).</summary>
     internal void RemoveAt(int index)
     {
+        _hasWrapped = true;
         if (!Locate(index, out int row, out int offset, out @this? inner)) return;
         if (inner != null)
         {
@@ -334,6 +363,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // weight-1 rows — a new order is a new flat list.
     private void ResetTo(List<Data> flat)
     {
+        _hasWrapped = true;
         _items.Clear();
         if (_context != null) foreach (var d in flat) d.Context = _context;
         _items.AddRange(flat);
@@ -353,6 +383,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     internal void SetAt(int index, Data value)
     {
         if (_context != null) value.Context = _context;
+        _hasWrapped = true;
         if (Locate(index, out int row, out int offset, out @this? inner))
         {
             if (inner != null) inner.SetAt(offset, value);
@@ -405,17 +436,24 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     }
 
     /// <summary>
-    /// The CLR exit door — the list decomposes itself into a raw
-    /// <c>List&lt;object?&gt;</c> (each element lowers through its OWN
-    /// <see cref="global::app.type.item.@this.Clr{T}"/>, so nested dict/list recurse),
-    /// then hands that to the shared converter for the generic list→target step
-    /// (typed <c>List&lt;T&gt;</c>, JSON round-trip). A named row carries identity
-    /// beyond its value (a parameter list's {name, value} entries) — it IS its own
-    /// raw form; only anonymous rows decompose to bare values. Read-out form only;
-    /// the in-memory representation stays Data-keyed.
+    /// The CLR exit door. A <b>compatible</b> target (<c>List&lt;object?&gt;</c>,
+    /// <c>object</c>, <c>IList</c>) gets the backing itself — same instance, O(1),
+    /// and a Data / item slot (a signed <c>signature</c>, a number wrapper) rides
+    /// intact: the list's CLR IS its backing, nothing is unwrapped. A <b>different</b>
+    /// typed target (<c>List&lt;T&gt;</c>, an array, a record) is a real conversion —
+    /// peel each element to its raw form, then convert (a named row keeps identity).
+    /// A signed value never rides a typed numeric/record list, so the wrong-unwrap of
+    /// a value with no raw form (a signature) can't happen on this path.
     /// </summary>
     internal override object? Clr(System.Type target)
     {
+        // All-raw backing IS the raw form — hand it straight to the converter:
+        // identity (same instance, O(1)) for a List<object?> target, a round-trip for
+        // a typed one. A diverged backing (a Data / item slot — rendered rows, an
+        // added element) must peel each slot to its raw form first, since a consumer
+        // asking for List<object?>/List<T> expects raw values, not wrappers.
+        if (!_hasWrapped) return ClrConvert(_items, target);
+
         var flat = Items;
         var raw = new List<object?>(flat.Count);
         foreach (var item in flat)

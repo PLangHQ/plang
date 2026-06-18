@@ -27,20 +27,38 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
     public static string Example => "{\"name\":\"a\"}";
 
-    // Store raw, type on read. A slot holds EITHER a raw CLR value (a scalar
-    // literal off the wire, or a native sub-container) OR a Data (dropped in by
-    // `set`/`add` carrying its own type/signature). One Data wraps the whole
-    // dict — never a Data per entry at rest. An entry becomes a Data only when
-    // something reads it (Slot materializes + caches back).
+    // The single backing — key → raw-or-wrapped slot, mirroring list's _items. A
+    // slot holds EITHER a raw CLR value (a scalar off the wire, a native
+    // sub-container) OR a wrapped value (a Data / item dropped in by `set`/`add`
+    // carrying its own type/signature). Store raw, type on read: an entry borns a
+    // FRESH Data on read, never cached back, so a pure-read backing stays pristine
+    // and the CLR exit door hands this exact instance back (same-ref, O(1)).
     //
-    // `_keys` is the insertion order + display casing (the round-trip contract);
-    // `_map` is the case-insensitive store. The KEY is the identity (the way
-    // position is for list) — an entry's own `Data.Name` is no longer the key.
-    private readonly List<string> _keys = new();
-    private readonly Dictionary<string, object?> _map =
-        new(System.StringComparer.OrdinalIgnoreCase);
+    // The Dictionary IS the order (insertion order) and the casing (the key string).
+    // PLang builds its own dicts case-insensitive (OrdinalIgnoreCase); an aliased
+    // foreign dict keeps whatever comparer it came with — the dict object does not
+    // police casing, the construction site picks the comparer.
+    private readonly Dictionary<string, object?> _value;
 
-    public @this() { }
+    // The backing has diverged from a pure-raw form — a slot holds a Data/wrapper.
+    // Drives the .Clr same-ref fast path (clean → hand _value straight back) and
+    // gates the context walk (clean → only raw slots, nothing context-bearing).
+    private bool _hasWrapped;
+
+    // A slot that carries context / must be peeled at the CLR exit door — a Data or
+    // a plang wrapper. A raw scalar or a raw nested container rides verbatim.
+    private static bool IsWrapped(object? slot)
+        => slot is Data or global::app.type.item.@this;
+
+    public @this() => _value = new(System.StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Aliases a foreign CLR dictionary as the backing — true O(1), no walk,
+    /// no copy. The handoff contract: the source becomes the backing (its slots are
+    /// raw values, type-on-read). A pure read keeps it pristine, so <see cref="Clr"/>
+    /// hands the same instance back; the first write diverges it (<see cref="_hasWrapped"/>).
+    /// The comparer is the source's own — PLang's own dicts are built case-insensitive
+    /// via the default ctor.</summary>
+    internal @this(Dictionary<string, object?> backing) => _value = backing;
 
     /// <summary>
     /// Context for runtime access. When set, propagates onto every entry Data so
@@ -54,8 +72,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         set
         {
             _context = value;
-            if (value == null) return;
-            foreach (var slot in _map.Values)
+            // A clean dict's slots are raw — nothing context-bearing to walk, so
+            // assigning context stays O(1). Reads born their entries with _context
+            // (Slot); a wrapped slot is reached here only after a write diverged it.
+            if (value == null || !_hasWrapped) return;
+            foreach (var slot in _value.Values)
             {
                 if (slot is Data d) d.Context = value;
                 else if (slot is module.IContext c) c.Context = value;
@@ -63,21 +84,22 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         }
     }
 
-    // Type-on-read: hand back the entry under `key` as a Data, wrapping a raw
-    // slot into its natural type on first touch and caching the Data back into
-    // the slot (the narrow). An already-Data slot returns as-is.
+    // Type-on-read: hand back the entry under `key` as a FRESH Data, wrapping the
+    // raw slot into its natural type on each read — never cached back, so the
+    // backing stays pristine (an aliased source keeps the same instance for the
+    // CLR exit door). An already-Data slot returns as-is.
     private Data Slot(string key)
     {
-        var raw = _map[key];
+        var raw = _value[key];
         if (raw is Data d)
         {
             if (_context != null) d.Context = _context;
             return d;
         }
         var instance = global::app.type.item.serializer.json.BornFromRaw(raw);
-        var data = new Data(key, instance) { Context = _context! };
-        _map[key] = data;   // cache-back the narrow
-        return data;
+        // Born a FRESH Data each read — never cached back. Leaving the slot raw keeps
+        // the aliased backing pristine, so the CLR exit door stays same-ref.
+        return new Data(key, instance) { Context = _context! };
     }
     private actor.context.@this? _context;
 
@@ -93,10 +115,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>Number of entries.</summary>
     /// <summary>Entry count as the PLang <c>number</c> (the public surface
     /// answers in PLang values).</summary>
-    public global::app.type.number.@this Count => _keys.Count;
+    public global::app.type.number.@this Count => _value.Count;
 
     /// <summary>The interior raw count — loop bounds and emptiness checks.</summary>
-    internal int CountRaw => _keys.Count;
+    internal int CountRaw => _value.Count;
 
     /// <summary>Keys in insertion order, as a native <c>list&lt;text&gt;</c> —
     /// the public surface answers in PLang values (<c>%dict!keys%</c>).</summary>
@@ -105,22 +127,22 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         get
         {
             var keys = new global::app.type.list.@this<global::app.type.text.@this>();
-            foreach (var k in _keys)
+            foreach (var k in _value.Keys)
                 keys.Add(new Data(k, new global::app.type.text.@this(k)));
             return keys;
         }
     }
 
     /// <summary>Keys in insertion order — the interior raw view.</summary>
-    internal IEnumerable<string> KeyNames => _keys;
+    internal IEnumerable<string> KeyNames => _value.Keys;
 
     /// <summary>Entry Data values in insertion order — materializes every raw slot.</summary>
     public IReadOnlyList<Data> Entries
     {
         get
         {
-            var list = new List<Data>(_keys.Count);
-            foreach (var k in _keys) list.Add(Slot(k));
+            var list = new List<Data>(_value.Count);
+            foreach (var k in _value.Keys) list.Add(Slot(k));
             return list;
         }
     }
@@ -134,7 +156,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     }
 
     /// <summary>True when <paramref name="key"/> is present (distinct from a present key whose value is null).</summary>
-    public bool Has(string key) => _map.ContainsKey(key);
+    public bool Has(string key) => _value.ContainsKey(key);
 
     /// <summary>
     /// The entry Data for <paramref name="key"/>, or C# <c>null</c> when the key
@@ -142,7 +164,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// Data — the caller decides what missing means.
     /// </summary>
     public Data? Get(string key)
-        => _map.ContainsKey(key) ? Slot(key) : null;
+        => _value.ContainsKey(key) ? Slot(key) : null;
 
     /// <summary>
     /// Typed path navigation over the materialized structure: dotted keys +
@@ -242,9 +264,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     }
 
     // The one mutation seam — last-wins on a duplicate key (json object
-    // semantics), order preserved at the position of the first occurrence, and
-    // the display casing updated to the latest write (mirrors the prior
-    // entry-replacing behavior).
+    // semantics), order preserved at the position of the first occurrence (the
+    // Dictionary keeps a key's slot on overwrite).
     private void Put(string key, object? slot)
     {
         // `@schema` is the wire marker that tags a serialized envelope — a dict
@@ -253,28 +274,32 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (string.Equals(key, "@schema", System.StringComparison.OrdinalIgnoreCase))
             throw new System.ArgumentException(
                 "'@schema' is the wire marker and cannot be a dict key.", nameof(key));
-        if (_map.ContainsKey(key))
-        {
-            int i = _keys.FindIndex(k => string.Equals(k, key, System.StringComparison.OrdinalIgnoreCase));
-            if (i >= 0) _keys[i] = key;
-        }
-        else _keys.Add(key);
-        _map[key] = slot;
+        // A wrapped slot diverges the dict — the CLR exit door must peel, and the
+        // context walk has something to reach. A raw scalar leaves it clean (the
+        // .Clr fast path still hands the backing back).
+        if (IsWrapped(slot)) _hasWrapped = true;
+        _value[key] = slot;
     }
 
     /// <summary>
-    /// The CLR exit door — the dict decomposes itself into a raw
-    /// <c>Dictionary&lt;string, object?&gt;</c> (each entry lowers through its OWN
-    /// <see cref="global::app.type.item.@this.Clr{T}"/>, so nested dict/list recurse),
-    /// then hands that to the shared converter for the generic map→target step
-    /// (identity for a Dictionary target, reflection-populate for a record). Loud
-    /// on failure, as every lowering is. The in-memory form stays Data-keyed; this
-    /// is the read-out form only.
+    /// The CLR exit door. A <b>compatible</b> target
+    /// (<c>Dictionary&lt;string,object?&gt;</c>, <c>object</c>, <c>IDictionary</c>) gets
+    /// the backing itself — same instance, O(1), and a Data / item slot (a signed
+    /// <c>signature</c>, a number wrapper) rides intact: the dict's CLR IS its backing.
+    /// A <b>different</b> typed target (a record, <c>Dictionary&lt;string,T&gt;</c>) is a
+    /// real conversion — peel each entry to its raw form, then convert. A signed value
+    /// never rides a typed record/map, so a value with no raw form can't be wrong-unwrapped.
     /// </summary>
     internal override object? Clr(System.Type target)
     {
+        // All-raw backing IS the raw form — hand it straight to the converter
+        // (same instance, O(1), for a Dictionary<string,object?> target). A diverged
+        // backing (a Data / item slot) peels each entry to raw first, since a consumer
+        // asking for a raw map / record expects raw values, not wrappers.
+        if (!_hasWrapped) return ClrConvert(_value, target);
+
         var raw = new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase);
-        foreach (var key in _keys)
+        foreach (var key in _value.Keys)
             raw[key] = Unwrap(Slot(key).Peek());
         return ClrConvert(raw, target);
     }
@@ -283,8 +308,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         string or byte[] => value,
         // Any item leaf — a scalar wrapper (text/number/bool/…) OR a nested dict/list —
-        // decomposes through its own Clr, so a `dict` projects to a fully-raw CLR
-        // Dictionary (born-native scalars are wrappers, not raw, until unwrapped here).
+        // decomposes through its own Clr, so a `dict` projects to a fully-raw CLR map.
         global::app.type.item.@this leaf => leaf.Clr<object>(),
         // A raw CLR list may still hold dict/list elements; unwrap each so a nested
         // object reads out raw too — otherwise STJ would reflect its C# surface.
@@ -296,7 +320,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// item truthiness: an empty dict is falsy, a dict with any entry is truthy —
     /// matches the falsiness of an empty list / string / null.
     /// </summary>
-    public override bool IsTruthy() => _keys.Count > 0;
+    public override bool IsTruthy() => _value.Count > 0;
 
     /// <summary>A stamped container's render depends on outside state — never kept.</summary>
     public override bool Cacheable => Template == null;
@@ -311,9 +335,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         if (Template == null) return this;
         var rendered = new @this { Context = _context };
-        foreach (var key in _keys)
+        foreach (var key in _value.Keys)
         {
-            var slot = _map[key];
+            var slot = _value[key];
             var inner = slot as global::app.type.item.@this ?? (slot as Data)?.Peek();
             if (inner is { Template: not null } stamped)
             {
@@ -334,7 +358,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>The item emptiness hook — no entries.</summary>
     public override System.Threading.Tasks.ValueTask<bool> IsEmpty()
-        => System.Threading.Tasks.ValueTask.FromResult(_keys.Count == 0);
+        => System.Threading.Tasks.ValueTask.FromResult(_value.Count == 0);
 
     // ---- Comparison (the unified hook — see app.type.compare) ----
 
@@ -360,8 +384,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// </summary>
     public bool AreEqual(object? other)
     {
-        if (other is not @this od || _keys.Count != od.CountRaw) return false;
-        foreach (var key in _keys)
+        if (other is not @this od || _value.Count != od.CountRaw) return false;
+        foreach (var key in _value.Keys)
         {
             var entry = Slot(key);
             var match = od.Get(key);
@@ -375,5 +399,5 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // Debug view — peeks the raw slot without materializing (a Data slot shows
     // its peeked value; a raw scalar / native container shows itself).
     public override string ToString()
-        => $"{{{string.Join(", ", _keys.Select(k => $"{k}: {(_map[k] is Data d ? d.Peek() : _map[k])}"))}}}";
+        => $"{{{string.Join(", ", _value.Select(kv => $"{kv.Key}: {(kv.Value is Data d ? d.Peek() : kv.Value)}"))}}}";
 }

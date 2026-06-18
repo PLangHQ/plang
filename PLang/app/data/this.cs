@@ -217,6 +217,17 @@ public partial class @this
         // too — exclude it; bytes are the binary leaf, not a list. A container that
         // cannot be narrowed is a producer handing raw to a Data — fail loud rather
         // than parking an un-serializable clr (clr-dissolution role 5).
+        // The common handoff shapes alias their backing BY REFERENCE — O(1), no
+        // walk, no JSON. The native value owns the source from here (store raw,
+        // type on read); a pure read keeps the backing pristine so .Clr hands the
+        // same instance back. A million-row List<object?> costs one pointer copy.
+        if (v is System.Collections.Generic.List<object?> objList)
+            return new global::app.type.list.@this(objList) { Context = context! };
+        if (v is System.Collections.Generic.Dictionary<string, object?> objDict)
+            return new global::app.type.dict.@this(objDict) { Context = context! };
+        // Other raw C# container shapes (List<int>, int[], typed dictionaries, …)
+        // can't be aliased as object-slots (generic invariance), so they narrow off
+        // the wire — the correctness path, not the O(1) one.
         if (v is System.Collections.IDictionary
             || (v is System.Collections.IList && v is not byte[]))
             return global::app.type.item.serializer.json.Parse(
@@ -462,20 +473,27 @@ public partial class @this
             case global::app.type.list.@this l:
             {
                 if (l.Template != null) return l;
+                // Materialize the rows ONCE: a row borns a fresh Data per read (no
+                // cache-back), so StampEntry mutates THESE instances and the rebuilt
+                // list must keep THESE — re-reading l.Items would born fresh, unstamped
+                // rows and drop the stamping. (Interim — this whole walk is slated to
+                // move to the parser/creation seam, where the authored flag is known.)
+                var items = l.Items;
                 bool any = false;
-                foreach (var entry in l.Items) any |= StampEntry(entry);
+                foreach (var entry in items) any |= StampEntry(entry);
                 if (!any) return l;
-                return new global::app.type.list.@this(l.Items) { Template = "plang", Context = l.Context };
+                return new global::app.type.list.@this(items) { Template = "plang", Context = l.Context };
             }
 
             case global::app.type.dict.@this d:
             {
                 if (d.Template != null) return d;
+                var entries = d.Entries;   // materialize once — see the list case
                 bool any = false;
-                foreach (var entry in d.Entries) any |= StampEntry(entry);
+                foreach (var entry in entries) any |= StampEntry(entry);
                 if (!any) return d;
                 var stampedDict = new global::app.type.dict.@this { Template = "plang", Context = d.Context };
-                foreach (var entry in d.Entries) stampedDict.Set(entry);
+                foreach (var entry in entries) stampedDict.Set(entry);
                 return stampedDict;
             }
 
