@@ -340,7 +340,7 @@ public class RenderTests : IDisposable
     public async Task Render_DotNavigation_AccessesObjectProperties()
     {
         var context = _app.User.Context;
-        var user = new { name = "Alice", age = 30 };
+        var user = new Dictionary<string, object?> { ["name"] = "Alice", ["age"] = 30 };
         context.Variable.Set(new Data("user", user));
         var action = new Render
         {
@@ -413,7 +413,7 @@ public class RenderTests : IDisposable
     {
         var context = _app.User.Context;
         // Data wraps a complex object — template should navigate the inner object, not Data properties
-        var user = new { name = "Alice", age = 30 };
+        var user = new Dictionary<string, object?> { ["name"] = "Alice", ["age"] = 30 };
         context.Variable.Set(new Data("user", user));
         var action = new Render
         {
@@ -694,7 +694,7 @@ public class RenderTests : IDisposable
             Module = actionClass,
             ActionName = method,
             Parameters = parameters is IDictionary<string, object?> dict
-                ? dict.Select(kv => new Data(kv.Key, kv.Value)).ToList()
+                ? PrParam.List(actionClass, method, dict)
                 : new List<Data>()
         };
         // Tests author actions the way the builder does — same template seam
