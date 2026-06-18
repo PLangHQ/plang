@@ -28,7 +28,9 @@ public sealed class @this : global::app.channel.@this
     {
         Name = "http";
         Direction = ChannelDirection.Bidirectional;
-        Mime = string.IsNullOrEmpty(contentType) ? "application/octet-stream" : contentType;
+        // A response with no Content-Type is read as text — web content is text by
+        // default; raw bytes are the exception (the server names them explicitly).
+        Mime = string.IsNullOrEmpty(contentType) ? "text/plain" : contentType;
         _body = body;
         if (context != null)
         {

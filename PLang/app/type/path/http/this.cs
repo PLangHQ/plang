@@ -431,10 +431,15 @@ public sealed partial class @this : global::app.type.path.@this
         if (Context == null) return;
         try
         {
+            // Sign over a canonical request line — method, path, then the body. This
+            // binds WHAT the request does (method + path) into the signature, so it is
+            // never empty (a bodyless GET still signs) and a redirect to a different
+            // path produces a fresh, destination-specific signature.
+            var canonical = $"{method}\n{_uri.PathAndQuery}\n{body ?? ""}";
             var sign = new module.signing.sign
             {
                 Context = Context,
-                Data = new data.@this("", body ?? ""),
+                Data = new data.@this("", canonical),
                 Headers = new data.@this<global::app.type.dict.@this>("", global::app.type.dict.@this.FromRaw(new Dictionary<string, object>
                 {
                     ["url"] = _uri.ToString(),
