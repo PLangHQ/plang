@@ -21,7 +21,10 @@ public partial class Get : IContext
         if (!result.Success)
             return result;
 
-        if (await result.Value() == null)
+        // A missing key resolves to the typed null/absent citizen, not C# null —
+        // detect "no value" via the value's own emptiness, then ask for it.
+        var value = await result.Value();
+        if (value is null || await value.IsEmpty())
             return global::app.data.@this.FromError(new AskError(
                 $"Settings value '{key}' is not set. Please provide a value.",
                 "settings", key));
