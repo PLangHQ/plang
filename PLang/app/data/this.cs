@@ -691,65 +691,6 @@ public partial class @this
     }
 
     /// <summary>
-    /// Materializes this Data as the requested PLang type — explicit
-    /// cross-type coercion. Resolves <paramref name="typeName"/> via the
-    /// context's type registry to a CLR type, then runs the materializer on
-    /// the raw value. Used at call sites where the caller knows the target
-    /// shape at runtime — e.g. a save action passes the format inferred from
-    /// the destination extension (see todos.md "file.save cross-type coercion").
-    ///
-    /// <para>Returns a fresh Data wrapping the materialized value; the source's
-    /// own <c>.Type</c> is not consulted, only <paramref name="typeName"/>. For
-    /// the implicit case where the variable's declared type drives
-    /// materialization, just read <see cref="Value"/>.</para>
-    ///
-    /// <para>Unknown type names surface a clear error at access — the materializer
-    /// lookup fails fast rather than passing a wrong CLR shape downstream.</para>
-    /// </summary>
-    public @this As(string typeName, actor.context.@this? context = null)
-    {
-        if (string.IsNullOrWhiteSpace(typeName))
-            return global::app.data.@this.FromError(new global::app.error.ServiceError(
-                "Data.As(typeName) requires a non-empty type name.", "InvalidTypeName", 400));
-
-        context = context ?? _context!;
-
-        // `as <type>/<kind>` (e.g. `as object/json`) reads toward the named
-        // encoding through the reader registry — the explicit, deterministic cast
-        // that resolves a type-unknown value (replacing the removed json-string
-        // content-sniff). The bare `as <type>` form keeps the CLR Convert path.
-        string? kind = null;
-        if (typeName.Contains('/'))
-        {
-            var slash = typeName.IndexOf('/');
-            kind = typeName[(slash + 1)..];
-            typeName = typeName[..slash];
-        }
-        if (kind != null)
-        {
-            var reader = context.App.Type.Readers.Of(typeName, kind);
-            if (reader != null)
-            {
-                // The explicit cast re-reads the SOURCE FORM — the reader is
-                // CLR-facing machinery, so a leaf lowers through its own Clr
-                // at this proven seam.
-                var raw = global::app.type.item.@this.Backing(_type);
-                var materialized = raw == null ? null
-                    : reader(raw, kind, new global::app.type.reader.ReadContext(context));
-                return new @this(Name, materialized, type.Create(typeName, kind, context: context), Parent) { Context = context };
-            }
-        }
-
-        var clr = context.App.Type.Clr(typeName);
-        if (clr == null)
-            return global::app.data.@this.FromError(new global::app.error.ServiceError(
-                $"No PLang type registered under name '{typeName}'.", "UnknownType", 400));
-
-        var converted = context.App.Type.Convert(Peek(), clr, context).Peek();
-        return new @this(Name, converted, new type(typeName), Parent) { Context = context };
-    }
-
-    /// <summary>
     /// Resolves this Data as the canonical Data — used by the generator's plain `Data` property
     /// emission to bypass As&lt;T&gt; wrapping entirely (architect/v1/plan.md §Phase 2 Rule 4).
     /// Returns:
