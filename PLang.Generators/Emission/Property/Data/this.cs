@@ -92,7 +92,7 @@ public sealed record @this(
             sb.AppendLine($"            var __d = __ResolveData(\"{ParamName}\");");
             sb.AppendLine($"            {Backing} = await __d.IsEmpty() ? new global::app.data.@this<{InnerType}>(\"{ParamName}\", {DefaultExpr}) : __d.ShallowClone<{InnerType}>(await __d.Value<{InnerType}>());");
             sb.AppendLine($"            if (!{Backing}.Success) __resolutionError = {Backing};");
-            sb.AppendLine($"            else if ({Backing}.Peek() is global::app.type.@null.@this or global::app.type.item.absent) {Backing} = new global::app.data.@this<{InnerType}>(\"{ParamName}\", {DefaultExpr});");
+            sb.AppendLine($"            else if ({Backing}.Peek() is global::app.type.@null.@this) {Backing} = new global::app.data.@this<{InnerType}>(\"{ParamName}\", {DefaultExpr});");
         }
         else
         {

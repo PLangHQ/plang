@@ -28,7 +28,7 @@ public class ReadFailureTests
         var v = await d.Value();
         // A failed materialize answers the typed absence (Value is never C# null),
         // and the failure is cached on Error.
-        await Assert.That(v is global::app.type.item.absent).IsTrue();
+        await Assert.That(v.IsNull).IsTrue();
         await Assert.That(d.Error).IsNotNull();
         await Assert.That(d.Error!.Message).Contains("bad"); // names the source
     }

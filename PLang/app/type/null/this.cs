@@ -24,10 +24,31 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public static string Example => "null";
     public static string Shape => "null";
 
-    /// <summary>The one null value in the world.</summary>
+    /// <summary>The one typeless null value in the world.</summary>
     public static @this Instance { get; } = new();
 
     private @this() { }
+
+    // A TYPED null — a declared slot that holds no value yet (`set %x% as path`
+    // with no value, a tool-definition parameter the LLM will fill, a typed null
+    // result). It is still null (IsNull, falsy, empty, renders/serialises null);
+    // the declaration only surfaces through Mint/Type/Kind. Absorbs the former
+    // `item.absent` — a value-less slot is just a null that remembers its type.
+    private readonly string? _typeName;
+    private readonly string? _kind;
+
+    public @this(string typeName, string? kind = null)
+    {
+        _typeName = string.IsNullOrWhiteSpace(typeName) ? null : typeName;
+        _kind = kind;
+    }
+
+    /// <summary>A typeless null mints "null"; a typed null mints its declared
+    /// type/kind so an empty <c>path</c> slot still answers <c>path</c>.</summary>
+    protected internal override global::app.type.@this Mint()
+        => _typeName == null
+            ? base.Mint()
+            : new global::app.type.@this(_typeName) { Kind = _kind };
 
     /// <summary>
     /// Is this raw value "null" in PLang's sense — a C# null reference OR the born-native

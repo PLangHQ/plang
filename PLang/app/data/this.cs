@@ -32,7 +32,7 @@ public partial class @this
     // value (raw source form, descriptor, lazy factory) lives ON the instance:
     // a file holds its own bytes, a source its declared {type, kind}, a
     // computed its factory.
-    private protected global::app.type.item.@this _type = global::app.type.item.absent.Slot;
+    private protected global::app.type.item.@this _type = global::app.type.@null.@this.Instance;
     private protected actor.context.@this _context = null!;
 
     /// <summary>
@@ -295,7 +295,7 @@ public partial class @this
                 // A declared type with no value yet — a typed absence (a tool
                 // parameter slot, a typed null). The declaration must survive
                 // even with nothing to lift.
-                _type = new global::app.type.item.absent(type.Name, type.Kind);
+                _type = new global::app.type.@null.@this(type.Name, type.Kind);
             else if (_context != null)
             {
                 // The type builds its value, born at its kind — same path as the
@@ -321,7 +321,7 @@ public partial class @this
     public @this(string name, global::app.type.item.@this instance, @this? parent = null)
     {
         Name = CleanName(name);
-        _type = instance ?? global::app.type.item.absent.Slot;
+        _type = instance ?? global::app.type.@null.@this.Instance;
         Parent = parent;
         Path = BuildPath(parent, Name);
         IsInitialized = true;
@@ -626,7 +626,7 @@ public partial class @this
     /// concern): initialized and holding neither absence citizen. Distinct
     /// from emptiness ("" and false are present) and truthiness.</summary>
     public bool HasValue => IsInitialized
-        && _type is not (global::app.type.@null.@this or global::app.type.item.absent);
+        && _type is not global::app.type.@null.@this;
 
     // The null *value* — a present null carrying the null.@this singleton, so
     // IsInitialized is true (distinct from NotFound/Uninitialized, which leave a
@@ -636,7 +636,7 @@ public partial class @this
     public static @this NotFound(string name = "")
     {
         var d = new @this(name);
-        d._type = global::app.type.item.absent.Slot;
+        d._type = global::app.type.@null.@this.Instance;
         d.IsInitialized = false;
         return d;
     }

@@ -204,7 +204,7 @@ public sealed class @this : item.@this
     /// instance <c>Create(object)</c> would be ambiguous with it.)</remarks>
     public item.@this Build(object? value)
     {
-        if (value is null) return new item.absent(Name, Kind);
+        if (value is null) return new global::app.type.@null.@this(Name, Kind);
 
         // A container / domain value is already native (dict, list, path, image, …) —
         // only scalars need a family to coerce them to a kind. (A variable-name target
@@ -212,7 +212,7 @@ public sealed class @this : item.@this
         if (value is item.@this { IsLeaf: false } native) return native;
 
         var built = Convert(value, Context!);   // the family returns the born-native wrapper
-        return built.Success && built.Peek() is item.@this it ? it : new item.absent(Name, Kind);
+        return built.Success && built.Peek() is item.@this it ? it : new global::app.type.@null.@this(Name, Kind);
     }
 
     /// <summary>
@@ -396,7 +396,7 @@ public sealed class @this : item.@this
     internal item.@this Deserialize(object? raw, actor.context.@this? context = null)
     {
         var ctx = context ?? Context;
-        if (raw is null) return new item.absent(Name, Kind);
+        if (raw is null) return new global::app.type.@null.@this(Name, Kind);
         if (raw is item.@this already) return already;
 
         // A variable-name target builds through the family dispatch

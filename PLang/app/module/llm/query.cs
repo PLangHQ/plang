@@ -117,7 +117,7 @@ public partial class query : IContext, IBuildValidatable
     {
         var schema = __action?.Parameters?.FirstOrDefault(p =>
             string.Equals(p.Name, "Schema", System.StringComparison.OrdinalIgnoreCase))?.Peek();
-        if (schema is not (null or global::app.type.@null.@this or global::app.type.item.absent)
+        if (schema is not (null or global::app.type.@null.@this)
             && !(schema is global::app.type.text.@this st
                  && (st.Clr<string>() is "" or null || st.HasHoles)))
             return Task.FromResult(data.@this.Ok("json"));

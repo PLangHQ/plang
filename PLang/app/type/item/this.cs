@@ -47,9 +47,10 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this asking)
         => System.Threading.Tasks.ValueTask.FromResult(this);
 
-    /// <summary>The undeclared typed absence — what a failed door answers
-    /// (the error rides the asking binding; the value slot stays never-null).</summary>
-    public static @this Absent => absent.Slot;
+    /// <summary>The value-less citizen — what a failed door answers (the error
+    /// rides the asking binding; the value slot stays never-null). The typeless
+    /// null; a declared-but-empty slot uses <c>new null.@this(type, kind)</c>.</summary>
+    public static @this Absent => global::app.type.@null.@this.Instance;
 
     /// <summary>
     /// What is in memory NOW — sync, no I/O, no parse, no resolve: the
