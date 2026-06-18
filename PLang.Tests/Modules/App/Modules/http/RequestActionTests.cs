@@ -96,8 +96,11 @@ public class RequestActionTests
 
         await result.IsSuccess();
         await Assert.That((await result.Value())).IsNotNull();
-        // The body is the lazy value; touching it materializes json → object.
-        var json = JsonSerializer.Serialize(await result.Value());
+        // The body is the lazy value; touching it materializes json → dict.
+        // Serialize against the runtime type (object) so the value's own
+        // [JsonConverter] fires — the static item base would reflect its
+        // infra props (Cacheable/Prior/Template) instead of the content.
+        var json = JsonSerializer.Serialize((object?)await result.Value());
         await Assert.That(json).Contains("Alice");
     }
 

@@ -208,7 +208,9 @@ public class UploadActionTests
 
         await result.IsSuccess();
         await Assert.That((await result.Value())).IsNotNull();
-        var json = System.Text.Json.JsonSerializer.Serialize(await result.Value());
+        // Serialize against the runtime type (object) so the value's own
+        // [JsonConverter] fires, not the item base's infra props.
+        var json = System.Text.Json.JsonSerializer.Serialize((object?)await result.Value());
         await Assert.That(json).Contains("42");
         await Assert.That(result.Properties["StatusCode"]).IsEqualTo(200);
     }
