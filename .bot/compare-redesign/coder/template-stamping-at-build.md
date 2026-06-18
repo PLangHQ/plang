@@ -1,5 +1,7 @@
 # Design: template-stamping moves to build time (persisted on the wire)
 
+> **SUPERSEDED by `template-stamping-at-read.md`.** Architect review rejected build-time + per-node wire marks in favour of stamping at read, gated by the reader's mode (no wire change, no `.pr` migration, no signing question). Read that file. This one is kept only for the rejected-alternatives record.
+
 **Status:** designed + agreed with Ingi (this session). For architect review before implementation.
 **Owner:** coder. **Branch:** compare-redesign.
 **Related:** `list-dict-raw-slot-model.md` (the O(1) raw-slot model — already landed; this builds on it).
