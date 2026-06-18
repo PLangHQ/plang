@@ -182,10 +182,11 @@ public class HttpPathRedirectTests
         var headers = targetGet[^1].Headers;
         await Assert.That(headers.ContainsKey("X-Signature")).IsTrue();
         var envelope = JsonDocument.Parse(headers["X-Signature"]).RootElement;
-        var signedUrl = envelope.GetProperty("Headers").GetProperty("url").GetString();
-        await Assert.That(signedUrl).IsEqualTo(new System.Uri(target).ToString());
-
-        // And it is definitely not the origin URL.
-        await Assert.That(signedUrl).IsNotEqualTo(new System.Uri(origin).ToString());
+        // The signed value is the canonical request line ("<method>\n<path>\n<body>")
+        // — method + path are bound into the signature itself, not a side claim. It
+        // must bind the DESTINATION path, and definitely not the origin's.
+        var signedValue = envelope.GetProperty("value").GetProperty("value").GetString();
+        await Assert.That(signedValue).Contains(new System.Uri(target).AbsolutePath);
+        await Assert.That(signedValue).DoesNotContain(new System.Uri(origin).AbsolutePath);
     }
 }
