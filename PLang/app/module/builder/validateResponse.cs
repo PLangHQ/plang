@@ -144,36 +144,6 @@ public partial class validateResponse : IContext
             }
         }
 
-        // Scalar PlangType shape check — a parameter typed as a Scalar (e.g. tstring,
-        // path) must carry a primitive value, never a record. The LLM sometimes wraps
-        // tstring values as `{value, key}` (semantic from "translatable"); rejecting
-        // the wrong shape forces LlmFixer to retry until the LLM produces the bare
-        // string. The catalog teaches the correct shape — this enforces it.
-        foreach (var step in response.Steps)
-        {
-            if (step.Keep) continue;
-            foreach (var a in step.Actions)
-            {
-                if (a.Parameters == null) continue;
-                foreach (var p in a.Parameters)
-                {
-                    if (p.Type?.Name == null || (await p.Value()) == null) continue;
-
-                    var targetType = (goal.App ?? app)?.Type.Get(p.Type.Name);
-                    if (targetType == null) continue;
-                    if (!global::app.type.catalog.@this.IsScalarPlangType(targetType)) continue;
-
-                    // A bare wire string rides born-native as text — that IS the
-                    // plain-string form this check wants; only a record shape
-                    // ({value, key}) is the violation.
-                    if ((await p.Value()) is not global::app.type.text.@this)
-                        errors.Add(
-                            $"Step[{step.Index}] {a.Module}.{a.ActionName}: parameter '{p.Name}' has type '{p.Type.Name}' but value is not a plain string. " +
-                            $"Scalar types (e.g. tstring, path) must be emitted as bare string values, not records like {{value, key}}.");
-                }
-            }
-        }
-
         // Value-to-type convertibility check. The LLM occasionally hallucinates a
         // value that looks like a schema description (e.g. Actor="this?(user|service|system)")
         // or emits "" as a placeholder for an unset constrained-type parameter.

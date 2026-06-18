@@ -320,8 +320,12 @@ public partial class Set : IContext, IBuildValidatable
             return await Context.Variable.Set(typedData);
         }
 
-        // No forced type — bind the value under the target name.
-        return await Context.Variable.Set(name.Name, Value);
+        // No forced type — bind a shallow clone under the target name. For a
+        // full-match `%x%`, the value door (AsCanonical) hands back the LIVE source
+        // Data; storing it directly would alias x and y onto one Properties bag, so
+        // `set %y!NewProp% = 1` would leak onto %x%. ShallowClone gives the new slot
+        // its own Properties copy (the value instance is shared — immutable, safe).
+        return await Context.Variable.Set(name.Name, Value.ShallowClone(name.Name));
     }
 
     /// <summary>

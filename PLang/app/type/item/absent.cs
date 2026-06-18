@@ -33,6 +33,15 @@ public sealed class absent : @this
     /// <summary>The item emptiness hook — a value-less slot is empty.</summary>
     public override System.Threading.Tasks.ValueTask<bool> IsEmpty()
         => System.Threading.Tasks.ValueTask.FromResult(true);
+
+    /// <summary>A value-less slot rides the wire as a bare null leaf, like the
+    /// null citizen — it has no sub-structure. Without this it falls to the
+    /// property-bag reflection and round-trips into a dict of its own metadata
+    /// ({cacheable, isleaf, isnull, …}). The declared {type, kind} survives on
+    /// the Data envelope, so the value slot stays value-only.</summary>
+    public override bool IsLeaf => true;
+    public override void Write(global::app.channel.serializer.IWriter w) => w.Null();
+
     // The CLR edge — an absent slot has no backing; lowers to null so the
     // value-less slot answers Clr<T>() without the base default touching Peek().
     internal override object? Clr(System.Type target) => null;

@@ -298,8 +298,11 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     internal static T? Lower<T>(object? doorAnswer) => doorAnswer switch
     {
-        T t => t,
+        // A plang value lowers to CLR via its own door FIRST — every item is also
+        // an `object`, so the universal `T t` arm below would otherwise swallow a
+        // `Lower<object>` and hand back the unlowered wrapper instead of its CLR form.
         @this it => it.Clr<T>(),
+        T t => t,
         _ => default,
     };
 
