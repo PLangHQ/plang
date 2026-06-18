@@ -121,9 +121,12 @@ public class Stage2_ValueDoorTests
     [Test]
     public async Task VarReference_RidesAsTypedText_NeverBareCSharpString()
     {
-        // SetValue("%x%") + downstream read yields a `text` instance — value slot is never a raw System.String
+        // A %ref% value rides as a typed `text` (never a bare System.String); the
+        // authored seam stamps the %hole% as a template (Template="plang"), which
+        // is what marks it a variable reference.
         var d = new Data("slot");
         d.SetValue("%x%");
+        d.Authored();
         await Assert.That(d.Peek() is global::app.type.text.@this).IsTrue();
         await Assert.That(d.IsVariable).IsTrue();
     }
