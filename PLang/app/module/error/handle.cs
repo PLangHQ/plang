@@ -183,16 +183,24 @@ public partial class Handle : IContext, IModifier
     private bool MatchesError(IError? error)
     {
         // MatchesError is a sync predicate — read the materialised backing, not the async door.
-        if ((StatusCode?.Peek()?.IsNull ?? true) && (Key?.Peek()?.IsNull ?? true) && (Message?.Peek()?.IsNull ?? true)) return true;
+        // An UNSET filter resolves to the typed null citizen, never C# null — and its
+        // ToString() renders "null", so presence MUST be tested via IsNull, never
+        // string.IsNullOrEmpty(ToString()) (which would read an unset filter as the
+        // literal "null" and spuriously activate it).
+        var sc = StatusCode?.Peek();
+        var key = Key?.Peek();
+        var msg = Message?.Peek();
+        bool hasKey = key is { IsNull: false };
+        bool hasMsg = msg is { IsNull: false };
+
+        if (sc is not global::app.type.number.@this && !hasKey && !hasMsg) return true;
         if (error == null) return false;
 
         // The matcher's int boundary is IError.StatusCode — the number lowers
         // itself there (Peek: sync predicate, value already in memory).
-        if (StatusCode?.Peek() is global::app.type.number.@this sc && error.StatusCode != sc.ToInt32()) return false;
-        if (!string.IsNullOrEmpty(Key?.Peek()?.ToString())
-            && !string.Equals(error.Key, Key.Peek()?.ToString(), StringComparison.OrdinalIgnoreCase)) return false;
-        if (!string.IsNullOrEmpty(Message?.Peek()?.ToString())
-            && !error.Message.Contains(Message.Peek()!.ToString()!, StringComparison.OrdinalIgnoreCase)) return false;
+        if (sc is global::app.type.number.@this scNum && error.StatusCode != scNum.ToInt32()) return false;
+        if (hasKey && !string.Equals(error.Key, key!.ToString(), StringComparison.OrdinalIgnoreCase)) return false;
+        if (hasMsg && !error.Message.Contains(msg!.ToString()!, StringComparison.OrdinalIgnoreCase)) return false;
 
         return true;
     }
