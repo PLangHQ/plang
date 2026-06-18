@@ -184,4 +184,18 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// Matches <see cref="op_Implicit(@this)"/>'s string semantics.
     /// </summary>
     public override string ToString() => Name;
+
+    /// <summary>
+    /// A variable is a leaf that NAMES a slot — its wire form is the name
+    /// string (e.g. <c>"%label%"</c>), not a property bag. This is what the
+    /// builder writes into the .pr and what <see cref="Convert"/> reads back,
+    /// so a born Variable round-trips through the wire as the same scalar a
+    /// raw-string param carries. (Without this it reflected to <c>{}</c> and
+    /// lost its name on serialize — born-native round-trip completeness.)
+    /// </summary>
+    public override bool IsLeaf => true;
+
+    /// <summary>Bare wire form: the raw reference as emitted, so a re-read
+    /// reconstructs the same Name and WasPercentWrapped via <see cref="Convert"/>.</summary>
+    public override void Write(global::app.channel.serializer.IWriter w) => w.String(RawValue);
 }

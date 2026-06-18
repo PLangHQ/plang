@@ -105,7 +105,7 @@ public class RunActionTests
         {
             ("variable", "set", new List<Data>
             {
-                new("Name", "shared"),
+                new("Name", new global::app.variable.@this("shared")),
                 new("Value", 1)
             })
         });
@@ -167,7 +167,7 @@ public class RunActionTests
             for (int i = 0; i < 4; i++)
                 tests.Add(BuildFixture($"T{i}.test.goal", $"T{i}", new (string, string, List<Data>)[]
                 {
-                    ("variable", "set", new List<Data> { new("Name", "x"), new("Value", i) })
+                    ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("x")), new("Value", i) })
                 }));
 
             var results = await RunTests(tests, parallel: 2);
@@ -216,8 +216,8 @@ public class RunActionTests
     {
         var test = BuildFixture("Cov.test.goal", "Cov", new (string, string, List<Data>)[]
         {
-            ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) }),
-            ("variable", "set", new List<Data> { new("Name", "y"), new("Value", 2) })
+            ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("x")), new("Value", 1) }),
+            ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("y")), new("Value", 2) })
         });
 
         await RunTests(new List<global::app.tester.test.@this> { test });
@@ -234,7 +234,7 @@ public class RunActionTests
     {
         var test = BuildFixture("MergeA.test.goal", "M", new (string, string, List<Data>)[]
         {
-            ("variable", "set", new List<Data> { new("Name", "a"), new("Value", 1) })
+            ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("a")), new("Value", 1) })
         });
 
         // Pre-populate parent's coverage with something distinct
@@ -269,7 +269,7 @@ public class RunActionTests
         {
             var test = BuildFixture("OsDir.test.goal", "S", new (string, string, List<Data>)[]
             {
-                ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
+                ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("x")), new("Value", 1) })
             });
 
             await RunTests(new List<global::app.tester.test.@this> { test });
@@ -302,7 +302,7 @@ public class RunActionTests
         {
             var test = BuildFixture("IsEn.test.goal", "E", new (string, string, List<Data>)[]
             {
-                ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
+                ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("x")), new("Value", 1) })
             });
 
             var results = await RunTests(new List<global::app.tester.test.@this> { test });
@@ -337,7 +337,7 @@ public class RunActionTests
         {
             var ready = BuildFixture("Ready.test.goal", "R", new (string, string, List<Data>)[]
             {
-                ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
+                ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("x")), new("Value", 1) })
             });
             var stale = new global::app.tester.test.@this {
                 Goal = new Goal { Name = "Stale", Path = "/Stale.test.goal" },
@@ -373,7 +373,7 @@ public class RunActionTests
         // demonstrate it carried through test.run's failure path (end-to-end check).
         var test = BuildFixture("Fail.test.goal", "F", new (string, string, List<Data>)[]
         {
-            ("variable", "set", new List<Data> { new("Name", "score"), new("Value", 42) }),
+            ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("score")), new("Value", 42) }),
             ("assert", "equals", new List<Data>
             {
                 new("Expected", 1),
@@ -529,12 +529,12 @@ public class RunActionTests
                 new Step { Index = 0, Text = "h0", Actions = new StepActions
                 {
                     new PrAction { Module = "variable", ActionName = "set",
-                        Parameters = new List<Data> { new("Name", "h0"), new("Value", 0) } }
+                        Parameters = new List<Data> { new("Name", new global::app.variable.@this("h0")), new("Value", 0) } }
                 }},
                 new Step { Index = 1, Text = "h1", Actions = new StepActions
                 {
                     new PrAction { Module = "variable", ActionName = "set",
-                        Parameters = new List<Data> { new("Name", "h1"), new("Value", 1) } }
+                        Parameters = new List<Data> { new("Name", new global::app.variable.@this("h1")), new("Value", 1) } }
                 }}
             }
         };
@@ -550,12 +550,12 @@ public class RunActionTests
         // 2 steps). Timings should record exactly steps 0, 1, 2 of the entry.
         var entry = BuildFixture("Tim.test.goal", "Tim", new (string, string, List<Data>)[]
         {
-            ("variable", "set", new List<Data> { new("Name", "a"), new("Value", 1) }),
+            ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("a")), new("Value", 1) }),
             ("goal", "call", new List<Data>
             {
                 new("GoalName", new GoalCall { Name = "Helper" }, global::app.type.@this.FromName("goal.call"))
             }),
-            ("variable", "set", new List<Data> { new("Name", "b"), new("Value", 2) })
+            ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("b")), new("Value", 2) })
         });
 
         var results = await RunTests(new List<global::app.tester.test.@this> { entry });
@@ -589,7 +589,7 @@ public class RunActionTests
         // fixture whose .pr is malformed JSON so goal loading throws.
         var throwing = BuildFixture("Throw.test.goal", "T", new (string, string, List<Data>)[]
         {
-            ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
+            ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("x")), new("Value", 1) })
         });
         // Corrupt the .pr so deserialization throws inside RunSingleAsync.
         // .pr lives at <_tempDir>/.build/<stem>.pr (BuildFixture recipe).
@@ -598,7 +598,7 @@ public class RunActionTests
 
         var healthy = BuildFixture("Healthy.test.goal", "H", new (string, string, List<Data>)[]
         {
-            ("variable", "set", new List<Data> { new("Name", "y"), new("Value", 2) })
+            ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("y")), new("Value", 2) })
         });
 
         var results = await RunTests(new List<global::app.tester.test.@this> { throwing, healthy });
