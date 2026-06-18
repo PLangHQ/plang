@@ -436,8 +436,11 @@ public class RequestActionTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Peek()).IsTypeOf<byte[]>();
-        await Assert.That(global::app.type.item.@this.Lower<byte[]>(result.Peek())!).IsEquivalentTo(bytes);
+        // An image/png body narrows to the plang `image` type (kind=png) on the
+        // value door (never a bare CLR byte[]); the bytes lower out of it.
+        var value = await result.Value();
+        await Assert.That(value).IsTypeOf<global::app.type.image.@this>();
+        await Assert.That(((global::app.type.image.@this)value!).Bytes).IsEquivalentTo(bytes);
     }
 
     #endregion
