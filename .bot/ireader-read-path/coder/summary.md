@@ -105,7 +105,43 @@ own value off the single decode pass. The JsonElement-DOM double-read is gone fo
 every common .pr value. Eight typed readers, all mutation-proven live where
 reachable, full suite green at every commit.
 
-## What's next (the deletion phase — heavier, partly irreversible)
+## Polymorphic reader — built, proven NOT exercised, reverted
+Built `object`/`item` polymorphic readers + a `ReadNatural` streaming helper and
+routed Wire's no-type/`Polymorphic` case through them. Full suite stayed green, but
+a **mutation test proved the path is never exercised** (Data's 937 tests all pass
+with `ReadNatural` throwing) — typed values dominate the wire; a bare polymorphic
+value rarely/never rides it. Worse, the streaming path *diverges* from the proven
+eager `Parse` path on two points: a `%ref%` string borns `text` instead of a raw
+string (belongs to template-stamping-at-read), and the Data's declared type derives
+to the natural type instead of preserving `{object}`. An unexercised path that also
+diverges is a latent bug, not a feature — **reverted**. The eager `Parse` path keeps
+polymorphic values correct. Revisit only alongside template-stamping-at-read.
+
+## The deletion phase — a real sub-epic, NOT rushed (recommend a focused session)
+Deleting the `object raw` registry (`Readers.Of`) requires, in order:
+1. **Two new `IReader` impls** the content path needs:
+   - a **content reader** over a held `string`/`byte[]` (degenerate — `String()`/
+     `Bytes()`/`RawValue()` hand the raw back) for `source.Value`'s content decode;
+   - a **CLR-value reader** over an already-decoded `object` (dict/list/scalar) for
+     `type.Deserialize` (its `raw` is post-decode, not bytes) — iterates a held
+     dict/list and parses held scalars through the pull surface.
+2. **Convert the content readers to `ITypeReader`** — `object/json`, `table/csv`,
+   `image`, `code` (their existing `Read(object raw)` decode, now pulling raw via
+   `reader.String()`/`Bytes()`).
+3. **Rewire the 4 consumers** off `Readers.Of`/`TypeOf`: `source.Value` (73/79),
+   `type.Deserialize` (410), `json/converter.cs` path field (77), `kind.TypeOf` (34).
+4. **Delete** `Readers.Of`, the object-raw delegate + its discovery, and the dead
+   Wire machinery (`deferredRaw`/`GetRawText`, `IsDeferrableShape`, `_readDepth`) —
+   the deferred capture moves to `reader.RawValue()` → `source`.
+
+Why not now: it builds two new reader kinds, converts 4+ content readers, rewires 4
+call sites, then does the **irreversible** registry removal — larger than the entire
+read-path work above, and the read path is the load-bearing deserialize spine. It
+deserves its own session with the plang suite ideally back up as a net. Everything
+above this line is proven green and the old paths stand untouched behind the new
+ones, so this is a safe stopping point.
+
+## (superseded) earlier next-steps list
 1. **`number`** — typed reader keyed off `kind` (mirror `Default.Write`'s NumberKind
    switch in reverse: Int/Long→`Long()`, Float→`Float()`, Decimal→`Decimal()`,
    Int128/UInt128/BigInteger→`String()`), then `number.Convert(raw, kind, ctx)`.
