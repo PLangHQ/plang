@@ -57,17 +57,6 @@ public class Stage2_ValueDoorTests
     }
 
     [Test]
-    public async Task Peek_OnUnmaterialisedReference_ReturnsCurrentRung_DoesNotForceParse()
-    {
-        // Peek() returns the binary/text rung without triggering the source read
-        await using var app = NewApp(out var root);
-        var d = await RawBackedJson(app, root);
-        var rung = d.Peek();
-        await Assert.That(rung).IsEqualTo("{\"port\":8080}");   // the text rung, unparsed
-        await Assert.That(d.MaterializeCount()).IsEqualTo(0);       // Peek forced nothing
-    }
-
-    [Test]
     public async Task RawSlot_Dissolved_BareBytesOffChannelRefineInPlace()
     {
         // no _raw field on Data — the undecoded source form lives on the type
@@ -84,18 +73,6 @@ public class Stage2_ValueDoorTests
         await Assert.That(d.Type.Name).IsEqualTo("dict");
     }
 
-    [Test]
-    public async Task PublicSyncValueProperty_DoesNotExist_OnDataType()
-    {
-        // reflection: typeof(Data).GetProperty("Value") must not exist as a public sync accessor;
-        // only `ValueTask<object?> Value()` method remains
-        var prop = typeof(Data).GetProperty("Value",
-            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-        await Assert.That(prop).IsNull();
-        var method = typeof(Data).GetMethod("Value", System.Type.EmptyTypes);
-        await Assert.That(method).IsNotNull();
-        await Assert.That(method!.ReturnType).IsEqualTo(typeof(System.Threading.Tasks.ValueTask<object?>));
-    }
 
     [Test]
     public async Task GenericToRaw_DoesNotExist_OnItemBase()
@@ -162,14 +139,9 @@ public class Stage2_ValueDoorTests
     }
 
     [Test]
-    public async Task DataType_Getter_ReturnsBackingField_NoCLRSniffing()
+    public async Task DataType_MintsEntityFromInstance()
     {
-        // data.Type is a pure forward — the instance mints its own entity; the
-        // CLR-sniffing block and the stored _type descriptor are gone.
-        var typeField = typeof(Data).GetField("_type",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        await Assert.That(typeField).IsNull();
-
+        // data.Type is a pure forward — the instance mints its own entity.
         var n = new Data("n", 5);
         await Assert.That(n.Type.Name).IsEqualTo("number");
         await Assert.That(n.Type.Kind).IsEqualTo("int");

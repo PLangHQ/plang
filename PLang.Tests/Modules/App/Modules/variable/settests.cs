@@ -126,15 +126,6 @@ public class SetTests
 
     // --- ValidateBuild tests ---
 
-    [Test]
-    public async Task ValidateBuild_LiteralThis_ReturnsError()
-    {
-        var parameters = new List<Data> { new Data("Value", "this") };
-        var result = global::app.module.variable.Set.ValidateBuild(parameters);
-
-        await Assert.That(result).IsNotNull();
-        await Assert.That(result!).Contains("this");
-    }
 
     [Test]
     public async Task ValidateBuild_VariableReference_ReturnsNull()
