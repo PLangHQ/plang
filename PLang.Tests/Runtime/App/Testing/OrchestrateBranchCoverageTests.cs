@@ -84,7 +84,13 @@ public class OrchestrateBranchCoverageTests
     {
         Module = "variable",
         ActionName = "set",
-        Parameters = new List<Data> { new("Name", name), new("Value", value) }
+        // PrParam stamps the var-name slot (Name) as type:variable — the builder
+        // emits it that way; a bare string Name would decline at run.
+        Parameters = PrParam.List("variable", "set", new Dictionary<string, object?>
+        {
+            ["Name"] = name,
+            ["Value"] = value
+        })
     };
 
     // Multi-action orchestrate step where outer if is false and inner elseif is true.
@@ -138,11 +144,11 @@ public class OrchestrateBranchCoverageTests
         //    pass and `subran` would be unset. After the fix, the re-enable fires
         //    and the sub-step runs.
         var vars = _app.User.Context.Variable;
-        await Assert.That((long)(await vars.GetValue("subran"))!).IsEqualTo(1L);
+        await Assert.That(Convert.ToInt64((await vars.GetValue("subran"))!)).IsEqualTo(1L);
 
         // 2. alreadyOrchestrating guard keyed on the real step: inner elseif's body
         //    ran (bodyB set) and outer's body didn't (bodyA unset because outer was false).
-        await Assert.That((long)(await vars.GetValue("bodyB"))!).IsEqualTo(2L);
+        await Assert.That(Convert.ToInt64((await vars.GetValue("bodyB"))!)).IsEqualTo(2L);
         await Assert.That(vars.Contains("bodyA")).IsFalse();
 
         // 3. Coverage subscriber never recorded "?:?" — Step was propagated.

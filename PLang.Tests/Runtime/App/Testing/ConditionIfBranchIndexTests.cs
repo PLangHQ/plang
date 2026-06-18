@@ -119,11 +119,13 @@ public class ConditionIfBranchIndexTests
             {
                 Module = "variable",
                 ActionName = "set",
-                Parameters = new List<Data>
+                // PrParam stamps the var-name slot (Name) as type:variable, the way
+                // the builder emits it — a bare string Name would decline at run.
+                Parameters = PrParam.List("variable", "set", new Dictionary<string, object?>
                 {
-                    new("Name", br.bodyVar),
-                    new("Value", br.bodyVal)
-                }
+                    ["Name"] = br.bodyVar,
+                    ["Value"] = br.bodyVal
+                })
             });
         }
 
