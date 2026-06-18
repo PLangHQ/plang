@@ -45,7 +45,7 @@ public class AfterActionPayloadTests
                             ActionName = "set",
                             Parameters = new List<Data>
                             {
-                                new("Name", varName),
+                                new("Name", new global::app.variable.@this(varName)),
                                 new("Value", value)
                             }
                         }
@@ -116,7 +116,7 @@ public class AfterActionPayloadTests
             ActionName = "set",
             Parameters = new List<Data>
             {
-                new("Name", "y"),
+                new("Name", new global::app.variable.@this("y")),
                 new("Value", 7)
             },
             Modifiers = modifiers

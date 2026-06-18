@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace PLang.Tests;
 
 /// <summary>
@@ -17,16 +19,45 @@ public static class PrParam
                 IsVarNameSlot(module, action, kv.Key) ? new global::app.type.@this("variable") : null))
             .ToList();
 
-    /// <summary>The (module, action, param) tuples whose slot is a raw-name
-    /// <c>Data&lt;Variable&gt;</c>. Kept narrow — extend as tests exercise more.</summary>
+    /// <summary>
+    /// True when the action handler declares this parameter as a raw-name slot —
+    /// <c>Data&lt;T&gt;</c> with <c>T : IRawNameResolvable</c> (Variable). Read
+    /// straight off the handler's property declaration, not a hand-maintained
+    /// list, so every list/loop/variable name slot is covered automatically and
+    /// stays correct as actions change.
+    /// </summary>
     public static bool IsVarNameSlot(string module, string action, string key)
-        => (Lc(module), Lc(action), Lc(key)) switch
+    {
+        var handler = FindHandler(module, action);
+        var prop = handler?.GetProperty(key, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+        if (prop == null) return false;
+
+        var t = System.Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+        if (!t.IsGenericType || t.GetGenericTypeDefinition() != typeof(global::app.data.@this<>)) return false;
+
+        return typeof(global::app.variable.IRawNameResolvable)
+            .IsAssignableFrom(t.GetGenericArguments()[0]);
+    }
+
+    // (module, action) → handler type, discovered once by reflecting [Action] over
+    // the PLang assembly. Action name defaults to the class name when unset.
+    private static readonly Dictionary<(string, string), System.Type> _handlers = BuildHandlerMap();
+
+    private static System.Type? FindHandler(string module, string action)
+        => _handlers.TryGetValue((Lc(module), Lc(action)), out var t) ? t : null;
+
+    private static Dictionary<(string, string), System.Type> BuildHandlerMap()
+    {
+        var map = new Dictionary<(string, string), System.Type>();
+        foreach (var t in typeof(global::app.module.ActionAttribute).Assembly.GetTypes())
         {
-            ("variable", "set", "name") => true,
-            ("loop", "foreach", "itemname") => true,
-            ("loop", "foreach", "keyname") => true,
-            _ => false,
-        };
+            var attr = t.GetCustomAttribute<global::app.module.ActionAttribute>();
+            if (attr == null || t.Namespace == null || !t.Namespace.StartsWith("app.module.")) continue;
+            var module = t.Namespace["app.module.".Length..];
+            map[(Lc(module), Lc(attr.Name ?? t.Name))] = t;
+        }
+        return map;
+    }
 
     private static string Lc(string s) => s.ToLowerInvariant();
 }
