@@ -91,6 +91,12 @@ public class Fluid : ITemplate
         // the variable-binding loops below and nested access during rendering.
         options.ValueConverters.Add(NativeCollectionConverter);
 
+        // The null citizen (typeless or typed-empty slot) renders as nothing and is
+        // falsy — same as an undefined variable. Without this it would stringify via
+        // ToString() to the literal "null".
+        options.ValueConverters.Add(value =>
+            value is global::app.type.@null.@this ? NilValue.Instance : null);
+
         // `formal` filter: renders any value the way the action catalog writes it —
         // strings with spaces/commas become quoted, %variables% stay bare, dicts/lists
         // become compact JSON, scalars use their literal form. Used by templates that

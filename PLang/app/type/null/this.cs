@@ -37,7 +37,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     private readonly string? _typeName;
     private readonly string? _kind;
 
-    public @this(string typeName, string? kind = null)
+    internal @this(string typeName, string? kind = null)
     {
         _typeName = string.IsNullOrWhiteSpace(typeName) ? null : typeName;
         _kind = kind;
