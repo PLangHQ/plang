@@ -137,12 +137,9 @@ public class NormalizeTreeShapeTests
             .Because("second call for the same (Type, Mode) key must hand back the cached reference");
     }
 
-    // Postponed: a delegate isn't a plang item, so it parks in an item.clr carrier;
-    // Normalize then reflects the CARRIER into its infra property bag instead of
-    // hitting the `is Delegate → null` leaf. Post-clr a delegate is a hard error at
-    // Lift (it never reaches a Data value), so this scenario stops existing. Lands
-    // with clr removal.
-    [Skip("Delegate parks in item.clr and the carrier leaks — resolved by clr removal (hard error at Lift)")]
+    // A delegate isn't a plang item, so it parks in an item.clr carrier; Normalize
+    // unwraps the carrier to its host and hits the `is Delegate → null` leaf, so an
+    // unrepresentable value normalizes to null rather than leaking a property bag.
     [Test] public async Task Normalize_UnsupportedType_ThrowsTypedError()
     {
         var d = new Data("", new System.Func<int>(() => 0));
