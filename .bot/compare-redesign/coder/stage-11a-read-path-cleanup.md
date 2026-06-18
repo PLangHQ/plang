@@ -1,84 +1,159 @@
-# Stage 11A — read-path cleanup (decode-once; container parsing on the types; Judge STAYS)
+# Stage 11A — `IReader`: the type reads its own value off the wire (mirror of `IWriter`)
 
 **Status:** ready to implement. Self-contained pickup doc for a fresh context.
-**Branch:** `compare-redesign`. **Owner:** coder.
-**Read first, in order:** this doc → `deserialize-flow-design.md` (the agreed design + the architect review note at the top) → `architect/stage-11-lazy-read-and-containers.md`. Also skim `list-dict-raw-slot-model.md` (the container raw-slot model already landed) and `handoff-value-model-2026-06-17.md` (the binary/kind work that landed *after* the design doc was written — this is why you MUST re-ground, see Step 0).
+**Branch:** `compare-redesign`. **Owner:** coder. **Target framework:** .NET 10 / C# 13 (this matters — see "the mechanism").
+**Read first, in order:** this doc → `deserialize-flow-design.md` (the original flow design; **its "IReader can't be built" note is now SUPERSEDED — see below**) → `architect/stage-11-lazy-read-and-containers.md`. Skim `list-dict-raw-slot-model.md` (container raw-slot model already landed) and `handoff-value-model-2026-06-17.md` (the binary/kind work that landed after the design doc — re-ground against current code, Step 0).
 
 ---
 
-## The goal in one paragraph
+## The goal
 
-Simplify the wire **read** path so a value is decoded **once** and handed to the type that owns it, deleting the throwaway-tree machinery the path accreted. The type already owns its read via the **reader registry** (`type.Read(object raw, kind, ctx)`); the work is to stop building intermediate DOMs / re-stringifying around it, and to move container (`list`/`dict`) element-parsing **onto those types** (interlocking with the raw-slot container model already landed). **`Judge` STAYS for now** (Ingi's call) — its kind/strict reconciliation is separable from this cleanup and runs fine on the single decoded value.
+Deserialization is symmetric with serialization. We have **`IWriter`** — a format-agnostic surface the type *pushes* its value into (`writer.Long(42)`), with a JSON impl (`json.Writer`) and protobuf/CBOR as future siblings. Build the mirror: **`IReader`** — a format-agnostic surface the type *pulls* its value from (`reader.Long()`), so **the type reads its own value directly off the single decode pass**. No intermediate `JsonElement` DOM, no `GetRawText()` re-stringify, no "decode to a plain object then re-read it." Data reads `{@schema?, name, type}`, then hands the reader (positioned at `value`) to the type, and the type constructs itself.
 
-## What this is NOT
+```
+bytes → format reader (tokenized ONCE) → IReader → type.Read(ref reader, kind, ctx) → item
+                                                     (the type pulls its tokens; no DOM, no re-parse)
+```
 
-- **Not building `IReader`.** The architect rejected it: `Utf8JsonReader` is a `ref struct` (stack-only), so it can't be a field or cross an interface — a format-agnostic token-streaming `IReader` mirror of `IWriter` is impossible without hand-rolling a non-stack reader, just to skip one cheap decode. The read side is intentionally **not** symmetric to `Write(IWriter)`. Do not build `IReader`.
-- **Not removing `Judge`.** Out of scope. Leave `type.Judge` and its callers alone.
+## The mechanism — why `IReader` IS buildable now (supersedes the old "impossible" note)
 
-## How a value is created on read (the read "mirror")
+The earlier doc said a format-agnostic `IReader` is impossible because `Utf8JsonReader` is a `ref struct` and "can't cross an interface." That objection was about **storing** the reader in a class field (genuinely illegal) and **boxing** it to an interface (illegal). **We never store or box it.** Two facts dissolve the objection:
 
-`Write(IWriter)` is push/token-stream out. There is **no** token-stream in. A value is born from an **already-decoded plain value** through one of:
+1. **The read is one *synchronous* pass.** The reader is a stack local for the duration of the parse and is threaded **by `ref`** into each type's read; nothing keeps it alive across calls. (A `ref struct` only can't cross an `await` — and parsing is sync; I/O is the separate lazy `Value()` door.)
+2. **C# 13 `allows ref struct`** (we're on .NET 10). A `ref struct` may implement an interface, and a generic method may accept it without boxing via the anti-constraint `where TReader : IReader, allows ref struct`. So a type's read is generic over the reader, monomorphized per format at the call site — zero boxing, zero storage.
 
-1. **`type.Read` via the reader registry** — `Context.App.Type.Readers.Of(typeName, kind)` returns a reader that takes a decoded `string`/`long`/`List`/`Dictionary` (never JSON) and returns the item. *This is the read mirror* — post-decode granularity, format-agnostic. (See `item/source.cs` `Value()` for the canonical use.)
-2. **`type.Convert(value)`** — family hook (json-string→dict, primitive coercion).
-3. **`Data.Lift(clrValue)`** — the CLR→plang inbound boundary (see `clr-plang-boundary.md`).
-4. **`item.source`** — the lazy form: holds raw bytes + a `{type,kind}` stamp, materializes via #1 on `Value()`. This is how **verbatim passthrough / lazy** is achieved (a never-touched value stays raw).
+So the asymmetry with `IWriter` is only in *plumbing*, invisible to the type: the **writer is a normal class** the type holds a reference to and pushes into; the **reader is a stack-only ref struct** threaded by `ref` and pulled from. Both are `reader.Long()` / `writer.Long(42)` to the type.
 
-The decode step *between bytes and #1* is where the historical waste lived.
+## The shape
 
-## Current state of `Wire.ReadBody` (`PLang/app/data/Wire.cs`)
+```csharp
+// 1. The format-agnostic pull surface (mirror of IWriter). A ref struct so a
+//    format impl can hold a Utf8JsonReader.
+public interface IReader
+{
+    string Format { get; }                 // "json", "protobuf", … (mirror of IWriter.Format)
 
-Re-verify these line numbers — they drift.
+    // leaf pulls (mirror IWriter's leaf pushes)
+    bool   Null();                          // true if the current token is null (consumes it)
+    bool   Bool();   int Int();   long Long();   float Float();   double Double();
+    string String(); decimal Decimal();  byte[] Bytes();
+    System.DateTime DateTime(); System.DateTimeOffset DateTimeOffset();
+    System.TimeSpan TimeSpan(); System.Guid Guid();
 
-- **Eager value slot (≈ line 348-349):** already decode-**once** — `JsonDocument.ParseValue(ref reader)` then `item.serializer.json.Parse(RootElement)` → a born value. This is the accepted "decode once into a plain value, hand to the reader" shape. (Building a `JsonDocument` here, not streaming off `Utf8JsonReader`, is the accepted cost of *not* having `IReader`.)
-- **Lazy/deferred value slot (≈ line 332-339, `deferredRaw`):** for `IsDeferrableShape` types (`object`/`item`/`table` **with a kind**) it does `JsonDocument.ParseValue` → **`GetRawText()` (re-stringify)** → `FromRaw(deferredRaw, …)` so the value stays unparsed for verbatim passthrough. The `GetRawText` re-stringify is the wart.
-- **Machinery to retire:** `_readDepth`/`MaxReadDepth` (recursion guard, ≈ line 136/155/174), `deferredRaw` + `IsDeferrableShape` (≈ line 261/332/369), and any `LiftDataIfShaped`/`LiftArrayElements` still referenced (grep — some may already be gone after the binary/kind work).
-- **Nested Data DOES ride a value slot for `@schema:data`** (≈ line 344-347 comment) — the design doc's "no nested Data ever" is now **false**; `@schema:data` is the one place a nested Data rides (signatures, snapshot section lists). Preserve that path.
+    // structure
+    void BeginArray();  bool NextElement();  void EndArray();      // while(NextElement()) { recurse }
+    void BeginObject(); bool NextName(out string name); void EndObject();
 
-## Step 0 — RE-GROUND before changing anything (mandatory)
+    // read-only extras IWriter doesn't need (writes are told the shape; reads must look):
+    TokenKind Peek();                       // number | string | bool | null | array | object — branch on it
+    byte[] RawValue();                      // capture the current value's encoded bytes WITHOUT decoding
+                                            //   (the lazy/verbatim path — see below; NOT GetRawText)
+    void Skip();                            // skip the current value entirely
+}
 
-The `deserialize-flow-design.md` was written **before** the binary/kind + raw-slot-container work landed (`handoff-value-model-2026-06-17.md`). Some of what it proposes to delete is **already done** (the eager decode-once), and some of what it proposes (delete `deferredRaw`) **conflicts with a real requirement** (verbatim passthrough / lazy needs an unparsed form). So:
+// 2. The JSON impl — a ref struct holding the (ref struct) Utf8JsonReader. Legal:
+//    a ref struct MAY contain a ref struct field (C# 11+). Never stored in a class.
+public ref struct JsonReader : IReader
+{
+    private Utf8JsonReader _r;              // stack-only field of a stack-only struct — fine
+    public string Format => "json";
+    public long Long() => _r.GetInt64();    // pulls one token off the single pass
+    // … etc, plus RawValue() via _r's byte span / a bounded skip-and-capture
+}
 
-1. Read the current `Wire.cs` end-to-end. Confirm which of `{deferredRaw, IsDeferrableShape, _readDepth, LiftDataIfShaped, LiftArrayElements}` still exist.
-2. For each, decide: dead remnant (delete) vs load-bearing (lazy/verbatim — keep but de-wart). **The lazy path is a requirement, not waste** — Stage 3's "verbatim passthrough = the never-narrowed path." Do not delete laziness; remove only the *re-stringify* within it.
-3. Write a 5-line findings note (what's already done, what's actually left) before editing. If the path turns out already-clean enough, say so and stop — don't manufacture work.
+// 3. Dispatch on the TYPE, generic over the reader. The registry stores NON-generic
+//    reader objects (storable); the generic method is monomorphized per TReader.
+public interface ITypeReader
+{
+    item.@this Read<TReader>(ref TReader reader, string? kind, ReadContext ctx)
+        where TReader : IReader, allows ref struct;
+}
+// number.serializer.Reader : ITypeReader { Read<TReader>(...) => new number(reader.Long()); }
+// registry: (typeName, kind) -> ITypeReader   (replaces today's Readers.Of(name,kind))
+```
 
-## The work (after Step 0 confirms it)
+`Wire` then:
 
-1. **Lazy slot without re-stringify.** Replace the `deferredRaw`/`GetRawText` capture so a deferred value rides as raw **without** round-tripping through a re-stringified string — ideally born straight into an `item.source` (or kept as the decoded value the source can re-encode on demand). The single subtlety of the whole task: keep verbatim passthrough working (read→write-out of an untouched value must reproduce the bytes) while not re-stringifying eagerly. Verify against the verbatim-passthrough / never-narrowed tests.
-2. **Container element-parsing onto `list`/`dict`.** Move any array/object element-walk that still lives in `Wire` onto the container types (a `list`/`dict` parses its own elements, each recursing through the Data envelope). This dovetails with the raw-slot model (`list-dict-raw-slot-model.md`) — the container backs raw slots and types an element on read.
-3. **Delete the dead machinery** confirmed in Step 0 (`_readDepth`, `IsDeferrableShape`, etc.) once nothing references it.
-4. **Leave `Judge` in place.** It reconciles kind/strict on the single decoded value. Its removal is a *later* step, easier once the read path is clean.
+```
+read @schema (optional, ignored)
+read name
+read type     → typeRef                      // type precedes value ⇒ typeRef known at `value`
+value         → registry[typeRef].Read(ref jsonReader, typeRef.Kind, ctx)   // type pulls its own value
+construct     → new Data(name, item)
+```
 
-## Caveats / invariants to hold
+- `number.Read` → `reader.Long()`. `text.Read` → `reader.String()`.
+- `list.Read` → `reader.BeginArray(); while (reader.NextElement()) { /* recurse a Data envelope read on the SAME ref reader */ } reader.EndArray();` — **element parsing lives on `list`/`dict`, not in `Wire`** (interlocks with the raw-slot container model already landed).
+- Polymorphic / no declared type: the `object`/`item` reader reads the natural value from `reader.Peek()` (number→number, string→text, array→list, object→dict).
 
-- **Verbatim passthrough** (read→write-out of an untouched value = byte-identical) must survive. This is the reason the lazy form exists.
-- **`type` precedes `value` on the wire** — so `typeRef` is known at the value token. Keep that writer invariant; it's what lets the type own the parse.
-- **`@schema:data` nested-Data** in a value slot is real (signatures, snapshot section lists). Don't "no nested Data" it away.
-- **Judge stays.** Don't touch `type.Judge` or its callers.
+## Lazy / verbatim passthrough — the one subtlety (keep it)
+
+Verbatim passthrough (read→write-out of an *untouched* value = byte-identical) is a **requirement** (Stage 3 "the never-narrowed path"), not waste. Today it's done with `deferredRaw` + `GetRawText()` (a re-stringify). With `IReader` it becomes `reader.RawValue()` — capture the encoded bytes for the value slot **without** decoding into a value, born straight into an `item.source` (raw form + `{type,kind}` stamp), materialized lazily later via the type's content decode. The win: no `JsonDocument` DOM, no `GetRawText` round-trip — the reader hands the raw span. **Do not delete laziness; delete the re-stringify.**
+
+Note the two distinct "reads" — don't conflate:
+- **Wire structural read (`IReader`'s job):** pull the `.pr` value tokens — number/string/array/object — into the value (or its raw form).
+- **Content-kind decode (stays on the type / `item.source`):** turn a *content* payload (a CSV string, a JSON string that is a file's content) into rows/a dict, lazily, on `Value()`. `IReader` gets the structural raw form; the kind-reader decodes the content. They compose (a `{table,csv}` value: `IReader` yields the CSV string → `source` → table content-decode on touch).
+
+## Judge STAYS (Ingi's call)
+
+Out of scope. Leave `type.Judge` and callers. Judge's kind/strict reconciliation runs on the single read value just as before — it's separable from this read-path rewrite, and removing it is a later, smaller step once the read is clean.
+
+## Step 0 — RE-GROUND before editing (mandatory)
+
+`deserialize-flow-design.md` predates the binary/kind + raw-slot-container landing (`handoff-value-model-2026-06-17.md`). Confirm against **current** code, in `PLang/app/data/Wire.cs`:
+- the eager value path (`JsonDocument.ParseValue` → `item.serializer.json.Parse`) — this is the decode-then-read this design replaces with off-stream reads.
+- which of `{deferredRaw, IsDeferrableShape, _readDepth, LiftDataIfShaped, LiftArrayElements}` still exist (some may be gone).
+- the `@schema:data` nested-Data-in-value-slot path (signatures, snapshot section lists) — **real, keep it**; the design doc's "no nested Data" is false now.
+Write a 5-line findings note (what's already off-stream, what's left) before changing anything.
+
+## What this removes (after Step 0 confirms)
+
+`Wire.ReadBody`'s value eager-decode (`JsonDocument` DOM + `json.Parse` re-read), the `deferredRaw`/`GetRawText` re-stringify, `IsDeferrableShape`, `LiftDataIfShaped`, `LiftArrayElements`, the `_readDepth` counter; `type.Deserialize`'s JsonElement-unwrap + try/catch + reader-registry `Shared` fallback. Element-parsing moves onto `list`/`dict`.
+
+## Migration order
+
+1. **`IReader` + `ReadContext`** (the surface above; `ReadContext` already exists — reuse).
+2. **`ref struct JsonReader : IReader`** over `Utf8JsonReader`, including `RawValue()`/`Skip()`/`Peek()`.
+3. **`ITypeReader` registry** — convert each existing reader (json/csv/text/goal/code, the scalar types) from `Read(object raw, kind, ctx)` to `Read<TReader>(ref TReader, kind, ctx)`. Scalars pull one token; containers stream.
+4. **Rewire `Wire.ReadBody`** to read `{@schema?,name,type}` then dispatch `registry[typeRef].Read(ref reader, kind, ctx)`; lazy/verbatim → `reader.RawValue()` → `item.source`.
+5. **Move container element-parsing** onto `list`/`dict` (raw-slot model already there).
+6. **Delete** the dead machinery once unreferenced. Leave `Judge`.
+
+## Caveats / invariants
+
+- **Sync-only read pass** — no `await` between `BeginObject` and `EndObject` (ref struct can't cross await). Already true. Content-kind decode that needs I/O stays behind the lazy `Value()` door, post-read.
+- **`type` precedes `value`** on the wire (writer invariant) — so `typeRef` is known at the value token. Keep enforcing on the writer; a hand-authored value-first `.pr` is the only thing that'd need buffering (reject or tolerate — decide, document).
+- **`allows ref struct`** requires C# 13 / .NET 9+. Confirm `<LangVersion>`; if not defaulted, set it.
+- **Verbatim passthrough** must survive (`reader.RawValue()` → `source`, no re-stringify).
+- **`@schema:data` nested Data** in a value slot is real — keep that read path.
 
 ## Files
 
-- `PLang/app/data/Wire.cs` — `ReadBody` (the value loop), `IsDeferrableShape`, `_readDepth`, the writer side for the passthrough invariant.
-- `PLang/app/type/item/source.cs` — the lazy form (`Value()` → reader registry); the lazy slot should land here.
-- `PLang/app/type/list/this.cs`, `PLang/app/type/dict/this.cs` — container element parsing (raw-slot model already here).
-- `PLang/app/type/this.cs` — `Build`/`Deserialize`/`Judge` (Judge stays; Deserialize may have a JsonElement-unwrap wart to simplify).
-- Reader registry: `Context.App.Type.Readers` (the `type.Read(raw, kind, ctx)` surface).
+- NEW: `PLang/app/channel/serializer/IReader.cs` (mirror `IWriter.cs`), `…/json/Reader.cs` (the `ref struct JsonReader`).
+- `PLang/app/data/Wire.cs` — `ReadBody` (the value loop), delete the DOM/deferredRaw/depth machinery; keep the writer side (passthrough invariant).
+- `PLang/app/type/item/source.cs` — lazy form fed by `reader.RawValue()`.
+- `PLang/app/type/list/this.cs`, `…/dict/this.cs` — element parsing via `IReader`.
+- `PLang/app/type/this.cs` — `Build`/`Deserialize` simplify; `Judge` stays.
+- The reader registry: `Context.App.Type.Readers` → returns `ITypeReader` now.
+- Mirror reference: `PLang/app/channel/serializer/IWriter.cs` + `…/json/Writer.cs` (read the write side first; build the symmetric read).
 
 ## Verify
 
-- `./dev.sh build` clean, then the per-suite sweep (see `CLAUDE.md` "Running plang Tests"); baseline below.
-- Watch especially: `PLang.Tests/Wire/**` (serialization round-trips), `PLang.Tests/Data/App/LazyDeserialize/**`, the verbatim-passthrough / never-narrowed tests in `Stage3_*`, and the `binary/kind` decode tests (json→dict, csv→table, image, md→text, `.pr`→goal — listed in `handoff-value-model-2026-06-17.md`).
-- Full-sweep diff against baseline; zero new failures is the bar. Every shared-code change → full sweep (this path is very shared).
+- `./dev.sh build` clean → per-suite sweep (see `CLAUDE.md` "Running plang Tests").
+- Watch: `PLang.Tests/Wire/**`, `PLang.Tests/Data/App/LazyDeserialize/**`, `Stage3_*` verbatim-passthrough / never-narrowed, and the binary/kind decode tests (json→dict, csv→table, image, md→text, `.pr`→goal — listed in `handoff-value-model-2026-06-17.md`).
+- Every change here is deep-shared → full sweep, diff against baseline, **zero new failures** is the bar.
 
-## Baseline at handoff (HEAD on `compare-redesign` after the value-model + url/signing + clr-unskip work)
+## Baseline at handoff (HEAD on `compare-redesign`)
 
-C# suite: **0 real failures.** Two HTTP tests (`Redirect_ToUnauthorizedHost`, `Post_405`) are **flaky under full-suite server contention** — they pass isolated; ignore unless they fail isolated.
+C# suite: **0 real failures.** Two HTTP tests (`Redirect_ToUnauthorizedHost`, `Post_405`) are **flaky under full-suite server contention** — pass isolated; ignore unless they fail isolated.
+Skipped (do NOT expect to clear with this work): snapshot-redesign (3: `Snapshot_CapturesByReference`, `Snapshot_NullValuedVariable`, `ErrorsTrail`), archive-as-layer (8), pure-lazy source-gen (8). `ErrorsTrail` is a neighbor (snapshot serializes `IError` via Data-normalization as an empty `[Out]` bag); if the read rework happens to fix it, bonus, but it's filed under the snapshot redesign.
 
-Skipped (do NOT expect to unskip with this work): snapshot-redesign (3: `Snapshot_CapturesByReference`, `Snapshot_NullValuedVariable`, `ErrorsTrail`), archive-as-layer (8), pure-lazy source-gen (8). `ErrorsTrail` is the closest neighbor — it's the snapshot serializing `IError` via Data-normalization as an empty `[Out]` bag; if your read-path work happens to fix the round-trip, great, but it's filed under the snapshot redesign, not here.
+## Why this is right (the signal)
 
-## Related model context (memory / docs)
+It's the exact symmetric counterpart of `IWriter` — the same minimal leaf+structure surface, the same per-format impl, the same type-owned dispatch. The write side already proved the shape; the read side just needed the ref-struct mechanics (sync pass, by-ref, `allows ref struct`) that the earlier note missed. Types stay format-agnostic; JSON is one impl; protobuf/CBOR ship later as siblings without touching a single type.
 
-- `clr-plang-boundary.md` — the CLR⇄plang boundary (Lift inbound, .Clr outbound), and the everything-plang-internally endpoint (Stage 10, the architect is mapping that separately — not this work).
-- `null_model_no_absent` (memory) — `absent` was collapsed into the null citizen; value-less = `IsNull`. Relevant because a lazily-unmaterialized/failed read surfaces as the null citizen now.
-- `data_value_model` (memory) + `data-value-model.md` — the type-instance-IS-the-value contract this all serves.
+## Related model context
+
+- `clr-plang-boundary.md` — CLR⇄plang boundary (Lift inbound, `.Clr` outbound) + the everything-plang-internally endpoint (Stage 10 — the architect is mapping that separately; the `a4dfcb602` "ask the value, don't reach past it" worklist is its start).
+- `null_model_no_absent` (memory) — `absent` collapsed into the null citizen; value-less = `IsNull` (a failed/unmaterialized read surfaces as the null citizen).
+- `data_value_model` (memory) + `data-value-model.md` — the type-instance-IS-the-value contract this serves.
