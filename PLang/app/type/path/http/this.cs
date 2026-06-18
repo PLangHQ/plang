@@ -357,8 +357,15 @@ public sealed partial class @this : global::app.type.path.@this
 
             // Wrap bytes born-native so ReadBytes→From<binary> extracts the value
             // (From's `source.Value is T` test matches only the wrapper, not raw byte[]).
+            // The response Content-Type rides as a Property so the url door can stamp
+            // by it (Content-Type rules over the URL extension); empty when the server
+            // sent none.
             if (asBytes)
-                return data.@this.Ok((object)new global::app.type.binary.@this(await resp.Content.ReadAsByteArrayAsync()));
+            {
+                var bytesData = data.@this.Ok((object)new global::app.type.binary.@this(await resp.Content.ReadAsByteArrayAsync()));
+                bytesData.Properties.Set("contentType", resp.Content.Headers.ContentType?.MediaType ?? "");
+                return bytesData;
+            }
             return data.@this.Ok(await resp.Content.ReadAsStringAsync());
         }
         catch (System.Exception ex) when (IsNetworkError(ex))

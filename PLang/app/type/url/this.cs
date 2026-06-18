@@ -22,6 +22,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public global::app.type.path.@this Path { get; }
 
     private byte[]? _bytes;
+    private string? _contentType;
 
     [System.Text.Json.Serialization.JsonIgnore]
     public actor.context.@this? Context
@@ -59,6 +60,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         var read = await Path.ReadBytes();
         if (!read.Success)
             throw new System.Net.Http.HttpRequestException(read.Error!.Message);
+        _contentType = read.Properties.Get<string>("contentType");
         var bin = await read.Value();
         return _bytes = bin?.Value ?? System.Array.Empty<byte>();
     }
@@ -87,8 +89,16 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                 $"could not fetch '{Path}': {ex.Message}", "UrlFetchFailed", 400) { Exception = ex });
             return Absent;
         }
-        var channel = new global::app.channel.type.file.@this(Path);
-        var read = await channel.Read(bytes);
+        // Stamp the content's type by precedence: the response Content-Type rules;
+        // else the URL extension is the hint (.json → dict); else a typeless web
+        // response is text, not raw bytes.
+        global::app.data.@this read;
+        if (!string.IsNullOrEmpty(_contentType))
+            read = await new global::app.channel.type.http.@this(_contentType, bytes, Context).Read();
+        else if (Context?.App.Format.TypeFromExtension(Path.Extension) is { IsNull: false })
+            read = await new global::app.channel.type.file.@this(Path).Read(bytes);
+        else
+            read = await new global::app.channel.type.http.@this("text/plain", bytes, Context).Read();
         if (!read.Success) { asking.Fail(read.Error!); return Absent; }
         _ = await read.Value();
         if (!read.Success) { asking.Fail(read.Error!); return Absent; }
