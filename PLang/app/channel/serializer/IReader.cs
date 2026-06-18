@@ -57,6 +57,14 @@ public interface IReader
     bool Bool();
     int Int();
     long Long();
+
+    /// <summary>
+    /// The numeric token at its natural CLR precision — a <see cref="long"/> when
+    /// it is an integer that fits, otherwise a <see cref="double"/>. For a raw
+    /// container slot or a polymorphic read where no declared kind picks the
+    /// precision; a kinded number pulls the exact token instead (<see cref="Long"/>/…).
+    /// </summary>
+    object Number();
     float Float();
     double Double();
     decimal Decimal();

@@ -67,6 +67,29 @@ public class TypedReaderRoundTripTests
                 "\"170141183460469231731687303715884105728\"", "biginteger").ToString())
             .IsEqualTo("170141183460469231731687303715884105728");
 
+    [Test] public async Task List_StreamsRawSlots_Isolated()
+    {
+        var item = ReadScalar(new global::app.type.list.serializer.Reader(), "[1,2,\"name\"]", null);
+        var list = (global::app.type.list.@this)item;
+        await Assert.That(list.Items.Count).IsEqualTo(3);
+    }
+
+    [Test] public async Task List_Nested_Isolated()
+    {
+        // Items flattens leaves, so two nested pairs surface as four leaves —
+        // proving both nested lists and their elements were read off the pass.
+        var item = ReadScalar(new global::app.type.list.serializer.Reader(), "[[1,2],[3,4]]", null);
+        var list = (global::app.type.list.@this)item;
+        await Assert.That(list.Items.Count).IsEqualTo(4);
+    }
+
+    [Test] public async Task Dict_StreamsRawSlots_Isolated()
+    {
+        var item = ReadScalar(new global::app.type.dict.serializer.Reader(), "{\"a\":1,\"b\":2}", null);
+        var dict = (global::app.type.dict.@this)item;
+        await Assert.That(dict.Entries.Count).IsEqualTo(2);
+    }
+
     // End-to-end through the Wire bridge: serialize a Data, sign, deserialize.
     // The typed bool reader borns the value off the single pass on read.
     [Test] public async Task Bool_FullRoundTrip_ThroughWire()

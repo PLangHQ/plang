@@ -23,6 +23,33 @@ public static partial class json
     /// is. This lives with the json reader — the parse belongs to the format,
     /// not to Data.
     /// </summary>
+    /// <summary>
+    /// Streaming sibling of <see cref="RawSlot"/> — reads ONE value off an
+    /// <see cref="app.channel.serializer.IReader"/> into a raw container slot
+    /// (store raw, type on read). A scalar streams directly off the pass — no DOM;
+    /// a nested container / <c>@schema:data</c> element reuses the proven DOM narrow
+    /// via <c>RawValue()</c> (the structured minority). Cursor lands on the value's
+    /// last token, per the reader contract.
+    /// </summary>
+    internal static object? ReadSlot<TReader>(ref TReader reader)
+        where TReader : global::app.channel.serializer.IReader, allows ref struct
+        => reader.Peek() switch
+        {
+            global::app.channel.serializer.TokenKind.Null => null,
+            global::app.channel.serializer.TokenKind.Bool => reader.Bool(),
+            global::app.channel.serializer.TokenKind.Number => reader.Number(),
+            global::app.channel.serializer.TokenKind.String => reader.String(),
+            // Array / Object — a nested container or a @schema:data Data. Capture the
+            // encoded value and narrow through the same parser the eager path uses.
+            _ => ParseRaw(reader.RawValue()),
+        };
+
+    private static object? ParseRaw(byte[] utf8)
+    {
+        using var doc = System.Text.Json.JsonDocument.Parse(utf8);
+        return Parse(doc.RootElement);
+    }
+
     internal static object? Parse(object? value, int depth = 0)
     {
         if (depth > MaxDepth)
