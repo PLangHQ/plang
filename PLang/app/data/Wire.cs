@@ -259,11 +259,20 @@ public class Wire : JsonConverter<@this>
         type? typeRef = null;
         Properties? properties = null;
         string? deferredRaw = null;   // set when the value slot is captured for lazy materialization
+        global::app.type.item.@this? born = null;   // set when the type read its own value off the pass
 
         while (reader.Read())
         {
             if (reader.TokenType == JsonTokenType.EndObject)
             {
+                if (born != null)
+                {
+                    // The declared type already read its own value off the pass,
+                    // born at its kind — no lift, no Build. Data is the dumb holder.
+                    var d = new @this(name, born);
+                    if (properties != null) d.Properties = properties;
+                    return d;
+                }
                 if (deferredRaw != null && typeRef != null)
                 {
                     // Lazy value slot: a shape-typed value (object/table) rides as
@@ -336,6 +345,19 @@ public class Wire : JsonConverter<@this>
                         deferredRaw = el.ValueKind == JsonValueKind.String
                             ? el.GetString() ?? ""
                             : el.GetRawText();
+                    }
+                    else if (typeRef is { IsNull: false, Polymorphic: false } && _context != null
+                             && _context.App.Type.Readers.Typed(typeRef.Name, typeRef.Kind) is { } typed)
+                    {
+                        // The declared type reads its OWN value off the single pass —
+                        // no JsonElement DOM, no lift-then-Build. A json.Reader wraps the
+                        // live Utf8JsonReader by value; the advanced position is copied
+                        // back (Inner) so the envelope walk continues correctly. The type
+                        // is born at its kind in one step (mirror of its IWriter render).
+                        var jr = new global::app.channel.serializer.json.Reader(reader);
+                        born = typed.Read(ref jr, typeRef.Kind,
+                            new global::app.type.reader.ReadContext(_context));
+                        reader = jr.Inner;
                     }
                     else
                     {

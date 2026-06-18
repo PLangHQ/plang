@@ -1,0 +1,59 @@
+{
+  "branch": "ireader-read-path",
+  "sessions": [
+    {
+      "id": "51d100dd-34f3-4ce4-9b2e-e83286b3c2b2",
+      "bot": "coder",
+      "timestamp_start": "2026-06-18T00:00:00Z",
+      "timestamp_end": null,
+      "intent": "Build IReader — the format-agnostic pull surface mirroring IWriter — so the type reads its own value off a single decode pass; one ITypeReader registry, front-end (JsonReader/CsvReader/BinaryReader) picked by kind; delete the object-raw read path.",
+      "before": {
+        "assumptions": "allows ref struct available (net10/C#14); Part B container raw-slot backing already landed; Wire.ReadBody triple-parses the value slot today.",
+        "risk": "Deep-shared read path — regressions ripple across Wire/Data/list/dict/source. Verbatim passthrough + @schema:data nested-Data + signature layer must survive. ref-struct RawValue subtree capture is the one novel mechanic."
+      },
+      "plan": ".bot/ireader-read-path/coder/v1/plan.md",
+      "actions": [
+        {
+          "paths": ["PLang/app/channel/serializer/IReader.cs", "PLang/app/channel/serializer/json/reader.cs"],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "IReader pull surface + TokenKind; ref struct json.Reader holding Utf8JsonReader BY VALUE (ref field to a ref struct is CS9050-illegal), threaded by ref, STJ-bridge copy-in/out via Inner. allows ref struct confirmed available on net10/C#14."
+        },
+        {
+          "paths": ["PLang/app/type/reader/ITypeReader.cs", "PLang/app/type/reader/this.cs"],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "ITypeReader.Read<TReader> with allows ref struct anti-constraint. Added Typed(type,kind) registry + ITypeReader discovery alongside the existing object-raw Read scan; both coexist during migration."
+        },
+        {
+          "paths": ["PLang/app/type/bool/serializer/Reader.cs", "PLang/app/type/guid/serializer/Reader.cs", "PLang/app/type/duration/serializer/Reader.cs"],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Three typed readers mirroring their Default.Read semantics. Chosen as the B1 proof because they have no kind ambiguity / no %ref% carve-out."
+        },
+        {
+          "paths": ["PLang/app/data/Wire.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "ReadBody value case: typed-reader fast path (no JsonElement DOM, no Build) gated to where Build runs today; new born local short-circuits at EndObject. Eager/deferred paths otherwise untouched."
+        },
+        {
+          "paths": ["PLang.Tests/Wire/App/Serialization/TypedReaderRoundTripTests.cs"],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "bool/guid/duration wire round-trips. Mutation-proven the typed path is live (bool throw → round-trip fails with probe; reverted → green)."
+        }
+      ],
+      "after": {
+        "status": "B1 landed and verified — IReader mechanism proven end-to-end on bool/guid/duration. B2+ (number/text/containers/polymorphic, source.Value rewire, registry deletion) pending.",
+        "health": "green — dev.sh full all 6 projects green, counts identical to baseline except Wire 495→498. Pre-existing plang --test abort unrelated/unchanged.",
+        "notes": "Approach B per Ingi. RawValue is a re-encode fallback until approach A (buffer-owning) lands. Two reader registries coexist intentionally during migration."
+      }
+    }
+  ]
+}

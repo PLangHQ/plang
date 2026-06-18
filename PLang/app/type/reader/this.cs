@@ -39,6 +39,12 @@ public sealed class @this
     private readonly ConcurrentDictionary<(string Type, string Kind), Read> _generated = new();
     private readonly ConcurrentDictionary<(string Type, string Kind), Read> _runtime = new();
 
+    // The typed (ITypeReader) registry — the format-agnostic pull readers that
+    // replace the object-raw delegates above. During the migration both coexist:
+    // a type with a typed reader is read through it; the rest stay on Of(...).
+    private readonly ConcurrentDictionary<(string Type, string Kind), ITypeReader> _generatedTyped = new();
+    private readonly ConcurrentDictionary<(string Type, string Kind), ITypeReader> _runtimeTyped = new();
+
     private readonly object _initLock = new();
     private bool _initialized;
 
@@ -64,6 +70,24 @@ public sealed class @this
         if (_generated.TryGetValue((typeName, k), out var gen)) return gen;
         if (_runtime.TryGetValue((typeName, AnyKind), out var rtAny)) return rtAny;
         if (_generated.TryGetValue((typeName, AnyKind), out var genAny)) return genAny;
+        return null;
+    }
+
+    /// <summary>
+    /// Returns the <see cref="ITypeReader"/> registered for
+    /// <paramref name="typeName"/> + <paramref name="kind"/> — the format-agnostic
+    /// pull reader. Same precedence as <see cref="Of"/>: runtime-exact →
+    /// generated-exact → runtime-"*" → generated-"*". Null when the type has not
+    /// been converted to a typed reader yet (the caller falls back to <see cref="Of"/>).
+    /// </summary>
+    public ITypeReader? Typed(string typeName, string? kind)
+    {
+        EnsureInitialized();
+        var k = string.IsNullOrEmpty(kind) ? AnyKind : kind!;
+        if (_runtimeTyped.TryGetValue((typeName, k), out var rt)) return rt;
+        if (_generatedTyped.TryGetValue((typeName, k), out var gen)) return gen;
+        if (_runtimeTyped.TryGetValue((typeName, AnyKind), out var rtAny)) return rtAny;
+        if (_generatedTyped.TryGetValue((typeName, AnyKind), out var genAny)) return genAny;
         return null;
     }
 
@@ -113,7 +137,7 @@ public sealed class @this
     {
         foreach (var type in SafeGetTypes(assembly))
         {
-            if (!type.IsClass || !type.IsAbstract || !type.IsSealed) continue; // static class
+            if (!type.IsClass) continue;
             if (string.IsNullOrEmpty(type.Namespace)) continue;
             if (!type.Namespace!.EndsWith(".serializer", System.StringComparison.Ordinal)) continue;
 
@@ -127,6 +151,19 @@ public sealed class @this
             // (app.type.@bool) is named without it everywhere else ("bool"), so the
             // reader must register under the bare name to be found by Readers.Of.
             var typeName = head[(lastDot + 1)..].TrimStart('@');
+
+            // The typed (ITypeReader) pull reader — an instance class whose own Kind
+            // names the (type, kind) variant. Wins over the static object-raw reader
+            // during the migration; once every reader is typed the static branch goes.
+            if (!type.IsAbstract && typeof(ITypeReader).IsAssignableFrom(type)
+                && type.GetConstructor(System.Type.EmptyTypes) is { } ctor)
+            {
+                var instance = (ITypeReader)ctor.Invoke(null);
+                _generatedTyped[(typeName, instance.Kind)] = instance;
+                continue;
+            }
+
+            if (!type.IsAbstract || !type.IsSealed) continue; // static class
 
             // file/class name maps to kind token; "Default" → wildcard.
             var kind = type.Name.Equals("Default", System.StringComparison.Ordinal)
