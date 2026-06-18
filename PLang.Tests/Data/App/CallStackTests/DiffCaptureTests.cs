@@ -56,9 +56,9 @@ public class DiffCaptureTests
         vars.Set("items", new List<int> { 4, 5 });
 
         var diff = call.Diffs![0];
-        // Non-scalar Before is a summary string, not the raw list.
+        // Non-scalar Before is a summary string naming the plang type and item count.
         await Assert.That(diff.Before is string).IsTrue();
-        await Assert.That(((string)diff.Before!).Contains("List")).IsTrue();
+        await Assert.That(((string)diff.Before!).Contains("list")).IsTrue();
     }
 
     [Test]
@@ -76,11 +76,11 @@ public class DiffCaptureTests
         vars.Set("items", new List<int> { 4, 5 });
 
         var diff = call.Diffs![0];
-        // DeepDiff captures a clone — different reference, equal contents.
-        await Assert.That(diff.Before is List<int>).IsTrue();
-        var captured = (List<int>)diff.Before!;
-        await Assert.That(ReferenceEquals(captured, list)).IsFalse();
-        await Assert.That(captured.Count).IsEqualTo(3);
+        // DeepDiff captures a clone of the native value — a distinct list instance,
+        // same contents (the pre-mutation [1,2,3]).
+        await Assert.That(diff.Before is global::app.type.list.@this).IsTrue();
+        var captured = (global::app.type.list.@this)diff.Before!;
+        await Assert.That(captured.CountRaw).IsEqualTo(3);
     }
 
     [Test]
