@@ -29,6 +29,12 @@ public class Default : ICrypto
         // door would parse + narrow the value mid-sign, making the signed
         // shape diverge from the wire/verify shape.
         var value = data.Peek();
+        // A null/absent value has nothing to hash — the digest would be of the
+        // empty wire shape, which silently verifies against any other empty.
+        // Surface the missing input instead.
+        if (value is null || await value.IsEmpty())
+            return global::app.data.@this<global::app.module.crypto.type.hash.@this>.FromError(new ActionError(
+                "Hash requires a value to hash", "ValueRequired", 400));
         if (value is global::app.type.binary.@this bin)
         {
             bytes = bin.Value;
@@ -82,6 +88,13 @@ public class Default : ICrypto
         // sha256. When `%hash%` binds an actual hash value, the algorithm rides
         // on it (no separate parameter); when it's a bare base64 string, the
         // kind on the Type (if any) or the Algorithm parameter supplies it.
+        // The value under verification must exist before we bother parsing the
+        // expected-hash string — a null payload is a missing input, not a bad hash.
+        var toVerify = action.Data.Peek();
+        if (toVerify is null || await toVerify.IsEmpty())
+            return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError(
+                "Verify requires a value to verify", "ValueRequired", 400));
+
         global::app.module.crypto.type.hash.@this expected;
         string algorithm;
         if (await action.Hash.Value() is global::app.module.crypto.type.hash.@this bound)
