@@ -355,8 +355,10 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // NotEqual/Incomparable between present values is a mixed list → error.
     private static int OrderOf(Data a, Data b, object? va, object? vb)
     {
-        if (va is global::app.type.@null.@this) va = null;
-        if (vb is global::app.type.@null.@this) vb = null;
+        // A value-less entry (the null citizen OR an absent slot — both Peek null)
+        // sorts last; only present values are ordered against each other.
+        if (va is global::app.type.item.@this { } iva && iva.Peek() == null) va = null;
+        if (vb is global::app.type.item.@this { } ivb && ivb.Peek() == null) vb = null;
         if (va == null && vb == null) return 0;
         if (va == null) return 1;
         if (vb == null) return -1;

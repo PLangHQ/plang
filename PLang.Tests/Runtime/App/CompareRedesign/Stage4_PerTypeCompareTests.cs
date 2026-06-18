@@ -180,7 +180,7 @@ public class Stage4_PerTypeCompareTests
         await list.SortByValue(descending: false);
         await Assert.That((await list.At(0)!.Value())?.ToString()).IsEqualTo("1");
         await Assert.That((await list.At(1)!.Value())?.ToString()).IsEqualTo("3");
-        await Assert.That((await list.At(2)!.Value())).IsNull();   // nulls last
+        await Assert.That(await (await list.At(2)!.Value())!.IsEmpty()).IsTrue();   // nulls last
     }
 
     [Test]
