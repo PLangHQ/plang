@@ -62,7 +62,9 @@ public class ActorSettingsStoreTests
         {
             engine2.Tester.IsEnabled = true;
             var result = await engine2.SettingsStore.Get("LlmCache", "testkey");
-            await Assert.That((await result.Value())).IsNull();
+            // A missing key yields an empty value (the plang null/absent citizen),
+            // never C# null — assert emptiness the plang way, not TUnit IsNull.
+            await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
         }
     }
 }

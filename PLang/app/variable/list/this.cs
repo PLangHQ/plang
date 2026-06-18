@@ -715,6 +715,10 @@ public partial class @this
             if (skipInfrastructure && varName.StartsWith('!')) continue;
             if (resolved.ContainsKey(varName)) continue;
             var dataVar = await Get(varName);
+            // A missing variable is left literal (the replace below keeps %match%).
+            // The citizen for a not-found slot renders as "" (not C# null), so guard
+            // on existence here — otherwise an unresolved %!x% would substitute empty.
+            if (dataVar == null || !dataVar.IsInitialized) continue;
             string? s;
             if (dataVar?.Peek() is global::app.type.file.@this or global::app.type.url.@this)
             {
