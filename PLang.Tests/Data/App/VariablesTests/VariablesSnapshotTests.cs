@@ -18,11 +18,13 @@ public class VariablesSnapshotTests
         await Assert.That(x).IsNotNull();
         await Assert.That((await x!.Value())?.ToString()).IsEqualTo("1");
 
+        // The dict round-trips as a native dict value — read its key the plang way,
+        // not by casting to a raw CLR IDictionary.
         var obj = await dst.User.Context.Variable.Get("obj");
         await Assert.That(obj).IsNotNull();
-        var dict = (await obj!.Value()) as IDictionary<string, object?>;
+        var dict = (await obj!.Value()) as global::app.type.dict.@this;
         await Assert.That(dict).IsNotNull();
-        await Assert.That(dict!["a"]).IsEqualTo(1);
+        await Assert.That(dict!.Get("a")?.Peek()?.ToString()).IsEqualTo("1");
     }
 
     [Test]

@@ -61,6 +61,10 @@ public class DataResolutionTests
 
         await using var subApp = new global::app.@this("/sub");
         subApp.User.Context.Variable.Set("scope", "sub");
+        // A Data resolves its template against its own Context — re-point it to the
+        // sub scope, mirroring how a goal call injects the value into the sub-goal's
+        // context before that goal resolves it.
+        data.Context = subApp.User.Context;
         var subView = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
 
         await Assert.That((await parentView.Value())?.ToString()).IsEqualTo("parent");
