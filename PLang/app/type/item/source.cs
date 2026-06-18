@@ -92,6 +92,15 @@ public sealed class source : @this, module.IContext
                 var entity = global::app.type.@this.Create(_type, _kind, context: Context);
                 parsed = entity.Convert(s);
             }
+            else if (_raw is byte[] bytes && string.Equals(_type, "binary", System.StringComparison.OrdinalIgnoreCase))
+            {
+                // A raw byte form typed plainly `binary` (no domain type, no kind) IS
+                // a binary value — its face is its bytes; surface it as binary rather
+                // than leaving the source shell. A byte form with a SPECIFIC type/kind
+                // awaiting a reader (table/xlsx, image/heic) stays raw below until its
+                // reader exists.
+                parsed = new global::app.type.binary.@this(bytes);
+            }
             else
             {
                 return this;

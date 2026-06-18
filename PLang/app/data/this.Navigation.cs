@@ -398,13 +398,14 @@ public partial class @this
         if (_type?.Facet(key) is { } facetValue)
             return new @this(key, facetValue, parent: this);
 
-        // Property plane on the value itself — `!path`/`!host`/`!size` reach the
-        // value's own metadata surface without materialising content (Peek).
-        // NonPublic included: the raw derivations (path.Relative/.Extension/
-        // .Absolute) are internal C# but ARE the `!relative`/`!extension`/
-        // `!absolute` projections on this plane.
+        // Property plane on the value itself — `!path`/`!host`/`!size`/`!length`
+        // reach the value's own typed metadata surface without materialising
+        // content (Peek). Properties were checked first above, so a user-set
+        // Property still wins over a reflected member of the same name. NonPublic
+        // included: the raw derivations (path.Relative/.Extension/.Absolute) are
+        // internal C# but ARE the `!relative`/`!extension`/`!absolute` projections.
         var peeked = Peek();
-        if (peeked != null && peeked is not global::app.type.text.@this)
+        if (peeked != null)
         {
             var vp = peeked.GetType().GetProperty(key,
                 System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic

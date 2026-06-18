@@ -96,9 +96,10 @@ public class Stage3_ReferenceNarrowTests : IDisposable
         var result = await Read("blob.zzz");
         await Assert.That(result.Type!.Name).IsEqualTo("file");
         await Assert.That(result.Peek()).IsTypeOf<global::app.type.file.@this>();
-        // unknown extension: scalar content stays raw bytes (no text decode)
+        // unknown extension: content is a binary value (raw bytes, no text decode)
         var content = await result.Value();
-        await Assert.That(content).IsTypeOf<byte[]>();
+        await Assert.That(content).IsTypeOf<global::app.type.binary.@this>();
+        await Assert.That(((global::app.type.binary.@this)content!).Value).IsEquivalentTo(new byte[] { 1, 2, 3 });
     }
 
     [Test]
