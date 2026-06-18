@@ -20,7 +20,11 @@ public partial class intercept : IContext
         {
             Id = Guid.NewGuid().ToString("N")[..8],
             Pattern = (await Pattern.Value())!.Clr<string>()!,
-            IsSpy = (Return == null ? null : await Return.Value()) == null && (Call == null ? null : await Call.Value()) == null
+            // A spy supplies neither a Return value nor a Call goal — it only
+            // observes. An unsupplied optional param is a non-null Uninitialized
+            // Data (null model), so "was it supplied?" is IsInitialized, not a
+            // C# null check on its absent-citizen value.
+            IsSpy = !(Return?.IsInitialized ?? false) && !(Call?.IsInitialized ?? false)
         };
 
         var returnValue = (Return == null ? null : await Return.Value());

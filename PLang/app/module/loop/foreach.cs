@@ -18,7 +18,11 @@ public partial class Foreach : IContext, IStep
 
     public async Task<data.@this> Run()
     {
-        if (await Collection.Value() == null)
+        // A value-less collection (the null citizen or an absent slot) iterates
+        // zero times; an empty list/dict falls through and enumerates to zero
+        // naturally. The null citizen Peeks itself (IsNull), absent Peeks null.
+        var collectionValue = await Collection.Value();
+        if (collectionValue == null || collectionValue.IsNull || collectionValue.Peek() == null)
             return global::app.data.@this.Ok(Result(itemCount: 0, completed: true));
 
         var variableName = (ItemName == null ? null : (await ItemName.Value())?.Name) ?? "item";
