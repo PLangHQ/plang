@@ -49,6 +49,17 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public @this() => _items = new();
     public @this(IEnumerable<Data> items) { _items = new(items); _hasWrapped = true; }
 
+    /// <summary>Builds from a sequence of native plang VALUES — each wrapped in its
+    /// own row Data, preserving the strong value (a list&lt;type&gt; keeps real type
+    /// instances, never degraded to dicts on a JSON round-trip). The value-sequence
+    /// sibling of the <see cref="Data"/>-sequence ctor above — the list owns how a
+    /// sequence of values becomes its rows; callers just hand over the values.</summary>
+    public @this(IEnumerable<global::app.type.item.@this> values)
+    {
+        _items = new(values.Select(v => (object?)new Data("", v)));
+        _hasWrapped = true;
+    }
+
     /// <summary>Aliases a foreign CLR list as this list's backing — O(1), no walk,
     /// no copy. The handoff contract: the source becomes the backing, so its slots
     /// are assumed raw CLR values (the all-raw invariant <see cref="_hasWrapped"/> tracks

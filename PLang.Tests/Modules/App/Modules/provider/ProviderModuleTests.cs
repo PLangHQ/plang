@@ -357,9 +357,9 @@ public class ProviderModuleTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        // Returns all providers across all types
-        var providers = (IReadOnlyList<ICode>)(await result.Value())!;
-        await Assert.That(providers.Count).IsGreaterThanOrEqualTo(2);
+        // Providers are plumbing — the action returns their names (list<text>), not the CLR instances.
+        var names = (global::app.type.list.@this)(await result.Value())!;
+        await Assert.That(names.Items.Count).IsGreaterThanOrEqualTo(2);
     }
 
     [Test]

@@ -65,7 +65,8 @@ public class Stage2_PlaneResolverTests
             var data = await read.Run();
             await data.GetChild("a");                       // narrow
             var chain = await data.GetChild("!type.list");
-            var names = ((IReadOnlyList<global::app.type.@this>)chain.Peek()!).Select(t => t.Name).ToList();
+            var list = (global::app.type.list.@this)chain.Peek()!;
+            var names = list.Items.Select(d => ((global::app.type.@this)d.Peek()!).Name).ToList();
             await Assert.That(names[0]).IsEqualTo("dict");
             await Assert.That(names).Contains("file");
         }

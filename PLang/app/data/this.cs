@@ -210,6 +210,14 @@ public partial class @this
         if (v is System.Collections.Generic.IEnumerable<@this> dataSeq)
             return new global::app.type.list.@this(dataSeq) { Context = context! };
 
+        // A sequence of native plang VALUES (item.@this — type, path, date, …)
+        // narrows to a native list that owns the wrapping. The JSON round-trip
+        // below would re-serialize each value to its wire shape and reparse it as
+        // a dict, degrading the strong value (a list<type> would collapse to a
+        // list of dicts). JSON narrowing is for foreign C# containers only.
+        if (v is System.Collections.Generic.IEnumerable<global::app.type.item.@this> itemSeq)
+            return new global::app.type.list.@this(itemSeq) { Context = context! };
+
         // Other raw C# containers narrow to their native plang type (list.@this /
         // dict.@this). The check is the NON-generic IList: a List<int> implements
         // IList but NOT IList<object?> (generic invariance), so the old generic check
