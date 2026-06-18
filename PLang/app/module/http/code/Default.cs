@@ -940,7 +940,7 @@ public sealed class Default : IHttp
                 ContentAs.Base64 => (CreateBase64Content(content!.ToString()!), (global::app.error.IError?)null),
                 ContentAs.Form => await CreateFormContentAsync(app, context, content!),
                 ContentAs.Text => (new StringContent(
-                    content is global::app.type.text.@this ? content.ToString()! : JsonSerializer.Serialize(content),
+                    content is global::app.type.text.@this ? content.ToString()! : JsonSerializer.Serialize(global::app.type.item.@this.Lower<object>(content)),
                     Encoding.GetEncoding(encoding)), (global::app.error.IError?)null),
                 _ => (new StringContent(content!.ToString()!, Encoding.GetEncoding(encoding)), (global::app.error.IError?)null)
             };
@@ -968,8 +968,11 @@ public sealed class Default : IHttp
             return (new StringContent(str, Encoding.GetEncoding(encoding)), null);
         }
 
+        // Lower the native value to its CLR form before serializing — JSON-
+        // serializing the value wrapper directly would emit its C# property bag
+        // ({"Cacheable":...,"IsLeaf":...}) instead of the list/object content.
         return (new StringContent(
-            JsonSerializer.Serialize(content),
+            JsonSerializer.Serialize(global::app.type.item.@this.Lower<object>(content)),
             Encoding.GetEncoding(encoding),
             "application/json"), null);
     }
@@ -1004,7 +1007,9 @@ public sealed class Default : IHttp
         var form = new MultipartFormDataContent();
         Dictionary<string, object> fields;
 
-        if (content is Dictionary<string, object> dict)
+        // A native dict value (the production shape — Content resolved from %var%)
+        // lowers to its entries; a raw CLR Dictionary passes straight through.
+        if (global::app.type.item.@this.Lower<Dictionary<string, object>>(content) is { } dict)
             fields = dict;
         else if (content is JsonElement je)
         {
