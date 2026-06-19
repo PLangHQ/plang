@@ -12,15 +12,23 @@ You don't choose the action yourself. You write a plain English instruction, and
 - write out "Hello %name%"
 ```
 
-PLang sees this as: display the text to the user. The `%name%` part is replaced with whatever value `name` holds at that moment.
+PLang maps this to the `output.write` action. The `%name%` part is replaced with whatever value `name` holds at that moment.
 
-**Remember a value**
+[[PLang/app/module/output/write.cs]]
+
+---
+
+**Round a number**
 
 ```plang
-- set %total% = %total% + %item%
+- round %price% to 2 decimals, write to %rounded%
 ```
 
-PLang sees this as: take the current value of `total`, add `item` to it, and store the result back in `total`.
+PLang maps this to the `math.round` action. It takes the value in `%price%`, rounds it to 2 decimal places, and stores the result in `%rounded%`.
+
+[[PLang/app/module/math/round.cs]]
+
+---
 
 ## How it works
 
@@ -28,7 +36,5 @@ When you build your program, PLang reads each step and decides which action fits
 
 If PLang picks the wrong action, you can reword the step and rebuild.
 
----
-
-- [All available actions →](../../../../../os/system/modules/) — the full list of what PLang can do
+- [All available actions →](../../../../../os/system/modules/)
 - [How the builder picks actions →](../../../../../Documentation/v0.2/action-catalog.md)
