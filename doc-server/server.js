@@ -110,11 +110,18 @@ function resolveIncludes(md) {
 // ── Build nav from root-level folders that have a start.md ──────────────────
 const SKIP = new Set(['doc-server', 'doc', '.git', '.bot', 'PLang', 'PLang.Tests', 'PLang.Generators', 'PlangConsole', 'Tests', 'os', 'node_modules', 'Documentation', 'characters', 'learnings', 'diary', 'sessions']);
 
+function hasMd(dir) {
+  try {
+    return fs.readdirSync(dir).some(f => f.endsWith('.md'));
+  } catch { return false; }
+}
+
 function rootNav(currentUrl) {
   const items = [];
   for (const e of fs.readdirSync(ROOT, { withFileTypes: true })) {
     if (!e.isDirectory() || SKIP.has(e.name) || e.name.startsWith('.')) continue;
-    if (!fs.existsSync(path.join(ROOT, e.name, 'start.md'))) continue;
+    const dirPath = path.join(ROOT, e.name);
+    if (!fs.existsSync(path.join(dirPath, 'start.md')) && !hasMd(dirPath)) continue;
     const href = `/${e.name}/`;
     items.push({ label: e.name, href, active: currentUrl.startsWith(href) });
   }
@@ -142,16 +149,61 @@ async function renderFile(filePath, urlPath) {
   return page(urlPath, html);
 }
 
+// ── Auto directory listing ────────────────────────────────────────────────────
+function walkMd(dir, base) {
+  const entries = { files: [], dirs: {} };
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (e.name.startsWith('.')) continue;
+    if (e.isDirectory()) {
+      entries.dirs[e.name] = walkMd(path.join(dir, e.name), base);
+    } else if (e.name.endsWith('.md') && e.name !== 'start.md' && e.name !== 'index.md') {
+      entries.files.push(e.name);
+    }
+  }
+  return entries;
+}
+
+function renderTree(entries, urlBase) {
+  let html = '<ul style="list-style:none;padding:0;margin:0;">';
+  for (const f of entries.files.sort()) {
+    const label = f.replace(/\.md$/, '').replace(/-/g, ' ');
+    const href = urlBase + f.replace(/\.md$/, '') + '/';
+    html += `<li style="margin:0;"><a href="${href}" style="display:block;font-family:'IBM Plex Mono',monospace;font-size:15px;color:#2C6E8C;text-decoration:none;padding:8px 0;border-bottom:1px solid #F0F1EF;">${label}</a></li>`;
+  }
+  for (const [dir, sub] of Object.entries(entries.dirs).sort()) {
+    html += `<li style="margin:20px 0 6px;"><span style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#A6AEB4;">${dir}</span>`;
+    html += renderTree(sub, urlBase + dir + '/');
+    html += '</li>';
+  }
+  html += '</ul>';
+  return html;
+}
+
+async function dirListing(dirPath, urlPath, title) {
+  const entries = walkMd(dirPath, urlPath);
+  const tree = renderTree(entries, urlPath);
+  const body = `<h1 style="font-size:clamp(36px,5.6vw,56px);line-height:1.08;font-weight:500;letter-spacing:-0.02em;margin:0 0 40px;color:#161D23;">${title}</h1>${tree}`;
+  return page(urlPath, body);
+}
+
 // ── Routes ───────────────────────────────────────────────────────────────────
 async function servePage(req, res) {
   const urlPath = req.path.endsWith('/') ? req.path : req.path + '/';
   const rel = urlPath.replace(/^\//, '');
+  const bare = rel.replace(/\/$/, '');
   const candidates = [
     path.join(ROOT, rel, 'start.md'),
-    path.join(ROOT, rel.replace(/\/$/, '')),
+    path.join(ROOT, bare + '.md'),
+    path.join(ROOT, bare),
   ];
   for (const f of candidates) {
-    if (fs.existsSync(f)) return res.send(await renderFile(f, urlPath));
+    if (!fs.existsSync(f)) continue;
+    const stat = fs.statSync(f);
+    if (stat.isFile()) return res.send(await renderFile(f, urlPath));
+    if (stat.isDirectory()) {
+      const title = bare.split('/').pop() || bare;
+      return res.send(await dirListing(f, urlPath, title));
+    }
   }
   res.status(404).send(await page(urlPath, '<h1>Not found</h1>'));
 }
