@@ -18,6 +18,10 @@ When a step runs, it fires `BeforeStep` events, then iterates its `Actions`. If 
 
 `Disabled` is set by condition actions to skip indented sub-steps without removing them.
 
+## Children
+
+- [action/](action/start.md) — What PLang does when a step runs
+
 ## Source
 
 [[PLang/app/goal/steps/step/this.cs]]
