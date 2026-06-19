@@ -16,7 +16,16 @@ public class IfHandlerTests : IDisposable
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir);
+        _app = TestApp.Create(_tempDir);
+    }
+
+    // Runs a step's actions through the REAL read path (a goal off a stream channel),
+    // so the actions assemble and their params type/stamp like a .pr off disk —
+    // instead of the hand-built shape that bypasses the read.
+    private async Task<Data> RunStep(string text, params Action[] actions)
+    {
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("G", Make.Step(text, actions)));
+        return await _app.RunGoalAsync(goal, _app.User.Context);
     }
 
     public void Dispose()
@@ -65,29 +74,10 @@ public class IfHandlerTests : IDisposable
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 
-        // Build a step with: condition.if, then output.write
-        var condAction = new Action
-        {
-            Module = "condition", ActionName = "if",
-            Parameters = new List<Data>
-            {
-                new Data("Left", true), new Data("Operator", "=="), new Data("Right", true)
-            }
-        };
-        var thenAction = new Action
-        {
-            Module = "output", ActionName = "write",
-            Parameters = new List<Data> { new Data("Data", "true-branch") }
-        };
-
-        var step = new Step
-        {
-            Index = 0, Text = "if true, write true-branch",
-            Actions = new StepActions { condAction, thenAction }
-        };
-        condAction.Step = step;
-
-        var result = await step.RunAsync(_app.User.Context);
+        // A step with: condition.if, then output.write
+        var result = await RunStep("if true, write true-branch",
+            Make.Action("condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
+            Make.Action("output", "write", ("Data", "true-branch")));
 
         await result.IsSuccess();
 
@@ -105,28 +95,9 @@ public class IfHandlerTests : IDisposable
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 
-        var condAction = new Action
-        {
-            Module = "condition", ActionName = "if",
-            Parameters = new List<Data>
-            {
-                new Data("Left", false), new Data("Operator", "=="), new Data("Right", true)
-            }
-        };
-        var thenAction = new Action
-        {
-            Module = "output", ActionName = "write",
-            Parameters = new List<Data> { new Data("Data", "should-not-appear") }
-        };
-
-        var step = new Step
-        {
-            Index = 0, Text = "if false, write (should skip)",
-            Actions = new StepActions { condAction, thenAction }
-        };
-        condAction.Step = step;
-
-        var result = await step.RunAsync(_app.User.Context);
+        var result = await RunStep("if false, write (should skip)",
+            Make.Action("condition", "if", ("Left", false), ("Operator", "=="), ("Right", true)),
+            Make.Action("output", "write", ("Data", "should-not-appear")));
 
         await result.IsSuccess();
 
@@ -145,41 +116,11 @@ public class IfHandlerTests : IDisposable
         { Mime = "text/plain" });
 
         // if true → write "then", else → write "else"
-        var condAction = new Action
-        {
-            Module = "condition", ActionName = "if",
-            Parameters = new List<Data>
-            {
-                new Data("Left", 10), new Data("Operator", ">"), new Data("Right", 5)
-            }
-        };
-        var thenAction = new Action
-        {
-            Module = "output", ActionName = "write",
-            Parameters = new List<Data> { new Data("Data", "then-branch") }
-        };
-        var elseCondAction = new Action
-        {
-            Module = "condition", ActionName = "if",
-            Parameters = new List<Data>
-            {
-                new Data("Left", true), new Data("Operator", "=="), new Data("Right", true)
-            }
-        };
-        var elseAction = new Action
-        {
-            Module = "output", ActionName = "write",
-            Parameters = new List<Data> { new Data("Data", "else-branch") }
-        };
-
-        var step = new Step
-        {
-            Index = 0, Text = "if x > 5 write then, else write else",
-            Actions = new StepActions { condAction, thenAction, elseCondAction, elseAction }
-        };
-        condAction.Step = step;
-
-        var result = await step.RunAsync(_app.User.Context);
+        var result = await RunStep("if x > 5 write then, else write else",
+            Make.Action("condition", "if", ("Left", 10), ("Operator", ">"), ("Right", 5)),
+            Make.Action("output", "write", ("Data", "then-branch")),
+            Make.Action("condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
+            Make.Action("output", "write", ("Data", "else-branch")));
 
         await result.IsSuccess();
 
@@ -198,42 +139,12 @@ public class IfHandlerTests : IDisposable
         { Mime = "text/plain" });
 
         // if false → skip then, else always true → write "else"
-        var condAction = new Action
-        {
-            Module = "condition", ActionName = "if",
-            Parameters = new List<Data>
-            {
-                new Data("Left", 3), new Data("Operator", ">"), new Data("Right", 5)
-            }
-        };
-        var thenAction = new Action
-        {
-            Module = "output", ActionName = "write",
-            Parameters = new List<Data> { new Data("Data", "then-branch") }
-        };
-        // "else" is a condition that's always true
-        var elseCondAction = new Action
-        {
-            Module = "condition", ActionName = "if",
-            Parameters = new List<Data>
-            {
-                new Data("Left", true), new Data("Operator", "=="), new Data("Right", true)
-            }
-        };
-        var elseAction = new Action
-        {
-            Module = "output", ActionName = "write",
-            Parameters = new List<Data> { new Data("Data", "else-branch") }
-        };
-
-        var step = new Step
-        {
-            Index = 0, Text = "if x > 5 write then, else write else",
-            Actions = new StepActions { condAction, thenAction, elseCondAction, elseAction }
-        };
-        condAction.Step = step;
-
-        var result = await step.RunAsync(_app.User.Context);
+        var result = await RunStep("if x > 5 write then, else write else",
+            Make.Action("condition", "if", ("Left", 3), ("Operator", ">"), ("Right", 5)),
+            Make.Action("output", "write", ("Data", "then-branch")),
+            // "else" is a condition that's always true
+            Make.Action("condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
+            Make.Action("output", "write", ("Data", "else-branch")));
 
         await result.IsSuccess();
 
@@ -375,49 +286,17 @@ public class IfHandlerTests : IDisposable
         { Mime = "text/plain" });
 
         // --- Inner goal: if true → write "inner-then", else → write "inner-else" ---
-        var innerCondAction = new Action
-        {
-            Module = "condition", ActionName = "if",
-            Parameters = new List<Data>
-            {
-                new Data("Left", true), new Data("Operator", "=="), new Data("Right", true)
-            }
-        };
-        var innerThenAction = new Action
-        {
-            Module = "output", ActionName = "write",
-            Parameters = new List<Data> { new Data("Data", "inner-then") }
-        };
-        var innerElseCondAction = new Action
-        {
-            Module = "condition", ActionName = "if",
-            Parameters = new List<Data>
-            {
-                new Data("Left", true), new Data("Operator", "=="), new Data("Right", true)
-            }
-        };
-        var innerElseAction = new Action
-        {
-            Module = "output", ActionName = "write",
-            Parameters = new List<Data> { new Data("Data", "inner-else") }
-        };
+        // Simulate the bug: the outer goal's condition has already set the guard on the
+        // SAME context (RunGoalAsync passes context by reference). With the buggy code
+        // (Variables-based guard) the inner condition sees it and skips orchestration —
+        // actions run sequentially instead of branched.
+        _app.User.Context.Variable.Set(new Data("__condition_orchestrating__", true));
 
-        var innerStep = new Step
-        {
-            Index = 0, Text = "if true write inner-then, else write inner-else",
-            Actions = new StepActions { innerCondAction, innerThenAction, innerElseCondAction, innerElseAction }
-        };
-        innerCondAction.Step = innerStep;
-
-        // Simulate the bug: the outer goal's condition has already set the guard
-        // on the SAME context (because RunGoalAsync passes context by reference).
-        // With the buggy code (Variables-based guard), the inner condition sees it
-        // and skips orchestration — actions run sequentially instead of branched.
-        var context = _app.User.Context;
-        context.Variable.Set(new Data("__condition_orchestrating__", true));
-
-        // Run the inner step (which shares the same context as the outer)
-        var result = await innerStep.RunAsync(context);
+        var result = await RunStep("if true write inner-then, else write inner-else",
+            Make.Action("condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
+            Make.Action("output", "write", ("Data", "inner-then")),
+            Make.Action("condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
+            Make.Action("output", "write", ("Data", "inner-else")));
 
         await result.IsSuccess();
 
