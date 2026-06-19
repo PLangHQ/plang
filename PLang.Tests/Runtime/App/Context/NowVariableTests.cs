@@ -67,4 +67,37 @@ public class NowVariableTests
         await Assert.That(minute).IsBetween(0, 59);
         await Assert.That(second).IsBetween(0, 59);
     }
+
+    // The compound parts carry their own plang type — %Now.Date% is a `date`,
+    // %Now.TimeOfDay% a `time`, %Now.Offset% a `duration`.
+    [Test]
+    public async Task Now_CompoundParts_CarryTheirOwnPlangType()
+    {
+        var vars = _app.User.Context.Variable;
+
+        // GetValue coerces item types to their CLR backing for C# callers; the typed
+        // plang value is the navigated Data's own value — read it via Peek.
+        var date = (await vars.Get("Now.Date")).Peek();
+        var timeOfDay = (await vars.Get("Now.TimeOfDay")).Peek();
+        var offset = (await vars.Get("Now.Offset")).Peek();
+
+        await Assert.That(date).IsTypeOf<global::app.type.date.@this>();
+        await Assert.That(timeOfDay).IsTypeOf<global::app.type.time.@this>();
+        await Assert.That(offset).IsTypeOf<global::app.type.duration.@this>();
+    }
+
+    // The plang-typed parts navigate further: %Now.Date.Year%, %Now.TimeOfDay.Hour%.
+    [Test]
+    public async Task Now_CompoundParts_NavigateTheirOwnMembers()
+    {
+        var before = System.DateTimeOffset.Now;
+        var vars = _app.User.Context.Variable;
+
+        long dateYear = System.Convert.ToInt64(await vars.GetValue("Now.Date.Year"));
+        long timeHour = System.Convert.ToInt64(await vars.GetValue("Now.TimeOfDay.Hour"));
+        var after = System.DateTimeOffset.Now;
+
+        await Assert.That(dateYear).IsBetween(before.Year, after.Year);
+        await Assert.That(timeHour).IsBetween(0, 23);
+    }
 }
