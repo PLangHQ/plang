@@ -5,7 +5,7 @@ const { marked } = require('marked');
 
 const app = express();
 const ROOT = path.join(__dirname, '..');
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8086;
 
 // ── File extension → highlight.js language ──────────────────────────────────
 const LANG = { '.cs': 'csharp', '.goal': 'plaintext', '.json': 'json', '.js': 'javascript', '.ts': 'typescript', '.md': 'markdown' };
