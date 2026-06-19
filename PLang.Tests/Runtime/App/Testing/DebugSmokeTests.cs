@@ -16,7 +16,7 @@ public class DebugSmokeTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/test");
+        _app = TestApp.Create("/test");
         // Debug.Write routes via System.Channels.Resolve("debug") ?? Resolve("error").
         // Register a memory channel as "error" on System so debug output lands in a
         // capture buffer instead of the real stderr stream the channel was wired to.
@@ -47,28 +47,9 @@ public class DebugSmokeTests
     {
         _app.Debug.Apply(new Dictionary<string, object?> { ["level"] = "action" });
 
-        var goal = new Goal
-        {
-            Name = "Dbg",
-            Path = "/Dbg.goal",
-            Steps = new GoalSteps
-            {
-                new Step
-                {
-                    Index = 0,
-                    Text = "set x",
-                    Actions = new StepActions
-                    {
-                        new PrAction
-                        {
-                            Module = "variable",
-                            ActionName = "set",
-                            Parameters = new List<Data> { new("Name", "x"), new("Value", 1) }
-                        }
-                    }
-                }
-            }
-        };
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("Dbg",
+            Make.Step("set x",
+                Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", 1)))));
         _app.Goal.Add(goal);
 
         // If the widened lambda mis-handles the (action, result) params (e.g. dereferences a
