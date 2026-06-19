@@ -9,7 +9,7 @@ public class ModifierActionTests
     [Test]
     public async Task ModifierAction_WrapDispatch_FramePushedOnce()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         // Run the modifier in isolation to confirm it behaves as a [Modifier]-attributed
         // handler: the handler exists, ExecuteAsync runs without error.
         MatrixRunner.EnsureRegistered<ModifierAction>(app);
@@ -29,7 +29,7 @@ public class ModifierActionTests
     [Test]
     public async Task ModifierAction_RetryTwice_TwoFramesPushed()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         MatrixRunner.EnsureRegistered<StringPlain>(app);
         var currentBefore = app.User.Context.CallStack?.Current;
 
@@ -51,7 +51,7 @@ public class ModifierActionTests
     {
         // Action.RunAsync's Handled-override path returns the bound result without calling App.Run.
         // Test by setting up a BeforeAction binding that returns Handled=true.
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         MatrixRunner.EnsureRegistered<StringPlain>(app);
         var currentBefore = app.User.Context.CallStack?.Current;
 
@@ -76,7 +76,7 @@ public class ModifierActionTests
         // Smoke check: Action.RunAsync still flows AfterAction even on Handled override.
         // Detailed event-firing assertions live in EngineTests / EventTests; here we just
         // confirm the surrounding scaffolding doesn't break.
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         MatrixRunner.EnsureRegistered<StringPlain>(app);
 
         var action = new PrAction

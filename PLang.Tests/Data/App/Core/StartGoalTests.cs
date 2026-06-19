@@ -11,32 +11,21 @@ public class StartGoalTests
     [Test]
     public async Task StartGoal_Programmatic_SetsVariablesAndWritesOutput()
     {
-        await using var engine = new global::app.@this("/app");
+        await using var engine = TestApp.Create("/app");
 
         // Replace output.write with capturing version
         var capture = new CapturingWriteHandler();
         engine.Module.Register("output", "write", capture);
 
-        var goal = new Goal
-        {
-            Name = "Start",
-            Path = "/Start.goal",
-            Steps = new GoalSteps
-            {
-                MakeStep("variable", "set",
-                    new Dictionary<string, object?> { { "name", "name" }, { "value", "Plang" } },
-                    index: 0, text: "set %name% = \"Plang\""),
-                MakeStep("output", "write",
-                    new Dictionary<string, object?> { { "Data", "%name%" } },
-                    index: 1, text: "write out %name%"),
-                MakeStep("variable", "set",
-                    new Dictionary<string, object?> { { "name", "newVarName" }, { "value", "%name%" } },
-                    index: 2, text: "set %newVarName% = %name%"),
-                MakeStep("output", "write",
-                    new Dictionary<string, object?> { { "Data", "NewVar: %newVarName%" } },
-                    index: 3, text: "write out \"NewVar: %newVarName%\"")
-            }
-        };
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Start",
+            Make.Step("set %name% = \"Plang\"",
+                Make.Action("variable", "set", Make.Param("Name", "name", "variable"), ("Value", "Plang"))),
+            Make.Step("write out %name%",
+                Make.Action("output", "write", ("Data", "%name%"))),
+            Make.Step("set %newVarName% = %name%",
+                Make.Action("variable", "set", Make.Param("Name", "newVarName", "variable"), ("Value", "%name%"))),
+            Make.Step("write out \"NewVar: %newVarName%\"",
+                Make.Action("output", "write", ("Data", "NewVar: %newVarName%")))));
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -60,22 +49,13 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_FullVariableReference_ReturnsTypedValue()
     {
-        await using var engine = new global::app.@this("/app");
+        await using var engine = TestApp.Create("/app");
 
-        var goal = new Goal
-        {
-            Name = "Test",
-            Path = "/Test.goal",
-            Steps = new GoalSteps
-            {
-                MakeStep("variable", "set",
-                    new Dictionary<string, object?> { { "name", "myVar" }, { "value", "Hello" } },
-                    index: 0, text: "set myVar"),
-                MakeStep("variable", "set",
-                    new Dictionary<string, object?> { { "name", "result" }, { "value", "%myVar%" } },
-                    index: 1, text: "set result = %myVar%")
-            }
-        };
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
+            Make.Step("set myVar",
+                Make.Action("variable", "set", Make.Param("Name", "myVar", "variable"), ("Value", "Hello"))),
+            Make.Step("set result = %myVar%",
+                Make.Action("variable", "set", Make.Param("Name", "result", "variable"), ("Value", "%myVar%")))));
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -88,25 +68,16 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_StringInterpolation_ReturnsInterpolatedString()
     {
-        await using var engine = new global::app.@this("/app");
+        await using var engine = TestApp.Create("/app");
 
         var capture = new CapturingWriteHandler();
         engine.Module.Register("output", "write", capture);
 
-        var goal = new Goal
-        {
-            Name = "Test",
-            Path = "/Test.goal",
-            Steps = new GoalSteps
-            {
-                MakeStep("variable", "set",
-                    new Dictionary<string, object?> { { "name", "user" }, { "value", "World" } },
-                    index: 0, text: "set user"),
-                MakeStep("output", "write",
-                    new Dictionary<string, object?> { { "Data", "Hello %user%!" } },
-                    index: 1, text: "write Hello %user%!")
-            }
-        };
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
+            Make.Step("set user",
+                Make.Action("variable", "set", Make.Param("Name", "user", "variable"), ("Value", "World"))),
+            Make.Step("write Hello %user%!",
+                Make.Action("output", "write", ("Data", "Hello %user%!")))));
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -119,22 +90,14 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_LiteralString_RemainsUnchanged()
     {
-        await using var engine = new global::app.@this("/app");
+        await using var engine = TestApp.Create("/app");
 
         var capture = new CapturingWriteHandler();
         engine.Module.Register("output", "write", capture);
 
-        var goal = new Goal
-        {
-            Name = "Test",
-            Path = "/Test.goal",
-            Steps = new GoalSteps
-            {
-                MakeStep("output", "write",
-                    new Dictionary<string, object?> { { "Data", "no variables here" } },
-                    index: 0, text: "write literal")
-            }
-        };
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
+            Make.Step("write literal",
+                Make.Action("output", "write", ("Data", "no variables here")))));
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -147,22 +110,14 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_MissingVariable_ResolvesToEmptyString()
     {
-        await using var engine = new global::app.@this("/app");
+        await using var engine = TestApp.Create("/app");
 
         var capture = new CapturingWriteHandler();
         engine.Module.Register("output", "write", capture);
 
-        var goal = new Goal
-        {
-            Name = "Test",
-            Path = "/Test.goal",
-            Steps = new GoalSteps
-            {
-                MakeStep("output", "write",
-                    new Dictionary<string, object?> { { "Data", "Value: %unknown%" } },
-                    index: 0, text: "write with unknown var")
-            }
-        };
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
+            Make.Step("write with unknown var",
+                Make.Action("output", "write", ("Data", "Value: %unknown%")))));
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -175,19 +130,11 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_FullMissingVariable_ResolvesToNull()
     {
-        await using var engine = new global::app.@this("/app");
+        await using var engine = TestApp.Create("/app");
 
-        var goal = new Goal
-        {
-            Name = "Test",
-            Path = "/Test.goal",
-            Steps = new GoalSteps
-            {
-                MakeStep("variable", "set",
-                    new Dictionary<string, object?> { { "name", "result" }, { "value", "%nonexistent%" } },
-                    index: 0, text: "set result = %nonexistent%")
-            }
-        };
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
+            Make.Step("set result = %nonexistent%",
+                Make.Action("variable", "set", Make.Param("Name", "result", "variable"), ("Value", "%nonexistent%")))));
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;

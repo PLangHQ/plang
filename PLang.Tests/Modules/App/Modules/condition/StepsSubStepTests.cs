@@ -15,7 +15,7 @@ public class StepsSubStepTests : IDisposable
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir);
+        _app = TestApp.Create(_tempDir);
     }
 
     public void Dispose()
@@ -26,79 +26,34 @@ public class StepsSubStepTests : IDisposable
     }
 
     /// <summary>
-    /// Creates a step that runs a condition.if action returning the given bool value.
+    /// A step that runs a condition.if action returning the given bool value.
     /// </summary>
-    private Step MakeConditionStep(int index, int indent, bool conditionResult)
-    {
-        return new Step
-        {
-            Index = index,
-            Indent = indent,
-            Text = $"if condition = {conditionResult}",
-            Actions = new StepActions
-            {
-                new global::app.goal.steps.step.actions.action.@this
-                {
-                    Module = "condition",
-                    ActionName = "if",
-                    Parameters = new List<Data>
-                    {
-                        new Data("left", conditionResult),
-                        new Data("operator", "=="),
-                        new Data("right", true)
-                    }
-                }
-            }
-        };
-    }
+    private static Make.StepDef MakeConditionStep(int indent, bool conditionResult)
+        => Make.Step($"if condition = {conditionResult}", indent,
+            Make.Action("condition", "if",
+                ("left", conditionResult), ("operator", "=="), ("right", true)));
 
     /// <summary>
-    /// Creates a step that writes a marker string to the output channel.
+    /// A step that writes a marker string to the output channel.
     /// </summary>
-    private Step MakeOutputStep(int index, int indent, string marker)
-    {
-        return new Step
-        {
-            Index = index,
-            Indent = indent,
-            Text = $"write {marker}",
-            Actions = new StepActions
-            {
-                new global::app.goal.steps.step.actions.action.@this
-                {
-                    Module = "output",
-                    ActionName = "write",
-                    Parameters = new List<Data> { new Data("Data", marker) }
-                }
-            }
-        };
-    }
+    private static Make.StepDef MakeOutputStep(int indent, string marker)
+        => Make.Step($"write {marker}", indent,
+            Make.Action("output", "write", ("Data", marker)));
 
     /// <summary>
-    /// Creates a step that sets a variable (returns the variable value, not a bool).
+    /// A step that sets a variable (returns the variable value, not a bool).
     /// </summary>
-    private Step MakeSetStep(int index, int indent, string varName, object? value)
-    {
-        return new Step
-        {
-            Index = index,
-            Indent = indent,
-            Text = $"set {varName} = {value}",
-            Actions = new StepActions
-            {
-                new global::app.goal.steps.step.actions.action.@this
-                {
-                    Module = "variable",
-                    ActionName = "set",
-                    Parameters = new List<Data>
-                    {
-                        new Data("name", varName, new global::app.type.@this("variable")),
-                        new Data("value", value)
-                    }
-                }
-            }
-        };
-    }
+    private static Make.StepDef MakeSetStep(int indent, string varName, object? value)
+        => Make.Step($"set {varName} = {value}", indent,
+            Make.Action("variable", "set",
+                Make.Param("name", varName, "variable"), ("value", value)));
+
+    /// <summary>
+    /// Loads the given step specs through the real read path and returns the
+    /// loaded GoalSteps — params born-type exactly like a `.pr` off disk.
+    /// </summary>
+    private async Task<GoalSteps> LoadSteps(string name, params Make.StepDef[] steps)
+        => (await RealGoalLoad.ViaChannel(_app, Make.Goal(name, steps))).Steps;
 
     private (System.IO.MemoryStream stream, Func<string> getOutput) SetupCapture()
     {
@@ -119,11 +74,9 @@ public class StepsSubStepTests : IDisposable
     public async Task RunAsync_FalseCondition_SkipsIndentedChildren()
     {
         var (_, getOutput) = SetupCapture();
-        var steps = new GoalSteps
-        {
-            MakeConditionStep(0, 0, false),
-            MakeOutputStep(1, 4, "should-be-skipped")
-        };
+        var steps = await LoadSteps("FalseSkipsChildren",
+            MakeConditionStep(0, false),
+            MakeOutputStep(4, "should-be-skipped"));
         var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
@@ -135,11 +88,9 @@ public class StepsSubStepTests : IDisposable
     public async Task RunAsync_TrueCondition_ExecutesIndentedChildren()
     {
         var (_, getOutput) = SetupCapture();
-        var steps = new GoalSteps
-        {
-            MakeConditionStep(0, 0, true),
-            MakeOutputStep(1, 4, "child-executed")
-        };
+        var steps = await LoadSteps("TrueExecutesChildren",
+            MakeConditionStep(0, true),
+            MakeOutputStep(4, "child-executed"));
         var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
@@ -151,12 +102,10 @@ public class StepsSubStepTests : IDisposable
     public async Task RunAsync_FalseCondition_ResumesAtSameIndent()
     {
         var (_, getOutput) = SetupCapture();
-        var steps = new GoalSteps
-        {
-            MakeConditionStep(0, 0, false),
-            MakeOutputStep(1, 4, "child-skipped"),
-            MakeOutputStep(2, 0, "next-runs")
-        };
+        var steps = await LoadSteps("FalseResumesAtIndent",
+            MakeConditionStep(0, false),
+            MakeOutputStep(4, "child-skipped"),
+            MakeOutputStep(0, "next-runs"));
         var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
@@ -170,13 +119,11 @@ public class StepsSubStepTests : IDisposable
     public async Task RunAsync_NestedConditions_InnerFalseSkipsOnlyInner()
     {
         var (_, getOutput) = SetupCapture();
-        var steps = new GoalSteps
-        {
-            MakeConditionStep(0, 0, true),        // outer true → children execute
-            MakeConditionStep(1, 4, false),        // inner false → inner children skipped
-            MakeOutputStep(2, 8, "inner-skipped"), // inner child
-            MakeOutputStep(3, 4, "outer-runs")     // outer child at indent 4
-        };
+        var steps = await LoadSteps("NestedInnerFalse",
+            MakeConditionStep(0, true),        // outer true → children execute
+            MakeConditionStep(4, false),        // inner false → inner children skipped
+            MakeOutputStep(8, "inner-skipped"), // inner child
+            MakeOutputStep(4, "outer-runs"));   // outer child at indent 4
         var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
@@ -190,11 +137,9 @@ public class StepsSubStepTests : IDisposable
     public async Task RunAsync_NoIndentedChildren_FalseDoesNotSkip()
     {
         var (_, getOutput) = SetupCapture();
-        var steps = new GoalSteps
-        {
-            MakeConditionStep(0, 0, false),  // false but no indented children
-            MakeOutputStep(1, 0, "next-runs") // same indent — not a child
-        };
+        var steps = await LoadSteps("NoChildrenFalseNoSkip",
+            MakeConditionStep(0, false),  // false but no indented children
+            MakeOutputStep(0, "next-runs")); // same indent — not a child
         var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
@@ -206,13 +151,11 @@ public class StepsSubStepTests : IDisposable
     public async Task RunAsync_TwoConsecutiveConditions_EachControlsOwnBlock()
     {
         var (_, getOutput) = SetupCapture();
-        var steps = new GoalSteps
-        {
-            MakeConditionStep(0, 0, false),
-            MakeOutputStep(1, 4, "child-A-skipped"),
-            MakeConditionStep(2, 0, true),
-            MakeOutputStep(3, 4, "child-B-runs")
-        };
+        var steps = await LoadSteps("TwoConsecutiveConditions",
+            MakeConditionStep(0, false),
+            MakeOutputStep(4, "child-A-skipped"),
+            MakeConditionStep(0, true),
+            MakeOutputStep(4, "child-B-runs"));
         var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
@@ -226,12 +169,10 @@ public class StepsSubStepTests : IDisposable
     public async Task RunAsync_DeeplyNested_ThreeLevels()
     {
         var (_, getOutput) = SetupCapture();
-        var steps = new GoalSteps
-        {
-            MakeConditionStep(0, 0, true),
-            MakeConditionStep(1, 4, true),
-            MakeOutputStep(2, 8, "leaf-runs")
-        };
+        var steps = await LoadSteps("DeeplyNestedThreeLevels",
+            MakeConditionStep(0, true),
+            MakeConditionStep(4, true),
+            MakeOutputStep(8, "leaf-runs"));
         var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
@@ -246,11 +187,9 @@ public class StepsSubStepTests : IDisposable
         // variable.set with value false — returns a variable types object, not bool false
         // Even if it somehow returned false, the child should not be skipped
         // because set returns Data.Ok(variable{...}), not Data.Ok(false)
-        var steps = new GoalSteps
-        {
-            MakeSetStep(0, 0, "myVar", false),
-            MakeOutputStep(1, 4, "child-runs")
-        };
+        var steps = await LoadSteps("NonConditionFalseNoSkip",
+            MakeSetStep(0, "myVar", false),
+            MakeOutputStep(4, "child-runs"));
         var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
@@ -263,12 +202,10 @@ public class StepsSubStepTests : IDisposable
     [Test]
     public async Task RunAsync_HasIndentedChildren_CorrectDetection()
     {
-        var steps = new GoalSteps
-        {
-            MakeOutputStep(0, 0, "parent"),
-            MakeOutputStep(1, 4, "child"),
-            MakeOutputStep(2, 0, "sibling")
-        };
+        var steps = await LoadSteps("HasIndentedChildren",
+            MakeOutputStep(0, "parent"),
+            MakeOutputStep(4, "child"),
+            MakeOutputStep(0, "sibling"));
 
         await Assert.That(steps.HasIndentedChildren(0)).IsTrue();  // step[1].Indent > step[0].Indent
         await Assert.That(steps.HasIndentedChildren(1)).IsFalse(); // step[2].Indent < step[1].Indent

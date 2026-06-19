@@ -1,0 +1,68 @@
+{
+  "branch": "template-stamping-at-read",
+  "sessions": [
+    {
+      "id": "b7e3c2a1-9f4d-4e8a-bc21-7d5f0a1c3e90",
+      "bot": "coder",
+      "timestamp_start": "2026-06-19T11:05:00Z",
+      "timestamp_end": "2026-06-19T11:55:00Z",
+      "intent": "Migrate hand-built goal/step executor tests in PLang.Tests/Modules to load goals through the real read path (TestApp.Create + Make.Goal + RealGoalLoad.ViaChannel).",
+      "before": {
+        "assumptions": "Baseline PLang.Tests/Modules is green (failed: 0). Executor tests are those calling _app.RunGoalAsync or step(s).RunAsync on a hand-built goal/step; handler-direct .Run()/action.RunAsync and provider/fold isolation tests stay.",
+        "risk": "ViaChannel serialize->read round-trip may expose a real read-path gap on some param shape (e.g. goal.call goalname dict). If so, revert that file and report."
+      },
+      "plan": ".bot/template-stamping-at-read/coder/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Modules/App/Modules/loop/ForeachTests.cs",
+            "PLang.Tests/Modules/App/Modules/loop/ForeachStringNotIterableTests.cs",
+            "PLang.Tests/Modules/App/Modules/loop/ForeachErrorPropagationTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Migrated step.RunAsync executor tests: new app->TestApp.Create; runner step built via Make.Goal + RealGoalLoad.ViaChannel, capture goal.Steps.First() then step.RunAsync. foreach itemname/keyname -> Make.Param(...,'variable'). Empty target goals (DoNothing/Noop/ProcessItem) and the registered Inner fixture left as new Goal. The 3 action.RunAsync-direct foreach tests (Empty/Null/Cancellation) left as-is."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Modules/App/Modules/condition/StepsSubStepTests.cs",
+            "PLang.Tests/Modules/App/Modules/condition/IfErrorOrchestrationTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "StepsSubStep: Step-returning helpers -> Make.StepDef helpers + LoadSteps() routes through ViaChannel, returning goal.Steps for steps.RunAsync (and HasIndentedChildren). IfErrorOrchestration: removed now-unused Action alias; both step.RunAsync tests load via ViaChannel."
+        },
+        {
+          "paths": ["PLang.Tests/Modules/App/Modules/file/FileHandlerTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "3 RunGoalAsync executor tests (Read_UnregisteredScheme, Integration_FileExists, Integration_FileNotExists) now build via Make.Goal + ViaChannel; dropped manual StampTemplates walk. variable.set Name -> Make.Param('Name',...,'variable'). All .Run() handler-direct tests left as-is. Constructor new app -> TestApp.Create."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Modules/App/Modules/variable/SetTypeInferenceTests.cs",
+            "PLang.Tests/Modules/App/Modules/variable/settests.cs",
+            "PLang.Tests/Modules/App/Modules/ui/RenderTests.cs",
+            "PLang.Tests/Modules/App/Modules/llm/QueryCallbackTests.cs",
+            "PLang.Tests/Modules/App/Modules/modifier/ErrorHandleTests.cs",
+            "PLang.Tests/Modules/App/Modules/modifier/ModifierFoldTests.cs",
+            "PLang.Tests/Modules/App/Modules/modifier/TimeoutAfterTests.cs",
+            "PLang.Tests/Modules/App/Modules/modifier/CacheWrapTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Examined, deliberately left: all execute via handler .Run()/action.RunAsync/modifiers.RunAsync/_provider.Render — isolation tests, not RunGoalAsync/steps.RunAsync executors. RenderTests goals are callGoal registry fixtures, never directly run."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "PLang.Tests/Modules builds clean (no error CS) and full suite passes (failed: 0). No read-path gaps exposed; nothing reverted. Not committed (per task)."
+      }
+    }
+  ]
+}

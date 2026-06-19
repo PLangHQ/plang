@@ -8,34 +8,47 @@
       "timestamp_end": null,
       "intent": "Move template stamping from a post-parse walk onto the read: the reader hands the type its template mode at construction, the type decides (it owns its holes). Trust rides the reader, not the content.",
       "before": {
-        "assumptions": "ReadContext is the natural mode carrier (IReader work landed). text ctor's canTemplate:true hardcoded \"plang\" mode-blind — the bug. Goal is the only inherently-authored read.",
-        "risk": "Security-critical: the mode must NOT ride the shared _inbound Wire (also reads runtime messages). FromWire rebuilds from already-parsed values — its seam can't delete blind. Two goal-load paths (goal.list via plang serializer, GoalCall via catalog options)."
+        "assumptions": "ReadContext is the natural mode carrier (IReader work landed). text ctor's canTemplate:true hardcoded \"plang\" mode-blind \u2014 the bug. Goal is the only inherently-authored read.",
+        "risk": "Security-critical: the mode must NOT ride the shared _inbound Wire (also reads runtime messages). FromWire rebuilds from already-parsed values \u2014 its seam can't delete blind. Two goal-load paths (goal.list via plang serializer, GoalCall via catalog options)."
       },
       "plan": ".bot/template-stamping-at-read/coder/v1/plan.md",
       "actions": [
         {
-          "paths": ["PLang/app/type/reader/ReadContext.cs", "PLang/app/type/text/this.cs"],
+          "paths": [
+            "PLang/app/type/reader/ReadContext.cs",
+            "PLang/app/type/text/this.cs"
+          ],
           "type": "modify",
           "category": "code",
           "confidence": "high",
           "context": "ReadContext gains Template (string?). text ctor: bool canTemplate -> string? template; Template = (template != null && HasHoles) ? template : null. The type owns the holes-decision so HasVariableReference stays correct."
         },
         {
-          "paths": ["PLang/app/type/text/serializer/Reader.cs", "PLang/app/type/text/serializer/Default.cs", "PLang/app/type/path/this.cs"],
+          "paths": [
+            "PLang/app/type/text/serializer/Reader.cs",
+            "PLang/app/type/text/serializer/Default.cs",
+            "PLang/app/type/path/this.cs"
+          ],
           "type": "modify",
           "category": "code",
           "confidence": "high",
           "context": "text.Read + text/Default.Read pass ctx.Template (mode-gated). path keeps \"plang\" (no read-mode at its ctor; mode-gating path deferred, behavior preserved)."
         },
         {
-          "paths": ["PLang/app/data/Wire.cs", "PLang/app/channel/serializer/plang/this.cs"],
+          "paths": [
+            "PLang/app/data/Wire.cs",
+            "PLang/app/channel/serializer/plang/this.cs"
+          ],
           "type": "modify",
           "category": "code",
           "confidence": "high",
           "context": "Wire gains a Template ctor param, feeds it into the ReadContext for ITypeReader.Read. Plang serializer gains a dedicated _authored options (template=\"plang\"); Deserialize<goal> routes to it (goal is the inherently-authored type). The single trusted construction site."
         },
         {
-          "paths": ["PLang.Tests/Wire/App/Serialization/TemplateStampOnReadTests.cs", "PLang.Tests/Data/App/DataTests/DataTests.cs"],
+          "paths": [
+            "PLang.Tests/Wire/App/Serialization/TemplateStampOnReadTests.cs",
+            "PLang.Tests/Data/App/DataTests/DataTests.cs"
+          ],
           "type": "modify",
           "category": "test",
           "confidence": "high",
@@ -43,9 +56,91 @@
         }
       ],
       "after": {
-        "status": "Increment 1 landed — born-with-template on the read path, mode-gated, proven. Seams still in place (idempotent); StampedForm removal + path-2 read-stamp + container slots + FromWire are later increments.",
-        "health": "green — dev.sh full all 6 projects green (counts identical to baseline; one flaky Types failure cleared on re-run). Security test passes. Runtime template-rendering suite (789) green.",
+        "status": "Increment 1 landed \u2014 born-with-template on the read path, mode-gated, proven. Seams still in place (idempotent); StampedForm removal + path-2 read-stamp + container slots + FromWire are later increments.",
+        "health": "green \u2014 dev.sh full all 6 projects green (counts identical to baseline; one flaky Types failure cleared on re-run). Security test passes. Runtime template-rendering suite (789) green.",
         "notes": "The mode rides _authored only; _inbound (runtime messages) stays mode-off. GoalCall path 2 (catalog options) still seam-stamps until its read is routed through _authored too."
+      }
+    },
+    {
+      "id": "c1d2e3f4-5a6b-7c8d-9e0f-1a2b3c4d5e6f",
+      "bot": "coder",
+      "timestamp_start": "2026-06-19T12:00:00Z",
+      "timestamp_end": "2026-06-19T12:30:00Z",
+      "intent": "Migrate hand-built goal/step executors in PLang.Tests/Types to load goals through the real read path (Make + RealGoalLoad.ViaChannel + TestApp.Create), matching the proven pilot pattern.",
+      "before": {
+        "assumptions": "Named TypeKindStrict/PathTests files would contain goal/step executors built via new PrAction/new Goal and run via RunGoalAsync/steps.RunAsync \u2014 the migration anti-pattern.",
+        "risk": "Strict/kind type-mismatch tests intentionally hand-build to hit a precise validation layer; migrating could move where the failure surfaces."
+      },
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Types/App/TypeKindStrict/IntegrationCutsTests/Cut1_TypedSetRoundTripsKind.cs",
+            "PLang.Tests/Types/App/TypeKindStrict/IntegrationCutsTests/Cut2_StrictMismatchFailsAtRightLayer.cs",
+            "PLang.Tests/Types/App/TypeKindStrict/SetAndStrictTests/StrictRunTests.cs",
+            "PLang.Tests/Types/App/TypeKindStrict/SetAndStrictTests/SetMintCarriesKindTests.cs",
+            "PLang.Tests/Types/App/TypeKindStrict/ReferenceFundamentalTests/LazyPathHandleTests.cs",
+            "PLang.Tests/Types/App/TypeKindStrict/TypeValueModelTests/TypeIsTests.cs",
+            "PLang.Tests/Types/App/Types/PathTests/GoalMimeDeserializationTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Examined all seven. None are goal/step executors: each uses TestAction.Create(...).RunAsync (the sanctioned single-action isolation helper, which already applies StampTemplates) or direct type/FilePath/ValidateBuild calls. The migration target is nested new PrAction/new Goal run via RunGoalAsync/steps.RunAsync (the pilot's before-state) \u2014 absent here. The set tests also pass explicit type/kind/strict params that Make.Param cannot express and that probe precise mint/validation layers \u2014 squarely the leave-alone caveat. No code changed."
+        }
+      ],
+      "after": {
+        "status": "No migrations performed \u2014 examination concluded none of the named files are in-scope goal/step executors.",
+        "health": "green \u2014 PLang.Tests/Types builds with 0 CS errors and tests pass (failed: 0).",
+        "notes": "TestAction.Create + action.RunAsync is action-isolation, not the hand-built-Goal+RunGoalAsync anti-pattern the migration targets. Kind/strict are inexpressible via Make.Param, reinforcing leave-alone."
+      }
+    },
+    {
+      "id": "aac7bf57-e82d-438b-a993-fda5fbc2501f",
+      "bot": "coder",
+      "timestamp_start": "2026-06-19T11:06:38.168843Z",
+      "timestamp_end": "2026-06-19T11:09:54.032542Z",
+      "intent": "Migrate PLang.Tests/Data executor tests to RealGoalLoad.ViaChannel + Make + TestApp.Create",
+      "before": {
+        "assumptions": "Make.Goal hardcodes Path=root; no Defaults seam; steps.RunAsync machinery tests stay hand-built per PlangRuntimeTests precedent",
+        "risk": "custom capture handlers + born-typing through read path may diverge"
+      },
+      "plan": ".bot/template-stamping-at-read/coder/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Data/App/Core/EngineTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Migrated 3 RunGoalAsync behavioral tests (ExecutesSteps, WithActor, ByName) to RealGoalLoad.ViaChannel + Make + TestApp.Create. Left steps.RunAsync machinery, cancelled, malformed variable.get, constructor/dispose/actor tests hand-built. Kept MakeStep helpers."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Data/App/Core/StartGoalTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Migrated programmatic + 5 ResolveValue_* tests. Left 3 Defaults_* tests (Make has no Defaults seam). Kept MakeStep/MakeStepWithDefaults helpers + custom CapturingWriteHandler."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Data/App/Core/PrPipelineTests.cs",
+            "PLang.Tests/Data/App/Core/GoalTests.cs",
+            "PLang.Tests/Data/App/Core/StepTests.cs",
+            "PLang.Tests/Data/App/VariablesTests/VariablesTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Left unchanged. PrPipeline: fixtures load real .pr off disk; hand-built ones need subfolder goal Path which Make.Goal hardcodes to root. Goal/Step/Variables: structural/Variables-collection unit tests, no goal execution."
+        }
+      ],
+      "after": {
+        "status": "done",
+        "health": "green",
+        "notes": "Data project build clean (only pre-existing CS8981 lowercase-type warnings). Suite: failed:1 = pre-existing Diff_DiffModeOverLargeListDoesNotOom (perf/OOM, unrelated). StartGoalTests 9/9 + EngineTests 35/35 pass. No commit per task instruction. Read-path gap: Make.Goal hardcodes Path=/{name}.goal so subfolder-path-resolution tests cannot migrate."
       }
     }
   ]

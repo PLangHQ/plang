@@ -2,7 +2,6 @@ using app;
 using app.actor.context;
 using app.variable;
 using app.type.path;
-using Action = global::app.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.Modules.condition;
 
@@ -24,7 +23,7 @@ public class IfErrorOrchestrationTests : IDisposable
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_if_err_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir);
+        _app = TestApp.Create(_tempDir);
     }
 
     public void Dispose()
@@ -37,30 +36,12 @@ public class IfErrorOrchestrationTests : IDisposable
     [Test]
     public async Task If_OrchestratedBranchAction_ReturnsError_PropagatesThroughStep()
     {
-        var condAction = new Action
-        {
-            Module = "condition", ActionName = "if",
-            Parameters = new List<Data>
-            {
-                new Data("Left", true), new Data("Operator", "=="), new Data("Right", true)
-            }
-        };
-        var goalCallAction = new Action
-        {
-            Module = "goal", ActionName = "call",
-            Parameters = new List<Data>
-            {
-                new Data("goalname", new Dictionary<string, object?> { ["name"] = "DoesNotExist" })
-            }
-        };
-
-        var step = new Step
-        {
-            Index = 0, Text = "if true, call DoesNotExist",
-            Actions = new StepActions { condAction, goalCallAction }
-        };
-        condAction.Step = step;
-        goalCallAction.Step = step;
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("IfCallMissing",
+            Make.Step("if true, call DoesNotExist",
+                Make.Action("condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
+                Make.Action("goal", "call",
+                    ("goalname", new Dictionary<string, object?> { ["name"] = "DoesNotExist" })))));
+        var step = goal.Steps.First();
 
         var result = await step.RunAsync(_app.User.Context);
 
@@ -83,27 +64,11 @@ public class IfErrorOrchestrationTests : IDisposable
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 
-        var condAction = new Action
-        {
-            Module = "condition", ActionName = "if",
-            Parameters = new List<Data>
-            {
-                new Data("Left", true), new Data("Operator", "=="), new Data("Right", true)
-            }
-        };
-        var writeAction = new Action
-        {
-            Module = "output", ActionName = "write",
-            Parameters = new List<Data> { new Data("Data", "ran") }
-        };
-
-        var step = new Step
-        {
-            Index = 0, Text = "if true, write ran",
-            Actions = new StepActions { condAction, writeAction }
-        };
-        condAction.Step = step;
-        writeAction.Step = step;
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("IfWriteRan",
+            Make.Step("if true, write ran",
+                Make.Action("condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
+                Make.Action("output", "write", ("Data", "ran")))));
+        var step = goal.Steps.First();
 
         var result = await step.RunAsync(_app.User.Context);
 

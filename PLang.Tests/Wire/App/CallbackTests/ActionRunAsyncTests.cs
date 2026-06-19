@@ -12,7 +12,7 @@ namespace PLang.Tests.App.CallbackTests;
 public class ActionRunAsyncTests
 {
     private static global::app.@this NewApp() =>
-        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-rasn-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     [Test] public async Task ActionRunAsync_IsSingleEntry_PushAnchorExecute()

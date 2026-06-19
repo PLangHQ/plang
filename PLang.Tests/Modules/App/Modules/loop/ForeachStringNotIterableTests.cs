@@ -16,7 +16,7 @@ public class ForeachStringNotIterableTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::app.@this("/app");
+    public void Setup() => _app = TestApp.Create("/app");
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
@@ -30,21 +30,15 @@ public class ForeachStringNotIterableTests
         context.Variable.Set("s", "hello");
 
         // Body goal runs once per iteration.
-        var goal = new Goal { Name = "DoNothing", Path = "/DoNothing.goal", Steps = new GoalSteps() };
-        _app.Goal.Add(goal);
+        _app.Goal.Add(new Goal { Name = "DoNothing", Path = "/DoNothing.goal", Steps = new GoalSteps() });
 
-        var foreachAction = TestAction.Create("loop", "foreach",
-            ("collection", "%s%"), ("itemname", "%item%"));
-        var goalCallAction = TestAction.Create("goal", "call",
-            ("goalname", new Dictionary<string, object?> { ["name"] = "DoNothing" }));
-        var step = new Step
-        {
-            Index = 0,
-            Text = "foreach %s%, call DoNothing",
-            Actions = new StepActions { foreachAction, goalCallAction }
-        };
-        foreachAction.Step = step;
-        goalCallAction.Step = step;
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("StringRunner",
+            Make.Step("foreach %s%, call DoNothing",
+                Make.Action("loop", "foreach",
+                    ("collection", "%s%"), Make.Param("itemname", "%item%", "variable")),
+                Make.Action("goal", "call",
+                    ("goalname", new Dictionary<string, object?> { ["name"] = "DoNothing" })))));
+        var step = goal.Steps.First();
 
         var result = await step.RunAsync(context);
 
@@ -60,21 +54,15 @@ public class ForeachStringNotIterableTests
         var context = _app.User.Context;
         context.Variable.Set("s", "hello");
 
-        var goal = new Goal { Name = "DoNothing", Path = "/DoNothing.goal", Steps = new GoalSteps() };
-        _app.Goal.Add(goal);
+        _app.Goal.Add(new Goal { Name = "DoNothing", Path = "/DoNothing.goal", Steps = new GoalSteps() });
 
-        var foreachAction = TestAction.Create("loop", "foreach",
-            ("collection", "%s%"), ("itemname", "%item%"));
-        var goalCallAction = TestAction.Create("goal", "call",
-            ("goalname", new Dictionary<string, object?> { ["name"] = "DoNothing" }));
-        var step = new Step
-        {
-            Index = 0,
-            Text = "foreach %s%, call DoNothing",
-            Actions = new StepActions { foreachAction, goalCallAction }
-        };
-        foreachAction.Step = step;
-        goalCallAction.Step = step;
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("WholeStringRunner",
+            Make.Step("foreach %s%, call DoNothing",
+                Make.Action("loop", "foreach",
+                    ("collection", "%s%"), Make.Param("itemname", "%item%", "variable")),
+                Make.Action("goal", "call",
+                    ("goalname", new Dictionary<string, object?> { ["name"] = "DoNothing" })))));
+        var step = goal.Steps.First();
 
         await step.RunAsync(context);
 
@@ -88,21 +76,15 @@ public class ForeachStringNotIterableTests
         var context = _app.User.Context;
         context.Variable.Set("n", 42);
 
-        var goal = new Goal { Name = "DoNothing", Path = "/DoNothing.goal", Steps = new GoalSteps() };
-        _app.Goal.Add(goal);
+        _app.Goal.Add(new Goal { Name = "DoNothing", Path = "/DoNothing.goal", Steps = new GoalSteps() });
 
-        var foreachAction = TestAction.Create("loop", "foreach",
-            ("collection", "%n%"), ("itemname", "%item%"));
-        var goalCallAction = TestAction.Create("goal", "call",
-            ("goalname", new Dictionary<string, object?> { ["name"] = "DoNothing" }));
-        var step = new Step
-        {
-            Index = 0,
-            Text = "foreach %n%, call DoNothing",
-            Actions = new StepActions { foreachAction, goalCallAction }
-        };
-        foreachAction.Step = step;
-        goalCallAction.Step = step;
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("NumberRunner",
+            Make.Step("foreach %n%, call DoNothing",
+                Make.Action("loop", "foreach",
+                    ("collection", "%n%"), Make.Param("itemname", "%item%", "variable")),
+                Make.Action("goal", "call",
+                    ("goalname", new Dictionary<string, object?> { ["name"] = "DoNothing" })))));
+        var step = goal.Steps.First();
 
         var result = await step.RunAsync(context);
 

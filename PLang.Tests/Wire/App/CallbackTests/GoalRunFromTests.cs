@@ -15,7 +15,7 @@ namespace PLang.Tests.App.CallbackTests;
 public class GoalRunFromTests
 {
     private static global::app.@this NewApp() =>
-        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-rf-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     private static Step SetStep(int index, string varName, object value)

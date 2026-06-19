@@ -88,3 +88,57 @@ Removing the post-parse walk needs **every** authored read to stamp at read firs
 4. **`FromWire`** (the risk): rebuilds actions from already-parsed values — confirm
    each caller's upstream read is mode-on before deleting its seam; may keep it.
 5. **path** mode-gating (thread the mode to path construction; today hardcodes "plang").
+
+---
+
+## v3 — Migrate PLang.Tests/Data executor tests to the real read path
+
+**What this is.** Same migration pattern as the Modules pass (v2): hand-built
+goal/step EXECUTORS in PLang.Tests/Data now load through the real channel read so
+params born-type like a `.pr` off disk (`RealGoalLoad.ViaChannel` + `Make.Goal` +
+`TestApp.Create`). Copied the landed pattern (ConditionIfBranchIndexTests,
+AfterActionPayloadTests, PlangRuntimeTests) — no new design.
+
+**Migrated:**
+- `App/Core/EngineTests.cs` — 3 `RunGoalAsync` behavioral tests
+  (`RunGoalAsync_ExecutesSteps`, `_WithActor_UsesActorContext`,
+  `_ByName_WithActor_UsesActorContext`). `MakeStep*` helpers kept (still used by
+  left-alone tests).
+- `App/Core/StartGoalTests.cs` — `StartGoal_Programmatic...` + the five
+  `ResolveValue_*` tests. `MakeStep`/`MakeStepWithDefaults` helpers + custom
+  `CapturingWriteHandler` kept.
+
+**Left alone (with reason):**
+- EngineTests: constructor/dispose/actor tests (no goal exec); `steps.RunAsync`
+  kernel/step-machinery tests (precedent: PlangRuntimeTests keeps these hand-built);
+  `_CancelledToken` (step never runs); `_StepFailure` (deliberately-malformed
+  variable.get); `_EmptyGoal` (no steps).
+- StartGoalTests: the three `Defaults_*` tests — `Make.Action` has no `Defaults`
+  seam (`MakeStepWithDefaults` builds the action's `Defaults` field).
+- `PrPipelineTests.cs` — left entirely. FullPipeline/ReadFile/FilePathsFromRoot
+  already load real `.pr` fixtures off disk; the hand-built ones
+  (SubRelative/ParentTraversal/ParentAndDown) depend on the goal's subfolder `Path`
+  (e.g. `/sub/...goal`), which `Make.Goal` hardcodes to `/{name}.goal` (root).
+- `GoalTests.cs`, `StepTests.cs`, `VariablesTests.cs` — structural /
+  Variables-collection unit tests; no goal execution.
+
+**Read-path gap found.** `Make.Goal(name, ...)` hardcodes `Path = "/{name}.goal"`
+(root). Goal-path-dependent tests (relative-resolves-against-goal-folder, parent
+traversal) can't migrate without losing intent. If those should ride the read path,
+`Make.Goal` needs an optional path/subfolder parameter.
+
+**Proof.** `dotnet build PLang.Tests/Data` clean (only pre-existing CS8981 warnings).
+Suite: `failed: 1` = pre-existing `Diff_DiffModeOverLargeListDoesNotOom` (perf/OOM,
+unrelated). StartGoalTests 9/9 and EngineTests 35/35 pass. Not committed (per task).
+
+### Code example
+```csharp
+// before — hand-built nested Goal/Step/PrAction, bypasses the read:
+var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal",
+    Steps = new GoalSteps { MakeStep("variable","set",
+        new Dictionary<string,object?>{{"name","test"},{"value","hello"}}, 0, "set variable") } };
+// after — loaded through the real channel read, params born-type:
+var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("TestGoal",
+    Make.Step("set variable",
+        Make.Action("variable","set", Make.Param("Name","test","variable"), ("Value","hello")))));
+```
