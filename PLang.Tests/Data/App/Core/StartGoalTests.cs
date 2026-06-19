@@ -151,22 +151,15 @@ public class StartGoalTests
     [Test]
     public async Task Defaults_ResolvedWhenParameterMissing()
     {
-        await using var engine = new global::app.@this("/app");
+        await using var engine = TestApp.Create("/app");
 
-        // "type" is NOT in parameters — developer didn't set it
-        // "type" IS in defaults — builder captured it at build time
-        var goal = new Goal
-        {
-            Name = "Test",
-            Path = "/Test.goal",
-            Steps = new GoalSteps
-            {
-                MakeStepWithDefaults("variable", "set",
-                    parameters: new Dictionary<string, object?> { { "name", "greeting" }, { "value", "hello" } },
-                    defaults: new Dictionary<string, object?> { { "type", "string" } },
-                    index: 0, text: "set greeting = hello")
-            }
-        };
+        // "Type" is NOT in parameters — developer didn't set it
+        // "Type" IS in defaults — builder captured it at build time
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
+            Make.Step("set greeting = hello",
+                Make.WithDefaults(
+                    Make.Action("variable", "set", Make.Param("Name", "greeting", "variable"), ("Value", "hello")),
+                    ("Type", new global::app.type.@this("text"))))));
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -183,21 +176,16 @@ public class StartGoalTests
     [Test]
     public async Task Defaults_ParameterOverridesDefault()
     {
-        await using var engine = new global::app.@this("/app");
+        await using var engine = TestApp.Create("/app");
 
-        // "type" is in BOTH parameters and defaults — parameter wins
-        var goal = new Goal
-        {
-            Name = "Test",
-            Path = "/Test.goal",
-            Steps = new GoalSteps
-            {
-                MakeStepWithDefaults("variable", "set",
-                    parameters: new Dictionary<string, object?> { { "name", "count" }, { "value", 42 }, { "type", "long" } },
-                    defaults: new Dictionary<string, object?> { { "type", "string" } },
-                    index: 0, text: "set count = 42")
-            }
-        };
+        // "Type" is in BOTH parameters and defaults — parameter wins
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
+            Make.Step("set count = 42",
+                Make.WithDefaults(
+                    Make.Action("variable", "set",
+                        Make.Param("Name", "count", "variable"), ("Value", 42),
+                        ("Type", new global::app.type.@this("number", "long"))),
+                    ("Type", new global::app.type.@this("text"))))));
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -212,20 +200,12 @@ public class StartGoalTests
     [Test]
     public async Task Defaults_NullDefaultsStillWorksWithAttributeFallback()
     {
-        await using var engine = new global::app.@this("/app");
+        await using var engine = TestApp.Create("/app");
 
         // No defaults at all — falls through to [Default] attribute on the action
-        var goal = new Goal
-        {
-            Name = "Test",
-            Path = "/Test.goal",
-            Steps = new GoalSteps
-            {
-                MakeStep("variable", "set",
-                    new Dictionary<string, object?> { { "name", "x" }, { "value", "y" } },
-                    index: 0, text: "set x = y")
-            }
-        };
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
+            Make.Step("set x = y",
+                Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", "y")))));
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -241,33 +221,6 @@ public class StartGoalTests
     #endregion
 
     #region Helpers
-
-    private static Step MakeStep(string actionClass, string method, IDictionary<string, object?> parameters, int index = 0, string text = "")
-    {
-        return MakeStepWithDefaults(actionClass, method, parameters, null, index, text);
-    }
-
-    private static Step MakeStepWithDefaults(string actionClass, string method,
-        IDictionary<string, object?> parameters, IDictionary<string, object?>? defaults,
-        int index = 0, string text = "")
-    {
-        var action = new global::app.goal.steps.step.actions.action.@this
-        {
-            Module = actionClass,
-            ActionName = method,
-            Parameters = PrParam.List(actionClass, method, parameters),
-            Defaults = defaults != null ? PrParam.List(actionClass, method, defaults) : null
-        };
-        // Tests author actions the way the builder does — same template seam
-        // the .pr load applies, so %ref% parameters resolve live at dispatch.
-        action.StampTemplates();
-        return new Step
-        {
-            Index = index,
-            Text = text,
-            Actions = new StepActions { action }
-        };
-    }
 
     /// <summary>
     /// A test handler that captures written content instead of writing to Console.
