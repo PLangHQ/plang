@@ -37,8 +37,8 @@ public class Ed25519 : ISigning
         if (await hashResult.Value() is not global::app.module.crypto.type.hash.@this hash)
             return global::app.data.@this.FromError(new ActionError("Hashing produced no digest", "DataHashMismatch", 500));
 
-        var now = (DateTimeOffset)(await action.Context.Variable.GetValue("NowUtc"))!;
-        var nonce = (await action.Context.Variable.GetValue("GUID"))!.ToString()!;
+        var now = await (await action.Context.Variable.Get("NowUtc")).Clr<DateTimeOffset>(default);
+        var nonce = (await (await action.Context.Variable.Get("GUID")).Clr<Guid>(default)).ToString();
         DateTimeOffset? expires = (action.Expires == null ? null : await action.Expires.Value()) is { } expiry
             ? now.Add(expiry.Value) : null;
         var contracts = action.Contracts == null ? null : await action.Contracts.Value();
@@ -72,8 +72,7 @@ public class Ed25519 : ISigning
         // NowUtc may be unset when verify runs at the deserialize boundary (the
         // read context isn't mid-step) — fall back to the wall clock rather than
         // NRE on an unbox of a missing runtime variable.
-        var now = await action.Context.Variable.GetValue("NowUtc") is DateTimeOffset nowUtc
-            ? nowUtc : DateTimeOffset.UtcNow;
+        var now = await (await action.Context.Variable.Get("NowUtc")).Clr<DateTimeOffset>(DateTimeOffset.UtcNow);
         var signingSettings = app.Config.For<Config>(action.Context);
         long effectiveTimeout = action.TimeoutMs == null
             ? signingSettings.Resolve<long>("TimeoutMs", 300_000)

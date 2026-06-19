@@ -515,7 +515,7 @@ public sealed partial class @this : IAsyncDisposable
         if (Builder.IsEnabled) return await Builder.RunAsync();
 
         // Resolve goal file
-        var goalFile = (await context.Variable.GetValue("goalFile")) as string;
+        var goalFile = await (await context.Variable.Get("goalFile")).Clr<string?>(null);
         if (string.IsNullOrEmpty(goalFile))
             return app.data.@this.FromError(new global::app.error.ServiceError(
                 "No goal file specified. Use: plang <goalfile>", "NoGoalFile", 400));
