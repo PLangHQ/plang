@@ -18,7 +18,7 @@ public class PlangRuntimeTests : IDisposable
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_runtime_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir);
+        _app = TestApp.Create(_tempDir);
     }
 
     public void Dispose()
@@ -117,29 +117,9 @@ public class PlangRuntimeTests : IDisposable
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 
-        var goal = new Goal
-        {
-            Name = "TestGoal",
-            Path = "/Test.goal",
-            Steps = new GoalSteps
-            {
-                new Step
-                {
-                    Index = 0,
-                    Text = "write hello",
-                    Actions = new StepActions
-                    {
-                        new global::app.goal.steps.step.actions.action.@this
-                        {
-                            Module = "output",
-                            ActionName = "write",
-                            Parameters = new List<Data> { new Data("Data", "hello runtime") }
-                        }
-                    }
-                }
-            }
-        };
-        foreach (var s in goal.Steps) s.Goal = goal;
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("TestGoal",
+            Make.Step("write hello",
+                Make.Action("output", "write", ("Data", "hello runtime")))));
 
         var context = _app.User.Context;
         var result = await _app.RunGoalAsync(goal, context);

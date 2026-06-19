@@ -18,7 +18,7 @@ public class AfterActionPayloadTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/test");
+        _app = TestApp.Create("/test");
     }
 
     [After(Test)]
@@ -27,32 +27,9 @@ public class AfterActionPayloadTests
     // Runs a simple goal with one action (variable.set) so a single AfterAction fires.
     private async Task RunSimpleGoal(string varName = "x", int value = 42)
     {
-        var goal = new Goal
-        {
-            Name = "TestGoal",
-            Path = "/Test.goal",
-            Steps = new GoalSteps
-            {
-                new Step
-                {
-                    Index = 0,
-                    Text = "set var",
-                    Actions = new StepActions
-                    {
-                        new PrAction
-                        {
-                            Module = "variable",
-                            ActionName = "set",
-                            Parameters = new List<Data>
-                            {
-                                new("Name", new global::app.variable.@this(varName)),
-                                new("Value", value)
-                            }
-                        }
-                    }
-                }
-            }
-        };
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("TestGoal",
+            Make.Step("set var",
+                Make.Action("variable", "set", Make.Param("Name", varName, "variable"), ("Value", value)))));
         _app.Goal.Add(goal);
         await _app.RunGoalAsync(goal, _app.User.Context);
     }
@@ -102,35 +79,12 @@ public class AfterActionPayloadTests
     {
         // Simpler fixture: variable.set wrapped by timeout.after. The modifier and the
         // inner variable.set each go through Action.RunAsync → fire their own AfterAction.
-        var modifiers = new ActionModifiers();
-        modifiers.Add(new PrAction
-        {
-            Module = "timeout",
-            ActionName = "after",
-            Parameters = new List<Data> { new("Ms", 5000) }
-        });
+        var inner = Make.Modified(
+            Make.Action("variable", "set", Make.Param("Name", "y", "variable"), ("Value", 7)),
+            Make.Action("timeout", "after", ("Ms", 5000)));
 
-        var inner = new PrAction
-        {
-            Module = "variable",
-            ActionName = "set",
-            Parameters = new List<Data>
-            {
-                new("Name", new global::app.variable.@this("y")),
-                new("Value", 7)
-            },
-            Modifiers = modifiers
-        };
-
-        var goal = new Goal
-        {
-            Name = "ModifierGoal",
-            Path = "/Mod.goal",
-            Steps = new GoalSteps
-            {
-                new Step { Index = 0, Text = "mod set", Actions = new StepActions { inner } }
-            }
-        };
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("ModifierGoal",
+            Make.Step("mod set", inner)));
         _app.Goal.Add(goal);
 
         var observed = new List<(string Module, string ActionName)>();
@@ -189,32 +143,9 @@ public class AfterActionPayloadTests
     public async Task AfterAction_OnActionFailure_FiresWithErrorData()
     {
         // Build a goal whose action will fail: assert.equals with mismatched values.
-        var goal = new Goal
-        {
-            Name = "FailGoal",
-            Path = "/Fail.goal",
-            Steps = new GoalSteps
-            {
-                new Step
-                {
-                    Index = 0,
-                    Text = "bad assert",
-                    Actions = new StepActions
-                    {
-                        new PrAction
-                        {
-                            Module = "assert",
-                            ActionName = "equals",
-                            Parameters = new List<Data>
-                            {
-                                new("Expected", 1),
-                                new("Actual", 2)
-                            }
-                        }
-                    }
-                }
-            }
-        };
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("FailGoal",
+            Make.Step("bad assert",
+                Make.Action("assert", "equals", ("Expected", 1), ("Actual", 2)))));
         _app.Goal.Add(goal);
 
         Data? captured = null;

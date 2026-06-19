@@ -66,6 +66,21 @@ public static class Make
     public static (string name, object? value) Param(string name, object? value, string type)
         => (name, new global::app.data.@this(name, value, new global::app.type.@this(type)));
 
+    /// <summary>
+    /// Wraps an action with one or more modifier actions (e.g. <c>timeout.after</c>,
+    /// <c>error.handle</c>, <c>cache</c>). The modifiers run around the inner action;
+    /// each fires its own lifecycle events. Returns the same inner action for nesting
+    /// inside <see cref="Step"/>.
+    /// </summary>
+    public static global::app.goal.steps.step.actions.action.@this Modified(
+        global::app.goal.steps.step.actions.action.@this inner,
+        params global::app.goal.steps.step.actions.action.@this[] modifiers)
+    {
+        foreach (var modifier in modifiers)
+            inner.Modifiers.Add(modifier);
+        return inner;
+    }
+
     public static global::app.goal.@this Goal(string name, params StepDef[] steps)
     {
         var goal = new global::app.goal.@this
