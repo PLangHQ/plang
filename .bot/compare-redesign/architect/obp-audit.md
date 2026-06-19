@@ -52,31 +52,50 @@ Two naming laws this audit enforces (both yours, both structural — no exceptio
 
 The OBP formal doc documents `.Parameters — List<Data>` (line 353) — **that decision is retired** (confirmed). Update the doc when this lands. `Action.Return` (`List<Data>?`) is the same shape — fold it in (`return.list` or reuse `parameter.list`).
 
-## 3b. Errors + Warnings → one `Diagnostics` collection
+## The governing principle for 3b/3c — *value fixed by type ⇒ it's the type*
 
-**The smell isn't "raw list" — it's two lists distinguished by a field that belongs on the element.** `Errors` and `Warnings` are both `List<Info>` on Goal, Step, Action (`goal/this.cs:180-183`, `step/this.cs:103-106`, `action/this.cs:46-49`) — severity encoded by *which list you're in*. That's "same logical thing stored twice."
+If a property's value is determined by the object's type (not its instance), it is not a property — it is the type. `Key`/`Code`/`Message` vary per instance → real fields. `Severity` (error vs warning) and `Category` (application vs runtime) are fixed by *which kind* the thing is → they must be the type, never a flag enum. A flag that re-encodes type identity is the inverted type-switch smell: every element redundantly declares its own kind, and a second derive (or a `switch`) inevitably drifts from it.
 
-Collapse to one `Diagnostics` collection. Element: **`Info` → `Property { Key, Code, Message, Severity }`** (rename + `Code` field + `Severity`).
-- `Severity` is an enum (`Error` / `Warning`), stamped by the construction verb.
-- `Code` is the diagnostic code (PLNG001-style) — distinct from severity.
-- *(Open flag: `Property` collides conceptually with `Data.Properties`. Compiles — different namespace — but a reader will wonder. Confirm the name.)*
+**Proof this is real, not theoretical — `ErrorCategory` today:** the name is noun+noun, owner-prefixed (`Error`Category, in `app.error`) — the flashing sign. 8 error types each `override Category => ErrorCategory.X` restating what their type already says; the base *derives* it from `StatusCode < 500` (second source of truth → drift); **zero logic reads it** — only 2 serializers stringify it (`IError.Wire.cs:47`, `error/serializer/Default.cs:31`). It is pure ceremony re-encoding type identity. **Delete it** — the enum, the 8 overrides, the base derive. The wire already carries the `[type]`; if "developer-caused vs system" is ever needed it's a virtual `bool` on the type, computed once — but nothing reads it, so YAGNI.
 
-**The cross-file `.Add` fix — domain verbs on the collection.** Today the builder reaches in and news up the element:
+## 3b. Errors + Warnings → one `diagnostic` family (severity is the type, not a field)
+
+**The smell isn't "raw list" — it's two lists distinguished by what should be the element's type.** `Errors` and `Warnings` are both `List<Info>` on Goal, Step, Action (`goal/this.cs:180-183`, `step/this.cs:103-106`, `action/this.cs:46-49`) — severity encoded by *which list you're in*. That's "same logical thing stored twice," and the fix is NOT to add a `Severity` enum (that would rebirth the `ErrorCategory` mistake — see the principle above).
+
+The family — `Info` → `Diagnostic`, severity carried by the type:
+```
+Diagnostic { Key, Code, Message }          // base — NO Severity field
+  ├─ warning : Diagnostic                   // plain build diagnostic
+  └─ error   : Diagnostic                   // + the rich runtime fields (see 3c)
+```
+- `Code` is the diagnostic code (PLNG001-style); `Key`/`Message` per-instance. No flag fields.
+- One shared collection type `diagnostic.list.@this`, instantiated per owner: `goal.diagnostic` / `step.diagnostic` / `action.diagnostic` (build), `app.diagnostic` (runtime, see 3c).
+- `is error` / `is warning` answers severity — a type test, not a field read. `app.diagnostic.error` selects the `error`-typed members; `.warning` the warnings; `.list` all.
+
+**The cross-file `.Add` fix — domain verbs that name the type they construct.** Today the builder reaches in and news up the element:
 ```csharp
-a.Warnings.Add(new Info { Key = "...", Message = "..." });   // builder knows Property's shape + does the append
+a.Warnings.Add(new Info { Key = "...", Message = "..." });   // builder knows the shape + does the append
 ```
 becomes:
 ```csharp
-a.Diagnostics.Warn(code, message);     // collection owns element construction AND append; .Warn stamps Severity.Warning
-a.Diagnostics.Error(code, message);    // .Error stamps Severity.Error
+a.diagnostic.warn(code, message);     // constructs a `warning`, appends
+a.diagnostic.error(code, message);    // constructs an `error`, appends
 ```
-`Diagnostics : List<Property>` is the collection-as-API (Rule 5 — exposed, not proxied); `.Warn()` / `.Error()` are its **domain operations** — which is what earns it being a type (a named `List<Info>` with no ops would be ceremony; *these ops* justify it). The builder states intent; it never sees `Property`'s shape or calls `.Add`. Only 6 `new Info` sites today (`grep new Info`) — small migration. Reads (`from.Errors.Count > 0` at `step/this.cs:229,235`) become `from.Diagnostics.Any(Severity.Error)` or a `.HasErrors` bool.
+The verb names the type it makes; the collection owns construction + append; the builder states intent and never sees the element shape or calls `.Add`. Only 6 `new Info` sites today — small migration. Reads (`from.Errors.Count > 0` at `step/this.cs:229,235`) become `from.diagnostic.error.list.Any()` (select-by-type) or a `.HasErrors` bool.
 
 Also covers: `data/this.Result.cs:61 Warnings`, `BuildResponse.cs:13-14 Errors/Warnings` — same collapse.
 
-## 3c. Runtime `error` — `app.error` (current) + `app.error.list` (stack)
+## 3c. `error` IS-A `Diagnostic` — `app.diagnostic` / `app.error`
 
-Separate concept from 3b, and keeping them separate IS the fix for the naming collision. Runtime errors (`IError`) already live at `app.error.list` (`error/list/this.cs:41`). Add `app.error` = the current error on the stack (the class decides which — top of trail), mirroring the `app.goal` / `app.goal.list` shape. Entity-level diagnostics are now `Diagnostics` (not "error"), so no collision: `app.error` is unambiguously the runtime error stack.
+The runtime error unifies into the same family: `error : Diagnostic`, carrying the rich runtime fields the base doesn't — `Id, StatusCode, FixSuggestion, HelpfulLinks, CreatedUtc, Exception, ErrorChain, Step, Goal, CallFrames, Format()`. The existing 10 `: Error` subtypes (`ServiceError`, `ValidationError`, `AskError`, …) ride along as `error` subtypes unchanged. `IError` becomes effectively `IDiagnostic` of the error kind.
+
+This makes `app.diagnostic.add(error)` type-check (an error IS-A diagnostic), and resolves the naming collision by unification rather than separation:
+- `app.diagnostic` — the runtime stack (replaces today's `error.list` Trail, `error/list/this.cs:41`). `.add(d)` appends.
+- `app.diagnostic.error` — the current error (class decides — top of trail), typed back to `error`. `app.error` aliases it. `app.error.list` → `app.diagnostic.error.list`.
+
+Reconciliations settled: `Code` (string, base — the rule/diagnostic code) and `StatusCode` (int, error-only — HTTP) stay distinct. `Severity` is **not** added (it's the type). `Category` (`ErrorCategory`) is **deleted** (see the principle).
+
+Cost to call out: this is the heaviest item in Stage 3 — `Error.cs` + `IError` + the 10 subtypes move under the `Diagnostic` family. Worth it for the single family and the deleted ceremony, but it's a real refactor, not a rename.
 
 ---
 
@@ -143,7 +162,7 @@ Verified false positives from the sweep: handlers calling `Context.Events.Regist
 
 1. **Stage 1** (goal-chain singularize) — atomic, internal, ~80 files.
 2. **Stage 2** (settings→setting) — smaller, crosses PLang surface; introduces `setting.list`.
-3. **Stage 3** (Diagnostics + parameter.list + app.error) — the redesign; settle the open flags (Severity field, `Property` name) first.
+3. **Stage 3** (`diagnostic` family + `parameter.list` + `app.error`) — the redesign. Design settled: severity-is-the-type (no enum), `Info`→`Diagnostic`, `error : Diagnostic`, `ErrorCategory` deleted. Heaviest item (Error.cs + IError + 10 subtypes move).
 4. **Stage 4** (annotated documentation) — last, over the moved code.
 
 Pre-1.0: no shims, no flags. Change the shape, fix the callers, update the OBP doc where it's now wrong (3a).
