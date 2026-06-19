@@ -66,15 +66,15 @@ marked.use({
       if (level === 2) {
         sectionCount++;
         const num = String(sectionCount).padStart(2, '0');
-        return `<div style="height:1px;background:#E4E7E4;margin:56px 0 0;"></div><div style="padding:56px 0 0;"><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.16em;text-transform:uppercase;margin-bottom:18px;"><span style="color:#2C6E8C;font-weight:500;">${num}</span><span style="color:#A6AEB4;"> / ${text}</span></div>`;
+        return `<div style="height:1px;background:#E4E7E4;margin:56px 0 0;"></div><div style="padding:56px 0 0;"><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.16em;text-transform:uppercase;margin-bottom:18px;"><span style="color:#2C6E8C;font-weight:500;">${num}</span><span style="color:#A6AEB4;">&nbsp;/</span></div><h2 style="font-size:clamp(26px,3.4vw,33px);line-height:1.22;font-weight:500;letter-spacing:-0.01em;margin:0 0 28px;color:#1A2128;max-width:600px;text-wrap:balance;">${text}</h2>`;
       }
       if (level === 3) {
-        return `<h3 style="font-size:18px;font-weight:500;color:#1A2128;margin:32px 0 10px;letter-spacing:-0.01em;">${text}</h3>`;
+        return `<h3 style="font-size:19px;font-weight:500;color:#1A2128;margin:32px 0 10px;letter-spacing:-0.01em;">${text}</h3>`;
       }
       return `<h${level}>${text}</h${level}>`;
     },
     paragraph(text) {
-      return `<p style="font-size:clamp(17px,2vw,19px);line-height:1.65;color:#525C64;margin:0 0 20px;max-width:600px;text-wrap:pretty;">${text || ''}</p>`;
+      return `<p style="font-size:19px;line-height:1.65;color:#525C64;margin:0 0 20px;max-width:600px;text-wrap:pretty;">${text || ''}</p>`;
     },
     hr() {
       return `<div style="height:1px;background:#E4E7E4;margin:56px 0 0;"></div>`;
