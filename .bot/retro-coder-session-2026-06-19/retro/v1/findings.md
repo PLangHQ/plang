@@ -11,7 +11,8 @@ Session file: `/peer-sessions/coder/projects/-workspace-plang/5af76d61-0fd6-4ee1
 **Trigger:** After delegating test migration to subagents, coder reported that "explicit kind/strict declarations can't be expressed via Make.Param" — treating an agent's assertion as a verified architectural fact.  
 **Ingi's correction:** *"why can that be? I mean, pr files have it, so we should be able to do it"*  
 **Bot's admission:** *"You're right — that rationalization was wrong. `app.type.@this` owns kind+strict. Its ctor is `@this(string name, string? kind = null, bool strict = false)` — nothing about the read path loses them."*  
-**Root cause:** No rule: verify subagent claims against actual source before asserting them.
+**Root cause:** No rule: verify subagent claims against actual source before asserting them.  
+**Doc target:** coder MEMORY.md (Coding Discipline), coder character file
 
 **Applied to:**
 - `coder/MEMORY.md` → *Coding Discipline*
@@ -26,7 +27,8 @@ Session file: `/peer-sessions/coder/projects/-workspace-plang/5af76d61-0fd6-4ee1
 **Trigger:** Coder added `PeekValue()` to variables — a wrapper around `Peek()` — without checking whether `Peek()` already existed.  
 **Ingi's correction:** *"wow, what is PeekValue? we have Peek to get current value, or Value to get value"*  
 **Bot's admission:** *"You're right — `PeekValue` is a redundant verb+noun method. `Peek()` is already the sync door on the Data; I shouldn't wrap it."*  
-**Root cause:** No habit of inspecting existing type surface via LSP before adding a method.
+**Root cause:** No habit of inspecting existing type surface via LSP before adding a method.  
+**Doc target:** coder MEMORY.md (Coding Discipline), coder character file
 
 **Applied to:**
 - `coder/MEMORY.md` → *Coding Discipline*
@@ -42,7 +44,8 @@ Session file: `/peer-sessions/coder/projects/-workspace-plang/5af76d61-0fd6-4ee1
 **Ingi's correction:** *"so are you saying we are leaving code in runtime just for test?"*  
 **Bot's admission:** *"You're right — that's a smell. Production code that exists only to serve tests is exactly backwards; tests should use the same doors production uses."*  
 **Resolution:** `GetValue` moved to `PLang.Tests/Shared/VariablesTestExtensions.cs`.  
-**Root cause:** No rule: if a method has only test callers, it belongs in test extensions, not runtime.
+**Root cause:** No rule: if a method has only test callers, it belongs in test extensions, not runtime.  
+**Doc target:** coder MEMORY.md (Coding Discipline), coder character file
 
 **Applied to:**
 - `coder/MEMORY.md` → *Coding Discipline*
@@ -57,7 +60,8 @@ Session file: `/peer-sessions/coder/projects/-workspace-plang/5af76d61-0fd6-4ee1
 **Trigger:** Early IReader design proposed splitting by format type based on "we use JSON for .pr" — treating current usage as a domain boundary.  
 **Ingi's correction:** *"aren't we mixing pr parser, parsing plang type and regular json, and i don't see why same reader abstraction can't be used for binary?"*  
 **Bot's admission:** *"You're right — I drew a false line. There aren't two axes; there's one `IReader` abstraction with multiple format impls, and I was confusing 'the .pr happens to be JSON' with 'the reader must be JSON.'"*  
-**Root cause:** No OBP-framed rule for asking "why is this split here, does it follow OBP?" when a boundary appears.
+**Root cause:** No OBP-framed rule for asking "why is this split here, does it follow OBP?" when a boundary appears.  
+**Doc target:** coder MEMORY.md (Coding Discipline), coder character file
 
 **Applied to:**
 - `coder/MEMORY.md` → *Coding Discipline*
@@ -72,7 +76,8 @@ Session file: `/peer-sessions/coder/projects/-workspace-plang/5af76d61-0fd6-4ee1
 **Trigger:** Coder added the verb+noun feedback rule to a separate file and put a pointer mid-list in MEMORY.md. Ingi had to point out that MEMORY.md is the loaded index.  
 **Ingi's correction:** *"would it not be more permanent if it was in memory.md"*  
 **Bot's realization:** *"MEMORY.md is the file loaded into context every session, so anything there is always in front of me."*  
-**Root cause:** Coder didn't understand that individual memory files are not auto-loaded; only MEMORY.md is.
+**Root cause:** Coder didn't understand that individual memory files are not auto-loaded; only MEMORY.md is.  
+**Doc target:** coder MEMORY.md (Memory System section), coder character file
 
 **Applied to:**
 - `coder/MEMORY.md` → *Memory System*
@@ -86,7 +91,8 @@ Session file: `/peer-sessions/coder/projects/-workspace-plang/5af76d61-0fd6-4ee1
 **Trigger:** Designed `text.Authored()` as a post-construction stamp, which is the create-then-transform OBP smell.  
 **Ingi's correction:** *"yes, it's cleaner. `text.Authored()` is itself a tiny version of the create-then-transform smell. The reader knows its mode; it should hand the template to the type at construction."*  
 **Bot's admission:** *"Yes — I think you're right, and it's cleaner."*  
-**Root cause:** Didn't apply the allocate-here/transform-there smell check at design time.
+**Root cause:** Didn't apply the allocate-here/transform-there smell check at design time.  
+**Doc target:** coder MEMORY.md (Coding Discipline)
 
 **Applied to:**
 - `coder/MEMORY.md` → *Coding Discipline*
