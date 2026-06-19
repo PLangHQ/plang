@@ -4,6 +4,7 @@ const path = require('path');
 const { marked } = require('marked');
 
 const app = express();
+app.set('strict routing', true);
 const ROOT = path.join(__dirname, '..');
 const PORT = process.env.PORT || 8086;
 
@@ -117,25 +118,22 @@ function renderFile(filePath, urlPath) {
 }
 
 // ── Routes ───────────────────────────────────────────────────────────────────
-app.get('/', (_, res) => res.redirect('/doc/'));
-
-app.get('/doc', (_, res) => res.redirect('/doc/'));
-
-app.get('/doc/*', (req, res) => {
-  let urlPath = req.path.endsWith('/') ? req.path : req.path + '/';
-  const rel = req.path.replace(/^\//, '');           // e.g. "doc/app/goal/"
+function servePage(req, res) {
+  const urlPath = req.path.endsWith('/') ? req.path : req.path + '/';
+  const rel = urlPath.replace(/^\//, '');            // e.g. "doc/app/goal/"
   const candidates = [
-    path.join(ROOT, rel, 'start.md'),                // /doc/app/goal/ → doc/app/goal/start.md
-    path.join(ROOT, rel.replace(/\/$/, '')),          // /doc/app/goal/start.md (direct)
+    path.join(ROOT, rel, 'start.md'),                // doc/app/goal/ → doc/app/goal/start.md
+    path.join(ROOT, rel.replace(/\/$/, '')),          // direct file path
   ];
-
   for (const f of candidates) {
-    if (fs.existsSync(f)) {
-      return res.send(renderFile(f, urlPath));
-    }
+    if (fs.existsSync(f)) return res.send(renderFile(f, urlPath));
   }
-
   res.status(404).send(page('Not found', urlPath, '<h1>Not found</h1>'));
-});
+}
+
+app.get('/', (_, res) => res.redirect('/doc/'));
+app.get('/doc', (_, res) => res.redirect('/doc/'));
+app.get('/doc/', servePage);
+app.get('/doc/*', servePage);
 
 app.listen(PORT, () => console.log(`PLang docs → http://localhost:${PORT}/doc/`));
