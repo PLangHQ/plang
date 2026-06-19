@@ -243,3 +243,109 @@ Read the typed door instead (`await Depth.Value()` / the `Data<number>` accessor
 ## Audit scope (so you know the boundary)
 
 This is the whole population — the smell is contained, not systemic. Across `PLang/app/**`: 6 raw-bag fish sites (all in Case A/B), 2 `is null or @null.@this` sites (`query.cs` + `GoalCall`), 3 peek-cast-or-default sites. Courier value-opening (cache `ILoadable`, `Wire` signature, variable-store `DynamicData`) was checked and is OBP-correct — don't "fix" it.
+
+---
+
+# Part 3 — Convert / cast / ToString (same principle: hold plang values, ask them)
+
+Crawl of `Convert.ToXXX` (25), explicit primitive casts (~60), `ChangeType`/`IConvertible` (27), `ToString()` (240). The conversion surface mirrors the `.Clr` surface: the value-model **core is already disciplined**; the wins are in the **courier/container layers that still hold `object?` or raw CLR**. A, B and D below are one disease — a container holding `object?`/raw-CLR forces coercion or reflection at every read; hold plang values and the read is just "ask the value."
+
+## A — `object?` bags that reimplement coercion (highest value, structural)
+
+Two typed getters coerce with `Convert.ChangeType` *because the bag stores raw `object?`*:
+- `data/Properties.cs:82` — `Properties.Get<T>`: `if (v is T t) return t; return (T)Convert.ChangeType(v, typeof(T))`
+- `config/this.cs:57` — `Config.Get<T>`: same `ChangeType`, plus a hand-rolled enum branch (`Enum.TryParse` / `Enum.ToObject`)
+
+If the bag held plang values (`Data` / `item.@this`), `Get<T>(name)` is one door — `bag[name].As<T>()` / `.Clr<T>()` — culture-correct, and the enum case is what the `choice` type already owns. `Config.Get<T>` is reimplementing `number`/`choice`/`text` conversion by hand. Structural; it ripples to every `Set(string, object?)` site, so do it as its own unit.
+
+## B — `dict.Get("k")?.Peek()?.ToString()` field extraction (fragile, recurring ~8 sites)
+
+`goal/GoalCall.cs:124, :179`; `module/goal/getTypes.cs:168`; `data/this.cs:823`; `module/test/discover.cs:298` — extract a string field by stringifying the peeked value via the universal `ToString()`. This is the failure documented at `GoalCall.cs:114`: a *structured* value's `ToString()` yields `"Dictionary\`2…"` → bogus `/Dictionary…` path. The typed accessor already exists — `dict.Get<T>` (`type/dict/this.cs:176`). Use `nd.Get<text>("name")` (converts/validates) instead of `nd.Get("name")?.Peek()?.ToString()` (blind stringify).
+
+## C — `Convert.ToInt32(plangValue)` (trivial, one site)
+
+`module/list/indexof.cs:19` — `Convert.ToInt32((await key.Value()))`. `key.Value()` is already a `number`; ask it `.ToInt32()`.
+
+## D — reflection-for-Count casts (symptom of raw collections)
+
+`variable/navigator/List.cs:115`, `variable/list/this.cs:434` — `(int)countProp.GetValue(collection)` reflects over a *raw CLR* collection to read `Count`. Vanishes if collections are always plang `list`/`dict` (ask `list.Count`). Don't fix in isolation — fold into the collections-go-plang direction in `clr-plang-boundary.md`; cross-linked here so it isn't lost.
+
+## KEEP — legitimate, do NOT churn
+
+- BCL encoding boundaries: `Convert.ToBase64String` / `ToHexString` / `XmlConvert.ToTimeSpan` (crypto, hashing, ISO8601), `settings/Sqlite.cs:277` `ToInt64(ExecuteScalar())`
+- The value owning its own form: `binary`/`archive`/`duration` `ToString()`, `crypto/type/hash.ToBase64()`
+- The number tower: `type/number/this.Tower.cs`, `this.cs:171-181`, the number JSON/Default serializers — value-model core managing CLR numerics
+- The sanctioned `ChangeType` leaf: `type/catalog/Conversion.cs:486`, `type/number/this.Convert.cs:84`, `type/item/this.cs:343` — already isolated and documented as the one allowed instance
+- Leaf serializers' `ToString`
+
+## Grey zone — `IConvertible` render helpers
+
+`module/ui/code/Fluid.cs:169`, `module/builder/code/Default.cs:759`, `builder/type/Render.cs:113` — `if (v is IConvertible conv) return Convert.ToString(conv, InvariantCulture)`. Render boundaries handling raw primitives; legit today, would collapse to `v.ToString()` if fed plang values. (Fluid is a larger conversation — see Part 4.)
+
+---
+
+# Part 4 — Fluid binds a snapshot, not the live variable store
+
+Different principle, same family: **share the memory, don't snapshot it.** `ui.render` should let a template read the live PLang variable store, not a point-in-time copy made at render start.
+
+## What it does today
+
+The whole variable surface enters Fluid through two eager loops at render start (`module/ui/code/Fluid.cs:120-132`):
+
+```csharp
+foreach (var kvp in action.Context.Variable.GetAll())          // every variable, eagerly
+    fluidContext.SetValue(kvp.Key, FluidValue.Create(await kvp.Value.Value(), options));
+```
+
+`GetAll()` returns live `Data` refs, but the loop **resolves every variable up front** (even unused ones) and wraps each via `FluidValue.Create`, splitting into two regimes:
+
+- **Collections** (`dict`/`list`) → `NativeDictView`/`NativeListView` hold a reference to the live `dict.@this`/`list.@this` and read on demand. Genuinely shared, zero copy. Already right.
+- **Scalars** (`text`/`number`/…) → no converter matches, so they fall through to Fluid's built-in `FluidValue.Create`. Frozen at bind time (held as an `ObjectValue` over the instance, or snapshotted into a `StringValue`/`NumberValue` copy — confirm which by checking Fluid 2.31's `Create` dispatch).
+
+Net: it is **not** a live window into `Context.Variable`. It's a point-in-time projection of the whole set. So (1) every variable is resolved whether used or not; (2) a variable created/reassigned mid-render (via `callGoal`) is invisible — the set was snapshotted; (3) even a collection *reassignment* is invisible, because `set` rebinds to a new instance and the view still points at the old one (PLang never mutates in place).
+
+## The fix — one live read-through scope over the store
+
+Replace the eager loops with a single live `IDictionary<string,object?>` over `Context.Variable` — the exact `NativeDictView` pattern, lifted to the root — so `{{ x }}` resolves `x` against the live store *at the moment it's read*: no eager resolution, no snapshot, scalars and collections both live, mid-render changes visible, zero copy.
+
+### Required store addition (because `Get` is async)
+
+`app.variable.list.@this.Get(name)` is **async** (`ValueTask<Data>`, `variable/list/this.cs:561`) — Fluid's scope/member access is **sync**, so the view can't call it. Add a sync by-name read that returns the stored `Data` without resolution (the store already looks up synchronously — `Contains(name)` at `:652` proves it):
+
+```csharp
+// app/variable/list/this.cs — sync sibling of Get, no resolution
+public data.@this? Peek(string name) => _variables.TryGetValue(name, out var d) ? d : null;
+```
+
+### The view (mirror of NativeDictView, over the store)
+
+```csharp
+private sealed class VariableStoreView(app.variable.list.@this store) : IDictionary<string, object?>
+{
+    public object? this[string key] { get => store.Peek(key)?.Peek(); set => throw new NotSupportedException(); }
+    public bool TryGetValue(string key, out object? value) { var d = store.Peek(key); value = d?.Peek(); return d != null; }
+    public bool ContainsKey(string key) => store.Contains(key);
+    public ICollection<string> Keys => store.GetAll().Select(kv => kv.Key).ToList();
+    public IEnumerator<KeyValuePair<string, object?>> GetEnumerator()
+    { foreach (var kv in store.GetAll()) yield return new(kv.Key, kv.Value.Peek()); }
+    // Count/Values/IsReadOnly + write members throw, same as NativeDictView.
+}
+```
+
+`store.Peek(key)?.Peek()` returns the value's `item.@this`; `NativeCollectionConverter` re-runs on it during rendering, so a `dict` variable still becomes a live `NativeDictView` (nested live, unchanged). Then bind it as Fluid's root instead of the two loops:
+
+```csharp
+// replaces Fluid.cs:120-132 — confirm the exact 2.31 hook (model ctor / scope / identifier resolver)
+var fluidContext = new TemplateContext(new VariableStoreView(action.Context.Variable), options);
+```
+
+The explicit `Parameters` override loop (`:126-132`) stays — it layers per-call params on top (those genuinely are a small, intentional set; `SetValue` them after constructing the context so they shadow the store).
+
+## Two wrinkles to settle
+
+1. **Async references.** `store.Peek(name).Peek()` is sync — fine for already-resolved variables (most of the store at render time), but a lazily-unloaded `file`/`url` reference can't `await` its load inside a sync Fluid read. Decide: a tiny eager pre-pass that resolves *only* the reference-typed vars before rendering, or accept `Peek` semantics (render the reference's own form). Don't re-introduce the eager-resolve-everything loop to dodge this.
+2. **The exact Fluid root hook.** Whether it's `new TemplateContext(model)`, a custom scope, or an identifier resolver in 2.31 — verify the API, don't assume. The views already prove Fluid reads a nested `IDictionary` live; the root-binding mechanism is the one thing to pin.
+
+## While you're in this file — the triplicated formatter
+
+`FormatFormalValue` (`Fluid.cs:154`) is byte-identical to `Default.FormatValue` (`builder/code/Default.cs:752`), and `builder/type/Render.cs:113` carries the same `IConvertible` arm — three copies of "render a value in the catalog's formal syntax," kept in sync by a comment. Collapse to one home: ideally `value.Formal()` on each plang type (text quotes-if-spaced, number its literal, dict/list compact JSON, `%var%` bare), which also retires the three Part 3 grey-zone `Convert.ToString` sites; interim, one shared `Formatter.Formal(object?)`. Gated on the values reaching these sites being plang — until then, the single shared helper is the move.
