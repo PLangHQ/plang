@@ -1,0 +1,12 @@
+{
+  "name": "plang-doc-server",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "marked": "^12.0.0"
+  }
+}
