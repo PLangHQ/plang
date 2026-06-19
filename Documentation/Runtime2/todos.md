@@ -899,6 +899,13 @@ instead of a raw `IDictionary<string,object?>` the consumers then re-read by key
 Kills the build-native-then-flatten round-trip and the stringly-typed property bag
 in one move. Perimeter/infra, low priority — do it as a focused pass, not mid-branch.
 
+**Update (2026-06-10, Ingi, born-typed stage):** ruled with the born-typed store seam
+(`.bot/compare-redesign/coder/stage-proposal-born-typed.md`) — CLI config **stays
+outside Data** (no carve-out; the seam's "no raw CLR in the slot" invariant has no
+exceptions). CommandLineParser keeps its raw shapes until this cleanup lands; the
+cleanup is the moment it lifts at the perimeter (typed option records), not a blocker
+for the born-typed stage.
+
 ## Make Data._type non-null — kill the `if (_type != null)` derive-fork (2026-06-05, Ingi)
 
 `Data.Type` (`app/data/this.cs:341`) lazily derives the type from the value's CLR
@@ -980,3 +987,423 @@ first copy-on-write cut.
 **Sequencing.** Own branch + spec (supersedes the F1 copy on `collections-are-data`). Not urgent
 (low): on `collections-are-data` the F1 copy stays as the interim patch for the most-flagged
 path; the residual `set`-share / dict-in-list leaks ride until C lands.
+
+## Per-path lazy narrowing of a materialized value
+
+**Date:** 2026-06-06 on branch `scalars-as-native`. Raised by Ingi during the
+born-native scalar flip.
+
+**What:** Today, the first touch of a json-backed value materializes the **whole
+tree** in one shot. `read user.json, write to %user%` holds only raw bytes until
+touched (genuinely lazy at the file boundary), but the moment you touch `%user%`
+*in any way* — `%user.name%`, `%user.address.zip%`, even writing `%user%` out —
+the `(object, json)` reader (`PLang/app/type/object/serializer/json.cs`) runs
+`JsonSerializer.Deserialize` + `UnwrapJsonElement`, which recursively walks the
+entire document and wraps every leaf (`name`→`text`, `zip`→`number`, the whole
+`address` subtree). There is no per-*path* laziness: touching `zip` does not
+narrow only the spine down to `zip` and leave the rest un-narrowed `item`.
+
+**Why consider it:** for a large document where a goal reads only one deep field,
+the whole tree is parsed and every leaf allocated a wrapper (~24 B/leaf, see the
+scalars-as-native allocation note). Per-path laziness would materialize only the
+navigated spine, leaving siblings as un-narrowed `item(kind=json)` slices of the
+raw blob until they too are touched.
+
+**Why NOT done in scalars-as-native:** this branch deliberately keeps the
+existing "whole value materializes on first touch" model (which predates it — it
+was already true for `dict`/`list`; the branch only changed the *leaf* from raw
+`int` → `number.@this`). Per-path laziness is a separate, larger change to the
+narrow/materialize machinery, orthogonal to making leaves native.
+
+**Where it would live:** the narrow seam — `Data.Materialize()` /
+`item.Narrow()` (`PLang/app/data/this.cs`, `PLang/app/type/item/this.cs`) and the
+`(object, json)` reader. A per-path design would have `Narrow()` produce a `dict`
+whose property values are themselves raw-backed `Data` (a `_raw` JSON slice +
+`item(kind=json)` type), materializing only when navigated — turning today's one
+eager walk into N lazy ones. Cost: more bookkeeping, holding the raw blob alive
+longer (GC trade-off), and re-parse-per-path unless slices are cached.
+
+**Decision:** Ingi is fine with the 2× allocation for now; logged for later.
+
+## Centralize value-type serialization to IWriter; purge STJ attributes from value/domain classes
+
+**Date:** 2026-06-06 on branch `scalars-as-native`. Raised by Ingi while adding
+bare serialization for the scalar wrappers.
+
+**Context / current state (Option A, what shipped on this branch):** each scalar
+wrapper (`text`/`number`/`bool`/`datetime`/`date`/`time`/`duration`/`null`) and
+each collection (`dict`/`list`, from collections-are-data) carries a per-type
+`[System.Text.Json.Serialization.JsonConverter(typeof(Json))]` attribute + a
+sibling `Json.cs` that does the raw-STJ projection. This is the "raw STJ" path
+(plain `JsonSerializer.Serialize` calls: LLM cache, snapshots, http bodies,
+`dict.Json.Write` recursion) — distinct from the format-agnostic
+`application/plang` wire (`Data.Normalize → IWriter → json.Writer`). Chosen for
+consistency with the already-merged dict/list precedent.
+
+**The problem Ingi flagged:** a value `this.cs` should NOT be aware of any
+concrete serializer. Today they are, two ways:
+  1. the `[JsonConverter(typeof(Json))]` attribute names System.Text.Json, and
+  2. domain/value classes are littered with STJ-specific attributes —
+     `[JsonIgnore]`, `[JsonPropertyName]`, `[JsonConstructor]`, `[JsonConverter]`.
+When a second IWriter ships (protobuf, MsgPack, CBOR), it must NOT have to know
+about `[JsonIgnore]` — that attribute is meaningless to protobuf. Serialization
+discipline (what crosses the wire, what's hidden, property names) must be
+declared in a **PLang-native, format-neutral** vocabulary that every IWriter
+honors uniformly.
+
+**Option B — the target shape:**
+  - **One** `JsonConverterFactory` registered at the `app/data` layer that
+    intercepts ANY `item` during raw STJ and bridges its format-neutral IWriter
+    bare-write onto STJ's `Utf8JsonWriter`. Delete every per-type `Json.cs` +
+    `[JsonConverter]` attribute (scalars AND dict/list, so there's one pattern,
+    not two).
+  - **PLang-native wire attributes** replacing the STJ ones on value/domain
+    classes: a `[WireIgnore]` (or reuse/extend the existing `[Out]`/`[Store]`/
+    `[LlmIgnore]` Tagged filter in `app.channel.serializer.filter`), a
+    PLang-native property-rename, and a PLang-native "construct from wire"
+    marker — so `[JsonIgnore]`/`[JsonPropertyName]`/`[JsonConstructor]` disappear
+    from the value/domain surface. Every IWriter (json, protobuf, …) reads the
+    SAME PLang-native tags; the json IWriter is the only thing that translates
+    them to STJ semantics, at the one bridge point.
+
+**Why not now:** it's a cross-cutting refactor touching every value/domain class
+and the already-merged dict/list; out of scope for locking the scalar wrappers.
+Ingi's decision: ship A on this branch, do B as its own pass.
+
+**Where:** `app/data/` (the factory + Tagged filter), every `app/type/<t>/Json.cs`
+(delete), every value/domain class carrying `[Json*]` attributes (retag).
+
+## Error messages should show the PLang type name, not the CLR GetType().Name
+
+**Date:** 2026-06-06 on branch `scalars-as-native`. Raised by Ingi reviewing the
+collapsed ScalarComparer.
+
+**What:** Many error/diagnostic messages interpolate `value.GetType().Name` (CLR
+name, e.g. `@this`, `Dictionary``2`, `Int64`) where the PLang type name
+(`dict`, `number`, `text`) would read far better for a PLang developer. Example:
+`ScalarComparer.Order` throws `"cannot order {a.GetType().Name} against
+{b.GetType().Name}"` — should say `"cannot order dict against number"`.
+
+**Why not trivially done:** at many of these sites the value is a bare value
+object, not a `Data`, so `a.Type.Name` isn't reachable and there's no Context to
+hit the type registry (`catalog.ResolveName(clrType)`). Two fixes are needed:
+  1. A context-free value→PLang-name helper (the wrappers can expose a static
+     PLang name; the registry maps CLR→name for the rest), OR move the message up
+     to where a `Data`/Context is in scope and use `data.Type.Name`.
+  2. A sweep: grep `GetType().Name`/`GetType().FullName` in error/exception
+     message strings across production C# and convert each to the PLang name.
+     (The collapsed `ScalarComparer` removed the old per-type `Name()` switch that
+     used to do this for the comparer — the systematic replacement should restore
+     PLang-named messages everywhere, not reintroduce a per-site switch.)
+
+**Decision:** logged for a dedicated pass; not folded into scalars-as-native.
+
+## Serialization centralization, part 2: Normalize-on-item (read/walk side)
+
+**Date:** 2026-06-06 on branch `scalars-as-native`. Ingi, extending the
+serialization-centralization todo.
+
+Companion to the IWriter centralization. Two virtuals now belong on `item`:
+- `Write(IWriter)` — **DONE on scalars-as-native**: each leaf renders its own bare
+  wire form; `json.Writer.Value` collapsed its per-scalar `case` list to one
+  `if (value is item leaf && leaf.IsLeaf) leaf.Write(this)`.
+- `Normalize(mode, visited, depth, types)` — **TODO**: make the NormalizeValue
+  type-switch a virtual on `item`. `dict`/`list` override (recurse entries),
+  scalars use the default (return self). Then `NormalizeValue` collapses to
+  `if (value is item iv) return iv.Normalize(...); else <raw-CLR perimeter>`.
+
+**Residual that can't vanish:** raw CLR values from non-PLang code (bare `string`,
+`Dictionary`, `enum`, `byte[]`) are not `item`, so the raw-CLR perimeter arm stays;
+and `path`/`image`/`code` reflect through the shared `[Out]`-filtered NormalizeObject
++ renderer registry, which doesn't cleanly move per-type. Net: one dispatch for all
+items + a perimeter fallback.
+
+**Decision:** land the `where T : item` constraint first (branch goal), then do
+Write+Normalize-on-item as one pass. Folds into [the IWriter-centralization todo above].
+
+## `variable.set` — redundant type when force matches judged value type
+
+**Date:** 2026-06-07 on branch `scalars-as-native`. Ingi, noticing the set.examples
+mapping `variable.set Name([variable] %iso%), Value([duration] PT5M), Type([type]
+{"name":"duration"})`.
+
+The type appears twice: once as the **Value wrapper's own type** (`[duration]` on
+`PT5M`) and once as the **separate `Type` force parameter** (`{name:duration}`). When a
+force (`as duration` / `(duration)`) coerces the value to exactly the type it would be
+judged anyway, the two are identical — redundant. Now that literals are judged by form +
+intent (see the literal-judgement change), a force *usually* lands the value at the same
+type its wrapper already carries, so the `Type` param duplicates the Value's type more
+often than not.
+
+**Investigate:** does the separate `Type` parameter still earn its place? It is only
+meaningfully distinct when the force DISAGREES with the value's natural type — e.g.
+`"2026-01-01" as text` (force text over a date judgement) or `"42" as image/jpg` (a kind
+that isn't derivable from the value). For the agreeing case, the Value wrapper's type is
+the single source and `Type` is noise. Options to weigh: (a) emit `Type` only when it
+differs from the Value wrapper's judged type; (b) drop `Type` entirely and let the force
+flow through the Value wrapper's type (the `as`/`(kind)` just sets the wrapper's type);
+(c) keep both but document the redundancy as deliberate. Touches `variable.set`'s
+`TypeFromWire`/`FromName` reconstruction and the compile teaching.
+
+**Decision:** logged for a dedicated investigation; not changing now.
+
+## 2026-06-11 — Typed-null slot citizen `@null.@this<T>`
+A declined/absent `Data<T>` slot currently holds the untyped `absent.Slot`. A
+typed-null citizen (`@null.@this<T>`) would make the slot say *which* type is
+missing — richer diagnostics for navigation/serialization/error views without
+reading the error object. Orthogonal to the instance-returning `Create` (that
+boundary must stay `T?` — a typed-null can't satisfy a `T` return; can't inherit
+a type param, and the leaf types are sealed). Cost: thread T through every
+absent/present-null construction site; the door returns bare `item` so untyped
+couriers still see `item`. Polish, not a correctness gap — the decline error
+already names the target type. Don't fold into the born-typed slice.
+
+## 2026-06-11 — Remove the raw-container Lift bridge (born-native invariant)
+`data.@this.Lift` currently converts a raw C# `List<object?>`/`Dictionary`/`ArrayList`
+into native `list.@this`/`dict.@this` (via `json.Parse(SerializeToElement(v))`) as a
+TEMPORARY bridge — see the `TODO(remove)` in `PLang/app/data/this.cs` Lift. A raw
+container should never reach a `Data`: container values are born native off the wire.
+The bridge exists because several seams still hand raw containers to `Data`:
+  - LLM result — `OpenAi.Query` → `Data.Ok(resultValue)` (`llm/code/OpenAi.cs:476`)
+  - `Variable.Set(name, rawValue)` (`variable/list/this.cs:253`)
+  - `Diff`/`Normalize` transients — `Data.Ok` of a decomposed raw bag
+    (`data/this.Diff.cs:38` → `this.Normalize.cs`)
+  - `Reconstruct` (`As<T>`) — `Data.Ok` during CLR reconstruction (`this.Reconstruct.cs:44`)
+Fix: make each seam build native, then delete the Lift conversion and restore the
+commented-out throw as the invariant (the throw is kept in place, commented, right
+above the conversion). The throw was verified to fire at exactly these seams + the
+unfaithful C#-composition tests.
+
+### Known regressions from the temporary Lift bridge (restored when bridge is removed)
+The raw-container Lift bridge over-resolves ACTION-TEMPLATE containers: it flattens a
+raw action-list into a uniform native dict/list/text graph, so `StampTemplates` recurses
+and stamps DEFERRED sub-action `%var%` that must stay raw; the door then renders them.
+Two tests regress (green at c026ff245):
+  - `DataWrappedActionList_DoesNotRecurseIntoActions`
+  - `DataWrappedActionList_SubActionParametersRemainRaw`
+The real pipeline keeps action templates as `PrAction` (which the stamp walker doesn't
+recurse), so deferral holds there. Both are fixed for free by the "template born on the
+value from the builder" design (`.bot/compare-redesign/coder/v8/template-ownership-proposal.md`):
+no walker → no over-stamp. Do not chase these separately; they go green when that lands.
+
+## 2026-06-11 — Switch text .ToString() → Clr<string>() across the project
+`Clr<string>()` names the intent explicitly ("I want the CLR string at a .NET edge");
+`text.ToString()` hides it. `text` already implements `Clr(Type)` (`type/text/this.cs:117`),
+so the swap is mechanical. Three sites already converted (variable/set.cs, actor/this.cs,
+type/duration/this.Convert.cs); there are more `.ToString()` reads on `text` instances
+across the project — find them (grep for `.ToString()` where the receiver is a
+`text.@this`) and switch to `Clr<string>()`. Keep `ToString()` only for genuine display
+edges (logs, error messages, interpolation), not for extracting the backing for a .NET call.
+
+## 2026-06-11 — dict/list raw-backing + lazy parse (collection redesign)
+Today dict stores `List<Data>` entries (and list likewise) — eagerly Data-keyed, so
+`Clr` must BUILD the raw `Dictionary`/`List` on demand (the decompose loop in
+`dict.Clr`/`list.Clr`). The original justification (per-entry signature preservation
+through containers) is GONE — signatures don't work that way (Ingi, 2026-06-11). So the
+right design is: the collection's backing IS the raw C# object (`Dictionary<string,object?>`
+/ `List<object?>`), values parsed/typed lazily on access (like `source`). Then `dict.Clr`
+collapses to "return the backing" — no loop, no ClrConvert decompose. Major refactor:
+touches navigation (`%dict.key%`), wire (Normalize/Json), conversion, the generic
+`list<T>`. Overlaps the lazy-Normalize rework — same architect redesign bucket. Works for
+now (the loop is correct on the current Data-keyed design); do not start solo.
+
+## 2026-06-11 — Split type.catalog: LLM vocabulary (plang) vs runtime CLR registry/conversion
+`type/catalog/@this` wears three hats in one class: (1) LLM type VOCABULARY —
+`BuildTypeEntries`, `ValidValues`, the schemas (only needs PLANG types: names +
+teaching, no CLR); (2) name↔System.Type REGISTRY — `Get`/`Clr`/`GetPrimitiveOrMime`
+(CLR-keyed, runtime dispatch); (3) CONVERSION ENGINE — `TryConvert`/`ClrConvert`
+(the .NET-edge bridge every `Clr()` funnels through). Roles 2+3 legitimately need
+CLR (perimeter to .NET); role 1 does not — yet it's CLR-keyed too (`ValidValues`
+takes a `System.Type` to reflect an enum's values for the LLM, when it could key
+by the plang type). Split the display vocabulary (plang-centric) from the runtime
+CLR registry/conversion. Also OBP shape smells to fix in the same pass: Get/verb
+twins (`GetValidValues`+`ValidValues`, `GetBuilderTypeNames`+`BuilderNames`,
+`GetTypeName`+`Name`) and `Build`/`Get`+noun names (`BuildTypeEntries`,
+`GetPrimitiveOrMime`). Architect bucket.
+
+## 2026-06-11 — Data.Load()/LoadValue die with async Write
+`data.Load()` (called by the Json + plang serializers before writing) walks the value
+graph and pre-`LoadAsync`es every lazy reference (file/image/url) ONLY because the STJ
+writer is sync and can't await a load mid-write. Its private `LoadValue` recurses by
+type-switching on dict/list (a courier iteration ladder — left as-is, do NOT polish).
+The async-Write rework (already a tracked stage-9 prerequisite) makes each value load
+itself at write time through its own async Write/door, deleting Load()/LoadValue and
+their dict/list branches entirely. So the data.Load.cs is/as sites are resolved by that
+rework, not a standalone fix.
+
+## 2026-06-12 — error as a first-class plang type
+An error is not a plang value type. `%!error%` is a `DynamicData` whose value is the
+raw C# `IError`, so when an error rides as a *value* it gets wrapped in a `clr` carrier
+(an opaque object to the type system). Any code that needs to recognize "this value is
+an error" must open that carrier — e.g. `throw` re-raise does
+`thrown?.Clr<object>() is IError` (PLang/app/module/error/throw.cs), and navigation
+reads `Message`/`Key`/`Details` off the IError by reflection. That carrier-opening is
+the smell, and it recurs everywhere an error rides as a value.
+
+Fix: add `app.type.error.@this` (an `item`) wrapping the `IError`. Then `%!error%`'s
+value is an `error.@this` (navigation reads its members as a real plang value), and the
+re-raise becomes `if (thrown is error.@this err) return Error(err.Inner);` — the value
+tells us its nature, no `Clr`. Point the `!error` DynamicData (PLang/app/actor/context/
+this.cs:179) and the other error-as-value paths at the new type. Removes the
+`Clr<object>() is IError` leaf-read in throw and the reflection navigation of IError.
+
+## 2026-06-12 — builder broken: cascade of value-layer strays from the fundamentals refactor
+`plang build` of ANY goal was failing. Root causes are value-layer strays from the
+born-typed refactor (NOT source-gen / param-bind):
+
+1. FIXED — `text.Value` (the deleted property) read as a method group in `type.Judge`
+   (PLang/app/type/this.cs:410, `text.@this t => (object)t.Value`). C# infers a natural
+   delegate type, so `t.Value` silently became `Func<data,ValueTask<item>>` and the
+   channel param "builder" judged into `source(Func,…)` → `ChannelNotFound`. Changed to
+   `t.ToString()` (matches the sibling extraction at :370). Net −14 test failures across
+   Data/Modules/Wire/Types — this leak was breaking tests broadly. AUDIT for other stray
+   `text.Value` reads (the property is gone; any `someText.Value` now compiles to a Func
+   silently — the compiler won't catch it).
+
+2. OPEN — typed `%ref%` params don't render. `builder.goals path=%path%` arrives as
+   `clr(Value = text("%path%"))` labeled `path`; `Build.goal:13` then hits
+   `Directory not found: …/os/system/builder/%path%`. `StampedForm` (PLang/app/data/
+   this.cs) only stamps a `%ref%` carrier as a template when its declared type is
+   text/string AND its value is a raw string — but a typed `%ref%` rides as a
+   `clr`/`source` carrier wrapping a `text`, so it's never stamped → never rendered.
+   Pervasive: ANY non-text-typed param with a `%var%` value (path/channel/etc.). The
+   right fix likely intersects with param-bind's "full-match %var% → Variable.Get<T>
+   identity hop" (a reference, not a born-typed carrier) — flag for design. BLOCKS the
+   .test.goal layer until fixed.
+
+## 2026-06-12 — Data.Created/Updated are DateTime, should be DateTimeOffset (plang datetime)
+PLang/app/data/this.cs — `public DateTime Created { get; }` and `Updated` are CLR
+`DateTime` set via `System.DateTime.UtcNow`. Intended shape is `DateTimeOffset` (the
+plang default `datetime` object). Switch both fields + the assignments to
+`DateTimeOffset.UtcNow` (and audit any consumer that reads them as DateTime).
+
+## 2026-06-12 — remove the type converter (Judge) from Data; ctor takes only (name, item)
+Data still does declared-type conversion in its ctor (`new Data(name, value, type)` →
+`Lift` + `type.Judge`) and `Data.Declare` → `type.Judge`. Per the settled design, Data
+must only HOLD an item; the `raw → typed item` step is owned by the type's reader
+(`type.Deserialize`, already built) and happens at the CALL SITE (Wire.cs ReadBody,
+variable.set handler, etc.), then `new Data(name, item)`. The object-taking ctor stays
+as a convenience (lifts raw→natural item) so we avoid migrating ~944 `new Data(name,raw)`
+sites now.
+
+Two gates to finish the removal:
+1. **ctor item-only** = migrate the ~944 `new Data(name, raw)` sites to `data.Ok(raw)` /
+   pass items (production by hand, tests bulk-sed). data.Ok/From lift raw→item; the ctor
+   sticks to `(name, item)`.
+2. **readers apply declared kind/strict** — Judge also does kind/strict/binary/facet
+   reconciliation (text Kinded, image-vs-binary, strict carrier label). Deleting Judge
+   without moving that INTO each type's reader regresses ~11 kind/strict tests
+   (SetAsTextMd, *ImageGifStrict*, Wire/PrParameter kind roundtrip, Data_KindGetter).
+   The work moves onto each type (the type knows its own kind/strict), per OBP.
+
+Then: delete `Judge`, `Declare`→`type.Deserialize`, `As(string)` (replaced by `Value<T>()`,
+delete + its tests), `FromWireShape`/static `action.FromWire` collapse into the Wire path.
+Source-gen binding = the `param-bind` branch (`GetParameter<T>` + `Variable.Get<T>`, bind
+lines, demolish the resolve machinery). Foundation already committed: readers for all types,
+`type.Deserialize`, `path` holds `text`, `Wire`/`FromWireShape` deserialize via reader,
+`Variable.Get<T>` (Data<T>), `Action.GetParameter<T>` (started). See branch `param-bind`.
+
+## 2026-06-12 — remove variable.GetValue(name) (never return a CLR type)
+`app.variable.list.@this.GetValue(name)` returns a raw CLR `object?` — the store
+should never hand back a CLR type; it holds Data and answers Data. Callers that
+genuinely need a .NET-edge value lower through the item's own `Clr<T>()` at the leaf.
+`Variable.Get<T>(name)` now returns `Data<T>` (the typed ask, identity hop); that is
+the door. Migrate `GetValue` callers (app/this.cs, identity/code/Default.cs,
+signing/code/Ed25519.cs, actor/context/this.cs, module/test/run.cs) + the CLR-typed
+`Get<T>` test callers (MemoryStackCloneTests `Get<List<string>>`/`Get<Dictionary>`,
+ExecutorTests `Get<string>`) to the `Data<T>` ask / native collection ops, then delete
+GetValue. Part of the same born-typed completion as the type-converter removal above.
+
+## 2026-06-14 — clr-dissolution follow-ups (after the value-renders-itself commit)
+The "value renders itself" change (writer dispatches `item.Write`; killed the
+IsLeaf-gate + TypedValueNode arm for items; enum→choice in Lift) dissolved two
+clr sources. Remaining, in priority order:
+
+1. **Static renderers are now dead for items.** image/file/code/directory/url +
+   hash each have an instance `Write`; their `serializer/<fmt>.cs` static
+   `Write` is no longer reached for items (only via the TypedValueNode case,
+   which items no longer hit). They still hold a duplicate copy of the render
+   logic. Make them delegate to `value.Write(writer)` (path's pattern) or delete
+   them once *SerializerTests are confirmed to route through the channel, not the
+   static directly. snapshot's instance Write delegates the OTHER way (to its
+   static walk) — fine, single-source, but inconsistent direction; unify later.
+2. **error is the last non-item with a renderer.** A non-item POCO with a
+   renderer nested in a dict still hits the rebox→clr (TypedValueNode can't be a
+   Data value). Real production case: `error` (IError). Make `app.type.error.@this`
+   a real item (already a separate todo above) — then NO non-item has a renderer,
+   TypedValueNode dies entirely, and the writer's TypedValueNode arm + the
+   renderer registry can both go. Test `Normalize_NestedRegisteredValueInsideUnregistered_TagsInner`
+   (pre-existing red) encodes the old non-item-tagging behavior; revisit when error becomes an item.
+3. **Write should be abstract / build-gated.** Today item.Write is virtual with a
+   throwing default. Once actions stop being `:item` (next), make Write abstract
+   for value types — or gate it via the generator (PLNG) for `app/type/**` so a
+   value type missing a Write/Read fails the build, not at runtime.
+4. **Actions should not be `:item`.** Confirmed inert: the catalog discovers
+   types by `@this`-naming (+[PlangType]), not by `:item`; RunAction constrains
+   `ICodeGenerated`, not `item`. Drop `:item` from the 132 action records (via the
+   generator) so `item` = value types only — which unblocks abstract Write (#3).
+
+## 2026-06-14 — clr/TypedValueNode kill: where it stands + the remaining sweep
+DONE this session (committed+pushed on compare-redesign):
+- value-renders-itself: writer dispatches `item.Write`; killed the IsLeaf-gate +
+  TypedValueNode arm FOR ITEMS; enum→choice in Lift. (2 clr sources dissolved.)
+- error IS an item: `Error : item.@this, IError`. error-as-value (%!error%,
+  errors-trail, throw re-raise, snapshot) renders/navigates itself, no wrapper,
+  no clr. Lift returns it as-is (it's an item). Data.Error sidecar unchanged.
+- Result: ZERO clr carriers on the wire across all suites; no production code
+  produces a TypedValueNode; zero regressions; Types 26→13, Runtime 66→57, Wire 32→30.
+
+REMAINING to fully delete TypedValueNode (the class) — a bounded test-surgery sweep:
+- Normalize this.Normalize.cs:214 — drop the `: new TypedValueNode(...)` else
+  (only test-fixture non-item-with-renderer hits it now); make it `return value`.
+- writer.cs — delete the `case app.data.TypedValueNode typed:` arm.
+- delete PLang/app/data/TypedValueNode.cs; clean the doc-comment refs in
+  catalog/this.cs:60 and IWriter.cs:24.
+- TEST surgery (10 files reference TVN): delete TypedValueNodeNormalizeTests.cs
+  (19 refs, tests the deleted mechanism) + the TVN-dispatch methods in
+  IWriterFormatTests.cs (5); the other 8 have 1-3 incidental refs (assert
+  IsTypeOf<TypedValueNode> — now expect the item directly). ANNOUNCE the test
+  deletions before doing them.
+
+THEN (separate, larger):
+- renderer (write) registry `app.type.renderer.@this` can die once Normalize's
+  `Renderers.Has` "renders-self?" check is replaced (every value-item has Write).
+  The static `serializer/<fmt>.cs` Write methods go with it (keep the Read methods
+  — the reader registry still needs them).
+- clr the CLASS only fully dies with "force everything to a real item" (actions
+  not `:item`, all domain types become items) — the big migration.
+
+## 2026-06-14 — retiring the renderer (write) registry — `app/type/renderer/this.cs`
+After TypedValueNode's deletion the registry's WRITE-DISPATCH (`Of`) is dead — a
+value renders itself via `item.Write`. Two jobs remain before the file can go:
+
+1. **Built-in decouple (bounded, do next):** Normalize still calls
+   `types.Renderers.Has(typeName)` as its "this value renders itself, don't
+   reflect it" signal. Move that onto the item — `item.@this` virtual
+   `RendersSelf => false`, overridden `=> true` on the non-leaf self-renderers
+   (path [covers file/http/dir-path], file, url, code, directory, image,
+   snapshot, hash, error). Leaves already pass through via IsLeaf. Then drop the
+   now-dead `renderers` ctor param + `_renderers` field from json/Writer (the
+   only `_renderers` user, the TVN case, is gone) and update its construction
+   sites (Wire.cs:519 + ~10 Wire test files that pass `renderers:`). After this
+   the registry's `Of`/`Has` have no built-in callers.
+2. **Code-load seam (Stage 7, larger):** `ITypeRenderer` + `Loader.cs`
+   (Renderers.Register + the `Renderers.Has` coverage gate at Loader.cs:169) is
+   how a `code.load`ed DLL ships a renderer for its type. Under "renderer =>
+   Write" a runtime type renders via `item.Write` too — retire ITypeRenderer /
+   Register / the Loader gate, then delete `app/type/renderer/this.cs` and the
+   catalog `Renderers` property. The static `serializer/<fmt>.cs` Write methods
+   (dead once nothing discovers them) go too; KEEP their Read methods (the reader
+   registry still needs them).
+
+## 2026-06-15 — DateTime→DateTimeOffset offset policy should be runtime config
+When a C# `System.DateTime` lifts to the `datetime` item (it's backed by
+`DateTimeOffset`), the conversion `new DateTimeOffset(dt)` (`app/type/datetime/this.Convert.cs`)
+applies the **machine-local offset** for a `DateTimeKind.Unspecified`/`Local` value.
+That is nondeterministic across machines — it affects signed-data canonicalization
+(two signers hash different offsets for the same wall-clock DateTime).
+Make the offset policy a **runtime config** so the user decides
+(Unspecified → UTC, vs Unspecified → machine-local). We should pick the better
+**default** when we implement it (UTC is the safer default for reproducible/signed
+data). Context: surfaced during the clr-removal work when `datetime` was given
+ownership of plain `DateTime` (`app/type/datetime/this.Owns.cs`).

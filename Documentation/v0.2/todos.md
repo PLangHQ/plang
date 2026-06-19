@@ -882,3 +882,294 @@ stub, rebuild. Consider pointing at a self-hosted httpbin or a local mock so the
 suite isn't hostage to an external service. Each `[RequiresCapability("network")]`
 on the http actions still auto-tags these as `network`, so `--test={"exclude":
 ["network"]}` remains available as a per-run alternative.
+
+## 2026-06-10 — PLNG003 gate scope: do domain entities convert, or only value types?
+
+**Context:** Stage 7 (compare-redesign) stood up the PLNG003 build gate — a public
+instance member of an `item.@this` subtype returning raw CLR is flagged. The value
+types (path, text, dict, list, file, number…) are converted and green. ~190 warnings
+remain, almost all on DOMAIN entities: `goal.Name`, `identity.PublicKey`,
+`step.Comment`, `StatInfo.Exists`, `LlmMessage.Content`, …
+
+**The open question (Ingi to decide):** are domain entities "values a developer
+navigates" — so their surface must also answer in PLang types (`text`/`@bool`/…) —
+or are they engine objects the gate should exempt by scope rule? Converting is a
+large mechanical diff; exempting is a one-line scope rule in
+`PLang.Generators/Diagnostics/Plng003.cs`. The gate stays at WARNING severity
+either way until the worklist is empty, so this doesn't block anything — but the
+line needs to be deliberate, not accidental.
+
+## 2026-06-10 — Investigate the SealedNames seal (type/catalog/Loader.cs)
+
+**Context (Ingi):** review the sealed built-in list — `identity`, `signature`,
+`signedoperation`, `callback`, `channel`. It guards transport-load-bearing type
+names against substitution by `code.load`-registered DLLs (a DLL claiming the
+name `signature` would substitute the wire body the signing model trusts).
+Investigate: is the list complete (should `path`/`permission`/`goalcall` be on
+it?), is name-sealing the right mechanism vs. sealing by assembly origin, and
+how it interacts with the new ReservedCore property-shadow check beside it.
+
+## 2026-06-10 — Rename TString
+
+**Context (Ingi):** `TString` is the translation carrier (user-facing strings go
+through translation — even ones with no %refs%, like "100% plang"). The name
+doesn't say that; during Stage 9 design it was nearly misappropriated as the
+%ref%-resolution template type precisely because the name is opaque. Rename to
+something that says translation (and keep it distinct from the authored-literal
+resolution type Stage 9 introduces).
+
+## 2026-06-10 — Audit number's IConvertible
+
+**Context (Ingi/Stage 9):** the slice-1 ruling is "no implicit central conversion —
+consumers read typed and the type's own explicit member lowers at the .NET
+boundary." `number` implements IConvertible from before the branch; it is woven
+into the numeric tower and the Convert.ChangeType arm. Audit whether it can be
+removed (replaced by explicit To* members at the remaining call sites) or must
+stay as the one standard-protocol exception; do not add IConvertible to any
+other wrapper meanwhile.
+
+## 2026-06-11 — `context.Ok(...)` context-stamping result factory (born-typed)
+Idea (Ingi): a `context.Ok(value)` / `context.Fail(error)` on `actor.context.@this`
+that returns `Data.Ok(...)` with Context already wired. Lets result-producing
+handlers mint a fully-contexted Data in one call instead of static `Data.Ok` +
+later stamping — the path to making `Data._context` non-nullable BY CONSTRUCTION
+(today it's effectively non-null only at read-time via "context rides the value").
+Deferred: the static `Data.Ok/FromError/Null/...` factories are called in hundreds
+of places; flipping them to require context is its own pass. Do when the value
+model settles. See `.bot/compare-redesign/coder/v8/slice2b-state.md`.
+
+## 2026-06-12 — error as a first-class plang type
+An error is not a plang value type. `%!error%` is a `DynamicData` whose value is the
+raw C# `IError`, so when an error rides as a *value* it gets wrapped in a `clr` carrier
+(opaque to the type system). Any code that needs to recognize "this value is an error"
+must open that carrier — e.g. `throw` re-raise does `thrown?.Clr<object>() is IError`
+(PLang/app/module/error/throw.cs), and navigation reads `Message`/`Key`/`Details` off
+the IError by reflection. That carrier-opening is the smell, and it recurs everywhere
+an error rides as a value.
+
+Fix: add `app.type.error.@this` (an `item`) wrapping the `IError`. Then `%!error%`'s
+value is an `error.@this` (navigation reads its members as a real plang value), and the
+re-raise becomes `if (thrown is error.@this err) return Error(err.Inner);` — the value
+tells us its nature, no `Clr`. Point the `!error` DynamicData (PLang/app/actor/context/
+this.cs:179) and the other error-as-value paths at the new type.
+
+## 2026-06-14 — Test-suite speed: stdin-blocking test + teardown segfault (before closing compare-redesign)
+- A test blocks on **stdin** (a stream/ask channel test reading input that never
+  arrives) and hangs the WHOLE suite forever — this was the "5-minute Wire hang".
+  Worked around in `dev.sh` with a whole-suite `--timeout` net (15s) + parallel
+  suite execution (~25s full gate instead of 5+ min). REAL FIX: give that test a
+  per-test `[Timeout]` (or stub stdin) so it fails fast; then the `--timeout` net
+  can drop. Candidates: `Wire/App/ChannelsTests/Stage2_StreamChannelTests`,
+  `Wire/App/CallbackTests/OutputAskRoutingTests`, `SnapshotResumeTests`.
+- The test runners **segfault at teardown** AFTER printing results (intermittent),
+  which sometimes eats the summary line so a green suite reads as "NO SUMMARY".
+  Cosmetic for now (re-run prints it); worth rooting out before close.
+
+## 2026-06-14 — FromWireShape is a parallel wire reader (OBP smell, before close)
+`data.@this.FromWireShape` (+ WireSlot / IsWireShape / TypeFromWire) reconstructs
+a Data from an ALREADY-PARSED dict by reaching into "value"/"type" keys by hand —
+a SECOND implementation of what Wire.ReadBody does from bytes (and what json.Parse
+does for a marked JsonElement). It exists because the .pr loader parses to native
+dicts first, then hand-rebuilds params (action/this.FromWire.cs:31) instead of
+deserializing through the Wire converter. REAL FIX: load .pr as Deserialize<Goal>
+(params born as Data via Wire), then FromWireShape + the WireSlot/IsWireShape/
+TypeFromWire helpers all delete. Ingi: "a Data should only be reconstructed in one
+place, never by reaching into its slots by string key."
+
+## 2026-06-14 — Construction builds EAGERLY; defer to Value() (the real Judge-killer)
+The Data (name,value,type) ctor / Data.Ok(value,type) build the typed value
+EAGERLY at construction (Lift+Build/Judge). The model is store-raw / type-on-read.
+The expensive cases ARE lazy (file/url=source, dict/list=type-on-read, Stage 11) —
+only cheap already-in-hand C# values build now (deferring a constant buys nothing),
+so it's a purity deviation, not a cost. BUT it's why Judge can't be deleted: the
+no-context construction is pervasive (screamer: variable 99, text 71, hash 50,
+identity 40, … 50+ types) and Build needs context (catalog) it doesn't have.
+REAL FIX: don't build at construction — store raw value + declared type, build at
+the FIRST Value() read where the Data has been wired into an actor and ALWAYS has
+context. Then the no-context ctor case disappears, Build is universal, and Judge +
+its Resolve branch delete. This is the lazy-source / born-typed-deferred refactor —
+its own run, not a tail.
+
+## 2026-06-15 — rename item `Write(IWriter)` → `Output(IWriter)`
+The serialization method `item.@this.Write(global::app.channel.serializer.IWriter)`
+should be renamed `Output(IWriter)` to mark it as the I/O-layer output path. This
+frees the verb `Write` for the child-set introduced on the value model
+(`item.@this.Write(string key, object? value)` — a dict writes its key, a list its
+index; see `Variables.Set` dot-path). Today the two `Write` overloads coexist (output
+vs child-set) — same verb, two meanings. After the rename: `Output` = serialize to a
+wire writer, `Write` = set a child slot. Touches every `item` subtype that overrides
+`Write(IWriter)` (number/text/dict/list/binary/archive/clr/…) and the serializer
+dispatch.
+
+## 2026-06-15 — type-owned navigation: move Navigate onto items, delete the navigator subsystem
+Write is now type-owned (`item.@this.Write(key, value)`; dict writes its key, list its
+index; `Variables.Set` calls it directly). Do the same for READ: move `Navigate(key)`
+onto the value types (`dict.@this`, `list.@this`, …), then DELETE the whole external
+navigator subsystem:
+- `INavigator` + `app/variable/navigator/{Dictionary,List,Object}.cs` (per-type logic
+  that belongs on the type)
+- `ValueNavigators` (static duplicate of the registry — OBP smell #3, "same set stored
+  twice")
+- `app.Navigator` (`navigator/list/@this`) the instance registry
+The reflection `Object` navigator is the clr fallback — it dies with clr removal (only
+`:item` types exist). Read dispatch (`data/this.Navigation.cs` `GetChildValue`) then
+asks the item directly: `item.Navigate(key)`. Risky/hot path — own run.
+
+Also pending in this arc: the remaining `Set_DotPath_*` tests still feed raw CLR
+fixtures (`TestPerson`, raw `Dictionary`, `List<TestPerson>`) that get clr-wrapped and
+exercise the reflection fallback / "convert-to-dictionary" (a clr-only premise). Rewrite
+the native-equivalent ones to native `dict`/`list` (round-trip via Get), and retire the
+clr-conversion ones with clr removal.
+
+## 2026-06-15 — pure-lazy parameter resolution (source-gen refactor; delete AsCanonical)
+Today the generator resolves action parameters EAGERLY at dispatch
+(`Emission/Property/Data/this.cs` `EmitDispatchResolve` → `__ResolveParameters`,
+awaited by ExecuteAsync before Run): it runs `__ResolveData(name).Value<T>()` /
+`.AsCanonical(Context)` and lands the result in a backing field. That eager
+dispatch-resolve is the premature resolution that stamps/resolves NESTED action
+params before their sub-action runs (the failing DataWrappedActionList tests).
+
+Target (Ingi): NO dispatch-time resolution. The property hands back the raw,
+context-bound parameter `Data`; resolution happens only when the handler does
+`await XXX.Value()` inside Run(). Roughly:
+    public partial Data<T> XXX => __GetParameter("xxx");
+This DELETES: the backing field + set-flag, EmitDispatchResolve,
+`__ResolveParameters`, and `Data.AsCanonical` (the dispatch resolver — no rename,
+it just goes away). It naturally keeps nested-action params raw (`%x%`) until
+their sub-action runs.
+
+Four concerns the dispatch-resolve currently owns must move to lazy `.Value()`
+time (or be re-homed):
+1. Error timing — a bad/missing `%var%` surfaces BEFORE Run today
+   (`__resolutionError`); pure-lazy moves it to the handler's `.Value()` call.
+2. `[IsNotNull]` / `IRawNameResolvable` guards (pre-Run checks today;
+   IsNotNullProp test expects "ValueRequired", currently "CreateDeclined").
+3. `[Default]` on absent/null-resolving slots.
+4. Typed `Value<T>` conversion + the error snapshot (`__SnapshotParams` /
+   EmitSnapshotEntry; SnapshotOnError_Sensitive test).
+
+Changes resolution-error behavior for EVERY action — high value, own focused run.
+Tests [Skip]'d pending this: DataWrappedActionList_DoesNotRecurseIntoActions,
+DataWrappedActionList_SubActionParametersRemainRaw, FullVarMatch_MissingVariable_
+ReturnsErrorOrNotFound, IsNotNullProp_NullValue_RejectedWithError,
+SnapshotOnError_SensitiveProperty_NullPrValue_StaysNull.
+
+## 2026-06-15 — unify the byte[] type name: "bytes" vs "binary"
+byte[] has two PLang names: the primitive map (app/type/primitive/this.cs) calls it
+"bytes" (so type.Create("bytes") works), but the binary value type names itself
+"binary" (binary.Mint() → "binary", OwnedClr → "binary"). One CLR type, two names —
+a raw byte[] declared "bytes" and an actual binary.@this value disagree. Unify on one
+(likely "binary", the value type's own name; "bytes" becomes an alias or is dropped).
+Surfaced while removing the source.Peek UTF-8 content-sniff (bytes/binary no longer
+auto-decode to text — a binary value's face stays bytes; decode is the explicit `as text`).
+
+## 2026-06-15 — merge-by-name belongs on list.@this (if needed)
+Deleted Data.Merge — a list operation that lived on Data and lowered to CLR
+List<Data> (OBP smell), with zero production callers (test-only). If merge-by-name
+is needed, add it to the native list type (list.@this), operating on its own Data
+elements (no Lower to CLR) — the type owns its behavior.
+
+## 2026-06-15 — SettingsStore: verify signed reads (+ OBP rewrite)
+The signature-as-layer model makes a Data signed at the application/plang boundary
+and auto-verified on read. SettingsStore (`Sqlite.cs`) serializes grants via the
+plang wire so WRITE signs (using the grant Data's own context), but its serializer
+is context-less (`new plang.@this()`) and `IStore.Load(...)` takes no actor context,
+so READ does NOT auto-verify — an invalid/tampered grant is still returned instead of
+absent. The permission model (Ingi: "sign %answer% → store → read validates, invalid
+→ nothing returned") needs the store's read path to carry an actor context so `verify`
+runs on load. Fold this into the planned OBP rewrite of SettingsStore (per-actor store
+or context-threaded Load). Until then, `permission.TryCover` trusts loaded grants
+without re-verifying (see `actor/permission/this.cs` SECURITY REVIEW comment).
+
+## 2026-06-15 — new-model signing test coverage (replaces deleted old-mechanism tests)
+The signature-as-layer rewrite deleted tests that pinned the removed in-memory
+mechanisms (sign-if-missing wire walk, Data.Signature POCO + SigningOptions, the
+MarkOuterForHash canonicalization carve-out, multi-actor Data.Signature forwarding):
+SigningSerializationTests, RawSignatureDeletionTests, Cut3_SignWireVerifyTests,
+Cut3_MultiActorForwardingTests, CanonicalizationTests, Cut3_SignThenWireThenVerify,
+SignedDataSurvivesVariableSetListTests. The new boundary model is partly covered
+(WireConverterSigningTests rewritten to layer round-trip + tamper-fails;
+SchemaLayerFormatTests for shape + ToSigningBytes determinism). STILL TO ADD:
+multi-actor forwarding under the layer model, store verify-on-read (rides the
+SettingsStore todo), and signed-then-compressed (archive-over-signature) once
+archive becomes a real layer.
+
+## 2026-06-15 — re-cover the Transport [In]/[Out] property filter
+TransportPropertyFilterTests was deleted: it tested app.channel.serializer.filter.Transport
+exclusively via Data.Signature as the [In]/[Out]+[JsonIgnore] example property, which the
+signature-as-layer rewrite removed. The Transport filter (production) still re-includes
+[In]/[Out] JsonIgnore'd properties for application/plang; add a fresh test using a current
+[In] property as the example. Also: RequestActionTests lost its http mutual-auth tests
+(X-Signature header, ServiceIdentity from signed responses) — that feature was removed
+(signing rides the application/plang channel border, not http-module headers).
+
+## 2026-06-15 — compress/hash over the signature layer (round-trip value loss) — INVESTIGATE
+After signing moved to the I/O boundary, serializing a Data within an actor scope wraps
+it in a signature layer. So crypto.Hash's canonicalization and variable.compress both now
+operate over a SIGNED inner payload. Symptom: `Decompress_AfterCompress_PreservesNameAndValue`
+(and the Cut2 sign-then-compress tests) — Decompress round-trips to a NULL inner value
+(the simple sign→serialize→deserialize round-trip works, so it's specific to the
+compress/async-deserialize-of-a-layer path). Skipped with a pointer to this todo
+(CompressFlattenedTests, Cut1_CryptoVerify, FailureMatrix SigningVerify, Cut2_*). The real
+fix rides the archive-as-layer design: archive becomes {@schema:archive, type, value:<inner
+schema bytes>} and the layers compose (archive over signature over data). Until then, verify
+whether async DeserializeAsync peels a signature layer correctly — the value-loss may be a
+genuine bug in that path, not only a shape change.
+
+## 2026-06-16 — add `external` carrier + clone-on-write (deferred; lands when a real external-object need appears)
+
+The `clr` class is being removed (it hard-codes ".NET" into PLang's runtime-independent
+type vocabulary — a Rust runtime has no CLR). Today every value in the runtime is, or
+should be, a real `item.@this`, so no external-object carrier is needed yet. When a host
+module genuinely needs to hand PLang an object PLang has no item for, add it back as
+`app.type.item.external` (NOT `clr`) — the runtime-independent name for "a value whose
+type lives outside PLang's vocabulary."
+
+Settled semantics (Ingi, 2026-06-16) for `external` when it lands:
+- **Behaves identically to every other PLang value: immutable + rebind.** No mutate-in-place.
+- **Clone-on-write navigation.** Read `%x.y%` = reflection get on the live host object.
+  Write `%x.y% = 1` = clone the object (stays its real host type, NOT a dict), reflection-set
+  on the clone, rebind the binding to the clone. The dev's original instance is never
+  mutated; aliases never drift. This keeps immutability AND avoids the expensive
+  clr→dict→reserialize round-trip when handing the object back to a host action.
+  - Nested set (`%x.addr.city% = …`) must **path-copy**: clone every level along the path,
+    not just the root — a shallow clone shares sub-objects, so setting a leaf would mutate
+    the shared original. Standard persistent-structure path-copying.
+  - Clone = shallow `MemberwiseClone` (reachable via reflection), reapplied at each path level.
+  - The set target must be writable (setter / reflection-settable init/field) — else a clear
+    error, not a silent no-op. Genuinely uncloneable handles (Stream, native-state wrappers)
+    are the opaque class you never navigate, so clone-on-write doesn't apply to them.
+- **Identity from the host type**, not a stored declared label (the courier/`_declared`
+  machinery does NOT come back — it died with clr).
+- **The invariant that keeps it honest: no code branches on `is external`.** Every consumer
+  reaches values through the uniform door (`Peek()`/`Clr<T>()`/navigate). `external` needs a
+  concrete name only so the type lattice has a bottom rung; nobody should ever say its name.
+- **Why this over POCO→dict:** dict loses the host type and forces a serialize round-trip
+  on host-action interop ("expensive magic"); clone-on-write keeps the real type and is cheap.
+  Why over reflect-into-live-object: that gives foreign objects mutable reference semantics
+  while PLang values are immutable — an unacceptable behavioral split. Clone-on-write makes
+  them behave the same.
+
+Design record: `.bot/compare-redesign/coder/clr-dissolution-design.md` (DECISION 2026-06-16).
+
+## 2026-06-16 — Test isolation: persisted permission grants pollute `Fixtures/pr/.db`
+HTTP/permission tests (e.g. `HttpPathTests`) call `Permission.Add(..., persist: true)`,
+which writes signed grants to the SettingsStore-backed SQLite dir
+`PLang.Tests/Shared/Fixtures/pr/.db` (untracked, generated). Grants accumulate across
+runs and are NOT cleaned between suites — after enough runs the HTTP/permission tests
+fail en masse with `[ChannelEof] Channel 'input' has no interactive answerer` (the auth
+re-ask), turning a clean ~12-failure Types baseline into ~31. `rm -rf
+PLang.Tests/Shared/Fixtures/pr/.db` restores it. Fix: a per-test/suite teardown that
+clears the permission table (or points the store at a fresh temp dir per run). Cost me
+hours of false "regression" chasing on the host-carrier slice.
+
+## 2026-06-17 — Remove WrapAsTyped re-box (Wire.cs)
+`Wire.Read` produces base `Data`, then re-boxes into `Data<T>` via `WrapAsTyped`
+(reflection-construct + copy guts) whenever a caller asks for the C# generic
+(`Deserialize<Data<T>>` / `GetAll<Data<T>>` / the `DeserializeAsync<T>` channel API).
+Ingi: this is a smell — the reader should yield base `Data` and consumers should use
+`.Value()` (the `type` stamp carries the truth; the `Data<T>` generic isn't needed at
+the read boundary). The permission registry was converted to base `Data` (2026-06-17);
+the remaining typed-read sites (channel `DeserializeAsync<T>`, any `GetAll<Data<T>>`)
+still rely on WrapAsTyped. Removing it = convert every typed-read site to base-Data +
+`.Value()`. Branch-worthy on its own; audit all `Data<T>` deserialization sites first.

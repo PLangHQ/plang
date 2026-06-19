@@ -65,6 +65,22 @@ Fix: the collection becomes its own type with the lock private and `Add(...)` as
 
 **5. Helper that takes a domain object and returns a derived answer.** `ComputeAbsolute(path)`, `CheckPermission(absolute, verb)`, `RenderName(user)` — the domain object owns its own questions. `Helper.X(thing)` almost always wants to be `thing.X()`. The helper is the missing method on the type.
 
+*Worked example — the leaf that decomposes its own operands.* A leaf action may read its own typed value, but it must not chop the value (or its operands) into primitives for a static helper. `math.round` did exactly that:
+
+```csharp
+// WRONG — cracks both carriers open, hands raw values to a static op
+public async Task<data.@this<number>> Run() {
+    var n = number.FromObject(await Value.Value());          // re-lift (the slot should be Data<number>)
+    if (n == null) return ...ValidationError("requires a number");  // re-validate what the typed slot guarantees
+    return number.Round(n, (await Decimals.Value())!);       // static Round(value, decimals); operand decomposed
+}
+
+// RIGHT — type the operand; the number rounds itself; the other operand rides whole
+public async Task<data.@this<number>> Run() => await Value.Round(Decimals);
+```
+
+The whole `math/*` module had this shape (`number.Add(await A.Value(), await B.Value(), policy)` etc.) — every action decomposed both operand carriers and called a static `number.Op(a, b)`. The fix is `await A.Add(B, …)`: the value owns the verb, operands pass as whole `Data` carriers. The tell: you `await X.Value()` an operand only to feed the raw inside to something else. If you opened the box to pass what was inside, pass the box. (This is the value-layer face of `object_pattern_formal.md` Rule #9 and CLAUDE.md smell #8.)
+
 **6. Producer hands back raw; consumers transform identically.** Same property, same suffix/prefix/case-fold/slice at three or more call sites — the discipline belongs on the owner.
 
 *Worked example:* `step.Goal?.Path?.ToString().TrimStart('/')` paired with `test.Path.TrimStart('/')` across `modules/test/run.cs`, `modules/cache/wrap.cs`. The leading slash comes from `.pr` deserialization; fix it once at the producer (`Goal.RelativePath` returning the trimmed form) and both sites collapse. Grep `\.Path\.TrimStart\(`.
@@ -144,7 +160,7 @@ The coverage rule reads as *"if the request needs feature X, the grant must have
 
 **The rules, tightly:**
 
-1. **Folders are singular** — `Permission/`, not `Permissions/`. The doubled type name (`…Permission.Permission`) is the accepted cost.
+1. **Folders are singular** — `Permission/`, not `Permissions/`.
 2. **A concept with N configurable variants is one folder.** Each variant is one file owning its record (sensible defaults) *and* its own `Covers(other)`.
 3. **Variants are always-present, non-nullable properties on the parent `@this`.** Narrowing is a record copy with explicit `false`; never a flag enum with parallel option records, never nullable variants as granted/not-granted signaling.
 4. **Managers compose, they don't implement.**
