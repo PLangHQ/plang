@@ -19,11 +19,17 @@ namespace PLang.Tests.Shared;
 /// </summary>
 public static class Make
 {
-    /// <summary>A step spec — text plus its actions. Indexed when the goal is built.</summary>
-    public readonly record struct StepDef(string Text, global::app.goal.steps.step.actions.action.@this[] Actions);
+    /// <summary>A step spec — text + indent + actions. Indexed when the goal is built.</summary>
+    public readonly record struct StepDef(
+        string Text, int Indent, global::app.goal.steps.step.actions.action.@this[] Actions);
 
     public static StepDef Step(string text, params global::app.goal.steps.step.actions.action.@this[] actions)
-        => new(text, actions);
+        => new(text, 0, actions);
+
+    /// <summary>A nested step — <paramref name="indent"/> &gt; 0 makes it a child of the
+    /// preceding shallower step (orchestration / branch bodies depend on indent).</summary>
+    public static StepDef Step(string text, int indent, params global::app.goal.steps.step.actions.action.@this[] actions)
+        => new(text, indent, actions);
 
     /// <summary>
     /// An action with its parameters. A parameter's <b>type comes from its value</b>
@@ -78,6 +84,7 @@ public static class Make
             goal.Steps.Add(new global::app.goal.steps.step.@this
             {
                 Index = i,
+                Indent = steps[i].Indent,
                 Text = steps[i].Text,
                 Actions = actions,
             });

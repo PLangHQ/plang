@@ -29,7 +29,7 @@ public class OrchestrateBranchCoverageTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/test");
+        _app = TestApp.Create("/test");
     }
 
     [After(Test)]
@@ -68,30 +68,13 @@ public class OrchestrateBranchCoverageTests
         return (coverage, observed);
     }
 
-    private static PrAction IfAction(object? left, string op, object? right) => new()
-    {
-        Module = "condition",
-        ActionName = "if",
-        Parameters = new List<Data>
-        {
-            new("Left", left),
-            new("Operator", op),
-            new("Right", right)
-        }
-    };
+    private static PrAction IfAction(object? left, string op, object? right)
+        => Make.Action("condition", "if", ("Left", left), ("Operator", op), ("Right", right));
 
-    private static PrAction SetAction(string name, object value) => new()
-    {
-        Module = "variable",
-        ActionName = "set",
-        // PrParam stamps the var-name slot (Name) as type:variable — the builder
-        // emits it that way; a bare string Name would decline at run.
-        Parameters = PrParam.List("variable", "set", new Dictionary<string, object?>
-        {
-            ["Name"] = name,
-            ["Value"] = value
-        })
-    };
+    // The var-name slot (Name) is declared type:variable — the builder emits it that
+    // way; a bare string Name would decline at run.
+    private static PrAction SetAction(string name, object value)
+        => Make.Action("variable", "set", Make.Param("Name", name, "variable"), ("Value", value));
 
     // Multi-action orchestrate step where outer if is false and inner elseif is true.
     // Before d05c138d: inner elseif's Step was null, so the coverage subscriber recorded
@@ -102,35 +85,14 @@ public class OrchestrateBranchCoverageTests
     {
         _app.User.Context.Variable.Set("x", 5);
 
-        var orchestrateStep = new Step
-        {
-            Index = 0,
-            Indent = 0,
-            Text = "if outer false elseif inner true",
-            Actions = new StepActions
-            {
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("Orch",
+            Make.Step("if outer false elseif inner true",
                 IfAction("%x%", ">", 100),   // outer — false (5 > 100)
                 SetAction("bodyA", 1),       // body under outer if
                 IfAction("%x%", ">", 0),     // inner — true (5 > 0)
-                SetAction("bodyB", 2)        // body under inner elseif
-            }
-        };
-
-        // Indented sub-step: only reached when DisableChildrenOf leaves it enabled.
-        var subStep = new Step
-        {
-            Index = 1,
-            Indent = 1,
-            Text = "set subran",
-            Actions = new StepActions { SetAction("subran", 1) }
-        };
-
-        var goal = new Goal
-        {
-            Name = "Orch",
-            Path = "/Orch.goal",
-            Steps = new GoalSteps { orchestrateStep, subStep }
-        };
+                SetAction("bodyB", 2)),      // body under inner elseif
+            // Indented sub-step: only reached when DisableChildrenOf leaves it enabled.
+            Make.Step("set subran", 1, SetAction("subran", 1))));
         _app.Goal.Add(goal);
 
         var (coverage, observed) = RegisterCoverageProbe();
@@ -183,26 +145,9 @@ public class OrchestrateBranchCoverageTests
     {
         _app.User.Context.Variable.Set("x", 5);
 
-        var conditionStep = new Step
-        {
-            Index = 0,
-            Indent = 0,
-            Text = "if x > 100",
-            Actions = new StepActions { IfAction("%x%", ">", 100) } // false
-        };
-        var subStep = new Step
-        {
-            Index = 1,
-            Indent = 1,
-            Text = "set subran",
-            Actions = new StepActions { SetAction("subran", 1) }
-        };
-        var goal = new Goal
-        {
-            Name = "SingleIf",
-            Path = "/SingleIf.goal",
-            Steps = new GoalSteps { conditionStep, subStep }
-        };
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("SingleIf",
+            Make.Step("if x > 100", IfAction("%x%", ">", 100)), // false
+            Make.Step("set subran", 1, SetAction("subran", 1))));
         _app.Goal.Add(goal);
 
         await _app.RunGoalAsync(goal, _app.User.Context);
