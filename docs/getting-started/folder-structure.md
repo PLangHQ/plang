@@ -11,13 +11,10 @@ MyApp/
 ├── helpers/
 │   └── Utilities.goal      ← additional goals
 ├── .build/                 ← compiled output (generated)
-│   ├── Start/
-│   │   └── 00. Start.pr
-│   ├── Setup/
-│   │   └── 00. Setup.pr
+│   ├── start.pr
+│   ├── setup.pr
 │   └── helpers/
-│       └── Utilities/
-│           └── 00. Utilities.pr
+│       └── utilities.pr
 └── .db/                    ← PLang databases (if used)
     └── system.sqlite
 ```
@@ -44,7 +41,7 @@ SayHello
 The `.build/` folder mirrors your source structure. Each goal compiles to a `.pr` file:
 
 ```
-Start.goal  →  .build/Start/00. Start.pr
+Start.goal  →  .build/start.pr
 ```
 
 `.pr` files are JSON. They contain the module, action, parameters, and return mappings for each step. The runtime reads these directly — no parsing of `.goal` files at runtime.

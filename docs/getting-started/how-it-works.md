@@ -7,7 +7,7 @@ PLang has two phases: **build** and **run**. The build phase uses an LLM to unde
 When you run `plang build` (or `plang exec` for the first time):
 
 ```
-Start.goal  →  LLM  →  .build/Start/00. Start.pr
+Start.goal  →  LLM  →  .build/start.pr
 ```
 
 1. PLang reads your `.goal` file
@@ -40,7 +40,7 @@ Each step costs $0.002–$0.009 to build. A typical goal with 5-10 steps costs a
 When you run `plang exec`:
 
 ```
-.build/Start/00. Start.pr  →  Runtime  →  Output
+.build/start.pr  →  Runtime  →  Output
 ```
 
 1. The runtime loads the `.pr` file
