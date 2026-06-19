@@ -166,7 +166,18 @@ Surfaces every call site where the caller is reaching into `App.X` to pass it as
 
 **Refinement.** Not every parameter is decomposed. A method that takes data the receiver *cannot* navigate to (a fresh value computed by the caller, an opaque token, an unrelated entity) is correctly parameterized. The smell is specifically *parameter is a child of the receiver* or *parameter is reachable through the receiver's parent chain*.
 
-**Today's count on `PLang/app/`:** ~4 raw hits, 2 real smells.
+**The value-layer face — leaf actions that decompose their operands.** A leaf action may read its own typed `Data<T>` value, but extracting `.Value()` to feed a static/free helper decomposes it. `number.Round(await Value.Value(), await Decimals.Value())`, `number.Add(await A.Value(), await B.Value(), policy)`, `Resize((await A.Value()).Bytes, w, h)` — all crack the carriers and hand raw fields out. The value owns the op: `await Value.Round(Decimals)`, `await A.Add(B)`, `await A.Resize(Width, Height)` — operands ride as whole `Data` carriers.
+
+**Quick screen (value-layer).**
+
+```bash
+grep -rnE "\b[A-Za-z_]+\.(await )?\w+\(await \w+\.Value\(\)" PLang/app/module/ --include='*.cs'
+# plus: a static Type.Op(...) whose args are `await X.Value()` results
+```
+
+The tell: you `await X.Value()` an operand only to pass the raw inside elsewhere. If you opened the box to pass what was inside, pass the box. **Whole `math/*` module is the live example** (`add`/`subtract`/`multiply`/`divide`/`power`/`intdiv`/`round` all decompose).
+
+**Today's count on `PLang/app/`:** ~4 raw hits, 2 real smells (navigate-parameter form); the value-layer form is unmeasured — the `math/*` module alone is ~7 actions.
 
 **Worked examples currently in the cleanup plan:**
 

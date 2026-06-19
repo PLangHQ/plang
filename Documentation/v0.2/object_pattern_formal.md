@@ -310,17 +310,26 @@ public Task<Data> Run() {
     return input;  // and now lies about being a relay
 }
 
-// Correct: declare the type at the leaf, or forward as Data
+// Wrong: a LEAF this time — but it decomposes. It cracks the operand carriers
+// open and hands raw fields to a free function. Reading your own typed slot is
+// fine; chopping it into primitives for a static helper is the smell.
 public Task<Data<image>> Run() {
-    var img = A.Value;                          // typed slot — this *is* the leaf
-    var resized = Resize(img.Bytes, ...);
-    return Task.FromResult(Data<image>.Ok(resized));
+    var img = await A.Value();                  // ok so far — a leaf may read its own value
+    var w = await Width.Value(); var h = await Height.Value();  // SMELL: cracking the other carriers
+    return Data<image>.Ok(Resize(img.Bytes, w, h));            // SMELL: value handed to a free function
 }
+
+// Correct: name the type at the leaf, then the VALUE does the work —
+// operands are passed as whole carriers, never extracted.
+public Task<Data<image>> Run() => await A.Resize(Width, Height);
+//   the image resizes itself; Width/Height ride in as whole Data carriers; returns Data<image>
 ```
+
+A leaf is allowed to read its own typed value — but it must not **decompose** it. The value owns its operations: call the operation on the carrier and pass other operands as whole carriers (`A.Resize(Width, Height)`, `Value.Round(Decimals)`, `A.Add(B)`), never extract `.Value()` and feed raw fields to a free function or a static helper (`Resize(img.Bytes, …)`, `number.Round(n, …)`, `number.Add(a, b, …)`). Decomposing at the call site is the same mistake as Rule #2 (don't decompose an object into parameters) and Rule #4 (keep the reference) — now at the value layer. The tell: a leaf that `await X.Value()`s an operand only to hand the raw inside to something else. If you opened the box to pass what was inside, pass the box.
 
 This is what makes adding a new PLang type cheap. A type registers its routing key (its name), declares its leaf-action surface (`Data<image>` parameter slots on handlers), and declares its leaf-serializer behavior (`IWireWritable` or the equivalent on the value class). Nothing in the courier path changes. The first new type that needs touching variable memory, callstack, or channel routing means the type system has grown a leak.
 
-The rule is a sharpening of Rule #7: don't repackage `Data`, *and* don't open it mid-flight to peek at `Value`. The two failures look different at the call site but they are the same architectural mistake — a courier pretending to be a leaf.
+The rule is a sharpening of Rule #7: don't repackage `Data`, *and* don't open it mid-flight to peek at `Value`, *and* — even at a leaf — don't decompose the value to operate on it. The failures look different at the call site but they are the same architectural mistake: data pulled out of the object that owns it.
 
 ## Why This Matters for LLMs
 
