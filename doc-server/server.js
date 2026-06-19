@@ -105,31 +105,32 @@ function resolveIncludes(md) {
   });
 }
 
-// ── Build sidebar nav from doc/ folder tree ──────────────────────────────────
-function navTree(dir, urlBase) {
+// ── Build nav from root-level folders that have a start.md ──────────────────
+const SKIP = new Set(['doc-server', 'doc', '.git', '.bot', 'PLang', 'PLang.Tests', 'PLang.Generators', 'PlangConsole', 'Tests', 'os', 'node_modules', 'Documentation', 'characters', 'learnings', 'diary', 'sessions']);
+
+function rootNav() {
   const items = [];
-  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (!e.isDirectory()) continue;
-    const child = path.join(dir, e.name);
-    if (!fs.existsSync(path.join(child, 'start.md'))) continue;
-    items.push({ label: e.name, href: `${urlBase}/${e.name}/`, children: navTree(child, `${urlBase}/${e.name}`) });
+  for (const e of fs.readdirSync(ROOT, { withFileTypes: true })) {
+    if (!e.isDirectory() || SKIP.has(e.name) || e.name.startsWith('.')) continue;
+    if (!fs.existsSync(path.join(ROOT, e.name, 'start.md'))) continue;
+    items.push({ label: e.name, href: `/${e.name}/` });
   }
   return items;
 }
 
 function navHtml(items, current) {
   if (!items.length) return '';
-  return items.map(({ label, href, children }) => {
+  return items.map(({ label, href }) => {
     const active = current.startsWith(href);
     const color = active ? '#2C6E8C' : '#5C666E';
-    return `<a href="${href}" style="display:block;font-family:'IBM Plex Mono',monospace;font-size:13px;color:${color};text-decoration:none;padding:3px 0;">${label}</a>${navHtml(children, current)}`;
+    return `<a href="${href}" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:${color};text-decoration:none;">${label}</a>`;
   }).join('');
 }
 
 // ── HTML shell ───────────────────────────────────────────────────────────────
 function page(currentUrl, bodyHtml) {
-  sectionCount = 0; // reset for each page render
-  const nav = navTree(path.join(ROOT, 'doc'), '/doc');
+  sectionCount = 0;
+  const nav = rootNav();
   const isHome = currentUrl === '/';
   return `<!DOCTYPE html>
 <html lang="en">
@@ -228,5 +229,10 @@ app.get('/', (req, res) => res.send(renderFile(path.join(ROOT, 'start.md'), '/')
 app.get('/doc', (_, res) => res.redirect('/doc/'));
 app.get('/doc/', servePage);
 app.get('/doc/*', servePage);
+
+// General: any top-level folder with a start.md
+app.get('/:segment', (req, res) => res.redirect('/' + req.params.segment + '/'));
+app.get('/:segment/', servePage);
+app.get('/:segment/*', servePage);
 
 app.listen(PORT, () => console.log(`PLang docs → http://localhost:${PORT}/`));
