@@ -117,7 +117,30 @@ to the natural type instead of preserving `{object}`. An unexercised path that a
 diverges is a latent bug, not a feature — **reverted**. The eager `Parse` path keeps
 polymorphic values correct. Revisit only alongside template-stamping-at-read.
 
-## The deletion phase — a real sub-epic, NOT rushed (recommend a focused session)
+## FINAL DECISION (with Ingi) — two read modes, the IReader work is complete
+We will **not** delete the `object raw` registry. Implementing the content path
+revealed it is the *wrong* thing to unify: content decode is a **whole-payload**
+operation (csv→table parses the whole string, image→base64 wraps the whole bytes,
+json-string→dict parses the whole payload) — the raw is already materialised, there
+is no token stream to pull. Forcing it through `IReader` means wrapping the raw in
+a degenerate reader whose `String()`/`Bytes()` hand the same raw straight back —
+indirection that returns its own input, with no DOM avoided and no streaming.
+
+So the honest end state is **two read modes, both load-bearing**:
+- **token-stream pull** (`IReader` / `ITypeReader`, `Readers.Typed`) — the `.pr`
+  wire structural read, where streaming off bytes kills the JsonElement DOM. DONE
+  for every common value (scalars + containers).
+- **whole-payload content decode** (`Read(object raw)`, `Readers.Of`) — `file.read`'s
+  path: the channel stamps `{type,kind}` from mime → `item.source` → `source.Value`
+  → the type's `Read(object raw)` (csv→table, json→dict, bytes→image). The raw is
+  in hand; the type decodes it whole. This is the *right* shape, not transitional debt.
+
+`file.read` materialises through `source.Value` (mode 2) and already works — it never
+needed to be an `IReader`. **The IReader read-path project is complete.** The
+polymorphic reader was reverted (nothing feeds it). Nothing further to delete:
+the deferred-capture machinery in Wire feeds mode 2 (content), so it stays.
+
+## (obsolete — superseded by the FINAL DECISION above) the deletion phase
 Deleting the `object raw` registry (`Readers.Of`) requires, in order:
 1. **Two new `IReader` impls** the content path needs:
    - a **content reader** over a held `string`/`byte[]` (degenerate — `String()`/

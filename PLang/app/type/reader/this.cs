@@ -39,9 +39,15 @@ public sealed class @this
     private readonly ConcurrentDictionary<(string Type, string Kind), Read> _generated = new();
     private readonly ConcurrentDictionary<(string Type, string Kind), Read> _runtime = new();
 
-    // The typed (ITypeReader) registry — the format-agnostic pull readers that
-    // replace the object-raw delegates above. During the migration both coexist:
-    // a type with a typed reader is read through it; the rest stay on Of(...).
+    // The typed (ITypeReader) registry — the two read modes live side by side, and
+    // both are load-bearing:
+    //   Typed(...) — a token-stream pull off a tokenized source (the .pr wire read,
+    //     json.Reader): the type pulls its value token-by-token, no DOM.
+    //   Of(...)    — a whole-payload content decode (Default.Read / csv / image):
+    //     the raw string/bytes is already in hand and the type decodes it whole
+    //     (CSV parse, base64, JSON-of-a-string). A token reader buys nothing here.
+    // A type may answer both — its wire value streams via Typed, its content form
+    // (a file's bytes materialising through source.Value) decodes via Of.
     private readonly ConcurrentDictionary<(string Type, string Kind), ITypeReader> _generatedTyped = new();
     private readonly ConcurrentDictionary<(string Type, string Kind), ITypeReader> _runtimeTyped = new();
 
@@ -153,8 +159,9 @@ public sealed class @this
             var typeName = head[(lastDot + 1)..].TrimStart('@');
 
             // The typed (ITypeReader) pull reader — an instance class whose own Kind
-            // names the (type, kind) variant. Wins over the static object-raw reader
-            // during the migration; once every reader is typed the static branch goes.
+            // names the (type, kind) variant. Registered into the token-stream table;
+            // the static Default.Read branch below registers the whole-payload decode.
+            // A type may ship both (its wire read and its content decode).
             if (!type.IsAbstract && typeof(ITypeReader).IsAssignableFrom(type)
                 && type.GetConstructor(System.Type.EmptyTypes) is { } ctor)
             {
