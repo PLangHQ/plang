@@ -100,6 +100,53 @@
         "health": "SC1-SC6 fully applied. Coder memory and character updated. Docs memory updated with SC5.",
         "notes": "All changes are in the PLang repo on this branch — Ingi reviews via git diff before merging."
       }
+    },
+    {
+      "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+      "bot": "retro",
+      "timestamp_start": "2026-06-19T22:00:00Z",
+      "timestamp_end": "2026-06-19T22:30:00Z",
+      "intent": "Mine two earlier coder sessions from 2026-06-18 (93456b3b, efe53299) for new teachable moments not already in SC1-SC8",
+      "before": {
+        "assumptions": "SC1-SC8 already applied. Two sessions not yet analyzed: 93456b3b (2608 lines, 15:15 UTC) and efe53299 (920 lines, 13:24 UTC).",
+        "risk": "Duplicate risk if lessons overlap with SC1-SC8 — handled by explicit comparison."
+      },
+      "plan": ".bot/retro-coder-session-2026-06-19/retro/v2/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/retro-coder-session-2026-06-19/retro/v2/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plan written before implementation"
+        },
+        {
+          "paths": [".bot/retro-coder-session-2026-06-19/retro/v2/findings.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "3 new findings (F1-F3 → SC9-SC11). 5 findings dropped as duplicates or too specific."
+        },
+        {
+          "paths": ["characters/coder/memory/MEMORY.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added SC9, SC10, SC11 bullets to Coder discipline section."
+        },
+        {
+          "paths": [".bot/retro-coder-session-2026-06-19/retro/v2/changes.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Changelog of v2 edits."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "SC9-SC11 applied to coder MEMORY.md. Retro MEMORY.md updated.",
+        "notes": "Sessions 93456b3b and efe53299 fully mined."
+      }
     }
   ]
 }
