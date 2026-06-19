@@ -225,12 +225,16 @@ public sealed class @this : ISerializer
     {
         try
         {
-            if (string.IsNullOrEmpty(s) || s == "null")
-                return global::app.data.@this.Ok(null);
+            // Empty input has no Data to read. A JSON `null` payload deserializes to
+            // a C# null — handled on the result below, not by string-matching the raw
+            // bytes (which would also mis-fire on whitespace and read as if the text
+            // "null" were special).
+            if (string.IsNullOrEmpty(s)) return global::app.data.@this.Ok(null);
             // The persisted value IS a Data — return the reconstruction itself,
             // never an Ok envelope around it (a bare Data inside a Data is the
             // double-wrap the store seam rejects).
-            return JsonSerializer.Deserialize<global::app.data.@this>(s, _store)!;
+            return JsonSerializer.Deserialize<global::app.data.@this>(s, _store)
+                ?? global::app.data.@this.Ok(null);
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {
@@ -250,8 +254,9 @@ public sealed class @this : ISerializer
     {
         try
         {
-            if (string.IsNullOrEmpty(s) || s == "null") return (default, null);
-            return (JsonSerializer.Deserialize<T>(s, _store)!, null);
+            if (string.IsNullOrEmpty(s)) return (default, null);
+            // A JSON `null` payload deserializes to null — a valid empty result.
+            return (JsonSerializer.Deserialize<T>(s, _store), null);
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {
@@ -264,9 +269,10 @@ public sealed class @this : ISerializer
     {
         try
         {
-            if (string.IsNullOrEmpty(s) || s == "null") return global::app.data.@this.Ok();
+            if (string.IsNullOrEmpty(s)) return global::app.data.@this.Ok();
             // The wire IS a Data — return the reconstruction itself, never an
-            // Ok envelope around it (the bare-Data nesting the seam rejects).
+            // Ok envelope around it (the bare-Data nesting the seam rejects). A JSON
+            // `null` payload deserializes to null and falls back to an empty Ok.
             return JsonSerializer.Deserialize<global::app.data.@this>(s, _inbound) ?? global::app.data.@this.Ok();
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
@@ -280,7 +286,8 @@ public sealed class @this : ISerializer
     {
         try
         {
-            if (string.IsNullOrEmpty(s) || s == "null") return global::app.data.@this<T>.Ok(default!);
+            if (string.IsNullOrEmpty(s)) return global::app.data.@this<T>.Ok(default!);
+            // A JSON `null` payload deserializes to null → an empty typed Data.
             return global::app.data.@this<T>.Ok(JsonSerializer.Deserialize<T>(s, _inbound)!);
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
