@@ -52,7 +52,34 @@ Gap (covered by the still-present seam): a `%ref%` nested inside a *structured* 
 (object/array) goes through `ParseRaw → Parse` which doesn't thread the mode yet —
 thread it when removing the seam.
 
-## Remaining increments (to reach the OBP win — deleting `StampedForm`)
+## Mutation finding (2026-06-19) — the seam is far more load-bearing than the doc implied
+Disabling `Data.Authored()` (the whole post-parse stamp) → **70+ failures** across every
+suite (Modules 13, Types 3, Data 30, Generator 20, Runtime 4, Wire crashed). So
+read-stamping (incr 1+2) covers only a NARROW slice — a value read as a **text token**
+via the typed reader. The bulk of authored stamping still flows through `StampedForm`:
+- **`.pr` params reload as `source`/`clr` carriers**, not as text. `StampedForm`'s
+  `source`/`clr` arms (`this.cs:512-532`) collapse a templated carrier to a stamped
+  text. Born-with-template doesn't reach these — a deferred/carrier value materialises
+  LATER, outside the read-mode context, so the mode must be **captured on the
+  source/clr at read and applied at materialise** (new plumbing, not a token stamp).
+- **Action-load paths beyond `Deserialize<goal>`** — compile-response rebuild,
+  `FromWire`, `GoalCall` (catalog deserialize) — don't run through the `_authored`
+  Wire at all, so their params only stamp via the seam.
+
+**Consequence:** deleting `StampedForm` is NOT remaining "cleanup" — it's a substantial
+follow-up: born-stamped at the source/clr carrier materialisation (mode captured at
+read) + routing every authored-action-load path through the authored read. It couples
+with the format-agnostic `ReadData<TReader>` work too. The seam stays as the universal
+stamper for now; read-stamping is the first correct slice (the security + live-bug fixes).
+
+## What IS finished and correct (the landed value)
+- Born-with-template mechanism: the reader hands the type its mode; the type decides
+  (incr 1). Security fix — runtime-ingest `%ref%` never stamps.
+- Container slots read-stamp (incr 2). Live-bug fix — the stamp rides the slot.
+- Both proven; full suite green WITH the seam in place (the seam + read-stamp coexist
+  idempotently).
+
+## Remaining (the larger follow-up — to reach the OBP win of deleting `StampedForm`)
 Removing the post-parse walk needs **every** authored read to stamp at read first:
 2. **Path 2 (GoalCall)** — route the catalog goal-deserialize through the authored
    Wire so a sub-goal's `%ref%` params read-stamp (today they seam-stamp).
