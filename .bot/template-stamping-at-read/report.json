@@ -158,6 +158,70 @@
         "health": "red",
         "notes": "VERDICT: NEEDS-TESTS. C# suites run green (4151/0, clean rebuild, git clean) and production behavior is correct, but the suite is not a trustworthy gate: F1 (HIGH) is a mutation-proven hole on the headline born-typed-variable rule (neuter the decline -> 3433 tests stay green). By strict-red, a confirmed coverage hole on headline behavior is not PASS. RESOLUTION READY: tester wrote+ran the 14 missing tests (4 F1 + 10 F2), confirmed they pass on real code AND that the F1 decline tests FAIL under the neuter mutation (real guards). Code handed off in tester/v1/tests-for-coder.md. CODER ACTION: add both files (BornTypedDeclineTests.cs, TemporalOperatorTests.cs) to the Modules suite, rebuild -> flips to PASS. Tester doesn't commit source. PLang suite out of scope (known-broken): aborts at runner bootstrap on stale os/system/.build/test.pr (type:string Name) — positive evidence F1's rule fires; 628 committed .pr carry old shape, need plang build sweep. Next bot: coder."
       }
+    },
+    {
+      "id": "e5f6a7b8-c9d0-41e2-a3f4-b5c6d7e8f9a0",
+      "bot": "security",
+      "timestamp_start": "2026-06-19T19:00:00Z",
+      "timestamp_end": "2026-06-19T19:50:00Z",
+      "intent": "Security review of template-stamping-at-read. Risk-prioritised over the 361-file delta: signing/Ed25519 churn (signature-as-layer integration + auto-verify-on-read), Wire.cs schema dispatch, template-stamping seam reachability from wire, Assembly.LoadFrom centralisation, semgrep baseline delta.",
+      "before": {
+        "assumptions": "Tester PASS after coder F1/F2 follow-ups. 4151 C# tests green on clean rebuild. The new auto-verify-on-read (commit 50963ed18) is the highest-novelty security defense on this branch.",
+        "risk": "A 532-commit refactor that moves signature from a flat Data property to a wire layer with auto-verify-on-read is exactly the shape that ships a silent-skip bypass: the new defense looks present in the trace but is gated on a field that callers are permitted to leave null."
+      },
+      "plan": ".bot/template-stamping-at-read/security/v1/report.md",
+      "actions": [
+        {
+          "paths": ["PLang/app/data/Wire.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1 [Medium, latent High]: Wire.ReadSignatureLayer (lines 206-240) auto-verifies a @schema:signature payload ONLY when _context != null. A context-less Wire (the ContextLessFallback singleton at channel/serializer/plang/this.cs:133, or any `new Wire(view, context: null)`) silently unwraps the signature layer and returns the inner Data UNVERIFIED. Reachable today via snapshot.this.Wire.cs:89 (Snapshot.FromWire → Data.As<snapshot>) and data/this.Transport.cs:142 (Data.DecompressAsync's actor-unavailable fallback). Latent ratchet to High the first time a new ingest seam picks up ContextLessFallback to read externally-sourced bytes. Fix posture: fail-closed when _context is null. Path is unambiguous on inspection; mutation test optional. Composes with the open standing finding on callback.run (same shape: 'if signature present verify else skip' on the producer side here applied symmetrically on the consumer side)."
+        },
+        {
+          "paths": ["PLang/app/channel/serializer/plang/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F2 [Low / Docs but security-relevant]: class XML summary (lines 29-34) still states 'Read does NOT auto-verify — verification is the consumer's explicit step.' That contract was true before commit 50963ed18; today Wire auto-verifies on read. Stale contract on a security boundary risks future contributors planning redundant or absent verify steps. Land the corrected contract alongside the F1 fix so the doc carries the fail-closed behaviour authoritatively."
+        },
+        {
+          "paths": [
+            "PLang/app/module/signing/code/Ed25519.cs",
+            "PLang/app/type/signature/this.Wire.cs",
+            "PLang/app/goal/steps/step/actions/action/this.FromWire.cs",
+            "PLang/app/goal/steps/step/actions/this.Convert.cs",
+            "PLang/app/data/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Reviewed clean: (1) Ed25519 verify pipeline (9 steps, lines 66-137) preserved. NowUtc → wall-clock fallback at deserialize boundary is justified — drift bounded by TimeoutMs window. ContractsMatch correctly rejects any payload whose signed contracts disagree with required set; null on either side without empty/non-empty mismatch is the only path to true. (2) action.FromWire calls StampTemplates on wire-rebuilt actions (error.handle, compile-response rebuild). Reachable for runtime input ONLY if the outer signature is bypassed — folded into F1: composition lifts that bypass from 'trusted data slip' to 'stamped recovery actions executed under victim identity'. The `runtime input never passes here` comment in data/this.cs:461 holds conditional on F1. (3) Signature.FromWire builds the layer field-by-field; verification stays the caller's job."
+        },
+        {
+          "paths": [
+            "PLang/app/type/path/file/this.Operations.cs",
+            "PLang/app/module/module/add.cs",
+            "PLang/app/module/code/load.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Assembly.LoadFrom centralisation is a NET SECURITY IMPROVEMENT. Previously Module.add and code.load did raw Assembly.LoadFrom (accepted risk per MEMORY.md). Now both route through path.LoadAssemblyAsync which gates on AuthGate(Verb.Execute) — a NEW permission distinct from Read (so granting read on a folder no longer accidentally permits code loading from it). One new semgrep hit (this.Operations.cs:32) needs whitelist update; semgrep rule comment still names Module.add/provider.load."
+        },
+        {
+          "paths": [".semgrep/"],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Baseline 16 blocking findings vs documented 15. Delta +1 attributable to the Assembly.LoadFrom relocation (now a whitelist update, not a real new caller). Spot-checked all 15 serializer-hygiene hits — all long-standing audit-list entries on internal shapes (builder Render, Error.cs, identity/code, http/Default, llm/OpenAi, item/serializer/json, text/this.Convert, etc.). No new default-options Deserialize on attacker-controlled bytes."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "yellow",
+        "notes": "VERDICT: NEEDS-FIX. One Medium auth-bypass (F1, latent-ratchet to High) on the new auto-verify-on-read defense — context-less Wire reads silently strip @schema:signature. One Low docs-vs-impl drift on a security boundary (F2). Both fixes are small and clean (two-line guard + one paragraph rewrite). No Critical/High today; build green; semgrep delta innocuous (+1, Assembly.LoadFrom relocation needs whitelist update). The Ed25519 pipeline, action.FromWire stamping seam, and Assembly.LoadFrom centralisation all hold up under review. Net delta on security posture is slightly POSITIVE (LoadFrom now gated on a distinct Execute verb) — F1 is the regression that must close before the new defense ships in production. Standing memo: callback.run finding remains open and is the symmetric write-side of F1 (same fix posture). Next bot: auditor."
+      }
     }
   ]
 }
