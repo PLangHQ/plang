@@ -38,6 +38,15 @@ When you read a `.md` file, PLang knows it's markdown. So `%content%` isn't just
 
 You didn't write any parsing code. PLang knows the shape of a markdown file and gives you its parts.
 
+See for yourself — write out everything `%content%` contains:
+
+```plang
+- read file.md, write to %content%
+- write out %content!%
+```
+
+`%content!%` prints all the properties PLang found in the file.
+
 ---
 
 ## Converting is just renaming the extension
