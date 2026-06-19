@@ -5,33 +5,37 @@
 
 ## What this is
 
-Retrospective pass over today's coder session. Goal: find self-correction moments, identify their root cause (what rule was missing), and write proposals to fix the coder's MEMORY.md and character file so the mistakes aren't rediscovered next session.
+Retrospective pass over today's coder session. Goal: find self-correction moments, identify their root cause (what rule was missing), and write the fixes directly to the coder's MEMORY.md and character file so the mistakes aren't rediscovered next session.
 
 ## What was done
 
-**Found 6 self-corrections (SC1–SC6).** All are documented in `v1/findings.md`.
+**Found 6 self-corrections (SC1–SC6).** All documented in `v1/findings.md`.
 
-**Top 3 by impact:**
-1. SC1 — Relayed a subagent's "can't do this" claim without verifying source. Caused three test cases to be wrongly skipped. Rule missing: verify agent claims.
-2. SC2/SC3 — Added `PeekValue()` (already existed as `Peek()`) and kept `GetValue` in production code for tests. Both caught via Ingi review. Rules missing: LSP before adding, coverage to find test-only callers.
-3. SC5 — MEMORY.md is the loaded index, not just another file. Coder didn't know this, so its own feedback rules weren't actually in context.
+**Applied directly:**
+- `characters/coder/memory/MEMORY.md` — Added SC1–SC6 bullets to "Coder discipline" section; added SC5 Memory System callout near top
+- `characters/coder/character.md` — Added 4 sub-sections to OBP section: verify subagent claims (SC1), LSP before adding a method (SC2), test-only methods in test extensions (SC3), OBP usage-smell question (SC4)
+- `characters/docs/memory/MEMORY.md` — Added SC5 Memory System callout (universally applicable)
 
-**Files created:**
+**Supporting files:**
 - `v1/plan.md` — plan
 - `v1/findings.md` — evidence ledger with quotes and timestamps
-- `v1/proposals.md` — proposed changes for coder MEMORY.md and character file (Ingi applies on Windows)
-- `doc/start.md`, `doc/app/start.md`, `doc/app/goal/start.md`, `doc/app/goal/step/start.md` — new doc tree in the repo
+- `v1/proposals.md` — original proposals (before direct write access was confirmed)
+- `v1/changes.md` — changelog of every edit applied
 
-**Files that couldn't be written (read-only filesystem):**
-- `/peer-sessions/coder/projects/-workspace-plang/memory/MEMORY.md`
-- `/peer-sessions/coder/CLAUDE.md`
+## Top 3 findings by impact
 
-Both are in proposals.md for Ingi to apply.
+1. **SC1** — Coder relayed a subagent's "can't do this" claim without verifying source. Three test cases were wrongly skipped. Rule added: verify agent claims before asserting.
+2. **SC2/SC3** — Added `PeekValue()` beside existing `Peek()` and kept `GetValue` in production for test-only callers. Rules added: LSP before adding, test-only callers go in test extensions.
+3. **SC5** — MEMORY.md is the loaded index, not just another file. Coder didn't know this, so its own feedback rules weren't actually in context. Callout added to MEMORY.md itself.
 
-## Doc tree (`doc/`)
+## Code example
 
-New folder at repo root. Structure mirrors OBP: `doc/app/goal/step/start.md`. `start.md` is the entry point for each concept. Source included via `[[path/to/file]]` — the web UI renders it inline from source. Example at `doc/app/goal/step/start.md`.
+Coder discipline bullets added to MEMORY.md:
 
-## For next run
-
-After Ingi applies the memory/character proposals, add a note to my own MEMORY.md marking SC1–SC6 as proposed so I don't re-surface them.
+```markdown
+- **Verify subagent claims against source before asserting them.** Subagents can state
+  constraints that sound architectural but don't exist in the code. Before telling Ingi
+  "this can't be done," grep or use LSP to confirm. (SC1)
+- **Inspect the type surface via LSP before adding any method.** The method you're about
+  to write may already exist under a slightly different name. (SC2)
+```

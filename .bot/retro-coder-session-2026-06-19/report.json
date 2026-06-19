@@ -54,6 +54,52 @@
         "health": "6 findings documented, proposals written, doc/ tree created with example. peer-sessions files are read-only — proposals need Ingi to apply.",
         "notes": "SC1-SC6 tracked in retro MEMORY.md to avoid re-proposing."
       }
+    },
+    {
+      "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "bot": "retro",
+      "timestamp_start": "2026-06-19T21:00:00Z",
+      "timestamp_end": "2026-06-19T21:30:00Z",
+      "intent": "Apply SC1-SC6 proposals directly to coder character/memory files and docs character memory",
+      "before": {
+        "assumptions": "Characters are now accessible at /workspace/plang/characters/ (not EROFS). proposals.md contains the ready-to-apply content.",
+        "risk": "Edits are direct — git is the safety net for Ingi to review and revert if needed."
+      },
+      "actions": [
+        {
+          "paths": ["characters/coder/memory/MEMORY.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added SC1-SC6 bullets to Coder discipline section. Added SC5 Memory System callout near top."
+        },
+        {
+          "paths": ["characters/coder/character.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added 4 sub-sections to OBP section: verify subagent claims, LSP before adding, test-only methods, OBP usage-smell question."
+        },
+        {
+          "paths": ["characters/docs/memory/MEMORY.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added SC5 Memory System callout — universally applicable lesson about the memory index."
+        },
+        {
+          "paths": [".bot/retro-coder-session-2026-06-19/retro/v1/changes.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Changelog of every edit applied, with F# backing."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "SC1-SC6 fully applied. Coder memory and character updated. Docs memory updated with SC5.",
+        "notes": "All changes are in the PLang repo on this branch — Ingi reviews via git diff before merging."
+      }
     }
   ]
 }
