@@ -46,8 +46,10 @@ ConvertFile
 
 ```plang
 SendReport
-- write out "Done. Files saved."
+- write out to logger "Done. Files saved."
 ```
+
+`logger` is a [channel](/channel/logger/) — a named destination you define once and write to by name.
 
 Each goal does one thing. You compose them to build a program.
 
