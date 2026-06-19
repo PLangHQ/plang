@@ -304,47 +304,32 @@ foreach (var kvp in action.Context.Variable.GetAll())          // every variable
 
 Net: it is **not** a live window into `Context.Variable`. It's a point-in-time projection of the whole set. So (1) every variable is resolved whether used or not; (2) a variable created/reassigned mid-render (via `callGoal`) is invisible — the set was snapshotted; (3) even a collection *reassignment* is invisible, because `set` rebinds to a new instance and the view still points at the old one (PLang never mutates in place).
 
-## The fix — one live read-through scope over the store
+## The fix — a live, lazy, async accessor into the store
 
-Replace the eager loops with a single live `IDictionary<string,object?>` over `Context.Variable` — the exact `NativeDictView` pattern, lifted to the root — so `{{ x }}` resolves `x` against the live store *at the moment it's read*: no eager resolution, no snapshot, scalars and collections both live, mid-render changes visible, zero copy.
+Fluid is async-aware end to end: register an **async member accessor** (returns `ValueTask`) and the await runs lazily, **at access time** — when the template actually hits the variable. `Render()` already calls `RenderAsync` (`Fluid.cs:138`), so the plumbing is in place. So the accessor resolves through the existing **async** `Context.Variable.Get(name)` directly — no sync workaround, no eager pass, no new store method.
 
-### Required store addition (because `Get` is async)
-
-`app.variable.list.@this.Get(name)` is **async** (`ValueTask<Data>`, `variable/list/this.cs:561`) — Fluid's scope/member access is **sync**, so the view can't call it. Add a sync by-name read that returns the stored `Data` without resolution (the store already looks up synchronously — `Contains(name)` at `:652` proves it):
+Replace the two eager loops (`Fluid.cs:120-132`) with the variable store as the context model plus one async accessor keyed by name:
 
 ```csharp
-// app/variable/list/this.cs — sync sibling of Get, no resolution
-public data.@this? Peek(string name) => _variables.TryGetValue(name, out var d) ? d : null;
+// (model, name) accessor → resolves dynamically, lazily, per reference; await runs only when {{ name }} renders
+options.MemberAccessStrategy.Register<app.variable.list.@this, object?>(
+    async (store, name) => (await store.Get(name)).Peek());
+
+var fluidContext = new TemplateContext(action.Context.Variable, options);  // the live store IS the root model
 ```
 
-### The view (mirror of NativeDictView, over the store)
+`store.Get(name)` is the existing async resolver (`variable/list/this.cs:561`). The returned value rides the existing `ValueConverters`: a `dict`/`list` becomes a live `NativeDictView`/`NativeListView` (nested-live, unchanged), the `@null` citizen → `NilValue`, scalars map as before. `{{ x }}` now reads the live store at the moment it renders — no eager resolution of unused vars, no snapshot, mid-render `set`/`callGoal` changes visible, zero copy.
 
-```csharp
-private sealed class VariableStoreView(app.variable.list.@this store) : IDictionary<string, object?>
-{
-    public object? this[string key] { get => store.Peek(key)?.Peek(); set => throw new NotSupportedException(); }
-    public bool TryGetValue(string key, out object? value) { var d = store.Peek(key); value = d?.Peek(); return d != null; }
-    public bool ContainsKey(string key) => store.Contains(key);
-    public ICollection<string> Keys => store.GetAll().Select(kv => kv.Key).ToList();
-    public IEnumerator<KeyValuePair<string, object?>> GetEnumerator()
-    { foreach (var kv in store.GetAll()) yield return new(kv.Key, kv.Value.Peek()); }
-    // Count/Values/IsReadOnly + write members throw, same as NativeDictView.
-}
-```
+`(await store.Get(name)).Peek()` hands Fluid the value instance so `NativeCollectionConverter` can re-wrap nested natives live (`Peek` returns the `item.@this`; that's what the views feed on). If a template should render a `file`/`url` variable's **content** rather than its reference form, that's a deliberate `.Value()`/load step in the accessor — a template-semantics choice now, not a sync limitation.
 
-`store.Peek(key)?.Peek()` returns the value's `item.@this`; `NativeCollectionConverter` re-runs on it during rendering, so a `dict` variable still becomes a live `NativeDictView` (nested live, unchanged). Then bind it as Fluid's root instead of the two loops:
+For richer needs (indexers, or `{% for k in vars %}` enumerating the whole store), inherit `ObjectValueBase` and override `GetValueAsync`/`GetIndexAsync`, wired via a `ValueConverter`. Overkill for plain `{{ x }}` / `{{ x.y }}`; reach for it only if a template enumerates all variables.
 
-```csharp
-// replaces Fluid.cs:120-132 — confirm the exact 2.31 hook (model ctor / scope / identifier resolver)
-var fluidContext = new TemplateContext(new VariableStoreView(action.Context.Variable), options);
-```
+The explicit `Parameters` override (`:126-132`) stays — `SetValue` those onto the context after construction so per-call params shadow the store.
 
-The explicit `Parameters` override loop (`:126-132`) stays — it layers per-call params on top (those genuinely are a small, intentional set; `SetValue` them after constructing the context so they shadow the store).
+## What to verify (don't assume)
 
-## Two wrinkles to settle
-
-1. **Async references.** `store.Peek(name).Peek()` is sync — fine for already-resolved variables (most of the store at render time), but a lazily-unloaded `file`/`url` reference can't `await` its load inside a sync Fluid read. Decide: a tiny eager pre-pass that resolves *only* the reference-typed vars before rendering, or accept `Peek` semantics (render the reference's own form). Don't re-introduce the eager-resolve-everything loop to dodge this.
-2. **The exact Fluid root hook.** Whether it's `new TemplateContext(model)`, a custom scope, or an identifier resolver in 2.31 — verify the API, don't assume. The views already prove Fluid reads a nested `IDictionary` live; the root-binding mechanism is the one thing to pin.
+- The exact Fluid 2.31 signature for the async-accessor overload (`MemberAccessStrategy.Register<T, TMember>(Func<T, string, ValueTask<TMember>>)`) and that a bare top-level identifier (`{{ x }}`) routes through the model's `(model, name)` accessor — that dynamic-name form is exactly what an arbitrary variable name needs.
+- That nothing on the path calls the sync `Render` (it must be `RenderAsync`, which it already is) — a sync render would block on the async accessor.
 
 ## While you're in this file — the triplicated formatter
 
