@@ -19,6 +19,30 @@ Start
 
 That's a complete program. It reads a markdown file, prints all the h1 headings, and converts it to HTML.
 
+<details style="margin:20px 0;background:#FFFFFF;border:1px solid #E4E7E4;border-radius:10px;padding:0;overflow:hidden;">
+<summary style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#2C6E8C;padding:14px 20px;cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;">
+  <span style="font-size:11px;">▶</span> What is file.md?
+</summary>
+<div style="padding:20px 24px 24px;border-top:1px solid #E4E7E4;">
+  <p style="font-size:16px;line-height:1.65;color:#525C64;margin:0 0 18px;">A <code style="font-family:'IBM Plex Mono',monospace;font-size:0.9em;background:#E9F0F3;color:#2C6E8C;padding:2px 6px;border-radius:4px;border:1px solid #D9E6EB;">.md</code> file is a plain text file. You write it in any text editor — Notepad, TextEdit, VS Code, anything. The <code style="font-family:'IBM Plex Mono',monospace;font-size:0.9em;background:#E9F0F3;color:#2C6E8C;padding:2px 6px;border-radius:4px;border:1px solid #D9E6EB;">#</code> marks headings, and <code style="font-family:'IBM Plex Mono',monospace;font-size:0.9em;background:#E9F0F3;color:#2C6E8C;padding:2px 6px;border-radius:4px;border:1px solid #D9E6EB;">-</code> marks list items.</p>
+  <p style="font-size:14px;font-family:'IBM Plex Mono',monospace;color:#97A0A7;margin:0 0 8px;letter-spacing:0.04em;text-transform:uppercase;">file.md — copy this</p>
+  <div style="position:relative;">
+    <pre style="font-family:'IBM Plex Mono',monospace;font-size:14px;line-height:1.8;background:#F6F8FA;border:1px solid #E4E7E4;border-radius:8px;padding:18px 20px;margin:0;overflow-x:auto;color:#3A434C;"><code id="filemd-example"># My notes
+
+## Shopping list
+- Apples
+- Bread
+- Milk
+
+## Ideas
+- Learn PLang
+- Build something</code></pre>
+    <button onclick="navigator.clipboard.writeText(document.getElementById('filemd-example').innerText).then(()=>{this.textContent='Copied';setTimeout(()=>this.textContent='Copy',1500)})" style="position:absolute;top:10px;right:10px;font-family:'IBM Plex Mono',monospace;font-size:12px;background:#fff;border:1px solid #D0D7DE;border-radius:5px;padding:4px 10px;color:#5C666E;cursor:pointer;">Copy</button>
+  </div>
+  <p style="font-size:16px;line-height:1.65;color:#525C64;margin:18px 0 0;"><strong style="color:#1A2128;">Where to put it:</strong> Create <code style="font-family:'IBM Plex Mono',monospace;font-size:0.9em;background:#E9F0F3;color:#2C6E8C;padding:2px 6px;border-radius:4px;border:1px solid #D9E6EB;">file.md</code> in the same folder as your PLang program — the same folder where your <code style="font-family:'IBM Plex Mono',monospace;font-size:0.9em;background:#E9F0F3;color:#2C6E8C;padding:2px 6px;border-radius:4px;border:1px solid #D9E6EB;">Start.goal</code> file lives.</p>
+</div>
+</details>
+
 ---
 
 ## PLang understands what things are
