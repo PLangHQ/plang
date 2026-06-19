@@ -63,6 +63,61 @@
         "health": "green",
         "notes": "PLang.Tests/Modules builds clean (no error CS) and full suite passes (failed: 0). No read-path gaps exposed; nothing reverted. Not committed (per task)."
       }
+    },
+    {
+      "id": "c1d2e3f4-a5b6-47c8-9d0e-1f2a3b4c5d6e",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-06-19T16:00:00Z",
+      "timestamp_end": null,
+      "intent": "Codeanalyzer review of template-stamping-at-read: OBP + simplicity + behavioral + root-cause passes, prioritized by risk (handoff B1-B5 + scalars-as-native item apex).",
+      "before": {
+        "assumptions": "First codeanalyzer review on this branch. Branch carries the entire scalars-as-native refactor (527 commits off runtime2) plus the recent template-stamping production changes (handoff B1-B5). Coder claims all six C# suites green at handoff.",
+        "risk": "361 production C# files changed (+10359/-5157). Full line-by-line coverage in one pass is unrealistic; review is risk-prioritized. Highest risk: security-critical signing/identity reads (B3), the item apex + scalar-type proliferation, the ScalarComparer/Compare->Comparison collapse, and Data.cs core changes."
+      },
+      "plan": ".bot/template-stamping-at-read/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/module/signing/code/Ed25519.cs",
+            "PLang/app/variable/list/this.cs",
+            "PLang/app/this.cs",
+            "PLang/app/type/datetime/this.cs",
+            "PLang/app/data/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Handoff B1-B5: datetime navigable members, Data.Clr<T>(fallback) lift, system-var typed reads, Variables.GetValue removal, bracket-resolution fix. Ed25519 sign/verify clock-fallback asymmetry reviewed (N1, justified). B5 ResolveVariablesInPath fix sound; minor note F5 (top-frame-only precedence)."
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/this.cs",
+            "PLang/app/type/compare/this.cs",
+            "PLang/app/data/Comparison.cs",
+            "PLang/app/module/condition/Operator.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "scalars-as-native core. item apex OBP-clean (behavior-on-element, storage-free; N5). compare mediator mirrors convert pattern (N2). Findings: F1 dead BothPresent (deletion test), F2 orphaned enum summary in Comparison.cs, F3 two Write methods on item apex (naming)."
+        },
+        {
+          "paths": [
+            "PLang/app/module/code/this.Snapshot.cs",
+            "PLang/app/module/llm/code/OpenAi.cs",
+            "PLang/app/module/ui/code/Fluid.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mechanical passes (System.IO/Console/Rule-9 courier/provenance) all clean across changed production set. Root-cause pass: both fix() commits (cache JsonElement c27c37c5a, Fluid blank d2d2f557a) are genuine root-cause fixes. F4: Normalize silently reflects unknown raw-CLR leaf to ValueKind bag instead of failing loud — systemic/pre-existing hardening item."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "VERDICT: PASS on risk-prioritized surface. Build green (0 errors). Findings all LOW except F4 (systemic pre-existing). Non-blocking cleanups for coder: delete dead BothPresent (F1), move orphaned Comparison enum summary (F2). NOT a full certification of the 361-file scalars-as-native body (relies on prior architect/test-designer/coder rounds + green C# suites). Next bot: tester."
+      }
     }
   ]
 }
