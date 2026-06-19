@@ -13,7 +13,7 @@ public class ChannelStreamLoadTests
     [Test]
     public async Task ViaChannel_AssemblesActions_AndKeepsParamType()
     {
-        await using var app = new global::app.@this("/test");
+        await using var app = TestApp.Create("/test");
 
         var loaded = await RealGoalLoad.ViaChannel(app, SampleGoal());
 
@@ -32,7 +32,7 @@ public class ChannelStreamLoadTests
     [Test]
     public async Task ViaChannel_ParamTypes_FromValue_AndExplicit()
     {
-        await using var app = new global::app.@this("/test");
+        await using var app = TestApp.Create("/test");
 
         // number from the value (5 → number); variable declared explicitly.
         var goal = Make.Goal("G",
