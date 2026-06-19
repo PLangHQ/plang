@@ -95,8 +95,8 @@ function page(title, currentUrl, bodyHtml) {
 </head>
 <body>
   <nav>
-    <div class="logo"><a href="/doc/">PLang Docs</a></div>
-    <ul><li><a href="/doc/"${currentUrl === '/doc/' ? ' class="active"' : ''}>start</a>${nav}</li></ul>
+    <div class="logo"><a href="/"${currentUrl === '/' ? ' class="active"' : ''}>PLang</a></div>
+    <ul><li><a href="/doc/"${currentUrl === '/doc/' ? ' class="active"' : ''}>doc/</a>${nav}</li></ul>
   </nav>
   <main>
     ${bodyHtml}
@@ -131,9 +131,9 @@ function servePage(req, res) {
   res.status(404).send(page('Not found', urlPath, '<h1>Not found</h1>'));
 }
 
-app.get('/', (_, res) => res.redirect('/doc/'));
+app.get('/', (req, res) => res.send(renderFile(path.join(ROOT, 'start.md'), '/')));
 app.get('/doc', (_, res) => res.redirect('/doc/'));
 app.get('/doc/', servePage);
 app.get('/doc/*', servePage);
 
-app.listen(PORT, () => console.log(`PLang docs → http://localhost:${PORT}/doc/`));
+app.listen(PORT, () => console.log(`PLang docs → http://localhost:${PORT}/`));
