@@ -1,4 +1,3 @@
-using System.Linq;
 
 namespace PLang.Tests.App.CompareRedesign;
 
@@ -8,28 +7,9 @@ namespace PLang.Tests.App.CompareRedesign;
 // shape that bypasses the read.
 public class ChannelStreamLoadTests
 {
-    private static Goal SampleGoal() => new()
-    {
-        Name = "G",
-        Path = "/G.goal",
-        Steps = new GoalSteps
-        {
-            new Step
-            {
-                Index = 0,
-                Text = "write out",
-                Actions = new StepActions
-                {
-                    new PrAction
-                    {
-                        Module = "output",
-                        ActionName = "write",
-                        Parameters = new List<Data> { new("Content", "Hi %name%") }
-                    }
-                }
-            }
-        }
-    };
+    private static Goal SampleGoal() => PLang.Tests.Shared.Goals.Build("G",
+        PLang.Tests.Shared.Goals.Step("write out",
+            PLang.Tests.Shared.Goals.Action("output", "write", ("Content", "Hi %name%"))));
 
     [Test]
     public async Task ViaChannel_AssemblesActions_AndKeepsParamType()
