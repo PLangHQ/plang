@@ -118,6 +118,46 @@
         "health": "green",
         "notes": "VERDICT: PASS on risk-prioritized surface. Build green (0 errors). Findings all LOW except F4 (systemic pre-existing). Non-blocking cleanups for coder: delete dead BothPresent (F1), move orphaned Comparison enum summary (F2). NOT a full certification of the 361-file scalars-as-native body (relies on prior architect/test-designer/coder rounds + green C# suites). Next bot: tester."
       }
+    },
+    {
+      "id": "d4e5f6a7-b8c9-40d1-a2e3-f4b5c6d7e8f9",
+      "bot": "tester",
+      "timestamp_start": "2026-06-19T17:20:00Z",
+      "timestamp_end": "2026-06-19T17:55:00Z",
+      "intent": "Tester pass on template-stamping-at-read. C# suites only (PLang suite known-broken, out of scope). No test-designer ran for this branch, so hunt for missing coverage on the headline behaviors (born-typed variables, template-stamping-at-read, scalars-as-native, real-read-path migration).",
+      "before": {
+        "assumptions": "Coder + codeanalyzer both PASS. C# green claimed. Clean rebuild done (stale-binary trap avoided). 4151 C# tests across 6 suites.",
+        "risk": "Green suite can still hide false-greens / missing coverage on a branch with no test-designer. Headline runtime rule (born-typed variable decline) is the one that broke the PLang suite — primary target."
+      },
+      "plan": ".bot/template-stamping-at-read/tester/v1/test-report.md",
+      "actions": [
+        {
+          "paths": ["PLang/app/variable/this.cs", "PLang.Tests/Shared/PrParam.cs", "PLang.Tests/Modules/App/Modules/variable/settests.cs"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "F1 HIGH: born-typed Variable.Create decline (CreateDeclined, this.cs:67-74) — the branch's headline rule, the one breaking the PLang suite — has ZERO C# coverage. MUTATION-PROVEN: neutered the decline, rebuilt, re-ran Modules+Data+Types+Runtime (3433 tests), all green. Reverted, git clean. Cause: every test auto-stamps type:variable via PrParam/TestAction, so all take the happy path; nothing feeds a value-typed Name. 3 tests specified to add."
+        },
+        {
+          "paths": ["PLang.Tests/Modules/App/Modules/condition/", "PLang.Tests/Runtime/App/CompareRedesign/"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "F2 MEDIUM: temporal comparison operators (<,>,<=,>=) for datetime/date/time/duration tested only at low-level Stage4_PerTypeCompareTests; the user-facing Operator/DefaultEvaluator/condition path covers only == and numbers. F3 LOW: OperatorTests.Choices_ContainsAllOperators and Stage1_ComparisonEnumTests are structural (name/string checks) — a gutted Evaluate/swapped enum semantics would pass."
+        },
+        {
+          "paths": ["PLang.Tests/Shared/RealGoalLoad.cs", "PLang.Tests/Wire/App/Serialization/TemplateStampOnReadTests.cs", "PLang.Tests/Types/App/ScalarsAsNative/"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Verified SOLID: real-read-path migration does a genuine serialize->stream-channel->read round-trip (no no-op fallback). Template-stamping at .pr-load seam (Data.Authored/StampedForm incl. dict) covered behaviorally by DataAsTResolutionTests + TemplateStampOnReadTests. ScalarsAsNative wrappers (10 files, ~60 tests) behaviorally solid per delegated sweep."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "yellow",
+        "notes": "C# suites PASS — honest green, 4151/0, clean rebuild, git clean, mutation reverted. BUT F1 (HIGH) is a mutation-proven coverage hole on the headline born-typed-variable rule; F2 (MEDIUM) is a real gap on temporal condition operators. Recommend F1 tests added before merge (rule currently guarded only by the negative signal of the PLang suite breaking). Tests specified, not authored (tester doesn't commit source). PLang suite out of scope: aborts at runner bootstrap (os/system/.build/test.pr stale type:string Name) — positive evidence F1's rule fires; 628 committed .pr still carry old shape, need plang build sweep. Next bot: coder/test-designer to add F1+F2 tests."
+      }
     }
   ]
 }
