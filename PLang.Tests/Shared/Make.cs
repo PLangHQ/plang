@@ -6,18 +6,18 @@ namespace PLang.Tests.Shared;
 /// new PrAction { Parameters = ... } } } } }</c>, write:
 ///
 /// <code>
-/// var goal = Goals.Build("MyGoal",
-///     Goals.Step("write out %name%",
-///         Goals.Action("output", "write", ("Content", "Hi %name%"))),
-///     Goals.Step("if it matches",
-///         Goals.Action("condition", "if", ("Left", "%x%"), ("Operator", "="), ("Right", 1))));
+/// var goal = Make.Goal("MyGoal",
+///     Make.Step("write out %name%",
+///         Make.Action("output", "write", ("Content", "Hi %name%"))),
+///     Make.Step("if it matches",
+///         Make.Action("condition", "if", ("Left", "%x%"), ("Operator", "="), ("Right", 1))));
 /// </code>
 ///
 /// Step <c>Index</c> is assigned by position; <c>Path</c> defaults to
 /// <c>/{name}.goal</c>. Pair it with <see cref="RealGoalLoad.ViaChannel"/> to load
 /// the goal through the real read path.
 /// </summary>
-public static class Goals
+public static class Make
 {
     /// <summary>A step spec — text plus its actions. Indexed when the goal is built.</summary>
     public readonly record struct StepDef(string Text, global::app.goal.steps.step.actions.action.@this[] Actions);
@@ -25,6 +25,14 @@ public static class Goals
     public static StepDef Step(string text, params global::app.goal.steps.step.actions.action.@this[] actions)
         => new(text, actions);
 
+    /// <summary>
+    /// An action with its parameters. A parameter's <b>type comes from its value</b>
+    /// (born-typed, like the runtime): <c>("Count", 5)</c> → number, <c>("On", true)</c>
+    /// → bool, <c>("Content", "Hi %name%")</c> → text. To <b>declare</b> a type that
+    /// differs from the value's natural one — a write-target <c>variable</c>, a date
+    /// written as a string, etc. — use <see cref="Param"/>: <c>Make.Param("Name",
+    /// "relative", "variable")</c>.
+    /// </summary>
     public static global::app.goal.steps.step.actions.action.@this Action(
         string module, string actionName, params (string name, object? value)[] parameters)
     {
@@ -34,11 +42,25 @@ public static class Goals
             ActionName = actionName,
         };
         foreach (var (name, value) in parameters)
-            action.Parameters.Add(new global::app.data.@this(name, value));
+            // Param(...) hands back a ready Data carrying an explicit type; a plain
+            // tuple value borns its natural type.
+            action.Parameters.Add(value is global::app.data.@this typed
+                ? typed
+                : new global::app.data.@this(name, value));
         return action;
     }
 
-    public static global::app.goal.@this Build(string name, params StepDef[] steps)
+    /// <summary>
+    /// A parameter with an explicitly-declared type — used inside
+    /// <see cref="Action"/>'s parameter list when the declared type differs from the
+    /// value's natural type (e.g. <c>Make.Param("Name", "relative", "variable")</c>). For
+    /// the common case where the value's own type is right, a plain
+    /// <c>(name, value)</c> tuple is enough.
+    /// </summary>
+    public static (string name, object? value) Param(string name, object? value, string type)
+        => (name, new global::app.data.@this(name, value, new global::app.type.@this(type)));
+
+    public static global::app.goal.@this Goal(string name, params StepDef[] steps)
     {
         var goal = new global::app.goal.@this
         {

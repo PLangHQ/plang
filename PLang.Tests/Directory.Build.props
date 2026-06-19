@@ -86,5 +86,9 @@
     <Using Include="app.snapshot.@this" Alias="Snapshot" />
     <Using Include="app.snapshot.ISnapshot" Alias="ISnapshot" />
     <Using Include="app.Statics.@this" Alias="AppStatics" />
+    <!-- Test helpers (PLang.Tests.Shared) — Make.Goal/Step/Action/Param, RealGoalLoad.
+         Named Make (not Goals) so it doesn't collide with the PLang.Tests.App.Goals
+         namespace, which would shadow it in tests under App.*. -->
+    <Using Include="PLang.Tests.Shared" />
   </ItemGroup>
 </Project>
