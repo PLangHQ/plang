@@ -1,0 +1,59 @@
+{
+  "branch": "retro/coder-session-2026-06-19",
+  "sessions": [
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "bot": "retro",
+      "timestamp_start": "2026-06-19T19:00:00Z",
+      "timestamp_end": "2026-06-19T20:30:00Z",
+      "intent": "Mine coder session 2026-06-19 for self-correction moments and turn them into MEMORY.md rules and doc proposals",
+      "before": {
+        "assumptions": "Coder MEMORY.md is sparse (2 entries). Self-corrections from today's session are unrecorded.",
+        "risk": "peer-sessions filesystem is read-only — can propose changes but not apply them directly."
+      },
+      "plan": ".bot/retro-coder-session-2026-06-19/retro/v1/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/retro-coder-session-2026-06-19/retro/v1/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plan written before implementation"
+        },
+        {
+          "paths": [".bot/retro-coder-session-2026-06-19/retro/v1/findings.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Evidence ledger: 6 self-corrections SC1-SC6 with quotes and timestamps"
+        },
+        {
+          "paths": [".bot/retro-coder-session-2026-06-19/retro/v1/proposals.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Proposals for coder MEMORY.md and character file — cannot write directly (EROFS)"
+        },
+        {
+          "paths": ["doc/start.md", "doc/app/start.md", "doc/app/goal/start.md", "doc/app/goal/step/start.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "New doc/ tree mirroring OBP structure. start.md is the entry point per folder. [[path]] syntax for source inclusion."
+        },
+        {
+          "paths": [".bot/retro-coder-session-2026-06-19/retro/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session summary"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "6 findings documented, proposals written, doc/ tree created with example. peer-sessions files are read-only — proposals need Ingi to apply.",
+        "notes": "SC1-SC6 tracked in retro MEMORY.md to avoid re-proposing."
+      }
+    }
+  ]
+}
