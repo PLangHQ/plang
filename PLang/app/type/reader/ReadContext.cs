@@ -9,5 +9,13 @@ namespace app.type.reader;
 ///
 /// <para>The read-side mirror of the write side's <c>IWriter</c>: where the
 /// writer carries the format encoder, the reader carries the decode context.</para>
+///
+/// <para><see cref="Template"/> is the authored-content mode — <c>"plang"</c> when
+/// the bytes are a developer-authored goal/<c>.pr</c> (a <c>%ref%</c> leaf borns a
+/// live template), null for every runtime-ingest read (a <c>%ref%</c> borns literal).
+/// The trust rides the reader, never the content: a value is templatable only
+/// because the reader that read it was constructed in authored mode.</para>
 /// </summary>
-public sealed record ReadContext(global::app.actor.context.@this? Context);
+public sealed record ReadContext(
+    global::app.actor.context.@this? Context,
+    string? Template = null);

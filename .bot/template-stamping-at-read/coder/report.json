@@ -1,0 +1,52 @@
+{
+  "branch": "template-stamping-at-read",
+  "sessions": [
+    {
+      "id": "517afde0-a941-4cc4-a9fa-dfe43f811ac7",
+      "bot": "coder",
+      "timestamp_start": "2026-06-19T00:00:00Z",
+      "timestamp_end": null,
+      "intent": "Move template stamping from a post-parse walk onto the read: the reader hands the type its template mode at construction, the type decides (it owns its holes). Trust rides the reader, not the content.",
+      "before": {
+        "assumptions": "ReadContext is the natural mode carrier (IReader work landed). text ctor's canTemplate:true hardcoded \"plang\" mode-blind — the bug. Goal is the only inherently-authored read.",
+        "risk": "Security-critical: the mode must NOT ride the shared _inbound Wire (also reads runtime messages). FromWire rebuilds from already-parsed values — its seam can't delete blind. Two goal-load paths (goal.list via plang serializer, GoalCall via catalog options)."
+      },
+      "plan": ".bot/template-stamping-at-read/coder/v1/plan.md",
+      "actions": [
+        {
+          "paths": ["PLang/app/type/reader/ReadContext.cs", "PLang/app/type/text/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "ReadContext gains Template (string?). text ctor: bool canTemplate -> string? template; Template = (template != null && HasHoles) ? template : null. The type owns the holes-decision so HasVariableReference stays correct."
+        },
+        {
+          "paths": ["PLang/app/type/text/serializer/Reader.cs", "PLang/app/type/text/serializer/Default.cs", "PLang/app/type/path/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "text.Read + text/Default.Read pass ctx.Template (mode-gated). path keeps \"plang\" (no read-mode at its ctor; mode-gating path deferred, behavior preserved)."
+        },
+        {
+          "paths": ["PLang/app/data/Wire.cs", "PLang/app/channel/serializer/plang/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Wire gains a Template ctor param, feeds it into the ReadContext for ITypeReader.Read. Plang serializer gains a dedicated _authored options (template=\"plang\"); Deserialize<goal> routes to it (goal is the inherently-authored type). The single trusted construction site."
+        },
+        {
+          "paths": ["PLang.Tests/Wire/App/Serialization/TemplateStampOnReadTests.cs", "PLang.Tests/Data/App/DataTests/DataTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Security test: same %ref% bytes stamp under authored mode, stay literal under runtime mode, holeless never stamps. Updated 5 DataTests canTemplate:true -> \"plang\"."
+        }
+      ],
+      "after": {
+        "status": "Increment 1 landed — born-with-template on the read path, mode-gated, proven. Seams still in place (idempotent); StampedForm removal + path-2 read-stamp + container slots + FromWire are later increments.",
+        "health": "green — dev.sh full all 6 projects green (counts identical to baseline; one flaky Types failure cleared on re-run). Security test passes. Runtime template-rendering suite (789) green.",
+        "notes": "The mode rides _authored only; _inbound (runtime messages) stays mode-off. GoalCall path 2 (catalog options) still seam-stamps until its read is routed through _authored too."
+      }
+    }
+  ]
+}

@@ -40,6 +40,7 @@ public sealed class @this : ISerializer
 
     private readonly JsonSerializerOptions _outbound;
     private readonly JsonSerializerOptions _inbound;
+    private readonly JsonSerializerOptions _authored;
     private readonly JsonSerializerOptions _store;
     private readonly JsonSerializerOptions _snapshot;
 
@@ -60,6 +61,16 @@ public sealed class @this : ISerializer
 
         _inbound = BuildOptions(
             new global::app.data.Wire(global::app.View.Out, context: context),
+            pathConverter,
+            global::app.channel.serializer.filter.Transport.ForInbound);
+
+        // The authored read — the goal/.pr-load Wire, the ONLY reader in template
+        // mode ("plang"). Same recipe as _inbound, but a %ref% leaf borns a live
+        // template here. A goal is developer-authored code; a runtime message is
+        // never deserialized as a goal, so this never reads untrusted bytes. This
+        // is the single trusted construction site — keep it greppable.
+        _authored = BuildOptions(
+            new global::app.data.Wire(global::app.View.Out, context: context, template: "plang"),
             pathConverter,
             global::app.channel.serializer.filter.Transport.ForInbound);
 
@@ -281,7 +292,12 @@ public sealed class @this : ISerializer
         try
         {
             if (string.IsNullOrEmpty(s) || s == "null") return global::app.data.@this<T>.Ok(default!);
-            return global::app.data.@this<T>.Ok(JsonSerializer.Deserialize<T>(s, _inbound)!);
+            // A goal is developer-authored code — read it through the authored Wire
+            // (template mode "plang") so its step parameters' %ref% holes born as
+            // live templates. Every other type is runtime data: the inbound Wire,
+            // mode off, so a %ref% in a message prints literally.
+            var options = typeof(T) == typeof(global::app.goal.@this) ? _authored : _inbound;
+            return global::app.data.@this<T>.Ok(JsonSerializer.Deserialize<T>(s, options)!);
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {

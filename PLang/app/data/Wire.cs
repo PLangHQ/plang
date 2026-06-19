@@ -72,13 +72,22 @@ public class Wire : JsonConverter<@this>
     // serializer's construction site.
     private readonly actor.context.@this? _context;
 
+    // The authored-content mode threaded into every value read this converter
+    // drives — "plang" only on the dedicated goal/.pr-load Wire (a %ref% leaf borns
+    // a live template), null everywhere else (runtime ingest borns literal). The
+    // trust rides the reader instance, set once at the construction site, never
+    // inferred from the bytes. Owned per-instance, like View/Sign.
+    private readonly string? _template;
+
     public Wire() : this(global::app.View.Out) { }
 
-    public Wire(global::app.View view, bool sign = true, actor.context.@this? context = null)
+    public Wire(global::app.View view, bool sign = true, actor.context.@this? context = null,
+        string? template = null)
     {
         View = view;
         Sign = sign;
         _context = context;
+        _template = template;
     }
 
     /// <summary>
@@ -356,7 +365,7 @@ public class Wire : JsonConverter<@this>
                         // is born at its kind in one step (mirror of its IWriter render).
                         var jr = new global::app.channel.serializer.json.Reader(reader);
                         born = typed.Read(ref jr, typeRef.Kind,
-                            new global::app.type.reader.ReadContext(_context));
+                            new global::app.type.reader.ReadContext(_context, _template));
                         reader = jr.Inner;
                     }
                     else

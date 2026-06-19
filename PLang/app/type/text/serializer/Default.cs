@@ -23,7 +23,7 @@ public static class Default
             global::app.type.text.@this t => t,
             // A string is the value; binary bytes off I/O decode in the text ctor
             // (the text class owns bytes→string — born only from a decoded string).
-            string or byte[] => new global::app.type.text.@this(raw, canTemplate: true) { Kind = kind },
-            _ => new global::app.type.text.@this(raw.ToString() ?? "", canTemplate: true) { Kind = kind },
+            string or byte[] => new global::app.type.text.@this(raw, ctx.Template) { Kind = kind },
+            _ => new global::app.type.text.@this(raw.ToString() ?? "", ctx.Template) { Kind = kind },
         };
 }
