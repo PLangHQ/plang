@@ -39,11 +39,21 @@ new text.@this(reader.String(), ctx.Template) { Kind = kind }
 //   holeless string                     → literal regardless
 ```
 
+## Increment 2 — container slots (landed, green, pushed)
+`item.serializer.json.ReadSlot` now takes the `ReadContext`; a templated string slot
+in an authored container rides as a stamped `text{Template}` item (the "elevated
+slot"), a literal slot stays raw, a runtime-ingest slot is always raw. This also
+**fixes the live bug** the design flagged (§1.3): the stamp rides the slot, so it
+survives the container's fresh-per-read model instead of being re-derived by the
+seam's materialize-once hack. `list`/`dict` readers thread `ctx`. Tests: authored
+container stamps the `%ref%` slot + leaves the literal; runtime container stamps
+neither. Full suite green (Wire 512).
+Gap (covered by the still-present seam): a `%ref%` nested inside a *structured* slot
+(object/array) goes through `ParseRaw → Parse` which doesn't thread the mode yet —
+thread it when removing the seam.
+
 ## Remaining increments (to reach the OBP win — deleting `StampedForm`)
 Removing the post-parse walk needs **every** authored read to stamp at read first:
-1. **Container slots** — thread the mode into `item.serializer.json.ReadSlot`; a
-   templated string slot in a goal-authored container stores a `text{Template}` item
-   (the "elevated item slot"), not a raw string. (Replaces `StampEntry`.)
 2. **Path 2 (GoalCall)** — route the catalog goal-deserialize through the authored
    Wire so a sub-goal's `%ref%` params read-stamp (today they seam-stamp).
 3. **Delete** `StampedForm`/`Authored`/`RawGraphHasRef`/`StampEntry` + the

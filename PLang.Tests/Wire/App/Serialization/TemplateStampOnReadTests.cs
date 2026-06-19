@@ -24,4 +24,29 @@ public class TemplateStampOnReadTests
 
     [Test] public async Task HolelessText_NeverStamps_EvenAuthored()
         => await Assert.That(ReadText("\"hello\"", "plang").Template).IsNull();
+
+    private static global::app.type.list.@this ReadList(string json, string? mode)
+    {
+        var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+        var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
+        utf8.Read();
+        var jr = new global::app.channel.serializer.json.Reader(utf8);
+        return (global::app.type.list.@this)new global::app.type.list.serializer.Reader()
+            .Read(ref jr, null, new global::app.type.reader.ReadContext(null, mode));
+    }
+
+    // A templated string slot in an authored container rides as a stamped item;
+    // a literal slot stays raw. The stamp survives the container's fresh-per-read.
+    [Test] public async Task AuthoredContainer_StampsRefSlot_LeavesLiteral()
+    {
+        var list = ReadList("[\"hi %name%\", \"literal\"]", "plang");
+        await Assert.That(list.Items[0].HasVariableReference).IsTrue();
+        await Assert.That(list.Items[1].HasVariableReference).IsFalse();
+    }
+
+    [Test] public async Task RuntimeContainer_DoesNotStampRefSlot()
+    {
+        var list = ReadList("[\"hi %name%\"]", null);
+        await Assert.That(list.Items[0].HasVariableReference).IsFalse();
+    }
 }

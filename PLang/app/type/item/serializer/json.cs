@@ -31,18 +31,29 @@ public static partial class json
     /// via <c>RawValue()</c> (the structured minority). Cursor lands on the value's
     /// last token, per the reader contract.
     /// </summary>
-    internal static object? ReadSlot<TReader>(ref TReader reader)
+    internal static object? ReadSlot<TReader>(ref TReader reader,
+        global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
         => reader.Peek() switch
         {
             global::app.channel.serializer.TokenKind.Null => null,
             global::app.channel.serializer.TokenKind.Bool => reader.Bool(),
             global::app.channel.serializer.TokenKind.Number => reader.Number(),
-            global::app.channel.serializer.TokenKind.String => reader.String(),
+            global::app.channel.serializer.TokenKind.String => StringSlot(reader.String(), ctx),
             // Array / Object — a nested container or a @schema:data Data. Capture the
             // encoded value and narrow through the same parser the eager path uses.
             _ => ParseRaw(reader.RawValue()),
         };
+
+    // A string slot stays a raw scalar (store raw, type on read) UNLESS the read is
+    // authored and the string carries a %ref% hole — then it rides as a stamped
+    // text item (the "elevated slot"), so the template survives the container's
+    // fresh-per-read model (a raw string would born unstamped each read). Trust is
+    // the reader's mode, never the content: a runtime-ingest slot is always raw.
+    private static object? StringSlot(string s, global::app.type.reader.ReadContext ctx)
+        => ctx.Template != null && RefRegex().IsMatch(s)
+            ? new text.@this(s, ctx.Template)
+            : s;
 
     private static object? ParseRaw(byte[] utf8)
     {

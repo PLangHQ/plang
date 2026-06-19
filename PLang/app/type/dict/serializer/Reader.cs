@@ -20,7 +20,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         reader.BeginObject();
         var dict = new global::app.type.dict.@this();
         while (reader.NextName(out var name))
-            dict.Set(name, global::app.type.item.serializer.json.ReadSlot(ref reader));
+            dict.Set(name, global::app.type.item.serializer.json.ReadSlot(ref reader, ctx));
         reader.EndObject();
         return dict;
     }
