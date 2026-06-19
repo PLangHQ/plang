@@ -2,11 +2,18 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const { marked } = require('marked');
+const { Liquid } = require('liquidjs');
 
 const app = express();
 app.set('strict routing', true);
 const ROOT = path.join(__dirname, '..');
 const PORT = process.env.PORT || 8086;
+
+const engine = new Liquid({
+  root: path.join(__dirname, 'templates'),
+  extname: '.liquid',
+  escapeHTML: false,
+});
 
 // ── File extension → highlight.js language ──────────────────────────────────
 const LANG = { '.cs': 'csharp', '.goal': 'plaintext', '.json': 'json', '.js': 'javascript', '.ts': 'typescript' };
@@ -15,21 +22,16 @@ function lang(filePath) { return LANG[path.extname(filePath)] || 'plaintext'; }
 // ── PLang code block syntax colouring ───────────────────────────────────────
 function highlightPlang(code) {
   return code.split('\n').map(line => {
-    // Goal/section name (no leading dash)
     if (!line.startsWith('-') && line.trim() && !line.startsWith(' ')) {
       return `<span style="font-weight:600;color:#1A2128;">${esc(line)}</span>`;
     }
-    // Step line
     if (line.startsWith('- ') || line.startsWith('  - ')) {
       const indent = line.match(/^(\s*)/)[1];
-      const rest = line.slice(indent.length + 2); // strip "- "
+      const rest = line.slice(indent.length + 2);
       const colored = rest
-        // %variable% → teal
         .replace(/%([^%]+)%/g, (m) => `<span style="color:#2C6E8C;font-weight:500;">${esc(m)}</span>`)
-        // file.ext → green (after % replacement so we don't double-process)
         .replace(/\b(\w[\w-]*\.(md|html|pdf|csv|json|txt|goal|cs|js|ts))\b/g,
           (m) => `<span style="color:#4F7C5E;">${esc(m)}</span>`)
-        // &lt;-- comment → muted (already escaped)
         .replace(/(&lt;--[^<]*)$/, m => `<span style="color:#97A0A7;font-style:italic;">${m}</span>`);
       return `${esc(indent)}<span style="color:#AEB6BC;">- </span>${colored}`;
     }
@@ -108,102 +110,31 @@ function resolveIncludes(md) {
 // ── Build nav from root-level folders that have a start.md ──────────────────
 const SKIP = new Set(['doc-server', 'doc', '.git', '.bot', 'PLang', 'PLang.Tests', 'PLang.Generators', 'PlangConsole', 'Tests', 'os', 'node_modules', 'Documentation', 'characters', 'learnings', 'diary', 'sessions']);
 
-function rootNav() {
+function rootNav(currentUrl) {
   const items = [];
   for (const e of fs.readdirSync(ROOT, { withFileTypes: true })) {
     if (!e.isDirectory() || SKIP.has(e.name) || e.name.startsWith('.')) continue;
     if (!fs.existsSync(path.join(ROOT, e.name, 'start.md'))) continue;
-    items.push({ label: e.name, href: `/${e.name}/` });
+    const href = `/${e.name}/`;
+    items.push({ label: e.name, href, active: currentUrl.startsWith(href) });
   }
   return items;
 }
 
-function navHtml(items, current) {
-  if (!items.length) return '';
-  return items.map(({ label, href }) => {
-    const active = current.startsWith(href);
-    const color = active ? '#2C6E8C' : '#5C666E';
-    return `<a href="${href}" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:${color};text-decoration:none;">${label}</a>`;
-  }).join('');
-}
-
-// ── HTML shell ───────────────────────────────────────────────────────────────
-function page(currentUrl, bodyHtml) {
-  sectionCount = 0;
-  const nav = rootNav();
+// ── Render a page via Liquid template ───────────────────────────────────────
+async function page(currentUrl, bodyHtml) {
   const isHome = currentUrl === '/';
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PLang${isHome ? '' : ' — Docs'}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0;}
-    html,body{background:#F4F5F3;}
-    ::selection{background:#CFE0E7;color:#1B2228;}
-    body{font-family:'Newsreader',Georgia,serif;color:#222A30;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
-    pre{background:#f6f8fa;border:1px solid #E4E7E4;border-radius:8px;padding:18px 22px;overflow-x:auto;margin:20px 0;}
-    pre code{font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.6;background:none;border:none;padding:0;}
-    blockquote{border-left:3px solid #E4E7E4;padding-left:16px;color:#7A838A;margin:16px 0;}
-  </style>
-</head>
-<body style="min-height:100vh;background:#F4F5F3;">
-
-  <!-- Flag strip -->
-  <div style="height:4px;width:100%;display:flex;">
-    <div style="width:13%;background:#02529C;"></div>
-    <div style="width:1.5%;background:#FFFFFF;"></div>
-    <div style="width:1.6%;background:#DC1E35;"></div>
-    <div style="width:1.5%;background:#FFFFFF;"></div>
-    <div style="flex:1;background:#02529C;"></div>
-  </div>
-
-  <div style="max-width:720px;margin:0 auto;padding:0 28px;">
-
-    <!-- Header -->
-    <header style="display:flex;align-items:baseline;justify-content:space-between;padding:30px 0 0;">
-      <a href="/" style="text-decoration:none;display:flex;align-items:baseline;gap:2px;">
-        <span style="font-size:23px;font-weight:600;letter-spacing:-0.01em;color:#1A2128;">PLang</span>
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#97A0A7;">.is</span>
-      </a>
-      <nav style="display:flex;gap:24px;font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:0.01em;">
-        ${navHtml(nav, currentUrl)}
-      </nav>
-    </header>
-
-    <!-- Hero label -->
-    <div style="padding:78px 0 18px;">
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:#97A0A7;margin-bottom:26px;">
-        <span style="color:#2C6E8C;">plang.is</span>&nbsp;&nbsp;·&nbsp;&nbsp;programming in plain english
-      </div>
-
-      <!-- Page content -->
-      ${bodyHtml}
-
-    </div>
-
-    <!-- Footer -->
-    <div style="height:1px;background:#E4E7E4;margin:64px 0 0;"></div>
-    <footer style="padding:36px 0 80px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#A6AEB4;letter-spacing:0.02em;">
-      plang.is
-    </footer>
-
-  </div>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js"></script>
-  <script>hljs.highlightAll();</script>
-</body>
-</html>`;
+  return engine.renderFile('layout', {
+    title: isHome ? 'PLang' : 'PLang — Docs',
+    content: bodyHtml,
+    currentUrl,
+    isHome,
+    navItems: rootNav(currentUrl),
+  });
 }
 
 // ── Render a markdown file ───────────────────────────────────────────────────
-function renderFile(filePath, urlPath) {
+async function renderFile(filePath, urlPath) {
   const raw = fs.readFileSync(filePath, 'utf8');
   const expanded = resolveIncludes(raw);
   sectionCount = 0;
@@ -212,7 +143,7 @@ function renderFile(filePath, urlPath) {
 }
 
 // ── Routes ───────────────────────────────────────────────────────────────────
-function servePage(req, res) {
+async function servePage(req, res) {
   const urlPath = req.path.endsWith('/') ? req.path : req.path + '/';
   const rel = urlPath.replace(/^\//, '');
   const candidates = [
@@ -220,17 +151,16 @@ function servePage(req, res) {
     path.join(ROOT, rel.replace(/\/$/, '')),
   ];
   for (const f of candidates) {
-    if (fs.existsSync(f)) return res.send(renderFile(f, urlPath));
+    if (fs.existsSync(f)) return res.send(await renderFile(f, urlPath));
   }
-  res.status(404).send(page(urlPath, '<h1>Not found</h1>'));
+  res.status(404).send(await page(urlPath, '<h1>Not found</h1>'));
 }
 
-app.get('/', (req, res) => res.send(renderFile(path.join(ROOT, 'start.md'), '/')));
+app.get('/', async (req, res) => res.send(await renderFile(path.join(ROOT, 'start.md'), '/')));
 app.get('/doc', (_, res) => res.redirect('/doc/'));
 app.get('/doc/', servePage);
 app.get('/doc/*', servePage);
 
-// General: any top-level folder with a start.md
 app.get('/:segment', (req, res) => res.redirect('/' + req.params.segment + '/'));
 app.get('/:segment/', servePage);
 app.get('/:segment/*', servePage);
