@@ -78,17 +78,20 @@ through `DefaultEvaluator`/`Operator` (and at least one in an integrated
 These aren't wrong, but they don't substitute for behavioral coverage (F2 covers
 the real gap).
 
-## Verdict
+## Verdict — NEEDS-TESTS (fail)
 
-**C# suites: PASS (honest green, 4151/0).** The migration and template-stamping
-work is genuinely tested.
+The C# suites run green (4151/0) and the *production behavior is correct*, but the
+suite is **not a trustworthy gate** for this branch: F1 is a mutation-proven hole
+on the branch's headline runtime rule — neutering the born-typed decline leaves
+3433 tests green. By the strict-red rule (a confirmed coverage hole on headline
+behavior is not a PASS), this is **NEEDS-TESTS**, not PASS.
 
-**But:** F1 is a confirmed coverage hole on the branch's *headline* runtime rule —
-proven by mutation that nothing in C# guards the born-typed decline. Given no
-test-designer ran for this branch, I recommend the F1 tests be added before merge
-(the rule is currently guarded only by the *negative* signal of the PLang suite
-breaking). F2 should follow. I did not author the tests (tester does not commit
-source); they're specified above for the coder/test-designer.
+**Resolution is ready, not just specified.** I wrote and ran the missing tests —
+14 of them (4 F1 + 10 F2) — confirmed they compile and pass on real code, and
+confirmed the F1 decline tests FAIL under the neuter mutation (real guards). The
+code is in `tests-for-coder.md`. Coder: add those two files (drop the `TesterTemp`
+prefix), rebuild, and this flips to PASS. Tester does not commit source, so they're
+handed over rather than committed.
 
 ## PLang suite — out of scope, but one observation
 

@@ -155,8 +155,8 @@
       ],
       "after": {
         "status": "complete",
-        "health": "yellow",
-        "notes": "C# suites PASS — honest green, 4151/0, clean rebuild, git clean, mutation reverted. BUT F1 (HIGH) is a mutation-proven coverage hole on the headline born-typed-variable rule; F2 (MEDIUM) is a real gap on temporal condition operators. Recommend F1 tests added before merge (rule currently guarded only by the negative signal of the PLang suite breaking). Tests specified, not authored (tester doesn't commit source). PLang suite out of scope: aborts at runner bootstrap (os/system/.build/test.pr stale type:string Name) — positive evidence F1's rule fires; 628 committed .pr still carry old shape, need plang build sweep. Next bot: coder/test-designer to add F1+F2 tests."
+        "health": "red",
+        "notes": "VERDICT: NEEDS-TESTS. C# suites run green (4151/0, clean rebuild, git clean) and production behavior is correct, but the suite is not a trustworthy gate: F1 (HIGH) is a mutation-proven hole on the headline born-typed-variable rule (neuter the decline -> 3433 tests stay green). By strict-red, a confirmed coverage hole on headline behavior is not PASS. RESOLUTION READY: tester wrote+ran the 14 missing tests (4 F1 + 10 F2), confirmed they pass on real code AND that the F1 decline tests FAIL under the neuter mutation (real guards). Code handed off in tester/v1/tests-for-coder.md. CODER ACTION: add both files (BornTypedDeclineTests.cs, TemporalOperatorTests.cs) to the Modules suite, rebuild -> flips to PASS. Tester doesn't commit source. PLang suite out of scope (known-broken): aborts at runner bootstrap on stale os/system/.build/test.pr (type:string Name) — positive evidence F1's rule fires; 628 committed .pr carry old shape, need plang build sweep. Next bot: coder."
       }
     }
   ]
