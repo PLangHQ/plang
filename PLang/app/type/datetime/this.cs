@@ -36,6 +36,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public int Hour => Value.Hour;
     public int Minute => Value.Minute;
     public int Second => Value.Second;
+    public int Millisecond => Value.Millisecond;
+    public long Ticks => Value.Ticks;
+    public int DayOfYear => Value.DayOfYear;
+    public System.DayOfWeek DayOfWeek => Value.DayOfWeek;
 
     /// <summary>Bare ISO round-trip form — the serializer renders this.</summary>
     public override string ToString() =>
