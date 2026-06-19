@@ -45,5 +45,8 @@ public class ChannelStreamLoadTests
         var param = action.Parameters.First(p => p.Name == "Content");
         // The type survives the read — self-describing, no Judge needed.
         await Assert.That(param.Type.Name).IsEqualTo("text");
+        // And the %ref% borns a live template — a goal is authored code, so the goal
+        // read stamps (mode rides the goal type, not the read path).
+        await Assert.That(param.HasVariableReference).IsTrue();
     }
 }

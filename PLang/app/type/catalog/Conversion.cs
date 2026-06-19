@@ -67,6 +67,23 @@ public sealed partial class @this
         };
     }
 
+    /// <summary>
+    /// Read options for a <c>goal</c> — same as <see cref="ContextualReadOptions"/>
+    /// but with the <see cref="global::app.data.Wire"/> in template mode. A goal is
+    /// developer-authored code (it is what <c>application/plang-goal</c> names), so
+    /// its step params' <c>%ref%</c> holes born as live templates as they are read.
+    /// The mode rides the goal type — not a read-path flag, not the file extension —
+    /// and runtime data, never being a goal, is never read through here, so a forged
+    /// <c>%secret%</c> in a message stays literal.
+    /// </summary>
+    private static JsonSerializerOptions GoalReadOptions(actor.context.@this context)
+    {
+        var options = ContextualReadOptions(context);
+        options.Converters.Add(new global::app.data.Wire(
+            global::app.View.Store, context: context, template: "plang"));
+        return options;
+    }
+
     /// <summary>Internal accessor for the test facade — see <see cref="_caseInsensitiveRead"/>.</summary>
     internal static JsonSerializerOptions CaseInsensitiveRead => _caseInsensitiveRead;
 
@@ -299,7 +316,11 @@ public sealed partial class @this
             // Context-bound options when the caller passed one — deserialised
             // Paths get path.Resolve(raw, context) treatment so they land Context-
             // wired. Falls back to the static stub-Path options otherwise.
-            var readOpts = context != null ? ContextualReadOptions(context) : _caseInsensitiveRead;
+            // A goal reads with templates on (it is authored code); everything else
+            // reads literal.
+            var readOpts = context == null ? _caseInsensitiveRead
+                : targetType == typeof(global::app.goal.@this) ? GoalReadOptions(context)
+                : ContextualReadOptions(context);
             try
             {
                 var jsonResult = JsonSerializer.Deserialize(jsonStr, targetType, readOpts);
