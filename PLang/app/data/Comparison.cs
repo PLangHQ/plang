@@ -1,6 +1,15 @@
 namespace app.data;
 
 /// <summary>
+/// Raised by an operator boundary when a <see cref="Comparison"/> result has no
+/// honest answer for that operator — <see cref="Comparison.Incomparable"/> on any
+/// comparison, <see cref="Comparison.NotEqual"/> on an ordering. Derives from
+/// ArgumentException so the condition evaluator's catch surfaces it as a clean
+/// EvaluationError. The VALUE never throws; the boundary decides error-or-result.
+/// </summary>
+public sealed class IncomparableException(string message) : System.ArgumentException(message);
+
+/// <summary>
 /// The single, sign-free result of every comparison. An enum by construction, not
 /// an <c>int</c>: a magic <c>NotEqual = -2</c> would satisfy <c>&lt; 0</c> and a
 /// sign-based sort would silently order "not equal" values. Nothing casts these to
@@ -10,14 +19,6 @@ namespace app.data;
 /// load-bearing: it makes <c>dict == dict</c> work while <c>dict &lt; dict</c>
 /// errors, and <c>dict == number</c> error while <c>%x% == null</c> does not.</para>
 /// </summary>
-/// <summary>
-/// Raised by an operator boundary when a <see cref="Comparison"/> result has no
-/// honest answer for that operator — <see cref="Comparison.Incomparable"/> on any
-/// comparison, <see cref="Comparison.NotEqual"/> on an ordering. Derives from
-/// ArgumentException so the condition evaluator's catch surfaces it as a clean
-/// EvaluationError. The VALUE never throws; the boundary decides error-or-result.
-/// </summary>
-public sealed class IncomparableException(string message) : System.ArgumentException(message);
 
 public enum Comparison
 {

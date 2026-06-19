@@ -157,3 +157,21 @@ Ingi's lean ("code is wrong, we should serialize the verb") points at **(B)**. C
 - `variable/list/this.cs::GetChangedSince()` — 0 callers (the string projection it does, `Value?.ToString()` / `"(null)"`, would also be a presentation-in-registry smell if it were live).
 - `app/error/GoalError`, `app/error/ProgramError` — 0 references.
 Delete in the cleanup pass unless a near-term consumer is known.
+
+## Hardening candidates (systemic, not local to one diff)
+
+- **`Normalize` silently reflects an unrecognized raw-CLR leaf into a property bag.**
+  `data/this.Normalize.cs` — `NormalizeValue` has arms for null/primitive/enum/item-leaf/
+  carrier/dict/list, then falls through to `NormalizeObject` (line ~225), which reflects any
+  remaining CLR object into a native dict. Correct for **domain records** (the "domain types
+  ride the wire as property bags" design), but it also silently mangles a *foreign* leaf that
+  slipped past born-native construction — a `JsonElement` reflects to `{"valuekind":"Object"}`,
+  losing all content. This took down every cached LLM build until `c27c37c5a` fixed the
+  **source** (cache no longer stores a `JsonElement`); the foot-gun in `Normalize` itself
+  remains for the next un-born raw type.
+  - Why it can't be a blind local fix: a stray `JsonElement` and a legitimate domain POCO are
+    both non-`item` CLR objects reaching `NormalizeObject` the same way — "throw loudly on an
+    unrecognized leaf" would break the intended domain-record path. The honest fix is upstream
+    (no foreign CLR leaf reaches `Normalize` un-born) or a curated allow/deny of reflectable
+    types — an architect-level call. Flagged by codeanalyzer v1 (F4, MEDIUM); pre-existing,
+    not introduced on `template-stamping-at-read`.

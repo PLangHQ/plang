@@ -83,10 +83,6 @@ public sealed class Operator
     private static async ValueTask<global::app.type.item.@this?> Val(data.@this? data)
         => data == null ? null : await data.Value();
 
-    /// <summary>Both operands have a present value — the ordering operators are false otherwise.</summary>
-    private static bool BothPresent(data.@this? left, data.@this? right)
-        => left?.HasValue == true && right?.HasValue == true;
-
     /// <summary>
     /// IS-A: does the left value's type satisfy the named type (right operand)?
     /// On an un-narrowed reference (`file`/`url`) a miss forces the narrow —
