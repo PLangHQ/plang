@@ -167,36 +167,31 @@ function renderDocNavHtml(nodes, currentUrl, depth) {
 
 function docNav(currentUrl) {
   const docDir = path.join(ROOT, 'doc');
-  const hasRoot = fs.existsSync(path.join(docDir, 'start.md'));
-  const rootLink = hasRoot
-    ? `<a href="/doc/" style="display:block;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:${currentUrl === '/doc/' ? '500' : '400'};color:${currentUrl === '/doc/' ? '#161D23' : '#6B757D'};text-decoration:none;padding:5px 8px;border-radius:4px;margin-bottom:6px;">doc</a>`
-    : '';
-  const tree = buildDocTree(docDir, '/doc/');
+  const isRoot = currentUrl === '/';
+  const color = isRoot ? '#161D23' : '#6B757D';
+  const weight = isRoot ? '500' : '400';
+  const rootLink = `<a href="/" style="display:block;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:${weight};color:${color};text-decoration:none;padding:5px 8px;border-radius:4px;margin-bottom:6px;">plang.is</a>`;
+  const tree = buildDocTree(docDir, '/');
   return rootLink + renderDocNavHtml(tree, currentUrl, 0);
 }
 
 // ── Render a page via Liquid template ───────────────────────────────────────
 async function page(currentUrl, bodyHtml) {
   const isHome = currentUrl === '/';
-  const inDoc = currentUrl.startsWith('/doc/') || currentUrl === '/doc/';
-  let content = bodyHtml;
-  if (inDoc) {
-    const sidebar = docNav(currentUrl);
-    content = `<div style="display:grid;grid-template-columns:220px 1fr;gap:64px;align-items:start;">` +
-      `<aside style="position:sticky;top:40px;">` +
-      `<div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#A6AEB4;padding:0 8px;margin-bottom:10px;">Reference</div>` +
-      `<div style="border-left:1px solid #E4E7E4;">${sidebar}</div>` +
-      `</aside>` +
-      `<main style="min-width:0;">${bodyHtml}</main>` +
-      `</div>`;
-  }
+  const sidebar = docNav(currentUrl);
+  const content = `<div style="display:grid;grid-template-columns:220px 1fr;gap:64px;align-items:start;">` +
+    `<aside style="position:sticky;top:40px;">` +
+    `<div style="border-left:1px solid #E4E7E4;">${sidebar}</div>` +
+    `</aside>` +
+    `<main style="min-width:0;">${bodyHtml}</main>` +
+    `</div>`;
   return engine.renderFile('layout', {
     title: isHome ? 'PLang' : 'PLang — Docs',
     content,
     currentUrl,
     isHome,
-    navItems: rootNav(currentUrl),
-    inDoc,
+    navItems: [],
+    inDoc: true,
   });
 }
 
@@ -247,14 +242,16 @@ async function dirListing(dirPath, urlPath, title) {
 }
 
 // ── Routes ───────────────────────────────────────────────────────────────────
+const DOC = path.join(ROOT, 'doc');
+
 async function servePage(req, res) {
   const urlPath = req.path.endsWith('/') ? req.path : req.path + '/';
   const rel = urlPath.replace(/^\//, '');
   const bare = rel.replace(/\/$/, '');
   const candidates = [
-    path.join(ROOT, rel, 'start.md'),
-    path.join(ROOT, bare + '.md'),
-    path.join(ROOT, bare),
+    path.join(DOC, rel, 'start.md'),
+    path.join(DOC, bare + '.md'),
+    path.join(DOC, bare),
   ];
   for (const f of candidates) {
     if (!fs.existsSync(f)) continue;
@@ -268,13 +265,6 @@ async function servePage(req, res) {
   res.status(404).send(await page(urlPath, '<h1>Not found</h1>'));
 }
 
-app.get('/', async (req, res) => res.send(await renderFile(path.join(ROOT, 'start.md'), '/')));
-app.get('/doc', (_, res) => res.redirect('/doc/'));
-app.get('/doc/', servePage);
-app.get('/doc/*', servePage);
-
-app.get('/:segment', (req, res) => res.redirect('/' + req.params.segment + '/'));
-app.get('/:segment/', servePage);
-app.get('/:segment/*', servePage);
+app.get('*', servePage);
 
 app.listen(PORT, () => console.log(`PLang docs → http://localhost:${PORT}/`));
