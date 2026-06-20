@@ -234,10 +234,11 @@ fix posture is identical: gate-must-be-unconditional.
 
 ## Next bot
 
-**auditor.** Per `/memory/feedback_next_bot_after_security.md` — security
-PASS/NEEDS-FIX hands to auditor for the merge-readiness call; docs is
-downstream of auditor.
+**coder.** NEEDS-FIX with concrete fixes specified (F1: fail-closed in
+`ReadSignatureLayer` when `_context == null`; F2: rewrite the stale XML
+doc to match post-fix contract). Coder lands both, then back to security
+for v2 re-review before auditor.
 
 ```
-Next bot: auditor
+Next bot: coder
 ```
