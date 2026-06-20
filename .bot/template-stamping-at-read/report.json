@@ -222,6 +222,47 @@
         "health": "yellow",
         "notes": "VERDICT: NEEDS-FIX. One Medium auth-bypass (F1, latent-ratchet to High) on the new auto-verify-on-read defense — context-less Wire reads silently strip @schema:signature. One Low docs-vs-impl drift on a security boundary (F2). Both fixes are small and clean (two-line guard + one paragraph rewrite). No Critical/High today; build green; semgrep delta innocuous (+1, Assembly.LoadFrom relocation needs whitelist update). The Ed25519 pipeline, action.FromWire stamping seam, and Assembly.LoadFrom centralisation all hold up under review. Net delta on security posture is slightly POSITIVE (LoadFrom now gated on a distinct Execute verb) — F1 is the regression that must close before the new defense ships in production. Standing memo: callback.run finding remains open and is the symmetric write-side of F1 (same fix posture). Next bot: coder."
       }
+    },
+    {
+      "id": "d5e6f7a8-b9c0-41d2-83e4-5f6a7b8c9d0e",
+      "bot": "auditor",
+      "timestamp_start": "2026-06-20T12:00:00Z",
+      "timestamp_end": "2026-06-20T12:35:00Z",
+      "intent": "Cross-cut audit of template-stamping-at-read after coder a3a912cd9 closed security F1/F2. Verify pipeline state, re-trace ContextLessFallback callers under new fail-closed posture, re-run all C# suites.",
+      "before": {
+        "assumptions": "All four upstream bots (coder/codeanalyzer/tester/security) have summary + verdict on this branch. Only commit since security ran is a3a912cd9 (coder's F1/F2 response).",
+        "risk": "Coder's at-rest Store-view trust-on-read decision is a conscious open todo — must verify it doesn't widen the externally-reachable attack surface."
+      },
+      "plan": ".bot/template-stamping-at-read/auditor/v1/report.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/data/Wire.cs",
+            "PLang/app/channel/serializer/plang/this.cs",
+            "PLang.Tests/Wire/App/Serialization/WireConverterSigningTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1/F2 fix verified: transport (View.Out) with _context==null returns SignatureVerifyContextMissing typed error; at-rest (View.Store) trust-on-read is documented inline with threat-model justification. Doc rewrite matches impl. Regression test exercises ContextLessFallback.Deserialize on a signed payload and asserts the typed error key — exactly the bypass security flagged."
+        },
+        {
+          "paths": [
+            "PLang/app/module/crypto/code/Default.cs",
+            "PLang/app/data/this.Transport.cs",
+            "PLang/app/snapshot/this.Wire.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "All 5 ContextLessFallback call sites re-traced. Read-side callers: DecompressAsync (View.Out → fail-closed after fix), snapshot resume (View.Store + sign:false → trust-on-read, local-FS threat model). Write-side: Compress + crypto.Hash canonicalization — no signed-payload read path. Transport hot-spot is now closed."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "VERDICT: PASS. All 4 upstream bots ran; their findings closed or filed as standing items. Coder's F1/F2 fix (a3a912cd9) cleanly partitions transport (fail-closed) from at-rest Store (trust-on-read, documented). Build clean; 4166/0 across 6 C# suites. Two non-blocking observations filed: O1 — name the SettingsStore verify-with-context todo so it doesn't decay; O2 — comment the sign:false-write/verify-on-read asymmetry on snapshot Wire so future contributors don't shortcut it. O3 — PLang suite stays known-broken (stale .pr files; tracked outside this branch). Next: Ingi for merge-gate decision."
+      }
     }
   ]
 }
