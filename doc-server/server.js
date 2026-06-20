@@ -108,7 +108,7 @@ function resolveIncludes(md) {
 }
 
 // ── Build nav from root-level folders that have a start.md ──────────────────
-const SKIP = new Set(['doc-server', 'doc', '.git', '.bot', 'PLang', 'PLang.Tests', 'PLang.Generators', 'PlangConsole', 'Tests', 'os', 'node_modules', 'Documentation', 'characters', 'learnings', 'diary', 'sessions']);
+const SKIP = new Set(['doc-server', '.git', '.bot', 'PLang', 'PLang.Tests', 'PLang.Generators', 'PlangConsole', 'Tests', 'os', 'node_modules', 'Documentation', 'characters', 'learnings', 'diary', 'sessions']);
 
 function hasMd(dir) {
   try {
@@ -128,15 +128,64 @@ function rootNav(currentUrl) {
   return items;
 }
 
+// ── Doc tree (left sidebar) ──────────────────────────────────────────────────
+function buildDocTree(dir, urlBase) {
+  const nodes = [];
+  let entries;
+  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return nodes; }
+  for (const e of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+    if (e.name.startsWith('.')) continue;
+    if (e.isDirectory()) {
+      const href = urlBase + e.name + '/';
+      const hasPage = fs.existsSync(path.join(dir, e.name, 'start.md'));
+      nodes.push({ label: e.name, href: hasPage ? href : null, children: buildDocTree(path.join(dir, e.name), href) });
+    } else if (e.name.endsWith('.md') && e.name !== 'start.md') {
+      const slug = e.name.replace(/\.md$/, '');
+      nodes.push({ label: slug.replace(/-/g, ' '), href: urlBase + slug + '/', children: [] });
+    }
+  }
+  return nodes;
+}
+
+function renderDocNavHtml(nodes, currentUrl, depth) {
+  if (!nodes.length) return '';
+  depth = depth || 0;
+  const indent = depth * 14;
+  let html = `<ul style="list-style:none;padding:0;margin:0;">`;
+  for (const n of nodes) {
+    const active = currentUrl === n.href || (n.href && currentUrl.startsWith(n.href));
+    const color = active ? '#161D23' : '#6B757D';
+    const weight = active ? '500' : '400';
+    const label = n.href
+      ? `<a href="${n.href}" style="display:block;font-family:'IBM Plex Mono',monospace;font-size:13px;color:${color};font-weight:${weight};text-decoration:none;padding:5px 0 5px ${8 + indent}px;border-radius:4px;">${n.label}</a>`
+      : `<span style="display:block;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#A6AEB4;padding:14px 0 4px ${8 + indent}px;">${n.label}</span>`;
+    html += `<li>${label}${renderDocNavHtml(n.children, currentUrl, depth + 1)}</li>`;
+  }
+  html += '</ul>';
+  return html;
+}
+
+function docNav(currentUrl) {
+  const docDir = path.join(ROOT, 'doc');
+  const hasRoot = fs.existsSync(path.join(docDir, 'start.md'));
+  const rootLink = hasRoot
+    ? `<a href="/doc/" style="display:block;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:${currentUrl === '/doc/' ? '500' : '400'};color:${currentUrl === '/doc/' ? '#161D23' : '#6B757D'};text-decoration:none;padding:5px 8px;border-radius:4px;margin-bottom:6px;">doc</a>`
+    : '';
+  const tree = buildDocTree(docDir, '/doc/');
+  return rootLink + renderDocNavHtml(tree, currentUrl, 0);
+}
+
 // ── Render a page via Liquid template ───────────────────────────────────────
 async function page(currentUrl, bodyHtml) {
   const isHome = currentUrl === '/';
+  const inDoc = currentUrl.startsWith('/doc/') || currentUrl === '/doc/';
   return engine.renderFile('layout', {
     title: isHome ? 'PLang' : 'PLang — Docs',
     content: bodyHtml,
     currentUrl,
     isHome,
     navItems: rootNav(currentUrl),
+    docNavHtml: inDoc ? docNav(currentUrl) : null,
   });
 }
 
