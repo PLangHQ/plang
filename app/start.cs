@@ -1,13 +1,14 @@
-using app.type.path;
+// app is the root. A program is a list of goals; app starts them. This is the
+// minimal core — the owned concepts (file, channel, type, identity, …) grow in
+// from here, each as Data on the constructor.
 
-namespace app;
+namespace app
+{
+    public sealed class @this(data.@this<goal.list.@this> goal)
+    {
+        public data.@this<goal.list.@this> goal { get; } = goal;
 
-// app boots. A program is a file. The file contains goals.
-// Everything owned once, here.
-class app(file.list files, goal.list goals, channel.list channels,
-          identity.list identities, signing.list signers, llm.list llms,
-          type.list types, error.list errors, warning.list warnings) {
-
-    public async Task<data.@this> start(data.@this<path.@this> entry) =>
-        await new file(entry).start();
+        // Run the program — run all the goals. Forward to the Data; it runs the list.
+        public Task<data.@this> start() => goal.start();
+    }
 }

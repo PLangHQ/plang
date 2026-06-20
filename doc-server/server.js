@@ -206,13 +206,15 @@ function buildDocTree(dir, urlBase) {
     if (e.name.startsWith('.')) continue;
     if (isRoot && SKIP.has(e.name)) continue;
     if (e.isDirectory()) {
+      const sub = path.join(dir, e.name);
       const href = urlBase + e.name + '/';
-      const hasStart = fs.existsSync(path.join(dir, e.name, 'start.md'));
-      const children = buildDocTree(path.join(dir, e.name), href);
-      // Skip folders that have no page and no documented children (e.g. a
-      // concept with only start.cs so far) — don't litter the nav with dead labels.
-      if (!hasStart && children.length === 0) continue;
-      nodes.push({ label: e.name, href: hasStart ? href : null, children });
+      // A concept is anything with a start.md (a written page) OR a start.cs
+      // (code we can render the structure of). Both are browsable.
+      const isConcept = fs.existsSync(path.join(sub, 'start.md'))
+        || fs.existsSync(path.join(sub, 'start.cs'));
+      const children = buildDocTree(sub, href);
+      if (!isConcept && children.length === 0) continue;
+      nodes.push({ label: e.name, href: isConcept ? href : null, children });
     } else if (e.name.endsWith('.md') && e.name !== 'start.md') {
       const slug = e.name.replace(/\.md$/, '');
       nodes.push({ label: slug.replace(/-/g, ' '), href: urlBase + slug + '/', children: [] });
@@ -258,11 +260,28 @@ function renderDocNavHtml(nodes, currentUrl, depth) {
   return html;
 }
 
+// Curated browse order for the app concepts. Anything not listed falls to the
+// end, alphabetical. Keeps the nav reading top-to-bottom in a sensible flow
+// instead of A–Z noise.
+const APP_ORDER = [
+  'goal', 'step', 'action',           // execution
+  'type', 'file', 'channel', 'translate',  // values & io
+  'identity', 'signing',              // trust
+  'llm',                              // ai
+  'error', 'warning',                 // outcomes
+  'context', 'obp',                   // runtime + pattern
+];
+function orderApp(nodes) {
+  const rank = n => { const i = APP_ORDER.indexOf(n.label); return i === -1 ? 999 : i; };
+  return [...nodes].sort((a, b) => rank(a) - rank(b) || a.label.localeCompare(b.label))
+    .map(n => ({ ...n, children: orderApp(n.children || []) }));
+}
+
 function docNav(currentUrl) {
   // The nav roots: the canonical app/ tree, and the modules folder. Each is a
   // foldable group — walk only these, not the whole repo.
   const tree = [
-    { label: 'app', href: '/app/', children: buildDocTree(path.join(ROOT, 'app'), '/app/') },
+    { label: 'app', href: '/app/', children: orderApp(buildDocTree(path.join(ROOT, 'app'), '/app/')) },
     { label: 'modules', href: '/docs/modules/', children: buildDocTree(path.join(ROOT, 'docs', 'modules'), '/docs/modules/') },
   ];
   return renderDocNavHtml(tree, currentUrl, 0);
@@ -333,6 +352,24 @@ async function dirListing(dirPath, urlPath, title) {
   return page(urlPath, body);
 }
 
+// A concept folder with code but no written page: render its generated
+// structure so it's still browsable (the same component [[…json]] produces).
+async function conceptPage(dirPath, urlPath, title) {
+  let data;
+  const jsonPath = path.join(dirPath, 'start.json');
+  if (fs.existsSync(jsonPath)) {
+    data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+  } else {
+    const { extract } = require('./extract');
+    const rel = path.relative(ROOT, path.join(dirPath, 'start.cs'));
+    data = extract(fs.readFileSync(path.join(dirPath, 'start.cs'), 'utf8'), rel);
+  }
+  const ns = data.namespace ? `<p style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#A6AEB4;margin:0 0 28px;">${esc(data.namespace)}</p>` : '';
+  const note = `<p style="font-size:16px;line-height:1.6;color:#7A838A;margin:0 0 8px;">Generated from <code style="font-family:'IBM Plex Mono',monospace;font-size:0.85em;color:#2C6E8C;">${esc(data.source)}</code>. No written page yet — this is the shape straight from the code.</p>`;
+  const body = `<h1 style="font-size:clamp(36px,5.6vw,56px);line-height:1.08;font-weight:500;letter-spacing:-0.02em;margin:0 0 6px;color:#161D23;">${esc(title)}</h1>${ns}${note}${renderStructure(data)}`;
+  return page(urlPath, body);
+}
+
 // ── Routes ───────────────────────────────────────────────────────────────────
 
 async function servePage(req, res) {
@@ -350,6 +387,9 @@ async function servePage(req, res) {
     if (stat.isFile()) return res.send(await renderFile(f, urlPath));
     if (stat.isDirectory()) {
       const title = bare.split('/').pop() || bare;
+      // A concept folder (has code) renders its structure; a plain folder lists.
+      if (fs.existsSync(path.join(f, 'start.cs')))
+        return res.send(await conceptPage(f, urlPath, title));
       return res.send(await dirListing(f, urlPath, title));
     }
   }

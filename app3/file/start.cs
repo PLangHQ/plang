@@ -17,9 +17,10 @@ class file(data.@this<path.@this> path) {
     async Task<data.@this<goal.goal>> load() =>
         throw new NotImplementedException();
 
-    // file.list — all the files of a program.
-    public class list(plang.list<file> files) {
-        public plang.list<file> list => files;
-        public file? find(data.@this<path.@this> path) => files.first(f => f.is(path));
+    // file.list — all the files of a program. The list owns its backing.
+    public class list(data.@this<plang.list<file>> files) {
+        public data.@this<plang.list<file>> list => files;
+        public async Task<file?> find(data.@this<path.@this> path) =>
+            (await files.Value()).first(f => f.is(path));
     }
 }
