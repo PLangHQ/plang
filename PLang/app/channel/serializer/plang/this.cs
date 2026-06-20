@@ -27,10 +27,18 @@ namespace app.channel.serializer.plang;
 /// </para>
 ///
 /// <para>
-/// Read does NOT auto-verify — verification is the consumer's explicit step
-/// (<c>signing.verify</c> action, or a channel event handler bound to
-/// <c>BeforeRead</c>/<c>AfterRead</c>). The reconstructed Data has its signature
-/// populated-but-unverified.
+/// Read auto-verifies: any <c>@schema:signature</c> payload it encounters runs
+/// the <c>signing.verify</c> action before the inner data is peeled out — a
+/// bad/expired/wrong-key signature fails the read. Freshness + nonce-replay are
+/// enforced on the Out (transport) view; the Store view skips the freshness
+/// window because at-rest artifacts re-present the same nonce by design (their
+/// own <c>Expires</c> is the time bound). A transport read with no actor context
+/// cannot verify, so it <b>fails closed</b> — a signed payload is never unwrapped
+/// without verification. At-rest (Store) reads are made context-less by the
+/// settings/permission store and are trusted on read (tampering them requires
+/// local-filesystem write); verifying at-rest signatures needs the actor context
+/// carried into the store read. Production transport reads always carry a context
+/// via the per-actor serializer.
 /// </para>
 /// </summary>
 public sealed class @this : ISerializer
