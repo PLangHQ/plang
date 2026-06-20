@@ -22,7 +22,7 @@
 </head>
 <body style="min-height:100vh;background:#F4F5F3;">
 
-  <div style="max-width:{% if docNavHtml %}1140px{% else %}720px{% endif %};margin:0 auto;padding:0 28px;">
+  <div style="max-width:{% if inDoc %}1140px{% else %}720px{% endif %};margin:0 auto;padding:0 28px;">
 
     <header style="display:flex;align-items:baseline;justify-content:space-between;padding:30px 0 0;">
       <a href="/" style="text-decoration:none;display:flex;align-items:baseline;gap:2px;">
@@ -36,35 +36,16 @@
       </nav>
     </header>
 
-    {% if docNavHtml %}
-
-    <div style="display:grid;grid-template-columns:220px 1fr;gap:64px;padding:60px 0 80px;align-items:start;">
-
-      <aside style="position:sticky;top:40px;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#A6AEB4;padding:0 8px;margin-bottom:10px;">Reference</div>
-        <div style="border-left:1px solid #E4E7E4;padding-left:0;">
-          {{ docNavHtml }}
-        </div>
-      </aside>
-
-      <main style="min-width:0;">
-        {{ content }}
-      </main>
-
-    </div>
-
-    {% else %}
-
-    <div style="padding:78px 0 18px;">
+    <div style="padding:{% if inDoc %}60px{% else %}78px{% endif %} 0 {% if inDoc %}80px{% else %}18px{% endif %};">
+      {% unless inDoc %}
       <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:#97A0A7;margin-bottom:26px;">
         <span style="color:#2C6E8C;">plang.is</span>&nbsp;&nbsp;·&nbsp;&nbsp;programming in plain english
       </div>
+      {% endunless %}
 
       {{ content }}
 
     </div>
-
-    {% endif %}
 
     <div style="height:1px;background:#E4E7E4;margin:64px 0 0;"></div>
     <footer style="padding:54px 0 80px;">

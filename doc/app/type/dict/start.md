@@ -1,17 +1,18 @@
-# app/type/dict
+# Dict
 
-`dict.@this` is a key→value map. It mirrors `list.@this` exactly — same slot model, same aliasing contract.
+A dict is a set of named values — like a JSON object or a record with fields.
 
-Its backing is a single `Dictionary<string, object?>` of **raw-or-item slots**. One store. (An earlier design had `_keys` + `_map` as separate fields — that's gone. One field, one source of truth.)
+```plang
+Start
+- set %person% = {name: "Alice", age: 30}
+- write out %person.name%          <-- Alice
+- set %person.age% = 31            <-- update one field
+```
 
-## The slot model
+## Reading and writing
 
-**Assign a CLR dict** (`set %obj% = src`) — aliases the source by reference. O(1), no walk. Ownership hand-off.
+Read a field with `%dict.key%`. Set a field with `set %dict.key% = value`. Keys are case-insensitive.
 
-**Read a key** (`%obj.name%`) — borns a fresh item from the slot. Slot not mutated.
+## Assigning a dict
 
-**Write a key** (`set %obj.name% = v`) — slot elevates in-place to the item.
-
-**`.Clr`** — all-raw → returns the same backing ref. Any elevated slot → peels per-element and rebuilds.
-
-Built dicts are `OrdinalIgnoreCase`. A dict aliased from a foreign `Dictionary` keeps whatever comparer the source had — `dict.@this` doesn't police casing on an aliased backing.
+Same as list — assigning a dict to a variable holds a reference to the original data, not a copy. Changes to a field are visible immediately.

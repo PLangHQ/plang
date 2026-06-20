@@ -179,13 +179,24 @@ function docNav(currentUrl) {
 async function page(currentUrl, bodyHtml) {
   const isHome = currentUrl === '/';
   const inDoc = currentUrl.startsWith('/doc/') || currentUrl === '/doc/';
+  let content = bodyHtml;
+  if (inDoc) {
+    const sidebar = docNav(currentUrl);
+    content = `<div style="display:grid;grid-template-columns:220px 1fr;gap:64px;align-items:start;">` +
+      `<aside style="position:sticky;top:40px;">` +
+      `<div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#A6AEB4;padding:0 8px;margin-bottom:10px;">Reference</div>` +
+      `<div style="border-left:1px solid #E4E7E4;">${sidebar}</div>` +
+      `</aside>` +
+      `<main style="min-width:0;">${bodyHtml}</main>` +
+      `</div>`;
+  }
   return engine.renderFile('layout', {
     title: isHome ? 'PLang' : 'PLang — Docs',
-    content: bodyHtml,
+    content,
     currentUrl,
     isHome,
     navItems: rootNav(currentUrl),
-    docNavHtml: inDoc ? docNav(currentUrl) : null,
+    inDoc,
   });
 }
 
