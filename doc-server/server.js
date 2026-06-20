@@ -137,8 +137,11 @@ function buildDocTree(dir, urlBase) {
     if (e.name.startsWith('.')) continue;
     if (e.isDirectory()) {
       const href = urlBase + e.name + '/';
-      const hasPage = fs.existsSync(path.join(dir, e.name, 'start.md'));
-      nodes.push({ label: e.name, href: hasPage ? href : null, children: buildDocTree(path.join(dir, e.name), href) });
+      const hasStart = fs.existsSync(path.join(dir, e.name, 'start.md'));
+      const children = [];
+      if (hasStart) children.push({ label: 'start', href, children: [] });
+      children.push(...buildDocTree(path.join(dir, e.name), href));
+      nodes.push({ label: e.name + '/', href: null, children });
     } else if (e.name.endsWith('.md') && e.name !== 'start.md') {
       const slug = e.name.replace(/\.md$/, '');
       nodes.push({ label: slug.replace(/-/g, ' '), href: urlBase + slug + '/', children: [] });
@@ -157,8 +160,8 @@ function renderDocNavHtml(nodes, currentUrl, depth) {
     const color = active ? '#161D23' : '#6B757D';
     const weight = active ? '500' : '400';
     const label = n.href
-      ? `<a href="${n.href}" style="display:block;font-family:'IBM Plex Mono',monospace;font-size:13px;color:${color};font-weight:${weight};text-decoration:none;padding:5px 0 5px ${8 + indent}px;border-radius:4px;">${n.label}</a>`
-      : `<span style="display:block;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#A6AEB4;padding:14px 0 4px ${8 + indent}px;">${n.label}</span>`;
+      ? `<a href="${n.href}" style="display:block;font-family:'IBM Plex Mono',monospace;font-size:13px;color:${color};font-weight:${weight};text-decoration:none;padding:4px 0 4px ${8 + indent}px;border-radius:4px;">${n.label}</a>`
+      : `<span style="display:block;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#B0B8BF;padding:10px 0 2px ${8 + indent}px;">${n.label}</span>`;
     html += `<li>${label}${renderDocNavHtml(n.children, currentUrl, depth + 1)}</li>`;
   }
   html += '</ul>';
@@ -170,13 +173,13 @@ function docNav(currentUrl) {
   const isRoot = currentUrl === '/';
   const color = isRoot ? '#161D23' : '#6B757D';
   const weight = isRoot ? '500' : '400';
-  const rootLink = `<a href="/" style="display:block;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:${weight};color:${color};text-decoration:none;padding:5px 8px;border-radius:4px;margin-bottom:6px;">plang.is</a>`;
+  const rootLink = `<a href="/" style="display:block;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:${weight};color:${color};text-decoration:none;padding:4px 8px;border-radius:4px;margin-bottom:4px;">start</a>`;
   const tree = buildDocTree(docDir, '/');
   return rootLink + renderDocNavHtml(tree, currentUrl, 0);
 }
 
 // ── Render a page via Liquid template ───────────────────────────────────────
-async function page(currentUrl, bodyHtml) {
+async function page(currentUrl, bodyHtml, opts = {}) {
   const isHome = currentUrl === '/';
   const sidebar = docNav(currentUrl);
   const content = `<div style="display:grid;grid-template-columns:220px 1fr;gap:64px;align-items:start;">` +
@@ -186,12 +189,11 @@ async function page(currentUrl, bodyHtml) {
     `<main style="min-width:0;">${bodyHtml}</main>` +
     `</div>`;
   return engine.renderFile('layout', {
-    title: isHome ? 'PLang' : 'PLang — Docs',
+    title: opts.title || (isHome ? 'PLang' : 'PLang — Docs'),
     content,
     currentUrl,
     isHome,
-    navItems: [],
-    inDoc: true,
+    query: opts.query || '',
   });
 }
 
@@ -264,6 +266,22 @@ async function servePage(req, res) {
   }
   res.status(404).send(await page(urlPath, '<h1>Not found</h1>'));
 }
+
+app.get('/ask', async (req, res) => {
+  const q = (req.query.q || '').trim();
+  let body;
+  if (!q) {
+    body = `<p style="font-size:19px;line-height:1.65;color:#525C64;">Type a question in the bar above.</p>`;
+  } else {
+    body = `<h1 style="font-size:clamp(28px,4vw,42px);line-height:1.12;font-weight:500;letter-spacing:-0.02em;margin:0 0 28px;color:#161D23;">${esc(q)}</h1>` +
+      `<p style="font-size:19px;line-height:1.65;color:#525C64;margin:0 0 20px;max-width:600px;">` +
+      `Language answers are coming. For now, browse the docs using the sidebar — start with ` +
+      `<a href="/" style="color:#2C6E8C;">start</a> or jump straight to ` +
+      `<a href="/app/" style="color:#2C6E8C;">app/</a>.` +
+      `</p>`;
+  }
+  res.send(await page('/ask', body, { title: q ? `${q} — PLang` : 'Ask PLang', query: q }));
+});
 
 app.get('*', servePage);
 

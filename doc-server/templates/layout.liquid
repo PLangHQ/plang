@@ -18,33 +18,28 @@
     blockquote{border-left:3px solid #E4E7E4;padding-left:16px;color:#7A838A;margin:16px 0;}
     details summary::-webkit-details-marker{display:none;}
     details[open] summary span.arrow{transform:rotate(90deg);display:inline-block;}
+    #ask-input::placeholder{color:#A6AEB4;}
+    #ask-input:focus{outline:none;border-color:#2C6E8C;background:#fff;}
   </style>
 </head>
 <body style="min-height:100vh;background:#F4F5F3;">
 
-  <div style="max-width:{% if inDoc %}1140px{% else %}720px{% endif %};margin:0 auto;padding:0 28px;">
+  <div style="max-width:1140px;margin:0 auto;padding:0 28px;">
 
-    <header style="display:flex;align-items:baseline;justify-content:space-between;padding:30px 0 0;">
-      <a href="/" style="text-decoration:none;display:flex;align-items:baseline;gap:2px;">
+    <header style="display:flex;align-items:center;justify-content:space-between;padding:28px 0 0;gap:32px;">
+      <a href="/" style="text-decoration:none;display:flex;align-items:baseline;gap:2px;flex-shrink:0;">
         <span style="font-size:23px;font-weight:600;letter-spacing:-0.01em;color:#1A2128;">PLang</span>
         <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#97A0A7;">.is</span>
       </a>
-      <nav style="display:flex;gap:24px;">
-        {% for item in navItems %}
-        <a href="{{ item.href }}" style="font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:0.01em;text-decoration:none;color:{% if item.active %}#2C6E8C{% else %}#5C666E{% endif %};">{{ item.label }}</a>
-        {% endfor %}
-      </nav>
+      <form action="/ask" method="GET" style="flex:1;max-width:520px;">
+        <input id="ask-input" type="text" name="q" value="{{ query }}" autocomplete="off"
+          placeholder="ask PLang anything — how do I read a file?"
+          style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#1A2128;background:#ECEEED;border:1px solid #D8DBD8;border-radius:8px;padding:10px 16px;transition:border-color 0.15s,background 0.15s;">
+      </form>
     </header>
 
-    <div style="padding:{% if inDoc %}60px{% else %}78px{% endif %} 0 {% if inDoc %}80px{% else %}18px{% endif %};">
-      {% unless inDoc %}
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:#97A0A7;margin-bottom:26px;">
-        <span style="color:#2C6E8C;">plang.is</span>&nbsp;&nbsp;·&nbsp;&nbsp;programming in plain english
-      </div>
-      {% endunless %}
-
+    <div style="padding:56px 0 80px;">
       {{ content }}
-
     </div>
 
     <div style="height:1px;background:#E4E7E4;margin:64px 0 0;"></div>
