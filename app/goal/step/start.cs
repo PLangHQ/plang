@@ -3,18 +3,23 @@ using app.type.number;
 
 namespace app.goal.step;
 
-class step(data.@this<text.@this> text, data.@this<number.@this> index, action.list actions) {
-    public data.@this<text.@this>   text    { get; } = text;
-    public data.@this<number.@this> index   { get; } = index;
-    public action.list              actions { get; } = actions;
+// A single step: one instruction. It runs its actions.
+// Everything it holds flows as Data<T> — the action.list included.
+class step(data.@this<text.@this> text, data.@this<number.@this> index, data.@this<action.list> action) {
+    public data.@this<text.@this>   text   { get; } = text;
+    public data.@this<number.@this> index  { get; } = index;
+    public data.@this<action.list>  action { get; } = action;
 
-    public async Task<data.@this> start() => await actions.start();
+    // Run all the actions — run the list.
+    public Task<data.@this> start() => action.list.start();
 }
 
-class list(list<step> steps) {
+// step.list — all the steps of a goal. The list owns the loop.
+class list(plang.list<step> steps) {
+    public plang.list<step> list => steps;
+
     public async Task<data.@this> start() {
-        foreach (var s in steps)
-        {
+        foreach (var s in steps) {
             var result = await s.start();
             if (!result.Success) return result;
         }

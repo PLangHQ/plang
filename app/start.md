@@ -7,18 +7,21 @@ app.start(Data<path> entry)
   → new file(entry).start()
 ```
 
-Everything in PLang is reachable from `app`. Every concept is owned once, here.
+Everything in plang is reachable from `app`. Every concept is owned once, here.
 Nothing constructs a sibling — it asks `app`.
 
 ## execution chain
 
 ```
-app
- └─ file          loads start.goal
-     └─ goal      named sequence of steps
-         └─ step  one instruction
-             └─ action   e.g. new db(Data<Db> db).start()
+app.start(entry)
+ └─ file.start()              loads start.goal
+     └─ goal.start()          → step.list.start()   run all steps
+         └─ step.start()      → action.list.start() run all actions
+             └─ action.start()   e.g. new db(Data<Db> db).start()
 ```
+
+Every `start()` asks one question: *what does this want to do?* A goal wants to
+run all its steps — that's the **list** — so it starts the list. See [obp](obp/start.md).
 
 ## owns
 
@@ -34,6 +37,10 @@ app
 | [translate](translate/start.md) | `Data<item>` value, `Data<type>` target | format conversion |
 | [error](error/start.md) | `Data<text>` message | what to do when things fail |
 | [warning](warning/start.md) | `Data<text>` message | what to flag without stopping |
+
+`app` is the program. One run of it is a [context](context/start.md) — the
+per-run state (variables, current goal/step). Context is navigated through
+`IContext`, never passed.
 
 ## OBP rules
 

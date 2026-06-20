@@ -2,6 +2,7 @@ using app.type.path;
 
 namespace app.file;
 
+// A file holds a goal. Start the file → load and start the goal.
 class file(data.@this<path.@this> path) {
     public data.@this<path.@this> path { get; } = path;
 
@@ -16,8 +17,9 @@ class file(data.@this<path.@this> path) {
     async Task<data.@this<goal.goal>> load() =>
         throw new NotImplementedException();
 
-    public class list(list<file> files) {
-        public file? find(data.@this<path.@this> path) =>
-            files.first(f => f.is(path));
+    // file.list — all the files of a program.
+    public class list(plang.list<file> files) {
+        public plang.list<file> list => files;
+        public file? find(data.@this<path.@this> path) => files.first(f => f.is(path));
     }
 }

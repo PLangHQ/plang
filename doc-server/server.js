@@ -95,16 +95,84 @@ marked.use({
   }
 });
 
-// ── Replace [[path/to/file]] with a fenced code block ───────────────────────
+// ── Replace [[path/to/file]] with an include ────────────────────────────────
+// A .json include renders the generated structure (params/methods) as a
+// component; anything else embeds as a fenced code block.
 function resolveIncludes(md) {
   return md.replace(/\[\[([^\]]+)\]\]/g, (_, rel) => {
+    const clean = rel.trim();
     try {
-      const src = fs.readFileSync(path.join(ROOT, rel.trim()), 'utf8');
-      return `\`\`\`${lang(rel)}\n${src.trimEnd()}\n\`\`\``;
+      if (clean.endsWith('.json')) {
+        const data = JSON.parse(fs.readFileSync(path.join(ROOT, clean), 'utf8'));
+        return renderStructure(data);
+      }
+      const src = fs.readFileSync(path.join(ROOT, clean), 'utf8');
+      return `\`\`\`${lang(clean)}\n${src.trimEnd()}\n\`\`\``;
     } catch {
-      return `> ⚠️ Could not load \`${rel}\``;
+      return `> ⚠️ Could not load \`${clean}\``;
     }
   });
+}
+
+// ── Render a generated structure JSON as HTML ───────────────────────────────
+// One card per type, read top-to-bottom as a signature:
+//   the constructor (the Data<T> it's built from), then the methods it answers.
+const MONO = "'IBM Plex Mono',monospace";
+const C = { name: '#161D23', type: '#2C6E8C', mute: '#A6AEB4', arrow: '#7C868D' };
+const nm  = t => `<span style="color:${C.name};">${esc(t)}</span>`;
+const ty  = t => `<span style="color:${C.type};">${esc(t)}</span>`;
+const mut = t => `<span style="color:${C.mute};">${esc(t)}</span>`;
+
+function renderStructure(data) {
+  const types = data.types || [data];
+  let html = `<div style="margin:28px 0;display:flex;flex-direction:column;gap:14px;">`;
+
+  for (const t of types) {
+    html += `<div style="border:1px solid #E4E7E4;border-radius:12px;background:#FFFFFF;overflow:hidden;">`;
+
+    // header: type name + namespace
+    html += `<div style="display:flex;align-items:baseline;gap:10px;padding:13px 20px;border-bottom:1px solid #EEF0EE;background:#FCFCFB;">`;
+    html += `<span style="font-family:${MONO};font-size:15px;font-weight:600;color:${C.name};">${esc(t.name)}</span>`;
+    if (data.namespace) html += `<span style="font-family:${MONO};font-size:12px;color:${C.mute};">${esc(data.namespace)}</span>`;
+    html += `</div>`;
+
+    if (t.summary)
+      html += `<p style="font-size:14px;line-height:1.55;color:#6B757D;margin:0;padding:13px 20px 0;">${esc(t.summary)}</p>`;
+
+    html += `<div style="font-family:${MONO};font-size:14px;line-height:1.85;padding:15px 20px;">`;
+
+    // constructor — what the type is built from
+    const params = t.parameters || [];
+    if (params.length) {
+      html += `<div>${nm(t.name)}${mut('(')}</div>`;
+      params.forEach((p, i) => {
+        const comma = i < params.length - 1 ? mut(',') : '';
+        html += `<div style="display:flex;padding-left:22px;gap:18px;">`
+              + `<span style="min-width:88px;color:${C.name};">${esc(p.name)}</span>`
+              + `<span>${ty(p.type)}${comma}</span></div>`;
+      });
+      html += `<div>${mut(')')}</div>`;
+    } else {
+      html += `<div>${nm(t.name)}${mut('()')}</div>`;
+    }
+
+    // methods — what the type answers. name(args) → return
+    const methods = (t.methods || []).filter(m => m.name !== 'list');
+    if (methods.length) {
+      html += `<div style="height:1px;background:#F0F1EF;margin:13px 0;"></div>`;
+      for (const m of methods) {
+        const args = (m.params || []).map(p => `${ty(p.type)} ${nm(p.name)}`).join(mut(', '));
+        html += `<div>${nm(m.name)}${mut('(')}${args}${mut(')')} ${mut('→')} ${ty(m.returns)}</div>`;
+        if (m.summary)
+          html += `<div style="font-size:13px;color:${C.mute};padding-left:22px;margin:-1px 0 7px;line-height:1.5;">${esc(m.summary)}</div>`;
+      }
+    }
+
+    html += `</div></div>`;
+  }
+
+  html += `</div>`;
+  return html;
 }
 
 // ── Build nav from root-level folders that have a start.md ──────────────────
@@ -140,7 +208,11 @@ function buildDocTree(dir, urlBase) {
     if (e.isDirectory()) {
       const href = urlBase + e.name + '/';
       const hasStart = fs.existsSync(path.join(dir, e.name, 'start.md'));
-      nodes.push({ label: e.name, href: hasStart ? href : null, children: buildDocTree(path.join(dir, e.name), href) });
+      const children = buildDocTree(path.join(dir, e.name), href);
+      // Skip folders that have no page and no documented children (e.g. a
+      // concept with only start.cs so far) — don't litter the nav with dead labels.
+      if (!hasStart && children.length === 0) continue;
+      nodes.push({ label: e.name, href: hasStart ? href : null, children });
     } else if (e.name.endsWith('.md') && e.name !== 'start.md') {
       const slug = e.name.replace(/\.md$/, '');
       nodes.push({ label: slug.replace(/-/g, ' '), href: urlBase + slug + '/', children: [] });
@@ -158,17 +230,41 @@ function renderDocNavHtml(nodes, currentUrl, depth) {
     const active = currentUrl === n.href || (n.href && currentUrl.startsWith(n.href));
     const color = active ? '#161D23' : '#6B757D';
     const weight = active ? '500' : '400';
+    const pad = `4px 0 4px ${8 + indent}px`;
+
+    // A folder with children → foldable <details>. Open when the active page is
+    // inside it (or when there's no link target, so the label stays reachable).
+    if (n.children && n.children.length) {
+      const within = n.href && currentUrl.startsWith(n.href);
+      const open = within || !n.href ? ' open' : '';
+      const labelInner = n.href
+        ? `<a href="${n.href}" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:${color};font-weight:${weight};text-decoration:none;">${n.label}</a>`
+        : `<span style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#3A434C;font-weight:500;">${n.label}</span>`;
+      html += `<li><details${open}>`;
+      html += `<summary style="list-style:none;cursor:pointer;padding:${pad};display:flex;align-items:center;gap:6px;">`;
+      html += `<span class="arrow" style="font-size:9px;color:#A6AEB4;transition:transform .12s;display:inline-block;">▶</span>${labelInner}</summary>`;
+      html += renderDocNavHtml(n.children, currentUrl, depth + 1);
+      html += `</details></li>`;
+      continue;
+    }
+
+    // Leaf
     const label = n.href
-      ? `<a href="${n.href}" style="display:block;font-family:'IBM Plex Mono',monospace;font-size:13px;color:${color};font-weight:${weight};text-decoration:none;padding:4px 0 4px ${8 + indent}px;border-radius:4px;">${n.label}</a>`
-      : `<span style="display:block;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#B0B8BF;padding:10px 0 2px ${8 + indent}px;">${n.label}</span>`;
-    html += `<li>${label}${renderDocNavHtml(n.children, currentUrl, depth + 1)}</li>`;
+      ? `<a href="${n.href}" style="display:block;font-family:'IBM Plex Mono',monospace;font-size:13px;color:${color};font-weight:${weight};text-decoration:none;padding:${pad};border-radius:4px;">${n.label}</a>`
+      : `<span style="display:block;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#B0B8BF;padding:${pad};">${n.label}</span>`;
+    html += `<li>${label}</li>`;
   }
   html += '</ul>';
   return html;
 }
 
 function docNav(currentUrl) {
-  const tree = buildDocTree(ROOT, '/');
+  // The nav roots: the canonical app/ tree, and the modules folder. Each is a
+  // foldable group — walk only these, not the whole repo.
+  const tree = [
+    { label: 'app', href: '/app/', children: buildDocTree(path.join(ROOT, 'app'), '/app/') },
+    { label: 'modules', href: '/docs/modules/', children: buildDocTree(path.join(ROOT, 'docs', 'modules'), '/docs/modules/') },
+  ];
   return renderDocNavHtml(tree, currentUrl, 0);
 }
 
@@ -183,7 +279,7 @@ async function page(currentUrl, bodyHtml, opts = {}) {
     `<main style="min-width:0;">${bodyHtml}</main>` +
     `</div>`;
   return engine.renderFile('layout', {
-    title: opts.title || (isHome ? 'PLang' : 'PLang — Docs'),
+    title: opts.title || (isHome ? 'plang' : 'plang — Docs'),
     content,
     currentUrl,
     isHome,
@@ -273,9 +369,9 @@ app.get('/ask', async (req, res) => {
       `<a href="/app/" style="color:#2C6E8C;">app/</a>.` +
       `</p>`;
   }
-  res.send(await page('/ask', body, { title: q ? `${q} — PLang` : 'Ask PLang', query: q }));
+  res.send(await page('/ask', body, { title: q ? `${q} — plang` : 'Ask plang', query: q }));
 });
 
 app.get('*', servePage);
 
-app.listen(PORT, () => console.log(`PLang docs → http://localhost:${PORT}/`));
+app.listen(PORT, () => console.log(`plang docs → http://localhost:${PORT}/`));

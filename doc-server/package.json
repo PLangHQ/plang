@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "type": "commonjs",
   "scripts": {
+    "build": "node extract.js",
+    "prestart": "node extract.js",
     "start": "node server.js"
   },
   "dependencies": {
