@@ -1,15 +1,8 @@
-namespace app.error;
+namespace error;
 
-class error(string message, Exception? cause = null) {
-    public string     message { get; } = message;
-    public Exception? cause   { get; } = cause;
-    public void start() => throw new RuntimeException(this);
-}
-
-class list(IReadOnlyList<error> items) {
-    public void add(error e) => throw new RuntimeException(e);
-}
-
-class RuntimeException(error error) : Exception(error.message) {
-    public error error { get; } = error;
+// A failed Data carries one of these — the what and the where.
+public sealed class @this(string message, string key = "Error")
+{
+    public string Message { get; } = message;
+    public string Key { get; } = key;
 }

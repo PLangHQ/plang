@@ -4,5 +4,23 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>app</RootNamespace>
+    <!-- Totally separate from PLang/app — its own project, own build. -->
+    <!-- Lowercase type names (list, etc.) are the plang convention, not a mistake. -->
+    <NoWarn>CS8981</NoWarn>
   </PropertyGroup>
+
+  <!-- Design sketches: start.md + start.cs that read right in the docs but don't
+       compile yet. They stay as files (the doc-server renders them); excluded
+       from the build until they're implemented for real. -->
+  <ItemGroup>
+    <Compile Remove="channel/**/*.cs" />
+    <Compile Remove="context/**/*.cs" />
+    <Compile Remove="file/**/*.cs" />
+    <Compile Remove="identity/**/*.cs" />
+    <Compile Remove="llm/**/*.cs" />
+    <Compile Remove="signing/**/*.cs" />
+    <Compile Remove="translate/**/*.cs" />
+    <Compile Remove="warning/**/*.cs" />
+    <Compile Remove="type/start.cs" />
+  </ItemGroup>
 </Project>
