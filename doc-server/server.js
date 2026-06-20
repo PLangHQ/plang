@@ -138,10 +138,7 @@ function buildDocTree(dir, urlBase) {
     if (e.isDirectory()) {
       const href = urlBase + e.name + '/';
       const hasStart = fs.existsSync(path.join(dir, e.name, 'start.md'));
-      const children = [];
-      if (hasStart) children.push({ label: 'start', href, children: [] });
-      children.push(...buildDocTree(path.join(dir, e.name), href));
-      nodes.push({ label: e.name + '/', href: null, children });
+      nodes.push({ label: e.name, href: hasStart ? href : null, children: buildDocTree(path.join(dir, e.name), href) });
     } else if (e.name.endsWith('.md') && e.name !== 'start.md') {
       const slug = e.name.replace(/\.md$/, '');
       nodes.push({ label: slug.replace(/-/g, ' '), href: urlBase + slug + '/', children: [] });
@@ -170,12 +167,8 @@ function renderDocNavHtml(nodes, currentUrl, depth) {
 
 function docNav(currentUrl) {
   const docDir = path.join(ROOT, 'doc');
-  const isRoot = currentUrl === '/';
-  const color = isRoot ? '#161D23' : '#6B757D';
-  const weight = isRoot ? '500' : '400';
-  const rootLink = `<a href="/" style="display:block;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:${weight};color:${color};text-decoration:none;padding:4px 8px;border-radius:4px;margin-bottom:4px;">start</a>`;
   const tree = buildDocTree(docDir, '/');
-  return rootLink + renderDocNavHtml(tree, currentUrl, 0);
+  return renderDocNavHtml(tree, currentUrl, 0);
 }
 
 // ── Render a page via Liquid template ───────────────────────────────────────
