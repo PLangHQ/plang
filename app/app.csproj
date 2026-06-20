@@ -4,8 +4,5 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>app</RootNamespace>
-    <!-- Totally separate from PLang/app — its own project, own build. -->
-    <!-- Lowercase type names (list, etc.) are the plang convention, not a mistake. -->
-    <NoWarn>CS8981</NoWarn>
   </PropertyGroup>
 </Project>
