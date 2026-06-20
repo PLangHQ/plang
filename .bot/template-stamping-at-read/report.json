@@ -263,6 +263,60 @@
         "health": "green",
         "notes": "VERDICT: PASS. All 4 upstream bots ran; their findings closed or filed as standing items. Coder's F1/F2 fix (a3a912cd9) cleanly partitions transport (fail-closed) from at-rest Store (trust-on-read, documented). Build clean; 4166/0 across 6 C# suites. Two non-blocking observations filed: O1 — name the SettingsStore verify-with-context todo so it doesn't decay; O2 — comment the sign:false-write/verify-on-read asymmetry on snapshot Wire so future contributors don't shortcut it. O3 — PLang suite stays known-broken (stale .pr files; tracked outside this branch). Next: Ingi for merge-gate decision."
       }
+    },
+    {
+      "id": "f7a8b9c0-d1e2-43f4-a5b6-c7d8e9f0a1b2",
+      "bot": "docs",
+      "timestamp_start": "2026-06-20T13:00:00Z",
+      "timestamp_end": "2026-06-20T13:30:00Z",
+      "intent": "Docs pass on template-stamping-at-read. Find and fill documentation gaps introduced by the branch's headline changes: Wire auto-verify-on-read, template-stamping at read, born-typed variable decline, datetime navigable members, Data.Clr<T>(fallback), GetValue removal.",
+      "before": {
+        "assumptions": "Auditor PASS. All 5 upstream bots ran; build and C# suite green. Docs pass works from the auditor report + coder commits.",
+        "risk": "The wire-serialization.md auto-verify rule was explicitly flagged as stale by the security report (F2). Born-typed decline is a headline runtime rule with no prior doc entry. GetValue was deleted but still appears in variables.md API table."
+      },
+      "plan": ".bot/template-stamping-at-read/docs/v1/report.md",
+      "actions": [
+        {
+          "paths": ["Documentation/v0.2/wire-serialization.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated stale 'Wire.Read does not auto-verify' rule to the new contract (fail-closed on context-less View.Out; trust-on-read for View.Store). Added new section 'Template-stamping at read' covering the authored-Wire mode, trust boundary, and type holes-decision."
+        },
+        {
+          "paths": ["Documentation/v0.2/variables.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added born-typed variable decline rule. Removed GetValue(string) from API table, GetValue example from code block, and stale GetValue<T>() from Data properties list. Replaced with Clr<T>()."
+        },
+        {
+          "paths": ["Documentation/v0.2/type-system.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added 'datetime navigable members' section: member table, dot-navigation mechanics, Data.Clr<T>(fallback) utility."
+        },
+        {
+          "paths": ["Documentation/v0.2/good_to_know.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Five new index entries: Wire auto-verify, template-stamping at read, born-typed variable decline, datetime navigable members, Data.Clr<T>(fallback)."
+        },
+        {
+          "paths": [".bot/template-stamping-at-read/claude-md-proposals.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Filed two CLAUDE.md proposals: Wire.Read auto-verify-on-read posture; born-typed variable decline rule."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "VERDICT: PASS. 5 gaps found and filled; 4 doc files updated; 5 good_to_know index entries added; CLAUDE.md proposal filed. No C# docstring drift on changed files. Full summary in docs-report.json. Next: Ingi for merge-gate decision."
+      }
     }
   ]
 }
