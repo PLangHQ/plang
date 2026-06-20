@@ -1,33 +1,45 @@
 # app.goal
 
-A goal is a named sequence of steps. It is the basic unit of a plang program.
+A goal is a named sequence of steps — the basic unit of a plang program. It is
+born one of two ways, and either way it ends up holding the **located** compiled
+file:
+
+- **by `name`** — a reference (`new goal { name = "start" }`, or a `call
+  SomeGoal`). The goal finds the matching `.pr` and keeps its path as `prPath`.
+- **by `prPath`** — already located (the loader hands over a `Path` to a `.pr`).
 
 ```csharp
-goal(Data<text> name, Data<path> path, step.list step)
+goal(Data<text> name?, Data<path> prPath?) : IStart
 ```
 
-A goal runs by starting its steps. What does `goal.start()` want to do? Run all
-the steps — run the list:
+Exactly one is given. The point of resolving to `prPath` at birth is that
+`start()` becomes trivial: the file is already found, so starting is just a
+read.
 
 ```csharp
-public Task<data.@this> start() => step.list.start();
+public Task<data.@this> start() => read().start();   // prPath → step.list → start
 ```
 
-The steps ride as `Data<step.list>` — a collection is a value, so it flows
-wrapped like everything else. Taking a bare `step.list` would force the caller
-to crack open a Data to hand it over; that is the decomposition OBP forbids. The
-goal navigates to the list and starts it — it never loops, and never opens
-`Data.Value` (only a leaf does that).
+`read()` loads the `.pr` at `prPath` into the `step.list`, then the goal starts
+the list. The read is **deferred to `start()`** — finding the file (resolving
+`name → prPath`) is cheap path work done at birth; opening it is I/O, and I/O
+never happens in a constructor (OBP smell #9).
 
 ## execution
 
 ```
 goal.start()
- └─ step.list.start()         the list owns the loop, runs steps in order
-     └─ step.start()
-         └─ action.list.start()
-             └─ action.start()    e.g. new db(Data<Db> db).start()
+ └─ read()                    prPath → step.list   (load the compiled .pr)
+     └─ step.list.start()     the list owns the loop, runs steps in order
+         └─ step.start()
+             └─ action.list.start()
+                 └─ action.start()    e.g. new db(Data<Db> db).start()
 ```
+
+`goal.start()` returns the **bare** `Task<data.@this>`: it forwards whatever the
+last step produced, and that type isn't known until runtime. `Ok` when all steps
+complete, the first `Error` otherwise. The error short-circuits — remaining steps
+do not run, and the goal returns it as-is without inspecting it.
 
 ## structure
 
@@ -35,28 +47,29 @@ Generated from the source at build time — never hand-maintained:
 
 [[app/goal/start.json]]
 
-There is no `goal.steps`. The concept is singular (`step`); the collection of
-them is `step.list`. Same shape as the root: `app.goal.list`, `app.goal["Start"]`.
+There is no `goal.steps`. The concept is singular (`step`); the collection is
+`step.list` — and it isn't a constructor field, it is read from `prPath` at
+`start()`. Same naming shape as the root: `app.goal.list`, `app.goal["Start"]`.
 
-## returns
+## name → prPath
 
-A method returns one of two shapes, chosen by the signature:
+Resolving a `name` to its `.pr` is the one open mechanism here. It is **not** a
+file read — it is locating the file. Two candidates, to settle separately:
 
-- `Task<data.@this<T>>` — a value of a known type. A db read returns
-  `Data<table>`, `math.add` returns `Data<number>`. **Prefer this** whenever the
-  type is known.
-- `Task<data.@this>` (bare) — the value is polymorphic or forwarded.
+- **registry** — `app.goal.list` already knows every goal's `prPath` from the
+  build; the goal asks the registry by name.
+- **convention** — the `.pr` lives at a path derived from the name
+  (`.build/{name}/…`), computed without touching disk.
 
-`goal.start()` returns the **bare** form: it forwards whatever the last step
-produced, and that type isn't known until runtime — so it stays
-`Task<data.@this>`. `Ok` when all steps complete, the first `Error` otherwise.
-The error short-circuits: remaining steps do not run, and the goal returns it
-as-is without inspecting it.
+Either way it stays cheap and synchronous; the disk read waits for `start()`.
 
 ## OBP rules
 
-- **A goal owns its steps.** `step.list` is owned here, not shared between goals.
-- **Run = start the list.** `goal.start()` delegates to `step.list.start()`. No loop.
+- **A goal holds its located file, not its steps.** `prPath` is the handle;
+  `step.list` is read from it at `start()`, owned by the goal once read.
+- **Find at birth, read at start.** Resolving `name → prPath` is path work; the
+  `.pr` read is deferred — never in the constructor.
+- **Run = read then start the list.** No loop in the goal; `step.list` owns it.
 - **No plurals.** `goal.step.list`, never `goal.steps`.
 - **Behavior flows down.** A step never reaches back up to its goal.
 - **Error short-circuits.** The list stops at the first failed step and returns the error.

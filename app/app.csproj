@@ -14,6 +14,7 @@
        from the build until they're implemented for real. -->
   <ItemGroup>
     <Compile Remove="channel/**/*.cs" />
+    <Compile Remove="console/**/*.cs" />
     <Compile Remove="context/**/*.cs" />
     <Compile Remove="file/**/*.cs" />
     <Compile Remove="identity/**/*.cs" />

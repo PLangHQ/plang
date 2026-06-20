@@ -63,14 +63,23 @@ plang types:
 | `data.@this<number.@this>` | `int`, `long`, `double` |
 | `data.@this<@bool.@this>` | `bool` |
 | `data.@this<dict.@this>` | `Dictionary<,>` |
-| `list<T>` | `IReadOnlyList<T>`, `IEnumerable<T>` |
+| `data.@this<plang.list<T>>` | `IReadOnlyList<T>`, `IEnumerable<T>`, bare `plang.list<T>` |
+
+A `plang.list<T>` is a value like any other — it rides wrapped, `data.@this<plang.list<T>>`,
+never bare. (Same for any `plang.XX` type.) The one floor exception is the list's
+*own* backing constructor, `list<T>(IEnumerable<T> items)`, where raw items become
+the list — exactly as `text.@this(string value)` is where a raw string becomes `text`.
 
 **Out is `Data<T>`, or `Data`, or skip:**
 
 - `Task<data.@this<T>>` — the method produces a value of a known type.
-  A db read returns `Data<table>`, `math.add` returns `Data<number>`. **Prefer this.**
-- `Task<data.@this>` (bare) — the value is polymorphic, or the method forwards a
-  `Data` produced elsewhere (a relay must stay bare — see rule 8).
+  A db read returns `Data<table>`, `math.add` returns `Data<number>`. **If the
+  type is known, the signature must say it** — never widen a known `Data<T>` to
+  bare `Data`. The return type is the method's promise; keep it specific.
+- `Task<data.@this>` (bare) — *only* when the value is genuinely polymorphic, or
+  the method forwards a `Data` produced elsewhere (a relay must stay bare — see
+  rule 8). `goal.start()` is bare because the last step's type isn't known until
+  runtime; `math.add` is `Data<number>` because it always is.
 - **skip** — the method isn't data-bearing: a predicate (`bool is(...)`), a
   navigation property, a `void` side-effect. Don't wrap these in `Data` for
   its own sake.
@@ -255,11 +264,12 @@ Run this on any method or type. A "yes" means a type is missing — the fix is s
 5. **Courier reads `.Value`** → declare the type at the leaf or forward as-is
 6. **Same transform at 3+ call sites** (`f.path.TrimStart('/')` everywhere) → property on the owner
 7. **Two fields that mirror a reference** (`goal.name` + `goal.goal.name`) → delete the flat copy
-8. **`IReadOnlyList<T>` or `IEnumerable<T>` in a signature** → use `list<T>`
+8. **`IReadOnlyList<T>`, `IEnumerable<T>`, or a bare `plang.list<T>` in a signature** → a list is a value; ride it as `data.@this<plang.list<T>>`
 9. **Constructor does I/O** → defer to first access
 10. **`lock(other.X)` from outside X** → the lock belongs on X
 11. **`context` passed as a parameter** → implement `IContext`, let it be injected
 12. **A plural property name** (`steps`, `actions`, `goals`) → the concept is singular, the collection is `X.list`
+13. **Returns bare `Data` but always builds a known type** → declare `Data<T>`; the return type is the promise
 
 ---
 
