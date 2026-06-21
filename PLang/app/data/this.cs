@@ -752,6 +752,16 @@ public partial class @this
         return view;
     }
 
+    /// <summary>The typed view, stamped with the execution <paramref name="context"/> so
+    /// the handler's later <c>.Value()</c> resolves in the right scope. The dispatch form:
+    /// <c>action.Parameters["name"].As&lt;T&gt;(context)</c>.</summary>
+    public @this<T> As<T>(actor.context.@this? context) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+    {
+        var view = As<T>();
+        if (context != null) view.Context = context;
+        return view;
+    }
+
     /// <summary>
     /// Resolves this Data as the canonical Data — used by the generator's plain `Data` property
     /// emission to bypass As&lt;T&gt; wrapping entirely (architect/v1/plan.md §Phase 2 Rule 4).

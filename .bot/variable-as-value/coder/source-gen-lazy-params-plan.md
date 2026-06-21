@@ -66,6 +66,40 @@ public static async Task<Data> ExecuteAsync(action.@this action, context Context
   `{ get; set; }`.
 - **`actor` → `clr` item**: `actor.@this` becomes an item (clr carrier); confirm `Data<actor>` round-trips.
 
+## Refined design (Ingi): object-initializer dispatch, no backing-cache
+
+The dispatch should **construct the handler with its params** instead of `new()`-empty-then-fill:
+```csharp
+var h = new Call {
+    Context  = context,                               // IContext
+    GoalName = action["goalname"].As<GoalCall>(context),     // present → value; absent → NotFound→As<T> = uninitialized
+    Cache    = action["cache"] is { IsInitialized: true } c  // [Default]: present → As<T>, absent → default literal
+                 ? c.As<@bool>(context) : new data.@this<@bool>("cache", true),
+};
+// required ([IsNotNull]/non-null Data<Variable>): sync presence check → MissingRequiredParameter
+return await h.Run();
+```
+**Enablers (DONE, committed):**
+- `Data.As<T>(context)` — typed view stamped with the execution scope.
+- `action["name"]` indexer (`action/this.cs`) — by-name param/Default/NotFound, so the dispatch reads `action["name"].As<T>(context)`.
+
+**Properties** shrink to `get => __backing; init => __backing = value;` (drop `__X_set`, getter-fallback, reset) — the
+initializer sets every slot. Handler `{ get; init; }` decls are UNCHANGED (init = object-initializer). Gen-only.
+
+**The big interlocking piece — `Emission/Action/this.cs` `EmitExecuteAsync`** does far more than resolve params;
+ALL of this must be preserved, re-pointed at the freshly-constructed `h`:
+- `Context`/`Channel`(IChannel)/`Action`(IAction)/`Step`(IStep)/`Static`(IStatic) wiring
+- eager `[Code]` provider resolution (sets the `[Code]` backing — those stay lazy-injected)
+- `IEvent` surface (`context.Event = X.Event`)
+- `[IsNotNull]` + `MissingRequiredParameter` validation (currently pre-`__ResolveParameters`)
+- `try { Run() } catch` wrap + `__PrefixActionContext`
+- **a SECOND dispatch path** (the Build/`SetAction` emit, ~line 327) + the **prebound-C#** path (`action == null`)
+- **`__SnapshotParams`** (reads `__X_set`/backing — must move to reading the property)
+- DELETE: `__ResolveData`, `__ResolveParameters`, the reset blocks, `__X_set` flags, getter-fallbacks.
+
+Risk: regenerates EVERY handler — a slip breaks the whole build. Do it as a focused step with a clean machine,
+`dotnet build` + one Hello build to verify.
+
 ## Open
 - Failed `As<T>` (genuinely wrong type) keeps the `module.action` prefix the old
   `__PrefixActionContext` gave.
