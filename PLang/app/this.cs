@@ -320,6 +320,10 @@ public sealed partial class @this : IAsyncDisposable
 
         Code.RegisterDefaults();
         Type.RegisterDomainTypes();
+        // Module choice<T> inner types (operator, …) live in app.module.* and only
+        // surface through handler params — register them so the runtime catalog
+        // resolves them by name (the cached map is built module-less).
+        Type.RegisterModuleChoiceTypes(_modules);
         Type.Scheme.Register("file", (raw, context) => global::app.type.path.file.@this.Resolve(raw, context));
         Type.Scheme.Register("http", (raw, context) => global::app.type.path.http.@this.Resolve(raw, context));
         Type.Scheme.Register("https", (raw, context) => global::app.type.path.http.@this.Resolve(raw, context));

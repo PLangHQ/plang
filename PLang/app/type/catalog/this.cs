@@ -451,6 +451,37 @@ public sealed partial class @this
     {
     }
 
+    /// <summary>
+    /// Registers module-defined <c>choice&lt;T&gt;</c> inner types (the <c>[Choices]</c>
+    /// vocabularies / enums a handler param names, e.g. <c>operator</c> on
+    /// <c>condition.if</c>) into the RUNTIME registry. The cached name→type map is built
+    /// module-less (<see cref="BuildTypeEntries"/>(null)), and these types live in
+    /// <c>app.module.*</c>, surfacing only through handler params — so without this the
+    /// catalog resolves them FORWARD (<c>choice&lt;Operator&gt;</c> → "operator") but not
+    /// REVERSE ("operator" → <c>Operator</c>), and <c>Wire.ReadBody</c> of a
+    /// <c>type:operator</c> param throws. Called at boot once actions are discovered.
+    /// </summary>
+    public void RegisterModuleChoiceTypes(global::app.module.@this modules)
+    {
+        foreach (var ns in modules.Names)
+            foreach (var actionName in modules.GetActions(ns))
+            {
+                var actionType = modules.GetActionType(ns, actionName);
+                if (actionType == null) continue;
+                foreach (var prop in actionType.GetProperties(
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+                {
+                    if (prop.Name is "EqualityContract" or "Context") continue;
+                    if (UnwrapType(prop.PropertyType) is { IsGenericType: true } c
+                        && c.GetGenericTypeDefinition() == typeof(app.type.choice.@this<>))
+                    {
+                        var inner = c.GetGenericArguments()[0];
+                        Register(GetTypeName(inner), inner);
+                    }
+                }
+            }
+    }
+
     // --- Constrained-value catalog ---
 
     /// <summary>
