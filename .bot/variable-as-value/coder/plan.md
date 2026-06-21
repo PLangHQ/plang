@@ -54,6 +54,9 @@ The `Lift(json.Parse(value))` fallback is the raw-CLR-era *"guess the shape"* pa
 
 ---
 
+## Parked (after the builder is green)
+- Review the codeanalyzer findings Ingi flagged (incoming review) once the builder build is cleared.
+
 ## Scope / worklist
 1. **`variable<container>`** — extend `app.variable.Variable` to carry container type + kind and resolve+convert+error at `.Value()`; keep `.Name` for name-slots.
 2. **`Wire.ReadBody` born rule** — full-match `%x%` → `variable`; partial → `text`; content → type reader. No parse on refs.

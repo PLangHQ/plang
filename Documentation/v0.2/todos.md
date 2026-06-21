@@ -1,5 +1,20 @@
 # TODOs
 
+## Remove `item.@this.Lower<T>` — value lowers itself via `.Clr<T>`
+
+**Date:** 2026-06-21 (branch `variable-as-value`). `Lower<T>(doorAnswer)` is a static
+.NET-edge wrapper whose `T t`/`default` arms are dead in the born-typed model (the
+door always hands back an `item`). ~20 call sites (`OpenAi`, `builder/code/Default` ×4,
+`http/code/Default` ×4, `goal/list`, `MarkdownTeaching`, `test/{run,discover,tag}`,
+`code/{load,this.Snapshot}`, `module/add`, `builder/goals`, `mock/intercept`,
+`identity/code/Default`, `actor`). Replace each with the value's own `.Clr<T>`, delete
+`Lower`. **Open (Ingi):** the call shape — `(await x.Value()).Clr<T>()` forces the door
+(needed for a `%ref%`/lazy value) but is verbose and unneeded where the value is already
+in hand (`loadResult` — one site already uses `.Peek()`). Decide between `.Peek().Clr<T>`
+(no force, value-in-hand) vs a `Data.Clr<T>()` that encapsulates force+lower
+(`await x.Clr<T>()`) before doing the sweep. 11 sites were converted then reverted pending
+this decision.
+
 ## ~~Polymorphic `Path` (file:// + http:// + s3://… via scheme registry)~~ — Phase 1 + 2 shipped
 
 **Date:** 2026-05-21 → **Closed:** 2026-05-23 on branch `path-polymorphism`.

@@ -680,7 +680,17 @@ public partial class @this
     /// </summary>
     public async System.Threading.Tasks.ValueTask<T?> Value<T>()
         where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-        => T.Create(await Value(), this);
+    {
+        var v = await Value();
+        // A %ref% (variable) resolves HERE, where T is known: a value slot (T is not
+        // variable) hops to the named variable's value; a name slot (T = variable) keeps
+        // the reference itself (the consumer reads its Name). The reference carries only a
+        // name — the resolved value's own type stands.
+        if (v is global::app.variable.@this varRef
+            && typeof(T) != typeof(global::app.variable.@this))
+            v = await (await _context!.Variable.Get(varRef.Name)).Value();
+        return T.Create(v, this);
+    }
 
     /// <summary>
     /// Forms the typed slot binding from this resolved Data and an already-built

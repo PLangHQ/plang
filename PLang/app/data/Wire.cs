@@ -284,12 +284,23 @@ public class Wire : JsonConverter<@this>
         type? typeRef = null;
         Properties? properties = null;
         string? deferredRaw = null;   // set when the value slot is captured for lazy materialization
+        string? refValue = null;      // a full-match %x% value, born at EndObject when the type is known
         global::app.type.item.@this? born = null;   // set when the type read its own value off the pass
 
         while (reader.Read())
         {
             if (reader.TokenType == JsonTokenType.EndObject)
             {
+                if (refValue != null && born == null
+                    && typeRef is { IsNull: false } && typeRef.Name != "variable")
+                {
+                    // A full-match %x% declared as a real value type → a typed variable
+                    // reference: it resolves at .Value() (the variable hop), then the
+                    // consumer converts to T. Never read through the type's reader at load
+                    // (which would parse the literal "%x%" and null it). Name-slots
+                    // (type:variable), untyped refs, and content fall through unchanged.
+                    born = global::app.variable.@this.Reference(refValue, _context!);
+                }
                 if (born != null)
                 {
                     // The declared type already read its own value off the pass,
@@ -356,6 +367,22 @@ public class Wire : JsonConverter<@this>
                     }
                     break;
                 case "value":
+                    // A full-match %x% is a VALUE-slot variable reference — resolved at
+                    // .Value() (the variable hop), then converted by the consumer's typed
+                    // door. Never read through the declared type's reader at load (which
+                    // would parse the literal "%x%" and null it). Born a typed variable
+                    // carrying the declared type; a partial "...%x%..." stays text and real
+                    // content falls through to the reader below.
+                    if (reader.TokenType == JsonTokenType.String && _template != null && _context != null
+                        && reader.GetString() is { } sv
+                        && global::app.data.@this.TryFullVarMatch(sv, out _))
+                    {
+                        // `type` follows `value` on the wire, so the declared type isn't
+                        // known yet — capture the ref and decide at EndObject. Fall through
+                        // so name-slot / untyped / content paths read the token as before;
+                        // only a real-value-typed ref is overridden into a variable there.
+                        refValue = sv;
+                    }
                     // Defer a shape-typed value (object/table) — capture its raw
                     // source form and let it materialize lazily on first touch.
                     // The type slot precedes value on the wire, so typeRef is known

@@ -554,12 +554,12 @@ public sealed partial class @this : IAsyncDisposable
         if (goalCall.Parameters != null)
             foreach (var param in goalCall.Parameters)
             {
-                // Call-by-value at the boundary: the param rides raw (`%user%`) from the
-                // .pr; this Set IS the assignment, and assignment evaluates once — decode
-                // in the caller's scope (full-match `%var%` yields the live variable Data,
-                // type intact; literals pass through), then store under the param name.
+                // Call-by-value at the boundary. A value-slot variable reference resolves
+                // to the caller's live binding by name — it IS a variable, so just Get it
+                // (no AsCanonical/IsRef ceremony). Anything else (a literal, a partial
+                // template) is stored as-is and resolves at read against the shared store.
                 param.Context = context;
-                await context.Variable.Set(param.Name, await param.AsCanonical(context));
+                await context.Variable.Set(param.Name, param);
             }
 
         return await ((Goal)(await goalResult.Value())!).RunAsync(context);

@@ -57,6 +57,20 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public @this(string name) : this(name ?? "", name ?? "", false) { }
 
     /// <summary>
+    /// Born a reference from a raw <c>%x%</c> form. A reference is typed
+    /// <c>variable</c> and carries ONLY its name — the type it resolves to is
+    /// whatever the named variable holds, discovered when a consumer's slot
+    /// resolves it (the consumer's <c>Value&lt;T&gt;</c> converts). Parses the name
+    /// through <see cref="Convert"/> so <c>%x!cost%</c>/paths keep their shape.
+    /// <para>A reference does not override the value door: it stays itself
+    /// (<c>item.Value</c> → self). Resolution is the consumer's job —
+    /// <c>Data.Value&lt;T&gt;</c> hops a reference to the named variable's value when
+    /// T is not <c>variable</c>; a name slot (T = variable) gets the reference as-is.</para>
+    /// </summary>
+    public static @this Reference(string raw, actor.context.@this context)
+        => (@this)Convert(raw, null, context).Peek()!;
+
+    /// <summary>
     /// The typed-ask construction (<see cref="global::app.type.item.ICreate{TSelf}"/>):
     /// pure pass-through. A variable NAMES a thing — it is born a Variable at the
     /// wire boundary (<see cref="global::app.type.@this.Judge"/> calls

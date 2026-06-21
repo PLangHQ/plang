@@ -226,8 +226,12 @@ public sealed partial class @this
             {
                 foreach (var row in baseList.Items)
                 {
-                    var (convEl, _) = TryConvert(row.Peek(), elemType, context);
-                    typed.Add(new data.@this("", convEl ?? row.Peek()));
+                    // Never swallow: a typed list's element MUST become its element type.
+                    // Keeping the raw row on failure produced a list<T> that lies about its
+                    // contents and exploded two layers away at Clr — surface the reason here.
+                    var (convEl, elErr) = TryConvert(row.Peek(), elemType, context);
+                    if (elErr != null) return (null, elErr);
+                    typed.Add(new data.@this("", convEl));
                 }
             }
             return (typed, null);
