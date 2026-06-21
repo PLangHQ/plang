@@ -40,11 +40,19 @@ Variables.Get(name)
   Neither is a static helper's.
 - **Behavior outside the type (smell #1/#7):** `Data` opens the value and parses a
   string to decide how to walk it. A courier reading the value to branch on it.
-- **Same logical thing stored twice (smell #3):** two navigation mechanisms — the
-  `INavigator` registry (`Dictionary`/`List`/`Object`/`Snapshot`) *and* the
-  `item.Navigate` / `item.Write` virtuals. The virtuals already exist; the
-  registry is the leftover half of an unfinished migration. `item/this.cs:80`
-  literally says "until those collapse onto Navigate as well."
+- **Same logical thing stored twice (smell #3/#4):** navigation has THREE
+  mechanisms consulted for a single hop in `GetChildValue` —
+  (a) `item.Navigate` / `item.Write` virtuals (the OBP answer, already exist),
+  (b) the `navigator.list.@this` registry at `app.Navigator`
+      (`ConcurrentDictionary<Type, INavigator>` + Object fallback), and
+  (c) `ValueNavigators` — a *static* `INavigator[] { Dictionary, List, Object }`
+      "no-app-context" fallback. (b) and (c) hold the **same three navigator
+      instances** in two different stores with two different lookups (by-type-
+      hierarchy vs `CanNavigate` scan). `ValueNavigators` is also a **flat plural
+      name** — the deleted-`AppGoals`/`AppChannels` smell — and a *duplicate* of
+      the correctly-named `navigator.list.@this` collection that already exists.
+  The virtuals are the finished half of a migration; (b) and (c) are the leftover.
+  `item/this.cs:80` literally says "until those collapse onto Navigate as well."
 - **Read/write divergence:** reads go through `GetChild`; writes go through a
   *different* path (`Set` → `LastIndexOf('.')` split → `target.Write` /
   `SetValueOnObject` reflection). Two walkers, each re-deriving how to index a
