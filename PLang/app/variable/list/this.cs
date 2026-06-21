@@ -558,6 +558,12 @@ public partial class @this
         return _variables.TryGetValue(rootName, out var v) ? v : null;
     }
 
+    /// <summary>The value-counterpart to <see cref="Get"/>: hand back the VALUE a
+    /// name holds, opened through its own door. The binding carries its own context,
+    /// so a reference stored under another scope resolves there (goal-call by-value).</summary>
+    public async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(string name)
+        => await (await Get(name)).Value();
+
     public async System.Threading.Tasks.ValueTask<data.@this> Get(string name)
     {
         if (string.IsNullOrEmpty(name))

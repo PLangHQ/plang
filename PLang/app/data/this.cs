@@ -681,15 +681,13 @@ public partial class @this
     public async System.Threading.Tasks.ValueTask<T?> Value<T>()
         where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
-        var v = await Value();
-        // A %ref% (variable) resolves HERE, where T is known: a value slot (T is not
-        // variable) hops to the named variable's value; a name slot (T = variable) keeps
-        // the reference itself (the consumer reads its Name). The reference carries only a
-        // name — the resolved value's own type stands.
-        if (v is global::app.variable.@this varRef
-            && typeof(T) != typeof(global::app.variable.@this))
-            v = await (await _context!.Variable.Get(varRef.Name)).Value();
-        return T.Create(v, this);
+        // A name slot wants the reference itself (its name), not its value — so it must
+        // NOT open the door (the door resolves a reference to what it points at). Every
+        // other slot opens the door: a reference resolves through it, a container
+        // deep-renders, and the resolved value's own type then converts to T.
+        if (typeof(T) == typeof(global::app.variable.@this) && Peek() is global::app.variable.@this nameRef)
+            return T.Create(nameRef, this);
+        return T.Create(await Value(), this);
     }
 
     /// <summary>

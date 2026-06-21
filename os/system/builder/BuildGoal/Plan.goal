@@ -7,7 +7,7 @@ Plan
 - render template "/system/actions/v2/summary.planner.md", write to %actionSummary%
 - render template "/system/builder/llm/templates/goalFormat.template", write to %goalForLlm%
 - render template "/system/builder/llm/Plan.llm", write to %planPrompt%
-- set %messages% = [{"Role":"system", "Content":"%planPrompt%"}, {"Role":"user", "Content":"%goalForLlm%"}], type=json
+- set %messages% = [{"Role":"system", "Content":"%planPrompt%"}, {"Role":"user", "Content":"%goalForLlm%"}]
 
 / Wrap llm.query + Validate together so the retry surface catches BOTH
 / malformed-JSON (llm.query throws) and structural validation failures

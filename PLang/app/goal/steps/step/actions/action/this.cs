@@ -262,12 +262,16 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
         if (result.Success)
         {
-            // Alias the result as %!data% — Variables.Set stores Data references as-is
-            // (no clone, no rename). Same object is reachable via both %!data% and
-            // whatever name the producing handler owns (e.g., variable.set's stored entry).
-            // Override path (beforeResult.Handled) flows through the same write so
-            // mocks and event.skipAction feed the next action like any real result.
-            await context.Variable.Set("!data", result);
+            // %!data% is the last result. A reference (%var%) or a template result is
+            // resolved to its VALUE first — a SNAPSHOT — never stored as a live reference.
+            // Otherwise %!data% could point back into a structure that itself references
+            // %!data% (e.g. an output template reporting the result), and resolving it loops.
+            // A concrete value result is stored as-is (same object reachable via %!data% and
+            // the producing handler's own name; override path flows through this same write).
+            var snapshot = result.Peek() is global::app.variable.@this or global::app.type.text.@this
+                ? new global::app.data.@this("!data", await result.Value()) { Context = context }
+                : result;
+            await context.Variable.Set("!data", snapshot);
         }
 
         var afterResult = await lifecycle.After.Run(context, app.@event.Trigger.AfterAction, this, result);

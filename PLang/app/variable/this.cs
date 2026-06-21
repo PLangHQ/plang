@@ -62,13 +62,24 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// whatever the named variable holds, discovered when a consumer's slot
     /// resolves it (the consumer's <c>Value&lt;T&gt;</c> converts). Parses the name
     /// through <see cref="Convert"/> so <c>%x!cost%</c>/paths keep their shape.
-    /// <para>A reference does not override the value door: it stays itself
-    /// (<c>item.Value</c> → self). Resolution is the consumer's job —
-    /// <c>Data.Value&lt;T&gt;</c> hops a reference to the named variable's value when
-    /// T is not <c>variable</c>; a name slot (T = variable) gets the reference as-is.</para>
+    /// <para>A reference resolves through its own door (<see cref="Value"/>): it
+    /// hands back what the named variable HOLDS, opened through that value's door
+    /// (a container deep-renders, a template renders, a scalar answers itself). A
+    /// name slot reads the reference directly (<c>Data.Value&lt;variable&gt;</c>),
+    /// never resolving — it wants the name.</para>
     /// </summary>
     public static @this Reference(string raw, actor.context.@this context)
         => (@this)Convert(raw, null, context).Peek()!;
+
+    /// <summary>
+    /// Resolve: hand back what the named variable holds, through its own door
+    /// (<see cref="global::app.variable.list.@this.Value(string)"/>). A bound
+    /// binding's door terminates; the goal-call by-value injection keeps the
+    /// stored value's context, so a <c>%x%</c>-into-<c>x</c> pass resolves against
+    /// the caller's binding — no Get cycle.
+    /// </summary>
+    public override System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this asking)
+        => asking.Context.Variable.Value(Name);
 
     /// <summary>
     /// The typed-ask construction (<see cref="global::app.type.item.ICreate{TSelf}"/>):

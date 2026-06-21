@@ -3,8 +3,7 @@ Start
 
 - call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
 - set %buildStart% = %Now.Ticks%
-- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
-
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}
 - call Plan, on error call HandleBuildFailure
 - set %trace.plan% = %plan%
 
@@ -46,6 +45,5 @@ HandleBuildFailure
 / Capture error onto trace, save, rethrow. No null-pass inference.
 
 - call /system/builder/EmitBuildEvent kind="goalError", goal=%goal%, errorMessage=%!error.Message%
-- set %trace.buildError% = {"key": "%!error.Key%", "message": "%!error.Message%", "goal": "%goal.Name%"}, type=json
-- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- set %trace.buildError% = {"key": "%!error.Key%", "message": "%!error.Message%", "goal": "%goal.Name%"}- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
 - throw %!error%

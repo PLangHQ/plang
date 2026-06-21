@@ -22,8 +22,7 @@ Compile
 - render template "/system/builder/llm/templates/stepActionDetails.template", write to %actionDetails%
 - render template "/system/builder/llm/Compile.llm", write to %buildStepPrompt%
 - render template "/system/builder/llm/CompileUser.llm", write to %buildStepUserMsg%
-- set %messages% = [{"Role":"system", "Content":"%buildStepPrompt%"}, {"Role":"user", "Content":"%buildStepUserMsg%"}], type=json
-
+- set %messages% = [{"Role":"system", "Content":"%buildStepPrompt%"}, {"Role":"user", "Content":"%buildStepUserMsg%"}]
 / QueryAndVerify wraps llm.query + a missing-actions check (throws on missing-actions).
 / on error key="missing-actions": run RefineActions first (expands %planStep.actions%),
 / then retry the whole QueryAndVerify. RetryCount is the runtime's job, no counter.
@@ -51,8 +50,7 @@ QueryAndVerify
 RefineActions
 / Planner continuation: hand the LLM the compiler's complaint, get an expanded action set.
 - set %complaint% = "Compiler returned missing-actions for step %step.Index% (text: '%step.Text%'). Current action set is insufficient: %planStep.actions%. Reason: %!error.Message%. Return a corrected action set for step %step.Index% only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) — recovery confidence matters because it tells the dev whether even the correction is a guess.", type=string
-- set %refineMessages% = [{"Role":"user", "Content":"%complaint%"}], type=json
-- llm.query Messages=%refineMessages%, Schema={index: int, actions: list<string>, confidence: string, explanation?: string}, cache=%!build.cache%, previousConversation=%plan%, write to %correction%
+- set %refineMessages% = [{"Role":"user", "Content":"%complaint%"}]- llm.query Messages=%refineMessages%, Schema={index: int, actions: list<string>, confidence: string, explanation?: string}, cache=%!build.cache%, previousConversation=%plan%, write to %correction%
 - set %planStep.actions% = %correction.actions%
 - set %trace.plan.steps[step.Index].actions% = %correction.actions%
 - call /system/builder/EmitBuildEvent kind="step-missing-actions", step=%step%
@@ -62,8 +60,7 @@ FixValidation
 / Validator rejected the compiled actions. Re-prompt the LLM with the validator's
 / complaint, write corrected compileResult, update goal.Steps so the subsequent retry
 / of builder.validate sees the corrected actions.
-- set %fixMessages% = [{"Role":"user", "Content":"Your previous response was rejected by the validator: %!error.Message%\n\nReturn the corrected response in the same Output Shape (formal, actions, confidence, explanation, errors, warnings) for this step only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) — recovery confidence matters because it tells the dev whether even the correction is a guess."}], type=json
-- llm.query Messages=%fixMessages%, Schema={formal: string, actions: list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>, modifiers?: list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>}>, errors?: list<{key: string, message: string}>}>, confidence: string, explanation?: string, errors?: list<{key: string, message: string}>}, cache=%!build.cache%, previousConversation=%compileResult%, write to %compileResult%
+- set %fixMessages% = [{"Role":"user", "Content":"Your previous response was rejected by the validator: %!error.Message%\n\nReturn the corrected response in the same Output Shape (formal, actions, confidence, explanation, errors, warnings) for this step only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) — recovery confidence matters because it tells the dev whether even the correction is a guess."}]- llm.query Messages=%fixMessages%, Schema={formal: string, actions: list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>, modifiers?: list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>}>, errors?: list<{key: string, message: string}>}>, confidence: string, explanation?: string, errors?: list<{key: string, message: string}>}, cache=%!build.cache%, previousConversation=%compileResult%, write to %compileResult%
 - set %goal.Steps[step.Index].Actions% = %compileResult.actions%
 - set %goal.Steps[step.Index].Formal% = %compileResult.formal%
 - call /system/builder/EmitBuildEvent kind="step-validation-error", step=%step%, errorMessage=%!error.Message%

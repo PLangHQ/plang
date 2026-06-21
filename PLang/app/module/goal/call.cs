@@ -27,7 +27,10 @@ public partial class Call : IContext
         // navigate from themselves, not from the outer action that owns the step.
         if (goalCall.Action == null)
             goalCall.Action = __action;
-        var execContext = (Actor == null ? null : await Actor.Value())?.Context ?? Context;
+        // No actor given (param absent OR its value is null) → run in the current
+        // actor's context. Only resolve Actor when it actually holds one, so a null
+        // value never tries to convert into an actor.
+        var execContext = (Actor == null || await Actor.IsEmpty() ? null : await Actor.Value())?.Context ?? Context;
         return await Context.App!.RunGoalAsync(goalCall, execContext);
     }
 }

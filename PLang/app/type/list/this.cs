@@ -498,23 +498,32 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// whose ref is unset keeps its literal form — the builder's preservation
     /// rule for partially-bound structures.
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this asking)
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
-        if (Template == null) return this;
-        var rendered = new @this { Context = _context };
-        foreach (var slot in _items)
+        // Render each element through its OWN door — a %ref% variable resolves, a stamped
+        // text renders, a nested container deep-renders. Allocate only when the first
+        // door-owning element appears (copy the raw prefix); a list with none returns
+        // itself unchanged. The element's own door does the work (door recursion).
+        @this? rendered = null;
+        for (int i = 0; i < _items.Count; i++)
         {
-            if (Inner(slot) is { Template: not null } stamped)
+            var slot = _items[i];
+            if (Inner(slot) is global::app.type.item.@this e && OwnsDoor(e))
             {
+                if (rendered == null)
+                {
+                    rendered = new @this { Context = _context };
+                    for (int j = 0; j < i; j++) rendered.AddRaw(_items[j]);
+                }
                 var name = slot is Data sd ? sd.Name : "";
-                var probe = new Data(name, stamped) { Context = _context! };
+                var probe = new Data(name, e) { Context = _context! };
                 var answer = await probe.Value();
                 if (probe.HasUnobservedError) rendered.AddRaw(slot);
                 else rendered.Add(new Data(name, answer) { Context = _context! });
             }
-            else rendered.AddRaw(slot);
+            else rendered?.AddRaw(slot);
         }
-        return rendered;
+        return rendered ?? this;
     }
 
     /// <summary>The item membership hook — element equality through THE

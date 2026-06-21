@@ -331,24 +331,35 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// whose ref is unset keeps its literal form — the builder's preservation
     /// rule for partially-bound structures.
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this asking)
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
-        if (Template == null) return this;
-        var rendered = new @this { Context = _context };
+        // Render each entry through its OWN door — a %ref% variable resolves, a stamped
+        // text renders, a nested container deep-renders. Allocate only when the first
+        // door-owning entry appears (copy the raw prefix); a dict with none returns itself.
+        @this? rendered = null;
         foreach (var key in _value.Keys)
         {
             var slot = _value[key];
             var inner = slot as global::app.type.item.@this ?? (slot as Data)?.Peek();
-            if (inner is { Template: not null } stamped)
+            if (inner is global::app.type.item.@this e && OwnsDoor(e))
             {
-                var probe = new Data(key, stamped) { Context = _context! };
+                if (rendered == null)
+                {
+                    rendered = new @this { Context = _context };
+                    foreach (var prior in _value.Keys)
+                    {
+                        if (prior == key) break;
+                        rendered.Set(prior, _value[prior]);
+                    }
+                }
+                var probe = new Data(key, e) { Context = _context! };
                 var answer = await probe.Value();
                 if (probe.HasUnobservedError) rendered.Set(key, slot);
                 else rendered.Set(new Data(key, answer) { Context = _context! });
             }
-            else rendered.Set(key, slot);
+            else rendered?.Set(key, slot);
         }
-        return rendered;
+        return rendered ?? this;
     }
 
     /// <summary>The item membership hook — key membership (a dict "contains"
