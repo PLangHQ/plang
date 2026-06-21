@@ -417,7 +417,8 @@ public partial class @this
                             : typeof(object);
                         if (!elementType.IsAssignableFrom(value.GetType()))
                         {
-                            var (typedValue, _) = type.catalog.@this.TryConvert(value, elementType, _context);
+                            var (typedValue, err) = type.catalog.@this.TryConvert(value, elementType, _context);
+                            if (err != null) throw new System.InvalidCastException(err.Message);
                             if (typedValue != null) value = typedValue;
                         }
                     }
@@ -436,7 +437,8 @@ public partial class @this
                         {
                             if (value != null && !indexer.PropertyType.IsAssignableFrom(value.GetType()))
                             {
-                                var (typedValue, _) = type.catalog.@this.TryConvert(value, indexer.PropertyType, _context);
+                                var (typedValue, err) = type.catalog.@this.TryConvert(value, indexer.PropertyType, _context);
+                                if (err != null) throw new System.InvalidCastException(err.Message);
                                 if (typedValue != null) value = typedValue;
                             }
                             indexer.SetValue(collection, value, new object[] { gIdx });
@@ -454,7 +456,8 @@ public partial class @this
         {
             if (value != null && !clrProp.PropertyType.IsAssignableFrom(value.GetType()))
             {
-                var (typedValue, _) = type.catalog.@this.TryConvert(value, clrProp.PropertyType, _context);
+                var (typedValue, err) = type.catalog.@this.TryConvert(value, clrProp.PropertyType, _context);
+                if (err != null) throw new System.InvalidCastException(err.Message);
                 if (typedValue != null) value = typedValue;
             }
             clrProp.SetValue(target, value);

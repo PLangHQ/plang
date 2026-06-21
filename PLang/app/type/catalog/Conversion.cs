@@ -138,6 +138,43 @@ public sealed partial class @this
     }
 
     /// <summary>
+    /// Element-wise list conversion — the SINGLE home for it (JsonElement[], JsonArray,
+    /// non-generic IList all route here). Converts each element to <paramref name="elementType"/>
+    /// and AGGREGATES per-element failures into a <c>ListConversionFailed</c> carrying an
+    /// <c>ErrorChain</c>. Never silently drops a failed element nor pollutes the typed list
+    /// with an unconverted one — that swallow class is what made list&lt;T&gt; lie about its
+    /// contents (codeanalyzer F1).
+    /// </summary>
+    private static (object? Value, error.Error? Error) ConvertElementsInto(
+        System.Type targetListType, System.Type elementType,
+        System.Collections.IEnumerable elements, int count,
+        System.Type sourceType, actor.context.@this? context)
+    {
+        var targetList = (System.Collections.IList)System.Activator.CreateInstance(targetListType)!;
+        var errors = new List<error.Error>();
+        int i = 0;
+        foreach (var elem in elements)
+        {
+            var (converted, itemError) = TryConvert(elem, elementType, context);
+            if (itemError != null)
+                errors.Add(new error.Error($"[{i}]: {itemError.Message}", "ElementConversionFailed", 400)
+                    { FixSuggestion = itemError.FixSuggestion });
+            else if (converted != null)
+                targetList.Add(converted);
+            i++;
+        }
+        if (errors.Count > 0)
+        {
+            var err = new error.Error(
+                $"Failed converting {errors.Count}/{count} elements from {sourceType.Name} to {targetListType.Name}",
+                "ListConversionFailed", 400) { FixSuggestion = $"Element type: {elementType.Name}" };
+            foreach (var e in errors) err.ErrorChain.Add(e);
+            return (targetList.Count > 0 ? targetList : null, err);
+        }
+        return (targetList, null);
+    }
+
+    /// <summary>
     /// Attempts to convert a value to the specified type.
     /// Returns the converted value and null error on success,
     /// or null value and an Error describing what went wrong.
@@ -356,61 +393,19 @@ public sealed partial class @this
             // this, a JSON-roundtripped List (Variables.Set's deep-clone path) would
             // be treated as a single value and only the array's "wrapper" would land
             // in a single-element list.
-            if (value is JsonElement jeArr
-                && jeArr.ValueKind == JsonValueKind.Array)
-            {
-                var targetList = (System.Collections.IList)System.Activator.CreateInstance(targetType)!;
-                foreach (var elem in jeArr.EnumerateArray())
-                {
-                    var (convertedElem, _) = TryConvert(elem, listElementType, context);
-                    if (convertedElem != null) targetList.Add(convertedElem);
-                }
-                return (targetList, null);
-            }
+            // All three element-bearing sources go through ONE aggregating helper — a
+            // failed element surfaces a ListConversionFailed (per-element ErrorChain),
+            // never a silent drop (the JSON-array arms used to drop) or a pollution.
+            if (value is JsonElement jeArr && jeArr.ValueKind == JsonValueKind.Array)
+                return ConvertElementsInto(targetType, listElementType, jeArr.EnumerateArray(), jeArr.GetArrayLength(), sourceType, context);
 
-            // JsonArray source — parallel to the JsonElement-array case above. JsonArray
-            // implements IList<JsonNode?> but NOT the non-generic IList, so it skips the
-            // generic-list arm below. Iterate its JsonNode items directly.
+            // JsonArray implements IList<JsonNode?> but NOT the non-generic IList, so it
+            // skips the generic-list arm below — handle it here.
             if (value is JsonArray jArr)
-            {
-                var targetList = (System.Collections.IList)System.Activator.CreateInstance(targetType)!;
-                foreach (var elem in jArr)
-                {
-                    var (convertedElem, _) = TryConvert(elem, listElementType, context);
-                    if (convertedElem != null) targetList.Add(convertedElem);
-                }
-                return (targetList, null);
-            }
+                return ConvertElementsInto(targetType, listElementType, jArr, jArr.Count, sourceType, context);
 
             if (value is System.Collections.IList sourceList)
-            {
-                var targetList = (System.Collections.IList)System.Activator.CreateInstance(targetType)!;
-                var errors = new List<error.Error>();
-                for (int i = 0; i < sourceList.Count; i++)
-                {
-                    var (convertedItem, itemError) = TryConvert(sourceList[i], listElementType, context);
-                    if (itemError != null)
-                    {
-                        itemError = new error.Error(
-                            $"[{i}]: {itemError.Message}", "ElementConversionFailed", 400)
-                            { FixSuggestion = itemError.FixSuggestion };
-                        errors.Add(itemError);
-                        continue;
-                    }
-                    if (convertedItem != null)
-                        targetList.Add(convertedItem);
-                }
-                if (errors.Count > 0)
-                {
-                    var error = new error.Error(
-                        $"Failed converting {errors.Count}/{sourceList.Count} elements from {sourceType.Name} to {targetType.Name}",
-                        "ListConversionFailed", 400)
-                        { FixSuggestion = $"Element type: {listElementType.Name}" };
-                    foreach (var e in errors) error.ErrorChain.Add(e);
-                    return (targetList.Count > 0 ? targetList : null, error);
-                }
-                return (targetList, null);
-            }
+                return ConvertElementsInto(targetType, listElementType, sourceList, sourceList.Count, sourceType, context);
 
             // The value IS a collection, but none of the arms above recognized it
             // (e.g. a generic-only IList<T>/IEnumerable<T> that isn't the non-generic

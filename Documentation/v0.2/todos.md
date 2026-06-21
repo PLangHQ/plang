@@ -1,5 +1,17 @@
 # TODOs
 
+## Source-gen: object-initializer dispatch (finish the lazy-param rewrite)
+
+**Date:** 2026-06-21 (branch `variable-as-value`). The functional core is done — `As<T>`
+dispatch (no eager resolve) + the enablers `Data.As<T>(context)` and the `action["name"]`
+indexer are committed. **Remaining (cosmetic, deferred):** rewrite `EmitExecuteAsync` to
+construct the handler via object-initializer (`new H { Context=…, Foo=action["foo"].As<T>(ctx) }`)
+and delete the backing-cache machinery (`__X_set`, getter-fallbacks, reset, `__ResolveData`,
+`__ResolveParameters`). **Gen-only — handlers' `{ get; init; }` decls don't change.** Big because
+it regenerates every handler and must preserve the interlocking wiring (Channel/[Code]/IEvent/
+[IsNotNull]/MissingRequired + the second Build dispatch path + prebound + snapshot). Full map:
+`.bot/variable-as-value/coder/source-gen-lazy-params-plan.md`.
+
 ## Remove `item.@this.Lower<T>` — value lowers itself via `.Clr<T>`
 
 **Date:** 2026-06-21 (branch `variable-as-value`). `Lower<T>(doorAnswer)` is a static
