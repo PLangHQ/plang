@@ -121,6 +121,26 @@ Liquid templates rendered through the **Fluid** engine
 - `os/system/builder/llm/templates/stepActionDetails.template` — the per-action
   schema/notes block (`{{ actionDetails }}`).
 
+> **⚠️ `type=json` is deprecated — `json` is NOT a type (it's a serialization
+> format).** A `{…}` literal is a `dict`, a `[…]` literal is a `list`, nested →
+> `list<dict<string,data>>`. The `set %x% = …, type=json` form below describes the
+> *historical* behavior; on the born-typed model `type=json` is invalid and is being
+> removed from the builder goals + teaching. It bites **two** ways:
+> 1. **(historical / Fluid)** it stored a `JsonNode`, not Fluid-readable — the
+>    origin-#3 class documented here.
+> 2. **(born-typed)** a value set with `type=json` resolves to a **typed-null
+>    (`app.type.null.@this`)** at a *typed* consumer. E.g. `llm.query Messages` is
+>    `list<llmmessage>`; reading `%messages%` (set via `type=json`) through the typed
+>    door (`Value<list<llmmessage>>()`) yields a `null.@this` stamped with the *asked*
+>    type, so it declines:
+>    `%Messages% holds a list<llmmessage> — 'list' cannot be created from it` — even
+>    though `--debug` shows `%messages%` as a real list at the step boundary. The tell
+>    is the misleading "holds a `<asked-type>`" message: the value is value-less, the
+>    type in the message is the *slot's* declared type, not the value's. Fix: drop
+>    `type=json` so the literal borns as a native `list`/`dict`. The conversion path
+>    itself (`list<dict>`/`JsonNode`/json-string → `list<llmmessage>`) is *not* the
+>    gap — it converts fine in isolation; the value being null is the bug.
+
 Both iterate `{% for a in planStep.actions %}`. **`planStep` is built with
 `set %plan% = … type=json`, which TypeMapping stores as a
 `System.Text.Json.Nodes.JsonNode`** (`PLang/app/module/variable/set.cs`). Native

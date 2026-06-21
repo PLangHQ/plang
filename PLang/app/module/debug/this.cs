@@ -169,8 +169,8 @@ public sealed class @this
                 if (v.Event == DebugEvent.OnTypeChange)
                     placeholder.OnChange.Add((oldData, newData) =>
                     {
-                        var oldType = oldData.Peek()?.GetType().Name;
-                        var newType = newData.Peek()?.GetType().Name;
+                        var oldType = oldData.Type.Name;
+                        var newType = newData.Type.Name;
                         if (oldType != newType) LogMutation(v.Name, oldData, newData);
                     });
                 vars.Set(placeholder);
@@ -278,9 +278,7 @@ public sealed class @this
         var sb = new StringBuilder();
         sb.AppendLine($"=== WATCH [{name}] CHANGED ===");
         sb.AppendLine($"  Goal: {goalName}[{stepIndex}] {stepText ?? "?"}");
-        sb.AppendLine($"  Raw: {oldData.Peek()?.GetType().Name ?? "null"} → {newData.Peek()?.GetType().Name ?? "null"}");
-        sb.AppendLine($"  Value: {oldData.Peek()?.GetType().Name ?? "null"} → {newData.Peek()?.GetType().Name ?? "null"}");
-        sb.AppendLine($"  HasCtx: {newData.Context != null}");
+        sb.AppendLine($"  Type: {oldData.Type.Name} → {newData.Type.Name}");
         for (int i = 0; i < Math.Min(5, stack.FrameCount); i++)
         {
             var frame = stack.GetFrame(i);
@@ -300,7 +298,7 @@ public sealed class @this
         var goalName = context?.Goal?.Name ?? "?";
         var stepIndex = context?.Step?.Index.ToString() ?? "?";
 
-        _ = Write($"=== WATCH [{name}] {eventType} in {goalName}[{stepIndex}] type={data.Peek()?.GetType().Name ?? "null"} ==={Environment.NewLine}");
+        _ = Write($"=== WATCH [{name}] {eventType} in {goalName}[{stepIndex}] type={data.Type.Name} ==={Environment.NewLine}");
     }
 
     private static async Task<data.@this> BeforeStepHandler(actor.context.@this context, int? stepFilter)
