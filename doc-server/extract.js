@@ -119,8 +119,14 @@ function walk(dir, root, out) {
       const src = fs.readFileSync(full, 'utf8');
       const json = extract(src, rel);
       const dest = full.replace(/\.cs$/, '.json');
-      fs.writeFileSync(dest, JSON.stringify(json, null, 2));
-      out.push(path.relative(root, dest));
+      const next = JSON.stringify(json, null, 2);
+      // Write only when the shape actually changed, so an unchanged .cs leaves
+      // the .json (and its mtime) untouched — no spurious rebuilds or git churn.
+      const prev = fs.existsSync(dest) ? fs.readFileSync(dest, 'utf8') : null;
+      if (prev !== next) {
+        fs.writeFileSync(dest, next);
+        out.push(path.relative(root, dest));
+      }
     }
   }
 }
@@ -131,6 +137,10 @@ if (require.main === module) {
   const ROOT = path.join(__dirname, '..');
   const written = [];
   walk(path.join(ROOT, 'app'), ROOT, written);
-  console.log(`generated ${written.length} structure files:`);
-  for (const w of written) console.log('  ' + w);
+  if (written.length === 0) {
+    console.log('structure files up to date — nothing changed');
+  } else {
+    console.log(`updated ${written.length} structure files:`);
+    for (const w of written) console.log('  ' + w);
+  }
 }
