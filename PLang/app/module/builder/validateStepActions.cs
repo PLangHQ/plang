@@ -29,5 +29,5 @@ public partial class validateStepActions : IContext
     [Code]
     public partial IBuilder Builder { get; }
 
-    public Task<data.@this> Run() => Task.FromResult(Builder.ValidateStepActions(this));
+    public Task<data.@this> Run() => Builder.ValidateStepActions(this);
 }

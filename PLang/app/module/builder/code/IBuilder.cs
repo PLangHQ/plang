@@ -17,7 +17,7 @@ public interface IBuilder : ICode
     Task<data.@this> Goals(goals action);
     Task<data.@this> GoalsSave(goalsSave action);
     Task<data.@this> Validate(validate action);
-    data.@this ValidateStepActions(validateStepActions action);
+    Task<data.@this> ValidateStepActions(validateStepActions action);
     data.@this Merge(merge action);
     Task<data.@this> PromoteGroups(promoteGroups action);
     data.@this EnrichResponse(enrichResponse action);

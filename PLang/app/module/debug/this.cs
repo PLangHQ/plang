@@ -318,8 +318,10 @@ public sealed class @this
             sb.AppendLine($"  Action: {action.Module}.{action.ActionName}");
             foreach (var p in action.Parameters)
             {
-                p.Context = context;   // resolution needs the execution scope (mirrors dispatch)
-                sb.AppendLine($"    {p.Name} = {FormatValue((await p.Value()), context)}");
+                // PEEK, never resolve: a BEFORE-step display must not run param doors —
+                // resolving renders templates / hops refs (side-effecting, and NREs on a
+                // not-yet-ready value), which would perturb the very execution we're observing.
+                sb.AppendLine($"    {p.Name} = {FormatValue(p.Peek(), context)}");
             }
 
         }

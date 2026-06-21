@@ -291,9 +291,9 @@ public class Default : IBuilder
 
     // --- ValidateStepActions ---
 
-    public data.@this ValidateStepActions(validateStepActions action)
+    public async System.Threading.Tasks.Task<data.@this> ValidateStepActions(validateStepActions action)
     {
-        var step = action.Step.Peek() as global::app.goal.steps.step.@this;
+        var step = await action.Step.Value() as global::app.goal.steps.step.@this;
         if (step == null)
         {
             // Dump what the planner actually returned so the user can see the
@@ -339,7 +339,7 @@ public class Default : IBuilder
         }
         // Sync build surface — read the in-memory backing (the planner's list
         // is authored in this process; no door to open).
-        var input = global::app.type.item.@this.Lower<List<string>>(action.Actions.Peek()) ?? new List<string>();
+        var input = global::app.type.item.@this.Lower<List<string>>(await action.Actions.Value()) ?? new List<string>();
         var modules = action.Context.App.Module;
 
         var result = new List<string>();
