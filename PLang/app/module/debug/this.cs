@@ -318,6 +318,7 @@ public sealed class @this
             sb.AppendLine($"  Action: {action.Module}.{action.ActionName}");
             foreach (var p in action.Parameters)
             {
+                p.Context = context;   // resolution needs the execution scope (mirrors dispatch)
                 sb.AppendLine($"    {p.Name} = {FormatValue((await p.Value()), context)}");
             }
 

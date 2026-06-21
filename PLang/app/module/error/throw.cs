@@ -39,6 +39,12 @@ public partial class Throw : IContext
         if (thrown?.Clr<object>() is global::app.error.IError existing)
             return Error(existing);
 
+        // `- throw %!error%` lands the error in the (text) Message slot, not Data. Re-raise
+        // it from there too — resolve Message as the apex value (NOT text, which would choke
+        // coercing the error object) and hand the existing error straight through.
+        if (Message != null && (await Message.Value<global::app.type.item.@this>())?.Clr<object>() is global::app.error.IError msgError)
+            return Error(msgError);
+
         string key = Key == null ? "UserError" : (await Key.Value())?.Clr<string>() ?? "UserError";
         int status = (await StatusCode.Value())!.ToInt32();
         string message = Message == null ? "" : (await Message.Value())?.Clr<string>() ?? "";
