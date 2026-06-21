@@ -6,8 +6,9 @@ const { Liquid } = require('liquidjs');
 
 const app = express();
 app.set('strict routing', true);
+app.use(express.json({ limit: '1mb' }));
 const ROOT = path.join(__dirname, '..');
-const PORT = process.env.PORT || 8086;
+const PORT = process.env.PORT || 8084;
 
 const engine = new Liquid({
   root: path.join(__dirname, 'templates'),
@@ -306,13 +307,59 @@ async function page(currentUrl, bodyHtml, opts = {}) {
   });
 }
 
-// ── Render a markdown file ───────────────────────────────────────────────────
+// ── Render an [[include]] to HTML (structure card or fenced code) ────────────
+function renderIncludeHtml(clean) {
+  try {
+    if (clean.endsWith('.json')) {
+      const data = JSON.parse(fs.readFileSync(path.join(ROOT, clean), 'utf8'));
+      return renderStructure(data);
+    }
+    const src = fs.readFileSync(path.join(ROOT, clean), 'utf8');
+    return marked.parse('```' + lang(clean) + '\n' + src.trimEnd() + '\n```');
+  } catch {
+    return `<blockquote>⚠️ Could not load <code>${esc(clean)}</code></blockquote>`;
+  }
+}
+
+// ── Render markdown as line-anchored blocks ──────────────────────────────────
+// Each top-level token becomes one block tagged with its 1-based SOURCE line, so
+// a comment anchors to the exact line of the .md file. [[includes]] expand here
+// (not pre-expanded) so an include's length never shifts the source line numbers.
+function renderMdBlocks(rawSource) {
+  const tokens = marked.lexer(rawSource);
+  sectionCount = 0;
+  let line = 1;
+  const out = [];
+  for (const tok of tokens) {
+    const raw = tok.raw || '';
+    const start = line;
+    line += (raw.match(/\n/g) || []).length;
+    if (tok.type === 'space') continue;
+    const end = start + (raw.replace(/\n+$/, '').match(/\n/g) || []).length;
+    const inc = tok.type === 'paragraph' && /^\[\[[^\]]+\]\]$/.test((tok.text || '').trim());
+    const html = inc
+      ? renderIncludeHtml(tok.text.trim().replace(/^\[\[|\]\]$/g, '').trim())
+      : marked.parser([tok]);
+    out.push({ start, end, html });
+  }
+  return out;
+}
+
+const commentInject = rel =>
+  `<link rel="stylesheet" href="/comments.css">` +
+  `<script>window.__DOC_FILE__=${JSON.stringify(rel)};</script>` +
+  `<script src="/comments.js"></script>`;
+
+// ── Render a markdown file — line-anchored and commentable ───────────────────
 async function renderFile(filePath, urlPath) {
   const raw = fs.readFileSync(filePath, 'utf8');
-  const expanded = resolveIncludes(raw);
-  sectionCount = 0;
-  const html = marked.parse(expanded);
-  return page(urlPath, html);
+  const rel = path.relative(ROOT, filePath).split(path.sep).join('/');
+  const blocks = renderMdBlocks(raw).map(b =>
+    `<div class="cblock" data-start="${b.start}" data-end="${b.end}">` +
+    `<span class="cgutter" data-line="${b.start}" title="Comment on line ${b.start}">${b.start}</span>` +
+    `<div class="cbody">${b.html}</div></div>`
+  ).join('\n');
+  return page(urlPath, blocks + commentInject(rel));
 }
 
 // ── Auto directory listing ────────────────────────────────────────────────────
@@ -410,6 +457,91 @@ app.get('/ask', async (req, res) => {
       `</p>`;
   }
   res.send(await page('/ask', body, { title: q ? `${q} — plang` : 'Ask plang', query: q }));
+});
+
+// ── Comments ─────────────────────────────────────────────────────────────────
+// Per-line comments on the doc tree, stored beside the server so they commit
+// with the branch. Keyed by repo-relative file path (e.g. app/goal/start.md).
+const COMMENTS_PATH = path.join(__dirname, 'comments.json');
+function loadComments() { try { return JSON.parse(fs.readFileSync(COMMENTS_PATH, 'utf8')); } catch { return {}; } }
+function saveComments(d) { fs.writeFileSync(COMMENTS_PATH, JSON.stringify(d, null, 2)); }
+function genId() { let s = ''; while (s.length < 10) s += Math.floor(Math.random() * 16).toString(16); return s.slice(0, 10); }
+function nowTs() { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`; }
+function fileLines(rel) { try { return fs.readFileSync(path.join(ROOT, rel), 'utf8').split('\n'); } catch { return null; } }
+
+// Re-anchor comments by their stored line text when the file has shifted under
+// them — a unique match wins, otherwise flag `drifted`. Backfills defaults.
+function normalizeFor(rel, arr) {
+  const lines = fileLines(rel);
+  for (const c of arr) {
+    if (c.author == null) c.author = 'user';
+    if (c.status == null) c.status = 'open';
+    if (c.parent_id == null) c.parent_id = null;
+    if (!lines) continue;
+    const idx = (c.line | 0) - 1;
+    const cur = idx >= 0 && idx < lines.length ? lines[idx] : null;
+    if (c.anchor == null) { c.anchor = cur || ''; c.drifted = false; continue; }
+    if (cur === c.anchor) { c.drifted = false; continue; }
+    if (!c.anchor) { c.drifted = false; continue; }
+    const m = []; lines.forEach((ln, i) => { if (ln === c.anchor) m.push(i); });
+    if (m.length === 1) { c.line = m[0] + 1; c.drifted = false; } else { c.drifted = true; }
+  }
+  return arr;
+}
+
+app.get('/comments.css', (_req, res) => res.type('css').send(fs.readFileSync(path.join(__dirname, 'comments.css'))));
+app.get('/comments.js', (_req, res) => res.type('js').send(fs.readFileSync(path.join(__dirname, 'comments.js'))));
+
+app.get('/api/comments', (req, res) => {
+  const rel = String(req.query.path || '');
+  const all = loadComments();
+  const arr = normalizeFor(rel, all[rel] || []);
+  if (all[rel]) { all[rel] = arr; saveComments(all); }
+  res.json({ comments: arr });
+});
+
+app.post('/api/comment', (req, res) => {
+  const { file, line, text, author, parent_id } = req.body || {};
+  if (!file || !text) return res.status(400).json({ error: 'file and text required' });
+  const all = loadComments();
+  const arr = all[file] || (all[file] = []);
+  const lines = fileLines(file);
+  const idx = (line | 0) - 1;
+  arr.push({
+    id: genId(), line: line | 0, text: String(text),
+    author: author === 'architect' ? 'architect' : 'user',
+    status: 'open', parent_id: parent_id || null, ts: nowTs(),
+    anchor: lines && idx >= 0 && idx < lines.length ? lines[idx] : '',
+  });
+  saveComments(all);
+  res.json({ comments: normalizeFor(file, all[file]) });
+});
+
+app.patch('/api/comment', (req, res) => {
+  const id = String(req.query.id || '');
+  const { status, text } = req.body || {};
+  const all = loadComments();
+  let file = null;
+  for (const f of Object.keys(all)) for (const c of all[f]) if (c.id === id) {
+    if (status) c.status = status;
+    if (text != null) c.text = String(text);
+    file = f;
+  }
+  saveComments(all);
+  res.json({ comments: file ? normalizeFor(file, all[file]) : [] });
+});
+
+app.delete('/api/comment', (req, res) => {
+  const id = String(req.query.id || '');
+  const all = loadComments();
+  let file = null;
+  for (const f of Object.keys(all)) {
+    const before = all[f].length;
+    all[f] = all[f].filter(c => c.id !== id && c.parent_id !== id);
+    if (all[f].length !== before) file = f;
+  }
+  saveComments(all);
+  res.json({ comments: file ? normalizeFor(file, all[file]) : [] });
 });
 
 app.get('*', servePage);

@@ -1,0 +1,61 @@
+/* Per-line comment layer for the doc tree — light, to match the docs. */
+.cblock { position: relative; border-radius: 6px; }
+.cblock:hover { background: #FAFBF9; }
+.cgutter {
+  position: absolute; left: -42px; top: 3px; width: 30px; text-align: right;
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #C4CAC4;
+  cursor: pointer; user-select: none; opacity: 0; transition: opacity .12s, color .12s;
+}
+.cblock:hover .cgutter { opacity: 1; }
+.cgutter:hover { color: #2C6E8C; }
+.cgutter.has-comment { opacity: 1; color: #C2683A; font-weight: 600; }
+.cgutter.has-comment::before { content: '●'; font-size: 8px; margin-right: 3px; vertical-align: 1px; }
+
+.cthread { margin: 8px 0 18px; display: flex; flex-direction: column; gap: 8px; }
+.ccomment {
+  background: #F2F6F7; border-left: 3px solid #2C6E8C; border-radius: 7px;
+  padding: 10px 14px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #3A434C;
+}
+.ccomment.a-architect { background: #F7F4ED; border-left-color: #B58B3A; }
+.ccomment.reply { margin-left: 30px; }
+.ccomment.s-resolved { opacity: .62; border-left-color: #4F7C5E; }
+.ccomment.s-resolved .ctext { text-decoration: line-through; color: #8A928A; }
+.ccomment.s-disagreed { border-left-color: #C2683A; background: #F8F0EB; }
+.cmeta { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 11px; color: #97A0A7; margin-bottom: 5px; }
+.cmeta .who { font-weight: 600; color: #525C64; }
+.cbadge { padding: 1px 7px; border-radius: 9px; font-size: 10px; background: #E2E6E2; color: #525C64; text-transform: uppercase; letter-spacing: .04em; }
+.cbadge.resolved { background: #DDEAE0; color: #3C6147; }
+.cbadge.disagreed { background: #F0DACE; color: #9A4D24; }
+.cbadge.drifted { background: #EFE6CC; color: #83702E; }
+.ctext { white-space: pre-wrap; word-break: break-word; line-height: 1.55; }
+.cact { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+.cbtn {
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px; border: 1px solid #D8DBD8;
+  background: #fff; color: #525C64; padding: 4px 10px; border-radius: 5px; cursor: pointer;
+}
+.cbtn:hover { border-color: #2C6E8C; color: #2C6E8C; }
+.cbtn.resolve:hover { border-color: #4F7C5E; color: #4F7C5E; }
+.cbtn.disagree:hover { border-color: #C2683A; color: #C2683A; }
+.cbtn.del { border: 0; color: #C0B7B0; }
+.cbtn.del:hover { color: #C2683A; }
+.cbtn.save { background: #2C6E8C; color: #fff; border-color: #2C6E8C; }
+.cbtn.save:hover { background: #245d77; color: #fff; }
+
+.ccomposer {
+  margin: 8px 0 18px; padding: 11px; background: #fff; border: 1px solid #2C6E8C;
+  border-radius: 9px; box-shadow: 0 10px 28px -18px rgba(20, 30, 40, .35);
+}
+.ccomposer textarea {
+  width: 100%; min-height: 64px; border: 1px solid #E0E3E0; border-radius: 6px; padding: 8px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #3A434C; resize: vertical;
+}
+.ccomposer textarea:focus { outline: none; border-color: #2C6E8C; }
+.crow { margin-top: 8px; display: flex; align-items: center; gap: 10px; }
+.cas { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #97A0A7; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+.cspacer { flex: 1; }
+
+@media (max-width: 760px) {
+  .cgutter { left: 0; opacity: 1; }
+  .cbody { padding-left: 34px; }
+  .ccomment.reply { margin-left: 12px; }
+}
