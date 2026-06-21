@@ -4,8 +4,21 @@
 Sibling to `deserialize-flow-design.md`. No code yet — this is the record before
 any of it becomes work.
 
-> **DECISION 2026-06-16 (supersedes the role-by-role disposition below where they
-> conflict).** Discussed with Ingi. Conclusions:
+> **REVERSED 2026-06-21 (Ingi): `clr` stays — this DECISION is cancelled.**
+> We are NOT removing `clr` and NOT introducing `external`. `clr` remains the
+> closed host-object carrier: navigate / write-if-setter / serialize-`[Out]`,
+> `Peek()`→self. Engine `%!...%` handles keep riding `clr` and are NOT itemized;
+> the Lift fallback stays. The migration buckets, the Lift-fallback-to-hard-error
+> flip, and the `clr`/`SetValueDirect`/`Lower<T>`/Judge-label/StampedForm deletes
+> are all **off**. The clone-on-write `external` semantics in point 3 below are
+> shelved with it. The whole 2026-06-16 DECISION and the buckets that follow are
+> kept for history only — read past them. (The two dead `clr` read-couriers
+> already removed from `Wire.ReadBody` were genuinely dead code and stand.)
+>
+> ---
+>
+> **DECISION 2026-06-16 (CANCELLED — see reversal above; kept for history).**
+> Discussed with Ingi. Conclusions:
 >
 > 1. **`clr` the class is removed now.** Every value in today's runtime is, or
 >    should be, a real `item.@this`. A non-item reaching the Lift value slot
