@@ -16,7 +16,7 @@ public class FileHandlerTests : IDisposable
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir);
+        _app = TestApp.Create(_tempDir);
     }
 
     public void Dispose()
@@ -80,29 +80,9 @@ public class FileHandlerTests : IDisposable
         // surfaces that typed error through the dispatch's parameter-resolution
         // guard: the read step fails cleanly with SchemeNotRegistered, no NRE.
         var context = _app.User.Context;
-        var goal = new global::app.goal.@this
-        {
-            Name = "TestUnregisteredScheme",
-            Steps = new global::app.goal.steps.@this
-            {
-                new global::app.goal.steps.step.@this
-                {
-                    Index = 0,
-                    Text = "read s3 file",
-                    Actions = new global::app.goal.steps.step.actions.@this
-                    {
-                        new global::app.goal.steps.step.actions.action.@this
-                        {
-                            Module = "file",
-                            ActionName = "read",
-                            Parameters = new System.Collections.Generic.List<global::app.data.@this>
-                                { new global::app.data.@this("path", "s3://bucket/key") },
-                        }
-                    }
-                }
-            }
-        };
-        foreach (var st in goal.Steps) foreach (var a in st.Actions) a.StampTemplates();
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("TestUnregisteredScheme",
+            Make.Step("read s3 file",
+                Make.Action("file", "read", ("path", "s3://bucket/key")))));
 
         var result = await _app.RunGoalAsync(goal, context);
 
@@ -462,55 +442,15 @@ public class FileHandlerTests : IDisposable
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 
-        var goal = new global::app.goal.@this
-        {
-            Name = "TestFileExistsFlow",
-            Steps = new global::app.goal.steps.@this
-            {
-                new global::app.goal.steps.step.@this
-                {
-                    Index = 0,
-                    Text = "check if file exists",
-                    Actions = new global::app.goal.steps.step.actions.@this
-                    {
-                        new global::app.goal.steps.step.actions.action.@this
-                        {
-                            Module = "file",
-                            ActionName = "exists",
-                            Parameters = new System.Collections.Generic.List<global::app.data.@this>
-                                { new global::app.data.@this("path", TempPath("real.txt")) },
-                        },
-                        new global::app.goal.steps.step.actions.action.@this
-                        {
-                            Module = "variable",
-                            ActionName = "set",
-                            Parameters = new System.Collections.Generic.List<global::app.data.@this>
-                            {
-                                new global::app.data.@this("Name", "fileResult", new global::app.type.@this("variable")),
-                                new global::app.data.@this("Value", "%!data%")                            }
-                        }
-                    }
-                },
-                new global::app.goal.steps.step.@this
-                {
-                    Index = 1,
-                    Text = "write exists result",
-                    Actions = new global::app.goal.steps.step.actions.@this
-                    {
-                        new global::app.goal.steps.step.actions.action.@this
-                        {
-                            Module = "output",
-                            ActionName = "write",
-                            Parameters = new System.Collections.Generic.List<global::app.data.@this>
-                                { new global::app.data.@this("Data", "%fileResult.Exists%") },
-                        }
-                    }
-                }
-            }
-        };
-
         var context = _app.User.Context;
-        foreach (var st in goal.Steps) foreach (var a in st.Actions) a.StampTemplates();
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("TestFileExistsFlow",
+            Make.Step("check if file exists",
+                Make.Action("file", "exists", ("path", TempPath("real.txt"))),
+                Make.Action("variable", "set",
+                    Make.Param("Name", "fileResult", "variable"), ("Value", "%!data%"))),
+            Make.Step("write exists result",
+                Make.Action("output", "write", ("Data", "%fileResult.Exists%")))));
+
         var goalResult = await _app.RunGoalAsync(goal, context);
 
         await goalResult.IsSuccess();
@@ -539,55 +479,15 @@ public class FileHandlerTests : IDisposable
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 
-        var goal = new global::app.goal.@this
-        {
-            Name = "TestFileNotExistsFlow",
-            Steps = new global::app.goal.steps.@this
-            {
-                new global::app.goal.steps.step.@this
-                {
-                    Index = 0,
-                    Text = "check if file exists",
-                    Actions = new global::app.goal.steps.step.actions.@this
-                    {
-                        new global::app.goal.steps.step.actions.action.@this
-                        {
-                            Module = "file",
-                            ActionName = "exists",
-                            Parameters = new System.Collections.Generic.List<global::app.data.@this>
-                                { new global::app.data.@this("path", TempPath("ghost.txt")) },
-                        },
-                        new global::app.goal.steps.step.actions.action.@this
-                        {
-                            Module = "variable",
-                            ActionName = "set",
-                            Parameters = new System.Collections.Generic.List<global::app.data.@this>
-                            {
-                                new global::app.data.@this("Name", "fileResult", new global::app.type.@this("variable")),
-                                new global::app.data.@this("Value", "%!data%")                            }
-                        }
-                    }
-                },
-                new global::app.goal.steps.step.@this
-                {
-                    Index = 1,
-                    Text = "write exists result",
-                    Actions = new global::app.goal.steps.step.actions.@this
-                    {
-                        new global::app.goal.steps.step.actions.action.@this
-                        {
-                            Module = "output",
-                            ActionName = "write",
-                            Parameters = new System.Collections.Generic.List<global::app.data.@this>
-                                { new global::app.data.@this("Data", "%fileResult.Exists%") },
-                        }
-                    }
-                }
-            }
-        };
-
         var context = _app.User.Context;
-        foreach (var st in goal.Steps) foreach (var a in st.Actions) a.StampTemplates();
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("TestFileNotExistsFlow",
+            Make.Step("check if file exists",
+                Make.Action("file", "exists", ("path", TempPath("ghost.txt"))),
+                Make.Action("variable", "set",
+                    Make.Param("Name", "fileResult", "variable"), ("Value", "%!data%"))),
+            Make.Step("write exists result",
+                Make.Action("output", "write", ("Data", "%fileResult.Exists%")))));
+
         var goalResult = await _app.RunGoalAsync(goal, context);
 
         await goalResult.IsSuccess();

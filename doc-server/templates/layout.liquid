@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{background:#F4F5F3;}
+    ::selection{background:#CFE0E7;color:#1B2228;}
+    body{font-family:'Newsreader',Georgia,serif;color:#222A30;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+    pre{background:#f6f8fa;border:1px solid #E4E7E4;border-radius:8px;padding:18px 22px;overflow-x:auto;margin:20px 0;}
+    pre code{font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.6;background:none;border:none;padding:0;}
+    blockquote{border-left:3px solid #E4E7E4;padding-left:16px;color:#7A838A;margin:16px 0;}
+    details summary::-webkit-details-marker{display:none;}
+    details[open] summary span.arrow{transform:rotate(90deg);display:inline-block;}
+    #ask-input::placeholder{color:#A6AEB4;}
+    #ask-input:focus{outline:none;border-color:#2C6E8C;background:#fff;}
+  </style>
+</head>
+<body style="min-height:100vh;background:#F4F5F3;">
+
+  <div style="max-width:1140px;margin:0 auto;padding:0 28px;">
+
+    <header style="display:flex;align-items:center;justify-content:space-between;padding:28px 0 0;gap:32px;">
+      <a href="/" style="text-decoration:none;display:flex;align-items:baseline;gap:2px;flex-shrink:0;">
+        <span style="font-size:23px;font-weight:600;letter-spacing:-0.01em;color:#1A2128;">PLang</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#97A0A7;">.is</span>
+      </a>
+      <form action="/ask" method="GET" style="flex:1;max-width:520px;">
+        <input id="ask-input" type="text" name="q" value="{{ query }}" autocomplete="off"
+          placeholder="ask PLang anything — how do I read a file?"
+          style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#1A2128;background:#ECEEED;border:1px solid #D8DBD8;border-radius:8px;padding:10px 16px;transition:border-color 0.15s,background 0.15s;">
+      </form>
+    </header>
+
+    <div style="padding:56px 0 80px;">
+      {{ content }}
+    </div>
+
+    <div style="height:1px;background:#E4E7E4;margin:64px 0 0;"></div>
+    <footer style="padding:54px 0 80px;">
+      <div style="display:flex;align-items:center;gap:14px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#A6AEB4;letter-spacing:0.02em;flex-wrap:wrap;">
+        <span style="color:#5C666E;">plang.is</span>
+        <span>·</span>
+        <span>Reykjavík, Ísland</span>
+        <span>·</span>
+        <span>64°08′N&nbsp;&nbsp;21°56′W</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js"></script>
+  <script>hljs.highlightAll();</script>
+</body>
+</html>

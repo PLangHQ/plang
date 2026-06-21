@@ -318,19 +318,11 @@ public class EngineTests
     [Test]
     public async Task RunGoalAsync_ExecutesSteps()
     {
-        await using var engine = new global::app.@this("/app");
+        await using var engine = TestApp.Create("/app");
 
-        var goal = new Goal
-        {
-            Name = "TestGoal",
-            Path = "/TestGoal.goal",
-            Steps = new GoalSteps
-            {
-                MakeStep("variable", "set",
-                    new Dictionary<string, object?> { { "name", "test" }, { "value", "hello" } },
-                    index: 0, text: "set variable")
-            }
-        };
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("TestGoal",
+            Make.Step("set variable",
+                Make.Action("variable", "set", Make.Param("Name", "test", "variable"), ("Value", "hello")))));
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -500,19 +492,11 @@ public class EngineTests
     [Test]
     public async Task RunGoalAsync_WithActor_UsesActorContext()
     {
-        await using var engine = new global::app.@this("/app");
+        await using var engine = TestApp.Create("/app");
 
-        var goal = new Goal
-        {
-            Name = "TestGoal",
-            Path = "/TestGoal.goal",
-            Steps = new GoalSteps
-            {
-                MakeStep("variable", "set",
-                    new Dictionary<string, object?> { { "name", "test" }, { "value", "hello" } },
-                    index: 0, text: "set variable")
-            }
-        };
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("TestGoal",
+            Make.Step("set variable",
+                Make.Action("variable", "set", Make.Param("Name", "test", "variable"), ("Value", "hello")))));
         engine.Goal.Add(goal);
 
         var result = await engine.RunGoalAsync(goal, engine.System.Context);
@@ -526,19 +510,11 @@ public class EngineTests
     [Test]
     public async Task RunGoalAsync_ByName_WithActor_UsesActorContext()
     {
-        await using var engine = new global::app.@this("/app");
+        await using var engine = TestApp.Create("/app");
 
-        var goal = new Goal
-        {
-            Name = "TestGoal",
-            Path = "/TestGoal.goal",
-            Steps = new GoalSteps
-            {
-                MakeStep("variable", "set",
-                    new Dictionary<string, object?> { { "name", "test" }, { "value", "system-value" } },
-                    index: 0, text: "set variable")
-            }
-        };
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("TestGoal",
+            Make.Step("set variable",
+                Make.Action("variable", "set", Make.Param("Name", "test", "variable"), ("Value", "system-value")))));
         engine.Goal.Add(goal);
 
         var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" }, engine.System.Context);

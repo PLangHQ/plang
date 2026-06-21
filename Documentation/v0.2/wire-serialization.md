@@ -241,7 +241,31 @@ The hash round-trip is byte-identical for a relayed `RawUntouched` Data because:
 
 A sender that produces non-canonical bytes (third-party, non-STJ writer, permuted keys) fails verify on the receiver — conservative-correct. A wire-attached `type.kind` cannot redirect bytes to a different parser without invalidating the signature: the `type` slot is in the signed scope.
 
-**`Wire.Read` does not auto-verify.** A reconstructed Data carries its `Signature` populated-but-unverified. Verification is the consumer's explicit step (`signing.verify`, or a `BeforeRead` event binding). Parity with the prior eager-read behavior — not a regression. Full security audit in `.bot/lazy-deserialize/security/v1/result.md`.
+**`Wire.Read` auto-verifies `@schema:signature` layers on transport reads.** When the first property of a deserialized object is `@schema:"signature"`, `Wire.Read` dispatches to `ReadSignatureLayer`, which:
+
+1. Rebuilds the `signature.@this` layer from the JSON buffer.
+2. Verifies the signature against the actor context (runs the verify action inline — a bad or expired signature **fails the read**).
+3. Returns the peeled inner `Data`, now carrying the verifying actor's context.
+
+**Fail-closed on context-less transport reads.** If `_context == null` and the view is `View.Out` (transport), the read returns a typed `SignatureVerifyContextMissing` error instead of peeling the layer silently. A context-less Wire must not unwrap signed transport payloads — doing so would return the inner data as if verified.
+
+**At-rest reads trust on read.** `View.Store` (settings, permission grants) with `_context == null` returns `layer.Value` directly. At-rest artifacts require local-filesystem write to tamper — equivalent to actor-level access already. Carrying the actor context into Store reads (so verification can run) is tracked as an open item under the SettingsStore refactor.
+
+This replaced the earlier posture ("Wire.Read does not auto-verify — verification is the consumer's explicit step") that was correct before the signature-as-layer integration (`commit 50963ed18`). The regression test is `Deserialize_SignatureLayer_NoActorContext_FailsClosed` in `PLang.Tests/Wire/App/Serialization/WireConverterSigningTests.cs`.
+
+## Template-stamping at read — the authored Wire mode
+
+**The problem.** A `.pr` goal file contains literal strings like `"Hello %name%"`. At runtime, those strings must be resolved as templates (variable references substituted). A runtime-ingest HTTP body with the same bytes is **not** a template — the `%name%` is literal user content. Prior to this branch, template-stamping was done by a post-parse `Authored()` walk that touched every value regardless of origin. This was both wrong (http bodies got stamped) and wasteful.
+
+**The fix: mode rides the Wire, not the bytes.** `Wire` gains an optional `template` constructor parameter (a string naming the template mode, e.g. `"plang"`). Goal deserialization routes through a dedicated **authored Wire** (`Template = "plang"`), constructed once by the plang channel serializer. All other Wire instances — `_inbound` for runtime messages, the default `Wire()` for general serialization — have `template = null` and produce literal values.
+
+**Types own the holes-decision.** `Wire.Read` passes the template mode down via `ReadContext.Template`. `text.@this` receives it and stamps only when `HasHoles` (i.e., the string actually contains `%ref%` patterns). A holeless string drops the stamp regardless of mode — `HasVariableReference => Template != null` stays the invariant. Container slots (`ReadSlot`) propagate the mode so nested string values inside a goal's action slots are also stamped.
+
+**Trust boundary.** Goal deserialization is the only authored-read path:
+- `goal.list` — `Deserialize<goal>` routes to the authored Wire.
+- `GoalCall` — `file.read → source.Value → goal reader → App.Type.Convert(text, goal)` — also terminates at the authored Wire.
+
+Runtime channels (`_inbound`) share the Wire instance but have `template = null`; a `%ref%` arriving in an HTTP body is born a literal `text`, never a template. The mode is set once at construction and never inferred from the bytes themselves.
 
 ## Multi-segment serializer extension matching
 

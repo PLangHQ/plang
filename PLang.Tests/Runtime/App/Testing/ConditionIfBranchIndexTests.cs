@@ -18,41 +18,23 @@ public class ConditionIfBranchIndexTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/test");
+        _app = TestApp.Create("/test");
     }
 
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();
 
     // Builds an `if <left> <op> <right>` action with no body (so simple path is taken).
-    private PrAction IfAction(object? left, string op, object? right)
-    {
-        return new PrAction
-        {
-            Module = "condition",
-            ActionName = "if",
-            Parameters = new List<Data>
-            {
-                new("Left", left),
-                new("Operator", op),
-                new("Right", right)
-            }
-        };
-    }
+    private static PrAction IfAction(object? left, string op, object? right)
+        => Make.Action("condition", "if", ("Left", left), ("Operator", op), ("Right", right));
 
-    // Runs a single-step goal whose action is the given condition.if action. Returns
-    // the result Data so the test can inspect Properties["branchIndex"].
+    // Runs a single-step goal whose action is the given condition.if action — loaded
+    // through the real read path, so the action assembles and its params type/stamp
+    // like a .pr off disk. Returns the result Data for the test to inspect.
     private async Task<Data> RunSingleStep(PrAction ifAction)
     {
-        var goal = new Goal
-        {
-            Name = "CondGoal",
-            Path = "/Cond.goal",
-            Steps = new GoalSteps
-            {
-                new Step { Index = 0, Text = "if test", Actions = new StepActions { ifAction } }
-            }
-        };
+        var goal = await RealGoalLoad.ViaChannel(_app,
+            Make.Goal("CondGoal", Make.Step("if test", ifAction)));
         _app.Goal.Add(goal);
 
         Data? captured = null;
@@ -98,56 +80,33 @@ public class ConditionIfBranchIndexTests
         var vars = _app.User.Context.Variable;
         vars.Set("x", xValue);
 
-        var actions = new StepActions();
+        var actions = new List<PrAction>();
         foreach (var br in branches)
         {
             if (br.op != null)
-            {
-                actions.Add(new PrAction
-                {
-                    Module = "condition",
-                    ActionName = "if",
-                    Parameters = new List<Data>
-                    {
-                        new("Left", "%x%"),
-                        new("Operator", br.op),
-                        new("Right", br.right)
-                    }
-                });
-            }
-            actions.Add(new PrAction
-            {
-                Module = "variable",
-                ActionName = "set",
-                // PrParam stamps the var-name slot (Name) as type:variable, the way
-                // the builder emits it — a bare string Name would decline at run.
-                Parameters = PrParam.List("variable", "set", new Dictionary<string, object?>
-                {
-                    ["Name"] = br.bodyVar,
-                    ["Value"] = br.bodyVal
-                })
-            });
+                actions.Add(Make.Action("condition", "if",
+                    ("Left", "%x%"), ("Operator", br.op), ("Right", br.right)));
+            // The var-name slot (Name) is declared type:variable — the way the builder
+            // emits it; a bare string Name would decline at run.
+            actions.Add(Make.Action("variable", "set",
+                Make.Param("Name", br.bodyVar, "variable"), ("Value", br.bodyVal)));
         }
 
-        var goal = new Goal
-        {
-            Name = "Multi",
-            Path = "/Multi.goal",
-            Steps = new GoalSteps
-            {
-                new Step { Index = 0, Text = "multi", Actions = actions }
-            }
-        };
+        var goal = await RealGoalLoad.ViaChannel(_app,
+            Make.Goal("Multi", Make.Step("multi", actions.ToArray())));
         _app.Goal.Add(goal);
 
         Data? captured = null;
-        // Capture the first-if's AfterAction (the orchestrator emits its result there).
-        var first = actions[0];
+        // Capture the orchestrating if's AfterAction (it emits the final branchIndex
+        // there, after its sub-evaluations). It is the step's first action — but the
+        // LOADED instance, since the read borns fresh actions (the hand-built ones we
+        // passed in are not what runs).
+        var orchestrator = goal.Steps.First().Actions.First();
         _app.User.Context.Events.Register(new EventBinding(
             Trigger.AfterAction,
             (context, action, result) =>
             {
-                if (ReferenceEquals(action, first))
+                if (ReferenceEquals(action, orchestrator))
                     captured = result;
                 return Task.FromResult(Data.Ok());
             },

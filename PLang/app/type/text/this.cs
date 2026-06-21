@@ -96,32 +96,35 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public @this(string value) { _value = value ?? string.Empty; }
 
     /// <summary>
-    /// Construction with template permission. <paramref name="canTemplate"/> is the
-    /// owner's claim "this slot may carry a <c>%var%</c> reference" (a value slot of a
-    /// templating type — <c>path</c>, a <c>text</c> value — sets it; a structural text
-    /// like a dict key or type name does not). When permitted, text decides for itself
-    /// whether there is actually a template (<see cref="HasHoles"/>) and stamps it.
-    /// Resolution stays lazy — nothing renders until the door (<see cref="Value"/>).
+    /// Construction with a template mode. <paramref name="template"/> is the
+    /// authored-content mode the reader carries — <c>"plang"</c> when the bytes are
+    /// developer-authored (a goal/<c>.pr</c>), null for runtime-ingest. Text decides
+    /// for itself whether there is actually a template to stamp: only a value with a
+    /// <c>%ref%</c> hole (<see cref="HasHoles"/>) keeps the mode, so a holeless string
+    /// never reports as a variable reference. Resolution stays lazy — nothing renders
+    /// until the door (<see cref="Value"/>). The trust is the mode, not the content:
+    /// a structural text (a dict key, a type name) or a runtime-ingest value is born
+    /// with a null mode and prints literally.
     /// </summary>
-    public @this(string value, bool canTemplate)
+    public @this(string value, string? template)
     {
         _value = value ?? string.Empty;
-        if (canTemplate && HasHoles) Template = "plang";
+        if (template != null && HasHoles) Template = template;
     }
 
     /// <summary>
     /// Construction from a raw form — a string is the value as-is; binary bytes
     /// off I/O decode as UTF-8. Text is only ever born from a string, so this is
     /// the one place bytes become that string (a reader handed raw stream bytes
-    /// reaches the text here). <paramref name="canTemplate"/> as above.
+    /// reaches the text here). <paramref name="template"/> as above.
     /// </summary>
-    public @this(object raw, bool canTemplate = false)
+    public @this(object raw, string? template = null)
         : this(raw switch
         {
             byte[] b => System.Text.Encoding.UTF8.GetString(b),
             string s => s,
             _ => raw?.ToString() ?? string.Empty,
-        }, canTemplate)
+        }, template)
     { }
 
     // INBOUND only — the entry lift (`.Ok("x")` constructs). The outbound

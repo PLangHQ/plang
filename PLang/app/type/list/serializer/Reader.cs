@@ -20,7 +20,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         reader.BeginArray();
         var list = new global::app.type.list.@this();
         while (reader.NextElement())
-            list.AddRaw(global::app.type.item.serializer.json.ReadSlot(ref reader));
+            list.AddRaw(global::app.type.item.serializer.json.ReadSlot(ref reader, ctx));
         reader.EndArray();
         return list;
     }

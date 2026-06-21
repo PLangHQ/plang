@@ -36,6 +36,16 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public int Hour => Value.Hour;
     public int Minute => Value.Minute;
     public int Second => Value.Second;
+    public int Millisecond => Value.Millisecond;
+    public long Ticks => Value.Ticks;
+    public int DayOfYear => Value.DayOfYear;
+    public System.DayOfWeek DayOfWeek => Value.DayOfWeek;
+
+    // Compound parts carry their own plang type: the calendar day is a `date`, the
+    // wall-clock time a `time`, the zone offset a `duration`.
+    public global::app.type.date.@this Date => new(System.DateOnly.FromDateTime(Value.Date));
+    public global::app.type.time.@this TimeOfDay => new(System.TimeOnly.FromTimeSpan(Value.TimeOfDay));
+    public global::app.type.duration.@this Offset => new(Value.Offset);
 
     /// <summary>Bare ISO round-trip form — the serializer renders this.</summary>
     public override string ToString() =>

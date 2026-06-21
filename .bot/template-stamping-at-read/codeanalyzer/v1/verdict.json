@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "Risk-prioritized review (B1-B5 + scalars-as-native core) clean; build green, all mechanical passes clean. 2 trivial cleanups (dead BothPresent, orphaned Comparison enum doc) + 1 systemic hardening note (Normalize silent on unknown CLR leaf). Not a full certification of the 361-file scalars body." }

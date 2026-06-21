@@ -129,28 +129,9 @@ public class PrPipelineTests
 
         // A goal in /sub/ reads "subdata.txt" (relative)
         // This resolves to {root}/sub/subdata.txt — relative to goal folder
-        var goal = new global::app.goal.@this
-        {
-            Name = "SubRelative",
-            Path = "/sub/SubRelative.goal",
-            Steps = new global::app.goal.steps.@this
-            {
-                new global::app.goal.steps.step.@this
-                {
-                    Index = 0,
-                    Text = "read subdata.txt, write to %content%",
-                    Actions = new global::app.goal.steps.step.actions.@this
-                    {
-                        new global::app.goal.steps.step.actions.action.@this
-                        {
-                            Module = "file",
-                            ActionName = "read",
-                            Parameters = new List<Data> { new Data("path", "subdata.txt") },
-                        }
-                    }
-                }
-            }
-        };
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("SubRelative", "/sub/SubRelative.goal",
+            Make.Step("read subdata.txt, write to %content%",
+                Make.Action("file", "read", ("path", "subdata.txt")))));
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -168,28 +149,9 @@ public class PrPipelineTests
         await using var engine = TestApp.Create(fixturesDir);
 
         // #3: Goal in /sub/ reads ../testdata.txt — should resolve to {root}/testdata.txt
-        var goal = new global::app.goal.@this
-        {
-            Name = "ParentTraversal",
-            Path = "/sub/ParentTraversal.goal",
-            Steps = new global::app.goal.steps.@this
-            {
-                new global::app.goal.steps.step.@this
-                {
-                    Index = 0,
-                    Text = "read ../testdata.txt, write to %fromParent%",
-                    Actions = new global::app.goal.steps.step.actions.@this
-                    {
-                        new global::app.goal.steps.step.actions.action.@this
-                        {
-                            Module = "file",
-                            ActionName = "read",
-                            Parameters = new List<Data> { new Data("path", "../testdata.txt") },
-                        }
-                    }
-                }
-            }
-        };
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("ParentTraversal", "/sub/ParentTraversal.goal",
+            Make.Step("read ../testdata.txt, write to %fromParent%",
+                Make.Action("file", "read", ("path", "../testdata.txt")))));
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -206,28 +168,9 @@ public class PrPipelineTests
         await using var engine = TestApp.Create(fixturesDir);
 
         // #8: Goal in /sub/ reads ../sub/subdata.txt — parent then back down
-        var goal = new global::app.goal.@this
-        {
-            Name = "ParentAndDown",
-            Path = "/sub/ParentAndDown.goal",
-            Steps = new global::app.goal.steps.@this
-            {
-                new global::app.goal.steps.step.@this
-                {
-                    Index = 0,
-                    Text = "read ../sub/subdata.txt, write to %backAndDown%",
-                    Actions = new global::app.goal.steps.step.actions.@this
-                    {
-                        new global::app.goal.steps.step.actions.action.@this
-                        {
-                            Module = "file",
-                            ActionName = "read",
-                            Parameters = new List<Data> { new Data("path", "../sub/subdata.txt") },
-                        }
-                    }
-                }
-            }
-        };
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("ParentAndDown", "/sub/ParentAndDown.goal",
+            Make.Step("read ../sub/subdata.txt, write to %backAndDown%",
+                Make.Action("file", "read", ("path", "../sub/subdata.txt")))));
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -244,28 +187,9 @@ public class PrPipelineTests
         await using var engine = TestApp.Create(fixturesDir);
 
         // Hand-build a goal that reads a nonexistent file
-        var goal = new global::app.goal.@this
-        {
-            Name = "ReadMissing",
-            Path = "/ReadMissing.goal",
-            Steps = new global::app.goal.steps.@this
-            {
-                new global::app.goal.steps.step.@this
-                {
-                    Index = 0,
-                    Text = "read nonexistent.txt, write to %content%",
-                    Actions = new global::app.goal.steps.step.actions.@this
-                    {
-                        new global::app.goal.steps.step.actions.action.@this
-                        {
-                            Module = "file",
-                            ActionName = "read",
-                            Parameters = new List<Data> { new Data("path", "nonexistent.txt") },
-                        }
-                    }
-                }
-            }
-        };
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("ReadMissing", "/ReadMissing.goal",
+            Make.Step("read nonexistent.txt, write to %content%",
+                Make.Action("file", "read", ("path", "nonexistent.txt")))));
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -283,28 +207,9 @@ public class PrPipelineTests
         await using var engine = TestApp.Create(fixturesDir);
 
         // Try to read ../../ — should be blocked by PLangFileSystem
-        var goal = new global::app.goal.@this
-        {
-            Name = "ReadEscape",
-            Path = "/ReadEscape.goal",
-            Steps = new global::app.goal.steps.@this
-            {
-                new global::app.goal.steps.step.@this
-                {
-                    Index = 0,
-                    Text = "read ../../etc/passwd, write to %content%",
-                    Actions = new global::app.goal.steps.step.actions.@this
-                    {
-                        new global::app.goal.steps.step.actions.action.@this
-                        {
-                            Module = "file",
-                            ActionName = "read",
-                            Parameters = new List<Data> { new Data("path", "../../etc/passwd") },
-                        }
-                    }
-                }
-            }
-        };
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("ReadEscape", "/ReadEscape.goal",
+            Make.Step("read ../../etc/passwd, write to %content%",
+                Make.Action("file", "read", ("path", "../../etc/passwd")))));
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;

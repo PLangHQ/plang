@@ -301,7 +301,7 @@ public sealed class Default : IIdentity
         if (keyErr != null)
             return data.@this<Identity>.FromError(keyErr);
 
-        var now = (DateTimeOffset)(await action.Context.Variable.GetValue("NowUtc"))!;
+        var now = await (await action.Context.Variable.Get("NowUtc")).Clr<DateTimeOffset>(default);
 
         var identity = new Identity(name)
         {

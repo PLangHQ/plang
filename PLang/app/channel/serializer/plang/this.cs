@@ -27,10 +27,18 @@ namespace app.channel.serializer.plang;
 /// </para>
 ///
 /// <para>
-/// Read does NOT auto-verify — verification is the consumer's explicit step
-/// (<c>signing.verify</c> action, or a channel event handler bound to
-/// <c>BeforeRead</c>/<c>AfterRead</c>). The reconstructed Data has its signature
-/// populated-but-unverified.
+/// Read auto-verifies: any <c>@schema:signature</c> payload it encounters runs
+/// the <c>signing.verify</c> action before the inner data is peeled out — a
+/// bad/expired/wrong-key signature fails the read. Freshness + nonce-replay are
+/// enforced on the Out (transport) view; the Store view skips the freshness
+/// window because at-rest artifacts re-present the same nonce by design (their
+/// own <c>Expires</c> is the time bound). A transport read with no actor context
+/// cannot verify, so it <b>fails closed</b> — a signed payload is never unwrapped
+/// without verification. At-rest (Store) reads are made context-less by the
+/// settings/permission store and are trusted on read (tampering them requires
+/// local-filesystem write); verifying at-rest signatures needs the actor context
+/// carried into the store read. Production transport reads always carry a context
+/// via the per-actor serializer.
 /// </para>
 /// </summary>
 public sealed class @this : ISerializer
@@ -225,12 +233,16 @@ public sealed class @this : ISerializer
     {
         try
         {
-            if (string.IsNullOrEmpty(s) || s == "null")
-                return global::app.data.@this.Ok(null);
+            // Empty input has no Data to read. A JSON `null` payload deserializes to
+            // a C# null — handled on the result below, not by string-matching the raw
+            // bytes (which would also mis-fire on whitespace and read as if the text
+            // "null" were special).
+            if (string.IsNullOrEmpty(s)) return global::app.data.@this.Ok(null);
             // The persisted value IS a Data — return the reconstruction itself,
             // never an Ok envelope around it (a bare Data inside a Data is the
             // double-wrap the store seam rejects).
-            return JsonSerializer.Deserialize<global::app.data.@this>(s, _store)!;
+            return JsonSerializer.Deserialize<global::app.data.@this>(s, _store)
+                ?? global::app.data.@this.Ok(null);
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {
@@ -250,8 +262,9 @@ public sealed class @this : ISerializer
     {
         try
         {
-            if (string.IsNullOrEmpty(s) || s == "null") return (default, null);
-            return (JsonSerializer.Deserialize<T>(s, _store)!, null);
+            if (string.IsNullOrEmpty(s)) return (default, null);
+            // A JSON `null` payload deserializes to null — a valid empty result.
+            return (JsonSerializer.Deserialize<T>(s, _store), null);
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {
@@ -264,9 +277,10 @@ public sealed class @this : ISerializer
     {
         try
         {
-            if (string.IsNullOrEmpty(s) || s == "null") return global::app.data.@this.Ok();
+            if (string.IsNullOrEmpty(s)) return global::app.data.@this.Ok();
             // The wire IS a Data — return the reconstruction itself, never an
-            // Ok envelope around it (the bare-Data nesting the seam rejects).
+            // Ok envelope around it (the bare-Data nesting the seam rejects). A JSON
+            // `null` payload deserializes to null and falls back to an empty Ok.
             return JsonSerializer.Deserialize<global::app.data.@this>(s, _inbound) ?? global::app.data.@this.Ok();
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
@@ -280,7 +294,8 @@ public sealed class @this : ISerializer
     {
         try
         {
-            if (string.IsNullOrEmpty(s) || s == "null") return global::app.data.@this<T>.Ok(default!);
+            if (string.IsNullOrEmpty(s)) return global::app.data.@this<T>.Ok(default!);
+            // A JSON `null` payload deserializes to null → an empty typed Data.
             return global::app.data.@this<T>.Ok(JsonSerializer.Deserialize<T>(s, _inbound)!);
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)

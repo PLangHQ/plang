@@ -72,13 +72,22 @@ public class Wire : JsonConverter<@this>
     // serializer's construction site.
     private readonly actor.context.@this? _context;
 
+    // The authored-content mode threaded into every value read this converter
+    // drives — "plang" only on the dedicated goal/.pr-load Wire (a %ref% leaf borns
+    // a live template), null everywhere else (runtime ingest borns literal). The
+    // trust rides the reader instance, set once at the construction site, never
+    // inferred from the bytes. Owned per-instance, like View/Sign.
+    private readonly string? _template;
+
     public Wire() : this(global::app.View.Out) { }
 
-    public Wire(global::app.View view, bool sign = true, actor.context.@this? context = null)
+    public Wire(global::app.View view, bool sign = true, actor.context.@this? context = null,
+        string? template = null)
     {
         View = view;
         Sign = sign;
         _context = context;
+        _template = template;
     }
 
     /// <summary>
@@ -198,32 +207,48 @@ public class Wire : JsonConverter<@this>
     {
         using var doc = JsonDocument.ParseValue(ref reader);
         var layer = global::app.type.signature.@this.FromWire(doc.RootElement, options);
+
+        if (_context == null)
+        {
+            // Transport (Out) is the external attack surface: a signed payload that
+            // arrives with no actor to verify against must not be unwrapped — peeling
+            // it would return the inner as if verified. Fail closed.
+            if (View != global::app.View.Store)
+                return @this.FromError(new app.error.ServiceError(
+                    "Cannot verify a signature layer without an actor context.",
+                    "SignatureVerifyContextMissing", 400));
+
+            // At-rest (Store) artifacts — settings and permission grants — are read by
+            // the store without an actor context, so verify cannot run here; the stored
+            // grant is trusted on read. Tampering an at-rest artifact requires local
+            // filesystem write, i.e. actor-level access already. (At-rest verification
+            // needs the actor context carried into the store read.)
+            return layer.Value;
+        }
+
         // The inner data is re-hashed during verify (canonicalized through the
         // wire), so it needs the actor context the same way the outer does.
-        layer.Value.Context = _context!;
+        layer.Value.Context = _context;
 
-        if (_context != null)
+        var carrier = @this.Ok(layer);
+        carrier.Context = _context;
+        // At-rest artifacts (the Store view — permission grants, identities)
+        // re-present the same nonce on every read and outlive the wire-
+        // freshness window by design; their signature's own Expires is the
+        // only time bound. Transport reads (Out view) keep the freshness +
+        // nonce-replay defence.
+        var verifyAction = new app.module.signing.verify
         {
-            var carrier = @this.Ok(layer);
-            carrier.Context = _context;
-            // At-rest artifacts (the Store view — permission grants, identities)
-            // re-present the same nonce on every read and outlive the wire-
-            // freshness window by design; their signature's own Expires is the
-            // only time bound. Transport reads (Out view) keep the freshness +
-            // nonce-replay defence.
-            var verifyAction = new app.module.signing.verify
-            {
-                Data = carrier,
-                SkipFreshnessCheck = new @this<global::app.type.@bool.@this>(
-                    "", View == global::app.View.Store),
-            };
-            var verifyResult = _context.App
-                .RunAction(verifyAction, _context)
-                .GetAwaiter().GetResult();
-            if (!verifyResult.Success)
-                return @this.FromError(verifyResult.Error
-                    ?? new app.error.ServiceError("Signature verification failed", "SignatureInvalid", 400));
-        }
+            Data = carrier,
+            SkipFreshnessCheck = new @this<global::app.type.@bool.@this>(
+                "", View == global::app.View.Store),
+        };
+        var verifyResult = _context.App
+            .RunAction(verifyAction, _context)
+            .GetAwaiter().GetResult();
+        if (!verifyResult.Success)
+            return @this.FromError(verifyResult.Error
+                ?? new app.error.ServiceError("Signature verification failed", "SignatureInvalid", 400));
 
         var inner = layer.Value;
         inner.Context = _context;
@@ -356,7 +381,7 @@ public class Wire : JsonConverter<@this>
                         // is born at its kind in one step (mirror of its IWriter render).
                         var jr = new global::app.channel.serializer.json.Reader(reader);
                         born = typed.Read(ref jr, typeRef.Kind,
-                            new global::app.type.reader.ReadContext(_context));
+                            new global::app.type.reader.ReadContext(_context, _template));
                         reader = jr.Inner;
                     }
                     else

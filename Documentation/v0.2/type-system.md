@@ -319,3 +319,21 @@ a container. Dict elements **share by reference** inside the copy — `set
 consistent with JS/Python object reference semantics and is documented as
 intentional; a future copy-on-write pass (branch `collections-are-data`
 todo, auditor O1) will close it uniformly.
+
+## `datetime` navigable members — `%Now.Date%`, `.TimeOfDay`, `.Offset`, `.Ticks`
+
+`datetime.@this` exposes a set of properties that navigate to their own PLang types via dot-notation:
+
+| Member | PLang type | C# backing |
+|--------|-----------|------------|
+| `.Date` | `date` | `DateOnly.FromDateTime(Value.Date)` |
+| `.TimeOfDay` | `time` | `TimeOnly.FromTimeSpan(Value.TimeOfDay)` |
+| `.Offset` | `duration` | `Value.Offset` |
+| `.Ticks` | `number` (long) | `Value.Ticks` |
+| `.Millisecond` | `number` (int) | `Value.Millisecond` |
+| `.DayOfYear` | `number` (int) | `Value.DayOfYear` |
+| `.DayOfWeek` | `number` (DayOfWeek enum) | `Value.DayOfWeek` |
+
+These are C# properties on `datetime.@this`, so PLang's dot-navigation (`%Now.Date%`, `%Now.TimeOfDay%`, `%Now.Ticks%`) reaches them through the normal `Data.GetChild()` path. Each returns a born-typed Data wrapping the corresponding PLang type — `%Now.Date%` is a `date`, `%Now.TimeOfDay%` is a `time`, `%Now.Offset%` is a `duration`. Scalar members (`.Ticks`, `.Millisecond`, `.DayOfYear`, `.DayOfWeek`) return a `number`.
+
+**`Data.Clr<T>(fallback)`.** Added in this branch as an async companion to `item.Clr<T>()`. Used by system-variable reads and handlers that need a typed CLR value out of a `Data` without crashing on absent entries: `await data.Clr<int>(0)` returns `0` if the slot is null/absent, or the extracted CLR `int` otherwise. The sync `item.Clr<T>()` / `item.Clr(Type)` family (base throws, each type hands its backing through `ClrConvert`) remains the leaf door; `Data.Clr<T>(fallback)` is a convenience wrapper that peeks the underlying item and falls back to the provided default.

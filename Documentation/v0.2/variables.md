@@ -16,7 +16,6 @@ public class @this   // app.variable.@this
     Data Set(string name, object? value, Type? type = null)  // Wraps non-Data values
     Data Get(string name)                                 // Get Data by name (dot-notation path support)
     T? Get<T>(string name)                                // Get typed value
-    object? GetValue(string name)                         // Get raw value
     bool Contains(string name)
     bool Remove(string name)                              // Fires OnDelete on the removed Data
     void Clear()                                          // Drops non-system variables
@@ -45,6 +44,7 @@ public class @this   // app.variable.@this
 - `Set(name, value, type)` for a non-Data value updates the existing Data in-place (so readers holding the prev reference see the new value); when no entry exists yet, a fresh Data is constructed and stored.
 - On replacement of an existing Data binding: **event subscribers (`OnCreate`/`OnChange`/`OnDelete`) follow the name** — the new Data aliases the prev binding's event-list refs so `--debug={"variables":[...]}` watches see every assignment, not just the first. **`Properties` stay with the Data instance** — they're result metadata, not binding metadata.
 - `variable.set` is the sole binding-mint site for user-visible variables; it owns type inference (`MintTyped` picks the concrete `Data<T>` for the runtime type) and snapshot-clones mutable refs (List, Dict) so source/target don't alias.
+- **Born-typed variable decline.** `app.variable.@this` now implements `ICreate<@this>`. Its `Create(value, asking)` method is a pass-through only: if the incoming value already is a `variable.@this`, it returns it; otherwise it calls `asking.Fail("CreateDeclined", 400)` and returns null. A variable NAMES a slot — it is born at the wire boundary when a `type:variable` param is read. You cannot construct a variable by handing it a value of another type. Concretely: if PLang code tries to write a `number` or `text` into a `variable`-typed parameter, the step fails with a clear error. The correct pattern is `declare 'type:variable'` in the action catalog entry so the source generator routes the raw name through `Variable.Resolve` at the wire boundary rather than through `Create`.
 - `Get(name)` supports dot-notation paths (e.g., `"user.address.city"`) and bracket indices with variables (`addresses[idx].street`) — splits on first separator and delegates to `Data.GetChild()`
 - `Remove(name)` fires `OnDelete` on the removed Data so subscribers (e.g. `event=ondelete` debug watches) see the deletion.
 - `Clone()` deep-clones each Data so mutations in the clone do not affect the original.
@@ -88,8 +88,6 @@ memory.Set(new Data.@this<string>("greeting", "hi"));
 // Get variables
 var nameData = memory.Get("name");         // Data { Name = "name", Value = "John" }
 var name = memory.Get<string>("name");     // "John"
-var age = memory.GetValue("age");          // 30 (as object)
-
 // Dot-notation path resolution
 memory.Set("user", new { Name = "John", Address = new { City = "NYC" } });
 var city = memory.Get("user.Address.City");  // Data { Value = "NYC" }
@@ -123,7 +121,7 @@ Key properties for variable use:
 - `Type` — PLang type descriptor
 - `Path` — parent-qualified path (e.g., `user.address.city`)
 - `GetChild(path)` — navigate to nested properties
-- `GetValue<T>()` — get typed value
+- `Clr<T>()` — extract typed CLR value from the underlying item (base throws; each type provides its backing via `ClrConvert`)
 
 ## Properties
 

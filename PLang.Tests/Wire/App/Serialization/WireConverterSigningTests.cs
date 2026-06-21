@@ -72,4 +72,20 @@ public class WireConverterSigningTests
         var inner = doc.RootElement.GetProperty("value");
         await Assert.That(inner.GetProperty("value").GetString()).IsEqualTo(Convert.ToBase64String(bytes));
     }
+
+    // A transport (Out-view) read of a signed payload with no actor context cannot
+    // verify, so it must fail closed rather than silently peel to the inner data.
+    // ContextLessFallback is the context-less transport serializer.
+    [Test] public async Task Deserialize_SignatureLayer_NoActorContext_FailsClosed()
+    {
+        await using var app = NewSignedApp();
+        var data = new global::app.data.@this("greeting", "hello") { Context = app.User.Context };
+        var json = (await Plang(app).Serialize(data).Value())!.Clr<string>()!;
+
+        var result = global::app.channel.serializer.plang.@this.ContextLessFallback.Deserialize(json);
+
+        await Assert.That(result.Success).IsFalse()
+            .Because("A transport read of a signed payload with no actor context must fail closed, not strip verification.");
+        await Assert.That(result.Error!.Key).IsEqualTo("SignatureVerifyContextMissing");
+    }
 }

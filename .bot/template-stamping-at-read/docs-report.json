@@ -1,0 +1,57 @@
+{
+  "reviewer": "docs",
+  "branch": "template-stamping-at-read",
+  "timestamp": "2026-06-20T00:00:00Z",
+  "reviewed_version": "v1",
+  "summary": "Final docs gate for template-stamping-at-read. Five gaps found across four files: (1) stale 'Wire.Read does not auto-verify' rule rewritten to the new fail-closed transport / trust-on-read-Store contract; (2) new 'Template-stamping at read' section added to wire-serialization.md covering the authored-Wire mode, the trust boundary, and the type's holes-decision; (3) born-typed variable decline rule added to variables.md (Variable.Create passes through or declines; a variable is born, not constructed from a value); (4) stale GetValue entries removed from variables.md API table and Data properties list, replaced with Clr<T>(); (5) datetime navigable members + Data.Clr<T>(fallback) section added to type-system.md. Five good_to_know.md index entries added. No C# docstring drift on changed files. CLAUDE.md proposal filed for the two new cross-cutting rules (Wire auto-verify, born-typed decline). Merge gate carries from auditor PASS.",
+  "stats": {
+    "gaps_found": 5,
+    "gaps_filled": 5,
+    "docs_updated": 4,
+    "docs_created": 0
+  },
+  "changes": [
+    {
+      "id": 1,
+      "type": "doc-section",
+      "action": "updated",
+      "file": "Documentation/v0.2/wire-serialization.md",
+      "description": "Replaced stale 'Wire.Read does not auto-verify' rule (true before signature-as-layer integration) with the new contract: auto-verifies @schema:signature layers on transport reads; fail-closed on context-less Wire (View.Out); trust-on-read for View.Store. Regression test pointer included."
+    },
+    {
+      "id": 2,
+      "type": "doc-section",
+      "action": "added",
+      "file": "Documentation/v0.2/wire-serialization.md",
+      "description": "New section 'Template-stamping at read — the authored Wire mode': the problem (post-parse Authored() walk), the fix (mode rides the Wire constructor, type owns the holes-decision), and the trust boundary (only goal deserialization routes through the authored Wire)."
+    },
+    {
+      "id": 3,
+      "type": "doc-section",
+      "action": "updated",
+      "file": "Documentation/v0.2/variables.md",
+      "description": "Added born-typed variable decline rule to Behavior & Rules. Removed stale GetValue(string) from the API surface table and GetValue<T>() from the Data properties list; replaced with Clr<T>(). Removed GetValue example from the code block."
+    },
+    {
+      "id": 4,
+      "type": "doc-section",
+      "action": "added",
+      "file": "Documentation/v0.2/type-system.md",
+      "description": "New section 'datetime navigable members': property table (.Date→date, .TimeOfDay→time, .Offset→duration, .Ticks/.Millisecond/.DayOfYear/.DayOfWeek→number), how dot-navigation reaches them, and Data.Clr<T>(fallback) as an async typed CLR extraction utility."
+    },
+    {
+      "id": 5,
+      "type": "index",
+      "action": "updated",
+      "file": "Documentation/v0.2/good_to_know.md",
+      "description": "Five new pointer entries: Wire auto-verify, template-stamping at read, born-typed variable decline, datetime navigable members, Data.Clr<T>(fallback)."
+    },
+    {
+      "id": 6,
+      "type": "claude-md-proposal",
+      "action": "filed",
+      "file": ".bot/template-stamping-at-read/claude-md-proposals.md",
+      "description": "Two CLAUDE.md bullets: Wire.Read auto-verify-on-read (transport vs Store posture); born-typed variable decline (Variable.Create is a pass-through-or-decline, not a converter)."
+    }
+  ]
+}

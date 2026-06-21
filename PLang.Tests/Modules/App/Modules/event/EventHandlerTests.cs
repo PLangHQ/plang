@@ -13,7 +13,7 @@ public class EventHandlerTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/test");
+        _app = TestApp.Create("/test");
     }
 
     private On MakeOn(global::app.actor.context.@this context, global::app.@event.Trigger type, string goalName,

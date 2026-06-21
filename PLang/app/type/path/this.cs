@@ -76,9 +76,11 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     {
         // Producers that resolved the path hand the resolved form here and
         // override the as-typed location via the Raw init; a verbatim
-        // construction is both at once. path authorizes templating (canTemplate)
-        // — text decides whether the location actually carries a %var%.
-        _location = new global::app.type.text.@this(path, canTemplate: true);
+        // construction is both at once. path authorizes templating — text decides
+        // whether the location actually carries a %var%. Mode is "plang" here: a
+        // path location is template-capable (mode-gating path by the reader is a
+        // later step; this preserves the prior behavior).
+        _location = new global::app.type.text.@this(path, "plang");
         // A template location has no resolved host form yet — leave _absolute
         // unprimed until Value renders it. A literal location is resolved as-is.
         _absolute = _location.Template == null ? path : null;
@@ -133,7 +135,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// string the user wrote) makes the verbatim form the value's identity while
     /// the resolved form stays a cached derivation.
     /// </summary>
-    public string Raw { get => _location.Clr<string>() ?? ""; init { if (!string.IsNullOrEmpty(value)) _location = new global::app.type.text.@this(value, canTemplate: true); } }
+    public string Raw { get => _location.Clr<string>() ?? ""; init { if (!string.IsNullOrEmpty(value)) _location = new global::app.type.text.@this(value, "plang"); } }
 
     // The resolved host form — INTERNAL: the raw string is the interop inch
     // (sqlite, Assembly.LoadFrom, HttpClient), reached through the type's own

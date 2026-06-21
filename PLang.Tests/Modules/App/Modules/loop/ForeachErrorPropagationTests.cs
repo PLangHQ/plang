@@ -21,7 +21,7 @@ public class ForeachErrorPropagationTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/app");
+        _app = TestApp.Create("/app");
     }
 
     /// <summary>
@@ -34,19 +34,13 @@ public class ForeachErrorPropagationTests
         var context = _app.User.Context;
         context.Variable.Set("items", new List<object?> { "a", "b", "c" });
 
-        var foreachAction = TestAction.Create("loop", "foreach",
-            ("collection", "%items%"), ("itemname", "%item%"));
-        var goalCallAction = TestAction.Create("goal", "call",
-            ("goalname", new Dictionary<string, object?> { ["name"] = "NonExistentGoal" }));
-
-        var step = new Step
-        {
-            Index = 0,
-            Text = "foreach %items%, call NonExistentGoal item=%item%",
-            Actions = new StepActions { foreachAction, goalCallAction }
-        };
-        foreachAction.Step = step;
-        goalCallAction.Step = step;
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("MissingGoalRunner",
+            Make.Step("foreach %items%, call NonExistentGoal item=%item%",
+                Make.Action("loop", "foreach",
+                    ("collection", "%items%"), Make.Param("itemname", "%item%", "variable")),
+                Make.Action("goal", "call",
+                    ("goalname", new Dictionary<string, object?> { ["name"] = "NonExistentGoal" })))));
+        var step = goal.Steps.First();
 
         var result = await step.RunAsync(context);
 
@@ -107,19 +101,13 @@ public class ForeachErrorPropagationTests
         _app.Goal.Add(innerGoal);
 
         // Outer step: foreach over items, body is goal.call Inner
-        var foreachAction = TestAction.Create("loop", "foreach",
-            ("collection", "%items%"), ("itemname", "%item%"));
-        var outerGoalCall = TestAction.Create("goal", "call",
-            ("goalname", new Dictionary<string, object?> { ["name"] = "Inner" }));
-
-        var outerStep = new Step
-        {
-            Index = 0,
-            Text = "foreach %items%, call Inner item=%item%",
-            Actions = new StepActions { foreachAction, outerGoalCall }
-        };
-        foreachAction.Step = outerStep;
-        outerGoalCall.Step = outerStep;
+        var outerGoal = await RealGoalLoad.ViaChannel(_app, Make.Goal("InnerCallRunner",
+            Make.Step("foreach %items%, call Inner item=%item%",
+                Make.Action("loop", "foreach",
+                    ("collection", "%items%"), Make.Param("itemname", "%item%", "variable")),
+                Make.Action("goal", "call",
+                    ("goalname", new Dictionary<string, object?> { ["name"] = "Inner" })))));
+        var outerStep = outerGoal.Steps.First();
 
         var result = await outerStep.RunAsync(context);
 
@@ -142,27 +130,15 @@ public class ForeachErrorPropagationTests
         var context = _app.User.Context;
         context.Variable.Set("items", new List<object?> { "a", "b", "c" });
 
-        var noop = new Goal
-        {
-            Name = "Noop",
-            Path = "/Noop.goal",
-            Steps = new GoalSteps()
-        };
-        _app.Goal.Add(noop);
+        _app.Goal.Add(new Goal { Name = "Noop", Path = "/Noop.goal", Steps = new GoalSteps() });
 
-        var foreachAction = TestAction.Create("loop", "foreach",
-            ("collection", "%items%"), ("itemname", "%item%"));
-        var goalCallAction = TestAction.Create("goal", "call",
-            ("goalname", new Dictionary<string, object?> { ["name"] = "Noop" }));
-
-        var step = new Step
-        {
-            Index = 0,
-            Text = "foreach %items%, call Noop item=%item%",
-            Actions = new StepActions { foreachAction, goalCallAction }
-        };
-        foreachAction.Step = step;
-        goalCallAction.Step = step;
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("NoopRunner",
+            Make.Step("foreach %items%, call Noop item=%item%",
+                Make.Action("loop", "foreach",
+                    ("collection", "%items%"), Make.Param("itemname", "%item%", "variable")),
+                Make.Action("goal", "call",
+                    ("goalname", new Dictionary<string, object?> { ["name"] = "Noop" })))));
+        var step = goal.Steps.First();
 
         var result = await step.RunAsync(context);
 

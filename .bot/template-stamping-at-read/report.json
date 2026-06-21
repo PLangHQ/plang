@@ -1,0 +1,322 @@
+{
+  "branch": "template-stamping-at-read",
+  "sessions": [
+    {
+      "id": "b7e3c2a1-9f4d-4e8a-bc21-7d5f0a1c3e90",
+      "bot": "coder",
+      "timestamp_start": "2026-06-19T11:05:00Z",
+      "timestamp_end": "2026-06-19T11:55:00Z",
+      "intent": "Migrate hand-built goal/step executor tests in PLang.Tests/Modules to load goals through the real read path (TestApp.Create + Make.Goal + RealGoalLoad.ViaChannel).",
+      "before": {
+        "assumptions": "Baseline PLang.Tests/Modules is green (failed: 0). Executor tests are those calling _app.RunGoalAsync or step(s).RunAsync on a hand-built goal/step; handler-direct .Run()/action.RunAsync and provider/fold isolation tests stay.",
+        "risk": "ViaChannel serialize->read round-trip may expose a real read-path gap on some param shape (e.g. goal.call goalname dict). If so, revert that file and report."
+      },
+      "plan": ".bot/template-stamping-at-read/coder/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Modules/App/Modules/loop/ForeachTests.cs",
+            "PLang.Tests/Modules/App/Modules/loop/ForeachStringNotIterableTests.cs",
+            "PLang.Tests/Modules/App/Modules/loop/ForeachErrorPropagationTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Migrated step.RunAsync executor tests: new app->TestApp.Create; runner step built via Make.Goal + RealGoalLoad.ViaChannel, capture goal.Steps.First() then step.RunAsync. foreach itemname/keyname -> Make.Param(...,'variable'). Empty target goals (DoNothing/Noop/ProcessItem) and the registered Inner fixture left as new Goal. The 3 action.RunAsync-direct foreach tests (Empty/Null/Cancellation) left as-is."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Modules/App/Modules/condition/StepsSubStepTests.cs",
+            "PLang.Tests/Modules/App/Modules/condition/IfErrorOrchestrationTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "StepsSubStep: Step-returning helpers -> Make.StepDef helpers + LoadSteps() routes through ViaChannel, returning goal.Steps for steps.RunAsync (and HasIndentedChildren). IfErrorOrchestration: removed now-unused Action alias; both step.RunAsync tests load via ViaChannel."
+        },
+        {
+          "paths": ["PLang.Tests/Modules/App/Modules/file/FileHandlerTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "3 RunGoalAsync executor tests (Read_UnregisteredScheme, Integration_FileExists, Integration_FileNotExists) now build via Make.Goal + ViaChannel; dropped manual StampTemplates walk. variable.set Name -> Make.Param('Name',...,'variable'). All .Run() handler-direct tests left as-is. Constructor new app -> TestApp.Create."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Modules/App/Modules/variable/SetTypeInferenceTests.cs",
+            "PLang.Tests/Modules/App/Modules/variable/settests.cs",
+            "PLang.Tests/Modules/App/Modules/ui/RenderTests.cs",
+            "PLang.Tests/Modules/App/Modules/llm/QueryCallbackTests.cs",
+            "PLang.Tests/Modules/App/Modules/modifier/ErrorHandleTests.cs",
+            "PLang.Tests/Modules/App/Modules/modifier/ModifierFoldTests.cs",
+            "PLang.Tests/Modules/App/Modules/modifier/TimeoutAfterTests.cs",
+            "PLang.Tests/Modules/App/Modules/modifier/CacheWrapTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Examined, deliberately left: all execute via handler .Run()/action.RunAsync/modifiers.RunAsync/_provider.Render — isolation tests, not RunGoalAsync/steps.RunAsync executors. RenderTests goals are callGoal registry fixtures, never directly run."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "PLang.Tests/Modules builds clean (no error CS) and full suite passes (failed: 0). No read-path gaps exposed; nothing reverted. Not committed (per task)."
+      }
+    },
+    {
+      "id": "c1d2e3f4-a5b6-47c8-9d0e-1f2a3b4c5d6e",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-06-19T16:00:00Z",
+      "timestamp_end": null,
+      "intent": "Codeanalyzer review of template-stamping-at-read: OBP + simplicity + behavioral + root-cause passes, prioritized by risk (handoff B1-B5 + scalars-as-native item apex).",
+      "before": {
+        "assumptions": "First codeanalyzer review on this branch. Branch carries the entire scalars-as-native refactor (527 commits off runtime2) plus the recent template-stamping production changes (handoff B1-B5). Coder claims all six C# suites green at handoff.",
+        "risk": "361 production C# files changed (+10359/-5157). Full line-by-line coverage in one pass is unrealistic; review is risk-prioritized. Highest risk: security-critical signing/identity reads (B3), the item apex + scalar-type proliferation, the ScalarComparer/Compare->Comparison collapse, and Data.cs core changes."
+      },
+      "plan": ".bot/template-stamping-at-read/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/module/signing/code/Ed25519.cs",
+            "PLang/app/variable/list/this.cs",
+            "PLang/app/this.cs",
+            "PLang/app/type/datetime/this.cs",
+            "PLang/app/data/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Handoff B1-B5: datetime navigable members, Data.Clr<T>(fallback) lift, system-var typed reads, Variables.GetValue removal, bracket-resolution fix. Ed25519 sign/verify clock-fallback asymmetry reviewed (N1, justified). B5 ResolveVariablesInPath fix sound; minor note F5 (top-frame-only precedence)."
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/this.cs",
+            "PLang/app/type/compare/this.cs",
+            "PLang/app/data/Comparison.cs",
+            "PLang/app/module/condition/Operator.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "scalars-as-native core. item apex OBP-clean (behavior-on-element, storage-free; N5). compare mediator mirrors convert pattern (N2). Findings: F1 dead BothPresent (deletion test), F2 orphaned enum summary in Comparison.cs, F3 two Write methods on item apex (naming)."
+        },
+        {
+          "paths": [
+            "PLang/app/module/code/this.Snapshot.cs",
+            "PLang/app/module/llm/code/OpenAi.cs",
+            "PLang/app/module/ui/code/Fluid.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mechanical passes (System.IO/Console/Rule-9 courier/provenance) all clean across changed production set. Root-cause pass: both fix() commits (cache JsonElement c27c37c5a, Fluid blank d2d2f557a) are genuine root-cause fixes. F4: Normalize silently reflects unknown raw-CLR leaf to ValueKind bag instead of failing loud — systemic/pre-existing hardening item."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "VERDICT: PASS on risk-prioritized surface. Build green (0 errors). Findings all LOW except F4 (systemic pre-existing). Non-blocking cleanups for coder: delete dead BothPresent (F1), move orphaned Comparison enum summary (F2). NOT a full certification of the 361-file scalars-as-native body (relies on prior architect/test-designer/coder rounds + green C# suites). Next bot: tester."
+      }
+    },
+    {
+      "id": "d4e5f6a7-b8c9-40d1-a2e3-f4b5c6d7e8f9",
+      "bot": "tester",
+      "timestamp_start": "2026-06-19T17:20:00Z",
+      "timestamp_end": "2026-06-19T17:55:00Z",
+      "intent": "Tester pass on template-stamping-at-read. C# suites only (PLang suite known-broken, out of scope). No test-designer ran for this branch, so hunt for missing coverage on the headline behaviors (born-typed variables, template-stamping-at-read, scalars-as-native, real-read-path migration).",
+      "before": {
+        "assumptions": "Coder + codeanalyzer both PASS. C# green claimed. Clean rebuild done (stale-binary trap avoided). 4151 C# tests across 6 suites.",
+        "risk": "Green suite can still hide false-greens / missing coverage on a branch with no test-designer. Headline runtime rule (born-typed variable decline) is the one that broke the PLang suite — primary target."
+      },
+      "plan": ".bot/template-stamping-at-read/tester/v1/test-report.md",
+      "actions": [
+        {
+          "paths": ["PLang/app/variable/this.cs", "PLang.Tests/Shared/PrParam.cs", "PLang.Tests/Modules/App/Modules/variable/settests.cs"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "F1 HIGH: born-typed Variable.Create decline (CreateDeclined, this.cs:67-74) — the branch's headline rule, the one breaking the PLang suite — has ZERO C# coverage. MUTATION-PROVEN: neutered the decline, rebuilt, re-ran Modules+Data+Types+Runtime (3433 tests), all green. Reverted, git clean. Cause: every test auto-stamps type:variable via PrParam/TestAction, so all take the happy path; nothing feeds a value-typed Name. 3 tests specified to add."
+        },
+        {
+          "paths": ["PLang.Tests/Modules/App/Modules/condition/", "PLang.Tests/Runtime/App/CompareRedesign/"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "F2 MEDIUM: temporal comparison operators (<,>,<=,>=) for datetime/date/time/duration tested only at low-level Stage4_PerTypeCompareTests; the user-facing Operator/DefaultEvaluator/condition path covers only == and numbers. F3 LOW: OperatorTests.Choices_ContainsAllOperators and Stage1_ComparisonEnumTests are structural (name/string checks) — a gutted Evaluate/swapped enum semantics would pass."
+        },
+        {
+          "paths": ["PLang.Tests/Shared/RealGoalLoad.cs", "PLang.Tests/Wire/App/Serialization/TemplateStampOnReadTests.cs", "PLang.Tests/Types/App/ScalarsAsNative/"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Verified SOLID: real-read-path migration does a genuine serialize->stream-channel->read round-trip (no no-op fallback). Template-stamping at .pr-load seam (Data.Authored/StampedForm incl. dict) covered behaviorally by DataAsTResolutionTests + TemplateStampOnReadTests. ScalarsAsNative wrappers (10 files, ~60 tests) behaviorally solid per delegated sweep."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "red",
+        "notes": "VERDICT: NEEDS-TESTS. C# suites run green (4151/0, clean rebuild, git clean) and production behavior is correct, but the suite is not a trustworthy gate: F1 (HIGH) is a mutation-proven hole on the headline born-typed-variable rule (neuter the decline -> 3433 tests stay green). By strict-red, a confirmed coverage hole on headline behavior is not PASS. RESOLUTION READY: tester wrote+ran the 14 missing tests (4 F1 + 10 F2), confirmed they pass on real code AND that the F1 decline tests FAIL under the neuter mutation (real guards). Code handed off in tester/v1/tests-for-coder.md. CODER ACTION: add both files (BornTypedDeclineTests.cs, TemporalOperatorTests.cs) to the Modules suite, rebuild -> flips to PASS. Tester doesn't commit source. PLang suite out of scope (known-broken): aborts at runner bootstrap on stale os/system/.build/test.pr (type:string Name) — positive evidence F1's rule fires; 628 committed .pr carry old shape, need plang build sweep. Next bot: coder."
+      }
+    },
+    {
+      "id": "e5f6a7b8-c9d0-41e2-a3f4-b5c6d7e8f9a0",
+      "bot": "security",
+      "timestamp_start": "2026-06-19T19:00:00Z",
+      "timestamp_end": "2026-06-19T19:50:00Z",
+      "intent": "Security review of template-stamping-at-read. Risk-prioritised over the 361-file delta: signing/Ed25519 churn (signature-as-layer integration + auto-verify-on-read), Wire.cs schema dispatch, template-stamping seam reachability from wire, Assembly.LoadFrom centralisation, semgrep baseline delta.",
+      "before": {
+        "assumptions": "Tester PASS after coder F1/F2 follow-ups. 4151 C# tests green on clean rebuild. The new auto-verify-on-read (commit 50963ed18) is the highest-novelty security defense on this branch.",
+        "risk": "A 532-commit refactor that moves signature from a flat Data property to a wire layer with auto-verify-on-read is exactly the shape that ships a silent-skip bypass: the new defense looks present in the trace but is gated on a field that callers are permitted to leave null."
+      },
+      "plan": ".bot/template-stamping-at-read/security/v1/report.md",
+      "actions": [
+        {
+          "paths": ["PLang/app/data/Wire.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1 [Medium, latent High]: Wire.ReadSignatureLayer (lines 206-240) auto-verifies a @schema:signature payload ONLY when _context != null. A context-less Wire (the ContextLessFallback singleton at channel/serializer/plang/this.cs:133, or any `new Wire(view, context: null)`) silently unwraps the signature layer and returns the inner Data UNVERIFIED. Reachable today via snapshot.this.Wire.cs:89 (Snapshot.FromWire → Data.As<snapshot>) and data/this.Transport.cs:142 (Data.DecompressAsync's actor-unavailable fallback). Latent ratchet to High the first time a new ingest seam picks up ContextLessFallback to read externally-sourced bytes. Fix posture: fail-closed when _context is null. Path is unambiguous on inspection; mutation test optional. Composes with the open standing finding on callback.run (same shape: 'if signature present verify else skip' on the producer side here applied symmetrically on the consumer side)."
+        },
+        {
+          "paths": ["PLang/app/channel/serializer/plang/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F2 [Low / Docs but security-relevant]: class XML summary (lines 29-34) still states 'Read does NOT auto-verify — verification is the consumer's explicit step.' That contract was true before commit 50963ed18; today Wire auto-verifies on read. Stale contract on a security boundary risks future contributors planning redundant or absent verify steps. Land the corrected contract alongside the F1 fix so the doc carries the fail-closed behaviour authoritatively."
+        },
+        {
+          "paths": [
+            "PLang/app/module/signing/code/Ed25519.cs",
+            "PLang/app/type/signature/this.Wire.cs",
+            "PLang/app/goal/steps/step/actions/action/this.FromWire.cs",
+            "PLang/app/goal/steps/step/actions/this.Convert.cs",
+            "PLang/app/data/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Reviewed clean: (1) Ed25519 verify pipeline (9 steps, lines 66-137) preserved. NowUtc → wall-clock fallback at deserialize boundary is justified — drift bounded by TimeoutMs window. ContractsMatch correctly rejects any payload whose signed contracts disagree with required set; null on either side without empty/non-empty mismatch is the only path to true. (2) action.FromWire calls StampTemplates on wire-rebuilt actions (error.handle, compile-response rebuild). Reachable for runtime input ONLY if the outer signature is bypassed — folded into F1: composition lifts that bypass from 'trusted data slip' to 'stamped recovery actions executed under victim identity'. The `runtime input never passes here` comment in data/this.cs:461 holds conditional on F1. (3) Signature.FromWire builds the layer field-by-field; verification stays the caller's job."
+        },
+        {
+          "paths": [
+            "PLang/app/type/path/file/this.Operations.cs",
+            "PLang/app/module/module/add.cs",
+            "PLang/app/module/code/load.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Assembly.LoadFrom centralisation is a NET SECURITY IMPROVEMENT. Previously Module.add and code.load did raw Assembly.LoadFrom (accepted risk per MEMORY.md). Now both route through path.LoadAssemblyAsync which gates on AuthGate(Verb.Execute) — a NEW permission distinct from Read (so granting read on a folder no longer accidentally permits code loading from it). One new semgrep hit (this.Operations.cs:32) needs whitelist update; semgrep rule comment still names Module.add/provider.load."
+        },
+        {
+          "paths": [".semgrep/"],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Baseline 16 blocking findings vs documented 15. Delta +1 attributable to the Assembly.LoadFrom relocation (now a whitelist update, not a real new caller). Spot-checked all 15 serializer-hygiene hits — all long-standing audit-list entries on internal shapes (builder Render, Error.cs, identity/code, http/Default, llm/OpenAi, item/serializer/json, text/this.Convert, etc.). No new default-options Deserialize on attacker-controlled bytes."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "yellow",
+        "notes": "VERDICT: NEEDS-FIX. One Medium auth-bypass (F1, latent-ratchet to High) on the new auto-verify-on-read defense — context-less Wire reads silently strip @schema:signature. One Low docs-vs-impl drift on a security boundary (F2). Both fixes are small and clean (two-line guard + one paragraph rewrite). No Critical/High today; build green; semgrep delta innocuous (+1, Assembly.LoadFrom relocation needs whitelist update). The Ed25519 pipeline, action.FromWire stamping seam, and Assembly.LoadFrom centralisation all hold up under review. Net delta on security posture is slightly POSITIVE (LoadFrom now gated on a distinct Execute verb) — F1 is the regression that must close before the new defense ships in production. Standing memo: callback.run finding remains open and is the symmetric write-side of F1 (same fix posture). Next bot: coder."
+      }
+    },
+    {
+      "id": "d5e6f7a8-b9c0-41d2-83e4-5f6a7b8c9d0e",
+      "bot": "auditor",
+      "timestamp_start": "2026-06-20T12:00:00Z",
+      "timestamp_end": "2026-06-20T12:35:00Z",
+      "intent": "Cross-cut audit of template-stamping-at-read after coder a3a912cd9 closed security F1/F2. Verify pipeline state, re-trace ContextLessFallback callers under new fail-closed posture, re-run all C# suites.",
+      "before": {
+        "assumptions": "All four upstream bots (coder/codeanalyzer/tester/security) have summary + verdict on this branch. Only commit since security ran is a3a912cd9 (coder's F1/F2 response).",
+        "risk": "Coder's at-rest Store-view trust-on-read decision is a conscious open todo — must verify it doesn't widen the externally-reachable attack surface."
+      },
+      "plan": ".bot/template-stamping-at-read/auditor/v1/report.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/data/Wire.cs",
+            "PLang/app/channel/serializer/plang/this.cs",
+            "PLang.Tests/Wire/App/Serialization/WireConverterSigningTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1/F2 fix verified: transport (View.Out) with _context==null returns SignatureVerifyContextMissing typed error; at-rest (View.Store) trust-on-read is documented inline with threat-model justification. Doc rewrite matches impl. Regression test exercises ContextLessFallback.Deserialize on a signed payload and asserts the typed error key — exactly the bypass security flagged."
+        },
+        {
+          "paths": [
+            "PLang/app/module/crypto/code/Default.cs",
+            "PLang/app/data/this.Transport.cs",
+            "PLang/app/snapshot/this.Wire.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "All 5 ContextLessFallback call sites re-traced. Read-side callers: DecompressAsync (View.Out → fail-closed after fix), snapshot resume (View.Store + sign:false → trust-on-read, local-FS threat model). Write-side: Compress + crypto.Hash canonicalization — no signed-payload read path. Transport hot-spot is now closed."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "VERDICT: PASS. All 4 upstream bots ran; their findings closed or filed as standing items. Coder's F1/F2 fix (a3a912cd9) cleanly partitions transport (fail-closed) from at-rest Store (trust-on-read, documented). Build clean; 4166/0 across 6 C# suites. Two non-blocking observations filed: O1 — name the SettingsStore verify-with-context todo so it doesn't decay; O2 — comment the sign:false-write/verify-on-read asymmetry on snapshot Wire so future contributors don't shortcut it. O3 — PLang suite stays known-broken (stale .pr files; tracked outside this branch). Next: Ingi for merge-gate decision."
+      }
+    },
+    {
+      "id": "f7a8b9c0-d1e2-43f4-a5b6-c7d8e9f0a1b2",
+      "bot": "docs",
+      "timestamp_start": "2026-06-20T13:00:00Z",
+      "timestamp_end": "2026-06-20T13:30:00Z",
+      "intent": "Docs pass on template-stamping-at-read. Find and fill documentation gaps introduced by the branch's headline changes: Wire auto-verify-on-read, template-stamping at read, born-typed variable decline, datetime navigable members, Data.Clr<T>(fallback), GetValue removal.",
+      "before": {
+        "assumptions": "Auditor PASS. All 5 upstream bots ran; build and C# suite green. Docs pass works from the auditor report + coder commits.",
+        "risk": "The wire-serialization.md auto-verify rule was explicitly flagged as stale by the security report (F2). Born-typed decline is a headline runtime rule with no prior doc entry. GetValue was deleted but still appears in variables.md API table."
+      },
+      "plan": ".bot/template-stamping-at-read/docs/v1/report.md",
+      "actions": [
+        {
+          "paths": ["Documentation/v0.2/wire-serialization.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated stale 'Wire.Read does not auto-verify' rule to the new contract (fail-closed on context-less View.Out; trust-on-read for View.Store). Added new section 'Template-stamping at read' covering the authored-Wire mode, trust boundary, and type holes-decision."
+        },
+        {
+          "paths": ["Documentation/v0.2/variables.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added born-typed variable decline rule. Removed GetValue(string) from API table, GetValue example from code block, and stale GetValue<T>() from Data properties list. Replaced with Clr<T>()."
+        },
+        {
+          "paths": ["Documentation/v0.2/type-system.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added 'datetime navigable members' section: member table, dot-navigation mechanics, Data.Clr<T>(fallback) utility."
+        },
+        {
+          "paths": ["Documentation/v0.2/good_to_know.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Five new index entries: Wire auto-verify, template-stamping at read, born-typed variable decline, datetime navigable members, Data.Clr<T>(fallback)."
+        },
+        {
+          "paths": [".bot/template-stamping-at-read/claude-md-proposals.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Filed two CLAUDE.md proposals: Wire.Read auto-verify-on-read posture; born-typed variable decline rule."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "VERDICT: PASS. 5 gaps found and filled; 4 doc files updated; 5 good_to_know index entries added; CLAUDE.md proposal filed. No C# docstring drift on changed files. Full summary in docs-report.json. Next: Ingi for merge-gate decision."
+      }
+    }
+  ]
+}

@@ -987,6 +987,18 @@ public partial class @this
 
         return $"{parent.Path}.{name}";
     }
+
+    /// <summary>The .NET-edge read with a fallback: resolves the value and lowers
+    /// it to the CLR <typeparamref name="TClr"/> (the type's own
+    /// <see cref="@this.Clr{T}"/>), answering <paramref name="fallback"/> when the
+    /// value is absent. One honest expression for "give me the primitive here,
+    /// this default if there's nothing" at a real .NET boundary (a string dict
+    /// key, a .NET API arg).</summary>
+    public async ValueTask<TClr> Clr<TClr>(TClr fallback)
+    {
+        var v = await Value();
+        return v is null ? fallback : v.Clr<TClr>() ?? fallback;
+    }
 }
 
 /// <summary>
@@ -1026,17 +1038,6 @@ public class @this<T> : @this
         return v ?? fallback;
     }
 
-    /// <summary>The .NET-edge read with a fallback: resolves the value and lowers
-    /// it to the CLR <typeparamref name="TClr"/> (the type's own
-    /// <see cref="@this.Clr{T}"/>), answering <paramref name="fallback"/> when the
-    /// value is absent. One honest expression for "give me the primitive here,
-    /// this default if there's nothing" at a real .NET boundary (a string dict
-    /// key, a .NET API arg).</summary>
-    public async ValueTask<TClr> Clr<TClr>(TClr fallback)
-    {
-        var v = await Value();
-        return v is null ? fallback : v.Clr<TClr>() ?? fallback;
-    }
 
     /// <summary>
     /// Explicit pass-through: retype a base <see cref="@this"/> as
