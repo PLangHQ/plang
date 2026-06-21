@@ -1,0 +1,44 @@
+{
+  "namespace": "app.identity",
+  "source": "app/identity/start.cs",
+  "types": [
+    {
+      "name": "identity",
+      "parameters": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "publicKey",
+          "type": "string"
+        }
+      ],
+      "methods": [],
+      "summary": null
+    },
+    {
+      "name": "list",
+      "parameters": [
+        {
+          "name": "items",
+          "type": "IReadOnlyList<identity>"
+        }
+      ],
+      "methods": [
+        {
+          "name": "set",
+          "returns": "void",
+          "params": [
+            {
+              "name": "name",
+              "type": "string"
+            }
+          ],
+          "summary": null
+        }
+      ],
+      "summary": null
+    }
+  ]
+}

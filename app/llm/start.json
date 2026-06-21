@@ -1,0 +1,40 @@
+{
+  "namespace": "app.llm",
+  "source": "app/llm/start.cs",
+  "types": [
+    {
+      "name": "llm",
+      "parameters": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ],
+      "methods": [
+        {
+          "name": "query",
+          "returns": "abstract Task<string>",
+          "params": [
+            {
+              "name": "prompt",
+              "type": "string"
+            }
+          ],
+          "summary": null
+        }
+      ],
+      "summary": null
+    },
+    {
+      "name": "list",
+      "parameters": [
+        {
+          "name": "items",
+          "type": "IReadOnlyList<llm>"
+        }
+      ],
+      "methods": [],
+      "summary": null
+    }
+  ]
+}

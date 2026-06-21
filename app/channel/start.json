@@ -1,0 +1,61 @@
+{
+  "namespace": "app.channel",
+  "source": "app/channel/start.cs",
+  "types": [
+    {
+      "name": "channel",
+      "parameters": [
+        {
+          "name": "name",
+          "type": "Data<text>"
+        },
+        {
+          "name": "config",
+          "type": "Data<config.config>"
+        }
+      ],
+      "methods": [
+        {
+          "name": "is",
+          "returns": "bool",
+          "params": [
+            {
+              "name": "target",
+              "type": "Data<text>"
+            }
+          ],
+          "summary": null
+        },
+        {
+          "name": "Write",
+          "returns": "Task<Data>",
+          "params": [
+            {
+              "name": "data",
+              "type": "Data"
+            }
+          ],
+          "summary": null
+        },
+        {
+          "name": "Read",
+          "returns": "Task<Data>",
+          "params": [],
+          "summary": null
+        }
+      ],
+      "summary": null
+    },
+    {
+      "name": "list",
+      "parameters": [
+        {
+          "name": "channels",
+          "type": "Data<list<channel>>"
+        }
+      ],
+      "methods": [],
+      "summary": null
+    }
+  ]
+}

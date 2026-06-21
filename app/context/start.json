@@ -1,0 +1,18 @@
+{
+  "namespace": "app.context",
+  "source": "app/context/start.cs",
+  "types": [
+    {
+      "name": "that",
+      "parameters": [],
+      "methods": [],
+      "summary": null
+    },
+    {
+      "name": "that",
+      "parameters": [],
+      "methods": [],
+      "summary": null
+    }
+  ]
+}

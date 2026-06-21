@@ -1,0 +1,80 @@
+{
+  "namespace": "app.channel.config",
+  "source": "app/channel/config/start.cs",
+  "types": [
+    {
+      "name": "config",
+      "parameters": [
+        {
+          "name": "direction",
+          "type": "direction"
+        },
+        {
+          "name": "mime",
+          "type": "// out | in | both\n    mime.mime"
+        },
+        {
+          "name": "text/plain",
+          "type": "//"
+        },
+        {
+          "name": "encoding",
+          "type": "application/json — selects format + read-type\n    text"
+        },
+        {
+          "name": "buffer",
+          "type": "// utf-8\n    number"
+        },
+        {
+          "name": "timeout",
+          "type": "// byte buffer size\n    duration"
+        },
+        {
+          "name": "signing",
+          "type": "// i/o timeout\n    text?"
+        },
+        {
+          "name": "encryption",
+          "type": "// signing provider; \"auto\" → system identity at write\n    text?"
+        }
+      ],
+      "methods": [],
+      "summary": null
+    },
+    {
+      "name": "direction",
+      "parameters": [],
+      "methods": [
+        {
+          "name": "refuseWrite",
+          "returns": "Task<Data>",
+          "params": [
+            {
+              "name": "name",
+              "type": "Data<text>"
+            }
+          ],
+          "summary": null
+        },
+        {
+          "name": "refuseRead",
+          "returns": "Task<Data>",
+          "params": [
+            {
+              "name": "name",
+              "type": "Data<text>"
+            }
+          ],
+          "summary": null
+        }
+      ],
+      "summary": null
+    },
+    {
+      "name": "both",
+      "parameters": [],
+      "methods": [],
+      "summary": null
+    }
+  ]
+}

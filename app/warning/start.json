@@ -1,0 +1,40 @@
+{
+  "namespace": "app.warning",
+  "source": "app/warning/start.cs",
+  "types": [
+    {
+      "name": "warning",
+      "parameters": [
+        {
+          "name": "message",
+          "type": "string"
+        }
+      ],
+      "methods": [],
+      "summary": null
+    },
+    {
+      "name": "list",
+      "parameters": [
+        {
+          "name": "items",
+          "type": "IReadOnlyList<warning>"
+        }
+      ],
+      "methods": [
+        {
+          "name": "emit",
+          "returns": "void",
+          "params": [
+            {
+              "name": "w",
+              "type": "warning"
+            }
+          ],
+          "summary": null
+        }
+      ],
+      "summary": null
+    }
+  ]
+}

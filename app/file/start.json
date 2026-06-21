@@ -1,0 +1,57 @@
+{
+  "namespace": "app.file",
+  "source": "app/file/start.cs",
+  "types": [
+    {
+      "name": "file",
+      "parameters": [
+        {
+          "name": "path",
+          "type": "Data<path>"
+        }
+      ],
+      "methods": [
+        {
+          "name": "is",
+          "returns": "bool",
+          "params": [
+            {
+              "name": "target",
+              "type": "Data<path>"
+            }
+          ],
+          "summary": null
+        },
+        {
+          "name": "start",
+          "returns": "Task<Data>",
+          "params": [],
+          "summary": null
+        },
+        {
+          "name": "list",
+          "returns": "class",
+          "params": [
+            {
+              "name": "files",
+              "type": "Data<list<file>>"
+            }
+          ],
+          "summary": null
+        }
+      ],
+      "summary": null
+    },
+    {
+      "name": "list",
+      "parameters": [
+        {
+          "name": "files",
+          "type": "Data<list<file>>"
+        }
+      ],
+      "methods": [],
+      "summary": null
+    }
+  ]
+}

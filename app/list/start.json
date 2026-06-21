@@ -1,0 +1,19 @@
+{
+  "namespace": "plang",
+  "source": "app/list/start.cs",
+  "types": [
+    {
+      "name": "list",
+      "parameters": [],
+      "methods": [
+        {
+          "name": "GetEnumerator",
+          "returns": "IEnumerator<T>",
+          "params": [],
+          "summary": null
+        }
+      ],
+      "summary": null
+    }
+  ]
+}

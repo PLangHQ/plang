@@ -1,0 +1,29 @@
+{
+  "namespace": "app.channel.mime",
+  "source": "app/channel/mime/start.cs",
+  "types": [
+    {
+      "name": "mime",
+      "parameters": [
+        {
+          "name": "name",
+          "type": "Data<text>"
+        }
+      ],
+      "methods": [
+        {
+          "name": "is",
+          "returns": "bool",
+          "params": [
+            {
+              "name": "target",
+              "type": "Data<text>"
+            }
+          ],
+          "summary": null
+        }
+      ],
+      "summary": null
+    }
+  ]
+}

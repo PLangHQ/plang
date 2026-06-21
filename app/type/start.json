@@ -1,0 +1,35 @@
+{
+  "namespace": "app.type",
+  "source": "app/type/start.cs",
+  "types": [
+    {
+      "name": "type",
+      "parameters": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ],
+      "methods": [
+        {
+          "name": "start",
+          "returns": "abstract void",
+          "params": [],
+          "summary": null
+        }
+      ],
+      "summary": null
+    },
+    {
+      "name": "list",
+      "parameters": [
+        {
+          "name": "items",
+          "type": "IReadOnlyList<type>"
+        }
+      ],
+      "methods": [],
+      "summary": null
+    }
+  ]
+}

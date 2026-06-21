@@ -1,0 +1,19 @@
+{
+  "namespace": null,
+  "source": "app/goal/step/action/start.cs",
+  "types": [
+    {
+      "name": "named",
+      "parameters": [],
+      "methods": [
+        {
+          "name": "start",
+          "returns": "abstract Task<Data>",
+          "params": [],
+          "summary": null
+        }
+      ],
+      "summary": null
+    }
+  ]
+}

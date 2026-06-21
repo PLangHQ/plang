@@ -1,0 +1,39 @@
+{
+  "namespace": "app.channel.stream",
+  "source": "app/channel/stream/start.cs",
+  "types": [
+    {
+      "name": "stream",
+      "parameters": [
+        {
+          "name": "format",
+          "type": "format.list"
+        },
+        {
+          "name": "config",
+          "type": "Data<config.config>"
+        }
+      ],
+      "methods": [
+        {
+          "name": "Write",
+          "returns": "Task<Data>",
+          "params": [
+            {
+              "name": "data",
+              "type": "Data"
+            }
+          ],
+          "summary": null
+        },
+        {
+          "name": "Read",
+          "returns": "Task<Data>",
+          "params": [],
+          "summary": null
+        }
+      ],
+      "summary": null
+    }
+  ]
+}

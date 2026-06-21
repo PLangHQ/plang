@@ -1,0 +1,55 @@
+{
+  "namespace": "app.translate",
+  "source": "app/translate/start.cs",
+  "types": [
+    {
+      "name": "translate",
+      "parameters": [],
+      "methods": [
+        {
+          "name": "to",
+          "returns": "abstract Task<object>",
+          "params": [
+            {
+              "name": "value",
+              "type": "object"
+            },
+            {
+              "name": "target",
+              "type": "type.type"
+            }
+          ],
+          "summary": null
+        }
+      ],
+      "summary": null
+    },
+    {
+      "name": "list",
+      "parameters": [
+        {
+          "name": "items",
+          "type": "IReadOnlyList<translate>"
+        }
+      ],
+      "methods": [
+        {
+          "name": "for_types",
+          "returns": "translate",
+          "params": [
+            {
+              "name": "from",
+              "type": "type.type"
+            },
+            {
+              "name": "to",
+              "type": "type.type"
+            }
+          ],
+          "summary": null
+        }
+      ],
+      "summary": null
+    }
+  ]
+}

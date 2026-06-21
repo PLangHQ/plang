@@ -1,0 +1,61 @@
+{
+  "namespace": "app.channel.format",
+  "source": "app/channel/format/start.cs",
+  "types": [
+    {
+      "name": "format",
+      "parameters": [],
+      "methods": [
+        {
+          "name": "handles",
+          "returns": "abstract bool",
+          "params": [
+            {
+              "name": "mime",
+              "type": "mime.mime"
+            }
+          ],
+          "summary": null
+        },
+        {
+          "name": "serialize",
+          "returns": "abstract Data<type.binary>",
+          "params": [
+            {
+              "name": "data",
+              "type": "Data"
+            }
+          ],
+          "summary": null
+        },
+        {
+          "name": "deserialize",
+          "returns": "abstract Data",
+          "params": [
+            {
+              "name": "bytes",
+              "type": "Data<type.binary>"
+            },
+            {
+              "name": "mime",
+              "type": "mime.mime"
+            }
+          ],
+          "summary": null
+        }
+      ],
+      "summary": null
+    },
+    {
+      "name": "list",
+      "parameters": [
+        {
+          "name": "formats",
+          "type": "Data<list<format>>"
+        }
+      ],
+      "methods": [],
+      "summary": null
+    }
+  ]
+}
