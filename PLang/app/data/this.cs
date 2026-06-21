@@ -725,6 +725,34 @@ public partial class @this
     }
 
     /// <summary>
+    /// The typed FACE of this binding — a <see cref="@this{T}"/> over the SAME value, with
+    /// NO resolution and NO clone of the value. Shares <c>_type</c>, Context, Properties and
+    /// event lists by reference: this binding and the view are two handles on one variable.
+    /// It is <see cref="Value{T}"/> MINUS the resolve — the dispatch hands a typed view onto
+    /// the action's property; the handler's own <c>.Value()</c> opens the door later. An
+    /// already-<c>Data&lt;T&gt;</c> binding is returned as itself.
+    /// </summary>
+    public @this<T> As<T>() where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+    {
+        if (this is @this<T> already) return already;
+        var view = new @this<T>(Name, null, null, Parent)
+        {
+            Returned = Returned,
+            ReturnDepth = ReturnDepth,
+            Warnings = Warnings,
+            Properties = Properties,
+            IsInitialized = IsInitialized,
+        };
+        view._type = _type;
+        view.Context = _context;
+        view.OnCreate = OnCreate;
+        view.OnChange = OnChange;
+        view.OnDelete = OnDelete;
+        if (_error != null) view.Fail(_error);
+        return view;
+    }
+
+    /// <summary>
     /// Resolves this Data as the canonical Data — used by the generator's plain `Data` property
     /// emission to bypass As&lt;T&gt; wrapping entirely (architect/v1/plan.md §Phase 2 Rule 4).
     /// Returns:

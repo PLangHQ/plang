@@ -82,7 +82,7 @@ public sealed record @this(
         else if (IsNullable)
         {
             sb.AppendLine($"            var __d = __ResolveData(\"{ParamName}\");");
-            sb.AppendLine($"            {Backing} = await __d.IsEmpty() ? global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\") : __d.ShallowClone<{InnerType}>(await __d.Value<{InnerType}>());");
+            sb.AppendLine($"            {Backing} = await __d.IsEmpty() ? global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\") : __d.As<{InnerType}>();");
             sb.AppendLine($"            if (!{Backing}.Success) __resolutionError = {Backing};");
         }
         else if (DefaultValue != null)
@@ -90,14 +90,14 @@ public sealed record @this(
             // [Default] fires on an absent slot AND on a null-resolving value
             // (`mime: %unsetVar%` lands on the default too).
             sb.AppendLine($"            var __d = __ResolveData(\"{ParamName}\");");
-            sb.AppendLine($"            {Backing} = await __d.IsEmpty() ? new global::app.data.@this<{InnerType}>(\"{ParamName}\", {DefaultExpr}) : __d.ShallowClone<{InnerType}>(await __d.Value<{InnerType}>());");
+            sb.AppendLine($"            {Backing} = await __d.IsEmpty() ? new global::app.data.@this<{InnerType}>(\"{ParamName}\", {DefaultExpr}) : __d.As<{InnerType}>();");
             sb.AppendLine($"            if (!{Backing}.Success) __resolutionError = {Backing};");
             sb.AppendLine($"            else if ({Backing}.Peek() is global::app.type.@null.@this) {Backing} = new global::app.data.@this<{InnerType}>(\"{ParamName}\", {DefaultExpr});");
         }
         else
         {
             sb.AppendLine($"            var __d = __ResolveData(\"{ParamName}\");");
-            sb.AppendLine($"            {Backing} = __d.ShallowClone<{InnerType}>(await __d.Value<{InnerType}>());");
+            sb.AppendLine($"            {Backing} = __d.As<{InnerType}>();");
             sb.AppendLine($"            if (!{Backing}.Success) __resolutionError = {Backing};");
         }
         sb.AppendLine($"            {SetFlag} = true;");
