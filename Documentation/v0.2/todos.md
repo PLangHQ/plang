@@ -1200,3 +1200,23 @@ the read boundary). The permission registry was converted to base `Data` (2026-0
 the remaining typed-read sites (channel `DeserializeAsync<T>`, any `GetAll<Data<T>>`)
 still rely on WrapAsTyped. Removing it = convert every typed-read site to base-Data +
 `.Value()`. Branch-worthy on its own; audit all `Data<T>` deserialization sites first.
+
+## 2026-06-21 — Navigation redesign: the item navigates itself
+Navigating `%goal.Steps[planStep.index]%` runs a procedural string-walking pile that
+lives OFF the values: `Data.GetChild` + `ParseNextSegment` + `ResolveVariablesInPath` +
+`GetRootName` + `GetChildValue`'s SEVEN-layer fallback, plus a parallel `INavigator`
+registry (`Dictionary`/`List`/`Object`/`Snapshot`) duplicating the `item.Navigate`/
+`item.Write` virtuals that already exist (the unfinished half of a migration —
+`item/this.cs:80` says "until those collapse onto Navigate as well"). Reads and writes
+use two different walkers. Verb+Noun free functions everywhere (Ingi flagged
+`ParseNextSegment` specifically). Anti-OBP: behavior outside the type, same thing stored
+twice, read/write divergence.
+Target: `path` is a value that owns `Split()` into typed segments (a bracket's inner is
+itself a path value — no regex); each item owns `Navigate(segment)`/`Write(segment)`;
+one walk shared by read+write, last segment differs. Deletes the registry, the fallback
+tower, the bracket pre-pass, and the write reflection fork.
+Full design + incremental migration plan (green per step):
+`.bot/variable-as-value/coder/navigation-redesign.md`.
+Interim fix already on `variable-as-value`: `ResolveVariablesInPath` delegates to `Get`
+(was reimplementing nav via root `Peek`, dropping the `.index` tail) — patch on the
+pile, removed at redesign step 5.

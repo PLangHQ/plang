@@ -116,7 +116,7 @@ public partial class @this
 
         // Resolve variable references inside bracket indices: [idx] → [1]
         if (name.Contains('['))
-            name = ResolveVariablesInPath(name);
+            name = await ResolveVariablesInPath(name);
 
         var rootName = GetRootName(name);
 
@@ -576,7 +576,7 @@ public partial class @this
 
         // Resolve variable references inside bracket indices: [idx] → [1]
         if (name.Contains('['))
-            name = ResolveVariablesInPath(name);
+            name = await ResolveVariablesInPath(name);
 
         // Handle paths like "user.name" or "items[0].value"
         var rootName = GetRootName(name);
@@ -852,7 +852,7 @@ public partial class @this
     /// Uses an async-local visited set to detect circular references (a→b→a) — survives
     /// future await introductions; ThreadStatic would race under Task.WhenAll.
     /// </summary>
-    private string ResolveVariablesInPath(string path)
+    private async System.Threading.Tasks.ValueTask<string> ResolveVariablesInPath(string path)
     {
         var resolving = _resolvingVars.Value;
         var isRoot = resolving == null;
@@ -863,28 +863,40 @@ public partial class @this
         }
         try
         {
-            return Regex.Replace(path, @"\[([^\]\d][^\]]*)\]", match =>
+            var matches = Regex.Matches(path, @"\[([^\]\d][^\]]*)\]");
+            if (matches.Count == 0) return path;
+
+            var sb = new System.Text.StringBuilder();
+            int last = 0;
+            foreach (Match match in matches)
             {
+                sb.Append(path, last, match.Index - last);
+                last = match.Index + match.Length;
+
                 var varName = match.Groups[1].Value;
                 if (!resolving!.Add(varName))
-                    return match.Value; // Circular reference — leave unresolved
+                {
+                    sb.Append(match.Value); // Circular reference — leave unresolved
+                    continue;
+                }
                 try
                 {
-                    // Sync read: an index name carries a simple value, so the root
-                    // Data's Peek (no door) is enough — the per-call frame wins over
-                    // the actor-shared store, mirroring Get's precedence.
-                    var rootName = GetRootName(CleanName(varName));
-                    var current = Calls.Current is { } frame && frame.TryGet(rootName, out var framed)
-                        ? framed
-                        : _variables.GetValueOrDefault(rootName);
-                    var resolved = current?.Peek();
-                    return resolved != null ? $"[{resolved}]" : match.Value;
+                    // An index variable may itself be a dotted/indexed path
+                    // (e.g. [planStep.index]) — resolve through Get so the whole
+                    // path navigates, not just its root. Get already honours the
+                    // per-call frame over the actor-shared store.
+                    var resolved = (await Get(varName))?.Peek();
+                    sb.Append(resolved is null or global::app.type.@null.@this
+                        ? match.Value
+                        : $"[{resolved}]");
                 }
                 finally
                 {
                     resolving.Remove(varName);
                 }
-            });
+            }
+            sb.Append(path, last, path.Length - last);
+            return sb.ToString();
         }
         finally
         {
