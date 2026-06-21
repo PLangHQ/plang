@@ -1,0 +1,12 @@
+{
+  "status": "needs-fix",
+  "next_bot": "coder",
+  "summary": "Branch production diff is clean (Wire fail-closed hardening already security-reviewed, dead-code delete, doc + cosmetic). Headline is a user-flagged, full-scanned systemic swallow: catalog TryConvert's Error slot is discarded across the conversion read/write path. F1 MAJOR — Conversion.cs:229 inserts unconverted values into a typed list<T> (element-type invariant silently violated); :361/:375 silently drop failed elements; dict/this.cs:190 returns null; variable/list/this.cs:420/439/457/534 keep the wrong-typed value and let a reflection ArgumentException replace TryConvert's slot-named error. The same file's IList arm (381-409) and variable/set.cs:63 already do it right — same-shape-second-site with a correct sibling = FAIL. F2/F3 MINOR: builder/code/Default.cs:608 and actor/this.cs:127 discard IError. Fix is code authoring -> coder.",
+  "findings": [
+    { "id": "F1", "severity": "major", "sites": ["PLang/app/type/catalog/Conversion.cs:229", "PLang/app/type/catalog/Conversion.cs:361", "PLang/app/type/catalog/Conversion.cs:375", "PLang/app/type/dict/this.cs:190", "PLang/app/variable/list/this.cs:420", "PLang/app/variable/list/this.cs:439", "PLang/app/variable/list/this.cs:457", "PLang/app/variable/list/this.cs:534"], "title": "catalog TryConvert errors discarded; typed-list element invariant silently violated" },
+    { "id": "F2", "severity": "minor", "sites": ["PLang/app/module/builder/code/Default.cs:608"], "title": "build pass discards GetCodeGenerated IError, silently skips unresolvable action" },
+    { "id": "F3", "severity": "minor", "sites": ["PLang/app/actor/this.cs:127"], "title": "%MyIdentity% resolution discards Code.Get IError, collapses to null" }
+  ],
+  "cleared": ["branch diff (Wire/serializer/Comparison/Operator)", "OwnerOf discards (kind not error)", "ReadErrorResponseAsync discards (Body not error)", "JsonString.cs staged-probe empty catches", "Conversion.cs:117 ConvertTo documented convenience"],
+  "build": "dotnet build PlangConsole: 0 errors"
+}
