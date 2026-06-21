@@ -1,5 +1,16 @@
 # v15 plan — remove `clr`, defer `external` (clone-on-write)
 
+> **CANCELLED 2026-06-21 (Ingi): `clr` stays.** We are NOT removing the `clr`
+> class. It stays as the closed host-object carrier (navigate / write-if-setter
+> / serialize-`[Out]`; `Peek`→self); engine `%!...%` handles keep riding it and
+> are NOT itemized. The Lift fallback stays. Everything below — the class→item
+> migration buckets, the Lift-fallback-to-hard-error flip, and the deletes of
+> `clr` / `SetValueDirect` / `Lower<T>` / Judge declared-label sites / StampedForm
+> — is **off**. Kept for history only. Canonical: `clr-dissolution-design.md`
+> DECISION (reversed) + `Documentation/v0.2/todos.md`. The one item that already
+> shipped (the two dead `clr` read-couriers removed from `Wire.ReadBody`,
+> verified dead) stands — that was genuinely dead code, not part of the removal.
+
 **Read this before `v14/handoff.md`** — it supersedes v14's "delete clr → hard
 error" framing with what Ingi and I settled on 2026-06-16. v14 is still correct
 on inventory, baseline numbers, and build/test workflow.
