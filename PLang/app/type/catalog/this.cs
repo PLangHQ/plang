@@ -507,7 +507,7 @@ public sealed partial class @this
             return true;
 
         // Final fallback: a catalog-named type with no [LlmBuilder] properties is, by
-        // convention, a wrapped primitive (TString). The catalog renders it as a string.
+        // convention, a single-value wrapper primitive. The catalog renders it as a string.
         foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
             if (System.Attribute.IsDefined(prop, typeof(LlmBuilderAttribute)))

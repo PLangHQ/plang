@@ -1,6 +1,6 @@
 # `text.translate` — kill `tstring`, fold translation onto `text`
 
-> Status: design seed, one open question (sender's vs reader's locale). Translator itself is Phase 6+ — nothing to build yet. This note exists so the thread survives a context clear.
+> Status: design settled (locale = sender's / emitting edge — Ingi 2026-06-21). Flag is **.pr-only**; the runtime wire stays bare string. Translator itself is Phase 6+ — nothing to build yet. This note exists so the thread survives a context clear.
 
 ## The realization (Ingi)
 
@@ -42,14 +42,16 @@ The same `output.write` emits both `"Welcome back, %name%"` (translate) and `"DE
 
 I (architect) lean hard on **(A)**: translation is an output-edge act that needs the reader's locale, so it fires at the channel, and the localized result is what travels. The flag only has to persist in the .pr.
 
-## OPEN QUESTION (this is the fork)
+## RESOLVED — locale is the sender's (emitting edge); (A) holds (Ingi 2026-06-21)
 
-**Does `translate` need to survive a runtime channel hop, or does it die at the first output edge that localizes?**
+The fork was: does `translate` survive a runtime channel hop, or die at the first output edge that localizes? Reframed: is locale the **sender's** or the **reader's**?
 
-- If a `text` with `translate=true` can be passed actor→actor and translated by the **receiving** actor's locale → the flag must ride the runtime wire and (A) collapses into (B).
-- If translation always happens at the **emitting** actor's output edge → the flag is .pr-only, the runtime wire stays bare, (A) holds.
+**Decision: sender's / emitting edge.** Translation always fires at the actor that produces the text, using the locale in *its* context (the CLI user's locale, or a request's `Accept-Language` carried as a context value). What crosses any channel is already-localized bare text. So:
+- The flag is **.pr-only** — authored metadata persisted in the .pr, born onto the `text` as `Translate=true` at load.
+- The runtime wire **stays a bare string**. No `{value, translate}` shape; no properties-bag carry needed.
+- The "store-and-render-later-in-the-device's-locale" case (the only one that needed (B)) is explicitly out of scope. If it ever surfaces, the flag can ride the `Data` properties bag (the `!` plane) without breaking the bare-value invariant — `text`'s value slot stays bare either way — so (B) is not foreclosed, just not built.
 
-Reframed: is locale the **sender's** or the **reader's**? That single answer picks (A) vs (B) and shapes everything downstream.
+Note `Kind` is *not* serialized (re-derived from extension); `Translate` is different — it can't be re-derived from the content, so it genuinely must persist in the .pr. That's the one wire-facing consequence of this change, and it's .pr-only.
 
 ## When this proceeds — first contact / movie
 

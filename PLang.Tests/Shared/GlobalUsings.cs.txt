@@ -35,7 +35,6 @@ global using DeserializeOptions = app.channel.serializer.list.DeserializeOptions
 global using Data = global::app.data.@this;
 global using Properties = global::app.data.Properties;
 global using DynamicData = global::app.data.DynamicData;
-global using TString = global::app.data.TString;
 
 // Variables (was MemoryStack)
 global using Variables = app.variable.list.@this;

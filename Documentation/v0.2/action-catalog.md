@@ -20,7 +20,7 @@ Rendered output (excerpt):
 
 ```
 Notation: `module.action Name([type?=default])` — `?` = optional, `=val` is default, `%var%` = runtime variable reference.
-`tstring` = translatable string; `any` = untyped/dynamic value.
+`any` = untyped/dynamic value.
 
 # Actions
 

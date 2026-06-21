@@ -189,7 +189,7 @@ public partial class validateResponse : IContext
 
                     var targetType = (goal.App ?? app)?.Type.Get(p.Type.Name);
                     if (targetType == null) continue;
-                    // Scalar PlangTypes (path, tstring, ...) accept the raw primitive at
+                    // Scalar PlangTypes (path, ...) accept the raw primitive at
                     // build time — runtime wraps via Resolve. Already covered by the
                     // shape check above.
                     if (global::app.type.catalog.@this.IsScalarPlangType(targetType)) continue;

@@ -594,11 +594,10 @@ coverage. Mirror the wiring in `PLang.Generators/Diagnostics/Plng002.cs`
 (register a public static `Register(IncrementalGeneratorInitializationContext)`
 called from `PLang.Generators/this.cs`'s `Initialize`).
 
-**Why deferred — signing risk.** Strict gate fires on 7 real production
+**Why deferred — signing risk.** Strict gate fires on 6 real production
 classes that currently have no explicit serializer:
 
 ```
-[PlangType("tstring")]    PLang/app/data/TString.cs
 [PlangType("goal.call")]  PLang/app/goals/goal/GoalCall.cs
 [PlangType("info")]       PLang/app/Info.cs
 [PlangType("identity")]   PLang/app/modules/identity/types.cs
@@ -622,7 +621,7 @@ under `PLang.Tests/App/Fixtures/`) and breaks verification.
 1. Reimplement the PLNG003 analyzer (pattern above). Keep severity =
    `DiagnosticSeverity.Error`.
 2. For each of the 7 PlangTypes, decide the explicit wire shape. For
-   non-signing-load-bearing types (`tstring`, `goal.call`, `info`,
+   non-signing-load-bearing types (`goal.call`, `info`,
    `llmmessage`, `ask`, `results`), the property-bag shape is fine —
    write `Default.cs` that emits the same property order as
    `NormalizeObject` produces today and capture a byte-for-byte test
@@ -909,14 +908,14 @@ Investigate: is the list complete (should `path`/`permission`/`goalcall` be on
 it?), is name-sealing the right mechanism vs. sealing by assembly origin, and
 how it interacts with the new ReservedCore property-shadow check beside it.
 
-## 2026-06-10 — Rename TString
+## 2026-06-10 — Rename TString  ✅ SUPERSEDED 2026-06-21 (TString removed)
 
-**Context (Ingi):** `TString` is the translation carrier (user-facing strings go
-through translation — even ones with no %refs%, like "100% plang"). The name
-doesn't say that; during Stage 9 design it was nearly misappropriated as the
-%ref%-resolution template type precisely because the name is opaque. Rename to
-something that says translation (and keep it distinct from the authored-literal
-resolution type Stage 9 introduces).
+There is no type to rename. `TString` was vestigial (its interpolation job was a
+duplicate of `text`'s template machinery) and has been **deleted from the
+project**. Translation is now a separate axis: a `Translate` boolean property on
+`text` (sender's/emitting-edge locale, .pr-only flag) — see
+`.bot/compare-redesign/architect/plan/text-translate.md`. The property itself is
+deferred until the translator lands (Phase 6+); nothing consumes it yet.
 
 ## 2026-06-10 — Audit number's IConvertible
 
@@ -1117,6 +1116,13 @@ whether async DeserializeAsync peels a signature layer correctly — the value-l
 genuine bug in that path, not only a shape change.
 
 ## 2026-06-16 — add `external` carrier + clone-on-write (deferred; lands when a real external-object need appears)
+
+> **SHELVED 2026-06-21 (Ingi): `clr` stays, so `external` is not needed.** The
+> premise of this entry — that `clr` is being removed and replaced by `external`
+> — is reversed. `clr` remains the host-object carrier as-is. The clone-on-write
+> semantics below are kept on record in case a future redesign revisits the
+> carrier, but there is no active work here. See
+> `.bot/compare-redesign/coder/clr-dissolution-design.md` (REVERSED 2026-06-21).
 
 The `clr` class is being removed (it hard-codes ".NET" into PLang's runtime-independent
 type vocabulary — a Rust runtime has no CLR). Today every value in the runtime is, or
