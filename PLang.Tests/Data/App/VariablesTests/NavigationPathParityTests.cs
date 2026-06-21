@@ -3,61 +3,34 @@ using Segment = global::app.variable.path.Segment;
 
 namespace PLang.Tests.App.VariablesTests;
 
-// Parity pins for the new navigation `path` value (app.variable.path) against the
-// legacy free-function tokenizer Data.ParseNextSegment, which it will replace.
-// The path parses a reference string ONCE into typed segments; this proves it
-// yields the SAME token sequence the old per-hop tokenizer did, so rerouting reads
-// (redesign step 2) is behaviour-preserving. ParseNextSegment is private + doomed,
-// so we reach it by reflection rather than editing production for the test.
+// Tokenization spec for the navigation `path` value (app.variable.path). A reference
+// string parses ONCE into typed segments. These expected token streams were pinned
+// equal to the legacy free-function Data.ParseNextSegment (redesign step 1, before it
+// was deleted in step 2), so they double as the parity record proving the reroute is
+// behaviour-preserving.
 public class NavigationPathParityTests
 {
-    // Repeatedly applies the real Data.ParseNextSegment to reproduce the legacy
-    // token stream (the sequence GetChild walked one hop at a time).
-    private static System.Collections.Generic.List<string> LegacyTokens(string path)
-    {
-        var method = typeof(global::app.data.@this).GetMethod(
-            "ParseNextSegment",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
-            ?? throw new System.Exception("ParseNextSegment not found — has it been removed?");
-
-        var tokens = new System.Collections.Generic.List<string>();
-        var rest = path;
-        while (rest.Length > 0)
-        {
-            var result = method.Invoke(null, new object[] { rest })!;
-            var t = result.GetType();
-            var token = (string)t.GetField("Item1")!.GetValue(result)!;
-            var remaining = (string)t.GetField("Item2")!.GetValue(result)!;
-            if (token.Length == 0) break;
-            tokens.Add(token);
-            // GetChild strips a leading '.' off the remaining after a bracket split.
-            rest = remaining.StartsWith('.') ? remaining[1..] : remaining;
-        }
-        return tokens;
-    }
-
     private static System.Collections.Generic.List<string> NavTokens(string path)
         => System.Linq.Enumerable.ToList(
             System.Linq.Enumerable.Select(NavPath.Parse(path).Segments, s => s.Raw));
 
     [Test]
-    [Arguments("user.name")]
-    [Arguments("goal.Steps[planStep.index]")]
-    [Arguments("goal.Steps[step.Index].Actions")]
-    [Arguments("items[0]")]
-    [Arguments("items[0].value")]
-    [Arguments("trace.plan.steps[step.Index].actions")]
-    [Arguments("x!file!path")]
-    [Arguments("!data.branchIndex")]
-    [Arguments("data.grep(\"pattern\").maxLength(100)")]
-    [Arguments("tags.\"key.with.dots\"")]
-    [Arguments("single")]
-    [Arguments("a.b.c.d")]
-    public async Task Parse_yields_same_token_stream_as_legacy_tokenizer(string path)
+    [Arguments("user.name", new[] { "user", "name" })]
+    [Arguments("goal.Steps[planStep.index]", new[] { "goal", "Steps", "[planStep.index]" })]
+    [Arguments("goal.Steps[step.Index].Actions", new[] { "goal", "Steps", "[step.Index]", "Actions" })]
+    [Arguments("items[0]", new[] { "items", "[0]" })]
+    [Arguments("items[0].value", new[] { "items", "[0]", "value" })]
+    [Arguments("trace.plan.steps[step.Index].actions", new[] { "trace", "plan", "steps", "[step.Index]", "actions" })]
+    [Arguments("x!file!path", new[] { "x", "!file", "!path" })]
+    [Arguments("!data.branchIndex", new[] { "!data", "branchIndex" })]
+    [Arguments("data.grep(\"pattern\").maxLength(100)", new[] { "data", "grep(\"pattern\")", "maxLength(100)" })]
+    [Arguments("tags.\"key.with.dots\"", new[] { "tags", "\"key.with.dots\"" })]
+    [Arguments("single", new[] { "single" })]
+    [Arguments("a.b.c.d", new[] { "a", "b", "c", "d" })]
+    public async Task Parse_yields_expected_token_stream(string path, string[] expected)
     {
-        var legacy = LegacyTokens(path);
         var nav = NavTokens(path);
-        await Assert.That(nav).IsEquivalentTo(legacy);
+        await Assert.That(nav).IsEquivalentTo(System.Linq.Enumerable.ToList(expected));
     }
 
     [Test]

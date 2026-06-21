@@ -19,125 +19,88 @@ public partial class @this
         if (string.IsNullOrEmpty(path))
             return this;
 
-        // Parse next segment — respects parentheses (method calls), brackets, and quotes
-        var (segment, remaining) = ParseNextSegment(path);
-
-        // Handle bracket notation: [0] or [key] — extract content
-        if (segment.StartsWith('[') && segment.EndsWith(']'))
-        {
-            segment = segment[1..^1];
-            // Strip leading dot from remaining if present
-            if (remaining.StartsWith('.'))
-                remaining = remaining[1..];
-        }
-
-        // Quoted-key segment: "manual-checkpoint" or 'foo' — strip quotes and treat as a
-        // literal dictionary key. Lets paths like Tags."key.with.dots" reach a key that
-        // would otherwise be split on the inner dot. Bypasses method-call and `!`
-        // infrastructure parsing (a quoted segment can't be either).
-        bool isQuoted = segment.Length >= 2
-            && ((segment[0] == '"' && segment[^1] == '"')
-                || (segment[0] == '\'' && segment[^1] == '\''));
-        if (isQuoted)
-            segment = segment[1..^1];
-
-        // Check for method call: segment contains (...)
-        if (!isQuoted)
-        {
-            var parenIndex = segment.IndexOf('(');
-            if (parenIndex > 0 && segment.EndsWith(')'))
-            {
-                var methodName = segment[..parenIndex];
-                var argsStr = segment[(parenIndex + 1)..^1]; // strip ( and )
-                var result = InvokeMethod(methodName, argsStr);
-                if (!result.IsInitialized) return result;
-
-                if (string.IsNullOrEmpty(remaining))
-                    return result;
-                return await result.GetChild(remaining);
-            }
-        }
-
-        // ! prefix = Data infrastructure access (Name, Error, Success, Type, Properties)
-        // . prefix (default) = domain/value navigation
-        bool isInfrastructure = !isQuoted && segment.StartsWith('!');
-        if (isInfrastructure)
-            segment = segment[1..]; // strip the !
-
-        var child = isInfrastructure
-            ? GetInfrastructureValue(segment)
-            : await GetChildValue(segment);
-        if (!child.IsInitialized) return child;
-
-        // Inject context on IContext values during traversal. A reference
-        // (file/url) injects via Peek — opening the door here would read its
-        // content on a property-plane hop (`%x!file!path%` must stay read-free).
-        var injectTarget = child.Peek() is (global::app.type.file.@this or global::app.type.url.@this) and { } reference
-            ? reference
-            : await child.Value();
-        if (injectTarget is app.module.IContext contextual)
-            contextual.Context = _context;
-
-        if (string.IsNullOrEmpty(remaining))
-            return child;
-
-        return await child.GetChild(remaining);
+        // The path owns its tokenization (app.variable.path) — parse once into
+        // typed segments, then walk. No free-function re-tokenizer per hop.
+        return await Navigate(global::app.variable.path.@this.Parse(path));
     }
 
     /// <summary>
-    /// Parses the next segment from a dot-path, handling parentheses and brackets.
-    /// Returns (segment, remaining).
+    /// Walks a parsed navigation <see cref="global::app.variable.path.@this">path</see>:
+    /// navigate this value by the head segment, recurse on the tail. Each segment kind
+    /// owns what its key IS — a member name, a resolved bracket index, an infrastructure
+    /// plane hop, or a method call.
     /// </summary>
-    private static (string segment, string remaining) ParseNextSegment(string path)
+    public async System.Threading.Tasks.ValueTask<@this> Navigate(global::app.variable.path.@this path)
     {
-        int depth = 0;
-        bool inQuote = false;
-        char quoteChar = '\0';
+        if (path.IsEmpty) return this;
 
-        for (int i = 0; i < path.Length; i++)
+        var (head, tail) = path.Split();
+
+        // Infrastructure plane (`!file`, `!data`) reads the binding, not the value;
+        // method calls (`grep(...)`) invoke on the value. Both skip the value-plane
+        // context injection below (mirrors the pre-redesign returns).
+        @this child;
+        bool valuePlane = false;
+        switch (head)
         {
-            var c = path[i];
-
-            // Track quotes
-            if ((c == '"' || c == '\'') && depth <= 1)
-            {
-                if (!inQuote) { inQuote = true; quoteChar = c; }
-                else if (c == quoteChar) { inQuote = false; }
-                continue;
-            }
-
-            if (inQuote) continue;
-
-            // Track parentheses depth
-            if (c == '(') { depth++; continue; }
-            if (c == ')') { depth--; continue; }
-
-            // Split at open bracket at depth 0: "Steps[0]" → ("Steps", "[0]")
-            if (c == '[' && depth == 0 && i > 0)
-            {
-                return (path[..i], path[i..]);
-            }
-
-            // Track bracket depth
-            if (c == '[') { depth++; continue; }
-            if (c == ']') { depth--; continue; }
-
-            // Split on dot only at depth 0
-            if (c == '.' && depth == 0)
-            {
-                return (path[..i], path[(i + 1)..]);
-            }
-
-            // Chain-wide `!`: a second bang starts the next property-plane hop —
-            // "!file!path" → ("!file", "!path"). The leading bang (i == 0) is the
-            // current segment's own prefix, never a split point.
-            if (c == '!' && depth == 0 && i > 0 && !inQuote)
-            {
-                return (path[..i], path[i..]);
-            }
+            case global::app.variable.path.Segment.Infra infra:
+                child = GetInfrastructureValue(infra.Name);
+                break;
+            case global::app.variable.path.Segment.Call call:
+                child = InvokeMethod(call.Method, call.Args);
+                break;
+            case global::app.variable.path.Segment.Index index:
+                child = await GetChildValue(await ResolveIndexKey(index));
+                valuePlane = true;
+                break;
+            default: // Member (plain or quoted) — value navigation by key
+                child = await GetChildValue(((global::app.variable.path.Segment.Member)head!).Name);
+                valuePlane = true;
+                break;
         }
 
-        return (path, "");
+        if (!child.IsInitialized) return child;
+
+        if (valuePlane)
+        {
+            // Inject context on IContext values during traversal. A reference
+            // (file/url) injects via Peek — opening the door here would read its
+            // content on a property-plane hop (`%x!file!path%` must stay read-free).
+            var injectTarget = child.Peek() is (global::app.type.file.@this or global::app.type.url.@this) and { } reference
+                ? reference
+                : await child.Value();
+            if (injectTarget is app.module.IContext contextual)
+                contextual.Context = _context;
+        }
+
+        return tail.IsEmpty ? child : await child.Navigate(tail);
+    }
+
+    /// <summary>
+    /// Resolves a bracket index <c>[expr]</c> to its literal key. A numeric or quoted
+    /// inner (<c>[0]</c>, <c>["k"]</c>) is already literal; a variable inner
+    /// (<c>[planStep.index]</c>) is a path resolved through the store — the same engine
+    /// that resolves every other reference, no regex pre-pass.
+    /// </summary>
+    private async System.Threading.Tasks.ValueTask<string> ResolveIndexKey(global::app.variable.path.Segment.Index index)
+    {
+        var inner = index.Inner;
+
+        // Literal index: a single member that is numeric or was quoted in source.
+        if (inner.Segments.Count == 1
+            && inner.Segments[0] is global::app.variable.path.Segment.Member m
+            && (m.Quoted || (m.Name.Length > 0 && (char.IsDigit(m.Name[0]) || m.Name[0] == '-'))))
+            return m.Name;
+
+        // Variable index (possibly a dotted/indexed path) — resolve via the store.
+        if (_context != null)
+        {
+            var resolved = (await _context.Variable.Get(inner.ToString())).Peek();
+            if (resolved is not (null or global::app.type.@null.@this))
+                return resolved.ToString() ?? inner.ToString();
+        }
+
+        return inner.ToString(); // unresolved → treat the expression as a literal key
     }
 
     /// <summary>
