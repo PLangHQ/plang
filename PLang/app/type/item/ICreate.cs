@@ -35,15 +35,31 @@ public interface ICreate<TSelf> where TSelf : @this, ICreate<TSelf>
         if (value is TSelf self) return self;
         if (value.Facet<TSelf>() is { } facet) return facet;
 
-        // The conversion body — the registry's per-type Convert dispatch
-        // (text→number, text→choice/enum, text→datetime, json→dict, …): the
-        // SINGLE construction home both the typed ask and the reader door call
-        // (reader-path ruling). A type with a richer story overrides Create;
-        // a decline lands its reason on the asking binding and answers null.
-        var (converted, error) = global::app.type.catalog.@this.TryConvert(
-            value, typeof(TSelf), asking.Context, asking.Name);
-        if (error != null) { asking.Fail(error); return null; }
-        if (converted is TSelf made) return made;
+        // The TARGET builds itself: a scalar via its own Convert hook (number/text/
+        // date/choice/…), a container via the lift (raw dict/list → dict/list). No
+        // central switch — the type owns its construction. (list<T> overrides with a
+        // re-tag; record/typed-list creation is the owner's, not a hub's.)
+        object? raw = value.Clr<object>();
+        // An error value isn't a convertible payload — keep it primary, demote the
+        // conversion failure onto its chain.
+        if (raw is global::app.error.Error errVal)
+        {
+            errVal.ErrorChain.Add(new global::app.error.Error(
+                $"%{asking.Name}% holds an error — '{@this.NameOf(typeof(TSelf))}' cannot be created from it.",
+                "TypeMismatch", 400));
+            asking.Fail(errVal);
+            return null;
+        }
+        var owned = global::app.type.convert.@this.OfStatic(typeof(TSelf), raw, asking.Type?.Kind, asking.Context);
+        // The owning hook ran and failed — surface ITS reason, not a generic decline.
+        if (owned is { Success: false } && owned.Error is { } hookErr) { asking.Fail(hookErr); return null; }
+        var built = owned?.Peek() ?? global::app.type.@this.Create(raw, asking.Context);
+        if (built is TSelf made) return made;
+
+        // A dict/list deserializes ITSELF to a record / domain item (step, …).
+        try { if (value.Clr(typeof(TSelf)) is TSelf rec) return rec; }
+        catch (System.Exception ex) when (ex is System.InvalidCastException or System.Text.Json.JsonException
+                                           or System.NotSupportedException or System.FormatException) { }
 
         asking.Fail(new global::app.error.Error(
             $"%{asking.Name}% holds a {value.Mint().Name} — '{@this.NameOf(typeof(TSelf))}' cannot be created from it.",
