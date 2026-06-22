@@ -81,6 +81,47 @@ all wrong.
   passes a raw slot through fine, so `new Data("", slot)` already works. Sequence
   this thread WITH the structural-`Clr` work (same conversion area).
 
+## Thread: conversion core — kill TryConvert↔ClrConvert (decided with Ingi)
+The conversion hub is tangled: `item.Clr(target) → ClrConvert → catalog.TryConvert`,
+and `TryConvert`'s OwnerOf-build arm does `wrapper.Clr(target)` — so LOWER calls the
+hub and the hub calls LOWER. Terminates only by luck for scalars; loops forever for
+containers (a family builds a plang value that never satisfies a CLR container
+target). This is also why B (containers in `OwnedClrTypes`) stack-overflows:
+`OwnerOf` is dual-purpose — "raw value's family" (LIFT) AND "target type's family"
+(BUILD) — and a container family yields a plang value, not the CLR target.
+
+**The fix — three directions, one owner each, NO cross-calls:**
+1. **LIFT**  raw CLR → plang value   — owner `type.Create(raw)` (done).
+2. **LOWER** plang value → CLR type  — owner `value.Clr(target)`, **terminal**.
+   A container lowers itself by lowering each CHILD (`row.Clr<X>()` / entry per
+   prop) — never the hub. Base: identity / IConvertible ChangeType / fail.
+3. **CONVERT** value → plang family X — owner `X.Convert(value)`, terminal (e.g.
+   `number.Convert(text)` parses), produces the target plang value directly.
+
+Universal entry becomes a **dispatch by target**, no recursion:
+```
+Convert(value, target):
+  target.IsInstanceOfType(value) → value                 // identity
+  target is item-derived (PLANG)  → Family(target).Convert(value)   // BUILD, terminal
+  else (CLR target)               → value.Clr(target)               // LOWER, terminal
+```
+Build never lowers; lower never builds. Then B is safe (a list registers `IList`;
+lowering list→List<object?> is `list.Clr`, terminal; `OwnerOf` only feeds BUILD).
+
+**Known hard part:** LOWER of dict→record for COMPLEX records (Goal) currently leans
+on JSON-deserialize-with-custom-options (`GoalReadOptions`, converters) — a naive
+per-prop loop won't replicate it. So record-lowering must route to the type's own
+reconstruction (FromWire / its Convert), not a generic prop loop. Scope this before
+making the base `ClrConvert` fully terminal.
+
+**Also a smell (Ingi):** `list`/`dict` have THREE ways to build from raw — the
+ctor (O(1) alias), `FromRaw` (element-wise), and the `Convert` hook. Collapse to one
+owner as part of this.
+
+Build order: (1) container self-lowering `Clr` (LOWER for collections); (2) record
+LOWER via the type's own reconstruction; (3) drop `TryConvert` from `ClrConvert`
+(base terminal); (4) collapse `TryConvert` to the 3-way dispatch; (5) then B.
+
 ## Watch-outs
 - The 2×O(n) trap: never build an intermediate collection then walk it again. A
   `dict.Clr` record build is one object (fine); a `list`→`list` materialization is NOT (banned).

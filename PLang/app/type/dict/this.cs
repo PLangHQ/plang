@@ -291,12 +291,22 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// </summary>
     internal override object? Clr(System.Type target)
     {
-        // All-raw backing IS the raw form — hand it straight to the converter
-        // (same instance, O(1), for a Dictionary<string,object?> target). A diverged
-        // backing (a Data / item slot) peels each entry to raw first, since a consumer
-        // asking for a raw map / record expects raw values, not wrappers.
-        if (!_hasWrapped) return ClrConvert(_value, target);
+        // All-raw backing IS the raw map the caller wants → hand it back (O(1)).
+        if (!_hasWrapped && target.IsInstanceOfType(_value)) return _value;
 
+        // A CLR map target: each entry's value lowers ITSELF to the value-type (terminal).
+        if (typeof(System.Collections.IDictionary).IsAssignableFrom(target))
+        {
+            var vt = target.IsGenericType ? target.GetGenericArguments()[1] : typeof(object);
+            var map = (System.Collections.IDictionary)System.Activator.CreateInstance(
+                target.IsInterface ? typeof(Dictionary<,>).MakeGenericType(typeof(string), vt) : target)!;
+            foreach (var key in _value.Keys) map[key] = Slot(key).Peek().Clr(vt);
+            return map;
+        }
+
+        // A CLR record/other target reconstructs from its DATA form — genuinely
+        // deserialization (custom record converters, e.g. Goal), so it keeps the shared
+        // converter path over the raw map.
         var raw = new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase);
         foreach (var key in _value.Keys)
             raw[key] = Unwrap(Slot(key).Peek());

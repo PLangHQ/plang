@@ -470,16 +470,29 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// </summary>
     internal override object? Clr(System.Type target)
     {
-        // All-raw backing IS the raw form — hand it straight to the converter:
-        // identity (same instance, O(1)) for a List<object?> target, a round-trip for
-        // a typed one. A diverged backing (a Data / item slot — rendered rows, an
-        // added element) must peel each slot to its raw form first, since a consumer
-        // asking for List<object?>/List<T> expects raw values, not wrappers.
-        if (!_hasWrapped) return ClrConvert(_items, target);
+        // All-raw backing IS the raw form the caller wants → hand it back (O(1)).
+        if (!_hasWrapped && target.IsInstanceOfType(_items)) return _items;
 
-        var flat = Items;
-        var raw = new List<object?>(flat.Count);
-        foreach (var item in flat)
+        // A CLR collection target: each row lowers ITSELF to the element type (terminal —
+        // a scalar row hits ChangeType, a nested container its own Clr), assembled into
+        // the target's shape. Only a list/array/enumerable target qualifies.
+        var elem = target.IsArray ? target.GetElementType()
+                 : target.IsGenericType && typeof(System.Collections.IEnumerable).IsAssignableFrom(target)
+                     ? target.GetGenericArguments()[0]
+                 : typeof(System.Collections.IList).IsAssignableFrom(target) ? typeof(object) : null;
+        if (elem != null)
+        {
+            var built = (System.Collections.IList)System.Activator.CreateInstance(
+                target.IsArray || target.IsInterface ? typeof(List<>).MakeGenericType(elem) : target)!;
+            foreach (var row in Items) built.Add(row.Peek().Clr(elem));
+            if (!target.IsArray) return built;
+            var arr = System.Array.CreateInstance(elem, built.Count); built.CopyTo(arr, 0); return arr;
+        }
+
+        // Non-collection target (a string, a record built off the wire, …) — fall back to
+        // the shared converter over the raw form.
+        var raw = new List<object?>(CountRaw);
+        foreach (var item in Items)
             raw.Add(string.IsNullOrEmpty(item.Name) ? Unwrap(item.Peek()) : item);
         return ClrConvert(raw, target);
     }
