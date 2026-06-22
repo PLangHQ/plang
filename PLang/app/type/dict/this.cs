@@ -186,8 +186,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             if (cur == null) return null;
         }
         if (cur is T typed) return typed;
-        var (converted, _) = global::app.type.catalog.@this.TryConvert(cur, typeof(T), _context);
-        return converted as T;
+        // The navigated value lifts to its plang type (the source already has the shape) —
+        // the type system creates it; no conversion hub.
+        return global::app.type.@this.Create(cur, _context) as T;
     }
 
     // Split a navigation path into segments: "choices[0].message.content" →
