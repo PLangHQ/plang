@@ -24,7 +24,7 @@ parity with a cobertura line-set diff before deleting, then commit per module.
 | VariablesTests | tester | **done** | **69 → 63** (−6), parity. Mixed file (3 classes); only Contains/Remove/GetValue/Get_Generic were tables. Most are distinct Set/Get navigation branches that stay. |
 | AssertTests (enumeration) | tester | **done** | **36 → 14** (−22, 61%), parity. Value-based asserts (Equals/NotEquals/IsTrue/IsFalse/IsNull/IsNotNull/Contains/GreaterThan/LessThan) → 9 data-driven; 4 file-path cases + custom-message kept. |
 | Json/TextStreamSerializerTests | tester | **done** | **68 → 48** (−20), parity. Uniform Serialize/Deserialize scalar+value rows collapsed; distinct cases (datetime/guid/bytes/culture-decimal/object/async/stream/error) kept. |
-| math | tester | queued | fully raw, small. |
+| math | tester | **done** | **17 hand-built `.Run()` → MathGoalRunTests (12 methods, 17 cases)**, coverage parity (0 math-prod lines lost). Altitude conversion: arithmetic now dispatches through `Make.Goal → RealGoalLoad.ViaChannel → RunGoalAsync`; operands born-typed from values; assert on returned `Data<number>` via `result.Value<number>()`. |
 
 ### RESOLVED — serializer unit tests are NOT deletable (kept collapsed)
 Ran the redundancy proof (2026-06-22): serializer-tests-only coverage of `Json.cs`/`Text.cs`
