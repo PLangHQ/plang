@@ -7,50 +7,21 @@ using ListType = global::app.type.list.@this;
 
 namespace PLang.Tests.App.actions.error;
 
+/// <summary>
+/// Floor for error.throw — the cases with no clean language surface. The
+/// message / key / status-code / Format-rendering behaviors moved to
+/// <see cref="ErrorThrowGoalRunTests"/> (through the engine). What stays here:
+/// re-raising a raw <c>ServiceError</c> (an error object has no language literal to
+/// seed it with — it only arises from an <c>on error</c> capture), and the internal
+/// <c>Error.Data</c> list-normalization shape (1..N values), which is an internal
+/// structure assertion, not something a goal observes as such.
+/// </summary>
 public class ThrowTests
 {
     private (global::app.actor.context.@this context, Variables memory) CreateContext()
     {
         var app = new global::app.@this("/app");
         return (app.User.Context, app.User.Context.Variable);
-    }
-
-    [Test]
-    public async Task Throw_ReturnsFailure()
-    {
-        var (context, _) = CreateContext();
-
-        var action = new Throw { Context = context, Message = (Text)"Something went wrong", StatusCode = (global::app.type.number.@this)500 };
-        var result = await action.Run();
-
-        await result.IsFailure();
-        await Assert.That(result.Error).IsNotNull();
-        await Assert.That(result.Error!.Message).IsEqualTo("Something went wrong");
-    }
-
-    [Test]
-    public async Task Throw_UsesCustomKey()
-    {
-        var (context, _) = CreateContext();
-
-        var action = new Throw { Context = context, Message = (Text)"Not found", StatusCode = (global::app.type.number.@this)404, Key = (Text)"NotFound" };
-        var result = await action.Run();
-
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
-        await Assert.That(result.Error.StatusCode).IsEqualTo(404);
-    }
-
-    [Test]
-    public async Task Throw_DefaultsStatusCode500()
-    {
-        var (context, _) = CreateContext();
-
-        var action = new Throw { Context = context, Message = (Text)"Server error" };
-        var result = await action.Run();
-
-        await result.IsFailure();
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
     }
 
     [Test]
@@ -108,19 +79,5 @@ public class ThrowTests
         await Assert.That(list!.Count.ToInt32()).IsEqualTo(2);
         await Assert.That(list.At(0)!.Peek()!.ToString()).IsEqualTo("order-123");
         await Assert.That(list.At(1)!.Peek()!.ToString()).IsEqualTo("item-9");
-    }
-
-    [Test]
-    public async Task Throw_DataRendersFullyInFormat()
-    {
-        // The attached value shows in the error display (Format), not as a type name.
-        var (context, _) = CreateContext();
-
-        var action = new Throw { Context = context, Message = (Text)"checkout failed", Data = Data.Ok((Text)"order-123") };
-        var result = await action.Run();
-
-        var formatted = result.Error!.Format();
-        await Assert.That(formatted).Contains("checkout failed");
-        await Assert.That(formatted).Contains("order-123");
     }
 }
