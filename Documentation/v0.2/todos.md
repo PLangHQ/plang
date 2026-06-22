@@ -1241,3 +1241,13 @@ can't say `result.Value()` and get a typed list — it must reach for the generi
 `Get` shape). Only one non-generic caller (identity Default.cs:227). Once typed, drop the
 `<list>` generic at the consumer. Context: variable-as-value consumer-door cleanup; the
 typed `.List()` sources (path.List → `data<list<path>>`) already work this way.
+
+## 2026-06-22 — rename path.ReadText() → Read() (+ typed Read<T>())
+`path.ReadText()` is misnamed: it reads AND parses by MIME — a `.pr` comes back as a
+`goal`, json as a dict, only text/* as a string. "Text" is wrong. Rename to `Read()`
+(the polymorphic MIME read; pairs with the raw `ReadBytes()`), and add a typed door
+`Read<T>() where T : item.@this, ICreate<T>` (mirrors `Value<T>`) so callers get
+`await prPath.Read<goal>()` — read, parse, type in one. Scope: ~10 prod call sites
+(this.cs, goal/Methods.cs, goal/setup, goal/list, MarkdownTeaching x2, test/discover x2,
+ui/Fluid x2) + ~16 test files + abstract decl (path/this.Operations.cs:60) + 2 overrides
+(file, http). goal/list LoadFromFileAsync then drops its `is goal.@this` cast.
