@@ -13,8 +13,11 @@ namespace app.type.catalog;
 ///      [PlangType] attributes act as aliases; the first non-null Name is canonical.
 ///   2. [PlangType] with no Name — inferred name (@this convention: last
 ///      namespace segment; otherwise class name lowercased).
-///   3. @this classes WITHOUT [PlangType] — last-namespace-segment is still
-///      canonical (the OBP convention makes them catalog-visible by default).
+///   3. @this classes WITHOUT [PlangType] — last-namespace-segment is the concept
+///      name (type→name). Only those that inherit app.type.item.@this (PLang
+///      values) also claim the forward name→type slot; engine mechanics (e.g.
+///      app.variable.path) report a concept name but are not resolvable as types,
+///      so they cannot shadow real value types.
 ///   4. Otherwise: type has no PLang name and is opaque.
 /// </summary>
 public sealed partial class @this
@@ -183,10 +186,20 @@ public sealed partial class @this
             {
                 var family = FamilyName(type);
                 canonical = family ?? InferName(type);
-                // A variant resolves TO its family name but never claims the
-                // name slot — the family base owns name→type (FilePath answers
-                // "path" for ResolveName; ResolveType("path") stays path.@this).
-                if (canonical != null && family == null)
+                // The forward name→type slot (value-type resolution) is claimed
+                // ONLY by an @this that IS a PLang value — one that inherits
+                // app.type.item.@this. Engine mechanics that merely follow the @this
+                // naming pattern but are not values (app.variable.path — a
+                // value-graph navigation path, not a filesystem path — and
+                // app.variable.list) would otherwise shadow the real value types
+                // (path, list) in this slot by reflection order. The reverse
+                // type→name (concept name, reported as .Kind for non-value concepts
+                // like app/callstack/trace) still records below for every @this.
+                // A variant resolves TO its family name but never claims the name
+                // slot — the family base owns name→type (FilePath answers "path"
+                // for ResolveName; ResolveType("path") stays path.@this).
+                if (canonical != null && family == null
+                    && typeof(app.type.item.@this).IsAssignableFrom(type))
                     _nameToType.TryAdd(canonical, type);
             }
 
