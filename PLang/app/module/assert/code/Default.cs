@@ -158,7 +158,7 @@ public class Default : IAssert
     private static async Task<bool> ContainsValue(object? container, object? value)
     {
         var c = container as global::app.type.item.@this
-            ?? global::app.data.@this.Lift(container);
+            ?? global::app.type.@this.Create(container);
         if (c == null) return false;
         var needle = value as data.@this ?? new data.@this("", value);
         return await c.Contains(needle);

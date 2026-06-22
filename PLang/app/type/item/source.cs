@@ -121,7 +121,7 @@ public sealed class source : @this, module.IContext
             return Absent;
         }
 
-        var answer = global::app.data.@this.Lift(parsed, Context);
+        var answer = global::app.type.@this.Create(parsed, Context);
         if (ReferenceEquals(answer, this)) return this;
         answer.Accumulate(this);
         await System.Threading.Tasks.Task.CompletedTask;

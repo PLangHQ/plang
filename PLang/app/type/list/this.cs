@@ -28,7 +28,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public IEnumerator<Data> GetEnumerator()
     {
         foreach (var slot in _items)
-            yield return slot is Data d ? d : new Data("", slot) { Context = _context! };
+            yield return slot is Data d ? d : new Data("", global::app.type.@this.Create(slot)) { Context = _context! };
     }
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
@@ -90,8 +90,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             if (_context != null) d.Context = _context;
             return d;
         }
-        var instance = global::app.type.item.serializer.json.BornFromRaw(raw);
-        return new Data("", instance) { Context = _context! };
+        return new Data("", global::app.type.@this.Create(raw)) { Context = _context! };
     }
 
     // The structural face of a raw-or-Data slot — the item instance for the

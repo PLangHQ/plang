@@ -316,6 +316,72 @@ public sealed class @this : item.@this
     public static @this Object => new("object", typeof(object));
 
     public static @this FromMime(string mimeType) => new(mimeType);
+
+    /// <summary>
+    /// The type-system value factory: a raw CLR value → its plang value (the one
+    /// owner of "what plang type is this"). The CLR→plang family map lives HERE in
+    /// the type system, not on Data — Data only USES it. null→the null citizen, an
+    /// already-plang value passes through, a sequence of values narrows to a native
+    /// list, a foreign container narrows to list/dict, a scalar borns to its family
+    /// wrapper (via <c>convert.OwnerOf</c>), an enum→choice, anything unowned rides
+    /// as the <c>item</c> apex. A TYPE-SYSTEM concern, not serialization — json
+    /// converts its own tokens then calls here for the leaves.
+    /// </summary>
+    public static item.@this Create(object? raw, global::app.actor.context.@this? context = null)
+    {
+        // The null VALUE is a typed citizen — the instance member is never
+        // C# null, so no consumer ever null-checks the value slot.
+        if (raw is null) return global::app.type.@null.@this.Instance;
+        if (raw is global::app.type.item.@this already) return already;
+        if (raw is global::app.data.@this)
+            throw new System.InvalidOperationException(
+                "A bare Data may not be stored as a value — nested Data always rides inside an owning wrapper type. "
+                + "This is the implicit-operator double-wrap accident: return the inner value via its own factory, never `return innerDataInstance;`."
+                + System.Environment.StackTrace);
+
+        // A sequence of Data builds a native list DIRECTLY, preserving the actual
+        // Data instances — their names, types and signatures.
+        if (raw is System.Collections.Generic.IEnumerable<global::app.data.@this> dataSeq)
+            return new global::app.type.list.@this(dataSeq) { Context = context! };
+
+        // A sequence of native plang VALUES (item.@this) narrows to a native list
+        // that owns the wrapping (no JSON round-trip that would degrade strong values).
+        if (raw is System.Collections.Generic.IEnumerable<global::app.type.item.@this> itemSeq)
+            return new global::app.type.list.@this(itemSeq) { Context = context! };
+
+        // Foreign C# containers narrow to their native plang type. The common handoff
+        // shapes alias their backing BY REFERENCE — O(1), no walk, no JSON (a
+        // million-row List<object?> costs one pointer copy); other shapes narrow off
+        // the wire. byte[] is excluded — bytes are the binary leaf, not a list.
+        if (raw is System.Collections.Generic.List<object?> objList)
+            return new global::app.type.list.@this(objList) { Context = context! };
+        if (raw is System.Collections.Generic.Dictionary<string, object?> objDict)
+            return new global::app.type.dict.@this(objDict) { Context = context! };
+        if (raw is System.Collections.IDictionary
+            || (raw is System.Collections.IList && raw is not byte[]))
+            return global::app.type.item.serializer.json.Parse(
+                       System.Text.Json.JsonSerializer.SerializeToElement(raw))
+                   as global::app.type.item.@this
+               ?? throw new System.InvalidOperationException(
+                   $"A raw C# container ({raw.GetType().Name}) could not be narrowed to a native plang list/dict.");
+
+        var (family, _) = global::app.type.convert.@this.OwnerOf(raw.GetType());
+        if (family != null && typeof(global::app.type.item.@this).IsAssignableFrom(family))
+        {
+            var lifted = global::app.type.convert.@this.OfStatic(family, raw, kind: null, context: context);
+            if (lifted is { Success: true } && lifted.Peek() is global::app.type.item.@this wrapper)
+                return wrapper;
+        }
+        // A CLR enum IS plang's choice (a closed named set) — build choice<T> for the enum.
+        if (raw is System.Enum)
+        {
+            var choiceType = typeof(global::app.type.choice.@this<>).MakeGenericType(raw.GetType());
+            return (global::app.type.item.@this)System.Activator.CreateInstance(choiceType, raw)!;
+        }
+        // Unowned — rung 2: a strongly-typed C# object rides as item with kind naming
+        // the class; the carrier's Peek answers the real instance.
+        return new global::app.type.item.clr(raw) { Context = context };
+    }
     public static @this FromName(string typeName) => new(typeName);
 
     /// <summary>
@@ -409,10 +475,10 @@ public sealed class @this : item.@this
 
         var reader = ctx?.App.Type.Readers.Of(Name, Kind);
         if (reader != null && reader(raw, Kind, new global::app.type.reader.ReadContext(ctx)) is { } read)
-            return global::app.data.@this.Lift(read, ctx);
+            return Create(read, ctx);
 
         // No reader (object / untyped): lift the raw to its natural instance.
-        return global::app.data.@this.Lift(global::app.type.item.serializer.json.Parse(raw), ctx);
+        return Create(global::app.type.item.serializer.json.Parse(raw), ctx);
     }
 
     internal item.@this Judge(item.@this value)

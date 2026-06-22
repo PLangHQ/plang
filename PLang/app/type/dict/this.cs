@@ -96,10 +96,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             if (_context != null) d.Context = _context;
             return d;
         }
-        var instance = global::app.type.item.serializer.json.BornFromRaw(raw);
         // Born a FRESH Data each read — never cached back. Leaving the slot raw keeps
         // the aliased backing pristine, so the CLR exit door stays same-ref.
-        return new Data(key, instance) { Context = _context! };
+        return new Data(key, global::app.type.@this.Create(raw)) { Context = _context! };
     }
     private actor.context.@this? _context;
 

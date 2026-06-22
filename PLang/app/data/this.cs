@@ -172,113 +172,12 @@ public partial class @this
     [Out, Store]
     public Properties Properties { get; set; } = new();
 
-    /// <summary>
-    /// THE STORE SEAM (Stage 9) — every value is lifted to its typed wrapper on
-    /// the way IN, so the slot always holds a PLang value and no consumer ever
-    /// branches on "wrapper or bare CLR?". One chokepoint; every slot write
-    /// routes through it.
-    ///
-    /// <para>No case table: the lift IS the conversion registry. The family that
-    /// owns the raw CLR type (each family's own <c>static OwnedClrTypes</c>
-    /// declaration, composed by <c>convert.OwnerOf</c>) constructs the value via
-    /// its own <c>Convert</c> hook — a new type joins by declaring its CLR mates
-    /// and hook on itself, never by editing this seam. The date arms stay a 1:1
-    /// CLR map because the DECLARATIONS are 1:1 (the seam never value-sniffs —
-    /// a midnight DateTime is not a <c>date</c>).</para>
-    ///
-    /// <para>A value no family owns stays as-is and types as <c>item</c> — the
-    /// "unknown" apex, exactly what <c>object</c> is to C#. A bare Data THROWS:
-    /// nested Data always rides inside an owning wrapper type (list's pattern),
-    /// so a bare one is always the implicit-operator double-wrap accident.</para>
-    /// </summary>
-    internal static global::app.type.item.@this Lift(object? v, actor.context.@this? context = null)
-    {
-        // The null VALUE is a typed citizen — the instance member is never
-        // C# null, so no consumer ever null-checks the value slot.
-        if (v is null) return global::app.type.@null.@this.Instance;
-        if (v is global::app.type.item.@this already) return already;
-        if (v is @this)
-            throw new System.InvalidOperationException(
-                "A bare Data may not be stored as a value — nested Data always rides inside an owning wrapper type. "
-                + "This is the implicit-operator double-wrap accident: return the inner value via its own factory, never `return innerDataInstance;`."
-                + System.Environment.StackTrace);
-
-        // A sequence of Data builds a native list DIRECTLY, preserving the actual
-        // Data instances — their names, types and signatures. Routing it through
-        // serialize/parse (below) would strip entry names at the Out view and break
-        // name-keyed semantics (merge-by-name).
-        if (v is System.Collections.Generic.IEnumerable<@this> dataSeq)
-            return new global::app.type.list.@this(dataSeq) { Context = context! };
-
-        // A sequence of native plang VALUES (item.@this — type, path, date, …)
-        // narrows to a native list that owns the wrapping. The JSON round-trip
-        // below would re-serialize each value to its wire shape and reparse it as
-        // a dict, degrading the strong value (a list<type> would collapse to a
-        // list of dicts). JSON narrowing is for foreign C# containers only.
-        if (v is System.Collections.Generic.IEnumerable<global::app.type.item.@this> itemSeq)
-            return new global::app.type.list.@this(itemSeq) { Context = context! };
-
-        // Other raw C# containers narrow to their native plang type (list.@this /
-        // dict.@this). The check is the NON-generic IList: a List<int> implements
-        // IList but NOT IList<object?> (generic invariance), so the old generic check
-        // leaked every strongly-typed list into the clr carrier. byte[] is an IList
-        // too — exclude it; bytes are the binary leaf, not a list. A container that
-        // cannot be narrowed is a producer handing raw to a Data — fail loud rather
-        // than parking an un-serializable clr (clr-dissolution role 5).
-        // The common handoff shapes alias their backing BY REFERENCE — O(1), no
-        // walk, no JSON. The native value owns the source from here (store raw,
-        // type on read); a pure read keeps the backing pristine so .Clr hands the
-        // same instance back. A million-row List<object?> costs one pointer copy.
-        if (v is System.Collections.Generic.List<object?> objList)
-            return new global::app.type.list.@this(objList) { Context = context! };
-        if (v is System.Collections.Generic.Dictionary<string, object?> objDict)
-            return new global::app.type.dict.@this(objDict) { Context = context! };
-        // Other raw C# container shapes (List<int>, int[], typed dictionaries, …)
-        // can't be aliased as object-slots (generic invariance), so they narrow off
-        // the wire — the correctness path, not the O(1) one.
-        if (v is System.Collections.IDictionary
-            || (v is System.Collections.IList && v is not byte[]))
-            return global::app.type.item.serializer.json.Parse(
-                       System.Text.Json.JsonSerializer.SerializeToElement(v))
-                   as global::app.type.item.@this
-               ?? throw new System.InvalidOperationException(
-                   $"A raw C# container ({v.GetType().Name}) could not be narrowed to a native plang list/dict. "
-                   + "Container values build native off the wire — never hand a raw List/Dictionary to a Data.");
-
-        var (family, _) = global::app.type.convert.@this.OwnerOf(v.GetType());
-        if (family != null && typeof(global::app.type.item.@this).IsAssignableFrom(family))
-        {
-            // kind: null — the routing kind is a conversion-TARGET nuance ("text"
-            // asks text.Convert for the raw string; a precision pins a numeric
-            // narrowing). The seam always wants the family's WRAPPER; the wrapper
-            // derives its own kind from the value (never stored — ruling 4).
-            var lifted = global::app.type.convert.@this.OfStatic(family, v, kind: null, context: context);
-            if (lifted is { Success: true } && lifted.Peek() is global::app.type.item.@this wrapper)
-                return wrapper;
-        }
-        // A CLR enum IS plang's `choice` (a closed named set) — lift it to its
-        // own item so it renders itself (the name) instead of parking in a clr
-        // that has no wire form. The generic choice<T> is closed over the enum
-        // type; build it for this runtime enum.
-        if (v is System.Enum)
-        {
-            var choiceType = typeof(global::app.type.choice.@this<>).MakeGenericType(v.GetType());
-            return (global::app.type.item.@this)System.Activator.CreateInstance(choiceType, v)!;
-        }
-        // Unowned — rung 2: a strongly-typed C# object plang holds as `item`
-        // with kind naming the class. The carrier's Peek answers the real
-        // instance, so generic consumers keep seeing the object itself. Context
-        // rides along so the carrier can resolve its registry name (the kind)
-        // the first time it mints — without it %!app% would report its raw CLR
-        // FullName instead of "app".
-        return new global::app.type.item.clr(v) { Context = context };
-    }
 
     [JsonConstructor]
     public @this(string name, object? value = null, type? type = null, @this? parent = null)
     {
         Name = CleanName(name);
-        _type = Lift(global::app.type.item.serializer.json.Parse(value));
+        _type = global::app.type.@this.Create(global::app.type.item.serializer.json.Parse(value));
         Parent = parent;
         Path = BuildPath(parent, Name);
         IsInitialized = true;
@@ -397,7 +296,7 @@ public partial class @this
     /// </summary>
     public virtual void SetValue(object? value)
     {
-        _type = Lift(global::app.type.item.serializer.json.Parse(value), _context);
+        _type = global::app.type.@this.Create(global::app.type.item.serializer.json.Parse(value), _context);
         Updated = System.DateTime.UtcNow;
         IsInitialized = true;
         if (_type is module.IContext contextual)
@@ -844,7 +743,7 @@ public partial class @this
         // named value. The type decides how to become itself; Data just holds it.
         var instance = typeEntity is { IsNull: false } && !typeEntity.Polymorphic
             ? typeEntity.Deserialize(innerValue, context)
-            : Lift(global::app.type.item.serializer.json.Parse(innerValue), context);
+            : global::app.type.@this.Create(global::app.type.item.serializer.json.Parse(innerValue), context);
         return new @this(name, instance) { Context = context };
     }
 

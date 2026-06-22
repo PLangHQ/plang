@@ -96,27 +96,6 @@ public static partial class json
         return value;
     }
 
-    /// <summary>
-    /// Born-native from a RAW CLR slot — the type-on-read narrow for a container
-    /// slot stored raw (store raw, type on read). Mirrors the JsonElement leaf
-    /// wrapping above, but from CLR: a number keeps its EXACT kind
-    /// (<see cref="number.@this.FromObject"/>, never re-narrowing a long to int);
-    /// a string is text, a bool is bool, null is the null citizen. An already-
-    /// typed instance passes through; an unowned CLR value falls back to the lift.
-    /// </summary>
-    internal static global::app.type.item.@this BornFromRaw(object? raw) => raw switch
-    {
-        null => @null.@this.Instance,
-        global::app.type.item.@this it => it,
-        string s => new text.@this(s),
-        bool b => new @bool.@this(b),
-        sbyte or byte or short or ushort or int or uint or long or ulong
-            or System.Int128 or System.UInt128 or System.Numerics.BigInteger
-            or System.Half or float or double or decimal
-            => number.@this.FromObject(raw)!,
-        _ => global::app.data.@this.Lift(raw),
-    };
-
     // Store raw, type on read: a container holds its leaves as RAW CLR (scalar)
     // or a native sub-container — never a Data per element at rest. An element
     // types itself when something reads it (the container's normalize-on-read).
