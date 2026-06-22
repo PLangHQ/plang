@@ -1,0 +1,47 @@
+{
+  "name": "Hello",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0022hello world\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello world"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "output.write(Data=\u0022hello world\u0022)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Scratch/Hello.goal",
+  "prPath": "/Tests/Scratch/.build/hello.pr",
+  "hash": "312c319d2aae72a2c4a2f4234a19778870c47ebc590c5f7ef464af0007e1752f",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}
