@@ -211,8 +211,9 @@ public partial class validateResponse : IContext
                         continue;
                     }
 
-                    var (_, error) = global::app.type.catalog.@this.TryConvert((await p.Value()), targetType);
-                    if (error == null) continue;
+                    // Ask the declared type object whether it can be made from the value.
+                    var conv = p.Type.Convert(await p.Value(), (goal.App ?? app)!.User.Context!);
+                    if (conv.Success) continue;
 
                     var validValues = (goal.App ?? app)?.Type.GetValidValues(targetType);
                     var hint = validValues != null && validValues.Length > 0

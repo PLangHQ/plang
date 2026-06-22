@@ -53,17 +53,11 @@ public partial class Set : IContext, IBuildValidatable
             // Skip validation when value contains %variable% references — they resolve at runtime
             if (value.HasVariableReference) return null;
 
-            // ClrType is non-public on `type.@this` — `internal` to the entity
-            // so the registry/primitive-fallback chain stays one place. Same
-            // assembly, so the read is direct; no external GetPrimitiveOrMime
-            // fallback to maintain at the call site.
+            // Born on the wire: the literal already carries its type, so this is a
+            // type-match check, not a conversion. A mismatch is a build error.
             var targetType = value.Type.ClrType;
             if (targetType != null && !targetType.IsInstanceOfType(valueBacking))
-            {
-                var (_, error) = global::app.type.catalog.@this.TryConvert(valueBacking, targetType);
-                if (error != null)
-                    return $"Parameter 'Value' has type={value.Type.Name} but value cannot be converted: {error.Message}";
-            }
+                return $"Parameter 'Value' has type={value.Type.Name} but value is not a {value.Type.Name}: {valueBacking}";
         }
         return null;
     }
@@ -379,10 +373,11 @@ public partial class Set : IContext, IBuildValidatable
             var (family, _) = global::app.type.convert.@this.OwnerOf(t);
             if (family != null && typeof(global::app.type.item.@this).IsAssignableFrom(family))
             {
-                // Wrap the raw value into its item form so the Data<wrapper> ctor (which takes
-                // a T? = the wrapper) binds — a raw string/int/byte[] won't match Data<text/number/binary>.
-                value = global::app.type.catalog.@this.ConvertTo(value, family, context) ?? value;
-                t = family;
+                // Lift the raw value into its item wrapper so the Data<wrapper> ctor binds —
+                // the type system creates it (raw string→text, int→number, byte[]→binary).
+                var lifted = global::app.type.@this.Create(value, context);
+                value = lifted;
+                t = lifted.GetType();
             }
             else
                 return new data.@this(name, value, declared) { Context = context };
