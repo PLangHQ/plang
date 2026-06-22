@@ -79,12 +79,6 @@ public sealed partial class @this
         return error != null ? global::app.data.@this.FromError(error) : global::app.data.@this.Ok(result);
     }
 
-    /// <summary>Convert a value to the specified type, null on failure (use TryConvert for errors).</summary>
-    internal static object? ConvertTo(object? value, System.Type targetType, actor.context.@this? context = null)
-    {
-        var (result, _) = TryConvert(value, targetType, context);
-        return result;
-    }
 
 
     /// <summary>

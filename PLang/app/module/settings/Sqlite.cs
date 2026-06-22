@@ -137,7 +137,6 @@ public sealed class Sqlite : IStore
 
             var (typed, derr) = _serializer.Load<T>(result.ToString()!);
             if (derr != null) return Task.FromResult(app.data.@this.FromError(derr));
-            if (typed != null) RehydrateValue(typed);
             return Task.FromResult((data.@this?)typed ?? app.data.@this.Ok(null));
         }
         catch (Exception ex)
@@ -197,7 +196,6 @@ public sealed class Sqlite : IStore
                     var (loaded, _) = _serializer.Load<T>(raw);
                     if (loaded != null)
                     {
-                        RehydrateValue(loaded);
                         list.Add(loaded);
                     }
                 }
@@ -305,25 +303,6 @@ public sealed class Sqlite : IStore
             return Task.FromResult(app.data.@this<global::app.type.list.@this>.FromError(
                 SettingsError.FromException(ex)));
         }
-    }
-
-    /// <summary>
-    /// Rehydrates Data.Value from dict/JsonElement to the correct CLR type using Data.Type.
-    /// After JSON deserialization, complex objects come back as dictionaries — this converts
-    /// them to the registered CLR type so callers get typed values.
-    /// </summary>
-    private static void RehydrateValue(data.@this data)
-    {
-        if (data.Peek().IsNull || data.Type.IsNull) return;
-
-        // ClrType is non-public on `type.@this` but `internal` — same-assembly
-        // callers read directly; the entity owns the registry/primitive
-        // fallback chain in one place.
-        var clrType = data.Type.ClrType;
-        if (clrType == null || clrType.IsAssignableFrom(data.Peek()!.GetType())) return;
-
-        var converted = AppTypes.ConvertTo(data.Peek(), clrType);
-        if (converted != null) data.SetValue(converted);
     }
 
     private void EnsureTable(string table)

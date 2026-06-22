@@ -30,9 +30,9 @@ internal static class TypeMapping
 
     public static bool IsPrimitive(System.Type type) => global::app.type.catalog.@this.IsPrimitive(type);
 
-    public static T? ConvertTo<T>(object? value) => (T?)global::app.type.catalog.@this.ConvertTo(value, typeof(T));
+    public static T? ConvertTo<T>(object? value) => (T?)global::app.type.catalog.@this.TryConvert(value, typeof(T)).Value;
 
-    public static object? ConvertTo(object? value, System.Type targetType) => global::app.type.catalog.@this.ConvertTo(value, targetType);
+    public static object? ConvertTo(object? value, System.Type targetType) => global::app.type.catalog.@this.TryConvert(value, targetType).Value;
 
     public static void Populate(object target, IDictionary<string, object?> values) => global::app.type.catalog.@this.Populate(target, values);
 
@@ -47,8 +47,8 @@ internal static class TypeMapping
 /// </summary>
 internal static class TypeConverter
 {
-    public static T? ConvertTo<T>(object? value) => (T?)global::app.type.catalog.@this.ConvertTo(value, typeof(T));
-    public static object? ConvertTo(object? value, System.Type targetType) => global::app.type.catalog.@this.ConvertTo(value, targetType);
+    public static T? ConvertTo<T>(object? value) => (T?)global::app.type.catalog.@this.TryConvert(value, typeof(T)).Value;
+    public static object? ConvertTo(object? value, System.Type targetType) => global::app.type.catalog.@this.TryConvert(value, targetType).Value;
     public static void Populate(object target, IDictionary<string, object?> values) => global::app.type.catalog.@this.Populate(target, values);
     public static (object? Value, global::app.error.Error? Error) TryConvertTo(
         object? value, System.Type targetType, global::app.actor.context.@this? context = null, string? targetName = null)
