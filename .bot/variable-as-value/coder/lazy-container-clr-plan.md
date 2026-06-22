@@ -136,6 +136,20 @@ LOWER via the type's own reconstruction; (3) drop `TryConvert` from `ClrConvert`
   owner is chosen by target type → its `Convert` converts-or-throws, never declines. So
   "throw not null" lands WITH the dispatch collapse, not before.
 
+## Finding: the LOWER/CONVERT boundary is FAMILY-based, not CLR-vs-plang
+Tried the naive dispatch "plang value + CLR target → LOWER (value.Clr)". It broke:
+- `text → int` (CLR target) threw `FormatException` — because `text→int` is NOT a
+  lower, it's a **CONVERT** (`number` parses text, returns an error gracefully). Only
+  `text → string` (its OWN backing) is a LOWER.
+- `image.Is(path)` facet broke (collateral).
+So the dispatch can't key on "is the target CLR or plang". The real boundary:
+- **LOWER** = value → its OWN family's CLR backing (`text→string`, `number→long`,
+  `list→List`, `dict→Dictionary`). Terminal, the value's own.
+- **CONVERT** = value → a DIFFERENT family (CLR or plang): `text→int` (number parses),
+  `text→datetime`, `dict→record`. Owned by the TARGET family's `Convert`, graceful.
+The dispatch must ask "is `target` this value's own family?" to pick LOWER vs CONVERT —
+that's the careful part of the collapse, and why it's not a one-arm change.
+
 ## Watch-outs
 - The 2×O(n) trap: never build an intermediate collection then walk it again. A
   `dict.Clr` record build is one object (fine); a `list`→`list` materialization is NOT (banned).
