@@ -79,26 +79,18 @@ public sealed partial class @this
         return error != null ? global::app.data.@this.FromError(error) : global::app.data.@this.Ok(result);
     }
 
-    /// <summary>Attempts to convert a value to the specified type. Generic convenience overload.</summary>
-    internal static T? ConvertTo<T>(object? value, actor.context.@this? context = null)
-        => (T?)ConvertTo(value, typeof(T), context);
-
-    /// <summary>
-    /// Attempts to convert a value to the specified type. Returns null on failure — use TryConvert for error details.
-    /// A <paramref name="context"/> is required to convert a string into a <see cref="path.@this"/> (the per-App
-    /// scheme registry needs it); without one, string→path conversions yield null.
-    /// </summary>
+    /// <summary>Convert a value to the specified type, null on failure (use TryConvert for errors).</summary>
     internal static object? ConvertTo(object? value, System.Type targetType, actor.context.@this? context = null)
     {
         var (result, _) = TryConvert(value, targetType, context);
         return result;
     }
 
+
     /// <summary>
-    /// Populates an object's public writable properties from a dictionary.
-    /// Keys are matched case-insensitively to property names. Values are converted via ConvertTo.
-    /// Pass <paramref name="context"/> when any target property is <see cref="path.@this"/>-typed
-    /// (or a list of them) — without it those properties stay unset.
+    /// Populates an object's public writable properties from a dictionary (config loading).
+    /// Each raw value lifts to its plang type and lowers to the property's CLR type — the
+    /// type system creates it, the value lowers itself; no conversion hub.
     /// </summary>
     internal static void Populate(object target, IDictionary<string, object?> values,
         actor.context.@this? context = null)
@@ -107,8 +99,10 @@ public sealed partial class @this
         {
             var prop = target.GetType().GetProperty(kvp.Key,
                 BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-            if (prop?.CanWrite != true) continue;
-            var converted = ConvertTo(kvp.Value, prop.PropertyType, context);
+            if (prop?.CanWrite != true || kvp.Value == null) continue;
+            var converted = prop.PropertyType.IsInstanceOfType(kvp.Value)
+                ? kvp.Value
+                : global::app.type.@this.Create(kvp.Value, context).Clr(prop.PropertyType);
             if (converted != null) prop.SetValue(target, converted);
         }
     }

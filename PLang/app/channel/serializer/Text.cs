@@ -92,18 +92,15 @@ public sealed class Text : ISerializer
         => global::app.data.@this<T>.Ok(FromText<T>(s));
 
     /// <summary>
-    /// A text payload → a typed value. Two concerns belong to this serializer, not
-    /// the general converter: an empty payload is absence (<c>default</c>, not a
-    /// value), and a text payload's own bytes are its UTF-8 encoding. Everything
-    /// else routes through the one converter (invariant culture, residual primitive
-    /// leaf + per-type hooks) — the text channel no longer forks its own parse, which
-    /// had drifted to CurrentCulture and gave a divergent locale result.
+    /// A text payload → a typed value. The serializer only supplies the text; the
+    /// TARGET type creates itself from it (<c>number.Create</c> parses "5"→number via
+    /// its own hook) — the type owns its from-text construction, not this serializer.
+    /// An empty payload is absence.
     /// </summary>
-    private T FromText<T>(string s)
+    private T? FromText<T>(string s) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
-        if (string.IsNullOrEmpty(s)) return default!;
-        if (typeof(T) == typeof(byte[])) return (T)(object)_encoding.GetBytes(s);
-        var converted = AppTypes.ConvertTo(s, typeof(T));
-        return converted is T typed ? typed : default!;
+        if (string.IsNullOrEmpty(s)) return null;
+        var text = (global::app.type.text.@this)s;
+        return T.Create(text, new global::app.data.@this("", text));
     }
 }
