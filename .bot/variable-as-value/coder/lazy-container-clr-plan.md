@@ -150,6 +150,30 @@ So the dispatch can't key on "is the target CLR or plang". The real boundary:
 The dispatch must ask "is `target` this value's own family?" to pick LOWER vs CONVERT —
 that's the careful part of the collapse, and why it's not a one-arm change.
 
+## CONVERT-arm migration — pattern + status
+A `TryConvert` target arm migrates by giving the **target type its own discoverable
+`Convert` hook**: `OwnerOf` already ends with `Discover(target)` (a type with a static
+`Convert(object,string,ctx)` owns itself), so once the type has the hook, the existing
+`OfStatic` build-arm invokes it and the special arm is deleted. The type gains its
+builder; the hub loses an arm. **No big-bang** — one arm at a time.
+
+- **choice<T> — DONE** (`choice<T>.Convert` added, arm removed, green).
+- **list<T> — the clean answer is LAZY, not an eager `Convert`.** `list<LlmMessage>`
+  is `type=list, kind=LlmMessage`; each element is `type=dict, kind=LlmMessage` — a
+  dict that *returns as* LlmMessage. `list<T>.Create` is then an **O(1) re-tag**
+  (stamp `kind=T`), NO element loop, NO `TryConvert`; the `dict→LlmMessage` build
+  happens **per element, lazily, on `row.Value()`**, driven by `kind`. Touch 2 of a
+  trillion rows → 2 materializations.
+  - **Blocked-handoff:** this needs `.Value()`/`type.Build` to take a `kind`-tagged
+    dict and build the domain object (`{type:dict, kind:LlmMessage}` → `LlmMessage`).
+    `kind` today carries FORMAT strings (`md`/`gif`/`int`), not domain-type names — so
+    kind-driven `dict→record` materialization is new machinery. **Ingi: that piece is
+    the builder bot's to solve.** Until it exists, leave the eager `list<T>` arm as-is;
+    don't migrate it the eager way (that re-introduces the materialize / 2×O(n) smell).
+- **record / string→json / FromWire / ctor-string arms** — same family-hook pattern,
+  but they're the `dict→record` deserialize question (record owns `From` vs deserialize)
+  and tie into the same kind-driven materialization. Sequence after the kind machinery.
+
 ## Watch-outs
 - The 2×O(n) trap: never build an intermediate collection then walk it again. A
   `dict.Clr` record build is one object (fine); a `list`→`list` materialization is NOT (banned).
