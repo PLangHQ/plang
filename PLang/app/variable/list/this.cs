@@ -411,12 +411,8 @@ public partial class @this
                         var elementType = list.GetType().IsGenericType
                             ? list.GetType().GetGenericArguments()[0]
                             : typeof(object);
-                        if (!elementType.IsAssignableFrom(value.GetType()))
-                        {
-                            var (typedValue, err) = type.catalog.@this.TryConvert(value, elementType, _context);
-                            if (err != null) throw new System.InvalidCastException(err.Message);
-                            if (typedValue != null) value = typedValue;
-                        }
+                        if (!elementType.IsAssignableFrom(value.GetType()) && value is global::app.type.item.@this iv)
+                            value = iv.Clr(elementType);   // the value lowers itself to the slot
                     }
                     list[idx] = value;
                     return target;
@@ -431,12 +427,8 @@ public partial class @this
                         var count = (int)countProp.GetValue(collection)!;
                         if (gIdx < count)
                         {
-                            if (value != null && !indexer.PropertyType.IsAssignableFrom(value.GetType()))
-                            {
-                                var (typedValue, err) = type.catalog.@this.TryConvert(value, indexer.PropertyType, _context);
-                                if (err != null) throw new System.InvalidCastException(err.Message);
-                                if (typedValue != null) value = typedValue;
-                            }
+                            if (value is global::app.type.item.@this iv && !indexer.PropertyType.IsAssignableFrom(value.GetType()))
+                                value = iv.Clr(indexer.PropertyType);   // the value lowers itself to the slot
                             indexer.SetValue(collection, value, new object[] { gIdx });
                             return target;
                         }
@@ -450,12 +442,8 @@ public partial class @this
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
         if (clrProp != null && clrProp.CanWrite)
         {
-            if (value != null && !clrProp.PropertyType.IsAssignableFrom(value.GetType()))
-            {
-                var (typedValue, err) = type.catalog.@this.TryConvert(value, clrProp.PropertyType, _context);
-                if (err != null) throw new System.InvalidCastException(err.Message);
-                if (typedValue != null) value = typedValue;
-            }
+            if (value is global::app.type.item.@this iv && !clrProp.PropertyType.IsAssignableFrom(value.GetType()))
+                value = iv.Clr(clrProp.PropertyType);   // the value lowers itself to the slot
             clrProp.SetValue(target, value);
             return target;
         }
@@ -530,8 +518,7 @@ public partial class @this
             }
         }
 
-        var (typedValue, _) = type.catalog.@this.TryConvert(value, slotType);
-        return typedValue ?? value;
+        return value is global::app.type.item.@this iv ? iv.Clr(slotType) ?? value : value;
     }
 
     /// <summary>

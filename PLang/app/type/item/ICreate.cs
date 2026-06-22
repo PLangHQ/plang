@@ -56,10 +56,10 @@ public interface ICreate<TSelf> where TSelf : @this, ICreate<TSelf>
         var built = owned?.Peek() ?? global::app.type.@this.Create(raw, asking.Context);
         if (built is TSelf made) return made;
 
-        // A dict/list deserializes ITSELF to a record / domain item (step, …).
-        try { if (value.Clr(typeof(TSelf)) is TSelf rec) return rec; }
-        catch (System.Exception ex) when (ex is System.InvalidCastException or System.Text.Json.JsonException
-                                           or System.NotSupportedException or System.FormatException) { }
+        // A dict/list deserializes ITSELF to a record / domain item (step, …). Only a
+        // container reaches this — a genuine deserialize failure surfaces (it throws).
+        if (value is global::app.type.dict.@this or global::app.type.list.@this
+            && value.Clr(typeof(TSelf)) is TSelf rec) return rec;
 
         asking.Fail(new global::app.error.Error(
             $"%{asking.Name}% holds a {value.Mint().Name} — '{@this.NameOf(typeof(TSelf))}' cannot be created from it.",
