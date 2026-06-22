@@ -27,8 +27,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// it (<c>row.Clr&lt;T&gt;()</c>) — the list never materialises a resolved copy.</summary>
     public IEnumerator<Data> GetEnumerator()
     {
-        for (int i = 0; i < _items.Count; i++)
-            yield return Row(i);
+        foreach (var slot in _items)
+            yield return slot is Data d ? d : new Data("", slot) { Context = _context! };
     }
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 

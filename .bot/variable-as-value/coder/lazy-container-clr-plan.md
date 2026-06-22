@@ -55,6 +55,32 @@ type-switch + flatten that kills doors and types.
    end-to-end first (OpenAi loop), then the rest (AsT tests, DeepResolution, etc.).
 5. Sweep the remaining `Value().Clr()`-on-container consumers; green.
 
+## Thread: JSON out of object construction → `type.Create` (decided with Ingi)
+JSON is a serialization format; turning a raw CLR value into its plang type is a
+**type-system** job, not json's. Today object construction routes through
+`json.Parse` / `json.BornFromRaw`, and dict→record "serializes-then-deserializes" —
+all wrong.
+
+- **`type.Create(raw)`** is the one factory: raw CLR → plang value (`"a"`→`text`,
+  `5`→`number`, `Dictionary`→`dict` O(1) alias, `List`→`list`). It lives in
+  `app.type`. `Data.Lift` (`data/this.cs:194`, via `convert.OwnerOf`) already *is*
+  this — promote/rename it to `type.Create`, give it the type-system home.
+- **`json.Parse` legit sites stay** (real JSON input): `Wire.cs:423`,
+  `list/Json.cs`, `dict/Json.cs` (the `[JsonConverter]`s), `Fluid.cs`,
+  `CommandLineParser.cs`. Their **leaf** creation delegates to `type.Create`.
+- **`json.Parse` smell sites become `type.Create`** (object construction): the
+  `Data` ctor (`:281`), `SetValue` (`:400`), source (`:847`), `type/this.cs:415`,
+  and `Row`/`Slot`'s `BornFromRaw` (`list:93`, `dict:99`). Delete `BornFromRaw`.
+- **A `JsonElement` reaching the `Data` ctor is a BUG → throw.** The wire/json
+  boundary must convert `JsonElement → plang` *before* constructing a Data; the
+  ctor must never see a `JsonElement`. (`json.Parse` in the ctor was the silent
+  net catching strays — replace with a loud throw so we see the offender.)
+- **Audit before pulling `json.Parse` from the ctor:** scan `new Data(...)` sites
+  for a `JsonElement` value reaching them; convert those at the boundary.
+- Not strictly blocking the lazy-container work — the current ctor (`Lift(json.Parse)`)
+  passes a raw slot through fine, so `new Data("", slot)` already works. Sequence
+  this thread WITH the structural-`Clr` work (same conversion area).
+
 ## Watch-outs
 - The 2×O(n) trap: never build an intermediate collection then walk it again. A
   `dict.Clr` record build is one object (fine); a `list`→`list` materialization is NOT (banned).
