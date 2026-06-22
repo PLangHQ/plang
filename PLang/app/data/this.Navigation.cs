@@ -50,7 +50,7 @@ public partial class @this
                 child = InvokeMethod(call.Method, call.Args);
                 break;
             case global::app.variable.path.Segment.Index index:
-                child = await GetChildValue(await ResolveIndexKey(index));
+                child = await GetChildValue(await index.ResolveKey(_context?.Variable));
                 valuePlane = true;
                 break;
             default: // Member (plain or quoted) — value navigation by key
@@ -74,33 +74,6 @@ public partial class @this
         }
 
         return tail.IsEmpty ? child : await child.Navigate(tail);
-    }
-
-    /// <summary>
-    /// Resolves a bracket index <c>[expr]</c> to its literal key. A numeric or quoted
-    /// inner (<c>[0]</c>, <c>["k"]</c>) is already literal; a variable inner
-    /// (<c>[planStep.index]</c>) is a path resolved through the store — the same engine
-    /// that resolves every other reference, no regex pre-pass.
-    /// </summary>
-    private async System.Threading.Tasks.ValueTask<string> ResolveIndexKey(global::app.variable.path.Segment.Index index)
-    {
-        var inner = index.Inner;
-
-        // Literal index: a single member that is numeric or was quoted in source.
-        if (inner.Segments.Count == 1
-            && inner.Segments[0] is global::app.variable.path.Segment.Member m
-            && (m.Quoted || (m.Name.Length > 0 && (char.IsDigit(m.Name[0]) || m.Name[0] == '-'))))
-            return m.Name;
-
-        // Variable index (possibly a dotted/indexed path) — resolve via the store.
-        if (_context != null)
-        {
-            var resolved = (await _context.Variable.Get(inner.ToString())).Peek();
-            if (resolved is not (null or global::app.type.@null.@this))
-                return resolved.ToString() ?? inner.ToString();
-        }
-
-        return inner.ToString(); // unresolved → treat the expression as a literal key
     }
 
     /// <summary>

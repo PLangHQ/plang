@@ -42,6 +42,35 @@ public abstract class Segment
     {
         public @this Inner { get; }
         public Index(string raw, @this inner) : base(raw) => Inner = inner;
+
+        /// <summary>True when the inner is already a literal key (a numeric or quoted
+        /// single member) — <c>[0]</c>, <c>["k"]</c> — needing no store lookup.</summary>
+        public bool IsLiteral
+            => Inner.Segments.Count == 1
+               && Inner.Segments[0] is Member m
+               && (m.Quoted || (m.Name.Length > 0 && (char.IsDigit(m.Name[0]) || m.Name[0] == '-')));
+
+        /// <summary>
+        /// The literal key this index resolves to. A literal inner (<see cref="IsLiteral"/>)
+        /// answers itself; a variable inner (<c>[planStep.index]</c>) is a path resolved
+        /// through the given <paramref name="store"/> — the same engine every other
+        /// reference uses, no regex pre-pass. The segment owns what its key IS; both read
+        /// (Navigate, store = the value's context store) and write (variable.set, store =
+        /// the store doing the set) ask here.
+        /// </summary>
+        public async System.Threading.Tasks.ValueTask<string> ResolveKey(global::app.variable.list.@this? store)
+        {
+            if (IsLiteral) return ((Member)Inner.Segments[0]).Name;
+
+            if (store != null)
+            {
+                var resolved = (await store.Get(Inner.ToString())).Peek();
+                if (resolved is not (null or global::app.type.@null.@this))
+                    return resolved.ToString() ?? Inner.ToString();
+            }
+
+            return Inner.ToString(); // unresolved → treat the expression as a literal key
+        }
     }
 
     /// <summary>Infrastructure plane (<c>!file</c>, <c>!path</c>, <c>!data</c>) — reads

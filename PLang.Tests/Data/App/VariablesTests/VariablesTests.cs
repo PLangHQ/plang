@@ -425,7 +425,10 @@ public class VariablesTests
     [Test]
     public async Task Get_VariableIndex_ResolvesAndNavigates()
     {
-        var stack = new Variables();
+        // A variable index in a READ resolves in the walk via the value's context
+        // (Segment.Index.ResolveKey) — so the store needs a context.
+        await using var app = new global::app.@this("/test");
+        var stack = app.User.Context.Variable;
         var items = new List<object> { "zero", "one", "two" };
         stack.Set("items", items);
         stack.Set("idx", 1);
@@ -808,72 +811,6 @@ public class VariablesTests
 
         // Child context stamps its own context on the cloned data
         await Assert.That((await childContext.Variable.Get("name"))!.Context).IsEqualTo(childContext);
-    }
-}
-
-public class VariablesCycleDetectionTests
-{
-    [Test]
-    public async Task Get_CircularVariableReference_LeavesUnresolved()
-    {
-        var stack = new Variables();
-        stack.Set("idx", 1);
-        var data = new Dictionary<string, object?>
-        {
-            { "items", new List<object> { "zero", "one", "two" } }
-        };
-        stack.Set("data", data);
-
-        // Verify normal resolution works: data.items[idx] → data.items[1] → "one"
-        var normalResult = await stack.Get("data.items[idx]");
-        await Assert.That((await normalResult!.Value())?.ToString()).IsEqualTo("one");
-
-        // Pre-seed the async-local visited set via reflection to simulate
-        // a circular reference already in progress (idx is "being resolved")
-        var field = typeof(Variables).GetField("_resolvingVars",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-        var asyncLocal = (AsyncLocal<HashSet<string>?>)field!.GetValue(null)!;
-        asyncLocal.Value = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "idx" };
-
-        try
-        {
-            // With "idx" already in visited set → cycle detected → [idx] left unresolved
-            // Path stays "data.items[idx]" → GetChild tries to navigate list with key "idx"
-            // → "idx" is not a valid index → returns Data.Null
-            var cycleResult = await stack.Get("data.items[idx]");
-
-            // Cycle detected → [idx] is left unresolved, so the path does NOT
-            // resolve to the real element ("one"). The exact result of navigating
-            // an unresolved index is an implementation detail; the invariant is
-            // that the cycle blocks resolution.
-            await Assert.That((await cycleResult.Value())?.ToString()).IsNotEqualTo("one");
-        }
-        finally
-        {
-            // Clean up async-local state
-            asyncLocal.Value = null;
-        }
-    }
-
-    [Test]
-    public async Task Get_NormalVariableResolution_WorksAfterCycleCleanup()
-    {
-        var stack = new Variables();
-        stack.Set("idx", 0);
-        var data = new Dictionary<string, object?>
-        {
-            { "items", new List<object> { "first", "second" } }
-        };
-        stack.Set("data", data);
-
-        // Verify the thread-static set is properly cleaned up after normal resolution
-        var result1 = await stack.Get("data.items[idx]");
-        await Assert.That((await result1!.Value())?.ToString()).IsEqualTo("first");
-
-        // Second call should work identically (no leftover state)
-        stack.Set("idx", 1);
-        var result2 = await stack.Get("data.items[idx]");
-        await Assert.That((await result2!.Value())?.ToString()).IsEqualTo("second");
     }
 }
 

@@ -106,9 +106,12 @@ public partial class @this
     {
         name = CleanName(name);
 
-        // Resolve variable references inside bracket indices: [idx] → [1]
+        // A write navigates to the parent then sets the leaf via CLR reflection,
+        // which needs literal indices (a list element, a record field). Resolve any
+        // variable index to its literal form first — through the path/segment engine
+        // (no regex), against this store.
         if (name.Contains('['))
-            name = await ResolveVariablesInPath(name);
+            name = await ResolveBracketIndices(name);
 
         var rootName = GetRootName(name);
 
@@ -266,7 +269,8 @@ public partial class @this
             ? name[(rootName.Length + 1)..]
             : name[rootName.Length..];
 
-        // Split remaining into parent path + final property name
+        // Split remaining into parent path + final property name. Indices are
+        // already literal (resolved above), so the last '.' splits parent from leaf.
         var lastDot = remaining.LastIndexOf('.');
         data.@this parent;
         string propertyName;
@@ -566,9 +570,8 @@ public partial class @this
 
         name = CleanName(name);
 
-        // Resolve variable references inside bracket indices: [idx] → [1]
-        if (name.Contains('['))
-            name = await ResolveVariablesInPath(name);
+        // Bracket indices (`[planStep.index]`) resolve inside the walk now
+        // (Segment.Index.ResolveKey) — no pre-pass string rewrite.
 
         // Handle paths like "user.name" or "items[0].value"
         var rootName = GetRootName(name);
@@ -836,64 +839,34 @@ public partial class @this
         return dict;
     }
 
-    private static readonly AsyncLocal<HashSet<string>?> _resolvingVars = new();
-
     /// <summary>
-    /// Resolves variable names inside bracket indices.
-    /// e.g. "addresses[idx].street" with idx=1 → "addresses[1].street"
-    /// Uses an async-local visited set to detect circular references (a→b→a) — survives
-    /// future await introductions; ThreadStatic would race under Task.WhenAll.
+    /// Rewrites variable indices in a write target to their literal form
+    /// (<c>people[idx].Name</c> → <c>people[0].Name</c>) so the reflection-based leaf
+    /// write sees a literal index. Parses through the navigation path (no regex) and
+    /// resolves each <c>Index</c> segment against THIS store — the write side resolves
+    /// where the set happens, independent of any value's context.
     /// </summary>
-    private async System.Threading.Tasks.ValueTask<string> ResolveVariablesInPath(string path)
+    private async System.Threading.Tasks.ValueTask<string> ResolveBracketIndices(string name)
     {
-        var resolving = _resolvingVars.Value;
-        var isRoot = resolving == null;
-        if (isRoot)
+        var path = global::app.variable.path.@this.Parse(name);
+        var sb = new System.Text.StringBuilder();
+        for (int i = 0; i < path.Segments.Count; i++)
         {
-            resolving = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            _resolvingVars.Value = resolving;
-        }
-        try
-        {
-            var matches = Regex.Matches(path, @"\[([^\]\d][^\]]*)\]");
-            if (matches.Count == 0) return path;
-
-            var sb = new System.Text.StringBuilder();
-            int last = 0;
-            foreach (Match match in matches)
+            switch (path.Segments[i])
             {
-                sb.Append(path, last, match.Index - last);
-                last = match.Index + match.Length;
-
-                var varName = match.Groups[1].Value;
-                if (!resolving!.Add(varName))
-                {
-                    sb.Append(match.Value); // Circular reference — leave unresolved
-                    continue;
-                }
-                try
-                {
-                    // An index variable may itself be a dotted/indexed path
-                    // (e.g. [planStep.index]) — resolve through Get so the whole
-                    // path navigates, not just its root. Get already honours the
-                    // per-call frame over the actor-shared store.
-                    var resolved = (await Get(varName))?.Peek();
-                    sb.Append(resolved is null or global::app.type.@null.@this
-                        ? match.Value
-                        : $"[{resolved}]");
-                }
-                finally
-                {
-                    resolving.Remove(varName);
-                }
+                case global::app.variable.path.Segment.Index idx:
+                    sb.Append('[').Append(await idx.ResolveKey(this)).Append(']');
+                    break;
+                case global::app.variable.path.Segment.Member m:
+                    if (i > 0) sb.Append('.');
+                    sb.Append(m.Raw);
+                    break;
+                default: // Infra (!x), Call — carry their own delimiter
+                    sb.Append(path.Segments[i].Raw);
+                    break;
             }
-            sb.Append(path, last, path.Length - last);
-            return sb.ToString();
         }
-        finally
-        {
-            if (isRoot) _resolvingVars.Value = null;
-        }
+        return sb.ToString();
     }
 
     private static string CleanName(string name)
