@@ -140,18 +140,21 @@ public class GeneratorValidationTests
         var intPlainSrc = File.ReadAllText(Path.Combine(GeneratedDir,
             "app.module.matrix.plain.IntPlain.Action.g.cs"));
 
-        await Assert.That(stringPlainSrc).Contains("__d.ShallowClone<global::app.type.text.@this>(await __d.Value<global::app.type.text.@this>())");
-        await Assert.That(intPlainSrc).Contains("__d.ShallowClone<global::app.type.number.@this>(await __d.Value<global::app.type.number.@this>())");
+        // Lazy resolution: the property resolves its slot to a typed VIEW via As<T>
+        // (conversion/errors surface later, at the value door) — not an eager
+        // materialize-and-clone.
+        await Assert.That(stringPlainSrc).Contains("__d.As<global::app.type.text.@this>()");
+        await Assert.That(intPlainSrc).Contains("__d.As<global::app.type.number.@this>()");
     }
 
     [Test]
     public async Task GeneratedPropertyBody_UsesGetParameterAndAsT()
     {
         var generated = ReadAnyGeneratedHandler();
-        // The lookup-then-resolve idiom: __ResolveData(name) → await Value<T>(Context).
-        // __ResolveData itself delegates to Action.GetParameter under the hood.
+        // The lookup-then-resolve idiom: __ResolveData(name) → As<T>() (a lazy typed
+        // view). __ResolveData itself delegates to Action.GetParameter under the hood.
         await Assert.That(generated).Contains("__ResolveData");
-        await Assert.That(generated).Contains(".Value<");
+        await Assert.That(generated).Contains(".As<");
     }
 
     [Test]
