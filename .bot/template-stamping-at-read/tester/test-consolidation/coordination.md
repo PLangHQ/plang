@@ -22,7 +22,14 @@ parity with a cobertura line-set diff before deleting, then commit per module.
 | DataTests (enumeration) | tester | **done** | **96 → 79** (−17), parity. Tables collapsed (IsVariable/HasVariableReference/IsEmpty/Path/ToString 23→5); ~73 distinct Data behaviors kept. Mixed file, so smaller cut than TypeMapping. |
 | EngineTypesTests (enumeration) | tester | **done** | **88 → 31** (−57, 65%), parity. 5 tables collapsed (Clr/Name/Kind/Mime/Compressible 62→5); registry Add/Remove/KindOf + BuilderNames + ComplexSchemas + depth-limit kept. |
 | VariablesTests | tester | **done** | **69 → 63** (−6), parity. Mixed file (3 classes); only Contains/Remove/GetValue/Get_Generic were tables. Most are distinct Set/Get navigation branches that stay. |
+| AssertTests (enumeration) | tester | **done** | **36 → 14** (−22, 61%), parity. Value-based asserts (Equals/NotEquals/IsTrue/IsFalse/IsNull/IsNotNull/Contains/GreaterThan/LessThan) → 9 data-driven; 4 file-path cases + custom-message kept. |
 | math | tester | queued | fully raw, small. |
+
+### Heuristic caveat (learned)
+Prefix-clustering over-counts: `RenderTests` is 33 `Render_*` but each is a distinct
+scenario (inline/file/callgoal/include) — NOT collapsible. A real table is
+input→output rows with identical shape (AssertEquals{Expected,Actual}.Run() → pass/fail).
+Check a few bodies before assuming a high-cluster file is tabular.
 
 ### Diminishing returns — where the big cuts actually are
 Pure-enumeration files give 60–77% cuts (TypeMapping 90→21, EngineTypes 88→31). Mixed

@@ -24,63 +24,12 @@ public class AssertTests
 
     private static Data D(object? value) => value == null ? new Data("") : Data.Ok(value);
 
-    // --- Equals ---
 
-    [Test]
-    public async Task Equals_SameInts_Passes()
-    {
-        var (context, _) = CreateContext();
-        var action = new AssertEquals { Context = context, Expected = D(42), Actual = D(42) };
-        var result = await action.Run();
-        await result.IsSuccess();
-    }
 
-    [Test]
-    public async Task Equals_DifferentValues_Fails()
-    {
-        var (context, _) = CreateContext();
-        var action = new AssertEquals { Context = context, Expected = D(42), Actual = D(99) };
-        var result = await action.Run();
-        await result.IsFailure();
-        await Assert.That(result.Error).IsNotNull();
-        await Assert.That(result.Error is AssertionError).IsTrue();
-    }
 
-    [Test]
-    public async Task Equals_IntAndDouble_CoercesAndPasses()
-    {
-        var (context, _) = CreateContext();
-        var action = new AssertEquals { Context = context, Expected = D(5), Actual = D(5.0) };
-        var result = await action.Run();
-        await result.IsSuccess();
-    }
 
-    [Test]
-    public async Task Equals_Strings_Passes()
-    {
-        var (context, _) = CreateContext();
-        var action = new AssertEquals { Context = context, Expected = D("hello"), Actual = D("hello") };
-        var result = await action.Run();
-        await result.IsSuccess();
-    }
 
-    [Test]
-    public async Task Equals_NullBothSides_Passes()
-    {
-        var (context, _) = CreateContext();
-        var action = new AssertEquals { Context = context, Expected = D(null), Actual = D(null) };
-        var result = await action.Run();
-        await result.IsSuccess();
-    }
 
-    [Test]
-    public async Task Equals_NullVsValue_Fails()
-    {
-        var (context, _) = CreateContext();
-        var action = new AssertEquals { Context = context, Expected = D(null), Actual = D(5) };
-        var result = await action.Run();
-        await result.IsFailure();
-    }
 
     [Test]
     public async Task Equals_CustomMessage_IncludedInError()
@@ -94,101 +43,18 @@ public class AssertTests
         await Assert.That(error!.UserMessage).IsEqualTo("Sum check");
     }
 
-    // --- NotEquals ---
 
-    [Test]
-    public async Task NotEquals_DifferentValues_Passes()
-    {
-        var (context, _) = CreateContext();
-        var action = new AssertNotEquals { Context = context, Expected = D(1), Actual = D(2) };
-        var result = await action.Run();
-        await result.IsSuccess();
-    }
 
-    [Test]
-    public async Task NotEquals_SameValues_Fails()
-    {
-        var (context, _) = CreateContext();
-        var action = new AssertNotEquals { Context = context, Expected = D(5), Actual = D(5) };
-        var result = await action.Run();
-        await result.IsFailure();
-    }
 
-    // --- IsTrue ---
 
-    [Test]
-    public async Task IsTrue_TrueValue_Passes()
-    {
-        var (context, _) = CreateContext();
-        var action = new AssertIsTrue { Context = context, Value = D(true) };
-        var result = await action.Run();
-        await result.IsSuccess();
-    }
 
-    [Test]
-    public async Task IsTrue_FalseValue_Fails()
-    {
-        var (context, _) = CreateContext();
-        var action = new AssertIsTrue { Context = context, Value = D(false) };
-        var result = await action.Run();
-        await result.IsFailure();
-    }
 
-    [Test]
-    public async Task IsTrue_NonZeroNumber_Passes()
-    {
-        var (context, _) = CreateContext();
-        var action = new AssertIsTrue { Context = context, Value = D(42) };
-        var result = await action.Run();
-        await result.IsSuccess();
-    }
 
-    [Test]
-    public async Task IsTrue_Zero_Fails()
-    {
-        var (context, _) = CreateContext();
-        var action = new AssertIsTrue { Context = context, Value = D(0) };
-        var result = await action.Run();
-        await result.IsFailure();
-    }
 
-    [Test]
-    public async Task IsTrue_Null_Fails()
-    {
-        var (context, _) = CreateContext();
-        var action = new AssertIsTrue { Context = context, Value = D(null) };
-        var result = await action.Run();
-        await result.IsFailure();
-    }
 
-    // --- IsFalse ---
 
-    [Test]
-    public async Task IsFalse_FalseValue_Passes()
-    {
-        var (context, _) = CreateContext();
-        var action = new AssertIsFalse { Context = context, Value = D(false) };
-        var result = await action.Run();
-        await result.IsSuccess();
-    }
 
-    [Test]
-    public async Task IsFalse_TrueValue_Fails()
-    {
-        var (context, _) = CreateContext();
-        var action = new AssertIsFalse { Context = context, Value = D(true) };
-        var result = await action.Run();
-        await result.IsFailure();
-    }
 
-    [Test]
-    public async Task IsFalse_Null_Passes()
-    {
-        var (context, _) = CreateContext();
-        var action = new AssertIsFalse { Context = context, Value = D(null) };
-        var result = await action.Run();
-        await result.IsSuccess();
-    }
 
     // --- IsTrue/IsFalse over a path ---
     //
@@ -258,150 +124,124 @@ public class AssertTests
         System.IO.Directory.Delete(root, true);
     }
 
-    // --- IsNull ---
 
-    [Test]
-    public async Task IsNull_NullValue_Passes()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // --- value-based assertions (data-driven; a failing row names itself) ---
+
+    private static async Task Expect(global::app.data.@this result, bool pass, string label)
     {
-        var (context, _) = CreateContext();
-        var action = new AssertIsNull { Context = context, Value = D(null) };
-        var result = await action.Run();
-        await result.IsSuccess();
+        if (pass) await result.IsSuccess();
+        else { await result.IsFailure(); await Assert.That(result.Error is AssertionError).IsTrue().Because(label); }
     }
 
     [Test]
-    public async Task IsNull_NonNullValue_Fails()
+    public async Task Equals_Classifies()
     {
         var (context, _) = CreateContext();
-        var action = new AssertIsNull { Context = context, Value = D("hello") };
-        var result = await action.Run();
-        await result.IsFailure();
-    }
-
-    // --- IsNotNull ---
-
-    [Test]
-    public async Task IsNotNull_NonNullValue_Passes()
-    {
-        var (context, _) = CreateContext();
-        var action = new AssertIsNotNull { Context = context, Value = D("hello") };
-        var result = await action.Run();
-        await result.IsSuccess();
+        (object? exp, object? act, bool pass, string label)[] table =
+        {
+            (42, 42, true, "same ints"), (42, 99, false, "different"),
+            (5, 5.0, true, "int coerces to double"), ("hello", "hello", true, "strings"),
+            (null, null, true, "both null"), (null, 5, false, "null vs value"),
+        };
+        foreach (var (exp, act, pass, label) in table)
+            await Expect(await new AssertEquals { Context = context, Expected = D(exp), Actual = D(act) }.Run(), pass, label);
     }
 
     [Test]
-    public async Task IsNotNull_NullValue_Fails()
+    public async Task NotEquals_Classifies()
     {
         var (context, _) = CreateContext();
-        var action = new AssertIsNotNull { Context = context, Value = D(null) };
-        var result = await action.Run();
-        await result.IsFailure();
-    }
-
-    // --- Contains ---
-
-    [Test]
-    public async Task Contains_StringContainsSubstring_Passes()
-    {
-        var (context, _) = CreateContext();
-        var action = new AssertContains { Context = context, Value = D("hello world"), Container = D("world") };
-        var result = await action.Run();
-        await result.IsSuccess();
+        (object? a, object? b, bool pass, string label)[] table = { (1, 2, true, "different"), (1, 1, false, "same") };
+        foreach (var (a, b, pass, label) in table)
+            await Expect(await new AssertNotEquals { Context = context, Expected = D(a), Actual = D(b) }.Run(), pass, label);
     }
 
     [Test]
-    public async Task Contains_StringDoesNotContain_Fails()
+    public async Task IsTrue_Classifies()
     {
         var (context, _) = CreateContext();
-        var action = new AssertContains { Context = context, Value = D("hello world"), Container = D("xyz") };
-        var result = await action.Run();
-        await result.IsFailure();
+        (object? v, bool pass, string label)[] table =
+        { (true, true, "true"), (false, false, "false"), (42, true, "nonzero"), (0, false, "zero"), (null, false, "null") };
+        foreach (var (v, pass, label) in table)
+            await Expect(await new AssertIsTrue { Context = context, Value = D(v) }.Run(), pass, label);
     }
 
     [Test]
-    public async Task Contains_ListContainsElement_Passes()
+    public async Task IsFalse_Classifies()
+    {
+        var (context, _) = CreateContext();
+        (object? v, bool pass, string label)[] table = { (false, true, "false"), (true, false, "true"), (null, true, "null") };
+        foreach (var (v, pass, label) in table)
+            await Expect(await new AssertIsFalse { Context = context, Value = D(v) }.Run(), pass, label);
+    }
+
+    [Test]
+    public async Task IsNull_Classifies()
+    {
+        var (context, _) = CreateContext();
+        await Expect(await new AssertIsNull { Context = context, Value = D(null) }.Run(), true, "null");
+        await Expect(await new AssertIsNull { Context = context, Value = D("x") }.Run(), false, "non-null");
+    }
+
+    [Test]
+    public async Task IsNotNull_Classifies()
+    {
+        var (context, _) = CreateContext();
+        await Expect(await new AssertIsNotNull { Context = context, Value = D("hello") }.Run(), true, "non-null");
+        await Expect(await new AssertIsNotNull { Context = context, Value = D(null) }.Run(), false, "null");
+    }
+
+    [Test]
+    public async Task Contains_Classifies()
     {
         var (context, _) = CreateContext();
         var list = new List<object> { 1, 2, 3 };
-        var action = new AssertContains { Context = context, Value = D(list), Container = D(2) };
-        var result = await action.Run();
-        await result.IsSuccess();
+        (object? value, object? container, bool pass, string label)[] table =
+        {
+            ("hello world", "world", true, "string contains"),
+            ("hello", "world", false, "string missing"),
+            (list, 2, true, "list contains"),
+            (list, 5, false, "list missing"),
+            (null, "x", false, "null value"),
+        };
+        foreach (var (value, container, pass, label) in table)
+            await Expect(await new AssertContains { Context = context, Value = D(value), Container = D(container) }.Run(), pass, label);
     }
 
     [Test]
-    public async Task Contains_ListDoesNotContain_Fails()
+    public async Task GreaterThan_Classifies()
     {
         var (context, _) = CreateContext();
-        var list = new List<object> { 1, 2, 3 };
-        var action = new AssertContains { Context = context, Value = D(list), Container = D(99) };
-        var result = await action.Run();
-        await result.IsFailure();
+        (object? a, object? b, bool pass, string label)[] table = { (10, 5, true, "larger"), (5, 5, false, "equal"), (3, 5, false, "smaller") };
+        foreach (var (a, b, pass, label) in table)
+            await Expect(await new AssertGreaterThan { Context = context, A = D(a), B = D(b) }.Run(), pass, label);
     }
 
     [Test]
-    public async Task Contains_NullValue_Fails()
+    public async Task LessThan_Classifies()
     {
         var (context, _) = CreateContext();
-        var action = new AssertContains { Context = context, Value = D(null), Container = D("x") };
-        var result = await action.Run();
-        await result.IsFailure();
-    }
-
-    // --- GreaterThan ---
-
-    [Test]
-    public async Task GreaterThan_LargerValue_Passes()
-    {
-        var (context, _) = CreateContext();
-        var action = new AssertGreaterThan { Context = context, A = D(10), B = D(5) };
-        var result = await action.Run();
-        await result.IsSuccess();
-    }
-
-    [Test]
-    public async Task GreaterThan_EqualValues_Fails()
-    {
-        var (context, _) = CreateContext();
-        var action = new AssertGreaterThan { Context = context, A = D(5), B = D(5) };
-        var result = await action.Run();
-        await result.IsFailure();
-    }
-
-    [Test]
-    public async Task GreaterThan_SmallerValue_Fails()
-    {
-        var (context, _) = CreateContext();
-        var action = new AssertGreaterThan { Context = context, A = D(3), B = D(5) };
-        var result = await action.Run();
-        await result.IsFailure();
-    }
-
-    // --- LessThan ---
-
-    [Test]
-    public async Task LessThan_SmallerValue_Passes()
-    {
-        var (context, _) = CreateContext();
-        var action = new AssertLessThan { Context = context, A = D(3), B = D(5) };
-        var result = await action.Run();
-        await result.IsSuccess();
-    }
-
-    [Test]
-    public async Task LessThan_EqualValues_Fails()
-    {
-        var (context, _) = CreateContext();
-        var action = new AssertLessThan { Context = context, A = D(5), B = D(5) };
-        var result = await action.Run();
-        await result.IsFailure();
-    }
-
-    [Test]
-    public async Task LessThan_LargerValue_Fails()
-    {
-        var (context, _) = CreateContext();
-        var action = new AssertLessThan { Context = context, A = D(10), B = D(5) };
-        var result = await action.Run();
-        await result.IsFailure();
+        (object? a, object? b, bool pass, string label)[] table = { (3, 5, true, "smaller"), (5, 5, false, "equal"), (10, 5, false, "larger") };
+        foreach (var (a, b, pass, label) in table)
+            await Expect(await new AssertLessThan { Context = context, A = D(a), B = D(b) }.Run(), pass, label);
     }
 }
