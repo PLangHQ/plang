@@ -39,9 +39,10 @@ public partial class DataWrappedActionList : global::app.module.IContext
 public partial class DataWrappedStringUses : global::app.module.IContext
 {
     public partial global::app.data.@this<global::app.type.text.@this> Body { get; init; }
-    public Task<global::app.data.@this> Run()
+    public async Task<global::app.data.@this> Run()
     {
-        var len = (Body.Peek()?.ToString())?.Length ?? 0;
-        return Task.FromResult(global::app.data.@this.Ok(len));
+        // Consume through the value door — lazy resolution happens here, not at Peek.
+        var len = ((await Body.Value())?.ToString())?.Length ?? 0;
+        return global::app.data.@this.Ok(len);
     }
 }

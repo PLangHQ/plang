@@ -52,8 +52,8 @@ public class DataWrappedListTests
             parameters: new[] { ("messages", (object?)raw) },
             variables: new Dictionary<string, object?> { ["comment"] = "you are a compiler" });
         var typed = result.Data as global::app.data.@this<global::app.type.list.@this<global::app.module.llm.LlmMessage>>;
-        await Assert.That((await typed!.Value())).IsNotNull();
-        var items = typed.GetValue<List<global::app.module.llm.LlmMessage>>()!;
+        // Resolved form is the value door's RETURN (stamped → non-cacheable).
+        var items = (await typed!.ResolvedValue<List<global::app.module.llm.LlmMessage>>())!;
         await Assert.That(items[0].Content).IsEqualTo("you are a compiler");
     }
 
@@ -79,7 +79,8 @@ public class DataWrappedDictTests
             parameters: new[] { ("headers", (object?)raw) },
             variables: new Dictionary<string, object?> { ["x"] = "substituted" });
         var typed = result.Data as global::app.data.@this<global::app.type.dict.@this>;
-        var d = typed!.GetValue<Dictionary<string, object?>>()!;
+        // Resolved form is the value door's RETURN (stamped → non-cacheable).
+        var d = (await typed!.ResolvedValue<Dictionary<string, object?>>())!;
         await Assert.That((d["inner"])?.ToString()).IsEqualTo("substituted");
         await Assert.That((d["other"])?.ToString()).IsEqualTo("literal");
     }

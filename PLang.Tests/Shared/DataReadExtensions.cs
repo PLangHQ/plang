@@ -19,4 +19,20 @@ public static class DataReadExtensions
         var (converted, _) = global::app.type.catalog.@this.TryConvert(v, targetType);
         return converted;
     }
+
+    /// <summary>
+    /// The RESOLVED typed read — opens the value door, then converts. Unlike
+    /// <see cref="GetValue{T}"/> (which reads the in-memory Peek), this resolves
+    /// templates / %ref% / deep container holes first. A stamped container is
+    /// non-cacheable, so the resolved form is the door's RETURN, not what Peek
+    /// would show — use this whenever the value under test carries variables.
+    /// </summary>
+    public static async System.Threading.Tasks.Task<T?> ResolvedValue<T>(this global::app.data.@this d)
+    {
+        var v = await d.Value();
+        if (v == null) return default;
+        if (v is T typed) return typed;
+        var (converted, _) = global::app.type.catalog.@this.TryConvert(v, typeof(T));
+        return converted is T result ? result : default;
+    }
 }

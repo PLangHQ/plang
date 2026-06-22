@@ -110,8 +110,8 @@ public class DeepResolutionListTests
             variables: new Dictionary<string, object?> { ["prompt"] = "You are a compiler" });
 
         var typed = result.Data as global::app.data.@this<global::app.type.list.@this<global::app.module.llm.LlmMessage>>;
-        await Assert.That((await typed!.Value())).IsNotNull();
-        var items = typed.GetValue<List<global::app.module.llm.LlmMessage>>()!;
+        // Resolved form is the value door's RETURN (stamped → non-cacheable).
+        var items = (await typed!.ResolvedValue<List<global::app.module.llm.LlmMessage>>())!;
         await Assert.That(items[0].Content).IsEqualTo("You are a compiler");
     }
 
@@ -138,7 +138,7 @@ public class DeepResolutionListTests
             variables: new Dictionary<string, object?> { ["a"] = "alpha", ["b"] = "beta" });
 
         var typed = result.Data as global::app.data.@this<global::app.type.list.@this<global::app.module.llm.LlmMessage>>;
-        var items = typed!.GetValue<List<global::app.module.llm.LlmMessage>>()!;
+        var items = (await typed!.ResolvedValue<List<global::app.module.llm.LlmMessage>>())!;
         await Assert.That(items[0].Content).IsEqualTo("alpha");
         await Assert.That(items[1].Content).IsEqualTo("beta");
     }
@@ -161,7 +161,9 @@ public class DeepResolutionDictTests
             variables: new Dictionary<string, object?> { ["x"] = "substituted" });
 
         var typed = result.Data as global::app.data.@this<global::app.type.dict.@this>;
-        var d = typed!.GetValue<Dictionary<string, object?>>()!;
+        // Lazy + stamped (Template="plang" → non-cacheable): the resolved dict is the
+        // RETURN of the value door, not what Peek/GetValue see.
+        var d = (await typed!.ResolvedValue<Dictionary<string, object?>>())!;
         await Assert.That(d["inner"]).IsEqualTo("substituted");
         await Assert.That(d["other"]).IsEqualTo("literal");
     }
@@ -180,7 +182,7 @@ public class DeepResolutionDictTests
             variables: new Dictionary<string, object?> { ["a"] = "alpha", ["b"] = "beta" });
 
         var typed = result.Data as global::app.data.@this<global::app.type.dict.@this>;
-        var d = typed!.GetValue<Dictionary<string, object?>>()!;
+        var d = (await typed!.ResolvedValue<Dictionary<string, object?>>())!;
         var inner = d["items"] as List<object?>;
         await Assert.That(inner![0]).IsEqualTo("alpha");
         await Assert.That(inner[1]).IsEqualTo("beta");
