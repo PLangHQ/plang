@@ -64,6 +64,6 @@ public sealed class @this
         Register(typeof(System.Collections.IList), new global::app.variable.navigator.List());
         Register(typeof(IDictionary<string, object?>), new global::app.variable.navigator.Dictionary());
         Register(typeof(IDictionary<,>), new global::app.variable.navigator.Dictionary());
-        Register(typeof(global::app.snapshot.@this), new global::app.variable.navigator.Snapshot());
+        // snapshot.@this owns its own Navigate (app.snapshot.this.Variables.cs).
     }
 }

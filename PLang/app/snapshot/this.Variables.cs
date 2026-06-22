@@ -22,6 +22,23 @@ public sealed partial class @this
         => VariableList()?.FirstOrDefault(v =>
             string.Equals(v.Name, name, StringComparison.OrdinalIgnoreCase));
 
+    /// <summary>
+    /// A snapshot owns its child read. <c>%snap.variables%</c> is the variable
+    /// namespace — it passes through so the next segment names a variable; any
+    /// other key resolves that captured variable's value. (The write side,
+    /// <c>set %snap.variables.x% = 2</c>, routes to <see cref="SetVariable"/>.)
+    /// </summary>
+    public override System.Threading.Tasks.ValueTask<data.@this> Navigate(data.@this parent, string key)
+    {
+        if (string.Equals(key, "variables", StringComparison.OrdinalIgnoreCase))
+            return new(new data.@this(key, this, parent: parent));
+
+        var v = GetVariable(key);
+        return new(v != null
+            ? new data.@this(key, v.Peek(), parent: parent)
+            : data.@this.NotFound(key));
+    }
+
     /// <summary>Sets a captured variable's value in place (or appends one).</summary>
     public void SetVariable(string name, object? value)
     {
