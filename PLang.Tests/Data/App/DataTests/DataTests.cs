@@ -93,31 +93,8 @@ public class DataTests
         await Assert.That(ov.Properties.Count).IsEqualTo(0);
     }
 
-    [Test]
-    public async Task Path_WithNoParent_EqualsName()
-    {
-        var ov = new Data("testVar");
 
-        await Assert.That(ov.Path).IsEqualTo("testVar");
-    }
 
-    [Test]
-    public async Task Path_WithParent_IncludesParentPath()
-    {
-        var parent = new Data("parent", new { Name = "test" });
-        var child = new Data("Name", "test", parent: parent);
-
-        await Assert.That(child.Path).IsEqualTo("parent.Name");
-    }
-
-    [Test]
-    public async Task Path_WithNumericName_UsesBracketNotation()
-    {
-        var parent = new Data("items", new List<int> { 1, 2, 3 });
-        var child = new Data("0", 1, parent: parent);
-
-        await Assert.That(child.Path).IsEqualTo("items[0]");
-    }
 
     [Test]
     public async Task Value_Setter_UpdatesValue()
@@ -341,37 +318,9 @@ public class DataTests
         await Assert.That(child.IsInitialized).IsFalse();
     }
 
-    [Test]
-    public async Task IsEmpty_NullValue_ReturnsTrue()
-    {
-        var ov = new Data("test");
 
-        await Assert.That(await ov.IsEmpty()).IsTrue();
-    }
 
-    [Test]
-    public async Task IsEmpty_EmptyString_ReturnsTrue()
-    {
-        var ov = new Data("test", "");
 
-        await Assert.That(await ov.IsEmpty()).IsTrue();
-    }
-
-    [Test]
-    public async Task IsEmpty_NonEmptyValue_ReturnsFalse()
-    {
-        var ov = new Data("test", "hello");
-
-        await Assert.That(await ov.IsEmpty()).IsFalse();
-    }
-
-    [Test]
-    public async Task IsEmpty_NotInitialized_ReturnsTrue()
-    {
-        var ov = new Data("test");
-
-        await Assert.That(await ov.IsEmpty()).IsTrue();
-    }
 
     [Test]
     public async Task Null_CreatesNullData()
@@ -404,26 +353,7 @@ public class DataTests
         await Assert.That(ReferenceEquals((ov.Peek()), app.type.@null.@this.Instance)).IsTrue();
     }
 
-    [Test]
-    public async Task ToString_WithValue_ReturnsValueString()
-    {
-        var ov = new Data("test", 42);
 
-        var str = ov.ToString();
-
-        await Assert.That(str).IsEqualTo("42");
-    }
-
-    [Test]
-    public async Task ToString_NullValue_ReturnsNullString()
-    {
-        var ov = new Data("test");
-
-        var str = ov.ToString();
-
-        // A no-value Data renders the plang null citizen — "null", not "(null)".
-        await Assert.That(str).IsEqualTo("null");
-    }
 
     [Test]
     public async Task Parent_WhenSet_IsAccessible()
@@ -991,6 +921,88 @@ public class DataTests
     // Data.Merge deleted — it was a list operation living on Data that lowered to
     // CLR List<Data>, with zero production callers. Merge-by-name belongs on the
     // native list type if/when needed (see todos: merge onto list.@this).
+    // --- IsVariable / HasVariableReference / IsEmpty / Path / ToString (data-driven) ---
+
+    [Test]
+    public async Task IsVariable_Classifies()
+    {
+        (Data d, bool expected, string label)[] table =
+        {
+            (new Data("x", new global::app.type.text.@this("%var%", "plang")), true,  "%var%"),
+            (new Data("x", new global::app.type.text.@this("%v%", "plang")),   true,  "%v%"),
+            (new Data("x", "%%"),          false, "%%"),
+            (new Data("x", "hello %var%"), false, "embedded"),
+            (new Data("x", "%var% + 1"),   false, "trailing"),
+            (new Data("x", 42),            false, "non-string"),
+            (new Data("x"),                false, "null"),
+        };
+        foreach (var (d, expected, label) in table)
+            await Assert.That(d.IsVariable).IsEqualTo(expected).Because(label);
+    }
+
+    [Test]
+    public async Task HasVariableReference_Classifies()
+    {
+        (Data d, bool expected, string label)[] table =
+        {
+            (new Data("x", new global::app.type.text.@this("hello %name%", "plang")), true, "embedded"),
+            (new Data("x", new global::app.type.text.@this("%a% + %b%", "plang")),    true, "multiple"),
+            (new Data("x", new global::app.type.text.@this("%var%", "plang")),        true, "single"),
+            (new Data("x", "no vars"), false, "none"),
+            (new Data("x", "%%"),      false, "%%"),
+            (new Data("x", 42),        false, "non-string"),
+            (new Data("x"),            false, "null"),
+        };
+        foreach (var (d, expected, label) in table)
+            await Assert.That(d.HasVariableReference).IsEqualTo(expected).Because(label);
+    }
+
+    [Test]
+    public async Task IsEmpty_Classifies()
+    {
+        (Data d, bool expected, string label)[] table =
+        {
+            (new Data("test"),          true,  "null/not-initialized"),
+            (new Data("test", ""),      true,  "empty string"),
+            (new Data("test", "hello"), false, "non-empty"),
+        };
+        foreach (var (d, expected, label) in table)
+            await Assert.That(await d.IsEmpty()).IsEqualTo(expected).Because(label);
+    }
+
+    [Test]
+    public async Task Path_BuildsFromParentChain()
+    {
+        var noParent = new Data("testVar");
+        await Assert.That(noParent.Path).IsEqualTo("testVar").Because("no parent");
+
+        var objParent = new Data("parent", new { Name = "test" });
+        await Assert.That(new Data("Name", "test", parent: objParent).Path).IsEqualTo("parent.Name").Because("dot");
+
+        var listParent = new Data("items", new List<int> { 1, 2, 3 });
+        await Assert.That(new Data("0", 1, parent: listParent).Path).IsEqualTo("items[0]").Because("bracket");
+    }
+
+    [Test]
+    public async Task ToString_RendersValueOrNull()
+    {
+        await Assert.That(new Data("test", 42).ToString()).IsEqualTo("42").Because("value");
+        // A no-value Data renders the plang null citizen — "null", not "(null)".
+        await Assert.That(new Data("test").ToString()).IsEqualTo("null").Because("null");
+    }
+
+    [Test]
+    public async Task Value_LiftsEnumToChoiceAndClrObjectToClrItem()
+    {
+        // A CLR enum lifts to a choice item; an arbitrary CLR object lifts to a clr item
+        // (the value-door's rung-1/rung-2 paths in this.cs). Materialize to force the lift.
+        var en = new Data("e", System.DayOfWeek.Monday);
+        await Assert.That(await en.Value()).IsNotNull();
+
+        var obj = new Data("o", new System.Text.StringBuilder("hi"));
+        await Assert.That(await obj.Value()).IsNotNull();
+    }
+
 }
 
 public class DynamicDataTests
@@ -1040,103 +1052,4 @@ public class DynamicDataTests
 
     // --- IsVariable tests ---
 
-    [Test]
-    public async Task IsVariable_StandardVariable_ReturnsTrue()
-    {
-        var d = new Data("x", new global::app.type.text.@this("%var%", "plang"));
-        await Assert.That(d.IsVariable).IsTrue();
-    }
-
-    [Test]
-    public async Task IsVariable_ShortName_ReturnsTrue()
-    {
-        var d = new Data("x", new global::app.type.text.@this("%v%", "plang"));
-        await Assert.That(d.IsVariable).IsTrue();
-    }
-
-    [Test]
-    public async Task IsVariable_EmptyPercents_ReturnsFalse()
-    {
-        var d = new Data("x", "%%");
-        await Assert.That(d.IsVariable).IsFalse();
-    }
-
-    [Test]
-    public async Task IsVariable_EmbeddedVariable_ReturnsFalse()
-    {
-        var d = new Data("x", "hello %var%");
-        await Assert.That(d.IsVariable).IsFalse();
-    }
-
-    [Test]
-    public async Task IsVariable_VariableWithTrailing_ReturnsFalse()
-    {
-        var d = new Data("x", "%var% + 1");
-        await Assert.That(d.IsVariable).IsFalse();
-    }
-
-    [Test]
-    public async Task IsVariable_NonStringValue_ReturnsFalse()
-    {
-        var d = new Data("x", 42);
-        await Assert.That(d.IsVariable).IsFalse();
-    }
-
-    [Test]
-    public async Task IsVariable_NullValue_ReturnsFalse()
-    {
-        var d = new Data("x");
-        await Assert.That(d.IsVariable).IsFalse();
-    }
-
-    // --- HasVariableReference tests ---
-
-    [Test]
-    public async Task HasVariableReference_EmbeddedVariable_ReturnsTrue()
-    {
-        var d = new Data("x", new global::app.type.text.@this("hello %name%", "plang"));
-        await Assert.That(d.HasVariableReference).IsTrue();
-    }
-
-    [Test]
-    public async Task HasVariableReference_MultipleVariables_ReturnsTrue()
-    {
-        var d = new Data("x", new global::app.type.text.@this("%a% + %b%", "plang"));
-        await Assert.That(d.HasVariableReference).IsTrue();
-    }
-
-    [Test]
-    public async Task HasVariableReference_SingleVariable_ReturnsTrue()
-    {
-        var d = new Data("x", new global::app.type.text.@this("%var%", "plang"));
-        await Assert.That(d.HasVariableReference).IsTrue();
-    }
-
-    [Test]
-    public async Task HasVariableReference_NoVariables_ReturnsFalse()
-    {
-        var d = new Data("x", "no vars");
-        await Assert.That(d.HasVariableReference).IsFalse();
-    }
-
-    [Test]
-    public async Task HasVariableReference_EmptyPercents_ReturnsFalse()
-    {
-        var d = new Data("x", "%%");
-        await Assert.That(d.HasVariableReference).IsFalse();
-    }
-
-    [Test]
-    public async Task HasVariableReference_NonStringValue_ReturnsFalse()
-    {
-        var d = new Data("x", 42);
-        await Assert.That(d.HasVariableReference).IsFalse();
-    }
-
-    [Test]
-    public async Task HasVariableReference_NullValue_ReturnsFalse()
-    {
-        var d = new Data("x");
-        await Assert.That(d.HasVariableReference).IsFalse();
-    }
 }
