@@ -228,11 +228,13 @@ public class AsTIdentityTests
 
         var canonical = await paramData.AsCanonical();
 
-        var resolved = global::app.type.item.@this.Lower<List<object?>>(await canonical.Value())!;
-        var first = (Dictionary<string, object?>)resolved[0]!;
-        var second = (Dictionary<string, object?>)resolved[1]!;
-        await Assert.That((first["Content"])?.ToString()).IsEqualTo("You are a compiler");
-        await Assert.That((second["Content"])?.ToString()).IsEqualTo("build this goal");
+        // Read the way a real consumer does: enumerate the list, resolve each row, read
+        // its field through the door — not a whole-list Lower into raw CLR dictionaries.
+        var rows = new List<global::app.type.dict.@this>();
+        foreach (var r in (global::app.type.list.@this)(await canonical.Value()))
+            rows.Add((global::app.type.dict.@this)(await r.Value()));
+        await Assert.That((await rows[0].Get("Content")!.Value()).ToString()).IsEqualTo("You are a compiler");
+        await Assert.That((await rows[1].Get("Content")!.Value()).ToString()).IsEqualTo("build this goal");
     }
 
     // Rule 4f — literal list (no %vars% anywhere) still walks. Symmetric with the typed

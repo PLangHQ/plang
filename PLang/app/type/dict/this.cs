@@ -294,36 +294,16 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         // All-raw backing IS the raw map the caller wants → hand it back (O(1)).
         if (!_hasWrapped && target.IsInstanceOfType(_value)) return _value;
 
-        // A CLR map target: each entry's value lowers ITSELF to the value-type (terminal).
-        if (typeof(System.Collections.IDictionary).IsAssignableFrom(target))
-        {
-            var vt = target.IsGenericType ? target.GetGenericArguments()[1] : typeof(object);
-            var map = (System.Collections.IDictionary)System.Activator.CreateInstance(
-                target.IsInterface ? typeof(Dictionary<,>).MakeGenericType(typeof(string), vt) : target)!;
-            foreach (var key in _value.Keys) map[key] = Slot(key).Peek().Clr(vt);
-            return map;
-        }
-
-        // A CLR record/other target reconstructs from its DATA form — genuinely
-        // deserialization (custom record converters, e.g. Goal), so it keeps the shared
-        // converter path over the raw map.
-        var raw = new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase);
-        foreach (var key in _value.Keys)
-            raw[key] = Unwrap(Slot(key).Peek());
-        return ClrConvert(raw, target);
+        // A CLR record target: the dict serializes ITSELF (its own [JsonConverter], so
+        // each value renders by its own type) and STJ rebuilds the record with the
+        // shared read options (Context-bound path adapter so nested path fields wire;
+        // record ctors / enums handled). No intermediate map, no hub. (Untyped fallback
+        // only — a typed read gives the record directly; see the SettingsStore/Identity todo.)
+        var opts = global::app.channel.serializer.json.Options.Read(Context);
+        var utf8 = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(this, opts);
+        return System.Text.Json.JsonSerializer.Deserialize(utf8, target, opts);
     }
 
-    private static object? Unwrap(object? value) => value switch
-    {
-        string or byte[] => value,
-        // Any item leaf — a scalar wrapper (text/number/bool/…) OR a nested dict/list —
-        // decomposes through its own Clr, so a `dict` projects to a fully-raw CLR map.
-        global::app.type.item.@this leaf => leaf.Clr<object>(),
-        // A raw CLR list may still hold dict/list elements; unwrap each so a nested
-        // object reads out raw too — otherwise STJ would reflect its C# surface.
-        System.Collections.IEnumerable seq => seq.Cast<object?>().Select(Unwrap).ToList(),
-        _ => value,
-    };
 
     /// <summary>
     /// item truthiness: an empty dict is falsy, a dict with any entry is truthy —

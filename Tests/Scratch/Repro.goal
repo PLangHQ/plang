@@ -1,0 +1,3 @@
+Repro
+- set %myrec% = {"id":"abc123"}
+- write out %myrec.id%

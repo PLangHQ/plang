@@ -110,8 +110,9 @@ public class DeepResolutionListTests
             variables: new Dictionary<string, object?> { ["prompt"] = "You are a compiler" });
 
         var typed = result.Data as global::app.data.@this<global::app.type.list.@this<global::app.module.llm.LlmMessage>>;
-        // Resolved form is the value door's RETURN (stamped → non-cacheable).
-        var items = (await typed!.ResolvedValue<List<global::app.module.llm.LlmMessage>>())!;
+        // Read the way a real handler does: enumerate, resolve + convert each row through its door.
+        var items = new List<global::app.module.llm.LlmMessage>();
+        foreach (var row in (await typed!.Value())!) items.Add((await row.Value()).Clr<global::app.module.llm.LlmMessage>()!);
         await Assert.That(items[0].Content).IsEqualTo("You are a compiler");
     }
 
@@ -138,7 +139,8 @@ public class DeepResolutionListTests
             variables: new Dictionary<string, object?> { ["a"] = "alpha", ["b"] = "beta" });
 
         var typed = result.Data as global::app.data.@this<global::app.type.list.@this<global::app.module.llm.LlmMessage>>;
-        var items = (await typed!.ResolvedValue<List<global::app.module.llm.LlmMessage>>())!;
+        var items = new List<global::app.module.llm.LlmMessage>();
+        foreach (var row in (await typed!.Value())!) items.Add((await row.Value()).Clr<global::app.module.llm.LlmMessage>()!);
         await Assert.That(items[0].Content).IsEqualTo("alpha");
         await Assert.That(items[1].Content).IsEqualTo("beta");
     }
@@ -161,11 +163,11 @@ public class DeepResolutionDictTests
             variables: new Dictionary<string, object?> { ["x"] = "substituted" });
 
         var typed = result.Data as global::app.data.@this<global::app.type.dict.@this>;
-        // Lazy + stamped (Template="plang" → non-cacheable): the resolved dict is the
-        // RETURN of the value door, not what Peek/GetValue see.
-        var d = (await typed!.ResolvedValue<Dictionary<string, object?>>())!;
-        await Assert.That(d["inner"]).IsEqualTo("substituted");
-        await Assert.That(d["other"]).IsEqualTo("literal");
+        // Lazy + stamped (Template="plang" → non-cacheable): resolve the dict through its
+        // door, then read each value through ITS door — the real per-item read path.
+        var d = (await typed!.Value())!;
+        await Assert.That((await d.Get("inner")!.Value()).ToString()).IsEqualTo("substituted");
+        await Assert.That((await d.Get("other")!.Value()).ToString()).IsEqualTo("literal");
     }
 
     // Dictionary value is itself a list → walks both layers.
@@ -182,9 +184,11 @@ public class DeepResolutionDictTests
             variables: new Dictionary<string, object?> { ["a"] = "alpha", ["b"] = "beta" });
 
         var typed = result.Data as global::app.data.@this<global::app.type.dict.@this>;
-        var d = (await typed!.ResolvedValue<Dictionary<string, object?>>())!;
-        var inner = d["items"] as List<object?>;
-        await Assert.That(inner![0]).IsEqualTo("alpha");
+        var d = (await typed!.Value())!;
+        var inner = new List<string?>();
+        foreach (var row in (global::app.type.list.@this)(await d.Get("items")!.Value()))
+            inner.Add((await row.Value()).ToString());
+        await Assert.That(inner[0]).IsEqualTo("alpha");
         await Assert.That(inner[1]).IsEqualTo("beta");
         await Assert.That(inner[2]).IsEqualTo("literal");
     }

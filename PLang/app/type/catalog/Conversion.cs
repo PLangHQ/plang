@@ -29,43 +29,19 @@ public sealed partial class @this
     /// test surface in one place; <c>http/code/Default</c>'s separate copy stays
     /// independent (different consumer, different concern).
     /// </summary>
-    internal static readonly JsonSerializerOptions _caseInsensitiveRead = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        Converters = {
-            new JsonStringEnumConverter(allowIntegerValues: true),
-            new app.data.EmptyStringToNullEnumConverterFactory(),
-            new global::app.channel.serializer.TimeSpanIso8601(),
-            // Context-less json Converter — produces stub Paths. Callers
-            // with a Context in scope use ContextualReadOptions instead so
-            // deserialized Paths are wired immediately.
-            new global::app.channel.serializer.json.Converter(),
-        },
-        NumberHandling = JsonNumberHandling.AllowReadingFromString
-    };
+    // The shared read options live on the serializer (json.Options.Read); the
+    // context-less form is cached here as the read side's hot default.
+    internal static readonly JsonSerializerOptions _caseInsensitiveRead =
+        global::app.channel.serializer.json.Options.Read();
 
     /// <summary>
-    /// Builds a one-shot JsonSerializerOptions equivalent to
-    /// <see cref="_caseInsensitiveRead"/> but with a Context-bound
-    /// <see cref="app.type.path.JsonConverter"/> in place of the stub one.
-    /// Used when <see cref="TryConvert"/> receives a non-null context so
-    /// every <see cref="app.type.path.@this"/> field in the deserialized
-    /// graph lands fully Context-wired.
+    /// Context-bound read options — <see cref="_caseInsensitiveRead"/> with the
+    /// Context-wired path adapter, so every <see cref="app.type.path.@this"/>
+    /// field in the deserialized graph lands fully Context-wired. Same factory the
+    /// dict's own record reconstruction uses — one converter set, no drift.
     /// </summary>
     private static JsonSerializerOptions ContextualReadOptions(actor.context.@this context)
-    {
-        return new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true,
-            Converters = {
-                new JsonStringEnumConverter(allowIntegerValues: true),
-                new app.data.EmptyStringToNullEnumConverterFactory(),
-                new global::app.channel.serializer.TimeSpanIso8601(),
-                new global::app.channel.serializer.json.Converter(context),
-            },
-            NumberHandling = JsonNumberHandling.AllowReadingFromString
-        };
-    }
+        => global::app.channel.serializer.json.Options.Read(context);
 
     /// <summary>
     /// Read options for a <c>goal</c> — same as <see cref="ContextualReadOptions"/>

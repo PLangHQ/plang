@@ -1242,6 +1242,15 @@ can't say `result.Value()` and get a typed list — it must reach for the generi
 `<list>` generic at the consumer. Context: variable-as-value consumer-door cleanup; the
 typed `.List()` sources (path.List → `data<list<path>>`) already work this way.
 
+**Part of the same refactor — type the storage of `Identity` so the read gives an
+`Identity` directly.** Today identities persist as JSON, read back as a generic `dict`,
+and `identity/code/Default.cs` reconstructs `dict.Clr<Identity>()` on demand — a
+dict→record deserialize that exists ONLY because the read is untyped. With a typed store
+(`Get`/`GetAll` knowing the stored type), the read deserializes `JSON → Identity` once
+(no dict intermediary, no `dict.Clr<Identity>` reconstruction). The `dict.Clr(record)`
+inline path stays as the fallback for genuinely untyped values; it should not be
+identity's normal path. Decide how the store carries the per-table element type.
+
 ## 2026-06-22 — rename path.ReadText() → Read() (+ typed Read<T>())
 `path.ReadText()` is misnamed: it reads AND parses by MIME — a `.pr` comes back as a
 `goal`, json as a dict, only text/* as a string. "Text" is wrong. Rename to `Read()`

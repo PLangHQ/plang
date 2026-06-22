@@ -52,8 +52,9 @@ public class DataWrappedListTests
             parameters: new[] { ("messages", (object?)raw) },
             variables: new Dictionary<string, object?> { ["comment"] = "you are a compiler" });
         var typed = result.Data as global::app.data.@this<global::app.type.list.@this<global::app.module.llm.LlmMessage>>;
-        // Resolved form is the value door's RETURN (stamped → non-cacheable).
-        var items = (await typed!.ResolvedValue<List<global::app.module.llm.LlmMessage>>())!;
+        // Read the way a real handler does: enumerate, resolve + convert each row through its door.
+        var items = new List<global::app.module.llm.LlmMessage>();
+        foreach (var row in (await typed!.Value())!) items.Add((await row.Value()).Clr<global::app.module.llm.LlmMessage>()!);
         await Assert.That(items[0].Content).IsEqualTo("you are a compiler");
     }
 
@@ -79,10 +80,10 @@ public class DataWrappedDictTests
             parameters: new[] { ("headers", (object?)raw) },
             variables: new Dictionary<string, object?> { ["x"] = "substituted" });
         var typed = result.Data as global::app.data.@this<global::app.type.dict.@this>;
-        // Resolved form is the value door's RETURN (stamped → non-cacheable).
-        var d = (await typed!.ResolvedValue<Dictionary<string, object?>>())!;
-        await Assert.That((d["inner"])?.ToString()).IsEqualTo("substituted");
-        await Assert.That((d["other"])?.ToString()).IsEqualTo("literal");
+        // Resolve the dict through its door, then read each value through ITS door.
+        var d = (await typed!.Value())!;
+        await Assert.That((await d.Get("inner")!.Value()).ToString()).IsEqualTo("substituted");
+        await Assert.That((await d.Get("other")!.Value()).ToString()).IsEqualTo("literal");
     }
 }
 
