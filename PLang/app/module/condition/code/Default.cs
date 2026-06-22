@@ -32,6 +32,12 @@ public sealed class Default : IEvaluator
             return global::app.data.@this<global::app.type.@bool.@this>.From(operatorData);
         try
         {
+            // A condition is a boolean question — an absent variable operand is tolerated
+            // (→ the operators' null-handling: ==→false, isempty→true, ordering→error),
+            // NOT the loud value door. Null only an absent VARIABLE; a present value or a
+            // lazy reference (file/url) is left untouched so its own door still fires.
+            left = await TolerateAbsentVariable(left);
+            right = await TolerateAbsentVariable(right);
             Operator op = (await operatorData.Value())!; bool result = await op.Evaluate(left, right);
             return global::app.data.@this<global::app.type.@bool.@this>.Ok(result);
         }
@@ -39,6 +45,20 @@ public sealed class Default : IEvaluator
         {
             return EvaluationError(left, (await operatorData.Value())!, right, ex);
         }
+    }
+
+    /// <summary>
+    /// A condition operand that is an unbound variable reference resolves to <c>null</c>
+    /// (the operators handle a null operand by their own rules) rather than tripping the
+    /// loud value door. Only an absent <c>variable</c> is nulled — a present value or a
+    /// lazy reference passes through unchanged so its own door still resolves.
+    /// </summary>
+    private static async Task<data.@this?> TolerateAbsentVariable(data.@this? d)
+    {
+        if (d?.Peek() is global::app.variable.@this v && d.Context != null
+            && !(await d.Context.Variable.Get(v.Name)).IsInitialized)
+            return null;
+        return d;
     }
 
     private static data.@this<global::app.type.@bool.@this> EvaluationError(data.@this? left, Operator op, data.@this? right, Exception ex)

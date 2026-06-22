@@ -78,8 +78,18 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// stored value's context, so a <c>%x%</c>-into-<c>x</c> pass resolves against
     /// the caller's binding — no Get cycle.
     /// </summary>
-    public override System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this asking)
-        => asking.Context.Variable.Value(Name);
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this asking)
+    {
+        // The value door is LOUD: a reference must resolve to a bound value. An absent
+        // variable (NotFound) used to render null and the value vanished silently
+        // downstream. Throw instead — a referenced value that isn't there is a bug at
+        // the reference site. Boolean questions (conditions) tolerate absence by asking
+        // through their own tolerant path (see condition.code.Default), never here.
+        var resolved = await asking.Context.Variable.Get(Name);
+        if (resolved is null || !resolved.IsInitialized)
+            throw new global::app.error.VariableNotFoundException(Name);
+        return await resolved.Value();
+    }
 
     /// <summary>
     /// The typed-ask construction (<see cref="global::app.type.item.ICreate{TSelf}"/>):
