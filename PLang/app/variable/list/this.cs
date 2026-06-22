@@ -37,14 +37,6 @@ public partial class @this
     public void RegisterNavigable(string name, Func<string, System.Threading.Tasks.ValueTask<data.@this>> resolver)
         => _navigables[name] = resolver;
 
-    /// <summary>
-    /// Per-type navigator registry for Data navigation. Delegates to the
-    /// shared App-level instance — navigators are app-wide infrastructure;
-    /// the property is exposed here so the canonical access path is
-    /// <c>app.variable.navigator</c> alongside other variable concerns.
-    /// </summary>
-    [JsonIgnore]
-    public navigator.list.@this Navigators => _context!.App.Navigator;
 
     /// <summary>
     /// Per-call parameter scopes. <see cref="Get"/> consults <c>Calls.Current</c> before

@@ -104,6 +104,52 @@ public partial class @this
     }
 
     /// <summary>
+    /// Last-resort child read by CLR reflection — the universal fallback when a value's
+    /// own <c>Navigate</c> has no structured child for <paramref name="key"/>. Reflects a
+    /// public property off the value; for a leaf whose own surface misses, reflects its CLR
+    /// backing (so <c>%now.Ticks%</c> reaches <c>DateTimeOffset.Ticks</c>). Walks the
+    /// inheritance chain bottom-up (DeclaredOnly) so a shadowing property wins without an
+    /// AmbiguousMatchException. This is what the deleted Object navigator did.
+    /// </summary>
+    private System.Threading.Tasks.ValueTask<@this> ReflectChild(global::app.type.item.@this value, string key)
+    {
+        const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Public
+            | System.Reflection.BindingFlags.Instance
+            | System.Reflection.BindingFlags.IgnoreCase
+            | System.Reflection.BindingFlags.DeclaredOnly;
+
+        System.Reflection.PropertyInfo? prop = null;
+        object? target = value;
+        for (var t = value.GetType(); t != null && prop == null; t = t.BaseType)
+            prop = t.GetProperty(key, flags);
+
+        // A scalar leaf whose own surface misses the key answers from its raw backing.
+        if (prop == null && value is { IsLeaf: true } leaf
+            && leaf.Clr<object>() is { } backing && !ReferenceEquals(backing, leaf))
+        {
+            for (var t = backing.GetType(); t != null && prop == null; t = t.BaseType)
+                prop = t.GetProperty(key, flags);
+            if (prop != null) target = backing;
+        }
+
+        if (prop == null) return new(NotFound(key));
+
+        try
+        {
+            var resolved = prop.GetValue(target);
+            // Relay an already-Data property value rather than re-boxing it (Rule #7):
+            // a property returning Data<snapshot> must not become Data-in-Data.
+            return new(resolved is @this d ? d : new @this(key, resolved, parent: this));
+        }
+        catch (System.Reflection.TargetInvocationException ex)
+        {
+            return new(FromError(new global::app.error.ServiceError(
+                $"Failed to read '{key}': {(ex.InnerException ?? ex).Message}",
+                "NavigationError", 500) { Exception = ex }));
+        }
+    }
+
+    /// <summary>
     /// Invokes a method-like navigation on Data. Chainable — returns Data.
     /// Override in subclasses to add domain-specific methods.
     /// </summary>
@@ -261,23 +307,15 @@ public partial class @this
             return new @this(key, ownProp.GetValue(this), parent: this);
 
 
-        // Navigate the Value object via registered navigator (dict, list, CLR reflection, etc.)
-        // Value wins over Properties on the dot path — Stage 4 made `!` the Properties operator,
-        // dot stays on the Value graph. Properties[key] is kept as a fallback below so existing
-        // call sites that read e.g. `%!data.branchIndex%` (Properties metadata via dot) still
-        // resolve when Value has no matching child.
+        // Last-resort value-plane read: reflect a CLR property off the value (the
+        // foreign-object case `clr.Navigate` owns, applied here for any value whose
+        // own Navigate had no structured child). Value wins over Properties on the
+        // dot path — Stage 4 made `!` the Properties operator; Properties[key] stays
+        // a fallback below so `%!data.branchIndex%` keeps resolving.
         if (val != null)
         {
-            var navigator = _context?.App?.Navigator?.Get(val.GetType());
-            if (navigator != null)
-            {
-                var navResult = await navigator.Navigate(this, key);
-                if (navResult.IsInitialized) return navResult;
-            }
-
-            // Fallback when no app context (e.g., during deserialization)
-            var fallbackResult = await global::app.variable.navigator.ValueNavigators.Navigate(this, key);
-            if (fallbackResult.IsInitialized) return fallbackResult;
+            var reflected = await ReflectChild(val, key);
+            if (reflected.IsInitialized) return reflected;
         }
 
         // Properties fallback — only reached when Value-graph navigation produced

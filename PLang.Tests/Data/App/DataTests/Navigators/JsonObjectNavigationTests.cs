@@ -1,14 +1,15 @@
-using app.variable.navigator;
 using System.Text.Json.Nodes;
 
 namespace PLang.Tests.App.DataTests.Navigators;
 
-// JsonObject implements IDictionary<string, JsonNode?> (NOT IDictionary<string, object?>
-// and NOT non-generic IDictionary), so the canonical-shape arms in global::app.variable.navigator.Dictionary
-// don't see it. Without the generic IDictionary<string, T> arm, dot-path navigation
-// through `set ... type=json` values fell through to the reflection navigator and
-// surfaced only the JsonObject CLR properties (Count, Options, Parent, Root) — never
-// the actual JSON keys. These tests pin the third arm.
+// A JsonObject is NEVER navigated raw. Every JSON value is narrowed to a native
+// dict/list at the boundary: Data.SetValue does Lift(json.Parse(value)), and
+// json.Parse round-trips any JsonNode (JsonObject/JsonArray) through JsonElement
+// into a native dict.@this / list.@this. So by the time navigation runs, the value
+// is a native dict navigated by key (dict.Navigate) — there is no JsonObject left
+// to reflect. These tests pin that boundary invariant through the public GetChild
+// path (the deleted per-type Dictionary navigator's JsonObject arm was dead code:
+// it could only fire on a raw JsonObject, which SetValue prevents).
 public class JsonObjectNavigationTests
 {
     private static Data MakeData(JsonObject value)
@@ -19,89 +20,67 @@ public class JsonObjectNavigationTests
     }
 
     [Test]
-    public async Task CanNavigate_JsonObject_ReturnsTrue()
+    public async Task SetValue_JsonObject_BecomesNativeDict_NotRaw()
     {
-        var nav = new global::app.variable.navigator.Dictionary();
-        var jo = new JsonObject { ["goal"] = new JsonObject { ["name"] = "Hello" } };
-        await Assert.That(nav.CanNavigate(MakeData(jo))).IsTrue();
+        var d = MakeData(new JsonObject { ["id"] = "abc123" });
+        await Assert.That(d.Peek()).IsTypeOf<global::app.type.dict.@this>();
     }
 
     [Test]
-    public async Task Navigate_TopLevelKey_ReturnsValue()
+    public async Task GetChild_TopLevelKey_ReturnsValue()
     {
-        var nav = new global::app.variable.navigator.Dictionary();
-        var jo = new JsonObject { ["id"] = "abc123" };
-        var result = await nav.Navigate(MakeData(jo), "id");
+        var d = MakeData(new JsonObject { ["id"] = "abc123" });
+        var result = await d.GetChild("id");
         await Assert.That(result.IsInitialized).IsTrue();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("abc123");
     }
 
     [Test]
-    public async Task Navigate_NestedKey_ReachesViaDotPath()
+    public async Task GetChild_NestedKey_ReachesViaDotPath()
     {
         // The motivating BuildGoal.goal pattern:
         //   set %trace% = {..., "goal": %goal%, ...}, type=json
         //   save %trace% to file '/.build/traces/%!trace.id%/%trace.goal.name%.json'
-        // %trace.goal.name% must reach into the inner JsonObject — without the
-        // generic-dict arm the lookup landed on JsonObject's CLR Root prop instead.
-        var jo = new JsonObject
-        {
-            ["goal"] = new JsonObject { ["name"] = "Hello" }
-        };
-        var data = MakeData(jo);
-        // Simulate dot-path: Navigate to "goal" then to "name".
-        var nav = new global::app.variable.navigator.Dictionary();
-        var goalResult = await nav.Navigate(data, "goal");
-        await Assert.That(goalResult.IsInitialized).IsTrue();
-
-        var goalData = new Data("goal");
-        goalData.SetValue((await goalResult.Value()));
-        var nameResult = await nav.Navigate(goalData, "name");
-        await Assert.That((await nameResult.Value())?.ToString()).IsEqualTo("Hello");
-    }
-
-    [Test]
-    public async Task Navigate_CaseInsensitiveKey()
-    {
-        var nav = new global::app.variable.navigator.Dictionary();
-        var jo = new JsonObject { ["Name"] = "Hello" };
-        var result = await nav.Navigate(MakeData(jo), "name");
+        var d = MakeData(new JsonObject { ["goal"] = new JsonObject { ["name"] = "Hello" } });
+        var result = await d.GetChild("goal.name");
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello");
     }
 
     [Test]
-    public async Task Navigate_MissingKey_ReturnsNotFound()
+    public async Task GetChild_CaseInsensitiveKey()
     {
-        var nav = new global::app.variable.navigator.Dictionary();
-        var jo = new JsonObject { ["goal"] = "Hello" };
-        var result = await nav.Navigate(MakeData(jo), "nonexistent");
+        var d = MakeData(new JsonObject { ["Name"] = "Hello" });
+        var result = await d.GetChild("name");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello");
+    }
+
+    [Test]
+    public async Task GetChild_MissingKey_ReturnsNotFound()
+    {
+        var d = MakeData(new JsonObject { ["goal"] = "Hello" });
+        var result = await d.GetChild("nonexistent");
         await Assert.That(result.IsInitialized).IsFalse();
     }
 
     [Test]
-    public async Task Navigate_Count_ReturnsItemCount()
+    public async Task GetChild_Count_ReturnsItemCount()
     {
-        var nav = new global::app.variable.navigator.Dictionary();
-        var jo = new JsonObject { ["a"] = 1, ["b"] = 2, ["c"] = 3 };
-        var result = await nav.Navigate(MakeData(jo), "Count");
+        var d = MakeData(new JsonObject { ["a"] = 1, ["b"] = 2, ["c"] = 3 });
+        var result = await d.GetChild("count");
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("3");
     }
 
     [Test]
-    public async Task Navigate_OriginalShapes_StillWork()
+    public async Task RawDictShapes_AlsoNarrowToNativeDict()
     {
-        // Regression guard: the prior IDictionary<string,object?> and non-generic
-        // IDictionary paths must not have been broken by the third arm.
-        var nav = new global::app.variable.navigator.Dictionary();
-
-        var canonical = new Dictionary<string, object?> { ["k"] = "v" };
+        // Regression guard: the canonical IDictionary<string,object?> and non-generic
+        // IDictionary (Hashtable) shapes also narrow at the boundary and navigate.
         var d1 = new Data("");
-        d1.SetValue(canonical);
-        await Assert.That((await (await nav.Navigate(d1, "k")).Value())?.ToString()).IsEqualTo("v");
+        d1.SetValue(new Dictionary<string, object?> { ["k"] = "v" });
+        await Assert.That((await (await d1.GetChild("k")).Value())?.ToString()).IsEqualTo("v");
 
-        var legacy = new System.Collections.Hashtable { ["k"] = "v" };
         var d2 = new Data("");
-        d2.SetValue(legacy);
-        await Assert.That((await (await nav.Navigate(d2, "k")).Value())?.ToString()).IsEqualTo("v");
+        d2.SetValue(new System.Collections.Hashtable { ["k"] = "v" });
+        await Assert.That((await (await d2.GetChild("k")).Value())?.ToString()).IsEqualTo("v");
     }
 }

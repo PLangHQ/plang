@@ -68,21 +68,19 @@ public class Stage3_ArraysAsDataTests
     [Test]
     public async Task ListNavigator_Element_ReturnsElementDataDirectly()
     {
-        // navigator/List returns the element Data with no raw-branch fallback and no
-        // WrapItem — the SAME instance the list holds (identity/signature intact). The
-        // implicit-first (`%list.name%` → list[0].name) stays (D).
+        // The list owns its navigation now (list.Navigate via GetChild): an index
+        // returns the SAME element Data it holds (identity/signature intact), and the
+        // implicit-first (`%list.name%` → list[0].name) stays.
         var element = new Data("", "first");
         var list = new ListV();
         list.Add(element);
         list.Add(new Data("", "second"));
         var data = new Data("items", list);
 
-        var nav = new global::app.variable.navigator.List();
-        await Assert.That(nav.CanNavigate(data)).IsTrue();
-        await Assert.That(ReferenceEquals(await nav.Navigate(data, "0"), element)).IsTrue();
-        await Assert.That((await (await nav.Navigate(data, "last")).Value())?.ToString()).IsEqualTo("second");
+        await Assert.That(ReferenceEquals(await data.GetChild("0"), element)).IsTrue();
+        await Assert.That((await (await data.GetChild("last")).Value())?.ToString()).IsEqualTo("second");
         // the count intrinsic answers in the PLang `number`
-        await Assert.That(((global::app.type.number.@this)(await (await nav.Navigate(data, "count")).Value())!).ToInt32()).IsEqualTo(2);
+        await Assert.That(((global::app.type.number.@this)(await (await data.GetChild("count")).Value())!).ToInt32()).IsEqualTo(2);
 
         // Implicit-first through a list of dicts.
         var people = new ListV();
@@ -90,7 +88,7 @@ public class Stage3_ArraysAsDataTests
         p0.Set(new Data("name", "alice"));
         people.Add(new Data("", p0));
         var peopleData = new Data("people", people);
-        await Assert.That((await (await nav.Navigate(peopleData, "name")).Value())?.ToString()).IsEqualTo("alice");
+        await Assert.That((await (await peopleData.GetChild("name")).Value())?.ToString()).IsEqualTo("alice");
     }
 
     [Test]

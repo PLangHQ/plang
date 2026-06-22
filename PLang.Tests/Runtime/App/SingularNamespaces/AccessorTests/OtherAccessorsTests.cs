@@ -75,13 +75,6 @@ public class OtherAccessorsTests
         await Assert.That(app.Error.list.Count()).IsEqualTo(2);
     }
 
-    [Test] public async Task AppNavigator_IndexByType_ReturnsTheNavigatorForThatType()
-    {
-        await using var app = new PLangEngine("/test");
-        var nav = app.Navigator[typeof(string)];
-        await Assert.That(nav).IsNotNull();
-    }
-
     // Minimal Stage 3: singular accessors (app.Goal, app.Channel, app.Event, app.Module) are
     // present alongside the originals.  Deletion of the App* aliases is deferred to the
     // full call-site sweep — this guard asserts the singular surface is in place.

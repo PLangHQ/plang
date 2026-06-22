@@ -67,10 +67,6 @@ public class Stage2_NavigationAsyncTests
         {
             "PLang/app/data/this.Navigation.cs",
             "PLang/app/variable/list/this.cs",
-            "PLang/app/variable/navigator/Dictionary.cs",
-            "PLang/app/variable/navigator/List.cs",
-            "PLang/app/variable/navigator/Object.cs",
-            "PLang/app/variable/navigator/ValueNavigators.cs",
             "PLang/app/snapshot/this.Variables.cs", // snapshot owns its Navigate now
         };
         var repoRoot = FindRepoRoot();

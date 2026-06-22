@@ -144,11 +144,6 @@ public sealed partial class @this : IAsyncDisposable
     public AppCode Code { get; } = new();
 
     /// <summary>
-    /// Per-type navigator registry for Data navigation.
-    /// </summary>
-    public variable.navigator.list.@this Navigator { get; } = new();
-
-    /// <summary>
     /// The loaded goals.
     /// </summary>
     public global::app.goal.list.@this Goal => _goals;
@@ -327,7 +322,6 @@ public sealed partial class @this : IAsyncDisposable
         Type.Scheme.Register("file", (raw, context) => global::app.type.path.file.@this.Resolve(raw, context));
         Type.Scheme.Register("http", (raw, context) => global::app.type.path.http.@this.Resolve(raw, context));
         Type.Scheme.Register("https", (raw, context) => global::app.type.path.http.@this.Resolve(raw, context));
-        Navigator.RegisterDefaults();
 
         // Default actor is User — Start() switches to System for bootstrap
         CurrentActor = User;
