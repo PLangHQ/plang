@@ -20,12 +20,44 @@ public class ListAddIdentityTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::app.@this("/app");
+    public void Setup() => _app = TestApp.Create("/app");
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
 
     private (global::app.actor.context.@this context, Variables vars) Ctx() => (_app.User.Context, _app.User.Context.Variable);
+
+    // Reference semantics of `add %b% to %a%`: the entry mints its own Data pointing at
+    // b's leaves (nothing copied), so an in-place write to a leaf shared with %b% shows
+    // through both names. No language surface for the SetAt write-through / ref identity,
+    // so this stays here (the flat-append count is covered by ListGoalRunTests).
+    [Test]
+    public async Task Add_List_SharesSourceInstance_WriteThrough()
+    {
+        var (context, memory) = Ctx();
+        var aList = new global::app.type.list.@this { Context = context };
+        aList.Add(new global::app.data.@this("", 10L)); aList.Add(new global::app.data.@this("", 20L));
+        var bList = new global::app.type.list.@this { Context = context };
+        bList.Add(new global::app.data.@this("", 50L)); bList.Add(new global::app.data.@this("", 60L));
+        memory.Set("a", aList);
+        memory.Set("b", bList);
+
+        var action = new Add { Context = context, ListName = new app.variable.@this("a"), Value = await memory.Get("b") };
+        await (await action.Run()).IsSuccess();
+
+        var a = (await memory.GetValue("a")) as global::app.type.list.@this;
+        var b = (await memory.GetValue("b")) as global::app.type.list.@this;
+        await Assert.That(a!.Count).IsEqualTo(4);   // flat [10,20,50,60]
+
+        // write-through: mutate the leaf in %a% that came from %b% → visible via %b%.
+        a.SetAt(2, new global::app.data.@this("", 99L));
+        await Assert.That((await a.At(2)!.Value())?.ToString()).IsEqualTo("99");
+        await Assert.That((await b!.At(0)!.Value())?.ToString()).IsEqualTo("99");
+
+        // read-view: mutate %b% → %a% flattens through the shared row and tracks it.
+        b.Add(new global::app.data.@this("", 70L));
+        await Assert.That(a.Count).IsEqualTo(5);
+    }
 
     // Mutation IS visible through Variables.Get because list.add mutates the live
     // List<object?> reference held by the variable's Data. No Variables.Set("products", list)
