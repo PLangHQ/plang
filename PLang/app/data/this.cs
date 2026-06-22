@@ -1045,6 +1045,15 @@ public partial class @this
         var v = await Value();
         return v is null ? fallback : v.Clr<TClr>() ?? fallback;
     }
+
+    /// <summary>Structural conversion of THIS row to <typeparamref name="T"/> — the
+    /// value converts itself (<see cref="@this.Clr{T}"/>) from its in-memory form
+    /// (<see cref="Peek"/>), not its resolved one. A plang-typed target keeps its
+    /// door (a <c>text</c> asked for as <c>text</c> is identity), so resolution stays
+    /// deferred to the perimeter. The sync, structural sibling of
+    /// <see cref="Clr{TClr}(TClr)"/> — used by a consumer enumerating a list:
+    /// <c>row.Clr&lt;LlmMessage&gt;()</c>.</summary>
+    internal T? Clr<T>() => Peek().Clr<T>();
 }
 
 /// <summary>

@@ -19,8 +19,19 @@ namespace app.type.list;
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, module.IContext,
-    global::app.data.IListLeaf
+    global::app.data.IListLeaf, IEnumerable<Data>
 {
+    /// <summary>The lazy read seam — yields each row as a <see cref="Data"/> (rich
+    /// carrier: name, type, context, the <c>.Value()</c> door), unresolved. The
+    /// consumer resolves what it needs per row (<c>await row.Value()</c>) or converts
+    /// it (<c>row.Clr&lt;T&gt;()</c>) — the list never materialises a resolved copy.</summary>
+    public IEnumerator<Data> GetEnumerator()
+    {
+        for (int i = 0; i < _items.Count; i++)
+            yield return Row(i);
+    }
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
     public static string Example => "[1, 2, 3]";
 
