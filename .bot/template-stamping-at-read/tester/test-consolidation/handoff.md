@@ -48,20 +48,20 @@ dotnet exec $DLL --treenode-filter "/*/*/<Class>/*" --coverage --coverage-output
 Filter quirks: namespace-folder filters can match multiple classes; `!`-negation does NOT
 work. Method-level filters were flaky — class-level (`/*/*/<Class>/*`) is reliable.
 
-## OPEN: serializer tests may be partly deletable (in progress)
-The `plang` wire serializer (goal-run/.pr I/O path) **extends**
-`app.channel.serializer.Json`; `Text` falls back to `Json`. So the broad I/O-runtime suite
-likely already covers the `Json` base → some of the 48 collapsed serializer tests may be
-**deletable**, not just collapsed.
-- **Proof being run:** move the 2 serializer test files aside → run the full Wire suite with
-  coverage → diff `Json.cs`/`Text.cs` against `/tmp/wire_X.json` (serializer-tests-only
-  baseline). Lines the rest-of-Wire still covers = deletable; lines unique to the serializer
-  tests = keep.
-- **Caveat:** full-suite-with-coverage is SLOW here (447 tests, kept timing out foreground;
-  run it as a background job to completion). For a *complete* redundancy answer you'd want
-  cross-project coverage (Modules/Data/Runtime goal-run tests also hit serializers) — best
-  as a CI/overnight job. Wire-rest alone is a conservative lower bound: delete only what it
-  proves covered.
+## RESOLVED: serializer tests are NOT deletable — keep collapsed (2026-06-22)
+Ran the proof. Moved `Json/TextStreamSerializerTests.cs` aside, rebuilt Wire, ran the full
+447-test suite with cobertura coverage (completed in ~4s — the earlier foreground "timeout"
+did not recur), and diffed `Json.cs`/`Text.cs` covered-line sets against the
+serializer-tests-only baseline.
+- **Json.cs:** ser-tests cover 71 lines, rest-of-Wire covers 49 of them → **22 unique** lines.
+- **Text.cs:** ser-tests cover 53 lines, rest-of-Wire covers only 21 → **32 unique** lines.
+- The unique lines are all **error catch-blocks** (`JsonException`/`IOException`/
+  `NotSupportedException`), **generic typed-deserialize** (`DeserializeAsync<T>`/`Deserialize<T>`),
+  **empty-stream guards**, `WithIndentation()`, and the whole `Text.cs` deserialize side
+  (`DeserializeAsync(stream)`, `FromText<T>`). None are reachable from happy-path goal-run —
+  you can't force an IOException or malformed bytes through the wire path — so cross-project
+  goal-run coverage won't reach them either. The within-Wire lower bound is therefore also the
+  complete answer: **not deletable.** Collapsed-not-deleted is the right final state.
 
 ## Remaining candidates (vet bodies first — prefix ≠ table)
 - `DefaultEvaluatorTests` (49, all `Evaluate_*`) — biggest remaining table, BUT it's in

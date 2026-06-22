@@ -26,13 +26,19 @@ parity with a cobertura line-set diff before deleting, then commit per module.
 | Json/TextStreamSerializerTests | tester | **done** | **68 → 48** (−20), parity. Uniform Serialize/Deserialize scalar+value rows collapsed; distinct cases (datetime/guid/bytes/culture-decimal/object/async/stream/error) kept. |
 | math | tester | queued | fully raw, small. |
 
-### Open question — serializer unit tests may be partly *deletable*, not just collapsible
-The `plang` wire serializer (goal-run/.pr I/O path) **extends** `app.channel.serializer.Json`;
-`Text` falls back to `Json`. So the broad I/O-runtime suite likely already covers the `Json`
-base — meaning some of these 48 may be redundant and deletable. Proving it needs a
-**full-suite coverage diff** (delete serializer tests → run whole suite w/ coverage → check
-Json.cs/Text.cs survives). That run is too slow here (447 tests × instrumentation timed out).
-Left as an overnight/CI job for whoever can run it. Until then, collapsed (safe) not deleted.
+### RESOLVED — serializer unit tests are NOT deletable (kept collapsed)
+Ran the redundancy proof (2026-06-22): serializer-tests-only coverage of `Json.cs`/`Text.cs`
+vs. rest-of-Wire coverage (the two test files moved aside, Wire rebuilt, full 447-test suite
+run with cobertura — completed in ~4s, the earlier "timeout" did not recur).
+Result: the collapsed serializer tests **uniquely cover 22 lines of `Json.cs` and 32 of
+`Text.cs`** that no other Wire test touches. Those unique lines are all **structurally
+unreachable from happy-path goal-run**: the serialize/deserialize `catch` blocks
+(`JsonException`/`IOException`/`NotSupportedException`), the generic `DeserializeAsync<T>` /
+`Deserialize<T>` typed paths, empty-stream guards, `WithIndentation()`, and the entire
+`Text.cs` deserialize side (`DeserializeAsync(stream)`, `FromText<T>`). You can't make the
+wire path throw IOException or feed it malformed bytes through a normal goal run, so
+cross-project goal-run tests (Modules/Data/Runtime) won't reach them either. Verdict: keep
+collapsed-not-deleted (already the committed state). Open question closed.
 
 ### Heuristic caveat (learned)
 Prefix-clustering over-counts: `RenderTests` is 33 `Render_*` but each is a distinct
