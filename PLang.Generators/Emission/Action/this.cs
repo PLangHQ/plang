@@ -214,8 +214,11 @@ public static class @this
             foreach (var name in info.IsNotNullProperties)
             {
                 var lower = name.ToLowerInvariant();
+                // A null value is the @null citizen, never C# null — Peek() never
+                // returns null, so test the value's own IsNull. A missing parameter
+                // (FirstOrDefault → null) short-circuits the ?. to true and also fires.
                 sb.Append($$"""
-                                if (__action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Peek() == null)
+                                if ((__action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Peek().IsNull) ?? true)
                                     return global::app.data.@this.FromError(new global::app.error.ServiceError(
                                         "'{{lower}}' must have a value", __step, __callFrames, "ValueRequired", 400));
 
