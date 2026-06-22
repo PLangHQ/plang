@@ -732,7 +732,7 @@ public partial class @this
     /// the action's property; the handler's own <c>.Value()</c> opens the door later. An
     /// already-<c>Data&lt;T&gt;</c> binding is returned as itself.
     /// </summary>
-    public @this<T> As<T>() where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+    internal @this<T> As<T>() where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
         if (this is @this<T> already) return already;
         var view = new @this<T>(Name, null, null, Parent)
@@ -755,7 +755,7 @@ public partial class @this
     /// <summary>The typed view, stamped with the execution <paramref name="context"/> so
     /// the handler's later <c>.Value()</c> resolves in the right scope. The dispatch form:
     /// <c>action.Parameters["name"].As&lt;T&gt;(context)</c>.</summary>
-    public @this<T> As<T>(actor.context.@this? context) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+    internal @this<T> As<T>(actor.context.@this? context) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
         var view = As<T>();
         if (context != null) view.Context = context;
