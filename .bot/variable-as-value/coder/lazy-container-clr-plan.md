@@ -122,6 +122,20 @@ Build order: (1) container self-lowering `Clr` (LOWER for collections); (2) reco
 LOWER via the type's own reconstruction; (3) drop `TryConvert` from `ClrConvert`
 (base terminal); (4) collapse `TryConvert` to the 3-way dispatch; (5) then B.
 
+## Findings (this session)
+- **Recursion is dead with inline-`Clr`.** Once `list`/`dict` lower themselves inline
+  (terminal), `wrapper.Clr(target)` bottoms out — re-probed B (containers in
+  `OwnedClrTypes`): no stack overflow, suite green. BUT B is a **detour, not a win**:
+  it routes a CLR-container target through `OwnerOf→Convert` (build a plang container)
+  then `wrapper.Clr` (lower it) — the build-then-lower smell, just non-looping —
+  whereas without B that target uses the direct element-convert arm. So B was reverted;
+  the real fix is the dispatch collapse (LOWER a CLR target directly, never build-then-lower).
+- **Convert hooks must throw, not return null (Ingi).** A failed conversion silently
+  returning `null` hides the error. Today `null` is overloaded as "decline / fall through
+  to another arm" in the hub, so it can't change piecemeal. With the 3-way dispatch the
+  owner is chosen by target type → its `Convert` converts-or-throws, never declines. So
+  "throw not null" lands WITH the dispatch collapse, not before.
+
 ## Watch-outs
 - The 2×O(n) trap: never build an intermediate collection then walk it again. A
   `dict.Clr` record build is one object (fine); a `list`→`list` materialization is NOT (banned).
