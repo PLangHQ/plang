@@ -1220,3 +1220,15 @@ Full design + incremental migration plan (green per step):
 Interim fix already on `variable-as-value`: `ResolveVariablesInPath` delegates to `Get`
 (was reimplementing nav via root `Peek`, dropping the `.index` tail) — patch on the
 pile, removed at redesign step 5.
+
+## 2026-06-22 — Build-time variable parsing (candidate nav step 6)
+Ingi: dislikes runtime path parsing — wants the reference compiled into the .pr so
+runtime steps through structure. Prior art `origin/prevars-in-pr` already split this:
+storing parsed %var% SPANS = no-go (regex rederives them — rule: store in .pr only what
+re-deriving needs the LLM); build-time VALUE TRANSFORMS (NL → navigation expression via
+the variable's type surface, e.g. %photo% resized to 200x200 → %photo.Resize(200,200)%)
+= the live prize (LLM-derived, rides in the existing `value` field). The navigation
+redesign shifts facet (A): there's now ONE parser (path.Parse) and a first-class `path`,
+so "store the path" can mean making segments the variable's SINGLE wire form (parse at
+build, FromWire at runtime, never parse at runtime) rather than a side-channel span cache.
+Full reconciliation + open decisions: `.bot/variable-as-value/coder/build-time-variable-parsing.md`.
