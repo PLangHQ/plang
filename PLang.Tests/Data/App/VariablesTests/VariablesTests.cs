@@ -470,105 +470,42 @@ public class VariablesTests
     }
 
     [Test]
-    public async Task Get_Generic_ReturnsTypedValue()
+    public async Task Get_Generic_TypedOrDefault()
     {
         var stack = new Variables();
         stack.Set("count", 42);
-
-        var value = await stack.Get<global::app.type.number.@this>("count");
-
-        await Assert.That((await value.Value()).Clr<long>()).IsEqualTo(42L);
+        await Assert.That((await (await stack.Get<global::app.type.number.@this>("count")).Value()).Clr<long>()).IsEqualTo(42L);
+        await Assert.That((await stack.Get<global::app.type.number.@this>("nonexistent")).IsInitialized).IsFalse();
     }
 
     [Test]
-    public async Task Get_Generic_NonexistentName_ReturnsDefault()
-    {
-        var stack = new Variables();
-
-        var value = await stack.Get<global::app.type.number.@this>("nonexistent");
-
-        await Assert.That(value.IsInitialized).IsFalse();
-    }
-
-    [Test]
-    public async Task GetValue_ReturnsRawValue()
+    public async Task GetValue_RawOrNull()
     {
         var stack = new Variables();
         stack.Set("test", "hello");
-
-        var value = await stack.GetValue("test");
-
-        await Assert.That(value).IsEqualTo("hello");
+        await Assert.That(await stack.GetValue("test")).IsEqualTo("hello");
+        await Assert.That(await stack.GetValue("nonexistent")).IsNull();
     }
 
     [Test]
-    public async Task GetValue_NonexistentName_ReturnsNull()
-    {
-        var stack = new Variables();
-
-        var value = await stack.GetValue("nonexistent");
-
-        await Assert.That(value).IsNull();
-    }
-
-    [Test]
-    public async Task Contains_ExistingName_ReturnsTrue()
-    {
-        var stack = new Variables();
-        stack.Set("test", "value");
-
-        await Assert.That(stack.Contains("test")).IsTrue();
-    }
-
-    [Test]
-    public async Task Contains_CaseInsensitive()
+    public async Task Contains_Classifies()
     {
         var stack = new Variables();
         stack.Set("Test", "value");
-
-        await Assert.That(stack.Contains("test")).IsTrue();
-        await Assert.That(stack.Contains("TEST")).IsTrue();
+        await Assert.That(stack.Contains("Test")).IsTrue().Because("exact");
+        await Assert.That(stack.Contains("test")).IsTrue().Because("lower");
+        await Assert.That(stack.Contains("TEST")).IsTrue().Because("upper");
+        await Assert.That(stack.Contains("nonexistent")).IsFalse().Because("missing");
     }
 
     [Test]
-    public async Task Contains_NonexistentName_ReturnsFalse()
-    {
-        var stack = new Variables();
-
-        await Assert.That(stack.Contains("nonexistent")).IsFalse();
-    }
-
-    [Test]
-    public async Task Remove_RemovesVariable()
-    {
-        var stack = new Variables();
-        stack.Set("test", "value");
-
-        var removed = stack.Remove("test");
-
-        await Assert.That(removed).IsTrue();
-        await Assert.That(stack.Contains("test")).IsFalse();
-    }
-
-    [Test]
-    public async Task Remove_NonexistentName_ReturnsFalse()
-    {
-        var stack = new Variables();
-
-        var removed = stack.Remove("nonexistent");
-
-        await Assert.That(removed).IsFalse();
-    }
-
-    [Test]
-    public async Task Remove_CaseInsensitive()
+    public async Task Remove_Classifies()
     {
         var stack = new Variables();
         stack.Set("Test", "value");
-
-        var removed = stack.Remove("TEST");
-
-        await Assert.That(removed).IsTrue();
+        await Assert.That(stack.Remove("nonexistent")).IsFalse().Because("missing");
+        await Assert.That(stack.Remove("TEST")).IsTrue().Because("case-insensitive");
+        await Assert.That(stack.Contains("Test")).IsFalse().Because("gone");
     }
 
     [Test]

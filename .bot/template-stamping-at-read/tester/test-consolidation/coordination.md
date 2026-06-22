@@ -21,7 +21,15 @@ parity with a cobertura line-set diff before deleting, then commit per module.
 | TypeMappingTests (enumeration) | tester | **done** | **90 → 21** (77% cut), coverage parity. 73 table-row tests → 4 data-driven loops; 17 distinct conversion paths kept. This is where real removal lives. |
 | DataTests (enumeration) | tester | **done** | **96 → 79** (−17), parity. Tables collapsed (IsVariable/HasVariableReference/IsEmpty/Path/ToString 23→5); ~73 distinct Data behaviors kept. Mixed file, so smaller cut than TypeMapping. |
 | EngineTypesTests (enumeration) | tester | **done** | **88 → 31** (−57, 65%), parity. 5 tables collapsed (Clr/Name/Kind/Mime/Compressible 62→5); registry Add/Remove/KindOf + BuilderNames + ComplexSchemas + depth-limit kept. |
+| VariablesTests | tester | **done** | **69 → 63** (−6), parity. Mixed file (3 classes); only Contains/Remove/GetValue/Get_Generic were tables. Most are distinct Set/Get navigation branches that stay. |
 | math | tester | queued | fully raw, small. |
+
+### Diminishing returns — where the big cuts actually are
+Pure-enumeration files give 60–77% cuts (TypeMapping 90→21, EngineTypes 88→31). Mixed
+files give ~10–18% (DataTests 96→79, VariablesTests 69→63) because most of their tests are
+distinct behaviors, not table rows. The remaining big wins are other *pure-table* files —
+worth grepping for `GetType_/Kind_/Name_/Mime_`-style one-row-per-method clusters rather
+than grinding mixed files for single-digit cuts.
 
 ### Gotcha for whoever edits DataTests.cs (and similar)
 DataTests.cs holds **two classes** (`DataTests` + `DynamicDataTests`). A script that
