@@ -178,13 +178,18 @@ public sealed class @this : item.@this
         var owned = context.App.Type.Conversions.Of(familyClass, value, Kind, context);
         if (owned != null) return owned;
 
-        // No type-owned Convert yet — fall back to the general converter against
-        // this type's CLR mate (incremental migration; the leaf Convert.ChangeType
-        // lives in there, and each family grows its own Convert over time).
         var target = ClrType;
         if (target == null)
             return global::app.data.@this.FromError(new global::app.error.Error(
                 $"Unknown type '{Name}'", "UnknownType", 400));
+
+        // No family hook — a non-leaf value (dict/list) lowers ITSELF to the CLR mate
+        // (dict→record deserialize, list→collection). The value owns it; no hub.
+        if (value is global::app.type.item.@this iv)
+            return global::app.data.@this.Ok(iv.Clr(target));
+
+        // A raw CLR input (a wire string → record, a primitive) — the raw→CLR deserialize
+        // leaf, the last TryConvert use here; folds into the wire serializer next.
         var (c, err) = global::app.type.catalog.@this.TryConvert(value, target, context);
         return err != null ? global::app.data.@this.FromError(err) : global::app.data.@this.Ok(c);
     }
