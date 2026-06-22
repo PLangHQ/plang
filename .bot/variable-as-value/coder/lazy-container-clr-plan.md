@@ -164,12 +164,19 @@ builder; the hub loses an arm. **No big-bang** — one arm at a time.
   (stamp `kind=T`), NO element loop, NO `TryConvert`; the `dict→LlmMessage` build
   happens **per element, lazily, on `row.Value()`**, driven by `kind`. Touch 2 of a
   trillion rows → 2 materializations.
-  - **Blocked-handoff:** this needs `.Value()`/`type.Build` to take a `kind`-tagged
-    dict and build the domain object (`{type:dict, kind:LlmMessage}` → `LlmMessage`).
-    `kind` today carries FORMAT strings (`md`/`gif`/`int`), not domain-type names — so
-    kind-driven `dict→record` materialization is new machinery. **Ingi: that piece is
-    the builder bot's to solve.** Until it exists, leave the eager `list<T>` arm as-is;
-    don't migrate it the eager way (that re-introduces the materialize / 2×O(n) smell).
+  - **This is OURS to build (not deferred).** The element carries `typeof(T)` (a real
+    `System.Type`), NOT a `kind` string — `kind` is a string and can't faithfully name
+    a domain type. The slot exists: `type` entity's `_clrType`, set via the
+    `@this(string name, System.Type clrType)` ctor (`type/this.cs:771`). Concrete steps:
+    1. `list.@this` gets `protected virtual type? ElementType => null`; `list<T>`
+       overrides → a type entity carrying `typeof(T)`.
+    2. rows stamp their `Data` with `ElementType` when set (so a row knows it returns as T).
+    3. `.Value()`/`type.Build` materialize a native that doesn't match the stamped
+       `ClrType` by converting it (`dict.Clr(typeof(T))` → the record build). Today
+       `Build` passes a non-leaf native straight through (`type/this.cs` Build) — extend
+       it: when `ClrType` is a domain type the native isn't, convert.
+    4. `list<T>.Create` = O(1) re-tag (stamp `ElementType`); delete the eager `list<T>`
+       arm in `TryConvert`. Materialization is per-element, lazy, on `row.Value()`.
 - **record / string→json / FromWire / ctor-string arms** — same family-hook pattern,
   but they're the `dict→record` deserialize question (record owns `From` vs deserialize)
   and tie into the same kind-driven materialization. Sequence after the kind machinery.
