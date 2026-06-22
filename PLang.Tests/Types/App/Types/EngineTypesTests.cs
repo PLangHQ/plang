@@ -12,358 +12,161 @@ public class EngineTypesTests
         _formats = new global::app.format.list.@this();
     }
 
-    // --- Clr: PLang name → CLR type ---
+    // --- Type/format mapping tables (data-driven; a failing row names itself) ---
 
     [Test]
-    public async Task Clr_String_ReturnsStringType()
+    public async Task Clr_MapsNamesAndMimesToClrTypes()
     {
-        await Assert.That(_types.Clr("string")).IsEqualTo(typeof(string));
+        (string name, System.Type? expected)[] table =
+        {
+            ("string", typeof(string)), ("text", typeof(string)),
+            ("STRING", typeof(string)), ("StRiNg", typeof(string)),   // case-insensitive
+            ("int", typeof(int)), ("long", typeof(long)), ("bool", typeof(bool)),
+            ("datetime", typeof(DateTimeOffset)), ("bytes", typeof(byte[])),
+            ("int?", typeof(int?)), ("guid?", typeof(Guid?)),
+            ("list<string>", typeof(List<string>)), ("list<int>", typeof(List<int>)),
+            ("dict<string,int>", typeof(Dictionary<string, int>)),
+            ("dictionary<string,int>", typeof(Dictionary<string, int>)),
+            ("text/plain", typeof(string)), ("image/jpeg", typeof(byte[])),
+            ("application/json", typeof(object)), ("application/octet-stream", typeof(byte[])),
+            ("unknowntype", null), (null!, null), ("", null), ("   ", null),
+        };
+        foreach (var (name, expected) in table)
+        {
+            var actual = _types.Clr(name);
+            if (expected is null) await Assert.That(actual).IsNull().Because($"Clr(\"{name}\")");
+            else await Assert.That(actual).IsEqualTo(expected).Because($"Clr(\"{name}\")");
+        }
     }
 
     [Test]
-    public async Task Clr_Text_ReturnsStringType()
+    public async Task Name_MapsClrTypesToPlangNames()
     {
-        await Assert.That(_types.Clr("text")).IsEqualTo(typeof(string));
+        (System.Type type, string expected)[] table =
+        {
+            (typeof(string), "text"), (typeof(int), "number"), (typeof(byte[]), "bytes"),
+            (typeof(int?), "number?"),
+            (typeof(List<string>), "list<text>"), (typeof(IList<int>), "list<number>"),
+            (typeof(Dictionary<string, int>), "dict<text,number>"),
+            (typeof(int[]), "list<number>"),
+            (typeof(HashSet<string>), "list<text>"),        // Set/HashSet normalize to list<T>
+            (typeof(SortedSet<int>), "sortedset"),          // not in map -> strip arity suffix
+            (typeof(Uri), "uri"),                            // unknown -> lowercase name
+        };
+        foreach (var (type, expected) in table)
+            await Assert.That(_types.Name(type)).IsEqualTo(expected).Because($"Name({type.Name})");
+
+        await Assert.That(_types.Name(null!)).IsEqualTo("object").Because("Name(null)");
     }
 
     [Test]
-    public async Task Clr_Int_ReturnsIntType()
+    public async Task Kind_MapsExtensionsToKinds()
     {
-        await Assert.That(_types.Clr("int")).IsEqualTo(typeof(int));
+        (string ext, string? expected)[] table =
+        {
+            (".jpg", "image"), (".xlsx", "spreadsheet"), (".mp4", "video"), (".mp3", "audio"),
+            (".zip", "archive"), (".cs", "code"), (".pdf", "document"), (".goal", "plang"),
+            ("jpg", "image"),       // without dot
+            (".JPG", "image"),      // case-insensitive
+            (".key", "certificate"),// conflict resolved: certificate wins over presentation
+            (".xyz123", null), (null!, null), ("", null),
+        };
+        foreach (var (ext, expected) in table)
+        {
+            var actual = _formats.Kind(ext);
+            if (expected is null) await Assert.That(actual).IsNull().Because($"Kind(\"{ext}\")");
+            else await Assert.That(actual).IsEqualTo(expected).Because($"Kind(\"{ext}\")");
+        }
     }
 
     [Test]
-    public async Task Clr_Long_ReturnsLongType()
+    public async Task Mime_MapsExtensionsToContentTypes()
     {
-        await Assert.That(_types.Clr("long")).IsEqualTo(typeof(long));
+        (string ext, string expected)[] table =
+        {
+            (".jpg", "image/jpeg"), (".json", "application/json"),
+            (".xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+            ("jpg", "image/jpeg"),                            // without dot
+            (".xyz123", "application/octet-stream"),          // unknown -> octet-stream
+            (null!, "application/octet-stream"), ("", "application/octet-stream"),
+        };
+        foreach (var (ext, expected) in table)
+            await Assert.That(_formats.Mime(ext)).IsEqualTo(expected).Because($"Mime(\"{ext}\")");
     }
 
     [Test]
-    public async Task Clr_Bool_ReturnsBoolType()
+    public async Task Compressible_ClassifiesKinds()
     {
-        await Assert.That(_types.Clr("bool")).IsEqualTo(typeof(bool));
+        (string? kind, bool expected)[] table =
+        {
+            ("text", true), ("spreadsheet", true), ("code", true), ("document", true),
+            ("image", false), ("video", false), ("audio", false), ("archive", false),
+            (null!, false), ("", false),
+        };
+        foreach (var (kind, expected) in table)
+            await Assert.That(_formats.Compressible(kind!)).IsEqualTo(expected).Because($"Compressible(\"{kind}\")");
     }
 
-    [Test]
-    public async Task Clr_DateTime_ReturnsDateTimeType()
-    {
-        // plang-types Stage 6: datetime rebinds to DateTimeOffset.
-        await Assert.That(_types.Clr("datetime")).IsEqualTo(typeof(DateTimeOffset));
-    }
 
-    [Test]
-    public async Task Clr_Bytes_ReturnsByteArrayType()
-    {
-        await Assert.That(_types.Clr("bytes")).IsEqualTo(typeof(byte[]));
-    }
 
-    [Test]
-    public async Task Clr_NullableInt_ReturnsNullableIntType()
-    {
-        await Assert.That(_types.Clr("int?")).IsEqualTo(typeof(int?));
-    }
 
-    [Test]
-    public async Task Clr_NullableGuid_ReturnsNullableGuidType()
-    {
-        await Assert.That(_types.Clr("guid?")).IsEqualTo(typeof(Guid?));
-    }
 
-    [Test]
-    public async Task Clr_GenericListString_ReturnsListOfString()
-    {
-        await Assert.That(_types.Clr("list<string>")).IsEqualTo(typeof(List<string>));
-    }
 
-    [Test]
-    public async Task Clr_GenericListInt_ReturnsListOfInt()
-    {
-        await Assert.That(_types.Clr("list<int>")).IsEqualTo(typeof(List<int>));
-    }
 
-    [Test]
-    public async Task Clr_GenericDictStringInt_ReturnsDictionary()
-    {
-        await Assert.That(_types.Clr("dict<string,int>")).IsEqualTo(typeof(Dictionary<string, int>));
-    }
 
-    [Test]
-    public async Task Clr_GenericDictionaryStringInt_ReturnsDictionary()
-    {
-        await Assert.That(_types.Clr("dictionary<string,int>")).IsEqualTo(typeof(Dictionary<string, int>));
-    }
 
-    [Test]
-    public async Task Clr_CaseInsensitive_Works()
-    {
-        await Assert.That(_types.Clr("STRING")).IsEqualTo(typeof(string));
-        await Assert.That(_types.Clr("StRiNg")).IsEqualTo(typeof(string));
-    }
 
-    [Test]
-    public async Task Clr_MimeTextPlain_ReturnsString()
-    {
-        await Assert.That(_types.Clr("text/plain")).IsEqualTo(typeof(string));
-    }
 
-    [Test]
-    public async Task Clr_MimeImageJpeg_ReturnsByteArray()
-    {
-        await Assert.That(_types.Clr("image/jpeg")).IsEqualTo(typeof(byte[]));
-    }
 
-    [Test]
-    public async Task Clr_MimeApplicationJson_ReturnsObject()
-    {
-        await Assert.That(_types.Clr("application/json")).IsEqualTo(typeof(object));
-    }
 
-    [Test]
-    public async Task Clr_MimeOctetStream_ReturnsByteArray()
-    {
-        await Assert.That(_types.Clr("application/octet-stream")).IsEqualTo(typeof(byte[]));
-    }
 
-    [Test]
-    public async Task Clr_NullOrEmpty_ReturnsNull()
-    {
-        await Assert.That(_types.Clr(null!)).IsNull();
-        await Assert.That(_types.Clr("")).IsNull();
-        await Assert.That(_types.Clr("   ")).IsNull();
-    }
 
-    [Test]
-    public async Task Clr_UnknownType_ReturnsNull()
-    {
-        await Assert.That(_types.Clr("unknowntype")).IsNull();
-    }
 
-    // --- Name: CLR type → PLang name ---
 
-    [Test]
-    public async Task Name_String_ReturnsString()
-    {
-        await Assert.That(_types.Name(typeof(string))).IsEqualTo("text");
-    }
 
-    [Test]
-    public async Task Name_Int_ReturnsInt()
-    {
-        await Assert.That(_types.Name(typeof(int))).IsEqualTo("number");
-    }
 
-    [Test]
-    public async Task Name_ByteArray_ReturnsBytes()
-    {
-        await Assert.That(_types.Name(typeof(byte[]))).IsEqualTo("bytes");
-    }
 
-    [Test]
-    public async Task Name_NullableInt_ReturnsIntQuestionMark()
-    {
-        await Assert.That(_types.Name(typeof(int?))).IsEqualTo("number?");
-    }
 
-    [Test]
-    public async Task Name_ListOfString_ReturnsListString()
-    {
-        await Assert.That(_types.Name(typeof(List<string>))).IsEqualTo("list<text>");
-    }
 
-    [Test]
-    public async Task Name_IListOfInt_ReturnsListInt()
-    {
-        await Assert.That(_types.Name(typeof(IList<int>))).IsEqualTo("list<number>");
-    }
 
-    [Test]
-    public async Task Name_DictionaryStringInt_ReturnsDictStringInt()
-    {
-        await Assert.That(_types.Name(typeof(Dictionary<string, int>))).IsEqualTo("dict<text,number>");
-    }
 
-    [Test]
-    public async Task Name_IntArray_ReturnsListInt()
-    {
-        await Assert.That(_types.Name(typeof(int[]))).IsEqualTo("list<number>");
-    }
 
-    [Test]
-    public async Task Name_Null_ReturnsObject()
-    {
-        await Assert.That(_types.Name(null!)).IsEqualTo("object");
-    }
 
-    [Test]
-    public async Task Name_UnknownType_ReturnsLowercaseName()
-    {
-        await Assert.That(_types.Name(typeof(Uri))).IsEqualTo("uri");
-    }
 
-    // --- Kind: extension → kind ---
 
-    [Test]
-    public async Task Kind_Jpg_ReturnsImage()
-    {
-        await Assert.That(_formats.Kind(".jpg")).IsEqualTo("image");
-    }
 
-    [Test]
-    public async Task Kind_Xlsx_ReturnsSpreadsheet()
-    {
-        await Assert.That(_formats.Kind(".xlsx")).IsEqualTo("spreadsheet");
-    }
 
-    [Test]
-    public async Task Kind_Mp4_ReturnsVideo()
-    {
-        await Assert.That(_formats.Kind(".mp4")).IsEqualTo("video");
-    }
 
-    [Test]
-    public async Task Kind_Mp3_ReturnsAudio()
-    {
-        await Assert.That(_formats.Kind(".mp3")).IsEqualTo("audio");
-    }
 
-    [Test]
-    public async Task Kind_Zip_ReturnsArchive()
-    {
-        await Assert.That(_formats.Kind(".zip")).IsEqualTo("archive");
-    }
 
-    [Test]
-    public async Task Kind_Cs_ReturnsCode()
-    {
-        await Assert.That(_formats.Kind(".cs")).IsEqualTo("code");
-    }
 
-    [Test]
-    public async Task Kind_Pdf_ReturnsDocument()
-    {
-        await Assert.That(_formats.Kind(".pdf")).IsEqualTo("document");
-    }
 
-    [Test]
-    public async Task Kind_Goal_ReturnsPlang()
-    {
-        await Assert.That(_formats.Kind(".goal")).IsEqualTo("plang");
-    }
 
-    [Test]
-    public async Task Kind_WithoutDot_Works()
-    {
-        await Assert.That(_formats.Kind("jpg")).IsEqualTo("image");
-    }
 
-    [Test]
-    public async Task Kind_CaseInsensitive_Works()
-    {
-        await Assert.That(_formats.Kind(".JPG")).IsEqualTo("image");
-    }
 
-    [Test]
-    public async Task Kind_UnknownExtension_ReturnsNull()
-    {
-        await Assert.That(_formats.Kind(".xyz123")).IsNull();
-    }
 
-    [Test]
-    public async Task Kind_KeyExtension_ReturnsCertificate()
-    {
-        // .key conflict resolved: "certificate" wins over "presentation"
-        await Assert.That(_formats.Kind(".key")).IsEqualTo("certificate");
-    }
 
-    // --- Mime: extension → MIME content type ---
 
-    [Test]
-    public async Task Mime_Jpg_ReturnsImageJpeg()
-    {
-        await Assert.That(_formats.Mime(".jpg")).IsEqualTo("image/jpeg");
-    }
 
-    [Test]
-    public async Task Mime_Json_ReturnsApplicationJson()
-    {
-        await Assert.That(_formats.Mime(".json")).IsEqualTo("application/json");
-    }
 
-    [Test]
-    public async Task Mime_Xlsx_ReturnsCorrectMime()
-    {
-        await Assert.That(_formats.Mime(".xlsx"))
-            .IsEqualTo("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-    }
 
-    [Test]
-    public async Task Mime_UnknownExtension_ReturnsOctetStream()
-    {
-        await Assert.That(_formats.Mime(".xyz123")).IsEqualTo("application/octet-stream");
-    }
 
-    [Test]
-    public async Task Mime_WithoutDot_Works()
-    {
-        await Assert.That(_formats.Mime("jpg")).IsEqualTo("image/jpeg");
-    }
 
-    // --- Compressible: kind → compressible? ---
 
-    [Test]
-    public async Task Compressible_Text_ReturnsTrue()
-    {
-        await Assert.That(_formats.Compressible("text")).IsTrue();
-    }
 
-    [Test]
-    public async Task Compressible_Spreadsheet_ReturnsTrue()
-    {
-        await Assert.That(_formats.Compressible("spreadsheet")).IsTrue();
-    }
 
-    [Test]
-    public async Task Compressible_Code_ReturnsTrue()
-    {
-        await Assert.That(_formats.Compressible("code")).IsTrue();
-    }
 
-    [Test]
-    public async Task Compressible_Document_ReturnsTrue()
-    {
-        await Assert.That(_formats.Compressible("document")).IsTrue();
-    }
 
-    [Test]
-    public async Task Compressible_Image_ReturnsFalse()
-    {
-        await Assert.That(_formats.Compressible("image")).IsFalse();
-    }
 
-    [Test]
-    public async Task Compressible_Video_ReturnsFalse()
-    {
-        await Assert.That(_formats.Compressible("video")).IsFalse();
-    }
 
-    [Test]
-    public async Task Compressible_Audio_ReturnsFalse()
-    {
-        await Assert.That(_formats.Compressible("audio")).IsFalse();
-    }
 
-    [Test]
-    public async Task Compressible_Archive_ReturnsFalse()
-    {
-        await Assert.That(_formats.Compressible("archive")).IsFalse();
-    }
 
-    [Test]
-    public async Task Compressible_NullOrEmpty_ReturnsFalse()
-    {
-        await Assert.That(_formats.Compressible(null!)).IsFalse();
-        await Assert.That(_formats.Compressible("")).IsFalse();
-    }
+
+
+
+
+
+
 
     // --- Add/Remove: runtime extensibility ---
 
@@ -504,46 +307,13 @@ public class EngineTypesTests
 
     // --- Finding #2: Kind(null)/Mime(null) null guard ---
 
-    [Test]
-    public async Task Kind_Null_ReturnsNull()
-    {
-        await Assert.That(_formats.Kind(null!)).IsNull();
-    }
 
-    [Test]
-    public async Task Kind_Empty_ReturnsNull()
-    {
-        await Assert.That(_formats.Kind("")).IsNull();
-    }
 
-    [Test]
-    public async Task Mime_Null_ReturnsOctetStream()
-    {
-        await Assert.That(_formats.Mime(null!)).IsEqualTo("application/octet-stream");
-    }
 
-    [Test]
-    public async Task Mime_Empty_ReturnsOctetStream()
-    {
-        await Assert.That(_formats.Mime("")).IsEqualTo("application/octet-stream");
-    }
 
     // --- Finding #3: Name() backtick fix for generics ---
 
-    [Test]
-    public async Task Name_HashSetOfString_RendersAsListT()
-    {
-        // Set/HashSet/IEnumerable all normalize to list<T> per catalog conventions
-        // (commit 197729d "Catalog: normalize collection type names").
-        await Assert.That(_types.Name(typeof(HashSet<string>))).IsEqualTo("list<text>");
-    }
 
-    [Test]
-    public async Task Name_GenericTypeNotInMap_StripsAritySuffix()
-    {
-        // SortedSet<int> is not in _clrToName — should return "sortedset" not "sortedset`1"
-        await Assert.That(_types.Name(typeof(SortedSet<int>))).IsEqualTo("sortedset");
-    }
 
     // --- Finding #4: BuilderNames/ComplexSchemas tests ---
 
