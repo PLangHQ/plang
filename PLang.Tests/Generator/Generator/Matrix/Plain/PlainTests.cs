@@ -79,7 +79,10 @@ public class IntPlainTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<IntPlain>(app,
             parameters: new[] { ("count", (object?)"not-a-number") });
-        // Conversion failure surfaces as Data.FromError with non-null Error.
+        // Lazy: the conversion runs at the typed value door, so the failure surfaces
+        // when the value is materialised (Data<number>.Value()) — not at dispatch.
+        var typed = result.Data as global::app.data.@this<global::app.type.number.@this>;
+        await typed!.Value();
         await result.Data.IsFailure();
     }
 }

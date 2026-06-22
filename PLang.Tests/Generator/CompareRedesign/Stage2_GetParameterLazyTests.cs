@@ -66,13 +66,15 @@ public class Stage2_GetParameterLazyTests
     }
 
     [Test]
-    public async Task ResolutionFailure_SurfacesAsTypedError_BeforeRunResult()
+    public async Task ResolutionFailure_SurfacesAsTypedError_AtValueDoor()
     {
         // An unconvertible literal for a typed slot surfaces as a typed FromError Data
-        // from the dispatch resolution — never an NRE inside Run().
+        // when the value is materialised at its door — never an NRE inside Run().
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<global::app.module.matrix.plain.IntPlain>(app,
             parameters: new[] { ("count", (object?)"not-a-number") });
+        var typed = result.Data as global::app.data.@this<global::app.type.number.@this>;
+        await typed!.Value();
         await result.Data.IsFailure();
     }
 
