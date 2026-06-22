@@ -368,20 +368,10 @@ public partial class Set : IContext, IBuildValidatable
         // Data<wrapper> holds the raw value and projects it lazily on read. A type with no
         // item wrapper falls back to a bare Data. The declared entity rides into the ctor
         // so the entry lift stamps kind onto the instance (the instance owns kind).
+        // A born-typed value is already an item → Data<itemType> directly, no conversion.
+        // A non-item (raw) type rides as a bare Data — a born-on-wire value never lands here.
         if (!typeof(global::app.type.item.@this).IsAssignableFrom(t))
-        {
-            var (family, _) = global::app.type.convert.@this.OwnerOf(t);
-            if (family != null && typeof(global::app.type.item.@this).IsAssignableFrom(family))
-            {
-                // Lift the raw value into its item wrapper so the Data<wrapper> ctor binds —
-                // the type system creates it (raw string→text, int→number, byte[]→binary).
-                var lifted = global::app.type.@this.Create(value, context);
-                value = lifted;
-                t = lifted.GetType();
-            }
-            else
-                return new data.@this(name, value, declared) { Context = context };
-        }
+            return new data.@this(name, value, declared) { Context = context };
         var generic = typeof(data.@this<>).MakeGenericType(t);
         var instance = (data.@this)Activator.CreateInstance(generic, name, value, declared, null)!;
         instance.Context = context;
