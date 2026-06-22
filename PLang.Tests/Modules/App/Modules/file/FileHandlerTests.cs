@@ -445,7 +445,7 @@ public class FileHandlerTests : IDisposable
         var context = _app.User.Context;
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("TestFileExistsFlow",
             Make.Step("check if file exists",
-                Make.Action("file", "exists", ("path", TempPath("real.txt"))),
+                Make.Action("file", "exists", Make.Param("path", TempPath("real.txt"), "path")),
                 Make.Action("variable", "set",
                     Make.Param("Name", "fileResult", "variable"), ("Value", "%!data%"))),
             Make.Step("write exists result",
@@ -482,7 +482,7 @@ public class FileHandlerTests : IDisposable
         var context = _app.User.Context;
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("TestFileNotExistsFlow",
             Make.Step("check if file exists",
-                Make.Action("file", "exists", ("path", TempPath("ghost.txt"))),
+                Make.Action("file", "exists", Make.Param("path", TempPath("ghost.txt"), "path")),
                 Make.Action("variable", "set",
                     Make.Param("Name", "fileResult", "variable"), ("Value", "%!data%"))),
             Make.Step("write exists result",
