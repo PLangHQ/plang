@@ -498,6 +498,12 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// whose ref is unset keeps its literal form — the builder's preservation
     /// rule for partially-bound structures.
     /// </summary>
+    /// <summary>An empty instance of THIS concrete list type — the polymorphic
+    /// seam the base render uses so it never hard-codes the non-generic type. The
+    /// generic <c>list&lt;T&gt;</c> overrides it so render/clone preserve the
+    /// element-type tag (a <c>list&lt;path&gt;</c> stays a <c>list&lt;path&gt;</c>).</summary>
+    protected virtual @this Empty() => new();
+
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
         // Render each element through its OWN door — a %ref% variable resolves, a stamped
@@ -512,7 +518,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             {
                 if (rendered == null)
                 {
-                    rendered = new @this { Context = _context };
+                    // Preserve the concrete list type — a list<path> must render to a
+                    // list<path>, not a bare list.@this, or the element-type tag is
+                    // lost and Data.Value<list<path>>() can no longer recognise it.
+                    rendered = Empty();
+                    rendered.Context = _context;
                     for (int j = 0; j < i; j++) rendered.AddRaw(_items[j]);
                 }
                 var name = slot is Data sd ? sd.Name : "";

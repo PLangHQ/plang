@@ -17,6 +17,10 @@ public sealed class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
     public @this() : base() { }
     public @this(System.Collections.Generic.IEnumerable<global::app.data.@this> items) : base(items) { }
 
+    /// <summary>Render/clone preserve the element-type tag — a list&lt;T&gt; stays
+    /// a list&lt;T&gt; instead of degrading to the non-generic base.</summary>
+    protected override global::app.type.list.@this Empty() => new @this<T>();
+
     /// <summary>Build a typed list from raw element values — each wrapped in a Data row.</summary>
     public static @this<T> Of(System.Collections.IEnumerable items)
     {
