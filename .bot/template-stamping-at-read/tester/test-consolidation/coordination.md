@@ -18,7 +18,13 @@ parity with a cobertura line-set diff before deleting, then commit per module.
 | loop | coder | mostly migrated | tester stays out. |
 | file | coder | partial | tester stays out. |
 | list | tester | **done** | 39→41, coverage parity. `ListGoalRunTests` + floor `ListAddIdentityTests` (ref-identity) + `ListFlattenRecursionTests` (recursion needs raw nested seed). |
-| math | tester | **claiming next** | fully raw, small. |
+| TypeMappingTests (enumeration) | tester | **done** | **90 → 21** (77% cut), coverage parity. 73 table-row tests → 4 data-driven loops; 17 distinct conversion paths kept. This is where real removal lives. |
+| math | tester | queued | fully raw, small. |
+
+**Removal lives in enumeration files, not module-action tests.** variable/list were ~1:1
+(distinct branches → little to cut). The big cuts are the table files: TypeMappingTests
+(done, 90→21), and next DataTests (96), EngineTypesTests (88), VariablesTests (69) — same
+shape (one mechanism typed N times → one data-driven test).
 
 ### Note for coder — wire flattens nested list literals
 Seeding a nested list via `variable.set` through `RealGoalLoad.ViaChannel` (the .pr wire
