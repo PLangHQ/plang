@@ -209,30 +209,8 @@ public sealed partial class @this
         // (choice<T> is built by its own discovered Convert hook via the OwnerOf/OfStatic
         // build arm below — no special arm here.)
 
-        // list<T> target — the typed native list. Resolve the source to the base native
-        // list first (JSON string / IEnumerable / native list all handled there), then
-        // re-house its rows in a list<T>, converting each element to T. The element type
-        // is intrinsic to the slot, so no [Element] hint is needed.
-        if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(app.type.list.@this<>))
-        {
-            var elemType = targetType.GetGenericArguments()[0];
-            var (baseObj, baseErr) = TryConvert(value, typeof(app.type.list.@this), context, targetName);
-            if (baseErr != null) return (null, baseErr);
-            var typed = (app.type.list.@this)System.Activator.CreateInstance(targetType)!;
-            if (baseObj is app.type.list.@this baseList)
-            {
-                foreach (var row in baseList.Items)
-                {
-                    // Never swallow: a typed list's element MUST become its element type.
-                    // Keeping the raw row on failure produced a list<T> that lies about its
-                    // contents and exploded two layers away at Clr — surface the reason here.
-                    var (convEl, elErr) = TryConvert(row.Peek(), elemType, context);
-                    if (elErr != null) return (null, elErr);
-                    typed.Add(new data.@this("", convEl));
-                }
-            }
-            return (typed, null);
-        }
+        // (No list<T> arm — list<T> is built by list<T>.Create, a re-tag, via the live
+        // As<list<T>>/Value<list<T>> path. Nothing in runtime feeds a list<T> target here.)
 
         // Handle nullable target types
         var underlying = System.Nullable.GetUnderlyingType(targetType);
