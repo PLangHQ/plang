@@ -231,7 +231,7 @@ public partial class @this
         // "value wins over Data infrastructure" (a dict's own "type" key still
         // wins for those).
         if (key.Equals("Type", StringComparison.OrdinalIgnoreCase)
-            && _type != null && global::app.type.item.@this.OwnsDoor(_type))
+            && _type != null && !_type.IsFinal)
             return new @this(key, Type, parent: this);
 
         // Navigation IS examination — the value door parses an un-narrowed

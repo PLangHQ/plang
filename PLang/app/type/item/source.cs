@@ -68,6 +68,9 @@ public sealed class source : @this, module.IContext
     /// new instance with this source as its prior; a raw with no reader and no
     /// type answers itself (the bytes are the value).
     /// </summary>
+    /// <summary>Never final — the door parses the raw form into its value on read.</summary>
+    internal override bool IsFinal => false;
+
     public override async System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this asking)
     {
         var read = Context?.App.Type.Readers.Of(_type, _kind);

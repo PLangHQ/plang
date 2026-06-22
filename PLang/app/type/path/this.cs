@@ -92,6 +92,10 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// a literal location is stable. path defers to text — it owns that judgement.</summary>
     public override bool Cacheable => _location.Cacheable;
 
+    /// <summary>Final when the location is literal — Value() returns this. A template
+    /// location resolves through text's door, so it is not final.</summary>
+    internal override bool IsFinal => _location.Cacheable;
+
     /// <summary>
     /// THE door. A literal location answers itself. A template location renders
     /// through text's door (full-match %var% → the variable's value, partial →

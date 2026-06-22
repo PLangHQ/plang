@@ -34,6 +34,9 @@ public sealed class computed : @this, module.IContext
 
     public override bool Cacheable => false;
 
+    /// <summary>Never final — the door computes a fresh answer on every read.</summary>
+    internal override bool IsFinal => false;
+
     public override System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this asking)
         => System.Threading.Tasks.ValueTask.FromResult(Compute());
 

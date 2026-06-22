@@ -217,16 +217,14 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     }
 
     /// <summary>
-    /// True when <paramref name="value"/>'s type overrides <see cref="Value"/> —
-    /// its own door does real work (file/url load, source parses, computed
-    /// answers fresh, a template renders). Metadata reads must not open such a
+    /// True when the value is already its own final answer — opening its door
+    /// (<see cref="Value"/>) returns itself, no resolve/render/load. A literal
+    /// scalar is final; a template renders, a file/url loads, a source parses, a
+    /// computed answers fresh, so those are NOT final. Metadata/structural reads
+    /// may take a final value as-is; a non-final value must be read through its
     /// door, and a carrier must never stand between the Data and it.
     /// </summary>
-    internal static bool OwnsDoor(@this value)
-        => value.Template != null || _doorOwners.GetOrAdd(value.GetType(), static t =>
-            t.GetMethod(nameof(Value), new[] { typeof(global::app.data.@this) })!.DeclaringType != typeof(@this));
-
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, bool> _doorOwners = new();
+    internal virtual bool IsFinal => Template == null;
 
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, string> _namespaceTails = new();
 

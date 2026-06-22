@@ -331,6 +331,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// whose ref is unset keeps its literal form — the builder's preservation
     /// rule for partially-bound structures.
     /// </summary>
+    /// <summary>A container is never final — an entry may be non-final (a template,
+    /// a nested container), so a read must go through the door. Value() short-circuits
+    /// to <c>this</c> when every entry turns out final.</summary>
+    internal override bool IsFinal => false;
+
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
         // Render each entry through its OWN door — a %ref% variable resolves, a stamped
@@ -341,7 +346,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         {
             var slot = _value[key];
             var inner = slot as global::app.type.item.@this ?? (slot as Data)?.Peek();
-            if (inner is global::app.type.item.@this e && OwnsDoor(e))
+            if (inner is global::app.type.item.@this e && !e.IsFinal)
             {
                 if (rendered == null)
                 {

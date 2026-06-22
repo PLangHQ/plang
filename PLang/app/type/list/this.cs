@@ -504,6 +504,12 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// element-type tag (a <c>list&lt;path&gt;</c> stays a <c>list&lt;path&gt;</c>).</summary>
     protected virtual @this Empty() => new();
 
+    /// <summary>A container is never final — an element may be non-final (a template,
+    /// a nested container), so a read must go through the door. Value() short-circuits
+    /// to <c>this</c> when every element turns out final, so the conservative answer
+    /// costs nothing for an all-literal list.</summary>
+    internal override bool IsFinal => false;
+
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
         // Render each element through its OWN door — a %ref% variable resolves, a stamped
@@ -514,7 +520,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         for (int i = 0; i < _items.Count; i++)
         {
             var slot = _items[i];
-            if (Inner(slot) is global::app.type.item.@this e && OwnsDoor(e))
+            if (Inner(slot) is global::app.type.item.@this e && !e.IsFinal)
             {
                 if (rendered == null)
                 {
