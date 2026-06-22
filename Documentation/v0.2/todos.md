@@ -1232,3 +1232,12 @@ redesign shifts facet (A): there's now ONE parser (path.Parse) and a first-class
 so "store the path" can mean making segments the variable's SINGLE wire form (parse at
 build, FromWire at runtime, never parse at runtime) rather than a side-channel span cache.
 Full reconciliation + open decisions: `.bot/variable-as-value/coder/build-time-variable-parsing.md`.
+
+## 2026-06-22 — identity settings-store returns bare `data.@this` (should be `data<list<T>>`)
+`IStore.GetAll(string)` (settings/IStore.cs:28) and `Get(string,string)` (:16) return
+bare `data.@this`, so the identity code (`identity/code/Default.cs` LoadAsync/LoadAllAsync)
+can't say `result.Value()` and get a typed list — it must reach for the generic door
+`Value<list>()`. Fix: `GetAll(table)` → `data.@this<list.@this>` (and decide the single
+`Get` shape). Only one non-generic caller (identity Default.cs:227). Once typed, drop the
+`<list>` generic at the consumer. Context: variable-as-value consumer-door cleanup; the
+typed `.List()` sources (path.List → `data<list<path>>`) already work this way.

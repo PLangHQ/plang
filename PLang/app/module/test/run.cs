@@ -36,8 +36,11 @@ public partial class run : IContext
 
     public async Task<data.@this<global::app.tester.Results>> Run()
     {
-        var tests = global::app.type.item.@this.Lower<List<global::app.tester.test.@this>>(await Tests.Value())
-            ?? new List<global::app.tester.test.@this>();
+        var tests = new List<global::app.tester.test.@this>();
+        var list = await Tests.Value();
+        if (list != null)
+            foreach (var row in list)
+                if (await row.Value() is global::app.tester.test.@this test) tests.Add(test);
         var parentApp = Context.App!;
         // The number lowers itself — absent slot falls to the stated default.
         int parallel = Parallel == null ? parentApp.Tester.Parallel

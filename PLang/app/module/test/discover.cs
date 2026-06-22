@@ -57,12 +57,12 @@ public partial class discover : IContext
         var exclude = Context.App.Tester.Exclude;
 
         var files = new List<global::app.tester.test.@this>();
-        var matches = global::app.type.item.@this.Lower<List<global::app.type.path.@this>>(await listed.Value())!;
-        foreach (var match in matches)
+        var list = await listed.Value();
+        foreach (var row in list!)
         {
             // .test.goal files only resolve under the file scheme; foreign schemes
             // skip silently. The List call already returned filesystem paths.
-            if (match is not FilePath fileMatch) continue;
+            if (await row.Value<global::app.type.path.@this>() is not FilePath fileMatch) continue;
             files.Add(await DiscoverOne(fileMatch, app, include, exclude));
         }
         return data.@this<global::app.type.list.@this<global::app.tester.test.@this>>.Ok(global::app.type.list.@this<global::app.tester.test.@this>.Of(files));

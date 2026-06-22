@@ -288,21 +288,20 @@ public class IdentityErrorPathTests
     // --- Deserialize with unrecognized value type (via Get action) ---
 
     [Test]
-    public async Task Get_UnrecognizedValueType_ReturnsEmptyIdentity()
+    public async Task Get_UnrecognizedValueType_FailsToDeserialize()
     {
-        // Store a raw integer in the identity table — deserializes as Identity with empty fields
+        // A corrupt store entry (a raw integer, not the stored identity dict) is not a
+        // deserializable identity — Get fails honestly rather than degrading to an empty one.
         var ds = _app.SettingsStore;
         await ds.Set("identity", "weird", new Data("weird", 42));
 
         var result = await new global::app.module.identity.Get { Context = Ctx, Name = (global::app.type.text.@this)"weird" }.Run();
-        // Identity deserializes but has empty PublicKey — valid but useless
-        await result.IsSuccess();
-        var identity = (await result.Value()) as Identity;
-        await Assert.That(identity!.PublicKey).IsEqualTo("");
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("DeserializationError");
     }
 
     [Test]
-    public async Task GetAll_MixedValues_IncludesAll()
+    public async Task GetAll_SkipsUndeserializableEntries()
     {
         var ds = _app.SettingsStore;
 
@@ -310,7 +309,7 @@ public class IdentityErrorPathTests
         var create = new Create { Context = Ctx, Name = (global::app.type.text.@this)"valid", SetAsDefault = (global::app.type.@bool.@this)true };
         await create.Run();
 
-        // Store a non-identity value directly — deserializes as Identity with empty fields
+        // Store a non-identity value directly — not a dict, so it can't deserialize to an Identity
         await ds.Set("identity", "garbage", new Data("garbage", "just a string"));
 
         var handler = new list { Context = Ctx };
@@ -318,8 +317,8 @@ public class IdentityErrorPathTests
         await result.IsSuccess();
 
         var list = result.GetValue<List<Identity>>();
-        // Both deserialize as Identity — no type filtering anymore
-        await Assert.That(list!.Count).IsEqualTo(2);
+        // Only the valid identity is listed; the corrupt entry is skipped, not degraded to empty.
+        await Assert.That(list!.Count).IsEqualTo(1);
     }
 
     // --- Helpers ---

@@ -213,7 +213,9 @@ public sealed class Default : IIdentity
         if (result.Peek().IsNull)
             return data.@this<Identity>.FromError(new ActionError($"Identity '{name}' not found", "NotFound", 404));
 
-        var identity = ConvertToIdentity(result.Peek());
+        // Only a stored dict deserializes to an Identity; any other shape (corrupt
+        // store entry) is not a deserializable identity → honest deserialize error.
+        var identity = await result.Value() is global::app.type.dict.@this dict ? dict.Clr<Identity>() : null;
         if (identity == null)
             return data.@this<Identity>.FromError(new ActionError($"Failed to deserialize identity '{name}'", "DeserializationError", 500));
 
@@ -228,15 +230,13 @@ public sealed class Default : IIdentity
         if (!result.Success) return (null, result.Error);
 
         var identities = new List<Identity>();
-        if (global::app.type.item.@this.Lower<List<data.@this>>(await result.Value()) is { } dataList)
-        {
-            foreach (var item in dataList)
+        var list = await result.Value<global::app.type.list.@this>();
+        if (list != null)
+            foreach (var row in list)
             {
-                var identity = ConvertToIdentity(item.Peek());
-                if (identity != null)
-                    identities.Add(identity);
+                var identity = await row.Value() is global::app.type.dict.@this dict ? dict.Clr<Identity>() : null;
+                if (identity != null) identities.Add(identity);
             }
-        }
         return (identities, null);
     }
 
@@ -312,49 +312,5 @@ public sealed class Default : IIdentity
             Created = now
         };
         return data.@this<Identity>.Ok(identity);
-    }
-
-    /// <summary>
-    /// Converts a stored value (may be Identity, Dictionary, or other) back to Identity.
-    /// </summary>
-    private static Identity? ConvertToIdentity(object? value)
-    {
-        if (value is Identity identity)
-            return identity;
-
-        // A stored identity reads back as the native dict — its JSON view (the
-        // dict's converter) is the stored shape; STJ rebuilds the Identity from
-        // it. Value→json is the serializer's job, json→domain is STJ's.
-        if (value is app.type.dict.@this nativeDict)
-        {
-            try
-            {
-                var json = JsonSerializer.Serialize(nativeDict);
-                return JsonSerializer.Deserialize<Identity>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            }
-            catch { return null; }
-        }
-
-        if (value is Dictionary<string, object?> dict)
-        {
-            try
-            {
-                var json = JsonSerializer.Serialize(dict);
-                return JsonSerializer.Deserialize<Identity>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            }
-            catch { return null; }
-        }
-
-        if (value is JsonElement element)
-        {
-            try
-            {
-                return JsonSerializer.Deserialize<Identity>(element.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            }
-            catch { return null; }
-        }
-
-        // Unrecognized value type (e.g., raw integer) — return empty Identity with the value's string as name
-        return new Identity(value?.ToString() ?? "");
     }
 }

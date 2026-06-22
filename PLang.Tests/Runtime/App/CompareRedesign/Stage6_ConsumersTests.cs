@@ -198,16 +198,6 @@ public class Stage6_ConsumersTests
     }
 
     [Test]
-    public async Task Pile2_Identity_RoundTripsJson_NoNativeDictIntermediary()
-    {
-        // identity/Default.cs — a stored identity rebuilds dict→json (the dict's own
-        // converter)→Identity via STJ; no ToRaw raw-dictionary intermediary.
-        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "identity", "code", "Default.cs"));
-        await Assert.That(src).DoesNotContain("ToRaw");
-        await Assert.That(src).Contains("JsonSerializer.Serialize(nativeDict)");
-    }
-
-    [Test]
     public async Task Pile2_Fluid_RendersViaTextSerializer_NoToRaw()
     {
         // ui/Fluid.cs — natives render through lazy read-through views (zero copy);

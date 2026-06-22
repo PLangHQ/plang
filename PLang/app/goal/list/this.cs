@@ -447,9 +447,11 @@ public sealed class @this
                 return data.@this.Ok(0);
 
             var loadedCount = 0;
-            var listedPaths = global::app.type.item.@this.Lower<List<global::app.type.path.@this>>(await listed.Value())!;
-            foreach (var file in listedPaths)
+            var list = await listed.Value();
+            foreach (var row in list!)
             {
+                var file = await row.Value<global::app.type.path.@this>();
+                if (file == null) continue;
                 var result = await LoadFromFileAsync(app, file.Absolute, context, cancellationToken);
                 if (result) loadedCount++;
             }

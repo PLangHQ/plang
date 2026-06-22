@@ -181,6 +181,41 @@ builder; the hub loses an arm. **No big-bang** — one arm at a time.
   but they're the `dict→record` deserialize question (record owns `From` vs deserialize)
   and tie into the same kind-driven materialization. Sequence after the kind machinery.
 
+## The doors (crisp, this session) — pick by what you want back
+- **`row.Value<T>()`** where `T : item.@this` → **the item**. Body is `T.Create(await Value(), this)`:
+  resolve the door, then **the TYPE creates itself** (`ICreate.Create`). This IS "use type
+  to create type" — already built. Use it whenever you want a plang item out.
+- **`row.Clr<TClr>()` / `.Clr(Type)`** → **the CLR object** (LOWER). The value lowers itself
+  (dict deserializes to a record, text→string). Terminal.
+- **`row.As<T>()`** → the **non-resolved typed view** (`Data<T>`), handed at dispatch; the
+  handler's later `.Value()` opens the door. NOT a conversion, NOT awaited.
+- **Never** reach for `convert.OfStatic` / a hand-rolled `item.As(Type)→object?` router —
+  that's the deleted-hub smell. CONVERT-to-a-specific-family is the type entity's
+  `Build(value)` (routes through `App.Type.Conversions.Of`, the instance path).
+
+## Current work — consumer-door cleanup (the raw→plang-through-`Clr` misuses)
+Five production sites `Lower<List<X.@this>>` to pull **plang items** out through the **CLR
+door** — that's raw→plang done by `Clr` (why terminal `ClrConvert` threw "String cannot
+lower to **this**"). They want the **item door** per row, not a CLR list:
+- `goal/list/this.cs:450` `Lower<List<path.@this>>` → `foreach row: await row.Value<path>()`
+- `module/test/discover.cs:60` `Lower<List<path.@this>>` → same
+- `module/MarkdownTeaching.cs:88` `Lower<List<path.@this>>` → same
+- `module/test/run.cs:39` `Lower<List<test.@this>>` → `await row.Value<test>()`
+- `module/identity/code/Default.cs:231` `Lower<List<data.@this>>` → the list IS
+  `IEnumerable<Data>`, just `foreach`; each `(await row.Value()).Clr<Identity>()`
+
+**Delete `ConvertToIdentity`** (identity/Default.cs:320) — it's `dict.Clr<Identity>()`
+hand-written (serialize dict → `Deserialize<Identity>`). Both call sites (216, 235) →
+`(await x.Value()).Clr<Identity>()`. The dict owns its own deserialize.
+
+**Payoff:** with these off the CLR door, `list.Clr` is *only ever* asked for real CLR
+element types → per-row `row.Clr(elem)` stays terminal: no router, no `OfStatic`, no hub.
+
+**Next step (separate):** `LoadFromFileAsync(app, file.Absolute, …)` takes a raw `string`
+(smell #8 + System.IO-by-string, bypasses `path` AuthGate) — change it to take the `path`
+item; `path` reads itself. Ripples 4 callers (188/214/350/453). Its own step, not tangled
+in the conversion fix.
+
 ## Watch-outs
 - The 2×O(n) trap: never build an intermediate collection then walk it again. A
   `dict.Clr` record build is one object (fine); a `list`→`list` materialization is NOT (banned).

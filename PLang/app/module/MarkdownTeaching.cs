@@ -85,9 +85,11 @@ public static class MarkdownTeaching
 
         var rootAbs = modulesRoot.Absolute;
         var actionsByModule = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
-        var listedFiles = global::app.type.item.@this.Lower<List<global::app.type.path.@this>>(await listResult.Value())!;
-        foreach (var file in listedFiles)
+        var list = await listResult.Value();
+        foreach (var row in list!)
         {
+            var file = await row.Value<global::app.type.path.@this>();
+            if (file == null) continue;
             var moduleDir = file.Parent;
             if (moduleDir == null) continue;
             var grand = moduleDir.Parent;
