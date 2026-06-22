@@ -223,6 +223,17 @@ public sealed partial class @this
         // the value decides. The reconstruction arms below then apply unchanged.
         if (value is app.type.item.@this itemValue)
         {
+            // LOWER: when the target is the value's OWN family (string for text, the
+            // numeric tower for number, IList for list, …), the value lowers ITSELF —
+            // terminal, the value owns its CLR projection. A DIFFERENT family (text→int,
+            // text→datetime) is a CONVERT and falls through to the family hooks below.
+            var (ownFamily, _) = global::app.type.convert.@this.OwnerOf(targetType);
+            if (ownFamily != null && ownFamily.IsInstanceOfType(itemValue))
+            {
+                try { return (itemValue.Clr(targetType), null); }
+                catch (System.Exception ex) when (ex is System.InvalidCastException or System.FormatException or System.OverflowException)
+                { return (null, WithSlot(new error.Error(ex.Message, "TypeConversionFailed", 400), targetName)); }
+            }
             var raw = itemValue.Clr<object>();
             if (!ReferenceEquals(raw, value))
                 return TryConvert(raw, targetType, context, targetName);
