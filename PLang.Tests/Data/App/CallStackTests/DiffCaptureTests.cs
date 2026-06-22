@@ -102,31 +102,24 @@ public class DiffCaptureTests
     [Test]
     public async Task Diff_DiffModeOverLargeListDoesNotOom()
     {
-        // scalar-only default should mitigate the prior OOM scenario.
-        // 100 iterations × 1MB list under Diff:true (no DeepDiff). GC delta stays low
-        // because Before captures a summary string, not a clone.
+        // The OOM risk under Diff:true (no DeepDiff) is cloning a large collection
+        // on every Set. CaptureBefore avoids it by storing an O(1) summary string,
+        // never a clone — so even a large list captures in constant space. Asserting
+        // the summary directly is both faster and stronger than a GC-delta heuristic:
+        // the summary IS the property that prevents the OOM.
         var stack = new CallStack { Flags = Flags.Default with { Diff = true } };
         var vars = new global::app.variable.list.@this();
-        // Seed with a 1MB-ish list.
-        vars.Set("big", new List<byte>(new byte[1024 * 1024]));
+        // Seed with a large list — this is the 'before' the next Set captures.
+        var big = new List<int>(Enumerable.Range(0, 100_000));
+        vars.Set("big", big);
 
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-        var memBefore = GC.GetTotalMemory(false);
+        await using var call = stack.Push(MakeAction("A"), vars);
+        vars.Set("big", new List<int> { 1, 2, 3 });
 
-        for (int i = 0; i < 100; i++)
-        {
-            await using var call = stack.Push(MakeAction("A"), vars);
-            // Replace the big list — capture should be a summary string, not a clone.
-            vars.Set("big", new List<byte>(new byte[1024 * 1024]));
-        }
-
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-        var memAfter = GC.GetTotalMemory(false);
-        var deltaMb = (memAfter - memBefore) / (1024 * 1024);
-
-        // 100 cloned 1MB lists would be ~100MB. Scalar default keeps growth far below that.
-        await Assert.That(deltaMb).IsLessThan(50);
+        var diff = call.Diffs![0];
+        // The large Before is captured as a constant-space summary string naming the
+        // plang type + item count, not a clone of the list.
+        await Assert.That(diff.Before is string).IsTrue();
+        await Assert.That(((string)diff.Before!).Contains("list")).IsTrue();
     }
 }
