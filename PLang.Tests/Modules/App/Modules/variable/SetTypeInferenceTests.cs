@@ -173,7 +173,8 @@ public class SetTypeInferenceTests
         var result = await action.RunAsync(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("n");
-        await Assert.That(stored).IsTypeOf<global::app.data.@this<global::app.type.text.@this>>();
+        // Forced `as string` converted 42 → text "42"; the stored value IS a text (born-typed).
+        await Assert.That(await stored.Value()).IsTypeOf<global::app.type.text.@this>();
         await Assert.That((await stored.Value())!.ToString()).IsEqualTo("42");
     }
 

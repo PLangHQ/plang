@@ -168,7 +168,7 @@ public partial class Set : IContext, IBuildValidatable
             // Only the dict goes through TypeFromWire — its string arm binds context onto the
             // entity, which would resolve a kindless name's ClrType to the wrapper (number) rather
             // than the raw CLR mate (Int32) the no-context FromName yields.
-            var typeEntity = typeValue as global::app.type.@this
+            var type = typeValue as global::app.type.@this
                 ?? (typeValue is global::app.type.dict.@this or System.Collections.Generic.IDictionary<string, object?>
                         ? global::app.data.@this.TypeFromWire(typeValue, Context)
                         : null)
@@ -176,32 +176,32 @@ public partial class Set : IContext, IBuildValidatable
             // Canonicalise kind through the format registry — `markdown` → `md`,
             // `jpeg` → `jpg`. The factory does this when a context is passed;
             // the .pr round-trip loses the context, so we run it again here.
-            if (typeEntity.Kind != null)
+            if (type.Kind != null)
             {
-                var canon = Context.App.Format.CanonicaliseKind(typeEntity.Kind);
-                if (canon != null) typeEntity.Kind = canon;
+                var canon = Context.App.Format.CanonicaliseKind(type.Kind);
+                if (canon != null) type.Kind = canon;
             }
             // Stamp the entity's Context so ClrType resolves through the
             // registry when the entity wasn't minted with a CLR mate.
-            typeEntity.Context ??= Context;
-            var typeName = typeEntity.Name;
+            type.Context ??= Context;
+            var typeName = type.Name;
             // Resolve the CLR target from the ENTITY, not Get(name). For
             // `number` the name resolves to the number.@this domain class, but
             // a numeric value is a CLR primitive (int/long/...) — the entity's
             // ClrType carries the right mate (typeof(int) for {number, int}).
-            var targetType = typeEntity.ClrType ?? Context.App.Type.Get(typeName);
+            var targetType = type.ClrType ?? Context.App.Type.Get(typeName);
 
             // Stamp kind from the value via the type's Build hook (image parses
             // its path's extension → jpg; number reads the literal's precision →
             // int). `text` has no Build hook (a literal's spelling is not its
             // kind), so a text literal naturally derives nothing here.
-            if (typeEntity.Kind == null && targetType != null)
+            if (type.Kind == null && targetType != null)
             {
                 var derivedKind = Context.App.Type.KindHooks.Of(targetType, sourceValue)
                                   ?? (Context.App.Type[typeName] is { ClrType: { } familyClr }
                                       ? Context.App.Type.KindHooks.Of(familyClr, sourceValue)
                                       : null);
-                if (derivedKind != null) typeEntity.Kind = derivedKind;
+                if (derivedKind != null) type.Kind = derivedKind;
             }
             if (targetType == null)
             {
@@ -215,17 +215,17 @@ public partial class Set : IContext, IBuildValidatable
             // We construct a sample instance using the raw value as the first
             // ctor argument (image's primary ctor takes byte[]); a type without
             // a fitting ctor is treated as "no probe available".
-            if (typeEntity.Strict && typeEntity.Kind != null
+            if (type.Strict && type.Kind != null
                 && typeof(global::app.data.IKindValidatable).IsAssignableFrom(targetType))
             {
                 var probe = TryInstantiateValidator(targetType, sourceValue);
                 if (probe is global::app.data.IKindValidatable v)
                 {
-                    var (ok, actual) = v.ValidateKind(sourceValue!, typeEntity.Kind);
+                    var (ok, actual) = v.ValidateKind(sourceValue!, type.Kind);
                     if (!ok)
                         return global::app.data.@this.FromError(
                             new global::app.error.ServiceError(
-                                $"Strict kind mismatch: declared {typeName}/{typeEntity.Kind}"
+                                $"Strict kind mismatch: declared {typeName}/{type.Kind}"
                                 + (actual != null ? $" but content is {actual}." : "."),
                                 "StrictKindMismatch", 400));
                 }
@@ -238,8 +238,8 @@ public partial class Set : IContext, IBuildValidatable
             // and verbatim passthrough holds. Re-materializing (Value.Value below)
             // would parse it on store and defeat the whole lazy path.
             if (Value.RawUntouched && Value.Type is { } vt
-                && string.Equals(vt.Name, typeEntity.Name, StringComparison.OrdinalIgnoreCase)
-                && string.Equals(vt.Kind ?? "", typeEntity.Kind ?? "", StringComparison.OrdinalIgnoreCase))
+                && string.Equals(vt.Name, type.Name, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(vt.Kind ?? "", type.Kind ?? "", StringComparison.OrdinalIgnoreCase))
             {
                 Value.Name = name!;
                 return await Context.Variable.Set(Value);
@@ -247,50 +247,30 @@ public partial class Set : IContext, IBuildValidatable
 
             if (Value.RawUntouched) sourceValue = await Value.Value();
             object? converted = sourceValue;
-            System.Type? mintType = targetType;
 
-            // The incoming value composes the declared type as a facet under a
-            // DIFFERENT name — an image has-a path, so an image bound to a `path`
-            // slot already satisfies `path`. Keep it as-is with its own (richer)
-            // type; the `path` hint was one the image already meets, downgrading
-            // would drop the bytes. Same-name is excluded: there the declared
-            // type may refine (`as text/md` over `{text}`) or carry strict, which
-            // must still apply (strict, below, then runs against the declared
-            // kind, so `image/gif strict` on a PNG still fails).
+            // The incoming value composes the declared type as a facet under a DIFFERENT
+            // name (an image has-a path, so an image bound to a `path` slot satisfies `path`)
+            // — keep its own richer type; downgrading would drop the bytes. Same-name is
+            // excluded so `as text/md` over `{text}` (and strict) still applies.
             var keepAsIs = Value.Type != null
-                && !string.Equals(Value.Type.Name, typeEntity.Name, StringComparison.OrdinalIgnoreCase)
-                && Value.Type.Is(typeEntity);
-            if (keepAsIs)
+                && !string.Equals(Value.Type.Name, type.Name, StringComparison.OrdinalIgnoreCase)
+                && Value.Type.Is(type);
+
+            // `as <type>` is a converter: the TYPE makes a value of itself (kind-aware).
+            // A byte-backed family (image) keeps a literal path-string — the Type entity
+            // carries the declared meaning and the value loads later.
+            if (!keepAsIs && converted != null && !targetType.IsInstanceOfType(converted))
             {
-                mintType = converted?.GetType() ?? targetType;
-            }
-            // CLR target type that can construct from the raw value (string→int,
-            // string→DateTime, dict→record) — convert in place. Conversion
-            // failure is a real error UNLESS the target is byte-backed
-            // (IKindValidatable family like image), in which case a literal
-            // path-string is a legitimate value the Type entity annotates;
-            // mint as Data<string> and let downstream consumers resolve.
-            else if (converted != null && !targetType.IsInstanceOfType(converted))
-            {
-                // Ask the TYPE to make a value of itself (kind-aware) — the type owns
-                // its own construction; we don't reach for Convert.ChangeType here.
-                var convResult = typeEntity.Convert(converted, Context);
+                var convResult = type.Convert(converted, Context);
                 if (convResult.Success)
-                {
                     converted = convResult.Peek();
-                    mintType = converted?.GetType() ?? targetType;
-                }
-                else if (typeof(global::app.data.IKindValidatable).IsAssignableFrom(targetType))
-                    // Byte-backed family — keep the raw value, the Type entity
-                    // (with its kind/strict) carries the user-declared meaning.
-                    mintType = converted.GetType();
-                else
+                else if (!typeof(global::app.data.IKindValidatable).IsAssignableFrom(targetType))
                     return convResult;
             }
-            // The instance carries its own type: kept-as-is keeps the value's
-            // richer truth (image wins over a `path` hint); otherwise the
-            // declared entity rides into the lift so kind survives the mint.
-            var typedData = ConstructDataOfT(name, mintType, converted, keepAsIs ? null : typeEntity, Context);
+
+            // The converted value already carries its type — store it in a Data directly
+            // (no reflective Data<T> mint). keepAsIs keeps the value's own richer type.
+            var typedData = new data.@this(name, converted, keepAsIs ? null : type) { Context = Context };
 
             // Strict kind for a reference fundamental rides WITH the value to its
             // load seam (Ingi: validate at byte-materialization, throw if strict).
@@ -298,14 +278,14 @@ public partial class Set : IContext, IBuildValidatable
             // now; a lazy path-backed value defers — its own load enforces (e.g.
             // image.BytesAsync throws on mismatch). Raw byte[] slots are handled
             // separately above via the IKindValidatable probe.
-            if (typeEntity.Strict && typeEntity.Kind != null
+            if (type.Strict && type.Kind != null
                 && (await typedData.Value()) is global::app.data.IStrictKindEnforcer enforcer)
             {
-                enforcer.RequireStrictKind(typeEntity.Kind);
+                enforcer.RequireStrictKind(type.Kind);
                 if (enforcer.CheckStrictKind() is { ok: false } mismatch)
                     return global::app.data.@this.FromError(
                         new global::app.error.ServiceError(
-                            $"Strict kind mismatch: declared {typeName}/{typeEntity.Kind}"
+                            $"Strict kind mismatch: declared {typeName}/{type.Kind}"
                             + (mismatch.actualKind != null ? $" but content is {mismatch.actualKind}." : "."),
                             "StrictKindMismatch", 400));
             }
@@ -359,23 +339,6 @@ public partial class Set : IContext, IBuildValidatable
             { continue; }
         }
         return null;
-    }
-
-    private static data.@this ConstructDataOfT(string name, System.Type t, object? value, global::app.type.@this? declared, actor.context.@this context)
-    {
-        // Data<T> requires T : item. A raw CLR mint type (string/int/byte[]/…) maps to the
-        // item wrapper that owns it (text/number/binary/…) via the conversion registry — the
-        // Data<wrapper> holds the raw value and projects it lazily on read. A type with no
-        // item wrapper falls back to a bare Data. The declared entity rides into the ctor
-        // so the entry lift stamps kind onto the instance (the instance owns kind).
-        // A born-typed value is already an item → Data<itemType> directly, no conversion.
-        // A non-item (raw) type rides as a bare Data — a born-on-wire value never lands here.
-        if (!typeof(global::app.type.item.@this).IsAssignableFrom(t))
-            return new data.@this(name, value, declared) { Context = context };
-        var generic = typeof(data.@this<>).MakeGenericType(t);
-        var instance = (data.@this)Activator.CreateInstance(generic, name, value, declared, null)!;
-        instance.Context = context;
-        return instance;
     }
 
 }
