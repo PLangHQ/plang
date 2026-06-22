@@ -184,9 +184,16 @@ public sealed class @this : item.@this
                 $"Unknown type '{Name}'", "UnknownType", 400));
 
         // No family hook — a non-leaf value (dict/list) lowers ITSELF to the CLR mate
-        // (dict→record deserialize, list→collection). The value owns it; no hub.
+        // (dict→record deserialize, list→collection). The value owns it; no hub. Clr is
+        // terminal (throws on a real failure); this boundary returns Data — translate
+        // the failure into the Error this method contractually hands back.
         if (value is global::app.type.item.@this iv)
-            return global::app.data.@this.Ok(iv.Clr(target));
+        {
+            try { return global::app.data.@this.Ok(iv.Clr(target)); }
+            catch (System.Exception ex) when (ex is System.InvalidCastException or System.FormatException
+                                               or System.NotSupportedException or System.Text.Json.JsonException)
+            { return global::app.data.@this.FromError(new global::app.error.Error(ex.Message, "TypeConversionFailed", 400)); }
+        }
 
         // A raw CLR input (a wire string → record, a primitive) — the raw→CLR deserialize
         // leaf, the last TryConvert use here; folds into the wire serializer next.
