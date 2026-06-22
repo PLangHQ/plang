@@ -1070,8 +1070,28 @@ public class Default : IBuilder
         var readResult = await app.RunAction(readAction, context);
         if (!readResult.Success) return errors;
 
-        // File provider auto-deserializes .pr files into a single Goal
-        if ((await readResult.Value()) is not Goal prGoal)
+        // File provider auto-deserializes .pr files into a single Goal. A .pr left
+        // by an older build can reference a type that has since been renamed or
+        // removed — deserialization then throws. That .pr is corrupt from the
+        // current schema, so record why and skip the merge: the goal rebuilds from
+        // its source rather than crashing the whole build on one stale artefact.
+        Goal? prGoal;
+        try
+        {
+            prGoal = (await readResult.Value()) as Goal;
+        }
+        catch (System.Exception ex) when (ex is not (System.OperationCanceledException
+            or System.OutOfMemoryException or System.StackOverflowException))
+        {
+            errors.Add(new Info
+            {
+                Key = "CorruptPrFile",
+                Message = $"Failed to deserialize .pr file at {prPath}: {ex.Message}"
+            });
+            return errors;
+        }
+
+        if (prGoal is null)
         {
             errors.Add(new Info
             {

@@ -15,31 +15,20 @@
           "action": "on",
           "parameters": [
             {
-              "name": "Type",
-              "value": "BeforeAppStart",
-              "type": "eventtype"
+              "@schema": "data",
+              "name": "GoalToCall",
+              "type": {
+                "name": "text"
+              },
+              "value": "System.Collections.Generic.Dictionary\u00602[System.String,System.Object]"
             }
           ],
-          "defaults": [
-            {
-              "name": "isregex",
-              "value": false,
-              "type": "bool"
-            },
-            {
-              "name": "priority",
-              "value": 0,
-              "type": "int"
-            }
-          ],
+          "defaults": null,
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": "Register a BeforeAppStart lifecycle event binding that calls the specified goal with parameters. This matches \u0027run before app start event\u0027.",
-      "level": "medium",
-      "confidence": 55,
-      "formal": null,
+      "formal": "I will correct the event.on action by adding the required non-nullable parameter \u0060GoalToCall\u0060.",
       "source": null,
       "waitForExecution": true
     },
@@ -55,19 +44,15 @@
           "action": "call",
           "parameters": [
             {
+              "@schema": "data",
               "name": "GoalName",
+              "type": {
+                "name": "dict"
+              },
               "value": {
                 "name": "%goalName%",
-                "parallel": false,
-                "parameters": null,
-                "prPath": null
-              },
-              "type": "goal.call"
-            },
-            {
-              "name": "Actor",
-              "value": "%parameters%",
-              "type": "actor"
+                "parameters": "%parameters%"
+              }
             }
           ],
           "defaults": null,
@@ -75,10 +60,7 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
+      "formal": "goal.call(GoalName={name:%goalName%,parameters:%parameters%})",
       "source": null,
       "waitForExecution": true
     },
@@ -94,51 +76,58 @@
           "action": "on",
           "parameters": [
             {
-              "name": "Type",
-              "value": "endApp",
-              "type": "eventtype"
+              "@schema": "data",
+              "name": "Trigger",
+              "type": {
+                "name": "choice"
+              },
+              "value": "OnError"
             },
             {
+              "@schema": "data",
               "name": "GoalToCall",
-              "value": {
-                "name": "goal.call",
-                "parallel": false,
-                "parameters": null,
-                "prPath": null
+              "type": {
+                "name": "dict"
               },
-              "type": "goal.call"
+              "value": {
+                "name": "end"
+              }
             }
           ],
           "defaults": [
             {
+              "@schema": "data",
               "name": "isregex",
-              "value": false,
-              "type": "bool"
+              "type": {
+                "name": "bool"
+              },
+              "value": false
             },
             {
+              "@schema": "data",
               "name": "priority",
-              "value": 0,
-              "type": "int"
+              "type": {
+                "name": "number",
+                "kind": "int"
+              },
+              "value": 0
             }
           ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
+      "formal": "event.on(Trigger=%trigger%, GoalToCall=%goalToCall%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Run.goal",
-  "prPath": "/.build/run.pr",
+  "path": "/PlangConsole/bin/Debug/net10.0/os/system/Run.goal",
+  "prPath": "/PlangConsole/bin/Debug/net10.0/os/system/.build/run.pr",
   "hash": "ec8c3a15cbb705a78dc1b5d642b2ddc1ebd4910a3043b359647c1816ea39ab8f",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,
