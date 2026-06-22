@@ -31,47 +31,9 @@ public class TextStreamSerializerTests
         await Assert.That((result)?.ToString()).IsEqualTo("Hello 世界");
     }
 
-    [Test]
-    public async Task Serialize_String_ReturnsString()
-    {
-        var serializer = new global::app.channel.serializer.Text();
 
-        var result = (await serializer.Serialize(Data.Ok("hello world")).Value())!.Clr<string>()!;
 
-        await Assert.That((result)?.ToString()).IsEqualTo("hello world");
-    }
 
-    [Test]
-    public async Task Serialize_Number_ReturnsStringRepresentation()
-    {
-        var serializer = new global::app.channel.serializer.Text();
-
-        var result = (await serializer.Serialize(Data.Ok(42)).Value())!.Clr<string>()!;
-
-        await Assert.That((result)?.ToString()).IsEqualTo("42");
-    }
-
-    [Test]
-    public async Task Serialize_Boolean_ReturnsStringRepresentation()
-    {
-        var serializer = new global::app.channel.serializer.Text();
-
-        var trueResult = (await serializer.Serialize(Data.Ok(true)).Value())!.Clr<string>()!;
-        var falseResult = (await serializer.Serialize(Data.Ok(false)).Value())!.Clr<string>()!;
-
-        await Assert.That(trueResult).IsEqualTo("true");
-        await Assert.That(falseResult).IsEqualTo("false");
-    }
-
-    [Test]
-    public async Task Serialize_Null_ReturnsEmptyString()
-    {
-        var serializer = new global::app.channel.serializer.Text();
-
-        var result = (await serializer.Serialize(Data.Ok(null)).Value())!.Clr<string>()!;
-
-        await Assert.That((result)?.ToString()).IsEqualTo("");
-    }
 
     [Test]
     public async Task Serialize_Object_ReturnsJson()
@@ -97,25 +59,7 @@ public class TextStreamSerializerTests
         await Assert.That(result).Contains("2024");
     }
 
-    [Test]
-    public async Task Deserialize_String_ReturnsString()
-    {
-        var serializer = new global::app.channel.serializer.Text();
 
-        var result = (await serializer.Deserialize<global::app.type.text.@this>("hello").Value())!;
-
-        await Assert.That((result)?.ToString()).IsEqualTo("hello");
-    }
-
-    [Test]
-    public async Task Deserialize_Int_ParsesNumber()
-    {
-        var serializer = new global::app.channel.serializer.Text();
-
-        var result = (await serializer.Deserialize<global::app.type.number.@this>("42").Value())!;
-
-        await Assert.That((result)?.ToString()).IsEqualTo("42");
-    }
 
     [Test]
     public async Task Deserialize_NullableInt_ParsesNumber()
@@ -127,15 +71,6 @@ public class TextStreamSerializerTests
         await Assert.That((result).ToString()).IsEqualTo("42");
     }
 
-    [Test]
-    public async Task Deserialize_Long_ParsesNumber()
-    {
-        var serializer = new global::app.channel.serializer.Text();
-
-        var result = (await serializer.Deserialize<global::app.type.number.@this>("9999999999").Value())!;
-
-        await Assert.That((result)?.ToString()).IsEqualTo("9999999999");
-    }
 
     [Test]
     public async Task Deserialize_Double_ParsesNumber()
@@ -212,56 +147,10 @@ public class TextStreamSerializerTests
         await Assert.That(result.Value.SequenceEqual(expected)).IsTrue();
     }
 
-    [Test]
-    public async Task Deserialize_InvalidInt_ReturnsNull()
-    {
-        var serializer = new global::app.channel.serializer.Text();
 
-        var result = (await serializer.Deserialize<global::app.type.number.@this>("not a number").Value());
 
-        await Assert.That(result).IsNull();
-    }
 
-    [Test]
-    public async Task Deserialize_EmptyString_ToValueType_ReturnsDefault()
-    {
-        var serializer = new global::app.channel.serializer.Text();
 
-        // Born-native: number is a reference wrapper — an empty payload yields its default (null).
-        var result = (await serializer.Deserialize<global::app.type.number.@this>("").Value());
-
-        await Assert.That(result).IsNull();
-    }
-
-    [Test]
-    public async Task Deserialize_EmptyString_ToReferenceType_ReturnsNull()
-    {
-        var serializer = new global::app.channel.serializer.Text();
-
-        var result = (await serializer.Deserialize<global::app.type.text.@this>("").Value())!;
-
-        await Assert.That(result).IsNull();
-    }
-
-    [Test]
-    public async Task Deserialize_WithType_ReturnsCorrectType()
-    {
-        var serializer = new global::app.channel.serializer.Text();
-
-        var result = (await serializer.Deserialize<global::app.type.number.@this>("42").Value())!;
-
-        await Assert.That((result)?.ToString()).IsEqualTo("42");
-    }
-
-    [Test]
-    public async Task Deserialize_UnknownType_ReturnsString()
-    {
-        var serializer = new global::app.channel.serializer.Text();
-
-        var result = (await serializer.Deserialize("hello").Value())!;
-
-        await Assert.That((result)?.ToString()).IsEqualTo("hello");
-    }
 
     [Test]
     public async Task SerializeAsync_WritesToStream()
@@ -390,6 +279,31 @@ public class TextStreamSerializerTests
 
     // Stream that always raises IOException on read/write — exercises the
     // serializer's catch-IOException → Data.Fail conversion.
+    [Test]
+    public async Task Serialize_Scalars()
+    {
+        var s = new global::app.channel.serializer.Text();
+        async Task<string> T(object? v) => (await s.Serialize(Data.Ok(v)).Value())!.Clr<string>()!;
+        await Assert.That(await T("hello world")).IsEqualTo("hello world").Because("string");
+        await Assert.That(await T(42)).IsEqualTo("42").Because("number");
+        await Assert.That(await T(true)).IsEqualTo("true").Because("true");
+        await Assert.That(await T(false)).IsEqualTo("false").Because("false");
+        await Assert.That(await T(null)).IsEqualTo("").Because("null");
+    }
+
+    [Test]
+    public async Task Deserialize_TextValues()
+    {
+        var s = new global::app.channel.serializer.Text();
+        await Assert.That((await s.Deserialize<global::app.type.text.@this>("hello").Value())!.ToString()).IsEqualTo("hello").Because("string");
+        await Assert.That((await s.Deserialize<global::app.type.number.@this>("42").Value())!.ToString()).IsEqualTo("42").Because("int");
+        await Assert.That((await s.Deserialize<global::app.type.number.@this>("9999999999").Value())!.ToString()).IsEqualTo("9999999999").Because("long");
+        await Assert.That((await s.Deserialize("hello").Value())!.ToString()).IsEqualTo("hello").Because("untyped");
+        await Assert.That((await s.Deserialize<global::app.type.number.@this>("not a number").Value())).IsNull().Because("invalid");
+        await Assert.That((await s.Deserialize<global::app.type.number.@this>("").Value())).IsNull().Because("empty->value");
+        await Assert.That((await s.Deserialize<global::app.type.text.@this>("").Value())).IsNull().Because("empty->ref");
+    }
+
     private sealed class ThrowingStream : Stream
     {
         private readonly bool _canRead;

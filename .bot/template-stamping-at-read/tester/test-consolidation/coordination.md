@@ -23,7 +23,16 @@ parity with a cobertura line-set diff before deleting, then commit per module.
 | EngineTypesTests (enumeration) | tester | **done** | **88 → 31** (−57, 65%), parity. 5 tables collapsed (Clr/Name/Kind/Mime/Compressible 62→5); registry Add/Remove/KindOf + BuilderNames + ComplexSchemas + depth-limit kept. |
 | VariablesTests | tester | **done** | **69 → 63** (−6), parity. Mixed file (3 classes); only Contains/Remove/GetValue/Get_Generic were tables. Most are distinct Set/Get navigation branches that stay. |
 | AssertTests (enumeration) | tester | **done** | **36 → 14** (−22, 61%), parity. Value-based asserts (Equals/NotEquals/IsTrue/IsFalse/IsNull/IsNotNull/Contains/GreaterThan/LessThan) → 9 data-driven; 4 file-path cases + custom-message kept. |
+| Json/TextStreamSerializerTests | tester | **done** | **68 → 48** (−20), parity. Uniform Serialize/Deserialize scalar+value rows collapsed; distinct cases (datetime/guid/bytes/culture-decimal/object/async/stream/error) kept. |
 | math | tester | queued | fully raw, small. |
+
+### Open question — serializer unit tests may be partly *deletable*, not just collapsible
+The `plang` wire serializer (goal-run/.pr I/O path) **extends** `app.channel.serializer.Json`;
+`Text` falls back to `Json`. So the broad I/O-runtime suite likely already covers the `Json`
+base — meaning some of these 48 may be redundant and deletable. Proving it needs a
+**full-suite coverage diff** (delete serializer tests → run whole suite w/ coverage → check
+Json.cs/Text.cs survives). That run is too slow here (447 tests × instrumentation timed out).
+Left as an overnight/CI job for whoever can run it. Until then, collapsed (safe) not deleted.
 
 ### Heuristic caveat (learned)
 Prefix-clustering over-counts: `RenderTests` is 33 `Render_*` but each is a distinct

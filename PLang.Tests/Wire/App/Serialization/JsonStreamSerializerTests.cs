@@ -21,47 +21,9 @@ public class JsonStreamSerializerTests
         await Assert.That(serializer.Extension).IsEqualTo(".json");
     }
 
-    [Test]
-    public async Task Serialize_SimpleString_ReturnsJsonString()
-    {
-        var serializer = new global::app.channel.serializer.Json();
 
-        var json = (await serializer.Serialize(Data.Ok("hello")).Value())!.Clr<string>()!;
 
-        await Assert.That(json).IsEqualTo("\"hello\"");
-    }
 
-    [Test]
-    public async Task Serialize_Number_ReturnsJsonNumber()
-    {
-        var serializer = new global::app.channel.serializer.Json();
-
-        var json = (await serializer.Serialize(Data.Ok(42)).Value())!.Clr<string>()!;
-
-        await Assert.That(json).IsEqualTo("42");
-    }
-
-    [Test]
-    public async Task Serialize_Boolean_ReturnsJsonBoolean()
-    {
-        var serializer = new global::app.channel.serializer.Json();
-
-        var jsonTrue = (await serializer.Serialize(Data.Ok(true)).Value())!.Clr<string>()!;
-        var jsonFalse = (await serializer.Serialize(Data.Ok(false)).Value())!.Clr<string>()!;
-
-        await Assert.That(jsonTrue).IsEqualTo("true");
-        await Assert.That(jsonFalse).IsEqualTo("false");
-    }
-
-    [Test]
-    public async Task Serialize_Null_ReturnsNullString()
-    {
-        var serializer = new global::app.channel.serializer.Json();
-
-        var json = (await serializer.Serialize(Data.Ok(null)).Value())!.Clr<string>()!;
-
-        await Assert.That(json).IsEqualTo("null");
-    }
 
     [Test]
     public async Task Serialize_Object_ReturnsCamelCaseJson()
@@ -86,16 +48,6 @@ public class JsonStreamSerializerTests
         await Assert.That(json).DoesNotContain("value");
     }
 
-    [Test]
-    public async Task Serialize_Array_ReturnsJsonArray()
-    {
-        var serializer = new global::app.channel.serializer.Json();
-        var arr = new[] { 1, 2, 3 };
-
-        var json = (await serializer.Serialize(Data.Ok(arr)).Value())!.Clr<string>()!;
-
-        await Assert.That(json).IsEqualTo("[1,2,3]");
-    }
 
     [Test]
     public async Task Serialize_Dictionary_ReturnsJsonObject()
@@ -109,93 +61,13 @@ public class JsonStreamSerializerTests
         await Assert.That(json).Contains("\"b\":2");
     }
 
-    [Test]
-    public async Task Deserialize_SimpleString_ReturnsString()
-    {
-        var serializer = new global::app.channel.serializer.Json();
 
-        var result = (await serializer.Deserialize<global::app.type.text.@this>("\"hello\"").Value())!;
 
-        await Assert.That(result.ToString()).IsEqualTo("hello");
-    }
 
-    [Test]
-    public async Task Deserialize_Number_ReturnsNumber()
-    {
-        var serializer = new global::app.channel.serializer.Json();
 
-        var result = (await serializer.Deserialize<global::app.type.number.@this>("42").Value())!;
 
-        await Assert.That(result).IsEqualTo(42);
-    }
 
-    [Test]
-    public async Task Deserialize_Boolean_ReturnsBoolean()
-    {
-        var serializer = new global::app.channel.serializer.Json();
 
-        var resultTrue = (await serializer.Deserialize<global::app.type.@bool.@this>("true").Value())!;
-        var resultFalse = (await serializer.Deserialize<global::app.type.@bool.@this>("false").Value())!;
-
-        await Assert.That(resultTrue.Value).IsTrue();
-        await Assert.That(resultFalse.Value).IsFalse();
-    }
-
-    [Test]
-    public async Task Deserialize_Null_ReturnsNull()
-    {
-        var serializer = new global::app.channel.serializer.Json();
-
-        var result = (await serializer.Deserialize<global::app.type.text.@this>("null").Value())!;
-
-        await Assert.That(result).IsNull();
-    }
-
-    [Test]
-    public async Task Deserialize_EmptyString_ReturnsDefault()
-    {
-        var serializer = new global::app.channel.serializer.Json();
-
-        var result = (await serializer.Deserialize<global::app.type.text.@this>("").Value())!;
-
-        await Assert.That(result).IsNull();
-    }
-
-    [Test]
-    public async Task Deserialize_Object_ReturnsObject()
-    {
-        var serializer = new global::app.channel.serializer.Json();
-        var json = "{\"name\":\"John\",\"value\":42}";
-
-        var result = (await serializer.Deserialize<TestClass>(json).Value())!;
-
-        await Assert.That(result).IsNotNull();
-        await Assert.That(result!.Name).IsEqualTo("John");
-        await Assert.That(result.Value).IsEqualTo(42);
-    }
-
-    [Test]
-    public async Task Deserialize_CaseInsensitive()
-    {
-        var serializer = new global::app.channel.serializer.Json();
-        var json = "{\"NAME\":\"John\"}";
-
-        var result = (await serializer.Deserialize<TestClass>(json).Value())!;
-
-        await Assert.That(result!.Name).IsEqualTo("John");
-    }
-
-    [Test]
-    public async Task Deserialize_WithType_ReturnsObject()
-    {
-        var serializer = new global::app.channel.serializer.Json();
-        var json = "{\"name\":\"John\"}";
-
-        var result = (await serializer.Deserialize<TestClass>(json).Value())!;
-
-        await Assert.That(result).IsTypeOf<TestClass>();
-        await Assert.That(((TestClass)result!).Name).IsEqualTo("John");
-    }
 
     [Test]
     public async Task SerializeAsync_WritesToStream()
@@ -393,6 +265,43 @@ public class JsonStreamSerializerTests
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("JsonDeserializeError");
+    }
+
+    [Test]
+    public async Task Serialize_Scalars()
+    {
+        var s = new global::app.channel.serializer.Json();
+        async Task<string> J(object? v) => (await s.Serialize(Data.Ok(v)).Value())!.Clr<string>()!;
+        await Assert.That(await J("hello")).IsEqualTo("\"hello\"").Because("string");
+        await Assert.That(await J(42)).IsEqualTo("42").Because("number");
+        await Assert.That(await J(true)).IsEqualTo("true").Because("true");
+        await Assert.That(await J(false)).IsEqualTo("false").Because("false");
+        await Assert.That(await J(null)).IsEqualTo("null").Because("null");
+        await Assert.That(await J(new[] { 1, 2, 3 })).IsEqualTo("[1,2,3]").Because("array");
+    }
+
+    [Test]
+    public async Task Deserialize_Scalars()
+    {
+        var s = new global::app.channel.serializer.Json();
+        await Assert.That((await s.Deserialize<global::app.type.text.@this>("\"hello\"").Value())!.ToString()).IsEqualTo("hello").Because("string");
+        await Assert.That((await s.Deserialize<global::app.type.number.@this>("42").Value())!).IsEqualTo(42).Because("number");
+        await Assert.That((await s.Deserialize<global::app.type.@bool.@this>("true").Value())!.Value).IsTrue().Because("true");
+        await Assert.That((await s.Deserialize<global::app.type.@bool.@this>("false").Value())!.Value).IsFalse().Because("false");
+        await Assert.That((await s.Deserialize<global::app.type.text.@this>("null").Value())).IsNull().Because("null");
+        await Assert.That((await s.Deserialize<global::app.type.text.@this>("").Value())).IsNull().Because("empty");
+    }
+
+    [Test]
+    public async Task Deserialize_Object_TypedAndCaseInsensitive()
+    {
+        var s = new global::app.channel.serializer.Json();
+        var r1 = (await s.Deserialize<TestClass>("{\"name\":\"John\",\"value\":42}").Value())!;
+        await Assert.That(r1.Name).IsEqualTo("John");
+        await Assert.That(r1.Value).IsEqualTo(42);
+        var r2 = (await s.Deserialize<TestClass>("{\"NAME\":\"John\"}").Value())!;   // case-insensitive
+        await Assert.That(r2.Name).IsEqualTo("John");
+        await Assert.That(r2).IsTypeOf<TestClass>();
     }
 
     private class TestClass : global::app.type.item.@this, global::app.type.item.ICreate<TestClass>
