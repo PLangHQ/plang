@@ -340,15 +340,13 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
             && target != typeof(object) && !target.IsEnum)
             return System.Convert.ChangeType(backing, target, System.Globalization.CultureInfo.InvariantCulture);
 
-        var (converted, error) = global::app.type.catalog.@this.TryConvert(backing, target);
-        if (error != null)
-            throw new System.InvalidCastException(error.Message);
-        // The converter answered with a born-native wrapper (its family-hook
-        // arm) — ask the WRAPPER for the raw target; its backing terminates the
-        // recursion at the identity arm.
-        if (converted is @this wrapper && !target.IsInstanceOfType(converted))
-            return wrapper.Clr(target);
-        return converted;
+        // Terminal — LOWER never re-enters the conversion hub. A value the identity /
+        // ChangeType arms can't carry to the target must own that projection in its OWN
+        // Clr (dict→record, list→collection, choice→enum). Reaching here means the caller
+        // asked Clr to do a CONVERT (raw→plang, cross-family) — that's the type system's
+        // job (type.Create / the target family), not the lower door's.
+        throw new System.InvalidCastException(
+            $"{backing.GetType().Name} cannot lower to {target.Name} — the type must own this Clr projection.");
     }
 
     /// <summary>

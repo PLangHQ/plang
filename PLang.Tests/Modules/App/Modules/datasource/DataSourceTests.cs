@@ -117,9 +117,8 @@ public class DataSourceTests
 
         var result = await ds.GetAll("settings");
         await result.IsSuccess();
-        var items = global::app.type.item.@this.Lower<List<Data>>(await result.Value());
-        await Assert.That(items).IsNotNull();
-        await Assert.That(items!.Count).IsEqualTo(2);
+        var items = (await result.Value<global::app.type.list.@this>())!.ToList();
+        await Assert.That(items.Count).IsEqualTo(2);
     }
 
     [Test]
@@ -295,9 +294,8 @@ public class DataSourceTests
         // GetAll
         await ds.Set("items", "key2", new Data("key2", "value2"));
         var allResult = await ds.GetAll("items");
-        var items = global::app.type.item.@this.Lower<List<Data>>(await allResult.Value());
-        await Assert.That(items).IsNotNull();
-        await Assert.That(items!.Count).IsEqualTo(2);
+        var items = (await allResult.Value<global::app.type.list.@this>())!.ToList();
+        await Assert.That(items.Count).IsEqualTo(2);
 
         // Remove
         var removeResult = await ds.Remove("items", "key1");
