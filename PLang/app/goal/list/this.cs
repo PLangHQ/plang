@@ -185,7 +185,7 @@ public sealed class @this
         var rootExists = await rootCandidate.ExistsAsync();
         if (rootExists.Success && await rootExists.ToBooleanAsync())
         {
-            var result = await LoadFromFileAsync(App, rootCandidate.Absolute, cancellationToken: ct);
+            var result = await LoadFromFileAsync(App, rootCandidate, cancellationToken: ct);
             if (result.Success)
             {
                 var goal = await result.Value() as goal.@this;
@@ -211,7 +211,7 @@ public sealed class @this
             var sysExists = await sysCandidate.ExistsAsync();
             if (sysExists.Success && await sysExists.ToBooleanAsync())
             {
-                var result = await LoadFromFileAsync(App, sysCandidate.Absolute, cancellationToken: ct);
+                var result = await LoadFromFileAsync(App, sysCandidate, cancellationToken: ct);
                 if (result.Success)
                 {
                     var goal = await result.Value() as goal.@this;
@@ -347,7 +347,7 @@ public sealed class @this
         if (!exists.Success || (await exists.Value())?.Value != true)
             return null;
 
-        var loadResult = await LoadFromFileAsync(App, resolved.Absolute, cancellationToken: ct);
+        var loadResult = await LoadFromFileAsync(App, resolved, cancellationToken: ct);
         if (!loadResult.Success)
             return null;
 
@@ -361,69 +361,28 @@ public sealed class @this
     /// <summary>
     /// Loads a goal from a .pr file, deserializes and adds to this collection.
     /// </summary>
-    public async Task<data.@this> LoadFromFileAsync(app.@this app, string prFilePath, actor.context.@this? context = null, CancellationToken cancellationToken = default)
+    public async Task<data.@this> LoadFromFileAsync(app.@this app, global::app.type.path.@this prPath, CancellationToken cancellationToken = default)
     {
         try
         {
-            // Lift to Path verb. AuthGate(Read) fires inside; for in-root .pr
-            // files this is the silent fast-path. Resolve handles relative paths
-            // (anchored against the App root) and the /system/* → <OsDirectory>
-            // fallback.
-            var deserializeCtx = context ?? app.System.Context!;
-            var prPath = global::app.type.path.@this.Resolve(prFilePath, deserializeCtx);
-            var readResult = await prPath.ReadBytes();
+            // The path reads itself AND parses by MIME — a .pr reads back as a goal
+            // (ReadText: Format maps .pr → the goal type, Context-bound so Path fields
+            // land wired). This collection only wires the parsed goal into the registry.
+            var readResult = await prPath.ReadText();
             if (!readResult.Success || readResult.Peek().IsNull)
-                return data.@this.FromError(readResult.Error ?? new Error($"Failed to read goal file: {prFilePath}"));
-            var content = System.Text.Encoding.UTF8.GetString((await readResult.Value())!.Value);
-            var ext = prPath.Extension;
+                return data.@this.FromError(readResult.Error ?? new Error($"Failed to read goal file: {prPath}"));
+            if (await readResult.Value() is not goal.@this primary)
+                return data.@this.FromError(new Error($"Failed to parse goal file: {prPath}"));
 
-            List<goal.@this>? goals = null;
-            var trimmed = content.TrimStart();
-            // Channels.Serializers is per-Actor with a Context-bound
-            // PathJsonConverter baked in — Path fields land wired.
-            if (trimmed.StartsWith('['))
+            foreach (var step in primary.Steps)
             {
-                // A JSON array of goals — deserialize each element via Deserialize<goal>
-                // (goal is :item); a List<goal> isn't an item so can't ride Data<List<goal>>.
-                goals = new List<goal.@this>();
-                using var doc = System.Text.Json.JsonDocument.Parse(content);
-                foreach (var el in doc.RootElement.EnumerateArray())
-                {
-                    var elResult = app.System.Channel.Serializers.Deserialize<goal.@this>(
-                        new DeserializeOptions { Value = el.GetRawText(), Extension = ext });
-                    if (!elResult.Success)
-                        return data.@this.FromError(elResult.Error!);
-                    { var __el = await elResult.Value() as goal.@this; if (__el != null) goals.Add(__el); }
-                }
+                step.Goal = primary;
+                foreach (var action in step.Actions)
+                    action.Synthetic = false;
             }
-            else
-            {
-                var singleResult = app.System.Channel.Serializers.Deserialize<goal.@this>(
-                    new DeserializeOptions { Value = content, Extension = ext });
-                if (!singleResult.Success)
-                    return data.@this.FromError(singleResult.Error!);
-                if (!singleResult.Peek().IsNull)
-                    goals = new List<goal.@this> { (await singleResult.Value() as goal.@this)! };
-            }
+            Add(primary);
 
-            if (goals == null || goals.Count == 0)
-                return data.@this.FromError(new Error($"Failed to parse goal file: {prFilePath}"));
-
-            goal.@this? primary = null;
-            foreach (var goal in goals)
-            {
-                foreach (var step in goal.Steps)
-                {
-                    step.Goal = goal;
-                    foreach (var action in step.Actions)
-                        action.Synthetic = false;
-                }
-
-                Add(goal);
-                primary ??= goal;
-            }
-
-            return data.@this.Ok(primary!);
+            return data.@this.Ok(primary);
         }
         catch (Exception ex)
         {
@@ -452,7 +411,7 @@ public sealed class @this
             {
                 var file = await row.Value<global::app.type.path.@this>();
                 if (file == null) continue;
-                var result = await LoadFromFileAsync(app, file.Absolute, context, cancellationToken);
+                var result = await LoadFromFileAsync(app, file, cancellationToken);
                 if (result) loadedCount++;
             }
             return data.@this.Ok(loadedCount);
