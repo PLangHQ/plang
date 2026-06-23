@@ -116,20 +116,19 @@ public sealed class @this
     /// mirroring how discovery keys the entries.
     /// </summary>
     /// <summary>
-    /// The default write — a value writes ITSELF via <c>item.Output</c>. What
-    /// <see cref="Output"/> hands back when a type has no per-format override, so the
-    /// resolved serializer is NEVER null and the caller never decides a fallback.
+    /// The per-format write override for <paramref name="itemType"/> + <paramref name="format"/>,
+    /// or null when the type ships none — in which case the value writes itself via its own
+    /// <c>item.Output</c> (the caller calls that directly; no wrapper default here). The PLang
+    /// type name is derived from the item's namespace (<c>app.type.dict.@this</c> → <c>dict</c>),
+    /// mirroring how discovery keys the entries.
     /// </summary>
-    public static readonly Write GenericWrite =
-        (value, writer, mode, context) => value.Output(writer, mode, context);
-
-    public Write Output(System.Type itemType, string format)
+    public Write? Output(System.Type itemType, string format)
     {
         EnsureInitialized();
         var typeName = NameFromNamespace(itemType.Namespace);
-        if (typeName == null) return GenericWrite;
+        if (typeName == null) return null;
         var f = string.IsNullOrEmpty(format) ? AnyKind : format;
-        return _generatedWrite.TryGetValue((typeName, f), out var w) ? w : GenericWrite;
+        return _generatedWrite.TryGetValue((typeName, f), out var w) ? w : null;
     }
 
     private static string? NameFromNamespace(string? ns)

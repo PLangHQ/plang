@@ -66,60 +66,69 @@ public partial class @this
             finally { _outputDepth.Value--; }
         }
 
-        // A bare format (application/json, text) writes the value alone — type inferred
-        // on read. Only the self-describing wire (application/plang) carries the
-        // @schema/type/properties envelope so values round-trip fully typed.
-        if (!writer.EmitsSchema)
+        // Only the self-describing wire (application/plang) opens the @schema/type
+        // envelope around the value; a bare format (json, text) writes the value alone
+        // (type inferred on read). The value-write below is the SAME either way.
+        if (writer.EmitsSchema)
         {
-            await (context?.App?.Type?.Readers?.Output(_type.GetType(), writer.Format)
-            ?? global::app.type.reader.@this.GenericWrite)(_type, writer, mode, context);
-            return;
+            writer.BeginObject();
+            writer.Name(global::app.data.@this.WireSchema);
+            writer.String(global::app.data.@this.WireSchemaData);
+            // The binding label rides only on the Store view (.pr parameters bind by name);
+            // the outbound wire omits it.
+            if (mode == View.Store)
+            {
+                writer.Name("name");
+                writer.String(Name);
+            }
+            if (!Type.IsNull)
+            {
+                writer.Name("type");
+                writer.BeginObject();
+                writer.Name("name");
+                writer.String(Type.Name);
+                if (!string.IsNullOrEmpty(Type.Kind))
+                {
+                    writer.Name("kind");
+                    writer.String(Type.Kind!);
+                }
+                if (Type.Strict)
+                {
+                    writer.Name("strict");
+                    writer.Bool(true);
+                }
+                writer.EndObject();
+            }
+            writer.Name("value");
         }
 
-        writer.BeginObject();
-        writer.Name(global::app.data.@this.WireSchema);
-        writer.String(global::app.data.@this.WireSchemaData);
-        // The binding label rides only on the Store view (.pr parameters bind by name);
-        // the outbound wire omits it.
-        if (mode == View.Store)
+        // The value writes itself via its per-(type, format) serializer if its type ships
+        // one (a container's text form), else via its own item.Output. The registry owns
+        // that choice; with no registry (no App) the value simply writes itself.
+        var serializer = context?.App?.Type?.Readers?.Output(_type.GetType(), writer.Format);
+        await (serializer != null
+            ? serializer(_type, writer, mode, context)
+            : _type.Output(writer, mode, context));
+
+        if (writer.EmitsSchema)
         {
-            writer.Name("name");
-            writer.String(Name);
-        }
-        if (!Type.IsNull)
-        {
-            writer.Name("type");
-            writer.BeginObject();
-            writer.Name("name");
-            writer.String(Type.Name);
-            if (!string.IsNullOrEmpty(Type.Kind))
+            // properties — nested object, omitted when empty.
+            if (Properties.Count > 0)
             {
-                writer.Name("kind");
-                writer.String(Type.Kind!);
-            }
-            if (Type.Strict)
-            {
-                writer.Name("strict");
-                writer.Bool(true);
-            }
-            writer.EndObject();
-        }
-        writer.Name("value");
-        await (context?.App?.Type?.Readers?.Output(_type.GetType(), writer.Format)
-            ?? global::app.type.reader.@this.GenericWrite)(_type, writer, mode, context);
-        // properties — nested object, omitted when empty.
-        if (Properties.Count > 0)
-        {
-            writer.Name("properties");
-            writer.BeginObject();
-            foreach (var kvp in Properties)
-            {
-                writer.Name(kvp.Key);
-                await global::app.type.item.clr.OutputAny(kvp.Value, writer, mode, context);
+                writer.Name("properties");
+                writer.BeginObject();
+                foreach (var kvp in Properties)
+                {
+                    writer.Name(kvp.Key);
+                    if (kvp.Value is global::app.data.@this pd)
+                        await pd.Output(writer, mode, context);
+                    else
+                        await global::app.type.@this.Create(kvp.Value, context).Output(writer, mode, context);
+                }
+                writer.EndObject();
             }
             writer.EndObject();
         }
-        writer.EndObject();
     }
 
     public object? Normalize(View mode = View.Out)
