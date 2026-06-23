@@ -50,11 +50,11 @@ public partial class @this
                 child = InvokeMethod(call.Method, call.Args);
                 break;
             case global::app.variable.path.Segment.Index index:
-                child = await GetChildValue(await index.ResolveKey(_context?.Variable));
+                child = await _type.Navigate(this, await index.ResolveKey(_context?.Variable));
                 valuePlane = true;
                 break;
-            default: // Member (plain or quoted) — value navigation by key
-                child = await GetChildValue(((global::app.variable.path.Segment.Member)head!).Name);
+            default: // Member (plain or quoted) — the VALUE owns navigation by key
+                child = await _type.Navigate(this, ((global::app.variable.path.Segment.Member)head!).Name);
                 valuePlane = true;
                 break;
         }
@@ -76,51 +76,6 @@ public partial class @this
         return tail.IsEmpty ? child : await child.Navigate(tail);
     }
 
-    /// <summary>
-    /// Last-resort child read by CLR reflection — the universal fallback when a value's
-    /// own <c>Navigate</c> has no structured child for <paramref name="key"/>. Reflects a
-    /// public property off the value; for a leaf whose own surface misses, reflects its CLR
-    /// backing (so <c>%now.Ticks%</c> reaches <c>DateTimeOffset.Ticks</c>). Walks the
-    /// inheritance chain bottom-up (DeclaredOnly) so a shadowing property wins without an
-    /// AmbiguousMatchException. This is what the deleted Object navigator did.
-    /// </summary>
-    private System.Threading.Tasks.ValueTask<@this> ReflectChild(global::app.type.item.@this value, string key)
-    {
-        const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Public
-            | System.Reflection.BindingFlags.Instance
-            | System.Reflection.BindingFlags.IgnoreCase
-            | System.Reflection.BindingFlags.DeclaredOnly;
-
-        System.Reflection.PropertyInfo? prop = null;
-        object? target = value;
-        for (var t = value.GetType(); t != null && prop == null; t = t.BaseType)
-            prop = t.GetProperty(key, flags);
-
-        // A scalar leaf whose own surface misses the key answers from its raw backing.
-        if (prop == null && value is { IsLeaf: true } leaf
-            && leaf.Clr<object>() is { } backing && !ReferenceEquals(backing, leaf))
-        {
-            for (var t = backing.GetType(); t != null && prop == null; t = t.BaseType)
-                prop = t.GetProperty(key, flags);
-            if (prop != null) target = backing;
-        }
-
-        if (prop == null) return new(NotFound(key));
-
-        try
-        {
-            var resolved = prop.GetValue(target);
-            // Relay an already-Data property value rather than re-boxing it (Rule #7):
-            // a property returning Data<snapshot> must not become Data-in-Data.
-            return new(resolved is @this d ? d : new @this(key, resolved, parent: this));
-        }
-        catch (System.Reflection.TargetInvocationException ex)
-        {
-            return new(FromError(new global::app.error.ServiceError(
-                $"Failed to read '{key}': {(ex.InnerException ?? ex).Message}",
-                "NavigationError", 500) { Exception = ex }));
-        }
-    }
 
     /// <summary>
     /// Invokes a method-like navigation on Data. Chainable — returns Data.
@@ -218,117 +173,6 @@ public partial class @this
         return int.TryParse(args, out var n) ? n : 0;
     }
 
-    /// <summary>
-    /// Navigates into the Data's value by key. Checks Properties, subclass properties,
-    /// navigators, and whitelisted base properties. Returns Data — never null.
-    /// </summary>
-    private async System.Threading.Tasks.ValueTask<@this> GetChildValue(string key)
-    {
-        // A value whose door does real work (file/url/source/computed) answers
-        // Type metadata from its stamp WITHOUT opening the door — reading the
-        // {type, kind} stamp is never an examination, so a later scalar use of
-        // %x% stays unparsed. Scoped to door-owners so in-memory values keep
-        // "value wins over Data infrastructure" (a dict's own "type" key still
-        // wins for those).
-        if (key.Equals("Type", StringComparison.OrdinalIgnoreCase)
-            && _type != null && !_type.IsFinal)
-            return new @this(key, Type, parent: this);
-
-        // Lazy key-navigation. A container (dict/list) navigates to ONE key without
-        // rendering its other entries — its in-memory form (Peek) borns just the
-        // requested child via its own Navigate. Opening the whole value (Value())
-        // here would re-resolve EVERY sibling %ref%, so a self-referential sibling
-        // (`%plan.usage% = {model:%plan.Model%}`) would loop forever. Only a value
-        // that is NOT yet its container — a reference/source/leaf (file/url, raw
-        // source) — needs the door opened to parse into the dict/list/table the
-        // navigators below see. A parse failure surfaces HERE (the developer
-        // navigating malformed JSON must see the real cause, not a generic NotFound).
-        global::app.type.item.@this val;
-        if (Peek() is global::app.type.dict.@this or global::app.type.list.@this)
-        {
-            val = Peek();
-        }
-        else
-        {
-            try
-            {
-                val = await Value();
-            }
-            catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
-            {
-                var real = (ex as System.Reflection.TargetInvocationException)?.InnerException ?? ex;
-                var entity = _type.Mint();
-                Error = new global::app.error.Error(
-                    $"failed to read %{Name}% as {entity.Kind ?? entity.Name}: {real.Message}",
-                    "MaterializeFailed", 400) { Exception = real };
-                return FromError(Error);
-            }
-
-            // The door may author its own parse failure WITHOUT throwing (source.Value
-            // catches and sets MaterializeFailed). Surface that as the navigation error
-            // rather than navigating an Absent value to a generic NotFound.
-            if (Error is { Key: "MaterializeFailed" }) return FromError(Error);
-        }
-
-        // The value navigates itself to the child — dict by key, list by index,
-        // the foreign-object carrier by reflecting its host. A value with no
-        // key-navigation answers NotFound and falls through to the resolution
-        // below (domain items reflect themselves via the legacy navigators; raw
-        // stragglers too) until those collapse onto Navigate as well.
-        if (val != null)
-        {
-            var owned = await val.Navigate(this, key);
-            if (owned.IsInitialized) return owned;
-        }
-
-        // Check Data subclass properties (e.g., DynamicData)
-        // These are declared on the subclass, not on Data itself.
-        var ownProp = GetType().GetProperty(key,
-            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-        if (ownProp != null && ownProp.DeclaringType != typeof(@this))
-            return new @this(key, ownProp.GetValue(this), parent: this);
-
-
-        // Last-resort value-plane read: reflect a CLR property off the value (the
-        // foreign-object case `clr.Navigate` owns, applied here for any value whose
-        // own Navigate had no structured child). Value wins over Properties on the
-        // dot path — Stage 4 made `!` the Properties operator; Properties[key] stays
-        // a fallback below so `%!data.branchIndex%` keeps resolving.
-        if (val != null)
-        {
-            var reflected = await ReflectChild(val, key);
-            if (reflected.IsInitialized) return reflected;
-        }
-
-        // Properties fallback — only reached when Value-graph navigation produced
-        // no initialized child. Lets the legacy `%!data.branchIndex%` shape keep
-        // working while the canonical Properties access path stays `!`.
-        var prop = Properties[key];
-        if (prop != null) return new @this(key, prop, parent: this);
-
-        // Fallback: whitelisted Data base properties (Success, Error, Name, Type).
-        // Checked last so %user.name% navigates to the Value's "name" property
-        // rather than Data.Name. `Type` joins the whitelist post-Stage-4 so
-        // %x.Type.Name% / %x.Type.Kind% reads the entity from any Data.
-        if (ownProp != null && (
-            key.Equals("Success", StringComparison.OrdinalIgnoreCase)
-            || key.Equals("Error", StringComparison.OrdinalIgnoreCase)
-            || key.Equals("Name", StringComparison.OrdinalIgnoreCase)
-            || key.Equals("Type", StringComparison.OrdinalIgnoreCase)))
-        {
-            return new @this(key, ownProp.GetValue(this), parent: this);
-        }
-
-        // Access-driven resolution: navigating by key into text is NOT a
-        // guess — no content sniffing. Text can't be walked by key, so the
-        // developer gets a clear, actionable error pointing at the fix
-        // (`as object/json`) rather than a silent null. A structured value
-        // (object/json) materialized above, so it never reaches here.
-        if (val is global::app.type.text.@this)
-            return TypeUnknownError(key);
-
-        return NotFound(key);
-    }
 
     /// <summary>
     /// The type-unknown navigation error — the contract surface for "you tried

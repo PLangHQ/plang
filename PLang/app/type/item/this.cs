@@ -79,9 +79,29 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// themselves via the legacy navigators there; raw stragglers too) until those
     /// collapse onto this method as well.
     /// </summary>
+    /// <summary>
+    /// The item navigates itself to a child by key. The default reflects a public CLR
+    /// property off THIS value — a domain item (<c>step.Index</c>, <c>goal.Steps</c>) or a
+    /// scalar leaf's backing (<c>now.Ticks</c> → <c>DateTimeOffset.Ticks</c>). Containers
+    /// (<c>dict</c>/<c>list</c>) override with key/index lookup; references
+    /// (<c>file</c>/<c>url</c>/<c>source</c>/<c>variable</c>) override to materialise
+    /// themselves first. Walks the inheritance chain bottom-up (DeclaredOnly) so a
+    /// shadowing property wins without AmbiguousMatch. Returns NotFound when truly absent.
+    /// </summary>
+    /// <summary>
+    /// The item navigates ITSELF to a child by key. The DEFAULT — for a domain item
+    /// (goal/step/action/…) — is to reflect its own members through the <c>clr</c> carrier
+    /// (CLR reflection lives there; an item is not a CLR object). Types that navigate
+    /// differently override: <c>dict</c>/<c>list</c> by key/index (lazy, no sibling
+    /// render); a scalar (datetime/number/…) reflects its CLR backing
+    /// (<c>clr(Clr&lt;object&gt;())</c>) so <c>%now.Ticks%</c> reaches DateTimeOffset;
+    /// a reference/source/computed/variable opens its own door for structure then
+    /// navigates the result; <c>null</c>/<c>text</c> can't be walked by key. No
+    /// <c>IsLeaf</c> branching, no generic <c>.Value()</c> in the base — the TYPE decides.
+    /// </summary>
     public virtual System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(
         global::app.data.@this parent, string key)
-        => System.Threading.Tasks.ValueTask.FromResult(global::app.data.@this.NotFound(key));
+        => new clr(this).Navigate(parent, key);
 
     /// <summary>
     /// Iteration as <c>(key, value)</c> pairs — the value owns how it iterates,

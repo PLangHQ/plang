@@ -40,6 +40,12 @@ public sealed class computed : @this, module.IContext
     public override System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this asking)
         => System.Threading.Tasks.ValueTask.FromResult(Compute());
 
+    /// <summary>A computed materialises itself (runs the factory) before navigating —
+    /// the result (e.g. a datetime) then navigates by its own rules.</summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(
+        global::app.data.@this parent, string key)
+        => await Compute().Navigate(parent, key);
+
     /// <summary>Peek computes too — "in memory now" for a computed value IS the
     /// current computation (no I/O, no parse; the factory is a pure read).</summary>
     public override object? Peek() => Compute().Peek();
