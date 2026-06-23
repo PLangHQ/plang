@@ -217,3 +217,36 @@ This supersedes the earlier "reflection registry" sketch. Captured so context su
 - The builder fails on `%msg%`: the `render … write to %msg%` stores a `%!data%`
   self-reference (SETMSG trace: `value=variable raw=%!data%`), so resolving `%msg%` loops.
   Now LOUD (`OutputSelfReference`) instead of stack-overflow. NOT a serializer bug.
+
+## #2 DECISIONS (Ingi, 2026-06-23) — the plang/json channel flip
+
+- **@schema is the LAYER marker**, not a per-Data tag: it discriminates `data` vs
+  `signature` vs `encryption` vs `compression` at a layer boundary (top-level payload, a
+  signed payload, …). A plain typed value carries `type` only.
+- **Dict entries (and nested typed values) carry `type`, NOT `@schema`.** Wire shape:
+  ```jsonc
+  { "@schema":"data", "type":{"name":"dict"}, "value": {
+      "name": { "type":{"name":"text"},               "value":"x" },   // entry: type+value, no @schema
+      "age":  { "type":{"name":"number","kind":"int"}, "value":30 }
+  }}
+  ```
+  This supersedes the earlier "every Data self-describes with @schema" — refined to
+  "@schema at layer boundaries; typed values carry type." More verbose `.pr` is fine
+  (more accurate; types round-trip).
+- **Sync `plang.Serialize`/`Store` → async-ify the callers** (everything is async in plang).
+- **RawUntouched/EmitRawVerbatim**: preserve on the module/file read path (a raw payload
+  relayed un-reparsed); NOT a concern for `.pr` plang values.
+
+### Implementation (incremental — reader-lenient first, then flip)
+1. Wire.ReadBody: ALSO accept `{type, value}` entries (no @schema) — lenient, reads old
+   (bare) AND new shapes. [green — old .pr still read]
+2. data.Output: a `layer` flag — top/layer boundary writes `@schema` + type + value;
+   nested (entries, value-slot children) write `{type, value}` (no @schema). [additive —
+   plang still on Wire, so not live yet; green]
+3. Flip plang/json serializers to drive `data.Output` (async, sign-if-missing ported)
+   instead of `Wire.Write`/STJ; json = bare (EmitsSchema=false), plang = layer
+   (EmitsSchema=true). Regenerate `.pr` (entries now carry type).
+4. DELETE: data.Normalize/NormalizeValue/NormalizeObject + NormalizeException;
+   json.Writer.Value/BeginRecord/EndRecord + IWriter.Value/BeginRecord/EndRecord;
+   Wire.Write → stub (Wire stays as the READ converter only). json.Writer → pure tokens.
+5. `./dev.sh full`.
