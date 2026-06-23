@@ -250,3 +250,52 @@ This supersedes the earlier "reflection registry" sketch. Captured so context su
    json.Writer.Value/BeginRecord/EndRecord + IWriter.Value/BeginRecord/EndRecord;
    Wire.Write → stub (Wire stays as the READ converter only). json.Writer → pure tokens.
 5. `./dev.sh full`.
+
+## (a) FULL SPEC — data.Output is the ONE write serialization (Ingi, 2026-06-23)
+
+The plang flip is a UNIFICATION: `data.Output` becomes the single write serializer for
+EVERY write path; `Wire.Write`/`Normalize` are deleted. `Wire.Read` stays (read).
+
+### Wire shapes
+- **Data (layer):** `data.Output(layer:true)` → `{@schema:"data", [name], type:{...}, value, properties?}`.
+- **Typed value (nested):** `data.Output(layer:false)` → `{type:{...}, value}` — NO @schema. (dict
+  entries, value-slot children.)
+- **Layer (signature/encryption/compression):** the layer's OWN serialization, e.g. signature:
+  `{ "@schema":"signature", "type":"ed25519", "nonce":"…", "created":"…", "signature":"<b64>",
+     "value": { "@schema":"data", "type":…, "value":… } }`
+  — i.e. `@schema:<kind>` + the layer's fields + `value = data.Output(inner, layer:true)`
+  (the inner is a full @schema:data Data). Same shape for encryption/compression.
+
+### Write paths to flip (ALL of them)
+1. **channels** — `plang.SerializeAsync` → drive `data.Output`. sign-if-missing becomes
+   `await RunAction(sign,…)` (kills today's `.GetAwaiter().GetResult()` sync-over-async).
+2. **layer dispatch at the serializer boundary (ONE place):** after signing, if the top is a
+   layer → `layer.Output(writer)`; else → `data.Output(writer, layer:true)`. So `data.Output`
+   stays clean (@schema:data only); the layer owns @schema:<kind>.
+3. **layer types** (`signature`/`encryption`/`compression`): add `Output` writing the envelope
+   above via the IWriter tokens + `data.Output(inner, layer:true)` for `value`. (Ports them off
+   `json.Writer.Value`/`BeginRecord`.)
+4. **signing hash canonicalization** — `crypto/code/Default.cs:61`
+   (`JsonSerializer.SerializeToUtf8Bytes(data, OutboundOptions)` = STJ+Wire) → `data.Output`
+   bytes (MemoryStream). Stable (fixed key order, entries insertion-order). sign+verify both
+   use it → consistent; the wire bytes == the canonical bytes (cleaner than today's two).
+5. **`.pr`** — `goalsSave`/`PrWrite` (STJ+Wire) → `data.Output`. (Old `.pr` regenerate — Ingi:
+   don't worry about existing files.)
+6. **sync legacy removal** — delete `plang.Serialize`/`Store`/`Load`/`Deserialize(string)`;
+   route sqlite (`settings/Sqlite.cs` Get/Set) + snapshot through the async stream API
+   (`SerializeAsync`/`DeserializeAsync` over a MemoryStream ↔ the stored string). Everything async.
+
+### Reader
+- dict/list reader reads `{type, value}` entries (read `type`, recurse `value` via the existing
+  Parse, apply type). No global heuristic — the container knows its entries are typed values.
+- Layer read (verify) stays in spirit (read @schema:<kind>, extract inner, re-canonicalize via
+  `data.Output`, verify).
+
+### Deletions (after the above)
+- `Wire.Write` → gone (the converter keeps only `Read`); `data.Normalize`/`NormalizeValue`/
+  `NormalizeObject` + `NormalizeException`; `json.Writer.Value`/`BeginRecord`/`EndRecord` +
+  the matching `IWriter` members. `json.Writer` collapses to pure tokens (like `text.Writer`).
+
+### Confirmed by Ingi
+- Stable hashing via data.Output: yes. `.pr` through data.Output: good. Layer shape: as above
+  (`@schema:signature` outer, `value` = inner @schema:data Data). Same for encryption/compression.
