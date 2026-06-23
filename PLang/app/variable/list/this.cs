@@ -301,12 +301,6 @@ public partial class @this
         // content dict, not on a reflection bag of the reference object.
         _ = await parent.Value();
 
-        // The value rides into the slot AS-IS — its in-memory form (Peek), never
-        // rendered. A `set %trace.plan% = %plan%` stores the %plan% binding; rendering it
-        // (Value()) would re-resolve every %ref% it contains, and a self-referential entry
-        // (%plan.usage% = {model:%plan.Model%, …}) loops forever. The slot holds the value
-        // lazily; it resolves when the slot itself is read.
-        var rawValue = value is data.@this dv2 ? dv2.Peek() : value;
         var target = parent.Peek();
         if (target == null)
         {
@@ -314,6 +308,17 @@ public partial class @this
                 return data.@this.FromError(parent.Error);
             return data.@this.NotFound(name);
         }
+
+        // Resolve the value to what the SLOT can hold — the write boundary decides:
+        //  - a container slot (dict/list) holds the value lazily, AS-IS (its in-memory
+        //    form), so `set %trace.plan% = %plan%` stores the %plan% binding without
+        //    rendering it (rendering re-resolves every %ref%; a self-referential entry
+        //    like %plan.usage% = {model:%plan.Model%} would loop forever);
+        //  - a CLR property (step.Formal : string) cannot hold a lazy reference — it needs
+        //    the concrete value, so resolve through the door HERE, where it's needed.
+        object? rawValue = value is data.@this dv2
+            ? (target is app.type.dict.@this or app.type.list.@this ? dv2.Peek() : await dv2.Value())
+            : value;
 
         // The value type owns its own write — symmetric to how Navigate owns the
         // read. Ask the registered navigator first (a dict writes its key, a list
@@ -438,7 +443,14 @@ public partial class @this
         if (clrProp != null && clrProp.CanWrite)
         {
             if (value is global::app.type.item.@this iv && !clrProp.PropertyType.IsAssignableFrom(value.GetType()))
-                value = iv.Clr(clrProp.PropertyType);   // the value lowers itself to the slot
+            {
+                // LIFT to the property's type via its own Convert hook — the target type
+                // builds itself from the value (a list<dict> → actions.@this via
+                // actions.Convert). Only a CLR-primitive target with no hook (string/int)
+                // falls back to the value lowering itself.
+                var built = global::app.type.convert.@this.OfStatic(clrProp.PropertyType, value, null, _context);
+                value = built is { Success: true } && built.Peek() is { } typed ? typed : iv.Clr(clrProp.PropertyType);
+            }
             clrProp.SetValue(target, value);
             return target;
         }

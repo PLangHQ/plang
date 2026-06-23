@@ -1281,3 +1281,21 @@ sub-goal an ISOLATED scope so a bare lazy ref resolves against the caller's bind
 with no self-collision — then store `Set(param.Name, param)` straight, no eager
 .Value(). Not the root of the build blocker (that's the dict render cycle), but
 clean it up today.
+
+## Convert hooks + kind should be plang types, not CLR (branch `variable-as-value`)
+
+**Date:** 2026-06-23. The per-type `Convert` hook is `Convert(object? value, string? kind,
+context)` — a CLR object + CLR string, which forces callers to `.Clr<object>()`-lower the
+value before converting (against the never-lower rule). Move it to plang types:
+- `Convert(item.@this value, text.@this kind, context)` across all ~18 hooks
+  (number/text/date/datetime/bool/guid/duration/choice/path/image/binary/dict/list/
+  goal.call/actions/actor/variable) + `convert.@this.Discover` (signature) + `Invoke`.
+- `type.@this.Kind: string? → text` (~56 sites: comparisons → `kind.IsNull`/`AreEqual`,
+  Mint stamps a text, wire read/write of "kind"). **Never `.ToString()`** — work in the
+  plang type; `kind.IsNull` to test absence.
+- `number.KindFromName(string)` → `KindFromName(text)` (plang token in).
+- callers (`ICreate.Create`, `type.Convert`) drop `value.Clr<object>()`, hand the item +
+  kind-text straight in.
+Audit: `kind` is functionally used ONLY by `number` (target precision); text/image accept
+it but ignore it; the rest only have it in the signature. Self-contained refactor; do as
+its own reviewable pass (not tangled into builder debugging).
