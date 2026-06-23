@@ -36,8 +36,20 @@ public sealed class @this
     /// </summary>
     public delegate object? Read(object raw, string? kind, ReadContext ctx);
 
+    /// <summary>
+    /// Write-side per-(type, format) override: how a value writes itself to a given
+    /// channel format when its own <c>item.Output</c> isn't the answer (a container's
+    /// text form, image base64 vs label, …). Discovered from the same
+    /// <c>serializer/&lt;format&gt;.cs</c> files as <see cref="Read"/> — a file may
+    /// expose either or both. A type with no override writes itself via <c>item.Output</c>.
+    /// </summary>
+    public delegate System.Threading.Tasks.ValueTask Write(
+        global::app.type.item.@this value, global::app.channel.serializer.IWriter writer,
+        global::app.View mode, global::app.actor.context.@this? context);
+
     private readonly ConcurrentDictionary<(string Type, string Kind), Read> _generated = new();
     private readonly ConcurrentDictionary<(string Type, string Kind), Read> _runtime = new();
+    private readonly ConcurrentDictionary<(string Type, string Format), Write> _generatedWrite = new();
 
     // The typed (ITypeReader) registry — the two read modes live side by side, and
     // both are load-bearing:
@@ -95,6 +107,36 @@ public sealed class @this
         if (_runtimeTyped.TryGetValue((typeName, AnyKind), out var rtAny)) return rtAny;
         if (_generatedTyped.TryGetValue((typeName, AnyKind), out var genAny)) return genAny;
         return null;
+    }
+
+    /// <summary>
+    /// The per-format write override for <paramref name="itemType"/> + <paramref name="format"/>,
+    /// or null when the type has none (it writes itself via <c>item.Output</c>). The PLang
+    /// type name is derived from the item's namespace (<c>app.type.dict.@this</c> → <c>dict</c>),
+    /// mirroring how discovery keys the entries.
+    /// </summary>
+    /// <summary>
+    /// The default write — a value writes ITSELF via <c>item.Output</c>. What
+    /// <see cref="Output"/> hands back when a type has no per-format override, so the
+    /// resolved serializer is NEVER null and the caller never decides a fallback.
+    /// </summary>
+    public static readonly Write GenericWrite =
+        (value, writer, mode, context) => value.Output(writer, mode, context);
+
+    public Write Output(System.Type itemType, string format)
+    {
+        EnsureInitialized();
+        var typeName = NameFromNamespace(itemType.Namespace);
+        if (typeName == null) return GenericWrite;
+        var f = string.IsNullOrEmpty(format) ? AnyKind : format;
+        return _generatedWrite.TryGetValue((typeName, f), out var w) ? w : GenericWrite;
+    }
+
+    private static string? NameFromNamespace(string? ns)
+    {
+        if (string.IsNullOrEmpty(ns)) return null;
+        var lastDot = ns!.LastIndexOf('.');
+        return (lastDot < 0 ? ns : ns[(lastDot + 1)..]).TrimStart('@');
     }
 
     /// <summary>
@@ -172,33 +214,49 @@ public sealed class @this
 
             if (!type.IsAbstract || !type.IsSealed) continue; // static class
 
-            // file/class name maps to kind token; "Default" → wildcard.
+            // file/class name maps to kind/format token; "Default" → wildcard.
             var kind = type.Name.Equals("Default", System.StringComparison.Ordinal)
                 ? AnyKind
                 : type.Name.ToLowerInvariant();
 
+            // READ — static Read(object raw, string? kind, ReadContext).
             var method = type.GetMethod("Read",
                 BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
-            if (method == null) continue;
-            var parameters = method.GetParameters();
-            if (parameters.Length != 3) continue;
-            if (parameters[2].ParameterType != typeof(ReadContext)) continue;
-
-            // Reflection wraps a thrown exception in TargetInvocationException;
-            // unwrap so callers (source.Value's parse-failure catch) see the real
-            // JsonException/FormatException and author their own error, rather than
-            // a reflection wrapper leaking to the courier.
-            Read del = (raw, k, ctx) =>
+            if (method is not null
+                && method.GetParameters() is { Length: 3 } parameters
+                && parameters[2].ParameterType == typeof(ReadContext))
             {
-                try { return method.Invoke(null, new object?[] { raw, k, ctx }); }
-                catch (System.Reflection.TargetInvocationException tie) when (tie.InnerException != null)
+                // Reflection wraps a thrown exception in TargetInvocationException;
+                // unwrap so callers (source.Value's parse-failure catch) see the real
+                // JsonException/FormatException and author their own error, rather than
+                // a reflection wrapper leaking to the courier.
+                Read del = (raw, k, ctx) =>
                 {
-                    System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(tie.InnerException).Throw();
-                    throw; // unreachable — Throw() always rethrows
-                }
-            };
+                    try { return method.Invoke(null, new object?[] { raw, k, ctx }); }
+                    catch (System.Reflection.TargetInvocationException tie) when (tie.InnerException != null)
+                    {
+                        System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(tie.InnerException).Throw();
+                        throw; // unreachable — Throw() always rethrows
+                    }
+                };
+                _generated[(typeName, kind)] = del;
+            }
 
-            _generated[(typeName, kind)] = del;
+            // WRITE — static Output(item, IWriter, View, context): the per-format write
+            // override for this (type, format). Same file, the other direction.
+            var output = type.GetMethod("Output",
+                BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy,
+                binder: null,
+                types: new[]
+                {
+                    typeof(global::app.type.item.@this),
+                    typeof(global::app.channel.serializer.IWriter),
+                    typeof(global::app.View),
+                    typeof(global::app.actor.context.@this),
+                },
+                modifiers: null);
+            if (output != null)
+                _generatedWrite[(typeName, kind)] = (Write)System.Delegate.CreateDelegate(typeof(Write), output);
         }
     }
 

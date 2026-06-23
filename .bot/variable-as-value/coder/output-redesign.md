@@ -126,3 +126,27 @@ NOT the JSON path. This redesign does NOT fix it — `%msg%`'s slot resolves to
 `variable(msg)` (a self-reference) exposed by `variable.Cacheable=false`. Root unknown
 (why `render … write to %msg%` leaves msg pointing at itself). Must be traced+fixed
 separately to unblock the builder, regardless of this redesign.
+
+## Refined design — writers own the stream + per-format override dispatch (Ingi, 2026-06-23)
+
+Two corrections that supersede the "inline writer.Format branch" idea:
+
+1. **Writers own the stream** — a writer is constructed with the Stream and writes THROUGH
+   it as each token arrives (streaming, no buffer-to-string-then-copy). `json.Writer` already
+   wraps `Utf8JsonWriter(stream)`; `text.Writer(stream, encoding)` writes leaf bytes straight
+   to the stream. Serializer = `new writer(stream); await data.Output(writer); await stream.FlushAsync()`.
+
+2. **No `if (writer.Format)` in types; no json inside `text.Writer`.** The text writer is PURE
+   text (leaves only). A container has no plain-text form, so its text rendering lives in a
+   **per-format override file** dispatched by format:
+   - `type/<x>/serializer/<format>.cs` — a static `Output(item value, IWriter writer, View, ctx)`.
+     `dict`/`list`/serializer/text.cs → `writer.String(JsonSerializer.Serialize(value, value.GetType()))`.
+   - **Dispatch** (in `data.Output`'s value slot): reflect `<item-namespace>.serializer.<format>`
+     for a static `Output` (cached, like the `Convert` hooks). Found → use it; else → `item.Output`.
+     So `dict + text` → `dict/serializer/text.cs`; `dict + json/plang` → no override → `item.Output`
+     (structural). Leaves → no override → `item.Output` → `writer.String` (text plain / json quoted).
+   - `text.Writer.BeginObject/BeginArray` THROW — a container always hits its override first, so
+     structural tokens never reach the text writer.
+
+Net: types stay format-neutral, the writer renders, containers' text form is one isolated file
+per type, dispatch is by format (no `if`), writers stream to the Stream. Read stays untouched.

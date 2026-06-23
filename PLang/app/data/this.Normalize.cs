@@ -71,7 +71,8 @@ public partial class @this
         // @schema/type/properties envelope so values round-trip fully typed.
         if (!writer.EmitsSchema)
         {
-            await _type.Output(writer, mode, context);
+            await (context?.App?.Type?.Readers?.Output(_type.GetType(), writer.Format)
+            ?? global::app.type.reader.@this.GenericWrite)(_type, writer, mode, context);
             return;
         }
 
@@ -104,7 +105,8 @@ public partial class @this
             writer.EndObject();
         }
         writer.Name("value");
-        await _type.Output(writer, mode, context);
+        await (context?.App?.Type?.Readers?.Output(_type.GetType(), writer.Format)
+            ?? global::app.type.reader.@this.GenericWrite)(_type, writer, mode, context);
         // properties — nested object, omitted when empty.
         if (Properties.Count > 0)
         {

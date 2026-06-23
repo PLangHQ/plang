@@ -25,24 +25,15 @@ public sealed class Text : ISerializer
     {
         try
         {
-            var value = await data.Value();
-            // A scalar wrapper (text/number/bool/…) is a text leaf — render it bare
-            // via ToString (born-native: it's no longer a CLR primitive but IS a leaf).
-            // Only genuine containers/domain objects fall back to JSON.
-            if (value != null && !AppTypes.IsPrimitive(value.GetType())
-                && value is not global::app.type.item.@this { IsLeaf: true })
-                return await _jsonFallback.SerializeAsync(stream, data, cancellationToken);
-
-            // A null value has no plain-text content — emit nothing (the citizen's
-            // structured-only "null" ToString does not belong in a text channel).
-            // Line framing (the delimiter between messages) is the channel's job,
-            // not the serializer's — emit only the value's bytes here.
-            var content = value == null || value.IsNull ? "" : value.ToString();
-            var bytes = _encoding.GetBytes(content ?? "");
-            await stream.WriteAsync(bytes, cancellationToken);
+            // The value writes ITSELF straight to the stream (one lazy pass, no pre-resolve
+            // walk). A leaf renders bare; a container renders via its serializer/text.cs
+            // override (json string). The writer owns the stream and the rendering.
+            var writer = new global::app.channel.serializer.text.Writer(stream, _encoding);
+            await data.Output(writer, global::app.View.Out, data.Context);
+            await stream.FlushAsync(cancellationToken);
             return global::app.data.@this.Ok();
         }
-        catch (Exception ex) when (ex is IOException)
+        catch (Exception ex) when (ex is IOException or System.Text.Json.JsonException)
         {
             return global::app.data.@this.FromError(new error.ServiceError(
                 $"Text serialize failed: {ex.Message}", "TextSerializeError", 400) { Exception = ex });
