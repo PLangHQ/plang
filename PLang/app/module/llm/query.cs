@@ -30,7 +30,7 @@ public partial class query : IContext, IBuildValidatable
             return "Parameter 'Messages' is empty. Must be a list of {Role: string, Content: string} objects. Map system= to {\"Role\": \"system\", \"Content\": \"...\"} and user= to {\"Role\": \"user\", \"Content\": \"...\"}";
 
         if (value is not global::app.type.list.@this
-            && value is not global::app.type.item.clr { Value: System.Collections.IList }
+            && value is not Clr { Value: System.Collections.IList }
             && value is not global::app.type.text.@this) // text already handled above
             return $"Parameter 'Messages' must be a list of {{Role, Content}} objects, got {value!.Mint().Name}";
 

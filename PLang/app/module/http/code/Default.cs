@@ -948,7 +948,7 @@ public sealed class Default : IHttp
 
         // Auto-detect
         if (content is global::app.type.dict.@this
-            || content is global::app.type.item.clr { Value: Dictionary<string, object> or JsonElement { ValueKind: JsonValueKind.Object } })
+            || content is Clr { Value: Dictionary<string, object> or JsonElement { ValueKind: JsonValueKind.Object } })
         {
             return await CreateFormContentAsync(app, context, content);
         }

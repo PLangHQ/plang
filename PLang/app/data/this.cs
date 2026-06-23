@@ -416,7 +416,7 @@ public partial class @this
 
             // A text-declared string riding the carrier (wire-read declared
             // params land as labeled clr) — same collapse as the source case.
-            case global::app.type.item.clr ct
+            case Clr ct
                 when ct.Value is string carried && HasTemplateRef(carried)
                      && ct.Mint().Name is "text" or "string":
                 if (ct.Template != null) return ct;
@@ -425,10 +425,10 @@ public partial class @this
             // A raw CLR container riding the rung-2 carrier (a C#-composed
             // dict/list literal) — refs hide inside raw strings, so scan the
             // graph once at the seam; the stamp lands on the carrier.
-            case global::app.type.item.clr c
+            case Clr c
                 when c.Value is IDictionary<string, object?> or IList<object?>:
                 if (c.Template != null || !RawGraphHasRef(c.Value, 0)) return c;
-                return new global::app.type.item.clr(c.Value) { Template = "plang", Context = c.Context };
+                return new Clr(c.Value) { Template = "plang", Context = c.Context };
 
             default:
                 return instance;
@@ -473,7 +473,7 @@ public partial class @this
     {
         _type = value is null ? null
             : value as global::app.type.item.@this
-            ?? new global::app.type.item.clr(value);
+            ?? new Clr(value);
         // Context propagates immediately — a context-resolved identity (the
         // carrier's registry name) must be stable from the first mint, or the
         // signed canonical form drifts when a later bind stamps Context.

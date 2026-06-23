@@ -187,7 +187,7 @@ public partial class @this
         // to the host and normalize that — the host's [Out] property bag. (When the
         // serializer fully collapses onto item.Write this branch dissolves, like the
         // navigator chain did.)
-        if (value is app.type.item.clr carrier)
+        if (value is Clr carrier)
             return NormalizeValue(carrier.Clr<object>(), mode, visited, depth, types);
 
         // Nested Data: normalize its Value into a fresh tree. Do NOT mutate the

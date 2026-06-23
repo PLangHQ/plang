@@ -291,12 +291,12 @@ public partial class discover : IContext
         {
             GoalCall gc => gc.Name,
             global::app.type.text.@this s => s.Clr<string>(),
-            global::app.type.item.clr { Value: System.Text.Json.JsonElement je }
+            Clr { Value: System.Text.Json.JsonElement je }
                 when je.ValueKind == System.Text.Json.JsonValueKind.Object
                 && je.TryGetProperty("Name", out var np) => np.GetString(),
             // A goal.call param read back from the .pr is the native dict value type.
             app.type.dict.@this nd when nd.Get("Name") is { } nameData => nameData.Peek()?.ToString(),
-            global::app.type.item.clr { Value: System.Collections.Generic.IDictionary<string, object?> dict }
+            Clr { Value: System.Collections.Generic.IDictionary<string, object?> dict }
                 when dict.TryGetValue("Name", out var nm) => nm?.ToString(),
             _ => null
         };

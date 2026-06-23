@@ -38,6 +38,7 @@ global using httppath = app.type.path.http.@this;
 // the bare names are ambiguous with the child namespaces; those files qualify
 // with `global::app.type.dict.@this` / `global::app.type.catalog.@this`.
 global using dict = app.type.dict.@this;
+global using Clr = app.type.clr.@this;
 
 // Config subsystem
 global using AppConfig = app.config.@this;

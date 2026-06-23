@@ -948,7 +948,7 @@ public sealed class OpenAi : ILlm
         var result = await settings.Get("LlmConfig", settingKey);
         if (result.Success && result.Peek() is { IsNull: false })
         {
-            var val = (await result.Value()) is global::app.type.item.clr { Value: data.@this d }
+            var val = (await result.Value()) is Clr { Value: data.@this d }
                 ? (await d.Value())?.ToString()
                 : (await result.Value())?.ToString();
             if (!string.IsNullOrEmpty(val)) return val;
@@ -1010,7 +1010,7 @@ public sealed class OpenAi : ILlm
                 props[entry.Name] = entry.Peek();
             }
         }
-        else if (cachedValue is global::app.type.item.clr { Value: JsonElement je } && je.ValueKind == JsonValueKind.Object)
+        else if (cachedValue is Clr { Value: JsonElement je } && je.ValueKind == JsonValueKind.Object)
         {
             if (je.TryGetProperty("Value", out var valProp))
                 resultValue = valProp.ValueKind == JsonValueKind.Null ? null : valProp.Clone();
@@ -1029,7 +1029,7 @@ public sealed class OpenAi : ILlm
                 };
             }
         }
-        else if (cachedValue is global::app.type.item.clr { Value: Dictionary<string, object?> dict })
+        else if (cachedValue is Clr { Value: Dictionary<string, object?> dict })
         {
             resultValue = dict.GetValueOrDefault("Value");
             foreach (var kvp in dict)
