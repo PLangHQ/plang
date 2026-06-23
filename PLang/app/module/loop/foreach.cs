@@ -26,7 +26,15 @@ public partial class Foreach : IContext, IStep
             return global::app.data.@this.Ok(Result(itemCount: 0, completed: true));
 
         var variableName = (ItemName == null ? null : (await ItemName.Value())?.Name) ?? "item";
+        var keyVariableName = KeyName is { IsInitialized: true } ? (await KeyName.Value())?.Name : null;
         int count = 0;
+
+        // Loop-in-a-loop: an inner loop reuses the same %item%/%key% names and would
+        // leave them clobbered for the OUTER loop's body after it returns. Save the
+        // outer bindings now and restore them when this loop exits — so a nested
+        // `foreach` doesn't bleed its last item up into the enclosing loop.
+        var savedItem = await Context.Variable.Get(variableName);
+        var savedKey = keyVariableName != null ? await Context.Variable.Get(keyVariableName) : null;
 
         // Find remaining actions in this step (the loop body)
         var bodyActions = GetBodyActions();
@@ -51,6 +59,11 @@ public partial class Foreach : IContext, IStep
             }
             count++;
         }
+
+        // Restore the outer loop's bindings (see savedItem above) — a nested loop
+        // must not leave its last item/key visible to the enclosing loop's body.
+        if (savedItem.IsInitialized) await Context.Variable.Set(variableName, savedItem);
+        if (keyVariableName != null && savedKey is { IsInitialized: true }) await Context.Variable.Set(keyVariableName, savedKey);
 
         var loopResult = global::app.data.@this.Ok(Result(count, completed: true));
         if (bodyActions.Count > 0)

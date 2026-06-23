@@ -234,32 +234,41 @@ public partial class @this
             && _type != null && !_type.IsFinal)
             return new @this(key, Type, parent: this);
 
-        // Navigation IS examination — the value door parses an un-narrowed
-        // reference (file/url) or source form through the instance's own
-        // door, and the Data rebinds; the navigators below see the
-        // dict/list/table, not the reference. A parse failure surfaces HERE as
-        // the actionable error (the developer navigating malformed JSON must
-        // see the real cause, not a generic NotFound) — one of the two seams
-        // that consume the door's failure; everywhere else it propagates loud.
+        // Lazy key-navigation. A container (dict/list) navigates to ONE key without
+        // rendering its other entries — its in-memory form (Peek) borns just the
+        // requested child via its own Navigate. Opening the whole value (Value())
+        // here would re-resolve EVERY sibling %ref%, so a self-referential sibling
+        // (`%plan.usage% = {model:%plan.Model%}`) would loop forever. Only a value
+        // that is NOT yet its container — a reference/source/leaf (file/url, raw
+        // source) — needs the door opened to parse into the dict/list/table the
+        // navigators below see. A parse failure surfaces HERE (the developer
+        // navigating malformed JSON must see the real cause, not a generic NotFound).
         global::app.type.item.@this val;
-        try
+        if (Peek() is global::app.type.dict.@this or global::app.type.list.@this)
         {
-            val = await Value();
+            val = Peek();
         }
-        catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
+        else
         {
-            var real = (ex as System.Reflection.TargetInvocationException)?.InnerException ?? ex;
-            var entity = _type.Mint();
-            Error = new global::app.error.Error(
-                $"failed to read %{Name}% as {entity.Kind ?? entity.Name}: {real.Message}",
-                "MaterializeFailed", 400) { Exception = real };
-            return FromError(Error);
-        }
+            try
+            {
+                val = await Value();
+            }
+            catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
+            {
+                var real = (ex as System.Reflection.TargetInvocationException)?.InnerException ?? ex;
+                var entity = _type.Mint();
+                Error = new global::app.error.Error(
+                    $"failed to read %{Name}% as {entity.Kind ?? entity.Name}: {real.Message}",
+                    "MaterializeFailed", 400) { Exception = real };
+                return FromError(Error);
+            }
 
-        // The door may author its own parse failure WITHOUT throwing (source.Value
-        // catches and sets MaterializeFailed). Surface that as the navigation error
-        // rather than navigating an Absent value to a generic NotFound.
-        if (Error is { Key: "MaterializeFailed" }) return FromError(Error);
+            // The door may author its own parse failure WITHOUT throwing (source.Value
+            // catches and sets MaterializeFailed). Surface that as the navigation error
+            // rather than navigating an Absent value to a generic NotFound.
+            if (Error is { Key: "MaterializeFailed" }) return FromError(Error);
+        }
 
         // The value navigates itself to the child — dict by key, list by index,
         // the foreign-object carrier by reflecting its host. A value with no

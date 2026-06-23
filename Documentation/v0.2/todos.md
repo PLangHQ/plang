@@ -1270,3 +1270,14 @@ Everything in PLang is `Data`, but a few callers still pass raw CLR values
 juggling inside Set (e.g. the dotted-write value extraction). Tighten the signature to
 `Set(string, data.@this)` and wrap those raw callers in `Data`, so the body is clean
 (`value.Peek()`), no `object?` branching.
+
+## goal.call param injection calls .Value() eagerly (branch `variable-as-value`)
+
+**Date:** 2026-06-23. `app/this.cs` RunGoalAsync resolves a `%ref%` param eagerly
+(`new Data(name, await param.Value())`) to dodge a self-alias loop in the SHARED
+caller/callee store (`call Foo x=%x%` → x points at itself). This violates "only
+action code calls .Value; everything else stays lazy." Proper fix: give the
+sub-goal an ISOLATED scope so a bare lazy ref resolves against the caller's binding
+with no self-collision — then store `Set(param.Name, param)` straight, no eager
+.Value(). Not the root of the build blocker (that's the dict render cycle), but
+clean it up today.
