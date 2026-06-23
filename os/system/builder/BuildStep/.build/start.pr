@@ -16,26 +16,26 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%step%",
               "type": {
                 "name": "variable"
-              }
+              },
+              "value": "%step%"
             },
             {
               "name": "Value",
-              "value": "%goal.Steps[planStep.index]%",
               "type": {
                 "name": "object"
-              }
+              },
+              "value": "%goal.Steps[planStep.index]%"
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
-              "value": false,
               "type": {
                 "name": "bool"
-              }
+              },
+              "value": false
             }
           ],
           "modifiers": []
@@ -59,14 +59,14 @@
           "parameters": [
             {
               "name": "GoalName",
+              "type": {
+                "name": "goal.call"
+              },
               "value": {
                 "name": "Compile",
                 "parallel": false,
                 "parameters": [],
                 "prPath": "/system/builder/BuildStep/.build/start.pr"
-              },
-              "type": {
-                "name": "goal.call"
               }
             }
           ],
@@ -99,17 +99,17 @@
               "parameters": [
                 {
                   "name": "Step",
-                  "value": "%step%",
                   "type": {
                     "name": "step"
-                  }
+                  },
+                  "value": "%step%"
                 },
                 {
                   "name": "Actions",
-                  "value": "%planStep.actions%",
                   "type": {
                     "name": "list<text>"
-                  }
+                  },
+                  "value": "%planStep.actions%"
                 }
               ],
               "defaults": null,
@@ -121,27 +121,27 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%planStep.actions%",
                   "type": {
                     "name": "variable"
-                  }
+                  },
+                  "value": "%planStep.actions%"
                 },
                 {
                   "name": "Value",
-                  "value": "%!data%",
                   "type": {
                     "name": "list",
                     "kind": "text"
-                  }
+                  },
+                  "value": "%!data%"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -165,10 +165,10 @@
               "parameters": [
                 {
                   "name": "Actions",
-                  "value": "%planStep.actions%",
                   "type": {
                     "name": "list<text>"
-                  }
+                  },
+                  "value": "%planStep.actions%"
                 }
               ],
               "defaults": null,
@@ -193,10 +193,10 @@
               "parameters": [
                 {
                   "name": "Actions",
-                  "value": "%planStep.actions%",
                   "type": {
                     "name": "list<text>"
-                  }
+                  },
+                  "value": "%planStep.actions%"
                 }
               ],
               "defaults": null,
@@ -208,27 +208,27 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%typeInfo%",
                   "type": {
                     "name": "variable"
-                  }
+                  },
+                  "value": "%typeInfo%"
                 },
                 {
                   "name": "Value",
-                  "value": "%!data%",
                   "type": {
                     "name": "list",
                     "kind": "text"
-                  }
+                  },
+                  "value": "%!data%"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -252,10 +252,10 @@
               "parameters": [
                 {
                   "name": "Goal",
-                  "value": "%goal%",
                   "type": {
                     "name": "goal"
-                  }
+                  },
+                  "value": "%goal%"
                 }
               ],
               "defaults": null,
@@ -267,26 +267,26 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%varTypes%",
                   "type": {
                     "name": "variable"
-                  }
+                  },
+                  "value": "%varTypes%"
                 },
                 {
                   "name": "Value",
-                  "value": "%!data%",
                   "type": {
                     "name": "list<dict<text,text>>"
-                  }
+                  },
+                  "value": "%!data%"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -310,26 +310,26 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%stepVarTypes%",
                   "type": {
                     "name": "variable"
-                  }
+                  },
+                  "value": "%stepVarTypes%"
                 },
                 {
                   "name": "Value",
-                  "value": "%varTypes[step.Index]%",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "%varTypes[step.Index]%"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -353,10 +353,10 @@
               "parameters": [
                 {
                   "name": "Template",
-                  "value": "/system/builder/llm/templates/stepForLlm.template",
                   "type": {
                     "name": "text"
-                  }
+                  },
+                  "value": "/system/builder/llm/templates/stepForLlm.template"
                 }
               ],
               "defaults": null,
@@ -368,26 +368,26 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%stepForLlm%",
                   "type": {
                     "name": "variable"
-                  }
+                  },
+                  "value": "%stepForLlm%"
                 },
                 {
                   "name": "Value",
-                  "value": "%!data%",
                   "type": {
                     "name": "text"
-                  }
+                  },
+                  "value": "%!data%"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -411,10 +411,10 @@
               "parameters": [
                 {
                   "name": "Template",
-                  "value": "/system/builder/llm/templates/stepActionDetails.template",
                   "type": {
                     "name": "text"
-                  }
+                  },
+                  "value": "/system/builder/llm/templates/stepActionDetails.template"
                 }
               ],
               "defaults": null,
@@ -426,26 +426,26 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%actionDetails%",
                   "type": {
                     "name": "variable"
-                  }
+                  },
+                  "value": "%actionDetails%"
                 },
                 {
                   "name": "Value",
-                  "value": "%!data%",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "%!data%"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -469,10 +469,10 @@
               "parameters": [
                 {
                   "name": "Template",
-                  "value": "/system/builder/llm/Compile.llm",
                   "type": {
                     "name": "text"
-                  }
+                  },
+                  "value": "/system/builder/llm/Compile.llm"
                 }
               ],
               "defaults": null,
@@ -484,26 +484,26 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%buildStepPrompt%",
                   "type": {
                     "name": "variable"
-                  }
+                  },
+                  "value": "%buildStepPrompt%"
                 },
                 {
                   "name": "Value",
-                  "value": "%!data%",
                   "type": {
                     "name": "text"
-                  }
+                  },
+                  "value": "%!data%"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -527,10 +527,10 @@
               "parameters": [
                 {
                   "name": "Template",
-                  "value": "/system/builder/llm/CompileUser.llm",
                   "type": {
                     "name": "text"
-                  }
+                  },
+                  "value": "/system/builder/llm/CompileUser.llm"
                 }
               ],
               "defaults": null,
@@ -542,26 +542,26 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%buildStepUserMsg%",
                   "type": {
                     "name": "variable"
-                  }
+                  },
+                  "value": "%buildStepUserMsg%"
                 },
                 {
                   "name": "Value",
-                  "value": "%!data%",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "%!data%"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -585,13 +585,16 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%messages%",
                   "type": {
                     "name": "variable"
-                  }
+                  },
+                  "value": "%messages%"
                 },
                 {
                   "name": "Value",
+                  "type": {
+                    "name": "list`1"
+                  },
                   "value": [
                     {
                       "Role": "system",
@@ -601,19 +604,16 @@
                       "Role": "user",
                       "Content": "%buildStepUserMsg%"
                     }
-                  ],
-                  "type": {
-                    "name": "list`1"
-                  }
+                  ]
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -637,14 +637,14 @@
               "parameters": [
                 {
                   "name": "GoalName",
+                  "type": {
+                    "name": "goal.call"
+                  },
                   "value": {
                     "name": "QueryAndVerify",
                     "parallel": false,
                     "parameters": [],
                     "prPath": "/system/builder/BuildStep/.build/start.pr"
-                  },
-                  "type": {
-                    "name": "goal.call"
                   }
                 }
               ],
@@ -656,13 +656,17 @@
                   "parameters": [
                     {
                       "name": "Key",
-                      "value": "missing-actions",
                       "type": {
                         "name": "text"
-                      }
+                      },
+                      "value": "missing-actions"
                     },
                     {
                       "name": "Actions",
+                      "type": {
+                        "name": "list",
+                        "kind": "action"
+                      },
                       "value": [
                         {
                           "module": "goal",
@@ -670,27 +674,23 @@
                           "parameters": [
                             {
                               "name": "GoalName",
+                              "type": "goal.call",
                               "value": {
                                 "name": "RefineActions",
                                 "parameters": []
-                              },
-                              "type": "goal.call"
+                              }
                             }
                           ]
                         }
-                      ],
-                      "type": {
-                        "name": "list",
-                        "kind": "action"
-                      }
+                      ]
                     },
                     {
                       "name": "RetryCount",
-                      "value": 2,
                       "type": {
                         "name": "number",
                         "kind": "int"
-                      }
+                      },
+                      "value": 2
                     }
                   ],
                   "defaults": null,
@@ -717,13 +717,16 @@
               "parameters": [
                 {
                   "name": "ListName",
-                  "value": "%trace.stepPasses%",
                   "type": {
                     "name": "variable"
-                  }
+                  },
+                  "value": "%trace.stepPasses%"
                 },
                 {
                   "name": "Value",
+                  "type": {
+                    "name": "dictionary`2"
+                  },
                   "value": {
                     "goal": "%goal.Name%",
                     "index": "%step.Index%",
@@ -740,20 +743,17 @@
                       "cost": "%compileResult.Cost%",
                       "cached": "%compileResult.Cached%"
                     }
-                  },
-                  "type": {
-                    "name": "dictionary`2"
                   }
                 }
               ],
               "defaults": [
                 {
                   "name": "atindex",
-                  "value": -1,
                   "type": {
                     "name": "number",
                     "kind": "int"
-                  }
+                  },
+                  "value": -1
                 }
               ],
               "modifiers": []
@@ -777,26 +777,26 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%goal.Steps[step.Index].Actions%",
                   "type": {
                     "name": "variable"
-                  }
+                  },
+                  "value": "%goal.Steps[step.Index].Actions%"
                 },
                 {
                   "name": "Value",
-                  "value": "%compileResult.actions%",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "%compileResult.actions%"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -820,26 +820,26 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%goal.Steps[step.Index].Formal%",
                   "type": {
                     "name": "variable"
-                  }
+                  },
+                  "value": "%goal.Steps[step.Index].Formal%"
                 },
                 {
                   "name": "Value",
-                  "value": "%compileResult.formal%",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "%compileResult.formal%"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -863,10 +863,10 @@
               "parameters": [
                 {
                   "name": "Actions",
-                  "value": "%goal.Steps[step.Index].Actions%",
                   "type": {
                     "name": "list<action>"
-                  }
+                  },
+                  "value": "%goal.Steps[step.Index].Actions%"
                 }
               ],
               "defaults": null,
@@ -877,6 +877,10 @@
                   "parameters": [
                     {
                       "name": "Actions",
+                      "type": {
+                        "name": "list",
+                        "kind": "action"
+                      },
                       "value": [
                         {
                           "module": "goal",
@@ -884,28 +888,24 @@
                           "parameters": [
                             {
                               "name": "GoalName",
-                              "value": {
-                                "name": "FixValidation"
-                              },
                               "type": {
                                 "name": "goal"
+                              },
+                              "value": {
+                                "name": "FixValidation"
                               }
                             }
                           ]
                         }
-                      ],
-                      "type": {
-                        "name": "list",
-                        "kind": "action"
-                      }
+                      ]
                     },
                     {
                       "name": "RetryCount",
-                      "value": 2,
                       "type": {
                         "name": "number",
                         "kind": "int"
-                      }
+                      },
+                      "value": 2
                     }
                   ],
                   "defaults": null,
@@ -932,14 +932,14 @@
               "parameters": [
                 {
                   "name": "GoalName",
+                  "type": {
+                    "name": "goal.call"
+                  },
                   "value": {
                     "name": "EmitSummary",
                     "parallel": false,
                     "parameters": [],
                     "prPath": "/system/builder/BuildStep/.build/start.pr"
-                  },
-                  "type": {
-                    "name": "goal.call"
                   }
                 }
               ],
@@ -983,71 +983,71 @@
               "parameters": [
                 {
                   "name": "Messages",
-                  "value": "%messages%",
                   "type": {
                     "name": "list<llmmessage>"
-                  }
+                  },
+                  "value": "%messages%"
                 },
                 {
                   "name": "Schema",
+                  "type": {
+                    "name": "object"
+                  },
                   "value": {
                     "formal": "string",
                     "actions": "list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>, errors?: list<{key: string, message: string}>}>",
                     "confidence": "string",
                     "explanation": "string",
                     "errors": "list<{key: string, message: string}>"
-                  },
-                  "type": {
-                    "name": "object"
                   }
                 },
                 {
                   "name": "Cache",
-                  "value": true,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": true
                 }
               ],
               "defaults": [
                 {
                   "name": "continuepreviousconversation",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 },
                 {
                   "name": "temperature",
-                  "value": 0,
                   "type": {
                     "name": "number",
                     "kind": "double"
-                  }
+                  },
+                  "value": 0
                 },
                 {
                   "name": "maxtokens",
-                  "value": 16000,
                   "type": {
                     "name": "number",
                     "kind": "int"
-                  }
+                  },
+                  "value": 16000
                 },
                 {
                   "name": "maxtoolcalls",
-                  "value": 10,
                   "type": {
                     "name": "number",
                     "kind": "int"
-                  }
+                  },
+                  "value": 10
                 },
                 {
                   "name": "maxvalidationretries",
-                  "value": 0,
                   "type": {
                     "name": "number",
                     "kind": "int"
-                  }
+                  },
+                  "value": 0
                 }
               ],
               "modifiers": [
@@ -1057,6 +1057,9 @@
                   "parameters": [
                     {
                       "name": "Actions",
+                      "type": {
+                        "name": "list<action>"
+                      },
                       "value": [
                         {
                           "module": "goal",
@@ -1064,17 +1067,14 @@
                           "parameters": [
                             {
                               "name": "GoalName",
+                              "type": "goal.call",
                               "value": {
                                 "name": "HandleStepFailure"
-                              },
-                              "type": "goal.call"
+                              }
                             }
                           ]
                         }
-                      ],
-                      "type": {
-                        "name": "list<action>"
-                      }
+                      ]
                     }
                   ],
                   "defaults": null,
@@ -1088,26 +1088,26 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%compileResult%",
                   "type": {
                     "name": "variable"
-                  }
+                  },
+                  "value": "%compileResult%"
                 },
                 {
                   "name": "Value",
-                  "value": "%!data%",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "%!data%"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -1131,33 +1131,33 @@
               "parameters": [
                 {
                   "name": "Left",
-                  "value": "%compileResult.errors[0].key%",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "%compileResult.errors[0].key%"
                 },
                 {
                   "name": "Operator",
-                  "value": "==",
                   "type": {
                     "name": "operator"
-                  }
+                  },
+                  "value": "=="
                 },
                 {
                   "name": "Right",
-                  "value": "missing-actions",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "missing-actions"
                 }
               ],
               "defaults": [
                 {
                   "name": "negate",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -1168,27 +1168,27 @@
               "parameters": [
                 {
                   "name": "Message",
-                  "value": "missing-actions: %compileResult.errors[0].message%",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "missing-actions: %compileResult.errors[0].message%"
                 },
                 {
                   "name": "Key",
-                  "value": "missing-actions",
                   "type": {
                     "name": "text"
-                  }
+                  },
+                  "value": "missing-actions"
                 }
               ],
               "defaults": [
                 {
                   "name": "statuscode",
-                  "value": 500,
                   "type": {
                     "name": "number",
                     "kind": "int"
-                  }
+                  },
+                  "value": 500
                 }
               ],
               "modifiers": []
@@ -1230,35 +1230,35 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%complaint%",
                   "type": {
                     "name": "variable"
-                  }
+                  },
+                  "value": "%complaint%"
                 },
                 {
                   "name": "Value",
-                  "value": "Compiler returned missing-actions for step %step.Index% (text: '%step.Text%'). Current action set is insufficient: %planStep.actions%. Reason: %!error.Message%. Return a corrected action set for step %step.Index% only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) — recovery confidence matters because it tells the dev whether even the correction is a guess.",
                   "type": {
                     "name": "text"
-                  }
+                  },
+                  "value": "Compiler returned missing-actions for step %step.Index% (text: '%step.Text%'). Current action set is insufficient: %planStep.actions%. Reason: %!error.Message%. Return a corrected action set for step %step.Index% only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) — recovery confidence matters because it tells the dev whether even the correction is a guess."
                 },
                 {
                   "name": "Type",
-                  "value": {
-                    "name": "string"
-                  },
                   "type": {
                     "name": "type"
+                  },
+                  "value": {
+                    "name": "string"
                   }
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -1282,31 +1282,31 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%refineMessages%",
                   "type": {
                     "name": "variable"
-                  }
+                  },
+                  "value": "%refineMessages%"
                 },
                 {
                   "name": "Value",
+                  "type": {
+                    "name": "list`1"
+                  },
                   "value": [
                     {
                       "Role": "user",
                       "Content": "%complaint%"
                     }
-                  ],
-                  "type": {
-                    "name": "list`1"
-                  }
+                  ]
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -1330,70 +1330,70 @@
               "parameters": [
                 {
                   "name": "Messages",
-                  "value": "%refineMessages%",
                   "type": {
                     "name": "list<llmmessage>"
-                  }
+                  },
+                  "value": "%refineMessages%"
                 },
                 {
                   "name": "Schema",
+                  "type": {
+                    "name": "dictionary`2"
+                  },
                   "value": {
                     "index": "int",
                     "actions": "list<string>",
                     "confidence": "string",
                     "explanation?": "string"
-                  },
-                  "type": {
-                    "name": "dictionary`2"
                   }
                 },
                 {
                   "name": "Cache",
-                  "value": "%!build.cache%",
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": "%!build.cache%"
                 },
                 {
                   "name": "ContinuePreviousConversation",
-                  "value": true,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": true
                 }
               ],
               "defaults": [
                 {
                   "name": "temperature",
-                  "value": 0,
                   "type": {
                     "name": "number",
                     "kind": "double"
-                  }
+                  },
+                  "value": 0
                 },
                 {
                   "name": "maxtokens",
-                  "value": 16000,
                   "type": {
                     "name": "number",
                     "kind": "int"
-                  }
+                  },
+                  "value": 16000
                 },
                 {
                   "name": "maxtoolcalls",
-                  "value": 10,
                   "type": {
                     "name": "number",
                     "kind": "int"
-                  }
+                  },
+                  "value": 10
                 },
                 {
                   "name": "maxvalidationretries",
-                  "value": 0,
                   "type": {
                     "name": "number",
                     "kind": "int"
-                  }
+                  },
+                  "value": 0
                 }
               ],
               "modifiers": []
@@ -1404,35 +1404,35 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%correction%",
                   "type": {
                     "name": "variable"
-                  }
+                  },
+                  "value": "%correction%"
                 },
                 {
                   "name": "Value",
-                  "value": "%!data%",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "%!data%"
                 },
                 {
                   "name": "Type",
-                  "value": {
-                    "name": "object"
-                  },
                   "type": {
                     "name": "type"
+                  },
+                  "value": {
+                    "name": "object"
                   }
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -1456,26 +1456,26 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%planStep.actions%",
                   "type": {
                     "name": "variable"
-                  }
+                  },
+                  "value": "%planStep.actions%"
                 },
                 {
                   "name": "Value",
-                  "value": "%correction.actions%",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "%correction.actions%"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -1499,26 +1499,26 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%trace.plan.steps[step.Index].actions%",
                   "type": {
                     "name": "variable"
-                  }
+                  },
+                  "value": "%trace.plan.steps[step.Index].actions%"
                 },
                 {
                   "name": "Value",
-                  "value": "%correction.actions%",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "%correction.actions%"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -1542,29 +1542,29 @@
               "parameters": [
                 {
                   "name": "GoalName",
+                  "type": {
+                    "name": "goal.call"
+                  },
                   "value": {
                     "name": "/system/builder/EmitBuildEvent",
                     "parallel": false,
                     "parameters": [
                       {
                         "name": "kind",
-                        "value": "step-missing-actions",
                         "type": {
                           "name": "text"
-                        }
+                        },
+                        "value": "step-missing-actions"
                       },
                       {
                         "name": "step",
-                        "value": "%step%",
                         "type": {
                           "name": "text"
-                        }
+                        },
+                        "value": "%step%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
-                  },
-                  "type": {
-                    "name": "goal.call"
                   }
                 }
               ],
@@ -1608,31 +1608,31 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%fixMessages%",
                   "type": {
                     "name": "variable"
-                  }
+                  },
+                  "value": "%fixMessages%"
                 },
                 {
                   "name": "Value",
+                  "type": {
+                    "name": "list`1"
+                  },
                   "value": [
                     {
                       "Role": "user",
                       "Content": "Your previous response was rejected by the validator: %!error.Message%\n\nReturn the corrected response in the same Output Shape (formal, actions, confidence, explanation, errors, warnings) for this step only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) — recovery confidence matters because it tells the dev whether even the correction is a guess."
                     }
-                  ],
-                  "type": {
-                    "name": "list`1"
-                  }
+                  ]
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -1656,78 +1656,78 @@
               "parameters": [
                 {
                   "name": "Messages",
-                  "value": "%fixMessages%",
                   "type": {
                     "name": "list<llmmessage>"
-                  }
+                  },
+                  "value": "%fixMessages%"
                 },
                 {
                   "name": "Schema",
+                  "type": {
+                    "name": "object"
+                  },
                   "value": {
                     "formal": "string",
                     "actions": "list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>, modifiers?: list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>}>, errors?: list<{key: string, message: string}>}>",
                     "confidence": "string",
                     "explanation": "string?",
                     "errors": "list<{key: string, message: string}>?"
-                  },
-                  "type": {
-                    "name": "object"
                   }
                 },
                 {
                   "name": "Cache",
-                  "value": "%!build.cache%",
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": "%!build.cache%"
                 },
                 {
                   "name": "ContinuePreviousConversation",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 },
                 {
                   "name": "previousConversation",
-                  "value": "%compileResult%",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "%compileResult%"
                 }
               ],
               "defaults": [
                 {
                   "name": "temperature",
-                  "value": 0,
                   "type": {
                     "name": "number",
                     "kind": "double"
-                  }
+                  },
+                  "value": 0
                 },
                 {
                   "name": "maxtokens",
-                  "value": 16000,
                   "type": {
                     "name": "number",
                     "kind": "int"
-                  }
+                  },
+                  "value": 16000
                 },
                 {
                   "name": "maxtoolcalls",
-                  "value": 10,
                   "type": {
                     "name": "number",
                     "kind": "int"
-                  }
+                  },
+                  "value": 10
                 },
                 {
                   "name": "maxvalidationretries",
-                  "value": 0,
                   "type": {
                     "name": "number",
                     "kind": "int"
-                  }
+                  },
+                  "value": 0
                 }
               ],
               "modifiers": []
@@ -1738,26 +1738,26 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%compileResult%",
                   "type": {
                     "name": "variable"
-                  }
+                  },
+                  "value": "%compileResult%"
                 },
                 {
                   "name": "Value",
-                  "value": "%!data%",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "%!data%"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -1781,26 +1781,26 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%goal.Steps[step.Index].Actions%",
                   "type": {
                     "name": "variable"
-                  }
+                  },
+                  "value": "%goal.Steps[step.Index].Actions%"
                 },
                 {
                   "name": "Value",
-                  "value": "%compileResult.actions%",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "%compileResult.actions%"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -1824,26 +1824,26 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%goal.Steps[step.Index].Formal%",
                   "type": {
                     "name": "variable"
-                  }
+                  },
+                  "value": "%goal.Steps[step.Index].Formal%"
                 },
                 {
                   "name": "Value",
-                  "value": "%compileResult.formal%",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "%compileResult.formal%"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -1867,36 +1867,36 @@
               "parameters": [
                 {
                   "name": "GoalName",
+                  "type": {
+                    "name": "goal.call"
+                  },
                   "value": {
                     "name": "/system/builder/EmitBuildEvent",
                     "parallel": false,
                     "parameters": [
                       {
                         "name": "kind",
-                        "value": "step-validation-error",
                         "type": {
                           "name": "text"
-                        }
+                        },
+                        "value": "step-validation-error"
                       },
                       {
                         "name": "step",
-                        "value": "%step%",
                         "type": {
                           "name": "text"
-                        }
+                        },
+                        "value": "%step%"
                       },
                       {
                         "name": "errorMessage",
-                        "value": "%!error.Message%",
                         "type": {
                           "name": "text"
-                        }
+                        },
+                        "value": "%!error.Message%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
-                  },
-                  "type": {
-                    "name": "goal.call"
                   }
                 }
               ],
@@ -1940,36 +1940,36 @@
               "parameters": [
                 {
                   "name": "GoalName",
+                  "type": {
+                    "name": "goal.call"
+                  },
                   "value": {
                     "name": "/system/builder/EmitBuildEvent",
                     "parallel": false,
                     "parameters": [
                       {
                         "name": "kind",
-                        "value": "step-build-error",
                         "type": {
                           "name": "text"
-                        }
+                        },
+                        "value": "step-build-error"
                       },
                       {
                         "name": "step",
-                        "value": "%step%",
                         "type": {
                           "name": "text"
-                        }
+                        },
+                        "value": "%step%"
                       },
                       {
                         "name": "errorMessage",
-                        "value": "%!error.Message%",
                         "type": {
                           "name": "text"
-                        }
+                        },
+                        "value": "%!error.Message%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
-                  },
-                  "type": {
-                    "name": "goal.call"
                   }
                 }
               ],
@@ -1995,17 +1995,17 @@
               "parameters": [
                 {
                   "name": "Message",
-                  "value": "%!error%",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "%!error%"
                 },
                 {
                   "name": "StatusCode",
-                  "value": 500,
                   "type": {
                     "name": "number"
-                  }
+                  },
+                  "value": 500
                 }
               ],
               "defaults": null,
@@ -2048,33 +2048,33 @@
               "parameters": [
                 {
                   "name": "Left",
-                  "value": "%compileResult.Cached%",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "%compileResult.Cached%"
                 },
                 {
                   "name": "Operator",
-                  "value": "==",
                   "type": {
                     "name": "operator"
-                  }
+                  },
+                  "value": "=="
                 },
                 {
                   "name": "Right",
-                  "value": true,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": true
                 }
               ],
               "defaults": [
                 {
                   "name": "negate",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -2085,29 +2085,29 @@
               "parameters": [
                 {
                   "name": "GoalName",
+                  "type": {
+                    "name": "goal.call"
+                  },
                   "value": {
                     "name": "/system/builder/EmitBuildEvent",
                     "parallel": false,
                     "parameters": [
                       {
                         "name": "kind",
-                        "value": "step-cached",
                         "type": {
                           "name": "text"
-                        }
+                        },
+                        "value": "step-cached"
                       },
                       {
                         "name": "step",
-                        "value": "%step%",
                         "type": {
                           "name": "text"
-                        }
+                        },
+                        "value": "%step%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
-                  },
-                  "type": {
-                    "name": "goal.call"
                   }
                 }
               ],
@@ -2133,33 +2133,33 @@
               "parameters": [
                 {
                   "name": "Left",
-                  "value": "%compileResult.Cached%",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "%compileResult.Cached%"
                 },
                 {
                   "name": "Operator",
-                  "value": "==",
                   "type": {
                     "name": "operator"
-                  }
+                  },
+                  "value": "=="
                 },
                 {
                   "name": "Right",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "defaults": [
                 {
                   "name": "negate",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -2170,29 +2170,29 @@
               "parameters": [
                 {
                   "name": "GoalName",
+                  "type": {
+                    "name": "goal.call"
+                  },
                   "value": {
                     "name": "/system/builder/EmitBuildEvent",
                     "parallel": false,
                     "parameters": [
                       {
                         "name": "kind",
-                        "value": "step-fresh",
                         "type": {
                           "name": "text"
-                        }
+                        },
+                        "value": "step-fresh"
                       },
                       {
                         "name": "step",
-                        "value": "%step%",
                         "type": {
                           "name": "text"
-                        }
+                        },
+                        "value": "%step%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
-                  },
-                  "type": {
-                    "name": "goal.call"
                   }
                 }
               ],
@@ -2218,33 +2218,33 @@
               "parameters": [
                 {
                   "name": "Left",
-                  "value": "%planStep.confidence%",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "%planStep.confidence%"
                 },
                 {
                   "name": "Operator",
-                  "value": "==",
                   "type": {
                     "name": "operator"
-                  }
+                  },
+                  "value": "=="
                 },
                 {
                   "name": "Right",
-                  "value": "Low",
                   "type": {
                     "name": "text"
-                  }
+                  },
+                  "value": "Low"
                 }
               ],
               "defaults": [
                 {
                   "name": "negate",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -2255,29 +2255,29 @@
               "parameters": [
                 {
                   "name": "GoalName",
+                  "type": {
+                    "name": "goal.call"
+                  },
                   "value": {
                     "name": "/system/builder/EmitBuildEvent",
                     "parallel": false,
                     "parameters": [
                       {
                         "name": "kind",
-                        "value": "confidence-warning-planner",
                         "type": {
                           "name": "text"
-                        }
+                        },
+                        "value": "confidence-warning-planner"
                       },
                       {
                         "name": "planStep",
-                        "value": "%planStep%",
                         "type": {
                           "name": "text"
-                        }
+                        },
+                        "value": "%planStep%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
-                  },
-                  "type": {
-                    "name": "goal.call"
                   }
                 }
               ],
@@ -2303,33 +2303,33 @@
               "parameters": [
                 {
                   "name": "Left",
-                  "value": "%planStep.confidence%",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "%planStep.confidence%"
                 },
                 {
                   "name": "Operator",
-                  "value": "==",
                   "type": {
                     "name": "operator"
-                  }
+                  },
+                  "value": "=="
                 },
                 {
                   "name": "Right",
-                  "value": "VeryLow",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "VeryLow"
                 }
               ],
               "defaults": [
                 {
                   "name": "negate",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -2340,29 +2340,29 @@
               "parameters": [
                 {
                   "name": "GoalName",
+                  "type": {
+                    "name": "goal.call"
+                  },
                   "value": {
                     "name": "/system/builder/EmitBuildEvent",
                     "parallel": false,
                     "parameters": [
                       {
                         "name": "kind",
-                        "value": "confidence-warning-planner",
                         "type": {
                           "name": "text"
-                        }
+                        },
+                        "value": "confidence-warning-planner"
                       },
                       {
                         "name": "planStep",
-                        "value": "%planStep%",
                         "type": {
                           "name": "text"
-                        }
+                        },
+                        "value": "%planStep%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
-                  },
-                  "type": {
-                    "name": "goal.call"
                   }
                 }
               ],
@@ -2388,33 +2388,33 @@
               "parameters": [
                 {
                   "name": "Left",
-                  "value": "%compileResult.confidence%",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "%compileResult.confidence%"
                 },
                 {
                   "name": "Operator",
-                  "value": "==",
                   "type": {
                     "name": "operator"
-                  }
+                  },
+                  "value": "=="
                 },
                 {
                   "name": "Right",
-                  "value": "Low",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "Low"
                 }
               ],
               "defaults": [
                 {
                   "name": "negate",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -2425,29 +2425,29 @@
               "parameters": [
                 {
                   "name": "GoalName",
+                  "type": {
+                    "name": "goal.call"
+                  },
                   "value": {
                     "name": "/system/builder/EmitBuildEvent",
                     "parallel": false,
                     "parameters": [
                       {
                         "name": "kind",
-                        "value": "confidence-warning-compiler",
                         "type": {
                           "name": "text"
-                        }
+                        },
+                        "value": "confidence-warning-compiler"
                       },
                       {
                         "name": "compileResult",
-                        "value": "%compileResult%",
                         "type": {
                           "name": "text"
-                        }
+                        },
+                        "value": "%compileResult%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
-                  },
-                  "type": {
-                    "name": "goal.call"
                   }
                 }
               ],
@@ -2473,33 +2473,33 @@
               "parameters": [
                 {
                   "name": "Left",
-                  "value": "%compileResult.confidence%",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "%compileResult.confidence%"
                 },
                 {
                   "name": "Operator",
-                  "value": "==",
                   "type": {
                     "name": "operator"
-                  }
+                  },
+                  "value": "=="
                 },
                 {
                   "name": "Right",
-                  "value": "VeryLow",
                   "type": {
                     "name": "object"
-                  }
+                  },
+                  "value": "VeryLow"
                 }
               ],
               "defaults": [
                 {
                   "name": "negate",
-                  "value": false,
                   "type": {
                     "name": "bool"
-                  }
+                  },
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -2510,29 +2510,29 @@
               "parameters": [
                 {
                   "name": "GoalName",
+                  "type": {
+                    "name": "goal.call"
+                  },
                   "value": {
                     "name": "/system/builder/EmitBuildEvent",
                     "parallel": false,
                     "parameters": [
                       {
                         "name": "kind",
-                        "value": "confidence-warning-compiler",
                         "type": {
                           "name": "text"
-                        }
+                        },
+                        "value": "confidence-warning-compiler"
                       },
                       {
                         "name": "compileResult",
-                        "value": "%compileResult%",
                         "type": {
                           "name": "text"
-                        }
+                        },
+                        "value": "%compileResult%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
-                  },
-                  "type": {
-                    "name": "goal.call"
                   }
                 }
               ],

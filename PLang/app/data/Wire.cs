@@ -373,24 +373,22 @@ public class Wire : JsonConverter<@this>
                     // would parse the literal "%x%" and null it). Born a typed variable
                     // carrying the declared type; a partial "...%x%..." stays text and real
                     // content falls through to the reader below.
+                    // A full-match %x% is a VARIABLE reference, whatever its declared type.
+                    // Capture it; at EndObject it borns a variable — a real-typed slot →
+                    // a reference resolving at .Value(); a type:variable name-slot → the raw
+                    // name for variable.Create. It must NOT run the declared type's reader on
+                    // the literal "%x%" (the list reader would choke on "%!data%"). Keep the
+                    // raw string in `value` so the name-slot path has it.
                     if (reader.TokenType == JsonTokenType.String && _template != null && _context != null
                         && reader.GetString() is { } sv
                         && global::app.data.@this.TryFullVarMatch(sv, out _))
                     {
-                        // `type` follows `value` on the wire, so the declared type isn't
-                        // known yet — capture the ref and decide at EndObject. Fall through
-                        // so name-slot / untyped / content paths read the token as before;
-                        // only a real-value-typed ref is overridden into a variable there.
                         refValue = sv;
+                        value = sv;
                     }
                     // Defer a shape-typed value (object/table) — capture its raw
                     // source form and let it materialize lazily on first touch.
-                    // The type slot precedes value on the wire, so typeRef is known
-                    // here. A json-string token unwraps to its content (the text a
-                    // text-shaped reader expects); object/array/number keep their
-                    // raw json. Scoped to object/table so scalars, domain objects,
-                    // and dict<…>-typed values keep their eager path unchanged.
-                    if (typeRef != null && IsDeferrableShape(typeRef))
+                    else if (typeRef != null && IsDeferrableShape(typeRef))
                     {
                         using var vdoc = JsonDocument.ParseValue(ref reader);
                         var el = vdoc.RootElement;
@@ -398,28 +396,43 @@ public class Wire : JsonConverter<@this>
                             ? el.GetString() ?? ""
                             : el.GetRawText();
                     }
+                    // The declared type reads its OWN value off the single pass — born at
+                    // its kind in one step (mirror of its IWriter render). goal.call borns
+                    // here too via its reader (params ride as references; no dict, no walk).
                     else if (typeRef is { IsNull: false, Polymorphic: false } && _context != null
                              && _context.App.Type.Readers.Typed(typeRef.Name, typeRef.Kind) is { } typed)
                     {
-                        // The declared type reads its OWN value off the single pass —
-                        // no JsonElement DOM, no lift-then-Build. A json.Reader wraps the
-                        // live Utf8JsonReader by value; the advanced position is copied
-                        // back (Inner) so the envelope walk continues correctly. The type
-                        // is born at its kind in one step (mirror of its IWriter render).
                         var jr = new global::app.channel.serializer.json.Reader(reader);
                         born = typed.Read(ref jr, typeRef.Kind,
                             new global::app.type.reader.ReadContext(_context, _template));
                         reader = jr.Inner;
                     }
+                    // TEMP: goal.call has no type reader yet, so born it inline from the
+                    // descriptor — GoalCall.Convert keeps its params as Data references (no
+                    // dict-render, no goal-graph walk). Remove this branch once goal.call
+                    // gets a real reader.
+                    else if (typeRef is { IsNull: false } && typeRef.Name == "goal.call" && _context != null)
+                    {
+                        using var vdoc = JsonDocument.ParseValue(ref reader);
+                        var descriptor = global::app.type.item.serializer.json.Parse(vdoc.RootElement);
+                        born = global::app.goal.GoalCall.Convert(descriptor, typeRef.Kind, _context).Peek()
+                               as global::app.type.item.@this;
+                    }
                     else
                     {
-                        // Single decode: the json entry parse turns the value
-                        // token into a born value in ONE pass — a scalar wrapper,
-                        // a native dict/list backing its raw slots (type on read),
-                        // or a reconstructed Data for a `@schema:data` slot (the
-                        // one place a nested Data rides). No throwaway DOM walked
-                        // twice, no per-element lift, no re-stringify.
                         using var vdoc = JsonDocument.ParseValue(ref reader);
+                        // A value slot with no declared type is invalid .pr schema — throw,
+                        // never silently born a guessed shape. Name the slot + show the value.
+                        if (typeRef is not { IsNull: false })
+                        {
+                            var preview = vdoc.RootElement.GetRawText();
+                            if (preview.Length > 120) preview = preview[..120] + "…";
+                            throw new JsonException(
+                                $"invalid .pr schema: value slot '{(string.IsNullOrEmpty(name) ? "(unnamed)" : name)}' "
+                                + $"has no declared type. Value was: {preview}");
+                        }
+                        // A declared type with no reader: born its natural value (scalar
+                        // wrapper / native dict-list / reconstructed Data) in one pass.
                         value = global::app.type.item.serializer.json.Parse(vdoc.RootElement);
                     }
                     break;

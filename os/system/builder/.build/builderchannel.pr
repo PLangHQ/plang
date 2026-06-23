@@ -16,8 +16,8 @@
           "parameters": [
             {
               "name": "Data",
-              "value": "%!data%",
-              "type": "object"
+              "type": "object",
+              "value": "%!data%"
             }
           ],
           "defaults": null,

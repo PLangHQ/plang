@@ -16,24 +16,24 @@
           "parameters": [
             {
               "name": "GoalName",
+              "type": "goal.call",
               "value": {
                 "name": "/system/builder/EmitBuildEvent",
                 "parallel": false,
                 "parameters": [
                   {
                     "name": "kind",
-                    "value": "goalHeader",
-                    "type": "string"
+                    "type": "string",
+                    "value": "goalHeader"
                   },
                   {
                     "name": "goal",
-                    "value": "%goal%",
-                    "type": "string"
+                    "type": "string",
+                    "value": "%goal%"
                   }
                 ],
                 "prPath": "/system/builder/.build/emitbuildevent.pr"
-              },
-              "type": "goal.call"
+              }
             }
           ],
           "defaults": null,
@@ -58,20 +58,20 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%buildStart%",
-              "type": "variable"
+              "type": "variable",
+              "value": "%buildStart%"
             },
             {
               "name": "Value",
-              "value": "%Now.Ticks%",
-              "type": "object"
+              "type": "object",
+              "value": "%Now.Ticks%"
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "modifiers": []
@@ -95,11 +95,12 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%trace%",
-              "type": "variable"
+              "type": "variable",
+              "value": "%trace%"
             },
             {
               "name": "Value",
+              "type": "dictionary`2",
               "value": {
                 "id": "%!trace.id%",
                 "timestamp": "%Now%",
@@ -108,15 +109,14 @@
                 "stepPasses": [],
                 "subGoals": [],
                 "durationMs": 0
-              },
-              "type": "dictionary`2"
+              }
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "modifiers": []
@@ -140,13 +140,13 @@
           "parameters": [
             {
               "name": "GoalName",
+              "type": "goal.call",
               "value": {
                 "name": "Plan",
                 "parallel": false,
                 "parameters": [],
                 "prPath": "/system/builder/BuildGoal/.build/plan.pr"
-              },
-              "type": "goal.call"
+              }
             }
           ],
           "defaults": null,
@@ -157,6 +157,7 @@
               "parameters": [
                 {
                   "name": "Actions",
+                  "type": "list<action>",
                   "value": [
                     {
                       "module": "goal",
@@ -164,16 +165,15 @@
                       "parameters": [
                         {
                           "name": "GoalName",
+                          "type": "goal.call",
                           "value": {
                             "name": "HandleBuildFailure",
                             "parameters": []
-                          },
-                          "type": "goal.call"
+                          }
                         }
                       ]
                     }
-                  ],
-                  "type": "list<action>"
+                  ]
                 }
               ],
               "defaults": null,
@@ -200,25 +200,25 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%trace.plan%",
-              "type": "variable"
+              "type": "variable",
+              "value": "%trace.plan%"
             },
             {
               "name": "Value",
-              "value": "%plan%",
-              "type": "object"
+              "type": "object",
+              "value": "%plan%"
             },
             {
               "name": "Type",
-              "value": "object",
-              "type": "string"
+              "type": "string",
+              "value": "object"
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "modifiers": []
@@ -242,8 +242,8 @@
           "parameters": [
             {
               "name": "Template",
-              "value": "/system/builder/llm/Compile.llm",
-              "type": "string"
+              "type": "string",
+              "value": "/system/builder/llm/Compile.llm"
             }
           ],
           "defaults": null,
@@ -255,20 +255,20 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%compileSystemPrompt%",
-              "type": "variable"
+              "type": "variable",
+              "value": "%compileSystemPrompt%"
             },
             {
               "name": "Value",
-              "value": "%!data%",
-              "type": "string"
+              "type": "string",
+              "value": "%!data%"
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "modifiers": []
@@ -292,25 +292,25 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%trace.compileSystem%",
-              "type": "variable"
+              "type": "variable",
+              "value": "%trace.compileSystem%"
             },
             {
               "name": "Value",
-              "value": "%compileSystemPrompt%",
-              "type": "object"
+              "type": "object",
+              "value": "%compileSystemPrompt%"
             },
             {
               "name": "Type",
-              "value": "string",
-              "type": "string"
+              "type": "string",
+              "value": "string"
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "modifiers": []
@@ -334,8 +334,8 @@
           "parameters": [
             {
               "name": "Collection",
-              "value": "%plan.steps%",
-              "type": "object"
+              "type": "object",
+              "value": "%plan.steps%"
             }
           ],
           "defaults": null,
@@ -347,19 +347,19 @@
           "parameters": [
             {
               "name": "GoalName",
+              "type": "goal.call",
               "value": {
                 "name": "BuildStep/Start",
                 "parallel": false,
                 "parameters": [
                   {
                     "name": "planStep",
-                    "value": "%item%",
-                    "type": "string"
+                    "type": "string",
+                    "value": "%item%"
                   }
                 ],
                 "prPath": "/system/builder/BuildStep/.build/start.pr"
-              },
-              "type": "goal.call"
+              }
             }
           ],
           "defaults": null,
@@ -370,6 +370,7 @@
               "parameters": [
                 {
                   "name": "Actions",
+                  "type": "list<action>",
                   "value": [
                     {
                       "module": "goal",
@@ -377,16 +378,15 @@
                       "parameters": [
                         {
                           "name": "GoalName",
+                          "type": "goal.call",
                           "value": {
                             "name": "HandleBuildFailure",
                             "parameters": []
-                          },
-                          "type": "goal.call"
+                          }
                         }
                       ]
                     }
-                  ],
-                  "type": "list<action>"
+                  ]
                 }
               ],
               "defaults": null,
@@ -413,25 +413,25 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%parentGoal%",
-              "type": "variable"
+              "type": "variable",
+              "value": "%parentGoal%"
             },
             {
               "name": "Value",
-              "value": "%goal%",
-              "type": "object"
+              "type": "object",
+              "value": "%goal%"
             },
             {
               "name": "Type",
-              "value": "object",
-              "type": "string"
+              "type": "string",
+              "value": "object"
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "modifiers": []
@@ -455,8 +455,8 @@
           "parameters": [
             {
               "name": "Collection",
-              "value": "%parentGoal.Goals%",
-              "type": "object"
+              "type": "object",
+              "value": "%parentGoal.Goals%"
             }
           ],
           "defaults": null,
@@ -468,19 +468,19 @@
           "parameters": [
             {
               "name": "GoalName",
+              "type": "goal.call",
               "value": {
                 "name": "BuildSubGoal",
                 "parallel": false,
                 "parameters": [
                   {
                     "name": "subGoal",
-                    "value": "%item%",
-                    "type": "string"
+                    "type": "string",
+                    "value": "%item%"
                   }
                 ],
                 "prPath": "/system/builder/BuildGoal/.build/start.pr"
-              },
-              "type": "goal.call"
+              }
             }
           ],
           "defaults": null,
@@ -505,25 +505,25 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%goal%",
-              "type": "variable"
+              "type": "variable",
+              "value": "%goal%"
             },
             {
               "name": "Value",
-              "value": "%parentGoal%",
-              "type": "object"
+              "type": "object",
+              "value": "%parentGoal%"
             },
             {
               "name": "Type",
-              "value": "object",
-              "type": "string"
+              "type": "string",
+              "value": "object"
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "modifiers": []
@@ -547,13 +547,13 @@
           "parameters": [
             {
               "name": "A",
-              "value": "%Now.Ticks%",
-              "type": "object"
+              "type": "object",
+              "value": "%Now.Ticks%"
             },
             {
               "name": "B",
-              "value": "%buildStart%",
-              "type": "object"
+              "type": "object",
+              "value": "%buildStart%"
             }
           ],
           "defaults": null,
@@ -565,20 +565,20 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%elapsedTicks%",
-              "type": "variable"
+              "type": "variable",
+              "value": "%elapsedTicks%"
             },
             {
               "name": "Value",
-              "value": "%!data%",
-              "type": "object"
+              "type": "object",
+              "value": "%!data%"
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "modifiers": []
@@ -602,13 +602,13 @@
           "parameters": [
             {
               "name": "A",
-              "value": "%elapsedTicks%",
-              "type": "object"
+              "type": "object",
+              "value": "%elapsedTicks%"
             },
             {
               "name": "B",
-              "value": 10000,
-              "type": "object"
+              "type": "object",
+              "value": 10000
             }
           ],
           "defaults": null,
@@ -620,20 +620,20 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%elapsedMs%",
-              "type": "variable"
+              "type": "variable",
+              "value": "%elapsedMs%"
             },
             {
               "name": "Value",
-              "value": "%!data%",
-              "type": "object"
+              "type": "object",
+              "value": "%!data%"
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "modifiers": []
@@ -657,20 +657,20 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%trace.durationMs%",
-              "type": "variable"
+              "type": "variable",
+              "value": "%trace.durationMs%"
             },
             {
               "name": "Value",
-              "value": "%elapsedMs%",
-              "type": "object"
+              "type": "object",
+              "value": "%elapsedMs%"
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "modifiers": []
@@ -694,13 +694,13 @@
           "parameters": [
             {
               "name": "Path",
-              "value": "/.build/traces/%!trace.id%/%goal.Name%.json",
-              "type": "path"
+              "type": "path",
+              "value": "/.build/traces/%!trace.id%/%goal.Name%.json"
             },
             {
               "name": "Value",
-              "value": "%trace%",
-              "type": "object"
+              "type": "object",
+              "value": "%trace%"
             }
           ],
           "defaults": null,
@@ -725,20 +725,20 @@
           "parameters": [
             {
               "name": "ListName",
-              "value": "%traceGoals%",
-              "type": "variable"
+              "type": "variable",
+              "value": "%traceGoals%"
             },
             {
               "name": "Value",
-              "value": "%goal.Name%",
-              "type": "object"
+              "type": "object",
+              "value": "%goal.Name%"
             }
           ],
           "defaults": [
             {
               "name": "atindex",
-              "value": -1,
-              "type": "int"
+              "type": "int",
+              "value": -1
             }
           ],
           "modifiers": []
@@ -762,8 +762,8 @@
           "parameters": [
             {
               "name": "Goal",
-              "value": "%goal%",
-              "type": "goal"
+              "type": "goal",
+              "value": "%goal%"
             }
           ],
           "defaults": null,
@@ -795,25 +795,25 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%goal%",
-                  "type": "variable"
+                  "type": "variable",
+                  "value": "%goal%"
                 },
                 {
                   "name": "Value",
-                  "value": "%subGoal%",
-                  "type": "object"
+                  "type": "object",
+                  "value": "%subGoal%"
                 },
                 {
                   "name": "Type",
-                  "value": "object",
-                  "type": "string"
+                  "type": "string",
+                  "value": "object"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
-                  "type": "bool"
+                  "type": "bool",
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -837,24 +837,24 @@
               "parameters": [
                 {
                   "name": "GoalName",
+                  "type": "goal.call",
                   "value": {
                     "name": "/system/builder/EmitBuildEvent",
                     "parallel": false,
                     "parameters": [
                       {
                         "name": "kind",
-                        "value": "subGoalHeader",
-                        "type": "string"
+                        "type": "string",
+                        "value": "subGoalHeader"
                       },
                       {
                         "name": "goal",
-                        "value": "%goal%",
-                        "type": "string"
+                        "type": "string",
+                        "value": "%goal%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
-                  },
-                  "type": "goal.call"
+                  }
                 }
               ],
               "defaults": null,
@@ -879,20 +879,20 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%subgoalStart%",
-                  "type": "variable"
+                  "type": "variable",
+                  "value": "%subgoalStart%"
                 },
                 {
                   "name": "Value",
-                  "value": "%Now.Ticks%",
-                  "type": "object"
+                  "type": "object",
+                  "value": "%Now.Ticks%"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
-                  "type": "bool"
+                  "type": "bool",
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -916,13 +916,13 @@
               "parameters": [
                 {
                   "name": "GoalName",
+                  "type": "goal.call",
                   "value": {
                     "name": "Plan",
                     "parallel": false,
                     "parameters": [],
                     "prPath": "/system/builder/BuildGoal/.build/plan.pr"
-                  },
-                  "type": "goal.call"
+                  }
                 }
               ],
               "defaults": null,
@@ -933,6 +933,7 @@
                   "parameters": [
                     {
                       "name": "Actions",
+                      "type": "list<action>",
                       "value": [
                         {
                           "module": "goal",
@@ -940,16 +941,15 @@
                           "parameters": [
                             {
                               "name": "GoalName",
+                              "type": "goal.call",
                               "value": {
                                 "name": "HandleBuildFailure",
                                 "parameters": []
-                              },
-                              "type": "goal.call"
+                              }
                             }
                           ]
                         }
-                      ],
-                      "type": "list<action>"
+                      ]
                     }
                   ],
                   "defaults": null,
@@ -976,8 +976,8 @@
               "parameters": [
                 {
                   "name": "Collection",
-                  "value": "%plan.steps%",
-                  "type": "object"
+                  "type": "object",
+                  "value": "%plan.steps%"
                 }
               ],
               "defaults": null,
@@ -989,19 +989,19 @@
               "parameters": [
                 {
                   "name": "GoalName",
+                  "type": "goal.call",
                   "value": {
                     "name": "BuildStep/Start",
                     "parallel": false,
                     "parameters": [
                       {
                         "name": "planStep",
-                        "value": "%item%",
-                        "type": "string"
+                        "type": "string",
+                        "value": "%item%"
                       }
                     ],
                     "prPath": "/system/builder/BuildStep/.build/start.pr"
-                  },
-                  "type": "goal.call"
+                  }
                 }
               ],
               "defaults": null,
@@ -1012,6 +1012,7 @@
                   "parameters": [
                     {
                       "name": "Actions",
+                      "type": "list<action>",
                       "value": [
                         {
                           "module": "goal",
@@ -1019,16 +1020,15 @@
                           "parameters": [
                             {
                               "name": "GoalName",
+                              "type": "goal.call",
                               "value": {
                                 "name": "HandleBuildFailure",
                                 "parameters": []
-                              },
-                              "type": "goal.call"
+                              }
                             }
                           ]
                         }
-                      ],
-                      "type": "list<action>"
+                      ]
                     }
                   ],
                   "defaults": null,
@@ -1055,23 +1055,23 @@
               "parameters": [
                 {
                   "name": "ListName",
-                  "value": "%trace.subGoals%",
-                  "type": "variable"
+                  "type": "variable",
+                  "value": "%trace.subGoals%"
                 },
                 {
                   "name": "Value",
+                  "type": "dictionary`2",
                   "value": {
                     "goal": "%goal%",
                     "plan": "%plan%"
-                  },
-                  "type": "dictionary`2"
+                  }
                 }
               ],
               "defaults": [
                 {
                   "name": "atindex",
-                  "value": -1,
-                  "type": "int"
+                  "type": "int",
+                  "value": -1
                 }
               ],
               "modifiers": []
@@ -1095,13 +1095,13 @@
               "parameters": [
                 {
                   "name": "A",
-                  "value": "%Now.Ticks%",
-                  "type": "object"
+                  "type": "object",
+                  "value": "%Now.Ticks%"
                 },
                 {
                   "name": "B",
-                  "value": "%subgoalStart%",
-                  "type": "object"
+                  "type": "object",
+                  "value": "%subgoalStart%"
                 }
               ],
               "defaults": null,
@@ -1113,20 +1113,20 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%elapsedTicks%",
-                  "type": "variable"
+                  "type": "variable",
+                  "value": "%elapsedTicks%"
                 },
                 {
                   "name": "Value",
-                  "value": "%!data%",
-                  "type": "object"
+                  "type": "object",
+                  "value": "%!data%"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
-                  "type": "bool"
+                  "type": "bool",
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -1150,13 +1150,13 @@
               "parameters": [
                 {
                   "name": "A",
-                  "value": "%elapsedTicks%",
-                  "type": "object"
+                  "type": "object",
+                  "value": "%elapsedTicks%"
                 },
                 {
                   "name": "B",
-                  "value": 10000,
-                  "type": "object"
+                  "type": "object",
+                  "value": 10000
                 }
               ],
               "defaults": null,
@@ -1168,20 +1168,20 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%subgoalMs%",
-                  "type": "variable"
+                  "type": "variable",
+                  "value": "%subgoalMs%"
                 },
                 {
                   "name": "Value",
-                  "value": "%!data%",
-                  "type": "object"
+                  "type": "object",
+                  "value": "%!data%"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
-                  "type": "bool"
+                  "type": "bool",
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -1205,29 +1205,29 @@
               "parameters": [
                 {
                   "name": "GoalName",
+                  "type": "goal.call",
                   "value": {
                     "name": "/system/builder/EmitBuildEvent",
                     "parallel": false,
                     "parameters": [
                       {
                         "name": "kind",
-                        "value": "subGoalDone",
-                        "type": "string"
+                        "type": "string",
+                        "value": "subGoalDone"
                       },
                       {
                         "name": "goal",
-                        "value": "%goal%",
-                        "type": "string"
+                        "type": "string",
+                        "value": "%goal%"
                       },
                       {
                         "name": "subgoalMs",
-                        "value": "%subgoalMs%",
-                        "type": "string"
+                        "type": "string",
+                        "value": "%subgoalMs%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
-                  },
-                  "type": "goal.call"
+                  }
                 }
               ],
               "defaults": null,
@@ -1270,29 +1270,29 @@
               "parameters": [
                 {
                   "name": "GoalName",
+                  "type": "goal.call",
                   "value": {
                     "name": "/system/builder/EmitBuildEvent",
                     "parallel": false,
                     "parameters": [
                       {
                         "name": "kind",
-                        "value": "goalError",
-                        "type": "string"
+                        "type": "string",
+                        "value": "goalError"
                       },
                       {
                         "name": "goal",
-                        "value": "%goal%",
-                        "type": "string"
+                        "type": "string",
+                        "value": "%goal%"
                       },
                       {
                         "name": "errorMessage",
-                        "value": "%!data%.Message%",
-                        "type": "string"
+                        "type": "string",
+                        "value": "%!data%.Message%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
-                  },
-                  "type": "goal.call"
+                  }
                 }
               ],
               "defaults": null,
@@ -1317,24 +1317,24 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%trace.buildError%",
-                  "type": "variable"
+                  "type": "variable",
+                  "value": "%trace.buildError%"
                 },
                 {
                   "name": "Value",
+                  "type": "dictionary`2",
                   "value": {
                     "key": "%!error.Key%",
                     "message": "%!error.Message%",
                     "goal": "%goal.Name%"
-                  },
-                  "type": "dictionary`2"
+                  }
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
-                  "type": "bool"
+                  "type": "bool",
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -1358,13 +1358,13 @@
               "parameters": [
                 {
                   "name": "Path",
-                  "value": "/.build/traces/%!trace.id%/%goal.Name%.json",
-                  "type": "path"
+                  "type": "path",
+                  "value": "/.build/traces/%!trace.id%/%goal.Name%.json"
                 },
                 {
                   "name": "Value",
-                  "value": "%trace%",
-                  "type": "object"
+                  "type": "object",
+                  "value": "%trace%"
                 }
               ],
               "defaults": null,
@@ -1389,13 +1389,13 @@
               "parameters": [
                 {
                   "name": "Message",
-                  "value": "%!error%",
-                  "type": "string"
+                  "type": "string",
+                  "value": "%!error%"
                 },
                 {
                   "name": "StatusCode",
-                  "value": 500,
-                  "type": "int"
+                  "type": "int",
+                  "value": 500
                 }
               ],
               "defaults": null,

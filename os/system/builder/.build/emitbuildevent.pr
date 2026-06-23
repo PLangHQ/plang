@@ -16,8 +16,8 @@
           "parameters": [
             {
               "name": "Template",
-              "value": "/system/builder/templates/output/build-output.template",
-              "type": "string"
+              "type": "string",
+              "value": "/system/builder/templates/output/build-output.template"
             }
           ],
           "defaults": null,
@@ -29,20 +29,20 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%msg%",
-              "type": "variable"
+              "type": "variable",
+              "value": "%msg%"
             },
             {
               "name": "Value",
-              "value": "%!data%",
-              "type": "string"
+              "type": "string",
+              "value": "%!data%"
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "modifiers": []
@@ -66,13 +66,13 @@
           "parameters": [
             {
               "name": "Data",
-              "value": "%msg%",
-              "type": "object"
+              "type": "object",
+              "value": "%msg%"
             },
             {
               "name": "channel",
-              "value": "builder",
-              "type": "text"
+              "type": "text",
+              "value": "builder"
             }
           ],
           "defaults": null,

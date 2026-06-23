@@ -301,7 +301,10 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
         // The value door — a source-backed .pr payload parses through its own
         // Ready() here (the goal reader), answering the Goal instance.
         if (await result.Value() is not @this goal)
-            return data.@this.FromError(new global::app.error.ActionError(
+            // Surface the underlying parse failure (source.Value keys it
+            // MaterializeFailed with the slot name + reason) — a generic "not a Goal"
+            // hides WHERE the .pr is malformed.
+            return data.@this.FromError(result.Error ?? new global::app.error.ActionError(
                 $"File '{prPath}' did not deserialize to a Goal", "InvalidPrFile", 400));
 
         // Wire back-references: Goal.App, Step.Goal for root and sub-goals.

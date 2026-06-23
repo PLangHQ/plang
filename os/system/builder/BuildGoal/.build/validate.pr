@@ -16,25 +16,25 @@
           "parameters": [
             {
               "name": "Left",
-              "value": "%plan.steps.Count%",
-              "type": "object"
+              "type": "object",
+              "value": "%plan.steps.Count%"
             },
             {
               "name": "Operator",
-              "value": "!=",
-              "type": "operator"
+              "type": "operator",
+              "value": "!="
             },
             {
               "name": "Right",
-              "value": "%goal.Steps.Count%",
-              "type": "object"
+              "type": "object",
+              "value": "%goal.Steps.Count%"
             }
           ],
           "defaults": [
             {
               "name": "negate",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "modifiers": []
@@ -45,18 +45,18 @@
           "parameters": [
             {
               "name": "Message",
-              "value": "Planner returned %plan.steps.Count% step plans but goal has %goal.Steps.Count% steps.",
-              "type": "string"
+              "type": "string",
+              "value": "Planner returned %plan.steps.Count% step plans but goal has %goal.Steps.Count% steps."
             },
             {
               "name": "StatusCode",
-              "value": 500,
-              "type": "int"
+              "type": "int",
+              "value": 500
             },
             {
               "name": "Key",
-              "value": "LlmTransient",
-              "type": "string"
+              "type": "string",
+              "value": "LlmTransient"
             }
           ],
           "defaults": null,

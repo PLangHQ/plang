@@ -16,29 +16,29 @@
           "parameters": [
             {
               "name": "GoalName",
+              "type": {
+                "name": "goal.call"
+              },
               "value": {
                 "name": "/system/builder/EmitBuildEvent",
                 "parallel": false,
                 "parameters": [
                   {
                     "name": "kind",
-                    "value": "planner-validation-failed",
                     "type": {
                       "name": "text"
-                    }
+                    },
+                    "value": "planner-validation-failed"
                   },
                   {
                     "name": "errorMessage",
-                    "value": "%!error.Message%",
                     "type": {
                       "name": "text"
-                    }
+                    },
+                    "value": "%!error.Message%"
                   }
                 ],
                 "prPath": "/system/builder/.build/emitbuildevent.pr"
-              },
-              "type": {
-                "name": "goal.call"
               }
             }
           ],
@@ -64,25 +64,25 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%fixerMessages%",
-              "type": "variable"
+              "type": "variable",
+              "value": "%fixerMessages%"
             },
             {
               "name": "Value",
+              "type": "list`1",
               "value": [
                 {
                   "Role": "user",
                   "Content": "Your previous response was rejected: %!error.Message%\n\nReturn the corrected plan. Each step's `actions` MUST be a non-empty array of \"module.action\" strings from the catalog (e.g. \"variable.set\", \"file.read\"). `index` is 0-based."
                 }
-              ],
-              "type": "list`1"
+              ]
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "modifiers": []
@@ -106,53 +106,53 @@
           "parameters": [
             {
               "name": "Messages",
-              "value": "%fixerMessages%",
-              "type": "list<llmmessage>"
+              "type": "list<llmmessage>",
+              "value": "%fixerMessages%"
             },
             {
               "name": "Schema",
+              "type": "dictionary`2",
               "value": {
                 "description": "string",
                 "steps": "list<{index: int, actions: list<string>, confidence: string, explanation?: string}>"
-              },
-              "type": "dictionary`2"
+              }
             },
             {
               "name": "Cache",
-              "value": "%!build.cache%",
-              "type": "bool"
+              "type": "bool",
+              "value": "%!build.cache%"
             },
             {
               "name": "ContinuePreviousConversation",
-              "value": "%plan%",
-              "type": "bool"
+              "type": "bool",
+              "value": "%plan%"
             },
             {
               "name": "Model",
-              "value": "gpt-5.4-nano",
-              "type": "text"
+              "type": "text",
+              "value": "gpt-5.4-nano"
             }
           ],
           "defaults": [
             {
               "name": "temperature",
-              "value": 0,
-              "type": "double"
+              "type": "double",
+              "value": 0
             },
             {
               "name": "maxtokens",
-              "value": 16000,
-              "type": "int"
+              "type": "int",
+              "value": 16000
             },
             {
               "name": "maxtoolcalls",
-              "value": 10,
-              "type": "int"
+              "type": "int",
+              "value": 10
             },
             {
               "name": "maxvalidationretries",
-              "value": 0,
-              "type": "int"
+              "type": "int",
+              "value": 0
             }
           ],
           "modifiers": []
@@ -163,20 +163,20 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%plan%",
-              "type": "variable"
+              "type": "variable",
+              "value": "%plan%"
             },
             {
               "name": "Value",
-              "value": "%!data%",
-              "type": "object"
+              "type": "object",
+              "value": "%!data%"
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "modifiers": []

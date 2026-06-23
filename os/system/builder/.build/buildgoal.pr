@@ -16,19 +16,19 @@
           "parameters": [
             {
               "name": "GoalName",
+              "type": "goal.call",
               "value": {
                 "name": "BuildGoal/Start",
                 "parallel": false,
                 "parameters": [
                   {
                     "name": "goal",
-                    "value": "%goal%",
-                    "type": "string"
+                    "type": "string",
+                    "value": "%goal%"
                   }
                 ],
                 "prPath": "/system/builder/BuildGoal/.build/start.pr"
-              },
-              "type": "goal.call"
+              }
             }
           ],
           "defaults": null,

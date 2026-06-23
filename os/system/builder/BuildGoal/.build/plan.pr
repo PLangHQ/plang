@@ -23,20 +23,20 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%actions%",
-              "type": "variable"
+              "type": "variable",
+              "value": "%actions%"
             },
             {
               "name": "Value",
-              "value": "%!data%",
-              "type": "object"
+              "type": "object",
+              "value": "%!data%"
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "modifiers": []
@@ -60,8 +60,8 @@
           "parameters": [
             {
               "name": "Template",
-              "value": "/system/actions/v2/summary.planner.md",
-              "type": "string"
+              "type": "string",
+              "value": "/system/actions/v2/summary.planner.md"
             }
           ],
           "defaults": null,
@@ -73,20 +73,20 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%actionSummary%",
-              "type": "variable"
+              "type": "variable",
+              "value": "%actionSummary%"
             },
             {
               "name": "Value",
-              "value": "%!data%",
-              "type": "string"
+              "type": "string",
+              "value": "%!data%"
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "modifiers": []
@@ -110,8 +110,8 @@
           "parameters": [
             {
               "name": "Template",
-              "value": "/system/builder/llm/templates/goalFormat.template",
-              "type": "string"
+              "type": "string",
+              "value": "/system/builder/llm/templates/goalFormat.template"
             }
           ],
           "defaults": null,
@@ -123,20 +123,20 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%goalForLlm%",
-              "type": "variable"
+              "type": "variable",
+              "value": "%goalForLlm%"
             },
             {
               "name": "Value",
-              "value": "%!data%",
-              "type": "string"
+              "type": "string",
+              "value": "%!data%"
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "modifiers": []
@@ -160,8 +160,8 @@
           "parameters": [
             {
               "name": "Template",
-              "value": "/system/builder/llm/Plan.llm",
-              "type": "string"
+              "type": "string",
+              "value": "/system/builder/llm/Plan.llm"
             }
           ],
           "defaults": null,
@@ -173,20 +173,20 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%planPrompt%",
-              "type": "variable"
+              "type": "variable",
+              "value": "%planPrompt%"
             },
             {
               "name": "Value",
-              "value": "%!data%",
-              "type": "string"
+              "type": "string",
+              "value": "%!data%"
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "modifiers": []
@@ -210,11 +210,12 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%messages%",
-              "type": "variable"
+              "type": "variable",
+              "value": "%messages%"
             },
             {
               "name": "Value",
+              "type": "list`1",
               "value": [
                 {
                   "Role": "system",
@@ -224,15 +225,14 @@
                   "Role": "user",
                   "Content": "%goalForLlm%"
                 }
-              ],
-              "type": "list`1"
+              ]
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "modifiers": []
@@ -256,13 +256,13 @@
           "parameters": [
             {
               "name": "GoalName",
+              "type": "goal.call",
               "value": {
                 "name": "QueryAndValidatePlan",
                 "parallel": false,
                 "parameters": [],
                 "prPath": "/system/builder/BuildGoal/.build/plan.pr"
-              },
-              "type": "goal.call"
+              }
             }
           ],
           "defaults": null,
@@ -273,6 +273,7 @@
               "parameters": [
                 {
                   "name": "Actions",
+                  "type": "list<action>",
                   "value": [
                     {
                       "module": "goal",
@@ -280,21 +281,20 @@
                       "parameters": [
                         {
                           "name": "GoalName",
+                          "type": "goal.call",
                           "value": {
                             "name": "LlmFixer",
                             "parameters": []
-                          },
-                          "type": "goal.call"
+                          }
                         }
                       ]
                     }
-                  ],
-                  "type": "list<action>"
+                  ]
                 },
                 {
                   "name": "RetryCount",
-                  "value": 2,
-                  "type": "int"
+                  "type": "int",
+                  "value": 2
                 }
               ],
               "defaults": null,
@@ -321,20 +321,20 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%plan.system%",
-              "type": "variable"
+              "type": "variable",
+              "value": "%plan.system%"
             },
             {
               "name": "Value",
-              "value": "%planPrompt%",
-              "type": "object"
+              "type": "object",
+              "value": "%planPrompt%"
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "modifiers": []
@@ -358,25 +358,25 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%plan.user%",
-              "type": "variable"
+              "type": "variable",
+              "value": "%plan.user%"
             },
             {
               "name": "Value",
-              "value": "%goalForLlm%",
-              "type": "object"
+              "type": "object",
+              "value": "%goalForLlm%"
             },
             {
               "name": "Type",
-              "value": "string",
-              "type": "string"
+              "type": "string",
+              "value": "string"
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "modifiers": []
@@ -400,11 +400,12 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%plan.usage%",
-              "type": "variable"
+              "type": "variable",
+              "value": "%plan.usage%"
             },
             {
               "name": "Value",
+              "type": "dictionary`2",
               "value": {
                 "model": "%plan.Model%",
                 "promptTokens": "%plan.PromptTokens%",
@@ -413,15 +414,14 @@
                 "totalTokens": "%plan.TotalTokens%",
                 "cost": "%plan.Cost%",
                 "cached": "%plan.Cached%"
-              },
-              "type": "dictionary`2"
+              }
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "modifiers": []
@@ -452,11 +452,12 @@
               "parameters": [
                 {
                   "name": "Messages",
-                  "value": "%messages%",
-                  "type": "list<llmmessage>"
+                  "type": "list<llmmessage>",
+                  "value": "%messages%"
                 },
                 {
                   "name": "Schema",
+                  "type": "dictionary`2",
                   "value": {
                     "description": "string",
                     "steps": [
@@ -469,45 +470,44 @@
                         "explanation?": "string"
                       }
                     ]
-                  },
-                  "type": "dictionary`2"
+                  }
                 },
                 {
                   "name": "Cache",
-                  "value": "%!build.cache%",
-                  "type": "bool"
+                  "type": "bool",
+                  "value": "%!build.cache%"
                 },
                 {
                   "name": "Model",
-                  "value": "gpt-5.4-nano",
-                  "type": "text"
+                  "type": "text",
+                  "value": "gpt-5.4-nano"
                 }
               ],
               "defaults": [
                 {
                   "name": "continuepreviousconversation",
-                  "value": false,
-                  "type": "bool"
+                  "type": "bool",
+                  "value": false
                 },
                 {
                   "name": "temperature",
-                  "value": 0,
-                  "type": "double"
+                  "type": "double",
+                  "value": 0
                 },
                 {
                   "name": "maxtokens",
-                  "value": 16000,
-                  "type": "int"
+                  "type": "int",
+                  "value": 16000
                 },
                 {
                   "name": "maxtoolcalls",
-                  "value": 10,
-                  "type": "int"
+                  "type": "int",
+                  "value": 10
                 },
                 {
                   "name": "maxvalidationretries",
-                  "value": 0,
-                  "type": "int"
+                  "type": "int",
+                  "value": 0
                 }
               ],
               "modifiers": []
@@ -518,20 +518,20 @@
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%plan%",
-                  "type": "variable"
+                  "type": "variable",
+                  "value": "%plan%"
                 },
                 {
                   "name": "Value",
-                  "value": "%!data%",
-                  "type": "object"
+                  "type": "object",
+                  "value": "%!data%"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
-                  "value": false,
-                  "type": "bool"
+                  "type": "bool",
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -555,13 +555,13 @@
               "parameters": [
                 {
                   "name": "GoalName",
+                  "type": "goal.call",
                   "value": {
                     "name": "Validate",
                     "parallel": false,
                     "parameters": [],
                     "prPath": "/system/builder/BuildGoal/.build/validate.pr"
-                  },
-                  "type": "goal.call"
+                  }
                 }
               ],
               "defaults": null,

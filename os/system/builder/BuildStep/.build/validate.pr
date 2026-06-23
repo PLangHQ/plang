@@ -16,25 +16,25 @@
           "parameters": [
             {
               "name": "Left",
-              "value": "%compileResult.errors%",
-              "type": "object"
+              "type": "object",
+              "value": "%compileResult.errors%"
             },
             {
               "name": "Operator",
-              "value": "isempty",
-              "type": "operator"
+              "type": "operator",
+              "value": "isempty"
             },
             {
               "name": "Right",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "defaults": [
             {
               "name": "negate",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "modifiers": []
@@ -45,18 +45,18 @@
           "parameters": [
             {
               "name": "Message",
-              "value": "Step %step.Index% (%step.Text%): %compileResult.errors%",
-              "type": "string"
+              "type": "string",
+              "value": "Step %step.Index% (%step.Text%): %compileResult.errors%"
             },
             {
               "name": "StatusCode",
-              "value": 500,
-              "type": "int"
+              "type": "int",
+              "value": 500
             },
             {
               "name": "Key",
-              "value": "GoalBug",
-              "type": "string"
+              "type": "string",
+              "value": "GoalBug"
             }
           ],
           "defaults": null,
@@ -84,25 +84,25 @@
           "parameters": [
             {
               "name": "Left",
-              "value": "%compileResult.actions%",
-              "type": "object"
+              "type": "object",
+              "value": "%compileResult.actions%"
             },
             {
               "name": "Operator",
-              "value": "isempty",
-              "type": "operator"
+              "type": "operator",
+              "value": "isempty"
             },
             {
               "name": "Right",
-              "value": null,
-              "type": "object"
+              "type": "object",
+              "value": null
             }
           ],
           "defaults": [
             {
               "name": "negate",
-              "value": false,
-              "type": "bool"
+              "type": "bool",
+              "value": false
             }
           ],
           "modifiers": []
@@ -113,18 +113,18 @@
           "parameters": [
             {
               "name": "Message",
-              "value": "Step %step.Index% (%step.Text%) has no actions.",
-              "type": "string"
+              "type": "string",
+              "value": "Step %step.Index% (%step.Text%) has no actions."
             },
             {
               "name": "StatusCode",
-              "value": 500,
-              "type": "int"
+              "type": "int",
+              "value": 500
             },
             {
               "name": "Key",
-              "value": "GoalBug",
-              "type": "string"
+              "type": "string",
+              "value": "GoalBug"
             }
           ],
           "defaults": null,
@@ -152,8 +152,8 @@
           "parameters": [
             {
               "name": "Collection",
-              "value": "%compileResult.actions%",
-              "type": "object"
+              "type": "object",
+              "value": "%compileResult.actions%"
             }
           ],
           "defaults": null,
@@ -165,19 +165,19 @@
           "parameters": [
             {
               "name": "GoalName",
+              "type": "goal.call",
               "value": {
                 "name": "ValidateAction",
                 "parallel": false,
                 "parameters": [
                   {
                     "name": "__vAct__",
-                    "value": "%item%",
-                    "type": "string"
+                    "type": "string",
+                    "value": "%item%"
                   }
                 ],
                 "prPath": "/system/builder/BuildStep/.build/validate.pr"
-              },
-              "type": "goal.call"
+              }
             }
           ],
           "defaults": null,
@@ -212,25 +212,25 @@
               "parameters": [
                 {
                   "name": "Left",
-                  "value": "%__vAct__.errors%",
-                  "type": "object"
+                  "type": "object",
+                  "value": "%__vAct__.errors%"
                 },
                 {
                   "name": "Operator",
-                  "value": "isempty",
-                  "type": "operator"
+                  "type": "operator",
+                  "value": "isempty"
                 },
                 {
                   "name": "Right",
-                  "value": false,
-                  "type": "bool"
+                  "type": "bool",
+                  "value": false
                 }
               ],
               "defaults": [
                 {
                   "name": "negate",
-                  "value": false,
-                  "type": "bool"
+                  "type": "bool",
+                  "value": false
                 }
               ],
               "modifiers": []
@@ -241,18 +241,18 @@
               "parameters": [
                 {
                   "name": "Message",
-                  "value": "Action %__vAct__.module%.%__vAct__.action% failed for step %step.Index% (%step.Text%): %__vAct__.errors%",
-                  "type": "string"
+                  "type": "string",
+                  "value": "Action %__vAct__.module%.%__vAct__.action% failed for step %step.Index% (%step.Text%): %__vAct__.errors%"
                 },
                 {
                   "name": "StatusCode",
-                  "value": 500,
-                  "type": "int"
+                  "type": "int",
+                  "value": 500
                 },
                 {
                   "name": "Key",
-                  "value": "GoalBug",
-                  "type": "string"
+                  "type": "string",
+                  "value": "GoalBug"
                 }
               ],
               "defaults": null,

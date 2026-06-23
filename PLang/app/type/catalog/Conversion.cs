@@ -307,19 +307,27 @@ public sealed partial class @this
             }
             catch (System.Exception ex) when (ex is JsonException || ex is NotSupportedException || ex is ArgumentException)
             {
-                // If target is a single object but JSON is an array, try deserializing as List<T> and take first
+                // Single-object target but array source — retry as List<T>, take first.
                 if (jsonStr.TrimStart().StartsWith('['))
                 {
                     try
                     {
                         var listType = typeof(List<>).MakeGenericType(targetType);
-                        var listResult = JsonSerializer.Deserialize(jsonStr, listType, readOpts)
-                            as System.Collections.IList;
-                        if (listResult != null && listResult.Count > 0)
+                        if (JsonSerializer.Deserialize(jsonStr, listType, readOpts)
+                                is System.Collections.IList { Count: > 0 } listResult)
                             return (listResult[0], null);
                     }
                     catch (System.Exception inner) when (inner is JsonException || inner is NotSupportedException || inner is ArgumentException) { }
                 }
+                // Otherwise terminal for the string→record path (the arms below are
+                // list/ctor/enum, which a {…}→record never matches). Surface the real
+                // cause as an Error — visible, and cheaper than letting it propagate. The
+                // inner Wire throw names the bad slot; keep the exception for the stack.
+                // Otherwise terminal for the string→record path — let the original
+                // exception propagate to the .pr materialization boundary (source.Value),
+                // which catches it as MaterializeFailed (naming the slot + reason). No
+                // swallow, no Error that a later .Peek() would drop.
+                throw;
             }
         }
 
