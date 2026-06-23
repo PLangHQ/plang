@@ -1,60 +1,53 @@
 # Retro Summary — retro/coder-session-2026-06-19
 
-**Version:** v4 (current)
+**Version:** v6 (current)
 
 ## What this is
 
-Retrospective analysis of coder and architect sessions from 2026-06-16 through 2026-06-18. Mines for self-corrections, frustration moments, and wrong-doc signals, then applies lessons directly to memory files and shared documentation. Also produced new user-facing documentation and doc-server improvements.
+Retrospective analysis of coder sessions on the compare-redesign branch, spanning Jun 16-23 2026. Mines sessions for self-corrections, frustration moments, and wrong-doc signals, then applies lessons directly to memory files and shared documentation.
 
-## What was done
+## What was done (all versions)
 
-**v1** analyzed `5af76d61` (coder, 21:05 UTC 2026-06-18) → SC1–SC6 applied to coder MEMORY.md and character.md. SC7 (OBP smell #8) and SC8 (.pr path format) applied from compare-redesign doc review.
+**v1** analyzed `5af76d61` (coder, Jun 18) → SC1–SC6 + SC7/SC8 from compare-redesign doc review → applied to coder MEMORY.md + character.md.
 
-**v2** analyzed `93456b3b` (coder, 15:15 UTC 2026-06-18) and `efe53299` (coder, 13:24 UTC 2026-06-18) → 3 new findings:
-- **SC9** — Dispatchers dispatch; construction belongs in the type family → `CLAUDE.md` OBP smell #9 + coder MEMORY.md
-- **SC10** — Fix the test, don't bend the runtime → coder MEMORY.md
-- **SC11** — Establish a clean baseline before making further changes → coder MEMORY.md
+**v2** analyzed `93456b3b` + `efe53299` (coder, Jun 18) → SC9 (dispatchers dispatch), SC10 (fix test not runtime), SC11 (clean baseline) → coder MEMORY.md.
 
-**v3** analyzed 2026-06-16 coder sessions → SC12 proposed (stale procedural memory) then **declined** by Ingi ("you will fix those types of errors when you see them"). Ledger updated.
+**v3** analyzed Jun 16 coder sessions → SC12 proposed (stale notes) then **declined** by Ingi.
 
-**v4** analyzed architect sessions from 2026-06-16 and 2026-06-18 → 3 new findings:
-- **A1** — Verb+Noun flashing sign added to architect MEMORY.md (own naming proposals, not just reviewed code)
-- **A2** — "During an OBP audit, actively apply each rule — don't skim" added to architect Small Rules
-- **A3** — "Don't assert library capability limits without verifying" added to architect Small Rules
+**v4** analyzed architect sessions Jun 16+18 → A1 (Verb+Noun to architect), A2 (actively apply OBP during audit), A3 (verify library claims) → architect MEMORY.md.
 
-**Also in this session (non-mining work):**
-- Wrote user-facing type docs in `doc/app/type/` (plain language, no C# references) with list/dict subdocs
-- Fixed `&quot;` Liquid escaping bug in doc-server by assembling HTML in JS, not passing through Liquid template variables
-- Added left-sidebar doc tree with active state highlighting to doc-server
-- Restructured doc-server to serve from `/` instead of `/doc/` — sidebar shows `plang.is` as root link, no "Reference" label, all content resolved from `doc/` directory
+**v5** analyzed docs sessions Jun 20 → D1 (examples are docs, OBP applies to code blocks), D2 (collection API is `.list` not `.s`), D3 (no C# types in PLang examples) → docs MEMORY.md.
 
-## Files modified
+**v6** (this session, Jun 23) analyzed 5 compare-redesign coder sessions (Jun 21-23). Ingi flagged coder for constant OBP violations, wrong code placement, not tracing root causes. **Top 3 patterns:**
 
-**Lessons/rules:**
-- `CLAUDE.md` — OBP smell #9
-- `characters/coder/memory/MEMORY.md` — SC9, SC10, SC11
-- `characters/architect/memory/MEMORY.md` — A1, A2, A3
+1. **Verb+Noun every session** (5/5 sessions) — BornRow, ValueClr, NewEmpty, LoadFromFileAsync, ParseNextSegment. Rule was in MEMORY.md but only as a write-time tripwire; coder proposed them in plans. **Fix:** SC13 — flashing sign now fires at design/proposal time too.
+
+2. **Hack-first, trace-never** (3/5 sessions) — patches symptoms without tracing root cause. Ingi: "dont just hack through this, I dont trust you." **Fix:** SC12b — new 🚩 ROOT CAUSE BEFORE CODE flashing sign.
+
+3. **Operations in wrong type** (2/5 sessions) — Ticks in item.cs, Number.FromText named Text.FromText, prPath parsing in goal/list. **Fix:** SC18 in Coder discipline section.
+
+Also applied: SC14 (design before code changes), SC15 (rebuild = diagnostic first), SC16 (fix at correct layer), SC17 (code over prose), SC19 (coincidental duplication), SC20 (.pr = build output).
+
+**Also in this branch (non-mining work, v1 session):**
+- User-facing type docs in `doc/app/type/`
+- Doc-server sidebar, routing from `/`, Liquid escaping fix
+
+## Files modified (v6)
+
+- `characters/coder/memory/MEMORY.md` — SC12b, SC13 (strengthened), SC14, SC15, SC16, SC17, SC18, SC19, SC20
 - `~/.claude/projects/-workspace-plang/memory/MEMORY.md` — ledger updated
+- `.bot/retro-coder-session-2026-06-19/retro/v6/plan.md`, `findings.md`, `changes.md`
 
-**Docs created:**
-- `doc/app/type/start.md` — type system for PLang users
-- `doc/app/type/list/start.md` — lists
-- `doc/app/type/dict/start.md` — dicts
-- `doc/start.md` — updated to link to type/
-- `doc/app/start.md` — updated to link to type/
+## Code example — SC13 strengthening
 
-**Doc-server:**
-- `doc-server/server.js` — sidebar tree, escaping fix, `/` routing from `doc/`
-- `doc-server/templates/layout.liquid` — single `{{ content }}` output
+Before (write-time tripwire only):
+```
+While writing C#, the moment a Verb+Noun name appears... write inline comment.
+```
 
-## Code example
-
-Doc-server now resolves all routes from `doc/`:
-```js
-const DOC = path.join(ROOT, 'doc');
-const candidates = [
-  path.join(DOC, rel, 'start.md'),   // /app/ → doc/app/start.md
-  path.join(DOC, bare + '.md'),
-  path.join(DOC, bare),
-];
+After:
+```
+FIRES AT DESIGN TIME. Before writing any plan or proposal, scan ALL intended
+names for Verb+Noun shape (BornRow, ValueClr, NewEmpty, LoadFromFileAsync...).
+If any name is Verb+Noun, the design is wrong — fix before touching code.
 ```

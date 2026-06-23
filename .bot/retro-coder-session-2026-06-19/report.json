@@ -147,6 +147,39 @@
         "health": "SC9-SC11 applied to coder MEMORY.md. Retro MEMORY.md updated.",
         "notes": "Sessions 93456b3b and efe53299 fully mined."
       }
+    },
+    {
+      "id": "d4e5f6a7-b8c9-0123-defa-234567890123",
+      "bot": "retro",
+      "timestamp_start": "2026-06-23T17:00:00Z",
+      "timestamp_end": "2026-06-23T18:00:00Z",
+      "intent": "Mine coder compare-redesign sessions Jun 21-23 for patterns behind Ingi's frustration (OBP violations, wrong placement, not tracing root causes)",
+      "before": {
+        "assumptions": "SC1-SC11, A1-A3, D1-D3 already applied. Sessions 1f86445f, 5af76d61, 7704f9f0, 6b1d7425, d760f3f1 not yet analyzed.",
+        "risk": "Verb+Noun rule already in MEMORY.md — need to determine if the rule is ineffective or just not applied at design time."
+      },
+      "plan": ".bot/retro-coder-session-2026-06-19/retro/v6/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/retro-coder-session-2026-06-19/retro/v6/plan.md", ".bot/retro-coder-session-2026-06-19/retro/v6/findings.md", ".bot/retro-coder-session-2026-06-19/retro/v6/changes.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "5 Haiku reader threads in parallel, one per session. 20+ raw findings collapsed to 9 new rules."
+        },
+        {
+          "paths": ["characters/coder/memory/MEMORY.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "SC12b (root-cause flashing sign), SC13 (verb+noun at proposal time), SC14 (design before code), SC15 (rebuild=diagnostic), SC16 (correct layer), SC17 (code over prose), SC18 (operations on owner), SC19 (coincidental dedup), SC20 (.pr=output)"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "9 new rules applied. Highest impact: SC12b (root-cause flashing sign) and SC13 (verb+noun fires at proposal time).",
+        "notes": "Ledger updated in retro MEMORY.md. All changes on this branch — Ingi reviews via git diff."
+      }
     }
   ]
 }
