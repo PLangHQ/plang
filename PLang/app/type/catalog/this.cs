@@ -476,7 +476,11 @@ public sealed partial class @this
                         && c.GetGenericTypeDefinition() == typeof(app.type.choice.@this<>))
                     {
                         var inner = c.GetGenericArguments()[0];
-                        Register(GetTypeName(inner), inner);
+                        // Register the name → the choice<T> WRAPPER (c), not the inner T.
+                        // The Convert hook (name→member, e.g. "!=") lives on choice<T>;
+                        // registering the inner leaves the name resolving to a type with no
+                        // hook, so a value falls through to the generic JSON deserializer.
+                        Register(GetTypeName(inner), c);
                     }
                 }
             }
