@@ -66,6 +66,15 @@ public partial class @this
             finally { _outputDepth.Value--; }
         }
 
+        // A bare format (application/json, text) writes the value alone — type inferred
+        // on read. Only the self-describing wire (application/plang) carries the
+        // @schema/type/properties envelope so values round-trip fully typed.
+        if (!writer.EmitsSchema)
+        {
+            await _type.Output(writer, mode, context);
+            return;
+        }
+
         writer.BeginObject();
         writer.Name(global::app.data.@this.WireSchema);
         writer.String(global::app.data.@this.WireSchemaData);

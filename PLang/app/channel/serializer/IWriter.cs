@@ -28,6 +28,16 @@ public interface IWriter
     /// </summary>
     string Format { get; }
 
+    /// <summary>
+    /// Whether this format carries the Data self-describing layer: <c>@schema</c> +
+    /// <c>type</c> around every value (the <c>application/plang</c> wire), so values
+    /// round-trip fully typed. <c>application/json</c> and <c>text</c> are bare — the
+    /// value alone, type inferred. <see cref="app.data.@this.Output"/> gates the
+    /// envelope on this; the item's own value output is identical either way.
+    /// Default false; the plang writer overrides true.
+    /// </summary>
+    bool EmitsSchema => false;
+
     void Null();
     void Bool(bool value);
     void Int(int value);

@@ -18,17 +18,23 @@ public sealed class Writer : IWriter
     private readonly JsonSerializerOptions _options;
     private readonly app.View _view;
     private readonly app.type.renderer.@this? _renderers;
+    private readonly bool _emitsSchema;
 
     public Writer(Utf8JsonWriter writer, JsonSerializerOptions? options = null,
-        app.View view = app.View.Out, app.type.renderer.@this? renderers = null)
+        app.View view = app.View.Out, app.type.renderer.@this? renderers = null,
+        bool emitsSchema = false)
     {
         _writer = writer;
         _options = options ?? new JsonSerializerOptions();
         _view = view;
         _renderers = renderers;
+        _emitsSchema = emitsSchema;
     }
 
-    public string Format => "json";
+    public string Format => _emitsSchema ? "plang" : "json";
+
+    /// <summary>The plang wire carries the @schema/type envelope; plain json is bare.</summary>
+    public bool EmitsSchema => _emitsSchema;
 
     public void Null() => _writer.WriteNullValue();
     public void Bool(bool value) => _writer.WriteBooleanValue(value);

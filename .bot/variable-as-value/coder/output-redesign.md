@@ -86,3 +86,43 @@ lazy single-pass Output is the clean home for that resolution.
   should own which tags it emits — `strict` is only meaningful for image/number, `kind`
   varies per family. Move the type-tag emission onto the type/item (a `type.WriteTag(writer)`
   or similar) once the main Output pass lands. (Ingi, 2026-06-23.)
+
+## Folder structure (locked with Ingi, 2026-06-23)
+
+Make WRITE mirror READ — per type, in the `serializer/` subfolder:
+
+```
+type/<x>/serializer/
+   Reader.cs    — ITypeReader: tokens → type (pull, single pass)        [exists]
+   Writer.cs    — item.Output:  type → tokens (push, single pass)        [NEW — mirrors Reader]
+   Default.cs   — raw CLR value → type (lift; no write mirror — inverse is .Clr on the type)
+```
+
+- The 14 per-type `type/<x>/Json.cs` JsonConverters are **deleted** — `item.Output` via a
+  `json.Writer` replaces them (verify no raw-STJ path, e.g. goalsSave `PrWrite`, depends
+  on them first).
+- Per-FORMAT writers live centrally, mirroring readers:
+  `channel/serializer/<format>/writer.cs` — `json/writer.cs` (exists), `text/writer.cs`
+  (new), `plang/writer.cs` (new). `plang.Writer.EmitsSchema = true`; json/text = false.
+- `data.Output` gates on `w.EmitsSchema`: plang → `{@schema,name,type,value,properties}`;
+  json/text → bare value. ONE walk, three writers.
+- **`data/Wire.cs` moves OUT of `data/`** (never belonged there) → `channel/serializer/plang/`
+  as the plang READER. Its Write half is gone (item.Output owns write).
+- Channel write dispatch: MIME → pick the format writer → `data.Output(writer)`.
+- Later cleanup: `Reader.cs` (tokens→type) and `Default.cs` (raw→type) overlap; once the
+  single-pass IReader is the only read path, fold `Default` into `Reader`. Separate task.
+
+### Build order (additive-green first, risky flip last)
+1. Per-format writers: `text/writer.cs`, `plang/writer.cs` (+ `EmitsSchema` on IWriter). [green]
+2. `data.Output` gated on `EmitsSchema`. [green]
+3. Move per-type `item.Output` bodies → `serializer/Writer.cs`. [green]
+4. Channel MIME → writer dispatch (THE flip: replaces Normalize/Wire.Write/Text pre-resolve). [risky]
+5. Move `Wire.cs` → `channel/serializer/plang/reader.cs`; delete Json.cs + Normalize. [cleanup]
+6. Reader: dict entries now read as @schema Data. Full `./dev.sh full`. [gate]
+
+## Separate, still-open: the %msg% self-ref (the actual builder blocker)
+The output channel is `text/plain` → `%msg%` resolves via `Text.cs await data.Value()`,
+NOT the JSON path. This redesign does NOT fix it — `%msg%`'s slot resolves to
+`variable(msg)` (a self-reference) exposed by `variable.Cacheable=false`. Root unknown
+(why `render … write to %msg%` leaves msg pointing at itself). Must be traced+fixed
+separately to unblock the builder, regardless of this redesign.
