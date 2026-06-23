@@ -191,6 +191,18 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         }
     }
 
+    /// <summary>Writes itself to the wire as a JSON array — each element self-describes
+    /// (rides its own Data envelope, so a signed/typed element keeps it), resolved lazily.</summary>
+    public override async System.Threading.Tasks.ValueTask Output(
+        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context)
+    {
+        writer.BeginArray(CountRaw);
+        foreach (var element in Items)
+            await element.Output(writer, mode, context);   // each element self-describes (@schema)
+        writer.EndArray();
+    }
+
     /// <summary>Iterates as (index, element) pairs — the list owns how it iterates.</summary>
     public override System.Collections.Generic.IEnumerable<(Data key, Data value)>
         EnumerateItems(global::app.actor.context.@this? context)

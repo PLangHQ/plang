@@ -78,6 +78,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// stored value's context, so a <c>%x%</c>-into-<c>x</c> pass resolves against
     /// the caller's binding — no Get cycle.
     /// </summary>
+    private static readonly System.Threading.AsyncLocal<int> _resolveDepth = new();
+
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this asking)
     {
         // The value door is LOUD: a reference must resolve to a bound value. An absent
@@ -85,10 +87,19 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         // downstream. Throw instead — a referenced value that isn't there is a bug at
         // the reference site. Boolean questions (conditions) tolerate absence by asking
         // through their own tolerant path (see condition.code.Default), never here.
-        var resolved = await asking.Context.Variable.Get(Name);
-        if (resolved is null || !resolved.IsInitialized)
-            throw new global::app.error.VariableNotFoundException(Name);
-        return await resolved.Value();
+        if (_resolveDepth.Value++ > 50)
+        {
+            _resolveDepth.Value = 0;
+            throw new global::app.error.AppException($"variable resolve cycle on '{Name}'", "VarResolveCycle", 500);
+        }
+        try
+        {
+            var resolved = await asking.Context.Variable.Get(Name);
+            if (resolved is null || !resolved.IsInitialized)
+                throw new global::app.error.VariableNotFoundException(Name);
+            return await resolved.Value();
+        }
+        finally { _resolveDepth.Value--; }
     }
 
     /// <summary>
@@ -229,6 +240,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// lost its name on serialize — born-native round-trip completeness.)
     /// </summary>
     public override bool IsLeaf => true;
+
+    /// <summary>A reference renders itself FRESH every read — like a computed, never
+    /// memoized onto the holding Data. The same authored reference (a goal-call param
+    /// <c>planStep=%item%</c>) is reused across calls; caching one call's resolved value
+    /// onto it would freeze every later call on the first binding. Resolving stays a
+    /// reference; only the answer it returns is the current binding.</summary>
+    public override bool Cacheable => false;
 
     /// <summary>Bare wire form: the raw reference as emitted, so a re-read
     /// reconstructs the same Name and WasPercentWrapped via <see cref="Convert"/>.</summary>

@@ -79,3 +79,10 @@ this is the write half. Current blocker that motivated it: `variable.Cacheable=f
 (so a goal-call `planStep=%item%` re-resolves per call instead of memoizing the shared
 descriptor) exposed that serializing `%msg%` (EmitBuildEvent) resolves a variable; the
 lazy single-pass Output is the clean home for that resolution.
+
+## Follow-up (to the end)
+
+- The `type` object's `kind`/`strict` are written generically in `data.Output`. The TYPE
+  should own which tags it emits — `strict` is only meaningful for image/number, `kind`
+  varies per family. Move the type-tag emission onto the type/item (a `type.WriteTag(writer)`
+  or similar) once the main Output pass lands. (Ingi, 2026-06-23.)

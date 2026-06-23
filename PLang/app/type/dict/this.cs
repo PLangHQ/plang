@@ -146,6 +146,23 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         }
     }
 
+    /// <summary>Writes itself to the wire as a JSON object — each entry's value bare
+    /// (entries are type-inferred on read), resolved lazily as it's reached.</summary>
+    public override async System.Threading.Tasks.ValueTask Output(
+        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context)
+    {
+        writer.BeginObject();
+        foreach (var entry in Entries)
+        {
+            writer.Name(entry.Name);
+            // Each entry is a Data — it self-describes via its own @schema/type, so types
+            // round-trip. No reaching for the inner item; the entry owns its output.
+            await entry.Output(writer, mode, context ?? entry.Context);
+        }
+        writer.EndObject();
+    }
+
     /// <summary>Iterates as (key-name, value) pairs — the dict owns how it iterates.</summary>
     public override System.Collections.Generic.IEnumerable<(Data key, Data value)>
         EnumerateItems(global::app.actor.context.@this? context)

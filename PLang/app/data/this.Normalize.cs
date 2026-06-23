@@ -30,6 +30,87 @@ public partial class @this
     /// twice produces the same shape. The default mode is <see cref="View.Out"/>;
     /// pass <see cref="View.Debug"/> to bypass the <c>[Out]</c> whitelist.
     /// </summary>
+    private static readonly System.Threading.AsyncLocal<int> _outputDepth = new();
+
+    /// <summary>
+    /// Data writes ITSELF to the wire — it owns its <c>@schema</c> layer (its identity),
+    /// then its <c>type</c>, then the underlying <c>value</c> (delegated to the item), then
+    /// <c>properties</c>. One async pass, resolving lazily at each node — no pre-resolve
+    /// walk, no Normalize tree. A Data holding a <c>%ref%</c> resolves it and outputs the
+    /// RESOLVED value's self-describing form (its real type+value), not <c>type:variable</c>.
+    /// </summary>
+    public async System.Threading.Tasks.ValueTask Output(
+        global::app.channel.serializer.IWriter writer, View mode,
+        global::app.actor.context.@this? context = null)
+    {
+        context ??= _context;
+
+        // A reference binding resolves to its target binding before output. Guarded:
+        // a self-referential binding (msg → msg) fails loud instead of looping.
+        if (_type is global::app.variable.@this vref && context != null)
+        {
+            if (_outputDepth.Value++ > 50)
+            {
+                _outputDepth.Value = 0;
+                throw new global::app.error.AppException(
+                    $"self-referential variable '{vref.Name}' on output", "OutputSelfReference", 500);
+            }
+            try
+            {
+                var resolved = await context.Variable.Get(vref.Name);
+                if (resolved == null || !resolved.IsInitialized)
+                    throw new global::app.error.VariableNotFoundException(vref.Name);
+                await resolved.Output(writer, mode, context);
+                return;
+            }
+            finally { _outputDepth.Value--; }
+        }
+
+        writer.BeginObject();
+        writer.Name(global::app.data.@this.WireSchema);
+        writer.String(global::app.data.@this.WireSchemaData);
+        // The binding label rides only on the Store view (.pr parameters bind by name);
+        // the outbound wire omits it.
+        if (mode == View.Store)
+        {
+            writer.Name("name");
+            writer.String(Name);
+        }
+        if (!Type.IsNull)
+        {
+            writer.Name("type");
+            writer.BeginObject();
+            writer.Name("name");
+            writer.String(Type.Name);
+            if (!string.IsNullOrEmpty(Type.Kind))
+            {
+                writer.Name("kind");
+                writer.String(Type.Kind!);
+            }
+            if (Type.Strict)
+            {
+                writer.Name("strict");
+                writer.Bool(true);
+            }
+            writer.EndObject();
+        }
+        writer.Name("value");
+        await _type.Output(writer, mode, context);
+        // properties — nested object, omitted when empty.
+        if (Properties.Count > 0)
+        {
+            writer.Name("properties");
+            writer.BeginObject();
+            foreach (var kvp in Properties)
+            {
+                writer.Name(kvp.Key);
+                await global::app.type.item.clr.OutputAny(kvp.Value, writer, mode, context);
+            }
+            writer.EndObject();
+        }
+        writer.EndObject();
+    }
+
     public object? Normalize(View mode = View.Out)
     {
         var visited = new HashSet<object>(System.Collections.Generic.ReferenceEqualityComparer.Instance);

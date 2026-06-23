@@ -114,4 +114,79 @@ public sealed class clr : @this, module.IContext
     public override bool Equals(object? obj) =>
         obj is clr other ? Equals(Value, other.Value) : Equals(Value, obj);
     public override int GetHashCode() => Value.GetHashCode();
+
+    /// <summary>The carrier writes its HOST to the wire — reflects the host's [Out] bag
+    /// (the sole CLR boundary). clr owns all CLR-world serialization.</summary>
+    public override System.Threading.Tasks.ValueTask Output(
+        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context)
+        => OutputAny(Value, writer, mode, context);
+
+    /// <summary>
+    /// The CLR boundary: write ANY raw CLR value to the wire. Tree leaves emit bare;
+    /// a Data self-describes (@schema); an item writes its value; collections become
+    /// object/array; a domain object reflects its [Out] property bag. A type with no
+    /// honest wire form (a delegate) emits null. This absorbs the old NormalizeValue +
+    /// NormalizeObject — no non-plang value escapes; everything is handled HERE.
+    /// </summary>
+    public static async System.Threading.Tasks.ValueTask OutputAny(
+        object? value, global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context)
+    {
+        switch (value)
+        {
+            case null: writer.Null(); return;
+            case bool b: writer.Bool(b); return;
+            case int i: writer.Int(i); return;
+            case long l: writer.Long(l); return;
+            case float f: writer.Float(f); return;
+            case double d: writer.Double(d); return;
+            case decimal dec: writer.Decimal(dec); return;
+            case string s: writer.String(s); return;
+            case System.DateTime dt: writer.DateTime(dt); return;
+            case System.DateTimeOffset dto: writer.DateTimeOffset(dto); return;
+            case System.TimeSpan ts: writer.TimeSpan(ts); return;
+            case System.Guid g: writer.Guid(g); return;
+            case System.Enum e: writer.Enum(e); return;
+            case byte[] bytes: writer.Bytes(bytes); return;
+            // A Data self-describes via its own @schema layer.
+            case global::app.data.@this nested: await nested.Output(writer, mode, context); return;
+            // A plang item writes its own value (leaf bare, dict/list walk, …).
+            case @this item: await item.Output(writer, mode, context); return;
+            case System.Collections.IDictionary rawDict:
+                writer.BeginObject();
+                foreach (System.Collections.DictionaryEntry de in rawDict)
+                {
+                    writer.Name(de.Key?.ToString() ?? "");
+                    await OutputAny(de.Value, writer, mode, context);
+                }
+                writer.EndObject();
+                return;
+            case System.Delegate: writer.Null(); return;
+            case System.Collections.IEnumerable seq:
+                writer.BeginArray(-1);
+                foreach (var x in seq) await OutputAny(x, writer, mode, context);
+                writer.EndArray();
+                return;
+            default:
+                // Domain object → reflect its [Out] property bag (the wire-view filter).
+                writer.BeginObject();
+                foreach (var entry in global::app.channel.serializer.filter.Tagged.PropertiesFor(value.GetType(), mode))
+                {
+                    writer.Name(entry.Property.Name.ToLowerInvariant());
+                    if (entry.Masked) { writer.String("****"); continue; }
+                    object? raw;
+                    try { raw = entry.Property.GetValue(value); }
+                    catch (System.Exception ex)
+                    {
+                        throw new global::app.data.OutputException(
+                            $"Output failed reading {value.GetType().Name}.{entry.Property.Name}: {ex.Message}",
+                            "OutputGetterThrew", ex);
+                    }
+                    await OutputAny(raw, writer, mode, context);
+                }
+                writer.EndObject();
+                return;
+        }
+    }
 }
