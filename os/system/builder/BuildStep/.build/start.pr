@@ -75,7 +75,7 @@
         }
       ],
       "intent": null,
-      "formal": "goal.call(GoalName={name:\u0022Compile\u0022})",
+      "formal": "goal.call(GoalName={name:\"Compile\"})",
       "source": null,
       "waitForExecution": true
     }
@@ -91,7 +91,7 @@
           "text": "builder.validateStepActions step=%step%, actions=%planStep.actions%, write to %planStep.actions%",
           "lineNumber": 15,
           "indent": 0,
-          "comment": "Validate planner\u0027s action set against runtime catalog \u002B augment with explicit\nmodule.action tokens from step text. Drops hallucinated entries; appends any\nliteral \u0060module.action\u0060 mention the planner missed. See building-the-builder.md\n\u0022preventing self-rebuild corruption\u0022 for the rationale.",
+          "comment": "Validate planner's action set against runtime catalog + augment with explicit\nmodule.action tokens from step text. Drops hallucinated entries; appends any\nliteral `module.action` mention the planner missed. See building-the-builder.md\n\"preventing self-rebuild corruption\" for the rationale.",
           "actions": [
             {
               "module": "builder",
@@ -108,7 +108,7 @@
                   "name": "Actions",
                   "value": "%planStep.actions%",
                   "type": {
-                    "name": "list\u003Ctext\u003E"
+                    "name": "list<text>"
                   }
                 }
               ],
@@ -148,7 +148,7 @@
             }
           ],
           "intent": null,
-          "formal": "builder.validateStepActions(Step=%step%, Actions=%planStep.actions%) | variable.set(Name=%planStep.actions%, Value=%!data%, type={\u0022name\u0022:\u0022list\u0022})",
+          "formal": "builder.validateStepActions(Step=%step%, Actions=%planStep.actions%) | variable.set(Name=%planStep.actions%, Value=%!data%, type={\"name\":\"list\"})",
           "source": null,
           "waitForExecution": true
         },
@@ -167,7 +167,7 @@
                   "name": "Actions",
                   "value": "%planStep.actions%",
                   "type": {
-                    "name": "list\u003Ctext\u003E"
+                    "name": "list<text>"
                   }
                 }
               ],
@@ -195,7 +195,7 @@
                   "name": "Actions",
                   "value": "%planStep.actions%",
                   "type": {
-                    "name": "list\u003Ctext\u003E"
+                    "name": "list<text>"
                   }
                 }
               ],
@@ -235,7 +235,7 @@
             }
           ],
           "intent": null,
-          "formal": "builder.types(Actions=%planStep.actions%) | variable.set(Name=%typeInfo%, Value=%!data%, type={\u0022name\u0022:\u0022list\u0022})",
+          "formal": "builder.types(Actions=%planStep.actions%) | variable.set(Name=%typeInfo%, Value=%!data%, type={\"name\":\"list\"})",
           "source": null,
           "waitForExecution": true
         },
@@ -276,7 +276,7 @@
                   "name": "Value",
                   "value": "%!data%",
                   "type": {
-                    "name": "list\u003Cdict\u003Ctext,text\u003E\u003E"
+                    "name": "list<dict<text,text>>"
                   }
                 }
               ],
@@ -293,7 +293,7 @@
             }
           ],
           "intent": null,
-          "formal": "goal.getTypes(Goal=%goal%) , variable.set(Name=%varTypes%, Value=%!data%, type=list\u003Cdict\u003Ctext,text\u003E\u003E)",
+          "formal": "goal.getTypes(Goal=%goal%) , variable.set(Name=%varTypes%, Value=%!data%, type=list<dict<text,text>>)",
           "source": null,
           "waitForExecution": true
         },
@@ -342,7 +342,7 @@
         },
         {
           "index": 5,
-          "text": "render template \u0022/system/builder/llm/templates/stepForLlm.template\u0022, write to %stepForLlm%",
+          "text": "render template \"/system/builder/llm/templates/stepForLlm.template\", write to %stepForLlm%",
           "lineNumber": 21,
           "indent": 0,
           "comment": null,
@@ -394,13 +394,13 @@
             }
           ],
           "intent": null,
-          "formal": "ui.render(Template=\u0022/system/builder/llm/templates/stepForLlm.template\u0022) , variable.set(Name=%stepForLlm%, Value=%!data%, type=text)",
+          "formal": "ui.render(Template=\"/system/builder/llm/templates/stepForLlm.template\") , variable.set(Name=%stepForLlm%, Value=%!data%, type=text)",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 6,
-          "text": "render template \u0022/system/builder/llm/templates/stepActionDetails.template\u0022, write to %actionDetails%",
+          "text": "render template \"/system/builder/llm/templates/stepActionDetails.template\", write to %actionDetails%",
           "lineNumber": 22,
           "indent": 0,
           "comment": null,
@@ -452,13 +452,13 @@
             }
           ],
           "intent": null,
-          "formal": "ui.render(Template=\u0022/system/builder/llm/templates/stepActionDetails.template\u0022) , variable.set(Name=%actionDetails%, Value=%!data%, type=object)",
+          "formal": "ui.render(Template=\"/system/builder/llm/templates/stepActionDetails.template\") , variable.set(Name=%actionDetails%, Value=%!data%, type=object)",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 7,
-          "text": "render template \u0022/system/builder/llm/Compile.llm\u0022, write to %buildStepPrompt%",
+          "text": "render template \"/system/builder/llm/Compile.llm\", write to %buildStepPrompt%",
           "lineNumber": 23,
           "indent": 0,
           "comment": null,
@@ -510,13 +510,13 @@
             }
           ],
           "intent": null,
-          "formal": "ui.render(Template=\u0022/system/builder/llm/Compile.llm\u0022) | variable.set(Name=%buildStepPrompt%, Value=%!data%, type=text)",
+          "formal": "ui.render(Template=\"/system/builder/llm/Compile.llm\") | variable.set(Name=%buildStepPrompt%, Value=%!data%, type=text)",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 8,
-          "text": "render template \u0022/system/builder/llm/CompileUser.llm\u0022, write to %buildStepUserMsg%",
+          "text": "render template \"/system/builder/llm/CompileUser.llm\", write to %buildStepUserMsg%",
           "lineNumber": 24,
           "indent": 0,
           "comment": null,
@@ -568,13 +568,13 @@
             }
           ],
           "intent": null,
-          "formal": "ui.render(Template=\u0022/system/builder/llm/CompileUser.llm\u0022) | variable.set(Name=%buildStepUserMsg%, Value=%!data%, type=object)",
+          "formal": "ui.render(Template=\"/system/builder/llm/CompileUser.llm\") | variable.set(Name=%buildStepUserMsg%, Value=%!data%, type=object)",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 9,
-          "text": "set %messages% = [{\u0022Role\u0022:\u0022system\u0022, \u0022Content\u0022:\u0022%buildStepPrompt%\u0022}, {\u0022Role\u0022:\u0022user\u0022, \u0022Content\u0022:\u0022%buildStepUserMsg%\u0022}], type=json",
+          "text": "set %messages% = [{\"Role\":\"system\", \"Content\":\"%buildStepPrompt%\"}, {\"Role\":\"user\", \"Content\":\"%buildStepUserMsg%\"}]",
           "lineNumber": 25,
           "indent": 0,
           "comment": null,
@@ -603,17 +603,7 @@
                     }
                   ],
                   "type": {
-                    "name": "list\u00601"
-                  }
-                },
-                {
-                  "name": "Type",
-                  "value": {
-                    "name": "text",
-                    "kind": "json"
-                  },
-                  "type": {
-                    "name": "type"
+                    "name": "list`1"
                   }
                 }
               ],
@@ -630,16 +620,16 @@
             }
           ],
           "intent": null,
-          "formal": "variable.set(Name=%messages%, Value=[{\u0022Role\u0022:\u0022system\u0022,\u0022Content\u0022:\u0022%buildStepPrompt%\u0022},{\u0022Role\u0022:\u0022user\u0022,\u0022Content\u0022:\u0022%buildStepUserMsg%\u0022}], Type={\u0022name\u0022:\u0022text\u0022,\u0022kind\u0022:\u0022json\u0022})",
+          "formal": "variable.set(Name=%messages%, Value=[{\"Role\":\"system\",\"Content\":\"%buildStepPrompt%\"},{\"Role\":\"user\",\"Content\":\"%buildStepUserMsg%\"}])",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 10,
-          "text": "call QueryAndVerify, on error key \u0022missing-actions\u0022 call RefineActions, then retry 2 times",
+          "text": "call QueryAndVerify, on error key \"missing-actions\" call RefineActions, then retry 2 times",
           "lineNumber": 30,
           "indent": 0,
-          "comment": "QueryAndVerify wraps llm.query \u002B a missing-actions check (throws on missing-actions).\non error key=\u0022missing-actions\u0022: run RefineActions first (expands %planStep.actions%),\nthen retry the whole QueryAndVerify. RetryCount is the runtime\u0027s job, no counter.",
+          "comment": "QueryAndVerify wraps llm.query + a missing-actions check (throws on missing-actions).\non error key=\"missing-actions\": run RefineActions first (expands %planStep.actions%),\nthen retry the whole QueryAndVerify. RetryCount is the runtime's job, no counter.",
           "actions": [
             {
               "module": "goal",
@@ -710,7 +700,7 @@
             }
           ],
           "intent": null,
-          "formal": "goal.call(GoalName={name:\u0022QueryAndVerify\u0022}) | error.handle(Actions=[goal.call(GoalName={name:\u0022RefineActions\u0022})], Key=\u0022missing-actions\u0022, RetryCount=2)",
+          "formal": "goal.call(GoalName={name:\"QueryAndVerify\"}) | error.handle(Actions=[goal.call(GoalName={name:\"RefineActions\"})], Key=\"missing-actions\", RetryCount=2)",
           "source": null,
           "waitForExecution": true
         },
@@ -719,7 +709,7 @@
           "text": "add {goal: %goal.Name%, index: %step.Index%, stepText: %step.Text%, actions: %planStep.actions%, user: %buildStepUserMsg%, response: %compileResult%, usage: {model: %compileResult.Model%, promptTokens: %compileResult.PromptTokens%, cachedTokens: %compileResult.CachedTokens%, completionTokens: %compileResult.CompletionTokens%, totalTokens: %compileResult.TotalTokens%, cost: %compileResult.Cost%, cached: %compileResult.Cached%}} to %trace.stepPasses%",
           "lineNumber": 33,
           "indent": 0,
-          "comment": "system prompt is stashed once at goal level (%trace.compileSystem%) \u2014 do not duplicate it here.",
+          "comment": "system prompt is stashed once at goal level (%trace.compileSystem%) — do not duplicate it here.",
           "actions": [
             {
               "module": "list",
@@ -752,7 +742,7 @@
                     }
                   },
                   "type": {
-                    "name": "dictionary\u00602"
+                    "name": "dictionary`2"
                   }
                 }
               ],
@@ -770,7 +760,7 @@
             }
           ],
           "intent": null,
-          "formal": "list.add(ListName=%trace.stepPasses%, Value={json {goal:%goal.Name%, index:%step.Index%, stepText:%step.Text%, actions:%planStep.actions%, user:%buildStepUserMsg%, response:%compileResult%, usage:{model:%compileResult.Model%, promptTokens:%compileResult.PromptTokens%, cachedTokens:%compileResult.CachedTokens%, completionTokens:%compileResult.CompletionTokens%, totalTokens:%compileResult.TotalTokens%, cost:%compileResult.Cost%, cached:%compileResult.Cached%}}})",
+          "formal": "list.add(ListName=%trace.stepPasses%, Value={{goal:%goal.Name%, index:%step.Index%, stepText:%step.Text%, actions:%planStep.actions%, user:%buildStepUserMsg%, response:%compileResult%, usage:{model:%compileResult.Model%, promptTokens:%compileResult.PromptTokens%, cachedTokens:%compileResult.CachedTokens%, completionTokens:%compileResult.CompletionTokens%, totalTokens:%compileResult.TotalTokens%, cost:%compileResult.Cost%, cached:%compileResult.Cached%}}})",
           "source": null,
           "waitForExecution": true
         },
@@ -865,7 +855,7 @@
           "text": "builder.validate actions=%goal.Steps[step.Index].Actions%, on error call FixValidation, then retry 2 times",
           "lineNumber": 41,
           "indent": 0,
-          "comment": "Validation retry: FixValidation re-queries the LLM with the validator\u0027s complaint as\npreviousConversation context, writes the corrected compileResult, updates goal.Steps.\nThen retry builder.validate against the corrected actions.",
+          "comment": "Validation retry: FixValidation re-queries the LLM with the validator's complaint as\npreviousConversation context, writes the corrected compileResult, updates goal.Steps.\nThen retry builder.validate against the corrected actions.",
           "actions": [
             {
               "module": "builder",
@@ -875,7 +865,7 @@
                   "name": "Actions",
                   "value": "%goal.Steps[step.Index].Actions%",
                   "type": {
-                    "name": "list\u003Caction\u003E"
+                    "name": "list<action>"
                   }
                 }
               ],
@@ -925,7 +915,7 @@
             }
           ],
           "intent": null,
-          "formal": "builder.validate(Actions=%goal.Steps[step.Index].Actions%) | error.handle(Actions=[goal.call(GoalName={name:\u0022FixValidation\u0022})], RetryCount=2)",
+          "formal": "builder.validate(Actions=%goal.Steps[step.Index].Actions%) | error.handle(Actions=[goal.call(GoalName={name:\"FixValidation\"})], RetryCount=2)",
           "source": null,
           "waitForExecution": true
         },
@@ -958,7 +948,7 @@
             }
           ],
           "intent": null,
-          "formal": "goal.call(GoalName={name:\u0022EmitSummary\u0022})",
+          "formal": "goal.call(GoalName={name:\"EmitSummary\"})",
           "source": null,
           "waitForExecution": true
         }
@@ -982,7 +972,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "llm.query Messages=%messages%, Schema={formal: string, actions: list\u003C{module: string, action: string, parameters?: list\u003C{name: string, value?: object, type?: string}\u003E, errors?: list\u003C{key: string, message: string}\u003E}\u003E, confidence: string, explanation?: string, errors?: list\u003C{key: string, message: string}\u003E}, cache=%!build.cache%, on error call HandleStepFailure, write to %compileResult%",
+          "text": "llm.query Messages=%messages%, Schema={formal: string, actions: list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>, errors?: list<{key: string, message: string}>}>, confidence: string, explanation?: string, errors?: list<{key: string, message: string}>}, cache=%!build.cache%, on error call HandleStepFailure, write to %compileResult%",
           "lineNumber": 47,
           "indent": 0,
           "comment": null,
@@ -995,17 +985,17 @@
                   "name": "Messages",
                   "value": "%messages%",
                   "type": {
-                    "name": "list\u003Cllmmessage\u003E"
+                    "name": "list<llmmessage>"
                   }
                 },
                 {
                   "name": "Schema",
                   "value": {
                     "formal": "string",
-                    "actions": "list\u003C{module: string, action: string, parameters?: list\u003C{name: string, value?: object, type?: string}\u003E, errors?: list\u003C{key: string, message: string}\u003E}\u003E",
+                    "actions": "list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>, errors?: list<{key: string, message: string}>}>",
                     "confidence": "string",
                     "explanation": "string",
-                    "errors": "list\u003C{key: string, message: string}\u003E"
+                    "errors": "list<{key: string, message: string}>"
                   },
                   "type": {
                     "name": "object"
@@ -1083,7 +1073,7 @@
                         }
                       ],
                       "type": {
-                        "name": "list\u003Caction\u003E"
+                        "name": "list<action>"
                       }
                     }
                   ],
@@ -1109,15 +1099,6 @@
                   "type": {
                     "name": "object"
                   }
-                },
-                {
-                  "name": "Type",
-                  "value": {
-                    "name": "json"
-                  },
-                  "type": {
-                    "name": "type"
-                  }
                 }
               ],
               "defaults": [
@@ -1133,13 +1114,13 @@
             }
           ],
           "intent": null,
-          "formal": "llm.query(Messages=%messages%, Schema={formal: string, actions: list\u003C{module: string, action: string, parameters?: list\u003C{name: string, value?: object, type?: string}\u003E, errors?: list\u003C{key: string, message: string}\u003E}\u003E, confidence: string, explanation?: string, errors?: list\u003C{key: string, message: string}\u003E}, Cache=true) | error.handle(Actions=[{module: goal, action: call, parameters:[GoalName={name:\u0022HandleStepFailure\u0022}]}]) , variable.set(Name=%compileResult%, Value=%!data%, type=\u0022object\u0022)",
+          "formal": "llm.query(Messages=%messages%, Schema={formal: string, actions: list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>, errors?: list<{key: string, message: string}>}>, confidence: string, explanation?: string, errors?: list<{key: string, message: string}>}, Cache=true) | error.handle(Actions=[{module: goal, action: call, parameters:[GoalName={name:\"HandleStepFailure\"}]}]) , variable.set(Name=%compileResult%, Value=%!data%, type=\"object\")",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 1,
-          "text": "if %compileResult.errors[0].key% is \u0022missing-actions\u0022, throw error \u0022missing-actions: %compileResult.errors[0].message%\u0022 key=\u0022missing-actions\u0022",
+          "text": "if %compileResult.errors[0].key% is \"missing-actions\", throw error \"missing-actions: %compileResult.errors[0].message%\" key=\"missing-actions\"",
           "lineNumber": 48,
           "indent": 0,
           "comment": null,
@@ -1214,7 +1195,7 @@
             }
           ],
           "intent": null,
-          "formal": "condition.if(Left=%compileResult.errors[0].key%, Operator=\u0022==\u0022, Right=\u0022missing-actions\u0022), error.throw(Message=\u0022missing-actions: %compileResult.errors[0].message%\u0022, Key=\u0022missing-actions\u0022)",
+          "formal": "condition.if(Left=%compileResult.errors[0].key%, Operator=\"==\", Right=\"missing-actions\"), error.throw(Message=\"missing-actions: %compileResult.errors[0].message%\", Key=\"missing-actions\")",
           "source": null,
           "waitForExecution": true
         }
@@ -1238,10 +1219,10 @@
       "steps": [
         {
           "index": 0,
-          "text": "set %complaint% = \u0022Compiler returned missing-actions for step %step.Index% (text: \u0027%step.Text%\u0027). Current action set is insufficient: %planStep.actions%. Reason: %!error.Message%. Return a corrected action set for step %step.Index% only. Include \u0060confidence\u0060 (VeryHigh|High|Medium|Low|VeryLow) and \u0060explanation\u0060 (one short sentence when confidence is Medium or below) \u2014 recovery confidence matters because it tells the dev whether even the correction is a guess.\u0022, type=string",
+          "text": "set %complaint% = \"Compiler returned missing-actions for step %step.Index% (text: '%step.Text%'). Current action set is insufficient: %planStep.actions%. Reason: %!error.Message%. Return a corrected action set for step %step.Index% only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) — recovery confidence matters because it tells the dev whether even the correction is a guess.\", type=string",
           "lineNumber": 53,
           "indent": 0,
-          "comment": "Planner continuation: hand the LLM the compiler\u0027s complaint, get an expanded action set.",
+          "comment": "Planner continuation: hand the LLM the compiler's complaint, get an expanded action set.",
           "actions": [
             {
               "module": "variable",
@@ -1256,7 +1237,7 @@
                 },
                 {
                   "name": "Value",
-                  "value": "Compiler returned missing-actions for step %step.Index% (text: \u0027%step.Text%\u0027). Current action set is insufficient: %planStep.actions%. Reason: %!error.Message%. Return a corrected action set for step %step.Index% only. Include \u0060confidence\u0060 (VeryHigh|High|Medium|Low|VeryLow) and \u0060explanation\u0060 (one short sentence when confidence is Medium or below) \u2014 recovery confidence matters because it tells the dev whether even the correction is a guess.",
+                  "value": "Compiler returned missing-actions for step %step.Index% (text: '%step.Text%'). Current action set is insufficient: %planStep.actions%. Reason: %!error.Message%. Return a corrected action set for step %step.Index% only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) — recovery confidence matters because it tells the dev whether even the correction is a guess.",
                   "type": {
                     "name": "text"
                   }
@@ -1284,13 +1265,13 @@
             }
           ],
           "intent": null,
-          "formal": "variable.set(Name=%complaint%, Value=\u0022Compiler returned missing-actions for step %step.Index% (text: \u0027%step.Text%\u0027). Current action set is insufficient: %planStep.actions%. Reason: %!error.Message%. Return a corrected action set for step %step.Index% only. Include \u0060confidence\u0060 (VeryHigh|High|Medium|Low|VeryLow) and \u0060explanation\u0060 (one short sentence when confidence is Medium or below) \u2014 recovery confidence matters because it tells the dev whether even the correction is a guess.\u0022, Type={\u0022name\u0022:\u0022string\u0022})",
+          "formal": "variable.set(Name=%complaint%, Value=\"Compiler returned missing-actions for step %step.Index% (text: '%step.Text%'). Current action set is insufficient: %planStep.actions%. Reason: %!error.Message%. Return a corrected action set for step %step.Index% only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) — recovery confidence matters because it tells the dev whether even the correction is a guess.\", Type={\"name\":\"string\"})",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 1,
-          "text": "set %refineMessages% = [{\u0022Role\u0022:\u0022user\u0022, \u0022Content\u0022:\u0022%complaint%\u0022}], type=json",
+          "text": "set %refineMessages% = [{\"Role\":\"user\", \"Content\":\"%complaint%\"}]",
           "lineNumber": 54,
           "indent": 0,
           "comment": null,
@@ -1315,17 +1296,7 @@
                     }
                   ],
                   "type": {
-                    "name": "list\u00601"
-                  }
-                },
-                {
-                  "name": "Type",
-                  "value": {
-                    "name": "text",
-                    "kind": "json"
-                  },
-                  "type": {
-                    "name": "type"
+                    "name": "list`1"
                   }
                 }
               ],
@@ -1342,13 +1313,13 @@
             }
           ],
           "intent": null,
-          "formal": "variable.set(Name=%refineMessages%, Value=[{\u0022Role\u0022:\u0022user\u0022, \u0022Content\u0022:\u0022%complaint%\u0022}], Type={\u0022name\u0022:\u0022text\u0022,\u0022kind\u0022:\u0022json\u0022})",
+          "formal": "variable.set(Name=%refineMessages%, Value=[{\"Role\":\"user\", \"Content\":\"%complaint%\"}])",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 2,
-          "text": "llm.query Messages=%refineMessages%, Schema={index: int, actions: list\u003Cstring\u003E, confidence: string, explanation?: string}, cache=%!build.cache%, previousConversation=%plan%, write to %correction%",
+          "text": "llm.query Messages=%refineMessages%, Schema={index: int, actions: list<string>, confidence: string, explanation?: string}, cache=%!build.cache%, previousConversation=%plan%, write to %correction%",
           "lineNumber": 55,
           "indent": 0,
           "comment": null,
@@ -1361,19 +1332,19 @@
                   "name": "Messages",
                   "value": "%refineMessages%",
                   "type": {
-                    "name": "list\u003Cllmmessage\u003E"
+                    "name": "list<llmmessage>"
                   }
                 },
                 {
                   "name": "Schema",
                   "value": {
                     "index": "int",
-                    "actions": "list\u003Cstring\u003E",
+                    "actions": "list<string>",
                     "confidence": "string",
                     "explanation?": "string"
                   },
                   "type": {
-                    "name": "dictionary\u00602"
+                    "name": "dictionary`2"
                   }
                 },
                 {
@@ -1468,7 +1439,7 @@
             }
           ],
           "intent": null,
-          "formal": "llm.query(Messages=%refineMessages%, Schema={index: int, actions: list\u003Cstring\u003E, confidence: string, explanation?: string}, Cache=%!build.cache%, ContinuePreviousConversation=true) | variable.set(Name=%correction%, Value=%!data%, Type={name:\u0022object\u0022})",
+          "formal": "llm.query(Messages=%refineMessages%, Schema={index: int, actions: list<string>, confidence: string, explanation?: string}, Cache=%!build.cache%, ContinuePreviousConversation=true) | variable.set(Name=%correction%, Value=%!data%, Type={name:\"object\"})",
           "source": null,
           "waitForExecution": true
         },
@@ -1560,7 +1531,7 @@
         },
         {
           "index": 5,
-          "text": "call /system/builder/EmitBuildEvent kind=\u0022step-missing-actions\u0022, step=%step%",
+          "text": "call /system/builder/EmitBuildEvent kind=\"step-missing-actions\", step=%step%",
           "lineNumber": 58,
           "indent": 0,
           "comment": null,
@@ -1602,7 +1573,7 @@
             }
           ],
           "intent": null,
-          "formal": "goal.call(GoalName={name:\u0022/system/builder/EmitBuildEvent\u0022, parameters:[{name:\u0022kind\u0022, value:\u0022step-missing-actions\u0022, type:{name:\u0022text\u0022}}, {name:\u0022step\u0022, value:%step%, type:{name:\u0022text\u0022}}]})",
+          "formal": "goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[{name:\"kind\", value:\"step-missing-actions\", type:{name:\"text\"}}, {name:\"step\", value:%step%, type:{name:\"text\"}}]})",
           "source": null,
           "waitForExecution": true
         }
@@ -1626,10 +1597,10 @@
       "steps": [
         {
           "index": 0,
-          "text": "set %fixMessages% = [{\u0022Role\u0022:\u0022user\u0022, \u0022Content\u0022:\u0022Your previous response was rejected by the validator: %!error.Message%\\n\\nReturn the corrected response in the same Output Shape (formal, actions, confidence, explanation, errors, warnings) for this step only. Include \u0060confidence\u0060 (VeryHigh|High|Medium|Low|VeryLow) and \u0060explanation\u0060 (one short sentence when confidence is Medium or below) \u2014 recovery confidence matters because it tells the dev whether even the correction is a guess.\u0022}], type=json",
+          "text": "set %fixMessages% = [{\"Role\":\"user\", \"Content\":\"Your previous response was rejected by the validator: %!error.Message%\\n\\nReturn the corrected response in the same Output Shape (formal, actions, confidence, explanation, errors, warnings) for this step only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) — recovery confidence matters because it tells the dev whether even the correction is a guess.\"}]",
           "lineNumber": 65,
           "indent": 0,
-          "comment": "Validator rejected the compiled actions. Re-prompt the LLM with the validator\u0027s\ncomplaint, write corrected compileResult, update goal.Steps so the subsequent retry\nof builder.validate sees the corrected actions.",
+          "comment": "Validator rejected the compiled actions. Re-prompt the LLM with the validator's\ncomplaint, write corrected compileResult, update goal.Steps so the subsequent retry\nof builder.validate sees the corrected actions.",
           "actions": [
             {
               "module": "variable",
@@ -1647,20 +1618,11 @@
                   "value": [
                     {
                       "Role": "user",
-                      "Content": "Your previous response was rejected by the validator: %!error.Message%\n\nReturn the corrected response in the same Output Shape (formal, actions, confidence, explanation, errors, warnings) for this step only. Include \u0060confidence\u0060 (VeryHigh|High|Medium|Low|VeryLow) and \u0060explanation\u0060 (one short sentence when confidence is Medium or below) \u2014 recovery confidence matters because it tells the dev whether even the correction is a guess."
+                      "Content": "Your previous response was rejected by the validator: %!error.Message%\n\nReturn the corrected response in the same Output Shape (formal, actions, confidence, explanation, errors, warnings) for this step only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) — recovery confidence matters because it tells the dev whether even the correction is a guess."
                     }
                   ],
                   "type": {
-                    "name": "list\u00601"
-                  }
-                },
-                {
-                  "name": "Type",
-                  "value": {
-                    "name": "json"
-                  },
-                  "type": {
-                    "name": "type"
+                    "name": "list`1"
                   }
                 }
               ],
@@ -1677,13 +1639,13 @@
             }
           ],
           "intent": null,
-          "formal": "variable.set(Name=%fixMessages%, Value=[{\u0022Role\u0022:\u0022user\u0022,\u0022Content\u0022:\u0022Your previous response was rejected by the validator: %!error.Message%\\n\\nReturn the corrected response in the same Output Shape (formal, actions, confidence, explanation, errors, warnings) for this step only. Include \u0060confidence\u0060 (VeryHigh|High|Medium|Low|VeryLow) and \u0060explanation\u0060 (one short sentence when confidence is Medium or below) \u2014 recovery confidence matters because it tells the dev whether even the correction is a guess.\u0022}], Type={\u0022name\u0022:\u0022json\u0022})",
+          "formal": "variable.set(Name=%fixMessages%, Value=[{\"Role\":\"user\",\"Content\":\"Your previous response was rejected by the validator: %!error.Message%\\n\\nReturn the corrected response in the same Output Shape (formal, actions, confidence, explanation, errors, warnings) for this step only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) — recovery confidence matters because it tells the dev whether even the correction is a guess.\"}])",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 1,
-          "text": "llm.query Messages=%fixMessages%, Schema={formal: string, actions: list\u003C{module: string, action: string, parameters?: list\u003C{name: string, value?: object, type?: string}\u003E, modifiers?: list\u003C{module: string, action: string, parameters?: list\u003C{name: string, value?: object, type?: string}\u003E}\u003E, errors?: list\u003C{key: string, message: string}\u003E}\u003E, confidence: string, explanation?: string, errors?: list\u003C{key: string, message: string}\u003E}, cache=%!build.cache%, previousConversation=%compileResult%, write to %compileResult%",
+          "text": "llm.query Messages=%fixMessages%, Schema={formal: string, actions: list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>, modifiers?: list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>}>, errors?: list<{key: string, message: string}>}>, confidence: string, explanation?: string, errors?: list<{key: string, message: string}>}, cache=%!build.cache%, previousConversation=%compileResult%, write to %compileResult%",
           "lineNumber": 66,
           "indent": 0,
           "comment": null,
@@ -1696,17 +1658,17 @@
                   "name": "Messages",
                   "value": "%fixMessages%",
                   "type": {
-                    "name": "list\u003Cllmmessage\u003E"
+                    "name": "list<llmmessage>"
                   }
                 },
                 {
                   "name": "Schema",
                   "value": {
                     "formal": "string",
-                    "actions": "list\u003C{module: string, action: string, parameters?: list\u003C{name: string, value?: object, type?: string}\u003E, modifiers?: list\u003C{module: string, action: string, parameters?: list\u003C{name: string, value?: object, type?: string}\u003E}\u003E, errors?: list\u003C{key: string, message: string}\u003E}\u003E",
+                    "actions": "list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>, modifiers?: list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>}>, errors?: list<{key: string, message: string}>}>",
                     "confidence": "string",
                     "explanation": "string?",
-                    "errors": "list\u003C{key: string, message: string}\u003E?"
+                    "errors": "list<{key: string, message: string}>?"
                   },
                   "type": {
                     "name": "object"
@@ -1787,15 +1749,6 @@
                   "type": {
                     "name": "object"
                   }
-                },
-                {
-                  "name": "Type",
-                  "value": {
-                    "name": "json"
-                  },
-                  "type": {
-                    "name": "type"
-                  }
                 }
               ],
               "defaults": [
@@ -1811,7 +1764,7 @@
             }
           ],
           "intent": null,
-          "formal": "llm.query(Messages=%fixMessages%, Schema={formal: string, actions: list\u003C{module: string, action: string, parameters?: list\u003C{name: string, value?: object, type?: string}\u003E, modifiers?: list\u003C{module: string, action: string, parameters?: list\u003C{name: string, value?: object, type?: string}\u003E}\u003E, errors?: list\u003C{key: string, message: string}\u003E}\u003E, confidence: string, explanation?: string, errors?: list\u003C{key: string, message: string}\u003E}, Cache=%!build.cache%, ContinuePreviousConversation=false, previousConversation=%compileResult%)",
+          "formal": "llm.query(Messages=%fixMessages%, Schema={formal: string, actions: list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>, modifiers?: list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>}>, errors?: list<{key: string, message: string}>}>, confidence: string, explanation?: string, errors?: list<{key: string, message: string}>}, Cache=%!build.cache%, ContinuePreviousConversation=false, previousConversation=%compileResult%)",
           "source": null,
           "waitForExecution": true
         },
@@ -1903,7 +1856,7 @@
         },
         {
           "index": 4,
-          "text": "call /system/builder/EmitBuildEvent kind=\u0022step-validation-error\u0022, step=%step%, errorMessage=%!error.Message%",
+          "text": "call /system/builder/EmitBuildEvent kind=\"step-validation-error\", step=%step%, errorMessage=%!error.Message%",
           "lineNumber": 69,
           "indent": 0,
           "comment": null,
@@ -1952,7 +1905,7 @@
             }
           ],
           "intent": null,
-          "formal": "goal.call(GoalName={name:\u0022/system/builder/EmitBuildEvent\u0022, parameters:[{name:\u0022kind\u0022, value:\u0022step-validation-error\u0022, type:{name:\u0022text\u0022}}, {name:\u0022step\u0022, value:\u0022%step%\u0022, type:{name:\u0022text\u0022}}, {name:\u0022errorMessage\u0022, value:\u0022%!error.Message%\u0022, type:{name:\u0022text\u0022}}]})",
+          "formal": "goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[{name:\"kind\", value:\"step-validation-error\", type:{name:\"text\"}}, {name:\"step\", value:\"%step%\", type:{name:\"text\"}}, {name:\"errorMessage\", value:\"%!error.Message%\", type:{name:\"text\"}}]})",
           "source": null,
           "waitForExecution": true
         }
@@ -1976,7 +1929,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "call /system/builder/EmitBuildEvent kind=\u0022step-build-error\u0022, step=%step%, errorMessage=%!error.Message%",
+          "text": "call /system/builder/EmitBuildEvent kind=\"step-build-error\", step=%step%, errorMessage=%!error.Message%",
           "lineNumber": 73,
           "indent": 0,
           "comment": null,
@@ -2025,7 +1978,7 @@
             }
           ],
           "intent": null,
-          "formal": "goal.call(GoalName={name:\u0022/system/builder/EmitBuildEvent\u0022, parameters:[{name:\u0022kind\u0022, value:\u0022step-build-error\u0022, type:{name:\u0022text\u0022}}, {name:\u0022step\u0022, value:\u0022%step%\u0022, type:{name:\u0022text\u0022}}, {name:\u0022errorMessage\u0022, value:\u0022%!error.Message%\u0022, type:{name:\u0022text\u0022}}]})",
+          "formal": "goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[{name:\"kind\", value:\"step-build-error\", type:{name:\"text\"}}, {name:\"step\", value:\"%step%\", type:{name:\"text\"}}, {name:\"errorMessage\", value:\"%!error.Message%\", type:{name:\"text\"}}]})",
           "source": null,
           "waitForExecution": true
         },
@@ -2084,10 +2037,10 @@
       "steps": [
         {
           "index": 0,
-          "text": "if %compileResult.Cached% is true, call /system/builder/EmitBuildEvent kind=\u0022step-cached\u0022, step=%step%",
+          "text": "if %compileResult.Cached% is true, call /system/builder/EmitBuildEvent kind=\"step-cached\", step=%step%",
           "lineNumber": 81,
           "indent": 0,
-          "comment": "Per-step build summary line, plus a warning line when either the planner or\nthe compiler reported Low / VeryLow confidence (LLM had to settle for a\nfallback action or guess a mapping \u2014 the dev should see it at build time).",
+          "comment": "Per-step build summary line, plus a warning line when either the planner or\nthe compiler reported Low / VeryLow confidence (LLM had to settle for a\nfallback action or guess a mapping — the dev should see it at build time).",
           "actions": [
             {
               "module": "condition",
@@ -2163,13 +2116,13 @@
             }
           ],
           "intent": null,
-          "formal": "condition.if(Left=%compileResult.Cached%, Operator=\u0022==\u0022, Right=true), goal.call(GoalName={name:\u0022/system/builder/EmitBuildEvent\u0022, parameters:[{name:\u0022kind\u0022, value:\u0022step-cached\u0022, type:{name:\u0022text\u0022}}, {name:\u0022step\u0022, value:\u0022%step%\u0022, type:{name:\u0022object\u0022}}]})",
+          "formal": "condition.if(Left=%compileResult.Cached%, Operator=\"==\", Right=true), goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[{name:\"kind\", value:\"step-cached\", type:{name:\"text\"}}, {name:\"step\", value:\"%step%\", type:{name:\"object\"}}]})",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 1,
-          "text": "if %compileResult.Cached% is not true, call /system/builder/EmitBuildEvent kind=\u0022step-fresh\u0022, step=%step%",
+          "text": "if %compileResult.Cached% is not true, call /system/builder/EmitBuildEvent kind=\"step-fresh\", step=%step%",
           "lineNumber": 82,
           "indent": 0,
           "comment": null,
@@ -2248,13 +2201,13 @@
             }
           ],
           "intent": null,
-          "formal": "condition.if(Left=%compileResult.Cached%, Operator=\u0022==\u0022, Right=false), goal.call(GoalName={name:\u0022/system/builder/EmitBuildEvent\u0022, parameters:[{name:\u0022kind\u0022, value:\u0022step-fresh\u0022, type:{name:\u0022text\u0022}}, {name:\u0022step\u0022, value:\u0022%step%\u0022, type:{name:\u0022object\u0022}}]})",
+          "formal": "condition.if(Left=%compileResult.Cached%, Operator=\"==\", Right=false), goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[{name:\"kind\", value:\"step-fresh\", type:{name:\"text\"}}, {name:\"step\", value:\"%step%\", type:{name:\"object\"}}]})",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 2,
-          "text": "if %planStep.confidence% is \u0022Low\u0022, call /system/builder/EmitBuildEvent kind=\u0022confidence-warning-planner\u0022, planStep=%planStep%",
+          "text": "if %planStep.confidence% is \"Low\", call /system/builder/EmitBuildEvent kind=\"confidence-warning-planner\", planStep=%planStep%",
           "lineNumber": 83,
           "indent": 0,
           "comment": null,
@@ -2333,13 +2286,13 @@
             }
           ],
           "intent": null,
-          "formal": "condition.if(Left=%planStep.confidence%, Operator=\u0022==\u0022, Right=\u0022Low\u0022), goal.call(GoalName={name:\u0022/system/builder/EmitBuildEvent\u0022, parameters:[{name:\u0022kind\u0022, value:\u0022confidence-warning-planner\u0022, type:{\u0022name\u0022:\u0022text\u0022}}, {name:\u0022planStep\u0022, value:\u0022%planStep%\u0022, type:{\u0022name\u0022:\u0022object\u0022}}]})",
+          "formal": "condition.if(Left=%planStep.confidence%, Operator=\"==\", Right=\"Low\"), goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[{name:\"kind\", value:\"confidence-warning-planner\", type:{\"name\":\"text\"}}, {name:\"planStep\", value:\"%planStep%\", type:{\"name\":\"object\"}}]})",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 3,
-          "text": "if %planStep.confidence% is \u0022VeryLow\u0022, call /system/builder/EmitBuildEvent kind=\u0022confidence-warning-planner\u0022, planStep=%planStep%",
+          "text": "if %planStep.confidence% is \"VeryLow\", call /system/builder/EmitBuildEvent kind=\"confidence-warning-planner\", planStep=%planStep%",
           "lineNumber": 84,
           "indent": 0,
           "comment": null,
@@ -2418,13 +2371,13 @@
             }
           ],
           "intent": null,
-          "formal": "condition.if(Left=%planStep.confidence%, Operator=\u0022==\u0022, Right=\u0022VeryLow\u0022), goal.call(GoalName={name:\u0022/system/builder/EmitBuildEvent\u0022, parameters:[{name:\u0022kind\u0022, value:\u0022confidence-warning-planner\u0022, type:{\u0022name\u0022:\u0022text\u0022}}, {name:\u0022planStep\u0022, value:\u0022%planStep%\u0022, type:{\u0022name\u0022:\u0022object\u0022}}]})",
+          "formal": "condition.if(Left=%planStep.confidence%, Operator=\"==\", Right=\"VeryLow\"), goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[{name:\"kind\", value:\"confidence-warning-planner\", type:{\"name\":\"text\"}}, {name:\"planStep\", value:\"%planStep%\", type:{\"name\":\"object\"}}]})",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 4,
-          "text": "if %compileResult.confidence% is \u0022Low\u0022, call /system/builder/EmitBuildEvent kind=\u0022confidence-warning-compiler\u0022, compileResult=%compileResult%",
+          "text": "if %compileResult.confidence% is \"Low\", call /system/builder/EmitBuildEvent kind=\"confidence-warning-compiler\", compileResult=%compileResult%",
           "lineNumber": 85,
           "indent": 0,
           "comment": null,
@@ -2503,13 +2456,13 @@
             }
           ],
           "intent": null,
-          "formal": "condition.if(Left=%compileResult.confidence%, Operator=\u0022==\u0022, Right=\u0022Low\u0022), goal.call(GoalName={name:\u0022/system/builder/EmitBuildEvent\u0022, parameters:[{name:\u0022kind\u0022, value:\u0022confidence-warning-compiler\u0022, type:{name:\u0022text\u0022}}, {name:\u0022compileResult\u0022, value:\u0022%compileResult%\u0022, type:{name:\u0022object\u0022}}]})",
+          "formal": "condition.if(Left=%compileResult.confidence%, Operator=\"==\", Right=\"Low\"), goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[{name:\"kind\", value:\"confidence-warning-compiler\", type:{name:\"text\"}}, {name:\"compileResult\", value:\"%compileResult%\", type:{name:\"object\"}}]})",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 5,
-          "text": "if %compileResult.confidence% is \u0022VeryLow\u0022, call /system/builder/EmitBuildEvent kind=\u0022confidence-warning-compiler\u0022, compileResult=%compileResult%",
+          "text": "if %compileResult.confidence% is \"VeryLow\", call /system/builder/EmitBuildEvent kind=\"confidence-warning-compiler\", compileResult=%compileResult%",
           "lineNumber": 86,
           "indent": 0,
           "comment": null,
@@ -2588,7 +2541,7 @@
             }
           ],
           "intent": null,
-          "formal": "condition.if(Left=%compileResult.confidence%, Operator=\u0022==\u0022, Right=\u0022VeryLow\u0022), goal.call(GoalName={name:\u0022/system/builder/EmitBuildEvent\u0022, parameters:[{name:\u0022kind\u0022, value:\u0022confidence-warning-compiler\u0022, type:{\u0022name\u0022:\u0022text\u0022}}, {name:\u0022compileResult\u0022, value:\u0022%compileResult%\u0022, type:{\u0022name\u0022:\u0022object\u0022}}]})",
+          "formal": "condition.if(Left=%compileResult.confidence%, Operator=\"==\", Right=\"VeryLow\"), goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[{name:\"kind\", value:\"confidence-warning-compiler\", type:{\"name\":\"text\"}}, {name:\"compileResult\", value:\"%compileResult%\", type:{\"name\":\"object\"}}]})",
           "source": null,
           "waitForExecution": true
         }

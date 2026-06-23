@@ -199,7 +199,7 @@
     },
     {
       "index": 4,
-      "text": "set %messages% = [{\"Role\":\"system\", \"Content\":\"%planPrompt%\"}, {\"Role\":\"user\", \"Content\":\"%goalForLlm%\"}], type=json",
+      "text": "set %messages% = [{\"Role\":\"system\", \"Content\":\"%planPrompt%\"}, {\"Role\":\"user\", \"Content\":\"%goalForLlm%\"}]",
       "lineNumber": 10,
       "indent": 0,
       "comment": null,
@@ -226,11 +226,6 @@
                 }
               ],
               "type": "list`1"
-            },
-            {
-              "name": "Type",
-              "value": "json",
-              "type": "string"
             }
           ],
           "defaults": [
@@ -244,7 +239,7 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%messages%, Value=[{\"Role\":\"system\",\"Content\":\"%planPrompt%\"},{\"Role\":\"user\",\"Content\":\"%goalForLlm%\"}], Type=json)",
+      "formal": "variable.set(Name=%messages%, Value=[{\"Role\":\"system\",\"Content\":\"%planPrompt%\"},{\"Role\":\"user\",\"Content\":\"%goalForLlm%\"}])",
       "source": null,
       "waitForExecution": true
     },
@@ -420,11 +415,6 @@
                 "cached": "%plan.Cached%"
               },
               "type": "dictionary`2"
-            },
-            {
-              "name": "Type",
-              "value": "json",
-              "type": "string"
             }
           ],
           "defaults": [
@@ -438,7 +428,7 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%plan.usage%, Value={model:%plan.Model%, promptTokens:%plan.PromptTokens%, cachedTokens:%plan.CachedTokens%, completionTokens:%plan.CompletionTokens%, totalTokens:%plan.TotalTokens%, cost:%plan.Cost%, cached:%plan.Cached%}, Type=json)",
+      "formal": "variable.set(Name=%plan.usage%, Value={model:%plan.Model%, promptTokens:%plan.PromptTokens%, cachedTokens:%plan.CachedTokens%, completionTokens:%plan.CompletionTokens%, totalTokens:%plan.TotalTokens%, cost:%plan.Cost%, cached:%plan.Cached%})",
       "source": null,
       "waitForExecution": true
     }
@@ -535,11 +525,6 @@
                   "name": "Value",
                   "value": "%!data%",
                   "type": "object"
-                },
-                {
-                  "name": "Type",
-                  "value": "json",
-                  "type": "string"
                 }
               ],
               "defaults": [

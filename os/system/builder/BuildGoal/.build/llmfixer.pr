@@ -53,7 +53,7 @@
     },
     {
       "index": 1,
-      "text": "set %fixerMessages% = [{\"Role\":\"user\", \"Content\":\"Your previous response was rejected: %!error.Message%\\n\\nReturn the corrected plan. Each step's `actions` MUST be a non-empty array of `\\\"module.action\\\"` strings from the catalog (e.g. `\\\"variable.set\\\"`, `\\\"file.read\\\"`). `index` is 0-based.\"}], type=json",
+      "text": "set %fixerMessages% = [{\"Role\":\"user\", \"Content\":\"Your previous response was rejected: %!error.Message%\\n\\nReturn the corrected plan. Each step's `actions` MUST be a non-empty array of `\\\"module.action\\\"` strings from the catalog (e.g. `\\\"variable.set\\\"`, `\\\"file.read\\\"`). `index` is 0-based.\"}]",
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
@@ -76,11 +76,6 @@
                 }
               ],
               "type": "list`1"
-            },
-            {
-              "name": "Type",
-              "value": "json",
-              "type": "string"
             }
           ],
           "defaults": [
@@ -94,7 +89,7 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%fixerMessages%, Value=[{\"Role\":\"user\",\"Content\":\"Your previous response was rejected: %!error.Message%\\n\\nReturn the corrected plan. Each step's `actions` MUST be a non-empty array of \\\"module.action\\\" strings from the catalog (e.g. \\\"variable.set\\\", \\\"file.read\\\"). `index` is 0-based.\"}], Type=json)",
+      "formal": "variable.set(Name=%fixerMessages%, Value=[{\"Role\":\"user\",\"Content\":\"Your previous response was rejected: %!error.Message%\\n\\nReturn the corrected plan. Each step's `actions` MUST be a non-empty array of \\\"module.action\\\" strings from the catalog (e.g. \\\"variable.set\\\", \\\"file.read\\\"). `index` is 0-based.\"}])",
       "source": null,
       "waitForExecution": true
     },
@@ -175,11 +170,6 @@
               "name": "Value",
               "value": "%!data%",
               "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": "json",
-              "type": "string"
             }
           ],
           "defaults": [

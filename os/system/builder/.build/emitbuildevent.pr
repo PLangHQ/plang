@@ -1,99 +1,99 @@
 {
- "name": "EmitBuildEvent",
- "description": null,
- "comment": null,
- "steps": [
-  {
-   "index": 0,
-   "text": "render template \"/system/builder/templates/output/build-output.template\", write to %msg%",
-   "lineNumber": 11,
-   "indent": 0,
-   "comment": null,
-   "actions": [
+  "name": "EmitBuildEvent",
+  "description": null,
+  "comment": null,
+  "steps": [
     {
-     "module": "ui",
-     "action": "render",
-     "parameters": [
-      {
-       "name": "Template",
-       "value": "/system/builder/templates/output/build-output.template",
-       "type": "string"
-      }
-     ],
-     "defaults": null,
-     "modifiers": []
+      "index": 0,
+      "text": "render template \"/system/builder/templates/output/build-output.template\", write to %msg%",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "ui",
+          "action": "render",
+          "parameters": [
+            {
+              "name": "Template",
+              "value": "/system/builder/templates/output/build-output.template",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%msg%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "ui.render(Template=\"/system/builder/templates/output/build-output.template\") | variable.set(Name=%msg%, Value=%!data%, type=\"string\")",
+      "source": null,
+      "waitForExecution": true
     },
     {
-     "module": "variable",
-     "action": "set",
-     "parameters": [
-      {
-       "name": "Name",
-       "value": "%msg%",
-       "type": "variable"
-      },
-      {
-       "name": "Value",
-       "value": "%!data%",
-       "type": "string"
-      }
-     ],
-     "defaults": [
-      {
-       "name": "asdefault",
-       "value": false,
-       "type": "bool"
-      }
-     ],
-     "modifiers": []
+      "index": 1,
+      "text": "write out %msg% channel: \"builder\"",
+      "lineNumber": 12,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%msg%",
+              "type": "object"
+            },
+            {
+              "name": "channel",
+              "value": "builder",
+              "type": "text"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "output.write(Data=%msg%, channel=\"builder\")",
+      "source": null,
+      "waitForExecution": true
     }
-   ],
-   "intent": null,
-   "formal": "ui.render(Template=\"/system/builder/templates/output/build-output.template\") | variable.set(Name=%msg%, Value=%!data%, type=\"string\")",
-   "source": null,
-   "waitForExecution": true
-  },
-  {
-   "index": 1,
-   "text": "write out %msg% channel: \"builder\"",
-   "lineNumber": 12,
-   "indent": 0,
-   "comment": null,
-   "actions": [
-    {
-     "module": "output",
-     "action": "write",
-     "parameters": [
-      {
-       "name": "Data",
-       "value": "%msg%",
-       "type": "object"
-      },
-      {
-       "name": "channel",
-       "value": "builder",
-       "type": "text"
-      }
-     ],
-     "defaults": null,
-     "modifiers": []
-    }
-   ],
-   "intent": null,
-   "formal": "output.write(Data=%msg%, channel=\"builder\")",
-   "source": null,
-   "waitForExecution": true
-  }
- ],
- "goals": [],
- "visibility": 1,
- "path": "/system/builder/EmitBuildEvent.goal",
- "prPath": "/system/builder/.build/emitbuildevent.pr",
- "hash": "a202f14a1c677ab9b18d4032ffc771bd2832c31ec69feaa669dae86f35533532",
- "builderVersion": null,
- "isSetup": false,
- "isEvent": false,
- "isSystem": true,
- "isTest": false,
- "inputParameters": null
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/system/builder/EmitBuildEvent.goal",
+  "prPath": "/system/builder/.build/emitbuildevent.pr",
+  "hash": "a202f14a1c677ab9b18d4032ffc771bd2832c31ec69feaa669dae86f35533532",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": true,
+  "isTest": false,
+  "inputParameters": null
 }

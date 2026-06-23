@@ -57,9 +57,11 @@ public static class @this
             ["dictionary"] = typeof(app.type.dict.@this),
             ["dict"] = typeof(app.type.dict.@this),
             ["map"] = typeof(app.type.dict.@this),
+            // `object` resolves for back-compat (a Data<object> slot, a CLR object
+            // value), but is NOT taught to the LLM — see InlineFundamentals. Data<object>
+            // is deprecated; new actions carry a concrete type or a clr-wrapped item.
             ["object"] = typeof(object),
             ["dynamic"] = typeof(object),
-            ["json"] = typeof(JsonNode),
             // Text-shaped file extensions — registered as string aliases so
             // file.read.Build()'s extension-derived Type stamp ("csv", "txt", ...)
             // doesn't surface "Unknown type" at runtime. Annotation stays specific
@@ -121,8 +123,11 @@ public static class @this
     /// precision or comes from an explicit <c>as</c> — never the literal's
     /// spelling.</para>
     /// </summary>
+    // `object` is intentionally absent — it is NOT taught to the LLM (a value is
+    // tagged by its real type, never `as object`). It still RESOLVES (see Aliases)
+    // for back-compat Data<object> slots, which are deprecated.
     public static IReadOnlyList<string> InlineFundamentals { get; } = new[]
-        { "text", "number", "bool", "object", "list", "dict", "datetime", "date", "time", "duration", "guid" };
+        { "text", "number", "bool", "list", "dict", "datetime", "date", "time", "duration", "guid" };
 
     /// <summary>
     /// <b>Reference fundamentals</b> — PLang is higher-level than C# (it is
