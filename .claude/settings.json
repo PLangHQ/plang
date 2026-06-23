@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /workspace/plang/.claude/hooks/check_verb_noun.py"
+          }
+        ]
+      }
+    ]
+  }
+}
