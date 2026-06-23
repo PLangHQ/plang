@@ -56,10 +56,23 @@ public class Default : ICrypto
                     "Registered application/plang serializer is not the canonical plang.@this; hash bytes would diverge from wire bytes.",
                     "SerializerMismatch", 500));
             var serializer = (registered as global::app.channel.serializer.plang.@this) ?? _fallbackPlang;
-            using (global::app.data.Wire.MarkOuterForHash(data))
+            // The value writes its OWN canonical bytes via data.Output — deterministic (fixed
+            // key order, entries insertion-order); sign and verify both run it, so they agree
+            // regardless of the wire format. View.Out omits the binding name (hash is name-
+            // independent), and data.Output never emits a signature, so there's nothing to
+            // suppress — MarkOuterForHash is unnecessary in the layer model.
+            // TODO: serialize-to-MemoryStream-then-hash is the wrong shape — data.Output
+            // should produce its hash intrinsically (write into a hashing writer), not via an
+            // intermediate buffer. Correct behaviour, wrong means.
+            using var hashStream = new MemoryStream();
+            await using (var utf8 = new System.Text.Json.Utf8JsonWriter(hashStream))
             {
-                bytes = JsonSerializer.SerializeToUtf8Bytes(data, serializer.OutboundOptions);
+                var writer = new global::app.channel.serializer.json.Writer(
+                    utf8, serializer.OutboundOptions, global::app.View.Out,
+                    action.Context?.App?.Type?.Renderers, emitsSchema: true);
+                await data.Output(writer, global::app.View.Out, action.Context, layer: true);
             }
+            bytes = hashStream.ToArray();
         }
         string algorithm = (await action.Algorithm.Value())!.ToString()!.ToLowerInvariant();
         byte[]? hashBytes = algorithm switch

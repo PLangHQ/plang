@@ -299,3 +299,11 @@ EVERY write path; `Wire.Write`/`Normalize` are deleted. `Wire.Read` stays (read)
 ### Confirmed by Ingi
 - Stable hashing via data.Output: yes. `.pr` through data.Output: good. Layer shape: as above
   (`@schema:signature` outer, `value` = inner @schema:data Data). Same for encryption/compression.
+
+## FLAGGED — revisit together (Ingi, 2026-06-23)
+- **Hash canonicalization shape is wrong (works, but wrong means).** `crypto/code/Default.cs`
+  now hashes via `data.Output` → MemoryStream → `byte[]` → algorithm. Behaviour is correct
+  (sign/verify/round-trip all green) and `MarkOuterForHash` is gone. But the right shape is
+  for `data.Output` to produce its hash **intrinsically** — write into a *hashing writer* —
+  not via an intermediate buffer. Revisit when doing (a)'s wire flip (the wire write and the
+  hash should be the one same `data.Output` walk).
