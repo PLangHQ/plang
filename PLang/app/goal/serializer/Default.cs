@@ -20,10 +20,14 @@ public static class Default
     public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
     {
         // Content off I/O rides as binary bytes; the .pr is json text — decode
-        // through the text type (it owns bytes→string), then reconstruct the Goal.
+        // through the text type (it owns bytes→string), then DESERIALIZE the Goal
+        // directly. Reading a .pr is the goal's own wire read, not a value coercion
+        // — it does NOT route through the type-conversion hub (Type.Convert). A parse
+        // failure throws JsonException (path + line), surfaced by source.Value.
         if (raw is not (string or byte[]) || ctx.Context == null) return raw;
         string text = new global::app.type.text.@this(raw).ToString();
         if (string.IsNullOrEmpty(text)) return null;
-        return ctx.Context.App.Type.Convert(text, typeof(global::app.goal.@this), ctx.Context).Peek();
+        return System.Text.Json.JsonSerializer.Deserialize<global::app.goal.@this>(
+            text, global::app.type.catalog.@this.GoalReadOptions(ctx.Context));
     }
 }

@@ -301,17 +301,12 @@ public partial class @this
         // content dict, not on a reflection bag of the reference object.
         _ = await parent.Value();
 
-        // For dot-path, extract the raw value from Data — we're setting a property on
-        // a C# object. No defensive deep-clone here: independence comes from rebinding.
-        // Reading a container variable (`%source%`) resolves through WalkContainerVars,
-        // which builds a fresh dict/list, so the captured value is already independent
-        // of the source's live container — a later `set %source.x% = ...` cannot reach
-        // it. The old SnapshotClone deep-copy was a redundant defense (and only ever
-        // fired for raw IDictionary/IList, never the native dict).
-        // A dotted write lands content on a C# object/dict slot — that IS a content
-        // use, so read through the door (materializes a lazy value); only the plain
-        // whole-binding Set stays lazy.
-        var rawValue = value is data.@this dv2 ? await dv2.Value() : value;
+        // The value rides into the slot AS-IS — its in-memory form (Peek), never
+        // rendered. A `set %trace.plan% = %plan%` stores the %plan% binding; rendering it
+        // (Value()) would re-resolve every %ref% it contains, and a self-referential entry
+        // (%plan.usage% = {model:%plan.Model%, …}) loops forever. The slot holds the value
+        // lazily; it resolves when the slot itself is read.
+        var rawValue = value is data.@this dv2 ? dv2.Peek() : value;
         var target = parent.Peek();
         if (target == null)
         {

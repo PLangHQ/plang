@@ -1260,3 +1260,13 @@ identity's normal path. Decide how the store carries the per-table element type.
 (this.cs, goal/Methods.cs, goal/setup, goal/list, MarkdownTeaching x2, test/discover x2,
 ui/Fluid x2) + ~16 test files + abstract decl (path/this.Operations.cs:60) + 2 overrides
 (file, http). goal/list LoadFromFileAsync then drops its `is goal.@this` cast.
+
+## `Variables.Set(string, object?)` should take `Data`, not `object?` (branch `variable-as-value`)
+
+**Date:** 2026-06-23. `app/variable/list/this.cs:105` is `Set(string name, object? value)`.
+Everything in PLang is `Data`, but a few callers still pass raw CLR values
+(`http/code/Default.cs` `!ServiceIdentity` ← a `string`; `loop/foreach` item/key;
+`list/add`,`remove`,`reverse`). That forces the `value is data.@this dv ? … : value`
+juggling inside Set (e.g. the dotted-write value extraction). Tighten the signature to
+`Set(string, data.@this)` and wrap those raw callers in `Data`, so the body is clean
+(`value.Peek()`), no `object?` branching.

@@ -52,7 +52,7 @@ public sealed partial class @this
     /// and runtime data, never being a goal, is never read through here, so a forged
     /// <c>%secret%</c> in a message stays literal.
     /// </summary>
-    private static JsonSerializerOptions GoalReadOptions(actor.context.@this context)
+    internal static JsonSerializerOptions GoalReadOptions(actor.context.@this context)
     {
         var options = ContextualReadOptions(context);
         options.Converters.Add(new global::app.data.Wire(

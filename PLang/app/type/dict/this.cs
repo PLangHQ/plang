@@ -326,8 +326,23 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// to <c>this</c> when every entry turns out final.</summary>
     internal override bool IsFinal => false;
 
+    // Render-recursion guard. A dict that holds a %ref% pointing back into itself (or a
+    // sibling that resolves through it) makes rendering re-enter forever — e.g.
+    // `%plan.usage% = {model:%plan.Model%, …}` renders `%plan%` → `usage` → resolve
+    // `%plan.Model%` → render `%plan%`. Fail LOUD with the offending keys instead of a
+    // silent StackOverflow. Async-safe (AsyncLocal flows down the await chain).
+    private const int MaxRenderDepth = 64;
+    private static readonly System.Threading.AsyncLocal<int> _renderDepth = new();
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
+        var depth = _renderDepth.Value + 1;
+        _renderDepth.Value = depth;
+        try {
+        if (depth > MaxRenderDepth)
+            throw new global::app.error.AppException(
+                $"dict render recursion exceeded {MaxRenderDepth} — a %ref% loops back into its own container "
+                + $"(dict '{data?.Name}', keys [{string.Join(",", _value.Keys)}]).",
+                "DictRenderCycle", 500);
         // Render each entry through its OWN door — a %ref% variable resolves, a stamped
         // text renders, a nested container deep-renders. Allocate only when the first
         // door-owning entry appears (copy the raw prefix); a dict with none returns itself.
@@ -355,6 +370,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             else rendered?.Set(key, slot);
         }
         return rendered ?? this;
+        } finally { _renderDepth.Value = depth - 1; }
     }
 
     /// <summary>The item membership hook — key membership (a dict "contains"
