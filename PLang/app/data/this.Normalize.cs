@@ -41,7 +41,7 @@ public partial class @this
     /// </summary>
     public async System.Threading.Tasks.ValueTask Output(
         global::app.channel.serializer.IWriter writer, View mode,
-        global::app.actor.context.@this? context = null)
+        global::app.actor.context.@this? context = null, bool layer = false)
     {
         context ??= _context;
 
@@ -60,26 +60,31 @@ public partial class @this
                 var resolved = await context.Variable.Get(vref.Name);
                 if (resolved == null || !resolved.IsInitialized)
                     throw new global::app.error.VariableNotFoundException(vref.Name);
-                await resolved.Output(writer, mode, context);
+                await resolved.Output(writer, mode, context, layer);
                 return;
             }
             finally { _outputDepth.Value--; }
         }
 
-        // Only the self-describing wire (application/plang) opens the @schema/type
-        // envelope around the value; a bare format (json, text) writes the value alone
-        // (type inferred on read). The value-write below is the SAME either way.
+        // Only the self-describing wire (application/plang) opens the type envelope around
+        // the value; a bare format (json, text) writes the value alone (type inferred on
+        // read). The value-write below is the SAME either way.
         if (writer.EmitsSchema)
         {
             writer.BeginObject();
-            writer.Name(global::app.data.@this.WireSchema);
-            writer.String(global::app.data.@this.WireSchemaData);
-            // The binding label rides only on the Store view (.pr parameters bind by name);
-            // the outbound wire omits it.
-            if (mode == View.Store)
+            // @schema is the LAYER marker (data vs signature/encryption/compression) — written
+            // ONLY at a layer boundary (the top payload). A nested typed value (a dict entry,
+            // the value slot's children) carries type+value without it. The binding label
+            // (name) likewise rides only on the Store-view layer (.pr params bind by name).
+            if (layer)
             {
-                writer.Name("name");
-                writer.String(Name);
+                writer.Name(global::app.data.@this.WireSchema);
+                writer.String(global::app.data.@this.WireSchemaData);
+                if (mode == View.Store)
+                {
+                    writer.Name("name");
+                    writer.String(Name);
+                }
             }
             if (!Type.IsNull)
             {
