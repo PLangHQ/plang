@@ -193,13 +193,25 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>Writes itself to the wire as a JSON array — each element self-describes
     /// (rides its own Data envelope, so a signed/typed element keeps it), resolved lazily.</summary>
+    // The list owns its per-format serializers — instantiated directly (no reflection, no
+    // registry), keyed by format. Only formats that DIVERGE from the default token form are
+    // listed; text is here because a list has no plain-text form (renders as json).
+    private static readonly System.Collections.Generic.Dictionary<string, global::app.channel.serializer.IOutput> _formats
+        = new() { ["text"] = new format.text() };
+
     public override async System.Threading.Tasks.ValueTask Output(
         global::app.channel.serializer.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
+        if (_formats.TryGetValue(writer.Format, out var serializer))
+        {
+            await serializer.Output(this, writer, mode, context);
+            return;
+        }
+        // default (json/plang): an array whose elements each self-describe (@schema).
         writer.BeginArray(CountRaw);
         foreach (var element in Items)
-            await element.Output(writer, mode, context);   // each element self-describes (@schema)
+            await element.Output(writer, mode, context);
         writer.EndArray();
     }
 

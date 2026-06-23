@@ -102,13 +102,9 @@ public partial class @this
             writer.Name("value");
         }
 
-        // The value writes itself via its per-(type, format) serializer if its type ships
-        // one (a container's text form), else via its own item.Output. The registry owns
-        // that choice; with no registry (no App) the value simply writes itself.
-        var serializer = context?.App?.Type?.Readers?.Output(_type.GetType(), writer.Format);
-        await (serializer != null
-            ? serializer(_type, writer, mode, context)
-            : _type.Output(writer, mode, context));
+        // The value writes itself — the type owns its per-format serialization (it holds
+        // its own format map and picks by writer.Format, or writes its default form).
+        await _type.Output(writer, mode, context);
 
         if (writer.EmitsSchema)
         {

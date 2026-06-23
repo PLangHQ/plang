@@ -36,20 +36,8 @@ public sealed class @this
     /// </summary>
     public delegate object? Read(object raw, string? kind, ReadContext ctx);
 
-    /// <summary>
-    /// Write-side per-(type, format) override: how a value writes itself to a given
-    /// channel format when its own <c>item.Output</c> isn't the answer (a container's
-    /// text form, image base64 vs label, …). Discovered from the same
-    /// <c>serializer/&lt;format&gt;.cs</c> files as <see cref="Read"/> — a file may
-    /// expose either or both. A type with no override writes itself via <c>item.Output</c>.
-    /// </summary>
-    public delegate System.Threading.Tasks.ValueTask Write(
-        global::app.type.item.@this value, global::app.channel.serializer.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context);
-
     private readonly ConcurrentDictionary<(string Type, string Kind), Read> _generated = new();
     private readonly ConcurrentDictionary<(string Type, string Kind), Read> _runtime = new();
-    private readonly ConcurrentDictionary<(string Type, string Format), Write> _generatedWrite = new();
 
     // The typed (ITypeReader) registry — the two read modes live side by side, and
     // both are load-bearing:
@@ -109,34 +97,6 @@ public sealed class @this
         return null;
     }
 
-    /// <summary>
-    /// The per-format write override for <paramref name="itemType"/> + <paramref name="format"/>,
-    /// or null when the type has none (it writes itself via <c>item.Output</c>). The PLang
-    /// type name is derived from the item's namespace (<c>app.type.dict.@this</c> → <c>dict</c>),
-    /// mirroring how discovery keys the entries.
-    /// </summary>
-    /// <summary>
-    /// The per-format write override for <paramref name="itemType"/> + <paramref name="format"/>,
-    /// or null when the type ships none — in which case the value writes itself via its own
-    /// <c>item.Output</c> (the caller calls that directly; no wrapper default here). The PLang
-    /// type name is derived from the item's namespace (<c>app.type.dict.@this</c> → <c>dict</c>),
-    /// mirroring how discovery keys the entries.
-    /// </summary>
-    public Write? Output(System.Type itemType, string format)
-    {
-        EnsureInitialized();
-        var typeName = NameFromNamespace(itemType.Namespace);
-        if (typeName == null) return null;
-        var f = string.IsNullOrEmpty(format) ? AnyKind : format;
-        return _generatedWrite.TryGetValue((typeName, f), out var w) ? w : null;
-    }
-
-    private static string? NameFromNamespace(string? ns)
-    {
-        if (string.IsNullOrEmpty(ns)) return null;
-        var lastDot = ns!.LastIndexOf('.');
-        return (lastDot < 0 ? ns : ns[(lastDot + 1)..]).TrimStart('@');
-    }
 
     /// <summary>
     /// The type whose reader is registered under <paramref name="kind"/> — a
@@ -240,22 +200,6 @@ public sealed class @this
                 };
                 _generated[(typeName, kind)] = del;
             }
-
-            // WRITE — static Output(item, IWriter, View, context): the per-format write
-            // override for this (type, format). Same file, the other direction.
-            var output = type.GetMethod("Output",
-                BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy,
-                binder: null,
-                types: new[]
-                {
-                    typeof(global::app.type.item.@this),
-                    typeof(global::app.channel.serializer.IWriter),
-                    typeof(global::app.View),
-                    typeof(global::app.actor.context.@this),
-                },
-                modifiers: null);
-            if (output != null)
-                _generatedWrite[(typeName, kind)] = (Write)System.Delegate.CreateDelegate(typeof(Write), output);
         }
     }
 
