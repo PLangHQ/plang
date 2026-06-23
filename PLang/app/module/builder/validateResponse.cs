@@ -167,9 +167,16 @@ public partial class validateResponse : IContext
 
                 foreach (var p in a.Parameters)
                 {
-                    if (p.Type?.Name == null || (await p.Value()) == null) continue;
-                    if ((await p.Value()) is global::app.type.text.@this refSv && refSv.StartsWith("%") && refSv.EndsWith("%")) continue;
-                    if (ValidateResponseHelpers.IsActionRecord((await p.Value()))) continue;
+                    // A %ref% parameter resolves at RUNTIME in the caller's scope, not at
+                    // build time — skip it WITHOUT opening the door. Resolving %x% here
+                    // throws VariableNotFound (this is authored code being validated, not
+                    // run). Detect via the non-resolving Peek / the binding's ref flags.
+                    if (p.Peek() is global::app.variable.@this || p.HasVariableReference) continue;
+                    if (p.Type?.Name == null) continue;
+
+                    var resolved = await p.Value();
+                    if (resolved == null) continue;
+                    if (ValidateResponseHelpers.IsActionRecord(resolved)) continue;
 
                     // LLMs emit "" for unset nullable slots even when the prompt says
                     // omit them. Map "" → null when the schema prop is nullable, so the
@@ -178,7 +185,7 @@ public partial class validateResponse : IContext
                     // ValidValues, can't parse to int, etc.). For non-nullable slots we
                     // *want* the convertibility error to surface — leave it for the
                     // TryConvert path below.
-                    if ((await p.Value()) is global::app.type.text.@this emptyT && !emptyT.IsTruthy())
+                    if (resolved is global::app.type.text.@this emptyT && !emptyT.IsTruthy())
                     {
                         if (ValidateResponseHelpers.IsNullableSchemaProp(actionType, p.Name))
                         {
@@ -203,16 +210,16 @@ public partial class validateResponse : IContext
                     var choices = (goal.App ?? app)?.Type.Choices.Get(targetType);
                     if (choices != null)
                     {
-                        var sval = (await p.Value()) as global::app.type.text.@this;
+                        var sval = resolved as global::app.type.text.@this;
                         if (sval != null && choices.Any(c => sval.AreEqual(c)))
                             continue;
                         errors.Add(
-                            $"Step[{step.Index}] {a.Module}.{a.ActionName}: parameter '{p.Name}' = {ValidateResponseHelpers.FormatValueForError((await p.Value()))} is not a valid {p.Type.Name}. Valid values: {string.Join(", ", choices)}.");
+                            $"Step[{step.Index}] {a.Module}.{a.ActionName}: parameter '{p.Name}' = {ValidateResponseHelpers.FormatValueForError(resolved)} is not a valid {p.Type.Name}. Valid values: {string.Join(", ", choices)}.");
                         continue;
                     }
 
                     // Ask the declared type object whether it can be made from the value.
-                    var conv = p.Type.Convert(await p.Value(), (goal.App ?? app)!.User.Context!);
+                    var conv = p.Type.Convert(resolved, (goal.App ?? app)!.User.Context!);
                     if (conv.Success) continue;
 
                     var validValues = (goal.App ?? app)?.Type.GetValidValues(targetType);
@@ -220,7 +227,7 @@ public partial class validateResponse : IContext
                         ? $" Valid values: {string.Join(", ", validValues)}."
                         : "";
                     errors.Add(
-                        $"Step[{step.Index}] {a.Module}.{a.ActionName}: parameter '{p.Name}' = {ValidateResponseHelpers.FormatValueForError((await p.Value()))} cannot be converted to type '{p.Type.Name}'.{hint} If the parameter is optional and you don't have a value, omit it from the parameters list — never emit \"\" as a placeholder.");
+                        $"Step[{step.Index}] {a.Module}.{a.ActionName}: parameter '{p.Name}' = {ValidateResponseHelpers.FormatValueForError(resolved)} cannot be converted to type '{p.Type.Name}'.{hint} If the parameter is optional and you don't have a value, omit it from the parameters list — never emit \"\" as a placeholder.");
                 }
             }
         }
