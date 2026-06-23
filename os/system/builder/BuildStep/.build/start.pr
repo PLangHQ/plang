@@ -674,7 +674,9 @@
                           "parameters": [
                             {
                               "name": "GoalName",
-                              "type": "goal.call",
+                              "type": {
+                                "name": "goal.call"
+                              },
                               "value": {
                                 "name": "RefineActions",
                                 "parameters": []
@@ -1067,7 +1069,9 @@
                           "parameters": [
                             {
                               "name": "GoalName",
-                              "type": "goal.call",
+                              "type": {
+                                "name": "goal.call"
+                              },
                               "value": {
                                 "name": "HandleStepFailure"
                               }

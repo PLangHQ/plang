@@ -351,10 +351,14 @@ public class Wire : JsonConverter<@this>
                     name = reader.TokenType == JsonTokenType.Null ? "" : reader.GetString() ?? "";
                     break;
                 case "type":
-                    // The structured entity {name, kind?, strict?} — its own
-                    // JsonConverter handles both string-form ("text") and
-                    // dict-form. No sibling `kind` key on the wire — the
-                    // entity owns its full identity in one slot.
+                    // The type is the structured entity {name, kind?, strict?}. A bare
+                    // string form (type:"string", type:"text") is the OLD shape — invalid.
+                    // Throw so a stale/malformed .pr surfaces loudly during the transition
+                    // instead of silently mis-borning.
+                    if (reader.TokenType == JsonTokenType.String)
+                        throw new JsonException(
+                            $"invalid .pr schema: 'type' must be an object {{name, ...}}, not the bare string "
+                            + $"\"{reader.GetString()}\" (value slot '{(string.IsNullOrEmpty(name) ? "(unnamed)" : name)}').");
                     if (reader.TokenType == JsonTokenType.Null) typeRef = null;
                     else
                     {
@@ -407,16 +411,16 @@ public class Wire : JsonConverter<@this>
                             new global::app.type.reader.ReadContext(_context, _template));
                         reader = jr.Inner;
                     }
-                    // TEMP: goal.call has no type reader yet, so born it inline from the
-                    // descriptor — GoalCall.Convert keeps its params as Data references (no
-                    // dict-render, no goal-graph walk). Remove this branch once goal.call
-                    // gets a real reader.
+                    // TEMP: goal.call has no type reader yet, so born it inline. Deserialize
+                    // the descriptor AS a GoalCall through the SAME options — its nested
+                    // params (List<Data>) born through the Wire, so a %ref% param
+                    // (path=%path%) borns as a variable reference (resolved call-by-value at
+                    // injection), not a flattened literal. Remove once goal.call gets a reader.
                     else if (typeRef is { IsNull: false } && typeRef.Name == "goal.call" && _context != null)
                     {
                         using var vdoc = JsonDocument.ParseValue(ref reader);
-                        var descriptor = global::app.type.item.serializer.json.Parse(vdoc.RootElement);
-                        born = global::app.goal.GoalCall.Convert(descriptor, typeRef.Kind, _context).Peek()
-                               as global::app.type.item.@this;
+                        born = JsonSerializer.Deserialize<global::app.goal.GoalCall>(
+                            vdoc.RootElement.GetRawText(), options);
                     }
                     else
                     {

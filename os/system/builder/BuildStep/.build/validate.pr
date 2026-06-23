@@ -16,24 +16,32 @@
           "parameters": [
             {
               "name": "Left",
-              "type": "object",
+              "type": {
+                "name": "object"
+              },
               "value": "%compileResult.errors%"
             },
             {
               "name": "Operator",
-              "type": "operator",
+              "type": {
+                "name": "operator"
+              },
               "value": "isempty"
             },
             {
               "name": "Right",
-              "type": "bool",
+              "type": {
+                "name": "bool"
+              },
               "value": false
             }
           ],
           "defaults": [
             {
               "name": "negate",
-              "type": "bool",
+              "type": {
+                "name": "bool"
+              },
               "value": false
             }
           ],
@@ -45,17 +53,23 @@
           "parameters": [
             {
               "name": "Message",
-              "type": "string",
+              "type": {
+                "name": "text"
+              },
               "value": "Step %step.Index% (%step.Text%): %compileResult.errors%"
             },
             {
               "name": "StatusCode",
-              "type": "int",
+              "type": {
+                "name": "int"
+              },
               "value": 500
             },
             {
               "name": "Key",
-              "type": "string",
+              "type": {
+                "name": "text"
+              },
               "value": "GoalBug"
             }
           ],
@@ -84,24 +98,32 @@
           "parameters": [
             {
               "name": "Left",
-              "type": "object",
+              "type": {
+                "name": "object"
+              },
               "value": "%compileResult.actions%"
             },
             {
               "name": "Operator",
-              "type": "operator",
+              "type": {
+                "name": "operator"
+              },
               "value": "isempty"
             },
             {
               "name": "Right",
-              "type": "object",
+              "type": {
+                "name": "object"
+              },
               "value": null
             }
           ],
           "defaults": [
             {
               "name": "negate",
-              "type": "bool",
+              "type": {
+                "name": "bool"
+              },
               "value": false
             }
           ],
@@ -113,17 +135,23 @@
           "parameters": [
             {
               "name": "Message",
-              "type": "string",
+              "type": {
+                "name": "text"
+              },
               "value": "Step %step.Index% (%step.Text%) has no actions."
             },
             {
               "name": "StatusCode",
-              "type": "int",
+              "type": {
+                "name": "int"
+              },
               "value": 500
             },
             {
               "name": "Key",
-              "type": "string",
+              "type": {
+                "name": "text"
+              },
               "value": "GoalBug"
             }
           ],
@@ -152,7 +180,9 @@
           "parameters": [
             {
               "name": "Collection",
-              "type": "object",
+              "type": {
+                "name": "object"
+              },
               "value": "%compileResult.actions%"
             }
           ],
@@ -165,14 +195,18 @@
           "parameters": [
             {
               "name": "GoalName",
-              "type": "goal.call",
+              "type": {
+                "name": "goal.call"
+              },
               "value": {
                 "name": "ValidateAction",
                 "parallel": false,
                 "parameters": [
                   {
                     "name": "__vAct__",
-                    "type": "string",
+                    "type": {
+                      "name": "text"
+                    },
                     "value": "%item%"
                   }
                 ],
@@ -212,24 +246,32 @@
               "parameters": [
                 {
                   "name": "Left",
-                  "type": "object",
+                  "type": {
+                    "name": "object"
+                  },
                   "value": "%__vAct__.errors%"
                 },
                 {
                   "name": "Operator",
-                  "type": "operator",
+                  "type": {
+                    "name": "operator"
+                  },
                   "value": "isempty"
                 },
                 {
                   "name": "Right",
-                  "type": "bool",
+                  "type": {
+                    "name": "bool"
+                  },
                   "value": false
                 }
               ],
               "defaults": [
                 {
                   "name": "negate",
-                  "type": "bool",
+                  "type": {
+                    "name": "bool"
+                  },
                   "value": false
                 }
               ],
@@ -241,17 +283,23 @@
               "parameters": [
                 {
                   "name": "Message",
-                  "type": "string",
+                  "type": {
+                    "name": "text"
+                  },
                   "value": "Action %__vAct__.module%.%__vAct__.action% failed for step %step.Index% (%step.Text%): %__vAct__.errors%"
                 },
                 {
                   "name": "StatusCode",
-                  "type": "int",
+                  "type": {
+                    "name": "int"
+                  },
                   "value": 500
                 },
                 {
                   "name": "Key",
-                  "type": "string",
+                  "type": {
+                    "name": "text"
+                  },
                   "value": "GoalBug"
                 }
               ],

@@ -16,14 +16,18 @@
           "parameters": [
             {
               "name": "GoalName",
-              "type": "goal.call",
+              "type": {
+                "name": "goal.call"
+              },
               "value": {
                 "name": "BuildGoal/Start",
                 "parallel": false,
                 "parameters": [
                   {
                     "name": "goal",
-                    "type": "string",
+                    "type": {
+                      "name": "text"
+                    },
                     "value": "%goal%"
                   }
                 ],

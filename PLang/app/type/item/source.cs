@@ -114,9 +114,14 @@ public sealed class source : @this, module.IContext
             // SOURCE authors its own failure story — the declared form did not parse
             // as its declared {type, kind}. Keyed MaterializeFailed and naming the
             // binding so navigation / set / read all surface one actionable error at
-            // first touch, never thrown to the courier.
+            // first touch, never thrown to the courier. A JsonException carries the JSON
+            // path + line STJ stamped (which slot in WHICH .pr, at what line) — append it
+            // so a malformed .pr is pinpointed, not just named.
+            var where = ex is System.Text.Json.JsonException je && (je.Path != null || je.LineNumber != null)
+                ? $" [at {je.Path ?? "?"}, line {je.LineNumber?.ToString() ?? "?"}]"
+                : "";
             asking.Fail(new global::app.error.Error(
-                $"failed to read %{asking.Name}% as {_type}{(_kind != null ? $"/{_kind}" : "")}: {ex.Message}",
+                $"failed to read %{asking.Name}% as {_type}{(_kind != null ? $"/{_kind}" : "")}: {ex.Message}{where}",
                 "MaterializeFailed", 400) { Exception = ex });
             return Absent;
         }

@@ -64,12 +64,16 @@
           "parameters": [
             {
               "name": "Name",
-              "type": "variable",
+              "type": {
+                "name": "variable"
+              },
               "value": "%fixerMessages%"
             },
             {
               "name": "Value",
-              "type": "list`1",
+              "type": {
+                "name": "list`1"
+              },
               "value": [
                 {
                   "Role": "user",
@@ -81,7 +85,9 @@
           "defaults": [
             {
               "name": "asdefault",
-              "type": "bool",
+              "type": {
+                "name": "bool"
+              },
               "value": false
             }
           ],
@@ -106,12 +112,16 @@
           "parameters": [
             {
               "name": "Messages",
-              "type": "list<llmmessage>",
+              "type": {
+                "name": "list<llmmessage>"
+              },
               "value": "%fixerMessages%"
             },
             {
               "name": "Schema",
-              "type": "dictionary`2",
+              "type": {
+                "name": "dictionary`2"
+              },
               "value": {
                 "description": "string",
                 "steps": "list<{index: int, actions: list<string>, confidence: string, explanation?: string}>"
@@ -119,39 +129,53 @@
             },
             {
               "name": "Cache",
-              "type": "bool",
+              "type": {
+                "name": "bool"
+              },
               "value": "%!build.cache%"
             },
             {
               "name": "ContinuePreviousConversation",
-              "type": "bool",
+              "type": {
+                "name": "bool"
+              },
               "value": "%plan%"
             },
             {
               "name": "Model",
-              "type": "text",
+              "type": {
+                "name": "text"
+              },
               "value": "gpt-5.4-nano"
             }
           ],
           "defaults": [
             {
               "name": "temperature",
-              "type": "double",
+              "type": {
+                "name": "double"
+              },
               "value": 0
             },
             {
               "name": "maxtokens",
-              "type": "int",
+              "type": {
+                "name": "int"
+              },
               "value": 16000
             },
             {
               "name": "maxtoolcalls",
-              "type": "int",
+              "type": {
+                "name": "int"
+              },
               "value": 10
             },
             {
               "name": "maxvalidationretries",
-              "type": "int",
+              "type": {
+                "name": "int"
+              },
               "value": 0
             }
           ],
@@ -163,19 +187,25 @@
           "parameters": [
             {
               "name": "Name",
-              "type": "variable",
+              "type": {
+                "name": "variable"
+              },
               "value": "%plan%"
             },
             {
               "name": "Value",
-              "type": "object",
+              "type": {
+                "name": "object"
+              },
               "value": "%!data%"
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
-              "type": "bool",
+              "type": {
+                "name": "bool"
+              },
               "value": false
             }
           ],
