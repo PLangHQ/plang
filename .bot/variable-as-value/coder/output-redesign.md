@@ -150,3 +150,70 @@ Two corrections that supersede the "inline writer.Format branch" idea:
 
 Net: types stay format-neutral, the writer renders, containers' text form is one isolated file
 per type, dispatch is by format (no `if`), writers stream to the Stream. Read stays untouched.
+
+## DECISIONS LOG (Ingi + coder, 2026-06-23) — the per-format serialization model
+
+This supersedes the earlier "reflection registry" sketch. Captured so context survives.
+
+### The model (agreed)
+- A value serializes itself by emitting **format-neutral tokens** via `item.Output(IWriter)`
+  (`BeginObject`/`Name`/`String`/`Long`/…). The per-format **writer** (`text.Writer`,
+  `json.Writer`, `plang.Writer`, later `protobuf.Writer`) renders those tokens. **Format
+  lives in the writer**, not in the type. One `Output` per type; writer owns format.
+- `data.Output`: **Data owns its `@schema` layer**. The `{@schema,name,type,…}` envelope
+  opens ONLY for `writer.EmitsSchema` (application/plang); json/text write the bare value.
+  The value-write happens **once** (envelope just wraps it). References (variable) resolve
+  before output (the variable branch); self-ref guarded (`OutputSelfReference`, loud).
+- `clr.Output` owns ONLY **reflect + lift**: a foreign host has no plang shape → render as
+  its `[Out]` fields (`Tagged.PropertiesFor`); each field VALUE is raw CLR → lifted to its
+  item via `type.@this.Create(raw)` → THAT item writes itself. So text/number/dict/… own
+  their own output; `clr` owns just "reflect my host." **`OutputAny` is DELETED** (it was
+  the `NormalizeValue` type-switch reborn).
+- `text.Writer` is **pure text**, owns the `Stream`, streams leaves straight through
+  (`String→bytes→stream`); structural tokens (`BeginObject`) THROW (a container never
+  reaches it — see the exception below).
+
+### The one exception — non-leaf × text
+- A container/object (`dict`/`list`/`clr`) on a **text** channel has no plain-text form,
+  so it serializes as **JSON** — a different serialization than "render my tokens." This
+  is the only `(type, format)` pair that needs bespoke per-format logic today.
+- Mechanism (agreed shape, NOT the rejected one): each diverging type owns a small
+  **per-type registry** of **`IOutput` INSTANCES** — `interface IOutput { ValueTask
+  Output(item.@this value, IWriter writer, View mode, context? ctx); }`. The type lists its
+  own format serializers (e.g. `dict/format/text.cs : IOutput` → `writer.String(json)`),
+  default = its own token output. **No central registry, no reflection-to-call, no static
+  classes** (instance classes + a static *field* Dictionary is fine).
+- The exact **dispatch** (how `Output` picks the format serializer) is STILL OPEN — string
+  key + lookup vs a typed `writer.Format`. Deferred (do not implement yet).
+
+### `clr` moves to its own namespace (agreed)
+- `app.type.item.clr` → **`app.type.clr.@this`** (follow the `app.type.<name>.@this`
+  convention, like dict/list). Removes the class-vs-namespace clash (`clr/format/text.cs`
+  works) and the "exception" — every type keys uniformly. ~10 real references
+  (`global::app.type.item.clr` in data.cs ×4, type.cs:395, item.cs `new clr`); add
+  `global using Clr = global::app.type.clr.@this;`. (computed/source can stay under
+  app.type.item — no format overrides, no collision.)
+
+### Rejected (do not reintroduce)
+- `if (writer.Format == "text")` branching inside a type.
+- A central `OutputAny`/`NormalizeValue` type-switch.
+- JSON logic inside `text.Writer`.
+- A central serializer registry scanned by reflection + static `serializer/<format>.cs`
+  classes (`_generatedWrite` + `Delegate.CreateDelegate`). OBP violation; statics forbidden.
+- Resolve-then-serialize (walks the tree twice). Single pass only.
+
+### State in the tree right now (mid-refactor)
+- DONE/committed: `item.Output` base (→`Write`), `dict`/`list.Output` (tokens),
+  `clr.Output` (reflect+lift), `data.Output` (@schema gate + value-once),
+  `text.Writer` (streaming pure), `IWriter.EmitsSchema`, `text` channel → `data.Output`.
+- STILL THE REFLECTION REGISTRY (to be replaced by per-type `IOutput` registries):
+  `type/reader/this.cs` `_generatedWrite` + `Output(itemType, format)` lookup, and
+  `dict`/`list`/serializer/text.cs are STATIC classes. **Replace these** with the
+  per-type `IOutput`-instance registries + move `clr`.
+- NOT DONE: the big flip of plang/json channels off `Wire`/`Normalize` onto `data.Output`;
+  delete `Normalize`/`NormalizeValue`/`NormalizeObject`; rename `this.Normalize.cs`→Output.
+
+### Separate, still-open blocker (orthogonal to all the above)
+- The builder fails on `%msg%`: the `render … write to %msg%` stores a `%!data%`
+  self-reference (SETMSG trace: `value=variable raw=%!data%`), so resolving `%msg%` loops.
+  Now LOUD (`OutputSelfReference`) instead of stack-overflow. NOT a serializer bug.
