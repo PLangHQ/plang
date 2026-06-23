@@ -307,3 +307,21 @@ EVERY write path; `Wire.Write`/`Normalize` are deleted. `Wire.Read` stays (read)
   for `data.Output` to produce its hash **intrinsically** — write into a *hashing writer* —
   not via an intermediate buffer. Revisit when doing (a)'s wire flip (the wire write and the
   hash should be the one same `data.Output` walk).
+
+## (a) progress + correction (2026-06-23)
+- **Piece 1 DONE + verified + committed** (`f8f8c20a4`): signing hash canonicalizes via
+  data.Output. Green: VerifyActionTests/SignActionTests/Stage3_ArraysAsDataTests/HashTypeTests.
+  (Shape flagged — hashing-writer, revisit.)
+- **Pieces 3–7 are ONE atomic landing**, not green-incrementable: SerializeAsync (writer) +
+  dict/list reader + PrWrite/.pr must flip together (emit {type,value} ⇒ reader must read it ⇒
+  every .pr/channel read changes at once). Needs full C# suite + a builder run to verify.
+- **CORRECTION — layers are NOT uniform** (spec assumed signature/encryption/compression alike):
+  - `signature` = wrapping layer, `value` = inner Data, serialized via `Write(IWriter)` (w.Value).
+    Port: async `Output` writing `{@schema:signature, <leaf fields via field.Write(w)>,
+    value: data.Output(inner, layer:true)}`. Leaf field renders confirmed: text→String,
+    datetime→DateTimeOffset, binary→Bytes.
+  - `archive` = LEAF (`IsLeaf`, value=compressed bytes), serialized via its OWN `archive/Json.cs`
+    STJ converter — different mechanism. Port needs an `Output` writing `{@schema:archive,
+    type, value:bytes}` AND retiring/replacing its Json.cs. Per-layer design, not mechanical.
+  - The hoist (`Wire.cs:564`) currently checks `is signature` only — archive's layer write path
+    must be confirmed (likely via its Json.cs today). Trace before flipping.
