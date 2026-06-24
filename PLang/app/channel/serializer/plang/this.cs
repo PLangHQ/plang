@@ -144,11 +144,31 @@ public sealed class @this : ISerializer
     {
         try
         {
-            // Materialize lazy reference fundamentals (image bytes) above the
-            // STJ converter wall — the sync Wire.Write below cannot await.
+            // Materialize lazy reference fundamentals (image bytes) before the walk.
             var loadError = await data.Load();
             if (loadError != null) return loadError;
-            await JsonSerializer.SerializeAsync(stream, data, _outbound, cancellationToken);
+            // Sign-if-missing at the I/O boundary — a clean await (the old Wire.Write
+            // path forced .GetAwaiter().GetResult()). A Data crossing application/plang
+            // in a real actor scope is wrapped in ONE signature layer; skipped when no
+            // actor (internal serialize) or already a layer (re-serialize / pre-signed).
+            if (data.Context?.Actor != null && data.Peek() is not global::app.type.signature.@this)
+            {
+                var signResult = await data.Context.App.RunAction(
+                    new app.module.signing.sign { Data = data }, data.Context);
+                if (signResult.Success) data = signResult;
+            }
+            await using var utf8 = new Utf8JsonWriter(stream);
+            var writer = new global::app.channel.serializer.json.Writer(
+                utf8, _outbound, global::app.View.Out,
+                data.Context?.App?.Type?.Renderers, emitsSchema: true);
+            // A layer (signature) writes its OWN @schema:<kind> envelope; a plain Data
+            // writes the @schema:data layer. The layer-vs-data choice lives here, at the
+            // serializer boundary — data.Output stays clean (@schema:data only).
+            if (data.Peek() is global::app.type.signature.@this sig)
+                await sig.Output(writer, global::app.View.Out, data.Context);
+            else
+                await data.Output(writer, global::app.View.Out, data.Context, layer: true);
+            await utf8.FlushAsync(cancellationToken);
             return global::app.data.@this.Ok();
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)

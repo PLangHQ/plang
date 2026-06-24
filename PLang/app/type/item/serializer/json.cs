@@ -76,13 +76,25 @@ public static partial class json
                 System.Text.Json.JsonValueKind.False => new @bool.@this(false),
                 System.Text.Json.JsonValueKind.Null => @null.@this.Instance,
                 System.Text.Json.JsonValueKind.Undefined => @null.@this.Instance,
-                System.Text.Json.JsonValueKind.Object => global::app.data.@this.IsDataMarked(element)
+                System.Text.Json.JsonValueKind.Object => global::app.data.@this.IsDataMarked(element) || IsTypedEntry(element)
                     ? System.Text.Json.JsonSerializer.Deserialize<global::app.data.@this>(element)
                     : ObjectLeaf(element, depth),
                 System.Text.Json.JsonValueKind.Array => ArrayLeaf(element, depth),
                 _ => element,
             };
         }
+
+        // A typed value WITHOUT the @schema layer marker — a dict/list entry's
+        // {type:{name,…}, value:…} shape. The container knows its entries are typed
+        // values, so this rides as a Data (Wire.ReadBody reads type+value), no @schema
+        // needed. Distinguished from a plain object by a structured `type` + a `value`
+        // sibling — a user object literally shaped {type:{name:…}, value:…} is the
+        // accepted rare collision (entries carry type, not @schema, by design).
+        static bool IsTypedEntry(System.Text.Json.JsonElement element)
+            => element.TryGetProperty("type", out var t)
+               && t.ValueKind == System.Text.Json.JsonValueKind.Object
+               && t.TryGetProperty("name", out _)
+               && element.TryGetProperty("value", out _);
 
         // System.Text.Json.Nodes DOM types (JsonObject/JsonArray/JsonValue)
         // round-trip through the JsonElement path so numeric/null/bool

@@ -109,24 +109,26 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>
     /// Renders the flat <c>{@schema:"signature", …fields…, value:&lt;inner&gt;}</c>
-    /// layer object. The layer owns this layout; every field renders ITSELF
-    /// through <see cref="IWriter.Value"/>, and the <c>value</c> slot recurses so
-    /// the inner Data writes itself as a <c>@schema:"data"</c> record.
+    /// layer object. The layer owns this layout; every leaf field renders ITSELF via
+    /// its own <see cref="global::app.type.item.@this.Write"/> (text→String,
+    /// datetime→DateTimeOffset, binary→Bytes), and the <c>value</c> slot recurses
+    /// through <see cref="global::app.data.@this.Output"/> so the inner Data writes
+    /// itself as a layer-level <c>@schema:"data"</c> record.
     /// </summary>
-    public override void Write(IWriter w)
+    public override async System.Threading.Tasks.ValueTask Output(
+        IWriter w, global::app.View mode, global::app.actor.context.@this? context)
     {
         w.BeginObject();
         w.Name(global::app.data.@this.WireSchema); w.String(WireSchemaSignature);
         // `type` = the algorithm within this layer — uniform with every layer
         // ({@schema:archive, type:gzip}, {@schema:encryption, type:aes-…}).
-        w.Name("type"); w.Value(Algorithm);
-        w.Name("nonce"); w.Value(Nonce);
-        w.Name("created"); w.Value(Created);
-        if (Expires is { } exp) { w.Name("expires"); w.Value(exp); }
-        w.Name("identity"); w.Value(Identity);
+        w.Name("type"); Algorithm.Write(w);
+        w.Name("nonce"); Nonce.Write(w);
+        w.Name("created"); Created.Write(w);
+        if (Expires is { } exp) { w.Name("expires"); exp.Write(w); }
+        w.Name("identity"); Identity.Write(w);
         // Contracts are bare strings on the wire (and in ToSigningBytes), not
-        // data records — a list of text renders its elements as records, so emit
-        // the strings directly.
+        // data records — emit the strings directly.
         if (Contracts is not null)
         {
             w.Name("contracts");
@@ -140,7 +142,40 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         w.Name("type"); w.String(Hash.Algorithm);
         w.Name("value"); w.String(Hash.ToBase64());
         w.EndObject();
-        w.Name("signature"); w.Value(Signature);
+        w.Name("signature"); Signature.Write(w);
+        // The inner Data is a full layer-level payload (its own @schema:data).
+        w.Name("value"); await Value.Output(w, mode, context, layer: true);
+        w.EndObject();
+    }
+
+    /// <summary>
+    /// Sync layer render for the STJ <see cref="global::app.data.Wire"/> write paths
+    /// (Serialize/Store/.pr) that cannot await <see cref="Output"/>. Same layout; the
+    /// inner <c>value</c> rides via the sync tree-walk. Retired once every write path
+    /// is on <see cref="Output"/> (then this and IWriter.Value both go).
+    /// </summary>
+    public override void Write(IWriter w)
+    {
+        w.BeginObject();
+        w.Name(global::app.data.@this.WireSchema); w.String(WireSchemaSignature);
+        w.Name("type"); Algorithm.Write(w);
+        w.Name("nonce"); Nonce.Write(w);
+        w.Name("created"); Created.Write(w);
+        if (Expires is { } exp) { w.Name("expires"); exp.Write(w); }
+        w.Name("identity"); Identity.Write(w);
+        if (Contracts is not null)
+        {
+            w.Name("contracts");
+            w.BeginArray(-1);
+            foreach (var c in ContractStrings()) w.String(c);
+            w.EndArray();
+        }
+        w.Name("hash");
+        w.BeginObject();
+        w.Name("type"); w.String(Hash.Algorithm);
+        w.Name("value"); w.String(Hash.ToBase64());
+        w.EndObject();
+        w.Name("signature"); Signature.Write(w);
         w.Name("value"); w.Value(Value);
         w.EndObject();
     }
