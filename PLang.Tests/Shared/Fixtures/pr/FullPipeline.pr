@@ -13,19 +13,25 @@
           "parameters": [
             {
               "name": "name",
-              "value": "greeting",
               "type": {
                 "name": "variable"
-              }
+              },
+              "value": "greeting"
             },
             {
               "name": "value",
+              "type": {
+                "name": "text"
+              },
               "value": "Hello"
             }
           ],
           "defaults": [
             {
               "name": "type",
+              "type": {
+                "name": "text"
+              },
               "value": "string"
             }
           ]
@@ -43,13 +49,16 @@
           "parameters": [
             {
               "name": "name",
-              "value": "user",
               "type": {
                 "name": "variable"
-              }
+              },
+              "value": "user"
             },
             {
               "name": "value",
+              "type": {
+                "name": "text"
+              },
               "value": "World"
             }
           ]
@@ -67,6 +76,9 @@
           "parameters": [
             {
               "name": "Data",
+              "type": {
+                "name": "text"
+              },
               "value": "%greeting%, %user%!"
             }
           ]
@@ -84,13 +96,16 @@
           "parameters": [
             {
               "name": "name",
-              "value": "message",
               "type": {
                 "name": "variable"
-              }
+              },
+              "value": "message"
             },
             {
               "name": "value",
+              "type": {
+                "name": "text"
+              },
               "value": "%greeting%, %user%!"
             }
           ]

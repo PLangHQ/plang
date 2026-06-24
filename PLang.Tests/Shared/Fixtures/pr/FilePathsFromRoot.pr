@@ -13,6 +13,9 @@
           "parameters": [
             {
               "name": "path",
+              "type": {
+                "name": "text"
+              },
               "value": "testdata.txt"
             }
           ]
@@ -23,10 +26,10 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "relative",
               "type": {
                 "name": "variable"
-              }
+              },
+              "value": "relative"
             },
             {
               "name": "Value",
@@ -47,6 +50,9 @@
           "parameters": [
             {
               "name": "path",
+              "type": {
+                "name": "text"
+              },
               "value": "/testdata.txt"
             }
           ]
@@ -57,10 +63,10 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "absolute",
               "type": {
                 "name": "variable"
-              }
+              },
+              "value": "absolute"
             },
             {
               "name": "Value",
@@ -81,6 +87,9 @@
           "parameters": [
             {
               "name": "path",
+              "type": {
+                "name": "text"
+              },
               "value": "sub/subdata.txt"
             }
           ]
@@ -91,10 +100,10 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "subfolder",
               "type": {
                 "name": "variable"
-              }
+              },
+              "value": "subfolder"
             },
             {
               "name": "Value",
@@ -115,6 +124,9 @@
           "parameters": [
             {
               "name": "path",
+              "type": {
+                "name": "text"
+              },
               "value": "./testdata.txt"
             }
           ]
@@ -125,10 +137,10 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "dotslash",
               "type": {
                 "name": "variable"
-              }
+              },
+              "value": "dotslash"
             },
             {
               "name": "Value",

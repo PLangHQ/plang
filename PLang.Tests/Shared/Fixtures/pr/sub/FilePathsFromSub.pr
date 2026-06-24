@@ -13,6 +13,9 @@
           "parameters": [
             {
               "name": "path",
+              "type": {
+                "name": "text"
+              },
               "value": "/testdata.txt"
             }
           ]
@@ -23,10 +26,10 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "rootAbsolute",
               "type": {
                 "name": "variable"
-              }
+              },
+              "value": "rootAbsolute"
             },
             {
               "name": "Value",
