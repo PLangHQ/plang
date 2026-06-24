@@ -44,23 +44,15 @@ public class NavigationAccessTests
         await Assert.That((await cell.Value())?.ToString()).IsEqualTo("Ada");
     }
 
-    // The contract error — type-unknown navigation does not guess.
-    [Test] public async Task Navigation_TypeUnknown_ProducesAddAsTypeError()
+    // Text has no by-key structure — navigating it is an authoring error. Real
+    // input is typed by mimetype at the boundary, so navigation only ever meets
+    // a structured value; a bare text reaching here means the author navigated a string.
+    [Test] public async Task Navigation_OnText_FailsWithCantNavigateText()
     {
-        var d = data.Ok("{\"port\":8080}"); // authored string, no type stamp
+        var d = data.Ok("hello");          // genuinely text (authored)
         var r = await d.GetChild("port");
         await Assert.That(r.Success).IsFalse();
-        await Assert.That(r.Error).IsNotNull();
-    }
-
-    // Independent #18 — the exact phrasing is the LLM teaching surface. Pin the
-    // literal substrings `add ` and `as ` so they stay the contract.
-    [Test] public async Task Navigation_TypeUnknownErrorMessage_ContainsLiteralAsType()
-    {
-        var d = data.Ok("{\"port\":8080}");
-        var r = await d.GetChild("port");
-        await Assert.That(r.Error!.Message).Contains("add ");
-        await Assert.That(r.Error!.Message).Contains("as ");
+        await Assert.That(r.Error!.Key).IsEqualTo("CantNavigateText");
     }
 
     // An authored dict value is already structured — navigation walks it

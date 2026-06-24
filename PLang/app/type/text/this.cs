@@ -93,6 +93,23 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override bool IsLeaf => true;
     public override void Write(global::app.channel.serializer.IWriter w) => w.String(_value);
 
+    /// <summary>
+    /// Text has no by-key structure — navigating it (<c>%x.port%</c>) is an authoring
+    /// error. A real input is typed by its mimetype at the boundary (object/json,
+    /// table/csv), so a value reaching navigation is already structured; a bare text
+    /// here means the author navigated a string. Method calls (<c>%x.grep("..")%</c>)
+    /// go through InvokeMethod, not here, so they are unaffected.
+    /// </summary>
+    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(
+        global::app.data.@this parent, string key)
+    {
+        var who = string.IsNullOrEmpty(parent.Name) ? "value" : $"%{parent.Name}%";
+        var err = global::app.data.@this.FromError(new global::app.error.Error(
+            $"cannot navigate .{key}: {who} is text", "CantNavigateText", 400));
+        err.Name = key;
+        return System.Threading.Tasks.ValueTask.FromResult(err);
+    }
+
     public @this(string value) { _value = value ?? string.Empty; }
 
     /// <summary>

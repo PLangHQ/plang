@@ -173,25 +173,6 @@ public partial class @this
         return int.TryParse(args, out var n) ? n : 0;
     }
 
-
-    /// <summary>
-    /// The type-unknown navigation error — the contract surface for "you tried
-    /// to navigate a value that has no type; tell PLang how to read it." The
-    /// wording is the LLM teaching surface; <c>add `as &lt;type&gt;`</c> names
-    /// the fix.
-    /// </summary>
-    private @this TypeUnknownError(string key)
-    {
-        var nameHint = string.IsNullOrEmpty(Name) ? "value" : $"%{Name}%";
-        var isText = _type is global::app.type.text.@this;
-        var what = isText ? "is text" : "has no type";
-        var err = FromError(new global::app.error.Error(
-            $"cannot navigate .{key}: {nameHint} {what}; add `as <type>` (e.g. `as object/json`) to navigate it",
-            "TypeUnknown", 400));
-        err.Name = key;
-        return err;
-    }
-
     /// <summary>
     /// Accesses Data's own infrastructure properties (Name, Type, Error, Success, Properties, etc.).
     /// Used when navigating with ! prefix: %user!Name%, %result!Error%, etc.
