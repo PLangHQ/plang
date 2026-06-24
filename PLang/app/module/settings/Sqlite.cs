@@ -93,7 +93,15 @@ public sealed class Sqlite : IStore
         }
     }
 
-    public Task<data.@this> Get(string table, string key)
+    // The store persists TEXT, the serializer speaks streams — so the store owns its own
+    // TEXT↔stream bridge (it chose the column type). Read: a stored string → a Data<T>.
+    private async Task<data.@this<T>> Hydrate<T>(string stored) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+    {
+        using var ms = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(stored));
+        return await _serializer.DeserializeAsync<T>(ms, global::app.View.Store);
+    }
+
+    public async Task<data.@this<T>> Get<T>(string table, string key) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
         try
         {
@@ -106,47 +114,16 @@ public sealed class Sqlite : IStore
 
             var result = cmd.ExecuteScalar();
             if (result == null || result == DBNull.Value)
-                return Task.FromResult(app.data.@this.Ok(null));
-
-            // Load returns the reconstructed Data ITSELF (no envelope around it).
-            var deserResult = _serializer.Load(result.ToString()!);
-            if (!deserResult.Success) return Task.FromResult(app.data.@this.FromError(deserResult.Error!));
-            return Task.FromResult(deserResult);
+                return data.@this<T>.Ok(default!);
+            return await Hydrate<T>(result.ToString()!);
         }
         catch (Exception ex)
         {
-            return Task.FromResult(app.data.@this.FromError(
-                SettingsError.FromException(ex, table, key)));
+            return data.@this<T>.FromError(SettingsError.FromException(ex, table, key));
         }
     }
 
-    public Task<data.@this> Get<T>(string table, string key) where T : data.@this
-    {
-        try
-        {
-            EnsureTable(table);
-            using var connection = new SqliteConnection(_connectionString);
-            connection.Open();
-            using var cmd = connection.CreateCommand();
-            cmd.CommandText = $"SELECT data FROM [{SanitizeTableName(table)}] WHERE key = @key;";
-            cmd.Parameters.AddWithValue("@key", key);
-
-            var result = cmd.ExecuteScalar();
-            if (result == null || result == DBNull.Value)
-                return Task.FromResult(app.data.@this.Ok(null));
-
-            var (typed, derr) = _serializer.Load<T>(result.ToString()!);
-            if (derr != null) return Task.FromResult(app.data.@this.FromError(derr));
-            return Task.FromResult((data.@this?)typed ?? app.data.@this.Ok(null));
-        }
-        catch (Exception ex)
-        {
-            return Task.FromResult(app.data.@this.FromError(
-                SettingsError.FromException(ex, table, key)));
-        }
-    }
-
-    public Task<data.@this> GetAll(string table)
+    public async Task<data.@this<global::app.type.list.@this>> GetAll<T>(string table) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
         try
         {
@@ -156,56 +133,24 @@ public sealed class Sqlite : IStore
             using var cmd = connection.CreateCommand();
             cmd.CommandText = $"SELECT key, data FROM [{SanitizeTableName(table)}];";
 
-            var items = new List<data.@this>();
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                var raw = reader.IsDBNull(1) ? null : reader.GetString(1);
-                if (raw != null)
-                {
-                    var deserResult = _serializer.Load(raw);
-                    if (deserResult.Success && !deserResult.Peek().IsNull) items.Add(deserResult);
-                }
-            }
-            return Task.FromResult(app.data.@this.Ok((object)items));
-        }
-        catch (Exception ex)
-        {
-            return Task.FromResult(app.data.@this.FromError(
-                SettingsError.FromException(ex, table)));
-        }
-    }
-
-    public Task<data.@this<global::app.type.list.@this>> GetAll<T>(string table) where T : data.@this
-    {
-        try
-        {
-            EnsureTable(table);
-            using var connection = new SqliteConnection(_connectionString);
-            connection.Open();
-            using var cmd = connection.CreateCommand();
-            cmd.CommandText = $"SELECT key, data FROM [{SanitizeTableName(table)}];";
-
+            // Read all rows first (the reader is sync), then deserialize each — keeps the
+            // connection lifetime tight and the await off the open reader.
+            var raws = new List<string>();
+            using (var reader = cmd.ExecuteReader())
+                while (reader.Read())
+                    if (!reader.IsDBNull(1)) raws.Add(reader.GetString(1));
             var list = new global::app.type.list.@this();
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
+            foreach (var raw in raws)
             {
-                var raw = reader.IsDBNull(1) ? null : reader.GetString(1);
-                if (raw != null)
-                {
-                    var (loaded, _) = _serializer.Load<T>(raw);
-                    if (loaded != null)
-                    {
-                        list.Add(loaded);
-                    }
-                }
+                var loaded = await Hydrate<T>(raw);
+                if (loaded.Success && !loaded.Peek().IsNull) list.Add(loaded);
             }
-            return Task.FromResult(data.@this<global::app.type.list.@this>.Ok(list));
+            return data.@this<global::app.type.list.@this>.Ok(list);
         }
         catch (Exception ex)
         {
-            return Task.FromResult(data.@this<global::app.type.list.@this>.FromError(
-                SettingsError.FromException(ex, table)));
+            return data.@this<global::app.type.list.@this>.FromError(
+                SettingsError.FromException(ex, table));
         }
     }
 
@@ -221,14 +166,13 @@ public sealed class Sqlite : IStore
             cmd.CommandText = $@"INSERT INTO [{sanitized}] (key, data) VALUES (@key, @data)
                                  ON CONFLICT(key) DO UPDATE SET data = @data;";
             cmd.Parameters.AddWithValue("@key", key);
-            // Local persistence — Store view ships every [Store]-tagged
-            // property (including [Sensitive] like Identity.PrivateKey).
-            var serialized = _serializer.Store(data);
+            // Store view ships every [Store]-tagged property (incl. [Sensitive] like
+            // Identity.PrivateKey). The store owns its TEXT↔stream bridge: serialize to a
+            // buffer, bind the TEXT param (this is where the string lives — the column's choice).
+            using var ms = new MemoryStream();
+            var serialized = await _serializer.SerializeAsync(ms, data, global::app.View.Store);
             if (!serialized.Success) return app.data.@this.FromError(serialized.Error!);
-            // SQLite is a take-over API — it binds CLR values; the blob is the
-            // text value's backing string.
-            global::app.type.text.@this? blob = await serialized.Value();
-            cmd.Parameters.AddWithValue("@data", blob?.Clr<string>());
+            cmd.Parameters.AddWithValue("@data", System.Text.Encoding.UTF8.GetString(ms.ToArray()));
             cmd.ExecuteNonQuery();
 
             return app.data.@this.Ok();

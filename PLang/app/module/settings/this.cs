@@ -11,7 +11,7 @@ namespace app.module.settings;
 /// </summary>
 public sealed class @this
 {
-    private const string SettingsTable = "settings";
+    internal const string SettingsTable = "settings";
     private readonly app.@this _app;
 
     public @this(app.@this app) { _app = app; }
@@ -30,7 +30,8 @@ public sealed class @this
         var key = dotIndex >= 0 ? path[..dotIndex] : path;
         var remaining = dotIndex >= 0 ? path[(dotIndex + 1)..] : null;
 
-        var result = await _app.SettingsStore.Get(SettingsTable, key);
+        // A user setting from plang code is an item (any plang value), forced — never a raw string.
+        var result = await _app.SettingsStore.Get<global::app.type.item.@this>(SettingsTable, key);
         if (!result.Success) return result;
 
         // A missing key resolves to the typed null/absent citizen, not C# null —

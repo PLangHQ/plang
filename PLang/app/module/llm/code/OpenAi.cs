@@ -162,7 +162,7 @@ public sealed class OpenAi : ILlm
         if (await action.Cache.ToBooleanAsync() && goalTools == null && !buildCacheOff)
         {
             cacheKey = ComputeCacheKey(messages, model, (await action.Temperature.Value())!.ToDouble(), schema, await FormatOf(action));
-            var cached = await settings.Get(CacheTable, cacheKey);
+            var cached = await settings.Get<global::app.type.item.@this>(CacheTable, cacheKey);
             // A missing key returns the null citizen (Ok(null) → Peek is null.this),
             // which is a real instance — test .IsNull, not a C# != null reference check.
             if (cached.Success && cached.Peek() is { IsNull: false })
@@ -945,7 +945,7 @@ public sealed class OpenAi : ILlm
         // Try settings store. A missing key returns the null citizen (Peek is
         // null.this, not C# null) — test .IsNull, or a missing setting reads as the
         // literal string "null" and (e.g.) the endpoint becomes "null:443".
-        var result = await settings.Get("LlmConfig", settingKey);
+        var result = await settings.Get<global::app.type.item.@this>("LlmConfig", settingKey);
         if (result.Success && result.Peek() is { IsNull: false })
         {
             var val = (await result.Value()) is Clr { Value: data.@this d }

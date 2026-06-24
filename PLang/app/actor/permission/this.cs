@@ -59,7 +59,7 @@ public sealed class @this
         // grants were ever used.
         try
         {
-            var stored = await _actor.App.SettingsStore.GetAll<global::app.data.@this>(PermissionTable);
+            var stored = await _actor.App.SettingsStore.GetAll<Grant>(PermissionTable);
             if (stored.Success && await stored.Value() is { } list)
             {
                 foreach (var grantData in list.Items.Cast<global::app.data.@this>())

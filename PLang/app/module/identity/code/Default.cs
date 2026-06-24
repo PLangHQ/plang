@@ -205,7 +205,8 @@ public sealed class Default : IIdentity
     internal async Task<data.@this<Identity>> LoadAsync(IContext action, string name)
     {
         var store = action.Context.App.SettingsStore;
-        var result = await store.Get(Table, name);
+        // Stored as a dict, reconstructed to Identity below — read it as a forced item.
+        var result = await store.Get<global::app.type.item.@this>(Table, name);
 
         if (!result.Success)
             return data.@this<Identity>.From(result);
@@ -226,7 +227,7 @@ public sealed class Default : IIdentity
     internal async Task<(List<Identity>? Identities, global::app.error.IError? Error)> LoadAllAsync(IContext action)
     {
         var store = action.Context.App.SettingsStore;
-        var result = await store.GetAll(Table);
+        var result = await store.GetAll<global::app.type.item.@this>(Table);
         if (!result.Success) return (null, result.Error);
 
         var identities = new List<Identity>();

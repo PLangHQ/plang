@@ -10,28 +10,18 @@ namespace app.module.settings;
 public interface IStore : IDisposable
 {
     /// <summary>
-    /// Gets a single value by table and key.
-    /// Returns Data with the value, or Data with null value if not found.
+    /// Gets a single value by table and key, as its plang item type <typeparamref name="T"/>
+    /// (forced to a real value, never a raw string): a defined class (<c>Get&lt;Identity&gt;</c>)
+    /// or, for a value from plang code, <c>Get&lt;item&gt;</c>. Returns <c>Data&lt;T&gt;</c>
+    /// (null value if not found). There is no untyped get — every stored value has a type.
     /// </summary>
-    Task<data.@this> Get(string table, string key);
+    Task<data.@this<T>> Get<T>(string table, string key) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>;
 
     /// <summary>
-    /// Gets a single value by table and key, deserializing the value to T.
-    /// Returns Data with a typed Value, or Data with null value if not found.
+    /// Gets all key-value pairs in a table, each forced to its plang item type
+    /// <typeparamref name="T"/>. Returns Data with a list of <c>Data&lt;T&gt;</c>.
     /// </summary>
-    Task<data.@this> Get<T>(string table, string key) where T : data.@this;
-
-    /// <summary>
-    /// Gets all key-value pairs in a table.
-    /// Returns Data with List&lt;Data&gt; value (each item has Name=key, Value=stored value).
-    /// </summary>
-    Task<data.@this> GetAll(string table);
-
-    /// <summary>
-    /// Gets all key-value pairs in a table, deserializing each value to T.
-    /// Returns Data with List&lt;T&gt; value, or Data with error on failure.
-    /// </summary>
-    Task<data.@this<global::app.type.list.@this>> GetAll<T>(string table) where T : data.@this;
+    Task<data.@this<global::app.type.list.@this>> GetAll<T>(string table) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>;
 
     /// <summary>
     /// Sets a Data value by table and key. Creates the table if it doesn't exist.

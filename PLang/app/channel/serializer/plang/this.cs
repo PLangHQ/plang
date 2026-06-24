@@ -140,34 +140,38 @@ public sealed class @this : ISerializer
     /// </summary>
     public static readonly @this ContextLessFallback = new @this();
 
-    public async Task<global::app.data.@this> SerializeAsync(Stream stream, global::app.data.@this data, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// View-aware stream write — the one place a Data drives its own wire via data.Output
+    /// (Out = transport, Store = local persistence). Lazy refs are materialized up-front
+    /// (await Load) so data.Output never meets an unresolved reference.
+    /// </summary>
+    public async Task<global::app.data.@this> SerializeAsync(Stream stream, global::app.data.@this data, global::app.View view = global::app.View.Out, CancellationToken cancellationToken = default)
     {
         try
         {
             // Materialize lazy reference fundamentals (image bytes) before the walk.
             var loadError = await data.Load();
             if (loadError != null) return loadError;
-            // Sign-if-missing at the I/O boundary — a clean await (the old Wire.Write
-            // path forced .GetAwaiter().GetResult()). A Data crossing application/plang
-            // in a real actor scope is wrapped in ONE signature layer; skipped when no
-            // actor (internal serialize) or already a layer (re-serialize / pre-signed).
+            // Sign-if-missing at the I/O boundary — a clean await. A Data crossing
+            // application/plang in a real actor scope is wrapped in ONE signature layer;
+            // skipped when no actor (internal serialize) or already a layer.
             if (data.Context?.Actor != null && data.Peek() is not global::app.type.signature.@this)
             {
                 var signResult = await data.Context.App.RunAction(
                     new app.module.signing.sign { Data = data }, data.Context);
                 if (signResult.Success) data = signResult;
             }
+            var options = view == global::app.View.Store ? _store : _outbound;
             await using var utf8 = new Utf8JsonWriter(stream);
             var writer = new global::app.channel.serializer.json.Writer(
-                utf8, _outbound, global::app.View.Out,
-                data.Context?.App?.Type?.Renderers, emitsSchema: true);
+                utf8, options, view, data.Context?.App?.Type?.Renderers, emitsSchema: true);
             // A layer (signature) writes its OWN @schema:<kind> envelope; a plain Data
             // writes the @schema:data layer. The layer-vs-data choice lives here, at the
             // serializer boundary — data.Output stays clean (@schema:data only).
             if (data.Peek() is global::app.type.signature.@this sig)
-                await sig.Output(writer, global::app.View.Out, data.Context);
+                await sig.Output(writer, view, data.Context);
             else
-                await data.Output(writer, global::app.View.Out, data.Context, layer: true);
+                await data.Output(writer, view, data.Context, layer: true);
             await utf8.FlushAsync(cancellationToken);
             return global::app.data.@this.Ok();
         }
@@ -178,14 +182,15 @@ public sealed class @this : ISerializer
         }
     }
 
-    public async Task<global::app.data.@this> DeserializeAsync(Stream stream, CancellationToken cancellationToken = default)
+    public async Task<global::app.data.@this> DeserializeAsync(Stream stream, global::app.View view = global::app.View.Out, CancellationToken cancellationToken = default)
     {
         try
         {
             if (stream.CanSeek && stream.Length == 0) return global::app.data.@this.Ok();
             // The container IS a Data — return the reconstruction itself, never
             // an Ok envelope around it (the bare-Data double-wrap the store seam rejects).
-            var v = await JsonSerializer.DeserializeAsync<global::app.data.@this>(stream, _inbound, cancellationToken);
+            var options = view == global::app.View.Store ? _store : _inbound;
+            var v = await JsonSerializer.DeserializeAsync<global::app.data.@this>(stream, options, cancellationToken);
             return v ?? global::app.data.@this.Ok();
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
@@ -195,12 +200,13 @@ public sealed class @this : ISerializer
         }
     }
 
-    public async Task<global::app.data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+    public async Task<global::app.data.@this<T>> DeserializeAsync<T>(Stream stream, global::app.View view = global::app.View.Out, CancellationToken cancellationToken = default) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
         try
         {
             if (stream.CanSeek && stream.Length == 0) return global::app.data.@this<T>.Ok(default!);
-            var v = await JsonSerializer.DeserializeAsync<T>(stream, _inbound, cancellationToken);
+            var options = view == global::app.View.Store ? _store : _inbound;
+            var v = await JsonSerializer.DeserializeAsync<T>(stream, options, cancellationToken);
             return global::app.data.@this<T>.Ok(v!);
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
@@ -210,118 +216,4 @@ public sealed class @this : ISerializer
         }
     }
 
-    public global::app.data.@this<global::app.type.text.@this> Serialize(global::app.data.@this data)
-    {
-        try
-        {
-            return global::app.data.@this<global::app.type.text.@this>.Ok(JsonSerializer.Serialize(data, _outbound));
-        }
-        catch (Exception ex) when (ex is JsonException or NotSupportedException)
-        {
-            return global::app.data.@this<global::app.type.text.@this>.FromError(new error.ServiceError(
-                $"Plang serialize failed: {ex.Message}", "PlangSerializeError", 400) { Exception = ex });
-        }
-    }
-
-    /// <summary>
-    /// Serialize for local persistence (sqlite settings / identity / permission
-    /// store). Uses the <see cref="global::app.View.Store"/>-bound
-    /// <see cref="global::app.data.Wire"/> so every
-    /// <c>[Store]</c>-tagged property — including <c>[Sensitive]</c> ones
-    /// like <c>Identity.PrivateKey</c> — round-trips. No observer on the
-    /// local persistence path, so <c>[Masked]</c> is ignored too.
-    /// </summary>
-    public global::app.data.@this<global::app.type.text.@this> Store(global::app.data.@this data)
-    {
-        try
-        {
-            return global::app.data.@this<global::app.type.text.@this>.Ok(JsonSerializer.Serialize(data, _store));
-        }
-        catch (Exception ex) when (ex is JsonException or NotSupportedException)
-        {
-            return global::app.data.@this<global::app.type.text.@this>.FromError(new error.ServiceError(
-                $"Plang Store failed: {ex.Message}", "PlangSerializeError", 400) { Exception = ex });
-        }
-    }
-
-    /// <summary>
-    /// Deserialize from local persistence (sqlite). Symmetric to
-    /// <see cref="Store"/>; reads through the Store-view options so any
-    /// [Store]-only property (re-)hydrates on the inbound side.
-    /// </summary>
-    public global::app.data.@this Load(string s)
-    {
-        try
-        {
-            // Empty input has no Data to read. A JSON `null` payload deserializes to
-            // a C# null — handled on the result below, not by string-matching the raw
-            // bytes (which would also mis-fire on whitespace and read as if the text
-            // "null" were special).
-            if (string.IsNullOrEmpty(s)) return global::app.data.@this.Ok(null);
-            // The persisted value IS a Data — return the reconstruction itself,
-            // never an Ok envelope around it (a bare Data inside a Data is the
-            // double-wrap the store seam rejects).
-            return JsonSerializer.Deserialize<global::app.data.@this>(s, _store)
-                ?? global::app.data.@this.Ok(null);
-        }
-        catch (Exception ex) when (ex is JsonException or NotSupportedException)
-        {
-            return global::app.data.@this.FromError(new error.ServiceError(
-                $"Plang Load failed: {ex.Message}", "PlangDeserializeError", 400) { Exception = ex });
-        }
-    }
-
-    /// <summary>
-    /// Typed load — symmetric to <see cref="Load(string)"/> when the caller
-    /// knows the wrapped type (e.g. <c>Load&lt;Identity&gt;</c> from the
-    /// identity table). [Store]-only properties hydrate on the inbound side.
-    /// </summary>
-    // Store load: the persisted value IS a Data, so the result is that Data (T : data),
-    // not Data<T> (which would force a Data<Data> the constraint forbids). Tuple result.
-    public (T? Value, error.IError? Error) Load<T>(string s) where T : global::app.data.@this
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(s)) return (default, null);
-            // A JSON `null` payload deserializes to null — a valid empty result.
-            return (JsonSerializer.Deserialize<T>(s, _store), null);
-        }
-        catch (Exception ex) when (ex is JsonException or NotSupportedException)
-        {
-            return (default, new error.ServiceError(
-                $"Plang Load failed: {ex.Message}", "PlangDeserializeError", 400) { Exception = ex });
-        }
-    }
-
-    public global::app.data.@this Deserialize(string s)
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(s)) return global::app.data.@this.Ok();
-            // The wire IS a Data — return the reconstruction itself, never an
-            // Ok envelope around it (the bare-Data nesting the seam rejects). A JSON
-            // `null` payload deserializes to null and falls back to an empty Ok.
-            return JsonSerializer.Deserialize<global::app.data.@this>(s, _inbound) ?? global::app.data.@this.Ok();
-        }
-        catch (Exception ex) when (ex is JsonException or NotSupportedException)
-        {
-            return global::app.data.@this.FromError(new error.ServiceError(
-                $"Plang deserialize failed: {ex.Message}", "PlangDeserializeError", 400) { Exception = ex });
-        }
-    }
-
-    public global::app.data.@this<T> Deserialize<T>(string s) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(s)) return global::app.data.@this<T>.Ok(default!);
-            // A JSON `null` payload deserializes to null → an empty typed Data.
-            return global::app.data.@this<T>.Ok(JsonSerializer.Deserialize<T>(s, _inbound)!);
-        }
-        catch (Exception ex) when (ex is JsonException or NotSupportedException)
-        {
-            return global::app.data.@this<T>.FromError(new error.ServiceError(
-                $"Plang deserialize failed: {ex.Message}", "PlangDeserializeError", 400) { Exception = ex });
-        }
-    }
 }

@@ -137,21 +137,6 @@ public sealed class @this
     /// </summary>
     public IEnumerable<string> Extensions => _byExtension.Keys;
 
-    /// <summary>
-    /// Deserializes content using the appropriate serializer, chosen by extension or MIME type.
-    /// </summary>
-    public data.@this<T> Deserialize<T>(DeserializeOptions options) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-    {
-        var serializer = ResolveSerializer(new ResolveOptions { Type = options.Type, Extension = options.Extension });
-
-        if (options.Value is string str)
-            return serializer.Deserialize<T>(str);
-
-        if (options.Value is T typed)
-            return data.@this<T>.Ok(typed);
-
-        return data.@this<T>.Ok(default!);
-    }
 
     /// <summary>
     /// Serializes data to a stream using the appropriate serializer.
@@ -189,7 +174,7 @@ public sealed class @this
             throw new ArgumentException("Stream is required for async deserialization", nameof(options));
 
         var serializer = ResolveSerializer(new ResolveOptions { Type = options.Type, Extension = options.Extension });
-        return serializer.DeserializeAsync<T>(options.Stream, options.CancellationToken);
+        return serializer.DeserializeAsync<T>(options.Stream, cancellationToken: options.CancellationToken);
     }
 
     private ISerializer ResolveSerializer(ResolveOptions options)

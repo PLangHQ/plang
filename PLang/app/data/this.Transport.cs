@@ -58,7 +58,7 @@ public partial class @this
                          ?? (global::app.channel.serializer.ISerializer)global::app.channel.serializer.plang.@this.ContextLessFallback;
 
         using var ms = new MemoryStream();
-        await serializer.SerializeAsync(ms, this, ct);
+        await serializer.SerializeAsync(ms, this, cancellationToken: ct);
         var compressed = GZipCompress(ms.ToArray());
 
         // TODO: compression belongs in an `archive` module, not inlined here.
@@ -142,7 +142,7 @@ public partial class @this
                              ?? (global::app.channel.serializer.ISerializer)global::app.channel.serializer.plang.@this.ContextLessFallback;
 
             using var ms = new MemoryStream(decompressed);
-            var deser = await serializer.DeserializeAsync(ms, ct);
+            var deser = await serializer.DeserializeAsync(ms, cancellationToken: ct);
             if (!deser.Success)
                 return FromError(new ServiceError(
                     "Deserialization failed after decompression: " + (deser.Error?.Message ?? "unknown"),

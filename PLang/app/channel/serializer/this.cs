@@ -22,38 +22,23 @@ public interface ISerializer
     string Extension { get; }
 
     /// <summary>
-    /// Serializes a Data to a stream. Ok on success; Fail with the
-    /// originating exception on serializer error.
+    /// Serializes a Data to a stream. Ok on success; Fail with the originating
+    /// exception on serializer error. <paramref name="view"/> selects Out (transport)
+    /// vs Store (local persistence). String I/O is NOT the serializer's concern —
+    /// a store that persists text (sqlite TEXT) owns its own string↔stream bridge.
     /// </summary>
-    Task<data.@this> SerializeAsync(Stream stream, data.@this data, CancellationToken cancellationToken = default);
+    Task<data.@this> SerializeAsync(Stream stream, data.@this data, global::app.View view = global::app.View.Out, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Deserializes from a stream. Data.Value carries the deserialized object;
-    /// Data.Fail carries the parse error.
+    /// Deserializes a Data from a stream. Data.Value carries the result; Data.Fail
+    /// the parse error. The non-generic form is the transport-receive boundary (an
+    /// arbitrary incoming message); a caller that knows the type uses the generic.
     /// </summary>
-    Task<data.@this> DeserializeAsync(Stream stream, CancellationToken cancellationToken = default);
+    Task<data.@this> DeserializeAsync(Stream stream, global::app.View view = global::app.View.Out, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Generic stream deserialize. Data&lt;T&gt;.Value carries the typed result;
-    /// Data&lt;T&gt;.FromError on parse failure.
+    /// Generic stream deserialize — the value is forced to its plang item type T
+    /// (<c>Data&lt;T&gt;</c>), never a raw string. Data&lt;T&gt;.FromError on parse failure.
     /// </summary>
-    Task<data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>;
-
-    /// <summary>
-    /// Synchronous serialize-to-string convenience. Data.Value carries the
-    /// rendered text; Data.Fail on serializer error.
-    /// </summary>
-    data.@this<global::app.type.text.@this> Serialize(data.@this data);
-
-    /// <summary>
-    /// Synchronous string deserialize. Data.Value carries the deserialized
-    /// object; Data.Fail on parse error. For a typed view, use Deserialize&lt;T&gt;
-    /// or call .As&lt;T&gt;() on the result.
-    /// </summary>
-    data.@this Deserialize(string s);
-
-    /// <summary>
-    /// Generic string deserialize. Data&lt;T&gt;.Value carries the typed result.
-    /// </summary>
-    data.@this<T> Deserialize<T>(string s) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>;
+    Task<data.@this<T>> DeserializeAsync<T>(Stream stream, global::app.View view = global::app.View.Out, CancellationToken cancellationToken = default) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>;
 }

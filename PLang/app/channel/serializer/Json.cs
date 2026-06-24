@@ -72,7 +72,9 @@ public sealed class Json : ISerializer
         });
     }
 
-    public async Task<data.@this> SerializeAsync(Stream stream, data.@this data, CancellationToken cancellationToken = default)
+    // view is part of the ISerializer contract; json has no Store/Out distinction
+    // (use ForView for property filtering), so it's accepted and ignored here.
+    public async Task<data.@this> SerializeAsync(Stream stream, data.@this data, global::app.View view = global::app.View.Out, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -98,7 +100,7 @@ public sealed class Json : ISerializer
         }
     }
 
-    public async Task<data.@this> DeserializeAsync(Stream stream, CancellationToken cancellationToken = default)
+    public async Task<data.@this> DeserializeAsync(Stream stream, global::app.View view = global::app.View.Out, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -113,7 +115,7 @@ public sealed class Json : ISerializer
         }
     }
 
-    public async Task<data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+    public async Task<data.@this<T>> DeserializeAsync<T>(Stream stream, global::app.View view = global::app.View.Out, CancellationToken cancellationToken = default) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
         try
         {
@@ -122,49 +124,6 @@ public sealed class Json : ISerializer
             return global::app.data.@this<T>.Ok(v!);
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
-        {
-            return global::app.data.@this<T>.FromError(new error.ServiceError(
-                $"JSON deserialize failed: {ex.Message}", "JsonDeserializeError", 400) { Exception = ex });
-        }
-    }
-
-    public data.@this<global::app.type.text.@this> Serialize(data.@this data)
-    {
-        try
-        {
-            var value = data.Peek();
-            if (value == null) return global::app.data.@this<global::app.type.text.@this>.Ok("null");
-            return global::app.data.@this<global::app.type.text.@this>.Ok(JsonSerializer.Serialize(value, value.GetType(), _options));
-        }
-        catch (Exception ex) when (ex is JsonException or NotSupportedException)
-        {
-            return global::app.data.@this<global::app.type.text.@this>.FromError(new error.ServiceError(
-                $"JSON serialize failed: {ex.Message}", "JsonSerializeError", 400) { Exception = ex });
-        }
-    }
-
-    public data.@this Deserialize(string s)
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(s) || s == "null") return global::app.data.@this.Ok();
-            return global::app.data.@this.Ok(JsonSerializer.Deserialize<object?>(s, _options));
-        }
-        catch (Exception ex) when (ex is JsonException or NotSupportedException)
-        {
-            return global::app.data.@this.FromError(new error.ServiceError(
-                $"JSON deserialize failed: {ex.Message}", "JsonDeserializeError", 400) { Exception = ex });
-        }
-    }
-
-    public data.@this<T> Deserialize<T>(string s) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(s) || s == "null") return global::app.data.@this<T>.Ok(default!);
-            return global::app.data.@this<T>.Ok(JsonSerializer.Deserialize<T>(s, _options)!);
-        }
-        catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {
             return global::app.data.@this<T>.FromError(new error.ServiceError(
                 $"JSON deserialize failed: {ex.Message}", "JsonDeserializeError", 400) { Exception = ex });

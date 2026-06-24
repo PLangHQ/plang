@@ -280,7 +280,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
             using var ms = new MemoryStream(raw);
             // The container deserializer returns the reconstructed Data itself
             // (never an envelope around it — the store seam rejects bare nesting).
-            return await serializer.DeserializeAsync(ms, ct);
+            return await serializer.DeserializeAsync(ms, cancellationToken: ct);
         }
         return StampValue(raw);
     }
