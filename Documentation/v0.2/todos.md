@@ -1354,3 +1354,13 @@ shim does). Decide + do after green.
   model are strings). Discuss before changing (not yet agreed).
 - Principle settled: `Get<item>` only for genuinely-dynamic `settings.get`; name the specific
   type everywhere else.
+
+### Suggestion (Ingi) — plang list should support LINQ, materialize in the background
+For the identity `LoadAll` refactor (and generally): a plang `list`/`list<T>` should support
+`list.Where(p => p.IsArchived)` / `Find` / etc. WITHOUT the caller writing `.Value<T>()` —
+enumeration materializes each row to T transparently. This makes option (a) plang-flowing the
+clear choice: `LoadAll` returns `Data<list>`, and the 5 callers keep clean LINQ
+(`list.Where(p => !p.IsArchived)`), no explicit per-row `.Value<T>()` loops, no CLR `List`.
+Wrinkle to resolve: `Value<T>()` is async but LINQ `Where` is sync — so list<T> needs a SYNC
+materialization path for enumeration (Peek<T>-based) or an async-LINQ surface. Settle that when
+doing the refactor; with it, (a) wins cleanly.
