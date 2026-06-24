@@ -302,12 +302,21 @@ public partial class Set : IContext, IBuildValidatable
             return await Context.Variable.Set(typedData);
         }
 
-        // No forced type — bind a shallow clone under the target name. For a
-        // full-match `%x%`, the value door (AsCanonical) hands back the LIVE source
-        // Data; storing it directly would alias x and y onto one Properties bag, so
-        // `set %y!NewProp% = 1` would leak onto %x%. ShallowClone gives the new slot
-        // its own Properties copy (the value instance is shared — immutable, safe).
-        return await Context.Variable.Set(name.Name, Value.ShallowClone(name.Name));
+        // No forced type — bind a shallow clone under the target name. AsCanonical
+        // resolves the NAME hop (a full-match `%x%`/`%!data%` → the CURRENT Data
+        // instance it points at) WITHOUT computing its value (lazy preserved); storing
+        // `Value` directly would copy the reference to the name, so when a reused infra
+        // var like `%!data%` rebinds to the next action's result, the target would follow
+        // it (the `%msg%` self-reference that blocks the builder). ShallowClone gives the
+        // new slot its own Properties copy (the value instance is shared — immutable, safe).
+        var canonical = await Value.AsCanonical(Context);
+        // A typed variable reference that resolves to nothing (`set %x% = %unset%`) is an
+        // error, not a silent uninitialized binding — surface it with the missing name. An
+        // infra var (`%!error%`) that is legitimately unset borns differently and is allowed.
+        if (Value.IsVariable && !canonical.IsInitialized)
+            return global::app.data.@this.FromError(new global::app.error.Error(
+                $"Variable '{canonical.Name}' not found", "VariableNotFound", 404));
+        return await Context.Variable.Set(name.Name, canonical.ShallowClone(name.Name));
     }
 
     /// <summary>
