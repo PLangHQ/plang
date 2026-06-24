@@ -94,6 +94,12 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (raw is Data d)
         {
             if (_context != null) d.Context = _context;
+            // The dict key is authoritative — a nested entry value carries no name of
+            // its own on the wire (only the key rides, as the JSON property name), so a
+            // reconstructed entry borns Name="". Re-stamp the key, matching the raw-slot
+            // path below (new Data(key, …)). Without this the round-tripped entry serialises
+            // under "" — breaking both signature canonicalisation and key navigation.
+            if (d.Name != key) d.Name = key;
             return d;
         }
         // Born a FRESH Data each read — never cached back. Leaving the slot raw keeps
