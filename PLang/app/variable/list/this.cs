@@ -707,6 +707,11 @@ public partial class @this
                 s = content is global::app.type.binary.@this bin
                     ? System.Convert.ToBase64String(bin.Value) : content?.ToString();
             }
+            // A stored variable reference resolves to its value (variable.Value() =>
+            // value.Value()) — so %y% set from %x% renders x's value, not the ref name.
+            // Everything else renders its raw current form (a source stays raw json).
+            else if (dataVar?.Peek() is global::app.variable.@this)
+                s = (await dataVar.Value())?.ToString();
             else s = dataVar?.Peek()?.ToString();
             if (s != null) resolved[varName] = s;
         }

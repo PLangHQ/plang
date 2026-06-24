@@ -13,9 +13,12 @@ public class StartGoalTests
     {
         await using var engine = TestApp.Create("/app");
 
-        // Replace output.write with capturing version
-        var capture = new CapturingWriteHandler();
-        engine.Module.Register("output", "write", capture);
+        // Capture the REAL output channel — the goal runs through the real output.write,
+        // which writes the resolved value to this stream (no hand-rolled handler).
+        var captureStream = new System.IO.MemoryStream();
+        engine.User.Channel.Register(new global::app.channel.type.stream.@this(
+            global::app.channel.list.@this.Output, captureStream,
+            global::app.channel.ChannelDirection.Output, ownsStream: true) { Mime = "text/plain" });
 
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Start",
             Make.Step("set %name% = \"Plang\"",
@@ -37,9 +40,11 @@ public class StartGoalTests
         await Assert.That((await context.Variable.GetValue("name"))).IsEqualTo("Plang");
         await Assert.That((await context.Variable.GetValue("newVarName"))).IsEqualTo("Plang");
 
-        // Check output
-        await Assert.That(capture.Lines).Contains("Plang");
-        await Assert.That(capture.Lines).Contains("NewVar: Plang");
+        // Check output (real channel)
+        captureStream.Position = 0;
+        var output = new System.IO.StreamReader(captureStream).ReadToEnd();
+        await Assert.That(output).Contains("Plang");
+        await Assert.That(output).Contains("NewVar: Plang");
     }
 
     #endregion
@@ -127,8 +132,11 @@ public class StartGoalTests
         await Assert.That(capture.Lines).Contains("Value: ");
     }
 
+    // Referencing an unset variable is an error, not a silent null — `set result =
+    // %nonexistent%` fails the step with VariableNotFound (the value the source would
+    // answer for is missing; there is nothing to assign).
     [Test]
-    public async Task ResolveValue_FullMissingVariable_ResolvesToNull()
+    public async Task ResolveValue_FullMissingVariable_FailsVariableNotFound()
     {
         await using var engine = TestApp.Create("/app");
 
@@ -140,8 +148,8 @@ public class StartGoalTests
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
-        await result.IsSuccess();
-        await Assert.That((await context.Variable.GetValue("result"))).IsNull();
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("VariableNotFound");
     }
 
     #endregion
