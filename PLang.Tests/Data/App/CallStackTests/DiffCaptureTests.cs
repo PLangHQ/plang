@@ -102,31 +102,29 @@ public class DiffCaptureTests
     [Test]
     public async Task Diff_DiffModeOverLargeListDoesNotOom()
     {
-        // scalar-only default should mitigate the prior OOM scenario.
-        // 100 iterations × 1MB list under Diff:true (no DeepDiff). GC delta stays low
-        // because Before captures a summary string, not a clone.
+        // Regression guard for the prior OOM: under Diff (no DeepDiff), capturing a
+        // non-scalar Before must record a summary STRING, never a clone — that is what
+        // stops a tight set-loop from ballooning memory. We assert the invariant
+        // DIRECTLY (Before is a summary string) instead of measuring a GC delta: each
+        // `await using` disposes the call and releases its Diffs, so retained memory is
+        // ~0 whether we summarise or clone — the old memory-delta proxy was both noisy
+        // and blind to a cloning regression. Asserting the summary is exact and cheap.
+        //
+        // Kept small on purpose: every Set of a typed primitive list round-trips through
+        // JSON narrowing in Data.Lift (O(elements) with a heavy constant), so the old
+        // 100×1MB form ran ~26s — ~40% of the whole C# suite. A handful of small sets
+        // proves the same invariant.
         var stack = new CallStack { Flags = Flags.Default with { Diff = true } };
         var vars = new global::app.variable.list.@this();
-        // Seed with a 1MB-ish list.
-        vars.Set("big", new List<byte>(new byte[1024 * 1024]));
+        vars.Set("big", new List<int>(new int[256]));
 
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-        var memBefore = GC.GetTotalMemory(false);
-
-        for (int i = 0; i < 100; i++)
+        for (int i = 0; i < 10; i++)
         {
             await using var call = stack.Push(MakeAction("A"), vars);
-            // Replace the big list — capture should be a summary string, not a clone.
-            vars.Set("big", new List<byte>(new byte[1024 * 1024]));
+            vars.Set("big", new List<int>(new int[256]));
+            var diff = call.Diffs![0];
+            await Assert.That(diff.Before is string).IsTrue();
+            await Assert.That(((string)diff.Before!).Contains("list")).IsTrue();
         }
-
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-        var memAfter = GC.GetTotalMemory(false);
-        var deltaMb = (memAfter - memBefore) / (1024 * 1024);
-
-        // 100 cloned 1MB lists would be ~100MB. Scalar default keeps growth far below that.
-        await Assert.That(deltaMb).IsLessThan(50);
     }
 }
