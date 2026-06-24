@@ -354,3 +354,26 @@ EVERY write path; `Wire.Write`/`Normalize` are deleted. `Wire.Read` stays (read)
     `NormalizeObject`, `json.Writer.Value`/`BeginRecord`/`EndRecord` + IWriter members;
     signature.Write goes too.
   - P1-followup (flagged): hashing-writer shape (one walk, no intermediate buffer).
+
+## SETTLED DESIGN — sync→async migration + typed settings (Ingi, 2026-06-24)
+Long design discussion; conclusions:
+- **Serializer is STREAM-only.** `ISerializer`: `SerializeAsync(Stream, Data, View=Out)`,
+  `DeserializeAsync(Stream, View=Out)`, `DeserializeAsync<T>(Stream, View=Out) where T:item`.
+  NO string methods, NO sync. The non-generic stream `DeserializeAsync(Stream)→Data` stays —
+  but ONLY for the channel transport (receiving an arbitrary message whose value is an item),
+  NOT as a settings escape hatch.
+- **string↔stream belongs to the store, not the serializer.** sqlite (it chose a TEXT column)
+  owns it: read via `reader.GetStream(col)` (real stream, no string); write buffers to a
+  MemoryStream then binds the TEXT param (a bytes→string hop — accepted; DB stays TEXT for
+  debuggability, NOT blob). Tests get a `string` convenience via a test-only shim.
+- **No untyped settings `Get`.** Every stored value is either a defined C# class (`Identity`,
+  an item) or a value from plang code (an `item` — the union of plang types). So
+  `Get<T> where T:item` covers BOTH; the untyped `Get(table,key)` is DELETED. KEY: `Get<item>`
+  is NOT verbose-`Get` — it FORCES the value to resolve to a plang item (no raw/source string
+  leaks through), a stronger contract. `Get<Identity>`→`Data<Identity>`→`.Value()` is the flow.
+- **`T:data` was vestigial** (only `permission` used it, with `T=data.@this` base). The typed
+  generic unifies on `T:item`; the clash dissolves.
+- Callers: identity→`Get<Identity>`; settings.get/this + llm cache/config→`Get<item>`;
+  permission→`GetAll<permission>` (`Grant = app.type.permission.@this`, an item).
+- Test churn (~100 sites) → ONE test-only extension shim (`Serialize`/`Deserialize` sync
+  wrappers over the async stream API), so call-sites compile unchanged.
