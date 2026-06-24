@@ -44,7 +44,7 @@ public class DataSourceTests
         var setResult = await ds.Set("settings", "ApiKey", new Data("ApiKey", "sk-123"));
         await setResult.IsSuccess();
 
-        var getResult = await ds.Get("settings", "ApiKey");
+        var getResult = await ds.Get<global::app.type.item.@this>("settings", "ApiKey");
         await getResult.IsSuccess();
         await Assert.That((await getResult.Value())?.ToString()).IsEqualTo("sk-123");
     }
@@ -53,7 +53,7 @@ public class DataSourceTests
     public async Task Get_NonExistentKey_ReturnsNullValue()
     {
         using var ds = CreateDataSource();
-        var result = await ds.Get("settings", "NonExistent");
+        var result = await ds.Get<global::app.type.item.@this>("settings", "NonExistent");
         await result.IsSuccess();
         await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
     }
@@ -65,7 +65,7 @@ public class DataSourceTests
         await ds.Set("settings", "ApiKey", new Data("ApiKey", "old-value"));
         await ds.Set("settings", "ApiKey", new Data("ApiKey", "new-value"));
 
-        var result = await ds.Get("settings", "ApiKey");
+        var result = await ds.Get<global::app.type.item.@this>("settings", "ApiKey");
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("new-value");
     }
 
@@ -77,7 +77,7 @@ public class DataSourceTests
         var removeResult = await ds.Remove("settings", "ApiKey");
         await removeResult.IsSuccess();
 
-        var result = await ds.Get("settings", "ApiKey");
+        var result = await ds.Get<global::app.type.item.@this>("settings", "ApiKey");
         await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
     }
 
@@ -115,7 +115,7 @@ public class DataSourceTests
         await ds.Set("settings", "Key1", new Data("Key1", "Value1"));
         await ds.Set("settings", "Key2", new Data("Key2", "Value2"));
 
-        var result = await ds.GetAll("settings");
+        var result = await ds.GetAll<global::app.type.item.@this>("settings");
         await result.IsSuccess();
         var items = (await result.Value<global::app.type.list.@this>())!.ToList();
         await Assert.That(items.Count).IsEqualTo(2);
@@ -140,7 +140,7 @@ public class DataSourceTests
     {
         using var ds = CreateDataSource();
         await ds.Set("settings", "NullKey", new Data("NullKey", null));
-        var result = await ds.Get("settings", "NullKey");
+        var result = await ds.Get<global::app.type.item.@this>("settings", "NullKey");
         await result.IsSuccess();
         await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
     }
@@ -150,7 +150,7 @@ public class DataSourceTests
     {
         using var ds = CreateDataSource();
         await ds.Set("settings", "Count", new Data("Count", 42));
-        var result = await ds.Get("settings", "Count");
+        var result = await ds.Get<global::app.type.item.@this>("settings", "Count");
         await result.IsSuccess();
         // JSON deserialization may box as long
         var value = Convert.ToInt64((await result.Value()));
@@ -164,8 +164,8 @@ public class DataSourceTests
         await ds.Set("settings", "Key", new Data("Key", "SettingsValue"));
         await ds.Set("encryption", "Key", new Data("Key", "EncryptionValue"));
 
-        var settingsResult = await ds.Get("settings", "Key");
-        var encryptionResult = await ds.Get("encryption", "Key");
+        var settingsResult = await ds.Get<global::app.type.item.@this>("settings", "Key");
+        var encryptionResult = await ds.Get<global::app.type.item.@this>("encryption", "Key");
 
         await Assert.That((await settingsResult.Value())?.ToString()).IsEqualTo("SettingsValue");
         await Assert.That((await encryptionResult.Value())?.ToString()).IsEqualTo("EncryptionValue");
@@ -189,7 +189,7 @@ public class DataSourceTests
         await result.IsSuccess();
 
         // Should be retrievable using the same dirty name (sanitized identically)
-        var getResult = await ds.Get("settings; DROP TABLE settings", "Key");
+        var getResult = await ds.Get<global::app.type.item.@this>("settings; DROP TABLE settings", "Key");
         await getResult.IsSuccess();
         await Assert.That((await getResult.Value())?.ToString()).IsEqualTo("Value");
     }
@@ -201,7 +201,7 @@ public class DataSourceTests
         var result = await ds.Set("my_table", "Key", new Data("Key", "Value"));
         await result.IsSuccess();
 
-        var getResult = await ds.Get("my_table", "Key");
+        var getResult = await ds.Get<global::app.type.item.@this>("my_table", "Key");
         await Assert.That((await getResult.Value())?.ToString()).IsEqualTo("Value");
     }
 
@@ -213,7 +213,7 @@ public class DataSourceTests
         var result = await ds.Set("!!!", "Key", new Data("Key", "Value"));
         await result.IsSuccess();
 
-        var getResult = await ds.Get("!!!", "Key");
+        var getResult = await ds.Get<global::app.type.item.@this>("!!!", "Key");
         await Assert.That((await getResult.Value())?.ToString()).IsEqualTo("Value");
     }
 
@@ -224,7 +224,7 @@ public class DataSourceTests
         await ds.Set("Settings", "Key", new Data("Key", "Value1"));
 
         // Same name in different case should hit the same table
-        var getResult = await ds.Get("settings", "Key");
+        var getResult = await ds.Get<global::app.type.item.@this>("settings", "Key");
         await Assert.That((await getResult.Value())?.ToString()).IsEqualTo("Value1");
     }
 
@@ -283,7 +283,7 @@ public class DataSourceTests
         await setResult.IsSuccess();
 
         // Get
-        var getResult = await ds.Get("items", "key1");
+        var getResult = await ds.Get<global::app.type.item.@this>("items", "key1");
         await getResult.IsSuccess();
         await Assert.That((await getResult.Value())?.ToString()).IsEqualTo("value1");
 
@@ -293,7 +293,7 @@ public class DataSourceTests
 
         // GetAll
         await ds.Set("items", "key2", new Data("key2", "value2"));
-        var allResult = await ds.GetAll("items");
+        var allResult = await ds.GetAll<global::app.type.item.@this>("items");
         var items = (await allResult.Value<global::app.type.list.@this>())!.ToList();
         await Assert.That(items.Count).IsEqualTo(2);
 
@@ -313,7 +313,7 @@ public class DataSourceTests
         await ds.Set("persistent", "key1", new Data("key1", "value1"));
 
         // Second operation should see the same table (no re-creation needed)
-        var result = await ds.Get("persistent", "key1");
+        var result = await ds.Get<global::app.type.item.@this>("persistent", "key1");
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("value1");
 
@@ -333,8 +333,8 @@ public class DataSourceTests
         await ds1.Set("shared", "key", new Data("key", "alpha_value"));
         await ds2.Set("shared", "key", new Data("key", "beta_value"));
 
-        var result1 = await ds1.Get("shared", "key");
-        var result2 = await ds2.Get("shared", "key");
+        var result1 = await ds1.Get<global::app.type.item.@this>("shared", "key");
+        var result2 = await ds2.Get<global::app.type.item.@this>("shared", "key");
 
         await Assert.That((await result1.Value())?.ToString()).IsEqualTo("alpha_value");
         await Assert.That((await result2.Value())?.ToString()).IsEqualTo("beta_value");
@@ -350,7 +350,7 @@ public class DataSourceTests
 
         // New datasource with same name should start empty (sentinel closed → DB vanished)
         using var ds2 = global::app.module.settings.Sqlite.InMemory("disposable_db");
-        var result = await ds2.Get("data", "key");
+        var result = await ds2.Get<global::app.type.item.@this>("data", "key");
         await result.IsSuccess();
         await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
     }
@@ -366,7 +366,7 @@ public class DataSourceTests
         var setResult = await ds.Set("test_table", "k", new Data("k", "v"));
         await setResult.IsSuccess();
 
-        var getResult = await ds.Get("test_table", "k");
+        var getResult = await ds.Get<global::app.type.item.@this>("test_table", "k");
         await Assert.That((await getResult.Value())?.ToString()).IsEqualTo("v");
 
         // Verify no .db directory was created on disk

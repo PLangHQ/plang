@@ -343,10 +343,8 @@ public class IdentityErrorPathTests
         private readonly global::app.module.settings.IStore _inner;
         public FailingSaveDataSource(global::app.module.settings.IStore inner) => _inner = inner;
 
-        public Task<Data> Get(string table, string key) => _inner.Get(table, key);
-        public Task<Data> Get<T>(string table, string key) where T : Data => _inner.Get<T>(table, key);
-        public Task<Data> GetAll(string table) => _inner.GetAll(table);
-        public Task<global::app.data.@this<global::app.type.list.@this>> GetAll<T>(string table) where T : Data => _inner.GetAll<T>(table);
+        public Task<global::app.data.@this<T>> Get<T>(string table, string key) where T : global::app.type.item.@this, global::app.type.item.ICreate<T> => _inner.Get<T>(table, key);
+        public Task<global::app.data.@this<global::app.type.list.@this>> GetAll<T>(string table) where T : global::app.type.item.@this, global::app.type.item.ICreate<T> => _inner.GetAll<T>(table);
         public Task<Data> Set(string table, string key, Data data)
             => Task.FromResult(Data.FromError(
                 new SettingsError("Simulated save failure", "IOError", 500)
@@ -365,10 +363,8 @@ public class IdentityErrorPathTests
         private readonly global::app.module.settings.IStore _inner;
         public FailingRemoveDataSource(global::app.module.settings.IStore inner) => _inner = inner;
 
-        public Task<Data> Get(string table, string key) => _inner.Get(table, key);
-        public Task<Data> Get<T>(string table, string key) where T : Data => _inner.Get<T>(table, key);
-        public Task<Data> GetAll(string table) => _inner.GetAll(table);
-        public Task<global::app.data.@this<global::app.type.list.@this>> GetAll<T>(string table) where T : Data => _inner.GetAll<T>(table);
+        public Task<global::app.data.@this<T>> Get<T>(string table, string key) where T : global::app.type.item.@this, global::app.type.item.ICreate<T> => _inner.Get<T>(table, key);
+        public Task<global::app.data.@this<global::app.type.list.@this>> GetAll<T>(string table) where T : global::app.type.item.@this, global::app.type.item.ICreate<T> => _inner.GetAll<T>(table);
         public Task<Data> Set(string table, string key, Data data) => _inner.Set(table, key, data);
         public Task<Data> Remove(string table, string key)
             => Task.FromResult(Data.FromError(
@@ -386,10 +382,11 @@ public class IdentityErrorPathTests
     {
         public Task<Data> Get(string table, string key)
             => Task.FromResult(Data.FromError(new SettingsError("Simulated failure")));
-        public Task<Data> Get<T>(string table, string key) where T : Data => Get(table, key);
+        public Task<global::app.data.@this<T>> Get<T>(string table, string key) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+            => Task.FromResult(global::app.data.@this<T>.FromError(new SettingsError("Simulated failure")));
         public Task<Data> GetAll(string table)
             => Task.FromResult(Data.FromError(new SettingsError("Simulated GetAll failure")));
-        public Task<global::app.data.@this<global::app.type.list.@this>> GetAll<T>(string table) where T : Data
+        public Task<global::app.data.@this<global::app.type.list.@this>> GetAll<T>(string table) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
             => Task.FromResult(global::app.data.@this<global::app.type.list.@this>.FromError(new SettingsError("Simulated GetAll failure")));
         public Task<Data> Set(string table, string key, Data data)
             => Task.FromResult(Data.FromError(new SettingsError("Simulated failure")));

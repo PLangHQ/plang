@@ -40,7 +40,7 @@ public class ActorSettingsStoreTests
         await using (var engine2 = new global::app.@this(_testDir))
         {
             engine2.Builder.IsEnabled = true;
-            var result = await engine2.SettingsStore.Get("LlmCache", "testkey");
+            var result = await engine2.SettingsStore.Get<global::app.type.item.@this>("LlmCache", "testkey");
             await Assert.That((await result.Value())).IsNotNull();
             await Assert.That((await result.Value())!.ToString()).IsEqualTo("cached_response");
         }
@@ -61,7 +61,7 @@ public class ActorSettingsStoreTests
         await using (var engine2 = new global::app.@this(_testDir))
         {
             engine2.Tester.IsEnabled = true;
-            var result = await engine2.SettingsStore.Get("LlmCache", "testkey");
+            var result = await engine2.SettingsStore.Get<global::app.type.item.@this>("LlmCache", "testkey");
             // A missing key yields an empty value (the plang null/absent citizen),
             // never C# null — assert emptiness the plang way, not TUnit IsNull.
             await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();

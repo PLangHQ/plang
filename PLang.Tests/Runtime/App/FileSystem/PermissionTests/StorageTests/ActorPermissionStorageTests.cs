@@ -63,7 +63,7 @@ public class ActorPermissionStorageTests
         // Routing: only the signed grant lands in sqlite. The unsigned one
         // must NOT appear there — proves Add's signature-presence heuristic
         // sends the two grants to different homes.
-        var stored = await app.SettingsStore.GetAll<global::app.data.@this>("permission");
+        var stored = await app.SettingsStore.GetAll<global::app.type.permission.@this>("permission");
         await stored.IsSuccess();
         var paths = new List<string>();
         foreach (var d in (await stored.Value())!.Items)
@@ -184,7 +184,7 @@ public class ActorPermissionStorageTests
 
         // SettingsStore.Set is keyed by path — the table must hold one row
         // for `/p`, not two.
-        var stored = await app.SettingsStore.GetAll<global::app.data.@this<PermissionRecord>>("permission");
+        var stored = await app.SettingsStore.GetAll<global::app.type.permission.@this>("permission");
         await stored.IsSuccess();
         var rowsForP = (await stored.Value())!.Items.Count(d => d.GetValue<global::app.type.permission.@this>()?.Path == "/p");
         await Assert.That(rowsForP).IsEqualTo(1);

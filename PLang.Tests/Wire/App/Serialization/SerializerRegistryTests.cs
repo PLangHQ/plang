@@ -266,13 +266,13 @@ public class SerializerRegistryTests
         public string Type => "custom/type";
         public string Extension => ".custom";
 
-        public Task<Data> SerializeAsync(Stream stream, Data data, CancellationToken cancellationToken = default)
+        public Task<Data> SerializeAsync(Stream stream, Data data, global::app.View view = global::app.View.Out, CancellationToken cancellationToken = default)
             => Task.FromResult(Data.Ok());
 
-        public Task<Data> DeserializeAsync(Stream stream, CancellationToken cancellationToken = default)
+        public Task<Data> DeserializeAsync(Stream stream, global::app.View view = global::app.View.Out, CancellationToken cancellationToken = default)
             => Task.FromResult(Data.Ok());
 
-        public Task<global::app.data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+        public Task<global::app.data.@this<T>> DeserializeAsync<T>(Stream stream, global::app.View view = global::app.View.Out, CancellationToken cancellationToken = default) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
             => Task.FromResult(global::app.data.@this<T>.Ok(default!));
 
         public global::app.data.@this<global::app.type.text.@this> Serialize(Data data)

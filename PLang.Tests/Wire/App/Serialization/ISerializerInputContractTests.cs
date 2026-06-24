@@ -79,14 +79,14 @@ public class ISerializerInputContractTests
         public global::app.data.@this? LastData { get; private set; }
         public string Type => "application/x-probe";
         public string Extension => ".probe";
-        public Task<global::app.data.@this> SerializeAsync(Stream s, global::app.data.@this data, CancellationToken ct = default)
+        public Task<global::app.data.@this> SerializeAsync(Stream s, global::app.data.@this data, global::app.View view = global::app.View.Out, CancellationToken ct = default)
         {
             LastData = data;
             return Task.FromResult(global::app.data.@this.Ok());
         }
-        public Task<global::app.data.@this> DeserializeAsync(Stream s, CancellationToken ct = default)
+        public Task<global::app.data.@this> DeserializeAsync(Stream s, global::app.View view = global::app.View.Out, CancellationToken ct = default)
             => Task.FromResult(global::app.data.@this.Ok());
-        public Task<global::app.data.@this<T>> DeserializeAsync<T>(Stream s, CancellationToken ct = default) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+        public Task<global::app.data.@this<T>> DeserializeAsync<T>(Stream s, global::app.View view = global::app.View.Out, CancellationToken ct = default) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
             => Task.FromResult(global::app.data.@this<T>.Ok(default!));
         public global::app.data.@this<global::app.type.text.@this> Serialize(global::app.data.@this data) => global::app.data.@this<global::app.type.text.@this>.Ok("");
         public global::app.data.@this Deserialize(string s) => global::app.data.@this.Ok();
