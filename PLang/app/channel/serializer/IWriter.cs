@@ -58,8 +58,9 @@ public interface IWriter
     /// undecoded raw form, passed through without re-encoding. JSON emits it unquoted
     /// (<c>WriteRawValue</c>) so a raw json object/number rides inline; text writes the
     /// string as-is. The caller (a <c>source</c> leaf) decides when its raw is format-ready.
+    /// Default falls back to a quoted string for writers that have no verbatim concept.
     /// </summary>
-    void Raw(string value);
+    void Raw(string value) => String(value);
 
     /// <summary>
     /// Begin an array bracket. <paramref name="count"/> is -1 when the writer
