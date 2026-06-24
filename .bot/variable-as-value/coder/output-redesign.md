@@ -325,3 +325,32 @@ EVERY write path; `Wire.Write`/`Normalize` are deleted. `Wire.Read` stays (read)
     type, value:bytes}` AND retiring/replacing its Json.cs. Per-layer design, not mechanical.
   - The hoist (`Wire.cs:564`) currently checks `is signature` only — archive's layer write path
     must be confirmed (likely via its Json.cs today). Trace before flipping.
+
+## (a) progress — 4 of 7 done (2026-06-24)
+- **DONE + committed, no regression, signing green:**
+  - P1 `cfb…` chain: hash canonicalization → data.Output (`f8f8c20a4`).
+  - P2 signature.Output (async layer envelope; sync Write kept for Wire.Write paths).
+  - P3 plang.SerializeAsync → data.Output (async sign + layer dispatch).
+  - P6 json.Parse recognizes {type,value} entries (no @schema) → Wire.ReadBody.
+  - (`cfb286e2f` carries P2/P3/P6.)
+- **BASELINE IS RED — 27 pre-existing Wire-slice failures** (NOT from this work; confirmed
+  by stash-compare: 27 with AND without the edits). Root: the type-object transition is
+  half-done — `json.Writer.BeginRecord` writes `type` as a BARE STRING (`record.Type?.Name`)
+  for NESTED Data records, but `Wire.ReadBody` now REQUIRES a type-object → every
+  nested-record round-trip via the sync `plang.Serialize`/`Deserialize` fails. (The .pr
+  top-level write goes through Normalize and writes a type-object, so the builder itself
+  isn't blocked by this — it's nested-record serialization via BeginRecord.)
+  ⚠️ Earlier `./dev.sh full` "exit 0" was MISLEADING — its exit code doesn't reflect TUnit
+  per-test failures. Always read the `failed:` count from the slice exe (`dotnet <dll>`),
+  not the exit code.
+- **REMAINING (the tail — fixes the 27):**
+  - P5: delete sync `Serialize`/`Store`/`Load`/`Deserialize(string)`; route sqlite
+    (`settings/Sqlite.cs` Get/Set) + snapshot through `SerializeAsync`/`DeserializeAsync`
+    (MemoryStream ↔ stored string). Update the ~27 Wire tests (they round-trip via the
+    sync `plang.Serialize` + a `Render` helper using `json.Writer.Value`) to async + the
+    new {type,value}/@schema-at-layer shape.
+  - P4: `goalsSave`/`PrWrite` → data.Output.
+  - P7: delete `Wire.Write` (keep `Wire.Read`), `Normalize`/`NormalizeValue`/
+    `NormalizeObject`, `json.Writer.Value`/`BeginRecord`/`EndRecord` + IWriter members;
+    signature.Write goes too.
+  - P1-followup (flagged): hashing-writer shape (one walk, no intermediate buffer).
