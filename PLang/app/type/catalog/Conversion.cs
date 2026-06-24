@@ -289,8 +289,12 @@ public sealed partial class @this
         }
 
         // String → complex type: try JSON deserialization before list handling
-        // (e.g., file.read of .pr returns JSON string → Goal)
-        if (value is string jsonStr && !targetType.IsPrimitive && targetType != typeof(string))
+        // (e.g., file.read of .pr returns JSON string → Goal). Only when the string
+        // actually looks like JSON ({ or [) — a bare word ("hello") is not a malformed
+        // JSON document, it's a single element to wrap / an enum / a ctor arg, so it
+        // falls through to those arms below instead of throwing 'h is an invalid start'.
+        if (value is string jsonStr && !targetType.IsPrimitive && targetType != typeof(string)
+            && jsonStr.TrimStart() is { Length: > 0 } trimmed && (trimmed[0] == '{' || trimmed[0] == '['))
         {
             // Context-bound options when the caller passed one — deserialised
             // Paths get path.Resolve(raw, context) treatment so they land Context-
