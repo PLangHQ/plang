@@ -37,6 +37,8 @@ public sealed class Writer : global::app.channel.serializer.IWriter
     public void Double(double value) => Write(value.ToString(CultureInfo.InvariantCulture));
     public void Decimal(decimal value) => Write(value.ToString(CultureInfo.InvariantCulture));
     public void String(string value) => Write(value);
+    // text has no structural form — raw passthrough is the string as-is.
+    public void Raw(string value) => Write(value);
     public void DateTime(System.DateTime value) => Write(value.ToString("o", CultureInfo.InvariantCulture));
     public void DateTimeOffset(System.DateTimeOffset value) => Write(value.ToString("o", CultureInfo.InvariantCulture));
     public void TimeSpan(System.TimeSpan value) => Write(value.ToString("c"));

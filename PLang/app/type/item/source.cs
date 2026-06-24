@@ -142,11 +142,21 @@ public sealed class source : @this, module.IContext
 
     public override bool IsLeaf => true;
 
-    /// <summary>Verbatim passthrough — the raw form streams out untouched.</summary>
+    /// <summary>
+    /// Verbatim passthrough — the raw form streams out untouched. A json-shaped raw
+    /// (object/item carrying <c>kind:json</c>, or a <c>number</c> literal) rides inline
+    /// and UNQUOTED via <see cref="global::app.channel.serializer.IWriter.Raw"/>; any
+    /// other raw string is a quoted string; bytes are base64. The declared
+    /// <c>{type, kind}</c> decides — not a content sniff. (Owns what Wire.Write's
+    /// EmitRawVerbatim used to do, so RawUntouched routes through data.Output.)
+    /// </summary>
     public override void Write(global::app.channel.serializer.IWriter w)
     {
-        if (_raw is byte[] b) w.Bytes(b);
-        else w.String(_raw.ToString() ?? "");
+        if (_raw is byte[] b) { w.Bytes(b); return; }
+        var s = _raw.ToString() ?? "";
+        bool isJson = (_type is "object" or "item" && string.Equals(_kind, "json", System.StringComparison.OrdinalIgnoreCase))
+                      || _type == "number";
+        if (isJson) w.Raw(s); else w.String(s);
     }
 
 

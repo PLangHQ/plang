@@ -54,6 +54,14 @@ public interface IWriter
     void Bytes(byte[] value);
 
     /// <summary>
+    /// Emit content already valid in the target format, verbatim — a source value's
+    /// undecoded raw form, passed through without re-encoding. JSON emits it unquoted
+    /// (<c>WriteRawValue</c>) so a raw json object/number rides inline; text writes the
+    /// string as-is. The caller (a <c>source</c> leaf) decides when its raw is format-ready.
+    /// </summary>
+    void Raw(string value);
+
+    /// <summary>
     /// Begin an array bracket. <paramref name="count"/> is -1 when the writer
     /// cannot determine the length up front; format encoders that need a
     /// known length (protobuf packed repeated, length-prefixed binary
