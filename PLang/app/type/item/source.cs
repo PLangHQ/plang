@@ -133,6 +133,22 @@ public sealed class source : @this, module.IContext
         return answer;
     }
 
+    /// <summary>
+    /// Navigation is first-touch: a source is still its raw form (bytes / json text),
+    /// so it parses itself via the Data door — which caches the parsed value back onto
+    /// <paramref name="parent"/> (a <c>%cfg%</c> source BECOMES the dict, parse-once) —
+    /// then navigates the parsed value. A bad parse fails <paramref name="parent"/> with
+    /// <c>MaterializeFailed</c> (the declared <c>{type, kind}</c> could not be built from
+    /// the raw form); surface that, not a misleading NotFound.
+    /// </summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(
+        global::app.data.@this parent, string key)
+    {
+        var materialized = await parent.Value();
+        if (!parent.Success) return parent;
+        return await materialized.Navigate(parent, key);
+    }
+
     public override bool IsTruthy() => _raw switch
     {
         string s => s.Length > 0,
