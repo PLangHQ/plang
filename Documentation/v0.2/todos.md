@@ -1326,3 +1326,15 @@ After completing the type-object transition (nested records → type-object), th
 Deserialize_ShallowNesting fixture {name,value} no-type, TypedSnapshotString edit-persist),
 Data 18, Types 7, Modules 15. Pre-existing, diverse (not the bare-string type issue, not from
 this session's data.Output work — verified by stash-compare). Triage separately.
+
+## 2026-06-24 — PROVEN: the (a) Wire.Write→data.Output flip is BLOCKED on the sync→async migration
+Attempted the `Wire.Write`→`data.Output` shim (non-blocking drain, fail-loud on async). It
+regressed Modules 15→98 and was reverted (`df563ac80`). Root cause is a HARD ordering
+dependency, not a tuning issue: the sync `Serialize`/`Store` paths cannot `await data.Load()`
+before serializing, so `data.Output` meets unmaterialized lazy refs (variable/computed), the
+ValueTask isn't completed, and the drain throws. The OLD `Normalize` resolved those refs
+synchronously; `data.Output` resolves them async. So:
+**ORDER IS FIXED — do the sync→async migration (41 files) FIRST, then the Wire.Write flip +
+deletions.** The flip cannot be a pragmatic shim ahead of the migration. `source.Raw`
+(RawUntouched verbatim via data.Output) is already in place, so once the sync paths are async,
+the flip itself is small.
