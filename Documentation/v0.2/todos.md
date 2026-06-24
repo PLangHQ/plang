@@ -1299,3 +1299,30 @@ value before converting (against the never-lower rule). Move it to plang types:
 Audit: `kind` is functionally used ONLY by `number` (target precision); text/image accept
 it but ignore it; the rest only have it in the signature. Self-contained refactor; do as
 its own reviewable pass (not tangled into builder debugging).
+
+## 2026-06-24 — Sync plang serializer methods → async (data.Output migration)
+`app/channel/serializer/plang/this.cs` still exposes SYNC `Serialize`/`Store`/`Load`/
+`Deserialize(string)` (+ `Load<T>`/`Deserialize<T>`). They route through STJ + `Wire.Write`.
+The serializer redesign makes `data.Output` the one write path (async); these sync methods
+should be deleted and their callers moved to `SerializeAsync`/`DeserializeAsync`.
+**Blast radius (why deferred):** 102 call-sites across 41 test files + `settings/Sqlite.cs`
+(Get/Set) + `channel/serializer/Text.cs` (_jsonFallback). Pure mechanical (each → `await …Async`
+over a MemoryStream ↔ string), no design risk — but one atomic landing (build red until all
+migrated). Context: `.bot/variable-as-value/coder/output-redesign.md`.
+
+## 2026-06-24 — Finish (a): delete Wire.Write/Normalize/json.Writer.Value machinery
+After the sync methods + snapshot route through data.Output, reimplement `Wire.Write` to drive
+`data.Output` (the agreed pragmatic shim — non-blocking drain, fail-loud on a genuinely-async
+value), then delete `data.Normalize`/`NormalizeValue`/`NormalizeObject`, `json.Writer.Value`/
+`BeginRecord`/`EndRecord` (+ IWriter members) and `signature.Write`. Blocker to resolve first:
+`Wire.Write`'s `RawUntouched` verbatim passthrough + properties still ride `Normalize` — needs
+the raw-backed type to own a verbatim `Output` so RawUntouched routes through data.Output too.
+Also the flagged hashing-writer shape (crypto/code/Default.cs — hash via a hashing writer, one
+walk with the wire, not serialize-to-buffer).
+
+## 2026-06-24 — ~43 deeper pre-existing wire/serialization failures (separate from type-object transition)
+After completing the type-object transition (nested records → type-object), these remain
+(TUnit slice exes): Wire 3 (Properties_RoundTrip_DateTimePrimitive null property,
+Deserialize_ShallowNesting fixture {name,value} no-type, TypedSnapshotString edit-persist),
+Data 18, Types 7, Modules 15. Pre-existing, diverse (not the bare-string type issue, not from
+this session's data.Output work — verified by stash-compare). Triage separately.
