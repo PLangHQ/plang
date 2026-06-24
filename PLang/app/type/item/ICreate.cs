@@ -63,7 +63,7 @@ public interface ICreate<TSelf> where TSelf : @this, ICreate<TSelf>
 
         asking.Fail(new global::app.error.Error(
             $"%{asking.Name}% holds a {value.Mint().Name} — '{@this.NameOf(typeof(TSelf))}' cannot be created from it.",
-            "CreateDeclined", 400));
+            "CreateItemDeclined", 400));
         return null;
     }
 }

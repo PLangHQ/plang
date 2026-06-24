@@ -86,11 +86,11 @@ public partial class Set : IContext, IBuildValidatable
 
         // The Name slot must NAME a thing. A value typed as something other than
         // `variable` (a string-typed literal) declines creation — variable.Create
-        // fails the Name binding (CreateDeclined) and answers null. Surface that
+        // fails the Name binding (CreateVariableDeclined) and answers null. Surface that
         // decline instead of NRE'ing on a null name below.
         if (name == null)
             return global::app.data.@this.FromError(Name.Error
-                ?? new global::app.error.Error("variable.set: Name did not resolve to a variable.", "CreateDeclined", 400));
+                ?? new global::app.error.Error("variable.set: Name did not resolve to a variable.", "CreateVariableDeclined", 400));
 
         // Variable.Resolve flagged the slot as syntactically malformed
         // (`%x!!cost%`, `%x!a!b%`, etc.) — fail with a typed error rather

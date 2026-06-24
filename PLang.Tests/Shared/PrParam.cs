@@ -7,7 +7,7 @@ namespace PLang.Tests;
 /// (e.g. <c>variable.set</c>'s <c>name</c>) with <c>type:variable</c> so
 /// <c>type.Judge</c> births a <c>Variable</c> at construction. A hand-built test
 /// dict carries no type, so a bare <c>name</c> would otherwise reach the
-/// <c>Data&lt;Variable&gt;</c> slot as plain text and decline (CreateDeclined).
+/// <c>Data&lt;Variable&gt;</c> slot as plain text and decline (CreateVariableDeclined).
 /// Mirrors the real <c>.pr</c>, where the builder always stamps these.
 /// </summary>
 public static class PrParam

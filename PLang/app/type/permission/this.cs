@@ -169,7 +169,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         {
             asking.Fail(new global::app.error.Error(
                 $"%{asking.Name}% holds a {value.Mint().Name} — 'permission' cannot be created from it.",
-                "CreateDeclined", 400));
+                "CreateItemDeclined", 400));
             return null;
         }
 

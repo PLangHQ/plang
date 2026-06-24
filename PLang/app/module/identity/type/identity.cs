@@ -35,6 +35,35 @@ public sealed class Identity : global::app.type.item.@this, global::app.type.ite
     [LlmBuilder, Store] public DateTimeOffset Created { get; set; }
 
     /// <summary>
+    /// The identity owns its wire form (OBP Rule 9 — the writer never type-switches
+    /// on it). View selects the field set, symmetric with the [Out]/[Store] tags:
+    ///   Out   → the public face {name, publicKey}
+    ///   Store → adds the [Store]/[Sensitive] fields {privateKey, isDefault,
+    ///           isArchived, created} for local sqlite round-trip (real PrivateKey).
+    ///   Debug → same fields as Store, but PrivateKey masked to "***".
+    /// Read-back is ICreate&lt;Identity&gt;.Create from this object.
+    /// </summary>
+    public override System.Threading.Tasks.ValueTask Output(
+        global::app.channel.serializer.IWriter w, global::app.View mode,
+        global::app.actor.context.@this? context)
+    {
+        w.BeginObject();
+        w.Name("name");      w.String(Name);        // [Out, Store]
+        w.Name("publicKey"); w.String(PublicKey);   // [Out, Store]
+        if (mode == global::app.View.Store || mode == global::app.View.Debug)
+        {
+            // [Sensitive, Store] — real value only at rest (Store); masked in Debug.
+            w.Name("privateKey");
+            w.String(mode == global::app.View.Store ? PrivateKey : "***");
+            w.Name("isDefault");  w.Bool(IsDefault);             // [Store]
+            w.Name("isArchived"); w.Bool(IsArchived);            // [Store]
+            w.Name("created");    w.DateTimeOffset(Created);     // [Store]
+        }
+        w.EndObject();
+        return System.Threading.Tasks.ValueTask.CompletedTask;
+    }
+
+    /// <summary>
     /// String context returns the public key — %MyIdentity% in a string gives the public key.
     /// </summary>
     public override string ToString() => PublicKey;

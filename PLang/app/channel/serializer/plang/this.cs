@@ -200,20 +200,22 @@ public sealed class @this : ISerializer
         }
     }
 
+    /// <summary>
+    /// Typed read — borns the stored value at its OWN wire type through the same
+    /// path as a base read (Wire.ReadBody, the .pr mechanism), then hands it back
+    /// as a <see cref="global::app.data.@this{T}"/> via <c>As&lt;T&gt;</c>: a typed
+    /// FACE over the born value, with NO resolution and NO value copy. The lift to
+    /// T (<c>await data.Value()</c>) is the consumer's job at the leaf — the store
+    /// never processes the item. Deserializing the base Data (never <c>Data&lt;T&gt;</c>)
+    /// sidesteps the lossy typed re-wrap and works even when T is abstract
+    /// (<c>Get&lt;item&gt;</c>), since <c>As&lt;T&gt;</c> builds <c>Data&lt;T&gt;</c>,
+    /// never an instance of T.
+    /// </summary>
     public async Task<global::app.data.@this<T>> DeserializeAsync<T>(Stream stream, global::app.View view = global::app.View.Out, CancellationToken cancellationToken = default) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
-        try
-        {
-            if (stream.CanSeek && stream.Length == 0) return global::app.data.@this<T>.Ok(default!);
-            var options = view == global::app.View.Store ? _store : _inbound;
-            var v = await JsonSerializer.DeserializeAsync<T>(stream, options, cancellationToken);
-            return global::app.data.@this<T>.Ok(v!);
-        }
-        catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
-        {
-            return global::app.data.@this<T>.FromError(new error.ServiceError(
-                $"Plang deserialize failed: {ex.Message}", "PlangDeserializeError", 400) { Exception = ex });
-        }
+        var data = await DeserializeAsync(stream, view, cancellationToken);
+        if (!data.Success) return global::app.data.@this<T>.From(data);
+        return data.As<T>();
     }
 
 }

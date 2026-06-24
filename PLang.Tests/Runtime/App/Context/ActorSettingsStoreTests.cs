@@ -67,4 +67,28 @@ public class ActorSettingsStoreTests
             await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
         }
     }
+
+    [Test]
+    public async Task SettingsStore_Identity_RoundTripsViaGetOfIdentity()
+    {
+        // The seam every module author uses: store an Identity, read it back typed.
+        // The store persists the Store view (incl. [Sensitive] PrivateKey) and hands
+        // back a Data<Identity> face; the typed lift (.Value()) reconstructs the item.
+        await using var engine = new global::app.@this(_testDir);
+        engine.Tester.IsEnabled = true;
+
+        var original = new global::app.module.identity.Identity("work")
+            { PublicKey = "pub-abc", PrivateKey = "priv-xyz", IsDefault = true };
+        await engine.SettingsStore.Set("identity", "work",
+            new Data("work", original));
+
+        var data   = await engine.SettingsStore.Get<global::app.module.identity.Identity>("identity", "work");
+        var loaded = await data.Value();
+
+        await Assert.That((object?)loaded).IsNotNull();
+        await Assert.That(loaded!.Name).IsEqualTo("work");
+        await Assert.That(loaded.PublicKey).IsEqualTo("pub-abc");
+        await Assert.That(loaded.PrivateKey).IsEqualTo("priv-xyz");
+        await Assert.That(loaded.IsDefault).IsTrue();
+    }
 }

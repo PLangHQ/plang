@@ -3,7 +3,7 @@ using app;
 namespace PLang.Tests.App.actions.variable;
 
 // The born-typed rule: a variable NAMES a thing; a variable.set whose Name slot
-// holds a *value* (type:string, not type:variable) is declined (CreateDeclined).
+// holds a *value* (type:string, not type:variable) is declined (CreateVariableDeclined).
 // This is the rule that broke the PLang suite; it had no C# guard before this.
 public class BornTypedDeclineTests
 {
@@ -12,7 +12,7 @@ public class BornTypedDeclineTests
 
     // Direct unit test on the decline seam (Variable.Create, app/variable/this.cs:67).
     [Test]
-    public async Task Create_TextValue_DeclinesWithCreateDeclined()
+    public async Task Create_TextValue_DeclinesWithCreateVariableDeclined()
     {
         var ctx = _app.User.Context;
         global::app.type.item.@this textValue = new global::app.type.text.@this("some value");
@@ -23,7 +23,7 @@ public class BornTypedDeclineTests
         // cast to object: Variable has an implicit string operator that NREs on null
         await Assert.That((object?)result).IsNull();
         await Assert.That(asking.Error).IsNotNull();
-        await Assert.That(asking.Error!.Key).IsEqualTo("CreateDeclined");
+        await Assert.That(asking.Error!.Key).IsEqualTo("CreateVariableDeclined");
     }
 
     [Test]
@@ -61,7 +61,7 @@ public class BornTypedDeclineTests
         var result = await act.RunAsync(ctx);
 
         await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("CreateDeclined");
+        await Assert.That(result.Error!.Key).IsEqualTo("CreateVariableDeclined");
     }
 
     // Positive control: same step with Name stamped type:variable succeeds — proves

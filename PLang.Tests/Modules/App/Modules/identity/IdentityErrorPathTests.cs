@@ -285,19 +285,24 @@ public class IdentityErrorPathTests
         await Assert.That(result.Error).IsNotNull();
     }
 
-    // --- Deserialize with unrecognized value type (via Get action) ---
+    // --- Store-direct read of a corrupt entry ---
 
     [Test]
-    public async Task Get_UnrecognizedValueType_FailsToDeserialize()
+    public async Task StoreGet_NonIdentityEntry_DeclinesOnLift()
     {
-        // A corrupt store entry (a raw integer, not the stored identity dict) is not a
-        // deserializable identity — Get fails honestly rather than degrading to an empty one.
+        // A module author wanting the identity calls store.Get<Identity>(...).Value()
+        // directly (the identity.Get action is a thin forwarder over this seam). The
+        // store hands back a typed FACE with no processing; a corrupt entry (a raw
+        // number, not an identity) surfaces its decline only when the developer LIFTS
+        // it — never inside the store.
         var ds = _app.SettingsStore;
         await ds.Set("identity", "weird", new Data("weird", 42));
 
-        var result = await new global::app.module.identity.Get { Context = Ctx, Name = (global::app.type.text.@this)"weird" }.Run();
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("DeserializationError");
+        var data   = await ds.Get<Identity>("identity", "weird");
+        var loaded = await data.Value();
+
+        await Assert.That((object?)loaded).IsNull();
+        await Assert.That(data.Error!.Key).IsEqualTo("CreateItemDeclined");
     }
 
     [Test]
