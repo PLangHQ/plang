@@ -128,8 +128,11 @@ public class IWriterContractTests
         w.String("world");
         w.EndRecord(record);
         var s = Flush(jw, ms);
-        // the binding label rides only on the Store view; Out omits it
-        await Assert.That(s).DoesNotContain("\"name\":");
+        // the binding label rides only on the Store view; Out omits it. (Check the ROOT
+        // for a `name` binding — the structured `type:{name,…}` sub-object legitimately
+        // carries a name and must not trip this.)
+        using (var d = System.Text.Json.JsonDocument.Parse(s))
+            await Assert.That(d.RootElement.TryGetProperty("name", out _)).IsFalse();
         await Assert.That(s).Contains("\"value\":\"world\"");
 
         var (jw2, ms2) = MakeWriter();

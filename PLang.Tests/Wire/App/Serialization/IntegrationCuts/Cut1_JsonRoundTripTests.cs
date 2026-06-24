@@ -31,8 +31,12 @@ public class Cut1_JsonRoundTripTests
         // a raw List<Data> stays observable as a list.
         var bag = new List<Data> { new("a", 1), new("b", "two") };
         var json = NormalizePipelineHelper.SerializeValueSlot(bag);
-        // binding labels stay off the outbound wire; values + record shape survive
-        await Assert.That(json).DoesNotContain("\"name\":");
+        // binding labels stay off the outbound wire; values + record shape survive.
+        // (Check each record's ROOT for a `name` binding — the structured type:{name,…}
+        // sub-object legitimately carries a name and must not trip this.)
+        using (var doc = System.Text.Json.JsonDocument.Parse(json))
+            foreach (var el in doc.RootElement.EnumerateArray())
+                await Assert.That(el.TryGetProperty("name", out _)).IsFalse();
         await Assert.That(json).Contains("\"value\":1");
         await Assert.That(json).Contains("\"value\":\"two\"");
     }

@@ -77,9 +77,14 @@ public sealed class Writer : IWriter
         if (_view == app.View.Store)
             _writer.WriteString("name", record.Name);
 
-        var typeVal = record.Type?.Name;
-        if (typeVal != null)
-            _writer.WriteString("type", typeVal);
+        // type — the structured entity {name, kind?, strict?} via the type's own
+        // converter, identical to the top-level envelope. A bare-string `type` is the
+        // OLD shape the reader now rejects; a nested record must match the top.
+        if (record.Type is { IsNull: false })
+        {
+            _writer.WritePropertyName("type");
+            System.Text.Json.JsonSerializer.Serialize(_writer, record.Type, _options);
+        }
 
         _writer.WritePropertyName("value");
     }
