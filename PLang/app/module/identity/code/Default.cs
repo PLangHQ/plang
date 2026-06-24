@@ -43,7 +43,7 @@ public sealed class Default : IIdentity
         if (string.IsNullOrWhiteSpace((await action.Name.Value())?.Clr<string>()))
             return data.@this<Identity>.FromError(new ActionError("Identity name cannot be empty", "ValidationError", 400));
 
-        var (items, err) = await LoadAllAsync(action);
+        var (items, err) = await LoadAll(action);
         if (err != null) return data.@this<Identity>.FromError(err);
         var __an = (await action.Name.Value())?.Clr<string>();
         if (items.Exists(i => string.Equals(i.Name, __an, StringComparison.OrdinalIgnoreCase)))
@@ -74,7 +74,7 @@ public sealed class Default : IIdentity
 
     public async Task<data.@this<Identity>> ArchiveAsync(Archive action)
     {
-        var loadResult = await LoadAsync(action, (await action.Name.Value())!.Clr<string>()!);
+        var loadResult = await Load(action, (await action.Name.Value())!.Clr<string>()!);
         if (!loadResult.Success) return loadResult;
         var identity = (await loadResult.Value())!;
 
@@ -94,7 +94,7 @@ public sealed class Default : IIdentity
 
     public async Task<data.@this<Identity>> UnarchiveAsync(Unarchive action)
     {
-        var loadResult = await LoadAsync(action, (await action.Name.Value())!.Clr<string>()!);
+        var loadResult = await Load(action, (await action.Name.Value())!.Clr<string>()!);
         if (!loadResult.Success) return loadResult;
         var identity = (await loadResult.Value())!;
 
@@ -110,7 +110,7 @@ public sealed class Default : IIdentity
     public async Task<data.@this<Identity>> SetDefaultAsync(SetDefault action)
     {
         var app = action.Context.App;
-        var (items, err) = await LoadAllAsync(action);
+        var (items, err) = await LoadAll(action);
         if (err != null) return data.@this<Identity>.FromError(err);
 
         var __nm = (await action.Name.Value())?.Clr<string>();
@@ -146,11 +146,11 @@ public sealed class Default : IIdentity
         if (string.IsNullOrWhiteSpace((await action.NewName.Value())?.Clr<string>()))
             return data.@this<Identity>.FromError(new ActionError("New name cannot be empty", "ValidationError", 400));
 
-        var loadResult = await LoadAsync(action, (await action.Name.Value())!.Clr<string>()!);
+        var loadResult = await Load(action, (await action.Name.Value())!.Clr<string>()!);
         if (!loadResult.Success) return loadResult;
         var identity = (await loadResult.Value())!;
 
-        var (items, err) = await LoadAllAsync(action);
+        var (items, err) = await LoadAll(action);
         if (err != null) return data.@this<Identity>.FromError(err);
         var __nn = (await action.NewName.Value())?.Clr<string>();
         if (items.Exists(i => string.Equals(i.Name, __nn, StringComparison.OrdinalIgnoreCase)))
@@ -175,7 +175,7 @@ public sealed class Default : IIdentity
 
     public async Task<data.@this<global::app.type.list.@this<Identity>>> ListAsync(list action)
     {
-        var (items, err) = await LoadAllAsync(action);
+        var (items, err) = await LoadAll(action);
         if (err != null) return data.@this<global::app.type.list.@this<Identity>>.FromError(err);
         var active = items!.Where(i => !i.IsArchived).ToList();
         return data.@this<global::app.type.list.@this<Identity>>.Ok(global::app.type.list.@this<Identity>.Of(active));
@@ -194,7 +194,7 @@ public sealed class Default : IIdentity
     private async Task<data.@this<Identity>> ResolveIdentityAsync(IContext action, string? name)
     {
         if (name != null)
-            return await LoadAsync(action, name);
+            return await Load(action, name);
 
         return await GetOrCreateDefaultAsync(action);
     }
@@ -202,42 +202,33 @@ public sealed class Default : IIdentity
     // --- Persistence helpers ---
 
     /// <summary>Loads a single identity by name from the settings store.</summary>
-    internal async Task<data.@this<Identity>> LoadAsync(IContext action, string name)
+    internal async Task<data.@this<Identity>> Load(IContext action, string name)
     {
         var store = action.Context.App.SettingsStore;
-        // Stored as a dict, reconstructed to Identity below — read it as a forced item.
-        var result = await store.Get<global::app.type.item.@this>(Table, name);
+        // Stored as the Identity item itself, so it round-trips as one.
+        var result = await store.Get<Identity>(Table, name);
 
         if (!result.Success)
-            return data.@this<Identity>.From(result);
+            return result;
 
-        if (result.Peek().IsNull)
+        if (result.Peek() is null or { IsNull: true })
             return data.@this<Identity>.FromError(new ActionError($"Identity '{name}' not found", "NotFound", 404));
 
-        // Only a stored dict deserializes to an Identity; any other shape (corrupt
-        // store entry) is not a deserializable identity → honest deserialize error.
-        var identity = await result.Value() is global::app.type.dict.@this dict ? dict.Clr<Identity>() : null;
-        if (identity == null)
-            return data.@this<Identity>.FromError(new ActionError($"Failed to deserialize identity '{name}'", "DeserializationError", 500));
-
-        return data.@this<Identity>.Ok(identity);
+        return result;
     }
 
     /// <summary>Loads all identities (including archived) from the settings store.</summary>
-    internal async Task<(List<Identity>? Identities, global::app.error.IError? Error)> LoadAllAsync(IContext action)
+    internal async Task<(List<Identity>? Identities, global::app.error.IError? Error)> LoadAll(IContext action)
     {
         var store = action.Context.App.SettingsStore;
-        var result = await store.GetAll<global::app.type.item.@this>(Table);
+        var result = await store.GetAll<Identity>(Table);
         if (!result.Success) return (null, result.Error);
 
         var identities = new List<Identity>();
         var list = await result.Value<global::app.type.list.@this>();
         if (list != null)
             foreach (var row in list)
-            {
-                var identity = await row.Value() is global::app.type.dict.@this dict ? dict.Clr<Identity>() : null;
-                if (identity != null) identities.Add(identity);
-            }
+                if (await row.Value<Identity>() is { } identity) identities.Add(identity);
         return (identities, null);
     }
 
@@ -246,7 +237,7 @@ public sealed class Default : IIdentity
     /// </summary>
     public async Task<data.@this<Identity>> GetOrCreateDefaultAsync(IContext action)
     {
-        var (items, err) = await LoadAllAsync(action);
+        var (items, err) = await LoadAll(action);
         if (err != null) return data.@this<Identity>.FromError(err);
 
         var def = items.Find(i => i.IsDefault && !i.IsArchived);

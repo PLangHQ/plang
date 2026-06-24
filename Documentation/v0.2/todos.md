@@ -1338,3 +1338,19 @@ synchronously; `data.Output` resolves them async. So:
 deletions.** The flip cannot be a pragmatic shim ahead of the migration. `source.Raw`
 (RawUntouched verbatim via data.Output) is already in place, so once the sync paths are async,
 the flip itself is small.
+
+## 2026-06-24 — identity LoadAll return shape + OpenAi settings types (deferred, not blockers)
+Polish on top of the typed-settings migration; neither blocks "migration green" (only the test
+shim does). Decide + do after green.
+- **identity `LoadAll` return shape:** today it returns `(List<Identity>?, IError?)` (CLR list,
+  tuple). Options: (a) plang-flowing — `LoadAll` returns `Data<list>`, each of the 5 callers
+  loops `await row.Value<Identity>()` and (for Create/SetDefault) materialize→mutate→save in the
+  loop; (b) materialize-once — keep one conversion to identities, callers keep clean LINQ+mutate
+  +save. The wrinkle: every caller needs MUTABLE Identity (Find/Where + set IsDefault + Save), so
+  (a) doesn't remove the conversion, it spreads it into 5 loops. (b) reads cleaner but is CLR
+  lowering. Ingi leans plang-flowing in general; this is the spot where (b) may be the honest call.
+- **OpenAi settings reads:** currently `Get<item>` (committed). Should be the specific type the
+  caller knows: cache → `Get<dict>` (a Dictionary is stored), config → `Get<text>` (endpoint/key/
+  model are strings). Discuss before changing (not yet agreed).
+- Principle settled: `Get<item>` only for genuinely-dynamic `settings.get`; name the specific
+  type everywhere else.
