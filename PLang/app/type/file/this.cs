@@ -107,6 +107,20 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         return answer;
     }
 
+    /// <summary>
+    /// Navigation is first-touch: a file is a reference to content, so it narrows itself
+    /// (read + parse by mime — json→dict) via the Data door, which caches the parsed value
+    /// back onto <paramref name="parent"/> (the file Data BECOMES a dict in place, read-once),
+    /// then navigates the parsed value. A read/parse failure surfaces the parent's error.
+    /// </summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(
+        global::app.data.@this parent, string key)
+    {
+        var materialized = await parent.Value();
+        if (!parent.Success) return parent;
+        return await materialized.Navigate(parent, key);
+    }
+
 
     /// <summary>Truthiness of a reference is its location's: does it exist.</summary>
     public override bool IsTruthy() => Path is global::app.type.path.file.@this fp && fp.Exists;
