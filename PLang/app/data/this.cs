@@ -687,7 +687,7 @@ public partial class @this
             var resolved = await context.Variable.Get(varName);
             if (resolved == null || !resolved.IsInitialized)
             {
-                var notFound = new @this(varName, null, null, Parent) { Context = context };
+                var notFound = new @this(varName, null, null, Parent, context: context);
                 notFound.IsInitialized = false;
                 return notFound;
             }
@@ -702,7 +702,7 @@ public partial class @this
         {
             if (_context == null!) Context = context!;
             var rendered = await Value();
-            var transient = new @this(Name, rendered, null, Parent) { Context = _context };
+            var transient = new @this(Name, rendered, null, Parent, context: _context);
             transient.Properties = Properties;
             transient.OnCreate   = OnCreate;
             transient.OnChange   = OnChange;
@@ -747,7 +747,7 @@ public partial class @this
         var instance = typeEntity is { IsNull: false } && !typeEntity.Polymorphic
             ? typeEntity.Deserialize(innerValue, context)
             : global::app.type.@this.Create(global::app.type.item.serializer.json.Parse(innerValue), context);
-        return new @this(name, instance) { Context = context };
+        return new @this(name, instance, context: context);
     }
 
     // Build a type entity from its wire form — a bare name string ("text") or the
