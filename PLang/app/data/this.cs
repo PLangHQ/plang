@@ -178,13 +178,16 @@ public partial class @this
         actor.context.@this? context = null)
     {
         Name = CleanName(name);
-        _type = global::app.type.@this.Create(global::app.type.item.serializer.json.Parse(value));
+        _context = context ?? parent?._context!;
+        // The value is born WITH this Data's context — never context-less then
+        // stamped. A value with no context can't reach its renderer/reader and
+        // falls through to a clr carrier.
+        _type = global::app.type.@this.Create(global::app.type.item.serializer.json.Parse(value), _context);
         Parent = parent;
         Path = BuildPath(parent, Name);
         IsInitialized = true;
         Created = System.DateTime.UtcNow;
         Updated = Created;
-        _context = context ?? parent?._context!;
         // A bare {object|item} stamp with no kind and no strict is the
         // polymorphic NON-judgement — the value's own truth stands (and a null
         // stays the null citizen, not a typed absence).

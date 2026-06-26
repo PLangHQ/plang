@@ -17,11 +17,10 @@ public class DictTypedEntryRoundTripTests
     // and every Store read routes through the one context-ful Typed-reader path.
     // Type-routing is verified: with a context-ful serializer the read borns each
     // nested {type,value} entry back to its type (the context-less narrow is gone).
-    // Still skipped pending Stage 5: the context-ful Store path signs on write and
-    // verifies on read, and the re-read value must canonicalize identically to the
-    // signed original (currently DataHashMismatch — verify-on-read fallout the plan
-    // predicted). Un-skip when signing round-trips deterministically.
-    [Skip("Pending context-never-null Stage 5: context-ful Store verify-on-read DataHashMismatch (signing canonicalization determinism)")]
+    // Scalar sign/verify round-trips (WireConverterSigningTests green); this nested
+    // dict→list→dict case still hits DataHashMismatch — the re-read nested containers
+    // must canonicalize identically to the signed original (nested-determinism, tracked).
+    [Skip("Pending: nested-typed Store verify-on-read DataHashMismatch (nested canonicalization determinism)")]
     [Test]
     public async Task DictOfTypedEntries_StoreRoundTrip_PreservesNestedTypes()
     {
@@ -30,12 +29,12 @@ public class DictTypedEntryRoundTripTests
 
         // value = dict { description: text, steps: list[ dict{index:number} ] }
         var steps = new global::app.type.list.@this()
-            .Add(new global::app.data.@this("", new global::app.type.dict.@this().Set("index", 0L)));
+            .Add(new global::app.data.@this("", new global::app.type.dict.@this().Set("index", 0L), context: context));
         var value = new global::app.type.dict.@this()
             .Set("description", "a plan")
             .Set("steps", steps);
-        var result = global::app.data.@this.Ok(value);
-        result.Context = context;
+        // Born WITH context — never constructed then stamped.
+        var result = context.Ok(value);
 
         // The store binds the serializer with its context (application/plang) — the read
         // routes through the one context-ful Typed-reader path, borning each nested

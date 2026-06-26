@@ -19,7 +19,7 @@ public class WireConverterSigningTests
     [Test] public async Task Serialize_WithinActorScope_WrapsInSignatureLayer()
     {
         await using var app = NewSignedApp();
-        var data = new global::app.data.@this("greeting", "hello") { Context = app.User.Context };
+        var data = new global::app.data.@this("greeting", "hello", context: app.User.Context);
 
         var json = (await Plang(app).Serialize(data).Value())!.Clr<string>()!;
 
@@ -36,7 +36,7 @@ public class WireConverterSigningTests
     [Test] public async Task Serialize_ThenDeserialize_AutoVerifies_AndPeelsToInnerData()
     {
         await using var app = NewSignedApp();
-        var data = new global::app.data.@this("greeting", "hello") { Context = app.User.Context };
+        var data = new global::app.data.@this("greeting", "hello", context: app.User.Context);
         var json = (await Plang(app).Serialize(data).Value())!.Clr<string>()!;
 
         var roundTripped = Plang(app).Deserialize(json);
@@ -48,7 +48,7 @@ public class WireConverterSigningTests
     [Test] public async Task Deserialize_TamperedInnerValue_FailsVerification()
     {
         await using var app = NewSignedApp();
-        var data = new global::app.data.@this("greeting", "hello") { Context = app.User.Context };
+        var data = new global::app.data.@this("greeting", "hello", context: app.User.Context);
         var json = (await Plang(app).Serialize(data).Value())!.Clr<string>()!;
 
         // Flip the signed inner value — the signature no longer covers the payload.
@@ -64,7 +64,7 @@ public class WireConverterSigningTests
     {
         await using var app = NewSignedApp();
         var bytes = new byte[] { 1, 2, 3, 4 };
-        var data = new global::app.data.@this("blob", bytes) { Context = app.User.Context };
+        var data = new global::app.data.@this("blob", bytes, context: app.User.Context);
         var json = (await Plang(app).Serialize(data).Value())!.Clr<string>()!;
 
         // The inner data's value is the base64 string, not a nested {name,type,value}.
@@ -79,7 +79,7 @@ public class WireConverterSigningTests
     [Test] public async Task Deserialize_SignatureLayer_NoActorContext_FailsClosed()
     {
         await using var app = NewSignedApp();
-        var data = new global::app.data.@this("greeting", "hello") { Context = app.User.Context };
+        var data = new global::app.data.@this("greeting", "hello", context: app.User.Context);
         var json = (await Plang(app).Serialize(data).Value())!.Clr<string>()!;
 
         var result = global::app.channel.serializer.plang.@this.ContextLessFallback.Deserialize(json);
