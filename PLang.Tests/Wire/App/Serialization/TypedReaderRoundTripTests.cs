@@ -94,7 +94,7 @@ public class TypedReaderRoundTripTests
     // The typed bool reader borns the value off the single pass on read.
     [Test] public async Task Bool_FullRoundTrip_ThroughWire()
     {
-        var app = new global::app.@this(System.IO.Path.Combine(
+        var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-typedread-" + Guid.NewGuid().ToString("N")[..8]));
         await using (app)
         {

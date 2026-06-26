@@ -6,7 +6,7 @@ namespace PLang.Tests.App.Serialization.IntegrationCuts;
 
 public class Cut2_SignThenCompressTests
 {
-    private static global::app.@this NewApp() => new(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+    private static global::app.@this NewApp() => global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
         "plang-cut2-" + Guid.NewGuid().ToString("N")[..8]));
 
     private static global::app.data.@this MakeCompressible(global::app.@this app, string payload)

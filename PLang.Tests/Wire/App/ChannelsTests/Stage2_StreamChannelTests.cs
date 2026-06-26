@@ -13,7 +13,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     [Test]
     public async Task StreamChannel_WriteCore_WritesDataViaSerializer()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false);
+        await using var app = global::PLang.Tests.TestApp.Create("/test", autoWireConsoleChannels: false);
         var captureStream = new MemoryStream();
         var ch = new StreamChannel("c", captureStream, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" };
@@ -77,7 +77,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     [Test]
     public async Task StreamChannel_WriteCore_FailsWithWriteError_OnUnderlyingStreamThrow()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false);
+        await using var app = global::PLang.Tests.TestApp.Create("/test", autoWireConsoleChannels: false);
         var ch = new StreamChannel("c", new ThrowingStream(throwOnWrite: true), ChannelDirection.Output, ownsStream: false);
         app.User.Channel.Register(ch);
         var result = await ch.Write(app.Ok("x"));

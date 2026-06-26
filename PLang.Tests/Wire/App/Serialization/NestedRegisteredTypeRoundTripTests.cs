@@ -10,7 +10,7 @@ namespace PLang.Tests.App.Serialization;
 public class NestedRegisteredTypeRoundTripTests
 {
     private static global::app.@this NewApp()
-        => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        => global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-nested-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     [Test]

@@ -12,7 +12,7 @@ namespace PLang.Tests.App.Serialization.IntegrationCuts;
 
 public class Cut1_PlainRoundTripTests
 {
-    private static global::app.@this NewApp() => new(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+    private static global::app.@this NewApp() => global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
         "plang-cut1-" + Guid.NewGuid().ToString("N")[..8]));
 
     private static async Task<(string wireJson, global::app.data.@this readBack, global::app.@this app)> WriteAndRead(string name, object? value)

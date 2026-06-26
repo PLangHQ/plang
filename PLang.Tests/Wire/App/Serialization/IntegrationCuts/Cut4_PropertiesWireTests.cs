@@ -6,7 +6,7 @@ namespace PLang.Tests.App.Serialization.IntegrationCuts;
 
 public class Cut4_PropertiesWireTests
 {
-    private static global::app.@this NewApp() => new(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+    private static global::app.@this NewApp() => global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
         "plang-cut4-" + Guid.NewGuid().ToString("N")[..8]));
 
     private static async Task<(string wire, global::app.data.@this back, global::app.@this app)> WriteAndRead()

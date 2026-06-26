@@ -13,7 +13,7 @@ public class PlangTypesCut3_CompositionNavigationTests
 
     [Test] public async Task ImageFromFile_PathFacet_IsTypePath_NavigationWorks()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut3a-" + System.Guid.NewGuid().ToString("N")[..8]));
         var p = global::app.type.path.@this.Resolve("/srv/photo.png", app.User.Context);
         var img = new image(PngBytes, "image/png", p);
@@ -27,7 +27,7 @@ public class PlangTypesCut3_CompositionNavigationTests
 
     [Test] public async Task ImageFromFile_PathExists_TrueForPresentFile()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut3b-" + System.Guid.NewGuid().ToString("N")[..8]));
         System.IO.Directory.CreateDirectory(app.AbsolutePath);
         var abs = System.IO.Path.Combine(app.AbsolutePath, "present.png");
@@ -46,7 +46,7 @@ public class PlangTypesCut3_CompositionNavigationTests
 
     [Test] public async Task ImageFromFile_PathExists_FalseForMissingFile()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut3c-" + System.Guid.NewGuid().ToString("N")[..8]));
         System.IO.Directory.CreateDirectory(app.AbsolutePath);
         var abs = System.IO.Path.Combine(app.AbsolutePath, "missing-" + System.Guid.NewGuid().ToString("N")[..8] + ".png");

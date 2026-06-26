@@ -27,7 +27,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
     [Skip("Serializing within an actor now signs the inner payload, so compressed/hashed bytes are a signature LAYER. The archived wire shape and compress/hash-over-signature round-trip need the archive-as-layer design (deferred). NOTE: Decompress currently loses the inner value through this path - see todos.md.")]
     [Test] public async Task SigningVerify_AfterWireByteTamper_ReturnsDataHashMismatch()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-fm-" + Guid.NewGuid().ToString("N")[..8]));
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");

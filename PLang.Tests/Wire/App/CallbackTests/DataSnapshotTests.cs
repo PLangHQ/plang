@@ -16,7 +16,7 @@ public class DataSnapshotTests : System.IAsyncDisposable
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private static global::app.@this NewApp() =>
-        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-snap-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     [Test] public async Task DataSnapshot_PropertyExists_AndDefaultsNull()

@@ -8,7 +8,7 @@ namespace PLang.Tests.App.Serialization;
 public class DictTypedEntryRoundTripTests
 {
     private static global::app.@this NewApp()
-        => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        => global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-dictentry-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     // Acceptance test for the context-never-null work (.bot/remove-goalcall/coder/

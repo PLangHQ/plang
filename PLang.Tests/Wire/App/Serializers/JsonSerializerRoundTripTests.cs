@@ -10,7 +10,7 @@ public class JsonSerializerRoundTripTests
     {
         // text/html and application/json wire shape is data.Value only; data.Signature
         // backing field stays null after Write.
-        var app = new global::app.@this("/test");
+        var app = global::PLang.Tests.TestApp.Create("/test");
         var data = new Data("v", "hello", context: app.User.Context);
 
         var json = app.User.Channel.Serializers.GetByMimeType("application/json");
@@ -23,7 +23,7 @@ public class JsonSerializerRoundTripTests
     public async Task JsonSerializer_Read_ProducesData_WithoutPopulatingSignature()
     {
         // Reading a JSON wire payload reconstructs Data with Value set; Signature stays null.
-        var app = new global::app.@this("/test");
+        var app = global::PLang.Tests.TestApp.Create("/test");
         var json = app.User.Channel.Serializers.GetByMimeType("application/json");
         var raw = "\"hello\"";
         var s = (await json.Deserialize<global::app.type.text.@this>(raw).Value())!;
@@ -34,7 +34,7 @@ public class JsonSerializerRoundTripTests
     public async Task JsonSerializer_HandlesTextHtml_AndApplicationJson_MimeTypes()
     {
         // The serializer registers for both mimetypes and produces the same wire shape.
-        var app = new global::app.@this("/test");
+        var app = global::PLang.Tests.TestApp.Create("/test");
         var jsonByJson = app.User.Channel.Serializers.GetByMimeType("application/json");
         var jsonByHtml = app.User.Channel.Serializers.GetByMimeType("text/html");
         await Assert.That(jsonByJson).IsTypeOf<global::app.channel.serializer.Json>();

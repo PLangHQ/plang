@@ -60,7 +60,7 @@ public class ISerializerInputContractTests : System.IAsyncDisposable
     {
         var probe = new ProbeSerializer();
 
-        await using var app = new global::app.@this("/tmp/stream-channel-write-test");
+        await using var app = global::PLang.Tests.TestApp.Create("/tmp/stream-channel-write-test");
         var ch = new global::app.channel.type.stream.@this(
             "probe", new MemoryStream(), global::app.channel.ChannelDirection.Output)
         {

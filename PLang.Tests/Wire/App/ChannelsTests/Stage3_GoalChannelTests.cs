@@ -16,7 +16,7 @@ public class Stage3_GoalChannelTests
     [Test]
     public async Task GoalChannel_WriteCore_InvokesGoalWithDataBound()
     {
-        var app = new global::app.@this("/tmp/g1");
+        var app = global::PLang.Tests.TestApp.Create("/tmp/g1");
         var goal = new EngineGoal { Name = "Probe", Path = "Probe.goal", PrPath = "/Probe.pr" };
         var ch = new GoalChannel("logger", goal, app.User);
         var dataIn = app.Ok("payload-A");
@@ -30,7 +30,7 @@ public class Stage3_GoalChannelTests
     [Test]
     public async Task GoalChannel_WriteCore_ReturnsGoalsResultData()
     {
-        var app = new global::app.@this("/tmp/g2");
+        var app = global::PLang.Tests.TestApp.Create("/tmp/g2");
         var goal = new EngineGoal { Name = "ReturnsOk", Path = "Returns.goal", PrPath = "/R.pr" };
         var ch = new GoalChannel("c", goal, app.User);
         var result = await ch.Write(app.Ok("x"));
@@ -40,7 +40,7 @@ public class Stage3_GoalChannelTests
     [Test]
     public async Task GoalChannel_IsExecuting_IsFalseBeforeAndAfterWrite()
     {
-        var app = new global::app.@this("/tmp/g_exec");
+        var app = global::PLang.Tests.TestApp.Create("/tmp/g_exec");
         var goal = new EngineGoal { Name = "G", Path = "G.goal", PrPath = "/G.pr" };
         var ch = new GoalChannel("x", goal, app.User);
         await Assert.That(ch.IsExecuting).IsFalse();
@@ -54,7 +54,7 @@ public class Stage3_GoalChannelTests
         // The load-bearing recursion guard: while a goal-channel's body is
         // running, the registry treats that name as not-found, so a body that
         // writes to its own name can't loop back into itself.
-        var app = new global::app.@this("/tmp/g_recurse");
+        var app = global::PLang.Tests.TestApp.Create("/tmp/g_recurse");
         var goal = new EngineGoal { Name = "G", Path = "G.goal", PrPath = "/G.pr" };
         var ch = new GoalChannel("logger", goal, app.User);
         app.User.Channel.Register(ch);
@@ -85,7 +85,7 @@ public class Stage3_GoalChannelTests
         // visible even when lookups happen inside a goal-channel body.
         // With the old foundational-snapshot approach, late-registered names
         // were invisible there. With per-channel IsExecuting, they aren't.
-        var app = new global::app.@this("/tmp/g_late");
+        var app = global::PLang.Tests.TestApp.Create("/tmp/g_late");
         var sinkGoal = new EngineGoal { Name = "Sink", Path = "S.goal", PrPath = "/S.pr" };
         var sink = new GoalChannel("sink", sinkGoal, app.User);
         app.User.Channel.Register(sink);
@@ -112,7 +112,7 @@ public class Stage3_GoalChannelTests
     [Test]
     public async Task GoalChannel_Ask_InvokesGoal_ReturnsAnswer()
     {
-        var app = new global::app.@this("/tmp/g8");
+        var app = global::PLang.Tests.TestApp.Create("/tmp/g8");
         var goal = new EngineGoal { Name = "Asker", Path = "Asker.goal", PrPath = "/A.pr" };
         var ch = new GoalChannel("input", goal, app.User);
         var result = await ch.Ask(new global::app.module.output.ask { Question = new global::app.data.@this<global::app.type.text.@this>("", "q?") });
@@ -122,7 +122,7 @@ public class Stage3_GoalChannelTests
     [Test]
     public async Task GoalChannel_Dispose_DoesNotDisposeUnderlyingGoal()
     {
-        var app = new global::app.@this("/tmp/g9");
+        var app = global::PLang.Tests.TestApp.Create("/tmp/g9");
         var goal = new EngineGoal { Name = "G", Path = "G.goal", PrPath = "/G.pr" };
         var ch = new GoalChannel("c", goal, app.User);
         await ch.DisposeAsync();

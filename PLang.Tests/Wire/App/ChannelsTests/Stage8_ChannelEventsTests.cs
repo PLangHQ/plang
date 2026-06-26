@@ -44,7 +44,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     [Test]
     public async Task BeforeWriteHandler_ReceivesCorrectData()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false);
+        await using var app = global::PLang.Tests.TestApp.Create("/test", autoWireConsoleChannels: false);
         var ch = StreamChannel.Memory("logger");
         app.User.Channel.Register(ch);
         Data? captured = null;
@@ -80,7 +80,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     [Test]
     public async Task AfterWriteHandler_FiresWhenWriteCoreSucceeds()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false);
+        await using var app = global::PLang.Tests.TestApp.Create("/test", autoWireConsoleChannels: false);
         var ch = StreamChannel.Memory("c");
         app.User.Channel.Register(ch);
         bool afterFired = false;
@@ -115,7 +115,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     [Test]
     public async Task AfterWriteHandler_ThrowingIsSuppressed_OriginalOutcomeStands()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false);
+        await using var app = global::PLang.Tests.TestApp.Create("/test", autoWireConsoleChannels: false);
         var ch = StreamChannel.Memory("c");
         app.User.Channel.Register(ch);
         ch.Events.Add(new EventBinding(Trigger.AfterWrite, (_, _, _) =>
@@ -143,7 +143,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     [Test]
     public async Task MultipleBindings_FireInRegistrationOrder()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false);
+        await using var app = global::PLang.Tests.TestApp.Create("/test", autoWireConsoleChannels: false);
         var ch = StreamChannel.Memory("c");
         app.User.Channel.Register(ch);
         var order = new List<string>();
@@ -210,7 +210,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     [Test]
     public async Task BindingsMatch_AcrossUserAndServiceChannels_OfSameName()
     {
-        await using var app = new global::app.@this("/tmp/s8-cross");
+        await using var app = global::PLang.Tests.TestApp.Create("/tmp/s8-cross");
         var userLogger = StreamChannel.Memory("logger");
         var serviceLogger = StreamChannel.Memory("logger");
         app.User.Channel.Register(userLogger);
@@ -230,7 +230,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     [Test]
     public async Task ChannelEvents_DoNotTriggerGoalStepOrActionBindings()
     {
-        await using var app = new global::app.@this("/tmp/s8-iso");
+        await using var app = global::PLang.Tests.TestApp.Create("/tmp/s8-iso");
         var ch = StreamChannel.Memory("c");
         app.User.Channel.Register(ch);
 

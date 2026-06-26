@@ -7,7 +7,7 @@ namespace PLang.Tests.App.Serialization;
 
 public class CompressFlattenedTests
 {
-    private static global::app.@this NewApp() => new(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+    private static global::app.@this NewApp() => global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
         "plang-cmp-" + Guid.NewGuid().ToString("N")[..8]));
 
     private static global::app.data.@this NewCompressibleData(global::app.@this app, string value)

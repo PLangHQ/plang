@@ -44,7 +44,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
 
     [Test] public async Task SameImage_TextWriter_GivesPathPlaceholder()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut2t-" + System.Guid.NewGuid().ToString("N")[..8]));
         var p = global::app.type.path.@this.Resolve("/srv/photo.png", app.User.Context);
         var img = new image(PngBytes, "image/png", p);
@@ -59,7 +59,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
 
     [Test] public async Task SameImage_JsonWriter_GivesBase64String()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut2j-" + System.Guid.NewGuid().ToString("N")[..8]));
         var img = new image(PngBytes, "image/png");
 
@@ -76,7 +76,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
 
     [Test] public async Task SameInstance_TwoWriters_NeverReMaterializesValue()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut2s-" + System.Guid.NewGuid().ToString("N")[..8]));
         var p = global::app.type.path.@this.Resolve("/srv/x.png", app.User.Context);
         var img = new image(PngBytes, "image/png", p);
@@ -109,7 +109,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
 
     [Test] public async Task ImageInstance_DataTypeStaysImage_AcrossBothChannels()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut2i-" + System.Guid.NewGuid().ToString("N")[..8]));
         var img = new image(PngBytes, "image/png");
         var data = new global::app.data.@this("photo", img,

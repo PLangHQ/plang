@@ -28,7 +28,7 @@ public class ActionSyntheticTests
 
     [Test] public async Task CallStackPush_StampsSynthetic_OnCallFrame()
     {
-        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cs-" + System.Guid.NewGuid().ToString("N")[..8]));
         var synthetic = new ActionEntity { Module = "x", ActionName = "y" };
         var prLoaded = new ActionEntity { Module = "x", ActionName = "y" }; prLoaded.Synthetic = false;
@@ -47,7 +47,7 @@ public class ActionSyntheticTests
         // Stage 2a.5 stamps Synthetic on Call frames; wire-serialize filtering
         // is a follow-up (architect's todos.md note — per-channel serializer
         // shape deferred). Pin the contract that the flag is readable.
-        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cs2-" + System.Guid.NewGuid().ToString("N")[..8]));
         var prLoaded = new ActionEntity { Module = "x", ActionName = "y" }; prLoaded.Synthetic = false;
         await using var call = app.CallStack.Push(prLoaded);
@@ -58,7 +58,7 @@ public class ActionSyntheticTests
     {
         // App.Snapshot() captures the full CallStack (synthetic + non-synthetic).
         // Pin: a synthetic frame appears in the snapshot section.
-        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cs3-" + System.Guid.NewGuid().ToString("N")[..8]));
         var synthetic = new ActionEntity { Module = "x", ActionName = "y" };
         await using var call = app.CallStack.Push(synthetic);

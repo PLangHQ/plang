@@ -11,7 +11,7 @@ namespace PLang.Tests.App.CallbackTests;
 public class SnapshotResumeTests
 {
     private static global::app.@this NewApp() =>
-        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-sr-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     private static Step SetStep(int index, string varName, object value)

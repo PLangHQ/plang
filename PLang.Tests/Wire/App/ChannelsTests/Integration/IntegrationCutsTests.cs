@@ -10,7 +10,7 @@ public class IntegrationCutsTests
     [Test]
     public async Task Cut1_ConsoleBoot_ThroughWriteOut_ReachesStdout()
     {
-        await using var app = new global::app.@this("/tmp/cut1");
+        await using var app = global::PLang.Tests.TestApp.Create("/tmp/cut1");
         var userOutput = new MemoryStream();
         var userError = new MemoryStream();
         var userInput = new MemoryStream();
@@ -42,7 +42,7 @@ public class IntegrationCutsTests
     [Test]
     public async Task Cut3_ChannelEvents_AbortPlusAuditMetric_AcrossTwoWrites()
     {
-        await using var app = new global::app.@this("/tmp/cut3");
+        await using var app = global::PLang.Tests.TestApp.Create("/tmp/cut3");
         var auditCapture = new MemoryStream();
         var metricsCapture = new MemoryStream();
         var audit = new StreamChannel("audit.external", auditCapture, ChannelDirection.Output, ownsStream: false)
