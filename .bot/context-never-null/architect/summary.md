@@ -19,6 +19,8 @@
 
 **GetActor throws.** Actor set is closed/hardcoded (system/user/service); unknown name throws, returns non-null. Off the stays-list.
 
+**Root flag named `verify.Root`** (bool, default false): skip the actor-identity match for the root identity read; keypair self-consistency check lives in the identity provider, not verify. **PLang var renamed `%MyIdentity%` → `%Identity%`** (touches ~3 identity test files).
+
 **Stays nullable.** Only the `[Choices]` static-vocab param (designed nullable).
 
 **Settled (was open).** Settings is system-owned: you can't store a context, only the actor; the store reads through `App.System.Context` (live) and records `Actor=system`.
