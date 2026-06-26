@@ -31,7 +31,7 @@ public partial class Set : IContext
         // — reference semantics, same rule as list.add (nothing copied).
         global::app.data.@this item = Value == null
             ? new global::app.data.@this("", null, context: Context)
-            : new global::app.data.@this(Value.Name, await Value.Value(), Value.Type) { Context = Context };
+            : new global::app.data.@this(Value.Name, await Value.Value(), Value.Type, context: Context);
         nl.SetAt(index, item);
         return Context.Ok<type.list>(new type.list { count = nl.CountRaw, value = nl }, app.type.@this.FromName("list"));
     }

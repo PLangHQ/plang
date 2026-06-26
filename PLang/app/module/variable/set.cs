@@ -278,7 +278,7 @@ public partial class Set : IContext, IBuildValidatable
 
             // The converted value already carries its type — store it in a Data directly
             // (no reflective Data<T> mint). keepAsIs keeps the value's own richer type.
-            var typedData = new data.@this(name, converted, keepAsIs ? null : type) { Context = Context };
+            var typedData = new data.@this(name, converted, keepAsIs ? null : type, context: Context);
 
             // Strict kind for a reference fundamental rides WITH the value to its
             // load seam (Ingi: validate at byte-materialization, throw if strict).

@@ -133,7 +133,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
             // %var%/literal/container form. Goal-call shares the caller's scope, so the
             // step that reads %name% resolves it through the door then; no eager pass.
             var entries = ParamEntries(p)
-                .Select(e => new data.@this(e.name, e.value) { Context = context })
+                .Select(e => new data.@this(e.name, e.value, context: context))
                 .ToList();
             if (entries.Count > 0) parameters = entries;
         }

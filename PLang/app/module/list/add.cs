@@ -31,7 +31,7 @@ public partial class Add : IContext
         // semantics: `add %b% to %a%` shares %b%'s list instance (a later
         // in-place mutation of %b% is visible through %a%, like C#), while a
         // later `set %b% = ...` rebinds %b% and never touches the entry.
-        data.@this toAdd = new data.@this(Value.Name, await Value.Value(), Value.Type) { Context = Context };
+        data.@this toAdd = new data.@this(Value.Name, await Value.Value(), Value.Type, context: Context);
 
         // Typed read — number end to end; the list lowers inside its own boundary.
         var atIndex = (await AtIndex.Value())!;

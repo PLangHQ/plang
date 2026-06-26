@@ -209,7 +209,7 @@ public partial class @this
                 // independent.
                 if (frame.ContainsLocal(name) && frame.TryGet(name, out var existingFrame))
                 {
-                    var rebound = new data.@this(name, value) { Context = _context };
+                    var rebound = new data.@this(name, value, context: _context);
                     rebound.OnCreate = existingFrame.OnCreate;
                     rebound.OnChange = existingFrame.OnChange;
                     rebound.OnDelete = existingFrame.OnDelete;
@@ -223,8 +223,7 @@ public partial class @this
                 // Either nothing visible, or only visible via Caller chain — mint a
                 // fresh local entry that shadows. Mutating an inherited Data would
                 // bleed the write up to the caller's scope.
-                var data = new data.@this(name, value);
-                data.Context = _context;
+                var data = new data.@this(name, value, context: _context);
                 if (frame.TryGet(name, out var inherited))
                 {
                     OnSet?.Invoke(name, inherited.Peek(), value);
@@ -246,7 +245,7 @@ public partial class @this
                 // elsewhere (e.g. stored in a list by `add`) gets rewritten underfoot
                 // when the variable is re-set. Reassignment rebinds the binding; it
                 // does not reach back into a value already captured elsewhere.
-                var rebound = new data.@this(name, value) { Context = _context };
+                var rebound = new data.@this(name, value, context: _context);
                 rebound.OnCreate = existing.OnCreate;
                 rebound.OnChange = existing.OnChange;
                 rebound.OnDelete = existing.OnDelete;
@@ -258,8 +257,7 @@ public partial class @this
             }
             else
             {
-                var data = new data.@this(name, value);
-                data.Context = _context;
+                var data = new data.@this(name, value, context: _context);
                 data.FireOnCreate();
                 _variables[name] = data;
                 OnCreate?.Invoke(name, value);

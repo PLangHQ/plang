@@ -70,7 +70,7 @@ public sealed class @this : global::app.type.item.@this
     {
         int i = 0;
         foreach (var row in Rows)
-            yield return (new global::app.data.@this("", i++) { Context = context },
-                          new global::app.data.@this("", row) { Context = context });
+            yield return (new global::app.data.@this("", i++, context: context),
+                          new global::app.data.@this("", row, context: context));
     }
 }

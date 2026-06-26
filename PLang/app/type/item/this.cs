@@ -113,8 +113,8 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual System.Collections.Generic.IEnumerable<(global::app.data.@this key, global::app.data.@this value)>
         EnumerateItems(global::app.actor.context.@this? context)
     {
-        yield return (new global::app.data.@this("", 0) { Context = context },
-                      new global::app.data.@this("", this) { Context = context });
+        yield return (new global::app.data.@this("", 0, context: context),
+                      new global::app.data.@this("", this, context: context));
     }
 
     /// <summary>

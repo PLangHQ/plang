@@ -434,7 +434,7 @@ public sealed partial class @this
     private async Task StoreGrant(Verb verb, bool persist)
     {
         var grant = BuildRequest(Context!.Actor!, verb);
-        var d = new data.@this<global::app.type.permission.@this>("", grant) { Context = Context };
+        var d = new data.@this<global::app.type.permission.@this>("", grant, context: Context);
         // Signing is at the I/O boundary now: a persisted grant is signed when it
         // crosses application/plang into the settings store. `persist` carries intent.
         await Context!.Actor!.Permission.Add(d, persist);

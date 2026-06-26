@@ -277,7 +277,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             // A concrete value result is stored as-is (same object reachable via %!data% and
             // the producing handler's own name; override path flows through this same write).
             var snapshot = result.Peek() is global::app.variable.@this || result.HasVariableReference
-                ? new global::app.data.@this("!data", await result.Value()) { Context = context }
+                ? new global::app.data.@this("!data", await result.Value(), context: context)
                 : result;
             await context.Variable.Set("!data", snapshot);
         }

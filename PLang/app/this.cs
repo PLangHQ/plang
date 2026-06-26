@@ -564,7 +564,7 @@ public sealed partial class @this : IAsyncDisposable
                 param.Context = context;
                 if (param.Peek() is global::app.variable.@this)
                     await context.Variable.Set(param.Name,
-                        new global::app.data.@this(param.Name, await param.Value()) { Context = context });
+                        new global::app.data.@this(param.Name, await param.Value(), context: context));
                 else
                     await context.Variable.Set(param.Name, param);
             }
