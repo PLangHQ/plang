@@ -104,7 +104,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         }
         // Born a FRESH Data each read — never cached back. Leaving the slot raw keeps
         // the aliased backing pristine, so the CLR exit door stays same-ref.
-        return new Data(key, global::app.type.@this.Create(raw)) { Context = _context! };
+        return new Data(key, global::app.type.@this.Create(raw, _context)) { Context = _context! };
     }
     private actor.context.@this? _context;
 
