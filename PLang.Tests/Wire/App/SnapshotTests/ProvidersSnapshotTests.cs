@@ -11,8 +11,8 @@ public class ProvidersSnapshotTests
         public bool IsDefault { get; set; }
         public bool IsBuiltIn { get; set; }
         public string? Source { get; set; }
-        public Data Grep(Data data, string pattern, int contextLines = 0) => Data.Ok(true);
-        public Data GrepCount(Data data, string pattern) => Data.Ok(0L);
+        public Data Grep(Data data, string pattern, int contextLines = 0) => data.Context.Ok(true);
+        public Data GrepCount(Data data, string pattern) => data.Context.Ok(0L);
     }
 
     [Test]

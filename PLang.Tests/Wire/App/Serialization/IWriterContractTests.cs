@@ -8,8 +8,13 @@ namespace PLang.Tests.App.Serialization;
 // data-normalize — Stage 2
 // IWriter is the format encoder protocol. JsonWriter is the first concrete adapter.
 
-public class IWriterContractTests
+public class IWriterContractTests : System.IAsyncDisposable
 {
+    // Born-with-context: serialized records are born from this app's user context.
+    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create(
+        "/tmp/iwriter-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     private static (Utf8JsonWriter jw, MemoryStream ms) MakeWriter()
     {
         var ms = new MemoryStream();
@@ -123,7 +128,7 @@ public class IWriterContractTests
     {
         var (jw, ms) = MakeWriter();
         var w = new global::app.channel.serializer.json.Writer(jw);
-        var record = new app.data.@this("hello", "world");
+        var record = new global::app.data.@this("hello", "world", context: app.User.Context);
         w.BeginRecord(record);
         w.String("world");
         w.EndRecord(record);
@@ -147,7 +152,7 @@ public class IWriterContractTests
     {
         var (jw, ms) = MakeWriter();
         var w = new global::app.channel.serializer.json.Writer(jw);
-        var record = new app.data.@this("nums", new List<int> { 1, 2 });
+        var record = new global::app.data.@this("nums", new List<int> { 1, 2 }, context: app.User.Context);
         w.BeginRecord(record);
         w.BeginArray(2);
         w.Int(1); w.Int(2);

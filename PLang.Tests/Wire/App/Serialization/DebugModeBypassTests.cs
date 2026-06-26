@@ -10,8 +10,11 @@ namespace PLang.Tests.App.Serialization;
 //   View.Debug → every public property ships, EXCEPT those tagged [Sensitive].
 // [Masked] is honored in BOTH views — debug never unmasks.
 
-public class DebugModeBypassTests
+public class DebugModeBypassTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/DebugModeBypassTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test] public async Task OutMode_PayloadContains_OnlyOutTaggedProperties()
     {
         var identity = new global::app.module.identity.Identity
@@ -21,7 +24,7 @@ public class DebugModeBypassTests
             PrivateKey = "secret",
             IsDefault = true,
         };
-        var children = (new Data("", identity).Normalize(global::app.View.Out))!.Children();
+        var children = (new Data("", identity, context: app.User.Context).Normalize(global::app.View.Out))!.Children();
         await Assert.That(children.Any(c => c.Name == "isdefault")).IsFalse();
         await Assert.That(children.Any(c => c.Name == "isarchived")).IsFalse();
         await Assert.That(children.Any(c => c.Name == "created")).IsFalse();
@@ -36,7 +39,7 @@ public class DebugModeBypassTests
             PrivateKey = "secret",
             IsDefault = true,
         };
-        var children = (new Data("", identity).Normalize(global::app.View.Debug))!.Children();
+        var children = (new Data("", identity, context: app.User.Context).Normalize(global::app.View.Debug))!.Children();
         await Assert.That(children.Any(c => c.Name == "isdefault")).IsTrue();
         await Assert.That(children.Any(c => c.Name == "isarchived")).IsTrue();
         await Assert.That(children.Any(c => c.Name == "created")).IsTrue();
@@ -46,7 +49,7 @@ public class DebugModeBypassTests
     [Test] public async Task DebugMode_Identity_IncludesIsDefault_IsArchived_Created_NoOutTag()
     {
         var identity = new global::app.module.identity.Identity { IsDefault = true, IsArchived = false };
-        var children = (new Data("", identity).Normalize(global::app.View.Debug))!.Children();
+        var children = (new Data("", identity, context: app.User.Context).Normalize(global::app.View.Debug))!.Children();
         await Assert.That(children.Any(c => c.Name == "isdefault")).IsTrue();
         await Assert.That(children.Any(c => c.Name == "isarchived")).IsTrue();
         await Assert.That(children.Any(c => c.Name == "created")).IsTrue();
@@ -55,14 +58,14 @@ public class DebugModeBypassTests
     [Test] public async Task DebugMode_Identity_StillExcludes_PrivateKey_SensitiveAlwaysHonored()
     {
         var identity = new global::app.module.identity.Identity { PrivateKey = "should never appear" };
-        var children = (new Data("", identity).Normalize(global::app.View.Debug))!.Children();
+        var children = (new Data("", identity, context: app.User.Context).Normalize(global::app.View.Debug))!.Children();
         await Assert.That(children.Any(c => c.Name == "privatekey")).IsFalse();
     }
 
     [Test] public async Task DebugMode_Setting_StillMasksValue_MaskedAlwaysHonored()
     {
         var s = new global::app.module.settings.type.setting { key = "K", value = "secret" };
-        var children = (new Data("", s).Normalize(global::app.View.Debug))!.Children();
+        var children = (new Data("", s, context: app.User.Context).Normalize(global::app.View.Debug))!.Children();
         await Assert.That((await children.First(c => c.Name == "value").Value())?.ToString()).IsEqualTo("****");
     }
 

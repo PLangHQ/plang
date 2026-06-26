@@ -9,8 +9,13 @@ namespace PLang.Tests.App.Serialization.IntegrationCuts;
 // then walk back through Reconstruct<T>. Reconstructed value is semantically equal
 // to the original on the [Out]-tagged properties. Sensitive is absent. Masked is "****".
 
-public class Cut1_JsonRoundTripTests
+public class Cut1_JsonRoundTripTests : System.IAsyncDisposable
 {
+    // Born-with-context: value-bearing Data are born from this app's user context.
+    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create(
+        "/tmp/cut1-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test] public async Task Cut1_Path_RoundTrips_AsScheme_Relative_PropertyBag()
     {
         // Stage 3: the REAL wire is the single location string (type-owned
@@ -29,7 +34,11 @@ public class Cut1_JsonRoundTripTests
         // (each preserves its name + value envelope). The property-bag form
         // {a:1, b:"two"} is reserved for Normalize's domain-object output;
         // a raw List<Data> stays observable as a list.
-        var bag = new List<Data> { new("a", 1), new("b", "two") };
+        var bag = new List<Data>
+        {
+            new("a", 1, context: app.User.Context),
+            new("b", "two", context: app.User.Context)
+        };
         var json = NormalizePipelineHelper.SerializeValueSlot(bag);
         // binding labels stay off the outbound wire; values + record shape survive.
         // (Check each record's ROOT for a `name` binding — the structured type:{name,…}
@@ -62,7 +71,7 @@ public class Cut1_JsonRoundTripTests
 
     [Test] public async Task Cut1_DataWithProperties_Sidecar_RoundTripsAsNestedObject()
     {
-        var d = new Data("rec", "v");
+        var d = new Data("rec", "v", context: app.User.Context);
         d.Properties["k"] = "vp";
         var json = NormalizePipelineHelper.SerializeRecord(d);
         await Assert.That(json).Contains("\"properties\":{\"k\":\"vp\"}");

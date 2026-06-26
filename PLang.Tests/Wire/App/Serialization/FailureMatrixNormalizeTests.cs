@@ -9,8 +9,11 @@ namespace PLang.Tests.App.Serialization;
 // live in NormalizeCycleAndDepthTests; scheme-mismatch / missing-required / type-mismatch
 // live in AsTreeWalkerTests — this file picks up the cross-cutting residue.
 
-public class FailureMatrixNormalizeTests
+public class FailureMatrixNormalizeTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/FailureMatrixNormalizeTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     private sealed class SensitiveAndOut
     {
         [global::app.Out, global::app.Sensitive] public string? S { get; set; }
@@ -21,7 +24,7 @@ public class FailureMatrixNormalizeTests
         // Sensitive wins — the property is hard-excluded even when Out is also present.
         // Stage 2 enforces this via the Wire filter ordering: Sensitive check first.
         var s = new SensitiveAndOut { S = "leak" };
-        var children = (new Data("", s).Normalize())!.Children();
+        var children = (new Data("", s, context: app.User.Context).Normalize())!.Children();
         await Assert.That(children.Any(c => c.Name == "s")).IsFalse();
     }
 
@@ -31,7 +34,7 @@ public class FailureMatrixNormalizeTests
         // NormalizeException. Stage 2 in isolation can't surface this; pin the symmetry:
         // a type with no [Out] properties normalizes to an empty children list rather
         // than throwing, which is the Normalize side of the same "no strategy" gap.
-        var children = (new Data("", new object()).Normalize())!.Children();
+        var children = (new Data("", new object(), context: app.User.Context).Normalize())!.Children();
         await Assert.That(children.Count).IsEqualTo(0);
     }
 
@@ -87,7 +90,7 @@ public class FailureMatrixNormalizeTests
     {
         // Covered by NormalizeCycleAndDepthTests.Normalize_GetterThrows_* — pin the
         // residue: an indexed property is skipped (not invoked), so no failure.
-        var children = (new Data("", new System.Collections.Generic.Dictionary<string, int>()).Normalize())!.Children();
+        var children = (new Data("", new System.Collections.Generic.Dictionary<string, int>(), context: app.User.Context).Normalize())!.Children();
         await Assert.That(children).IsNotNull();
     }
 }
