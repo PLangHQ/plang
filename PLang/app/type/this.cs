@@ -351,6 +351,18 @@ public sealed class @this : item.@this
                 + "This is the implicit-operator double-wrap accident: return the inner value via its own factory, never `return innerDataInstance;`."
                 + System.Environment.StackTrace);
 
+        // A value cannot be born without a context. There is no context-less value
+        // in the codebase — period. A null context here is a caller that constructed
+        // a value (or a Data) without one, or used construct-then-stamp ({ Context = …}
+        // runs after the ctor builds the value). Born-with-context: pass the context at
+        // construction. The throw flags the offending caller via the stack trace.
+        if (context == null)
+            throw new System.InvalidOperationException(
+                $"A {raw.GetType().Name} value cannot be born without a context. "
+                + "type.Create(raw, context) requires a non-null context — born-with-context, never construct-then-stamp "
+                + "({ Context = … } sets the wrapper after the value is already built). Fix the caller that passed null.\n"
+                + System.Environment.StackTrace);
+
         // A sequence of Data builds a native list DIRECTLY, preserving the actual
         // Data instances — their names, types and signatures.
         if (raw is System.Collections.Generic.IEnumerable<global::app.data.@this> dataSeq)
