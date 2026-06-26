@@ -82,9 +82,10 @@ public sealed class @this : IDisposable
     public @this? Parent { get; }
 
     /// <summary>
-    /// The actor that owns this context (if any).
+    /// The actor that owns this context. Born with the context — every context
+    /// is owned by exactly one actor, passed into the ctor.
     /// </summary>
-    public ActorType? Actor { get; internal set; }
+    public ActorType Actor { get; }
 
     /// <summary>
     /// Event bindings registered on this context.
@@ -136,11 +137,12 @@ public sealed class @this : IDisposable
     /// </summary>
     public ConfigScope? ConfigScope { get; set; }
 
-    public @this(app.@this app, Variables? variables = null, @this? parent = null, CancellationToken? parentToken = null)
+    public @this(app.@this app, ActorType owner, Variables? variables = null, @this? parent = null, CancellationToken? parentToken = null)
     {
         Id = Guid.NewGuid().ToString("N")[..12];
         App = app;
-        Variable = variables ?? new Variables();
+        Actor = owner;
+        Variable = variables ?? new Variables(this);
         Parent = parent;
         CreatedAt = DateTime.UtcNow;
         var linkTo = parentToken ?? parent?.CancellationToken ?? app.ShutdownToken;
@@ -168,8 +170,8 @@ public sealed class @this : IDisposable
         vars.Set(new data.DynamicData("!variables", () => Variable));
         vars.Set(new data.DynamicData("!callStack", () => CallStack));
         vars.Set(new data.DynamicData("!trace", () => Trace));
-        vars.Set(new data.DynamicData("!channels", () => Actor?.Channel));
-        vars.Set(new data.DynamicData("!serializers", () => Actor!.Channel.Serializers));
+        vars.Set(new data.DynamicData("!channels", () => Actor.Channel));
+        vars.Set(new data.DynamicData("!serializers", () => Actor.Channel.Serializers));
         vars.Set(new data.DynamicData("!goal", () => Goal));
         vars.Set(new data.DynamicData("!step", () => Step));
         // %!error% reads from App.Errors.@this — an AsyncLocal scope managed by
@@ -260,7 +262,7 @@ public sealed class @this : IDisposable
     /// </summary>
     public @this CreateChild(Variables? variables = null)
     {
-        return new @this(App, variables ?? Variable.Clone(), this);
+        return new @this(App, Actor, variables ?? Variable.Clone(), this);
     }
 
     /// <summary>
@@ -316,7 +318,7 @@ public sealed class @this : IDisposable
     /// </summary>
     public @this Clone(Variables? variables = null)
     {
-        var clone = new @this(App, variables ?? Variable.Clone(), Parent)
+        var clone = new @this(App, Actor, variables ?? Variable.Clone(), Parent)
         {
             IsAsync = IsAsync,
             Setup = Setup,

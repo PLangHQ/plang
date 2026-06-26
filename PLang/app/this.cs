@@ -25,8 +25,8 @@ public sealed partial class @this : IAsyncDisposable
     private readonly global::app.goal.list.@this _goals;
     private bool _disposed;
 
-    private actor.@this? _system;
-    private actor.@this? _user;
+    private readonly actor.@this _system;
+    private readonly actor.@this _user;
     private global::app.service.list.@this? _services;
 
     /// <summary>
@@ -224,12 +224,12 @@ public sealed partial class @this : IAsyncDisposable
     /// Cancelling System cascades to User and Service.
     /// Links to App's shutdown token so RequestShutdown() cascades through everything.
     /// </summary>
-    public actor.@this System => _system ??= new actor.@this("System", this, _shutdownCts.Token);
+    public actor.@this System => _system;
 
     /// <summary>
     /// User actor for end user operations. Links to System's cancellation token.
     /// </summary>
-    public actor.@this User => _user ??= new actor.@this("User", this, System.CancellationToken);
+    public actor.@this User => _user;
 
     /// <summary>
     /// Flat per-call Service collection. Each Service is one outbound call's I/O
@@ -245,25 +245,19 @@ public sealed partial class @this : IAsyncDisposable
     public actor.@this CurrentActor { get; set; } = null!; // initialized to User in constructor
 
     /// <summary>
-    /// Resolves an actor by name. Returns error instead of null — object reports its own errors.
+    /// Resolves an actor by name. The actor set is closed and hardcoded
+    /// (system/user), so an unknown name is a critical miss, not a soft one —
+    /// throws and returns a non-null actor. The conversion pipeline wraps the
+    /// throw into a graceful error for untrusted (LLM) input.
     /// </summary>
-    public (actor.@this? Actor, IError? Error) GetActor(string? name)
-    {
-        if (string.IsNullOrEmpty(name))
-            return (null, new ActionError("Actor name is required", "ActorRequired", 400));
-
-        var actor = name.ToLowerInvariant() switch
+    public actor.@this GetActor(string name)
+        => name?.ToLowerInvariant() switch
         {
             "system" => System,
             "user" => User,
-            _ => (actor.@this?)null
+            _ => throw new ArgumentException(
+                $"Unknown actor '{name}' — the actor set is closed (system/user).", nameof(name))
         };
-
-        if (actor == null)
-            return (null, new ActionError($"Unknown actor '{name}'", "UnknownActor", 400));
-
-        return (actor, null);
-    }
 
     /// <summary>
     /// Requests graceful shutdown.
@@ -323,8 +317,14 @@ public sealed partial class @this : IAsyncDisposable
         Type.Scheme.Register("http", (raw, context) => global::app.type.path.http.@this.Resolve(raw, context));
         Type.Scheme.Register("https", (raw, context) => global::app.type.path.http.@this.Resolve(raw, context));
 
+        // Actors are born eagerly with the App — System first (root of the
+        // cancellation hierarchy), then User linked to System's token. No lazy
+        // window: _system / _user are non-null for the App's lifetime.
+        _system = new actor.@this("System", this, _shutdownCts.Token);
+        _user = new actor.@this("User", this, _system.CancellationToken);
+
         // Default actor is User — Start() switches to System for bootstrap
-        CurrentActor = User;
+        CurrentActor = _user;
 
         // Auto-wire console channels for ad-hoc App constructions (sub-process
         // test fixtures, embedded scenarios, C# tests). Entry points that own

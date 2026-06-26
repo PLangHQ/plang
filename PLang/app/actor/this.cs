@@ -26,9 +26,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             case null: return global::app.data.@this.Ok(value);
             case @this self: return global::app.data.@this.Ok(self);
             case string name:
-                var (actor, err) = context.App.GetActor(name);
-                if (err != null) return global::app.data.@this.FromError(err);
-                return global::app.data.@this.Ok(actor);
+                return global::app.data.@this.Ok(context.App.GetActor(name));
             default:
                 return global::app.data.@this.FromError(new global::app.error.Error(
                     $"Cannot convert {value.GetType().Name} to actor — expected an actor name (system/service/user).",
@@ -88,7 +86,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// Resolves an actor by name using the app.
     /// Convention: types with this signature are auto-resolved by the source generator.
     /// </summary>
-    public static @this? Resolve(string name, context.@this context) => context.App.GetActor(name).Actor;
+    public static @this? Resolve(string name, context.@this context) => context.App.GetActor(name);
 
     /// <summary>
     /// Closed list of actor names the LLM may emit for an Actor-typed slot.
@@ -105,8 +103,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         _cts = parentToken == default
             ? new CancellationTokenSource()
             : CancellationTokenSource.CreateLinkedTokenSource(parentToken);
-        Context = new context.@this(app, parentToken: _cts.Token);
-        Context.Actor = this;
+        Context = new context.@this(app, this, parentToken: _cts.Token);
         Permission = new permission.@this(this);
         // Per-Actor Serializers: bound to this actor's Context so PathJsonConverter
         // produces Context-wired Paths on deserialize without any ambient state.

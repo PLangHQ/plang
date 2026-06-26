@@ -23,7 +23,7 @@ public partial class @this
     private readonly ConcurrentDictionary<string, data.@this> _variables = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Func<string, System.Threading.Tasks.ValueTask<data.@this>>> _navigables
         = new(StringComparer.OrdinalIgnoreCase);
-    private actor.context.@this? _context;
+    private actor.context.@this _context;
 
     /// <summary>
     /// Registers a navigable mount: when <see cref="Get"/> resolves <c>name.X</c>
@@ -48,7 +48,7 @@ public partial class @this
     public call.list.@this Calls { get; } = new();
 
     [JsonIgnore]
-    internal actor.context.@this? Context
+    internal actor.context.@this Context
     {
         get => _context;
         set
@@ -76,8 +76,20 @@ public partial class @this
     /// </summary>
     public event Action<string>? OnRemove;
 
+    /// <summary>
+    /// Production ctor — born from the owning context. Every Variables in a running
+    /// App belongs to exactly one context, passed in here.
+    /// </summary>
+    public @this(actor.context.@this context) : this()
+    {
+        Context = context;
+    }
+
     public @this()
     {
+        // Test seam — production constructs via @this(context). _context is wired by
+        // the owning context's ctor (or Context setter) before any read.
+        _context = null!;
         // System variables seeded directly (Set is async now; simple names, no navigation,
         // no subscribers at construction — Context is wired later).
         _variables["Now"] = new data.DynamicData("Now", () => DateTimeOffset.Now, app.type.@this.DateTime);
