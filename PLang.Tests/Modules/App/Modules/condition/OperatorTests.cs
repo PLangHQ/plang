@@ -3,9 +3,12 @@ using app.module.condition;
 
 namespace PLang.Tests.App.Modules.condition;
 
-public class OperatorTests
+public class OperatorTests : System.IAsyncDisposable
 {
-    private static Data D(object? value) => value == null ? new Data("") : Data.Ok(value);
+    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/optests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
+
+    private Data D(object? value) => value == null ? new Data("") : _app.User.Context.Ok(value);
 
     // --- Construction ---
 

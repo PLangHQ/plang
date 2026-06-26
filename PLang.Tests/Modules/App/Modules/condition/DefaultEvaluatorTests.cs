@@ -4,17 +4,19 @@ using app.module.condition.code;
 
 namespace PLang.Tests.App.Modules.condition;
 
-public class DefaultEvaluatorTests
+public class DefaultEvaluatorTests : System.IAsyncDisposable
 {
     private readonly Default _eval = new();
+    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/defeval-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
-    private static Data D(object? value) => value == null ? new Data("") : Data.Ok(value);
+    private Data D(object? value) => value == null ? new Data("") : _app.User.Context.Ok(value);
 
     private Task<global::app.data.@this<global::app.type.@bool.@this>> Eval(object? left, string op, object? right)
-        => _eval.Evaluate(new Compare { Left = D(left), Operator = (global::app.type.choice.@this<Operator>)new Operator(op), Right = D(right) });
+        => _eval.Evaluate(new Compare { Context = _app.User.Context, Left = D(left), Operator = (global::app.type.choice.@this<Operator>)new Operator(op), Right = D(right) });
 
     private Task<global::app.data.@this<global::app.type.@bool.@this>> EvalIf(object? left, string op = "==", object? right = null)
-        => _eval.Evaluate(new If { Left = D(left), Operator = (global::app.type.choice.@this<Operator>)new Operator(op), Right = D(right) });
+        => _eval.Evaluate(new If { Context = _app.User.Context, Left = D(left), Operator = (global::app.type.choice.@this<Operator>)new Operator(op), Right = D(right) });
 
     private bool IsTrue(global::app.data.@this<global::app.type.@bool.@this> result) => result.Success && (result.Peek() as global::app.type.@bool.@this)?.Value == true;
     private bool IsFalse(global::app.data.@this<global::app.type.@bool.@this> result) => result.Success && (result.Peek() as global::app.type.@bool.@this)?.Value == false;
