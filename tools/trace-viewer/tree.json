@@ -1,0 +1,58 @@
+{
+  "title": "variable.get  %user%  —  where context forks the path",
+  "legend": "One trunk, shared all the way down. ⑂ = fork. A fork is RED when its arms never reconverge (they end at different results). Deeper = more shared.",
+  "root": {
+    "kind": "act", "n": "variable.get  %user%", "sig": "variable/get.cs",
+    "children": [
+      { "kind": "cs", "n": "Data.As<User>", "sig": "data/this.cs:As", "children": [
+        { "kind": "cs", "n": "Wire.Read", "sig": "data/Wire.cs:Read", "children": [
+
+          { "kind": "cs", "n": "Wire.ReadBody", "sig": "data/Wire.cs:316", "children": [
+            { "fork": true, "q": "_context != null  (and a typed reader exists)", "at": "Wire.cs:374", "reconverges": false,
+              "arms": [
+                { "label": "has context", "ret": "User (typed)", "children": [
+                  { "kind": "cs", "n": "Type.Readers.Typed(\"user\",\"record\")", "sig": "type/reader" },
+                  { "kind": "cs", "n": "typed.Read(ref jr, kind, ReadContext)", "sig": "json/Reader.cs", "ret": "User{ … }" }
+                ]},
+                { "label": "no context", "ret": "untyped item", "warn": "typed reader skipped — value born untyped", "children": [
+                  { "kind": "cs", "n": "JsonDocument.ParseValue", "sig": "Wire.cs:388" },
+                  { "kind": "cs", "n": "item.serializer.json.Parse(root)", "sig": "Wire.cs:395", "ret": "item (untyped)" }
+                ]}
+              ]}
+          ]},
+
+          { "kind": "cs", "n": "Wire.ReadSignatureLayer", "sig": "data/Wire.cs:200", "children": [
+            { "fork": true, "q": "_context == null", "at": "Wire.cs:211", "reconverges": false,
+              "arms": [
+                { "label": "has context", "ret": "verified ✓", "children": [
+                  { "kind": "cs", "n": "context.App.RunAction(signature.verify)", "sig": "Wire.cs:246", "ret": "verified ✓" }
+                ]},
+                { "label": "no context", "ret": "returned UNVERIFIED", "warn": "signature not checked — trusted at-rest (View==Store)" }
+              ]}
+          ]},
+
+          { "kind": "cs", "n": "Data..ctor", "sig": "data/this.cs:292", "children": [
+            { "fork": true, "q": "_context != null", "at": "this.cs:299", "reconverges": false,
+              "arms": [
+                { "label": "has context", "ret": "User (record)", "children": [
+                  { "kind": "cs", "n": "type.Build", "sig": "type/this.cs:205", "children": [
+                    { "kind": "cs", "n": "type.Convert(value, Context!)", "sig": "type/this.cs:214", "ret": "User" }
+                  ]}
+                ]},
+                { "label": "no context", "ret": "item.source", "warn": "Judge, not Build — mismatches deferred unparsed", "children": [
+                  { "kind": "cs", "n": "type.Judge", "sig": "type/this.cs:418", "children": [
+                    { "kind": "cs", "n": "new item.source(backing)", "sig": "type/this.cs:467", "ret": "item.source (lazy)" }
+                  ]}
+                ]}
+              ]}
+          ]}
+
+        ]}
+      ]}
+    ],
+    "outcomes": [
+      { "label": "has context", "ret": "User{ id:7, name:\"Ingi\" }   ✓ typed, verified" },
+      { "label": "no context", "ret": "item.source   ⚠ untyped, unverified, unparsed" }
+    ]
+  }
+}
