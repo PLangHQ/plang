@@ -184,6 +184,30 @@ public sealed class @this : IDisposable
         vars.Set(new data.DynamicData("!test", () => Test));
     }
 
+    // --- Value births ---
+    // A Data is born FROM this context — never constructed context-less and stamped
+    // later. The context is the one handle that's always in scope at a real birth
+    // (handler result, %var% resolve, deserialize, LLM parse), so it owns the factory.
+
+    /// <summary>An empty success Data, born with this context.</summary>
+    public data.@this Ok() => new("", context: this);
+
+    /// <summary>A success Data wrapping <paramref name="value"/>, born with this context.</summary>
+    public data.@this Ok(object? value, global::app.type.@this? type = null)
+        => new("", value, type, context: this);
+
+    /// <summary>A typed success Data wrapping <paramref name="value"/>, born with this context.</summary>
+    public data.@this<T> Ok<T>(T value, global::app.type.@this? type = null)
+        where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+        => new("", value, type, context: this);
+
+    /// <summary>A present-null Data, born with this context.</summary>
+    public data.@this Null(string name = "")
+        => new(name, global::app.type.@null.@this.Instance, context: this);
+
+    /// <summary>An error Data carrying <paramref name="error"/>, born with this context.</summary>
+    public data.@this Error(IError error) => new("", context: this) { Error = error };
+
     /// <summary>
     /// Gets or sets a value in the execution context.
     /// </summary>

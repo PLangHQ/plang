@@ -174,7 +174,8 @@ public partial class @this
 
 
     [JsonConstructor]
-    public @this(string name, object? value = null, type? type = null, @this? parent = null)
+    public @this(string name, object? value = null, type? type = null, @this? parent = null,
+        actor.context.@this? context = null)
     {
         Name = CleanName(name);
         _type = global::app.type.@this.Create(global::app.type.item.serializer.json.Parse(value));
@@ -183,8 +184,7 @@ public partial class @this
         IsInitialized = true;
         Created = System.DateTime.UtcNow;
         Updated = Created;
-        if (parent != null)
-            _context = parent._context;
+        _context = context ?? parent?._context!;
         // A bare {object|item} stamp with no kind and no strict is the
         // polymorphic NON-judgement — the value's own truth stands (and a null
         // stays the null citizen, not a typed absence).
@@ -217,7 +217,8 @@ public partial class @this
     /// value arrives as its type, and Data is a dumb holder. (Replaces the
     /// <c>(name, value, type)</c> ctor's Lift+Judge path — see <see cref="type.Deserialize"/>.)
     /// </summary>
-    public @this(string name, global::app.type.item.@this instance, @this? parent = null)
+    public @this(string name, global::app.type.item.@this instance, @this? parent = null,
+        actor.context.@this? context = null)
     {
         Name = CleanName(name);
         _type = instance ?? global::app.type.@null.@this.Instance;
@@ -226,8 +227,7 @@ public partial class @this
         IsInitialized = true;
         Created = System.DateTime.UtcNow;
         Updated = Created;
-        if (parent != null)
-            _context = parent._context;
+        _context = context ?? parent?._context!;
     }
 
     /// <summary>
@@ -974,8 +974,9 @@ public class @this<T> : @this
     /// </summary>
     public new ValueTask<T?> Value() => Value<T>();
 
-    public @this(string name = "", T? value = default, type? type = null, @this? parent = null)
-        : base(name, value, type, parent) { }
+    public @this(string name = "", T? value = default, type? type = null, @this? parent = null,
+        actor.context.@this? context = null)
+        : base(name, value, type, parent, context) { }
 
     public static @this<T> Ok(T value, type? type = null) => new("", value, type);
     public new static @this<T> FromError(IError error) => new() { Error = error };
