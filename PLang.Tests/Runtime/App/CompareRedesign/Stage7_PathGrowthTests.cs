@@ -68,7 +68,7 @@ public class Stage7_PathGrowthTests
         var (app, context, _) = MakeApp();
         await using var __ = app;
         var p = global::app.type.path.@this.Resolve("docs/readme.md", context);
-        var data = new Data("p", p) { Context = context };
+        var data = new Data("p", p, context: context);
         var ext = await data.GetChild("!extension");
         await Assert.That(ext.Peek()?.ToString()).IsEqualTo("md");
     }

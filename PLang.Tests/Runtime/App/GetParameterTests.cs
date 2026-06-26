@@ -20,7 +20,7 @@ public class GetParameterTests
         {
             Module = "test",
             ActionName = "fixture",
-            Parameters = parameters.Select(p => new Data(p.name, p.value)).ToList()
+            Parameters = parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList()
         };
     }
 
@@ -32,8 +32,8 @@ public class GetParameterTests
         {
             Module = "test",
             ActionName = "fixture",
-            Parameters = parameters.Select(p => new Data(p.name, p.value)).ToList(),
-            Defaults = defaults.Select(d => new Data(d.name, d.value)).ToList()
+            Parameters = parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList(),
+            Defaults = defaults.Select(d => new Data(d.name, d.value, context: _app.User.Context)).ToList()
         };
     }
 

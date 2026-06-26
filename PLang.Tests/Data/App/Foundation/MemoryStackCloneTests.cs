@@ -19,10 +19,10 @@ public class VariablesCloneTests : System.IAsyncDisposable
     public async Task Clone_ListValue_IsIsolatedFromOriginal()
     {
         var vars = new Variables(app.User.Context);
-        vars.Set("items", new List<string> { "a", "b" });
+        vars.Set("items", new List<object?> { "a", "b" });
 
         var clone = vars.Clone();
-        clone.Set("items", new List<string> { "a", "b", "c" });
+        clone.Set("items", new List<object?> { "a", "b", "c" });
 
         var originalList = (await vars.GetValue("items")) as global::app.type.list.@this;
         await Assert.That(originalList!.Items.Count).IsEqualTo(2);

@@ -12,7 +12,7 @@ public class ModuleViewTests
     private (EngineType engine, global::app.actor.context.@this context) CreateEngine()
     {
         var engine = new EngineType("/app");
-        var context = new global::app.actor.context.@this(engine, new Variables());
+        var context = new global::app.actor.context.@this(engine, engine.User, new Variables(engine.User.Context));
         return (engine, context);
     }
 
@@ -57,7 +57,7 @@ public class ModuleViewTests
     public async Task ModuleView_DifferentContextsGetDifferentValues()
     {
         var (engine, context1) = CreateEngine();
-        var context2 = new global::app.actor.context.@this(engine, new Variables());
+        var context2 = new global::app.actor.context.@this(engine, engine.User, new Variables(engine.User.Context));
         long classDefault = 300_000;
 
         engine.Config.Set("signing.TimeoutMs", 60_000L, context1);

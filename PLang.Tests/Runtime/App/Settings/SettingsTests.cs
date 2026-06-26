@@ -12,7 +12,7 @@ public class SettingsTests
     private (EngineType engine, global::app.actor.context.@this context) CreateEngine()
     {
         var engine = new EngineType("/app");
-        var context = new global::app.actor.context.@this(engine, new Variables());
+        var context = new global::app.actor.context.@this(engine, engine.User, new Variables(engine.User.Context));
         return (engine, context);
     }
 

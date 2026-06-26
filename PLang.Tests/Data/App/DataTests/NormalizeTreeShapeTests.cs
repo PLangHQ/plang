@@ -50,7 +50,7 @@ public class NormalizeTreeShapeTests : System.IAsyncDisposable
 
     [Test] public async Task Normalize_HomogeneousPrimitiveList_StaysNativeList()
     {
-        var d = _app.Data("", new List<int> { 1, 2, 3 });
+        var d = _app.Data("", new List<object?> { 1, 2, 3 });
         var result = d.Normalize();
         await Assert.That(result).IsTypeOf<app.type.list.@this>();
         var items = result.Children();
@@ -74,7 +74,7 @@ public class NormalizeTreeShapeTests : System.IAsyncDisposable
 
     [Test] public async Task Normalize_DictionaryStringX_BecomesListOfData_KeysAsNames()
     {
-        var dict = new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 };
+        var dict = new Dictionary<string, object?> { ["a"] = 1, ["b"] = 2 };
         var d = _app.Data("", dict);
         var result = d.Normalize();
         await Assert.That(result).IsTypeOf<app.type.dict.@this>();
@@ -117,7 +117,7 @@ public class NormalizeTreeShapeTests : System.IAsyncDisposable
 
     [Test] public async Task Normalize_IsIdempotent_CallingTwiceProducesSameTree()
     {
-        var d = _app.Data("", new Dictionary<string, int> { ["x"] = 1 });
+        var d = _app.Data("", new Dictionary<string, object?> { ["x"] = 1 });
         var r1 = d.Normalize();
         var r2 = d.Normalize();
         // Shape stable across calls: same type, same count, same contents.

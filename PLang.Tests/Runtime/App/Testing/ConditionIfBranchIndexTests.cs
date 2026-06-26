@@ -176,9 +176,9 @@ public class ConditionIfBranchIndexTests
             ActionName = "if",
             Parameters = new List<Data>
             {
-                new("Left", "hello"),
-                new("Operator", ">"),
-                new("Right", new app.type.dict.@this()) // not orderable
+                new("Left", "hello", context: _app.User.Context),
+                new("Operator", ">", context: _app.User.Context),
+                new("Right", new app.type.dict.@this { Context = _app.User.Context }, context: _app.User.Context) // not orderable
             }
         };
 

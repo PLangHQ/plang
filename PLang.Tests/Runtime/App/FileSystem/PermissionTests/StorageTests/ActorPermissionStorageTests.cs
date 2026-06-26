@@ -21,7 +21,7 @@ public class ActorPermissionStorageTests
     {
         var verbs = verb is { } v ? new System.Collections.Generic.HashSet<Verb> { v } : PermissionRecord.AllVerbs;
         var p = new PermissionRecord(actor, path, verbs, match);
-        return new global::app.data.@this<PermissionRecord>("", p) { Context = app.User.Context };
+        return new global::app.data.@this<PermissionRecord>("", p, context: app.User.Context);
     }
 
     [Test] public async Task RoundTrip_AddSignedAGrant_FindReturnsIt_SignatureValidates()

@@ -20,7 +20,10 @@ public static class TestApp
         app.Tester.IsEnabled = true;   // in-memory settings store — no on-disk pollution
         // Swap in the no-crypto signing mock so tests don't pay ed25519 keygen +
         // keccak256 + signing per Data. Real-signing tests use a plain app.@this.
-        app.Code.Register<global::app.module.signing.code.ISigning>(new global::PLang.Tests.Shared.TestSigning());
+        // IsBuiltIn keeps the mock out of the Code snapshot (it has no loadable
+        // Source, so a captured registration would fail ProviderRestore). Restore
+        // targets are themselves TestApp.Create'd, so they already carry the mock.
+        app.Code.Register<global::app.module.signing.code.ISigning>(new global::PLang.Tests.Shared.TestSigning { IsBuiltIn = true });
         app.Code.SetDefault<global::app.module.signing.code.ISigning>("test-signing");
         return app;
     }

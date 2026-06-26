@@ -57,7 +57,7 @@ public class PathAuthorizeTests
 
         // Pre-seed a grant covering the request.
         var grant = new PermissionRecord(app.User.Name, "/p", global::app.type.permission.@this.AllVerbs, MatchMode.Exact);
-        var grantData = new global::app.data.@this<PermissionRecord>("", grant) { Context = context };
+        var grantData = new global::app.data.@this<PermissionRecord>("", grant, context: context);
         await app.User.Permission.Add(grantData, persist: true);
 
         var result = await path.Authorize(global::app.type.permission.Verb.Read);

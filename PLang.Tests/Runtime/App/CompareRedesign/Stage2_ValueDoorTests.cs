@@ -4,8 +4,11 @@ namespace PLang.Tests.App.CompareRedesign;
 // _value is present; async only when it must read. No public sync .Value; no
 // generic ToRaw; value slot is always a typed PLang item. Materialize disappears
 // — parse folds into the door. Read fires only behind an await on navigation.
-public class Stage2_ValueDoorTests
+public class Stage2_ValueDoorTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/stage2vd-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
+
     private static global::app.@this NewApp(out string root)
     {
         root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
@@ -25,7 +28,7 @@ public class Stage2_ValueDoorTests
     public async Task Value_AuthoredScalar_ReturnsTypedNumberNotRawInt()
     {
         // set %x% = 5 → await data.Value() returns a `number` (item subtype), not boxed int 5
-        var d = new Data("x", 5);
+        var d = new Data("x", 5, context: _app.User.Context);
         var v = await d.Value();
         await Assert.That(v is global::app.type.number.@this).IsTrue();
         await Assert.That(((global::app.type.number.@this)v!).Clr<object>()).IsEqualTo(5);
@@ -35,7 +38,7 @@ public class Stage2_ValueDoorTests
     public async Task Value_PresentBacking_CompletesSynchronously_NoAsyncHop()
     {
         // ValueTask.IsCompletedSuccessfully true when _value already materialised; zero alloc
-        var d = new Data("x", 42);
+        var d = new Data("x", 42, context: _app.User.Context);
         var vt = d.Value();
         await Assert.That(vt.IsCompletedSuccessfully).IsTrue();
         await Assert.That((await vt)?.ToString()).IsEqualTo("42");
@@ -113,7 +116,7 @@ public class Stage2_ValueDoorTests
         // MaterializeCount=0 before/after data.Equals(other) and data.GetHashCode()
         await using var app = NewApp(out var root);
         var d = await RawBackedJson(app, root);
-        _ = d.Equals(new Data("y", 1));
+        _ = d.Equals(new Data("y", 1, context: app.User.Context));
         _ = d.GetHashCode();
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
@@ -145,10 +148,10 @@ public class Stage2_ValueDoorTests
     public async Task DataType_MintsEntityFromInstance()
     {
         // data.Type is a pure forward — the instance mints its own entity.
-        var n = new Data("n", 5);
+        var n = new Data("n", 5, context: _app.User.Context);
         await Assert.That(n.Type.Name).IsEqualTo("number");
         await Assert.That(n.Type.Kind).IsEqualTo("int");
-        var t = new Data("t", "hello");
+        var t = new Data("t", "hello", context: _app.User.Context);
         await Assert.That(t.Type.Name).IsEqualTo("text");
     }
 }

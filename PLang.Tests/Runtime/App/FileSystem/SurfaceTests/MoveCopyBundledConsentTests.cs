@@ -37,7 +37,7 @@ public class MoveCopyBundledConsentTests
         {
             LastQuestion = (action.Question.Peek()?.ToString()) ?? "";
             AskCount++;
-            return Task.FromResult(global::app.data.@this.Ok(_answer));
+            return Task.FromResult(action.Context.Ok(_answer));
         }
     }
 

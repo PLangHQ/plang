@@ -31,7 +31,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     private string TempPath(string rel) => System.IO.Path.Combine(_tempDir, rel);
 
     private global::app.data.@this<PLangPath> MakePath(string rel) =>
-        new("", new PLangFilePath(TempPath(rel)) { Context = _app.User.Context });
+        new("", new PLangFilePath(TempPath(rel), _app.User.Context), context: _app.User.Context);
 
     private async Task<Data> Read(string rel)
     {
@@ -81,9 +81,9 @@ public class Stage3_ReferenceNarrowTests : IDisposable
         var data = await Read("report.csv");
         await Assert.That(data.Type!.Kind).IsEqualTo("csv");
         var op = new global::app.module.condition.Operator("is");
-        var right = new Data("", "table") { Context = _app.User.Context };
+        var right = new Data("", "table", context: _app.User.Context);
         var isTable = await op.Evaluate(data, right);
-        var rightList = new Data("", "list") { Context = _app.User.Context };
+        var rightList = new Data("", "list", context: _app.User.Context);
         var isList = await op.Evaluate(data, rightList);
         await Assert.That(isTable || isList).IsTrue()
             .Because("csv content narrows to table (or list)");
@@ -183,7 +183,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     {
         var data = JsonFile("force.json");
         var op = new global::app.module.condition.Operator("is");
-        var right = new Data("", "dict") { Context = _app.User.Context };
+        var right = new Data("", "dict", context: _app.User.Context);
         await Assert.That(await op.Evaluate(data, right)).IsTrue();
         await Assert.That(data.Type!.Name).IsEqualTo("dict");
         // deterministic: asking again answers from the chain, no second parse

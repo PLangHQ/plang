@@ -84,7 +84,7 @@ public class PermissionCoversTests
         await using var app = new global::app.@this("/test");
         var ctx = app.User.Context;
         var original = new Permission("user", "/p", global::app.type.permission.@this.AllVerbs, Match.Glob);
-        var data = new global::app.data.@this<Permission>("", original) { Context = ctx };
+        var data = new global::app.data.@this<Permission>("", original, context: ctx);
         var serializer = new global::app.channel.serializer.plang.@this(ctx);
         var stored = serializer.Store(data);
         await stored.IsSuccess();

@@ -96,7 +96,7 @@ public class DiscoverActionTests
             else
             {
                 parameters = actionSpec.parameters
-                    .Select(p => new Data(p.name, p.value))
+                    .Select(p => new Data(p.name, p.value, context: _app.User.Context))
                     .ToList();
             }
             step.Actions.Add(new PrAction
@@ -255,7 +255,7 @@ public class DiscoverActionTests
                         new PrAction
                         {
                             Module = "http", ActionName = "request",
-                            Parameters = new List<Data> { new("Url", "https://example.com") }
+                            Parameters = new List<Data> { new("Url", "https://example.com", context: _app.User.Context) }
                         }
                     }
                 }
@@ -269,7 +269,7 @@ public class DiscoverActionTests
             {
                 ("goal", "call", new List<Data>
                 {
-                    new("GoalName", new GoalCall { Name = "Helper" }, global::app.type.@this.FromName("goal.call"))
+                    new("GoalName", new GoalCall { Name = "Helper" }, global::app.type.@this.FromName("goal.call"), context: _app.User.Context)
                 })
             });
 

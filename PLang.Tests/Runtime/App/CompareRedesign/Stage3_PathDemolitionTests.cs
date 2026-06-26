@@ -28,7 +28,7 @@ public class Stage3_PathDemolitionTests
             "User", new HttpPath(url, context).Absolute,
             global::app.type.permission.@this.AllVerbs,
             global::app.type.permission.Match.Exact);
-        await context.Actor!.Permission.Add(new global::app.data.@this<global::app.type.permission.@this>("", perm) { Context = context }, persist: true);
+        await context.Actor!.Permission.Add(new global::app.data.@this<global::app.type.permission.@this>("", perm, context: context), persist: true);
     }
 
     private static async Task<Data> Read(global::app.actor.context.@this context, global::app.type.path.@this p)
@@ -107,7 +107,7 @@ public class Stage3_PathDemolitionTests
         var (app, context, dir) = MakeApp();
         await using var _ = app;
         var p = global::app.type.path.@this.Resolve("note.txt", context);
-        var data = new Data("p", p) { Context = context };
+        var data = new Data("p", p, context: context);
         var json = await SerializePlang(app, data);
         await Assert.That(json).DoesNotContain(dir);
         // the projection itself is still derivable on the property plane
@@ -123,7 +123,7 @@ public class Stage3_PathDemolitionTests
         var (app, context, _) = MakeApp();
         await using var __ = app;
         var p = global::app.type.path.@this.Resolve("docs/readme.md", context);
-        var data = new Data("p", p) { Context = context };
+        var data = new Data("p", p, context: context);
         var ext = await data.GetChild("!extension");
         await Assert.That(ext.Peek()?.ToString()).IsEqualTo("md");
         var json = await SerializePlang(app, data);

@@ -151,7 +151,7 @@ public class VariablesTests : System.IAsyncDisposable
         await using var app = global::PLang.Tests.TestApp.Create("/test");
         var stack = app.User.Context.Variable;
 
-        var person = new global::app.type.dict.@this();
+        var person = new global::app.type.dict.@this { Context = _app.User.Context };
         person.Set("Name", "John");
         person.Set("Age", 30L);
         await stack.Set("person", person);
@@ -184,10 +184,10 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Set_DotPath_SetsNestedProperty()
     {
         var stack = new Variables(_app.User.Context);
-        var address = new global::app.type.dict.@this();
+        var address = new global::app.type.dict.@this { Context = _app.User.Context };
         address.Set("Street", "Main St");
         address.Set("City", "Springfield");
-        var person = new global::app.type.dict.@this();
+        var person = new global::app.type.dict.@this { Context = _app.User.Context };
         person.Set("Name", "John");
         person.Set("Address", address);
         await stack.Set("person", person);
@@ -202,7 +202,7 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Set_DotPath_CaseInsensitive()
     {
         var stack = new Variables(_app.User.Context);
-        var person = new global::app.type.dict.@this();
+        var person = new global::app.type.dict.@this { Context = _app.User.Context };
         person.Set("Name", "John");
         await stack.Set("person", person);
 
@@ -217,7 +217,7 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Set_DotPath_DictionaryValue()
     {
         var stack = new Variables(_app.User.Context);
-        var user = new global::app.type.dict.@this();
+        var user = new global::app.type.dict.@this { Context = _app.User.Context };
         user.Set("name", "John");
         user.Set("age", 30L);
         await stack.Set("user", user);
@@ -248,7 +248,7 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Set_DotPath_NewProperty_AddsKey()
     {
         var stack = new Variables(_app.User.Context);
-        var person = new global::app.type.dict.@this();
+        var person = new global::app.type.dict.@this { Context = _app.User.Context };
         person.Set("Name", "John");
         await stack.Set("person", person);
 
@@ -266,7 +266,7 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Set_DotPath_NewProperty_CaseInsensitive()
     {
         var stack = new Variables(_app.User.Context);
-        var person = new global::app.type.dict.@this();
+        var person = new global::app.type.dict.@this { Context = _app.User.Context };
         person.Set("Name", "John");
         await stack.Set("person", person);
 
@@ -281,9 +281,9 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Set_DotPath_WithBracketIndex()
     {
         var stack = new Variables(_app.User.Context);
-        var alice = new global::app.type.dict.@this(); alice.Set("Name", "Alice");
-        var bob = new global::app.type.dict.@this(); bob.Set("Name", "Bob");
-        var people = new global::app.type.list.@this();
+        var alice = new global::app.type.dict.@this { Context = _app.User.Context }; alice.Set("Name", "Alice");
+        var bob = new global::app.type.dict.@this { Context = _app.User.Context }; bob.Set("Name", "Bob");
+        var people = new global::app.type.list.@this { Context = _app.User.Context };
         people.Add(_app.Data("", alice));
         people.Add(_app.Data("", bob));
         await stack.Set("people", people);
@@ -298,9 +298,9 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Set_DotPath_WithVariableIndex()
     {
         var stack = new Variables(_app.User.Context);
-        var alice = new global::app.type.dict.@this(); alice.Set("Name", "Alice");
-        var bob = new global::app.type.dict.@this(); bob.Set("Name", "Bob");
-        var people = new global::app.type.list.@this();
+        var alice = new global::app.type.dict.@this { Context = _app.User.Context }; alice.Set("Name", "Alice");
+        var bob = new global::app.type.dict.@this { Context = _app.User.Context }; bob.Set("Name", "Bob");
+        var people = new global::app.type.list.@this { Context = _app.User.Context };
         people.Add(_app.Data("", alice));
         people.Add(_app.Data("", bob));
         await stack.Set("people", people);
@@ -902,6 +902,7 @@ public class VariablesAccessorTests : System.IAsyncDisposable
         goal.Goals.Add(new global::app.goal.@this { Name = "SubGoal" });
         var step = new global::app.goal.steps.step.@this { Index = 0, Text = "original" };
         goal.Steps.Add(step);
+        goal.Steps.Context = _app.User.Context;
         stack.Set("goal", goal);
 
         // Simulate what builder.merge does: set %goal.Steps[0]% = newStep

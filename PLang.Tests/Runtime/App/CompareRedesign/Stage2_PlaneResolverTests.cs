@@ -15,7 +15,7 @@ public class Stage2_PlaneResolverTests
     {
         // %dict.field% → dict's content via the type's own resolver; no central case-table
         await using var app = NewApp();
-        var d = new Data("cfg", new Dictionary<string, object?> { ["field"] = "content" }) { Context = app.User.Context };
+        var d = new Data("cfg", new Dictionary<string, object?> { ["field"] = "content" }, context: app.User.Context);
         var child = await d.GetChild("field");
         await Assert.That((await child.Value())?.ToString()).IsEqualTo("content");
     }
@@ -25,7 +25,7 @@ public class Stage2_PlaneResolverTests
     {
         // %text!length% — the value's own property, answered in a PLang value
         await using var app = NewApp();
-        var t = new Data("s", new global::app.type.text.@this("hello")) { Context = app.User.Context };
+        var t = new Data("s", new global::app.type.text.@this("hello"), context: app.User.Context);
         var length = await t.GetChild("!length");
         await Assert.That(length.Peek()).IsTypeOf<global::app.type.number.@this>();
         await Assert.That(length.Peek()!.ToString()).IsEqualTo("5");
@@ -112,7 +112,7 @@ public class Stage2_PlaneResolverTests
         // bind by name). `%x.name%` reads the content's own field.
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var d = new Data("myBinding", new Dictionary<string, object?> { ["name"] = "ingi" }) { Context = ctx };
+        var d = new Data("myBinding", new Dictionary<string, object?> { ["name"] = "ingi" }, context: ctx);
 
         var plang = (global::app.channel.serializer.plang.@this)app.User.Channel.Serializers.GetByMimeType("application/plang");
         var outbound = System.Text.Json.JsonSerializer.Serialize(d,
@@ -134,7 +134,7 @@ public class Stage2_PlaneResolverTests
     {
         // %dict.size% (content key=10) and %dict!size% (property bag=28) — sigil picks the plane
         await using var app = NewApp();
-        var d = new Data("dict", new Dictionary<string, object?> { ["size"] = 10 }) { Context = app.User.Context };
+        var d = new Data("dict", new Dictionary<string, object?> { ["size"] = 10 }, context: app.User.Context);
         d.Properties["size"] = 28;
         var content = await d.GetChild("size");     // `.` — the data plane (content key)
         var property = await d.GetChild("!size");   // `!` — the property plane (Properties bag)

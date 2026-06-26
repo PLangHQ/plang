@@ -92,6 +92,7 @@ public class StepTests : System.IAsyncDisposable
                 new Step { Index = 2, Text = "write out done", Indent = 0 }
             }
         };
+        goal.Steps.Context = app.User.Context;
         foreach (var s in goal.Steps) s.Goal = goal;
 
         await Assert.That(goal.Steps[0].HasSubSteps).IsTrue();
@@ -114,6 +115,7 @@ public class StepTests : System.IAsyncDisposable
                 new Step { Index = 4, Text = "write out done", Indent = 0 }
             }
         };
+        goal.Steps.Context = app.User.Context;
         foreach (var s in goal.Steps) s.Goal = goal;
 
         await Assert.That(goal.Steps[0].HasSubSteps).IsTrue();

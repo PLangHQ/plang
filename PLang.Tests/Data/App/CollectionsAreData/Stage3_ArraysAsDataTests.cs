@@ -30,6 +30,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
         var result = global::app.type.item.serializer.json.Parse(doc.RootElement);
         await Assert.That(result).IsTypeOf<ListV>();
         var list = (ListV)result!;
+        list.Context = app.User.Context;
         await Assert.That(list.Count).IsEqualTo(2);
         // Born-native: elements are scalar wrappers; ToRaw yields the backing.
         await Assert.That(((app.type.item.@this)(await list.At(0)!.Value())!).Clr<object>()).IsEqualTo((object)1L);

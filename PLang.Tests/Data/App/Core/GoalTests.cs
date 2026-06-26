@@ -146,6 +146,7 @@ public class GoalTests : System.IAsyncDisposable
             }
         };
 
+        goal.Steps.Context = _app.User.Context;
         var text = goal.ToText();
 
         await Assert.That(text).Contains("TestGoal");
@@ -162,6 +163,7 @@ public class GoalTests : System.IAsyncDisposable
             Comment = "This is a goal comment"
         };
 
+        goal.Steps.Context = _app.User.Context;
         var text = goal.ToText();
 
         await Assert.That(text).Contains("/ This is a goal comment");
@@ -179,6 +181,7 @@ public class GoalTests : System.IAsyncDisposable
             }
         };
 
+        goal.Steps.Context = _app.User.Context;
         var text = goal.ToText();
 
         await Assert.That(text).Contains("/ step comment");
@@ -198,6 +201,7 @@ public class GoalTests : System.IAsyncDisposable
             }
         };
 
+        goal.Steps.Context = _app.User.Context;
         var text = goal.ToText();
 
         await Assert.That(text).Contains("- no indent");
@@ -226,6 +230,7 @@ public class GoalTests : System.IAsyncDisposable
             }
         };
 
+        goal.Steps.Context = _app.User.Context;
         var str = goal.ToString();
 
         await Assert.That(str).IsEqualTo("Start\n- write out \"hello\"");
@@ -244,6 +249,7 @@ public class GoalTests : System.IAsyncDisposable
             }
         };
 
+        goal.Steps.Context = _app.User.Context;
         var result = await goal.FormatForLlm();
 
         await Assert.That(result).Contains("Start");
@@ -276,6 +282,7 @@ public class GoalTests : System.IAsyncDisposable
             }
         };
 
+        goal.Steps.Context = _app.User.Context;
         var result = await goal.FormatForLlm();
 
         await Assert.That(result).Contains("Start");
@@ -294,6 +301,7 @@ public class GoalTests : System.IAsyncDisposable
             Steps = new GoalSteps()
         };
 
+        goal.Steps.Context = _app.User.Context;
         var result = await goal.FormatForLlm();
 
         await Assert.That(result).Contains("/ This is the main goal");
@@ -313,6 +321,7 @@ public class GoalTests : System.IAsyncDisposable
             }
         };
 
+        goal.Steps.Context = _app.User.Context;
         var result = await goal.FormatForLlm();
 
         await Assert.That(result).Contains("errors:");
@@ -355,6 +364,7 @@ public class GoalTests : System.IAsyncDisposable
             }
         };
 
+        goal.Steps.Context = _app.User.Context;
         var result = await goal.FormatForLlm();
 
         await Assert.That(result).Contains("\"module\":\"variable\"");
@@ -387,6 +397,7 @@ public class GoalTests : System.IAsyncDisposable
             }
         };
 
+        goal.Steps.Context = _app.User.Context;
         var result = await goal.FormatForLlm();
 
         await Assert.That(result).Contains("\"module\":\"output\"");

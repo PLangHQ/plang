@@ -18,7 +18,7 @@ public class SettingsApplyTests
     public void Setup()
     {
         _app = new PLangEngine("/app");
-        _ctx = new global::app.actor.context.@this(_app, new Variables());
+        _ctx = new global::app.actor.context.@this(_app, _app.User, new Variables(_app.User.Context));
     }
 
     [After(Test)]
@@ -77,7 +77,7 @@ public class SettingsApplyTests
         _app.Config.Apply<Config>(source, _ctx, isDefault: true);
 
         // Should be visible from a completely different context
-        var newCtx = new global::app.actor.context.@this(_app, new Variables());
+        var newCtx = new global::app.actor.context.@this(_app, _app.User, new Variables(_app.User.Context));
         var view = _app.Config.For<Config>(newCtx);
         await Assert.That(view.Resolve("TimeoutInSec", 30)).IsEqualTo(120);
     }
@@ -94,7 +94,7 @@ public class SettingsApplyTests
         await Assert.That(view.Resolve("TimeoutInSec", 30)).IsEqualTo(90);
 
         // Not visible from different context
-        var otherCtx = new global::app.actor.context.@this(_app, new Variables());
+        var otherCtx = new global::app.actor.context.@this(_app, _app.User, new Variables(_app.User.Context));
         var otherView = _app.Config.For<Config>(otherCtx);
         await Assert.That(otherView.Resolve("TimeoutInSec", 30)).IsEqualTo(30);
     }

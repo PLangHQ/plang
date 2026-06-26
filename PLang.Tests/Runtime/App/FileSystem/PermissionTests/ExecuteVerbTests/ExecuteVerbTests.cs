@@ -32,7 +32,7 @@ public class ExecuteVerbTests
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
         {
             _prompts.Add((action.Question.Peek()?.ToString()) ?? "");
-            return Task.FromResult(global::app.data.@this.Ok(_answer));
+            return Task.FromResult(action.Context.Ok(_answer));
         }
     }
 
@@ -85,7 +85,7 @@ public class ExecuteVerbTests
             Path: p.Absolute,
             Verbs: new System.Collections.Generic.HashSet<global::app.type.permission.Verb> { global::app.type.permission.Verb.Read },
             Match: global::app.type.permission.Match.Exact);
-        var grantData = new global::app.data.@this<global::app.type.permission.@this>("", permission) { Context = app.User.Context };
+        var grantData = new global::app.data.@this<global::app.type.permission.@this>("", permission, context: app.User.Context);
         await app.User.Permission.Add(grantData, persist: true);
         // Execute should NOT be covered.
         var executeMatch = await app.User.Permission.Find(p, global::app.type.permission.Verb.Execute);

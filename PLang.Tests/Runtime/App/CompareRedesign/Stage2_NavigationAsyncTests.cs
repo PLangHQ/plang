@@ -27,7 +27,7 @@ public class Stage2_NavigationAsyncTests
         // ValueTask.IsCompletedSuccessfully on materialised dict navigation; zero alloc on hot path
         await using var app = NewApp(out _);
         var dict = new Dictionary<string, object?> { ["name"] = "alice" };
-        var d = new Data("user", dict) { Context = app.User.Context };
+        var d = new Data("user", dict, context: app.User.Context);
         var vt = d.GetChild("name");
         await Assert.That(vt.IsCompletedSuccessfully).IsTrue();   // in-memory: no async hop
         await Assert.That((await (await vt).Value())?.ToString()).IsEqualTo("alice");
