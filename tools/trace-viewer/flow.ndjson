@@ -1,0 +1,26 @@
+{"e":"meta","title":"variable.get %user% — execution flow graph","note":"Two runs overlaid on shared bubbles. A bubble with two different next-edges is a FORK. A bubble both paths arrive at is a MERGE (reconvergence)."}
+{"e":"run","run":"A","label":"with context","color":"#7aa2f7"}
+{"e":"run","run":"B","label":"no context","color":"#e0af68"}
+{"e":"step","run":"A","sig":"variable/get.cs","n":"variable.get"}
+{"e":"step","run":"A","sig":"data/this.cs:As","n":"Data.As<User>"}
+{"e":"step","run":"A","sig":"data/Wire.cs:Read","n":"Wire.Read"}
+{"e":"step","run":"A","sig":"data/Wire.cs:316","n":"Wire.ReadBody"}
+{"e":"step","run":"A","sig":"type/reader","n":"Type.Readers.Typed"}
+{"e":"step","run":"A","sig":"json/Reader.cs","n":"typed.Read"}
+{"e":"step","run":"A","sig":"data/Wire.cs:200","n":"Wire.ReadSignatureLayer"}
+{"e":"step","run":"A","sig":"data/Wire.cs:246","n":"signature.verify"}
+{"e":"step","run":"A","sig":"data/this.cs:292","n":"Data..ctor"}
+{"e":"step","run":"A","sig":"type/this.cs:205","n":"type.Build"}
+{"e":"step","run":"A","sig":"type/this.cs:214","n":"type.Convert"}
+{"e":"end","run":"A","ret":"User{ id:7, name:\"Ingi\" }  ✓ typed, verified"}
+{"e":"step","run":"B","sig":"variable/get.cs","n":"variable.get"}
+{"e":"step","run":"B","sig":"data/this.cs:As","n":"Data.As<User>"}
+{"e":"step","run":"B","sig":"data/Wire.cs:Read","n":"Wire.Read"}
+{"e":"step","run":"B","sig":"data/Wire.cs:316","n":"Wire.ReadBody"}
+{"e":"step","run":"B","sig":"data/Wire.cs:388","n":"JsonDocument.ParseValue"}
+{"e":"step","run":"B","sig":"data/Wire.cs:395","n":"item.serializer.json.Parse"}
+{"e":"step","run":"B","sig":"data/Wire.cs:200","n":"Wire.ReadSignatureLayer"}
+{"e":"step","run":"B","sig":"data/this.cs:292","n":"Data..ctor"}
+{"e":"step","run":"B","sig":"type/this.cs:418","n":"type.Judge"}
+{"e":"step","run":"B","sig":"type/this.cs:467","n":"new item.source"}
+{"e":"end","run":"B","ret":"item.source  ⚠ untyped, unverified, unparsed"}

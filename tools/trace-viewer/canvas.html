@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PLang Execution Flow — Canvas</title>
+<style>
+  :root{--bg:#0f1115;--panel:#171a21;--line:#262b36;--text:#d7dce5;--muted:#8a93a6;
+        --fork:#bb9af7;--merge:#9ece6a;--bad:#f7768e;--shared:#3a4150}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+       font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;overflow:hidden}
+  header{position:fixed;top:0;left:0;right:0;padding:10px 16px;border-bottom:1px solid var(--line);
+         background:rgba(15,17,21,.85);backdrop-filter:blur(4px);display:flex;gap:16px;align-items:center;flex-wrap:wrap;z-index:5}
+  header h1{font-size:14px;margin:0;font-weight:600}
+  header .sub{color:var(--muted);font-size:12px}
+  .legend{display:flex;gap:14px;align-items:center;margin-left:auto;flex-wrap:wrap}
+  .legend span{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:12px}
+  .dot{width:11px;height:11px;border-radius:50%}
+  .ln{width:18px;height:0;border-top:3px solid}
+  canvas{display:block}
+  #tip{position:fixed;pointer-events:none;background:var(--panel);border:1px solid var(--line);
+       border-radius:6px;padding:6px 9px;font-size:12px;max-width:360px;display:none;z-index:6}
+  #tip .s{color:var(--muted)} #tip .r{color:#7dcfff;display:block;margin-top:3px}
+  label{color:var(--muted);cursor:pointer}
+  button{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:3px 9px;font:inherit;cursor:pointer}
+  footer{position:fixed;bottom:0;left:0;right:0;padding:6px 16px;border-top:1px solid var(--line);
+         background:rgba(15,17,21,.85);color:var(--muted);font-size:11px;z-index:5}
+</style>
+</head>
+<body>
+<header>
+  <h1>Execution Flow</h1>
+  <span class="sub" id="title"></span>
+  <button id="relayout">re-layout</button>
+  <label style="margin-left:4px">load .ndjson <input type="file" id="file" accept=".ndjson,.json,.txt"></label>
+  <div class="legend" id="legend"></div>
+</header>
+<canvas id="c"></canvas>
+<div id="tip"></div>
+<footer><b>entry → return</b> flows left to right. Drag bubbles to adjust. <b style="color:var(--fork)">▢</b> fork = next call differs by run · <b style="color:var(--merge)">▢</b> merge = paths reconverge here · runs colored on the edges.</footer>
+
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d'),tip=document.getElementById('tip');
+let DPR=Math.max(1,window.devicePixelRatio||1);
+function resize(){cv.width=innerWidth*DPR;cv.height=innerHeight*DPR;cv.style.width=innerWidth+'px';cv.style.height=innerHeight+'px';ctx.setTransform(DPR,0,0,DPR,0,0);ctx.font='12px ui-monospace,Menlo,monospace';if(NODES.size)layout();}
+addEventListener('resize',resize);
+
+let NODES=new Map(),EDGES=new Map(),RUNS=new Map(),META={};
+const H=26;
+function nodeW(n){return Math.max(46,ctx.measureText(n.label).width+24);}
+
+function build(text){
+  NODES=new Map();EDGES=new Map();RUNS=new Map();META={};
+  const perRun={};
+  ctx.font='12px ui-monospace,Menlo,monospace';
+  for(const raw of text.split('\n')){
+    const l=raw.trim();if(!l)continue;let ev;try{ev=JSON.parse(l)}catch{continue}
+    if(ev.e==='meta'){META=ev;continue}
+    if(ev.e==='run'){RUNS.set(ev.run,{label:ev.label||ev.run,color:ev.color||'#7dcfff'});perRun[ev.run]=[];continue}
+    if(ev.e==='step'){
+      const id=ev.sig;
+      if(!NODES.has(id))NODES.set(id,{id,label:ev.n||ev.sig,sig:ev.sig,runs:new Set(),x:0,y:0,pin:false});
+      NODES.get(id).runs.add(ev.run);(perRun[ev.run]=perRun[ev.run]||[]).push(id);
+    }
+    if(ev.e==='end'){
+      const id='__end_'+ev.run, short=(ev.ret||'').split('  ')[0];
+      NODES.set(id,{id,label:short||'outcome',sig:'',ret:ev.ret,runs:new Set([ev.run]),outcome:true,run:ev.run,x:0,y:0,pin:false});
+      (perRun[ev.run]=perRun[ev.run]||[]).push(id);
+    }
+  }
+  for(const [run,seq] of Object.entries(perRun))
+    for(let i=0;i+1<seq.length;i++){const k=seq[i]+'>>'+seq[i+1];if(!EDGES.has(k))EDGES.set(k,{from:seq[i],to:seq[i+1],runs:new Set()});EDGES.get(k).runs.add(run);}
+  const succ={},pred={};
+  for(const e of EDGES.values()){(succ[e.from]=succ[e.from]||new Set()).add(e.to);(pred[e.to]=pred[e.to]||new Set()).add(e.from);}
+  for(const n of NODES.values()){n.fork=(succ[n.id]?.size||0)>1;n.merge=(pred[n.id]?.size||0)>1;n.w=nodeW(n);}
+  renderLegend();layout();
+}
+function renderLegend(){
+  const L=document.getElementById('legend');L.innerHTML='';
+  document.getElementById('title').textContent=META.title||'';
+  for(const [r,info] of RUNS){const s=document.createElement('span');s.innerHTML=`<span class="ln" style="border-color:${info.color}"></span>${info.label}`;L.appendChild(s);}
+  const f=document.createElement('span');f.innerHTML='<span class="dot" style="background:var(--fork)"></span>fork';L.appendChild(f);
+  const m=document.createElement('span');m.innerHTML='<span class="dot" style="background:var(--merge)"></span>merge';L.appendChild(m);
+}
+
+// ---- layered left→right layout (longest-path) ----
+function layout(){
+  const arr=[...NODES.values()];if(!arr.length)return;
+  const out={},inc={};
+  for(const e of EDGES.values()){(out[e.from]=out[e.from]||[]).push(e.to);(inc[e.to]=inc[e.to]||[]).push(e.from);}
+  for(const n of arr)n.layer=0;
+  const indeg={};for(const n of arr)indeg[n.id]=(inc[n.id]||[]).length;
+  const q=arr.filter(n=>!indeg[n.id]).map(n=>n.id),ind={...indeg},order=[];
+  while(q.length){const id=q.shift();order.push(id);for(const t of (out[id]||[])){ind[t]--;if(ind[t]===0)q.push(t);}}
+  for(const id of order){const ln=NODES.get(id).layer;for(const t of (out[id]||[]))if(NODES.get(t).layer<ln+1)NODES.get(t).layer=ln+1;}
+  const layers={};let maxL=0;for(const n of arr){(layers[n.layer]=layers[n.layer]||[]).push(n);maxL=Math.max(maxL,n.layer);}
+  const margin=110,avail=innerWidth-2*margin,dx=maxL>0?Math.max(180,avail/maxL):0;
+  const top=110,bottom=innerHeight-70;
+  for(const Lk in layers){for(const n of layers[Lk])n.x=margin+n.layer*dx;}
+  for(const Lk in layers){const g=layers[Lk];g.forEach((n,i)=>n.y=top+(bottom-top)*((i+1)/(g.length+1)));}
+  const bary=(n,side)=>{const src=side==='in'?(inc[n.id]||[]):(out[n.id]||[]);if(!src.length)return n.y;return src.reduce((a,id)=>a+NODES.get(id).y,0)/src.length;};
+  const space=g=>{g.sort((a,b)=>a.y-b.y);const min=H+12;for(let i=1;i<g.length;i++)if(g[i].y-g[i-1].y<min)g[i].y=g[i-1].y+min;
+    const overflow=(g[g.length-1]?.y||0)-bottom;if(overflow>0){const sh=overflow/2;for(const n of g)n.y-=sh;}};
+  for(let s=0;s<8;s++){
+    for(let L=1;L<=maxL;L++){const g=layers[L]||[];for(const n of g)n.y=bary(n,'in');space(g);}
+    for(let L=maxL-1;L>=0;L--){const g=layers[L]||[];for(const n of g)n.y=bary(n,'out');space(g);}
+  }
+}
+
+function edge(a,b,color,w){
+  const ax=a.x+a.w/2,ay=a.y,bx=b.x-b.w/2,by=b.y,mx=(ax+bx)/2;
+  ctx.strokeStyle=color;ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(ax,ay);ctx.bezierCurveTo(mx,ay,mx,by,bx,by);ctx.stroke();
+  const ah=7;ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(bx-ah,by-4);ctx.lineTo(bx-ah,by+4);ctx.closePath();ctx.fill();
+}
+function pill(n){
+  const w=n.w,x=n.x-w/2,y=n.y-H/2,r=H/2;
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+H,r);ctx.arcTo(x+w,y+H,x,y+H,r);ctx.arcTo(x,y+H,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();
+}
+function draw(){
+  ctx.clearRect(0,0,innerWidth,innerHeight);ctx.font='12px ui-monospace,Menlo,monospace';
+  for(const e of EDGES.values()){const a=NODES.get(e.from),b=NODES.get(e.to);if(!a||!b)continue;
+    const all=RUNS.size>0&&e.runs.size===RUNS.size;
+    if(all)edge(a,b,getCss('--shared'),3);
+    else for(const r of e.runs)edge(a,b,RUNS.get(r)?.color||'#7dcfff',2);
+  }
+  for(const n of NODES.values()){
+    pill(n);ctx.fillStyle=n.outcome?(RUNS.get(n.run)?.color||'#7dcfff'):'#1b2030';ctx.fill();
+    let ring=getCss('--line'),lw=1.5;
+    if(n.merge){ring=getCss('--merge');lw=3}
+    if(n.fork){ring=getCss('--fork');lw=3}
+    ctx.strokeStyle=ring;ctx.lineWidth=lw;ctx.stroke();
+    if(n.fork&&n.merge){pill({x:n.x,y:n.y,w:n.w-6});ctx.setLineDash([3,3]);ctx.strokeStyle=getCss('--merge');ctx.lineWidth=1.5;ctx.stroke();ctx.setLineDash([]);}
+    ctx.fillStyle=n.outcome?'#0f1115':getCss('--text');ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(n.label,n.x,n.y);
+  }
+}
+function getCss(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function loop(){draw();requestAnimationFrame(loop);}
+
+// ---- interaction ----
+let drag=null,off=[0,0];
+function at(mx,my){for(const n of [...NODES.values()].reverse())if(Math.abs(mx-n.x)<=n.w/2&&Math.abs(my-n.y)<=H/2)return n;return null}
+cv.addEventListener('mousedown',e=>{const n=at(e.clientX,e.clientY);if(n){drag=n;off=[e.clientX-n.x,e.clientY-n.y]}});
+addEventListener('mousemove',e=>{
+  if(drag){drag.x=e.clientX-off[0];drag.y=e.clientY-off[1];return}
+  const n=at(e.clientX,e.clientY);
+  if(n){tip.style.display='block';tip.style.left=(e.clientX+14)+'px';tip.style.top=(e.clientY+14)+'px';
+    tip.innerHTML=`<b>${n.outcome?'outcome':n.label}</b><span class="s"> ${n.sig||''}</span>`+
+      (n.fork?'<br><span style="color:var(--fork)">fork — next call differs by run</span>':'')+
+      (n.merge?'<br><span style="color:var(--merge)">merge — paths reconverge here</span>':'')+
+      `<br><span class="s">runs: ${[...n.runs].join(', ')}</span>`+(n.ret?`<span class="r">${n.ret}</span>`:'');}
+  else tip.style.display='none';
+});
+addEventListener('mouseup',()=>drag=null);
+document.getElementById('relayout').onclick=()=>{layout()};
+function load(t){build(t)}
+document.getElementById('file').addEventListener('change',e=>{const fr=new FileReader();fr.onload=()=>load(fr.result);fr.readAsText(e.target.files[0])});
+resize();
+fetch('flow.ndjson').then(r=>r.ok?r.text():Promise.reject()).then(load)
+  .catch(()=>{document.getElementById('title').textContent='— pick flow.ndjson via "load" →'});
+loop();
+</script>
+</body>
+</html>
