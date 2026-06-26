@@ -105,7 +105,7 @@ The nullable `context.@this?` parameters (e.g. `data/this.Normalize.cs:44`, `typ
 
 ## Additions this branch introduces (not demolition)
 
-- **Expected-identity check in verify.** A system-owned read passes `App.System.PublicKey`; `Ed25519.VerifyAsync` (or its wiring in `Wire.ReadSignatureLayer`) asserts `layer.Identity == expected`. New surface on the verify path (an expected-identity input + the equality check).
+- **Expected-identity check in verify.** A system-owned read passes `App.System.Identity`; `Ed25519.VerifyAsync` (or its wiring in `Wire.ReadSignatureLayer`) asserts `layer.Identity == expected`. New surface on the verify path (an expected-identity input + the equality check).
 - **Root-mode read for the identity table.** The bootstrap read of the system keypair verifies signature integrity + keypair self-consistency (`PublicKey` re-derives from `PrivateKey`) instead of matching an external identity. One flag/path, used only for the identity-table load. See `plan/mime-and-verify.md`.
 - **`context.Null()` / `context.Error(...)` / `context.Ok(...)`** factory methods on `actor.context.@this`.
 - **Tripwire** in `Wire.ReadBody`: `if (_context == null && View == Store) throw`.

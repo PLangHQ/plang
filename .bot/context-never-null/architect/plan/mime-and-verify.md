@@ -56,13 +56,13 @@ You can't persist a context — it's ephemeral, per-execution. What's durable is
 
 ## Bootstrap: loading the root key
 
-The system keypair lives in the same `application/plang` settings store (`identity/code/Default.cs` — `store.Set/Get<Identity>(Table, name)`), and the stored `Identity` carries both `PublicKey` and the real `PrivateKey` (`identity/type/identity.cs:21,26,57`). So "verify every `application/plang` read against `App.System.PublicKey`" is circular for the identity read itself — that read is *how* the system pubkey gets into memory.
+The system keypair lives in the same `application/plang` settings store (`identity/code/Default.cs` — `store.Set/Get<Identity>(Table, name)`), and the stored `Identity` carries both `PublicKey` and the real `PrivateKey` (`identity/type/identity.cs:21,26,57`). So "verify every `application/plang` read against `App.System.Identity`" is circular for the identity read itself — that read is *how* the system pubkey gets into memory.
 
 It breaks because the root authenticates by **private-key possession**, not by matching an external key:
 
 1. **First run, no identity.** `GetOrCreateDefaultAsync` mints a keypair (private key in hand), `SaveAsync` signs the artifact with it and stores it. Nothing to verify — just minted.
-2. **Later runs — the identity-table read is the one root read.** Read it in **root mode**: verify the signature is internally valid (integrity) and that the loaded keypair is self-consistent — `PublicKey` re-derives from `PrivateKey` (Ed25519 deterministic). A self-consistent keypair from your own store is the authentication for the root. This establishes `App.System.PublicKey`.
-3. **Every other read** passes `expected = App.System.PublicKey` and asserts `layer.Identity == expected`.
+2. **Later runs — the identity-table read is the one root read.** Read it in **root mode**: verify the signature is internally valid (integrity) and that the loaded keypair is self-consistent — `PublicKey` re-derives from `PrivateKey` (Ed25519 deterministic). A self-consistent keypair from your own store is the authentication for the root. This establishes `App.System.Identity`.
+3. **Every other read** passes `expected = App.System.Identity` and asserts `layer.Identity == expected`.
 
 So `expected` is null only for the identity-table read; the loaded system pubkey for everything else. **Bootstrap order:** load the system identity (root mode) before any other `application/plang` read, or a settings read re-enters the identity load (itself a settings read). `App.System` is eager (mechanism A), but `MyIdentity` resolves lazily (`actor/this.cs:125-129`) — make the root load happen first.
 

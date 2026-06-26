@@ -104,16 +104,18 @@ layer.Value.Context = _context;
 var verify = new signing.verify {
     Data = carrier,
     SkipFreshnessCheck = (View == Store),     // Store skips freshness only
-    ExpectedIdentity = _context.Actor.PublicKey,   // NEW — authenticity
+    ExpectedIdentity = _context.Actor.Identity,   // NEW — authenticity
 };
 // verify asserts layer.Identity == ExpectedIdentity, plus the existing signature/hash checks
 ```
 
 The expected-identity check is the new authenticity step, reachable because `_context.Actor` is non-null at the read.
 
+`actor.Identity` is the actor's identity — the `identity` keypair object whose identity-*value* is its public key (the type renders to its `PublicKey`, and PLang exposes it as `%Identity%`). The signature's `layer.Identity` is already the public-key text. So the authenticity assertion compares public keys: `layer.Identity == _context.Actor.Identity` reduces to the public-key string on both sides. The actor keeps the whole keypair (it needs the private key to sign); only its public face is the identity.
+
 ## 6. Bootstrap — the one read that authenticates differently
 
-Loading the system keypair can't match against `App.System.PublicKey` — that read is *how* the key gets into memory. It reads in **root mode**: signature integrity + the loaded keypair is self-consistent (`PublicKey` re-derives from `PrivateKey`). Possession authenticates the root. After it, `App.System.PublicKey` is in memory and steps 3–5 above use it. Bootstrap loads the system identity before any other `application/plang` read.
+Loading the system keypair can't match against `App.System.Identity` — that read is *how* the key gets into memory. It reads in **root mode**: signature integrity + the loaded keypair is self-consistent (`PublicKey` re-derives from `PrivateKey`). Possession authenticates the root. After it, `App.System.Identity` is in memory and steps 3–5 above use it. Bootstrap loads the system identity before any other `application/plang` read.
 
 ## 7. Step.Disabled — context passed, not stashed
 
