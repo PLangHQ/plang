@@ -2,6 +2,31 @@
 
 Member-by-member, what must not survive this branch, grouped by mechanism. Read before cutting. The stays-list at the bottom is as load-bearing as the kill-list — flipping those would be wrong.
 
+## Removed outright — these cease to exist
+
+Pure deletions (distinct from the *flips* below, which lose their `?` but stay):
+
+**Types / fields / members gone:**
+- `ContextLessFallback` static field (`channel/serializer/plang/this.cs:141`) and all five use sites.
+- `Step.Context` field (`goal/steps/step/this.cs:16`).
+- `AnchorScopeDisposable._previousStepContext` field (`actor/context/this.cs:290`) and its capture (`:299`) and restore (`:307`).
+- The `Step.Context = this` set in `AnchorScope` (`:278`).
+- The `step.Context = …` / `_items[i].Context = …` stamps (`goal/steps/this.cs:53,128`).
+- `Data.Null()`'s context-free static sentinel birth via `@null.Instance` — replaced by `context.Null()`.
+
+**Code blocks / branches deleted:**
+- The `if (_context == null) { … }` trust/fail-closed block in `Wire.ReadSignatureLayer` (`data/Wire.cs:211-227`) — entirely.
+- The `_context != null` guards on the three typed-read branches (`Wire.cs:386, 406, 419`), and the context-less `Parse → RawSlot` fallback for typed values that they fed (now dead).
+- The `?? (_type as IContext)?.Context!` fallback in `Data.Context`'s getter and the `value != null` null-guard in its setter (`data/this.cs:116,120`).
+- The `… ?? ContextLessFallback` fallbacks in `data/this.Transport.cs:58,142` and `snapshot/this.Wire.cs:89`.
+- `GetActor` returning `(actor.@this?)null` (`app/this.cs:259`) — replaced by a throw.
+
+**Seams retired:**
+- The 2-arg `FromWire(raw, kind)` registry seam (`snapshot/this.Wire.cs:83`) — replaced by a context-ful read registration.
+- The `_context != null` MIME-guess shortcut at reads — the store binds the serializer, so there is nothing to guess.
+
+The full member-by-member tables (including the *flips* to non-null) follow.
+
 ## A. Construction-order windows
 
 | Member | File | Disposition |

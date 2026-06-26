@@ -43,6 +43,10 @@ The 16 nullable fields are not one problem. The 56 parameters are downstream —
 
 **D. Delete `Step.Context`.** Its only consumer is `Step.Disabled`, and every caller of `Disabled` already holds the running context as a local one line above. The field is pure choreography — stash the context on a shared Step, read it back through `Disabled`, and have AnchorScope save/restore the stash per dispatch. `Disabled` becomes context-parameterized and the field is deleted, not nulled. Full detail: [plan/step-context.md](plan/step-context.md).
 
+## The after-state — how the code flows once context is non-null
+
+[plan/after-flow.md](plan/after-flow.md) walks the whole path in the new world — app start → actor/context births → value creation → wire write → the single read path → verify-with-authenticity → bootstrap root key → `Step.Disabled` — with before/after code shapes at each junction. The consolidated list of what is **removed outright** (distinct from the flips) is at the top of [plan/demolition.md](plan/demolition.md).
+
 ## Leaf trace — the incumbents and each call site
 
 - **`Wire._context`** (`data/Wire.cs:73`) — read at the three typed-read gates (`:386/406/419`) and the trust branch (`:211-227`). Disposition: non-null; gates and trust branch deleted; `View` keeps only the freshness role.

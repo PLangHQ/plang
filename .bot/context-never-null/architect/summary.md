@@ -23,6 +23,6 @@
 
 **Settled (was open).** Settings is system-owned: you can't store a context, only the actor; the store reads through `App.System.Context` (live) and records `Actor=system`.
 
-**Files.** Plan spine `plan.md`; deep dives `plan/mime-and-verify.md`, `plan/value-births.md`, `plan/step-context.md`, `plan/demolition.md`. No stage files yet (Ingi: plan only, steps later).
+**Files.** Plan spine `plan.md`; deep dives `plan/mime-and-verify.md`, `plan/value-births.md`, `plan/step-context.md`, `plan/demolition.md`, `plan/after-flow.md` (end-to-end code flow in the non-null world, before/after at each junction). The "removed outright" consolidated list is at the top of `demolition.md`. No stage files yet (Ingi: plan only, steps later).
 
 **Status.** Awaiting Ingi's read-through. Stages to be carved after.
