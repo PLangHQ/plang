@@ -50,10 +50,28 @@ You can't persist a context — it's ephemeral, per-execution. What's durable is
 
 ## Caveats carried up to the spine
 
-- **Verify is integrity today; authenticity is a decision this branch enables.** `Ed25519.VerifyAsync` step 6 (`:133`) checks the signature against `layer.Identity` — the public key embedded in the signature itself — and the Store/boundary read never sets `Contracts` (step 4, the only identity gate). So today verify proves the signer held the private key for the embedded key; it does not pin that key to system. To make it authenticity, the read passes the owning actor's known public key and verify asserts `layer.Identity == expected`. That is reachable only because the read now holds `context.Actor` (hence the actor's loaded identity). There is no bootstrap root-of-trust problem: reading your own keypair at boot authenticates by private-key possession (the loaded public key must derive from the loaded private key). **Pending decision: land the expected-identity check in this branch or as a follow-up.**
+- **Authenticity lands in this branch (decided).** `Ed25519.VerifyAsync` step 6 (`:133`) checks the signature against `layer.Identity` — the public key embedded in the signature itself — and the Store/boundary read never sets `Contracts` (step 4, the only identity gate). So today verify proves the signer held the private key for the embedded key; it does not pin that key to system. This branch passes the owning actor's known public key on a system-owned read and verify asserts `layer.Identity == expected`. Reachable only because the read now holds `context.Actor`. See "Bootstrap: loading the root key" below for the one read that authenticates differently.
 - **Read needs no key; sign-on-save does.** The plan's read-path-key worry is inverted — confirm the private key is present on every save, including first-run identity creation.
 - **Hash recursion.** Crypto's context-ful canonicalizer must route through a body-only write, not sign-if-missing, or signing recurses.
 
+## Bootstrap: loading the root key
+
+The system keypair lives in the same `application/plang` settings store (`identity/code/Default.cs` — `store.Set/Get<Identity>(Table, name)`), and the stored `Identity` carries both `PublicKey` and the real `PrivateKey` (`identity/type/identity.cs:21,26,57`). So "verify every `application/plang` read against `App.System.PublicKey`" is circular for the identity read itself — that read is *how* the system pubkey gets into memory.
+
+It breaks because the root authenticates by **private-key possession**, not by matching an external key:
+
+1. **First run, no identity.** `GetOrCreateDefaultAsync` mints a keypair (private key in hand), `SaveAsync` signs the artifact with it and stores it. Nothing to verify — just minted.
+2. **Later runs — the identity-table read is the one root read.** Read it in **root mode**: verify the signature is internally valid (integrity) and that the loaded keypair is self-consistent — `PublicKey` re-derives from `PrivateKey` (Ed25519 deterministic). A self-consistent keypair from your own store is the authentication for the root. This establishes `App.System.PublicKey`.
+3. **Every other read** passes `expected = App.System.PublicKey` and asserts `layer.Identity == expected`.
+
+So `expected` is null only for the identity-table read; the loaded system pubkey for everything else. **Bootstrap order:** load the system identity (root mode) before any other `application/plang` read, or a settings read re-enters the identity load (itself a settings read). `App.System` is eager (mechanism A), but `MyIdentity` resolves lazily (`actor/this.cs:125-129`) — make the root load happen first.
+
+Two storage shapes were considered; **A** is the plan unless Ingi picks B:
+- **A (chosen, minimal):** keypair stays in the `application/plang` settings store; the identity-table read is marked root-mode.
+- **B (more standard, more change):** root keypair in a separate protected keystore (OS keychain / FS-protected file), loaded before any settings read, so the settings store always has the expected key.
+
+Separate concern (not this branch): the private key is stored in plaintext in sqlite (`identity.cs:57`), so authenticity catches tampering by others, not by someone who read your key file. Key-at-rest encryption is later hardening.
+
 ## You own the final shape
 
-The seam names here (the context-ful read registration, the body-only write entry) describe intent. Pick the shapes that fit the serializer code as it stands.
+The seam names here (the context-ful read registration, the body-only write entry, the root-mode read flag, `context.Null/Error/Ok`) describe intent. Pick the shapes that fit the serializer code as it stands.

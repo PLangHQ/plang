@@ -13,11 +13,15 @@
 - **Construction-order windows** (`Context.Actor`, `Variables._context`, `App._system/_user`) flip via ctor owner-passing / eager construction — cheap, no behavior change.
 - **`Step.Context` is deleted, not flipped.** Its only consumer is `Step.Disabled`, whose every caller already holds the running context one line above. `Disabled` becomes `IsDisabled(context)`; the field and the AnchorScope save/restore go.
 
-**Caveats recorded.** Verify-on-read is integrity not authenticity (signature embeds its own key); the read path needs no key, sign-on-save does; hash canonicalization must use a body-only write to avoid sign recursion.
+**Authenticity decided (in this branch).** Verify today only checks the signature against its *embedded* public key (`Ed25519.cs:133`) — integrity, not authenticity. This branch adds an expected-identity check: a system-owned read passes `App.System.PublicKey` and asserts `layer.Identity == expected`. Reachable only because the read now holds `context.Actor`. The root key (system keypair, stored in the same `application/plang` settings store) loads in **root mode**: verify signature + keypair self-consistency (`PublicKey` re-derives from `PrivateKey`), no external match — possession authenticates the root. Bootstrap order must load the root identity before any other settings read. Storage stays in the settings store (option A) unless Ingi picks a separate keystore (B). Out of scope: private key is plaintext in sqlite (`identity.cs:57`) — key-at-rest encryption is later hardening.
 
-**Stays nullable.** `GetActor → Actor?` (not-found channel), the `[Choices]` static-vocab param (designed nullable).
+**Other caveats.** The read path needs no key, sign-on-save does; hash canonicalization must use a body-only write to avoid sign recursion.
 
-**Open detail for implementation.** Whether the settings store binds the System actor's context (settings is system-owned) vs the running actor's.
+**GetActor throws.** Actor set is closed/hardcoded (system/user/service); unknown name throws, returns non-null. Off the stays-list.
+
+**Stays nullable.** Only the `[Choices]` static-vocab param (designed nullable).
+
+**Settled (was open).** Settings is system-owned: you can't store a context, only the actor; the store reads through `App.System.Context` (live) and records `Actor=system`.
 
 **Files.** Plan spine `plan.md`; deep dives `plan/mime-and-verify.md`, `plan/value-births.md`, `plan/step-context.md`, `plan/demolition.md`. No stage files yet (Ingi: plan only, steps later).
 
