@@ -1,85 +1,62 @@
-# Handoff — variable-as-value (conversion / lazy-container arc)
+# Handoff — variable-as-value: unblock `plang build`
 
-Read `lazy-container-clr-plan.md` next to this — it has the full design + every probe
-finding. This file is "where we are right now / what to do next".
+## THE GOAL (don't lose it again)
+This branch exists to **make `plang build` work** — it couldn't build any goal because a
+full-match `%x%` was coerced to its declared type at `.pr` load → null. Done-state =
+`plang build` runs + `cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test` green.
+NOT "green C# unit slices" (that's a side-effect). Plan: `.bot/variable-as-value/coder/plan.md`.
 
-## Working-tree state at handoff
-- **One uncommitted, UNTESTED change:** `PLang/app/type/list/this.Generic.cs` — a
-  `list<T>.Create(value, data)` override that RE-TAGS (wraps the value's rows as
-  `list<T>` with NO per-element conversion). Edited but the test run was interrupted.
-  **First action next session: build + run the suite on it.**
-  - If green → commit ("list<T>.Create is a re-tag, not an eager convert").
-  - If red → breakers are consumers that read `list<T>` elements expecting them already
-    materialized (`.At`/`.Peek`) instead of enumerating + `.Value()`/`Clr<List<T>>`.
-    Move those to per-element reads, OR revert and rethink.
-- Everything else committed + pushed (`origin/variable-as-value`). `git status` should
-  show only `Tests/Scratch/Repro.goal` (untracked) + the Generic.cs edit.
+## DONE this session (committed + pushed, HEAD = 95ab8771a)
+- **The `%msg%` self-reference blocker is FIXED** (the documented "Root unknown" in
+  output-redesign.md). `render … write to %msg%` → `set %msg% = %!data%` was storing a
+  reference to the reused infra NAME `!data`, so it cycled. Fix: `variable.@this` now
+  reports `IsRef` (a variable value IS a reference to its name), and `set`'s no-type path
+  calls `Value.AsCanonical()` — the NAME-hop resolve (`%!data%` → the current Data instance,
+  value NOT computed; lazy) — so the target binds to the instance, not the rebinding name.
+  Commits: `91b5b225f` (self-ref), `e661dc076` (set errors on unset ref, infra `%!` excepted),
+  `95ab8771a` (nav: unset index → `IndexNotSet`, self-diagnosing).
+- Earlier chain (settings/serializer + nav, all green-and-pushed): `Get<T>` deferred face,
+  Identity.Output, dict entry-key re-stamp, source/file/text.Navigate, interpolation
+  `variable.Value()`, convert JSON-gate. Suite: Modules 124→12, Runtime 49→2, Types 24→2,
+  Wire 14→5, **Data 18→0**. Foreach tests fixed.
 
-## Build / test (memory: build_speed_workflow)
+## THE NEXT BLOCKER (start here)
+The builder now runs the LLM planner (LLM IS available here — produces a real 4-step plan)
+and reaches BuildStep, then dies:
 ```
-dotnet msbuild PLang.Tests/All.proj -t:Build -p:Configuration=Debug -p:RunAnalyzers=false -v:q -nologo
-PLang.Tests/<Area>/bin/Debug/net10.0/PLang.Tests.<Area> --timeout 40s   # Runtime Types Modules Data Generator Wire
+BuildGoal/Start.goal:  foreach %plan.steps%, call BuildStep/Start planStep=%item%
+BuildStep/Start.goal:6: set %step% = %goal.Steps[planStep.index]%
+  → IndexNotSet(400): the index %planStep.index% is not set (resolved to null)
 ```
-Green baseline = Modules **4 failed** (the R1 set: `Integration_FileExists/NotExists`,
-`Set_NameTypedAsText`, `ActionRunAsync` — Ingi's active work, LEAVE them), else 0.
-`Runtime: ReadLocalFile_ReturnsFileType_ChainIsFilePathItem` is a known ORDER-FLAKE
-(passes isolated) — not a regression.
+`plan.steps` items are well-formed (`{index:0, actions:[...], confidence}`); foreach +
+goal-call work in unit tests — so **`%planStep%` isn't resolving in BuildStep's scope**.
+Narrowed to ONE of:
+  (a) the goal-call **`planStep=%item%` injection** into the called goal (App.RunGoalAsync
+      param injection — see memory feedback_app_architecture_patterns), or
+  (b) **`planStep.index` navigation** on the injected dict.
+Next: `--debug` watch `planStep`/`item` across the foreach→BuildStep boundary; confirm
+whether `%planStep%` is `(undefined)` in BuildStep (→ injection bug) or set-but-nav-misses
+(→ nav bug). I could NOT get the watched value to print in the BuildStep BEFORE block —
+try `{"level":"action"}` and watch the goal-call action's param resolution.
 
-## Landed this session (green, pushed)
-Bug sweep (~32 tests): registry collision (`app.variable.path/.list` shadowing
-`app.type.path/.list` → only item-derived `@this` claim a value-type name); `list`
-render preserves the element-type tag; Diff OOM test → behavioral; generator shape
-asserts `As<T>`; deep-resolution read via the value door; `[IsNotNull]` guard uses
-`IsNull`; conversion-error timing; `Data.As<T>` → internal.
+## REPRO + DEBUG (use these, not C# dumps)
+```bash
+dotnet build PlangConsole -c Debug         # rebuild the binary (NOT auto-rebuilt)
+cd Tests
+../PlangConsole/bin/Debug/net10.0/plang '--build={"files":["Scratch/Repro.goal"]}' \
+  '--debug={"variables":["planStep","item"],"level":"action","maxLength":400}'  2>&1 | less
+```
+`Tests/Scratch/Repro.goal` is the minimal repro (set + nav). Builder goals:
+`os/system/builder/{Build,BuildGoal/Start,BuildStep/Start}.goal`.
 
-Conversion architecture:
-- `type.Create(raw)` = the one CLR→plang LIFT, in the type system. `Data.Lift` +
-  `json.BornFromRaw` DELETED (JSON out of object construction).
-- `list`/`dict` LOWER themselves inline (`row.Peek().Clr(elem)`), no static helpers.
-- `list : IEnumerable<Data>`, `Data.Clr<T>()`.
-- family-aware LOWER in `TryConvert`: value lowers itself (`value.Clr`) only when target
-  is its OWN family (`OwnerOf(target)` matches the value); cross-family → CONVERT.
-- `choice<T>` arm MIGRATED: `choice<T>.Convert` hook + arm deleted — `OwnerOf`'s
-  `Discover(target)` routes it. This is the per-arm migration PATTERN.
+## PROCESS (Ingi's corrections — follow these)
+- On a plang/builder failure: **improve the error message first** (self-diagnosing, keepable)
+  and **use `plang --debug={...}`** — do NOT add `Console.Error` dumps to C#. (memory:
+  feedback_debug_plang_failures). The `IndexNotSet` message this session is an example.
+- Show code before changing C#; commit green chunks and push.
 
-## Model (decided with Ingi) — 3 directions, no central hub
-- LIFT raw→plang = `type.Create`. LOWER plang→CLR = `value.Clr` (terminal). CONVERT
-  →plang family = `family.Convert` (terminal).
-- `TryConvert` collapses to: identity / `target is plang → family.Convert` / `else →
-  value.Clr`. Migrate arms ONE AT A TIME (give the target type a `Convert`, delete its
-  arm; `Discover` picks it up). NOT a big-bang — `choice<T>` proved it.
-- Convert hooks should THROW, not return null — but only once the dispatch gates the
-  owner (today `null` = decline). Lands with the collapse.
-- LOWER/CONVERT boundary is FAMILY-based, not CLR-vs-plang (probe-proven).
-
-## The big remaining piece — typed-list lazy materialization (OURS)
-`list<LlmMessage>` = `type=list, kind=LlmMessage`; each element = `type=dict,
-kind=LlmMessage` — a dict that RETURNS AS LlmMessage on `.Value()`. NOT an eager walk
-— O(1) re-tag; `dict→LlmMessage` materializes per element, lazily, on touch.
-- **Ingi's constraint:** `kind` is a `string` and can't faithfully name a domain type
-  — store `typeof(T)` (a real `System.Type`). Slot exists: `type` entity `_clrType`,
-  via `@this(string name, System.Type)` ctor (`type/this.cs:771`).
-- **Storage finding:** a `Data`'s `Type` is minted by its VALUE (`_type.Type`/`Mint()`)
-  — no declared-type slot. So the VALUE carries the materialize-as `typeof(T)` (drives
-  `Mint()` + `.Value()`/`Build`). `type.Build` passes a non-leaf native straight
-  through today — extend it to materialize when `ClrType` is a domain type the native
-  isn't (`dict.Clr(typeof(T))`, the record build).
-- Steps: (1) `list.@this` `protected virtual type? ElementType => null`; `list<T>`
-  overrides carrying `typeof(T)`. (2) rows stamp it. (3) `Build`/`.Value()` materialize
-  `dict→T` lazily via it. (4) delete the eager `list<T>` arm in `Conversion.cs` (the
-  `GetGenericTypeDefinition() == typeof(list.@this<>)` block). The uncommitted
-  `list<T>.Create` re-tag is toward (4).
-- Then the same migration for: `string→record` (`dict→Goal` deserialize — record owns
-  `From` vs deserialize), `FromWire`-string, ctor-string arms.
-
-## Conventions / notes (Ingi this session)
-- `ICreate.Create(@this value, @this asking)` — the param should be **`data`**, not
-  `asking` ("data is just data"). Uncommitted `list<T>.Create` already uses `data`; the
-  interface + other impls still say `asking` — rename as a convention pass.
-- Inline complexity AT the operation; extract a method ONLY for genuinely SHARED logic
-  (no single-caller `.Of`/helpers). The value owns its conversion — no static
-  `ClrList`/`Record.Of`. 5+/10+ line methods = OBP smell to re-examine. `kind` carries
-  strings; domain identity needs a `Type`.
-- `Modules 4` (R1) + the `ReadLocalFile` flake are NOT yours to fix.
-- Always `git push` after the final commit; rebase on `origin/variable-as-value` first
-  (other bots push there).
+## Build/test
+`./dev.sh build` (C#), `./dev.sh full` (all slices), `dotnet build PlangConsole` (the plang exe).
+Remaining slice failures (all pre-existing, NOT regressions): Modules 12 (dict→Step `.pr`
+type-object cluster + Settings-MissingKey AskError), Runtime 2, Types 2, Wire 5 — the
+`data.Output` write-path migration tail (output-redesign.md P4/P7); separate from the builder.
