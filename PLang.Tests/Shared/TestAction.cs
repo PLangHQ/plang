@@ -16,7 +16,8 @@ public static class TestAction
             Parameters = parameters
                 .Select(p => new global::app.data.@this(p.name, p.value,
                     PrParam.IsVarNameSlot(module, action, p.name)
-                        ? new global::app.type.@this("variable") : null))
+                        ? new global::app.type.@this("variable") : null,
+                    context: global::PLang.Tests.TestApp.SharedContext))
                 .ToList()
         };
         // Tests author actions the way the builder does — same template seam
@@ -26,8 +27,8 @@ public static class TestAction
     }
 
     /// <summary>Wraps a typed value in data.@this&lt;T&gt; for direct action construction in tests.</summary>
-    public static global::app.data.@this<T> D<T>(T value) where T : global::app.type.item.@this, global::app.type.item.ICreate<T> => new("", value);
+    public static global::app.data.@this<T> D<T>(T value) where T : global::app.type.item.@this, global::app.type.item.ICreate<T> => new("", value, context: global::PLang.Tests.TestApp.SharedContext);
 
     /// <summary>Wraps an untyped value in data.@this for direct action construction in tests.</summary>
-    public static global::app.data.@this D(object? value) => new("", value);
+    public static global::app.data.@this D(object? value) => new("", value, context: global::PLang.Tests.TestApp.SharedContext);
 }

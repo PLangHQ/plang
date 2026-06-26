@@ -30,7 +30,7 @@ public class ContentShapeVerbTests
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
         {
             _prompts.Add((action.Question.Peek()?.ToString()) ?? "");
-            return Task.FromResult(global::app.data.@this.Ok(_answer));
+            return Task.FromResult(action.Context.Ok(_answer));
         }
     }
 
