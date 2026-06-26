@@ -429,7 +429,7 @@ public sealed partial class @this : IAsyncDisposable
         var prPath = global::app.type.path.@this.Resolve("/.build/app.pr", System.Context!);
         var written = await prPath.WriteText(json);
         if (!written.Success) return written;
-        return app.data.@this.Ok(this);
+        return System.Context!.Ok(this);
     }
 
     /// <summary>
@@ -515,7 +515,7 @@ public sealed partial class @this : IAsyncDisposable
         // Resolve goal file
         var goalFile = await (await context.Variable.Get("goalFile")).Clr<string?>(null);
         if (string.IsNullOrEmpty(goalFile))
-            return app.data.@this.FromError(new global::app.error.ServiceError(
+            return context.Error(new global::app.error.ServiceError(
                 "No goal file specified. Use: plang <goalfile>", "NoGoalFile", 400));
 
         var goalCall = new GoalCall { PrPath = global::app.type.path.@this.Resolve(goalFile, context) };

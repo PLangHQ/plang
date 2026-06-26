@@ -148,7 +148,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             ?? (value as global::app.type.item.@this)?.Clr<string>()
             ?? value?.ToString() ?? "";
         if (string.IsNullOrEmpty(raw))
-            return global::app.data.@this.Ok(new @this("", raw, false));
+            return context.Ok(new @this("", raw, false));
 
         var trimmed = raw.Trim('%');
         var wasPercentWrapped = raw.Length >= 2 && raw[0] == '%' && raw[^1] == '%';
@@ -214,7 +214,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             name = (hasNegationPrefix ? "!" : "") + body;
         }
 
-        return global::app.data.@this.Ok(
+        return context.Ok(
             new @this(name, raw, wasPercentWrapped) { Property = property, IsMalformed = malformed });
     }
 

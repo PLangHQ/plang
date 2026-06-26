@@ -267,7 +267,7 @@ public sealed class Default : IIdentity
     private async Task<data.@this> SaveAsync(IContext action, Identity identity)
     {
         var store = action.Context.App.SettingsStore;
-        var data = new data.@this(identity.Name, identity);
+        var data = new data.@this(identity.Name, identity, context: action.Context);
         return await store.Set(Table, identity.Name, data);
     }
 

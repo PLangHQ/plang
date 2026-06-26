@@ -135,7 +135,7 @@ public sealed class @this : IList<Step>, IContext
     /// </summary>
     public async Task<data.@this> RunAsync(actor.context.@this context)
     {
-        data.@this result = data.@this.Ok();
+        data.@this result = context.Ok();
         int? skipBelowIndent = null;
 
         for (int i = 0; i < _items.Count; i++)
@@ -168,7 +168,7 @@ public sealed class @this : IList<Step>, IContext
             }
 
             if (context.CancellationToken.IsCancellationRequested)
-                return data.@this.FromError(new app.error.Error("Operation was cancelled", "Cancelled", 499));
+                return context.Error(new app.error.Error("Operation was cancelled", "Cancelled", 499));
         }
 
         return result;

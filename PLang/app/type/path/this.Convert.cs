@@ -11,25 +11,25 @@ public abstract partial class @this
     public static global::app.data.@this Convert(object? value, string? kind,
         actor.context.@this context)
     {
-        if (value is null) return global::app.data.@this.Ok(value);
-        if (value is @this) return global::app.data.@this.Ok(value);
+        if (value is null) return context.Ok(value);
+        if (value is @this) return context.Ok(value);
         if (value is not string raw)
-            return global::app.data.@this.FromError(new global::app.error.Error(
+            return context.Error(new global::app.error.Error(
                 $"Cannot convert {value.GetType().Name} to path.", "PathConversionFailed", 400));
 
         try
         {
-            return global::app.data.@this.Ok(context.App.Type.Scheme.From(raw, context));
+            return context.Ok(context.App.Type.Scheme.From(raw, context));
         }
         catch (scheme.SchemeNotRegistered snr)
         {
-            return global::app.data.@this.FromError(new global::app.error.Error(
+            return context.Error(new global::app.error.Error(
                 snr.Message, "SchemeNotRegistered", 400)
                 { FixSuggestion = $"Register a factory for scheme '{snr.Scheme}' via app.Type.Scheme.Register, or use a bare/file:// path." });
         }
         catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
         {
-            return global::app.data.@this.FromError(new global::app.error.Error(
+            return context.Error(new global::app.error.Error(
                 ex.Message, "PathConstructionFailed", 400));
         }
     }

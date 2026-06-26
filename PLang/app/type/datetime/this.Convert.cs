@@ -12,21 +12,21 @@ public sealed partial class @this
         global::app.actor.context.@this context)
     {
         // Always born-native: datetime builds a `datetime` value. A .NET edge unwraps with .Clr<DateTimeOffset>().
-        global::app.data.@this B(System.DateTimeOffset v) => global::app.data.@this.Ok(new @this(v));
+        global::app.data.@this B(System.DateTimeOffset v) => context.Ok(new @this(v));
         switch (value)
         {
-            case null: return global::app.data.@this.Ok(value);
+            case null: return context.Ok(value);
             case System.DateTimeOffset dto: return B(dto);
             case System.DateTime dt: return B(new System.DateTimeOffset(dt));
             case @this self: return B(self.Value);
             case string s:
                 var parsed = Resolve(s, context);
                 if (parsed != null) return B(parsed.Value);
-                return global::app.data.@this.FromError(new global::app.error.Error(
+                return context.Error(new global::app.error.Error(
                     $"Cannot parse '{s}' as datetime — expected ISO-8601 (e.g. 2024-03-15T10:30:00+00:00).",
                     "DateTimeParseFailed", 400));
             default:
-                return global::app.data.@this.FromError(new global::app.error.Error(
+                return context.Error(new global::app.error.Error(
                     $"Cannot convert {value.GetType().Name} to datetime.", "DateTimeConversionFailed", 400));
         }
     }

@@ -122,7 +122,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (!beforeResult.Success) return beforeResult;
         if (beforeResult.Handled) return beforeResult;
 
-        data.@this result = data.@this.Ok();
+        data.@this result = context.Ok();
         try
         {
             foreach (var action in Actions)
@@ -144,7 +144,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                 : (typeName.EndsWith("Exception", StringComparison.Ordinal)
                     ? typeName[..^"Exception".Length]
                     : typeName);
-            result = data.@this.FromError(new global::app.error.ServiceError(
+            result = context.Error(new global::app.error.ServiceError(
                 ex.Message, key, 400) { Exception = ex });
         }
 

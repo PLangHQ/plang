@@ -78,7 +78,7 @@ public partial class Handle : IContext, IModifier
     [Default(false)]
     public partial global::app.data.@this<global::app.type.@bool.@this> IgnoreError { get; init; }
 
-    public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
+    public Task<global::app.data.@this> Run() => Task.FromResult(Context.Ok());
 
     public Func<Task<global::app.data.@this>> Wrap(Func<Task<global::app.data.@this>> next, actor.context.@this context)
     {
@@ -132,7 +132,7 @@ public partial class Handle : IContext, IModifier
             }
 
             // IgnoreError is the final fallback — after retry and recovery are exhausted
-            if (await IgnoreError.ToBooleanAsync()) return global::app.data.@this.Ok();
+            if (await IgnoreError.ToBooleanAsync()) return context.Ok();
 
             return result;
         };
@@ -165,7 +165,7 @@ public partial class Handle : IContext, IModifier
         // Stamp the enclosing step so navigation — goal.call → GetGoalAsync → sibling
         // sub-goals — works the same as for actions placed directly in a step.
         var enclosingStep = context.Step;
-        global::app.data.@this last = global::app.data.@this.Ok();
+        global::app.data.@this last = context.Ok();
         foreach (var action in actions)
         {
             if (action.Step == null && enclosingStep != null)

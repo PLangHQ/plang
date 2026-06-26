@@ -65,11 +65,11 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
         global::app.actor.context.@this context)
     {
         var chosen = value as string ?? value?.ToString() ?? "";
-        try { return global::app.data.@this.Ok(FromName(chosen, context)); }
+        try { return context.Ok(FromName(chosen, context)); }
         catch (System.Exception ex)
         {
             var inner = (ex as System.Reflection.TargetInvocationException)?.InnerException ?? ex;
-            return global::app.data.@this.FromError(new global::app.error.Error(
+            return context.Error(new global::app.error.Error(
                 $"'{chosen}' is not a valid {typeof(T).Name} option: {inner.Message}",
                 "TypeConversionFailed", 400));
         }

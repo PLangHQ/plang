@@ -14,7 +14,7 @@ public partial class @this
         global::app.actor.context.@this context)
     {
         if (value is string s && string.IsNullOrWhiteSpace(s))
-            return global::app.data.@this.Ok(new @this { Context = context });
+            return context.Ok(new @this { Context = context });
         return null;
     }
 
@@ -38,7 +38,7 @@ public partial class @this
             object? element = item is System.Collections.IEnumerable and not string
                 ? FromRaw(item, context) ?? item
                 : item;
-            list.Add(new global::app.data.@this("", element));
+            list.Add(new global::app.data.@this("", element, context: context));
         }
         return list;
     }

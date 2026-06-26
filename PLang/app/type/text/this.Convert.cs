@@ -16,10 +16,10 @@ public sealed partial class @this
     public static global::app.data.@this Convert(object? value, string? kind,
         global::app.actor.context.@this context)
     {
-        if (value is null) return global::app.data.@this.Ok(value);
+        if (value is null) return context.Ok(value);
         // Always born-native: text builds a `text` value. A .NET edge that needs the
         // raw CLR string unwraps with .Clr<string>().
-        global::app.data.@this S(string? str) => global::app.data.@this.Ok((@this)(str ?? string.Empty));
+        global::app.data.@this S(string? str) => context.Ok((@this)(str ?? string.Empty));
         if (value is string s) return S(s);
         if (value is @this self) return S(self.Clr<string>());
 
@@ -37,7 +37,7 @@ public sealed partial class @this
         if (value is System.IConvertible)
             return S(System.Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture));
 
-        return global::app.data.@this.FromError(new global::app.error.Error(
+        return context.Error(new global::app.error.Error(
             $"Cannot bind a {value.GetType().Name} to text — it has no textual form.",
             "TypeConversionFailed", 400));
     }

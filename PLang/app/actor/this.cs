@@ -23,12 +23,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         if (value is global::app.type.text.@this t) value = t.Clr<string>();
         switch (value)
         {
-            case null: return global::app.data.@this.Ok(value);
-            case @this self: return global::app.data.@this.Ok(self);
+            case null: return context.Ok(value);
+            case @this self: return context.Ok(self);
             case string name:
-                return global::app.data.@this.Ok(context.App.GetActor(name));
+                return context.Ok(context.App.GetActor(name));
             default:
-                return global::app.data.@this.FromError(new global::app.error.Error(
+                return context.Error(new global::app.error.Error(
                     $"Cannot convert {value.GetType().Name} to actor — expected an actor name (system/service/user).",
                     "ActorConversionFailed", 400));
         }

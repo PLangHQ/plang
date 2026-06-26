@@ -303,7 +303,7 @@ public partial class @this
             // A parse failure on a raw-backed parent stamps MaterializeFailed —
             // surface it rather than masking the real cause with NotFound.
             if (parent.Error?.Key == "MaterializeFailed")
-                return data.@this.FromError(parent.Error);
+                return _context.Error(parent.Error);
             return data.@this.NotFound(name);
         }
 
@@ -317,7 +317,7 @@ public partial class @this
         if (target == null)
         {
             if (parent.Error?.Key == "MaterializeFailed")
-                return data.@this.FromError(parent.Error);
+                return _context.Error(parent.Error);
             return data.@this.NotFound(name);
         }
 

@@ -247,7 +247,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         context.Goal = this;
 
         if (context.CancellationToken.IsCancellationRequested)
-            return data.@this.FromError(new global::app.error.Error("Operation was cancelled", "Cancelled", 499));
+            return context.Error(new global::app.error.Error("Operation was cancelled", "Cancelled", 499));
 
         var lifecycle = context.LifecycleFor(this);
 
@@ -304,7 +304,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             var serviceErr = new global::app.error.ServiceError(
                 ex.Message, goalEntryAction.Step!, chain, "CallStackOverflow", 500) { Exception = ex };
             stack.Audit.Add(serviceErr);
-            return data.@this.FromError(serviceErr);
+            return context.Error(serviceErr);
         }
         finally
         {

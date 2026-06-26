@@ -86,16 +86,16 @@ public sealed class Json : ISerializer
             if (value == null)
             {
                 await stream.WriteAsync("null"u8.ToArray(), cancellationToken);
-                return global::app.data.@this.Ok();
+                return data.Context.Ok();
             }
             // Line framing between messages is the channel's job, not the
             // serializer's — emit only the value's JSON here, no trailing newline.
             await JsonSerializer.SerializeAsync(stream, value, value.GetType(), _options, cancellationToken);
-            return global::app.data.@this.Ok();
+            return data.Context.Ok();
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
         {
-            return global::app.data.@this.FromError(new error.ServiceError(
+            return data.Context.Error(new error.ServiceError(
                 $"JSON serialize failed: {ex.Message}", "JsonSerializeError", 400) { Exception = ex });
         }
     }

@@ -77,7 +77,7 @@ public abstract partial class @this
     // Data (no generic T → satisfies `where T : item`) so the AuthGate ask/exit bubble
     // (a Data Type signal) still propagates. .Value holds the Assembly.
     public virtual Task<data.@this> LoadAssemblyAsync() =>
-        Task.FromResult(data.@this.FromError(
+        Task.FromResult(Context!.Error(
             new error.ServiceError($"Scheme '{Scheme}' does not support assembly loading.", "NotSupported", 400)));
 
     // Content-shape verbs: when a third-party API needs the file's content

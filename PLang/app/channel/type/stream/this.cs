@@ -45,7 +45,7 @@ public sealed class @this : global::app.channel.type.session.@this
     public override async Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
     {
         if (!CanWrite)
-            return global::app.data.@this.FromError(new ServiceError(
+            return data.Context.Error(new ServiceError(
                 $"Channel '{Name}' does not support writing", "ChannelReadOnly", 400));
 
         try
@@ -67,7 +67,7 @@ public sealed class @this : global::app.channel.type.session.@this
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
-            return global::app.data.@this.FromError(new ServiceError(
+            return data.Context.Error(new ServiceError(
                 $"Failed to write to channel '{Name}': {ex.Message}", "WriteError") { Exception = ex });
         }
     }
@@ -112,19 +112,19 @@ public sealed class @this : global::app.channel.type.session.@this
             var output = action.Context?.Actor?.Channel.Resolve(global::app.channel.list.@this.Output);
             if (output != null && output.CanWrite)
             {
-                var writeRes = await output.WriteAsync(global::app.data.@this.Ok(question), ct);
+                var writeRes = await output.WriteAsync(action.Context.Ok(question), ct);
                 if (!writeRes.Success) return writeRes;
             }
             else if (CanWrite)
             {
-                var writeRes = await Write(global::app.data.@this.Ok(question), ct);
+                var writeRes = await Write(action.Context.Ok(question), ct);
                 if (!writeRes.Success) return writeRes;
             }
             // No writer at all — proceed to read; the prompt is just lost.
         }
 
         if (!CanRead)
-            return global::app.data.@this.FromError(new ServiceError(
+            return action.Context.Error(new ServiceError(
                 $"Channel '{Name}' does not support reading", "ChannelWriteOnly", 400));
 
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -139,19 +139,19 @@ public sealed class @this : global::app.channel.type.session.@this
             // answerer (closed pipe, redirected stdin, non-interactive runner).
             // Fail-fast instead of letting the caller loop on "" forever.
             if (line == null)
-                return global::app.data.@this.FromError(new ServiceError(
+                return action.Context.Error(new ServiceError(
                     $"Channel '{Name}' has no interactive answerer (stream EOF)",
                     "ChannelEof", 400));
-            return global::app.data.@this.Ok(line);
+            return action.Context.Ok(line);
         }
         catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !ct.IsCancellationRequested)
         {
-            return global::app.data.@this.FromError(new ServiceError(
+            return action.Context.Error(new ServiceError(
                 $"Channel '{Name}' ask timed out after {Timeout}", "AskTimeout", 408));
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
-            return global::app.data.@this.FromError(new ServiceError(
+            return action.Context.Error(new ServiceError(
                 $"Failed to ask on channel '{Name}': {ex.Message}", "AskError") { Exception = ex });
         }
     }

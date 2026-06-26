@@ -30,10 +30,10 @@ public partial class @this
             ?? throw new InvalidOperationException("Path.Authorize requires Context.Actor");
 
         // In-root paths are auto-granted — the actor owns its own root.
-        if (IsInRoot()) return data.@this.Ok();
+        if (IsInRoot()) return Context!.Ok();
 
         var existing = await actor.Permission.Find(this, verb);
-        if (existing != null) return data.@this.Ok();
+        if (existing != null) return Context!.Ok();
 
         // Loop, not recursion: adversarial input (a channel that keeps
         // returning garbage) would grow the async state machine without
@@ -70,7 +70,7 @@ public partial class @this
                 case "y": return await SignAndStore(actor, verb, persist: false);
                 // No answer (closed/EOF input channel) = no consent — deny rather than
                 // reprompt, or a channel that can never answer loops this forever.
-                case "n" or null or "": return data.@this.FromError(
+                case "n" or null or "": return Context!.Error(
                     new global::app.error.PermissionDenied(BuildRequest(actor, verb)));
                 default:
                     prefix = $"Invalid answer '{answer}'. ";
@@ -90,7 +90,7 @@ public partial class @this
         // crosses the application/plang boundary into the settings store. The
         // caller's `persist` intent decides persisted vs in-memory.
         await actor.Permission.Add(d, persist);
-        return data.@this.Ok();
+        return Context!.Ok();
     }
 
     protected permission.@this BuildRequest(actor.@this actor, Verb verb) =>

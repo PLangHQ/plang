@@ -14,14 +14,14 @@ public partial class Write : IContext, IChannel
 
     public async Task<data.@this> Run()
     {
-        var outer = Data ?? app.data.@this.Ok();
+        var outer = Data ?? Context.Ok();
         // %-resolution applies to in-memory strings only — Peek, don't open the door:
         // forcing the parse here would break verbatim passthrough (an untouched
         // file-read Data writes out its raw bytes, not a re-serialised object).
         if (outer.Peek() is global::app.type.text.@this { Template: not null } st)
         {
             var resolved = await Context.Variable.Resolve(st.Clr<string>()!, skipInfrastructure: true);
-            outer = app.data.@this.Ok(resolved);
+            outer = Context.Ok(resolved);
         }
         return await Channel.WriteAsync(outer);
     }

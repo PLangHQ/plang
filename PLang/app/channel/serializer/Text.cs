@@ -31,11 +31,11 @@ public sealed class Text : ISerializer
             var writer = new global::app.channel.serializer.text.Writer(stream, _encoding);
             await data.Output(writer, view, data.Context);
             await stream.FlushAsync(cancellationToken);
-            return global::app.data.@this.Ok();
+            return data.Context.Ok();
         }
         catch (Exception ex) when (ex is IOException or System.Text.Json.JsonException)
         {
-            return global::app.data.@this.FromError(new error.ServiceError(
+            return data.Context.Error(new error.ServiceError(
                 $"Text serialize failed: {ex.Message}", "TextSerializeError", 400) { Exception = ex });
         }
     }

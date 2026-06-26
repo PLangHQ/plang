@@ -307,7 +307,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         else
         {
             (handler, error) = app.Module.GetCodeGenerated(this);
-            if (error != null) return global::app.data.@this.FromError(error);
+            if (error != null) return context.Error(error);
         }
 
         // CallStackOverflowException (depth limit or ContainsGoal cycle) trips at Push,
@@ -322,7 +322,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             var chain = caller != null ? caller.SnapshotChain() : Array.Empty<global::app.callstack.call.@this>();
             var overflowErr = new global::app.error.ServiceError(ex.Message, this.Step!, chain, "CallStackOverflow", 500) { Exception = ex };
             app.CallStack.Audit.Add(overflowErr);
-            return global::app.data.@this.FromError(overflowErr);
+            return context.Error(overflowErr);
         }
 
         // Dispose order matters: anchor restore must run BEFORE Call's await-using

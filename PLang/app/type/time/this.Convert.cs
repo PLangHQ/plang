@@ -13,10 +13,10 @@ public sealed partial class @this
         global::app.actor.context.@this context)
     {
         // Always born-native: time builds a `time` value. A .NET edge unwraps with .Clr<TimeOnly>().
-        global::app.data.@this B(System.TimeOnly v) => global::app.data.@this.Ok(new @this(v));
+        global::app.data.@this B(System.TimeOnly v) => context.Ok(new @this(v));
         switch (value)
         {
-            case null: return global::app.data.@this.Ok(value);
+            case null: return context.Ok(value);
             case System.TimeOnly t0: return B(t0);
             case @this self: return B(self.Value);
             case System.DateTime dt: return B(System.TimeOnly.FromDateTime(dt));
@@ -26,10 +26,10 @@ public sealed partial class @this
                 System.Globalization.DateTimeStyles.None, out var t):
                 return B(t);
             case string s:
-                return global::app.data.@this.FromError(new global::app.error.Error(
+                return context.Error(new global::app.error.Error(
                     $"Cannot parse '{s}' as time — expected ISO HH:mm:ss.", "TimeParseFailed", 400));
             default:
-                return global::app.data.@this.FromError(new global::app.error.Error(
+                return context.Error(new global::app.error.Error(
                     $"Cannot convert {value.GetType().Name} to time.", "TimeConversionFailed", 400));
         }
     }

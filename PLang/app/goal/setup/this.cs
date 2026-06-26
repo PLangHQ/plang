@@ -87,7 +87,7 @@ public sealed class @this
         var discoverResult = await DiscoverAsync(app, ct);
         if (!discoverResult.Success) return discoverResult;
 
-        if (!Goals.Any()) return data.@this.Ok();
+        if (!Goals.Any()) return context.Ok();
 
         context.Setup = this;
         try
@@ -97,7 +97,7 @@ public sealed class @this
                 var result = await app.RunGoalAsync(goal, context, ct);
                 if (!result.Success) return result;
             }
-            return data.@this.Ok();
+            return context.Ok();
         }
         finally
         {

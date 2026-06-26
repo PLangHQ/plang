@@ -89,7 +89,7 @@ public partial class Set : IContext, IBuildValidatable
         // fails the Name binding (CreateVariableDeclined) and answers null. Surface that
         // decline instead of NRE'ing on a null name below.
         if (name == null)
-            return global::app.data.@this.FromError(Name.Error
+            return Context.Error(Name.Error
                 ?? new global::app.error.Error("variable.set: Name did not resolve to a variable.", "CreateVariableDeclined", 400));
 
         // Variable.Resolve flagged the slot as syntactically malformed
@@ -97,7 +97,7 @@ public partial class Set : IContext, IBuildValidatable
         // than silently writing to Properties[""] or replacing the binding
         // with a junk Name.
         if (name.IsMalformed)
-            return global::app.data.@this.FromError(
+            return Context.Error(
                 new global::app.error.ServiceError(
                     $"Variable reference '{name.RawValue}' is not a valid name — only a single '!' separates a variable from its Property key, and the suffix may not appear after '.' or '['.",
                     "InvalidVariableReference", 400));
@@ -111,7 +111,7 @@ public partial class Set : IContext, IBuildValidatable
         {
             var target = await Context.Variable.Get(name.Name);
             if (target == null || !target.IsInitialized)
-                return global::app.data.@this.FromError(
+                return Context.Error(
                     new global::app.error.ServiceError($"Variable '{name.Name}' is not set",
                         "VariableNotFound", 400));
             try
@@ -120,7 +120,7 @@ public partial class Set : IContext, IBuildValidatable
             }
             catch (ArgumentException ex)
             {
-                return global::app.data.@this.FromError(
+                return Context.Error(
                     new global::app.error.ServiceError(ex.Message, "InvalidPropertyValue", 400));
             }
             return target;
@@ -213,7 +213,7 @@ public partial class Set : IContext, IBuildValidatable
             }
             if (targetType == null)
             {
-                return global::app.data.@this.FromError(
+                return Context.Error(
                     new global::app.error.ServiceError($"Unknown type '{typeName}'", "UnknownType", 400));
             }
 
@@ -231,7 +231,7 @@ public partial class Set : IContext, IBuildValidatable
                 {
                     var (ok, actual) = v.ValidateKind(sourceValue!, type.Kind);
                     if (!ok)
-                        return global::app.data.@this.FromError(
+                        return Context.Error(
                             new global::app.error.ServiceError(
                                 $"Strict kind mismatch: declared {typeName}/{type.Kind}"
                                 + (actual != null ? $" but content is {actual}." : "."),
@@ -291,7 +291,7 @@ public partial class Set : IContext, IBuildValidatable
             {
                 enforcer.RequireStrictKind(type.Kind);
                 if (enforcer.CheckStrictKind() is { ok: false } mismatch)
-                    return global::app.data.@this.FromError(
+                    return Context.Error(
                         new global::app.error.ServiceError(
                             $"Strict kind mismatch: declared {typeName}/{type.Kind}"
                             + (mismatch.actualKind != null ? $" but content is {mismatch.actualKind}." : "."),
@@ -320,7 +320,7 @@ public partial class Set : IContext, IBuildValidatable
         // are legitimately unset (no error yet) and excepted; a present-null source is
         // initialized and binds fine.
         if (!canonical.IsInitialized && !canonical.Name.StartsWith('!'))
-            return global::app.data.@this.FromError(new global::app.error.Error(
+            return Context.Error(new global::app.error.Error(
                 $"Variable '{canonical.Name}' not found", "VariableNotFound", 404));
         return await Context.Variable.Set(name.Name, canonical.ShallowClone(name.Name));
     }

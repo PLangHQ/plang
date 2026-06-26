@@ -76,7 +76,7 @@ public sealed partial class @this
         actor.context.@this? context = null, string? slot = null)
     {
         var (result, error) = TryConvert(value, clrTarget, context, slot);
-        return error != null ? global::app.data.@this.FromError(error) : global::app.data.@this.Ok(result);
+        return error != null ? context.Error(error) : context.Ok(result);
     }
 
 

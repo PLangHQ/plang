@@ -49,14 +49,14 @@ public class @this : global::app.channel.type.session.@this
 
     public override async Task<global::app.data.@this> Ask(module.output.ask action, CancellationToken ct = default)
     {
-        var prompt = global::app.data.@this.Ok(action.Question == null ? null : await action.Question.Value());
+        var prompt = action.Context.Ok(action.Question == null ? null : await action.Question.Value());
         return await InvokeGoal(prompt, ct);
     }
 
     private async Task<global::app.data.@this> InvokeGoal(global::app.data.@this data, CancellationToken ct)
     {
         if (!IsOpen)
-            return global::app.data.@this.FromError(new ServiceError($"Channel '{Name}' is closed", "ChannelClosed", 400));
+            return data.Context.Error(new ServiceError($"Channel '{Name}' is closed", "ChannelClosed", 400));
 
         var context = Actor.Context;
 
@@ -67,7 +67,7 @@ public class @this : global::app.channel.type.session.@this
         // and AsyncLocal carries it down to here. Variables.Set("!data", ...)
         // lands in that overlay if there is one, in the actor-shared dict
         // otherwise — and either way subsequent goal-body sets behave the same.
-        await context.Variable.Set("!data", new data.@this("!data", data.Peek(), data.Type));
+        await context.Variable.Set("!data", new data.@this("!data", data.Peek(), data.Type, context: context));
 
         var prev = _executing.Value;
         _executing.Value = true;
@@ -77,7 +77,7 @@ public class @this : global::app.channel.type.session.@this
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
-            return global::app.data.@this.FromError(new ServiceError(
+            return context.Error(new ServiceError(
                 $"Goal channel '{Name}' failed: {ex.Message}", "GoalChannelError") { Exception = ex });
         }
         finally

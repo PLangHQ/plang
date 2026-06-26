@@ -13,18 +13,18 @@ public sealed partial class @this
     {
         // Always born-native: bool builds a `bool` value. A .NET edge that needs the
         // raw CLR bool unwraps with .Clr<bool>().
-        global::app.data.@this B(bool b) => global::app.data.@this.Ok((@this)b);
+        global::app.data.@this B(bool b) => context.Ok((@this)b);
         switch (value)
         {
-            case null: return global::app.data.@this.Ok(value);
+            case null: return context.Ok(value);
             case bool b2: return B(b2);
             case @this self: return B(self.Value);
             case string s when bool.TryParse(s, out var b): return B(b);
             case string s:
-                return global::app.data.@this.FromError(new global::app.error.Error(
+                return context.Error(new global::app.error.Error(
                     $"Cannot parse '{s}' as bool — expected true or false.", "BoolParseFailed", 400));
             default:
-                return global::app.data.@this.FromError(new global::app.error.Error(
+                return context.Error(new global::app.error.Error(
                     $"Cannot convert {value.GetType().Name} to bool.", "BoolConversionFailed", 400));
         }
     }

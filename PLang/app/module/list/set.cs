@@ -30,7 +30,7 @@ public partial class Set : IContext
         // The slot mints its OWN Data pointing at the value's current instance
         // — reference semantics, same rule as list.add (nothing copied).
         global::app.data.@this item = Value == null
-            ? new global::app.data.@this("", null)
+            ? new global::app.data.@this("", null, context: Context)
             : new global::app.data.@this(Value.Name, await Value.Value(), Value.Type) { Context = Context };
         nl.SetAt(index, item);
         return global::app.data.@this<type.list>.Ok(new type.list { count = nl.CountRaw, value = nl }, app.type.@this.FromName("list"));

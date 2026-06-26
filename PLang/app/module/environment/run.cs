@@ -30,7 +30,7 @@ public partial class run : IContext
         if (action != null)
             return await action.RunAsync(Context);
 
-        return data.@this.FromError(new ActionError(
+        return Context.Error(new ActionError(
             "run requires a GoalCall, Step, or Action", "MissingInput", 400));
     }
 }

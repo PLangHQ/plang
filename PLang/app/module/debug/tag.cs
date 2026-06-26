@@ -33,7 +33,7 @@ public partial class Tag : IContext
         // Tag the CALLER's Call, not our own — see class summary. Falls back to Current
         // if there's no caller (we're already at the root, e.g. a single-action scope).
         var target = Context.CallStack?.Current?.Caller ?? Context.CallStack?.Current;
-        if (target == null) return global::app.data.@this.Ok();
+        if (target == null) return Context.Ok();
 
         // Tags hold the typed binding — they don't need point-in-time resolution
         // (unlike a callstack snapshot), so the entry rides in AS-IS, staying lazy.
@@ -46,9 +46,9 @@ public partial class Tag : IContext
         }
         else if (Label != null && (await Label.Value()) is { } label && label.IsTruthy())
         {
-            target.Tag(label, global::app.data.@this.Ok(new global::app.type.@bool.@this(true)));
+            target.Tag(label, Context.Ok(new global::app.type.@bool.@this(true)));
         }
 
-        return global::app.data.@this.Ok();
+        return Context.Ok();
     }
 }

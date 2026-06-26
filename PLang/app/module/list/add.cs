@@ -22,7 +22,7 @@ public partial class Add : IContext
             // Promote a non-list (or legacy raw list) value into the native list type.
             list = new app.type.list.@this { Context = Context };
             if (data.HasValue)
-                list.Add(new data.@this("", existing));
+                list.Add(new data.@this("", existing, context: Context));
             await Context.Variable.Set(listName, list);
         }
 

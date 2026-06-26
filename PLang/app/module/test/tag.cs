@@ -29,6 +29,6 @@ public partial class Tag : IContext
         var snapshot = currentTest != null
             ? currentTest.UserTags.ToList()
             : new List<string>();
-        return app.data.@this.Ok(snapshot);
+        return Context.Ok(snapshot);
     }
 }

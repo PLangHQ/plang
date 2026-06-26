@@ -11,7 +11,7 @@ public sealed partial class @this
     public static global::app.data.@this? Convert(object? value, string? kind,
         global::app.actor.context.@this context)
     {
-        if (value is @this already) return global::app.data.@this.Ok(already);
+        if (value is @this already) return context.Ok(already);
         if (action.@this.Sequence(value) is not { } seq) return null;
 
         var actions = new @this();
@@ -20,6 +20,6 @@ public sealed partial class @this
             var raw = element is global::app.data.@this d ? d.Peek() : element;
             if (action.@this.FromWire(raw, context) is { } act) actions.Add(act);
         }
-        return global::app.data.@this.Ok(actions);
+        return context.Ok(actions);
     }
 }

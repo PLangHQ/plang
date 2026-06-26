@@ -21,7 +21,7 @@ public partial class Any : IContext
         var data = await Context.Variable.Get(await ListName.Value());
         var key = (await Key.Value())!.Clr<string>()!;
         var rightVal = await Value.Value();
-        var right = rightVal != null ? new data.@this("", rightVal) : null;
+        var right = rightVal != null ? new data.@this("", rightVal, context: Context) : null;
         var op = (global::app.module.condition.Operator)(await Operator.Value())!;
 
         foreach (var (_, item) in data.EnumerateItems())

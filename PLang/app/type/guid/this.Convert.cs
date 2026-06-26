@@ -15,20 +15,20 @@ public sealed partial class @this
         // parse below sees the guid text instead of the wrapper.
         if (value is global::app.type.text.@this txt) value = txt.Clr<string>();
         // Always born-native: guid builds a `guid` value. A .NET edge unwraps with .Clr<Guid>().
-        global::app.data.@this G(System.Guid g) => global::app.data.@this.Ok(new @this(g));
+        global::app.data.@this G(System.Guid g) => context.Ok(new @this(g));
         switch (value)
         {
-            case null: return global::app.data.@this.Ok(value);
+            case null: return context.Ok(value);
             case System.Guid raw: return G(raw);
             case @this self: return G(self.Value);
             case string s:
                 var parsed = Resolve(s, context);
                 if (parsed != null) return G(parsed.Value);
-                return global::app.data.@this.FromError(new global::app.error.Error(
+                return context.Error(new global::app.error.Error(
                     $"Cannot parse '{s}' as guid — expected a 36-char guid (e.g. 550e8400-e29b-41d4-a716-446655440000).",
                     "GuidParseFailed", 400));
             default:
-                return global::app.data.@this.FromError(new global::app.error.Error(
+                return context.Error(new global::app.error.Error(
                     $"Cannot convert {value.GetType().Name} to guid.", "GuidConversionFailed", 400));
         }
     }

@@ -64,7 +64,7 @@ public partial class report : IContext
         // WriteText creates parent dirs via EnsureParentDir; AuthGate(Write)
         // fast-passes in-root and prompts/denies otherwise.
         var written = await writeTarget.WriteText(content);
-        if (!written.Success) return global::app.data.@this.FromError(written.Error!);
+        if (!written.Success) return Context.Error(written.Error!);
         reportFile = writeTarget.Absolute;
 
         // Surface the artefact for observability: PLang tests inspect these on
@@ -81,7 +81,7 @@ public partial class report : IContext
                 variableSnapshotCount++;
         }
 
-        var result = global::app.data.@this.Ok(results);
+        var result = Context.Ok(results);
         result.Properties.Set("format", format);
         result.Properties.Set("reportPath", reportFile);
         result.Properties.Set("content", content);

@@ -33,13 +33,13 @@ public partial class Set : IContext
     {
         var name = (await Name.Value())?.Clr<string>();
         if (string.IsNullOrEmpty(name))
-            return app.data.@this.FromError(new ServiceError("Channel name is required", "ValueRequired", 400));
+            return Context.Error(new ServiceError("Channel name is required", "ValueRequired", 400));
 
         var actor = (Actor == null ? null : await Actor.Value()) ?? Context.Actor;
 
         var goalCall = await Goal.Value();
         if (goalCall == null || string.IsNullOrEmpty(goalCall.Name) && goalCall.PrPath == null)
-            return app.data.@this.FromError(new ServiceError("Goal is required", "ValueRequired", 400));
+            return Context.Error(new ServiceError("Goal is required", "ValueRequired", 400));
 
         var goalResult = await goalCall.GetGoalAsync(Context.App, Context);
         if (!goalResult.Success) return goalResult;
@@ -60,7 +60,7 @@ public partial class Set : IContext
             Signing = (Signing == null ? null : await Signing.Value())?.Name ?? "auto"
         };
         actor.Channel.Register(ch);
-        return app.data.@this.Ok(ch);
+        return Context.Ok(ch);
     }
 
     /// <summary>

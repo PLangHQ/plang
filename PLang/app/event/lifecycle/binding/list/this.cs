@@ -38,6 +38,6 @@ public sealed class @this
             if (!result.Success) return result;
             if (result.Handled) return result;
         }
-        return data.@this.Ok();
+        return context.Ok();
     }
 }

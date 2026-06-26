@@ -42,7 +42,7 @@ public sealed class @this
     public async Task<data.@this> Run(actor.context.@this context, Action? action = null, data.@this? result = null)
     {
         if (!context.TryEnterEvent(Id))
-            return data.@this.Ok();
+            return context.Ok();
 
         data.@this handlerResult;
         try
@@ -69,7 +69,7 @@ public sealed class @this
         }
 
         if (!handlerResult.Success && !StopOnError)
-            return data.@this.Ok();
+            return context.Ok();
 
         return handlerResult;
     }

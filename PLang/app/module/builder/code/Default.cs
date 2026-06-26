@@ -35,10 +35,10 @@ public class Default : IBuilder
             foreach (var a in catalog)
                 if (wanted.Contains($"{a.Module}.{a.ActionName}"))
                     subset.Add(a);
-            return data.@this.Ok(subset);
+            return action.Context.Ok(subset);
         }
 
-        return data.@this.Ok(catalog);
+        return action.Context.Ok(catalog);
     }
 
     // --- Types ---
@@ -122,7 +122,7 @@ public class Default : IBuilder
             };
         }
 
-        return data.@this.Ok(schema);
+        return action.Context.Ok(schema);
     }
 
     // --- Goals ---
@@ -168,7 +168,7 @@ public class Default : IBuilder
 
         var files = global::app.type.item.@this.Lower<List<path>>(await listResult.Value());
         if (files == null || files.Count == 0)
-            return data.@this.Ok(new List<Goal>());
+            return context.Ok(new List<Goal>());
 
         // Filter by app.Builder.Files if set (--build={"files":[...]})
         // Honor the user's specified order — building has bootstrapping concerns
@@ -197,7 +197,7 @@ public class Default : IBuilder
             }
             files = ordered;
             if (files.Count == 0)
-                return data.@this.Ok(new List<Goal>());
+                return context.Ok(new List<Goal>());
         }
 
         var allGoals = new List<Goal>();
@@ -231,7 +231,7 @@ public class Default : IBuilder
 
         _buildTimer.Restart();
 
-        var result = data.@this.Ok(allGoals);
+        var result = context.Ok(allGoals);
         if (allErrors.Count > 0)
             result.Warnings = allErrors;
         return result;
@@ -256,7 +256,7 @@ public class Default : IBuilder
 
         var prPath = goal.PrPath;
         if (prPath == null)
-            return data.@this.FromError(new global::app.error.ActionError("Goal has no Path set, cannot derive PrPath", "NoPrPath", 400));
+            return context.Error(new global::app.error.ActionError("Goal has no Path set, cannot derive PrPath", "NoPrPath", 400));
 
         // Group modifier actions onto their preceding executable action — recursive so
         // sub-goals are grouped too. Without this, sub-goal steps serialize with flat
@@ -277,7 +277,7 @@ public class Default : IBuilder
         {
             Context = context,
             Path = data.@this<path>.Ok(prPath),
-            Value = new data.@this("", json)
+            Value = new data.@this("", json, context: context)
         };
         var saveResult = await app.RunAction(saveAction, context);
 
@@ -286,7 +286,7 @@ public class Default : IBuilder
             $"  Saved {goal.Name} ({elapsed.TotalSeconds:F1}s){Environment.NewLine}");
         _buildTimer.Restart();
 
-        return saveResult.Success ? data.@this.Ok(true) : saveResult;
+        return saveResult.Success ? context.Ok(true) : saveResult;
     }
 
     // --- ValidateStepActions ---
@@ -330,7 +330,7 @@ public class Default : IBuilder
             }
             catch (System.Exception) { /* fall through with the default planDetail */ }
 
-            return data.@this.FromError(new global::app.error.ActionError(
+            return action.Context.Error(new global::app.error.ActionError(
                 "The LLM couldn't produce a usable plan for this goal — its proposed step count didn't match the goal, and the retry didn't recover. " +
                 "Try running plang build again (the LLM is non-deterministic). " +
                 "If it keeps failing, simplify or reword your goal text — long quoted strings or phrases that look like instructions can confuse the planner.\n\n" +
@@ -375,7 +375,7 @@ public class Default : IBuilder
             result.Add(key);
         }
 
-        return data.@this.Ok(result);
+        return action.Context.Ok(result);
     }
 
     // --- Validate ---
@@ -388,7 +388,7 @@ public class Default : IBuilder
         var modules = app.Module;
 
         if ((action.Actions == null ? null : await action.Actions.Value()) == null)
-            return data.@this.Ok(true);
+            return context.Ok(true);
 
         var actions = (await action.Actions.Value())!;
         var notFound = new List<string>();
@@ -446,7 +446,7 @@ public class Default : IBuilder
 
         if (notFound.Count > 0)
         {
-            return data.@this.FromError(new global::app.error.ActionError(
+            return context.Error(new global::app.error.ActionError(
                 $"Actions not found: {string.Join("; ", notFound)}",
                 "ActionNotFound", 400));
         }
@@ -574,7 +574,7 @@ public class Default : IBuilder
 
         if (validationErrors.Count > 0)
         {
-            return data.@this.FromError(new global::app.error.ActionError(
+            return context.Error(new global::app.error.ActionError(
                 string.Join("; ", validationErrors),
                 "BuildValidation", 400));
         }
@@ -584,12 +584,12 @@ public class Default : IBuilder
         var buildErrors = await RunBuildPass(actions, modules, context);
         if (buildErrors.Count > 0)
         {
-            return data.@this.FromError(new global::app.error.ActionError(
+            return context.Error(new global::app.error.ActionError(
                 string.Join("; ", buildErrors),
                 "BuildValidation", 400));
         }
 
-        return data.@this.Ok(true);
+        return context.Ok(true);
     }
 
     /// <summary>
@@ -672,7 +672,7 @@ public class Default : IBuilder
             $"from.Index={from?.Index} from.Keep={from?.Keep} from.Actions={from?.Actions.Count}");
 
         (action.Step.Peek() as global::app.goal.steps.step.@this)!.Merge((action.StepFromLlm.Peek() as global::app.goal.steps.step.@this)!);
-        return data.@this.Ok(action.Step.Peek());
+        return action.Context.Ok(action.Step.Peek());
     }
 
     // --- Enrich Response ---
@@ -683,7 +683,7 @@ public class Default : IBuilder
         var response = action.StepResults.Peek() as BuildResponse;
         var goal = action.Goal.Peek() as Goal;
         if (response == null || goal == null)
-            return data.@this.Ok(response);
+            return action.Context.Ok(response);
 
         foreach (var step in response.Steps)
         {
@@ -714,7 +714,7 @@ public class Default : IBuilder
             }
         }
 
-        return data.@this.Ok(response);
+        return action.Context.Ok(response);
     }
 
     private static string RenderFormal(Actions actions)
@@ -769,7 +769,7 @@ public class Default : IBuilder
 
         var app = action.Context.App;
         // App loads its identity from app.pr at Start() — just return it
-        return data.@this.Ok(app);
+        return action.Context.Ok(app);
     }
 
     public async Task<data.@this> AppSave(appSave action)
@@ -785,7 +785,7 @@ public class Default : IBuilder
 
         var steps = ToStepList((await action.Steps.Value()));
         if (steps == null || steps.Count == 0)
-            return data.@this.Ok((await action.Steps.Value()));
+            return action.Context.Ok((await action.Steps.Value()));
 
         // Collect groups and find the lowest level in each
         var groupLevels = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -819,7 +819,7 @@ public class Default : IBuilder
             if (string.Equals(currentLevel, "high", StringComparison.OrdinalIgnoreCase))
             {
                 if (!SetValue(step, "level", groupLevel))
-                    return data.@this.FromError(new global::app.error.ActionError(
+                    return action.Context.Error(new global::app.error.ActionError(
                         $"PromoteGroups received a step as JsonElement (immutable) — expected IDictionary. " +
                         $"Step type: {step.GetType().FullName}. Group: '{group}'.",
                         "PromoteGroupsImmutableStep", 500));
@@ -831,7 +831,7 @@ public class Default : IBuilder
             await action.Context.App.CurrentActor.Channel.WriteTextAsync(global::app.channel.list.@this.Output,
                 $"  Group promotion: {promoted} step(s) promoted to detail pass{Environment.NewLine}");
 
-        return data.@this.Ok((await action.Steps.Value()));
+        return action.Context.Ok((await action.Steps.Value()));
     }
 
     private static string LowestLevel(string a, string b)

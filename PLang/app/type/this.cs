@@ -162,7 +162,7 @@ public sealed class @this : item.@this
     public global::app.data.@this Convert(object? value, actor.context.@this context)
     {
         Context ??= context;
-        if (value is null) return global::app.data.@this.Ok(value);
+        if (value is null) return context.Ok(value);
 
         // A born-native scalar source (`set %d% = "2026-01-01" as date` makes the literal a
         // text.@this first) — unwrap the leaf wrapper to its raw form so the target family's
@@ -180,7 +180,7 @@ public sealed class @this : item.@this
 
         var target = ClrType;
         if (target == null)
-            return global::app.data.@this.FromError(new global::app.error.Error(
+            return context.Error(new global::app.error.Error(
                 $"Unknown type '{Name}'", "UnknownType", 400));
 
         // No family hook — a non-leaf value (dict/list) lowers ITSELF to the CLR mate
@@ -189,16 +189,16 @@ public sealed class @this : item.@this
         // the failure into the Error this method contractually hands back.
         if (value is global::app.type.item.@this iv)
         {
-            try { return global::app.data.@this.Ok(iv.Clr(target)); }
+            try { return context.Ok(iv.Clr(target)); }
             catch (System.Exception ex) when (ex is System.InvalidCastException or System.FormatException
                                                or System.NotSupportedException or System.Text.Json.JsonException)
-            { return global::app.data.@this.FromError(new global::app.error.Error(ex.Message, "TypeConversionFailed", 400)); }
+            { return context.Error(new global::app.error.Error(ex.Message, "TypeConversionFailed", 400)); }
         }
 
         // A raw CLR input (a wire string → record, a primitive) — the raw→CLR deserialize
         // leaf, the last TryConvert use here; folds into the wire serializer next.
         var (c, err) = global::app.type.catalog.@this.TryConvert(value, target, context);
-        return err != null ? global::app.data.@this.FromError(err) : global::app.data.@this.Ok(c);
+        return err != null ? context.Error(err) : context.Ok(c);
     }
 
     /// <summary>

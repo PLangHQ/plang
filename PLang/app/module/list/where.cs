@@ -39,19 +39,19 @@ public partial class Where : IContext
             var kept = new app.type.list.@this { Context = Context };
             foreach (var item in list.Items)
                 if (await Keep(item, field, op)) kept.Add(item);
-            return global::app.data.@this.Ok(kept, app.type.@this.FromName("list"));
+            return Context.Ok(kept, app.type.@this.FromName("list"));
         }
 
         if (subjectVal is app.type.dict.@this)
         {
             // dict.where is the leaf — subject is the dict itself, kept or dropped.
             bool keep = await Keep(subject, field, op);
-            return global::app.data.@this.Ok(keep ? subjectVal : null,
+            return Context.Ok(keep ? subjectVal : null,
                 app.type.@this.FromName("dict"));
         }
 
         // The apex has no fields to scope into — `5 where age > 20` is meaningless.
-        return global::app.data.@this.FromError(new app.error.ValidationError(
+        return Context.Error(new app.error.ValidationError(
             $"'where {field} …' needs a list or dict to scope into — '{(await ListName.Value())}' is a {subject.Type.Name}, which has no fields.",
             "WhereOnApex"));
     }

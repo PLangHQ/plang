@@ -22,7 +22,7 @@ public sealed class @this : global::app.channel.@this
 
     public override System.Threading.Tasks.Task<global::app.data.@this> Write(
         global::app.data.@this data, System.Threading.CancellationToken ct = default)
-        => System.Threading.Tasks.Task.FromResult(global::app.data.@this.Ok());
+        => System.Threading.Tasks.Task.FromResult(data.Context.Ok());
 
     public override System.Threading.Tasks.Task<global::app.data.@this> Read(
         System.Threading.CancellationToken ct = default)
@@ -30,5 +30,5 @@ public sealed class @this : global::app.channel.@this
 
     public override System.Threading.Tasks.Task<global::app.data.@this> Ask(
         global::app.module.output.ask action, System.Threading.CancellationToken ct = default)
-        => System.Threading.Tasks.Task.FromResult(global::app.data.@this.Ok());
+        => System.Threading.Tasks.Task.FromResult(action.Context.Ok());
 }

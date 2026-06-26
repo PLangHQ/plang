@@ -25,7 +25,7 @@ public partial class Get : IContext
         // detect "no value" via the value's own emptiness, then ask for it.
         var value = await result.Value();
         if (value is null || await value.IsEmpty())
-            return global::app.data.@this.FromError(new AskError(
+            return Context.Error(new AskError(
                 $"Settings value '{key}' is not set. Please provide a value.",
                 "settings", key));
 

@@ -126,7 +126,7 @@ public partial class run : IContext
                         }
                     }
                 }
-                return Task.FromResult(app.data.@this.Ok());
+                return Task.FromResult(context.Ok());
             },
             priority: int.MaxValue,
             stopOnError: false);
@@ -150,7 +150,7 @@ public partial class run : IContext
                 var wv = written == null ? null : await written.Value();
                 if (wv != null)
                     outputBuf.Append(wv).Append('\n');
-                return app.data.@this.Ok();
+                return context.Ok();
             },
             channelName: app.channel.list.@this.Output,
             priority: int.MaxValue,
@@ -173,7 +173,7 @@ public partial class run : IContext
                 var step = context.Step;
                 if (IsEntryGoalStep(step))
                     stepStarts[step!.Index] = Stopwatch.GetTimestamp();
-                return Task.FromResult(app.data.@this.Ok());
+                return Task.FromResult(context.Ok());
             },
             priority: int.MaxValue,
             stopOnError: false);
@@ -187,7 +187,7 @@ public partial class run : IContext
                     var ms = (Stopwatch.GetTimestamp() - start) * 1000.0 / Stopwatch.Frequency;
                     testRun.Timings.Add(step.Index, ms);
                 }
-                return Task.FromResult(app.data.@this.Ok());
+                return Task.FromResult(context.Ok());
             },
             priority: int.MaxValue,
             stopOnError: false);

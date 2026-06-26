@@ -15,20 +15,20 @@ public sealed partial class @this
         // parse below sees the ISO/timespan text instead of the wrapper.
         if (value is global::app.type.text.@this txt) value = txt.Clr<string>();
         // Always born-native: duration builds a `duration` value. A .NET edge unwraps with .Clr<TimeSpan>().
-        global::app.data.@this D(System.TimeSpan t) => global::app.data.@this.Ok((@this)t);
+        global::app.data.@this D(System.TimeSpan t) => context.Ok((@this)t);
         switch (value)
         {
-            case null: return global::app.data.@this.Ok(value);
+            case null: return context.Ok(value);
         case System.TimeSpan ts2: return D(ts2);
         case @this self: return D(self.Value);
         case string s:
             var parsed = Resolve(s, context);
             if (parsed != null) return D(parsed.Value);
-                return global::app.data.@this.FromError(new global::app.error.Error(
+                return context.Error(new global::app.error.Error(
                     $"Cannot parse '{s}' as duration — expected ISO-8601 (e.g. PT30S) or .NET format (e.g. 00:00:30).",
                     "DurationParseFailed", 400));
             default:
-                return global::app.data.@this.FromError(new global::app.error.Error(
+                return context.Error(new global::app.error.Error(
                     $"Cannot convert {value.GetType().Name} to duration.", "DurationConversionFailed", 400));
         }
     }

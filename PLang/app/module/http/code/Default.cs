@@ -181,7 +181,7 @@ public sealed class Default : IHttp
         await StreamWithProgressAsync(
             responseStream, buffer, totalBytes, maxDownloadSize, (action.OnProgress == null ? null : await action.OnProgress.Value()), app, action.Context, cts.Token);
 
-        return global::app.data.@this.Ok(buffer.ToArray());
+        return action.Context.Ok(buffer.ToArray());
     });
 
     public Task<data.@this> UploadAsync(upload action) => ExecuteHttpAsync(async () =>
@@ -204,7 +204,7 @@ public sealed class Default : IHttp
             : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.Headers.Value()), config);
 
         var (httpContent, contentErr) = await ResolveUploadContentAsync(action, app, encoding);
-        if (contentErr != null) return global::app.data.@this.FromError(contentErr);
+        if (contentErr != null) return action.Context.Error(contentErr);
 
         var httpMethod = ToSystemMethod((await action.Method.Value())!.Value);
         var requestMessage = new HttpRequestMessage(httpMethod, resolvedUrl) { Content = httpContent };
@@ -223,12 +223,12 @@ public sealed class Default : IHttp
     {
         // Redirect config can't change after first request (SocketsHttpHandler is immutable)
         if (_client != null && (action.FollowRedirects?.Peek() is { IsNull: false } || action.MaxRedirects?.Peek() is { IsNull: false }))
-            return global::app.data.@this.FromError(new ServiceError(
+            return action.Context.Error(new ServiceError(
                 "Cannot change FollowRedirects/MaxRedirects after first HTTP request",
                 "ConfigLocked", 409));
 
         action.Context.App.Config.Apply<Config>(action, action.Context, (action.Default.Peek() as global::app.type.@bool.@this)?.Value ?? false);
-        return global::app.data.@this.Ok();
+        return action.Context.Ok();
     }
 
     // --- Unified error handling ---
@@ -447,7 +447,7 @@ public sealed class Default : IHttp
         {
             if (unsigned)
             {
-                var err = global::app.data.@this.FromError(new ServiceError(
+                var err = context.Error(new ServiceError(
                     "Unsigned request received application/plang response — this is not allowed",
                     "UnsignedPlang", 403));
                 BuildProperties(err, request, response);
@@ -514,7 +514,7 @@ public sealed class Default : IHttp
         }
         catch (JsonException ex)
         {
-            var err = global::app.data.@this.FromError(new ServiceError(
+            var err = context.Error(new ServiceError(
                 $"Failed to deserialize application/plang response: {ex.Message}",
                 "PlangDeserializeError", 400));
             BuildProperties(err, request, response);
@@ -523,7 +523,7 @@ public sealed class Default : IHttp
 
         if (data == null)
         {
-            var err = global::app.data.@this.FromError(new ServiceError(
+            var err = context.Error(new ServiceError(
                 "application/plang response deserialized to null",
                 "PlangDeserializeError", 400));
             BuildProperties(err, request, response);
@@ -666,7 +666,7 @@ public sealed class Default : IHttp
         {
             using (response)
             {
-                var err = global::app.data.@this.FromError(new ServiceError(
+                var err = context.Error(new ServiceError(
                     "Unsigned request received application/plang streaming response — this is not allowed",
                     "UnsignedPlang", 403));
                 BuildProperties(err, request, response);
@@ -696,7 +696,7 @@ public sealed class Default : IHttp
                     break;
             }
 
-            var result = global::app.data.@this.Ok();
+            var result = context.Ok();
             BuildProperties(result, request, response);
             return result;
         }
@@ -715,7 +715,7 @@ public sealed class Default : IHttp
         // re-boxing would nest a bare Data, which the store seam rejects.
         data.@this param;
         if (value is data.@this dv) { dv.Name = paramName; param = dv; }
-        else param = new data.@this(paramName, value, type);
+        else param = new data.@this(paramName, value, type, context: context);
         var call = new GoalCall
         {
             Name = template.Name,
@@ -781,7 +781,7 @@ public sealed class Default : IHttp
                             $"SSE stream disconnected after {maxConsecutiveOverflows} consecutive buffer overflows — possible attack");
 
                     await app.System.Channel.WriteAsync(global::app.channel.list.@this.Error,
-                        global::app.data.@this.FromError(new ServiceError(
+                        context.Error(new ServiceError(
                             $"SSE message exceeds maximum buffer size of {maxBufferSize / (1024 * 1024)}MB",
                             "SSEBufferOverflow", 413)));
                     dataBuffer.Clear();
@@ -836,7 +836,7 @@ public sealed class Default : IHttp
             catch (JsonException)
             {
                 await app.System.Channel.WriteAsync(global::app.channel.list.@this.Error,
-                    global::app.data.@this.FromError(new ServiceError("Malformed NDJSON line in application/plang stream", "PlangStreamError", 400)));
+                    context.Error(new ServiceError("Malformed NDJSON line in application/plang stream", "PlangStreamError", 400)));
                 continue;
             }
             if (data == null) continue;

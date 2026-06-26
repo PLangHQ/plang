@@ -14,9 +14,9 @@ public partial class Get : IContext
         var item = await data.GetChild($"[{(await Index.Value())}]");
 
         if (!item.IsInitialized)
-            return global::app.data.@this.FromError(
+            return Context.Error(
                 new app.error.ValidationError($"Index {(await Index.Value())} out of range for '{(await ListName.Value())}'"));
 
-        return global::app.data.@this.Ok((await item.Value()));
+        return Context.Ok((await item.Value()));
     }
 }

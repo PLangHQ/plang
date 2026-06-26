@@ -54,7 +54,7 @@ public partial class validateResponse : IContext
                             ? $"Goal.Value is null but Data was initialized. Raw value type: {g.Peek()?.GetType().Name ?? "null"}"
                             : "Goal parameter is uninitialized (%goal% not in scope when builder.validateResponse ran)");
             }
-            return app.data.@this.FromError(
+            return Context.Error(
                 new global::app.error.ActionError(string.Join("; ", problems), "ValidationError", 400));
         }
         return await Validate(response!, goal!, Context.App);

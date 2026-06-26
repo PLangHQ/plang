@@ -87,7 +87,7 @@ public sealed class OpenAi : ILlm
         // The .NET edge: the message list lowers ITSELF to the API's CLR shape.
         var rawMessages = global::app.type.item.@this.Lower<List<LlmMessage>>(await action.Messages.Value());
         if (rawMessages is not { Count: > 0 })
-            return global::app.data.@this.FromError(new ActionError("Messages list is empty or null", "ValidationError", 400));
+            return context.Error(new ActionError("Messages list is empty or null", "ValidationError", 400));
 
         // --- Build messages ---
         var messages = CloneMessages(rawMessages);
@@ -227,7 +227,7 @@ public sealed class OpenAi : ILlm
                 Context = context,
                 Url = new data.@this<global::app.type.text.@this>("", endpoint),
                 Method = new data.@this<global::app.type.choice.@this<PlangHttpMethod>>("", PlangHttpMethod.POST),
-                Body = new data.@this("", body),
+                Body = new data.@this("", body, context: context),
                 Headers = new data.@this<global::app.type.dict.@this>("", global::app.type.dict.@this.FromRaw(headers, context)),
                 Unsigned = new data.@this<global::app.type.@bool.@this>("", true),
                 TimeoutInSec = new data.@this<global::app.type.number.@this>("", 120),
@@ -251,7 +251,7 @@ public sealed class OpenAi : ILlm
             // (json → plang dict) through the reader; Value<dict> hands it typed.
             var dict = await httpResult.Value<dict>();
             if (dict == null)
-                return global::app.data.@this.FromError(new ActionError("LLM response was not an object", "EmptyResponse", 500));
+                return context.Error(new ActionError("LLM response was not an object", "EmptyResponse", 500));
 
             // Usage / cost. (Token counters + cost math stay CLR/decimal here for now
             // — the class-wide native-plang-types migration is a tracked follow-up;
@@ -286,7 +286,7 @@ public sealed class OpenAi : ILlm
 
             // First choice
             if (dict.Get<item>("choices[0]") == null)
-                return global::app.data.@this.FromError(new ActionError("No choices in LLM response", "EmptyResponse", 500));
+                return context.Error(new ActionError("No choices in LLM response", "EmptyResponse", 500));
 
             string? content = dict.Get<text>("choices[0].message.content")?.ToString();
 
@@ -312,7 +312,7 @@ public sealed class OpenAi : ILlm
                     : finishReason == "content_filter"
                     ? "LLM refused the request via content filter."
                     : $"LLM response ended abnormally (finish_reason={finishReason}).";
-                return global::app.data.@this.FromError(new ActionError(msg, key, 400)
+                return context.Error(new ActionError(msg, key, 400)
                 {
                     Details = new Dictionary<string, object?>
                     {
@@ -403,7 +403,7 @@ public sealed class OpenAi : ILlm
                         parsed = TryParseJson(fromBlock);
 
                     if (parsed == null)
-                        return global::app.data.@this.FromError(new ActionError(
+                        return context.Error(new ActionError(
                             "Response is not valid JSON", "JsonParseError", 400)
                         {
                             Details = new Dictionary<string, object?>
@@ -425,7 +425,7 @@ public sealed class OpenAi : ILlm
                 {
                     Name = ((await action.OnValidateResponse.Value()) as global::app.goal.GoalCall)!.Name,
                     PrPath = ((await action.OnValidateResponse.Value()) as global::app.goal.GoalCall)!.PrPath,
-                    Parameters = new List<data.@this> { new data.@this("response", extracted) }
+                    Parameters = new List<data.@this> { new data.@this("response", extracted, context: context) }
                 };
                 var validationResult = await app.RunGoalAsync(validationCall, context);
 
@@ -437,7 +437,7 @@ public sealed class OpenAi : ILlm
                     {
                         await app.CurrentActor.Channel.WriteTextAsync(global::app.channel.list.@this.Output,
                             $"  Validation failed (no retries left): {validationError}{Environment.NewLine}");
-                        return global::app.data.@this.FromError(new ActionError(
+                        return context.Error(new ActionError(
                             $"LLM validation failed: {validationError}",
                             "ValidationFailed", 400));
                     }
@@ -465,7 +465,7 @@ public sealed class OpenAi : ILlm
 
             // --- Build result ---
             object? resultValue = effectiveFormat == "json" ? TryParseJson(extracted) : (object?)extracted;
-            var result = global::app.data.@this.Ok(resultValue);
+            var result = context.Ok(resultValue);
 
             // --- Cache store ---
             // Properties are [JsonIgnore] on Data, so store metadata as the value itself
@@ -492,7 +492,7 @@ public sealed class OpenAi : ILlm
                     ["Format"] = effectiveFormat,
                     ["Schema"] = schema
                 };
-                await settings.Set(CacheTable, cacheKey, new data.@this("cache", cacheEntry));
+                await settings.Set(CacheTable, cacheKey, new data.@this("cache", cacheEntry, context: context));
             }
 
             // --- Populate response properties ---
@@ -516,7 +516,7 @@ public sealed class OpenAi : ILlm
         }
 
         // Loop exited via break (MaxToolCalls or streaming)
-        var exitResult = global::app.data.@this.Ok(lastContent);
+        var exitResult = context.Ok(lastContent);
         SetProp(exitResult, "Model", model);
         SetProp(exitResult, "ToolCallCount", toolCallCount);
         SetProp(exitResult, "PromptTokens", totalPromptTokens);
@@ -544,9 +544,9 @@ public sealed class OpenAi : ILlm
                 PrPath = ((await action.OnToolCall.Value()) as global::app.goal.GoalCall)!.PrPath,
                 Parameters = new List<data.@this>
                 {
-                    new data.@this("name", toolCall.Name),
-                    new data.@this("arguments", toolCall.Arguments),
-                    new data.@this("status", "starting")
+                    new data.@this("name", toolCall.Name, context: context),
+                    new data.@this("arguments", toolCall.Arguments, context: context),
+                    new data.@this("status", "starting", context: context)
                 }
             };
             await app.RunGoalAsync(startCall, context);
@@ -595,10 +595,10 @@ public sealed class OpenAi : ILlm
                 PrPath = ((await action.OnToolCall.Value()) as global::app.goal.GoalCall)!.PrPath,
                 Parameters = new List<data.@this>
                 {
-                    new data.@this("name", toolCall.Name),
-                    new data.@this("arguments", toolCall.Arguments),
-                    new data.@this("result", result),
-                    new data.@this("status", "completed")
+                    new data.@this("name", toolCall.Name, context: context),
+                    new data.@this("arguments", toolCall.Arguments, context: context),
+                    new data.@this("result", result, context: context),
+                    new data.@this("status", "completed", context: context)
                 }
             };
             await app.RunGoalAsync(endCall, context);

@@ -38,7 +38,7 @@ public sealed class @this
         // detect "no value" via the value's own emptiness, then ask for it.
         var value = await result.Value();
         if (value is null || await value.IsEmpty())
-            return data.@this.FromError(new AskError(
+            return context.Error(new AskError(
                 $"Settings value '{key}' is not set. Please provide a value.",
                 SettingsTable, key));
 

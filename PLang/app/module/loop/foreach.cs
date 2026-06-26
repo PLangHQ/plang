@@ -23,7 +23,7 @@ public partial class Foreach : IContext, IStep
         // naturally. The null citizen Peeks itself (IsNull), absent Peeks null.
         var collectionValue = await Collection.Value();
         if (collectionValue == null || collectionValue.IsNull || collectionValue.Peek() == null)
-            return global::app.data.@this.Ok(Result(itemCount: 0, completed: true));
+            return Context.Ok(Result(itemCount: 0, completed: true));
 
         var variableName = (ItemName == null ? null : (await ItemName.Value())?.Name) ?? "item";
         var keyVariableName = KeyName is { IsInitialized: true } ? (await KeyName.Value())?.Name : null;
@@ -43,7 +43,7 @@ public partial class Foreach : IContext, IStep
         foreach (var (key, item) in Collection.EnumerateItems())
         {
             if (Context.CancellationToken.IsCancellationRequested)
-                return global::app.data.@this.Ok(Result(count, completed: false));
+                return Context.Ok(Result(count, completed: false));
 
             await Context.Variable.Set(variableName, item);
             // Optional param: absent slots are non-null Uninitialized (null model), so
@@ -65,7 +65,7 @@ public partial class Foreach : IContext, IStep
         if (savedItem.IsInitialized) await Context.Variable.Set(variableName, savedItem);
         if (keyVariableName != null && savedKey is { IsInitialized: true }) await Context.Variable.Set(keyVariableName, savedKey);
 
-        var loopResult = global::app.data.@this.Ok(Result(count, completed: true));
+        var loopResult = Context.Ok(Result(count, completed: true));
         if (bodyActions.Count > 0)
             loopResult.Handled = true;
         return loopResult;

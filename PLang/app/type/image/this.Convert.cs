@@ -17,27 +17,27 @@ public sealed partial class @this
     public static global::app.data.@this? Convert(object? value, string? kind,
         global::app.actor.context.@this context)
     {
-        if (value is @this) return global::app.data.@this.Ok(value);
+        if (value is @this) return context.Ok(value);
         // A byte[] declared `as image` becomes the image its magic bytes name — the
         // explicit declaration is the ask, and we already hold the bytes to sniff.
         if (value is byte[] bytes)
-            return FromBytes(bytes) is { } image ? global::app.data.@this.Ok(image) : null;
+            return FromBytes(bytes) is { } image ? context.Ok(image) : null;
         if (value is not string raw) return null;
 
         try
         {
             var path = context.App.Type.Scheme.From(raw, context);
-            return global::app.data.@this.Ok(new @this(path));
+            return context.Ok(new @this(path));
         }
         catch (global::app.type.path.scheme.SchemeNotRegistered snr)
         {
-            return global::app.data.@this.FromError(new global::app.error.Error(
+            return context.Error(new global::app.error.Error(
                 snr.Message, "SchemeNotRegistered", 400)
                 { FixSuggestion = $"Register a factory for scheme '{snr.Scheme}', or use a bare/file:// path." });
         }
         catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
         {
-            return global::app.data.@this.FromError(new global::app.error.Error(
+            return context.Error(new global::app.error.Error(
                 ex.InnerException?.Message ?? ex.Message, "PathHandleConstructionFailed", 400));
         }
     }

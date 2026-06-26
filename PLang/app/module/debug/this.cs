@@ -304,8 +304,8 @@ public sealed class @this
     private static async Task<data.@this> BeforeStepHandler(actor.context.@this context, int? stepFilter)
     {
         var step = context.Step;
-        if (step == null) return app.data.@this.Ok();
-        if (stepFilter.HasValue && step.Index != stepFilter.Value) return app.data.@this.Ok();
+        if (step == null) return context.Ok();
+        if (stepFilter.HasValue && step.Index != stepFilter.Value) return context.Ok();
 
         var goalName = context.Goal?.Name ?? "?";
         var sb = new StringBuilder();
@@ -345,14 +345,14 @@ public sealed class @this
         sb.AppendLine("========================================");
 
         await WriteFiltered(sb, context);
-        return app.data.@this.Ok();
+        return context.Ok();
     }
 
     private static async Task<data.@this> AfterStepHandler(actor.context.@this context, int? stepFilter)
     {
         var step = context.Step;
-        if (step == null) return app.data.@this.Ok();
-        if (stepFilter.HasValue && step.Index != stepFilter.Value) return app.data.@this.Ok();
+        if (step == null) return context.Ok();
+        if (stepFilter.HasValue && step.Index != stepFilter.Value) return context.Ok();
 
         var goalName = context.Goal?.Name ?? "?";
         var sb = new StringBuilder();
@@ -363,7 +363,7 @@ public sealed class @this
         sb.AppendLine("========================================");
 
         await WriteFiltered(sb, context);
-        return app.data.@this.Ok();
+        return context.Ok();
     }
 
     /// <summary>
@@ -529,14 +529,14 @@ public sealed class @this
         var debug = context.App?.Debug;
         if (debug != null)
             await debug.Write($"--- DEBUG: Goal '{goalName}' completed ---{Environment.NewLine}");
-        return app.data.@this.Ok();
+        return context.Ok();
     }
 
     private static async Task<data.@this> BeforeActionHandler(actor.context.@this context, int? stepFilter)
     {
         var step = context.Step;
-        if (step == null) return app.data.@this.Ok();
-        if (stepFilter.HasValue && step.Index != stepFilter.Value) return app.data.@this.Ok();
+        if (step == null) return context.Ok();
+        if (stepFilter.HasValue && step.Index != stepFilter.Value) return context.Ok();
 
         var goalName = context.Goal?.Name ?? "?";
         var sb = new StringBuilder();
@@ -545,14 +545,14 @@ public sealed class @this
         AppendStepVariables(sb, context);
 
         await WriteFiltered(sb, context);
-        return app.data.@this.Ok();
+        return context.Ok();
     }
 
     private static async Task<data.@this> AfterActionHandler(actor.context.@this context, int? stepFilter)
     {
         var step = context.Step;
-        if (step == null) return app.data.@this.Ok();
-        if (stepFilter.HasValue && step.Index != stepFilter.Value) return app.data.@this.Ok();
+        if (step == null) return context.Ok();
+        if (stepFilter.HasValue && step.Index != stepFilter.Value) return context.Ok();
 
         var goalName = context.Goal?.Name ?? "?";
         var sb = new StringBuilder();
@@ -561,7 +561,7 @@ public sealed class @this
         AppendStepVariables(sb, context);
 
         await WriteFiltered(sb, context);
-        return app.data.@this.Ok();
+        return context.Ok();
     }
 
     private static readonly Regex VarRefPattern = new(@"%([^%]+)%", RegexOptions.Compiled);

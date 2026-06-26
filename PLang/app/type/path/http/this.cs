@@ -351,9 +351,9 @@ public sealed partial class @this : global::app.type.path.@this
                 return await FollowRedirect(resp, method, content, readBody, verb, asBytes, hopsLeft);
 
             if (!resp.IsSuccessStatusCode)
-                return data.@this.FromError(MapStatus(resp.StatusCode));
+                return Context!.Error(MapStatus(resp.StatusCode));
 
-            if (!readBody) return data.@this.Ok();
+            if (!readBody) return Context!.Ok();
 
             // Wrap bytes born-native so ReadBytes→From<binary> extracts the value
             // (From's `source.Value is T` test matches only the wrapper, not raw byte[]).
@@ -362,15 +362,15 @@ public sealed partial class @this : global::app.type.path.@this
             // sent none.
             if (asBytes)
             {
-                var bytesData = data.@this.Ok((object)new global::app.type.binary.@this(await resp.Content.ReadAsByteArrayAsync()));
+                var bytesData = Context!.Ok((object)new global::app.type.binary.@this(await resp.Content.ReadAsByteArrayAsync()));
                 bytesData.Properties.Set("contentType", resp.Content.Headers.ContentType?.MediaType ?? "");
                 return bytesData;
             }
-            return data.@this.Ok(await resp.Content.ReadAsStringAsync());
+            return Context!.Ok(await resp.Content.ReadAsStringAsync());
         }
         catch (System.Exception ex) when (IsNetworkError(ex))
         {
-            return data.@this.FromError(NetworkError(ex));
+            return Context!.Error(NetworkError(ex));
         }
     }
 
@@ -386,7 +386,7 @@ public sealed partial class @this : global::app.type.path.@this
         bool readBody, Verb verb, bool asBytes, int hopsLeft)
     {
         if (hopsLeft <= 0)
-            return data.@this.FromError(new Error(
+            return Context!.Error(new Error(
                 $"Too many redirects (>{MaxRedirectHops}) — refusing to follow further.",
                 "TooManyRedirects", 508));
 
@@ -395,7 +395,7 @@ public sealed partial class @this : global::app.type.path.@this
             : new Uri(_uri, resp.Headers.Location);
 
         if (target.Scheme != "http" && target.Scheme != "https")
-            return data.@this.FromError(new Error(
+            return Context!.Error(new Error(
                 $"Redirect target uses unsupported scheme '{target.Scheme}'.",
                 "UnsupportedRedirectScheme", 400));
 
@@ -447,7 +447,7 @@ public sealed partial class @this : global::app.type.path.@this
             var sign = new module.signing.sign
             {
                 Context = Context,
-                Data = new data.@this("", canonical),
+                Data = new data.@this("", canonical, context: Context),
             };
             var signResult = await Context.App.RunAction<module.signing.sign>(sign, Context);
             if (signResult.Success)

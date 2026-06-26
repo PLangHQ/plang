@@ -56,7 +56,7 @@ public sealed class @this
         }
         catch (TargetInvocationException ex)
         {
-            return global::app.data.@this.FromError(new global::app.error.Error(
+            return context.Error(new global::app.error.Error(
                 (ex.InnerException ?? ex).Message, "TypeConversionFailed", 400));
         }
     }

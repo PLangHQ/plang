@@ -24,7 +24,7 @@ public partial class resume : IContext
     {
         var snap = await Snapshot.Value();
         if (snap == null)
-            return global::app.data.@this.FromError(new ServiceError(
+            return Context.Error(new ServiceError(
                 "resume could not rebuild a snapshot from the value", "NoSnapshot", 400));
         return await snap.Resume(Context);
     }

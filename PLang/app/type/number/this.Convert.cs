@@ -16,7 +16,7 @@ public sealed partial class @this
     public static global::app.data.@this Convert(object? value, string? kind,
         global::app.actor.context.@this context)
     {
-        if (value is null) return global::app.data.@this.Ok(value);
+        if (value is null) return context.Ok(value);
         // Born-native: a value arrives as its wrapper (text "0.1", a number, …).
         // Unwrap to the raw backing so the string-parse / CLR-numeric paths below
         // see what they expect instead of ChangeType-ing a wrapper.
@@ -30,7 +30,7 @@ public sealed partial class @this
             {
                 var parsed = Parse((string)value);
                 if (parsed == null) return Fail(value, kind);
-                return global::app.data.@this.Ok(parsed);
+                return context.Ok(parsed);
             }
         }
         if (k == null) return Fail(value, kind);
@@ -38,11 +38,11 @@ public sealed partial class @this
         try
         {
             object raw = CoerceToKind(value, k.Value);
-            return global::app.data.@this.Ok(FromObject(raw));
+            return context.Ok(FromObject(raw));
         }
         catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
         {
-            return global::app.data.@this.FromError(new global::app.error.Error(
+            return context.Error(new global::app.error.Error(
                 $"Cannot read '{value}' as {kind ?? "number"}: {ex.Message}",
                 "NumberConversionFailed", 400) { Exception = ex });
         }

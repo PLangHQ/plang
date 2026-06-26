@@ -258,7 +258,7 @@ public sealed partial class @this : IAsyncDisposable
             serviceErr.Params = handler.SnapshotParams();
             Errors.Add(serviceErr);
             _stack.Audit.Add(serviceErr);
-            return data.@this.FromError(serviceErr);
+            return context.Error(serviceErr);
         }
     }
 

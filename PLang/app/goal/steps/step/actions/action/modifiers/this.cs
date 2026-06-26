@@ -50,7 +50,7 @@ public sealed class @this : IList<PrAction>
         for (int i = _items.Count - 1; i >= 0; i--)
         {
             var (wrapped, error) = await _items[i].WrapAround(execute, context);
-            if (error != null) return data.@this.FromError(error);
+            if (error != null) return context.Error(error);
             execute = wrapped!;
         }
         var result = await execute();

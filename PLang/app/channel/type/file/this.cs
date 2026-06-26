@@ -56,10 +56,10 @@ public sealed class @this : global::app.channel.@this
         => StampReadAsync(raw, ct);
 
     public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
-        => Task.FromResult(global::app.data.@this.FromError(new ServiceError(
+        => Task.FromResult(data.Context.Error(new ServiceError(
             $"File channel '{Name}' is read-only; write through path.WriteText/WriteBytes", "ChannelReadOnly", 400)));
 
     public override Task<global::app.data.@this> Ask(module.output.ask action, CancellationToken ct = default)
-        => Task.FromResult(global::app.data.@this.FromError(new ServiceError(
+        => Task.FromResult(action.Context.Error(new ServiceError(
             $"File channel '{Name}' does not support ask", "ChannelNoAsk", 400)));
 }

@@ -173,11 +173,11 @@ public sealed class @this : ISerializer
             else
                 await data.Output(writer, view, data.Context, layer: true);
             await utf8.FlushAsync(cancellationToken);
-            return global::app.data.@this.Ok();
+            return data.Context.Ok();
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
         {
-            return global::app.data.@this.FromError(new error.ServiceError(
+            return data.Context.Error(new error.ServiceError(
                 $"Plang serialize failed: {ex.Message}", "PlangSerializeError", 400) { Exception = ex });
         }
     }

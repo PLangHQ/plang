@@ -12,6 +12,6 @@ public partial class First : IContext
         var data = await Context.Variable.Get((await ListName.Value()));
         var first = await data.GetChild("[0]");
 
-        return first.IsInitialized ? global::app.data.@this.Ok((await first.Value())) : global::app.data.@this.Ok();
+        return first.IsInitialized ? Context.Ok((await first.Value())) : Context.Ok();
     }
 }

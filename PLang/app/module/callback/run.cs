@@ -19,7 +19,7 @@ public partial class run : IContext
     public async Task<data.@this> Run()
     {
         if (Callback.Snapshot == null)
-            return global::app.data.@this.FromError(new ServiceError(
+            return Context.Error(new ServiceError(
                 "Resume invoked on Data without a Snapshot", "NoSnapshot", 400));
         return (await Callback.Snapshot.Resume(Context));
     }

@@ -13,10 +13,10 @@ public sealed partial class @this
         global::app.actor.context.@this context)
     {
         // Always born-native: date builds a `date` value. A .NET edge unwraps with .Clr<DateOnly>().
-        global::app.data.@this B(System.DateOnly v) => global::app.data.@this.Ok(new @this(v));
+        global::app.data.@this B(System.DateOnly v) => context.Ok(new @this(v));
         switch (value)
         {
-            case null: return global::app.data.@this.Ok(value);
+            case null: return context.Ok(value);
             case System.DateOnly d0: return B(d0);
             case @this self: return B(self.Value);
             case System.DateTime dt: return B(System.DateOnly.FromDateTime(dt));
@@ -26,10 +26,10 @@ public sealed partial class @this
                 System.Globalization.DateTimeStyles.None, out var d):
                 return B(d);
             case string s:
-                return global::app.data.@this.FromError(new global::app.error.Error(
+                return context.Error(new global::app.error.Error(
                     $"Cannot parse '{s}' as date — expected ISO yyyy-MM-dd.", "DateParseFailed", 400));
             default:
-                return global::app.data.@this.FromError(new global::app.error.Error(
+                return context.Error(new global::app.error.Error(
                     $"Cannot convert {value.GetType().Name} to date.", "DateConversionFailed", 400));
         }
     }

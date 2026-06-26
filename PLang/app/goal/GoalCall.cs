@@ -55,25 +55,25 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
         switch (value)
         {
             case null:
-                return data.@this.Ok(value);
+                return context.Ok(value);
             case GoalCall:
-                return data.@this.Ok(value);
+                return context.Ok(value);
             case string goalName:
                 if (context.App.Type.IsClrTypeName(goalName))
-                    return data.@this.FromError(new global::app.error.Error(
+                    return context.Error(new global::app.error.Error(
                         $"GoalCall.Name was set to a CLR type name '{goalName}' from a string source.",
                         "ClrTypeNameInGoalSlot", 500)
                         { FixSuggestion = "Build pipeline leaked a typed object's ToString() into a goal-name slot." });
-                return data.@this.Ok(new GoalCall { Name = goalName });
+                return context.Ok(new GoalCall { Name = goalName });
             case System.Text.Json.JsonElement je:
                 try
                 {
-                    return data.@this.Ok(System.Text.Json.JsonSerializer.Deserialize<GoalCall>(
+                    return context.Ok(System.Text.Json.JsonSerializer.Deserialize<GoalCall>(
                         je.GetRawText(), global::app.type.catalog.@this.CaseInsensitiveRead));
                 }
                 catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
                 {
-                    return data.@this.FromError(new global::app.error.Error(
+                    return context.Error(new global::app.error.Error(
                         $"Failed to deserialize GoalCall from JSON: {ex.Message}",
                         "GoalCallDeserializationFailed", 400));
                 }
@@ -85,7 +85,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
             case IDictionary<string, object?> dict:
                 return FromSlots(key => dict.TryGetValue(key, out var v) ? v : null, context);
             default:
-                return data.@this.FromError(new global::app.error.Error(
+                return context.Error(new global::app.error.Error(
                     $"Cannot convert {value.GetType().Name} to a goal call.", "GoalCallConversionFailed", 400));
         }
     }
@@ -102,7 +102,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
         // here — GetGoalAsync resolves it at dispatch, in the caller's context. The
         // CLR-type-name guard below still catches a literal leak (a %var% never matches).
         if (context.App.Type.IsClrTypeName(name))
-            return data.@this.FromError(new global::app.error.Error(
+            return context.Error(new global::app.error.Error(
                 $"GoalCall.Name was set to a CLR type name '{name}'.",
                 "ClrTypeNameInGoalSlot", 500)
                 { FixSuggestion = "Build pipeline leaked a typed object's ToString() into a goal-name slot " +
@@ -137,7 +137,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
                 .ToList();
             if (entries.Count > 0) parameters = entries;
         }
-        return data.@this.Ok(new GoalCall { Name = name, PrPath = prPath, Parameters = parameters });
+        return context.Ok(new GoalCall { Name = name, PrPath = prPath, Parameters = parameters });
     }
 
     // The prPath slot's relative form → a resolved path, or null when absent. (`relative` is
@@ -200,7 +200,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
         // slot is caught now.
         var resolvedName = Name.Contains('%') ? (await context.Variable.Resolve(Name)) ?? Name : Name;
         if (context.App.Type.IsClrTypeName(resolvedName))
-            return data.@this.FromError(new global::app.error.Error(
+            return context.Error(new global::app.error.Error(
                 $"GoalCall.Name resolved to a CLR type name '{resolvedName}'.", "ClrTypeNameInGoalSlot", 500));
 
         // PrPath is authoritative — load from file, no name-based search
@@ -212,18 +212,18 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
         while (currentGoal != null)
         {
             if (string.Equals(currentGoal.Name, resolvedName, StringComparison.OrdinalIgnoreCase))
-                return data.@this.Ok(currentGoal);
+                return context.Ok(currentGoal);
 
             var subGoal = currentGoal.Goals.FirstOrDefault(g =>
                 string.Equals(g.Name, resolvedName, StringComparison.OrdinalIgnoreCase));
-            if (subGoal != null) return data.@this.Ok(subGoal);
+            if (subGoal != null) return context.Ok(subGoal);
 
             currentGoal = currentGoal.Parent;
         }
 
         // 2. Check app's loaded goals
         var loaded = app.Goal.Get(resolvedName);
-        if (loaded != null) return data.@this.Ok(loaded);
+        if (loaded != null) return context.Ok(loaded);
 
         // 3. Derive the .pr path from Name and file.read.
         var name = resolvedName.Replace('\\', '/');
@@ -304,7 +304,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
             // Surface the underlying parse failure (source.Value keys it
             // MaterializeFailed with the slot name + reason) — a generic "not a Goal"
             // hides WHERE the .pr is malformed.
-            return data.@this.FromError(result.Error ?? new global::app.error.ActionError(
+            return context.Error(result.Error ?? new global::app.error.ActionError(
                 $"File '{prPath}' did not deserialize to a Goal", "InvalidPrFile", 400));
 
         // Wire back-references: Goal.App, Step.Goal for root and sub-goals.
@@ -352,9 +352,9 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
             found = goal.Goals.FirstOrDefault(g => string.Equals(g.Name, matchName, StringComparison.OrdinalIgnoreCase));
 
         if (found == null)
-            return data.@this.FromError(new global::app.error.ActionError(
+            return context.Error(new global::app.error.ActionError(
                 $"Goal '{Name}' not found in '{prPath}'", "GoalNotFound", 404));
 
-        return data.@this.Ok(found);
+        return context.Ok(found);
     }
 }

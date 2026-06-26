@@ -48,7 +48,7 @@ public partial class Read : IContext
         if (!stat.Success) return stat;
         var info = await stat.Value();
         if (info is not { Exists: true })
-            return data.@this.FromError(new global::app.error.ServiceError(
+            return Context.Error(new global::app.error.ServiceError(
                 $"Not found: {path}", "NotFound", 404));
 
         if (info.IsFile == false)
@@ -74,7 +74,7 @@ public partial class Read : IContext
             if (!read.Success || read.Type?.ClrType.Exit() == true) return read;
             if (read.Raw is byte[] imageBytes)
                 return new data.@this(read.Name,
-                    new global::app.type.image.@this(imageBytes, path), read.Type);
+                    new global::app.type.image.@this(imageBytes, path), read.Type, context: Context);
             return read;
         }
 
@@ -89,7 +89,7 @@ public partial class Read : IContext
             if (content is global::app.type.text.@this)
             {
                 var resolved = await Context.Variable.Resolve(content.ToString()!, skipInfrastructure: true);
-                return new data.@this(read.Name, resolved, read.Type);
+                return new data.@this(read.Name, resolved, read.Type, context: Context);
             }
             return read;
         }
@@ -119,11 +119,11 @@ public partial class Read : IContext
         // a "%var%" reference that has no binding yet at build time.
         var raw = __action?.Parameters?.FirstOrDefault(p =>
             string.Equals(p.Name, "Path", System.StringComparison.OrdinalIgnoreCase))?.Peek()?.ToString();
-        if (string.IsNullOrEmpty(raw) || raw.Contains('%')) return data.@this.Ok();
+        if (string.IsNullOrEmpty(raw) || raw.Contains('%')) return Context.Ok();
 
         var p = await Path.Value();
-        if (p == null || string.IsNullOrEmpty(p.Extension)) return data.@this.Ok();
-        if (p.MimeType == "application/octet-stream") return data.@this.Ok();
+        if (p == null || string.IsNullOrEmpty(p.Extension)) return Context.Ok();
+        if (p.MimeType == "application/octet-stream") return Context.Ok();
 
         // The SAME shared derivation the runtime uses, so build-time and
         // runtime stamps can't drift: an image keeps its structured {image,
@@ -131,7 +131,7 @@ public partial class Read : IContext
         // — {file, <ext>} — and the content type appears only when runtime
         // examination narrows.
         var inferred = p.Kind;
-        if (inferred.IsNull || Context.App.Type.Get(inferred.Name) == null) return data.@this.Ok();
+        if (inferred.IsNull || Context.App.Type.Get(inferred.Name) == null) return Context.Ok();
         if (inferred.Name != "image")
             inferred = global::app.type.@this.Create("file", p.Extension.TrimStart('.'), context: Context);
         inferred.Context = Context;
@@ -150,11 +150,11 @@ public partial class Read : IContext
                 var warning = new global::app.type.dict.@this()
                     .Set("action", source)
                     .Set("message", $"file.read: literal path '{raw}' does not exist on disk");
-                await Context.Actor.Channel.Channel("builder").WriteAsync(data.@this.Ok(warning));
+                await Context.Actor.Channel.Channel("builder").WriteAsync(Context.Ok(warning));
             }
         }
         catch (System.Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { /* best-effort warning — never block Build() */ }
 
-        return data.@this.Ok(inferred);
+        return Context.Ok(inferred);
     }
 }

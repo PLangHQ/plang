@@ -403,7 +403,7 @@ public sealed class @this
             var dirPath = global::app.type.path.@this.Resolve(directory, context);
             var listed = await dirPath.List(pattern, recursive: true);
             if (!listed.Success || listed.Peek().IsNull)
-                return data.@this.Ok(0);
+                return context.Ok(0);
 
             var loadedCount = 0;
             var list = await listed.Value();
@@ -414,7 +414,7 @@ public sealed class @this
                 var result = await LoadFromFileAsync(app, file, cancellationToken);
                 if (result) loadedCount++;
             }
-            return data.@this.Ok(loadedCount);
+            return context.Ok(loadedCount);
         }
         catch (Exception ex)
         {

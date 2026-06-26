@@ -21,9 +21,9 @@ public partial class Last : IContext
         if (count > 0)
         {
             var last = await data.GetChild($"[{count - 1}]");
-            if (last.IsInitialized) return global::app.data.@this.Ok((await last.Value()));
+            if (last.IsInitialized) return Context.Ok((await last.Value()));
         }
 
-        return global::app.data.@this.Ok();
+        return Context.Ok();
     }
 }

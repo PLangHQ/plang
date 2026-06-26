@@ -93,7 +93,7 @@ public sealed class @this : global::app.type.item.@this, global::app.module.ICon
         }
         catch (System.Reflection.TargetInvocationException ex)
         {
-            return global::app.data.@this.FromError(new global::app.error.ServiceError(
+            return Context.Error(new global::app.error.ServiceError(
                 $"Failed to read '{key}': {(ex.InnerException ?? ex).Message}",
                 "NavigationError", 500) { Exception = ex });
         }

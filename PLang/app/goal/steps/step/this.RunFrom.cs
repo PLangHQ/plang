@@ -13,7 +13,7 @@ public partial class @this
     {
         context.Step = this;
 
-        data.@this result = data.@this.Ok();
+        data.@this result = context.Ok();
         if (fromActionIdx < 0 || fromActionIdx >= Actions.Count) return result;
 
         try
@@ -33,7 +33,7 @@ public partial class @this
                 : (typeName.EndsWith("Exception", StringComparison.Ordinal)
                     ? typeName[..^"Exception".Length]
                     : typeName);
-            result = data.@this.FromError(new error.ServiceError(
+            result = context.Error(new error.ServiceError(
                 ex.Message, key, 400) { Exception = ex });
         }
 

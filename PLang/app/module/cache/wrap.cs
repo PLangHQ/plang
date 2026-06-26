@@ -17,7 +17,7 @@ public partial class CacheWrap : IContext, IModifier
     public partial global::app.data.@this<global::app.type.@bool.@this> Sliding { get; init; }
     public partial global::app.data.@this<global::app.type.text.@this>? Key { get; init; }
 
-    public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
+    public Task<global::app.data.@this> Run() => Task.FromResult(Context.Ok());
 
     public Func<Task<global::app.data.@this>> Wrap(Func<Task<global::app.data.@this>> next, actor.context.@this context)
     {

@@ -24,12 +24,12 @@ public partial class Range : IContext
         if (step > 0)
         {
             for (int i = start; i <= end; i += step)
-                list.Add(new global::app.data.@this("", i));
+                list.Add(new global::app.data.@this("", i, context: Context));
         }
         else
         {
             for (int i = start; i >= end; i += step)
-                list.Add(new global::app.data.@this("", i));
+                list.Add(new global::app.data.@this("", i, context: Context));
         }
 
         return global::app.data.@this<type.list>.Ok(new type.list { count = list.CountRaw, value = list }, app.type.@this.FromName("list"));

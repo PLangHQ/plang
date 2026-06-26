@@ -35,7 +35,7 @@ public class Ed25519 : ISigning
         var hashResult = await app.RunAction<Hash>(new Hash { Data = action.Data, Algorithm = new data.@this<global::app.type.text.@this>("", "keccak256") }, action.Context);
         if (!hashResult.Success) return hashResult;
         if (await hashResult.Value() is not global::app.module.crypto.type.hash.@this hash)
-            return global::app.data.@this.FromError(new ActionError("Hashing produced no digest", "DataHashMismatch", 500));
+            return action.Context.Error(new ActionError("Hashing produced no digest", "DataHashMismatch", 500));
 
         var now = await (await action.Context.Variable.Get("NowUtc")).Clr<DateTimeOffset>(default);
         var nonce = (await (await action.Context.Variable.Get("GUID")).Clr<Guid>(default)).ToString();
@@ -60,7 +60,7 @@ public class Ed25519 : ISigning
         if (!signResult.Success) return signResult;
         var signed = layer.Signed((await signResult.Value())!);
 
-        return global::app.data.@this.Ok(signed);
+        return action.Context.Ok(signed);
     }
 
     public virtual async Task<data.@this<global::app.type.@bool.@this>> VerifyAsync(verify action)
@@ -100,7 +100,7 @@ public class Ed25519 : ISigning
         {
             var nonceCacheKey = $"nonce:{layer.Nonce}";
             var cacheSettings = new CacheSettings { DurationMs = effectiveTimeout };
-            var nonceAdded = await app.Cache.TryAddAsync(nonceCacheKey, global::app.data.@this.Ok(true), cacheSettings);
+            var nonceAdded = await app.Cache.TryAddAsync(nonceCacheKey, action.Context.Ok(true), cacheSettings);
             if (!nonceAdded)
                 return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Nonce has already been used", "NonceReplay", 400));
         }

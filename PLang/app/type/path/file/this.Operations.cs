@@ -30,11 +30,11 @@ public sealed partial class @this
         try
         {
             var asm = System.Reflection.Assembly.LoadFrom(Absolute);
-            return data.@this.Ok((object)asm);
+            return Context!.Ok((object)asm);
         }
         catch (System.Exception ex) when (ex is System.IO.FileNotFoundException or System.IO.FileLoadException or System.BadImageFormatException)
         {
-            return data.@this.FromError(new global::app.error.ServiceError($"Failed to load assembly: {ex.Message}", "AssemblyLoadFailed", 500));
+            return Context!.Error(new global::app.error.ServiceError($"Failed to load assembly: {ex.Message}", "AssemblyLoadFailed", 500));
         }
     }
 
@@ -73,14 +73,14 @@ public sealed partial class @this
                 {
                     var converted = Context!.App.Type.Convert(snapshot, snapshotClr, Context).Peek();
                     if (converted != null)
-                        return new data.@this(Raw, converted, snapshotType);
+                        return new data.@this(Raw, converted, snapshotType, context: Context);
                 }
-                return new data.@this(Raw, snapshot, snapshotType);
+                return new data.@this(Raw, snapshot, snapshotType, context: Context);
             }
         }
 
         if (!System.IO.File.Exists(Absolute))
-            return data.@this.FromError(new global::app.error.ServiceError($"File not found: {Raw}", "NotFound", 404));
+            return Context!.Error(new global::app.error.ServiceError($"File not found: {Raw}", "NotFound", 404));
 
         try
         {
@@ -119,11 +119,11 @@ public sealed partial class @this
                 }
             }
 
-            return new data.@this(Raw, content, type);
+            return new data.@this(Raw, content, type, context: Context);
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {
-            return data.@this.FromError(new global::app.error.ServiceError(ex.Message, "IOError", 500));
+            return Context!.Error(new global::app.error.ServiceError(ex.Message, "IOError", 500));
         }
     }
 
@@ -426,9 +426,9 @@ public sealed partial class @this
 
     private async Task<data.@this?> TryAuthorizeWithoutAsk(Verb verb)
     {
-        if (IsInRoot()) return data.@this.Ok();
+        if (IsInRoot()) return Context!.Ok();
         var existing = await Context!.Actor!.Permission.Find(this, verb);
-        return existing != null ? data.@this.Ok() : null;
+        return existing != null ? Context!.Ok() : null;
     }
 
     private async Task StoreGrant(Verb verb, bool persist)
