@@ -36,7 +36,7 @@ public sealed partial class @this
         var v = GetVariable(key);
         return new(v != null
             ? new data.@this(key, v.Peek(), parent: parent)
-            : data.@this.NotFound(key));
+            : parent.Context.NotFound(key));
     }
 
     /// <summary>Sets a captured variable's value in place (or appends one).</summary>

@@ -62,7 +62,7 @@ public sealed class Text : ISerializer
         // Empty payload = absence — the channel-protocol concern that belongs
         // to this serializer. Everything else: the Data converts ITSELF to T
         // through T's own Convert hook (As<T> is the typed resolution door).
-        if (await result.IsEmpty()) return global::app.data.@this<T>.Ok(default!);
+        if (await result.IsEmpty()) return result.Context.Ok<T>(default!);
         return result.ShallowClone<T>(await result.Value<T>());
     }
 }

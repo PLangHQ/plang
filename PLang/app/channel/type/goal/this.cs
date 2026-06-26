@@ -44,7 +44,7 @@ public class @this : global::app.channel.type.session.@this
 
     public override async Task<global::app.data.@this> Read(CancellationToken ct = default)
     {
-        return await InvokeGoal(global::app.data.@this.Ok((object?)null), ct);
+        return await InvokeGoal(Actor.Context.Ok((object?)null), ct);
     }
 
     public override async Task<global::app.data.@this> Ask(module.output.ask action, CancellationToken ct = default)

@@ -104,7 +104,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         global::app.data.@this parent, string key)
     {
         var who = string.IsNullOrEmpty(parent.Name) ? "value" : $"%{parent.Name}%";
-        var err = global::app.data.@this.FromError(new global::app.error.Error(
+        var err = parent.Context.Error(new global::app.error.Error(
             $"cannot navigate .{key}: {who} is text", "CantNavigateText", 400));
         err.Name = key;
         return System.Threading.Tasks.ValueTask.FromResult(err);

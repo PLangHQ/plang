@@ -61,7 +61,7 @@ public sealed class @this : global::app.type.item.@this
         {
             "rows" => new global::app.data.@this("rows", Rows, parent: parent),
             "headers" => new global::app.data.@this("headers", Headers, parent: parent),
-            _ => global::app.data.@this.NotFound(key),
+            _ => parent.Context.NotFound(key),
         });
 
     /// <summary><c>foreach %t%</c> iterates the rows — each row a dict keyed by header.</summary>

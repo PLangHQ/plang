@@ -21,6 +21,8 @@ public sealed class Sqlite : IStore
     // it serializes through the system context so reads verify and route through
     // the typed wire reader (no context-less narrow).
     private readonly global::app.channel.serializer.plang.@this _serializer;
+    // The store's own context — system-owned. Its result Data is born from it.
+    private readonly actor.context.@this Context;
     private bool _disposed;
 
     /// <summary>
@@ -33,6 +35,7 @@ public sealed class Sqlite : IStore
     public Sqlite(global::app.type.path.@this dbPath, actor.context.@this context)
     {
         _serializer = new(context);
+        Context = context;
         // Take-over API: authorize before passing .Absolute. Sync-wait
         // — Sqlite ctor is sync and the gate is the bootstrap path.
         var auth = dbPath.Authorize(global::app.type.permission.Verb.Write).GetAwaiter().GetResult();
@@ -64,6 +67,7 @@ public sealed class Sqlite : IStore
     private Sqlite(string name, bool inMemory, actor.context.@this context)
     {
         _serializer = new(context);
+        Context = context;
         _connectionString = new SqliteConnectionStringBuilder
         {
             DataSource = name,
@@ -119,12 +123,12 @@ public sealed class Sqlite : IStore
 
             var result = cmd.ExecuteScalar();
             if (result == null || result == DBNull.Value)
-                return data.@this<T>.Ok(default!);
+                return Context.Ok<T>(default!);
             return await Hydrate<T>(result.ToString()!);
         }
         catch (Exception ex)
         {
-            return data.@this<T>.FromError(SettingsError.FromException(ex, table, key));
+            return Context.Error<T>(SettingsError.FromException(ex, table, key));
         }
     }
 
@@ -150,11 +154,11 @@ public sealed class Sqlite : IStore
                 var loaded = await Hydrate<T>(raw);
                 if (loaded.Success && !loaded.Peek().IsNull) list.Add(loaded);
             }
-            return data.@this<global::app.type.list.@this>.Ok(list);
+            return Context.Ok<global::app.type.list.@this>(list);
         }
         catch (Exception ex)
         {
-            return data.@this<global::app.type.list.@this>.FromError(
+            return Context.Error<global::app.type.list.@this>(
                 SettingsError.FromException(ex, table));
         }
     }
@@ -176,15 +180,15 @@ public sealed class Sqlite : IStore
             // buffer, bind the TEXT param (this is where the string lives — the column's choice).
             using var ms = new MemoryStream();
             var serialized = await _serializer.SerializeAsync(ms, data, global::app.View.Store);
-            if (!serialized.Success) return app.data.@this.FromError(serialized.Error!);
+            if (!serialized.Success) return Context.Error(serialized.Error!);
             cmd.Parameters.AddWithValue("@data", System.Text.Encoding.UTF8.GetString(ms.ToArray()));
             cmd.ExecuteNonQuery();
 
-            return app.data.@this.Ok();
+            return Context.Ok();
         }
         catch (Exception ex)
         {
-            return app.data.@this.FromError(
+            return Context.Error(
                 SettingsError.FromException(ex, table, key));
         }
     }
@@ -201,11 +205,11 @@ public sealed class Sqlite : IStore
             cmd.Parameters.AddWithValue("@key", key);
             cmd.ExecuteNonQuery();
 
-            return Task.FromResult(app.data.@this.Ok());
+            return Task.FromResult(Context.Ok());
         }
         catch (Exception ex)
         {
-            return Task.FromResult(app.data.@this.FromError(
+            return Task.FromResult(Context.Error(
                 SettingsError.FromException(ex, table, key)));
         }
     }
@@ -222,11 +226,11 @@ public sealed class Sqlite : IStore
             cmd.Parameters.AddWithValue("@key", key);
 
             var count = Convert.ToInt64(cmd.ExecuteScalar());
-            return Task.FromResult(app.data.@this<global::app.type.@bool.@this>.Ok(count > 0));
+            return Task.FromResult(Context.Ok<global::app.type.@bool.@this>(count > 0));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(app.data.@this<global::app.type.@bool.@this>.FromError(
+            return Task.FromResult(Context.Error<global::app.type.@bool.@this>(
                 SettingsError.FromException(ex, table, key)));
         }
     }
@@ -243,13 +247,13 @@ public sealed class Sqlite : IStore
             var tables = new global::app.type.list.@this();
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
-                tables.Add(new app.data.@this("", reader.GetString(0)));
+                tables.Add(new data.@this("", reader.GetString(0), context: Context));
 
-            return Task.FromResult(app.data.@this<global::app.type.list.@this>.Ok(tables));
+            return Task.FromResult(Context.Ok<global::app.type.list.@this>(tables));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(app.data.@this<global::app.type.list.@this>.FromError(
+            return Task.FromResult(Context.Error<global::app.type.list.@this>(
                 SettingsError.FromException(ex)));
         }
     }
