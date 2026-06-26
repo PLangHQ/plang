@@ -22,7 +22,7 @@ public class EventCacheInvalidationTests
         // Register first event
         context.Events.Register(new EventBinding(
             Trigger.BeforeGoal,
-            async (context, _, _) => Data.Ok(),
+            async (context, _, _) => engine.Ok(),
             goalNamePattern: "TestGoal"));
 
         // Resolve events — this gets cached
@@ -32,7 +32,7 @@ public class EventCacheInvalidationTests
         // Register second event at runtime
         context.Events.Register(new EventBinding(
             Trigger.BeforeGoal,
-            async (context, _, _) => Data.Ok(),
+            async (context, _, _) => engine.Ok(),
             goalNamePattern: "TestGoal"));
 
         // Resolve again — should see 2 events, not stale cached 1
@@ -52,7 +52,7 @@ public class EventCacheInvalidationTests
         // Register first step event
         context.Events.Register(new EventBinding(
             Trigger.BeforeStep,
-            async (context, _, _) => Data.Ok(),
+            async (context, _, _) => engine.Ok(),
             goalNamePattern: "TestGoal",
             stepPattern: "do something"));
 
@@ -63,7 +63,7 @@ public class EventCacheInvalidationTests
         // Register another step event at runtime
         context.Events.Register(new EventBinding(
             Trigger.BeforeStep,
-            async (context, _, _) => Data.Ok(),
+            async (context, _, _) => engine.Ok(),
             goalNamePattern: "TestGoal",
             stepPattern: "do something"));
 
@@ -86,7 +86,7 @@ public class EventCacheInvalidationTests
         // Register first action event
         context.Events.Register(new EventBinding(
             Trigger.BeforeAction,
-            async (context, _, _) => Data.Ok(),
+            async (context, _, _) => engine.Ok(),
             actionPattern: "variable.set"));
 
         // Resolve — cached
@@ -96,7 +96,7 @@ public class EventCacheInvalidationTests
         // Register another action event at runtime
         context.Events.Register(new EventBinding(
             Trigger.BeforeAction,
-            async (context, _, _) => Data.Ok(),
+            async (context, _, _) => engine.Ok(),
             actionPattern: "variable.set"));
 
         // Should see 2, not stale 1
@@ -114,7 +114,7 @@ public class EventCacheInvalidationTests
         // Register and cache
         context.Events.Register(new EventBinding(
             Trigger.BeforeGoal,
-            async (context, _, _) => Data.Ok(),
+            async (context, _, _) => engine.Ok(),
             goalNamePattern: "TestGoal"));
         var events1 = context.LifecycleFor(goal);
         await Assert.That(events1.Before.Count).IsEqualTo(1);
@@ -122,7 +122,7 @@ public class EventCacheInvalidationTests
         // Register new event + manually invalidate cache
         context.Events.Register(new EventBinding(
             Trigger.BeforeGoal,
-            async (context, _, _) => Data.Ok(),
+            async (context, _, _) => engine.Ok(),
             goalNamePattern: "TestGoal"));
         context.InvalidateEventCache();
 

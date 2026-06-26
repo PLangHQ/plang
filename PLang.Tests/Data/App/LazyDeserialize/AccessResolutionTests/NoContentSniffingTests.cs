@@ -1,7 +1,6 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using data = global::app.data.@this;
 
 namespace PLang.Tests.App.LazyDeserialize.AccessResolutionTests;
 
@@ -10,34 +9,38 @@ namespace PLang.Tests.App.LazyDeserialize.AccessResolutionTests;
 // are deliberately *negative*: each row picks a content shape and asserts
 // it is NOT auto-typed. An authored string with a structured-looking shape
 // stays a string — the value is only parsed when a type names how.
-public class NoContentSniffingTests
+public class NoContentSniffingTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create(
+        "/tmp/NoContentSniffingTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
+
     // A `{` prefix is not enough to auto-pick json. Without `as json`,
     // the value stays the string and is never materialized to a dict.
     [Test] public async Task Reader_DoesNotSniffJsonByLookingForLeadingBrace()
     {
-        var d = data.Ok("{\"a\":1}");
+        var d = _app.Ok("{\"a\":1}");
         await Assert.That((await d.Value())?.ToString()).IsEqualTo("{\"a\":1}");
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
 
     [Test] public async Task Reader_DoesNotSniffXmlByLookingForAngleBracket()
     {
-        var d = data.Ok("<root><a>1</a></root>");
+        var d = _app.Ok("<root><a>1</a></root>");
         await Assert.That((await d.Value())?.ToString()).IsEqualTo("<root><a>1</a></root>");
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
 
     [Test] public async Task Reader_DoesNotSniffCsvByLookingForCommas()
     {
-        var d = data.Ok("a,b,c");
+        var d = _app.Ok("a,b,c");
         await Assert.That((await d.Value())?.ToString()).IsEqualTo("a,b,c");
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
 
     [Test] public async Task Reader_DoesNotSniffYamlByLookingForColon()
     {
-        var d = data.Ok("key: value");
+        var d = _app.Ok("key: value");
         await Assert.That((await d.Value())?.ToString()).IsEqualTo("key: value");
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }

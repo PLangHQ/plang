@@ -9,8 +9,12 @@ namespace PLang.Tests.App.LazyDeserialize.LazyDataTests;
 
 // Stage 3 adds a raw backing slot to Data and materialises through the
 // reader registry on first touch.
-public class LazyDataShapeTests
+public class LazyDataShapeTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create(
+        "/tmp/LazyDataShapeTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
+
     // The raw slot dissolved off Data — the undecoded source form lives ON the
     // type that owns it (source/file/url), private there. Data carries one
     // typed instance and nothing beside it.
@@ -40,7 +44,7 @@ public class LazyDataShapeTests
     // shape stays Data's own four fields.
     [Test] public async Task Data_RawField_NotPickedUpByRendererNormalize()
     {
-        var d = data.Ok("hello");
+        var d = _app.Ok("hello");
         d.Name = "greeting";
         var json = (await global::app.channel.serializer.plang.@this.ContextLessFallback.Serialize(d).Value())!.Clr<string>()!;
         await Assert.That(json.Contains("\"raw\"")).IsFalse();
@@ -58,7 +62,7 @@ public class LazyDataShapeTests
         await Assert.That(factoryOverload).IsNull();
 
         int calls = 0;
-        var d = new data("f", new global::app.type.item.computed(() => { calls++; return 42; }));
+        var d = _app.Data("f", new global::app.type.item.computed(() => { calls++; return 42; }));
         await Assert.That((await d.Value())?.ToString()).IsEqualTo("42");
         await Assert.That((await d.Value())?.ToString()).IsEqualTo("42");
         // Fresh at every use — a computed answer is never kept.

@@ -52,7 +52,7 @@ public static class Make
             // tuple value borns its natural type.
             action.Parameters.Add(value is global::app.data.@this typed
                 ? typed
-                : new global::app.data.@this(name, value));
+                : new global::app.data.@this(name, value, context: global::PLang.Tests.TestApp.SharedContext));
         return action;
     }
 
@@ -81,7 +81,7 @@ public static class Make
     /// <see cref="global::app.type.@this"/> directly.</summary>
     public static (string name, object? value) Param(
         string name, object? value, global::app.type.@this type)
-        => (name, new global::app.data.@this(name, value, type));
+        => (name, new global::app.data.@this(name, value, type, context: global::PLang.Tests.TestApp.SharedContext));
 
     /// <summary>
     /// Wraps an action with one or more modifier actions (e.g. <c>timeout.after</c>,
@@ -113,7 +113,7 @@ public static class Make
         foreach (var (name, value) in defaults)
             action.Defaults.Add(value is global::app.data.@this typed
                 ? typed
-                : new global::app.data.@this(name, value));
+                : new global::app.data.@this(name, value, context: global::PLang.Tests.TestApp.SharedContext));
         return action;
     }
 
@@ -131,7 +131,11 @@ public static class Make
         {
             Name = name,
             Path = path,
-            Steps = new global::app.goal.steps.@this(),
+            // Steps need a context so the disabled-step probe (and any enumeration,
+            // e.g. PrWrite serialization in RealGoalLoad.ViaChannel) doesn't deref a
+            // null context. Transient like the param births — the real actor context
+            // is stamped when the goal is read back through a channel.
+            Steps = new global::app.goal.steps.@this { Context = global::PLang.Tests.TestApp.SharedContext },
         };
 
         for (int i = 0; i < steps.Length; i++)

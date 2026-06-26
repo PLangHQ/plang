@@ -24,4 +24,17 @@ public static class TestApp
         app.Code.SetDefault<global::app.module.signing.code.ISigning>("test-signing");
         return app;
     }
+
+    private static global::app.@this? _shared;
+
+    /// <summary>
+    /// A process-lifetime context for the static pre-wire test factories
+    /// (<c>Make</c>, <c>PrParam</c>, <c>NormalizePipelineHelper</c>). Those build the
+    /// authored goal/param shape that is reborn with the real actor context when the
+    /// goal is read through a channel (<c>RealGoalLoad.ViaChannel</c>), so this context
+    /// is transient — it only has to be non-null so an authored literal value can
+    /// materialize before it rides the wire. Born-with-context, never context-less.
+    /// </summary>
+    public static global::app.actor.context.@this SharedContext =>
+        (_shared ??= Create("/tmp/shared-" + System.Guid.NewGuid().ToString("N")[..6])).User.Context;
 }

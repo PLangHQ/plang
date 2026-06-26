@@ -4,8 +4,11 @@ using Type = global::app.type.@this;
 
 namespace PLang.Tests.App.DataTests;
 
-public class DataGenericTests
+public class DataGenericTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/DataGenericTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
+
     [Test]
     public async Task Ok_StoresTypedValue()
     {
@@ -39,7 +42,7 @@ public class DataGenericTests
     public async Task Value_WrongType_ReturnsDefault()
     {
         // Create a global::app.data.@this<global::app.type.number.@this> then set base value to a string via base class
-        var data = new global::app.data.@this<global::app.type.number.@this>("test", 42);
+        var data = new global::app.data.@this<global::app.type.number.@this>("test", 42, context: _app.User.Context);
         ((Data)data).SetValue("not an int");
 
         // Born-native: number is a reference wrapper, so a failed conversion yields its

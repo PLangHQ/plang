@@ -27,7 +27,8 @@ public class LazyMaterialisationTests
 
     [Test] public async Task Value_ReturnsValueDirectly_WhenValueSet_AndRawNull()
     {
-        var d = data.Ok(5);
+        await using var app = NewApp();
+        var d = app.Ok(5);
         await Assert.That(global::app.type.item.@this.Lower<long>(await d.Value())).IsEqualTo(5L);
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
@@ -35,7 +36,8 @@ public class LazyMaterialisationTests
     // Independent #6 — probe-counted negative: authored .Value never materializes.
     [Test] public async Task Value_AuthoredPath_NeverInvokesReader()
     {
-        var d = data.Ok("plain string");
+        await using var app = NewApp();
+        var d = app.Ok("plain string");
         _ = (await d.Value()); _ = (await d.Value());
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
@@ -72,7 +74,8 @@ public class LazyMaterialisationTests
     // Unchanged contract — `%var%` in an authored value is RAW per read.
     [Test] public async Task VarReference_InAuthoredValue_StillResolvesFreshPerRead()
     {
-        var d = data.Ok("%x%");
+        await using var app = NewApp();
+        var d = app.Ok("%x%");
         await Assert.That((await d.Value())?.ToString()).IsEqualTo("%x%");
         await Assert.That((await d.Value())?.ToString()).IsEqualTo("%x%");
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);

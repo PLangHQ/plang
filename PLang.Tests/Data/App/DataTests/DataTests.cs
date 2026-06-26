@@ -5,8 +5,11 @@ using Type = global::app.type.@this;
 
 namespace PLang.Tests.App.DataTests;
 
-public class DataTests
+public class DataTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/DataTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
+
     [Test]
     public async Task Constructor_WithName_SetsName()
     {
@@ -18,7 +21,7 @@ public class DataTests
     [Test]
     public async Task Constructor_WithValue_SetsValue()
     {
-        var ov = new Data("test", "hello");
+        var ov = _app.Data("test", "hello");
 
         await Assert.That((await ov.Value())?.ToString()).IsEqualTo("hello");
         await Assert.That(ov.IsInitialized).IsTrue();
@@ -41,7 +44,7 @@ public class DataTests
     {
         var type = Type.String;
 
-        var ov = new Data("test", "hello", type);
+        var ov = _app.Data("test", "hello", type);
 
         await Assert.That(ov.Type).IsNotNull();
         await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(string));
@@ -50,7 +53,7 @@ public class DataTests
     [Test]
     public async Task Constructor_InfersTypeFromValue()
     {
-        var ov = new Data("test", 42);
+        var ov = _app.Data("test", 42);
 
         await Assert.That(ov.Type).IsNotNull();
         await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(int));
@@ -104,8 +107,8 @@ public class DataTests
     [Test]
     public async Task Path_WithParent_IncludesParentPath()
     {
-        var parent = new Data("parent", new { Name = "test" });
-        var child = new Data("Name", "test", parent: parent);
+        var parent = _app.Data("parent", new { Name = "test" });
+        var child = new Data("Name", "test", parent: parent, context: _app.User.Context);
 
         await Assert.That(child.Path).IsEqualTo("parent.Name");
     }
@@ -113,8 +116,8 @@ public class DataTests
     [Test]
     public async Task Path_WithNumericName_UsesBracketNotation()
     {
-        var parent = new Data("items", new List<int> { 1, 2, 3 });
-        var child = new Data("0", 1, parent: parent);
+        var parent = _app.Data("items", new List<int> { 1, 2, 3 });
+        var child = new Data("0", 1, parent: parent, context: _app.User.Context);
 
         await Assert.That(child.Path).IsEqualTo("items[0]");
     }
@@ -122,7 +125,7 @@ public class DataTests
     [Test]
     public async Task Value_Setter_UpdatesValue()
     {
-        var ov = new Data("test");
+        var ov = new Data("test", context: _app.User.Context);
 
         ov.SetValue("new value");
 
@@ -133,7 +136,7 @@ public class DataTests
     [Test]
     public async Task Value_Setter_UpdatesUpdatedTimestamp()
     {
-        var ov = new Data("test");
+        var ov = new Data("test", context: _app.User.Context);
         var initialUpdated = ov.Updated;
         await Task.Delay(1);
 
@@ -145,7 +148,7 @@ public class DataTests
     [Test]
     public async Task Value_Setter_InfersTypeIfNull()
     {
-        var ov = new Data("test");
+        var ov = new Data("test", context: _app.User.Context);
 
         ov.SetValue(42);
 
@@ -156,7 +159,7 @@ public class DataTests
     [Test]
     public async Task GetValue_Generic_ReturnsTypedValue()
     {
-        var ov = new Data("test", "hello");
+        var ov = _app.Data("test", "hello");
 
         var value = ov.GetValue<string>();
 
@@ -166,7 +169,7 @@ public class DataTests
     [Test]
     public async Task GetValue_Generic_WrongType_ReturnsDefault()
     {
-        var ov = new Data("test", "hello");
+        var ov = _app.Data("test", "hello");
 
         var value = ov.GetValue<int>();
 
@@ -176,7 +179,7 @@ public class DataTests
     [Test]
     public async Task GetValue_Generic_ConvertibleType_Converts()
     {
-        var ov = new Data("test", 42);
+        var ov = _app.Data("test", 42);
 
         // The .NET edge: the door opens, the number lowers ITSELF.
         var value = (await ov.Value() as global::app.type.number.@this)!.ToDouble();
@@ -187,7 +190,7 @@ public class DataTests
     [Test]
     public async Task GetValue_ByType_ReturnsConvertedValue()
     {
-        var ov = new Data("test", "hello");
+        var ov = _app.Data("test", "hello");
 
         var value = ov.GetValue(typeof(string));
 
@@ -207,7 +210,7 @@ public class DataTests
     [Test]
     public async Task GetChild_EmptyPath_ReturnsSelf()
     {
-        var ov = new Data("test", "value");
+        var ov = _app.Data("test", "value");
 
         var child = await ov.GetChild("");
 
@@ -217,7 +220,7 @@ public class DataTests
     [Test]
     public async Task GetChild_NullPath_ReturnsSelf()
     {
-        var ov = new Data("test", "value");
+        var ov = _app.Data("test", "value");
 
         var child = await ov.GetChild(null!);
 
@@ -231,7 +234,7 @@ public class DataTests
         {
             { "user", new Dictionary<string, object?> { { "name", "John" } } }
         };
-        var ov = new Data("data", data);
+        var ov = _app.Data("data", data);
 
         var child = await ov.GetChild("user.name");
 
@@ -243,7 +246,7 @@ public class DataTests
     public async Task GetChild_IndexNotation_NavigatesArray()
     {
         var data = new List<object> { "first", "second", "third" };
-        var ov = new Data("items", data);
+        var ov = _app.Data("items", data);
 
         var child = await ov.GetChild("[1]");
 
@@ -263,7 +266,7 @@ public class DataTests
                 }
             }
         };
-        var ov = new Data("data", data);
+        var ov = _app.Data("data", data);
 
         var child = await ov.GetChild("users[1].name");
 
@@ -275,7 +278,7 @@ public class DataTests
     public async Task GetChild_NonexistentPath_ReturnsNotInitialized()
     {
         var data = new Dictionary<string, object?> { { "name", "test" } };
-        var ov = new Data("data", data);
+        var ov = _app.Data("data", data);
 
         var child = await ov.GetChild("nonexistent");
 
@@ -286,7 +289,7 @@ public class DataTests
     public async Task GetChild_OutOfBoundsIndex_ReturnsNotInitialized()
     {
         var data = new List<int> { 1, 2, 3 };
-        var ov = new Data("items", data);
+        var ov = _app.Data("items", data);
 
         var child = await ov.GetChild("[10]");
 
@@ -297,7 +300,7 @@ public class DataTests
     public async Task GetChild_NegativeIndex_ReturnsNotInitialized()
     {
         var data = new List<int> { 1, 2, 3 };
-        var ov = new Data("items", data);
+        var ov = _app.Data("items", data);
 
         var child = await ov.GetChild("[-1]");
 
@@ -309,7 +312,7 @@ public class DataTests
     public async Task GetChild_PropertyReflection_AccessesObjectProperty()
     {
         var data = new { Name = "Test", Value = 42 };
-        var ov = new Data("obj", data);
+        var ov = _app.Data("obj", data);
 
         var nameChild = await ov.GetChild("Name");
         var valueChild = await ov.GetChild("Value");
@@ -323,7 +326,7 @@ public class DataTests
     public async Task GetChild_CaseInsensitiveProperty_Works()
     {
         var data = new { Name = "Test" };
-        var ov = new Data("obj", data);
+        var ov = _app.Data("obj", data);
 
         var child = await ov.GetChild("name");
 
@@ -352,7 +355,7 @@ public class DataTests
     [Test]
     public async Task IsEmpty_EmptyString_ReturnsTrue()
     {
-        var ov = new Data("test", "");
+        var ov = _app.Data("test", "");
 
         await Assert.That(await ov.IsEmpty()).IsTrue();
     }
@@ -360,7 +363,7 @@ public class DataTests
     [Test]
     public async Task IsEmpty_NonEmptyValue_ReturnsFalse()
     {
-        var ov = new Data("test", "hello");
+        var ov = _app.Data("test", "hello");
 
         await Assert.That(await ov.IsEmpty()).IsFalse();
     }
@@ -376,7 +379,7 @@ public class DataTests
     [Test]
     public async Task Null_CreatesNullData()
     {
-        var ov = Data.Null("test");
+        var ov = _app.Null("test");
 
         await Assert.That(ov.Name).IsEqualTo("test");
         // Born-native: a present null value carries the null.@this singleton
@@ -388,7 +391,7 @@ public class DataTests
     [Test]
     public async Task NotFound_CreatesUninitializedData()
     {
-        var ov = Data.NotFound("missing");
+        var ov = _app.NotFound("missing");
 
         await Assert.That(ov.Name).IsEqualTo("missing");
         await Assert.That(await (await ov.Value())!.IsEmpty()).IsTrue();
@@ -398,7 +401,7 @@ public class DataTests
     [Test]
     public async Task Null_EmptyName_CreatesNullData()
     {
-        var ov = Data.Null();
+        var ov = _app.Null();
 
         await Assert.That(ov.Name).IsEqualTo("");
         await Assert.That(ReferenceEquals((ov.Peek()), app.type.@null.@this.Instance)).IsTrue();
@@ -407,7 +410,7 @@ public class DataTests
     [Test]
     public async Task ToString_WithValue_ReturnsValueString()
     {
-        var ov = new Data("test", 42);
+        var ov = _app.Data("test", 42);
 
         var str = ov.ToString();
 
@@ -428,8 +431,8 @@ public class DataTests
     [Test]
     public async Task Parent_WhenSet_IsAccessible()
     {
-        var parent = new Data("parent", "value");
-        var child = new Data("child", "value", parent: parent);
+        var parent = _app.Data("parent", "value");
+        var child = new Data("child", "value", parent: parent, context: _app.User.Context);
 
         await Assert.That(child.Parent).IsEqualTo(parent);
     }
@@ -453,8 +456,7 @@ public class DataTests
         // Context propagation: setting Data.Context stamps the embedded Type
         // entity so registry-keyed reads (TypeOf, Compressible, ClrType) work.
         // Bytes off I/O are binary; the kind (jpg) names how they narrow.
-        var ov = new Data("test", new byte[] { 1, 2 }, engine.Format.TypeFromMime("image/jpeg"));
-        ov.Context = context;
+        var ov = new Data("test", new byte[] { 1, 2 }, engine.Format.TypeFromMime("image/jpeg"), context: context);
 
         // The family lives on the format registry, keyed by the kind (the
         // subtype) — jpg → image — not by the Name, which is just "binary".
@@ -463,24 +465,12 @@ public class DataTests
     }
 
     [Test]
-    public async Task Type_LazyDerivation_WithoutContext()
-    {
-        var ov = new Data("test", 42);
-
-        // Type is lazily derived on first access
-        await Assert.That(ov.Type).IsNotNull();
-        await Assert.That(ov.Type!.Name).IsEqualTo("number");
-        await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(int));
-    }
-
-    [Test]
     public async Task Type_LazyDerivation_WithContext()
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
 
-        var ov = new Data("test", "hello");
-        ov.Context = context;
+        var ov = new Data("test", "hello", context: context);
 
         // Type lazily derived through context's Engine.Types
         await Assert.That(ov.Type).IsNotNull();
@@ -491,7 +481,7 @@ public class DataTests
     [Test]
     public async Task Type_LazyDerivation_InvalidatedByValueSetter()
     {
-        var ov = new Data("test", "hello");
+        var ov = _app.Data("test", "hello");
 
         await Assert.That(ov.Type!.Name).IsEqualTo("text");
 
@@ -517,12 +507,13 @@ public class DataTests
     public async Task Type_ExplicitType_NotOverridden()
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        var context = new global::app.actor.context.@this(engine, engine.User);
 
         // A declared {binary, jpg} (bytes off I/O, the kind names the decode)
         // survives the ctor — the value isn't re-derived to a bare binary that
         // drops the kind.
         var explicitType = engine.Format.TypeFromMime("image/jpeg");
-        var ov = new Data("test", new byte[] { 1, 2, 3 }, explicitType);
+        var ov = new Data("test", new byte[] { 1, 2, 3 }, explicitType, context: context);
 
         await Assert.That(ov.Type!.Name).IsEqualTo("binary");
         await Assert.That(ov.Type!.Kind).IsEqualTo("jpg");
@@ -535,8 +526,7 @@ public class DataTests
         var context = new global::app.actor.context.@this(engine, engine.User);
 
         var newType = new Type("text/plain");
-        var ov = new Data("test", "hello", newType);
-        ov.Context = context;
+        var ov = new Data("test", "hello", newType, context: context);
 
         // Type gets context from Data — family is resolvable via registry.
         await Assert.That(engine.Format.FamilyOf(newType.Name)).IsEqualTo("text");
@@ -548,8 +538,7 @@ public class DataTests
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
 
-        var data = new Data("img", new byte[] { 1, 2 }, engine.Format.TypeFromMime("image/jpeg"));
-        data.Context = context;
+        var data = new Data("img", new byte[] { 1, 2 }, engine.Format.TypeFromMime("image/jpeg"), context: context);
 
         // Binary content; the kind (jpg) carries the family. The kind's family
         // is image, which is not compressible (already-compressed content).
@@ -574,8 +563,7 @@ public class DataTests
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
 
-        var data = new Data("txt", "hello", Type.FromMime("text/plain"));
-        data.Context = context;
+        var data = new Data("txt", "hello", Type.FromMime("text/plain"), context: context);
 
         await Assert.That(engine.Format.FamilyOf(data.Type!.Name)).IsEqualTo("text");
         await Assert.That(data.Type!.Compressible).IsTrue();
@@ -588,8 +576,7 @@ public class DataTests
         var context = new global::app.actor.context.@this(engine, engine.User);
 
         var data = new Dictionary<string, object?> { { "name", "test" } };
-        var ov = new Data("data", data);
-        ov.Context = context;
+        var ov = new Data("data", data, context: context);
 
         var child = await ov.GetChild("name");
 
@@ -632,8 +619,7 @@ public class DataTests
         var context = new global::app.actor.context.@this(engine, engine.User);
 
         // text/plain is compressible (kind "text").
-        var data = new Data("", "Hello, this is a test string for compression!", Type.FromMime("text/plain"));
-        data.Context = context;
+        var data = new Data("", "Hello, this is a test string for compression!", Type.FromMime("text/plain"), context: context);
 
         var compressed = data.Compress();
 
@@ -650,18 +636,7 @@ public class DataTests
 
         // Bytes off I/O are binary; the kind (jpg) resolves to the image
         // family, which is not compressible (already-compressed content).
-        var data = new Data("", new byte[] { 1, 2, 3 }, engine.Format.TypeFromMime("image/jpeg"));
-        data.Context = context;
-
-        var result = data.Compress();
-
-        await Assert.That(result).IsEqualTo(data);
-    }
-
-    [Test]
-    public async Task Compress_NoContext_ReturnsSelf()
-    {
-        var data = new Data("", "Hello", Type.FromName("text"));
+        var data = new Data("", new byte[] { 1, 2, 3 }, engine.Format.TypeFromMime("image/jpeg"), context: context);
 
         var result = data.Compress();
 
@@ -675,8 +650,7 @@ public class DataTests
         var context = new global::app.actor.context.@this(engine, engine.User);
 
         // Compress a plain Data, then decompress — the value round-trips.
-        var inner = new Data("", "Hello world", Type.FromMime("text/plain"));
-        inner.Context = context;
+        var inner = new Data("", "Hello world", Type.FromMime("text/plain"), context: context);
 
         var compressed = inner.Compress();
         var decompressed = compressed.Decompress();
@@ -688,7 +662,7 @@ public class DataTests
     [Test]
     public async Task Decompress_NonArchived_ReturnsSelf()
     {
-        var data = new Data("", "Hello", Type.FromName("text"));
+        var data = _app.Data("", "Hello", Type.FromName("text"));
 
         var result = data.Decompress();
 
@@ -701,8 +675,7 @@ public class DataTests
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
 
-        var content = new Data("", "The quick brown fox jumps over the lazy dog", Type.FromMime("text/plain"));
-        content.Context = context;
+        var content = new Data("", "The quick brown fox jumps over the lazy dog", Type.FromMime("text/plain"), context: context);
 
         var compressed = content.Compress();
         compressed.Context = context;
@@ -715,7 +688,7 @@ public class DataTests
     [Test]
     public async Task Encrypt_ReturnsSelf_NoCryptoYet()
     {
-        var data = new Data("", "secret", Type.FromName("text"));
+        var data = _app.Data("", "secret", Type.FromName("text"));
 
         var result = data.Encrypt();
 
@@ -725,7 +698,7 @@ public class DataTests
     [Test]
     public async Task Decrypt_NonEncrypted_ReturnsSelf()
     {
-        var data = new Data("", "Hello", Type.FromName("text"));
+        var data = _app.Data("", "Hello", Type.FromName("text"));
 
         var result = data.Decrypt();
 
@@ -737,7 +710,7 @@ public class DataTests
     {
         // A Data declared as "encrypted" — Decrypt is a no-op until a crypto
         // service exists, returning self.
-        var encrypted = new Data("", new byte[] { 1, 2 }, Type.FromName("encrypted"));
+        var encrypted = _app.Data("", new byte[] { 1, 2 }, Type.FromName("encrypted"));
 
         var result = encrypted.Decrypt();
 
@@ -751,8 +724,7 @@ public class DataTests
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
 
-        var data = new Data("msg", "Hello, PLang!", Type.FromMime("text/plain"));
-        data.Context = context;
+        var data = new Data("msg", "Hello, PLang!", Type.FromMime("text/plain"), context: context);
 
         var envelope = data.Compress();
 
@@ -767,7 +739,7 @@ public class DataTests
     {
         // A Data that is not an archive item is not decompressable — Decompress
         // is a no-op and returns the Data unchanged (mirrors Decrypt / Unwrap).
-        var data = new Data("", "not an archive", Type.FromMime("text/plain"));
+        var data = _app.Data("", "not an archive", Type.FromMime("text/plain"));
 
         var result = data.Decompress();
 
@@ -779,7 +751,7 @@ public class DataTests
     public async Task Decompress_NullBytes_ReturnsError()
     {
         // archive with empty bytes — nothing decompressable
-        var archived = new Data("", new global::app.type.archive.@this(System.Array.Empty<byte>()));
+        var archived = new Data("", new global::app.type.archive.@this(System.Array.Empty<byte>()), context: _app.User.Context);
 
         var result = archived.Decompress();
 
@@ -793,8 +765,7 @@ public class DataTests
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
         // Random bytes — not valid GZip
-        var archived = new Data("", new global::app.type.archive.@this(new byte[] { 0xFF, 0xFE, 0x00, 0x42 }));
-        archived.Context = context;
+        var archived = new Data("", new global::app.type.archive.@this(new byte[] { 0xFF, 0xFE, 0x00, 0x42 }), context: context);
 
         var result = archived.Decompress();
 
@@ -820,8 +791,7 @@ public class DataTests
 
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
-        var archived = new Data("", new global::app.type.archive.@this(gzipped));
-        archived.Context = context;
+        var archived = new Data("", new global::app.type.archive.@this(gzipped), context: context);
 
         var result = archived.Decompress();
 
@@ -839,8 +809,7 @@ public class DataTests
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
 
-        var content = new Data("", "Hello", Type.FromMime("text/plain"));
-        content.Context = context;
+        var content = new Data("", "Hello", Type.FromMime("text/plain"), context: context);
         content.Properties["metadata"] = "some value";
 
         var compressed = content.Compress();
@@ -926,8 +895,7 @@ public class DataTests
         // Stage 3: archived.Value is the gzip byte[] directly (no inner gzip Data).
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
-        var archived = new Data("", new global::app.type.archive.@this(compressed));
-        archived.Context = context;
+        var archived = new Data("", new global::app.type.archive.@this(compressed), context: context);
 
         var result = archived.Decompress();
 
@@ -942,7 +910,7 @@ public class DataTests
     [Test]
     public async Task Decompress_NullBytes_ReturnsStatusCode500()
     {
-        var archived = new Data("", new global::app.type.archive.@this(System.Array.Empty<byte>()));
+        var archived = new Data("", new global::app.type.archive.@this(System.Array.Empty<byte>()), context: _app.User.Context);
 
         var result = archived.Decompress();
 
@@ -952,7 +920,7 @@ public class DataTests
     [Test]
     public async Task Decompress_CorruptData_ReturnsStatusCode500()
     {
-        var archived = new Data("", new global::app.type.archive.@this(new byte[] { 0xFF, 0xFE, 0x00, 0x42 }));
+        var archived = new Data("", new global::app.type.archive.@this(new byte[] { 0xFF, 0xFE, 0x00, 0x42 }), context: _app.User.Context);
 
         var result = archived.Decompress();
 
@@ -973,7 +941,7 @@ public class DataTests
             gzipped = vars.ToArray();
         }
 
-        var archived = new Data("", new global::app.type.archive.@this(gzipped));
+        var archived = new Data("", new global::app.type.archive.@this(gzipped), context: _app.User.Context);
 
         var result = archived.Decompress();
 
@@ -985,8 +953,11 @@ public class DataTests
     // native list type if/when needed (see todos: merge onto list.@this).
 }
 
-public class DynamicDataTests
+public class DynamicDataTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/DynamicDataTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
+
     [Test]
     public async Task Constructor_CreatesWithFactory()
     {
@@ -1049,28 +1020,28 @@ public class DynamicDataTests
     [Test]
     public async Task IsVariable_EmptyPercents_ReturnsFalse()
     {
-        var d = new Data("x", "%%");
+        var d = _app.Data("x", "%%");
         await Assert.That(d.IsVariable).IsFalse();
     }
 
     [Test]
     public async Task IsVariable_EmbeddedVariable_ReturnsFalse()
     {
-        var d = new Data("x", "hello %var%");
+        var d = _app.Data("x", "hello %var%");
         await Assert.That(d.IsVariable).IsFalse();
     }
 
     [Test]
     public async Task IsVariable_VariableWithTrailing_ReturnsFalse()
     {
-        var d = new Data("x", "%var% + 1");
+        var d = _app.Data("x", "%var% + 1");
         await Assert.That(d.IsVariable).IsFalse();
     }
 
     [Test]
     public async Task IsVariable_NonStringValue_ReturnsFalse()
     {
-        var d = new Data("x", 42);
+        var d = _app.Data("x", 42);
         await Assert.That(d.IsVariable).IsFalse();
     }
 
@@ -1107,21 +1078,21 @@ public class DynamicDataTests
     [Test]
     public async Task HasVariableReference_NoVariables_ReturnsFalse()
     {
-        var d = new Data("x", "no vars");
+        var d = _app.Data("x", "no vars");
         await Assert.That(d.HasVariableReference).IsFalse();
     }
 
     [Test]
     public async Task HasVariableReference_EmptyPercents_ReturnsFalse()
     {
-        var d = new Data("x", "%%");
+        var d = _app.Data("x", "%%");
         await Assert.That(d.HasVariableReference).IsFalse();
     }
 
     [Test]
     public async Task HasVariableReference_NonStringValue_ReturnsFalse()
     {
-        var d = new Data("x", 42);
+        var d = _app.Data("x", 42);
         await Assert.That(d.HasVariableReference).IsFalse();
     }
 

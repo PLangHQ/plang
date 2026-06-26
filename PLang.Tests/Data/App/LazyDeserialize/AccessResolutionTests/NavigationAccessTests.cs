@@ -49,7 +49,8 @@ public class NavigationAccessTests
     // a structured value; a bare text reaching here means the author navigated a string.
     [Test] public async Task Navigation_OnText_FailsWithCantNavigateText()
     {
-        var d = data.Ok("hello");          // genuinely text (authored)
+        await using var app = NewApp();
+        var d = app.Ok("hello");          // genuinely text (authored)
         var r = await d.GetChild("port");
         await Assert.That(r.Success).IsFalse();
         await Assert.That(r.Error!.Key).IsEqualTo("CantNavigateText");
@@ -59,8 +60,9 @@ public class NavigationAccessTests
     // directly without invoking the reader.
     [Test] public async Task Navigation_OnAuthoredDictValue_DoesNotTriggerReader()
     {
+        await using var app = NewApp();
         var dict = new System.Collections.Generic.Dictionary<string, object?> { ["port"] = 8080L };
-        var d = data.Ok(dict);
+        var d = app.Ok(dict);
         await Assert.That((await (await d.GetChild("port")).Value())?.ToString()).IsEqualTo("8080");
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }

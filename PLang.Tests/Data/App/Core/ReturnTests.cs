@@ -11,7 +11,7 @@ public class DataResultTests : System.IAsyncDisposable
     [Test]
     public async Task Ok_NoValue_ReturnsSuccess()
     {
-        var result = Data.Ok();
+        var result = app.Ok();
 
         await result.IsSuccess();
         // A no-value Ok holds the plang null citizen (a real item), not C# null.
@@ -34,7 +34,7 @@ public class DataResultTests : System.IAsyncDisposable
     [Test]
     public async Task Ok_WithNullValue_ReturnsSuccessWithNull()
     {
-        var result = Data.Ok(null);
+        var result = app.Ok(null);
 
         await result.IsSuccess();
         // Ok(null) holds the plang null citizen (a real item), not C# null.
@@ -46,7 +46,7 @@ public class DataResultTests : System.IAsyncDisposable
     {
         var error = new Error("Test error", "TestKey", 500);
 
-        var result = Data.FromError(error);
+        var result = app.Error(error);
 
         await result.IsFailure();
         await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
@@ -57,7 +57,7 @@ public class DataResultTests : System.IAsyncDisposable
     [Test]
     public async Task Fail_WithErrorMessage_ReturnsErrorWithDefaultKey()
     {
-        var result = Data.FromError(new Error("Something went wrong"));
+        var result = app.Error(new Error("Something went wrong"));
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
@@ -69,7 +69,7 @@ public class DataResultTests : System.IAsyncDisposable
     [Test]
     public async Task Fail_WithMessageAndKeyAndStatusCode_ReturnsCustomError()
     {
-        var result = Data.FromError(new Error("Not found", "NotFound", 404));
+        var result = app.Error(new Error("Not found", "NotFound", 404));
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).IsEqualTo("Not found");
@@ -100,7 +100,7 @@ public class DataResultTests : System.IAsyncDisposable
     [Test]
     public async Task GetValue_WithNullValue_ReturnsDefault()
     {
-        var result = Data.Ok();
+        var result = app.Ok();
 
         var value = result.GetValue<string>();
 
@@ -110,7 +110,7 @@ public class DataResultTests : System.IAsyncDisposable
     [Test]
     public async Task GetValue_WithReferenceType_ReturnsNull()
     {
-        var result = Data.Ok();
+        var result = app.Ok();
 
         var value = result.GetValue<List<int>>();
 
@@ -120,7 +120,7 @@ public class DataResultTests : System.IAsyncDisposable
     [Test]
     public async Task ImplicitBool_SuccessResult_ReturnsTrue()
     {
-        Data result = Data.Ok();
+        Data result = app.Ok();
 
         bool boolValue = result;
 
@@ -130,7 +130,7 @@ public class DataResultTests : System.IAsyncDisposable
     [Test]
     public async Task ImplicitBool_FailureResult_ReturnsFalse()
     {
-        Data result = Data.FromError(new Error("error"));
+        Data result = app.Error(new Error("error"));
 
         bool boolValue = result;
 
@@ -140,8 +140,8 @@ public class DataResultTests : System.IAsyncDisposable
     [Test]
     public async Task ImplicitBool_CanBeUsedInIfStatement()
     {
-        var successResult = Data.Ok();
-        var failResult = Data.FromError(new Error("error"));
+        var successResult = app.Ok();
+        var failResult = app.Error(new Error("error"));
 
         var successPassed = false;
         var failPassed = true;
@@ -166,7 +166,7 @@ public class DataResultTests : System.IAsyncDisposable
     [Test]
     public async Task ToString_SuccessWithNullValue_ReturnsNull()
     {
-        var result = Data.Ok();
+        var result = app.Ok();
 
         var str = result.ToString();
 
@@ -177,7 +177,7 @@ public class DataResultTests : System.IAsyncDisposable
     [Test]
     public async Task ToString_Failure_ReturnsErrorMessage()
     {
-        var result = Data.FromError(new Error("Something went wrong"));
+        var result = app.Error(new Error("Something went wrong"));
 
         var str = result.ToString();
 
@@ -217,7 +217,7 @@ public class DataResultTests : System.IAsyncDisposable
     [Test]
     public async Task Error_IsMutable()
     {
-        var result = Data.Ok();
+        var result = app.Ok();
         await result.IsSuccess();
 
         result.Error = new Error("now failed");

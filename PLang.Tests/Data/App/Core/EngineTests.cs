@@ -253,6 +253,7 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
         var goal = new Goal { Name = "EmptyGoal", Path = "/EmptyGoal.goal" };
+        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var result = await engine.RunGoalAsync(new GoalCall { Name = "EmptyGoal" });
@@ -275,6 +276,7 @@ public class EngineTests
                     index: 0, text: "set variable")
             }
         };
+        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         // Cancel via the engine's shutdown — Goal.RunAsync checks context.CancellationToken
@@ -291,6 +293,7 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
         var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
+        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
         var context = engine.User.Context;
         await engine.RunGoalAsync(goal, context);
@@ -306,6 +309,7 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
         var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
+        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -323,6 +327,7 @@ public class EngineTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("TestGoal",
             Make.Step("set variable",
                 Make.Action("variable", "set", Make.Param("Name", "test", "variable"), ("Value", "hello")))));
+        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -347,6 +352,7 @@ public class EngineTests
                 // Missing name parameter -> will fail
             }
         };
+        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" });
@@ -497,6 +503,7 @@ public class EngineTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("TestGoal",
             Make.Step("set variable",
                 Make.Action("variable", "set", Make.Param("Name", "test", "variable"), ("Value", "hello")))));
+        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var result = await engine.RunGoalAsync(goal, engine.System.Context);
@@ -515,6 +522,7 @@ public class EngineTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("TestGoal",
             Make.Step("set variable",
                 Make.Action("variable", "set", Make.Param("Name", "test", "variable"), ("Value", "system-value")))));
+        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" }, engine.System.Context);
@@ -547,7 +555,7 @@ public class EngineTests
         public Task<Data> ExecuteAsync(global::app.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
         {
             Initialize(context.App!, context);
-            return Task.FromResult(Data.Ok());
+            return Task.FromResult(context.App!.Ok());
         }
         public void Dispose() => IsDisposed = true;
     }
@@ -564,7 +572,7 @@ public class EngineTests
         public Task<Data> ExecuteAsync(global::app.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
         {
             Initialize(context.App!, context);
-            return Task.FromResult(Data.Ok());
+            return Task.FromResult(context.App!.Ok());
         }
         public ValueTask DisposeAsync() { IsDisposed = true; return ValueTask.CompletedTask; }
     }

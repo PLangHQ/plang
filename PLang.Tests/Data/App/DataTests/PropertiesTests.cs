@@ -10,25 +10,28 @@ namespace PLang.Tests.App.DataTests;
 // The smoke tests below pin the new API's basic correctness; the wire-shape
 // and rejection semantics are covered in those Stage-4 suites.
 
-public class PropertiesTests
+public class PropertiesTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/PropertiesTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
+
     [Test] public async Task Set_StringValue_RoundTrips()
     {
-        var data = new global::app.data.@this("x", 0);
+        var data = _app.Data("x", 0);
         data.Properties["key"] = "value";
         await Assert.That(data.Properties["key"]).IsEqualTo("value");
     }
 
     [Test] public async Task Set_IntValue_RoundTrips()
     {
-        var data = new global::app.data.@this("x", 0);
+        var data = _app.Data("x", 0);
         data.Properties["n"] = 42;
         await Assert.That(data.Properties["n"]).IsEqualTo(42);
     }
 
     [Test] public async Task SettingNull_RemovesKey()
     {
-        var data = new global::app.data.@this("x", 0);
+        var data = _app.Data("x", 0);
         data.Properties["k"] = "v";
         data.Properties["k"] = null;
         await Assert.That(data.Properties.ContainsKey("k")).IsFalse();
@@ -36,20 +39,20 @@ public class PropertiesTests
 
     [Test] public async Task UnknownKey_ReturnsNull()
     {
-        var data = new global::app.data.@this("x", 0);
+        var data = _app.Data("x", 0);
         await Assert.That(data.Properties["missing"]).IsNull();
     }
 
     [Test] public async Task DataInstanceAsValue_Rejected()
     {
-        var data = new global::app.data.@this("x", 0);
-        var inner = new global::app.data.@this("y", 1);
+        var data = _app.Data("x", 0);
+        var inner = _app.Data("y", 1);
         await Assert.That(() => data.Properties["k"] = inner).Throws<ArgumentException>();
     }
 
     [Test] public async Task UnsupportedType_Rejected()
     {
-        var data = new global::app.data.@this("x", 0);
+        var data = _app.Data("x", 0);
         await Assert.That(() => data.Properties["k"] = new System.Threading.CancellationTokenSource()).Throws<ArgumentException>();
     }
 

@@ -3,8 +3,11 @@ using app.variable;
 
 namespace PLang.Tests.App.Core;
 
-public class GoalTests
+public class GoalTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/GoalTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
+
     [Test]
     public async Task Properties_CanBeInitialized()
     {
@@ -266,7 +269,7 @@ public class GoalTests
                         {
                             Module = "output",
                             ActionName = "write",
-                            Parameters = new List<Data> { new("Data", "hello") }
+                            Parameters = new List<Data> { _app.Data("Data", "hello") }
                         }
                     })
                 }
@@ -335,7 +338,7 @@ public class GoalTests
                         {
                             Module = "db",
                             ActionName = "select",
-                            Parameters = new List<Data> { new("sql", "select * from users") },
+                            Parameters = new List<Data> { _app.Data("sql", "select * from users") },
                         },
                         new global::app.goal.steps.step.actions.action.@this
                         {
@@ -343,8 +346,8 @@ public class GoalTests
                             ActionName = "set",
                             Parameters = new List<Data>
                             {
-                                new("Name", "users"),
-                                new("Value", "%!data%")
+                                _app.Data("Name", "users"),
+                                _app.Data("Value", "%!data%")
                             }
                         }
                     })
@@ -376,7 +379,7 @@ public class GoalTests
                         {
                             Module = "output",
                             ActionName = "write",
-                            Parameters = new List<Data> { new("Data", "hello") }
+                            Parameters = new List<Data> { _app.Data("Data", "hello") }
                         }
                     })
                 },

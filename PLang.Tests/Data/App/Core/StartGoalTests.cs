@@ -29,6 +29,7 @@ public class StartGoalTests
                 Make.Action("variable", "set", Make.Param("Name", "newVarName", "variable"), ("Value", "%name%"))),
             Make.Step("write out \"NewVar: %newVarName%\"",
                 Make.Action("output", "write", ("Data", "NewVar: %newVarName%")))));
+        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -61,6 +62,7 @@ public class StartGoalTests
                 Make.Action("variable", "set", Make.Param("Name", "myVar", "variable"), ("Value", "Hello"))),
             Make.Step("set result = %myVar%",
                 Make.Action("variable", "set", Make.Param("Name", "result", "variable"), ("Value", "%myVar%")))));
+        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -83,6 +85,7 @@ public class StartGoalTests
                 Make.Action("variable", "set", Make.Param("Name", "user", "variable"), ("Value", "World"))),
             Make.Step("write Hello %user%!",
                 Make.Action("output", "write", ("Data", "Hello %user%!")))));
+        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -103,6 +106,7 @@ public class StartGoalTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
             Make.Step("write literal",
                 Make.Action("output", "write", ("Data", "no variables here")))));
+        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -123,6 +127,7 @@ public class StartGoalTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
             Make.Step("write with unknown var",
                 Make.Action("output", "write", ("Data", "Value: %unknown%")))));
+        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -143,6 +148,7 @@ public class StartGoalTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
             Make.Step("set result = %nonexistent%",
                 Make.Action("variable", "set", Make.Param("Name", "result", "variable"), ("Value", "%nonexistent%")))));
+        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -168,6 +174,7 @@ public class StartGoalTests
                 Make.WithDefaults(
                     Make.Action("variable", "set", Make.Param("Name", "greeting", "variable"), ("Value", "hello")),
                     ("Type", new global::app.type.@this("text"))))));
+        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -194,6 +201,7 @@ public class StartGoalTests
                         Make.Param("Name", "count", "variable"), ("Value", 42),
                         ("Type", new global::app.type.@this("number", "long"))),
                     ("Type", new global::app.type.@this("text"))))));
+        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -214,6 +222,7 @@ public class StartGoalTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
             Make.Step("set x = y",
                 Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", "y")))));
+        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -261,7 +270,7 @@ public class StartGoalTests
             }
             if (content != null)
                 Lines.Add(content.ToString()!);
-            return Data.Ok();
+            return context.App.Ok();
         }
     }
 

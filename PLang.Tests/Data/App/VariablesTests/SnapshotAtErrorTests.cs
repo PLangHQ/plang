@@ -12,6 +12,7 @@ public class SnapshotAtErrorTests
         var step = new Step { Index = 0, Text = "step", Goal = goal };
         var action = new ActionEntity { Module = "test", ActionName = "test" };
         action.Step = step; step.Actions.Add(action); goal.Steps.Add(step);
+        goal.Steps.Context = app.User.Context;
         app.Goal.Add(goal);
         return (app, action);
     }

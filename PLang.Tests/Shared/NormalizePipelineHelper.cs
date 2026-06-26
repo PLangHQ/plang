@@ -17,7 +17,7 @@ internal static class NormalizePipelineHelper
         using (var jw = new Utf8JsonWriter(ms))
         {
             var writer = new global::app.channel.serializer.json.Writer(jw);
-            var carrier = new app.data.@this("", rawValue);
+            var carrier = new app.data.@this("", rawValue, context: global::PLang.Tests.TestApp.SharedContext);
             var normalized = carrier.Normalize(mode);
             writer.Value(normalized);
         }

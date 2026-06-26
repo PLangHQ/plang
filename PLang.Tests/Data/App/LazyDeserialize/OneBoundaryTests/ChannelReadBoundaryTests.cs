@@ -2,7 +2,6 @@ using System.Text;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using data = global::app.data.@this;
 using stream = global::app.channel.type.stream.@this;
 
 namespace PLang.Tests.App.LazyDeserialize.OneBoundaryTests;
@@ -106,7 +105,7 @@ public class ChannelReadBoundaryTests
     {
         await using var app = NewApp();
         var serializer = app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var wire = (await serializer.Serialize(data.Ok("hello")).Value())!.Clr<string>()!;
+        var wire = (await serializer.Serialize(app.Ok("hello")).Value())!.Clr<string>()!;
 
         var ch = Input(app, "application/plang", Encoding.UTF8.GetBytes(wire));
         var d = await ch.Read();

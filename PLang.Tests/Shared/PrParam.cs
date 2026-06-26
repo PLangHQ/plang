@@ -16,7 +16,8 @@ public static class PrParam
         string module, string action, System.Collections.Generic.IDictionary<string, object?> parameters)
         => parameters.Select(kv => new global::app.data.@this(
                 kv.Key, kv.Value,
-                IsVarNameSlot(module, action, kv.Key) ? new global::app.type.@this("variable") : null))
+                IsVarNameSlot(module, action, kv.Key) ? new global::app.type.@this("variable") : null,
+                context: global::PLang.Tests.TestApp.SharedContext))
             .ToList();
 
     /// <summary>

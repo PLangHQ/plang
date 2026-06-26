@@ -16,6 +16,7 @@ public class CallSnapshotTests
         action.Step = step;
         step.Actions.Add(action);
         goal.Steps.Add(step);
+        goal.Steps.Context = app.User.Context;
         app.Goal.Add(goal);
         return (app, action);
     }
@@ -71,6 +72,7 @@ public class CallSnapshotTests
             dstAction.Step = dstStep;
             dstStep.Actions.Add(dstAction);
             dstGoal.Steps.Add(dstStep);
+            dstGoal.Steps.Context = dst.User.Context;
             dst.Goal.Add(dstGoal);
 
             dst.Restore(snap, dst.User.Context);
@@ -116,6 +118,7 @@ public class CallSnapshotTests
             dstAction.Step = dstStep;
             dstStep.Actions.Add(dstAction);
             dstGoal.Steps.Add(dstStep);
+            dstGoal.Steps.Context = dst.User.Context;
             dst.Goal.Add(dstGoal);
 
             await Assert.ThrowsAsync<CallbackGoalHashMismatch>(async () =>
@@ -141,6 +144,7 @@ public class CallSnapshotTests
             dstAction.Step = dstStep;
             dstStep.Actions.Add(dstAction);
             dstGoal.Steps.Add(dstStep);
+            dstGoal.Steps.Context = dst.User.Context;
             dst.Goal.Add(dstGoal);
 
             var goalBefore = dstGoal;

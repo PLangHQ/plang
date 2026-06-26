@@ -61,7 +61,7 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Put_StoresData()
     {
         var stack = new Variables(_app.User.Context);
-        var ov = new Data("test", "value");
+        var ov = _app.Data("test", "value");
 
         stack.Set(ov);
 
@@ -136,7 +136,7 @@ public class VariablesTests : System.IAsyncDisposable
         // advisory (its "original name at creation"). Reverting this branch to
         // the old ShallowClone + rename-to-key behavior would fail both asserts.
         var stack = new Variables(_app.User.Context);
-        var original = new Data("originalName", 42);
+        var original = _app.Data("originalName", 42);
 
         stack.Set("alias", original);
 
@@ -284,8 +284,8 @@ public class VariablesTests : System.IAsyncDisposable
         var alice = new global::app.type.dict.@this(); alice.Set("Name", "Alice");
         var bob = new global::app.type.dict.@this(); bob.Set("Name", "Bob");
         var people = new global::app.type.list.@this();
-        people.Add(new Data("", alice));
-        people.Add(new Data("", bob));
+        people.Add(_app.Data("", alice));
+        people.Add(_app.Data("", bob));
         await stack.Set("people", people);
 
         await stack.Set("people[1].Name", "Robert");
@@ -301,8 +301,8 @@ public class VariablesTests : System.IAsyncDisposable
         var alice = new global::app.type.dict.@this(); alice.Set("Name", "Alice");
         var bob = new global::app.type.dict.@this(); bob.Set("Name", "Bob");
         var people = new global::app.type.list.@this();
-        people.Add(new Data("", alice));
-        people.Add(new Data("", bob));
+        people.Add(_app.Data("", alice));
+        people.Add(_app.Data("", bob));
         await stack.Set("people", people);
         await stack.Set("idx", 0L);
 
@@ -769,7 +769,7 @@ public class VariablesTests : System.IAsyncDisposable
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
 
-        var data = new Data("test", "hello");
+        var data = new Data("test", "hello", context: engine.User.Context);
         context.Variable.Set(data);
 
         await Assert.That(data.Context).IsEqualTo(context);

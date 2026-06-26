@@ -55,7 +55,7 @@ public class VariableResolveTests
     [Test]
     public async Task SlotData_PercentWrapped_AsVariable_NameIsX()
     {
-        var slot = new global::app.data.@this<@this>("Name", @this.Resolve("%x%", _app.User.Context)) { Context = _app.User.Context };
+        var slot = new global::app.data.@this<@this>("Name", @this.Resolve("%x%", _app.User.Context), context: _app.User.Context);
 
         var resolved = await slot.Value<@this>();
 
@@ -70,7 +70,7 @@ public class VariableResolveTests
     public async Task SlotData_PercentWrapped_AsVariable_IgnoresExistingValue()
     {
         _app.User.Context.Variable.Set("x", 5);
-        var slot = new global::app.data.@this<@this>("Name", @this.Resolve("%x%", _app.User.Context)) { Context = _app.User.Context };
+        var slot = new global::app.data.@this<@this>("Name", @this.Resolve("%x%", _app.User.Context), context: _app.User.Context);
 
         var resolved = await slot.Value<@this>();
 
@@ -82,7 +82,7 @@ public class VariableResolveTests
     [Test]
     public async Task SlotData_BareName_AsVariable_NameIsX()
     {
-        var slot = new global::app.data.@this<@this>("Name", @this.Resolve("x", _app.User.Context)) { Context = _app.User.Context };
+        var slot = new global::app.data.@this<@this>("Name", @this.Resolve("x", _app.User.Context), context: _app.User.Context);
 
         var resolved = await slot.Value<@this>();
 
