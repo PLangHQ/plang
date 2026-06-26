@@ -35,7 +35,7 @@ public partial class @this
 
         var diff = CompareElements(thisDoc.RootElement, otherDoc.RootElement, "");
 
-        return new @this("comparison", diff);
+        return new @this("comparison", diff, context: Context);
     }
 
     private static string SerializeForComparison(@this data)

@@ -225,7 +225,7 @@ public partial class @this
             {
                 var copy = new app.type.dict.@this();
                 foreach (var entry in nativeDict.Entries)
-                    copy.Set(Entry(entry.Name, NormalizeValue(entry.Peek(), mode, visited, depth + 1, types)));
+                    copy.Set(Entry(entry.Name, NormalizeValue(entry.Peek(), mode, visited, depth + 1, types), types));
                 return copy;
             }
             finally { visited.Remove(nativeDict); }
@@ -239,7 +239,7 @@ public partial class @this
                 throw CycleError(value);
             try
             {
-                var built = new app.type.dict.@this();
+                var built = new app.type.dict.@this { Context = types?.Context };
                 foreach (DictionaryEntry e in rawDict)
                 {
                     var name = e.Key?.ToString() ?? "";
@@ -331,8 +331,8 @@ public partial class @this
     // ARE Data boxes) — re-boxing it in `new @this(name, data)` nests a bare Data
     // and trips Lift's guard. ShallowClone renames without mutating the source
     // (outbound normalize is observation-only).
-    private static @this Entry(string name, object? normalized)
-        => normalized is @this nd ? nd.ShallowClone(name) : new @this(name, normalized);
+    private static @this Entry(string name, object? normalized, app.type.catalog.@this? types)
+        => normalized is @this nd ? nd.ShallowClone(name) : new @this(name, normalized, context: types?.Context);
 
     // A C# domain record reflects into the one object form — a native `dict`,
     // not a parallel "property bag" list. One object shape across the wire.
@@ -344,7 +344,7 @@ public partial class @this
         try
         {
             var entries = app.channel.serializer.filter.Tagged.PropertiesFor(obj.GetType(), mode);
-            var built = new app.type.dict.@this();
+            var built = new app.type.dict.@this { Context = types?.Context };
 
             foreach (var entry in entries)
             {
@@ -354,7 +354,7 @@ public partial class @this
                 {
                     // [Masked] never invokes the getter — the value must not
                     // traverse memory boundaries it shouldn't cross.
-                    built.Set(new @this(name, "****"));
+                    built.Set(new @this(name, "****", context: types?.Context));
                     continue;
                 }
 
@@ -372,7 +372,7 @@ public partial class @this
 
                 try
                 {
-                    built.Set(Entry(name, NormalizeValue(raw, mode, visited, depth + 1, types: types)));
+                    built.Set(Entry(name, NormalizeValue(raw, mode, visited, depth + 1, types: types), types));
                 }
                 catch (NormalizeException ex) when (ex.Key == "NormalizeCycleDetected")
                 {
