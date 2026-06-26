@@ -609,7 +609,7 @@ public class EngineTypesTests
     public async Task Add_CustomType_LazyDerivationUsesEngineTypes()
     {
         await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine);
+        var context = new global::app.actor.context.@this(engine, engine.User);
 
         // Add a custom type mapping that static TypeMapping does NOT have
         engine.Format.Add(".custom", "custom-kind", "application/custom");

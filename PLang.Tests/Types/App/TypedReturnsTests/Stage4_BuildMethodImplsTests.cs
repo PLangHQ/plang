@@ -21,12 +21,12 @@ public class Stage4_BuildMethodImplsTests
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
 
-    private static PrAction Make(string module, string action, params (string name, object? value)[] parameters)
+    private PrAction Make(string module, string action, params (string name, object? value)[] parameters)
         => new PrAction
         {
             Module = module,
             ActionName = action,
-            Parameters = parameters.Select(p => new Data(p.name, p.value)).ToList()
+            Parameters = parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList()
         };
 
     private async Task<Data> Build(string module, string action, params (string name, object? value)[] parameters)

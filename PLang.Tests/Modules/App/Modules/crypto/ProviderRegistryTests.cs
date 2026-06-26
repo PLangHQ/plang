@@ -10,12 +10,17 @@ namespace PLang.Tests.App.Modules.crypto;
 public class ProviderRegistryTests
 {
     private EngineProviders _providers = null!;
+    private PLangEngine _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _providers = new EngineProviders();
+        _app = global::PLang.Tests.TestApp.Create("/tmp/provreg-" + System.Guid.NewGuid().ToString("N")[..6]);
+        _providers = new EngineProviders(_app.User.Context);
     }
+
+    [After(Test)]
+    public async Task Cleanup() => await _app.DisposeAsync();
 
     [Test]
     public async Task Get_NoRegistration_ReturnsError()

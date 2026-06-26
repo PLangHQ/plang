@@ -28,7 +28,7 @@ public class AssertionErrorVariablesTests
         _app = new global::app.@this("/test");
     }
 
-    private static Data D(object? value) => value == null ? new Data("") : Data.Ok(value);
+    private Data D(object? value) => value == null ? new Data("") : _app.User.Context.Ok(value);
 
     // New AssertionError has Variables == null. Only handlers populate it; unrelated error
     // construction paths leave it null.

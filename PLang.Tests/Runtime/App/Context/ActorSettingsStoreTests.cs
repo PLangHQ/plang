@@ -34,7 +34,7 @@ public class ActorSettingsStoreTests
         await using (var engine = new global::app.@this(_testDir))
         {
             engine.Builder.IsEnabled = true;
-            await engine.SettingsStore.Set("LlmCache", "testkey", Data.Ok("cached_response"));
+            await engine.SettingsStore.Set("LlmCache", "testkey", engine.User.Context.Ok("cached_response"));
         }
 
         await using (var engine2 = new global::app.@this(_testDir))
@@ -55,7 +55,7 @@ public class ActorSettingsStoreTests
         await using (var engine = new global::app.@this(_testDir))
         {
             engine.Tester.IsEnabled = true;
-            await engine.SettingsStore.Set("LlmCache", "testkey", Data.Ok("cached_response"));
+            await engine.SettingsStore.Set("LlmCache", "testkey", engine.User.Context.Ok("cached_response"));
         }
 
         await using (var engine2 = new global::app.@this(_testDir))

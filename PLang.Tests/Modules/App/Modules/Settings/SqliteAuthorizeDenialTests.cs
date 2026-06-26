@@ -41,7 +41,7 @@ public class SqliteAuthorizeDenialTests
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "external.sqlite");
         var dbPath = new FilePath(outOfRoot, app.User.Context);
         bool threw = false;
-        try { using var _ = new global::app.module.settings.Sqlite(dbPath); }
+        try { using var _ = new global::app.module.settings.Sqlite(dbPath, app.User.Context); }
         catch (System.InvalidOperationException) { threw = true; }
         await Assert.That(threw).IsTrue();
         await Assert.That(System.IO.File.Exists(outOfRoot)).IsFalse();
@@ -53,7 +53,7 @@ public class SqliteAuthorizeDenialTests
         var ch = new CannedChannel("UNEXPECTED");
         app.User.Channel.Register(ch);
         var dbPath = new FilePath(System.IO.Path.Combine(root, "data.sqlite"), app.User.Context);
-        using var _ = new global::app.module.settings.Sqlite(dbPath);
+        using var _ = new global::app.module.settings.Sqlite(dbPath, app.User.Context);
         await Assert.That(ch.AskCount).IsEqualTo(0);
     }
 }

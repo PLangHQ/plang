@@ -9,9 +9,17 @@ namespace PLang.Tests.App.Types;
 public class RegistryFoldTests
 {
     private global::app.type.catalog.@this _types = null!;
+    private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _types = new global::app.type.catalog.@this();
+    public void Setup()
+    {
+        _app = global::PLang.Tests.TestApp.Create("/tmp/regfold-" + System.Guid.NewGuid().ToString("N")[..6]);
+        _types = new global::app.type.catalog.@this();
+    }
+
+    [After(Test)]
+    public async Task Cleanup() => await _app.DisposeAsync();
 
     [Test]
     public async Task Get_NumberByName_ResolvesViaRegistry_NotFlatPrimitivesDict()
@@ -79,7 +87,7 @@ public class RegistryFoldTests
     [Test]
     public async Task Conversion_TryConvertTo_RoutesThroughRegistry_NotPrimitivesDict()
     {
-        var (value, error) = global::app.type.catalog.@this.TryConvert("42", typeof(int));
+        var (value, error) = global::app.type.catalog.@this.TryConvert("42", typeof(int), _app.User.Context);
         await Assert.That(error).IsNull();
         await Assert.That(value).IsEqualTo(42);
     }

@@ -34,7 +34,7 @@ public class DataSourceTests
     private global::app.module.settings.Sqlite CreateDataSource()
     {
         var dbPath = global::app.type.path.@this.Resolve("/.db/test.sqlite", _app.System.Context!);
-        return new global::app.module.settings.Sqlite(dbPath);
+        return new global::app.module.settings.Sqlite(dbPath, _app.System.Context!);
     }
 
     [Test]
@@ -276,7 +276,7 @@ public class DataSourceTests
     [Test]
     public async Task InMemory_CrudOperations()
     {
-        using var ds = global::app.module.settings.Sqlite.InMemory("test_crud");
+        using var ds = global::app.module.settings.Sqlite.InMemory("test_crud", _app.User.Context);
 
         // Set
         var setResult = await ds.Set("items", "key1", new Data("key1", "value1"));
@@ -307,7 +307,7 @@ public class DataSourceTests
     [Test]
     public async Task InMemory_SchemaPersistsAcrossOperations()
     {
-        using var ds = global::app.module.settings.Sqlite.InMemory("test_schema");
+        using var ds = global::app.module.settings.Sqlite.InMemory("test_schema", _app.User.Context);
 
         // First operation creates the table
         await ds.Set("persistent", "key1", new Data("key1", "value1"));
@@ -327,8 +327,8 @@ public class DataSourceTests
     [Test]
     public async Task InMemory_TwoNamesAreIsolated()
     {
-        using var ds1 = global::app.module.settings.Sqlite.InMemory("db_alpha");
-        using var ds2 = global::app.module.settings.Sqlite.InMemory("db_beta");
+        using var ds1 = global::app.module.settings.Sqlite.InMemory("db_alpha", _app.User.Context);
+        using var ds2 = global::app.module.settings.Sqlite.InMemory("db_beta", _app.User.Context);
 
         await ds1.Set("shared", "key", new Data("key", "alpha_value"));
         await ds2.Set("shared", "key", new Data("key", "beta_value"));
@@ -344,12 +344,12 @@ public class DataSourceTests
     public async Task InMemory_DisposeClosesDb()
     {
         // Create, populate, dispose
-        var ds1 = global::app.module.settings.Sqlite.InMemory("disposable_db");
+        var ds1 = global::app.module.settings.Sqlite.InMemory("disposable_db", _app.User.Context);
         await ds1.Set("data", "key", new Data("key", "value"));
         ds1.Dispose();
 
         // New datasource with same name should start empty (sentinel closed → DB vanished)
-        using var ds2 = global::app.module.settings.Sqlite.InMemory("disposable_db");
+        using var ds2 = global::app.module.settings.Sqlite.InMemory("disposable_db", _app.User.Context);
         var result = await ds2.Get<global::app.type.item.@this>("data", "key");
         await result.IsSuccess();
         await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();

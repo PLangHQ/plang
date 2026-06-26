@@ -110,7 +110,7 @@ public class Stage4_PerTypeCompareTests
         static global::app.type.list.@this L(global::app.actor.context.@this c, params object[] items)
         {
             var l = new global::app.type.list.@this { Context = c };
-            foreach (var i in items) l.Add(new Data("", i));
+            foreach (var i in items) l.Add(new Data("", i, context: c));
             return l;
         }
         await Assert.That(global::app.type.list.@this.Compare(L(ctx,1,2), L(ctx,1,3))).IsEqualTo(Comparison.Less);
@@ -174,9 +174,9 @@ public class Stage4_PerTypeCompareTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         var list = new global::app.type.list.@this { Context = ctx };
-        list.Add(new Data("", 3));
-        list.Add(new Data("", null));
-        list.Add(new Data("", 1));
+        list.Add(new Data("", 3, context: ctx));
+        list.Add(new Data("", null, context: ctx));
+        list.Add(new Data("", 1, context: ctx));
         await list.SortByValue(descending: false);
         await Assert.That((await list.At(0)!.Value())?.ToString()).IsEqualTo("1");
         await Assert.That((await list.At(1)!.Value())?.ToString()).IsEqualTo("3");

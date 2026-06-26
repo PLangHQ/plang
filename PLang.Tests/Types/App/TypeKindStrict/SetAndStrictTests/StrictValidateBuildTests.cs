@@ -37,9 +37,9 @@ public class StrictValidateBuildTests
     private List<global::app.data.@this> Params(object value, global::app.type.@this typeEntity)
     {
         var ctx = _app.User.Context;
-        var nameData = new global::app.data.@this("Name", "x"); nameData.Context = ctx;
-        var valueData = new global::app.data.@this("Value", value); valueData.Context = ctx;
-        var typeData = new global::app.data.@this("Type", typeEntity); typeData.Context = ctx;
+        var nameData = new global::app.data.@this("Name", "x", context: ctx);
+        var valueData = new global::app.data.@this("Value", value, context: ctx);
+        var typeData = new global::app.data.@this("Type", typeEntity, context: ctx);
         return new() { nameData, valueData, typeData };
     }
 

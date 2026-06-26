@@ -61,7 +61,7 @@ public class NumberPolicyResolutionTests
         var parent = app.User.Context;
         app.Config.Set("number.overflow", POverflow.Throw, parent);
 
-        var child = new global::app.actor.context.@this(app, parent: parent);
+        var child = new global::app.actor.context.@this(app, app.User, parent: parent);
         var p = global::app.module.math.MathPolicy.Resolve(child, null, null);
         await Assert.That(p.Overflow).IsEqualTo(POverflow.Throw);
     }

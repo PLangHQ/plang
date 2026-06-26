@@ -36,9 +36,9 @@ public class Cut2_StrictMismatchFailsAtRightLayer
     [Test] public async Task LiteralPngAsImageGifStrict_FailsAtBuild()
     {
         var ctx = _app.User.Context;
-        var nameData = new global::app.data.@this("Name", "img"); nameData.Context = ctx;
-        var valueData = new global::app.data.@this("Value", PngBytes); valueData.Context = ctx;
-        var typeData = new global::app.data.@this("Type", Type("image", "gif", true)); typeData.Context = ctx;
+        var nameData = new global::app.data.@this("Name", "img", context: ctx);
+        var valueData = new global::app.data.@this("Value", PngBytes, context: ctx);
+        var typeData = new global::app.data.@this("Type", Type("image", "gif", true), context: ctx);
         var parameters = new List<global::app.data.@this> { nameData, valueData, typeData };
         var error = global::app.module.variable.Set.ValidateBuild(parameters);
         await Assert.That(error).IsNotNull();
@@ -51,9 +51,9 @@ public class Cut2_StrictMismatchFailsAtRightLayer
         context.Variable.Set("upload", PngBytes);
 
         // ValidateBuild defers — value is a %var% reference.
-        var nameData = new global::app.data.@this("Name", "img"); nameData.Context = context;
-        var valueData = new global::app.data.@this("Value", "%upload%"); valueData.Context = context;
-        var typeData = new global::app.data.@this("Type", Type("image", "gif", true)); typeData.Context = context;
+        var nameData = new global::app.data.@this("Name", "img", context: context);
+        var valueData = new global::app.data.@this("Value", "%upload%", context: context);
+        var typeData = new global::app.data.@this("Type", Type("image", "gif", true), context: context);
         var validateParams = new List<global::app.data.@this> { nameData, valueData, typeData };
         await Assert.That(global::app.module.variable.Set.ValidateBuild(validateParams)).IsNull();
 
@@ -70,9 +70,9 @@ public class Cut2_StrictMismatchFailsAtRightLayer
     {
         var context = _app.User.Context;
 
-        var nameData = new global::app.data.@this("Name", "img"); nameData.Context = context;
-        var valueData = new global::app.data.@this("Value", GifBytes); valueData.Context = context;
-        var typeData = new global::app.data.@this("Type", Type("image", "gif", true)); typeData.Context = context;
+        var nameData = new global::app.data.@this("Name", "img", context: context);
+        var valueData = new global::app.data.@this("Value", GifBytes, context: context);
+        var typeData = new global::app.data.@this("Type", Type("image", "gif", true), context: context);
         var validateParams = new List<global::app.data.@this> { nameData, valueData, typeData };
         await Assert.That(global::app.module.variable.Set.ValidateBuild(validateParams)).IsNull();
 
