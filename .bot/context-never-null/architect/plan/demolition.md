@@ -1,0 +1,80 @@
+# Demolition worklist
+
+Member-by-member, what must not survive this branch, grouped by mechanism. Read before cutting. The stays-list at the bottom is as load-bearing as the kill-list — flipping those would be wrong.
+
+## A. Construction-order windows
+
+| Member | File | Disposition |
+|---|---|---|
+| `App._system` (field, `actor.@this?`) | `app/this.cs:28` | non-null; both actors constructed eagerly at App start |
+| `App._user` (field, `actor.@this?`) | `app/this.cs:29` | non-null; same |
+| `Context.Actor` (`public ActorType? { get; internal set; }`) | `actor/context/this.cs:87` | non-null; owner passed into the Context ctor |
+| `Variables._context` (field) | `variable/list/this.cs:26` | non-null; stamped at construction, not a line later |
+| the line `Context.Actor = this` | `actor/this.cs:109` | gone — the ctor receives the owner instead |
+
+`RegisterContextVariables` uses `Actor?` / `Actor!` (`context/this.cs:171-172`) inside lazy lambdas — those `?`/`!` go once `Actor` is non-null.
+
+## B. Value carries context
+
+| Member | File | Disposition |
+|---|---|---|
+| `Data.Context` getter `_context ?? (_type as IContext)?.Context!` | `data/this.cs:116` | the `!` removed; getter returns `_context` (non-null) |
+| `Data.Context` setter `if (value != null …)` null-guard | `data/this.cs:120` | the null-guard removed |
+| `type.Context` (`internal actor.context.@this?`) | `type/this.cs:86` | non-null |
+| `dict._context` | `type/dict/this.cs:109` | non-null |
+| `list._context` | `type/list/this.cs:141` | non-null |
+| `path.Context` | `type/path/this.cs:120` | non-null |
+| `clr.Context` | `type/clr/this.cs:16` | non-null |
+| `computed.Context` | `type/item/computed.cs:20` | non-null |
+| `source.Context` | `type/item/source.cs:22` | non-null |
+| `Error.Context` | `error/Error.cs:107` | non-null |
+| `Data.Null()` → `@null.Instance` static sentinel | `data/this.cs:534` | replaced by `context.Null()`; no context-free static value |
+| `Activator.CreateInstance(choiceType, raw)` unstamped | `type/this.cs:391` | stamp `.Context = context` (context already in scope) |
+| `WrapAsTyped` not receiving `_context` | `data/Wire.cs:258,265` | receive/stamp `_context` (non-null) |
+
+New surface: `context.Null()`, `context.Error(...)`, `context.Ok(...)` factory methods on `actor.context.@this` (names are the coder's call).
+
+## C. Serializer / store binds context
+
+| Member | File | Disposition |
+|---|---|---|
+| `ContextLessFallback` (static field) | `channel/serializer/plang/this.cs:141` | deleted |
+| `… ?? ContextLessFallback` (Compress/Decompress) | `data/this.Transport.cs:58,142` | deleted; require the actor |
+| `… ?? ContextLessFallback.SnapshotOptions` | `snapshot/this.Wire.cs:89` | deleted; context-ful options |
+| `FromWire(raw, kind)` 2-arg seam | `snapshot/this.Wire.cs:83` | retired for a context-ful read registration |
+| `=> ContextLessFallback` (crypto hash serializer) | `module/crypto/code/Default.cs:22` | routes through the crypto module's context |
+| `Wire._context` (`actor.context.@this?`) | `data/Wire.cs:73` | non-null |
+| `_context != null` gate (var-ref branch) | `data/Wire.cs:386` | `_context != null` dropped |
+| `_context != null` gate (Typed-reader dispatch) | `data/Wire.cs:406-407` | `_context != null` dropped |
+| `_context != null` gate (`goal.call` inline) | `data/Wire.cs:419` | `_context != null` dropped |
+| `if (_context == null) { … }` trust/fail-closed block | `data/Wire.cs:211-227` | deleted entirely (Store now verifies; Out always has context) |
+| `_serializer = new()` (context-less) | `settings/Sqlite.cs:20` | `new(context)` |
+| `converter._context` (`actor.context.@this?`) ×2 | `channel/serializer/json/converter.cs:24,47` | non-null |
+
+`View` is **not** demolished — it keeps the freshness-modulation role (`SkipFreshnessCheck` on Store). Only its trust-vs-verify role goes.
+
+## D. Step.Context
+
+| Member | File | Disposition |
+|---|---|---|
+| `Step.Context` (`[JsonIgnore] actor.context.@this?`) | `goal/steps/step/this.cs:16` | field deleted |
+| `Step.Disabled` reading `Context` directly | `goal/steps/step/this.cs:24-38` | parameterized — `IsDisabled(context)` / `SetDisabled(context, value)` |
+| `Step.Context = this` (AnchorScope set) | `actor/context/this.cs:278` | removed (keep `context.Step = …`) |
+| `_previousStepContext = action.Step?.Context` (save) | `actor/context/this.cs:299` | removed |
+| `if (_action.Step != null) _action.Step.Context = _previousStepContext` (restore) | `actor/context/this.cs:307` | removed |
+| `_previousStepContext` field on AnchorScopeDisposable | `actor/context/this.cs:290` | removed |
+| `step.Context = Context` / `_items[i].Context = context` stamps | `goal/steps/this.cs:53,128` | removed; pass the local to `IsDisabled`/`SetDisabled` |
+
+## Downstream — the 56 parameters
+
+The nullable `context.@this?` parameters (e.g. `data/this.Normalize.cs:44`, `type/this.cs:409`, `catalog/Conversion.cs:76,90,147`, `type/reader/ReadContext.cs:20`, `type/this.cs:Create context=null`) are nullable because the fields they receive were. After A–D they take a non-null `context`. Drop the `?` and the `= null` defaults as each call chain becomes non-null. This is mechanical fallout, not separate design — but it is the bulk of the line count, so budget for it.
+
+## Stays-list — do NOT flip these
+
+- **`GetActor(string? name) → (actor.@this? Actor, IError? Error)`** (`app/this.cs:250`, the `(actor.@this?)null` at `:259`). The null is the not-found result, paired with the error. It is a return signal, not held state.
+- **`[Choices]` static-vocabulary context parameter** (`type/choice/list/this.cs:71`). Nullable by design — static vocabularies ignore context. Decide keep-nullable vs pass-and-ignore; either is fine, it is not a state field.
+- **`CallStack? CallStack => App?.CallStack`** (`context/this.cs:49`) and other read-through getters whose null reflects a genuinely absent upstream — audit case by case; do not blanket-flip a getter whose `?` mirrors a real "not yet" (e.g. no call in flight). These are not part of the Context?/Actor? state-field sweep.
+
+## Tripwire (the proof, not a demolition)
+
+Add to `Wire.ReadBody` after the no-declared-type throw: `if (_context == null && View == Store) throw` naming the slot + type. Keep off until C lands, then on. Green suite with the tripwire on = the invariant holds.

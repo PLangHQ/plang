@@ -1,0 +1,55 @@
+{
+  "branch": "context-never-null",
+  "sessions": [
+    {
+      "id": "d47c6dd5-9b0d-434f-9b2e-e113f00db7be",
+      "bot": "architect",
+      "timestamp_start": "2026-06-26T16:26:53Z",
+      "timestamp_end": "2026-06-26T16:45:00Z",
+      "intent": "Design the branch-wide invariant: every Context? and Actor? becomes non-null, with one Data read path.",
+      "before": {
+        "assumptions": "The coder's seed plan (.bot/context-never-null/coder/plan.md) scoped this to the serializer/Wire read path. Ingi widened it: the goal is to remove Context?/Actor? everywhere, not only in the serializer.",
+        "risk": "Treating it as a serializer-only rename misses the real surface (16 nullable fields + 56 downstream params). The value-type context layer and Step.Context are the parts with genuine design decisions, not mechanical flips."
+      },
+      "plan": ".bot/context-never-null/architect/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/data/Wire.cs",
+            "PLang/app/actor/context/this.cs",
+            "PLang/app/actor/this.cs",
+            "PLang/app/data/this.cs",
+            "PLang/app/goal/steps/step/this.cs",
+            "PLang/app/goal/steps/this.cs",
+            "PLang/app/type/this.cs",
+            "PLang/app/type/catalog/Conversion.cs",
+            "PLang/app/module/settings/Sqlite.cs",
+            "PLang/app/channel/serializer/plang/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Traced the full nullable surface: 13 Context fields + 3 Actor fields + 56 downstream params. Verified the Wire fork (_context gates at 386/406/419 and the trust branch 211-227), the self-contained Ed25519 verify (signature embeds its own public key), the ContextLessFallback 5 sites, and that Step.Context's only consumer is Step.Disabled whose every caller already holds the context."
+        },
+        {
+          "paths": [
+            ".bot/context-never-null/architect/plan.md",
+            ".bot/context-never-null/architect/plan/mime-and-verify.md",
+            ".bot/context-never-null/architect/plan/value-births.md",
+            ".bot/context-never-null/architect/plan/step-context.md",
+            ".bot/context-never-null/architect/plan/demolition.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plan spine plus four topic deep-dives. No stage files yet (Ingi: plan only, steps later). Captures the MIME-decides-verify model, value-born-through-context (context.Null/Error/Ok, no System-context floor), the construction-order flips, Step.Context deletion, the demolition worklist, and the stays-nullable list."
+        }
+      ],
+      "after": {
+        "status": "Plan written, design settled through conversation with Ingi. Awaiting his read-through before stages are carved.",
+        "health": "green",
+        "notes": "Open detail flagged for implementation: whether the settings store binds the System actor's context (settings is system-owned) vs the running actor's. Caveats recorded: verify-on-read is integrity not authenticity; sign-on-save needs the key (read path does not); hash canonicalization must use a body-only write to avoid sign recursion."
+      }
+    }
+  ]
+}
