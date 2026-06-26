@@ -11,7 +11,7 @@ public class JsonSerializerRoundTripTests
         // text/html and application/json wire shape is data.Value only; data.Signature
         // backing field stays null after Write.
         var app = new global::app.@this("/test");
-        var data = new Data("v", "hello") { Context = app.User.Context };
+        var data = new Data("v", "hello", context: app.User.Context);
 
         var json = app.User.Channel.Serializers.GetByMimeType("application/json");
         var s = (await json.Serialize(data).Value())!.Clr<string>()!;

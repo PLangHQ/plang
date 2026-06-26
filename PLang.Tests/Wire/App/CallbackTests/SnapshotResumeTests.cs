@@ -26,7 +26,7 @@ public class SnapshotResumeTests
     [Test] public async Task CallbackRun_NullSnapshot_ReturnsNoSnapshotError()
     {
         var app = NewApp();
-        var data = global::app.data.@this.Ok("v"); // Snapshot = null
+        var data = app.Ok("v"); // Snapshot = null
         var handler = new run { Context = app.User.Context, Callback = data };
         var result = await handler.Run();
         await result.IsFailure();
@@ -36,7 +36,7 @@ public class SnapshotResumeTests
     [Test] public async Task CallbackRun_WithSnapshot_DelegatesToSnapshotResume()
     {
         var app = NewApp();
-        var data = global::app.data.@this.Ok("v");
+        var data = app.Ok("v");
         data.Snapshot = new global::app.snapshot.@this(); // empty snapshot
         var handler = new run { Context = app.User.Context, Callback = data };
         var result = await handler.Run();

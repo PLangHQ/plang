@@ -13,8 +13,7 @@ public class CompressFlattenedTests
     private static global::app.data.@this NewCompressibleData(global::app.@this app, string value)
     {
         // text/plain is compressible (kind = "text", not in image/video/audio/archive).
-        var d = new global::app.data.@this("payload", value, global::app.type.@this.FromMime("text/plain"))
-        { Context = app.User.Context };
+        var d = new global::app.data.@this("payload", value, global::app.type.@this.FromMime("text/plain"), context: app.User.Context);
         return d;
     }
 
@@ -85,8 +84,7 @@ public class CompressFlattenedTests
         await using var app = NewApp();
         // image/png decomposes to binary/png; the kind's family is image, which
         // is not compressible (already-compressed content).
-        var d = new global::app.data.@this("img", new byte[] { 1, 2, 3 }, app.Format.TypeFromMime("image/png"))
-        { Context = app.User.Context };
+        var d = new global::app.data.@this("img", new byte[] { 1, 2, 3 }, app.Format.TypeFromMime("image/png"), context: app.User.Context);
         var result = d.Compress();
         await Assert.That(ReferenceEquals(d, result)).IsTrue();
     }

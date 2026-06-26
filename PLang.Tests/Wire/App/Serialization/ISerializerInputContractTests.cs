@@ -9,15 +9,18 @@ namespace PLang.Tests.App.Serialization;
 // Architect refs: .bot/data-serialize-cleanup/architect/stage-1-iserializer-data.md,
 //                 .bot/data-serialize-cleanup/architect/plan/test-coverage.md.
 
-public class ISerializerInputContractTests
+public class ISerializerInputContractTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/ISerializerInputContractTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     // 1.1 — ISerializer.SerializeAsync(Stream, Data, ct) accepts Data and returns Task<Data>.
     [Test]
     public async Task SerializeAsync_AcceptsDataArgument_ReturnsTaskData()
     {
         var json = new global::app.channel.serializer.Json();
         using var ms = new MemoryStream();
-        var result = await json.SerializeAsync(ms, global::app.data.@this.Ok("hello"));
+        var result = await json.SerializeAsync(ms, app.Ok("hello"));
         await Assert.That(result).IsNotNull();
         await result.IsSuccess();
     }
@@ -66,7 +69,7 @@ public class ISerializerInputContractTests
         app.User.Channel.Register(ch);
         ch.Channels!.Serializers.Register(probe);
 
-        var input = global::app.data.@this.Ok("payload");
+        var input = app.Ok("payload");
         await ch.WriteAsync(input);
 
         await Assert.That(probe.LastData).IsNotNull();

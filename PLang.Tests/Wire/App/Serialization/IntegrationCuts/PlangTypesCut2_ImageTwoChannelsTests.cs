@@ -113,7 +113,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
             "plang-cut2i-" + System.Guid.NewGuid().ToString("N")[..8]));
         var img = new image(PngBytes, "image/png");
         var data = new global::app.data.@this("photo", img,
-            new global::app.type.@this("image")) { Context = app.User.Context };
+            new global::app.type.@this("image"), context: app.User.Context);
 
         await Assert.That(data.Type?.Name).IsEqualTo("image");
         app.Type.Renderers.Of("image", "text")!(img, new CaptureWriter("text"));

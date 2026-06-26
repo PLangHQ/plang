@@ -7,8 +7,11 @@ namespace PLang.Tests.App.Serialization;
 // confirmed flat wire shape that signature.@this.Write renders through the
 // IWriter object surface. Format confirmation (Ingi, 2026-06-15).
 
-public class SchemaLayerFormatTests
+public class SchemaLayerFormatTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/SchemaLayer-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     // Render a value through the json IWriter exactly as the wire writer's
     // value-slot dispatch does (case item.@this v: v.Write(this)).
     private static string Render(global::app.type.item.@this value)
@@ -24,7 +27,7 @@ public class SchemaLayerFormatTests
 
     [Test] public async Task SignatureLayer_RendersFlat_SchemaSignature_WrappingInnerData()
     {
-        var inner = new global::app.data.@this("user", "Ingi", global::app.type.@this.FromName("text"));
+        var inner = new global::app.data.@this("user", "Ingi", global::app.type.@this.FromName("text"), context: app.User.Context);
         var sig = new global::app.type.signature.@this(
             value: inner,
             algorithm: new global::app.type.text.@this("ed25519"),
@@ -56,7 +59,7 @@ public class SchemaLayerFormatTests
 
     [Test] public async Task SignatureLayer_RoundTrips_ThroughFromWire()
     {
-        var inner = new global::app.data.@this("user", "Ingi", global::app.type.@this.FromName("text"));
+        var inner = new global::app.data.@this("user", "Ingi", global::app.type.@this.FromName("text"), context: app.User.Context);
         var sig = new global::app.type.signature.@this(
             value: inner,
             algorithm: new global::app.type.text.@this("ed25519"),
@@ -65,7 +68,7 @@ public class SchemaLayerFormatTests
             identity: new global::app.type.text.@this("alice"),
             hash: new global::app.module.crypto.type.hash.@this(System.Convert.FromBase64String("ZGlnZXN0"), "keccak256"),
             signature: new global::app.type.binary.@this(System.Convert.FromBase64String("c2ln")),
-            contracts: new global::app.type.list.@this(new[] { global::app.data.@this.Ok(new global::app.type.text.@this("C0")) }));
+            contracts: new global::app.type.list.@this(new[] { app.Ok(new global::app.type.text.@this("C0")) }) { Context = app.User.Context });
 
         var options = new JsonSerializerOptions();
         options.Converters.Add(new global::app.data.Wire());
@@ -87,7 +90,7 @@ public class SchemaLayerFormatTests
 
     [Test] public async Task SignatureLayer_OmitsExpiresAndContracts_WhenAbsent()
     {
-        var inner = new global::app.data.@this("x", "y", global::app.type.@this.FromName("text"));
+        var inner = new global::app.data.@this("x", "y", global::app.type.@this.FromName("text"), context: app.User.Context);
         var sig = new global::app.type.signature.@this(
             value: inner,
             algorithm: new global::app.type.text.@this("ed25519"),

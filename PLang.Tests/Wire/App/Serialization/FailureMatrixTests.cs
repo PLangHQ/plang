@@ -6,8 +6,11 @@ namespace PLang.Tests.App.Serialization;
 // Negative-path tests not absorbed by the per-stage suites above. Each test asserts
 // the failure is hard, typed, and surfaces at the right layer.
 
-public class FailureMatrixTests
+public class FailureMatrixTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/FailureMatrixTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test] public async Task PropertiesSet_DataInstanceValue_ThrowsArgumentException()
     {
         var d = new global::app.data.@this("x", "y");
@@ -29,7 +32,7 @@ public class FailureMatrixTests
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
 
-        var d = new global::app.data.@this("x", "untampered") { Context = app.User.Context };
+        var d = new global::app.data.@this("x", "untampered", context: app.User.Context);
         var wire = (await plang.Serialize(d).Value())!.Clr<string>()!;
         var tampered = wire.Replace("untampered", "TAMPERED!");
 
@@ -82,7 +85,7 @@ public class FailureMatrixTests
         var crypto = new global::app.module.crypto.code.Default();
         var action = new global::app.module.crypto.Hash
         {
-            Data = global::app.data.@this.Ok("x"),
+            Data = app.Ok("x"),
             Algorithm = new global::app.data.@this<global::app.type.text.@this>("", "md5")
         };
         var result = await crypto.Hash(action);
@@ -93,7 +96,7 @@ public class FailureMatrixTests
     [Test] public async Task ChannelWrite_OnInputOnlyChannel_ReturnsServiceErrorChannelReadOnly()
     {
         var ch = global::app.channel.type.stream.@this.Input("stdin", new MemoryStream());
-        var result = await ch.Write(global::app.data.@this.Ok("x"));
+        var result = await ch.Write(app.Ok("x"));
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ChannelReadOnly");
     }

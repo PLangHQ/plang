@@ -7,14 +7,17 @@ namespace PLang.Tests.App.Serialization;
 // Public orchestrators keep the Async suffix to mark "entry-with-events".
 // Coverage matrix rows 1.9, 1.10.
 
-public class ChannelHookRenameTests
+public class ChannelHookRenameTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/ChannelHookRenameTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     // 1.9 — Base WriteAsync invokes FireBefore → Write → FireAfter in order.
     [Test]
     public async Task ChannelBase_WriteAsync_InvokesWriteBetweenFireBeforeAndFireAfter()
     {
         var ch = new ProbeChannel();
-        await ch.WriteAsync(global::app.data.@this.Ok("hello"));
+        await ch.WriteAsync(app.Ok("hello"));
         await Assert.That(ch.WriteWasCalled).IsTrue();
         await Assert.That(ch.Sequence.Count).IsEqualTo(1);
         await Assert.That(ch.Sequence[0]).IsEqualTo("Write");

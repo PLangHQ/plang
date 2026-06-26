@@ -100,7 +100,7 @@ public class TypedReaderRoundTripTests
         {
             var plang = (global::app.channel.serializer.plang.@this)
                 app.User.Channel.Serializers.GetByMimeType("application/plang");
-            var data = new global::app.data.@this("v", true) { Context = app.User.Context };
+            var data = new global::app.data.@this("v", true, context: app.User.Context);
             var wire = (await plang.Serialize(data).Value())!.Clr<string>()!;
             var back = plang.Deserialize(wire);
             await Assert.That((await back.Value())!.Clr<bool>()).IsTrue();

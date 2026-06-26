@@ -10,22 +10,25 @@ namespace PLang.Tests.App.CallbackTests;
 /// Stage 2a — Batch 3: `Data.@this.Snapshot` property and the
 /// `action.Snapshot()` helper. Any action returning Exit-typed Data MUST attach
 /// a non-null Snapshot — contract pinned by a generic invariant test.
-public class DataSnapshotTests
+public class DataSnapshotTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/DataSnapshotTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     private static global::app.@this NewApp() =>
         new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-snap-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     [Test] public async Task DataSnapshot_PropertyExists_AndDefaultsNull()
     {
-        var d = global::app.data.@this.Ok("v");
+        var d = app.Ok("v");
         await Assert.That(d.Snapshot).IsNull();
     }
 
     [Test] public async Task DataSnapshot_RoundTripsThrough_OkConstructor()
     {
         var snap = new global::app.snapshot.@this();
-        var d = global::app.data.@this.Ok("v");
+        var d = app.Ok("v");
         d.Snapshot = snap;
         await Assert.That(d.Snapshot).IsSameReferenceAs(snap);
     }

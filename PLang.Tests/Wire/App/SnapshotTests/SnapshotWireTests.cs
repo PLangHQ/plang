@@ -299,7 +299,7 @@ public class SnapshotWireTests
 
         var snap = app.Snapshot();
         var d = new global::app.data.@this<global::app.snapshot.@this>("", snap,
-            new global::app.type.@this("snapshot")) { Context = context };
+            new global::app.type.@this("snapshot"), context: context);
 
         using var ms = new System.IO.MemoryStream();
         var result = await context.Actor.Channel.Serializers.SerializeAsync(
@@ -375,7 +375,7 @@ public class SnapshotWireTests
 
         // %snap% = string value, but TYPED as snapshot (what an honored `as snapshot` yields).
         context.Variable.Set(new global::app.data.@this(
-            "snap", json, new global::app.type.@this("snapshot")) { Context = context });
+            "snap", json, new global::app.type.@this("snapshot"), context: context));
 
         context.Variable.Set("snap.variables.x", 2L);
 

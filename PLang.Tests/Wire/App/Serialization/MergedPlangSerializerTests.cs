@@ -4,8 +4,11 @@ namespace PLang.Tests.App.Serialization;
 // Merged plang serializer — application/plang+data is gone, application/plang is the
 // single registered serializer; Envelope class is deleted; per-MIME serializers still work.
 
-public class MergedPlangSerializerTests
+public class MergedPlangSerializerTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/MergedPlang-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test] public async Task Serializers_GetByType_ApplicationPlangData_ReturnsNull()
     {
         var reg = new global::app.channel.serializer.list.@this();
@@ -55,7 +58,7 @@ public class MergedPlangSerializerTests
     {
         var text = new global::app.channel.serializer.Text();
         using var ms = new MemoryStream();
-        await text.SerializeAsync(ms, global::app.data.@this.Ok("hello"));
+        await text.SerializeAsync(ms, app.Ok("hello"));
         var wire = System.Text.Encoding.UTF8.GetString(ms.ToArray()).TrimEnd();
         await Assert.That(wire).IsEqualTo("hello");
     }
@@ -64,7 +67,7 @@ public class MergedPlangSerializerTests
     {
         var json = new global::app.channel.serializer.Json();
         using var ms = new MemoryStream();
-        await json.SerializeAsync(ms, global::app.data.@this.Ok("hello"));
+        await json.SerializeAsync(ms, app.Ok("hello"));
         var wire = System.Text.Encoding.UTF8.GetString(ms.ToArray()).TrimEnd();
         await Assert.That(wire).IsEqualTo("\"hello\"");
     }

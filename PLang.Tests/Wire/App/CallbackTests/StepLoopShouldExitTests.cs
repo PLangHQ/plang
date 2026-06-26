@@ -10,25 +10,28 @@ namespace PLang.Tests.App.CallbackTests;
 /// Stage 2a — Batch 4: `Data.ShouldExit()` unifies the three distinct
 /// stop-conditions (unhandled failure, Returned, Exit-typed) into one branch
 /// for the step loop, `Step.RunAsync`, and `Goal.RunFrom`.
-public class StepLoopShouldExitTests
+public class StepLoopShouldExitTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/StepLoopShouldExitTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test] public async Task ShouldExit_True_UnhandledFailure_SuccessFalseHandledFalse()
     {
-        var d = global::app.data.@this.FromError(new ServiceError("boom"));
+        var d = app.Error(new ServiceError("boom"));
         d.Handled = false;
         await Assert.That(d.ShouldExit()).IsTrue();
     }
 
     [Test] public async Task ShouldExit_False_HandledFailure_SuccessFalseHandledTrue()
     {
-        var d = global::app.data.@this.FromError(new ServiceError("boom"));
+        var d = app.Error(new ServiceError("boom"));
         d.Handled = true;
         await Assert.That(d.ShouldExit()).IsFalse();
     }
 
     [Test] public async Task ShouldExit_True_ReturnedTrue()
     {
-        var d = global::app.data.@this.Ok("v");
+        var d = app.Ok("v");
         d.Returned = true;
         await Assert.That(d.ShouldExit()).IsTrue();
     }
@@ -37,13 +40,13 @@ public class StepLoopShouldExitTests
     {
         var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-se-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var d = new global::app.data.@this<Ask>("", new Ask()) { Context = app.User.Context };
+        var d = new global::app.data.@this<Ask>("", new Ask(), context: app.User.Context);
         await Assert.That(d.ShouldExit()).IsTrue();
     }
 
     [Test] public async Task ShouldExit_False_OkSuccessNonExitType()
     {
-        var d = global::app.data.@this.Ok("hello");
+        var d = app.Ok("hello");
         await Assert.That(d.ShouldExit()).IsFalse();
     }
 
@@ -55,7 +58,7 @@ public class StepLoopShouldExitTests
         // Here we just pin the predicate contract used by the loop.
         var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-se-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var exitData = new global::app.data.@this<Ask>("", new Ask()) { Context = app.User.Context };
+        var exitData = new global::app.data.@this<Ask>("", new Ask(), context: app.User.Context);
         await Assert.That(exitData.ShouldExit()).IsTrue();
     }
 }

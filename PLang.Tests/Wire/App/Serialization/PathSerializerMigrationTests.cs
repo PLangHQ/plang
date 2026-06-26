@@ -23,7 +23,7 @@ public class PathSerializerMigrationTests
         await using var app = NewApp();
         var context = app.User.Context;
         var p = global::app.type.path.@this.Resolve("/some/file.json", context);
-        var data = new global::app.data.@this("x", p) { Context = context };
+        var data = new global::app.data.@this("x", p, context: context);
 
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
@@ -45,7 +45,7 @@ public class PathSerializerMigrationTests
         await using var app = NewApp();
         var context = app.User.Context;
         var p = global::app.type.path.@this.Resolve("https://example.test/a/b", context);
-        var data = new global::app.data.@this("x", p) { Context = context };
+        var data = new global::app.data.@this("x", p, context: context);
 
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");

@@ -28,9 +28,9 @@ public class DictTypedEntryRoundTripTests
         var context = app.User.Context;
 
         // value = dict { description: text, steps: list[ dict{index:number} ] }
-        var steps = new global::app.type.list.@this()
-            .Add(new global::app.data.@this("", new global::app.type.dict.@this().Set("index", 0L), context: context));
-        var value = new global::app.type.dict.@this()
+        var steps = new global::app.type.list.@this { Context = context }
+            .Add(new global::app.data.@this("", new global::app.type.dict.@this { Context = context }.Set("index", 0L), context: context));
+        var value = new global::app.type.dict.@this { Context = context }
             .Set("description", "a plan")
             .Set("steps", steps);
         // Born WITH context — never constructed then stamped.

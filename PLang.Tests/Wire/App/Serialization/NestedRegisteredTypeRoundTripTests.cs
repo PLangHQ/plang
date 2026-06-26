@@ -24,9 +24,9 @@ public class NestedRegisteredTypeRoundTripTests
         var p1 = global::app.type.path.@this.Resolve("/srv/a.txt", context);
         var p2 = global::app.type.path.@this.Resolve("/srv/b.txt", context);
         var outer = new global::app.data.@this("outer", new[] {
-            new global::app.data.@this("p1", p1) { Context = context },
-            new global::app.data.@this("p2", p2) { Context = context },
-        }) { Context = context };
+            new global::app.data.@this("p1", p1, context: context),
+            new global::app.data.@this("p2", p2, context: context),
+        }, context: context);
 
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");

@@ -14,7 +14,7 @@ public class Cut4_PropertiesWireTests
         var app = NewApp();
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var d = new global::app.data.@this("response", "Hello!") { Context = app.User.Context };
+        var d = new global::app.data.@this("response", "Hello!", context: app.User.Context);
         d.Properties["cost"] = 100;
         d.Properties["model"] = "claude-opus-4-7";
         var wire = (await plang.Serialize(d).Value())!.Clr<string>()!;

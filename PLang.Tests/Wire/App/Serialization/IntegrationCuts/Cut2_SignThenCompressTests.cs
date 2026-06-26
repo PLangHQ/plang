@@ -10,8 +10,7 @@ public class Cut2_SignThenCompressTests
         "plang-cut2-" + Guid.NewGuid().ToString("N")[..8]));
 
     private static global::app.data.@this MakeCompressible(global::app.@this app, string payload)
-        => new global::app.data.@this("user", payload, global::app.type.@this.FromMime("text/plain"))
-        { Context = app.User.Context };
+        => new global::app.data.@this("user", payload, global::app.type.@this.FromMime("text/plain"), context: app.User.Context);
 
     [Skip("Serializing within an actor now signs the inner payload, so compressed/hashed bytes are a signature LAYER. The archived wire shape and compress/hash-over-signature round-trip need the archive-as-layer design (deferred). NOTE: Decompress currently loses the inner value through this path - see todos.md.")]
     [Test] public async Task Cut2_OuterWireJson_HasArchivedTypeBytesValueAndSignature()

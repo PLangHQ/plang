@@ -96,7 +96,7 @@ public class GoalRunFromTests
         // The integration test in 2a.8 (StatelessCrossGoalResumes) pins the
         // end-to-end behavior.
         var app = NewApp();
-        var data = new global::app.data.@this<Ask>("", new Ask()) { Context = app.User.Context };
+        var data = new global::app.data.@this<Ask>("", new Ask(), context: app.User.Context);
         await Assert.That(data.ShouldExit()).IsTrue();
     }
 

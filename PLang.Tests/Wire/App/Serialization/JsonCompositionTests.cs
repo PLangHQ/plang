@@ -8,8 +8,11 @@ namespace PLang.Tests.App.Serialization;
 // Json (the JSON-engine custodian) gains composition extensions so callers compose
 // with it instead of duplicating JsonSerializerOptions blocks.
 
-public class JsonCompositionTests
+public class JsonCompositionTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/JsonComposition-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     private sealed class Probe : JsonConverter<string>
     {
         public override string Read(ref Utf8JsonReader r, System.Type t, JsonSerializerOptions o) => r.GetString() ?? "";
@@ -22,16 +25,16 @@ public class JsonCompositionTests
         var withProbe = json.WithConverter(new Probe());
         await Assert.That(withProbe).IsNotEqualTo(json);
 
-        var wire = (await withProbe.Serialize(global::app.data.@this.Ok("hello")).Value())!.Clr<string>()!;
+        var wire = (await withProbe.Serialize(app.Ok("hello")).Value())!.Clr<string>()!;
         await Assert.That(wire).Contains("probe:hello");
     }
 
     [Test] public async Task Json_WithConverter_DoesNotMutateOriginalInstance()
     {
         var json = new Json();
-        var original = (await json.Serialize(global::app.data.@this.Ok("hello")).Value())!.Clr<string>()!;
+        var original = (await json.Serialize(app.Ok("hello")).Value())!.Clr<string>()!;
         json.WithConverter(new Probe());
-        var afterCompose = (await json.Serialize(global::app.data.@this.Ok("hello")).Value())!.Clr<string>()!;
+        var afterCompose = (await json.Serialize(app.Ok("hello")).Value())!.Clr<string>()!;
         await Assert.That(original).IsEqualTo(afterCompose);
     }
 
@@ -41,7 +44,7 @@ public class JsonCompositionTests
         bool fired = false;
         var withMod = json.WithModifier(_ => { fired = true; });
         // Drive serialization to invoke the resolver.
-        withMod.Serialize(global::app.data.@this.Ok("x"));
+        withMod.Serialize(app.Ok("x"));
         await Assert.That(fired).IsTrue();
         await Assert.That(withMod).IsNotEqualTo(json);
     }
@@ -51,7 +54,7 @@ public class JsonCompositionTests
         var json = new Json();
         bool firedOnOriginal = false;
         json.WithModifier(_ => { firedOnOriginal = true; });
-        json.Serialize(global::app.data.@this.Ok("x"));
+        json.Serialize(app.Ok("x"));
         await Assert.That(firedOnOriginal).IsFalse()
             .Because("Modifier should attach to the new instance, leaving the source's resolver intact.");
     }
