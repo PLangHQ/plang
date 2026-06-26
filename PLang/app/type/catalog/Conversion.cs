@@ -175,7 +175,7 @@ public sealed partial class @this
             }
             // A non-wire-shaped dict stays a dict inside the Data — don't unwrap
             // to raw here, that would lose the native value type.
-            return (new data.@this("", value), null);
+            return (new data.@this("", value, context: context), null);
         }
 
         // Every value owns its raw CLR projection (item.Clr): a scalar wrapper

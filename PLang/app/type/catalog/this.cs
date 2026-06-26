@@ -18,6 +18,14 @@ namespace app.type.catalog;
 /// </summary>
 public sealed partial class @this
 {
+    /// <summary>
+    /// The context this catalog births values from. The type catalog is a
+    /// system-owned collection, born with the App's system context.
+    /// </summary>
+    internal actor.context.@this Context { get; }
+
+    public @this(actor.context.@this context) => Context = context;
+
     /// <summary>[Choices] vocabulary registry — reachable as <c>app.type.choices</c>.</summary>
     public choice.list.@this Choices { get; } = new();
 

@@ -141,7 +141,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Type-keyed provider registry for pluggable module implementations.
     /// Modules define provider interfaces, register defaults, PLang developers override via DLL.
     /// </summary>
-    public AppCode Code { get; } = new();
+    public AppCode Code { get; }
 
     /// <summary>
     /// The loaded goals.
@@ -293,11 +293,24 @@ public sealed partial class @this : IAsyncDisposable
         AbsolutePath = absolutePath;
         Environment = environment ?? "production";
         StartedAt = DateTime.UtcNow;
+
+        // Context is fundamental — it is born before almost everything else. The
+        // system & user actors (each owning a long-lived context) are constructed
+        // first so Type, Code, and the rest can be handed the context they birth
+        // values from. System is the cancellation root; User links to its token.
+        // The actor/context ctor touches App only lazily (Settings/Code via deferred
+        // lambdas) and uses pure-static type seeds, so nothing here needs Type/Code yet.
+        _system = new actor.@this("System", this, _shutdownCts.Token);
+        _user = new actor.@this("User", this, _system.CancellationToken);
+        // Default actor is User — Start() switches to System for bootstrap
+        CurrentActor = _user;
+
         Event = new global::app.@event.list.@this();
         Debug = new Debugging(this);
         Tester = new global::app.tester.@this(this);
         Builder = new global::app.module.builder.@this(this);
-        Type = new type.catalog.@this();
+        Type = new type.catalog.@this(System.Context);
+        Code = new AppCode(System.Context);
         Config = new config.@this();
         _settingsStore = new Lazy<global::app.module.settings.IStore>(CreateSettingsStore);
         Settings = new global::app.module.settings.@this(this);
@@ -316,15 +329,6 @@ public sealed partial class @this : IAsyncDisposable
         Type.Scheme.Register("file", (raw, context) => global::app.type.path.file.@this.Resolve(raw, context));
         Type.Scheme.Register("http", (raw, context) => global::app.type.path.http.@this.Resolve(raw, context));
         Type.Scheme.Register("https", (raw, context) => global::app.type.path.http.@this.Resolve(raw, context));
-
-        // Actors are born eagerly with the App — System first (root of the
-        // cancellation hierarchy), then User linked to System's token. No lazy
-        // window: _system / _user are non-null for the App's lifetime.
-        _system = new actor.@this("System", this, _shutdownCts.Token);
-        _user = new actor.@this("User", this, _system.CancellationToken);
-
-        // Default actor is User — Start() switches to System for bootstrap
-        CurrentActor = _user;
 
         // Auto-wire console channels for ad-hoc App constructions (sub-process
         // test fixtures, embedded scenarios, C# tests). Entry points that own

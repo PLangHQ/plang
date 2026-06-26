@@ -18,6 +18,14 @@ public sealed partial class @this : IAsyncDisposable
     private readonly ConcurrentDictionary<System.Type, ConcurrentDictionary<string, ICode>> _providers = new();
     private bool _disposed;
 
+    /// <summary>
+    /// The context this registry births its result Data from. The registry is a
+    /// system-owned collection, born with the App's system context.
+    /// </summary>
+    private readonly actor.context.@this Context;
+
+    public @this(actor.context.@this context) => Context = context;
+
     // Remembers which provider RegisterDefaults marked as the type's default. Used by
     // Snapshot capture to decide whether the *current* default differs from what a
     // freshly-booted App would set. Without this, SetDefault() clearing the built-in's
@@ -143,7 +151,7 @@ public sealed partial class @this : IAsyncDisposable
         var typeDict = _providers.GetOrAdd(providerType, _ => new ConcurrentDictionary<string, ICode>(StringComparer.OrdinalIgnoreCase));
 
         if (!typeDict.TryAdd(provider.Name, provider))
-            return app.data.@this.FromError(new ActionError($"Provider '{provider.Name}' already registered for {providerType.Name}", "ProviderExists", 409));
+            return Context.Error(new ActionError($"Provider '{provider.Name}' already registered for {providerType.Name}", "ProviderExists", 409));
 
         if (typeDict.Count == 1)
             provider.IsDefault = true;
@@ -151,7 +159,7 @@ public sealed partial class @this : IAsyncDisposable
         // A provider is engine plumbing, never a plang value — the registration
         // just succeeds. Returning the provider as the value would wrap a CLR
         // service in a Data (a throwaway clr); the value is never read.
-        return app.data.@this.Ok();
+        return Context.Ok();
     }
 
     /// <summary>
@@ -168,19 +176,19 @@ public sealed partial class @this : IAsyncDisposable
     public data.@this Remove(System.Type providerType, string name)
     {
         if (string.IsNullOrEmpty(name))
-            return app.data.@this.FromError(new ActionError("Provider name is required", "ValidationError", 400));
+            return Context.Error(new ActionError("Provider name is required", "ValidationError", 400));
 
         if (!_providers.TryGetValue(providerType, out var typeDict))
-            return app.data.@this.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
+            return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
         if (!typeDict.TryGetValue(name, out var provider))
-            return app.data.@this.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
+            return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
         if (provider.IsDefault)
-            return app.data.@this.FromError(new ActionError($"Cannot remove default provider '{name}'. Set another as default first.", "CannotRemoveDefault", 400));
+            return Context.Error(new ActionError($"Cannot remove default provider '{name}'. Set another as default first.", "CannotRemoveDefault", 400));
 
         typeDict.TryRemove(name, out _);
-        return app.data.@this.Ok();
+        return Context.Ok();
     }
 
     /// <summary>
@@ -189,13 +197,13 @@ public sealed partial class @this : IAsyncDisposable
     public data.@this SetDefault(System.Type providerType, string name)
     {
         if (string.IsNullOrEmpty(name))
-            return app.data.@this.FromError(new ActionError("Provider name is required", "ValidationError", 400));
+            return Context.Error(new ActionError("Provider name is required", "ValidationError", 400));
 
         if (!_providers.TryGetValue(providerType, out var typeDict))
-            return app.data.@this.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
+            return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
         if (!typeDict.TryGetValue(name, out var newDefault))
-            return app.data.@this.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
+            return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
         // Set new default first, then clear old — avoids window where Get<T>() returns null
         newDefault.IsDefault = true;
@@ -204,7 +212,7 @@ public sealed partial class @this : IAsyncDisposable
             if (kvp.Value != newDefault)
                 kvp.Value.IsDefault = false;
         }
-        return app.data.@this.Ok();
+        return Context.Ok();
     }
 
     /// <summary>
