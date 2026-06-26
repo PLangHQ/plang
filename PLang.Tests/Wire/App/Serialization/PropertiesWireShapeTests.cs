@@ -18,7 +18,7 @@ public class PropertiesWireShapeTests
         var app = NewApp();
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var d = new global::app.data.@this(name, value ?? "v") { Context = app.User.Context };
+        var d = new global::app.data.@this(name, value ?? "v", context: app.User.Context);
         return (plang, d, () => app.DisposeAsync().GetAwaiter().GetResult());
     }
 
