@@ -82,7 +82,7 @@ if (... && _context != null && _context.App.Type.Readers.Typed(name, kind) is {}
 else { value = item.serializer.json.Parse(el); }   // raw {type,value} dict on the context-less path
 
 // after — one path; the Typed reader always runs for a declared type
-if (_context.App.Type.Readers.Typed(typeRef.Name, typeRef.Kind) is {} typed) { born = typed.Read(...); }
+if (_context.App.Type.Readers.Typed(typeRef) is {} typed) { born = typed.Read(...); }   // pass typeRef whole, not .Name + .Kind
 ```
 
 A nested `{type:{name},value}` entry is now always born to its type, whether it came from a `.pr` load or a settings read. The cache double-wrap that blocked `plang build` does not occur, because there is no second narrow to leave it raw.
@@ -104,14 +104,15 @@ layer.Value.Context = _context;
 var verify = new signing.verify {
     Data = carrier,
     SkipFreshnessCheck = (View == Store),     // Store skips freshness only
-    ExpectedIdentity = _context.Actor.Identity,   // NEW — authenticity
 };
-// verify asserts layer.Identity == ExpectedIdentity, plus the existing signature/hash checks
+// no decomposed identity passed in. verify is IContext, so it navigates its OWN
+// context for the authenticity check:
+//   assert layer.Identity == action.Context.Actor.Identity   (+ the existing signature/hash checks)
 ```
 
-The expected-identity check is the new authenticity step, reachable because `_context.Actor` is non-null at the read.
+The authenticity check lives **inside** verify, which navigates `action.Context.Actor.Identity` itself — nothing decomposes the actor at the call site (OBP Rule #2: don't pass `actor.Identity`, let the callee navigate to it).
 
-`actor.Identity` is the actor's identity — the `identity` keypair object whose identity-*value* is its public key (the type renders to its `PublicKey`, and PLang exposes it as `%Identity%`). The signature's `layer.Identity` is already the public-key text. So the authenticity assertion compares public keys: `layer.Identity == _context.Actor.Identity` reduces to the public-key string on both sides. The actor keeps the whole keypair (it needs the private key to sign); only its public face is the identity.
+`actor.Identity` is the actor's identity — the `identity` keypair object whose identity-*value* is its public key (the type renders to its `PublicKey`, and PLang exposes it as `%Identity%`). The signature's `layer.Identity` is already the public-key text. So verify asserts `layer.Identity == action.Context.Actor.Identity`, reducing to the public-key string on both sides. The actor keeps the whole keypair (it needs the private key to sign); only its public face is the identity. The bootstrap root read is the exception — the actor's identity isn't loaded yet, so it carries an explicit root-mode flag (request state, a parameter — Rule #6) that switches verify to keypair self-consistency.
 
 ## 6. Bootstrap — the one read that authenticates differently
 
@@ -128,7 +129,8 @@ if (step.Disabled) ...           // reads it back off the bag
 // + AnchorScope saves/restores step.Context each dispatch
 
 // after
-if (step.IsDisabled(context)) ...    // context passed in; same (PrPath,Index) key, same bag
+if (step.Disabled(context)) ...      // query: drop the Is-prefix; step navigates the passed context
+// mutate via real-work verbs: step.Disable(context) / step.Enable(context)
 // AnchorScope keeps context.Step (for %!step%) but the Step.Context dance is gone
 ```
 

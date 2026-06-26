@@ -50,7 +50,7 @@ You can't persist a context — it's ephemeral, per-execution. What's durable is
 
 ## Caveats carried up to the spine
 
-- **Authenticity lands in this branch (decided).** `Ed25519.VerifyAsync` step 6 (`:133`) checks the signature against `layer.Identity` — the public key embedded in the signature itself — and the Store/boundary read never sets `Contracts` (step 4, the only identity gate). So today verify proves the signer held the private key for the embedded key; it does not pin that key to system. This branch passes the owning actor's known public key on a system-owned read and verify asserts `layer.Identity == expected`. Reachable only because the read now holds `context.Actor`. See "Bootstrap: loading the root key" below for the one read that authenticates differently.
+- **Authenticity lands in this branch (decided).** `Ed25519.VerifyAsync` step 6 (`:133`) checks the signature against `layer.Identity` — the public key embedded in the signature itself — and the Store/boundary read never sets `Contracts` (step 4, the only identity gate). So today verify proves the signer held the private key for the embedded key; it does not pin that key to system. This branch makes verify navigate its own `Context.Actor.Identity` (verify is `IContext`) and assert `layer.Identity ==` it — no decomposed identity passed in (OBP Rule #2). Reachable only because the read now holds `context.Actor`. See "Bootstrap: loading the root key" below for the one read that authenticates differently.
 - **Read needs no key; sign-on-save does.** The plan's read-path-key worry is inverted — confirm the private key is present on every save, including first-run identity creation.
 - **Hash recursion.** Crypto's context-ful canonicalizer must route through a body-only write, not sign-if-missing, or signing recurses.
 
@@ -62,9 +62,9 @@ It breaks because the root authenticates by **private-key possession**, not by m
 
 1. **First run, no identity.** `GetOrCreateDefaultAsync` mints a keypair (private key in hand), `SaveAsync` signs the artifact with it and stores it. Nothing to verify — just minted.
 2. **Later runs — the identity-table read is the one root read.** Read it in **root mode**: verify the signature is internally valid (integrity) and that the loaded keypair is self-consistent — `PublicKey` re-derives from `PrivateKey` (Ed25519 deterministic). A self-consistent keypair from your own store is the authentication for the root. This establishes `App.System.Identity`.
-3. **Every other read** passes `expected = App.System.Identity` and asserts `layer.Identity == expected`.
+3. **Every other read** — verify navigates `Context.Actor.Identity` and asserts `layer.Identity ==` it.
 
-So `expected` is null only for the identity-table read; the loaded system pubkey for everything else. **Bootstrap order:** load the system identity (root mode) before any other `application/plang` read, or a settings read re-enters the identity load (itself a settings read). `App.System` is eager (mechanism A), but `MyIdentity` resolves lazily (`actor/this.cs:125-129`) — make the root load happen first.
+So the root-mode flag is set only for the identity-table read; everything else matches against the actor's loaded identity, navigated inside verify. **Bootstrap order:** load the system identity (root mode) before any other `application/plang` read, or a settings read re-enters the identity load (itself a settings read). `App.System` is eager (mechanism A), but `MyIdentity` resolves lazily (`actor/this.cs:125-129`) — make the root load happen first.
 
 **Decided — A.** The keypair stays in the `application/plang` settings store; the identity-table read is marked root-mode. (Considered and deferred: **B** — root keypair in a separate protected keystore loaded before any settings read. More standard root-of-trust separation, but a storage change; not this branch.)
 

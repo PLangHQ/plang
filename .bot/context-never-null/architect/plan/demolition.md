@@ -105,11 +105,24 @@ The nullable `context.@this?` parameters (e.g. `data/this.Normalize.cs:44`, `typ
 
 ## Additions this branch introduces (not demolition)
 
-- **Expected-identity check in verify.** A system-owned read passes `App.System.Identity`; `Ed25519.VerifyAsync` (or its wiring in `Wire.ReadSignatureLayer`) asserts `layer.Identity == expected`. New surface on the verify path (an expected-identity input + the equality check).
-- **Root-mode read for the identity table.** The bootstrap read of the system keypair verifies signature integrity + keypair self-consistency (`PublicKey` re-derives from `PrivateKey`) instead of matching an external identity. One flag/path, used only for the identity-table load. See `plan/mime-and-verify.md`.
+- **Authenticity check inside verify (no new param).** `verify` is `IContext`, so it navigates its own `Context.Actor.Identity` and asserts `layer.Identity ==` it (OBP Rule #2 — don't pass `actor.Identity` in). New surface is the equality check, not an input.
+- **Root-mode flag on verify.** The bootstrap read of the system keypair verifies signature integrity + keypair self-consistency (`PublicKey` re-derives from `PrivateKey`) instead of matching the actor identity. An explicit request-state flag (Rule #6), used only for the identity-table load. Follow the existing `SkipFreshnessCheck` precedent for shape; name it non-verb+noun. See `plan/mime-and-verify.md`.
 - **`context.Null()` / `context.Error(...)` / `context.Ok(...)`** factory methods on `actor.context.@this`.
 - **Tripwire** in `Wire.ReadBody`: `if (_context == null && View == Store) throw`.
 - **`CallStack? CallStack => App?.CallStack`** (`context/this.cs:49`) and other read-through getters whose null reflects a genuinely absent upstream — audit case by case; do not blanket-flip a getter whose `?` mirrors a real "not yet" (e.g. no call in flight). These are not part of the Context?/Actor? state-field sweep.
+
+## OBP self-audit (Rules #2, #3, #4)
+
+The new surfaces this branch introduces were checked for decomposition and verb+noun names. Outcome:
+
+| Surface | Smell | Resolution |
+|---|---|---|
+| `verify.ExpectedIdentity = _context.Actor.Identity` | Rule #2 — decomposed actor into `.Identity` and passed the primitive | Dropped. `verify` is `IContext`; it navigates `Context.Actor.Identity` itself. |
+| `step.IsDisabled(context)` / `step.SetDisabled(context, value)` | Rule #3 — `Is`/`Set`+adjective verb+noun | `step.Disabled(context)` (query) + `step.Disable(context)` / `step.Enable(context)` (real-work verbs). |
+| `Readers.Typed(typeRef.Name, typeRef.Kind)` (`Wire.cs:407`, pre-existing, on a line we edit) | Rule #2 — `typeRef` decomposed into Name + Kind | Opportunistic fix: pass `typeRef` whole — `Readers.Typed(typeRef)`. |
+| `GetActor(name)` (pre-existing) | Rule #3 — `Get`+`Actor` verb+noun | Flagged. We touch it to throw; aligning with the existing `actor.Resolve(name, context)` is a candidate but tangential. |
+| `context.Null()` / `context.Ok(...)` / `context.Error(...)` | none | Single-word factories, mirror `Data.Ok`. Kept. |
+| `step.Disable/Enable(context)`, `context.Null/Ok/Error(...)` arguments | none | Whole `context` passed, not a field of it. Clean. |
 
 ## Tripwire (the proof, not a demolition)
 

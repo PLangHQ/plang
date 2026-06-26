@@ -40,7 +40,7 @@ The field smuggles a context the caller already has. AnchorScope then carries th
 
 ## The fix — delete the field, parameterize Disabled
 
-- `Disabled` becomes context-parameterized — e.g. `step.IsDisabled(context)` / `step.SetDisabled(context, value)`. Same key (`step:{PrPath}:{Index}:disabled`), same bag; the step receives the context instead of holding it.
+- `Disabled` becomes context-parameterized: `step.Disabled(context)` for the query (drop the `Is`-prefix — it does real work, reads as `if (step.Disabled(context))`), and real-work verbs `step.Disable(context)` / `step.Enable(context)` for mutation. Same key (`step:{PrPath}:{Index}:disabled`), same bag; the step receives the context instead of holding it.
 - `Step.Context` field is removed.
 - AnchorScope keeps setting `context.Step = action.Step` (the current-step pointer behind `%!step%`) but drops the `Step.Context` set at `:278`, the `_previousStepContext` capture at `:299`, and its restore at `:307`.
 - The `step.Context = …` stamps at `steps/this.cs:53,128` disappear; the `Disabled` calls there pass the local `Context`/`context`.
@@ -53,4 +53,4 @@ This is the third option from the design conversation — neither "source from o
 
 ## You own the final shape
 
-`step.IsDisabled(context)` is the intended shape; the coder picks the method names and whether the disabled state reads more naturally on `Step` or on the steps collection. The contract is: `Step` no longer holds a `Context` field.
+`step.Disabled(context)` (query) + `step.Disable(context)` / `step.Enable(context)` (mutation) is the intended shape; the coder picks the final names and whether the disabled state reads more naturally on `Step` or on the steps collection. The contract is: `Step` no longer holds a `Context` field, and the names are not verb+noun.
