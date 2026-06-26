@@ -44,13 +44,13 @@ The `if (_context == null)` block at `:211-227` is deleted. The "Transport with 
 - `module/crypto/code/Default.cs:22` — hashing routes through the crypto module's context (see caveat below); no `ContextLessFallback`.
 - `channel/serializer/plang/this.cs:141` — delete `ContextLessFallback` once the above are converted.
 
-## The settings-belongs-to-system nuance
+## Settings is system-owned (resolved)
 
-Ingi flagged settings as the possible exception to "forward the running actor's context." Settings are system-owned, so the settings store likely binds **`App.System.Context`**, not the calling actor's. Note that the Actor ctor already registers a per-actor settings navigable (`app.Settings.Get(path, Context)` passing the actor's own context) for *resolution*. So there are two contexts in play: the store's own (System) and the resolving actor's. Confirm which one the Sqlite store is constructed with before wiring — do not assume the running actor's.
+You can't persist a context — it's ephemeral, per-execution. What's durable is the actor identity. Settings are system-owned, so the store reads/writes *through* `App.System.Context` (the system actor's long-lived live context), and the persisted ownership fact is `Actor=system` (the signature's `identity`). The Actor ctor already registers a per-actor settings navigable (`app.Settings.Get(path, Context)` passing the actor's own context) for *resolution* — so two contexts are in play: the store's own serializer rides System, while a read flowing through another actor passes that actor's context for resolution.
 
 ## Caveats carried up to the spine
 
-- **Verify is integrity, not authenticity.** `Ed25519.cs:201` imports the public key from the signature's own `identity` field, so verify confirms internal consistency, not authenticity, unless `verify.Contracts`/`Headers` supply an expected identity. There is therefore no bootstrap root-of-trust problem: reading your identity at boot needs no external key.
+- **Verify is integrity today; authenticity is a decision this branch enables.** `Ed25519.VerifyAsync` step 6 (`:133`) checks the signature against `layer.Identity` — the public key embedded in the signature itself — and the Store/boundary read never sets `Contracts` (step 4, the only identity gate). So today verify proves the signer held the private key for the embedded key; it does not pin that key to system. To make it authenticity, the read passes the owning actor's known public key and verify asserts `layer.Identity == expected`. That is reachable only because the read now holds `context.Actor` (hence the actor's loaded identity). There is no bootstrap root-of-trust problem: reading your own keypair at boot authenticates by private-key possession (the loaded public key must derive from the loaded private key). **Pending decision: land the expected-identity check in this branch or as a follow-up.**
 - **Read needs no key; sign-on-save does.** The plan's read-path-key worry is inverted — confirm the private key is present on every save, including first-run identity creation.
 - **Hash recursion.** Crypto's context-ful canonicalizer must route through a body-only write, not sign-if-missing, or signing recurses.
 

@@ -58,18 +58,19 @@ A member-by-member audit of what must not survive, organized by when each dies, 
 
 ## What stays nullable (the null is real, not lazy)
 
-- **`GetActor(name) → actor.@this?`** (`app/this.cs:250`) — a lookup that can miss; the null *is* the not-found channel, paired with `IError`. Forcing non-null would be wrong.
 - **`[Choices]` static-vocabulary context param** (`type/choice/list/this.cs:71`) — nullable by design; static vocabularies ignore context. Decide during implementation whether to keep the nullable contract or pass-and-ignore a non-null context. Low stakes; not a state field.
+
+`GetActor` does **not** stay nullable. The actor set is closed and hardcoded (system/user/service), so an unknown name is an error, not a soft miss: return non-null and throw/return-error on an unknown name. (If it keeps the `(Actor?, IError?)` tuple, the `?` is the Result pattern — null only when Error is set; to remove `Actor?` from the type entirely, throw.)
 
 ## Caveats — true, and worth being clear-eyed about
 
-- **Verify-on-read is integrity, not authenticity.** The Ed25519 signature embeds its own public key (`identity`) and verify imports the key *from the signature* (`module/signing/code/Ed25519.cs:201`). So "always verify at rest" catches corruption and partial writes; it does not stop a local-write adversary, who could re-sign with their own key and pass. Authenticity needs the `Contracts`/expected-identity layer in `verify`, which is opt-in. The default is right; just know what it buys.
+- **Verify-on-read is integrity today, not authenticity — and this branch should close that.** `Ed25519.VerifyAsync` step 6 (`:133`) checks the signature against the public key *embedded in the signature* (`layer.Identity`), and the Store/boundary read never sets `Contracts` (the only identity-ish gate, step 4), so nothing pins the signer to system. A local-write adversary can re-sign tampered data with their own keypair and pass. The fix is an **expected-identity check**: the read passes the owning actor's known public key and verify asserts `layer.Identity == expected`. This is reachable only because the read now holds `context.Actor` (hence the actor's loaded identity) — context-never-null is what enables it. The one exception is the bootstrap read of your own keypair (no in-memory pubkey yet), which authenticates by private-key possession. **Pending Ingi's call: land authenticity in this branch, or follow-up.**
 - **The read path needs no keys; sign-on-save does.** Because verify is self-contained, reading a signed artifact never needs a key in hand. The private key is needed on the *write* path. That is the path to confirm is always keyed — including first-run identity creation.
 - **Hash canonicalization must use a body-only write.** Crypto hashes by canonicalizing through the (now context-ful) wire, but `Wire.Write` fires sign-if-missing. The hasher must write body-only or signing recurses (hash → canonicalize → sign → hash). The body-only path exists today; confirm crypto's new context-ful canonicalizer routes through it.
 
-## One open detail for implementation
+## Settings is system-owned (resolved)
 
-Settings may be the exception to "forward the running actor's context": settings belong to the system, so the settings store likely binds the **System actor's** context, while reads that flow through an actor pass that actor's context for resolution. Confirm which context the Sqlite store is constructed with before wiring it.
+You can't persist a context — it's ephemeral, per-execution. What's durable is the actor identity. So the settings store reads/writes *through* a live context — `App.System.Context`, the system actor's long-lived context — and the persisted ownership fact is `Actor=system` (in the signature's `identity`). Reads that flow through another actor pass that actor's context for resolution, but the store's own serializer rides the system context.
 
 ## Acceptance
 

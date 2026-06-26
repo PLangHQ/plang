@@ -71,8 +71,12 @@ The nullable `context.@this?` parameters (e.g. `data/this.Normalize.cs:44`, `typ
 
 ## Stays-list — do NOT flip these
 
-- **`GetActor(string? name) → (actor.@this? Actor, IError? Error)`** (`app/this.cs:250`, the `(actor.@this?)null` at `:259`). The null is the not-found result, paired with the error. It is a return signal, not held state.
 - **`[Choices]` static-vocabulary context parameter** (`type/choice/list/this.cs:71`). Nullable by design — static vocabularies ignore context. Decide keep-nullable vs pass-and-ignore; either is fine, it is not a state field.
+- Read-through getters whose `?` mirrors a genuinely absent upstream — e.g. `context.CallStack => App?.CallStack` (`context/this.cs:49`). Audit case by case; not part of the state-field sweep.
+
+## Flip — was on the stays-list, now corrected
+
+- **`GetActor(string? name) → actor.@this`** (`app/this.cs:250`, `(actor.@this?)null` at `:259`). The actor set is closed and hardcoded (system/user/service), so an unknown name is an error, not a soft miss. Return non-null; throw or return-error on an unknown name. If the `(Actor?, IError?)` tuple shape is kept, the `?` is the Result pattern (null only when Error is set); to remove `Actor?` from the type, throw.
 - **`CallStack? CallStack => App?.CallStack`** (`context/this.cs:49`) and other read-through getters whose null reflects a genuinely absent upstream — audit case by case; do not blanket-flip a getter whose `?` mirrors a real "not yet" (e.g. no call in flight). These are not part of the Context?/Actor? state-field sweep.
 
 ## Tripwire (the proof, not a demolition)
