@@ -66,9 +66,7 @@ It breaks because the root authenticates by **private-key possession**, not by m
 
 So `expected` is null only for the identity-table read; the loaded system pubkey for everything else. **Bootstrap order:** load the system identity (root mode) before any other `application/plang` read, or a settings read re-enters the identity load (itself a settings read). `App.System` is eager (mechanism A), but `MyIdentity` resolves lazily (`actor/this.cs:125-129`) — make the root load happen first.
 
-Two storage shapes were considered; **A** is the plan unless Ingi picks B:
-- **A (chosen, minimal):** keypair stays in the `application/plang` settings store; the identity-table read is marked root-mode.
-- **B (more standard, more change):** root keypair in a separate protected keystore (OS keychain / FS-protected file), loaded before any settings read, so the settings store always has the expected key.
+**Decided — A.** The keypair stays in the `application/plang` settings store; the identity-table read is marked root-mode. (Considered and deferred: **B** — root keypair in a separate protected keystore loaded before any settings read. More standard root-of-trust separation, but a storage change; not this branch.)
 
 Separate concern (not this branch): the private key is stored in plaintext in sqlite (`identity.cs:57`), so authenticity catches tampering by others, not by someone who read your key file. Key-at-rest encryption is later hardening.
 
