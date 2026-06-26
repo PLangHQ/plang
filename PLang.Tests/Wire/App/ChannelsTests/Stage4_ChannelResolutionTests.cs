@@ -57,7 +57,7 @@ public class Stage4_ChannelResolutionTests
         var write = new global::app.module.output.Write
         {
             Context = app.User.Context,
-            Data = Data.Ok("hello-default"),
+            Data = app.Ok("hello-default"),
             Channel = app.User.Channel.Resolve(null)
         };
         // Direct Run skips ExecuteAsync's reset of init backing fields.
@@ -78,7 +78,7 @@ public class Stage4_ChannelResolutionTests
         var write = new global::app.module.output.Write
         {
             Context = app.User.Context,
-            Data = Data.Ok("targetted"),
+            Data = app.Ok("targetted"),
             Channel = app.User.Channel.Resolve("logger")
         };
         await write.Run();
@@ -95,7 +95,7 @@ public class Stage4_ChannelResolutionTests
         var probe = new EnvelopeProbeChannel();
         app.User.Channel.Register(probe);
 
-        var data = Data.Ok("payload");
+        var data = app.Ok("payload");
         data.Properties.Set("custom-prop", "x");
 
         var write = new global::app.module.output.Write

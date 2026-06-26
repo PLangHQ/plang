@@ -3,8 +3,13 @@ namespace PLang.Tests.App.ChannelsTests;
 // Channel.Stream concrete (the existing Channel refactored).
 // Architect: stage-2-stream-channel.md.
 
-public class Stage2_StreamChannelTests
+public class Stage2_StreamChannelTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create(
+        "/tmp/s2-" + System.Guid.NewGuid().ToString("N")[..6]);
+
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test]
     public async Task StreamChannel_WriteCore_WritesDataViaSerializer()
     {
@@ -14,7 +19,7 @@ public class Stage2_StreamChannelTests
         { Mime = "text/plain" };
         app.User.Channel.Register(ch);
 
-        var result = await ch.Write(Data.Ok("hello"));
+        var result = await ch.Write(app.Ok("hello"));
         await result.IsSuccess();
 
         var written = global::System.Text.Encoding.UTF8.GetString(captureStream.ToArray());
@@ -64,7 +69,7 @@ public class Stage2_StreamChannelTests
         await Assert.That(ch.Direction).IsEqualTo(ChannelDirection.Input);
         await Assert.That(ch.CanRead).IsTrue();
         await Assert.That(ch.CanWrite).IsFalse();
-        var write = await ch.Write(Data.Ok("x"));
+        var write = await ch.Write(app.Ok("x"));
         await write.IsFailure();
         await Assert.That(write.Error!.Key).IsEqualTo("ChannelReadOnly");
     }
@@ -75,7 +80,7 @@ public class Stage2_StreamChannelTests
         await using var app = new global::app.@this("/test", autoWireConsoleChannels: false);
         var ch = new StreamChannel("c", new ThrowingStream(throwOnWrite: true), ChannelDirection.Output, ownsStream: false);
         app.User.Channel.Register(ch);
-        var result = await ch.Write(Data.Ok("x"));
+        var result = await ch.Write(app.Ok("x"));
         await result.IsFailure();
         // Serializer-layer errors travel directly through Data.Error without
         // wrapping — the underlying ThrowingStream IOException surfaces as

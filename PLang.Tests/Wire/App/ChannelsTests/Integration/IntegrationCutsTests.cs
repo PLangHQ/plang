@@ -25,7 +25,7 @@ public class IntegrationCutsTests
         // Direct write through the resolved Output channel — proves
         // Channels.Resolve(null) returns Output role channel and WriteAsync routes there.
         var ch = app.User.Channel.Resolve(null);
-        await ch.WriteAsync(Data.Ok("hello"));
+        await ch.WriteAsync(app.Ok("hello"));
 
         var got = global::System.Text.Encoding.UTF8.GetString(userOutput.ToArray());
         await Assert.That(got.Contains("hello")).IsTrue();
@@ -57,7 +57,7 @@ public class IntegrationCutsTests
         {
             if (payload.Peek()?.ToString() is { } s && s.Contains("REJECT"))
                 throw new InvalidOperationException("rejected by approval");
-            return Task.FromResult(Data.Ok());
+            return Task.FromResult(app.Ok());
         }));
 
         // AfterWrite on audit: write "+1" to metrics. Stage 8 contract:
@@ -65,12 +65,12 @@ public class IntegrationCutsTests
         // the successful write.
         audit.Events.Add(new EventBinding(Trigger.AfterWrite, async (_, _, _) =>
         {
-            await metrics.WriteAsync(Data.Ok("+1"));
-            return Data.Ok();
+            await metrics.WriteAsync(app.Ok("+1"));
+            return app.Ok();
         }));
 
-        var ok = await audit.WriteAsync(Data.Ok("ok-payload"));
-        var bad = await audit.WriteAsync(Data.Ok("REJECT-this"));
+        var ok = await audit.WriteAsync(app.Ok("ok-payload"));
+        var bad = await audit.WriteAsync(app.Ok("REJECT-this"));
 
         await ok.IsSuccess();
         await bad.IsFailure();

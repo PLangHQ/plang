@@ -6,8 +6,13 @@ namespace PLang.Tests.App.ChannelsTests;
 // Channel events: types, firing, recursion guard.
 // Architect: stage-8-channel-events.md and v1/plan/channel-events.md.
 
-public class Stage8_ChannelEventsTests
+public class Stage8_ChannelEventsTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create(
+        "/tmp/s8-" + System.Guid.NewGuid().ToString("N")[..6]);
+
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test]
     public async Task Trigger_HasFiveNewValues_ForChannelLifecycle()
     {
@@ -23,7 +28,7 @@ public class Stage8_ChannelEventsTests
     public async Task EventBinding_AcceptsChannelNameFilter()
     {
         var b = new EventBinding(Trigger.BeforeWrite,
-            (_, _, _) => Task.FromResult(Data.Ok()),
+            (_, _, _) => Task.FromResult(app.Ok()),
             channelName: "logger");
         await Assert.That(b.ChannelName).IsEqualTo("logger");
     }
@@ -46,10 +51,10 @@ public class Stage8_ChannelEventsTests
         ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, payload) =>
         {
             captured = payload;
-            return Task.FromResult(Data.Ok());
+            return Task.FromResult(app.Ok());
         }, channelName: "logger"));
 
-        await ch.WriteAsync(Data.Ok("hello"));
+        await ch.WriteAsync(app.Ok("hello"));
         await Assert.That(captured).IsNotNull();
         await Assert.That((await captured!.Value())?.ToString()).IsEqualTo("hello");
     }
@@ -64,10 +69,10 @@ public class Stage8_ChannelEventsTests
         ch.Events.Add(new EventBinding(Trigger.AfterWrite, (_, _, _) =>
         {
             afterFired = true;
-            return Task.FromResult(Data.Ok());
+            return Task.FromResult(app.Ok());
         }));
 
-        var result = await ch.WriteAsync(Data.Ok("hi"));
+        var result = await ch.WriteAsync(app.Ok("hi"));
         await result.IsFailure();
         await Assert.That(afterFired).IsFalse();
     }
@@ -82,9 +87,9 @@ public class Stage8_ChannelEventsTests
         ch.Events.Add(new EventBinding(Trigger.AfterWrite, (_, _, _) =>
         {
             afterFired = true;
-            return Task.FromResult(Data.Ok());
+            return Task.FromResult(app.Ok());
         }));
-        var result = await ch.WriteAsync(Data.Ok("hi"));
+        var result = await ch.WriteAsync(app.Ok("hi"));
         await result.IsSuccess();
         await Assert.That(afterFired).IsTrue();
     }
@@ -99,9 +104,9 @@ public class Stage8_ChannelEventsTests
         {
             afterFired = true;
             receivedData = payload;
-            return Task.FromResult(Data.Ok());
+            return Task.FromResult(app.Ok());
         }));
-        var result = await ch.WriteAsync(Data.Ok("hi"));
+        var result = await ch.WriteAsync(app.Ok("hi"));
         await result.IsFailure();
         await Assert.That(afterFired).IsTrue();
         await receivedData!.IsFailure();
@@ -115,7 +120,7 @@ public class Stage8_ChannelEventsTests
         app.User.Channel.Register(ch);
         ch.Events.Add(new EventBinding(Trigger.AfterWrite, (_, _, _) =>
             throw new InvalidOperationException("after fail")));
-        var result = await ch.WriteAsync(Data.Ok("hi"));
+        var result = await ch.WriteAsync(app.Ok("hi"));
         await result.IsSuccess();
     }
 
@@ -128,10 +133,10 @@ public class Stage8_ChannelEventsTests
         {
             outerHits++;
             // Re-entry: write to the same channel inside the handler.
-            await ch.WriteAsync(Data.Ok("inner"));
-            return Data.Ok();
+            await ch.WriteAsync(app.Ok("inner"));
+            return app.Ok();
         }));
-        await ch.WriteAsync(Data.Ok("outer"));
+        await ch.WriteAsync(app.Ok("outer"));
         await Assert.That(outerHits).IsEqualTo(1);
     }
 
@@ -142,10 +147,10 @@ public class Stage8_ChannelEventsTests
         var ch = StreamChannel.Memory("c");
         app.User.Channel.Register(ch);
         var order = new List<string>();
-        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) => { order.Add("A"); return Task.FromResult(Data.Ok()); }));
-        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) => { order.Add("B"); return Task.FromResult(Data.Ok()); }));
-        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) => { order.Add("C"); return Task.FromResult(Data.Ok()); }));
-        await ch.WriteAsync(Data.Ok("x"));
+        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) => { order.Add("A"); return Task.FromResult(app.Ok()); }));
+        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) => { order.Add("B"); return Task.FromResult(app.Ok()); }));
+        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) => { order.Add("C"); return Task.FromResult(app.Ok()); }));
+        await ch.WriteAsync(app.Ok("x"));
         await Assert.That(order).IsEquivalentTo(new[] { "A", "B", "C" });
     }
 
@@ -154,14 +159,14 @@ public class Stage8_ChannelEventsTests
     {
         var ch = StreamChannel.Memory("c");
         var order = new List<string>();
-        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) => { order.Add("A"); return Task.FromResult(Data.Ok()); }));
+        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) => { order.Add("A"); return Task.FromResult(app.Ok()); }));
         ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) =>
         {
             order.Add("B");
             throw new InvalidOperationException("stop");
         }));
-        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) => { order.Add("C"); return Task.FromResult(Data.Ok()); }));
-        var result = await ch.WriteAsync(Data.Ok("x"));
+        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) => { order.Add("C"); return Task.FromResult(app.Ok()); }));
+        var result = await ch.WriteAsync(app.Ok("x"));
         await result.IsFailure();
         await Assert.That(order).IsEquivalentTo(new[] { "A", "B" });
     }
@@ -176,7 +181,7 @@ public class Stage8_ChannelEventsTests
         ch.Events.Add(new EventBinding(Trigger.OnAsk, (_, _, payload) =>
         {
             receivedData = payload;
-            return Task.FromResult(Data.Ok());
+            return Task.FromResult(app.Ok());
         }));
         var result = await ch.AskAsync(new global::app.module.output.ask { Question = new global::app.data.@this<global::app.type.text.@this>("", "") });
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("answer");
@@ -196,7 +201,7 @@ public class Stage8_ChannelEventsTests
         ch.Events.Add(new EventBinding(Trigger.OnAsk, (_, _, _) =>
         {
             fired = true;
-            return Task.FromResult(Data.Ok());
+            return Task.FromResult(app.Ok());
         }));
         await ch.AskAsync(new global::app.module.output.ask { Question = new global::app.data.@this<global::app.type.text.@this>("", "q?") });
         await Assert.That(fired).IsTrue();
@@ -214,11 +219,11 @@ public class Stage8_ChannelEventsTests
 
         var hits = 0;
         app.Event.Register(new EventBinding(Trigger.BeforeWrite,
-            (_, _, _) => { hits++; return Task.FromResult(Data.Ok()); },
+            (_, _, _) => { hits++; return Task.FromResult(app.Ok()); },
             channelName: "logger"));
 
-        await userLogger.WriteAsync(Data.Ok("a"));
-        await serviceLogger.WriteAsync(Data.Ok("b"));
+        await userLogger.WriteAsync(app.Ok("a"));
+        await serviceLogger.WriteAsync(app.Ok("b"));
         await Assert.That(hits).IsEqualTo(2);
     }
 
@@ -231,9 +236,9 @@ public class Stage8_ChannelEventsTests
 
         bool goalFired = false;
         app.Event.Register(new EventBinding(Trigger.BeforeGoal,
-            (_, _, _) => { goalFired = true; return Task.FromResult(Data.Ok()); }));
+            (_, _, _) => { goalFired = true; return Task.FromResult(app.Ok()); }));
 
-        await ch.WriteAsync(Data.Ok("x"));
+        await ch.WriteAsync(app.Ok("x"));
         await Assert.That(goalFired).IsFalse();
     }
 

@@ -3,8 +3,13 @@ using System.Text;
 
 namespace PLang.Tests.App.Serialization;
 
-public class TextStreamSerializerTests
+public class TextStreamSerializerTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create(
+        "/tmp/txtser-" + System.Guid.NewGuid().ToString("N")[..6]);
+
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test]
     public async Task ContentType_ReturnsTextPlain()
     {
@@ -27,7 +32,7 @@ public class TextStreamSerializerTests
         var serializer = new global::app.channel.serializer.Text();
 
         // Serialize and verify it works with UTF-8 characters
-        var result = (await serializer.Serialize(Data.Ok("Hello 世界")).Value())!.Clr<string>()!;
+        var result = (await serializer.Serialize(app.Ok("Hello 世界")).Value())!.Clr<string>()!;
         await Assert.That((result)?.ToString()).IsEqualTo("Hello 世界");
     }
 
@@ -36,7 +41,7 @@ public class TextStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Text();
 
-        var result = (await serializer.Serialize(Data.Ok("hello world")).Value())!.Clr<string>()!;
+        var result = (await serializer.Serialize(app.Ok("hello world")).Value())!.Clr<string>()!;
 
         await Assert.That((result)?.ToString()).IsEqualTo("hello world");
     }
@@ -46,7 +51,7 @@ public class TextStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Text();
 
-        var result = (await serializer.Serialize(Data.Ok(42)).Value())!.Clr<string>()!;
+        var result = (await serializer.Serialize(app.Ok(42)).Value())!.Clr<string>()!;
 
         await Assert.That((result)?.ToString()).IsEqualTo("42");
     }
@@ -56,8 +61,8 @@ public class TextStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Text();
 
-        var trueResult = (await serializer.Serialize(Data.Ok(true)).Value())!.Clr<string>()!;
-        var falseResult = (await serializer.Serialize(Data.Ok(false)).Value())!.Clr<string>()!;
+        var trueResult = (await serializer.Serialize(app.Ok(true)).Value())!.Clr<string>()!;
+        var falseResult = (await serializer.Serialize(app.Ok(false)).Value())!.Clr<string>()!;
 
         await Assert.That(trueResult).IsEqualTo("true");
         await Assert.That(falseResult).IsEqualTo("false");
@@ -68,7 +73,7 @@ public class TextStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Text();
 
-        var result = (await serializer.Serialize(Data.Ok(null)).Value())!.Clr<string>()!;
+        var result = (await serializer.Serialize(app.Ok(null)).Value())!.Clr<string>()!;
 
         await Assert.That((result)?.ToString()).IsEqualTo("");
     }
@@ -79,7 +84,7 @@ public class TextStreamSerializerTests
         var serializer = new global::app.channel.serializer.Text();
         var obj = new { Name = "test" };
 
-        var result = (await serializer.Serialize(Data.Ok(obj)).Value())!.Clr<string>()!;
+        var result = (await serializer.Serialize(app.Ok(obj)).Value())!.Clr<string>()!;
 
         // Complex types fall back to JSON serialization (camelCase)
         await Assert.That(result).Contains("name");
@@ -92,7 +97,7 @@ public class TextStreamSerializerTests
         var serializer = new global::app.channel.serializer.Text();
         var dt = new DateTime(2024, 1, 15, 10, 30, 0);
 
-        var result = (await serializer.Serialize(Data.Ok(dt)).Value())!.Clr<string>()!;
+        var result = (await serializer.Serialize(app.Ok(dt)).Value())!.Clr<string>()!;
 
         await Assert.That(result).Contains("2024");
     }
@@ -269,7 +274,7 @@ public class TextStreamSerializerTests
         var serializer = new global::app.channel.serializer.Text();
         using var stream = new MemoryStream();
 
-        await serializer.SerializeAsync(stream, Data.Ok("hello world"));
+        await serializer.SerializeAsync(stream, app.Ok("hello world"));
 
         stream.Position = 0;
         var text = Encoding.UTF8.GetString(stream.ToArray());
@@ -284,7 +289,7 @@ public class TextStreamSerializerTests
         var serializer = new global::app.channel.serializer.Text();
         using var stream = new MemoryStream();
 
-        await serializer.SerializeAsync(stream, Data.Ok(null));
+        await serializer.SerializeAsync(stream, app.Ok(null));
 
         stream.Position = 0;
         var text = Encoding.UTF8.GetString(stream.ToArray());
@@ -330,7 +335,7 @@ public class TextStreamSerializerTests
         var serializer = new global::app.channel.serializer.Text();
         var original = "hello world";
 
-        var text = (await serializer.Serialize(Data.Ok(original)).Value())!.Clr<string>()!;
+        var text = (await serializer.Serialize(app.Ok(original)).Value())!.Clr<string>()!;
         var result = (await serializer.Deserialize<global::app.type.text.@this>(text).Value())!;
 
         await Assert.That(result.ToString()).IsEqualTo(original);
@@ -343,7 +348,7 @@ public class TextStreamSerializerTests
         var original = "hello world";
         using var stream = new MemoryStream();
 
-        await serializer.SerializeAsync(stream, Data.Ok(original));
+        await serializer.SerializeAsync(stream, app.Ok(original));
         stream.Position = 0;
         var result = (await (await serializer.DeserializeAsync<global::app.type.text.@this>(stream)).Value())?.ToString();
 
@@ -356,7 +361,7 @@ public class TextStreamSerializerTests
         var serializer = new global::app.channel.serializer.Text(Encoding.ASCII);
         using var stream = new MemoryStream();
 
-        await serializer.SerializeAsync(stream, Data.Ok("test"));
+        await serializer.SerializeAsync(stream, app.Ok("test"));
 
         stream.Position = 0;
         var bytes = stream.ToArray();
@@ -382,7 +387,7 @@ public class TextStreamSerializerTests
         using var stream = new ThrowingStream(canRead: false);
 
         // Simple-type path: Text writes bytes directly and the write throws.
-        var result = await serializer.SerializeAsync(stream, Data.Ok("value"));
+        var result = await serializer.SerializeAsync(stream, app.Ok("value"));
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("TextSerializeError");
