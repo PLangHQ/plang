@@ -266,18 +266,16 @@ public sealed class @this : IDisposable
     }
 
     /// <summary>
-    /// Captures the current Step / Goal / Event / Step.Context anchors and
-    /// sets them to the action's for the dispatch's lifetime. On Dispose,
-    /// restores. Used by App.Run to scope the dispatch context — parallel
-    /// dispatches of the same Step (legal under Task.WhenAll on goal.call)
-    /// don't leave a sibling branch's Context pointer leaked on the shared
-    /// Step instance.
+    /// Captures the current Step / Goal / Event anchors and sets them to the
+    /// action's for the dispatch's lifetime. On Dispose, restores. Used by
+    /// App.Run to scope the dispatch context — parallel dispatches of the same
+    /// Step (legal under Task.WhenAll on goal.call) restore cleanly because the
+    /// per-dispatch state rides the context, not the shared Step instance.
     /// </summary>
     public IDisposable AnchorScope(Action action)
     {
         var disposable = new AnchorScopeDisposable(this, action);
         Step = action.Step;
-        if (Step != null) Step.Context = this;
         Goal = action.Step?.Goal;
         return disposable;
     }
@@ -285,20 +283,16 @@ public sealed class @this : IDisposable
     private readonly struct AnchorScopeDisposable : IDisposable
     {
         private readonly @this _ctx;
-        private readonly Action _action;
         private readonly Step? _previousStep;
         private readonly Goal? _previousGoal;
         private readonly module.EventContext? _previousEvent;
-        private readonly @this? _previousStepContext;
 
         public AnchorScopeDisposable(@this context, Action action)
         {
             _ctx = context;
-            _action = action;
             _previousStep = context.Step;
             _previousGoal = context.Goal;
             _previousEvent = context.Event;
-            _previousStepContext = action.Step?.Context;
         }
 
         public void Dispose()
@@ -306,7 +300,6 @@ public sealed class @this : IDisposable
             _ctx.Step = _previousStep;
             _ctx.Goal = _previousGoal;
             _ctx.Event = _previousEvent;
-            if (_action.Step != null) _action.Step.Context = _previousStepContext;
         }
     }
 

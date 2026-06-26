@@ -12,30 +12,19 @@ namespace app.goal.steps.step;
 /// </summary>
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, module.IDataWrappable
 {
-    [JsonIgnore]
-    public actor.context.@this? Context { get; set; }
-
     /// <summary>
-    /// Whether this step is disabled for the current execution.
-    /// Backed by context storage so concurrent executions don't interfere.
-    /// Set by the condition module when a condition is false — marks indented sub-steps.
+    /// Whether this step is disabled for the given execution.
+    /// Per-execution state keyed by step identity, reached by passing the running
+    /// context — concurrent executions don't interfere. Set by the condition module
+    /// when a condition is false to mark indented sub-steps.
     /// </summary>
-    [JsonIgnore]
-    public bool Disabled
-    {
-        get
-        {
-            if (Context == null) return false;
-            return Context.Get<bool>(DisabledKey);
-        }
-        set
-        {
-            if (value)
-                Context?.Set(DisabledKey, true);
-            else
-                Context?.Set<bool>(DisabledKey, default); // removes from context
-        }
-    }
+    public bool Disabled(actor.context.@this context) => context.Get<bool>(DisabledKey);
+
+    /// <summary>Disables this step for the given execution.</summary>
+    public void Disable(actor.context.@this context) => context.Set(DisabledKey, true);
+
+    /// <summary>Re-enables this step for the given execution (clears the disabled flag).</summary>
+    public void Enable(actor.context.@this context) => context.Set<bool>(DisabledKey, default);
 
     private string DisabledKey => $"step:{Goal?.PrPath}:{Index}:disabled";
 

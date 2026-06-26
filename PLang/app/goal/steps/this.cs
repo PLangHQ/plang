@@ -50,12 +50,11 @@ public sealed class @this : IList<Step>, IContext
         {
             var step = _items[i];
             step.Goal ??= Goal;
-            step.Context = Context;
 
-            if (step.Disabled)
+            if (step.Disabled(Context))
             {
                 // Clear the disabled flag after skipping so re-execution works
-                step.Disabled = false;
+                step.Enable(Context);
                 continue;
             }
 
@@ -125,8 +124,8 @@ public sealed class @this : IList<Step>, IContext
         for (int i = parent.Index + 1; i < _items.Count; i++)
         {
             if (_items[i].Indent <= parent.Indent) break;
-            _items[i].Context = context;
-            _items[i].Disabled = disabled;
+            if (disabled) _items[i].Disable(context);
+            else _items[i].Enable(context);
         }
     }
 
