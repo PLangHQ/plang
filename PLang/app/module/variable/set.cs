@@ -309,11 +309,17 @@ public partial class Set : IContext, IBuildValidatable
         // var like `%!data%` rebinds to the next action's result, the target would follow
         // it (the `%msg%` self-reference that blocks the builder). ShallowClone gives the
         // new slot its own Properties copy (the value instance is shared — immutable, safe).
+        // AsCanonical resolves the NAME hop (a full-match `%x%`/`%!data%` → the CURRENT
+        // Data instance it points at) without computing its value (lazy preserved), so the
+        // target binds to that instance, not the rebinding name — the fix for the `%msg%`
+        // self-reference.
         var canonical = await Value.AsCanonical(Context);
-        // A typed variable reference that resolves to nothing (`set %x% = %unset%`) is an
-        // error, not a silent uninitialized binding — surface it with the missing name. An
-        // infra var (`%!error%`) that is legitimately unset borns differently and is allowed.
-        if (Value.IsVariable && !canonical.IsInitialized)
+        // Binding to an UNSET reference (`set %x% = %unset%`, or a navigation that resolves
+        // to nothing) is an error — a missing value means something is wrong, surface it with
+        // the name rather than silently binding the absent citizen. Infra vars (`%!error%`)
+        // are legitimately unset (no error yet) and excepted; a present-null source is
+        // initialized and binds fine.
+        if (!canonical.IsInitialized && !canonical.Name.StartsWith('!'))
             return global::app.data.@this.FromError(new global::app.error.Error(
                 $"Variable '{canonical.Name}' not found", "VariableNotFound", 404));
         return await Context.Variable.Set(name.Name, canonical.ShallowClone(name.Name));
