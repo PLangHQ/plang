@@ -293,7 +293,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
         var readAction = new module.file.Read
         {
             Context = context,
-            Path = data.@this<path>.Ok(path.Resolve(prPath, context))
+            Path = context.Ok<path>(path.Resolve(prPath, context))
         };
         var result = await app.RunAction(readAction, context);
         if (!result.Success) return result;

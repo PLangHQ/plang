@@ -24,7 +24,7 @@ public sealed class @this
     /// </summary>
     public async System.Threading.Tasks.ValueTask<data.@this> Get(string path, actor.context.@this context)
     {
-        if (string.IsNullOrEmpty(path)) return data.@this.NotFound("Settings");
+        if (string.IsNullOrEmpty(path)) return context.NotFound("Settings");
 
         var dotIndex = path.IndexOf('.');
         var key = dotIndex >= 0 ? path[..dotIndex] : path;

@@ -80,7 +80,7 @@ public partial class ask : IContext
             // variable "!ask". Variables.Remove only takes flat keys; removing
             // the root consumes the marker. "!ask" is reserved for this use.
             Context.Variable.Remove("!ask");
-            return data.@this<Ask>.Ok(new Ask { Answer = (await answer.Value())?.ToString() });
+            return Context.Ok<Ask>(new Ask { Answer = (await answer.Value())?.ToString() });
         }
 
         // Fresh path: delegate to the input channel. Stream blocks and returns
@@ -95,7 +95,7 @@ public partial class ask : IContext
         // (no Snapshot needed — the answer is already here).
         var askVal = await askResult.Value();
         if (askVal is not Ask ask)
-            return data.@this<Ask>.Ok(new Ask { Answer = askVal?.ToString() });
+            return Context.Ok<Ask>(new Ask { Answer = askVal?.ToString() });
         // Stateless-channel shape: a suspending Ask plus a Snapshot. Forward
         // Snapshot + Type so the engine's ShouldExit and the channel's resume
         // path both still trigger.

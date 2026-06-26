@@ -18,7 +18,7 @@ public partial class Start : IContext, IStatic
         var entry = new TimerEntry(DateTimeOffset.UtcNow, (await Scope.Value())!.Clr<string>()!);
         Static[key] = entry;
         Static["__last__"] = key;
-        return global::app.data.@this<global::app.type.@bool.@this>.Ok(true);
+        return Context.Ok<global::app.type.@bool.@this>(true);
     }
 }
 

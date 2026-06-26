@@ -41,13 +41,13 @@ public sealed class Default : IIdentity
         var app = action.Context.App;
 
         if (string.IsNullOrWhiteSpace((await action.Name.Value())?.Clr<string>()))
-            return data.@this<Identity>.FromError(new ActionError("Identity name cannot be empty", "ValidationError", 400));
+            return action.Context.Error<Identity>(new ActionError("Identity name cannot be empty", "ValidationError", 400));
 
         var (items, err) = await LoadAll(action);
-        if (err != null) return data.@this<Identity>.FromError(err);
+        if (err != null) return action.Context.Error<Identity>(err);
         var __an = (await action.Name.Value())?.Clr<string>();
         if (items.Exists(i => string.Equals(i.Name, __an, StringComparison.OrdinalIgnoreCase)))
-            return data.@this<Identity>.FromError(new ActionError($"Identity '{await action.Name.Value()}' already exists", "DuplicateName", 409));
+            return action.Context.Error<Identity>(new ActionError($"Identity '{await action.Name.Value()}' already exists", "DuplicateName", 409));
 
         var genResult = await GenerateIdentity(action, (await action.Name.Value())!.Clr<string>()!, (await action.SetAsDefault.Value())!.Value, (action.Provider == null ? null : (await action.Provider.Value())?.Clr<string>()));
         if (!genResult.Success) return genResult;
@@ -69,7 +69,7 @@ public sealed class Default : IIdentity
         if (await action.SetAsDefault.ToBooleanAsync())
             app.System.Identity = identity;
 
-        return data.@this<Identity>.Ok(identity);
+        return action.Context.Ok<Identity>(identity);
     }
 
     public async Task<data.@this<Identity>> ArchiveAsync(Archive action)
@@ -79,17 +79,17 @@ public sealed class Default : IIdentity
         var identity = (await loadResult.Value())!;
 
         if (identity.IsDefault && (await action.Force.Value())?.Value != true)
-            return data.@this<Identity>.FromError(new ActionError(
+            return action.Context.Error<Identity>(new ActionError(
                 "Cannot archive the default identity. Set a different default first, or use force.",
                 "CannotArchiveDefault", 400));
 
         if (identity.IsArchived)
-            return data.@this<Identity>.Ok(identity);
+            return action.Context.Ok<Identity>(identity);
 
         identity.IsArchived = true;
         var saveResult = await SaveAsync(action, identity);
         if (!saveResult.Success) return data.@this<Identity>.From(saveResult);
-        return data.@this<Identity>.Ok(identity);
+        return action.Context.Ok<Identity>(identity);
     }
 
     public async Task<data.@this<Identity>> UnarchiveAsync(Unarchive action)
@@ -99,30 +99,30 @@ public sealed class Default : IIdentity
         var identity = (await loadResult.Value())!;
 
         if (!identity.IsArchived)
-            return data.@this<Identity>.Ok(identity);
+            return action.Context.Ok<Identity>(identity);
 
         identity.IsArchived = false;
         var saveResult = await SaveAsync(action, identity);
         if (!saveResult.Success) return data.@this<Identity>.From(saveResult);
-        return data.@this<Identity>.Ok(identity);
+        return action.Context.Ok<Identity>(identity);
     }
 
     public async Task<data.@this<Identity>> SetDefaultAsync(SetDefault action)
     {
         var app = action.Context.App;
         var (items, err) = await LoadAll(action);
-        if (err != null) return data.@this<Identity>.FromError(err);
+        if (err != null) return action.Context.Error<Identity>(err);
 
         var __nm = (await action.Name.Value())?.Clr<string>();
         var target = items.Find(i => string.Equals(i.Name, __nm, StringComparison.OrdinalIgnoreCase));
         if (target == null)
-            return data.@this<Identity>.FromError(new ActionError($"Identity '{await action.Name.Value()}' not found", "NotFound", 404));
+            return action.Context.Error<Identity>(new ActionError($"Identity '{await action.Name.Value()}' not found", "NotFound", 404));
 
         if (target.IsArchived)
-            return data.@this<Identity>.FromError(new ActionError($"Cannot set archived identity '{await action.Name.Value()}' as default", "ArchivedIdentity", 400));
+            return action.Context.Error<Identity>(new ActionError($"Cannot set archived identity '{await action.Name.Value()}' as default", "ArchivedIdentity", 400));
 
         if (target.IsDefault)
-            return data.@this<Identity>.Ok(target);
+            return action.Context.Ok<Identity>(target);
 
         foreach (var identity in items.Where(i => i.IsDefault))
         {
@@ -136,7 +136,7 @@ public sealed class Default : IIdentity
         if (!saveResult.Success) return data.@this<Identity>.From(saveResult);
 
         app.System.Identity = target;
-        return data.@this<Identity>.Ok(target);
+        return action.Context.Ok<Identity>(target);
     }
 
     public async Task<data.@this<Identity>> RenameAsync(Rename action)
@@ -144,17 +144,17 @@ public sealed class Default : IIdentity
         var app = action.Context.App;
 
         if (string.IsNullOrWhiteSpace((await action.NewName.Value())?.Clr<string>()))
-            return data.@this<Identity>.FromError(new ActionError("New name cannot be empty", "ValidationError", 400));
+            return action.Context.Error<Identity>(new ActionError("New name cannot be empty", "ValidationError", 400));
 
         var loadResult = await Load(action, (await action.Name.Value())!.Clr<string>()!);
         if (!loadResult.Success) return loadResult;
         var identity = (await loadResult.Value())!;
 
         var (items, err) = await LoadAll(action);
-        if (err != null) return data.@this<Identity>.FromError(err);
+        if (err != null) return action.Context.Error<Identity>(err);
         var __nn = (await action.NewName.Value())?.Clr<string>();
         if (items.Exists(i => string.Equals(i.Name, __nn, StringComparison.OrdinalIgnoreCase)))
-            return data.@this<Identity>.FromError(new ActionError($"Identity '{await action.NewName.Value()}' already exists", "DuplicateName", 409));
+            return action.Context.Error<Identity>(new ActionError($"Identity '{await action.NewName.Value()}' already exists", "DuplicateName", 409));
 
         // Save with new name first, then remove old — no data loss on failure
         var oldName = identity.Name;
@@ -170,15 +170,15 @@ public sealed class Default : IIdentity
         if (identity.IsDefault)
             app.System.Identity = identity;
 
-        return data.@this<Identity>.Ok(identity);
+        return action.Context.Ok<Identity>(identity);
     }
 
     public async Task<data.@this<global::app.type.list.@this<Identity>>> ListAsync(list action)
     {
         var (items, err) = await LoadAll(action);
-        if (err != null) return data.@this<global::app.type.list.@this<Identity>>.FromError(err);
+        if (err != null) return action.Context.Error<global::app.type.list.@this<Identity>>(err);
         var active = items!.Where(i => !i.IsArchived).ToList();
-        return data.@this<global::app.type.list.@this<Identity>>.Ok(global::app.type.list.@this<Identity>.Of(active));
+        return action.Context.Ok<global::app.type.list.@this<Identity>>(global::app.type.list.@this<Identity>.Of(active));
     }
 
     public async Task<data.@this<Identity>> ExportAsync(Export action)
@@ -212,7 +212,7 @@ public sealed class Default : IIdentity
             return result;
 
         if (result.Peek() is null or { IsNull: true })
-            return data.@this<Identity>.FromError(new ActionError($"Identity '{name}' not found", "NotFound", 404));
+            return action.Context.Error<Identity>(new ActionError($"Identity '{name}' not found", "NotFound", 404));
 
         return result;
     }
@@ -238,10 +238,10 @@ public sealed class Default : IIdentity
     public async Task<data.@this<Identity>> GetOrCreateDefaultAsync(IContext action)
     {
         var (items, err) = await LoadAll(action);
-        if (err != null) return data.@this<Identity>.FromError(err);
+        if (err != null) return action.Context.Error<Identity>(err);
 
         var def = items.Find(i => i.IsDefault && !i.IsArchived);
-        if (def != null) return data.@this<Identity>.Ok(def);
+        if (def != null) return action.Context.Ok<Identity>(def);
 
         // Promote an existing non-archived identity
         var candidate = items.Find(i => !i.IsArchived);
@@ -250,7 +250,7 @@ public sealed class Default : IIdentity
             candidate.IsDefault = true;
             var saveResult = await SaveAsync(action, candidate);
             if (!saveResult.Success) return data.@this<Identity>.From(saveResult);
-            return data.@this<Identity>.Ok(candidate);
+            return action.Context.Ok<Identity>(candidate);
         }
 
         // No identities at all — auto-create
@@ -259,7 +259,7 @@ public sealed class Default : IIdentity
         var identity = (await genResult.Value())!;
         var result = await SaveAsync(action, identity);
         if (!result.Success) return data.@this<Identity>.From(result);
-        return data.@this<Identity>.Ok(identity);
+        return action.Context.Ok<Identity>(identity);
     }
 
     /// <summary>Persists an identity to the settings store. Bare Data — the
@@ -287,11 +287,11 @@ public sealed class Default : IIdentity
         var app = action.Context.App;
         var (keyProvider, keyResolveErr) = app.Code.Get<IKey>(providerName);
         if (keyResolveErr != null)
-            return data.@this<Identity>.FromError(keyResolveErr);
+            return action.Context.Error<Identity>(keyResolveErr);
 
         var (keys, keyErr) = keyProvider!.GenerateKeyPair();
         if (keyErr != null)
-            return data.@this<Identity>.FromError(keyErr);
+            return action.Context.Error<Identity>(keyErr);
 
         var now = await (await action.Context.Variable.Get("NowUtc")).Clr<DateTimeOffset>(default);
 
@@ -303,6 +303,6 @@ public sealed class Default : IIdentity
             IsArchived = false,
             Created = now
         };
-        return data.@this<Identity>.Ok(identity);
+        return action.Context.Ok<Identity>(identity);
     }
 }

@@ -20,9 +20,9 @@ public partial class Split : IContext
         var parts = (await Value.Value())!.Clr<string>()!.Split(new[] { (await Separator.Value())!.Clr<string>()! }, options);
         var list = new app.type.list.@this { Context = Context };
         foreach (var part in parts)
-            list.Add(new global::app.data.@this("", part));
+            list.Add(new global::app.data.@this("", part, context: Context));
 
-        return global::app.data.@this<type.list>.Ok(
+        return Context.Ok<type.list>(
             new type.list { count = list.CountRaw, value = list }, app.type.@this.FromName("list"));
     }
 }

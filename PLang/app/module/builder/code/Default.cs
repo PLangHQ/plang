@@ -158,9 +158,9 @@ public class Default : IBuilder
         var listAction = new file.List
         {
             Context = context,
-            Path = data.@this<path>.Ok(path.Resolve(rootRelative, context)),
-            Pattern = new data.@this<global::app.type.text.@this>("", "*.goal"),
-            Recursive = new data.@this<global::app.type.@bool.@this>("", true)
+            Path = context.Ok<path>(path.Resolve(rootRelative, context)),
+            Pattern = new data.@this<global::app.type.text.@this>("", "*.goal", context: context),
+            Recursive = new data.@this<global::app.type.@bool.@this>("", true, context: context)
         };
         var listResult = await app.RunAction(listAction, context);
         if (!listResult.Success)
@@ -205,7 +205,7 @@ public class Default : IBuilder
 
         foreach (var file in files)
         {
-            var readAction = new file.Read { Context = context, Path = data.@this<path>.Ok(file) };
+            var readAction = new file.Read { Context = context, Path = context.Ok<path>(file) };
             var readResult = await app.RunAction(readAction, context);
             if (!readResult.Success)
             {
@@ -276,7 +276,7 @@ public class Default : IBuilder
         var saveAction = new file.Save
         {
             Context = context,
-            Path = data.@this<path>.Ok(prPath),
+            Path = context.Ok<path>(prPath),
             Value = new data.@this("", json, context: context)
         };
         var saveResult = await app.RunAction(saveAction, context);
@@ -1065,7 +1065,7 @@ public class Default : IBuilder
         var readAction = new file.Read
         {
             Context = context,
-            Path = data.@this<path>.Ok(prPath)
+            Path = context.Ok<path>(prPath)
         };
         var readResult = await app.RunAction(readAction, context);
         if (!readResult.Success) return errors;

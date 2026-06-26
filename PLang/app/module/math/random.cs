@@ -18,6 +18,6 @@ public partial class Random : IContext
         var max = (await Max.Value())!;
         var rng = System.Random.Shared;
         long result = rng.NextInt64(min.ToInt64(), max.ToInt64() + 1);
-        return data.@this<global::app.type.number.@this>.Ok(result);
+        return Context.Ok<global::app.type.number.@this>(result);
     }
 }

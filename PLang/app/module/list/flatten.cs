@@ -11,12 +11,12 @@ public partial class Flatten : IContext
     {
         var nl = app.type.list.@this.FromRaw((await (await Context.Variable.Get((await ListName.Value()))).Value()), Context);
         if (nl == null)
-            return global::app.data.@this<type.list>.FromError(
+            return Context.Error<type.list>(
                 new app.error.ValidationError($"Variable '{(await ListName.Value())}' is not a list"));
 
         var flat = new app.type.list.@this { Context = Context };
         await FlattenNative(nl, flat);
-        return global::app.data.@this<type.list>.Ok(new type.list { count = flat.CountRaw, value = flat }, app.type.@this.FromName("list"));
+        return Context.Ok<type.list>(new type.list { count = flat.CountRaw, value = flat }, app.type.@this.FromName("list"));
     }
 
     // Flatten a native list: a nested-list element's elements are lifted; any other

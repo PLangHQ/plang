@@ -20,7 +20,7 @@ public partial class Max : IContext
         var an = number.FromObject(await A.Value());
         var bn = number.FromObject(await B.Value());
         if (an == null || bn == null)
-            return data.@this<number>.FromError(
+            return Context.Error<number>(
                 new global::app.error.ValidationError("math.max requires two numbers", "InvalidInput"));
         return number.Max(an, bn, policy);
     }

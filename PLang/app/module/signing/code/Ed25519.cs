@@ -32,7 +32,7 @@ public class Ed25519 : ISigning
         var identity = (Identity)(await identityResult.Value())!;
 
         // Hash the inner data — the digest binds the value into the signed bytes.
-        var hashResult = await app.RunAction<Hash>(new Hash { Data = action.Data, Algorithm = new data.@this<global::app.type.text.@this>("", "keccak256") }, action.Context);
+        var hashResult = await app.RunAction<Hash>(new Hash { Data = action.Data, Algorithm = new data.@this<global::app.type.text.@this>("", "keccak256", context: action.Context) }, action.Context);
         if (!hashResult.Success) return hashResult;
         if (await hashResult.Value() is not global::app.module.crypto.type.hash.@this hash)
             return action.Context.Error(new ActionError("Hashing produced no digest", "DataHashMismatch", 500));
@@ -66,7 +66,7 @@ public class Ed25519 : ISigning
     public virtual async Task<data.@this<global::app.type.@bool.@this>> VerifyAsync(verify action)
     {
         if (action.Data?.Peek() is not global::app.type.signature.@this layer)
-            return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Data has no signature", "NoSignature", 400));
+            return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Data has no signature", "NoSignature", 400));
 
         var app = action.Context.App;
         // NowUtc may be unset when verify runs at the deserialize boundary (the
@@ -86,12 +86,12 @@ public class Ed25519 : ISigning
         {
             var age = now - layer.Created.Value;
             if (age.TotalMilliseconds > effectiveTimeout)
-                return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError($"Signature timed out (age: {age.TotalMilliseconds:F0}ms, timeout: {effectiveTimeout}ms)", "TimedOut", 400));
+                return action.Context.Error<global::app.type.@bool.@this>(new ActionError($"Signature timed out (age: {age.TotalMilliseconds:F0}ms, timeout: {effectiveTimeout}ms)", "TimedOut", 400));
         }
 
         // 2. Expiry check (signature's intrinsic lifetime — null = permanent).
         if (layer.Expires is { } exp && now > exp.Value)
-            return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Signature has expired", "Expired", 400));
+            return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Signature has expired", "Expired", 400));
 
         // 3. Nonce replay check — paired with step 1 (wire-freshness). For
         // stored artifacts the same nonce naturally re-presents on every read,
@@ -102,7 +102,7 @@ public class Ed25519 : ISigning
             var cacheSettings = new CacheSettings { DurationMs = effectiveTimeout };
             var nonceAdded = await app.Cache.TryAddAsync(nonceCacheKey, action.Context.Ok(true), cacheSettings);
             if (!nonceAdded)
-                return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Nonce has already been used", "NonceReplay", 400));
+                return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Nonce has already been used", "NonceReplay", 400));
         }
 
         // 4. Contract matching — Contracts may be an unset/absent slot (the
@@ -112,28 +112,28 @@ public class Ed25519 : ISigning
             : System.Linq.Enumerable.ToList(System.Linq.Enumerable.Select(
                 contractsList.Items, d => d.Peek().ToString() ?? ""));
         if (!ContractsMatch(System.Linq.Enumerable.ToList(layer.ContractStrings()), expectedContracts))
-            return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Contract mismatch", "ContractMismatch", 400));
+            return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Contract mismatch", "ContractMismatch", 400));
 
         // 5. Data hash verification — rehash the inner value, compare to the
         // signed digest (which carries its own algorithm).
         var storedHash = layer.Hash;
         if (storedHash.Bytes.Length == 0)
-            return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Missing data hash", "DataHashMismatch", 400));
+            return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Missing data hash", "DataHashMismatch", 400));
 
         var rehash = await app.RunAction<Hash>(
-            new Hash { Data = layer.Value, Algorithm = new data.@this<global::app.type.text.@this>("", storedHash.Algorithm) }, action.Context);
+            new Hash { Data = layer.Value, Algorithm = new data.@this<global::app.type.text.@this>("", storedHash.Algorithm, context: action.Context) }, action.Context);
         if (!rehash.Success) return global::app.data.@this<global::app.type.@bool.@this>.From(rehash);
         if (await rehash.Value() is not global::app.module.crypto.type.hash.@this rehashValue || !rehashValue.DigestEquals(storedHash))
-            return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
+            return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
 
         // 6. Signature verification — over the layer's canonical signing bytes.
         if (layer.Signature.Value.Length == 0)
-            return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Missing signature", "SignatureInvalid", 400));
+            return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Missing signature", "SignatureInvalid", 400));
 
         var verifyResult = Verify(layer.ToSigningBytes(), layer.Signature.Value, layer.Identity.ToString());
         if (!verifyResult.Success) return global::app.data.@this<global::app.type.@bool.@this>.From(verifyResult);
 
-        return global::app.data.@this<global::app.type.@bool.@this>.Ok(true);
+        return action.Context.Ok<global::app.type.@bool.@this>(true);
     }
 
     private static bool ContractsMatch(List<string>? signed, List<string>? required)

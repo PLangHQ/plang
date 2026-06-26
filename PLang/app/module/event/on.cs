@@ -60,6 +60,6 @@ public partial class On : IContext
         // Register on the target actor's event scope
         targetActor.Context.Events.Register(binding);
 
-        return global::app.data.@this<global::app.type.text.@this>.Ok(binding.Id);
+        return Context.Ok<global::app.type.text.@this>(binding.Id);
     }
 }

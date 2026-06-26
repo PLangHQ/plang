@@ -31,7 +31,7 @@ public class Fluid : ITemplate
         // Null-safe: [IsNotNull] guards the .pr path, but direct C# composition can
         // init Template to null — fail gracefully rather than throw.
         if (action.Template == null || (await action.Template.Value()) is not { } templateVal)
-            return app.data.@this<global::app.type.text.@this>.FromError(new global::app.error.ValidationError(
+            return action.Context.Error<global::app.type.text.@this>(new global::app.error.ValidationError(
                 "ui.render requires a template", "MissingTemplate"));
         var templateContent = templateVal.ToString() ?? "";
         var isFile = action.IsFile == null ? null : (await action.IsFile.Value());
@@ -42,13 +42,13 @@ public class Fluid : ITemplate
         {
             var pathData = path.Resolve(templateContent, action.Context);
             if (!await pathData.AsBooleanAsync())
-                return app.data.@this<global::app.type.text.@this>.FromError(new ServiceError(
+                return action.Context.Error<global::app.type.text.@this>(new ServiceError(
                     $"Template file not found: {templateContent}", "NotFound", 404));
 
             sourceFile = pathData.Relative;
             var readResult = await pathData.ReadText();
             if (!readResult.Success)
-                return app.data.@this<global::app.type.text.@this>.FromError(readResult.Error
+                return action.Context.Error<global::app.type.text.@this>(readResult.Error
                     ?? new ServiceError("Template read failed", "IOError", 500));
             templateContent = (await readResult.Value())?.ToString() ?? "";
         }
@@ -58,7 +58,7 @@ public class Fluid : ITemplate
         if (!parser.TryParse(templateContent, out var fluidTemplate, out var parseError))
         {
             var location = sourceFile != null ? $" in '{sourceFile}'" : "";
-            return app.data.@this<global::app.type.text.@this>.FromError(new ServiceError(
+            return action.Context.Error<global::app.type.text.@this>(new ServiceError(
                 $"Template syntax error{location}: {parseError}", "TemplateError", 400));
         }
 
@@ -136,12 +136,12 @@ public class Fluid : ITemplate
         {
             var writer = new StringWriter();
             await fluidTemplate.RenderAsync(writer, NullEncoder.Default, fluidContext);
-            return app.data.@this<global::app.type.text.@this>.Ok(writer.ToString());
+            return action.Context.Ok<global::app.type.text.@this>(writer.ToString());
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
             var location = sourceFile != null ? $" in '{sourceFile}'" : "";
-            return app.data.@this<global::app.type.text.@this>.FromError(new ServiceError(
+            return action.Context.Error<global::app.type.text.@this>(new ServiceError(
                 $"Template render error{location}: {ex.Message}", "RenderError", 500));
         }
     }

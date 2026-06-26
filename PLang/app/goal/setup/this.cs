@@ -74,7 +74,7 @@ public sealed class @this
             }
         }
 
-        return data.@this.Ok();
+        return context.Ok();
     }
 
     /// <summary>

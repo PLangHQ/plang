@@ -22,6 +22,6 @@ public partial class Set : IContext
         if (!result.Success)
             return data.@this<type.setting>.From(result);
 
-        return data.@this<type.setting>.Ok(new type.setting { key = key, value = val });
+        return Context.Ok<type.setting>(new type.setting { key = key, value = val });
     }
 }

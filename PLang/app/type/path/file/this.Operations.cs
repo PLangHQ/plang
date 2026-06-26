@@ -131,21 +131,21 @@ public sealed partial class @this
     {
         if (await AuthGate(Verb.Read) is { } early) return data.@this<global::app.type.binary.@this>.From(early);
         if (!System.IO.File.Exists(Absolute))
-            return data.@this<global::app.type.binary.@this>.FromError(new global::app.error.ServiceError($"File not found: {Raw}", "NotFound", 404));
+            return Context!.Error<global::app.type.binary.@this>(new global::app.error.ServiceError($"File not found: {Raw}", "NotFound", 404));
         try
         {
-            return data.@this<global::app.type.binary.@this>.Ok(new global::app.type.binary.@this(await System.IO.File.ReadAllBytesAsync(Absolute)));
+            return Context!.Ok<global::app.type.binary.@this>(new global::app.type.binary.@this(await System.IO.File.ReadAllBytesAsync(Absolute)));
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {
-            return data.@this<global::app.type.binary.@this>.FromError(new global::app.error.ServiceError(ex.Message, "IOError", 500));
+            return Context!.Error<global::app.type.binary.@this>(new global::app.error.ServiceError(ex.Message, "IOError", 500));
         }
     }
 
     public override async Task<data.@this<global::app.type.@bool.@this>> ExistsAsync()
     {
         if (await AuthGate(Verb.Read) is { } early) return data.@this<global::app.type.@bool.@this>.From(early);
-        return data.@this<global::app.type.@bool.@this>.Ok(System.IO.File.Exists(Absolute) || System.IO.Directory.Exists(Absolute));
+        return Context!.Ok<global::app.type.@bool.@this>(System.IO.File.Exists(Absolute) || System.IO.Directory.Exists(Absolute));
     }
 
     /// <summary>
@@ -169,18 +169,18 @@ public sealed partial class @this
     {
         if (await AuthGate(Verb.Read) is { } early) return data.@this<global::app.type.list.@this<global::app.type.path.@this>>.From(early);
         if (!System.IO.Directory.Exists(Absolute))
-            return data.@this<global::app.type.list.@this<global::app.type.path.@this>>.FromError(new global::app.error.ServiceError($"Directory not found: {Raw}", "NotFound", 404));
+            return Context!.Error<global::app.type.list.@this<global::app.type.path.@this>>(new global::app.error.ServiceError($"Directory not found: {Raw}", "NotFound", 404));
         try
         {
             var option = recursive ? System.IO.SearchOption.AllDirectories : System.IO.SearchOption.TopDirectoryOnly;
             var files = System.IO.Directory.GetFiles(Absolute, pattern, option)
                 .Select(f => (global::app.type.path.@this)new @this(f, Context))
                 .ToList();
-            return data.@this<global::app.type.list.@this<global::app.type.path.@this>>.Ok(global::app.type.list.@this<global::app.type.path.@this>.Of(files));
+            return Context!.Ok<global::app.type.list.@this<global::app.type.path.@this>>(global::app.type.list.@this<global::app.type.path.@this>.Of(files));
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {
-            return data.@this<global::app.type.list.@this<global::app.type.path.@this>>.FromError(new global::app.error.ServiceError(ex.Message, "IOError", 500));
+            return Context!.Error<global::app.type.list.@this<global::app.type.path.@this>>(new global::app.error.ServiceError(ex.Message, "IOError", 500));
         }
     }
 
@@ -190,14 +190,14 @@ public sealed partial class @this
         if (System.IO.File.Exists(Absolute))
         {
             var info = new System.IO.FileInfo(Absolute);
-            return data.@this<global::app.type.path.@this.StatInfo>.Ok(new StatInfo(Exists: true, IsFile: true, Length: info.Length, Modified: info.LastWriteTimeUtc));
+            return Context!.Ok<global::app.type.path.@this.StatInfo>(new StatInfo(Exists: true, IsFile: true, Length: info.Length, Modified: info.LastWriteTimeUtc));
         }
         if (System.IO.Directory.Exists(Absolute))
         {
             var info = new System.IO.DirectoryInfo(Absolute);
-            return data.@this<global::app.type.path.@this.StatInfo>.Ok(new StatInfo(Exists: true, IsFile: false, Modified: info.LastWriteTimeUtc));
+            return Context!.Ok<global::app.type.path.@this.StatInfo>(new StatInfo(Exists: true, IsFile: false, Modified: info.LastWriteTimeUtc));
         }
-        return data.@this<global::app.type.path.@this.StatInfo>.Ok(new StatInfo(Exists: false));
+        return Context!.Ok<global::app.type.path.@this.StatInfo>(new StatInfo(Exists: false));
     }
 
     // --- Writes --------------------------------------------------------------
@@ -207,7 +207,7 @@ public sealed partial class @this
         if (await AuthGate(Verb.Write) is { } early) return data.@this<global::app.type.path.@this>.From(early);
         EnsureParentDir();
         await System.IO.File.WriteAllTextAsync(Absolute, content);
-        return data.@this<global::app.type.path.@this>.Ok(this);
+        return Context!.Ok<global::app.type.path.@this>(this);
     }
 
     /// <summary>
@@ -241,17 +241,17 @@ public sealed partial class @this
                 var serResult = await Context!.Actor.Channel.Serializers.SerializeAsync(new global::app.channel.serializer.list.SerializeOptions
                     { Stream = stream, Data = value!, Extension = Extension });
                 if (!serResult.Success)
-                    return data.@this<global::app.type.path.@this>.FromError(serResult.Error!);
+                    return Context!.Error<global::app.type.path.@this>(serResult.Error!);
             }
-            return data.@this<global::app.type.path.@this>.Ok(this);
+            return Context!.Ok<global::app.type.path.@this>(this);
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {
-            return data.@this<global::app.type.path.@this>.FromError(new global::app.error.ServiceError(ex.Message, "IOError", 500));
+            return Context!.Error<global::app.type.path.@this>(new global::app.error.ServiceError(ex.Message, "IOError", 500));
         }
         catch (System.Exception ex) when (ex is System.Text.Json.JsonException or System.NotSupportedException)
         {
-            return data.@this<global::app.type.path.@this>.FromError(new global::app.error.ServiceError(ex.Message, "SerializationError", 500));
+            return Context!.Error<global::app.type.path.@this>(new global::app.error.ServiceError(ex.Message, "SerializationError", 500));
         }
     }
 
@@ -260,7 +260,7 @@ public sealed partial class @this
         if (await AuthGate(Verb.Write) is { } early) return data.@this<global::app.type.path.@this>.From(early);
         EnsureParentDir();
         await System.IO.File.WriteAllBytesAsync(Absolute, content);
-        return data.@this<global::app.type.path.@this>.Ok(this);
+        return Context!.Ok<global::app.type.path.@this>(this);
     }
 
     public override async Task<data.@this<global::app.type.path.@this>> Append(string content)
@@ -268,14 +268,14 @@ public sealed partial class @this
         if (await AuthGate(Verb.Write) is { } early) return data.@this<global::app.type.path.@this>.From(early);
         EnsureParentDir();
         await System.IO.File.AppendAllTextAsync(Absolute, content);
-        return data.@this<global::app.type.path.@this>.Ok(this);
+        return Context!.Ok<global::app.type.path.@this>(this);
     }
 
     public override async Task<data.@this<global::app.type.path.@this>> Mkdir()
     {
         if (await AuthGate(Verb.Write) is { } early) return data.@this<global::app.type.path.@this>.From(early);
         System.IO.Directory.CreateDirectory(Absolute);
-        return data.@this<global::app.type.path.@this>.Ok(this);
+        return Context!.Ok<global::app.type.path.@this>(this);
     }
 
     // --- Destructive ---------------------------------------------------------
@@ -297,18 +297,18 @@ public sealed partial class @this
             else if (System.IO.Directory.Exists(Absolute))
             {
                 if (!recursive && System.IO.Directory.GetFileSystemEntries(Absolute).Length > 0)
-                    return data.@this<global::app.type.path.@this>.FromError(new global::app.error.ServiceError(
+                    return Context!.Error<global::app.type.path.@this>(new global::app.error.ServiceError(
                         $"Directory is not empty: {Raw}. Use recursive=true to delete contents.", "DirectoryNotEmpty", 400));
                 System.IO.Directory.Delete(Absolute, recursive);
             }
             else if (!ignoreIfNotFound)
-                return data.@this<global::app.type.path.@this>.FromError(new global::app.error.ServiceError($"Not found: {Raw}", "NotFound", 404));
+                return Context!.Error<global::app.type.path.@this>(new global::app.error.ServiceError($"Not found: {Raw}", "NotFound", 404));
 
-            return data.@this<global::app.type.path.@this>.Ok(this);
+            return Context!.Ok<global::app.type.path.@this>(this);
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {
-            return data.@this<global::app.type.path.@this>.FromError(new global::app.error.ServiceError(ex.Message, "IOError", 500));
+            return Context!.Error<global::app.type.path.@this>(new global::app.error.ServiceError(ex.Message, "IOError", 500));
         }
     }
 
@@ -416,7 +416,7 @@ public sealed partial class @this
                     var denied = !sourceOk
                         ? new global::app.error.PermissionDenied(BuildRequest(Context!.Actor!, sourceVerb))
                         : new global::app.error.PermissionDenied(BuildRequest(Context!.Actor!, destVerb));
-                    return data.@this<global::app.type.path.@this>.FromError(denied);
+                    return Context!.Error<global::app.type.path.@this>(denied);
                 default:
                     prefix = $"Invalid answer '{answer}'. ";
                     continue;
@@ -452,7 +452,7 @@ public sealed partial class @this
         try
         {
             if (!System.IO.File.Exists(Absolute) && !System.IO.Directory.Exists(Absolute))
-                return Task.FromResult(data.@this<global::app.type.path.@this>.FromError(new global::app.error.ServiceError($"Not found: {Raw}", "NotFound", 404)));
+                return Task.FromResult(Context!.Error<global::app.type.path.@this>(new global::app.error.ServiceError($"Not found: {Raw}", "NotFound", 404)));
 
             // Directory transfer ------------------------------------------------
             if (System.IO.Directory.Exists(Absolute))
@@ -467,12 +467,12 @@ public sealed partial class @this
                         System.IO.Directory.Delete(destination.Absolute, recursive: true);
                     System.IO.Directory.Move(Absolute, destination.Absolute);
                     return Task.FromResult(
-                        data.@this<global::app.type.path.@this>.Ok(new @this(destination.Absolute, Context)));
+                        Context!.Ok<global::app.type.path.@this>(new @this(destination.Absolute, Context)));
                 }
 
                 CopyDirectory(Absolute, destination.Absolute, overwrite, includeSubfolders);
                 return Task.FromResult(
-                    data.@this<global::app.type.path.@this>.Ok(new @this(destination.Absolute, Context)));
+                    Context!.Ok<global::app.type.path.@this>(new @this(destination.Absolute, Context)));
             }
 
             // File transfer -----------------------------------------------------
@@ -485,11 +485,11 @@ public sealed partial class @this
             else        System.IO.File.Copy(Absolute, destPath, overwrite);
 
             return Task.FromResult(
-                data.@this<global::app.type.path.@this>.Ok(new @this(destPath, Context)));
+                Context!.Ok<global::app.type.path.@this>(new @this(destPath, Context)));
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {
-            return Task.FromResult(data.@this<global::app.type.path.@this>.FromError(new global::app.error.ServiceError(ex.Message, "IOError", 500)));
+            return Task.FromResult(Context!.Error<global::app.type.path.@this>(new global::app.error.ServiceError(ex.Message, "IOError", 500)));
         }
     }
 }

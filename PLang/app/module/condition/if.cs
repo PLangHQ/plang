@@ -114,7 +114,7 @@ public partial class If : IContext, IStep
 
             if (branchResult)
             {
-                data.@this lastResult = global::app.data.@this<global::app.type.@bool.@this>.Ok(true);
+                data.@this lastResult = Context.Ok<global::app.type.@bool.@this>(true);
                 foreach (var action in body)
                 {
                     lastResult = await action.RunAsync(Context);

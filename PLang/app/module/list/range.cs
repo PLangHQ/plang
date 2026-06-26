@@ -16,7 +16,7 @@ public partial class Range : IContext
         // own int boundary.
         var stepN = (await Step.Value())!;
         if (stepN == 0)
-            return global::app.data.@this<type.list>.FromError(
+            return Context.Error<type.list>(
                 new app.error.ValidationError("Step cannot be zero", "InvalidStep"));
 
         var list = new app.type.list.@this { Context = Context };
@@ -32,6 +32,6 @@ public partial class Range : IContext
                 list.Add(new global::app.data.@this("", i, context: Context));
         }
 
-        return global::app.data.@this<type.list>.Ok(new type.list { count = list.CountRaw, value = list }, app.type.@this.FromName("list"));
+        return Context.Ok<type.list>(new type.list { count = list.CountRaw, value = list }, app.type.@this.FromName("list"));
     }
 }

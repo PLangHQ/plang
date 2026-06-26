@@ -75,7 +75,7 @@ public partial class intercept : IContext
 
         Context.Events.Register(binding);
 
-        return data.@this<global::app.mock.@this>.Ok(handle);
+        return Context.Ok<global::app.mock.@this>(handle);
     }
 
     private static app.goal.steps.step.actions.action.@this? FindCurrentAction(actor.context.@this context)

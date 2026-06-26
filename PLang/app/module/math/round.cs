@@ -14,7 +14,7 @@ public partial class Round : IContext
     {
         var n = number.FromObject(await Value.Value());
         if (n == null)
-            return data.@this<number>.FromError(
+            return Context.Error<number>(
                 new global::app.error.ValidationError("math.round requires a number", "InvalidInput"));
         return number.Round(n, (await Decimals.Value())!);
     }

@@ -40,7 +40,7 @@ public partial class Group : IContext
             result.Add(new global::app.data.@this("", bucketDict, context: Context));
         }
 
-        return global::app.data.@this<type.list>.Ok(
+        return Context.Ok<type.list>(
             new type.list { count = result.CountRaw, value = result }, app.type.@this.FromName("list"));
     }
 }

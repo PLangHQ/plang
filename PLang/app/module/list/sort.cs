@@ -16,7 +16,7 @@ public partial class Sort : IContext
         var listName = (await ListName.Value())!;
         var nl = app.type.list.@this.FromRaw(await (await Context.Variable.Get(listName)).Value(), Context);
         if (nl == null)
-            return global::app.data.@this<type.list>.FromError(
+            return Context.Error<type.list>(
                 new app.error.ValidationError($"Variable '{listName}' is not a list"));
         // Promote the variable to the native list (no-op when already native) so the
         // in-place sort persists — mirrors list.add's raw→native promotion.
@@ -38,9 +38,9 @@ public partial class Sort : IContext
         }
         catch (global::app.data.IncomparableException ex)
         {
-            return global::app.data.@this<type.list>.FromError(
+            return Context.Error<type.list>(
                 new app.error.ValidationError(ex.Message));
         }
-        return global::app.data.@this<type.list>.Ok(new type.list { count = nl.CountRaw, value = nl }, app.type.@this.FromName("list"));
+        return Context.Ok<type.list>(new type.list { count = nl.CountRaw, value = nl }, app.type.@this.FromName("list"));
     }
 }

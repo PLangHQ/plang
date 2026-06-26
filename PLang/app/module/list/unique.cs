@@ -11,7 +11,7 @@ public partial class Unique : IContext
     {
         var nl = app.type.list.@this.FromRaw((await (await Context.Variable.Get((await ListName.Value()))).Value()), Context);
         if (nl == null)
-            return global::app.data.@this<type.list>.FromError(
+            return Context.Error<type.list>(
                 new app.error.ValidationError($"Variable '{(await ListName.Value())}' is not a list"));
 
         // Dedup through the one compare path's structural equality — so a list of
@@ -27,7 +27,7 @@ public partial class Unique : IContext
             if (!dup) kept.Add(item);
         }
         var deduped = new app.type.list.@this(kept) { Context = Context };
-        return global::app.data.@this<type.list>.Ok(
+        return Context.Ok<type.list>(
             new type.list { count = deduped.CountRaw, value = deduped }, app.type.@this.FromName("list"));
     }
 }

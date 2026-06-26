@@ -16,9 +16,9 @@ public partial class IndexOf : IContext
         foreach (var (key, item) in data.EnumerateItems())
         {
             if (await item.Compare(Value) == global::app.data.Comparison.Equal)
-                return global::app.data.@this<global::app.type.number.@this>.Ok(Convert.ToInt32((await key.Value())));
+                return Context.Ok<global::app.type.number.@this>(Convert.ToInt32((await key.Value())));
         }
 
-        return global::app.data.@this<global::app.type.number.@this>.Ok(-1);
+        return Context.Ok<global::app.type.number.@this>(-1);
     }
 }

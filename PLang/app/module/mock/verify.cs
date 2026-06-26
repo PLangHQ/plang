@@ -16,11 +16,11 @@ public partial class Verify : IContext
         var expected = await ExpectedCount.Value();
         if (mock.CallCount != expected)
         {
-            return global::app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(
+            return Context.Error<global::app.type.@bool.@this>(new AssertionError(
                 expected!, mock.CallCount,
                 (Message == null ? null : (await Message.Value())?.Clr<string>()) ?? $"Expected {mock.Pattern} to be called {expected} time(s), but was called {mock.CallCount} time(s)"));
         }
 
-        return global::app.data.@this<global::app.type.@bool.@this>.Ok(true);
+        return Context.Ok<global::app.type.@bool.@this>(true);
     }
 }

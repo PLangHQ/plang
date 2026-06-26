@@ -33,7 +33,7 @@ public class Default : ICrypto
         // empty wire shape, which silently verifies against any other empty.
         // Surface the missing input instead.
         if (value is null || await value.IsEmpty())
-            return global::app.data.@this<global::app.module.crypto.type.hash.@this>.FromError(new ActionError(
+            return action.Context.Error<global::app.module.crypto.type.hash.@this>(new ActionError(
                 "Hash requires a value to hash", "ValueRequired", 400));
         if (value is global::app.type.binary.@this bin)
         {
@@ -52,7 +52,7 @@ public class Default : ICrypto
             // verification would behave inconsistently across the same payload.
             var registered = action.Context?.Actor?.Channel.Serializers.GetByType("application/plang");
             if (registered != null && registered is not global::app.channel.serializer.plang.@this)
-                return global::app.data.@this<global::app.module.crypto.type.hash.@this>.FromError(new ActionError(
+                return action.Context.Error<global::app.module.crypto.type.hash.@this>(new ActionError(
                     "Registered application/plang serializer is not the canonical plang.@this; hash bytes would diverge from wire bytes.",
                     "SerializerMismatch", 500));
             var serializer = (registered as global::app.channel.serializer.plang.@this) ?? _fallbackPlang;
@@ -83,14 +83,14 @@ public class Default : ICrypto
         };
 
         if (hashBytes == null)
-            return global::app.data.@this<global::app.module.crypto.type.hash.@this>.FromError(new ActionError($"Algorithm '{action.Algorithm.Peek()}' is not supported", "UnsupportedAlgorithm", 400));
+            return action.Context.Error<global::app.module.crypto.type.hash.@this>(new ActionError($"Algorithm '{action.Algorithm.Peek()}' is not supported", "UnsupportedAlgorithm", 400));
 
         // The value IS a hash (a digest that knows its algorithm), not bare
         // bytes — so the builder annotates the write-to variable as `%x% (hash)`
         // and the live serializer renders the digest. The algorithm is the
         // value's KIND; stamp {name: hash, kind: <algorithm>} so verify reads
         // the algorithm off the value instead of a loose, mismatch-prone param.
-        return global::app.data.@this<global::app.module.crypto.type.hash.@this>.Ok(new global::app.module.crypto.type.hash.@this(hashBytes, algorithm),
+        return action.Context.Ok<global::app.module.crypto.type.hash.@this>(new global::app.module.crypto.type.hash.@this(hashBytes, algorithm),
             global::app.type.@this.Create("hash", kind: algorithm));
     }
 
@@ -105,7 +105,7 @@ public class Default : ICrypto
         // expected-hash string — a null payload is a missing input, not a bad hash.
         var toVerify = action.Data.Peek();
         if (toVerify is null || await toVerify.IsEmpty())
-            return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError(
+            return action.Context.Error<global::app.type.@bool.@this>(new ActionError(
                 "Verify requires a value to verify", "ValueRequired", 400));
 
         global::app.module.crypto.type.hash.@this expected;
@@ -122,7 +122,7 @@ public class Default : ICrypto
             // The hash type owns base64↔byte parsing (OBP) — Verify doesn't
             // reach for Convert.FromBase64String / SequenceEqual itself.
             try { expected = global::app.module.crypto.type.hash.@this.FromBase64((await action.Hash.Value())?.ToString() ?? "", algorithm); }
-            catch (FormatException) { return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Hash string is not valid base64", "InvalidHash", 400)); }
+            catch (FormatException) { return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Hash string is not valid base64", "InvalidHash", 400)); }
         }
 
         // Recompute through crypto.hash so the algorithm switch stays in one
@@ -131,10 +131,10 @@ public class Default : ICrypto
         {
             Context = action.Context,
             Data = action.Data,
-            Algorithm = new global::app.data.@this<global::app.type.text.@this>("Algorithm", algorithm),
+            Algorithm = new global::app.data.@this<global::app.type.text.@this>("Algorithm", algorithm, context: action.Context),
         });
-        if (!hashResult.Success) return global::app.data.@this<global::app.type.@bool.@this>.FromError(hashResult.Error!);
+        if (!hashResult.Success) return action.Context.Error<global::app.type.@bool.@this>(hashResult.Error!);
 
-        return global::app.data.@this<global::app.type.@bool.@this>.Ok(((global::app.module.crypto.type.hash.@this)(await hashResult.Value())!).DigestEquals(expected));
+        return action.Context.Ok<global::app.type.@bool.@this>(((global::app.module.crypto.type.hash.@this)(await hashResult.Value())!).DigestEquals(expected));
     }
 }

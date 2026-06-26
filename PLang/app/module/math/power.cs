@@ -40,7 +40,7 @@ public partial class Power : IContext
         var an = number.FromObject(await Base.Value());
         var bn = number.FromObject(await Exponent.Value());
         if (an == null || bn == null)
-            return data.@this<number>.FromError(
+            return Context.Error<number>(
                 new global::app.error.ValidationError("math.power requires base and exponent", "InvalidInput"));
         return number.Power(an, bn, policy);
     }

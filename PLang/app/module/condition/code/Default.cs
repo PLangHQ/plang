@@ -39,7 +39,7 @@ public sealed class Default : IEvaluator
             left = await TolerateAbsentVariable(left);
             right = await TolerateAbsentVariable(right);
             Operator op = (await operatorData.Value())!; bool result = await op.Evaluate(left, right);
-            return global::app.data.@this<global::app.type.@bool.@this>.Ok(result);
+            return operatorData.Context.Ok<global::app.type.@bool.@this>(result);
         }
         catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)
         {

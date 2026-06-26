@@ -227,7 +227,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (data != null) return data;
         data = Defaults?.FirstOrDefault(p =>
             string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
-        return data ?? global::app.data.@this.NotFound(name);
+        return data ?? context.NotFound(name);
     }
 
     /// <summary>By-name parameter access for the generated dispatch:

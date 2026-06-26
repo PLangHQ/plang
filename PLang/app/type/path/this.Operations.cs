@@ -96,7 +96,7 @@ public abstract partial class @this
         var bytes = await ReadBytes();
         if (!bytes.Success || bytes.Peek().IsNull)
             return data.@this<global::app.type.text.@this>.From(bytes);
-        return data.@this<global::app.type.text.@this>.Ok(System.Convert.ToBase64String((await bytes.Value())!.Value));
+        return Context!.Ok<global::app.type.text.@this>(System.Convert.ToBase64String((await bytes.Value())!.Value));
     }
 
     /// <summary>
@@ -110,7 +110,7 @@ public abstract partial class @this
         if (!bytes.Success || bytes.Peek().IsNull)
             return data.@this<global::app.type.text.@this>.From(bytes);
         var mime = string.IsNullOrEmpty(MimeType) ? "application/octet-stream" : MimeType;
-        return data.@this<global::app.type.text.@this>.Ok($"data:{mime};base64,{System.Convert.ToBase64String((await bytes.Value())!.Value)}");
+        return Context!.Ok<global::app.type.text.@this>($"data:{mime};base64,{System.Convert.ToBase64String((await bytes.Value())!.Value)}");
     }
 
     /// <summary>Delete with file-action options. Non-FS schemes ignore both.</summary>
@@ -144,7 +144,7 @@ public abstract partial class @this
         if (!read.Success || read.Type?.ClrType.Exit() == true) return data.@this<@this>.From(read);
         byte[]? copyBytes = (await read.Value())?.Value;
         if (copyBytes == null)
-            return data.@this<@this>.FromError(new error.Error("CopyTo: source ReadBytes did not return bytes.", "CopyToReadShape", 500));
+            return Context!.Error<@this>(new error.Error("CopyTo: source ReadBytes did not return bytes.", "CopyToReadShape", 500));
         return await destination.WriteBytes(copyBytes);
     }
 

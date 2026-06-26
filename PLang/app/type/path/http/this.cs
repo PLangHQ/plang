@@ -193,14 +193,14 @@ public sealed partial class @this : global::app.type.path.@this
             using var resp = await _client.SendAsync(req);
             // Exists answers a question — 2xx → true, 4xx → false, both Success.
             if ((int)resp.StatusCode >= 200 && (int)resp.StatusCode < 300)
-                return data.@this<global::app.type.@bool.@this>.Ok(true);
+                return Context!.Ok<global::app.type.@bool.@this>(true);
             if ((int)resp.StatusCode >= 400 && (int)resp.StatusCode < 500)
-                return data.@this<global::app.type.@bool.@this>.Ok(false);
-            return data.@this<global::app.type.@bool.@this>.FromError(MapStatus(resp.StatusCode));
+                return Context!.Ok<global::app.type.@bool.@this>(false);
+            return Context!.Error<global::app.type.@bool.@this>(MapStatus(resp.StatusCode));
         }
         catch (System.Exception ex) when (IsNetworkError(ex))
         {
-            return data.@this<global::app.type.@bool.@this>.FromError(NetworkError(ex));
+            return Context!.Error<global::app.type.@bool.@this>(NetworkError(ex));
         }
     }
 
@@ -213,7 +213,7 @@ public sealed partial class @this : global::app.type.path.@this
     public override async Task<data.@this<global::app.type.list.@this<global::app.type.path.@this>>> List(string pattern, bool recursive)
     {
         if (await AuthGate(Verb.Read) is { } early) return data.@this<global::app.type.list.@this<global::app.type.path.@this>>.From(early);
-        return data.@this<global::app.type.list.@this<global::app.type.path.@this>>.FromError(new Error(
+        return Context!.Error<global::app.type.list.@this<global::app.type.path.@this>>(new Error(
             "HTTP scheme does not support directory listing.", "NotSupported", 400));
     }
 
@@ -239,10 +239,10 @@ public sealed partial class @this : global::app.type.path.@this
             if (!resp.IsSuccessStatusCode)
             {
                 if ((int)resp.StatusCode == 404)
-                    return data.@this<global::app.type.path.@this.StatInfo>.Ok(new StatInfo(Exists: false));
-                return data.@this<global::app.type.path.@this.StatInfo>.FromError(MapStatus(resp.StatusCode));
+                    return Context!.Ok<global::app.type.path.@this.StatInfo>(new StatInfo(Exists: false));
+                return Context!.Error<global::app.type.path.@this.StatInfo>(MapStatus(resp.StatusCode));
             }
-            return data.@this<global::app.type.path.@this.StatInfo>.Ok(new StatInfo(
+            return Context!.Ok<global::app.type.path.@this.StatInfo>(new StatInfo(
                 Exists: true,
                 IsFile: true,
                 Length: resp.Content.Headers.ContentLength,
@@ -250,7 +250,7 @@ public sealed partial class @this : global::app.type.path.@this
         }
         catch (System.Exception ex) when (IsNetworkError(ex))
         {
-            return data.@this<global::app.type.path.@this.StatInfo>.FromError(NetworkError(ex));
+            return Context!.Error<global::app.type.path.@this.StatInfo>(NetworkError(ex));
         }
     }
 
@@ -261,7 +261,7 @@ public sealed partial class @this : global::app.type.path.@this
         var verb = Verb.Write;
         if (await AuthGate(verb) is { } early) return data.@this<global::app.type.path.@this>.From(early);
         var sent = await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), readBody: false, verb);
-        return sent.Success ? data.@this<global::app.type.path.@this>.Ok(this) : data.@this<global::app.type.path.@this>.From(sent);
+        return sent.Success ? Context!.Ok<global::app.type.path.@this>(this) : data.@this<global::app.type.path.@this>.From(sent);
     }
 
     public override async Task<data.@this<global::app.type.path.@this>> WriteBytes(byte[] content)
@@ -269,7 +269,7 @@ public sealed partial class @this : global::app.type.path.@this
         var verb = Verb.Write;
         if (await AuthGate(verb) is { } early) return data.@this<global::app.type.path.@this>.From(early);
         var sent = await Send(HttpMethod.Post, new ByteArrayContent(content), readBody: false, verb);
-        return sent.Success ? data.@this<global::app.type.path.@this>.Ok(this) : data.@this<global::app.type.path.@this>.From(sent);
+        return sent.Success ? Context!.Ok<global::app.type.path.@this>(this) : data.@this<global::app.type.path.@this>.From(sent);
     }
 
     /// <summary>HTTP append maps onto a second POST — servers that support
@@ -279,7 +279,7 @@ public sealed partial class @this : global::app.type.path.@this
         var verb = Verb.Write;
         if (await AuthGate(verb) is { } early) return data.@this<global::app.type.path.@this>.From(early);
         var sent = await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), readBody: false, verb);
-        return sent.Success ? data.@this<global::app.type.path.@this>.Ok(this) : data.@this<global::app.type.path.@this>.From(sent);
+        return sent.Success ? Context!.Ok<global::app.type.path.@this>(this) : data.@this<global::app.type.path.@this>.From(sent);
     }
 
     /// <summary>
@@ -289,7 +289,7 @@ public sealed partial class @this : global::app.type.path.@this
     public override async Task<data.@this<global::app.type.path.@this>> Mkdir()
     {
         if (await AuthGate(Verb.Write) is { } early) return data.@this<global::app.type.path.@this>.From(early);
-        return data.@this<global::app.type.path.@this>.FromError(new Error(
+        return Context!.Error<global::app.type.path.@this>(new Error(
             "HTTP scheme does not support directory creation.", "NotSupported", 400));
     }
 
@@ -316,7 +316,7 @@ public sealed partial class @this : global::app.type.path.@this
         var verb = Verb.Delete;
         if (await AuthGate(verb) is { } early) return data.@this<global::app.type.path.@this>.From(early);
         var sent = await Send(HttpMethod.Delete, content: null, readBody: false, verb);
-        return sent.Success ? data.@this<global::app.type.path.@this>.Ok(this) : data.@this<global::app.type.path.@this>.From(sent);
+        return sent.Success ? Context!.Ok<global::app.type.path.@this>(this) : data.@this<global::app.type.path.@this>.From(sent);
     }
 
     // --- HTTP plumbing -------------------------------------------------------

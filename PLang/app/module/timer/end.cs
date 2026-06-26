@@ -18,17 +18,17 @@ public partial class End : IContext, IStatic
         if (key == null)
         {
             if (!Static.TryGetValue("__last__", out var lastObj) || lastObj is not string lastKey)
-                return Task.FromResult(global::app.data.@this<global::app.type.duration.@this>.FromError(
+                return Task.FromResult(Context.Error<global::app.type.duration.@this>(
                     new app.error.ValidationError("No timer has been started")));
             key = lastKey;
         }
 
         if (!Static.TryGetValue(key, out var entryObj) || entryObj is not TimerEntry entry)
-            return Task.FromResult(global::app.data.@this<global::app.type.duration.@this>.FromError(
+            return Task.FromResult(Context.Error<global::app.type.duration.@this>(
                 new app.error.ValidationError($"Timer '{key}' was not started")));
 
         var elapsed = DateTimeOffset.UtcNow - entry.StartedAt;
         Static.TryRemove(key, out _);
-        return Task.FromResult(global::app.data.@this<global::app.type.duration.@this>.Ok(elapsed));
+        return Task.FromResult(Context.Ok<global::app.type.duration.@this>(elapsed));
     }
 }

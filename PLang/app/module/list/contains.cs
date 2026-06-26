@@ -17,9 +17,9 @@ public partial class Contains : IContext
         foreach (var (_, item) in data.EnumerateItems())
         {
             if (await item.Compare(Value) == global::app.data.Comparison.Equal)
-                return global::app.data.@this<global::app.type.@bool.@this>.Ok(true);
+                return Context.Ok<global::app.type.@bool.@this>(true);
         }
 
-        return global::app.data.@this<global::app.type.@bool.@this>.Ok(false);
+        return Context.Ok<global::app.type.@bool.@this>(false);
     }
 }

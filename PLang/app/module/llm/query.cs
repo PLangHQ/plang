@@ -120,13 +120,13 @@ public partial class query : IContext, IBuildValidatable
         if (schema is not (null or global::app.type.@null.@this)
             && !(schema is global::app.type.text.@this st
                  && (st.Clr<string>() is "" or null || st.HasHoles)))
-            return Task.FromResult(data.@this.Ok("json"));
+            return Task.FromResult(Context.Ok("json"));
 
         var format = __action?.Parameters?.FirstOrDefault(p =>
             string.Equals(p.Name, "Format", System.StringComparison.OrdinalIgnoreCase))?.Peek()?.ToString();
         if (!string.IsNullOrEmpty(format) && !format.Contains('%'))
-            return Task.FromResult(data.@this.Ok(format));
+            return Task.FromResult(Context.Ok(format));
 
-        return Task.FromResult(data.@this.Ok());
+        return Task.FromResult(Context.Ok());
     }
 }

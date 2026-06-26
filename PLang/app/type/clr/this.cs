@@ -82,14 +82,14 @@ public sealed class @this : global::app.type.item.@this, global::app.module.ICon
                 | System.Reflection.BindingFlags.Instance
                 | System.Reflection.BindingFlags.IgnoreCase
                 | System.Reflection.BindingFlags.DeclaredOnly);
-        if (prop == null) return global::app.data.@this.NotFound(key);
+        if (prop == null) return Context.NotFound(key);
 
         try
         {
             var resolved = prop.GetValue(Value);
             return resolved is global::app.data.@this d
                 ? d
-                : new global::app.data.@this(key, resolved, parent: parent);
+                : new global::app.data.@this(key, resolved, parent: parent, context: Context);
         }
         catch (System.Reflection.TargetInvocationException ex)
         {

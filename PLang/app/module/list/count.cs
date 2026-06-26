@@ -15,11 +15,11 @@ public partial class Count : IContext
         // The typed surface answers in a `number` (raw int covers IList infra).
         var counted = countData.IsInitialized ? await countData.Value() : null;
         if (counted is global::app.type.number.@this n)
-            return global::app.data.@this<global::app.type.number.@this>.Ok(n);
+            return Context.Ok<global::app.type.number.@this>(n);
 
         // Fallback: enumerate
         int count = 0;
         foreach (var _ in data.EnumerateItems()) count++;
-        return global::app.data.@this<global::app.type.number.@this>.Ok(count);
+        return Context.Ok<global::app.type.number.@this>(count);
     }
 }

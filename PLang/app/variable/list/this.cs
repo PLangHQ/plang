@@ -304,7 +304,7 @@ public partial class @this
             // surface it rather than masking the real cause with NotFound.
             if (parent.Error?.Key == "MaterializeFailed")
                 return _context.Error(parent.Error);
-            return data.@this.NotFound(name);
+            return _context.NotFound(name);
         }
 
         // A dotted write is an EXAMINATION — the value door parses an
@@ -318,7 +318,7 @@ public partial class @this
         {
             if (parent.Error?.Key == "MaterializeFailed")
                 return _context.Error(parent.Error);
-            return data.@this.NotFound(name);
+            return _context.NotFound(name);
         }
 
         // Resolve the value to what the SLOT can hold — the write boundary decides:
@@ -572,7 +572,7 @@ public partial class @this
     public async System.Threading.Tasks.ValueTask<data.@this> Get(string name)
     {
         if (string.IsNullOrEmpty(name))
-            return data.@this.NotFound(name ?? "");
+            return _context.NotFound(name ?? "");
 
         name = CleanName(name);
 
@@ -605,7 +605,7 @@ public partial class @this
         {
             if (_navigables.TryGetValue(rootName, out var resolver))
                 return await resolver(remaining ?? "");
-            return data.@this.NotFound(name);
+            return _context.NotFound(name);
         }
 
         if (string.IsNullOrEmpty(remaining))
@@ -632,7 +632,7 @@ public partial class @this
         if (existing is data.@this<T> already) return already;          // identity hop
         var item = await existing.Value<T>();                          // T.Create(await Value(), existing)
         if (item == null) return data.@this<T>.From(existing);         // decline carries the error
-        var typed = data.@this<T>.Ok(item);
+        var typed = _context.Ok<T>(item);
         typed.Context = _context;
         return typed;
     }

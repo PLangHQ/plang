@@ -208,6 +208,19 @@ public sealed class @this : IDisposable
     /// <summary>An error Data carrying <paramref name="error"/>, born with this context.</summary>
     public data.@this Error(IError error) => new("", context: this) { Error = error };
 
+    /// <summary>A typed error Data carrying <paramref name="error"/>, born with this context.</summary>
+    public data.@this<T> Error<T>(IError error)
+        where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+        => new("", context: this) { Error = error };
+
+    /// <summary>A not-found Data (present reference, <c>IsInitialized == false</c>), born with this context.</summary>
+    public data.@this NotFound(string name = "")
+    {
+        var d = data.@this.NotFound(name);
+        d.Context = this;
+        return d;
+    }
+
     /// <summary>
     /// Gets or sets a value in the execution context.
     /// </summary>

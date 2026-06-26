@@ -418,7 +418,7 @@ public sealed class @this
         }
         catch (Exception ex)
         {
-            return data.@this.FromError(Error.FromException(ex));
+            return context.Error(Error.FromException(ex));
         }
     }
 }

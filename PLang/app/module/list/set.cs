@@ -13,7 +13,7 @@ public partial class Set : IContext
     {
         var nl = app.type.list.@this.FromRaw((await (await Context.Variable.Get((await ListName.Value()))).Value()), Context);
         if (nl == null)
-            return global::app.data.@this<type.list>.FromError(
+            return Context.Error<type.list>(
                 new app.error.ValidationError($"Variable '{(await ListName.Value())}' is not a list"));
         // Promote to native (no-op when already native) so the in-place set persists.
         await Context.Variable.Set((await ListName.Value()), nl);
@@ -24,7 +24,7 @@ public partial class Set : IContext
         if (index < 0 || index >= nl.Count)
         {
             var lastIndex = nl.Count - 1;   // number arithmetic; renders via its own ToString
-            return global::app.data.@this<type.list>.FromError(
+            return Context.Error<type.list>(
                 new app.error.ValidationError($"Index {index} out of range (0..{lastIndex})"));
         }
         // The slot mints its OWN Data pointing at the value's current instance
@@ -33,6 +33,6 @@ public partial class Set : IContext
             ? new global::app.data.@this("", null, context: Context)
             : new global::app.data.@this(Value.Name, await Value.Value(), Value.Type) { Context = Context };
         nl.SetAt(index, item);
-        return global::app.data.@this<type.list>.Ok(new type.list { count = nl.CountRaw, value = nl }, app.type.@this.FromName("list"));
+        return Context.Ok<type.list>(new type.list { count = nl.CountRaw, value = nl }, app.type.@this.FromName("list"));
     }
 }
