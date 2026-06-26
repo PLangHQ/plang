@@ -27,6 +27,19 @@
 
 **OBP self-audit.** Checked new surfaces against Rules #2/#3/#4. Fixed: dropped the decomposed `verify.ExpectedIdentity` (verify navigates its own `Context.Actor.Identity`); renamed `IsDisabled`/`SetDisabled` → `Disabled(context)` + `Disable`/`Enable(context)`; pass `typeRef` whole to `Readers.Typed`. Flagged pre-existing `GetActor` verb+noun. Audit table at the foot of `demolition.md`.
 
-**Files.** Plan spine `plan.md`; deep dives `plan/mime-and-verify.md`, `plan/value-births.md`, `plan/step-context.md`, `plan/demolition.md`, `plan/after-flow.md` (end-to-end code flow in the non-null world, before/after at each junction). The "removed outright" consolidated list and the OBP self-audit are in `demolition.md`. No stage files yet (Ingi: plan only, steps later).
+**Files.** Plan spine `plan.md`; deep dives `plan/mime-and-verify.md`, `plan/value-births.md`, `plan/step-context.md`, `plan/demolition.md`, `plan/after-flow.md` (end-to-end code flow in the non-null world, before/after at each junction). The "removed outright" consolidated list and the OBP self-audit are in `demolition.md`.
 
-**Status.** Awaiting Ingi's read-through. Stages to be carved after.
+**Stages.** Carved into six stage files at the architect root.
+
+| Stage | File | Status |
+|-------|------|--------|
+| 1 | [Construction-order non-null](stage-1-construction-windows.md) | pending |
+| 2 | [Delete Step.Context](stage-2-step-context-removal.md) | pending |
+| 3 | [Values born through context](stage-3-value-births.md) | pending |
+| 4 | [Serializer & store bind context — one read path](stage-4-serializer-binds-context.md) | pending |
+| 5 | [Authenticity & bootstrap](stage-5-authenticity-bootstrap.md) | pending |
+| 6 | [Invariant proof](stage-6-invariant-proof.md) | pending |
+
+Dependency order: 1 first (foundation); 2 independent (sequence after 1 for clean diffs); 3 needs 1; 4 needs 1+3; 5 needs 4+1; 6 needs all.
+
+**Status.** Design settled and stages carved. Ready for test-designer and coder.
