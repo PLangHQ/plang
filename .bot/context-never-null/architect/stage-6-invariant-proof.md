@@ -20,6 +20,21 @@ Use the canonical test commands (rebuild from clean before claiming any `plang -
 
 Full detail: `plan.md` "Acceptance"; `plan/mime-and-verify.md`.
 
+## Tests to remove (not adapt)
+
+These pin behavior the branch deletes — they assert a state that becomes unreachable, so they go rather than getting a context threaded in. Distinct from the ~61-fixture sweep above (those use `ContextLessFallback` as a *tool* and get a context wired in; these test the context-less behavior *itself*).
+
+Definite removes:
+- `Wire/App/Serialization/WireConverterSigningTests.Deserialize_SignatureLayer_NoActorContext_FailsClosed` — asserts the `_context == null` fail-closed branch (`SignatureVerifyContextMissing`), deleted in Stage 4.
+- `Runtime/App/Goals/PathTypingTests/GoalPathTypingTests.PathJsonConverter_LeavesContextNullAtDeserializeTime` — its point is "the context-less converter produces a Path with Context=null"; the converter is context-ful after Stage 4.
+- `Data/App/DataTests/DataTests.Context_DefaultsToNull` — asserts `new Data(...).Context` is null; contradicts the invariant.
+
+Review at Stage 3 (premise is the deleted construct-then-stamp / no-context model — remove or rethink depending on the final ctor shape):
+- `Data/App/VariablesTests/VariablesTests.PLangContext_ExistingData_GetsContext` — the "Data context-less before Context creation, stamped after" lifecycle; at least the `IsNull`-before assertion dies.
+- `Runtime/App/SingularNamespaces/NullabilityTests/NonNullInvariantTests` — `ClrType_OnUnstampedDomainType_ReturnsNull`, `TypeFoldRead_OnUnstampedDomainEntity_ThrowsHard`, `TypeFoldRead_OnPrimitiveEntity_DoesNotThrow_EvenWithoutContext`. All premised on a value with no Context. If context-less construction becomes illegal in Stage 3, they can't exist; if a context-free path survives for primitives, keep and adjust the assertion.
+
+Each removal is a place where a test's *reason for existing* was the behavior we deleted — leaving it would mean re-introducing the dead path just to keep the test compiling.
+
 ## You own this
 
 The shape of the shared test helper and which adjacent failures to fold in vs track are yours. The contract: the tripwire is on and green, `DictTypedEntryRoundTripTests` passes, and `plang build` works fresh and cache-hit.
