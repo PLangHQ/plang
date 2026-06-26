@@ -73,7 +73,7 @@ public sealed partial class @this
     /// reads naturally.
     /// </summary>
     public global::app.data.@this Convert(object? value, System.Type clrTarget,
-        actor.context.@this? context = null, string? slot = null)
+        actor.context.@this context, string? slot = null)
     {
         var (result, error) = TryConvert(value, clrTarget, context, slot);
         return error != null ? context.Error(error) : context.Ok(result);
@@ -87,7 +87,7 @@ public sealed partial class @this
     /// type system creates it, the value lowers itself; no conversion hub.
     /// </summary>
     internal static void Populate(object target, IDictionary<string, object?> values,
-        actor.context.@this? context = null)
+        actor.context.@this context)
     {
         foreach (var kvp in values)
         {
@@ -112,7 +112,7 @@ public sealed partial class @this
     private static (object? Value, error.Error? Error) ConvertElementsInto(
         System.Type targetListType, System.Type elementType,
         System.Collections.IEnumerable elements, int count,
-        System.Type sourceType, actor.context.@this? context)
+        System.Type sourceType, actor.context.@this context)
     {
         var targetList = (System.Collections.IList)System.Activator.CreateInstance(targetListType)!;
         var errors = new List<error.Error>();
@@ -144,7 +144,7 @@ public sealed partial class @this
     /// or null value and an Error describing what went wrong.
     /// </summary>
     internal static (object? Value, error.Error? Error) TryConvert(object? value, System.Type targetType,
-        actor.context.@this? context = null, string? targetName = null)
+        actor.context.@this context, string? targetName = null)
     {
         if (value == null)
             return (targetType.IsValueType ? System.Activator.CreateInstance(targetType) : null, null);

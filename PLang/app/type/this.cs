@@ -596,7 +596,7 @@ public sealed class @this : item.@this
                 return reader.Invoke(null, new object?[] { raw, Kind });
         }
 
-        return AppTypes.TryConvert(raw, clr ?? typeof(object)).Value;
+        return AppTypes.TryConvert(raw, clr ?? typeof(object), Context).Value;
     }
 
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Reflection.MethodInfo?> _wireReaders = new();
