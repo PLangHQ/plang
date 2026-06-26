@@ -12,10 +12,13 @@ namespace PLang.Tests.App.CollectionsAreData;
 // array tokens; Materialize narrows json arrays to the list value type; navigator
 // returns the element Data directly (no WrapItem); Conversion unwraps; writer
 // disambiguates by wrapper type (dict→{}, list→[]).
-public class Stage3_ArraysAsDataTests
+public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/Stage3Arrays-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     private static global::app.@this NewApp()
-        => new(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        => global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-arrays-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     [Test]
@@ -38,7 +41,7 @@ public class Stage3_ArraysAsDataTests
     {
         // The Data ctor on a json-array source narrows to the list value type, not raw CLR.
         using var doc = JsonDocument.Parse("[1,2]");
-        var d = new Data("x", doc.RootElement.Clone());
+        var d = app.Data("x", doc.RootElement.Clone());
         await Assert.That((await d.Value())).IsTypeOf<ListV>();
     }
 
@@ -57,9 +60,9 @@ public class Stage3_ArraysAsDataTests
     public async Task ListValueType_HoldsListOfData()
     {
         // app/type/list/'s value type holds List<data.@this> — symmetric to dict.
-        var list = new ListV();
-        list.Add(new Data("", 1L));
-        list.Add(new Data("", "x"));
+        var list = new ListV { Context = app.User.Context };
+        list.Add(app.Data("", 1L));
+        list.Add(app.Data("", "x"));
         await Assert.That(list.Count).IsEqualTo(2);
         await Assert.That(list.At(0)).IsTypeOf<Data>();
         await Assert.That((await list.At(0)!.Value())?.ToString()).IsEqualTo("1");
@@ -71,11 +74,11 @@ public class Stage3_ArraysAsDataTests
         // The list owns its navigation now (list.Navigate via GetChild): an index
         // returns the SAME element Data it holds (identity/signature intact), and the
         // implicit-first (`%list.name%` → list[0].name) stays.
-        var element = new Data("", "first");
-        var list = new ListV();
+        var element = app.Data("", "first");
+        var list = new ListV { Context = app.User.Context };
         list.Add(element);
-        list.Add(new Data("", "second"));
-        var data = new Data("items", list);
+        list.Add(app.Data("", "second"));
+        var data = app.Data("items", list);
 
         await Assert.That(ReferenceEquals(await data.GetChild("0"), element)).IsTrue();
         await Assert.That((await (await data.GetChild("last")).Value())?.ToString()).IsEqualTo("second");
@@ -83,11 +86,11 @@ public class Stage3_ArraysAsDataTests
         await Assert.That(((global::app.type.number.@this)(await (await data.GetChild("count")).Value())!).ToInt32()).IsEqualTo(2);
 
         // Implicit-first through a list of dicts.
-        var people = new ListV();
-        var p0 = new DictV();
-        p0.Set(new Data("name", "alice"));
-        people.Add(new Data("", p0));
-        var peopleData = new Data("people", people);
+        var people = new ListV { Context = app.User.Context };
+        var p0 = new DictV { Context = app.User.Context };
+        p0.Set(app.Data("name", "alice"));
+        people.Add(app.Data("", p0));
+        var peopleData = app.Data("people", people);
         await Assert.That((await (await peopleData.GetChild("name")).Value())?.ToString()).IsEqualTo("alice");
     }
 
@@ -106,11 +109,11 @@ public class Stage3_ArraysAsDataTests
         // Coercing the list value type to a typed List<T> reads each element Data's value (I).
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var list = new ListV();
-        list.Add(new Data("", 1L));
-        list.Add(new Data("", 2L));
-        list.Add(new Data("", 3L));
-        var d = new Data("nums", list) { Context = ctx };
+        var list = new ListV { Context = app.User.Context };
+        list.Add(app.Data("", 1L));
+        list.Add(app.Data("", 2L));
+        list.Add(app.Data("", 3L));
+        var d = app.Data("nums", list);
         var res = d.ShallowClone<global::app.type.list.@this<global::app.type.number.@this>>(await d.Value<global::app.type.list.@this<global::app.type.number.@this>>());
         await res.IsSuccess();
         await Assert.That(res.GetValue<List<long>>()!).IsEquivalentTo(new List<long> { 1, 2, 3 });
@@ -120,10 +123,10 @@ public class Stage3_ArraysAsDataTests
     public async Task JsonWriter_DisambiguatesByValueType_DictBracesListBrackets()
     {
         // The writer disambiguates by wrapper type: dict → `{}`, list → `[]`. No ambiguity.
-        var list = new ListV();
-        list.Add(new Data("", 1L));
-        var dict = new DictV();
-        dict.Set(new Data("a", 1L));
+        var list = new ListV { Context = app.User.Context };
+        list.Add(app.Data("", 1L));
+        var dict = new DictV { Context = app.User.Context };
+        dict.Set(app.Data("a", 1L));
 
         var listJson = NormalizePipelineHelper.SerializeValueSlot(list);
         var dictJson = NormalizePipelineHelper.SerializeValueSlot(dict);
@@ -151,9 +154,9 @@ public class Stage3_ArraysAsDataTests
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
 
-        var list = new ListV();
-        list.Add(new Data("signed", "hello world") { Context = ctx });
-        var listData = new Data("list", list) { Context = ctx };
+        var list = new ListV { Context = app.User.Context };
+        list.Add(app.Data("signed", "hello world"));
+        var listData = app.Data("list", list);
 
         var json = (await plang.Serialize(listData).Value())!.Clr<string>()!;
         var rebuilt = plang.Deserialize(json);
@@ -170,9 +173,9 @@ public class Stage3_ArraysAsDataTests
         var method = typeof(global::app.module.builder.code.Default).GetMethod("ToStepList",
             BindingFlags.NonPublic | BindingFlags.Static);
         await Assert.That(method).IsNotNull();
-        var list = new ListV();
-        list.Add(new Data("", "variable.set"));
-        list.Add(new Data("", "list.add"));
+        var list = new ListV { Context = app.User.Context };
+        list.Add(app.Data("", "variable.set"));
+        list.Add(app.Data("", "list.add"));
         var result = method!.Invoke(null, new object?[] { list }) as List<object>;
         await Assert.That(result).IsNotNull();
         await Assert.That(result!.Count).IsEqualTo(2);

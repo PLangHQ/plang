@@ -9,7 +9,7 @@ public class CallSnapshotTests
         string goalName = "TestGoal", string stepText = "test step",
         string module = "test", string actionName = "test")
     {
-        var app = new global::app.@this("/test");
+        var app = global::PLang.Tests.TestApp.Create("/test");
         var goal = new Goal { Name = goalName, Path = $"/{goalName}.goal" };
         var step = new Step { Index = 0, Text = stepText, Goal = goal };
         var action = new ActionEntity { Module = module, ActionName = actionName };
@@ -60,7 +60,7 @@ public class CallSnapshotTests
             var snap = src.Snapshot();
 
             // Build a fresh app with the *same* goal registered.
-            var dst = new global::app.@this("/dst");
+            var dst = global::PLang.Tests.TestApp.Create("/dst");
             var dstGoal = new Goal
             {
                 Name = "ResolveGoal",
@@ -90,7 +90,7 @@ public class CallSnapshotTests
         {
             var snap = src.Snapshot();
             // Restore on a fresh App that never had this goal registered.
-            var dst = new global::app.@this("/dst");
+            var dst = global::PLang.Tests.TestApp.Create("/dst");
 
             await Assert.ThrowsAsync<CallbackGoalNotFound>(async () =>
             {
@@ -109,7 +109,7 @@ public class CallSnapshotTests
             var snap = src.Snapshot();
 
             // Fresh App with the same path but different hash (different step prose).
-            var dst = new global::app.@this("/dst");
+            var dst = global::PLang.Tests.TestApp.Create("/dst");
             var dstGoal = new Goal { Name = "HashGoal", Path = "/HashGoal.goal" };
             var dstStep = new Step { Index = 0, Text = "DIFFERENT step text", Goal = dstGoal };
             var dstAction = new ActionEntity { Module = "test", ActionName = "test" };
@@ -134,7 +134,7 @@ public class CallSnapshotTests
         {
             var snap = src.Snapshot();
 
-            var dst = new global::app.@this("/dst");
+            var dst = global::PLang.Tests.TestApp.Create("/dst");
             var dstGoal = new Goal { Name = "PureGoal", Path = "/PureGoal.goal" };
             var dstStep = new Step { Index = 0, Text = action.Step!.Text, Goal = dstGoal };
             var dstAction = new ActionEntity { Module = "test", ActionName = "test" };

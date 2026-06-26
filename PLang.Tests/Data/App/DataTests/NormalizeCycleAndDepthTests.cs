@@ -7,8 +7,11 @@ namespace PLang.Tests.App.DataTests;
 // past the limit). Both raise typed errors, hard, at serialize-time — no silent truncation.
 // Max-depth suggested 128 (mirrors MaxRehydrationDepth in this.Transport.cs).
 
-public class NormalizeCycleAndDepthTests
+public class NormalizeCycleAndDepthTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/NormalizeCycleAndDepthTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
+
     private sealed class Node
     {
         [global::app.Out] public string? Tag { get; set; }
@@ -26,7 +29,7 @@ public class NormalizeCycleAndDepthTests
         n.Next = n;
         var ex = await Assert.ThrowsAsync<NormalizeException>(async () =>
         {
-            new Data("", n).Normalize();
+            _app.Data("", n).Normalize();
             await Task.CompletedTask;
         });
         await Assert.That(ex!.Key).IsEqualTo("NormalizeCycleDetected");
@@ -40,7 +43,7 @@ public class NormalizeCycleAndDepthTests
         b.Next = a;
         var ex = await Assert.ThrowsAsync<NormalizeException>(async () =>
         {
-            new Data("", a).Normalize();
+            _app.Data("", a).Normalize();
             await Task.CompletedTask;
         });
         await Assert.That(ex!.Key).IsEqualTo("NormalizeCycleDetected");
@@ -56,7 +59,7 @@ public class NormalizeCycleAndDepthTests
             cur.Next = new Node { Tag = $"n{i}" };
             cur = cur.Next;
         }
-        var result = new Data("", head).Normalize();
+        var result = _app.Data("", head).Normalize();
         await Assert.That(result).IsTypeOf<app.type.dict.@this>();
     }
 
@@ -72,7 +75,7 @@ public class NormalizeCycleAndDepthTests
         }
         var ex = await Assert.ThrowsAsync<NormalizeException>(async () =>
         {
-            new Data("", head).Normalize();
+            _app.Data("", head).Normalize();
             await Task.CompletedTask;
         });
         await Assert.That(ex!.Key).IsEqualTo("NormalizeMaxDepthExceeded");
@@ -83,7 +86,7 @@ public class NormalizeCycleAndDepthTests
         var t = new Throws();
         var ex = await Assert.ThrowsAsync<NormalizeException>(async () =>
         {
-            new Data("", t).Normalize();
+            _app.Data("", t).Normalize();
             await Task.CompletedTask;
         });
         await Assert.That(ex!.Key).IsEqualTo("NormalizeGetterThrew");

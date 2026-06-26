@@ -121,7 +121,7 @@ public class NamedProviderRegistryTests
     public async Task Get_NoneRegistered_ReturnsError()
     {
         // Use a bare registry with no built-in registrations
-        var bare = new EngineProviders();
+        var bare = new EngineProviders(_app.User.Context);
         var result = bare.Get<IKey>();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
@@ -330,7 +330,7 @@ public class NamedProviderRegistryTests
     [Test]
     public async Task GetOrDefault_WhenNoneRegistered_ReturnsFallback()
     {
-        var bare = new EngineProviders();
+        var bare = new EngineProviders(_app.User.Context);
         var fallback = new MockSigningProvider("fallback");
         var result = bare.GetOrDefault<ISigning>(fallback);
         await Assert.That(result).IsSameReferenceAs(fallback);
@@ -345,7 +345,7 @@ public class NamedProviderRegistryTests
     [Test]
     public async Task Has_WhenNoneRegistered_ReturnsFalse()
     {
-        var bare = new EngineProviders();
+        var bare = new EngineProviders(_app.User.Context);
         await Assert.That(bare.Has<ISigning>()).IsFalse();
     }
 

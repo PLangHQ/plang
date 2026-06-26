@@ -445,18 +445,10 @@ public class DataTests
     // --- Phase 2: Context + Lazy Type derivation ---
 
     [Test]
-    public async Task Context_DefaultsToNull()
-    {
-        var ov = new Data("test", "hello");
-
-        await Assert.That(ov.Context).IsNull();
-    }
-
-    [Test]
     public async Task Context_WhenSet_PropagesToType()
     {
-        await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine);
+        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        var context = new global::app.actor.context.@this(engine, engine.User);
 
         // Context propagation: setting Data.Context stamps the embedded Type
         // entity so registry-keyed reads (TypeOf, Compressible, ClrType) work.
@@ -484,8 +476,8 @@ public class DataTests
     [Test]
     public async Task Type_LazyDerivation_WithContext()
     {
-        await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine);
+        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        var context = new global::app.actor.context.@this(engine, engine.User);
 
         var ov = new Data("test", "hello");
         ov.Context = context;
@@ -524,7 +516,7 @@ public class DataTests
     [Test]
     public async Task Type_ExplicitType_NotOverridden()
     {
-        await using var engine = new global::app.@this("/test");
+        await using var engine = global::PLang.Tests.TestApp.Create("/test");
 
         // A declared {binary, jpg} (bytes off I/O, the kind names the decode)
         // survives the ctor — the value isn't re-derived to a bare binary that
@@ -539,8 +531,8 @@ public class DataTests
     [Test]
     public async Task Type_Setter_StampsContext()
     {
-        await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine);
+        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        var context = new global::app.actor.context.@this(engine, engine.User);
 
         var newType = new Type("text/plain");
         var ov = new Data("test", "hello", newType);
@@ -553,8 +545,8 @@ public class DataTests
     [Test]
     public async Task Type_Kind_WithContext()
     {
-        await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine);
+        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        var context = new global::app.actor.context.@this(engine, engine.User);
 
         var data = new Data("img", new byte[] { 1, 2 }, engine.Format.TypeFromMime("image/jpeg"));
         data.Context = context;
@@ -579,8 +571,8 @@ public class DataTests
     [Test]
     public async Task Type_Compressible_TextKind()
     {
-        await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine);
+        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        var context = new global::app.actor.context.@this(engine, engine.User);
 
         var data = new Data("txt", "hello", Type.FromMime("text/plain"));
         data.Context = context;
@@ -592,8 +584,8 @@ public class DataTests
     [Test]
     public async Task GetChild_InheritsContext()
     {
-        await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine);
+        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        var context = new global::app.actor.context.@this(engine, engine.User);
 
         var data = new Dictionary<string, object?> { { "name", "test" } };
         var ov = new Data("data", data);
@@ -636,8 +628,8 @@ public class DataTests
     [Test]
     public async Task Compress_CompressibleType_CreatesArchivedEnvelope()
     {
-        await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine);
+        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        var context = new global::app.actor.context.@this(engine, engine.User);
 
         // text/plain is compressible (kind "text").
         var data = new Data("", "Hello, this is a test string for compression!", Type.FromMime("text/plain"));
@@ -653,8 +645,8 @@ public class DataTests
     [Test]
     public async Task Compress_NonCompressible_ReturnsSelf()
     {
-        await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine);
+        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        var context = new global::app.actor.context.@this(engine, engine.User);
 
         // Bytes off I/O are binary; the kind (jpg) resolves to the image
         // family, which is not compressible (already-compressed content).
@@ -679,8 +671,8 @@ public class DataTests
     [Test]
     public async Task Decompress_ArchivedData_ReturnsOriginal()
     {
-        await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine);
+        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        var context = new global::app.actor.context.@this(engine, engine.User);
 
         // Compress a plain Data, then decompress — the value round-trips.
         var inner = new Data("", "Hello world", Type.FromMime("text/plain"));
@@ -706,8 +698,8 @@ public class DataTests
     [Test]
     public async Task CompressDecompress_RoundTrip_PreservesData()
     {
-        await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine);
+        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        var context = new global::app.actor.context.@this(engine, engine.User);
 
         var content = new Data("", "The quick brown fox jumps over the lazy dog", Type.FromMime("text/plain"));
         content.Context = context;
@@ -756,8 +748,8 @@ public class DataTests
     [Test]
     public async Task CompressChain_TextData()
     {
-        await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine);
+        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        var context = new global::app.actor.context.@this(engine, engine.User);
 
         var data = new Data("msg", "Hello, PLang!", Type.FromMime("text/plain"));
         data.Context = context;
@@ -798,8 +790,8 @@ public class DataTests
     [Test]
     public async Task Decompress_CorruptData_ReturnsError()
     {
-        await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine);
+        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        var context = new global::app.actor.context.@this(engine, engine.User);
         // Random bytes — not valid GZip
         var archived = new Data("", new global::app.type.archive.@this(new byte[] { 0xFF, 0xFE, 0x00, 0x42 }));
         archived.Context = context;
@@ -826,8 +818,8 @@ public class DataTests
             gzipped = vars.ToArray();
         }
 
-        await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine);
+        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        var context = new global::app.actor.context.@this(engine, engine.User);
         var archived = new Data("", new global::app.type.archive.@this(gzipped));
         archived.Context = context;
 
@@ -844,8 +836,8 @@ public class DataTests
     [Test]
     public async Task CompressDecompress_PropertiesNotPreserved()
     {
-        await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine);
+        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        var context = new global::app.actor.context.@this(engine, engine.User);
 
         var content = new Data("", "Hello", Type.FromMime("text/plain"));
         content.Context = context;
@@ -932,8 +924,8 @@ public class DataTests
         }
 
         // Stage 3: archived.Value is the gzip byte[] directly (no inner gzip Data).
-        await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine);
+        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        var context = new global::app.actor.context.@this(engine, engine.User);
         var archived = new Data("", new global::app.type.archive.@this(compressed));
         archived.Context = context;
 

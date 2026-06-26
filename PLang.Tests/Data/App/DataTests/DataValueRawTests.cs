@@ -10,7 +10,7 @@ public class DataValueRawTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::app.@this("/app");
+    public void Setup() => _app = global::PLang.Tests.TestApp.Create("/app");
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
@@ -19,7 +19,7 @@ public class DataValueRawTests
     [Test]
     public async Task Value_AfterConstruction_ReturnsRawAsSet()
     {
-        var data = new Data("greeting", "hello world");
+        var data = _app.Data("greeting", "hello world");
         await Assert.That((await data.Value())?.ToString()).IsEqualTo("hello world");
     }
 
@@ -28,7 +28,7 @@ public class DataValueRawTests
     [Test]
     public async Task Value_ReadRepeatedly_NoSideEffects()
     {
-        var data = new Data("list", new List<object?> { "a", "b", "c" });
+        var data = _app.Data("list", new List<object?> { "a", "b", "c" });
         var native = data.Peek();
 
         for (int i = 0; i < 1000; i++)
@@ -43,7 +43,7 @@ public class DataValueRawTests
     public async Task Value_StringWithVarPlaceholder_ReturnsRawNotSubstituted()
     {
         _app.User.Context.Variable.Set("name", "world");
-        var data = new Data("greeting", "Hello %name%") { Context = _app.User.Context };
+        var data = new Data("greeting", "Hello %name%", context: _app.User.Context);
 
         await Assert.That((await data.Value())?.ToString()).IsEqualTo("Hello %name%");
     }
@@ -54,7 +54,7 @@ public class DataValueRawTests
     {
         _app.User.Context.Variable.Set("x", "actual");
         var raw = new List<object?> { "%x%", "literal", "%x%" };
-        var data = new Data("list", raw) { Context = _app.User.Context };
+        var data = new Data("list", raw, context: _app.User.Context);
 
         // The list rides as native; reading it does not resolve the unstamped
         // %x% placeholders — they stay literal.
@@ -69,21 +69,12 @@ public class DataValueRawTests
     {
         _app.User.Context.Variable.Set("user", "alice");
         var raw = new Dictionary<string, object?> { ["name"] = "%user%", ["role"] = "admin" };
-        var data = new Data("dict", raw) { Context = _app.User.Context };
+        var data = new Data("dict", raw, context: _app.User.Context);
 
         // The dict rides as native; reading it does not resolve the unstamped
         // %user% placeholder — it stays literal.
         var read = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await data.Value());
         await Assert.That((string)read!["name"]!).IsEqualTo("%user%");
-    }
-
-    // .Value reads do NOT depend on Context/Variables — even with no context attached, .Value works.
-    [Test]
-    public async Task Value_NoContextAttached_StillReadable()
-    {
-        var data = new Data("greeting", "Hello %name%");
-        // No context attached.
-        await Assert.That((await data.Value())?.ToString()).IsEqualTo("Hello %name%");
     }
 
     // After v4: Data has no _resolved field. Reflection check guards against re-introduction.
@@ -118,7 +109,7 @@ public class DataValueRawTests
     [Test]
     public async Task DataFlow_ThroughGetParameter_ReferenceIdentityPreserved()
     {
-        var stored = new Data("greeting", "Hello %name%");
+        var stored = _app.Data("greeting", "Hello %name%");
         var action = new PrAction
         {
             Module = "test",
@@ -136,7 +127,7 @@ public class DataValueRawTests
     [Test]
     public async Task Value_ConcurrentReads_NoRace()
     {
-        var data = new Data("list", new List<object?> { 1, 2, 3 });
+        var data = _app.Data("list", new List<object?> { 1, 2, 3 });
         var native = data.Peek();   // the native list value, set once at store
 
         var tasks = Enumerable.Range(0, 100).Select(_ => Task.Run(async () =>

@@ -10,8 +10,11 @@ namespace PLang.Tests.App.DataTests;
 // builds on this foundation. SubscriberSurvivalTests is gone (per Ingi: Variables.Set
 // is dumb storage; clone semantics live in variable.set, not in replacement merging).
 
-public class EventListTests
+public class EventListTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/EventListTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
+
     // Consumer-facing API: OnCreate is a List<Action<Data>>. .Add and .Remove
     // work; the property type itself is a List, not a `event Action<Data>`.
     [Test]
@@ -50,8 +53,8 @@ public class EventListTests
     [Test]
     public async Task FireOnChange_InvokesAllSubscribersInOrder()
     {
-        var d = new Data("x", 1);
-        var newD = new Data("x", 2);
+        var d = _app.Data("x", 1);
+        var newD = _app.Data("x", 2);
         var calls = new List<int>();
         d.OnChange.Add((_, _) => calls.Add(1));
         d.OnChange.Add((_, _) => calls.Add(2));

@@ -10,8 +10,11 @@ namespace PLang.Tests.App.DataTests;
 // Normalize is lazy (called by the serializer), idempotent, observation-only
 // (it copies; it never mutates the source value), and bounded.
 
-public class NormalizeTreeShapeTests
+public class NormalizeTreeShapeTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/NormalizeTreeShapeTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
+
     [Test] public async Task Normalize_Null_IsThePlangNullCitizen()
     {
         var d = new Data("x", (object?)null);
@@ -22,32 +25,32 @@ public class NormalizeTreeShapeTests
 
     [Test] public async Task Normalize_String_ReturnsUnchanged()
     {
-        var d = new Data("x", "hello");
+        var d = _app.Data("x", "hello");
         await Assert.That(d.Normalize()?.ToString()).IsEqualTo("hello");
     }
 
     [Test] public async Task Normalize_Int_Long_Double_Bool_Decimal_DateTime_ReturnUnchanged()
     {
-        await Assert.That(new Data("", 42).Normalize()?.ToString()).IsEqualTo("42");
-        await Assert.That(new Data("", 42L).Normalize()?.ToString()).IsEqualTo("42");
-        await Assert.That(new Data("", 1.5).Normalize()?.ToString()).IsEqualTo("1.5");
-        await Assert.That(new Data("", true).Normalize()?.ToString()).IsEqualTo("true");
-        await Assert.That(new Data("", 3.14m).Normalize()?.ToString()).IsEqualTo("3.14");
+        await Assert.That(_app.Data("", 42).Normalize()?.ToString()).IsEqualTo("42");
+        await Assert.That(_app.Data("", 42L).Normalize()?.ToString()).IsEqualTo("42");
+        await Assert.That(_app.Data("", 1.5).Normalize()?.ToString()).IsEqualTo("1.5");
+        await Assert.That(_app.Data("", true).Normalize()?.ToString()).IsEqualTo("true");
+        await Assert.That(_app.Data("", 3.14m).Normalize()?.ToString()).IsEqualTo("3.14");
         // A C# DateTime lifts to the `datetime` value (DateTimeOffset-backed) — it
         // rides the wire as a datetime leaf, not a raw CLR DateTime.
         var dt = new System.DateTime(2026, 1, 2, 3, 4, 5, System.DateTimeKind.Utc);
-        await Assert.That(new Data("", dt).Normalize()).IsTypeOf<global::app.type.datetime.@this>();
+        await Assert.That(_app.Data("", dt).Normalize()).IsTypeOf<global::app.type.datetime.@this>();
     }
 
     [Test] public async Task Normalize_ByteArray_ReturnsUnchanged_OpaqueBinaryLeaf()
     {
         var bytes = new byte[] { 1, 2, 3 };
-        await Assert.That(((global::app.type.binary.@this)new Data("", bytes).Normalize()!).Value).IsSameReferenceAs(bytes);
+        await Assert.That(((global::app.type.binary.@this)_app.Data("", bytes).Normalize()!).Value).IsSameReferenceAs(bytes);
     }
 
     [Test] public async Task Normalize_HomogeneousPrimitiveList_StaysNativeList()
     {
-        var d = new Data("", new List<int> { 1, 2, 3 });
+        var d = _app.Data("", new List<int> { 1, 2, 3 });
         var result = d.Normalize();
         await Assert.That(result).IsTypeOf<app.type.list.@this>();
         var items = result.Children();
@@ -59,7 +62,7 @@ public class NormalizeTreeShapeTests
 
     [Test] public async Task Normalize_HeterogeneousList_StaysNativeList()
     {
-        var d = new Data("", new List<object> { 1, "two", 3.0 });
+        var d = _app.Data("", new List<object> { 1, "two", 3.0 });
         var result = d.Normalize();
         await Assert.That(result).IsTypeOf<app.type.list.@this>();
         var items = result.Children();
@@ -72,7 +75,7 @@ public class NormalizeTreeShapeTests
     [Test] public async Task Normalize_DictionaryStringX_BecomesListOfData_KeysAsNames()
     {
         var dict = new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 };
-        var d = new Data("", dict);
+        var d = _app.Data("", dict);
         var result = d.Normalize();
         await Assert.That(result).IsTypeOf<app.type.dict.@this>();
         var list = result.Children();
@@ -90,7 +93,7 @@ public class NormalizeTreeShapeTests
             PrivateKey = "sekret",
             IsDefault = true,
         };
-        var d = new Data("", identity);
+        var d = _app.Data("", identity);
         var result = d.Normalize();
         await Assert.That(result).IsTypeOf<app.type.dict.@this>();
         var children = result.Children();
@@ -103,7 +106,7 @@ public class NormalizeTreeShapeTests
     [Test] public async Task Normalize_RecordType_EmitsOneChildPerOutProperty()
     {
         var setting = new global::app.module.settings.type.setting { key = "DATABASE_URL", value = "postgres://..." };
-        var d = new Data("", setting);
+        var d = _app.Data("", setting);
         var result = d.Normalize();
         var children = result.Children();
         await Assert.That(children.Count).IsEqualTo(2);
@@ -114,7 +117,7 @@ public class NormalizeTreeShapeTests
 
     [Test] public async Task Normalize_IsIdempotent_CallingTwiceProducesSameTree()
     {
-        var d = new Data("", new Dictionary<string, int> { ["x"] = 1 });
+        var d = _app.Data("", new Dictionary<string, int> { ["x"] = 1 });
         var r1 = d.Normalize();
         var r2 = d.Normalize();
         // Shape stable across calls: same type, same count, same contents.
@@ -142,7 +145,7 @@ public class NormalizeTreeShapeTests
     // unrepresentable value normalizes to null rather than leaking a property bag.
     [Test] public async Task Normalize_UnsupportedType_ThrowsTypedError()
     {
-        var d = new Data("", new System.Func<int>(() => 0));
+        var d = _app.Data("", new System.Func<int>(() => 0));
         var result = d.Normalize();
         await Assert.That(result).IsNull();
     }

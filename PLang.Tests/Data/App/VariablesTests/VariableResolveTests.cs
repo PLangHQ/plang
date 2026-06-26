@@ -13,7 +13,7 @@ public class VariableResolveTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::app.@this("/test");
+    public void Setup() => _app = global::PLang.Tests.TestApp.Create("/test");
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }

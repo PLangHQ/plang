@@ -50,10 +50,10 @@ public class WireReadLazyTests
         // The wire carries {number, kind:int}; the read honors a value's kind when
         // a Context is present (the realistic runtime path — the context-less
         // fallback can't resolve a kind and lifts the bare JSON number as long).
-        await using var app = new global::app.@this("/test");
+        await using var app = global::PLang.Tests.TestApp.Create("/test");
         var ctx = app.User.Context;
         var serializer = new plang(ctx);
-        var d = data.Ok(5);                 // number / int derived
+        var d = app.Ok(5);                 // number / int derived
         d.Name = "n";
         var back = serializer.Deserialize(serializer.Serialize(d).Peek()!.ToString()!);
         back.Context = ctx;

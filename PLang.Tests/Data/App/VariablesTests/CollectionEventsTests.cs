@@ -1,11 +1,14 @@
 namespace PLang.Tests.App.VariablesTests;
 
-public class CollectionEventsTests
+public class CollectionEventsTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/CollectionEventsTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test]
     public async Task OnSet_FiresOnRebind_WithBeforeAfter()
     {
-        var vars = new Variables();
+        var vars = new Variables(app.User.Context);
         vars.Set("name", "old");
 
         string? capturedName = null;
@@ -22,7 +25,7 @@ public class CollectionEventsTests
     [Test]
     public async Task OnCreate_FiresOnInitialSet()
     {
-        var vars = new Variables();
+        var vars = new Variables(app.User.Context);
         string? capturedName = null;
         object? capturedValue = null;
         vars.OnCreate += (n, v) => { capturedName = n; capturedValue = v; };
@@ -36,7 +39,7 @@ public class CollectionEventsTests
     [Test]
     public async Task OnRemove_FiresOnDelete()
     {
-        var vars = new Variables();
+        var vars = new Variables(app.User.Context);
         vars.Set("name", "ingi");
         string? capturedName = null;
         vars.OnRemove += n => capturedName = n;
@@ -48,7 +51,7 @@ public class CollectionEventsTests
     [Test]
     public async Task OnSet_DoesNotFireOnInitialSet()
     {
-        var vars = new Variables();
+        var vars = new Variables(app.User.Context);
         var setFired = false;
         vars.OnSet += (_, _, _) => setFired = true;
 
@@ -60,7 +63,7 @@ public class CollectionEventsTests
     public async Task PerVariableEvents_StillFire_BackCompat()
     {
         // Per-variable Data.OnChange must still fire — used by --debug={"variable":[...]}.
-        var vars = new Variables();
+        var vars = new Variables(app.User.Context);
         vars.Set("name", "first");
 
         var data = await vars.Get("name");
@@ -75,7 +78,7 @@ public class CollectionEventsTests
     [Test]
     public async Task Events_NotFired_AfterUnsubscribe()
     {
-        var vars = new Variables();
+        var vars = new Variables(app.User.Context);
         vars.Set("name", "first");
         var fired = false;
         Action<string, object?, object?> handler = (_, _, _) => fired = true;

@@ -3,12 +3,18 @@ using Type = global::app.type.@this;
 
 namespace PLang.Tests.App.VariablesTests;
 
-public class VariablesTests
+public class VariablesTests : System.IAsyncDisposable
 {
+    // Born-with-context: a Variables under test is born from this app's user context
+    // (bare `new Variables(_app.User.Context)` would birth context-less values that throw on Set).
+    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create(
+        "/tmp/vars-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
+
     [Test]
     public async Task Constructor_RegistersSystemVariables()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
 
         await Assert.That(stack.Contains("Now")).IsTrue();
         await Assert.That(stack.Contains("NowUtc")).IsTrue();
@@ -18,7 +24,7 @@ public class VariablesTests
     [Test]
     public async Task Now_ReturnsDynamicValue()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
 
         // Cast to DynamicData to access the dynamic Value property
         var nowObj = (await stack.Get("Now")) as DynamicData;
@@ -36,7 +42,7 @@ public class VariablesTests
     [Test]
     public async Task GUID_ReturnsDifferentValuesEachTime()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
 
         // Cast to DynamicData to access the dynamic Value property
         var guidObj = (await stack.Get("GUID")) as DynamicData;
@@ -54,7 +60,7 @@ public class VariablesTests
     [Test]
     public async Task Put_StoresData()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         var ov = new Data("test", "value");
 
         stack.Set(ov);
@@ -66,7 +72,7 @@ public class VariablesTests
     [Test]
     public async Task Set_StoresValue()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
 
         stack.Set("name", "John");
 
@@ -78,7 +84,7 @@ public class VariablesTests
     [Test]
     public async Task Set_WithType_SetsType()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
 
         stack.Set("count", 42);
 
@@ -90,7 +96,7 @@ public class VariablesTests
     [Test]
     public async Task Set_UpdatesExistingValue()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         stack.Set("name", "John");
 
         stack.Set("name", "Jane");
@@ -102,7 +108,7 @@ public class VariablesTests
     [Test]
     public async Task Set_UpdatesType()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         stack.Set("value", "text");
 
         stack.Set("value", 42);
@@ -114,7 +120,7 @@ public class VariablesTests
     [Test]
     public async Task Set_StripsPercentFromName()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
 
         stack.Set("%name%", "John");
 
@@ -129,7 +135,7 @@ public class VariablesTests
         // rename. Dictionary key is authoritative for lookup; Data.Name stays
         // advisory (its "original name at creation"). Reverting this branch to
         // the old ShallowClone + rename-to-key behavior would fail both asserts.
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         var original = new Data("originalName", 42);
 
         stack.Set("alias", original);
@@ -142,7 +148,7 @@ public class VariablesTests
     [Test]
     public async Task Set_DotPath_SetsPropertyOnObject()
     {
-        await using var app = new global::app.@this("/test");
+        await using var app = global::PLang.Tests.TestApp.Create("/test");
         var stack = app.User.Context.Variable;
 
         var person = new global::app.type.dict.@this();
@@ -163,7 +169,7 @@ public class VariablesTests
         // An external party adds a class as :item — it owns its own child-write.
         // Unlike a clr-wrapped foreign object, an :item IS the value (stored by
         // reference, no carrier), so the write mutates the very instance.
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         var person = new PersonItem { Name = "John", Age = 30 };
         await stack.Set("person", person);
 
@@ -177,7 +183,7 @@ public class VariablesTests
     [Test]
     public async Task Set_DotPath_SetsNestedProperty()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         var address = new global::app.type.dict.@this();
         address.Set("Street", "Main St");
         address.Set("City", "Springfield");
@@ -195,7 +201,7 @@ public class VariablesTests
     [Test]
     public async Task Set_DotPath_CaseInsensitive()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         var person = new global::app.type.dict.@this();
         person.Set("Name", "John");
         await stack.Set("person", person);
@@ -210,7 +216,7 @@ public class VariablesTests
     [Test]
     public async Task Set_DotPath_DictionaryValue()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         var user = new global::app.type.dict.@this();
         user.Set("name", "John");
         user.Set("age", 30L);
@@ -225,7 +231,7 @@ public class VariablesTests
     [Test]
     public async Task Set_DotPath_NonExistentRoot_CreatesRootDictionary()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
 
         // Root doesn't exist — creates a native dict and sets the property
         await stack.Set("nonexistent.prop", "value");
@@ -241,7 +247,7 @@ public class VariablesTests
     [Test]
     public async Task Set_DotPath_NewProperty_AddsKey()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         var person = new global::app.type.dict.@this();
         person.Set("Name", "John");
         await stack.Set("person", person);
@@ -259,7 +265,7 @@ public class VariablesTests
     [Test]
     public async Task Set_DotPath_NewProperty_CaseInsensitive()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         var person = new global::app.type.dict.@this();
         person.Set("Name", "John");
         await stack.Set("person", person);
@@ -274,7 +280,7 @@ public class VariablesTests
     [Test]
     public async Task Set_DotPath_WithBracketIndex()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         var alice = new global::app.type.dict.@this(); alice.Set("Name", "Alice");
         var bob = new global::app.type.dict.@this(); bob.Set("Name", "Bob");
         var people = new global::app.type.list.@this();
@@ -291,7 +297,7 @@ public class VariablesTests
     [Test]
     public async Task Set_DotPath_WithVariableIndex()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         var alice = new global::app.type.dict.@this(); alice.Set("Name", "Alice");
         var bob = new global::app.type.dict.@this(); bob.Set("Name", "Bob");
         var people = new global::app.type.list.@this();
@@ -309,7 +315,7 @@ public class VariablesTests
     [Test]
     public async Task Get_ReturnsData()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         stack.Set("test", "value");
 
         var ov = await stack.Get("test");
@@ -322,7 +328,7 @@ public class VariablesTests
     [Test]
     public async Task Get_CaseInsensitive()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         stack.Set("Name", "John");
 
         await Assert.That((await (await stack.Get("name"))!.Value())?.ToString()).IsEqualTo("John");
@@ -333,7 +339,7 @@ public class VariablesTests
     [Test]
     public async Task Get_NonexistentName_ReturnsUninitialized()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
 
         var ov = await stack.Get("nonexistent");
 
@@ -343,7 +349,7 @@ public class VariablesTests
     [Test]
     public async Task Get_NullOrEmpty_ReturnsUninitialized()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
 
         await Assert.That((await stack.Get(null!)).IsInitialized).IsFalse();
         await Assert.That((await stack.Get("")).IsInitialized).IsFalse();
@@ -352,7 +358,7 @@ public class VariablesTests
     [Test]
     public async Task Get_DotNotation_NavigatesPath()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         var data = new Dictionary<string, object?> { { "name", "John" }, { "age", 30 } };
         stack.Set("user", data);
 
@@ -366,7 +372,7 @@ public class VariablesTests
     [Test]
     public async Task Get_IndexNotation_NavigatesPath()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         var items = new List<object> { "first", "second", "third" };
         stack.Set("items", items);
 
@@ -385,7 +391,7 @@ public class VariablesTests
     [Test]
     public async Task Get_ArrayIndexWithProperty_NavigatesCorrectly()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         var arr = new List<object>
         {
             new Dictionary<string, object?> { { "id", 42 }, { "name", "first" } },
@@ -402,7 +408,7 @@ public class VariablesTests
     [Test]
     public async Task Get_NestedArrayNavigation_NavigatesCorrectly()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         var list = new List<object>
         {
             new Dictionary<string, object?>
@@ -427,7 +433,7 @@ public class VariablesTests
     {
         // A variable index in a READ resolves in the walk via the value's context
         // (Segment.Index.ResolveKey) — so the store needs a context.
-        await using var app = new global::app.@this("/test");
+        await using var app = global::PLang.Tests.TestApp.Create("/test");
         var stack = app.User.Context.Variable;
         var items = new List<object> { "zero", "one", "two" };
         stack.Set("items", items);
@@ -442,7 +448,7 @@ public class VariablesTests
     [Test]
     public async Task Get_DirectArrayIndex_NavigatesCorrectly()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         var items = new List<object> { "first", "second", "third" };
         stack.Set("items", items);
 
@@ -455,7 +461,7 @@ public class VariablesTests
     [Test]
     public async Task Get_MixedNotation_NavigatesComplexPath()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         var data = new Dictionary<string, object?>
         {
             { "users", new List<object>
@@ -475,7 +481,7 @@ public class VariablesTests
     [Test]
     public async Task Get_Generic_ReturnsTypedValue()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         stack.Set("count", 42);
 
         var value = await stack.Get<global::app.type.number.@this>("count");
@@ -486,7 +492,7 @@ public class VariablesTests
     [Test]
     public async Task Get_Generic_NonexistentName_ReturnsDefault()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
 
         var value = await stack.Get<global::app.type.number.@this>("nonexistent");
 
@@ -496,7 +502,7 @@ public class VariablesTests
     [Test]
     public async Task GetValue_ReturnsRawValue()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         stack.Set("test", "hello");
 
         var value = await stack.GetValue("test");
@@ -507,7 +513,7 @@ public class VariablesTests
     [Test]
     public async Task GetValue_NonexistentName_ReturnsNull()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
 
         var value = await stack.GetValue("nonexistent");
 
@@ -517,7 +523,7 @@ public class VariablesTests
     [Test]
     public async Task Contains_ExistingName_ReturnsTrue()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         stack.Set("test", "value");
 
         await Assert.That(stack.Contains("test")).IsTrue();
@@ -526,7 +532,7 @@ public class VariablesTests
     [Test]
     public async Task Contains_CaseInsensitive()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         stack.Set("Test", "value");
 
         await Assert.That(stack.Contains("test")).IsTrue();
@@ -536,7 +542,7 @@ public class VariablesTests
     [Test]
     public async Task Contains_NonexistentName_ReturnsFalse()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
 
         await Assert.That(stack.Contains("nonexistent")).IsFalse();
     }
@@ -544,7 +550,7 @@ public class VariablesTests
     [Test]
     public async Task Remove_RemovesVariable()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         stack.Set("test", "value");
 
         var removed = stack.Remove("test");
@@ -556,7 +562,7 @@ public class VariablesTests
     [Test]
     public async Task Remove_NonexistentName_ReturnsFalse()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
 
         var removed = stack.Remove("nonexistent");
 
@@ -566,7 +572,7 @@ public class VariablesTests
     [Test]
     public async Task Remove_CaseInsensitive()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         stack.Set("Test", "value");
 
         var removed = stack.Remove("TEST");
@@ -577,7 +583,7 @@ public class VariablesTests
     [Test]
     public async Task GetNames_ReturnsUserNames()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         stack.Set("name", "John");
         stack.Set("age", 30);
 
@@ -592,7 +598,7 @@ public class VariablesTests
     [Test]
     public async Task GetNames_ExcludesSystemVariablesStartingWithBang()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         stack.Set("!system", "value");
         stack.Set("normal", "value");
 
@@ -605,7 +611,7 @@ public class VariablesTests
     [Test]
     public async Task GetAll_ReturnsNonSystemVariables()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         stack.Set("name", "John");
         stack.Set("age", 30);
 
@@ -619,7 +625,7 @@ public class VariablesTests
     [Test]
     public async Task GetAll_OrderedByUpdated()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         stack.Set("first", 1);
         await Task.Delay(10);
         stack.Set("second", 2);
@@ -633,7 +639,7 @@ public class VariablesTests
     [Test]
     public async Task Clear_RemovesNonSystemVariables()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         stack.Set("name", "John");
         stack.Set("age", 30);
 
@@ -646,7 +652,7 @@ public class VariablesTests
     [Test]
     public async Task Clear_PreservesSystemVariables()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         stack.Set("name", "John");
 
         stack.Clear();
@@ -659,7 +665,7 @@ public class VariablesTests
     [Test]
     public async Task Clone_CreatesShallowCopy()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         stack.Set("name", "John");
         stack.Set("count", 42);
 
@@ -672,7 +678,7 @@ public class VariablesTests
     [Test]
     public async Task Clone_IndependentFromOriginal()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         stack.Set("name", "John");
 
         var clone = stack.Clone();
@@ -685,7 +691,7 @@ public class VariablesTests
     [Test]
     public async Task Clone_PreservesSystemVariables()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
 
         var clone = stack.Clone();
 
@@ -697,7 +703,7 @@ public class VariablesTests
     [Test]
     public async Task ToDictionary_ReturnsAllVariables()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         stack.Set("name", "John");
         stack.Set("age", 30);
 
@@ -710,7 +716,7 @@ public class VariablesTests
     [Test]
     public async Task ToDictionary_ExcludesSystemVariablesByDefault()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         stack.Set("!system", "value");
         stack.Set("normal", "value");
 
@@ -723,7 +729,7 @@ public class VariablesTests
     [Test]
     public async Task ToDictionary_IncludesSystemVariablesWhenRequested()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         stack.Set("!system", "value");
 
         var dict = stack.ToDictionary(includeSystem: true);
@@ -734,7 +740,7 @@ public class VariablesTests
     [Test]
     public async Task ToDictionary_CaseInsensitiveKeys()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         stack.Set("Name", "John");
 
         var dict = stack.ToDictionary();
@@ -748,8 +754,8 @@ public class VariablesTests
     [Test]
     public async Task PLangContext_StampsContextOnVariablesData()
     {
-        await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine);
+        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        var context = new global::app.actor.context.@this(engine, engine.User);
 
         // Variables set through global::app.actor.context.@this's Variables get context stamped
         context.Variable.Set("name", "John");
@@ -760,8 +766,8 @@ public class VariablesTests
     [Test]
     public async Task PLangContext_Put_StampsContext()
     {
-        await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine);
+        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        var context = new global::app.actor.context.@this(engine, engine.User);
 
         var data = new Data("test", "hello");
         context.Variable.Set(data);
@@ -770,27 +776,10 @@ public class VariablesTests
     }
 
     [Test]
-    public async Task PLangContext_ExistingData_GetsContext()
-    {
-        // Pre-populate a Variables, then create global::app.actor.context.@this with it
-        var stack = new Variables();
-        stack.Set("name", "John");
-
-        // Data has no context before global::app.actor.context.@this creation
-        await Assert.That((await stack.Get("name"))!.Context).IsNull();
-
-        await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine, stack);
-
-        // After global::app.actor.context.@this creation, existing data gets context
-        await Assert.That((await stack.Get("name"))!.Context).IsEqualTo(context);
-    }
-
-    [Test]
     public async Task Clone_PreservesDataContext()
     {
-        await using var engine = new global::app.@this("/test");
-        var context = new global::app.actor.context.@this(engine);
+        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        var context = new global::app.actor.context.@this(engine, engine.User);
 
         context.Variable.Set("name", "John");
 
@@ -803,8 +792,8 @@ public class VariablesTests
     [Test]
     public async Task ChildContext_StampsClonedData()
     {
-        await using var engine = new global::app.@this("/test");
-        var parentContext = new global::app.actor.context.@this(engine);
+        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        var parentContext = new global::app.actor.context.@this(engine, engine.User);
         parentContext.Variable.Set("name", "John");
 
         var childContext = parentContext.CreateChild();
@@ -814,8 +803,12 @@ public class VariablesTests
     }
 }
 
-public class VariablesAccessorTests
+public class VariablesAccessorTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create(
+        "/tmp/varsacc-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
+
     [Test]
     public async Task Current_ReturnsNewStackIfNotSet()
     {
@@ -830,7 +823,7 @@ public class VariablesAccessorTests
     public async Task Current_SetAndGet_ReturnsSameStack()
     {
         var accessor = new global::app.variable.list.@thisAccessor();
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
 
         accessor.Current = stack;
 
@@ -840,8 +833,8 @@ public class VariablesAccessorTests
     [Test]
     public async Task Clone_PreservesContext()
     {
-        var engine = new global::app.@this("/app");
-        var context = new global::app.actor.context.@this(engine, new Variables());
+        var engine = global::PLang.Tests.TestApp.Create("/app");
+        var context = new global::app.actor.context.@this(engine, engine.User, new Variables(_app.User.Context));
         context.Variable.Set("x", 1);
 
         var clone = context.Variable.Clone();
@@ -856,7 +849,7 @@ public class VariablesAccessorTests
     [Test]
     public async Task Get_GoalSubGoalName_NavigatesCorrectly()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         var goal = new global::app.goal.@this { Name = "BuildGoal" };
         goal.Goals.Add(new global::app.goal.@this { Name = "ProcessGroup" });
         goal.Goals.Add(new global::app.goal.@this { Name = "LlmFixer" });
@@ -876,7 +869,7 @@ public class VariablesAccessorTests
     [Test]
     public async Task Get_GoalName_ReturnsGoalName()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         var goal = new global::app.goal.@this { Name = "BuildGoal" };
         stack.Set("goal", goal);
 
@@ -889,7 +882,7 @@ public class VariablesAccessorTests
     [Test]
     public async Task Get_GoalGoalsCount_ReturnsCount()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         var goal = new global::app.goal.@this { Name = "BuildGoal" };
         goal.Goals.Add(new global::app.goal.@this { Name = "Sub1" });
         goal.Goals.Add(new global::app.goal.@this { Name = "Sub2" });
@@ -904,7 +897,7 @@ public class VariablesAccessorTests
     [Test]
     public async Task Set_GoalStepsBracketIndex_PreservesGoalIdentity()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         var goal = new global::app.goal.@this { Name = "BuildGoal" };
         goal.Goals.Add(new global::app.goal.@this { Name = "SubGoal" });
         var step = new global::app.goal.steps.step.@this { Index = 0, Text = "original" };
@@ -932,7 +925,7 @@ public class VariablesAccessorTests
     [Test]
     public async Task Set_GoalAsDataSubclass_StoredDirectly()
     {
-        var stack = new Variables();
+        var stack = new Variables(_app.User.Context);
         var goal = new global::app.goal.@this { Name = "MyGoal" };
         stack.Set("goal", goal);
 

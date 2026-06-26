@@ -8,8 +8,11 @@ namespace PLang.Tests.App.Core;
 /// Tests ICache.TryAddAsync atomic semantics on global::app.module.cache.memory.
 /// TryAddAsync is the atomic add-if-absent operation needed for nonce replay prevention.
 /// </summary>
-public class CacheTryAddTests
+public class CacheTryAddTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/CacheTryAddTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     private static CacheSettings MakeSettings(long durationMs = 300_000)
         => new() { DurationMs = durationMs, Sliding = false };
 
@@ -18,7 +21,7 @@ public class CacheTryAddTests
     {
         var cache = new global::app.module.cache.Memory();
 
-        var result = await cache.TryAddAsync("nonce-1", Data.Ok("value"), MakeSettings());
+        var result = await cache.TryAddAsync("nonce-1", app.Ok("value"), MakeSettings());
 
         await Assert.That(result).IsTrue();
     }
@@ -29,8 +32,8 @@ public class CacheTryAddTests
         var cache = new global::app.module.cache.Memory();
         var settings = MakeSettings();
 
-        var first = await cache.TryAddAsync("nonce-1", Data.Ok("value1"), settings);
-        var second = await cache.TryAddAsync("nonce-1", Data.Ok("value2"), settings);
+        var first = await cache.TryAddAsync("nonce-1", app.Ok("value1"), settings);
+        var second = await cache.TryAddAsync("nonce-1", app.Ok("value2"), settings);
 
         await Assert.That(first).IsTrue();
         await Assert.That(second).IsFalse();
@@ -42,8 +45,8 @@ public class CacheTryAddTests
         var cache = new global::app.module.cache.Memory();
         var settings = MakeSettings();
 
-        var result1 = await cache.TryAddAsync("nonce-1", Data.Ok("value1"), settings);
-        var result2 = await cache.TryAddAsync("nonce-2", Data.Ok("value2"), settings);
+        var result1 = await cache.TryAddAsync("nonce-1", app.Ok("value1"), settings);
+        var result2 = await cache.TryAddAsync("nonce-2", app.Ok("value2"), settings);
 
         await Assert.That(result1).IsTrue();
         await Assert.That(result2).IsTrue();
@@ -55,12 +58,12 @@ public class CacheTryAddTests
         var cache = new global::app.module.cache.Memory();
         var settings = MakeSettings(durationMs: 1000);
 
-        var first = await cache.TryAddAsync("nonce-1", Data.Ok("value"), settings);
+        var first = await cache.TryAddAsync("nonce-1", app.Ok("value"), settings);
         await Assert.That(first).IsTrue();
 
         await Task.Delay(1500);
 
-        var second = await cache.TryAddAsync("nonce-1", Data.Ok("value"), settings);
+        var second = await cache.TryAddAsync("nonce-1", app.Ok("value"), settings);
         await Assert.That(second).IsTrue();
     }
 
@@ -71,7 +74,7 @@ public class CacheTryAddTests
         var settings = MakeSettings();
 
         var tasks = Enumerable.Range(0, 10)
-            .Select(_ => cache.TryAddAsync("same-key", Data.Ok("value"), settings))
+            .Select(_ => cache.TryAddAsync("same-key", app.Ok("value"), settings))
             .ToArray();
 
         var results = await Task.WhenAll(tasks);

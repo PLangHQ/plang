@@ -44,7 +44,7 @@ public class ScalarAccessTests
     // `%cfg.port%` navigates and materializes the field.
     [Test] public async Task Scalar_VariableInterpolation_BareVarIsRaw_DottedNavigates()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(
+        await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-scalarvar-" + System.Guid.NewGuid().ToString("N")[..8]));
         var ctx = app.User.Context;
         ctx.Variable.Set("cfg", data.FromRaw("{\"port\":8080}", type.Create("object", "json", context: ctx), ctx, "cfg"));

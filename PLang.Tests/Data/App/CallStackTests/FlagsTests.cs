@@ -2,8 +2,11 @@ using static PLang.Tests.App.CallStackTests.CallStackTestHelpers;
 
 namespace PLang.Tests.App.CallStackTests;
 
-public class FlagsTests
+public class FlagsTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/FlagsTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test]
     public async Task Flags_DefaultIsAllFalse_MaxFrames1000()
     {
@@ -45,7 +48,7 @@ public class FlagsTests
     {
         var on = new CallStack { Flags = Flags.Default with { Diff = true } };
         var off = new CallStack();
-        var vars = new global::app.variable.list.@this();
+        var vars = new global::app.variable.list.@this(app.User.Context);
 
         await using var withDiff = on.Push(MakeAction("A"), vars);
         await using var noDiff = off.Push(MakeAction("A"), vars);
@@ -58,7 +61,7 @@ public class FlagsTests
     {
         // DeepDiff with Diff off → no diff machinery at all (no clones, no list).
         var stack = new CallStack { Flags = Flags.Default with { DeepDiff = true } };
-        var vars = new global::app.variable.list.@this();
+        var vars = new global::app.variable.list.@this(app.User.Context);
         await using var call = stack.Push(MakeAction("A"), vars);
         await Assert.That(call.Diffs).IsNull();
     }
@@ -72,7 +75,7 @@ public class FlagsTests
         // documents this: the flag exists for downstream tag-rendering decisions.
         var stack = new CallStack();
         await using var call = stack.Push(MakeAction("A"));
-        call.Tag("k", global::app.data.@this.Ok("v"));
+        call.Tag("k", app.Ok("v"));
         await Assert.That(call.Tags["k"].Peek()?.ToString()).IsEqualTo("v");
     }
 

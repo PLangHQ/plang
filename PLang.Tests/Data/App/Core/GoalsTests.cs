@@ -319,7 +319,7 @@ public class GoalsTests
         System.IO.Directory.CreateDirectory(tempDir);
         try
         {
-            await using var engine = new global::app.@this(tempDir);
+            await using var engine = global::PLang.Tests.TestApp.Create(tempDir);
 
             var buildDir = System.IO.Path.Combine(tempDir, ".build");
             System.IO.Directory.CreateDirectory(buildDir);
@@ -345,7 +345,7 @@ public class GoalsTests
         System.IO.Directory.CreateDirectory(tempDir);
         try
         {
-            await using var engine = new global::app.@this(tempDir);
+            await using var engine = global::PLang.Tests.TestApp.Create(tempDir);
 
             var buildDir = System.IO.Path.Combine(tempDir, ".build");
             System.IO.Directory.CreateDirectory(buildDir);
@@ -372,7 +372,7 @@ public class GoalsTests
         System.IO.Directory.CreateDirectory(tempDir);
         try
         {
-            await using var engine = new global::app.@this(tempDir);
+            await using var engine = global::PLang.Tests.TestApp.Create(tempDir);
 
             var buildDir = System.IO.Path.Combine(tempDir, ".build");
             System.IO.Directory.CreateDirectory(buildDir);

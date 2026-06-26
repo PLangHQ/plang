@@ -3,8 +3,11 @@ using app.variable;
 
 namespace PLang.Tests.App.Core;
 
-public class StepTests
+public class StepTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/StepTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test]
     public async Task Properties_CanBeInitialized()
     {
@@ -21,7 +24,7 @@ public class StepTests
                 {
                     Module = "http",
                     ActionName = "get",
-                    Parameters = new List<Data> { new Data("url", "https://api.example.com") },
+                    Parameters = new List<Data> { app.Data("url", "https://api.example.com") },
                 }
             },
             WaitForExecution = false
@@ -137,7 +140,7 @@ public class StepTests
                 {
                     Module = "variable",
                     ActionName = "set",
-                    Parameters = new List<Data> { new Data("name", "test") },
+                    Parameters = new List<Data> { app.Data("name", "test") },
                 }
             },
             WaitForExecution = false,

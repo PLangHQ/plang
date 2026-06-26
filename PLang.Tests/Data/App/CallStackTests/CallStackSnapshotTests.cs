@@ -18,7 +18,7 @@ public class CallStackSnapshotTests
 
     private static global::app.@this BuildAppWithGoals(params Goal[] goals)
     {
-        var app = new global::app.@this("/test");
+        var app = global::PLang.Tests.TestApp.Create("/test");
         foreach (var g in goals) app.Goal.Add(g);
         return app;
     }

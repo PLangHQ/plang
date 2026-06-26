@@ -159,15 +159,4 @@ public class GoalPathTypingTests
         await Assert.That(loaded!.PrPath).IsNotNull();
     }
 
-    [Test] public async Task PathJsonConverter_LeavesContextNullAtDeserializeTime()
-    {
-        // The context-less converter produces a stub Path with Context=null.
-        var opts = new JsonSerializerOptions
-        {
-            Converters = { new global::app.channel.serializer.json.Converter() }
-        };
-        var p = JsonSerializer.Deserialize<global::app.type.path.@this>("\"/Start.goal\"", opts);
-        await Assert.That(p).IsNotNull();
-        await Assert.That(p!.Context).IsNull();
-    }
 }

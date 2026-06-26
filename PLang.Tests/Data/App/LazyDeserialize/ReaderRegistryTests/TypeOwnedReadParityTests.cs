@@ -16,7 +16,7 @@ public class TypeOwnedReadParityTests
         // The old JsonConverter.Read resolved via path.@this.Resolve(raw, ctx);
         // path.Read re-houses exactly that. Same subclass + same wire form for
         // absolute and http inputs.
-        await using var app = new global::app.@this(System.IO.Path.Combine(
+        await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-pathread-" + System.Guid.NewGuid().ToString("N")[..8]));
         var ctx = app.User.Context;
         var r = new global::app.type.reader.@this();

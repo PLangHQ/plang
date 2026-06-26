@@ -14,8 +14,11 @@ namespace PLang.Tests.App.DataTests;
 // plang type, so it parks in an item.clr carrier; Normalize unwraps the carrier to
 // its host and reflects the fixture's own [Out] props — so the wire-filter behavior
 // ([Out] whitelist, [Sensitive]/[Masked], lowercasing) is exercised on the fixture.
-public class NormalizeFilterTests
+public class NormalizeFilterTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/NormalizeFilterTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
+
     // A reflection-only fixture so we don't depend on a specific domain shape.
     private sealed class Bag
     {
@@ -36,7 +39,7 @@ public class NormalizeFilterTests
     [Test] public async Task Normalize_OmitsProperties_WithoutOutAttribute()
     {
         var bag = new Bag { Public = "p", NotOut = "n" };
-        var children = (new Data("", bag).Normalize())!.Children();
+        var children = (_app.Data("", bag).Normalize())!.Children();
         await Assert.That(children.Any(c => c.Name == "public")).IsTrue();
         await Assert.That(children.Any(c => c.Name == "notout")).IsFalse();
     }
@@ -44,14 +47,14 @@ public class NormalizeFilterTests
     [Test] public async Task Normalize_OmitsSensitiveProperties_EvenWhenOutIsAlsoPresent()
     {
         var bag = new Bag { Secret = "x" };
-        var children = (new Data("", bag).Normalize())!.Children();
+        var children = (_app.Data("", bag).Normalize())!.Children();
         await Assert.That(children.Any(c => c.Name == "secret")).IsFalse();
     }
 
     [Test] public async Task Normalize_MaskedProperty_NameTravels_ValueIsFourStars()
     {
         var bag = new Bag { Token = "real-token" };
-        var children = (new Data("", bag).Normalize())!.Children();
+        var children = (_app.Data("", bag).Normalize())!.Children();
         var tok = children.First(c => c.Name == "token");
         await Assert.That((await tok.Value())?.ToString()).IsEqualTo("****");
     }
@@ -59,7 +62,7 @@ public class NormalizeFilterTests
     [Test] public async Task Normalize_MaskedProperty_GetterIsNeverInvoked()
     {
         var t = new ThrowingGetter();
-        var children = (new Data("", t).Normalize())!.Children();
+        var children = (_app.Data("", t).Normalize())!.Children();
         await Assert.That(t.Counter).IsEqualTo(0).Because("Masked getter must not be read");
         await Assert.That((await children.First(c => c.Name == "bomb").Value())?.ToString()).IsEqualTo("****");
     }
@@ -67,7 +70,7 @@ public class NormalizeFilterTests
     [Test] public async Task Normalize_ChildNames_AreLowercased()
     {
         var bag = new Bag { MixedCaseName = "v" };
-        var children = (new Data("", bag).Normalize())!.Children();
+        var children = (_app.Data("", bag).Normalize())!.Children();
         await Assert.That(children.Any(c => c.Name == "mixedcasename")).IsTrue();
         await Assert.That(children.Any(c => c.Name == "MixedCaseName")).IsFalse();
     }
@@ -82,7 +85,7 @@ public class NormalizeFilterTests
             IsDefault = true,
             IsArchived = false,
         };
-        var children = (new Data("", identity).Normalize())!.Children();
+        var children = (_app.Data("", identity).Normalize())!.Children();
         await Assert.That(children.Count).IsEqualTo(2);
         await Assert.That(children.Any(c => c.Name == "name")).IsTrue();
         await Assert.That(children.Any(c => c.Name == "publickey")).IsTrue();
@@ -94,7 +97,7 @@ public class NormalizeFilterTests
         // Normalize hands it to the path renderer (TypedValueNode), which emits
         // the single location string. No property bag, and never the absolute.
         global::app.type.path.@this path = "/foo/bar.txt";
-        var children = (new Data("", path).Normalize())!.Children();
+        var children = (_app.Data("", path).Normalize())!.Children();
         await Assert.That(children.Any(c => c.Name == "scheme")).IsTrue();
         await Assert.That(children.Any(c => c.Name == "relative")).IsFalse();
         await Assert.That(children.Any(c => c.Name == "absolute")).IsFalse();
@@ -105,7 +108,7 @@ public class NormalizeFilterTests
     [Test] public async Task Normalize_Setting_EmitsKey_AndValueMaskedFourStars()
     {
         var s = new global::app.module.settings.type.setting { key = "API_KEY", value = "secret-token" };
-        var children = (new Data("", s).Normalize())!.Children();
+        var children = (_app.Data("", s).Normalize())!.Children();
         await Assert.That((await children.First(c => c.Name == "key").Value())?.ToString()).IsEqualTo("API_KEY");
         await Assert.That((await children.First(c => c.Name == "value").Value())?.ToString()).IsEqualTo("****");
     }

@@ -3,8 +3,11 @@ using app.variable;
 
 namespace PLang.Tests.App.Core;
 
-public class DataResultTests
+public class DataResultTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/DataResultTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test]
     public async Task Ok_NoValue_ReturnsSuccess()
     {
@@ -21,7 +24,7 @@ public class DataResultTests
     {
         var value = "test value";
 
-        var result = Data.Ok(value);
+        var result = app.Ok(value);
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo(value);
@@ -77,7 +80,7 @@ public class DataResultTests
     [Test]
     public async Task GetValue_WithMatchingType_ReturnsTypedValue()
     {
-        var result = Data.Ok("hello");
+        var result = app.Ok("hello");
 
         var value = result.GetValue<string>();
 
@@ -87,7 +90,7 @@ public class DataResultTests
     [Test]
     public async Task GetValue_WithMismatchedType_ReturnsDefault()
     {
-        var result = Data.Ok("hello");
+        var result = app.Ok("hello");
 
         var value = result.GetValue<int>();
 
@@ -153,7 +156,7 @@ public class DataResultTests
     [Test]
     public async Task ToString_SuccessWithValue_ReturnsValueString()
     {
-        var result = Data.Ok("test value");
+        var result = app.Ok("test value");
 
         var str = result.ToString();
 
@@ -184,7 +187,7 @@ public class DataResultTests
     [Test]
     public async Task GetValue_WithIntegerInObjectValue_ReturnsInteger()
     {
-        var result = Data.Ok(42);
+        var result = app.Ok(42);
 
         var value = result.GetValue<int>();
 
@@ -196,7 +199,7 @@ public class DataResultTests
     {
         var data = new { Name = "Test", Value = 123 };
 
-        var result = Data.Ok(data);
+        var result = app.Ok(data);
 
         await result.IsSuccess();
         await Assert.That((await result.Value())).IsNotNull();
@@ -205,7 +208,7 @@ public class DataResultTests
     [Test]
     public async Task Value_IsMutable()
     {
-        var result = Data.Ok("initial");
+        var result = app.Ok("initial");
         result.SetValue("changed");
 
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("changed");

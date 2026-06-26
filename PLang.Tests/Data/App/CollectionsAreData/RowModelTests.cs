@@ -6,13 +6,16 @@ namespace PLang.Tests.App.CollectionsAreData;
 // The chunk/row list model: a list is rows (one per add), the public surface is the
 // FLATTENED view. `add` appends one row and never reads existing rows; reads walk
 // rows and descend into list rows only; sort/reverse collapse to a flat list.
-public class RowModelTests
+public class RowModelTests : System.IAsyncDisposable
 {
-    private static Data D(object? v) => new("", v);
+    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/RowModelTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
-    private static ListV Of(params long[] xs)
+    private Data D(object? v) => app.Data("", v);
+
+    private ListV Of(params long[] xs)
     {
-        var l = new ListV();
+        var l = new ListV { Context = app.User.Context };
         foreach (var x in xs) l.Add(D(x));
         return l;
     }
@@ -72,9 +75,9 @@ public class RowModelTests
     [Test]
     public async Task DictRow_IsWeightOne_NotFlattened()
     {
-        var a = new ListV();
-        var d1 = new DictV(); d1.Set(new Data("x", 1L));
-        var d2 = new DictV(); d2.Set(new Data("x", 2L));
+        var a = new ListV { Context = app.User.Context };
+        var d1 = new DictV { Context = app.User.Context }; d1.Set(app.Data("x", 1L));
+        var d2 = new DictV { Context = app.User.Context }; d2.Set(app.Data("x", 2L));
         a.Add(D(d1)); a.Add(D(d2));             // [{x:1}, {x:2}]
 
         await Assert.That(a.Count).IsEqualTo(2);            // dicts are whole items

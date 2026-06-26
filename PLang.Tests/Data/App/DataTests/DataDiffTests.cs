@@ -1,12 +1,15 @@
 namespace PLang.Tests.App.DataTests;
 
-public class DataDiffTests
+public class DataDiffTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/DataDiffTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
+
     [Test]
     public async Task Compare_IdenticalStrings_MatchTrue()
     {
-        var a = new Data("a", "hello");
-        var b = new Data("b", "hello");
+        var a = _app.Data("a", "hello");
+        var b = _app.Data("b", "hello");
 
         var result = a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
@@ -18,8 +21,8 @@ public class DataDiffTests
     [Test]
     public async Task Compare_DifferentStrings_MatchFalse()
     {
-        var a = new Data("a", "hello");
-        var b = new Data("b", "world");
+        var a = _app.Data("a", "hello");
+        var b = _app.Data("b", "world");
 
         var result = a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
@@ -33,8 +36,8 @@ public class DataDiffTests
     [Test]
     public async Task Compare_IdenticalNumbers_MatchTrue()
     {
-        var a = new Data("a", 42);
-        var b = new Data("b", 42);
+        var a = _app.Data("a", 42);
+        var b = _app.Data("b", 42);
 
         var result = a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
@@ -47,8 +50,8 @@ public class DataDiffTests
     public async Task Compare_IntVsLong_MatchTrue()
     {
         // JSON numeric boxing: int 42 vs long 42 should match
-        var a = new Data("a", (int)42);
-        var b = new Data("b", (long)42);
+        var a = _app.Data("a", (int)42);
+        var b = _app.Data("b", (long)42);
 
         var result = a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
@@ -67,8 +70,8 @@ public class DataDiffTests
             ["parameters"] = new List<object?> { "path" }
         };
 
-        var a = new Data("a", obj);
-        var b = new Data("b", new Dictionary<string, object?>(obj));
+        var a = _app.Data("a", obj);
+        var b = _app.Data("b", new Dictionary<string, object?>(obj));
 
         var result = a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
@@ -83,8 +86,8 @@ public class DataDiffTests
         var expected = new Dictionary<string, object?> { ["module"] = "file", ["action"] = "read" };
         var actual = new Dictionary<string, object?> { ["module"] = "file", ["action"] = "save" };
 
-        var a = new Data("a", expected);
-        var b = new Data("b", actual);
+        var a = _app.Data("a", expected);
+        var b = _app.Data("b", actual);
 
         var result = a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
@@ -110,8 +113,8 @@ public class DataDiffTests
         var expected = new Dictionary<string, object?> { ["module"] = "file", ["action"] = "read" };
         var actual = new Dictionary<string, object?> { ["module"] = "file" };
 
-        var a = new Data("a", expected);
-        var b = new Data("b", actual);
+        var a = _app.Data("a", expected);
+        var b = _app.Data("b", actual);
 
         var result = a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
@@ -133,8 +136,8 @@ public class DataDiffTests
         var expected = new Dictionary<string, object?> { ["module"] = "file" };
         var actual = new Dictionary<string, object?> { ["module"] = "file", ["extra"] = "value" };
 
-        var a = new Data("a", expected);
-        var b = new Data("b", actual);
+        var a = _app.Data("a", expected);
+        var b = _app.Data("b", actual);
 
         var result = a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
@@ -156,8 +159,8 @@ public class DataDiffTests
         var expected = new Dictionary<string, object?> { ["field"] = null };
         var actual = new Dictionary<string, object?> { ["field"] = null };
 
-        var a = new Data("a", expected);
-        var b = new Data("b", actual);
+        var a = _app.Data("a", expected);
+        var b = _app.Data("b", actual);
 
         var result = a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
@@ -173,8 +176,8 @@ public class DataDiffTests
         var expected = new Dictionary<string, object?> { ["module"] = "file", ["onError"] = null };
         var actual = new Dictionary<string, object?> { ["module"] = "file" };
 
-        var a = new Data("a", expected);
-        var b = new Data("b", actual);
+        var a = _app.Data("a", expected);
+        var b = _app.Data("b", actual);
 
         var result = a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
@@ -189,8 +192,8 @@ public class DataDiffTests
         var expected = new List<object?> { "a", "b", "c" };
         var actual = new List<object?> { "a", "b" };
 
-        var a = new Data("a", expected);
-        var b = new Data("b", actual);
+        var a = _app.Data("a", expected);
+        var b = _app.Data("b", actual);
 
         var result = a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
@@ -227,8 +230,8 @@ public class DataDiffTests
             }
         };
 
-        var a = new Data("a", expected);
-        var b = new Data("b", actual);
+        var a = _app.Data("a", expected);
+        var b = _app.Data("b", actual);
 
         var result = a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
@@ -240,8 +243,8 @@ public class DataDiffTests
     [Test]
     public async Task Compare_BooleanValues_MatchTrue()
     {
-        var a = new Data("a", true);
-        var b = new Data("b", true);
+        var a = _app.Data("a", true);
+        var b = _app.Data("b", true);
 
         var result = a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
@@ -253,8 +256,8 @@ public class DataDiffTests
     [Test]
     public async Task Compare_ReturnIsData()
     {
-        var a = new Data("a", "test");
-        var b = new Data("b", "test");
+        var a = _app.Data("a", "test");
+        var b = _app.Data("b", "test");
 
         var result = a.Diff(b);
 

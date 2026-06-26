@@ -15,8 +15,8 @@ public class EventCacheInvalidationTests
     [Test]
     public async Task EventsFor_Goal_PicksUpNewlyRegisteredEvent()
     {
-        await using var engine = new global::app.@this("/app");
-        using var context = new global::app.actor.context.@this(engine);
+        await using var engine = global::PLang.Tests.TestApp.Create("/app");
+        using var context = new global::app.actor.context.@this(engine, engine.User);
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
 
         // Register first event
@@ -43,8 +43,8 @@ public class EventCacheInvalidationTests
     [Test]
     public async Task EventsFor_Step_PicksUpNewlyRegisteredEvent()
     {
-        await using var engine = new global::app.@this("/app");
-        using var context = new global::app.actor.context.@this(engine);
+        await using var engine = global::PLang.Tests.TestApp.Create("/app");
+        using var context = new global::app.actor.context.@this(engine, engine.User);
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
         var step = new Step { Text = "do something" };
         step.Goal = goal;
@@ -75,8 +75,8 @@ public class EventCacheInvalidationTests
     [Test]
     public async Task EventsFor_Action_PicksUpNewlyRegisteredEvent()
     {
-        await using var engine = new global::app.@this("/app");
-        using var context = new global::app.actor.context.@this(engine);
+        await using var engine = global::PLang.Tests.TestApp.Create("/app");
+        using var context = new global::app.actor.context.@this(engine, engine.User);
         var action = new global::app.goal.steps.step.actions.action.@this
         {
             Module = "variable",
@@ -107,8 +107,8 @@ public class EventCacheInvalidationTests
     [Test]
     public async Task EventsFor_ManualInvalidation_Works()
     {
-        await using var engine = new global::app.@this("/app");
-        using var context = new global::app.actor.context.@this(engine);
+        await using var engine = global::PLang.Tests.TestApp.Create("/app");
+        using var context = new global::app.actor.context.@this(engine, engine.User);
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
 
         // Register and cache

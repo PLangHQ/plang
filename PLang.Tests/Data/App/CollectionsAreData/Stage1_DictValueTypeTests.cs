@@ -8,14 +8,17 @@ namespace PLang.Tests.App.CollectionsAreData;
 // owns Get/Keys/Has, implements IBooleanResolvable, and is registered in the primitive map.
 // These tests pin the value-type surface in isolation, before navigator / writer / parser
 // repointing in Stage1_DictNavigationAndWriterTests.
-public class Stage1_DictValueTypeTests
+public class Stage1_DictValueTypeTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/Stage1DictVT-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test]
     public async Task Get_ExistingKey_ReturnsDataValue()
     {
         // dict.Get("name") on a dict holding {name:Data("a")} returns that element Data.
-        var d = new Dict();
-        d.Set(new Data("name", "a"));
+        var d = new Dict { Context = app.User.Context };
+        d.Set(app.Data("name", "a"));
         var entry = d.Get("name");
         await Assert.That(entry).IsNotNull();
         await Assert.That((await entry!.Value())?.ToString()).IsEqualTo("a");
@@ -25,8 +28,8 @@ public class Stage1_DictValueTypeTests
     public async Task Get_MissingKey_ReturnsNull()
     {
         // dict.Get on an unknown key returns null (not throws) — caller decides what missing means.
-        var d = new Dict();
-        d.Set(new Data("name", "a"));
+        var d = new Dict { Context = app.User.Context };
+        d.Set(app.Data("name", "a"));
         await Assert.That(d.Get("nope")).IsNull();
         await Task.CompletedTask;
     }
@@ -35,10 +38,10 @@ public class Stage1_DictValueTypeTests
     public async Task Keys_PreservesInsertionOrder()
     {
         // Keys enumerates in insertion order — round-trip stability for round-tripped json objects.
-        var d = new Dict();
-        d.Set(new Data("name", "a"));
-        d.Set(new Data("age", 30L));
-        d.Set(new Data("city", "Reyk"));
+        var d = new Dict { Context = app.User.Context };
+        d.Set(app.Data("name", "a"));
+        d.Set(app.Data("age", 30L));
+        d.Set(app.Data("city", "Reyk"));
         // Keys is the typed list<text> surface; assert over the text values.
         await Assert.That(d.Keys.Items.Select(k => k.Peek()?.ToString()).ToList())
             .IsEquivalentTo(new[] { "name", "age", "city" });
@@ -48,8 +51,8 @@ public class Stage1_DictValueTypeTests
     public async Task Has_KnownKey_ReturnsTrue()
     {
         // Has(name) is true for a present key.
-        var d = new Dict();
-        d.Set(new Data("name", "a"));
+        var d = new Dict { Context = app.User.Context };
+        d.Set(app.Data("name", "a"));
         await Assert.That(d.Has("name")).IsTrue();
         await Task.CompletedTask;
     }
@@ -58,7 +61,7 @@ public class Stage1_DictValueTypeTests
     public async Task Has_MissingKey_ReturnsFalse()
     {
         // Has(name) is false for an absent key — distinct from Get returning null.
-        var d = new Dict();
+        var d = new Dict { Context = app.User.Context };
         await Assert.That(d.Has("name")).IsFalse();
         await Task.CompletedTask;
     }
@@ -67,7 +70,7 @@ public class Stage1_DictValueTypeTests
     public async Task AsBooleanAsync_EmptyDict_IsFalse()
     {
         // IBooleanResolvable: empty dict is falsy — matches falsiness of empty list/string/null.
-        var d = new Dict();
+        var d = new Dict { Context = app.User.Context };
         await Assert.That(await d.AsBooleanAsync()).IsFalse();
     }
 
@@ -75,8 +78,8 @@ public class Stage1_DictValueTypeTests
     public async Task AsBooleanAsync_NonEmptyDict_IsTrue()
     {
         // IBooleanResolvable: a dict with any entry is truthy.
-        var d = new Dict();
-        d.Set(new Data("name", "a"));
+        var d = new Dict { Context = app.User.Context };
+        d.Set(app.Data("name", "a"));
         await Assert.That(await d.AsBooleanAsync()).IsTrue();
     }
 
@@ -84,7 +87,7 @@ public class Stage1_DictValueTypeTests
     public async Task JsonSerialize_EmptyDict_EmitsEmptyObject()
     {
         // dict's own renderer emits `{}` for an empty dict — not `[]` and not the property-bag arm.
-        var json = NormalizePipelineHelper.SerializeValueSlot(new Dict());
+        var json = NormalizePipelineHelper.SerializeValueSlot(new Dict { Context = app.User.Context });
         await Assert.That(json).IsEqualTo("{}");
     }
 
@@ -92,9 +95,9 @@ public class Stage1_DictValueTypeTests
     public async Task JsonSerialize_TwoEntries_EmitsKeyedObject()
     {
         // dict emits {"name":"a","age":30} — keyed by entry name, values via per-element renderer.
-        var d = new Dict();
-        d.Set(new Data("name", "a"));
-        d.Set(new Data("age", 30L));
+        var d = new Dict { Context = app.User.Context };
+        d.Set(app.Data("name", "a"));
+        d.Set(app.Data("age", 30L));
         var json = NormalizePipelineHelper.SerializeValueSlot(d);
         await Assert.That(json).IsEqualTo("{\"name\":\"a\",\"age\":30}");
     }
@@ -103,10 +106,10 @@ public class Stage1_DictValueTypeTests
     public async Task JsonSerialize_NestedDict_EmitsNestedObject()
     {
         // dict holding a dict emits {"address":{"city":"Reyk"}} — nesting works through one renderer.
-        var inner = new Dict();
-        inner.Set(new Data("city", "Reyk"));
-        var outer = new Dict();
-        outer.Set(new Data("address", inner));
+        var inner = new Dict { Context = app.User.Context };
+        inner.Set(app.Data("city", "Reyk"));
+        var outer = new Dict { Context = app.User.Context };
+        outer.Set(app.Data("address", inner));
         var json = NormalizePipelineHelper.SerializeValueSlot(outer);
         await Assert.That(json).IsEqualTo("{\"address\":{\"city\":\"Reyk\"}}");
     }

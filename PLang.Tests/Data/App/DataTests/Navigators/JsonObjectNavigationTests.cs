@@ -10,11 +10,14 @@ namespace PLang.Tests.App.DataTests.Navigators;
 // to reflect. These tests pin that boundary invariant through the public GetChild
 // path (the deleted per-type Dictionary navigator's JsonObject arm was dead code:
 // it could only fire on a raw JsonObject, which SetValue prevents).
-public class JsonObjectNavigationTests
+public class JsonObjectNavigationTests : System.IAsyncDisposable
 {
-    private static Data MakeData(JsonObject value)
+    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/JsonObjectNavigationTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
+
+    private Data MakeData(JsonObject value)
     {
-        var d = new Data("trace");
+        var d = new Data("trace", context: _app.User.Context);
         d.SetValue(value);
         return d;
     }
@@ -75,11 +78,11 @@ public class JsonObjectNavigationTests
     {
         // Regression guard: the canonical IDictionary<string,object?> and non-generic
         // IDictionary (Hashtable) shapes also narrow at the boundary and navigate.
-        var d1 = new Data("");
+        var d1 = new Data("", context: _app.User.Context);
         d1.SetValue(new Dictionary<string, object?> { ["k"] = "v" });
         await Assert.That((await (await d1.GetChild("k")).Value())?.ToString()).IsEqualTo("v");
 
-        var d2 = new Data("");
+        var d2 = new Data("", context: _app.User.Context);
         d2.SetValue(new System.Collections.Hashtable { ["k"] = "v" });
         await Assert.That((await (await d2.GetChild("k")).Value())?.ToString()).IsEqualTo("v");
     }

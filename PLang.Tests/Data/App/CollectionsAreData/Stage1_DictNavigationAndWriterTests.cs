@@ -7,10 +7,13 @@ namespace PLang.Tests.App.CollectionsAreData;
 // Stage 1 — the wiring around dict: navigator collapses into it, json writer
 // disambiguates by type (no property-bag arm), and the lazy parse seam narrows
 // json objects to dict (not raw Dictionary<string,object?>).
-public class Stage1_DictNavigationAndWriterTests
+public class Stage1_DictNavigationAndWriterTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/Stage1DictNav-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     private static global::app.@this NewApp()
-        => new(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        => global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-dictnav-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     [Test]
@@ -31,10 +34,10 @@ public class Stage1_DictNavigationAndWriterTests
         // variable/navigator/Dictionary collapses: when data.Value is dict, navigation
         // is `d.Get(key)`. The three-arm shape dispatch (IDictionary / generic IDictionary<,>
         // / JsonObject) and the reflection fallback are gone for the dict case (C).
-        var u = new Dict();
-        u.Set(new Data("name", "a"));
-        u.Set(new Data("age", 30L));
-        var data = new Data("u", u);
+        var u = new Dict { Context = app.User.Context };
+        u.Set(app.Data("name", "a"));
+        u.Set(app.Data("age", 30L));
+        var data = app.Data("u", u);
 
         // Navigation is the value's own job now (dict.Navigate via GetChild) — no navigator.
         await Assert.That((await (await data.GetChild("name")).Value())?.ToString()).IsEqualTo("a");
@@ -48,7 +51,7 @@ public class Stage1_DictNavigationAndWriterTests
     {
         // writer.cs no longer has `case List<app.data.@this> propertyBag:` (E).
         // A List<Data> now serializes as a JSON array; only a dict routes to `{}`.
-        var list = new List<Data> { new("a", 1L), new("b", 2L) };
+        var list = new List<Data> { app.Data("a", 1L), app.Data("b", 2L) };
         var json = NormalizePipelineHelper.SerializeValueSlot(list);
         await Assert.That(json.StartsWith("[")).IsTrue();
         await Assert.That(json.StartsWith("{")).IsFalse();
@@ -60,7 +63,7 @@ public class Stage1_DictNavigationAndWriterTests
         // data/this.Normalize.cs's NormalizeObject returns a dict for a C# domain record
         // (e.g. identity) — not List<@this> (F). One object shape across the wire.
         var identity = new global::app.module.identity.Identity { Name = "alice", PublicKey = "pk" };
-        var normalized = new Data("", identity).Normalize();
+        var normalized = app.Data("", identity).Normalize();
         await Assert.That(normalized).IsTypeOf<Dict>();
         var d = (Dict)normalized!;
         await Assert.That(d.Has("name")).IsTrue();
