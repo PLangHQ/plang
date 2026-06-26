@@ -59,9 +59,23 @@ public partial class @this
                 if (!child.IsInitialized && !index.IsLiteral && _context?.Variable != null
                     && (await _context.Variable.Get(index.Inner.ToString())).Peek()
                         is null or global::app.type.@null.@this)
+                {
+                    // Report what the index expression's ROOT variable actually holds — the
+                    // common confusion is the root being unset (injection never ran) vs the
+                    // root holding a raw "%x%" literal (a param born as a string, not a
+                    // variable reference) vs the root being a value whose member is missing.
+                    var inner = index.Inner.ToString();
+                    var rootCut = inner.IndexOfAny(new[] { '.', '[' });
+                    var rootName = rootCut < 0 ? inner : inner[..rootCut];
+                    var rootData = await _context.Variable.Get(rootName);
+                    var rootPeek = rootData.Peek();
+                    var rootDiag = rootData.IsInitialized
+                        ? $"%{rootName}% holds {rootData.Type?.Name ?? "?"} = {(rootPeek is null ? "null" : $"'{rootPeek.ToString()?.Split('\n')[0]}'")}"
+                        : $"%{rootName}% is unset";
                     return FromError(new global::app.error.Error(
-                        $"cannot navigate [{index.Inner}]: the index %{index.Inner}% is not set (resolved to null)",
+                        $"cannot navigate [{index.Inner}]: the index %{index.Inner}% is not set (resolved to null) — {rootDiag}",
                         "IndexNotSet", 400));
+                }
                 break;
             default: // Member (plain or quoted) — the VALUE owns navigation by key
                 child = await _type.Navigate(this, ((global::app.variable.path.Segment.Member)head!).Name);
