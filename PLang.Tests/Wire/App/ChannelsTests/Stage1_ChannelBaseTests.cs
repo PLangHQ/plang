@@ -92,7 +92,7 @@ public class Stage1_ChannelBaseTests
         var jsonCh = new StreamChannel("json", captureA, ChannelDirection.Output, ownsStream: false)
         { Mime = "application/json" };
         app.User.Channel.Register(jsonCh);
-        await jsonCh.Write(Data.Ok(new { name = "x" }));
+        await jsonCh.Write(app.Ok(new { name = "x" }));
         await jsonCh.DisposeAsync();
         var jsonText = global::System.Text.Encoding.UTF8.GetString(captureA.ToArray());
         await Assert.That(jsonText).Contains("\"name\"");
@@ -101,7 +101,7 @@ public class Stage1_ChannelBaseTests
         var textCh = new StreamChannel("txt", captureB, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" };
         app.User.Channel.Register(textCh);
-        await textCh.Write(Data.Ok("plain hello"));
+        await textCh.Write(app.Ok("plain hello"));
         await textCh.DisposeAsync();
         var raw = global::System.Text.Encoding.UTF8.GetString(captureB.ToArray());
         await Assert.That(raw.Contains("plain hello")).IsTrue();
