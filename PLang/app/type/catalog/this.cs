@@ -24,7 +24,7 @@ public sealed partial class @this
     /// </summary>
     internal actor.context.@this Context { get; }
 
-    public @this(actor.context.@this context) => Context = context;
+    public @this(actor.context.@this context) : this() => Context = context;
 
     /// <summary>[Choices] vocabulary registry — reachable as <c>app.type.choices</c>.</summary>
     public choice.list.@this Choices { get; } = new();
