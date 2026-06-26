@@ -474,6 +474,15 @@ public partial class @this
 
     internal void SetValueDirect(object? value)
     {
+        // A bare Data may not become a value — wrapping one in a Clr makes the
+        // carrier reflect the Data on the wire, recursively ({name,value,{name,value,…}}).
+        // Same rule as type.Create: nested Data rides inside an owning wrapper type,
+        // never as the value itself. The throw flags the offending caller.
+        if (value is @this)
+            throw new System.InvalidOperationException(
+                "A bare Data may not be stored as a value (SetValueDirect) — it would ride a clr carrier "
+                + "and reflect recursively on the wire. Pass the inner value, not the Data wrapper.\n"
+                + System.Environment.StackTrace);
         _type = value is null ? null
             : value as global::app.type.item.@this
             ?? new Clr(value);

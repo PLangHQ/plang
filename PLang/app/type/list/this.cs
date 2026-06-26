@@ -28,7 +28,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public IEnumerator<Data> GetEnumerator()
     {
         foreach (var slot in _items)
-            yield return slot is Data d ? d : new Data("", global::app.type.@this.Create(slot)) { Context = _context! };
+            yield return slot is Data d ? d : new Data("", global::app.type.@this.Create(slot, _context), context: _context);
     }
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
@@ -90,7 +90,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             if (_context != null) d.Context = _context;
             return d;
         }
-        return new Data("", global::app.type.@this.Create(raw)) { Context = _context! };
+        return new Data("", global::app.type.@this.Create(raw, _context), context: _context);
     }
 
     // The structural face of a raw-or-Data slot — the item instance for the
@@ -221,7 +221,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     {
         int i = 0;
         foreach (var item in Items)
-            yield return (new Data("", i++) { Context = context }, item);
+            yield return (new Data("", i++, context: context), item);
     }
 
     // IListLeaf — a list dissolves into its container list: its leaves are this list's
@@ -579,10 +579,10 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
                     for (int j = 0; j < i; j++) rendered.AddRaw(_items[j]);
                 }
                 var name = slot is Data sd ? sd.Name : "";
-                var probe = new Data(name, e) { Context = _context! };
+                var probe = new Data(name, e, context: _context);
                 var answer = await probe.Value();
                 if (probe.HasUnobservedError) rendered.AddRaw(slot);
-                else rendered.Add(new Data(name, answer) { Context = _context! });
+                else rendered.Add(new Data(name, answer, context: _context));
             }
             else rendered?.AddRaw(slot);
         }

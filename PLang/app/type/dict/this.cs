@@ -185,7 +185,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         EnumerateItems(global::app.actor.context.@this? context)
     {
         foreach (var entry in Entries)
-            yield return (new Data("", entry.Name) { Context = context }, entry);
+            yield return (new Data("", entry.Name, context: context), entry);
     }
 
     /// <summary>True when <paramref name="key"/> is present (distinct from a present key whose value is null).</summary>
@@ -396,10 +396,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                         rendered.Set(prior, _value[prior]);
                     }
                 }
-                var probe = new Data(key, e) { Context = _context! };
+                var probe = new Data(key, e, context: _context);
                 var answer = await probe.Value();
                 if (probe.HasUnobservedError) rendered.Set(key, slot);
-                else rendered.Set(new Data(key, answer) { Context = _context! });
+                else rendered.Set(new Data(key, answer, context: _context));
             }
             else rendered?.Set(key, slot);
         }
