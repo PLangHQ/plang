@@ -98,6 +98,9 @@ public sealed partial class @this
         _app = app;
     }
 
+    /// <summary>The context this system-owned collection births its result Data from.</summary>
+    private actor.context.@this Context => _app.System.Context;
+
     /// <summary>
     /// Build-mode bootstrap. Confirms the app should be created (interactive y/n
     /// prompt) when no <c>.build/app.pr</c> exists and <c>--app={"create":true}</c>
@@ -115,7 +118,7 @@ public sealed partial class @this
         if ((!appPrExists.Success || (await appPrExists.Value())?.Value != true) && !_app.Create)
         {
             if (Console.IsInputRedirected)
-                return data.@this.FromError(new global::app.error.ServiceError(
+                return Context.Error(new global::app.error.ServiceError(
                     $"No app found at {_app.AbsolutePath}. Run plang build from your app's root directory, or use --app={{\"create\":true}}.", "NoAppFound", 400));
 
             // Channels are wired by the entry point (PlangConsole) before Run.
@@ -126,14 +129,14 @@ public sealed partial class @this
             var outputChannel = _app.User.Channel.Get(global::app.channel.list.@this.Output) as global::app.channel.type.stream.@this;
             var inputChannel = _app.User.Channel.Get(global::app.channel.list.@this.Input) as global::app.channel.type.stream.@this;
             if (outputChannel == null || inputChannel == null)
-                return data.@this.FromError(new global::app.error.ServiceError(
+                return Context.Error(new global::app.error.ServiceError(
                     "Default channels not wired — cannot prompt for app creation.", "MissingRequiredChannelAtBoot", 500));
 
             await outputChannel.WriteTextAsync($"No app found at {_app.AbsolutePath}. Create new app? (y/n): ");
             using var reader = new StreamReader(inputChannel.Stream, leaveOpen: true);
             var answer = (await reader.ReadLineAsync())?.Trim().ToLowerInvariant();
             if (answer != "y" && answer != "yes")
-                return data.@this.FromError(new global::app.error.ServiceError(
+                return Context.Error(new global::app.error.ServiceError(
                     "Build cancelled. Run plang build from your app's root directory.", "BuildCancelled", 400));
         }
 

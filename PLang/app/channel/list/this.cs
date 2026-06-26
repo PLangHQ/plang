@@ -35,6 +35,13 @@ public sealed class @this : IAsyncDisposable
     internal global::app.actor.@this Actor { get; set; } = null!;
 
     /// <summary>
+    /// The context this channel collection births its result Data from — its
+    /// owning actor's context, or the App's system context for Service-owned
+    /// channels (Service is not an Actor).
+    /// </summary>
+    private actor.context.@this Context => Actor?.Context ?? _app.System.Context;
+
+    /// <summary>
     /// The serializer registry — content-type routing for I/O. Per-actor:
     /// each actor's Channels owns its own registry. Boot-time defaults register
     /// identically per actor; runtime extensions apply to the registering actor.
@@ -81,11 +88,11 @@ public sealed class @this : IAsyncDisposable
         foreach (var name in Defaults)
         {
             if (!_channels.ContainsKey(name))
-                return global::app.data.@this.FromError(new ServiceError(
+                return Context.Error(new ServiceError(
                     $"Channel '{name}' not registered. Default channels ({string.Join(", ", Defaults)}) must be wired before goals run.",
                     "MissingRequiredChannelAtBoot", 500));
         }
-        return global::app.data.@this.Ok();
+        return Context.Ok();
     }
 
     public channel.@this GetOrCreate(string name, Func<channel.@this> factory)
@@ -155,13 +162,13 @@ public sealed class @this : IAsyncDisposable
     {
         var channel = Get(name);
         if (channel == null)
-            return (null, global::app.data.@this.FromError(new ServiceError($"Channel '{name}' not found", "ChannelNotFound", 404)));
+            return (null, Context.Error(new ServiceError($"Channel '{name}' not found", "ChannelNotFound", 404)));
 
         if (requireRead == true && !channel.CanRead)
-            return (null, global::app.data.@this.FromError(new ServiceError($"Channel '{name}' does not support reading", "ChannelWriteOnly", 400)));
+            return (null, Context.Error(new ServiceError($"Channel '{name}' does not support reading", "ChannelWriteOnly", 400)));
 
         if (requireWrite == true && !channel.CanWrite)
-            return (null, global::app.data.@this.FromError(new ServiceError($"Channel '{name}' does not support writing", "ChannelReadOnly", 400)));
+            return (null, Context.Error(new ServiceError($"Channel '{name}' does not support writing", "ChannelReadOnly", 400)));
 
         return (channel, null);
     }
@@ -176,7 +183,7 @@ public sealed class @this : IAsyncDisposable
         var (channel, error) = GetChannel(channelName, requireWrite: true);
         if (error != null) return error;
 
-        var wrapped = data is global::app.data.@this d ? d : global::app.data.@this.Ok(data);
+        var wrapped = data is global::app.data.@this d ? d : Context.Ok(data);
         return await channel!.WriteAsync(wrapped, cancellationToken);
     }
 
@@ -213,12 +220,12 @@ public sealed class @this : IAsyncDisposable
             if (channel is channel.type.stream.@this sc)
                 await sc.WriteTextAsync(text, cancellationToken);
             else
-                await channel!.WriteAsync(global::app.data.@this.Ok(text), cancellationToken);
-            return global::app.data.@this.Ok();
+                await channel!.WriteAsync(Context.Ok(text), cancellationToken);
+            return Context.Ok();
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
-            return global::app.data.@this.FromError(new ServiceError($"Failed to write text to channel '{channelName}': {ex.Message}", "WriteError") { Exception = ex });
+            return Context.Error(new ServiceError($"Failed to write text to channel '{channelName}': {ex.Message}", "WriteError") { Exception = ex });
         }
     }
 
@@ -233,14 +240,14 @@ public sealed class @this : IAsyncDisposable
             if (channel is channel.type.stream.@this sc)
             {
                 var text = await sc.ReadAllTextAsync(cancellationToken);
-                return global::app.data.@this.Ok(text);
+                return Context.Ok(text);
             }
             var read = await channel!.ReadAsync(cancellationToken);
             return read;
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
-            return global::app.data.@this.FromError(new ServiceError($"Failed to read text from channel '{channelName}': {ex.Message}", "ReadError") { Exception = ex });
+            return Context.Error(new ServiceError($"Failed to read text from channel '{channelName}': {ex.Message}", "ReadError") { Exception = ex });
         }
     }
 

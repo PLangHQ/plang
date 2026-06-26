@@ -49,6 +49,9 @@ public sealed partial class @this
 
     public @this(app.@this app) { App = app; }
 
+    /// <summary>The context this system-owned collection births its result Data from.</summary>
+    private actor.context.@this Context => App.System.Context;
+
     /// <summary>
     /// Applies a --test={...} config dictionary. Validates bounds and returns an error Data
     /// on invalid values (negative timeout, non-positive parallel, unknown format).
@@ -68,18 +71,18 @@ public sealed partial class @this
                 case "timeoutseconds":
                 {
                     if (!TryToInt(value, out var timeout))
-                        return data.@this.FromError(ConfigError($"--test.timeout must be an integer, got {Describe(value)}"));
+                        return Context.Error(ConfigError($"--test.timeout must be an integer, got {Describe(value)}"));
                     if (timeout <= 0)
-                        return data.@this.FromError(ConfigError($"--test.timeout must be positive, got {timeout}"));
+                        return Context.Error(ConfigError($"--test.timeout must be positive, got {timeout}"));
                     TimeoutSeconds = timeout;
                     break;
                 }
                 case "parallel":
                 {
                     if (!TryToInt(value, out var parallel))
-                        return data.@this.FromError(ConfigError($"--test.parallel must be an integer, got {Describe(value)}"));
+                        return Context.Error(ConfigError($"--test.parallel must be an integer, got {Describe(value)}"));
                     if (parallel <= 0)
-                        return data.@this.FromError(ConfigError($"--test.parallel must be positive, got {parallel}"));
+                        return Context.Error(ConfigError($"--test.parallel must be positive, got {parallel}"));
                     Parallel = parallel;
                     break;
                 }
@@ -101,21 +104,21 @@ public sealed partial class @this
                 {
                     if (value is bool b) Verbose = b;
                     else if (value is string s && bool.TryParse(s, out var bs)) Verbose = bs;
-                    else return data.@this.FromError(ConfigError($"--test.verbose must be a boolean, got {Describe(value)}"));
+                    else return Context.Error(ConfigError($"--test.verbose must be a boolean, got {Describe(value)}"));
                     break;
                 }
                 case "format":
                 {
                     var format = value?.ToString();
                     if (format != "json" && format != "junit")
-                        return data.@this.FromError(ConfigError($"--test.format must be \"json\" or \"junit\", got {Describe(value)}"));
+                        return Context.Error(ConfigError($"--test.format must be \"json\" or \"junit\", got {Describe(value)}"));
                     Format = format;
                     break;
                 }
                 // Unknown keys are ignored — forward-compatible with future options.
             }
         }
-        return data.@this.Ok();
+        return Context.Ok();
     }
 
     private static ServiceError ConfigError(string message) =>
