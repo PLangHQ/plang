@@ -20,7 +20,8 @@ shared implementation leaf. So:
 
 That inverts what's worth showing. The shared leaves are the boring trunk. **A fork is the
 event** — and a fork whose arms *never reconverge* (they end at different results) is the
-alarm. The goal is a single merged call tree where the eye goes straight to the forks.
+alarm. The goal is a single overlaid flow graph where the eye goes straight to the forks
+(the canvas in §3 — that is the target render).
 
 What the user wants to answer at a glance: *"when X happens, this is the path"*, and *"are
 we going down the wrong path?"* — at PLang altitude (goal → step → action) **and** C#
@@ -36,35 +37,61 @@ altitude (the `Variable.get → … → leaf` method chain).
 Therefore the merged tree is **not captured directly — it is derived by overlaying runs:**
 
 ```
-run 1 (ctx)      run 2 (no ctx)            merged tree.json
-   tree      +       tree         ──►   shared nodes drawn once
-                                        children differ   → fork
-                                        arms rejoin       → reconverges (green)
-                                        arms don't rejoin → red
+run 1 (ctx)      run 2 (no ctx)         canvas flow graph
+   path      +       path        ──►   one bubble per method (shared)
+                                       successors differ  → fork (purple)
+                                       predecessors merge → reconverge (green)
+                                       lanes never rejoin → distinct outcomes
 ```
 
 Consequence for the architecture: **the runtime's only job is to honestly record one path
-per run** (flat, cheap, append-only). Fork detection and reconvergence live in a separate
-**merge step** over 2+ recordings. The hot path stays dumb.
+per run** (flat, cheap, append-only). Fork/merge detection lives in the **viewer's overlay**
+over 2+ recordings (§3.1). The hot path stays dumb.
 
 ---
 
 ## 3. Prototype already in the repo
 
-`tools/trace-viewer/`:
+`tools/trace-viewer/`. **The primary target is the canvas flow graph** (`canvas.html` +
+`flow.ndjson`) — that is the view to build toward. The tree view is kept as a secondary
+reference.
 
-- `tree.json` — hand-authored **merged** tree for `variable.get %user%`, modelling the three
-  real context-null forks (`Wire.cs:374`, `Wire.cs:211`, `this.cs:299`).
-- `index.html` — zero-dependency viewer. One trunk; `⑂ fork` markers inline; red tag when a
-  fork's arms never reconverge; "dim C# leaves" toggle; "final outcome per path" footer.
-- `demo.ndjson` — earlier two-run **raw** format (the single-run wire shape the runtime would
-  emit). Kept as the capture-format reference.
+**Primary — canvas flow graph:**
 
-Serve: `cd tools/trace-viewer && python3 -m http.server 8777`.
+- `canvas.html` — zero-dependency canvas viewer. Each **method is a bubble** (deduped by
+  `sig`), edges are the **next call in execution** colored per run. Horizontal layered
+  layout: **entry far left, outcomes far right**, execution flows left→right; a bubble's
+  column = its longest path from entry, so a merge always sits right of its predecessors.
+  Forks ringed purple, merges green, draggable bubbles, hover tooltip.
+- `flow.ndjson` — the per-run capture format the canvas consumes (see §5).
 
-The prototype defines the **target render** and the **two file formats** (raw NDJSON per run,
-merged tree.json). The runtime work below produces the raw format; the merge produces the
-tree.
+**Secondary — merged tree (kept, not the focus):**
+
+- `index.html` + `tree.json` — the merged-tree render (one trunk, inline `⑂` forks, red when
+  arms never reconverge). Useful as an alternate lens; not the build target.
+- `demo.ndjson` — earlier raw two-run NDJSON, superseded by `flow.ndjson` as the capture
+  reference.
+
+Serve: `cd tools/trace-viewer && python3 -m http.server 8777` → open `/canvas.html`.
+
+### 3.1 The bubble-graph model (what the canvas encodes)
+
+A run is a **path** through methods — the ordered sequence of method entries. Overlay N runs
+on a shared set of bubbles (one bubble per `sig`). Edges = consecutive pairs in each path,
+tagged with which run(s) traversed them. Then:
+
+- **Fork** = a bubble whose set of *successor* bubbles differs across runs (out-degree
+  divergence). "Same bubble, different next call." This is the alarm.
+- **Merge / reconvergence** = a bubble reached from ≥2 distinct *predecessor* bubbles
+  (in-degree convergence). "Different paths, same bubble again." Expected — it's the trunk
+  re-forming. A bubble can be **both** (rejoin then split again).
+- **Outcome** = terminal bubble per run (the return value). Lanes that never reconverge end
+  at different outcomes — the divergence that matters.
+- Shared edges (all runs) draw neutral; run-specific edges draw in that run's color. The eye
+  reads the colored lanes peeling off and rejoining the gray trunk.
+
+This is purely structural: fork/merge fall out of the overlay with **no branch annotation**
+required. The runtime just emits each run's ordered entries; the canvas builds the graph.
 
 ---
 
@@ -130,47 +157,63 @@ Trace.Fork("_context == null", at: "Wire.cs:211");
 No annotation → still a red fork, labeled "diverges" instead of with the condition. Start
 unannotated; annotate the handful of branches that matter.
 
-### 4.5 Merge step — start in the viewer (JS)
+### 4.5 Overlay — in the viewer (JS), nothing extra in the runtime
 
-Keep the comparison **out of the runtime**. Load 2+ run NDJSONs → rebuild each tree → align
-by `sig` → emit the merged `tree.json` the viewer already renders.
+The canvas builds the graph itself (§3.1): read each run's ordered entries → one bubble per
+`sig` → edges between consecutive entries tagged by run → fork = successor set differs by run,
+merge = ≥2 distinct predecessors. **No merge tool, no runtime comparison code** — the runtime
+only emits flat per-run `flow.ndjson`; the canvas does the rest. This is implemented today in
+`canvas.html` and is the reference behaviour.
 
-Reconvergence rule: after a fork, if every arm reaches a common downstream `sig` (or the same
-final `ret`) → **green**; disjoint → **red**. (All three forks in the demo are red — a null
-context doesn't take a side road, it never comes back to the same result.)
+(The secondary tree view derives a nested `tree.json` by aligning runs and applying a
+reconvergence rule — kept for reference, not the build target.)
 
 ---
 
 ## 5. File formats
 
-### Raw, per-run (runtime emits this) — NDJSON, one event per line
+### `flow.ndjson` — the format the runtime emits (primary)
+
+One line per event, in execution order, per run. This is the canvas's input.
 
 ```
-{"e":"in","k":"act","id":"a3","p":"a2","n":"variable.get","sig":"variable/get.cs","arg":{"name":"%user%"},"ts":0.011}
-{"e":"out","id":"a3","ts":0.039,"ret":"User{…}","diff":[{"name":"%user%","to":"User{…}"}]}
+{"e":"meta","title":"variable.get %user% — execution flow graph"}
+{"e":"run","run":"A","label":"with context","color":"#7aa2f7"}
+{"e":"run","run":"B","label":"no context","color":"#e0af68"}
+{"e":"step","run":"A","sig":"data/Wire.cs:316","n":"Wire.ReadBody"}
+{"e":"step","run":"A","sig":"type/reader","n":"Type.Readers.Typed"}
+...
+{"e":"end","run":"A","ret":"User{ id:7, name:\"Ingi\" }  ✓ typed, verified"}
 ```
 
-`k` = goal/step/act/cs · `p` = parent id (rebuilds the tree) · `sig` = file:line · duration =
-`out.ts − in.ts` · optional `ret`, `diff`, `warn`, `err`. Optional `branch` events carry the
-condition + taken arm when `Trace.Fork` is annotated.
+- `run` declares a run (id, display label, lane color).
+- `step` is one method entry: `sig` (bubble identity) + `n` (display name). Emit in execution
+  order; the canvas pairs consecutive steps into edges.
+- `end` is the run's terminal outcome (`ret`).
 
-### Merged (derived by merge step) — nested tree.json
+Crucially: **a real run only emits its own path** (one arm of each fork). Run the action
+under different conditions (with/without context) → two runs in the file → the canvas
+overlays them and the forks/merges appear. The runtime never has to know about the other arm.
 
-Node: `{kind, n, sig, ret?, warn?, children[]}`. Fork:
-`{fork:true, q, at, reconverges:bool, arms:[{label, ret?, warn?, children[]}]}`. Root carries
-`outcomes[]`. See `tools/trace-viewer/tree.json` for the worked example.
+### `tree.json` — secondary, derived (reference only)
+
+Nested merged-tree shape consumed by `index.html`. See `tools/trace-viewer/tree.json`.
 
 ---
 
 ## 6. Build order
 
-1. **Slice 1 — PLang-altitude sink.** `trace` concept + sink, `--trace` scoping, hooks in
-   `Push` / `ExecuteAsync` / `DisposeAsync`. Real single-run NDJSON, no Fody. (~½ day,
-   reuses all existing call data.) **This is the smallest end-to-end proof.**
-2. **Slice 2 — JS merge.** Run with and without context, drop both NDJSONs in the viewer,
-   forks appear automatically.
-3. **Slice 3 — Fody weaving.** C# method depth under the PLang frames.
-4. **Slice 4 — `Trace.Fork` enrichment** on the branches that matter.
+1. **Slice 1 — emit `flow.ndjson`.** `trace` concept + sink, `--trace` scoping, hook
+   `CallStack.Push` to emit a `step` line (sig from `Goal.PrPath` / action) and `call`
+   exit to emit `end`/`ret`. PLang-altitude only, no Fody. Run an action twice (with/without
+   context) → drop both files in `canvas.html` → forks appear. (~½ day, reuses existing call
+   data.) **Smallest end-to-end proof against the canvas.**
+2. **Slice 2 — Fody weaving.** Add C# method `step` lines (one bubble per C# method) under
+   the PLang frames — this is the depth that makes `variable.get → … → leaf` visible.
+3. **Slice 3 — run management.** A convenient way to capture the same action under N
+   conditions into one `flow.ndjson` (or N files the canvas loads together).
+4. **Slice 4 — `Trace.Fork` enrichment** to label *why* a bubble forks (the condition text),
+   for the branches that matter.
 
 ---
 
@@ -180,13 +223,17 @@ Node: `{kind, n, sig, ret?, warn?, children[]}`. Fork:
    vs. folding the sink into the existing `CallStack.Flags` tier (alongside Timing/Diff/
    History). The concept is cleaner OBP; the flag is less surface. Recommendation: concept.
 2. **Fody vs Harmony** for C# weaving (§4.3). Recommendation: Fody first.
-3. **Merge location** — JS-in-viewer (proposed, zero runtime cost) vs a C# / PLang-goal tool
-   that emits `tree.json` for CI/headless. Recommendation: JS first, port later if needed.
-4. **Sig identity for alignment** — `file:line` is stable enough within a build but shifts as
-   code moves. Is `file:methodName` a better merge key? Affects how robust cross-run
-   alignment is.
-5. **Retention / size** — NDJSON rotation cap, loop-folding of repeated `foreach` subtrees
-   (hash subtree shape, render `×N`). Where does folding live — capture or viewer?
+3. **Bubble identity (`sig`)** — this is the load-bearing choice for the canvas, since bubbles
+   are deduped by it and forks/merges are defined by successor/predecessor sets over it.
+   `file:line` shifts as code moves; `Namespace.Method` is stable but collapses overloads and
+   loop iterations into one bubble (often desirable). Recommendation: `Namespace.Method`,
+   revisit if too coarse.
+4. **Capturing multiple runs** — how does the user request "run this action with and without
+   context"? Re-run the app under different inputs, or a single harness that drives both? The
+   canvas needs ≥2 runs in the file to show any fork.
+5. **Size / loops** — a method in a `foreach` becomes one bubble with a self-loop or repeated
+   edges; that's naturally compact (the graph dedups). Decide whether to show edge
+   traversal counts / weights, and any cap on distinct bubbles per capture.
 
 ---
 
@@ -205,5 +252,5 @@ Node: `{kind, n, sig, ret?, warn?, children[]}`. Fork:
 
 - **Off:** one `AsyncLocal` read per `Push` (already paid) + one null check per woven `app.*`
   method. Negligible but non-zero with Fody (compiled into every method).
-- **On, scoped:** bounded to the `--trace` subtree; append-only NDJSON; flat memory (no tree
-  retained in RAM — the file is the record, the viewer rebuilds the tree).
+- **On, scoped:** bounded to the `--trace` subtree; append-only NDJSON; flat memory (nothing
+  retained in RAM — the file is the record, the viewer builds the graph from it).
