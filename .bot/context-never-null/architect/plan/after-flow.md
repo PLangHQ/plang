@@ -116,7 +116,7 @@ The authenticity check lives **inside** verify, which navigates `action.Context.
 
 ## 6. Bootstrap — the one read that authenticates differently
 
-Loading the system keypair can't match against `App.System.Identity` — that read is *how* the key gets into memory. It reads in **root mode**: signature integrity + the loaded keypair is self-consistent (`PublicKey` re-derives from `PrivateKey`). Possession authenticates the root. After it, `App.System.Identity` is in memory and steps 3–5 above use it. Bootstrap loads the system identity before any other `application/plang` read.
+Loading the system keypair can't match against `App.System.Identity` — that read is *how* the key gets into memory. So it sets `verify.Root = true`: verify runs its normal checks (the signature check validates the self-signature) but skips the actor-identity match. The identity provider then checks the loaded keypair is self-consistent (`PublicKey` re-derives from `PrivateKey`) — that check is the provider's, not verify's. Possession authenticates the root. After it, `App.System.Identity` is in memory and steps 3–5 above use it. Bootstrap loads the system identity before any other `application/plang` read.
 
 ## 7. Step.Disabled — context passed, not stashed
 
