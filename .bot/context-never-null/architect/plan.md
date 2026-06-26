@@ -82,4 +82,4 @@ You can't persist a context — it's ephemeral, per-execution. What's durable is
 
 ## You own the final shape
 
-Any code path, signature, or factory name in these files (`context.Null/Error/Ok`, `step.IsDisabled(context)`, etc.) is a suggestion that captures the intent. The coder owns the final names and shapes. If a cleaner seam appears while implementing, take it — the invariant is the contract, not the spelling.
+Any code path, signature, or factory name in these files (`context.Null/Error/Ok`, `step.Disabled(context)`, etc.) is a suggestion that captures the intent. The coder owns the final names and shapes. If a cleaner seam appears while implementing, take it — the invariant is the contract, not the spelling.

@@ -83,12 +83,12 @@ New surface: `context.Null()`, `context.Error(...)`, `context.Ok(...)` factory m
 | Member | File | Disposition |
 |---|---|---|
 | `Step.Context` (`[JsonIgnore] actor.context.@this?`) | `goal/steps/step/this.cs:16` | field deleted |
-| `Step.Disabled` reading `Context` directly | `goal/steps/step/this.cs:24-38` | parameterized — `IsDisabled(context)` / `SetDisabled(context, value)` |
+| `Step.Disabled` reading `Context` directly | `goal/steps/step/this.cs:24-38` | parameterized — `Disabled(context)` query + `Disable(context)` / `Enable(context)` mutation |
 | `Step.Context = this` (AnchorScope set) | `actor/context/this.cs:278` | removed (keep `context.Step = …`) |
 | `_previousStepContext = action.Step?.Context` (save) | `actor/context/this.cs:299` | removed |
 | `if (_action.Step != null) _action.Step.Context = _previousStepContext` (restore) | `actor/context/this.cs:307` | removed |
 | `_previousStepContext` field on AnchorScopeDisposable | `actor/context/this.cs:290` | removed |
-| `step.Context = Context` / `_items[i].Context = context` stamps | `goal/steps/this.cs:53,128` | removed; pass the local to `IsDisabled`/`SetDisabled` |
+| `step.Context = Context` / `_items[i].Context = context` stamps | `goal/steps/this.cs:53,128` | removed; pass the local to `Disabled(context)` / `Disable`/`Enable(context)` |
 
 ## Downstream — the 56 parameters
 
