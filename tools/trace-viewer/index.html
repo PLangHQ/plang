@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PLang Execution Trace</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --line:#262b36; --text:#d7dce5; --muted:#8a93a6;
+    --goal:#7aa2f7; --step:#9ece6a; --act:#e0af68; --cs:#7dcfff; --branch:#bb9af7;
+    --taken:#9ece6a; --alt:#5a6171; --warn:#f7768e;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+       background:var(--bg);color:var(--text)}
+  header{padding:10px 16px;border-bottom:1px solid var(--line);display:flex;gap:14px;
+         align-items:center;flex-wrap:wrap}
+  header h1{font-size:14px;margin:0;font-weight:600}
+  header .sub{color:var(--muted)}
+  header label{color:var(--muted);cursor:pointer;user-select:none}
+  header input[type=search]{background:var(--panel);border:1px solid var(--line);color:var(--text);
+       border-radius:6px;padding:4px 8px;font:inherit;min-width:200px}
+  #runs{display:flex;gap:16px;padding:16px;align-items:flex-start;flex-wrap:wrap}
+  .run{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+       padding:12px 14px;min-width:440px;flex:1}
+  .run h2{font-size:13px;margin:0 0 2px}
+  .run .note{color:var(--muted);margin:0 0 10px;font-size:12px}
+  .node{margin-left:14px;border-left:1px solid var(--line);padding-left:10px}
+  .row{display:flex;align-items:baseline;gap:8px;padding:1px 0;border-radius:4px}
+  .row:hover{background:#1e2230}
+  .tw{cursor:pointer;color:var(--muted);width:12px;display:inline-block;flex:0 0 12px}
+  .badge{flex:0 0 auto;font-size:10px;padding:0 5px;border-radius:4px;text-transform:uppercase;
+         letter-spacing:.5px;color:#0f1115;font-weight:700}
+  .b-goal{background:var(--goal)} .b-step{background:var(--step)} .b-act{background:var(--act)}
+  .b-cs{background:var(--cs)} .b-branch{background:var(--branch)}
+  .name{color:var(--text)}
+  .sig{color:var(--muted);font-size:11px}
+  .dur{color:var(--muted);font-size:11px;margin-left:auto;flex:0 0 auto}
+  .ret{color:var(--cs)} .ret::before{content:"→ "}
+  .diff{color:var(--step)}
+  .warn{color:var(--warn)}
+  .branch .cond{color:var(--branch)}
+  .arm{color:var(--taken)} .arm::before{content:"\2714 "; color:var(--taken)}
+  .altarm{color:var(--alt)} .altarm::before{content:"✗ ";}
+  .branch-body{margin:2px 0 4px 22px;padding:4px 8px;border-left:2px solid var(--branch);
+       background:#1a1726;border-radius:0 6px 6px 0}
+  .branch-body div{padding:1px 0}
+  .collapsed > .kids{display:none}
+  .hidecs .b-cs{opacity:.5}
+  .dim{opacity:.25}
+  footer{color:var(--muted);padding:8px 16px;border-top:1px solid var(--line);font-size:11px}
+  code{color:var(--act)}
+</style>
+</head>
+<body>
+<header>
+  <h1>PLang Execution Trace</h1>
+  <span class="sub" id="title"></span>
+  <label><input type="checkbox" id="onlyBranch"> only branches</label>
+  <label><input type="checkbox" id="collapseCs"> collapse C# band</label>
+  <input type="search" id="filter" placeholder="filter by name / sig…">
+  <label style="margin-left:auto">load .ndjson <input type="file" id="file" accept=".ndjson,.json,.txt"></label>
+</header>
+<div id="runs"></div>
+<footer>Tree is rebuilt from <code>p</code> (parent id) links. Click ▸ to fold a subtree. Branches show the <span class="arm" style="padding-left:14px">taken</span> arm and the <span class="altarm">paths not taken</span>.</footer>
+
+<script>
+const runsEl = document.getElementById('runs');
+const titleEl = document.getElementById('title');
+
+function parse(text){
+  const nodes = new Map();      // id -> node
+  const roots = [];
+  let meta = null;
+  for(const raw of text.split('\n')){
+    const line = raw.trim(); if(!line) continue;
+    let ev; try{ ev = JSON.parse(line); }catch{ continue; }
+    if(ev.e === 'meta'){ if(!meta) meta = ev; continue; }
+    if(ev.e === 'in'){
+      const n = {id:ev.id, p:ev.p, k:ev.k, n:ev.n, sig:ev.sig, arg:ev.arg,
+                 ts:ev.ts, run:ev.run, kids:[], kind:'node'};
+      nodes.set(ev.id, n);
+      if(ev.p == null) roots.push(n);
+      else (nodes.get(ev.p)?.kids ?? []).push(n);
+    } else if(ev.e === 'out'){
+      const n = nodes.get(ev.id);
+      if(n){ n.outTs = ev.ts; n.ret = ev.ret; n.err = ev.err; n.warn = ev.warn; n.diff = ev.diff; }
+    } else if(ev.e === 'branch'){
+      const b = {id:ev.id, p:ev.p, kind:'branch', at:ev.at, cond:ev.cond,
+                 arm:ev.arm, alt:ev.alt||[], warn:ev.warn, kids:[]};
+      nodes.set(ev.id, b);
+      (nodes.get(ev.p)?.kids ?? []).push(b);
+    }
+  }
+  return {roots, meta};
+}
+
+function dur(n){
+  if(n.outTs==null||n.ts==null) return '';
+  const d = n.outTs - n.ts;
+  return d>0 ? d.toFixed(3)+'ms' : '';
+}
+function esc(s){ return (s==null?'':String(s)).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+function renderNode(n){
+  const wrap = document.createElement('div');
+  wrap.className = 'node ' + (n.kind==='branch'?'branch':'');
+  if(n.kind==='branch'){
+    const row = document.createElement('div'); row.className='row';
+    row.innerHTML = `<span class="tw"></span><span class="badge b-branch">fork</span>`+
+      `<span class="cond">${esc(n.cond)}</span> <span class="sig">@ ${esc(n.at)}</span>`+
+      (n.warn?` <span class="warn">⚠ ${esc(n.warn)}</span>`:'');
+    wrap.appendChild(row);
+    const body = document.createElement('div'); body.className='branch-body';
+    body.innerHTML = `<div class="arm">${esc(n.arm)}</div>`+
+      n.alt.map(a=>`<div class="altarm">${esc(a)}</div>`).join('');
+    wrap.appendChild(body);
+    return wrap;
+  }
+  const row = document.createElement('div'); row.className='row';
+  const hasKids = n.kids.length>0;
+  const tw = `<span class="tw">${hasKids?'▾':''}</span>`;
+  const arg = n.arg ? ` <span class="sig">(${esc(Object.entries(n.arg).map(([k,v])=>k+'='+v).join(', '))})</span>`:'';
+  row.innerHTML = tw +
+    `<span class="badge b-${n.k}">${esc(n.k)}</span>`+
+    `<span class="name">${esc(n.n)}</span>${arg}`+
+    (n.sig?` <span class="sig">${esc(n.sig)}</span>`:'')+
+    (n.ret?` <span class="ret">${esc(n.ret)}</span>`:'')+
+    (n.diff?` <span class="diff">Δ ${esc(n.diff.map(d=>d.name+'='+d.to).join(', '))}</span>`:'')+
+    (n.warn?` <span class="warn">⚠ ${esc(n.warn)}</span>`:'')+
+    (n.err?` <span class="warn">✗ ${esc(n.err)}</span>`:'')+
+    `<span class="dur">${dur(n)}</span>`;
+  wrap.appendChild(row);
+  const kids = document.createElement('div'); kids.className='kids';
+  for(const c of n.kids) kids.appendChild(renderNode(c));
+  wrap.appendChild(kids);
+  if(hasKids){
+    row.querySelector('.tw').onclick = ()=>{
+      wrap.classList.toggle('collapsed');
+      row.querySelector('.tw').textContent = wrap.classList.contains('collapsed')?'▸':'▾';
+    };
+  }
+  return wrap;
+}
+
+let MODEL = {roots:[], metas:[]};
+
+function render(){
+  runsEl.innerHTML='';
+  const onlyBranch = document.getElementById('onlyBranch').checked;
+  const collapseCs = document.getElementById('collapseCs').checked;
+  const f = document.getElementById('filter').value.trim().toLowerCase();
+  for(const root of MODEL.roots){
+    const card = document.createElement('div'); card.className='run';
+    if(collapseCs) card.classList.add('hidecs');
+    const meta = MODEL.metas.find(m=>m.run===root.run);
+    card.innerHTML = `<h2>Run ${esc(root.run||'')} — ${esc(meta?.title||root.n)}</h2>`+
+      (meta?.note?`<p class="note">${esc(meta.note)}</p>`:'');
+    card.appendChild(renderNode(root));
+    runsEl.appendChild(card);
+  }
+  // filters applied post-render for simplicity
+  if(onlyBranch){
+    runsEl.querySelectorAll('.node').forEach(el=>{
+      if(!el.classList.contains('branch') && !el.querySelector('.branch')) el.classList.add('dim');
+    });
+  }
+  if(f){
+    runsEl.querySelectorAll('.row').forEach(r=>{
+      if(!r.textContent.toLowerCase().includes(f)) r.classList.add('dim');
+    });
+  }
+}
+
+function load(text){
+  const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
+  const metas = lines.map(l=>{try{return JSON.parse(l)}catch{return null}}).filter(m=>m&&m.e==='meta');
+  const {roots} = parse(text);
+  MODEL = {roots, metas};
+  titleEl.textContent = metas.find(m=>m.title&&!m.run)?.title || '';
+  render();
+}
+
+['onlyBranch','collapseCs','filter'].forEach(id=>
+  document.getElementById(id).addEventListener('input', render));
+document.getElementById('file').addEventListener('change', e=>{
+  const fr = new FileReader(); fr.onload=()=>load(fr.result); fr.readAsText(e.target.files[0]);
+});
+
+// auto-load demo.ndjson when served over http; falls back to file picker on file://
+fetch('demo.ndjson').then(r=>r.ok?r.text():Promise.reject()).then(load)
+  .catch(()=>{ titleEl.textContent='— pick demo.ndjson via "load .ndjson" →'; });
+</script>
+</body>
+</html>

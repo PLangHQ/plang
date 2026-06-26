@@ -1,0 +1,56 @@
+{"e":"meta","schema":1,"title":"variable.get — context-null divergence","note":"Two runs of the same action. Run A has an actor context; Run B does not. Watch the three branches fork."}
+{"e":"in","k":"goal","id":"a1","p":null,"run":"A","n":"Start","sig":"Start.goal","ts":0.000}
+{"e":"in","k":"step","id":"a2","p":"a1","n":"read %user%","sig":"Start.goal:2","ts":0.010}
+{"e":"in","k":"act","id":"a3","p":"a2","n":"variable.get","sig":"variable/get.cs","arg":{"name":"%user%"},"ts":0.011}
+{"e":"in","k":"cs","id":"a4","p":"a3","n":"GetHandler.ExecuteAsync","sig":"variable/get.cs:GetHandler","ts":0.012}
+{"e":"in","k":"cs","id":"a5","p":"a4","n":"Data.As<User>","sig":"data/this.cs:As","ts":0.013}
+{"e":"in","k":"cs","id":"a6","p":"a5","n":"Wire.Read","sig":"data/Wire.cs:Read","ts":0.014}
+{"e":"in","k":"cs","id":"a7","p":"a6","n":"Wire.ReadBody","sig":"data/Wire.cs:316","ts":0.015}
+{"e":"branch","id":"a8","p":"a7","at":"Wire.cs:374","cond":"typeRef typed && _context != null && typed reader exists","arm":"context ≠ null  →  typed reader reads at its kind","alt":["context == null  →  JsonDocument.ParseValue + json.Parse (generic)"],"ts":0.016}
+{"e":"in","k":"cs","id":"a9","p":"a7","n":"Type.Readers.Typed(\"user\",\"record\")","sig":"type/reader/this.cs","ts":0.017}
+{"e":"out","id":"a9","ts":0.018,"ret":"recordReader"}
+{"e":"in","k":"cs","id":"a10","p":"a7","n":"typed.Read(ref jr, kind, ReadContext)","sig":"channel/serializer/json/Reader.cs","ts":0.018}
+{"e":"out","id":"a10","ts":0.020,"ret":"User{ id, name }"}
+{"e":"out","id":"a7","ts":0.021}
+{"e":"in","k":"cs","id":"a11","p":"a6","n":"Wire.ReadSignatureLayer","sig":"data/Wire.cs:200","ts":0.021}
+{"e":"branch","id":"a12","p":"a11","at":"Wire.cs:211","cond":"_context == null","arm":"context ≠ null  →  verify signature","alt":["context == null && View==Store  →  return value UNVERIFIED","context == null && View!=Store  →  ERROR: cannot verify without actor context"],"ts":0.022}
+{"e":"in","k":"cs","id":"a13","p":"a11","n":"context.App.RunAction(signature.verify)","sig":"Wire.cs:246","ts":0.023}
+{"e":"out","id":"a13","ts":0.030,"ret":"verified ✓"}
+{"e":"out","id":"a11","ts":0.031}
+{"e":"out","id":"a6","ts":0.031}
+{"e":"in","k":"cs","id":"a14","p":"a5","n":"Data..ctor","sig":"data/this.cs:292","ts":0.032}
+{"e":"branch","id":"a15","p":"a14","at":"this.cs:299","cond":"type not null && !Polymorphic && _context != null","arm":"context ≠ null  →  type.Build (registry-driven construction)","alt":["context == null  →  type.Judge (kind-blind reconcile)"],"ts":0.033}
+{"e":"in","k":"cs","id":"a16","p":"a14","n":"type.Build","sig":"type/this.cs:205","ts":0.033}
+{"e":"in","k":"cs","id":"a17","p":"a16","n":"type.Convert(value, Context!)","sig":"type/this.cs:214","ts":0.034}
+{"e":"out","id":"a17","ts":0.036,"ret":"User (record)"}
+{"e":"out","id":"a16","ts":0.036}
+{"e":"out","id":"a14","ts":0.037}
+{"e":"out","id":"a5","ts":0.038,"ret":"User{ id:7, name:\"Ingi\" }"}
+{"e":"out","id":"a4","ts":0.038}
+{"e":"out","id":"a3","ts":0.039,"diff":[{"name":"%user%","to":"User{ id:7, name:\"Ingi\" }"}]}
+{"e":"out","id":"a2","ts":0.039}
+{"e":"out","id":"a1","ts":0.040}
+{"e":"meta","run":"B","title":"variable.get — context IS null (at-rest / Store load)","note":"Same action, no actor context. Each branch takes the other arm."}
+{"e":"in","k":"act","id":"b3","p":null,"run":"B","n":"variable.get (at-rest load, no context)","sig":"variable/get.cs","arg":{"name":"%user%"},"ts":0.000}
+{"e":"in","k":"cs","id":"b5","p":"b3","n":"Data.As<User>","sig":"data/this.cs:As","ts":0.001}
+{"e":"in","k":"cs","id":"b6","p":"b5","n":"Wire.Read","sig":"data/Wire.cs:Read","ts":0.002}
+{"e":"in","k":"cs","id":"b7","p":"b6","n":"Wire.ReadBody","sig":"data/Wire.cs:316","ts":0.003}
+{"e":"branch","id":"b8","p":"b7","at":"Wire.cs:374","cond":"typeRef typed && _context != null && typed reader exists","arm":"context == null  →  generic decode (json.Parse)","alt":["context ≠ null  →  typed reader reads at its kind"],"ts":0.004,"warn":"typed reader skipped — value born untyped"}
+{"e":"in","k":"cs","id":"b9","p":"b7","n":"JsonDocument.ParseValue","sig":"Wire.cs:388","ts":0.005}
+{"e":"out","id":"b9","ts":0.006}
+{"e":"in","k":"cs","id":"b10","p":"b7","n":"item.serializer.json.Parse(root)","sig":"Wire.cs:395","ts":0.006}
+{"e":"out","id":"b10","ts":0.008,"ret":"item (generic, untyped)"}
+{"e":"out","id":"b7","ts":0.008}
+{"e":"in","k":"cs","id":"b11","p":"b6","n":"Wire.ReadSignatureLayer","sig":"data/Wire.cs:200","ts":0.009}
+{"e":"branch","id":"b12","p":"b11","at":"Wire.cs:211","cond":"_context == null","arm":"context == null && View==Store  →  return value UNVERIFIED","alt":["context ≠ null  →  verify signature","context == null && View!=Store  →  ERROR"],"ts":0.010,"warn":"signature NOT verified — trusted at-rest"}
+{"e":"out","id":"b11","ts":0.011}
+{"e":"out","id":"b6","ts":0.011}
+{"e":"in","k":"cs","id":"b14","p":"b5","n":"Data..ctor","sig":"data/this.cs:292","ts":0.012}
+{"e":"branch","id":"b15","p":"b14","at":"this.cs:299","cond":"type not null && !Polymorphic && _context != null","arm":"context == null  →  type.Judge (kind-blind reconcile)","alt":["context ≠ null  →  type.Build"],"ts":0.013,"warn":"Judge, not Build — mismatches deferred"}
+{"e":"in","k":"cs","id":"b16","p":"b14","n":"type.Judge","sig":"type/this.cs:418","ts":0.013}
+{"e":"in","k":"cs","id":"b17","p":"b16","n":"new item.source(backing) — deferred parse","sig":"type/this.cs:467","ts":0.014}
+{"e":"out","id":"b17","ts":0.015,"ret":"item.source (lazy, unparsed)"}
+{"e":"out","id":"b16","ts":0.015,"ret":"item.source"}
+{"e":"out","id":"b14","ts":0.016}
+{"e":"out","id":"b5","ts":0.016,"ret":"item.source  (NOT User!)","warn":"caller expected User, got deferred source"}
+{"e":"out","id":"b3","ts":0.017}
