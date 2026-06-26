@@ -1,0 +1,45 @@
+{
+  "branch": "execution-trace",
+  "sessions": [
+    {
+      "id": "cd32d195-53a6-4f10-8499-407a2569d9a4",
+      "bot": "architect",
+      "timestamp_start": "2026-06-26T20:05:36Z",
+      "timestamp_end": "2026-06-26T20:12:00Z",
+      "intent": "Settle the execution-trace fork graph model and hand codeanalyzer a buildable example to render in the web UI.",
+      "before": {
+        "assumptions": "Prototype framed trace as overlaying two runs of one action with sequence edges and out-degree forks. Ingi corrected scope: capture ALL C# methods, accumulate over all runs, surface forks.",
+        "risk": "Sequence-edge + out-degree model collapses once every method is woven (every node a fork, fake merges on shared utilities). Model had to change before any UI was built on it."
+      },
+      "plan": ".bot/execution-trace/architect/fork-graph-model.md",
+      "actions": [
+        {
+          "paths": [".bot/execution-trace/architect/fork-graph-model.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Settled model: call edges (parent->child), fork = callees differ across runs via distinct-run-count (node forks iff an out-edge runCount < node runCount), forks-only v1, no run identity retained. Rejected out-degree>=2 (lights up every method) and sequence edges (fake merges). Includes capture format, build rule, worked example, UI guidance."
+        },
+        {
+          "paths": [".bot/execution-trace/architect/example.ndjson"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Fabricated 4-run capture (warm / cold+ctx / cold+noctx / warm) of Start reading %user%. Call-edge NDJSON (enter/ret with id+parent+sig). Produces exactly three forks (data.As, Wire.ReadBody, Wire.ReadSignatureLayer) as an acceptance check for the renderer."
+        },
+        {
+          "paths": ["Documentation/Runtime2/execution-trace-design.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added a pointer at the top to the settled model so the canonical doc's superseded sequence/overlay sections don't mislead codeanalyzer."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "Handoff ready for codeanalyzer to build the web UI. Open (deferred, non-blocking): Fody vs Harmony weaving, arming model, multi-condition capture UX."
+      }
+    }
+  ]
+}

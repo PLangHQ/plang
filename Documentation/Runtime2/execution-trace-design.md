@@ -4,6 +4,8 @@
 **Branch:** `execution-trace` (from `compare-redesign`)
 **Author handoff:** Ingi + Claude → architect
 
+> **Settled model (2026-06-26):** the graph is built from **call edges** (`A → B` = A called B), and a **fork** is a node whose callees differ across runs, detected by distinct-run-counts — not the sequence edges / out-degree framing in §2, §3.1, and §5 below. v1 surfaces forks only. The buildable model, capture format, and a worked example with data live in `.bot/execution-trace/architect/fork-graph-model.md` + `example.ndjson`. The "why" (§1), the `trace` concept, Fody-vs-Harmony (§4.3), and the open decisions (§7) still stand.
+
 ---
 
 ## 1. Why

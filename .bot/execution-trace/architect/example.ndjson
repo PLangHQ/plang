@@ -1,0 +1,61 @@
+{"e":"meta","title":"Start goal — variable.get %user% over 4 runs","note":"Call edges: A->B means A called B. A FORK is a node whose callees differ across runs (some run reached it and went elsewhere). Trunk = shared by all runs. Run tags here are only used to count distinct runs per edge; the accumulated graph keeps the count, not the run."}
+{"e":"run","run":"A","label":"warm — value typed in memory","color":"#7aa2f7"}
+{"e":"run","run":"B","label":"cold — read from wire, context present","color":"#9ece6a"}
+{"e":"run","run":"C","label":"cold — read from wire, context null","color":"#e0af68"}
+{"e":"run","run":"D","label":"warm — value typed in memory","color":"#7aa2f7"}
+
+{"e":"enter","run":"A","id":1,"parent":null,"sig":"goal.call.Execute","n":"goal.call"}
+{"e":"enter","run":"A","id":2,"parent":1,"sig":"callstack.call.ExecuteAsync","n":"call.Execute"}
+{"e":"enter","run":"A","id":3,"parent":2,"sig":"module.variable.get","n":"variable.get"}
+{"e":"enter","run":"A","id":4,"parent":3,"sig":"data.As","n":"Data.As<User>"}
+{"e":"enter","run":"A","id":5,"parent":4,"sig":"type.Match","n":"type.Match"}
+{"e":"ret","run":"A","id":4,"ret":"User{ id:7, name:\"Ingi\" }  ✓ typed, from memory"}
+{"e":"enter","run":"A","id":6,"parent":1,"sig":"callstack.call.ExecuteAsync","n":"call.Execute"}
+{"e":"enter","run":"A","id":7,"parent":6,"sig":"module.output.write","n":"output.write"}
+{"e":"enter","run":"A","id":8,"parent":7,"sig":"channel.WriteText","n":"Channel.WriteText"}
+{"e":"ret","run":"A","id":1,"ret":"Hello Ingi"}
+
+{"e":"enter","run":"B","id":1,"parent":null,"sig":"goal.call.Execute","n":"goal.call"}
+{"e":"enter","run":"B","id":2,"parent":1,"sig":"callstack.call.ExecuteAsync","n":"call.Execute"}
+{"e":"enter","run":"B","id":3,"parent":2,"sig":"module.variable.get","n":"variable.get"}
+{"e":"enter","run":"B","id":4,"parent":3,"sig":"data.As","n":"Data.As<User>"}
+{"e":"enter","run":"B","id":5,"parent":4,"sig":"data.Wire.Read","n":"Wire.Read"}
+{"e":"enter","run":"B","id":6,"parent":5,"sig":"data.Wire.ReadBody","n":"Wire.ReadBody"}
+{"e":"enter","run":"B","id":7,"parent":6,"sig":"type.Readers.Typed","n":"Readers.Typed"}
+{"e":"enter","run":"B","id":8,"parent":7,"sig":"serializer.json.typed.Read","n":"json.typed.Read"}
+{"e":"enter","run":"B","id":9,"parent":5,"sig":"data.Wire.ReadSignatureLayer","n":"Wire.SignatureLayer"}
+{"e":"enter","run":"B","id":10,"parent":9,"sig":"data.signature.Verify","n":"signature.Verify"}
+{"e":"enter","run":"B","id":11,"parent":4,"sig":"type.Build","n":"type.Build"}
+{"e":"enter","run":"B","id":12,"parent":11,"sig":"type.Convert","n":"type.Convert"}
+{"e":"ret","run":"B","id":4,"ret":"User{ id:7, name:\"Ingi\" }  ✓ typed, verified"}
+{"e":"enter","run":"B","id":13,"parent":1,"sig":"callstack.call.ExecuteAsync","n":"call.Execute"}
+{"e":"enter","run":"B","id":14,"parent":13,"sig":"module.output.write","n":"output.write"}
+{"e":"enter","run":"B","id":15,"parent":14,"sig":"channel.WriteText","n":"Channel.WriteText"}
+{"e":"ret","run":"B","id":1,"ret":"Hello Ingi"}
+
+{"e":"enter","run":"C","id":1,"parent":null,"sig":"goal.call.Execute","n":"goal.call"}
+{"e":"enter","run":"C","id":2,"parent":1,"sig":"callstack.call.ExecuteAsync","n":"call.Execute"}
+{"e":"enter","run":"C","id":3,"parent":2,"sig":"module.variable.get","n":"variable.get"}
+{"e":"enter","run":"C","id":4,"parent":3,"sig":"data.As","n":"Data.As<User>"}
+{"e":"enter","run":"C","id":5,"parent":4,"sig":"data.Wire.Read","n":"Wire.Read"}
+{"e":"enter","run":"C","id":6,"parent":5,"sig":"data.Wire.ReadBody","n":"Wire.ReadBody"}
+{"e":"enter","run":"C","id":7,"parent":6,"sig":"serializer.json.Parse","n":"json.Parse"}
+{"e":"enter","run":"C","id":8,"parent":5,"sig":"data.Wire.ReadSignatureLayer","n":"Wire.SignatureLayer"}
+{"e":"enter","run":"C","id":9,"parent":4,"sig":"type.Judge","n":"type.Judge"}
+{"e":"enter","run":"C","id":10,"parent":9,"sig":"type.item.source.ctor","n":"new item.source"}
+{"e":"ret","run":"C","id":4,"ret":"item.source  ⚠ untyped, unverified"}
+{"e":"enter","run":"C","id":11,"parent":1,"sig":"callstack.call.ExecuteAsync","n":"call.Execute"}
+{"e":"enter","run":"C","id":12,"parent":11,"sig":"module.output.write","n":"output.write"}
+{"e":"enter","run":"C","id":13,"parent":12,"sig":"channel.WriteText","n":"Channel.WriteText"}
+{"e":"ret","run":"C","id":1,"ret":"Hello %user.name% (unresolved)"}
+
+{"e":"enter","run":"D","id":1,"parent":null,"sig":"goal.call.Execute","n":"goal.call"}
+{"e":"enter","run":"D","id":2,"parent":1,"sig":"callstack.call.ExecuteAsync","n":"call.Execute"}
+{"e":"enter","run":"D","id":3,"parent":2,"sig":"module.variable.get","n":"variable.get"}
+{"e":"enter","run":"D","id":4,"parent":3,"sig":"data.As","n":"Data.As<User>"}
+{"e":"enter","run":"D","id":5,"parent":4,"sig":"type.Match","n":"type.Match"}
+{"e":"ret","run":"D","id":4,"ret":"User{ id:7, name:\"Ingi\" }  ✓ typed, from memory"}
+{"e":"enter","run":"D","id":6,"parent":1,"sig":"callstack.call.ExecuteAsync","n":"call.Execute"}
+{"e":"enter","run":"D","id":7,"parent":6,"sig":"module.output.write","n":"output.write"}
+{"e":"enter","run":"D","id":8,"parent":7,"sig":"channel.WriteText","n":"Channel.WriteText"}
+{"e":"ret","run":"D","id":1,"ret":"Hello Ingi"}
