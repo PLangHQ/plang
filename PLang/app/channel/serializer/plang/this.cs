@@ -81,7 +81,7 @@ public sealed class @this : ISerializer
         // not an actor-boundary crossing. Adds the polymorphic IError converter
         // for the Errors trail section. Same recipe otherwise → one source of truth.
         _snapshot = BuildOptions(
-            new global::app.data.Wire(global::app.View.Store, sign: false),
+            new global::app.data.Wire(global::app.View.Store, sign: false, context: context),
             pathConverter,
             global::app.channel.serializer.filter.Transport.ForOutbound);
         _snapshot.Converters.Add(new global::app.error.ErrorWire());

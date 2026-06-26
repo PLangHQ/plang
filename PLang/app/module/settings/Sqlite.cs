@@ -17,7 +17,10 @@ public sealed class Sqlite : IStore
 {
     private readonly string _connectionString;
     private readonly SqliteConnection? _sentinel;
-    private readonly global::app.channel.serializer.plang.@this _serializer = new();
+    // The settings store is application/plang by construction and system-owned:
+    // it serializes through the system context so reads verify and route through
+    // the typed wire reader (no context-less narrow).
+    private readonly global::app.channel.serializer.plang.@this _serializer;
     private bool _disposed;
 
     /// <summary>
@@ -27,8 +30,9 @@ public sealed class Sqlite : IStore
     /// Absolute string to the connection string. Out-of-root paths the
     /// actor hasn't granted bubble up as an exception — sqlite never sees them.
     /// </summary>
-    public Sqlite(global::app.type.path.@this dbPath)
+    public Sqlite(global::app.type.path.@this dbPath, actor.context.@this context)
     {
+        _serializer = new(context);
         // Take-over API: authorize before passing .Absolute. Sync-wait
         // — Sqlite ctor is sync and the gate is the bootstrap path.
         var auth = dbPath.Authorize(global::app.type.permission.Verb.Write).GetAwaiter().GetResult();
@@ -57,8 +61,9 @@ public sealed class Sqlite : IStore
     /// Creates an in-memory Sqlite with a sentinel connection that keeps
     /// the database alive for the lifetime of this instance.
     /// </summary>
-    private Sqlite(string name, bool inMemory)
+    private Sqlite(string name, bool inMemory, actor.context.@this context)
     {
+        _serializer = new(context);
         _connectionString = new SqliteConnectionStringBuilder
         {
             DataSource = name,
@@ -74,8 +79,8 @@ public sealed class Sqlite : IStore
     /// Creates an in-memory SQLite settings store. The database lives as long as this instance.
     /// Different names produce isolated databases.
     /// </summary>
-    public static Sqlite InMemory(string name)
-        => new Sqlite(name, inMemory: true);
+    public static Sqlite InMemory(string name, actor.context.@this context)
+        => new Sqlite(name, inMemory: true, context);
 
     private void EnableWalMode()
     {

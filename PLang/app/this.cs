@@ -587,12 +587,12 @@ public sealed partial class @this : IAsyncDisposable
         // SQLite's shared-cache merges in-memory dbs with identical DataSource names,
         // so the App.Id scoping is load-bearing.
         if (Tester.IsEnabled)
-            return global::app.module.settings.Sqlite.InMemory($"system-{Id}");
+            return global::app.module.settings.Sqlite.InMemory($"system-{Id}", System.Context);
 
         // Lift to Path: AuthGate fires inside the Sqlite ctor on Write,
         // parent dir creation via path.Mkdir.
-        var dbPath = global::app.type.path.@this.Resolve("/.db/system.sqlite", System.Context!);
-        return new global::app.module.settings.Sqlite(dbPath);
+        var dbPath = global::app.type.path.@this.Resolve("/.db/system.sqlite", System.Context);
+        return new global::app.module.settings.Sqlite(dbPath, System.Context);
     }
 
     public async ValueTask DisposeAsync()
