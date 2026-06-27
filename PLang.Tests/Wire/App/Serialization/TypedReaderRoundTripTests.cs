@@ -53,6 +53,41 @@ public class TypedReaderRoundTripTests
         await Assert.That(((global::app.type.code.@this)item).Source).IsEqualTo("a = 1");
     }
 
+    [Test] public async Task Path_Isolated()
+    {
+        var item = ReadScalar(new global::app.type.path.serializer.Reader(), "\"/foo/bar.txt\"", null);
+        await Assert.That(item).IsAssignableTo<global::app.type.path.@this>();
+        await Assert.That(item.ToString()).Contains("foo/bar.txt");
+    }
+
+    [Test] public async Task Image_Isolated()
+    {
+        var bytes = new byte[] { 1, 2, 3, 4 };
+        var b64 = System.Convert.ToBase64String(bytes);
+        var item = ReadScalar(new global::app.type.image.serializer.Reader(), $"\"{b64}\"", "png");
+        await Assert.That(item).IsTypeOf<global::app.type.image.@this>();
+        await Assert.That(((global::app.type.image.@this)item).Bytes).IsEquivalentTo(bytes);
+    }
+
+    [Test] public async Task Object_Isolated()
+    {
+        var item = ReadScalar(new global::app.type.@object.serializer.Reader(), "{\"a\":1}", null);
+        await Assert.That(item).IsAssignableTo<global::app.type.dict.@this>();
+    }
+
+    [Test] public async Task Item_Isolated()
+    {
+        var item = ReadScalar(new global::app.type.item.serializer.Reader(), "[1,2,3]", null);
+        await Assert.That(item).IsAssignableTo<global::app.type.list.@this>();
+    }
+
+    [Test] public async Task Table_Csv_Isolated()
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize("h1,h2\na,b");
+        var item = ReadScalar(new global::app.type.table.serializer.Reader(), json, "csv");
+        await Assert.That(item).IsTypeOf<global::app.type.table.@this>();
+    }
+
     [Test] public async Task Number_Int_Isolated()
         => await Assert.That(ReadScalar(new global::app.type.number.serializer.Reader(), "42", "int").Clr<int>())
             .IsEqualTo(42);
