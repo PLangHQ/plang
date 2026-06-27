@@ -1,224 +1,200 @@
 # Read-path unification — architect plan (v1)
 
 **Branch:** `read-path-unification` (from `context-never-null`)
-**Author:** architect. Settled with Ingi in design review. Supersedes the coder dual-path map (`../../coder/plan.md`), which carried pre-decision framing (`Of` as open, a `clr` reader floor) that the changes below overturn.
+**Author:** architect. Settled with Ingi; incorporates the coder's v1 response (`../../coder/response-to-architect-v1.md`). Authoritative; `../../coder/plan.md` is the handoff.
 
 ## Why
 
-`context-never-null` made `type.Create(raw, context)` throw on a null context. The last holdout is the Wire read path: making its value births carry context regressed 15 core tests, because the `Data` ctor forks on context-presence — `Build` (eager, context) vs `Judge` (deferred, no-context) — and `Judge`, the branch context-never-null kills, is the only one that handles `path`/`%ref%`. That fork is dead code born from the nullable-context assumption.
+`context-never-null` made `type.Create(raw, context)` throw on a null context. The last holdout is the Wire read path: making its value births carry context regressed 15 core tests, because the `Data` ctor forks on context-presence — `Build` (eager) vs `Judge` (deferred) — and `Judge`, the branch context-never-null kills, is the only one that handles `path`/`%ref%`. That fork is dead code born from the nullable-context assumption, and under it sit many more doors. The read — *given (raw, type, kind, context), produce the born value, lazily* — is spread across `Wire.ReadBody`, `source.Value`, `type.Build`, `type.Judge`, `type.Deserialize`, `FromWireShape`, and two reader registries. Ingi: "there are many two-way doors, I really need to clean that up."
 
-Underneath it sit many more doors. The read — *given (raw, type, kind, context), produce the born value, lazily* — is spread across `Wire.ReadBody`, `source.Value`, `type.Build`, `type.Judge`, `type.Deserialize`, `type.Convert`, `FromWireShape`, and two reader registries. Ingi: "there are many two-way doors, I really need to clean that up." The law that collapses them: **every plang value is lazy — parse the `.pr` to learn the type, never load or parse the value until `.Value()`.**
+**Law:** every plang value is lazy — parse the `.pr` to learn the type; never load or parse a value (or a property's value) until `.Value()`.
 
 ## The center — two types, everything else delegates
 
-- **One lazy carrier: `source`** (`app/type/item/source.cs`). Holds the raw form + declared `{type, kind}` + context + authored-mode flag. Parses nothing until `.Value()`.
-- **One creation door: `app.type.Create(source) → item`** — pass the whole carrier (a `source`), no decompose. It absorbs the existing `Deserialize` (`app/type/this.cs:486`, *"Replaces Judge"*); no separate `type.Read`/`Deserialize` door survives. Inside it is one unconditional line — `App.Type.Reader(source).Read(source)` — over a **total** registry (a specific reader ‖ one generic default reader). A bad parse throws.
+- **One lazy carrier: `source`** (`app/type/item/source.cs`). Holds the raw form + declared `{type, kind}` + context + authored-mode flag. Parses nothing until `.Value()`. It is a transient placeholder — once it materializes into a real type it is replaced and gone.
+- **One creation door: `app.type.Create(source) → (item?, Error?)`** — pass the whole carrier (no decompose); it builds the type entity and reads its raw in one call. Absorbs the existing `Deserialize` (`type/this.cs:486`, *"Replaces Judge"*); no separate `type.Read`/`Deserialize` door. Inside, one line: `App.Type.Reader(source).Read(source)` over a **total** registry. On a bad parse it returns the error (see Error model), it does not throw.
 
-Two invariants that must hold at the end:
+The read is **serializer-independent**: `read(IReader)` — the mirror of `value.Write(IWriter)` — over the **existing** `app.channel.serializer.IReader`. `json` is one `IReader`.
 
-1. **No value parse at load.** Reading a `.pr` parses the envelope (`name`, `type`, `kind`) and captures the value **raw** — no `JsonDocument`, no DOM. The single parse happens in `source.Value()`.
-2. **One door per type.** A type makes its value from raw exactly one way (`app.type.Create(item)`, which uses an `ITypeReader` or constructs directly). No `Build`/`Judge` fork, no second `Create(parsed)` finish step, no `Of` delegate registry.
+## Invariants (must hold at the end)
 
-## Leaf-trace — the incumbent behaviors and where each goes
+1. **No value parse at load.** Reading parses the envelope (`name`, `type`, `kind`) and captures the `value` — **and every property's value** — as raw bytes via `IReader.RawValue()` (no DOM). The single parse happens in `source.Value()`, per value, on first `.Value()`.
+2. **No type-discrimination fork.** All "which envelope / which type" choices are registry dispatch (`@schema` → envelope reader, `(type, kind)` → value reader); the only value-path branch left is the narrow (F2), keyed on `Cacheable`.
 
-| Incumbent (leaf) | Where it lives now | Disposition |
-|---|---|---|
-| `Build`/`Judge` context fork | `Data` ctor `data/this.cs:194-213`; `Data.Declare` `:242-254`; `Wire.ReadBody` EndObject `:327-334` | → one `app.type.Create` call. Fork deletes in all three. |
-| `type.Build` (eager value build) | `type/this.cs:217`; callers ctor `:206`, `Declare` `:250`, `Wire` `:332`, **and `Deserialize`'s own variable branch `:497`** | delete — but only after `Deserialize`'s variable case re-points to the `variable`/`text` reader (it calls `Build` today). |
-| `type.Judge` | `type/this.cs:508`; callers ctor `:212`, `Declare` `:253` only | deletes cleanly with the fork. |
-| `Readers.Of` (delegate registry) | `reader/this.cs:71`; callers `source.Value:76,82`, `Read:500` | → the `ITypeReader` registry, renamed `App.Type.Reader(name, kind)` (from `Readers.Typed`). `Of` + the delegate type + `_generated`/`_runtime` delete. |
-| eager Wire value branches | `Wire.ReadBody:386-441` (`refValue`, `IsDeferrableShape`, `Typed.Read` inline, `goal.call`, `json.Parse`) | → raw capture → `source` for every value. Branches delete (goal.call stays as TEMP). |
-| `source.Value` 3 branches | `source.cs:87-110` | → `source` becomes a thin placeholder: `Value(data) => app.type.Create(this)` (whole source in, no decompose; `_raw` field renamed `_value`). Branches 2/3 delete. |
-| `Data.Value` rebind fork + `Cacheable` flag | `data/this.cs:272`; `item.Cacheable` base `item/this.cs:127` + overrides (`text`/`dict`/`list`/`path`/`computed`) | → `Data.Value` becomes single-step `result = await item.Value(this); if (!item.IsFinal) item = result; return result`. `Cacheable` deletes; the rebind re-keys onto `IsFinal` (is-`source` vs real value). Field `_type` → `item`. |
-| `IsFinal` conflates "renders" with "is the raw carrier" | `item/this.cs:247` (`=> Template == null`) + `path` override | → re-point `IsFinal` to *"I am a real value"*: `false` only for `source`, `true` for everything else (`path`/`file`/`dict`/`text`/templates). Only `source` is the placeholder that gets swapped. |
-| `%ref%` → variable eager special-case | `Wire.ReadBody:294-303,386-392` | → into the `text`/`variable` reader, gated on `ReadContext.Template`. Wire special-case deletes. Requires `source` to carry the template flag. |
-| STJ entry + `@schema` `if signature` probe | `Wire.Read:158-181`; `ReadSignatureLayer:206` | → `read(IReader)` (format-agnostic); `@schema` dispatches via `App.Reader(schema)`. `signature`/`data` become registered readers; `ReadSignatureLayer` → the `signature` reader; the STJ `JsonConverter` shrinks to a thin adapter. |
-| `WireLocal` (context-less Wire) | `data/WireLocal.cs`; `[JsonConverter]` on `Data`/`Data<T>` `data/this.cs:24,976`; consumers `json.cs:87,157` | deletes; `Wire._context` non-null; the `_context==null` fail-closed branch + tripwire `Wire.cs:211+` delete. |
+## Error model — `(item?, Error?)`, not a throw
 
-**Call-site counts** (verified): `Declare` — 2 callers (`builder/code/Default.cs:920,936`). Value-ctor with a declared type — ~7 sites (incl. `Wire.cs:339`). Both are small enough to migrate by hand.
+A malformed value is **bad data, not an invariant violation** (the same read serves http-inbound, not just `.pr`), and PLang's model is `on error` over `Data.Error`. The failure originates inside `app.type.Create` (the reader/parse), so it authors the error **there** — keyed `MaterializeFailed`, with the binding name, `{type, kind}`, JSON path+line, and the inner exception attached (everything today's `source.cs:123-126` has) — and returns `(null, Error)`. `source` forwards it to `Data`; nobody throws, nobody enumerates catching seams:
 
-**Stays — do not delete:** static `type.Create(object)` and `type.Create(string)` (the natural-lift primitive, used by the generic reader and ~15 native-wrap sites), the per-type coercion (the `Convert` *logic*, now the generic reader's `Read` — the `Convert` name goes), the holder ctor `Data(name, instance)`, the `ITypeReader` registry (`_generatedTyped`/`_runtimeTyped`/`TypeOf`/`Register`, lookup renamed `Readers.Typed` → `App.Type.Reader`), `ITypeReader`, the existing `app.channel.serializer.IReader` (used as-is). **Re-homed, not kept:** `FromWireShape`/`TypeFromWire`/`WireSlot`/`IsWireShape` and `ReadSignatureLayer` → the `data`/`signature` readers (`read(IReader)`); the signed-envelope handling stays but as the `signature` reader, not a hardcoded method.
+```
+app.type.Create(source) -> (item?, Error?)
+source.Value(data):
+    (item, err) = app.type.Create(this)
+    if (err != null) { data.Fail(err); return Absent; }   // error set on Data at the source seam
+    return item
+```
 
-## Capturing the value raw without a DOM — the existing `IReader.RawValue()` already does it
-
-To defer, the value slot must be captured as **raw bytes without parsing**. Today's deferred path calls `JsonDocument.ParseValue` + `GetRawText()` (`Wire.cs:397`) — a DOM (it parses the value), then re-parses at `.Value()` — because a `JsonConverter<Data>.Read` has the `ref Utf8JsonReader` but not the buffer.
-
-Reading through the **existing `IReader`** (Leg A) removes that: `app.channel.serializer.IReader` already exposes **`RawValue()`** (and `Skip()`), and the `json.Reader` impl owns the buffer, so the `data` reader does `value = r.RawValue()` — one raw slice, no DOM, uniform for scalar or structured. No new primitive, no buffer-threading puzzle. The constraint stands: **the value slot becomes a raw slice on the `source`, parsed once in `source.Value()`.**
-
-## Flow — input to output (target), every method + every fork
-
-The principle behind the unification: **every fork on the read path is a discrimination** ("which envelope / which type / which shape / has-context") and the cure is uniform — **registry dispatch** (`@schema` → envelope reader, `(type, kind)` → value reader) plus **virtual `Value()` / `Read()` on the item** replace the if-chains. The read is format-agnostic (`read(IReader)`, mirror of `value.Write(IWriter)`). Below is the target flow with every method call; `⑂` marks a branch and says whether it dies or stays.
-
-### Leg A — LOAD: raw bytes → lazy `Data` (no value parse)
+## Leg A — LOAD: bytes → lazy `Data` (no value parse)
 
 ```
 source bytes (any front-end: .pr file, http inbound, …)
-  │  open → IReader r                          the EXISTING app.channel.serializer.IReader (json.Reader wraps Utf8JsonReader, OWNS the buffer)
-  ▼  read(r)                                    format-agnostic — mirror of value.Write(IWriter); pulls tokens, never invents Field/Raw
-  │     r.BeginObject(); r.NextName(out _)      first name is always "@schema" (written first)
+  │  open → IReader r, View v          existing app.channel.serializer.IReader (json.Reader OWNS the buffer); v = Store (local) | Out (transport)
+  ▼  read(r, v)                         format-agnostic — mirror of value.Write(IWriter); pulls tokens
+  │     r.BeginObject(); r.NextName(out _)        first name is always "@schema" (written first)
   │     schema = r.String()
-  │     return App.Reader(schema).Read(r)       ⑂ registry dispatch on the tag — no `if signature`   [F1 GONE]
+  │     return App.Reader(schema).Read(r, v)      ⑂ registry dispatch on the tag — no `if signature`   [F1 GONE]
   │
-  ├─ "data" reader.Read(r):                     r positioned after @schema
-  │     while r.NextName(out name):             forward pull of known envelope slots
+  ├─ "data" reader.Read(r, v):          r positioned after @schema
+  │     while r.NextName(out name):     forward pull of known slots
   │        name       → r.String()
   │        type       → read the {name, kind?, strict?} entity
-  │        value      → r.RawValue()            raw bytes — NO parse, NO DOM (existing IReader primitive)
-  │        properties → read the props
+  │        value      → r.RawValue()    raw bytes — NO parse, NO DOM (existing IReader primitive)
+  │        properties → for each prop: read name + r.RawValue() (each prop value RAW too — invariant 1)
   │     r.EndObject()
   │     return new Data(slotName, new source(value, type))   holder ctor — lazy, value untouched
   │
-  └─ "signature" reader.Read(r):               the OUTER wrapper
-        read + verify the wrapper; inner = read(r)   recurse → the "data" reader; return the inner Data, verified
+  └─ "signature" reader.Read(r, v):     the OUTER wrapper; carries context (Phase 5 → non-null) + View v
+        read the wrapper
+        v == Out  → run verify (actor from context); bad signature → Error          // transport: auto-verify
+        v == Store→ peel without verify                                              // local copy
+        inner = read(r, v)              recurse → the "data" reader; return the inner Data (verified)
   ▼  Data (lazy)  →  Leg B on first .Value()
 ```
 
-### Leg B — USE: `await data.Value()` → born item (the single parse)
+`@schema` is a tag dispatched through the registry — `signature`/`data` are registered readers; a future envelope plugs in, no `if`. The `signature` reader is a reader that *does work* (like a `path` reader doing I/O): it verifies using the carried context + `View`. Fail-closed-on-null-context dies (Phase 5 guarantees context); fail-closed-on-bad-signature stays.
 
-```
-consumer: await data.Value()
-  │
-  ▼ Data.Value()                                  item = the held value (field was _type)
-  │     result = await item.Value(this)
-  │     if (!item.IsFinal) item = result          ONLY a source flips: parse-once, the source is replaced
-  │     return result                             no catch — a parse throw propagates to the boundary seam
-  │
-  ▼ item.Value(data)  — virtual, per type
-  │     source (IsFinal == false) → return app.type.Create(this)       throws on bad parse; source never catches
-  │     dict   (IsFinal == true)  → resolve %holes% on its leaves → fresh dict     renders, stays put
-  │     text   (IsFinal == true)  → Template == null ? this : interpolate(data.Context)
-  │     path   (IsFinal == true)  → return this        stays a path — content loads at output; exists = IsTruthy
-  │     scalar (IsFinal == true)  → return this
-  │
-  ▼ app.type.Create(source)       whole source in — no decompose
-  │     return App.Type.Reader(source).Read(source)       reader is NEVER null — no fork, no Convert
-  │        App.Type.Reader(source):  specific reader (dict / list / table / object)
-  │                               ‖   generic reader (the default — its Read holds the old Convert logic)
-  │        <bad parse> → Read THROWS → propagates out (caught at the boundary seam: Navigate / typed-ask)
-  ▼ resolved value  →  returned to consumer (output)
-
-  source→dict: read 1 swaps item = dict (parse once, source gone); later reads → dict.Value renders, dict kept.
-  path:        `if %path% exists` → path.IsTruthy (no load);  `write out %path%` → output loads content; path stays a path.
-```
-
-### Fork ledger — every branch on the path, and its fate
-
-| ID | Branch (current code) | Where | Fate |
-|---|---|---|---|
-| — | `Build` vs `Judge` (context null?) | `data/this.cs:201-212`, `:245-253` | **gone** — context never null; one door |
-| — | `Readers.Of` null-check + kind-fallback | `source.cs:76-83` | **gone** — `App.Type.Reader` is total (specific ‖ generic default), so the null-check disappears; `source.Value` just calls `app.type.Create` |
-| — | `source.Value` 3-way (reader / string→Convert / bytes→binary) | `source.cs:87-110` | **gone** — one dispatch through `app.type.Create` |
-| — | value-slot 5-way (ref / deferrable / typed / goal.call / else) | `Wire.cs:386-441` | **gone** — uniform `CaptureRaw` → `source` |
-| — | EndObject 4-way (ref / born / deferred / build) | `Wire.cs:292-342` | **gone** — always `source` + holder ctor |
-| — | `%ref%` full-match special-case | `Wire.cs:294-303,386-392` | **gone from Wire** — moves into the `variable`/`text` reader (registry dispatch on type name) |
-| — | scalar-vs-structured capture | (new, Leg A) | **avoided** — `IReader.Raw` slices *any* value kind as raw bytes uniformly (no token-kind branch) |
-| ~~F1~~ | `signature` vs `data` (`@schema` probe) | `Wire.cs:175-181` | **gone** — `@schema` dispatches through the reader registry (`App.Reader(schema).Read(r)`), same pattern as a value type. `signature` and `data` are just two registered readers; a future envelope plugs in. No `if signature`. Its inner `_context==null` sub-fork also dies (Phase 5). |
-| — | STJ entry `JsonSerializer.Deserialize<Data>` | `Wire.Read` | **gone** — the read is `read(IReader)`, format-agnostic (mirror of `value.Write(IWriter)`); `json` is one `IReader`. A `JsonConverter<Data>` survives only as a thin STJ adapter (when STJ drives an outer object). |
-| **F2** | the narrow `if (… && _type.Cacheable) _type = answer` | `data/this.cs:272` | **kept, re-keyed** — `Cacheable` deleted; becomes `if (!item.IsFinal) item = result`. `Data` overwrites `item` only when it just resolved a **placeholder**, and `source` is the only placeholder (path/file/dict/text are real values, kept). Single-step, not a type-switch. |
-| ~~F3~~ | `App.Type.Reader(...)` null? → reader-or-`Convert` | `app.type.Create` | **gone** — `App.Type.Reader` is **total** (specific reader ‖ one generic default reader = the old `Convert` logic), so it's always `reader.Read(source)`. No null-check, no `Convert` name. |
-| — | envelope field reads (`name`/`type`/`value`/`properties`) | the `"data"` reader | **kept** — pulling known slots via `IReader.Field`/`Raw`; structural, format-agnostic, not a value fork |
-
-### F2 — the narrow: source is the only placeholder (no `Cacheable`)
-
-`Data.Value` overwrites `item` only when it just resolved a **placeholder** — and `source` is the only one: raw bytes that *are* the value, unparsed. It parses once into a real type and is replaced. Every other value is real and stays: a `path` stays a `path` (its content loads at `output`, existence is `IsTruthy` — it is not narrowed away), a `dict`/`text` renders in place and re-resolves next read.
+## Leg B — USE: `await data.Value()` → born item
 
 ```
 Data.Value():
-    result = await item.Value(this)
-    if (!item.IsFinal) item = result   // ONLY a source flips — parse-once, source replaced
-    return result                      // no catch; a parse throw propagates to the boundary seam
+    answer = await item.Value(this)                          item = the held value (field was _type)
+    if (answer != item && item.Cacheable) item = answer      ⑂ the narrow [F2] — source caches its parse; a template never caches
+    return answer
+
+item.Value(data)  — virtual, per type:
+    source → (it, err) = app.type.Create(this); if err { data.Fail(err); return Absent } else return it
+    dict   → re-render entries whose `!e.IsFinal` → fresh dict        // IsFinal picks WHICH inner elements re-render
+    list   → same, by index
+    text   → Template == null ? this : interpolate(data.Context)
+    path   → return this        // stays a path — content loads at output; existence is IsTruthy
+    scalar → return this
+
+app.type.Create(source) -> (item?, Error?):
+    return App.Type.Reader(source).Read(source)              reader is NEVER null — no fork
+       App.Type.Reader(source):  specific reader (dict / list / table / object)
+                              ‖   generic reader (the default) → DELEGATES to type.Convert(raw) (per-type hook, type/this.cs:573)
+       <bad parse> → returns (null, Error) with MaterializeFailed + path/line
 ```
 
-The decider is **`IsFinal`**, re-pointed to mean *"I am a real value (not the raw source carrier)"* — `false` only for `source`, `true` for everything else (`path`/`file`/`dict`/`text`/`number`, **including** templates). That kills `Cacheable`: the rebind keyed on it (`data/this.cs:272`) becomes the `!IsFinal` swap. Today `IsFinal => Template == null` conflates "renders" with "is-a-placeholder" — split them: a template `dict`/`text` **is** final (a real value that renders); only `source` is non-final. (`module.Cacheable`, action-result caching, is unrelated and stays.)
+Two narrowing facts, kept distinct (the coder's C3):
+- **`Cacheable`** (`item:127`, "Data may keep my answer — parse yes, render never") drives the narrow. `source` inherits `Cacheable => true` → its parse is kept (`source → dict`, source replaced). A template (`text`/`dict`/`list` with `Template != null`) is `Cacheable => false` → never kept → re-renders every read. `path.Cacheable => _location.Cacheable` (false for `%file%.txt`) → a templated path re-resolves.
+- **`IsFinal`** (`item:247`, `=> Template == null`, "my door returns myself") is a *different* axis, read by `dict:388`/`list:570` to choose which inner elements to re-render. `dict`/`list` are `IsFinal => false` **always** (a container re-walks its entries). These two axes do not merge.
 
-No loop, no multi-hop: `source` resolves to its real type in one parse; a `path` is already a real value (content is the consuming op's concern, not a `Data.Value` narrow). `Data` mutates only its own field, keyed on `IsFinal` — no `Data.Narrow`, no item reaching into `Data`, no caching flag. The field rename `_type` → `item` stands (it holds an `item.@this`; the `Instance` alias already exists).
+## Fork ledger — every branch on the path, and its fate
 
-### F3 — gone: the reader is total
+| ID | Branch (current code) | Where | Fate |
+|---|---|---|---|
+| — | STJ entry `JsonSerializer.Deserialize<Data>` | `Wire.Read:158` | **gone** — `read(IReader)`, format-agnostic; `json` is one `IReader`; a thin `JsonConverter<Data>` adapter remains for STJ-driven outer objects |
+| ~~F1~~ | `signature` vs `data` (`@schema` probe) | `Wire.cs:175-181` | **gone** — `@schema` dispatches via `App.Reader(schema)`; `signature`/`data` are registered readers, no `if signature` |
+| — | `Build` vs `Judge` (context null?) | `data/this.cs:201-212,245-253`; `Wire.cs:327-334` | **gone** — context never null; one door (`app.type.Create`) |
+| — | `Readers.Of` null-check + kind-fallback | `source.cs:76-83` | **gone** — `App.Type.Reader` total; `source.Value` just calls `app.type.Create` |
+| — | `source.Value` 3-way (reader / string→Convert / bytes→binary) | `source.cs:87-110` | **gone** — one dispatch through `app.type.Create` |
+| — | value-slot 5-way (ref / deferrable / typed / goal.call / else) | `Wire.cs:386-441` | **gone** — uniform `IReader.RawValue()` → `source` |
+| — | EndObject 4-way (ref / born / deferred / build) | `Wire.cs:292-342` | **gone** — always `source` + holder ctor |
+| — | `%ref%` full-match special-case | `Wire.cs:294-303,386-392` | **gone from Wire** — moves into the `variable`/`text` reader (`ReadContext.Template`) |
+| ~~F3~~ | `App.Type.Reader(...)` null? → reader-or-`Convert` | `app.type.Create` | **gone** — registry is **total** (specific ‖ one generic default reader); always `reader.Read(source)` |
+| **F2** | the narrow `if (answer != item && item.Cacheable) item = answer` | `data/this.cs:272` | **kept** — `source` caches its parse (replaced); a template/`computed` (`Cacheable=false`) re-renders. Field `_type`→`item`. One line, not a type-switch. |
+| — | `dict`/`list` inner `!e.IsFinal` re-render | `dict:388`, `list:570` | **kept** — render logic (which inner templates to re-resolve), not value materialization |
+| — | envelope field reads (`name`/`type`/`value`/`properties`) | the `"data"` reader | **kept** — `IReader` pulling known slots; structural, format-agnostic |
 
-`app.type.Create(source)` is one unconditional line — `return App.Type.Reader(source).Read(source)`. `App.Type.Reader` is **total**: it returns a **specific** reader (`dict`/`list`/`table`/`object`) or, for everything else, **one generic default reader** whose `Read` holds the logic that used to live in `Convert`. Never null. So there is no `reader != null ? Read : Convert` branch and no method named `Convert`.
+**Bottom line:** the read path keeps one value-path branch — **F2**, the `Cacheable`-keyed narrow — plus the structural `IReader` field reads and the `dict`/`list` render-internal `!IsFinal`. F1 and F3 became registry dispatch; the STJ entry, the value DOM, and the `Build`/`Judge` context fork are gone. Discrimination rides registries (`@schema`, `(type, kind)`) + virtual `Value`; a bad parse returns `(item, Error?)`.
 
-My earlier "accept the fork" was based on a wrong cost — I thought total meant a thin reader **per scalar**. It doesn't: it's a **single** generic reader. So total is cheap *and* fork-free. `Convert`'s logic survives inside the generic reader's `Read` (it dispatches to each type's coercion through the convert registry — registry lookup, not an `if`). The `already-item` and `%ref%`/variable guards still collapse the same way (a read `source` carries raw, never an item; the `variable`/`text` reader handles a full `%x%` via `ReadContext.Template`). A bad parse **throws** out of `Read` — `Create`/`source`/`Data` never catch; the boundary seam (`Navigate` / typed-ask) authors the developer error.
+## Leaf-trace — incumbents and where each goes
 
-**Bottom line:** the read path keeps **one** value branch — **F2** (the `!IsFinal` source swap) — plus the format-agnostic structural read (`IReader` pulling fields). F1 and F3 are gone (both registry dispatch); `Cacheable` is gone; `Convert` is gone (its logic is the generic reader's `Read`); the STJ-specific entry is gone (`read(IReader)`). All discrimination rides registries — `@schema` → envelope reader, `(type, kind)` → value reader — plus virtual `Value`; the narrow rides `IsFinal`; rendering is each value's own `Value`; a bad parse throws to the boundary seam.
+| Incumbent (leaf) | Where it lives now | Disposition |
+|---|---|---|
+| STJ entry + `@schema` `if signature` probe | `Wire.Read:158-181`; `ReadSignatureLayer:206` | → `read(IReader, View)`; `@schema` → `App.Reader(schema)`; `ReadSignatureLayer` → the `signature` reader; the `JsonConverter` shrinks to a thin adapter. |
+| `Wire.ReadBody` + `ReadPropertiesObject` + `ReadPropertyPrimitive` | `Wire.cs:280,485,505` | → the `"data"` reader, pulling slots via `IReader` (`RawValue` for value + each property value). |
+| eager Wire value branches | `Wire.cs:386-441` (`refValue`/`IsDeferrableShape`/`Typed.Read`/`goal.call`/`json.Parse`) | → uniform `RawValue()` capture → `source`. Branches delete (goal.call stays TEMP). |
+| value DOM | `Wire.cs:397` (`JsonDocument.ParseValue`+`GetRawText`) | → `IReader.RawValue()` (no DOM). |
+| `FromWireShape`/`IsWireShape`/`WireSlot`/`TypeFromWire` | `data/this.cs:730-790`; callers `json.cs:87,157` | → re-homed into `read(IReader)` (the nested `@schema:data` reconstruct is just `read(r)` recursing). |
+| `source.Value` 3 branches + `try/catch`/`MaterializeFailed` | `source.cs:74-134` | → `source.Value => (item,err)=app.type.Create(this); if err data.Fail; return Absent|item`. `source._raw` field → `_value`. |
+| `Readers.Of` (delegate registry) | `reader/this.cs:71`; callers `source.Value:76,82`, `Deserialize:500` | → total `App.Type.Reader(source)` (renamed from `Readers.Typed`); `Of` + the delegate type + `_generated`/`_runtime` delete. |
+| `type.Convert` direct calls / central switch risk | `source.cs:95`; `type/this.cs:573` | the per-type `Convert` hook **stays** (distributed on each type, reached by the generic reader); the direct `source`/`Create` call to it goes. `catalog/Conversion.cs` (router only) stays. |
+| `Data.Value` rebind + field name | `data/this.cs:272`, `:35` | → field `_type` → `item` (holds an `item.@this`; `Instance` alias exists); rebind stays, keyed on `Cacheable`. |
+| `item.Value(asking)` parameter | `item/this.cs:47`, every override | → rename `asking` → `data` (variable named after its type, not its role). |
+| `Build`/`Judge` + the value-ctor fork | `type/this.cs:217,508`; `data/this.cs:177,194-213,242-254` | → die in the **last** phase, with value-ctor retirement (`Build`/`Judge` are only still reachable through the value-ctor / `Declare`). |
+| `WireLocal` (context-less Wire) | `data/WireLocal.cs`; `[JsonConverter]` `data/this.cs:24,976` | deletes; context flows through `read(IReader)`; the `_context==null` tripwire (`Wire.cs:211+`) deletes. |
 
 ## Demolition worklist — by phase
 
-Each phase: what **dies** (methods + fields), what **stays**. Nothing in "stays" may be deleted; nothing in "dies" may survive the phase.
+Each phase: what **dies**, what **stays**. Value-ctor retirement is deliberately **last** (Q4 — scope decided when we reach it).
 
 ### Phase 1 — `ITypeReader` is the only reader, and the registry is total
-- **Build:** wrap a stored raw (`source`'s string/bytes) as a one-shot `IReader` (json.Reader over the string; a bytes reader over the blob), plus the one `IReader` primitive for whole-payload decode (consume-value-as-string/bytes — json.Reader already has `GetRawText`/base64). **`App.Type.Reader(source)` is total — never null:** a specific reader (`dict`/`list`/`table`/`object`) or **one generic default reader** whose `Read` holds the logic that lived in `Convert` (coerce raw → scalar / lift native, dispatching to each type's coercion via the convert registry). So `app.type.Create(source) => App.Type.Reader(source).Read(source)` is one unconditional line — no null-check, no `Convert` name, no per-scalar reader files, no `clr` floor.
-- **Dies:** `Readers.Of` (`reader/this.cs:71`); the `Read` delegate type (`:37`); `_generated`/`_runtime` dictionaries (`:39-40`); the static-`Read` discovery branch in `IndexAssembly` (`:181-202`).
-- **Stays (renamed):** the `ITypeReader` registry — `_generatedTyped`/`_runtimeTyped`, `TypeOf`, `Register`, the `ITypeReader` discovery branch. Rename the lookup `Readers.Typed(name, kind)` → `App.Type.Reader(source)` (total; whole carrier in, reads the `(type, kind)` key off it). Add the generic default reader.
+- **Build:** wrap a stored raw as a one-shot `IReader`. Make `App.Type.Reader(source)` **total** — specific readers (`dict`/`list`/`table`/`object`) ‖ **one generic default reader** that **delegates** to the value's `type.Convert(raw)` hook (per-type, distributed — *not* a central switch). So `app.type.Create(source) => App.Type.Reader(source).Read(source)` is one line, never null, no `Convert` *door*.
+- **Dies:** `Readers.Of` (`reader/this.cs:71`); the `Read` delegate type (`:37`); `_generated`/`_runtime` dictionaries (`:39-40`); the static-`Read` discovery branch (`:181-202`).
+- **Stays:** the `ITypeReader` registry (`_generatedTyped`/`_runtimeTyped`/`TypeOf`, the discovery branch); rename the lookup `Readers.Typed` → `App.Type.Reader`. The per-type `Convert` hooks + `catalog/Conversion.cs` router (the generic reader delegates to them).
+- **Q7 — `code.load` runtime registration:** `Register()` (`:125`) survives but feeds the **typed** (`ITypeReader`) table, not the dead delegate one; a DLL shipping a static `Read` is wrapped in an `ITypeReader` adapter at registration.
 
-### Phase 2 — read through `IReader`; `@schema` dispatch; value captured raw
-- **Build:** the read becomes `read(IReader)` — format-agnostic, the mirror of `value.Write(IWriter)`, over the **existing** `app.channel.serializer.IReader` (json.Reader wraps `Utf8JsonReader`, **owns the buffer**). `read(r)`: `BeginObject` → `NextName` (first is `@schema`) → `String()` → `App.Reader(schema).Read(r)` — `data`/`signature` are registered readers, no `if signature`. The `"data"` reader pulls slots with `while r.NextName(out name)` (`name`→`String()`, `type`→nested entity, **`value`→`r.RawValue()`** raw bytes no DOM, `properties`→read) → `new source(value, type)` → holder `Data`. The `"signature"` reader verifies then `read(r)` recurses to `data`. **No new `IReader` primitives** — `RawValue`/`Skip`/`NextName`/`Peek` already exist. `source` gains `_template` (authored mode) for the `ReadContext` at `.Value()`.
-- **Dies:** the STJ read entry `JsonSerializer.Deserialize<Data>`; the `@schema` `if signature` probe (`Wire.cs:175-181`) → registry; `Wire.ReadBody` (`:280`) + `ReadSignatureLayer` (`:206`) as hardcoded methods → the `data`/`signature` readers; `ReadPropertiesObject` (`:485`) + `ReadPropertyPrimitive` (`:505`) → the `data` reader via `IReader`; `IsDeferrableShape` (`:460`); the eager value branches (`Typed.Read` inline `:406-413`, `json.Parse`-to-`value` `:438-440`, EndObject `Build` `:327-334`); the value DOM `JsonDocument.ParseValue`+`GetRawText` (`:397`); `EmitRawVerbatim` (`:467`); `FromWireShape` + `IsWireShape` + `WireSlot` + `TypeFromWire` (`data/this.cs:741-790`) — the nested-`@schema:data` reconstruct is now just `read(r)` recursing (the `data` reader); their `json.cs:87,157` callers switch to `read(r)`.
-- **Stays / re-homed:** the invalid-schema throws (now inside the `data` reader); a **thin** `JsonConverter<Data>` STJ adapter (wraps a `json.Reader`, calls `read(r)`); `WrapAsTyped` (`:258`) — the `Data<T>` wrap still needed when STJ asks for a typed `Data<T>`, moves onto the adapter; the `_readDepth`/`MaxReadDepth` recursion guard (`:144-145`) → moves into `read(IReader)`.
-- **Temp:** the `goal.call` inline branch (`:419-424`) and the **`action`/`GoalCall` `WireSlot`/`FromWireShape` reconstruct** (`action/this.FromWire.cs`) stay until `goal.call` gets a reader — then they migrate to `read(r)` too (follow-on, not a blocker).
-- **Open:** whether `@schema` dispatches through the same `App.Type.Reader` registry or a sibling keyed by the envelope tag (same pattern either way).
+### Phase 2 — `read(IReader, View)`; `@schema` dispatch; value (and properties) captured raw
+- **Build:** the read entry is `read(IReader, View)` over the existing `app.channel.serializer.IReader`. `@schema` dispatches via `App.Reader(schema)` (`data`/`signature` registered readers; no new `IReader` primitives — `RawValue`/`Skip`/`NextName`/`Peek` already exist). The `data` reader captures `value` **and every property value** via `RawValue()` (raw, no DOM) → `source` → holder `Data`. `source` gains `_template` (authored mode) for the `ReadContext` at `.Value()`.
+- **Dies:** STJ read entry `JsonSerializer.Deserialize<Data>`; the `@schema` `if signature` probe (`:175-181`); `Wire.ReadBody` (`:280`) + `ReadSignatureLayer` (`:206`) + `ReadPropertiesObject` (`:485`) + `ReadPropertyPrimitive` (`:505`) → the `data`/`signature` readers; `IsDeferrableShape` (`:460`); the eager value branches (`:406-413,438-440,327-334`); the value DOM (`:397`); `EmitRawVerbatim` (`:467`); `FromWireShape`/`IsWireShape`/`WireSlot`/`TypeFromWire` (`data/this.cs:730-790`) — callers (`json.cs:87,157`) switch to `read(r)`.
+- **Stays / re-homed:** invalid-schema throws (now in the `data` reader); a **thin** `JsonConverter<Data>` STJ adapter (wraps a `json.Reader`, calls `read(r, v)`); `WrapAsTyped` (`:258`) → onto the adapter (`Data<T>` wrap when STJ asks); `_readDepth`/`MaxReadDepth` (`:144-145`) → into `read(IReader)`; `FromRaw` (`:317`).
+- **Temp:** the `goal.call` inline branch (`:419-424`) and the `action`/`GoalCall` `WireSlot`/`FromWireShape` reconstruct (`action/this.FromWire.cs`) stay until `goal.call` gets a reader, then migrate to `read(r)`.
+- **Open:** `@schema` on the same `App.Type.Reader` registry, or a sibling keyed by the envelope tag (same pattern either way).
 
-### Phase 3 — `source` becomes a thin placeholder; the narrow keys on `IsFinal`
-- **Build:** `source.Value(data) => app.type.Create(this)` — whole source in, no try/catch (a bad parse **throws** out of the reader; `source` never catches). `source._raw` field → `_value` (the raw *is* its value). `source` never touches templates — the materialized type owns rendering. `Data.Value` becomes single-step: `result = await item.Value(this); if (!item.IsFinal) item = result; return result` (field `_type` → `item`; no catch — the throw propagates). Re-point `IsFinal` to *"I am a real value"* — `false` only for `source`, `true` for everything else including `path`/`file`/templates. Move the `%ref%` full-match → variable judgement into the `text`/`variable` reader (`ReadContext.Template == "plang"` + a full `%x%`). Rename the `item.Value(asking)` parameter → `data` (`item/this.cs:47`, `source.cs:74`, every override).
-- **Dies:** `source.Value` branches 2 (`string`→`Convert`) and 3 (`byte[]`→`binary`) + its `try/catch`/`MaterializeFailed` (`source.cs:85-127`); the `refValue` capture + EndObject variable-reference branch in `Wire.ReadBody` (`:294-303,386-392`); the `Data.Value` `Cacheable`-keyed rebind (`data/this.cs:272`); `item.Cacheable` — base virtual (`item/this.cs:127`) + overrides in `text`/`dict`/`list`/`path`/`computed`; `IsFinal => Template == null` (the template-conflating definition).
-- **Stays:** `source.Peek`, `source.Write`, `source.Navigate`, `source.IsTruthy`, `source.Clr`; `module.Cacheable` (unrelated action-result caching). No `Data.Narrow` — the narrow is `Data.Value`'s own `!IsFinal` swap. The `MaterializeFailed` authoring moves to the boundary seam (`Navigate` / typed-ask catch the throw).
+### Phase 3 — `source` becomes a thin placeholder; the narrow stays on `Cacheable`
+- **Build:** `source.Value(data) => (item,err)=app.type.Create(this); if err data.Fail(err) return Absent; return item` — no try/catch, no throw. `source._raw` field → `_value`. `source` never touches templates. `Data.Value` keeps its rebind, keyed on `Cacheable`, field `_type` → `item`. Move the `%ref%` full-match → variable judgement into the `text`/`variable` reader (`ReadContext.Template == "plang"`). Rename the `item.Value(asking)` parameter → `data`.
+- **Dies:** `source.Value` branches 2/3 + `try/catch`/`MaterializeFailed` (`source.cs:85-127` — authoring moves into `app.type.Create`); the `refValue` capture + EndObject variable-reference branch (`Wire.cs:294-303,386-392`).
+- **Stays:** `source.Peek`/`Write`/`Navigate`/`IsTruthy`/`Clr`; **`Cacheable`** (both base + the `text`/`dict`/`list`/`path`/`computed` overrides — the narrow needs it); **`IsFinal`** unchanged (`=> Template == null`, drives `dict`/`list` inner re-render); `module.Cacheable` (unrelated). No `Data.Narrow` — the narrow is `Data.Value`'s own line.
 
-### Phase 4 — delete the forks
-- **Build:** typed construction routes through `app.type.Create`. End-state (Ingi): callers build the item first and use the holder ctor `Data(name, instance)`. The pervasive no-type case `new Data(name, value)` is a plain lift — give it one factory (`Data.From(name, raw, type?, ctx)`: make the item via `source`/`app.type.Create`, then hold it) so the value-ctor can retire. `Declare`'s 2 callers route through `app.type.Create`.
-- **Dies:** `type.Build` (after its `Deserialize:497` variable use re-points to the `variable`/`text` reader); `type.Judge`; the ctor fork (`data/this.cs:194-213`); `Data.Declare`'s fork (`:242-254`); the value-ctor `(name, value = null, type = null, …)` **entirely** (`data/this.cs:177`) — every call site moved to the holder ctor or `Data.From` (see Scope below).
-- **Stays:** static `type.Create(object)`/`Create(string)`, the holder ctor, `Data.Value`. (`type.Convert`'s per-type coercion survives **only inside the generic reader's `Read`** — the `Convert` name and the direct `source`/`Create` calls to it are gone, Phase 1. `FromWireShape`/`WireSlot`/`IsWireShape`/`TypeFromWire` are re-homed into `read(IReader)` — Phase 2, not here.)
-- **Scope (settled): retire the value-ctor fully.** Ingi confirmed — do not stop at deleting the fork. The value-ctor `(name, value, type)` is used on write/in-code paths too, so this phase reaches past the read path: every `new Data(name, value[, type])` site moves to either the holder ctor `Data(name, instance)` (when an item is already in hand) or the `Data.From(name, raw, type?, ctx)` factory (when a raw needs lifting). Trace every value-ctor call site in this phase, not just the ~7 typed ones; the no-type lift sites are the bulk of the work.
+### Phase 4 — finish context-never-null for reads
+- **Dies:** `WireLocal` + both `[JsonConverter(typeof(WireLocal))]`; the `_context==null` fail-closed branch + tripwire (`Wire.cs:211+`); the `_context!`/`_template != null` defensive guards.
+- **Build:** context flows through `read(IReader)`, so the `signature` reader verifies with the actor in scope. Former `WireLocal` consumers go through `read(IReader)`.
+- **Stays:** the thin STJ adapter, the channel signing path, the `signature` reader (now context-guaranteed).
 
-### Phase 5 — finish context-never-null for reads
-- **Dies:** `WireLocal` + both `[JsonConverter(typeof(WireLocal))]` attributes; the `_context==null` fail-closed branch + tripwire (`Wire.cs:211+`); the `_context!`/`_template != null` defensive guards.
-- **Build:** context flows through `read(IReader)` (the reader carries it), so the `signature` reader verifies with the actor in scope. The former `WireLocal` consumers (nested `@schema:data` reconstruct `json.cs:87,157`; clone/snapshot/debug STJ paths) go through `read(IReader)` with context.
-- **Stays:** the thin `JsonConverter<Data>` STJ adapter, the channel-registered signing path, the `signature` reader (now context-guaranteed).
+### Phase 5 — fixtures + the 15
+- Sweep fixtures to born-with-context. The 15 core tests pass **because the read is correct** (one lazy door), not because a branch was silenced.
 
-### Phase 6 — fixtures + the 15
-- Sweep fixtures to born-with-context (continuation). The 15 core tests pass **because the read is now correct** (one lazy door), not because a branch was silenced.
+### Phase 6 (LAST) — retire the value-ctor + delete `Build`/`Judge`  *(scope TBD — decide here, Q4)*
+- The value-ctor `(name, value, type)` and its `Build`/`Judge` fork (`data/this.cs:177,194-213`), `type.Build` (`:217`), `type.Judge` (`:508`), `Data.Declare`'s fork (`:242-254`). These reach **write/in-code paths across the codebase**, unrelated to the read. Reads already avoid them (holder ctor + `source`) after Phases 1-3.
+- **Decision deferred to this point:** retire the value-ctor fully in this branch, or split to a follow-on so read-path-unification lands first. (Needs the no-type `new Data(name, value)` call-site count, which is uncounted.) Decide when we get here.
 
-## Reader-coverage worklist (for the door, not for `Of`)
+## Reader-coverage worklist
 
-Has a reader: **bool, code, dict, duration, guid, image, list, number, object, path, table, text**.
-No reader: **archive, binary, clr, compare, date, datetime, directory, file, null, permission, primitive, signature, time, url**.
+The registry is **total**: a **specific** reader for streaming/structured types, and **one generic default reader** that **delegates** to each type's `Convert` hook (no per-scalar reader files, no `Convert` *door*).
 
-Decision (settled): **the registry is total** — a **specific** reader for streaming/structured types, and **one generic default reader** (holding the old `Convert` logic) for everything else. No per-scalar reader files; no `Convert` name.
-
-- **Specific readers:** `dict`, `list`, `table`, `object` (streaming pull); `binary` (`byte[]`→`binary`) and the kinded binary forms (`image`/`archive`/`file`/`directory` content) where the decode is non-trivial.
-- **Generic default reader** (everything else): the scalars — `bool, number, text, guid, duration, date, datetime, time, url, path, primitive` — coerce raw → value through the convert registry. One reader, no per-type files.
-- **No raw materialization** (never read from a value slot): `null` rides through as the raw token `null` → typed absence; `compare`, `signature` (own wire), `permission`, `clr` (the value floor — reached only by lifting a foreign object via `Create(object)`). Confirm each is unreachable from a value slot.
+- **Specific readers:** `dict`, `list`, `table`, `object`; `binary` (`byte[]`→`binary`) and kinded binary (`image`/`archive`/`file`/`directory` content) where the decode is non-trivial.
+- **Generic default reader → `type.Convert`:** the scalars — `bool, number, text, guid, duration, date, datetime, time, url, path, primitive`. Their `Convert` hooks already exist and stay put.
+- **No raw materialization** (never a value slot): `null` rides as the raw token → typed absence; `compare`, `signature` (own envelope), `permission`, `clr` (value floor — only via `Create(object)`). Confirm each is unreachable from a value slot.
 
 ## Settled design questions
 
-1. **Readers only for streaming/structured?** No — the registry is **total**: specific readers for structured types + **one generic default reader** (the old `Convert` logic) for the rest. So `App.Type.Reader(source)` is never null and `app.type.Create` is fork-free (F3 gone). One generic reader, not a file per scalar.
-2. **One creation door?** Yes — `app.type.Create(source) => App.Type.Reader(source).Read(source)`. The reader returns the born item; `Convert`'s logic lives inside the generic reader's `Read`; a bad parse throws.
-3. **`%ref%` → variable in the reader?** Yes — in the `text`/`variable` reader, gated on `ReadContext.Template == "plang"`. Requires `source` to carry the template flag (Phase 2).
-4. **Stored-raw vs streaming?** One interface (`ITypeReader`), two front-ends — wrap the stored raw as a one-shot `IReader` (Phase 1).
-5. **Serializer-independent read?** Yes — the read is `read(IReader)` (mirror of `value.Write(IWriter)`); `json` is one `IReader`. No `JsonSerializer.Deserialize<Data>` entry; a thin `JsonConverter<Data>` adapter remains only for STJ-driven outer objects.
-6. **`@schema` dispatch generic?** Yes — `@schema` is a tag dispatched through the reader registry (`App.Reader(schema)`), same pattern as a value type. `signature`/`data` are registered readers; a future envelope plugs in. No `if signature`.
+1. **Generic reader holds or delegates?** **Delegates** to `type.Convert` (per-type hook). One reader class, coercion stays distributed on the types (OBP). The `Convert` *name* at the per-type hook stays; there is no `Convert`/`type.Read` *door*.
+2. **One creation door?** Yes — `app.type.Create(source) => App.Type.Reader(source).Read(source)`, returning `(item?, Error?)`.
+3. **`%ref%` → variable in the reader?** Yes — `text`/`variable` reader, gated on `ReadContext.Template == "plang"`; `source` carries the template flag.
+4. **Serializer-independent?** Yes — `read(IReader)` (mirror of `value.Write(IWriter)`); `json` is one `IReader`; thin STJ adapter only.
+5. **`@schema` dispatch generic?** Yes — `App.Reader(schema)`, no `if signature`.
+6. **Error model?** `(item?, Error?)` from `app.type.Create`, set on `Data` by `source`. No throw (coder C1).
+7. **`IsFinal`/`Cacheable`?** Two orthogonal axes, both kept (coder C3): `Cacheable` drives the narrow; `IsFinal` drives `dict`/`list` inner re-render.
+8. **Signature reader?** A registered reader that also **verifies**, carrying context + `View` injected into `read(IReader)` — verify on `Out`, peel on `Store` (Q5).
+9. **Properties lazy?** Yes — property value slots captured raw too (invariant 1, Q6).
+10. **`code.load` readers?** `Register()` → the `ITypeReader` table; static `Read` wrapped in an adapter (Q7).
+11. **Value-ctor scope?** Decided at Phase 6 (Q4).
 
 ## OBP validation pass
 
 | Surface | Check | Verdict |
 |---|---|---|
-| `read(IReader)` (read entry) | format-agnostic, mirror of `value.Write(IWriter)` | **settled.** No `JsonSerializer.Deserialize<Data>` entry; `json` is one `IReader`; STJ `JsonConverter<Data>` survives as a thin adapter. |
-| `IReader` (existing `app.channel.serializer.IReader`) | already has `Peek()`/`BeginObject`/`NextName(out name)`/`RawValue()`/`Skip()`/typed pulls | **use it as-is — do NOT invent `Field`/`Raw`.** The earlier sketch added a parallel surface (the smell); the real one already covers Leg A. |
-| `@schema` dispatch — `App.Reader(schema)` | tag dispatched through the registry, not `if signature` | **settled** (same pattern as a value type). `signature`/`data` are registered readers. |
-| `app.type.Create(source)` (door; absorbs `Deserialize`) | one line — `App.Type.Reader(source).Read(source)`; whole carrier in, no decompose | **settled.** No `type.Read`/`Deserialize` door; no `Convert` call; a bad parse throws. |
-| `App.Type.Reader(source)` (was `Readers.Typed`/`Of`) | total registry; whole carrier in | **settled:** never null — specific reader ‖ one generic default reader; returns an `ITypeReader`. |
-| generic default reader (was `Convert`) | one reader holding the per-type coercion | **settled:** `Convert` the name dies; its logic is the generic reader's `Read`. |
-| `Readers.Of` | dies | n/a |
-| `IsDeferrableShape` | verb-question that deletes itself (everything defers) | dies — good. |
-| `source` `{raw, type, kind, context, template}` | object kept whole, no decomposition; `template` added so the authored-mode signal survives deferral | clean. |
-| `ReadContext(Context, Template)` | noun record, mirror of `IWriter` | keep. |
-| `Data.From(name, raw, type?, ctx)` (new factory) | From+Noun static factory | keep (if value-ctor retires). |
-| `Data._type` field | holds an `item.@this` (a value), not a type entity | **rename → `item`** (matches what it holds; `Instance` alias already exists). |
-| `source._raw` field | the raw is the source's value | **rename → `_value`** (consistent with every other item's backing). |
-| `item.Value(asking)` parameter | role-name for a `data.@this` | **rename → `data`** (name the variable after its type, not its role). Applies to `item/this.cs:47`, `source.cs:74`, and every override. |
-| `IsFinal` | currently `=> Template == null` — conflates "renders" with "is the raw carrier" | **re-point → "I am a real value":** `false` only for `source`, `true` for everything else (`path`/`file`/`dict`/`text`/templates). Drives the `Data.Value` `!IsFinal` swap. **Name caveat:** "final" reads as "unchanging," but a template/path is `IsFinal=true` yet re-renders/reloads — only `source` is non-final. Coder: consider a word that says "real value vs raw carrier" (the distinction is *is-this-still-the-source*), not "final." |
-| `item.Cacheable` | flag `Data` read to decide the rebind | **dies** — the rebind re-keys onto `IsFinal` (is-`source` vs real value); no flag. |
-| parse error | `source` try/catch authors `MaterializeFailed` | **the reader throws** — `Create`/`source`/`Data` never catch; the boundary seam (`Navigate`/typed-ask) authors it. |
-| `EmitRawVerbatim` / `WrapAsTyped` | Verb+Noun helpers | `EmitRawVerbatim` dies (Phase 2); `WrapAsTyped` is a private STJ-cast helper — leave or inline. |
-| `FromRaw` | From+Noun factory, used by list/dict/channel | keep. |
-| `FromWireShape` / `TypeFromWire` / `WireSlot` / `IsWireShape` | the hand-rolled nested-`@schema:data` reconstruct | **re-homed → `read(IReader)`** (the `data` reader recursing); the `action`/`GoalCall` callers follow when `goal.call` gets a reader. |
-
-**Object decomposition:** the read no longer hands back a half-decoded `object?` for a caller to finish — the door returns a born item, and `source` holds the raw whole until `.Value()`. No "producer hands back raw, consumers transform identically" smell remains on the read path.
+| `read(IReader, View)` | format-agnostic, mirror of `value.Write(IWriter)`; `View` injected for the signature reader | settled. No `JsonSerializer.Deserialize<Data>` entry; thin STJ adapter only. |
+| existing `IReader` | already has `Peek`/`BeginObject`/`NextName`/`RawValue`/`Skip`/typed pulls | **use as-is — do NOT invent `Field`/`Raw`** (the earlier sketch was a parallel-surface smell). |
+| `@schema` dispatch — `App.Reader(schema)` | tag through the registry, not `if signature` | settled. `signature`/`data` registered readers. |
+| `app.type.Create(source) -> (item?, Error?)` | one line, whole carrier in, no decompose, no throw | settled. Absorbs `Deserialize`; no `Convert` door. |
+| generic default reader → `type.Convert` | **delegates** to the per-type hook, does not hold a switch | settled (coder C2). Per-type hooks + router stay. |
+| `App.Type.Reader(source)` | total registry; whole carrier in | settled — never null; returns an `ITypeReader`. |
+| `Cacheable` + `IsFinal` | two orthogonal axes | **both kept** (coder C3). `Cacheable` → narrow; `IsFinal` → inner re-render. Not merged. |
+| `Data._type` → `item` | field holds an `item.@this`, not a type entity | rename (the `Instance` alias already exists). |
+| `source._raw` → `_value` | the raw is the source's value | rename — consistent with other items' backing. |
+| `item.Value(asking)` → `item.Value(data)` | role-name for a `data.@this` | rename — variable after its type, not its role. |
+| `source` `{value, type, kind, context, template}` | object kept whole, no decomposition | clean. |
+| `FromRaw` | From+Noun factory (list/dict/channel) | keep. |
+| `FromWireShape`/`WireSlot`/`IsWireShape`/`TypeFromWire` | hand-rolled nested-`@schema:data` reconstruct | re-homed → `read(IReader)`. |
