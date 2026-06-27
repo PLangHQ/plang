@@ -1422,3 +1422,45 @@ predates any context). Surfaced while eliminating `WireLocal` (the context-less 
 http inbound needed a context to deserialize a `Data`, and the clean shape is "the provider has one,"
 not "thread it in." Bounded by: which providers, and whether the gen hook mirrors the action-handler
 `IContext` partial exactly.
+
+---
+
+## 2026-06-27 — eliminate WireLocal (context-less Data STJ converter) — attempted, reverted: regresses 15 tests
+
+`WireLocal` is the `[JsonConverter(typeof(WireLocal))]` attribute on `Data`/`Data<T>` — a `Wire`
+subclass STJ instantiates **parameterless** (`base(View.Store, sign:false)`), so it is a genuinely
+**context-less `Wire`**. It is the reason `Wire._context` must stay nullable, which contradicts
+context-never-null. It should not exist.
+
+**Traced consumers (who deserializes a Data via raw STJ → WireLocal):**
+- `json.cs:87/157` — nested `@schema:data` element reconstruction. **Fixable**: the json parser is now
+  born-with-context, so pass a context-ful Wire (`new JsonSerializerOptions { Converters = { new
+  Wire(View.Store, context: _context, sign:false) } }`).
+- `http/code/Default.cs:513/562/834` — response-body Data inflow via the **static** `_transportInOptions`
+  (no Wire). **Fixable**: the http handler/helpers already receive `context` — build a context-ful
+  options (Store view + `Transport.ForInbound` + a context-ful `Wire`). NOT `InboundOptions` (that's
+  **Out** view — view mismatch was one regression).
+- `signature/this.Wire.cs:101` and `plang/this.cs:186` already pass context-ful `options` — fine.
+
+**Why the straightforward elimination REGRESSED 15 Data tests (baseline 21 → 36), confirmed by stash:**
+1. **Verify-on-read activation.** The context-less WireLocal hit the `if (_context == null)` branch in
+   `Wire.ReadBody` (the "trust at-rest / fail-closed" path) and **skipped** signature verify. A context-ful
+   Wire **runs** verify on every nested `@schema:data` Data. So reconstructing an inner signed Data now
+   verifies where it never used to. Need to decide the right semantics: an inner Data is already covered by
+   the OUTER signature, so nested reconstruction should likely **skip verify** (a no-verify/inner flag on
+   the Wire used for reconstruction), not re-verify each inner layer.
+2. A serialize-side `clr.Navigate:85` NRE (`Context.NotFound` on a context-less clr) surfaced in the http
+   request-serialize path (`number.Convert:41`) — needs its own trace.
+3. `TypeOwnedReadParityTests.ObjectJsonRead_*` parity differences — the reconstruction output changed.
+
+**Also part of this:** `Wire.ReadBody` has three context-less Data births (`new @this(name, born)` /
+`(name, instance)` / `(name, value, typeRef)` at ~288/313/319) that should pass `context: _context` once
+the field is non-null; and the `if (_context == null)` fail-closed block (~209-224, the
+`SignatureVerifyContextMissing` path) gets deleted (architect Stage 6 says so) along with flipping
+`Wire._context` non-null + removing the parameterless `Wire()` ctor (reorder to `Wire(View, context,
+sign=true, template=null)`; all call sites use named `context:` so the reorder is safe).
+
+**Do it as a focused unit** (not at the tail of a long session): json + http context-ful reconstruction,
+decide the nested-verify semantics (#1 — the load-bearing decision), fix the ReadBody births, flip
+`Wire._context`, then the test-fixture sweep. The insight is solid; the regression is all behavior the
+context-less path was silently skipping.
