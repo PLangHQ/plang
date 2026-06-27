@@ -12,9 +12,11 @@
 ## The center — two types, everything else delegates
 
 - **One lazy carrier: `source`** (`app/type/item/source.cs`). Holds the raw form + declared `{type, kind}` + context + authored-mode flag. Parses nothing until `.Value()`. It is a transient placeholder — once it materializes into a real type it is replaced and gone.
-- **One creation door: `app.type.Create(source) → (item?, Error?)`** — pass the whole carrier (no decompose); it builds the type entity and reads its raw in one call. Absorbs the existing `Deserialize` (`type/this.cs:486`, *"Replaces Judge"*); no separate `type.Read`/`Deserialize` door. Inside, one line: `App.Type.Reader(source).Read(source)` over a **total** registry. On a bad parse it returns the error (see Error model), it does not throw.
+- **One creation door: `app.type.Create(source) → Task<(item?, Error?)>`** — pass the whole carrier (no decompose); it builds the type entity and reads its raw in one call. Absorbs the existing `Deserialize` (`type/this.cs:486`, *"Replaces Judge"*); no separate `type.Read`/`Deserialize` door. Inside, one line: `await App.Type.Reader(source).Read(source)` over a **total** registry. On a bad parse it returns the error (see Error model), it does not throw.
 
 The read is **serializer-independent**: `read(IReader)` — the mirror of `value.Write(IWriter)` — over the **existing** `app.channel.serializer.IReader`. `json` is one `IReader`.
+
+**The read is async — `read(IReader, View) → Task<Data>`** (Ingi). Verify-on-read is async (today sync-over-async at `Wire.cs:248` `.GetAwaiter().GetResult()`, tolerated only inside the sync `JsonConverter.Read`). The symmetry with `Write` is "read pulls / write pushes," **not** "both sync": **reads do I/O** (signature verify now, `path`/`url` content later), writes don't. So the whole `read` / `App.Reader(schema).Read(r, v)` / `app.type.Create` chain returns `Task` and the signature reader `await`s verify. The one surviving sync-over-async is the thin `JsonConverter<Data>` STJ adapter (its `Read` signature is sync) — it `.GetAwaiter().GetResult()`s the async `read` at the STJ perimeter, where there is no choice.
 
 ## Invariants (must hold at the end)
 
@@ -26,9 +28,9 @@ The read is **serializer-independent**: `read(IReader)` — the mirror of `value
 A malformed value is **bad data, not an invariant violation** (the same read serves http-inbound, not just `.pr`), and PLang's model is `on error` over `Data.Error`. The failure originates inside `app.type.Create` (the reader/parse), so it authors the error **there** — keyed `MaterializeFailed`, with the binding name, `{type, kind}`, JSON path+line, and the inner exception attached (everything today's `source.cs:123-126` has) — and returns `(null, Error)`. `source` forwards it to `Data`; nobody throws, nobody enumerates catching seams:
 
 ```
-app.type.Create(source) -> (item?, Error?)
-source.Value(data):
-    (item, err) = app.type.Create(this)
+app.type.Create(source) -> Task<(item?, Error?)>
+source.Value(data):                                       // already async
+    (item, err) = await app.type.Create(this)
     if (err != null) { data.Fail(err); return Absent; }   // error set on Data at the source seam
     return item
 ```
@@ -38,10 +40,10 @@ source.Value(data):
 ```
 source bytes (any front-end: .pr file, http inbound, …)
   │  open → IReader r, View v          existing app.channel.serializer.IReader (json.Reader OWNS the buffer); v = Store (local) | Out (transport)
-  ▼  read(r, v)                         format-agnostic — mirror of value.Write(IWriter); pulls tokens
+  ▼  async read(r, v)                   format-agnostic — mirror of value.Write(IWriter); pulls tokens
   │     r.BeginObject(); r.NextName(out _)        first name is always "@schema" (written first)
   │     schema = r.String()
-  │     return App.Reader(schema).Read(r, v)      ⑂ registry dispatch on the tag — no `if signature`   [F1 GONE]
+  │     return await App.Reader(schema).Read(r, v)   ⑂ registry dispatch on the tag — no `if signature`   [F1 GONE]
   │
   ├─ "data" reader.Read(r, v):          r positioned after @schema
   │     while r.NextName(out name):     forward pull of known slots
@@ -52,11 +54,11 @@ source bytes (any front-end: .pr file, http inbound, …)
   │     r.EndObject()
   │     return new Data(slotName, new source(value, type))   holder ctor — lazy, value untouched
   │
-  └─ "signature" reader.Read(r, v):     the OUTER wrapper; carries context (Phase 5 → non-null) + View v
+  └─ async "signature" reader.Read(r, v):   the OUTER wrapper; carries context (Phase 5 → non-null) + View v
         read the wrapper
-        v == Out  → run verify (actor from context); bad signature → Error          // transport: auto-verify
+        v == Out  → await verify (actor from context); bad signature → Error         // transport: auto-verify (async)
         v == Store→ peel without verify                                              // local copy
-        inner = read(r, v)              recurse → the "data" reader; return the inner Data (verified)
+        inner = await read(r, v)        recurse → the "data" reader; return the inner Data (verified)
   ▼  Data (lazy)  →  Leg B on first .Value()
 ```
 
@@ -71,17 +73,19 @@ Data.Value():
     return answer
 
 item.Value(data)  — virtual, per type:
-    source → (it, err) = app.type.Create(this); if err { data.Fail(err); return Absent } else return it
+    source → (it, err) = await app.type.Create(this); if err { data.Fail(err); return Absent } else return it
     dict   → re-render entries whose `!e.IsFinal` → fresh dict        // IsFinal picks WHICH inner elements re-render
     list   → same, by index
     text   → Template == null ? this : interpolate(data.Context)
     path   → return this        // stays a path — content loads at output; existence is IsTruthy
     scalar → return this
 
-app.type.Create(source) -> (item?, Error?):
-    return App.Type.Reader(source).Read(source)              reader is NEVER null — no fork
-       App.Type.Reader(source):  specific reader (dict / list / table / object)
+async app.type.Create(source) -> Task<(item?, Error?)>:
+    return await App.Type.Reader(source).Read(source)       reader is NEVER null — no fork
+       App.Type.Reader(source):  specific reader (dict / list / table / object) — string-raw goes to the THIN generic reader
                               ‖   generic reader (the default) → DELEGATES to type.Convert(raw) (per-type hook, type/this.cs:573)
+       byte[] raw never reaches the generic reader → born `binary` (type=binary, kind=mime/.ext) → binary-family reader
+       kind-narrowing (json→item, jpg→image) lives INSIDE App.Type.Reader's lookup, not a source branch
        <bad parse> → returns (null, Error) with MaterializeFailed + path/line
 ```
 
@@ -130,7 +134,11 @@ Two narrowing facts, kept distinct (the coder's C3):
 Each phase: what **dies**, what **stays**. Value-ctor retirement is deliberately **last** (Q4 — scope decided when we reach it).
 
 ### Phase 1 — `ITypeReader` is the only reader, and the registry is total
-- **Build:** wrap a stored raw as a one-shot `IReader`. Make `App.Type.Reader(source)` **total** — specific readers (`dict`/`list`/`table`/`object`) ‖ **one generic default reader** that **delegates** to the value's `type.Convert(raw)` hook (per-type, distributed — *not* a central switch). So `app.type.Create(source) => App.Type.Reader(source).Read(source)` is one line, never null, no `Convert` *door*.
+- **Build:** wrap a stored raw as a one-shot `IReader`. Make `App.Type.Reader(source)` **total** — specific readers (`dict`/`list`/`table`/`object`) ‖ **one thin generic default reader**. The generic reader is **string-raw scalars only** (`number`, `bool`, `guid`, `date`, `datetime`, `time`, `url`, `text`, `primitive`), one delegation — `source.DeclaredType.Convert(raw)` (the per-type hook, `type/this.cs:573`) — **zero type-branching**. So `app.type.Create(source) => await App.Type.Reader(source).Read(source)` is one line, never null, no `Convert` *door*.
+- **`byte[]` is the `binary` family, never the generic reader (Ingi):** a raw `byte[]` is born `binary` (`type=binary`, `kind=mime/.ext`) and read by the `binary`/`image`/`table`/`archive`/`file`/`directory` specific readers. Decode-to-text stays the explicit `as text` — no byte→string normalization inside the generic reader. The split is by **raw shape**: string-raw → thin generic reader; byte-raw → binary-family specific readers.
+- **Rule (Ingi):** if the generic reader ever wants an `if (type == …)`, that's the signal to **split a specific reader file** — it stays genuinely thin or it stops being the generic reader. No god-reader.
+- **Verify before deleting:** prove every `(type, kind)` reachable today via `Of`/`Convert`/direct-binary maps to **exactly one** reader (specific or generic) — trace current paths against the reader-coverage table; delete `Readers.Of` only after the map is total.
+- **kind-narrowing** (`json→item`, `jpg→image`) lives **inside `App.Type.Reader`'s lookup**, not a `source` branch.
 - **Dies:** `Readers.Of` (`reader/this.cs:71`); the `Read` delegate type (`:37`); `_generated`/`_runtime` dictionaries (`:39-40`); the static-`Read` discovery branch (`:181-202`).
 - **Stays:** the `ITypeReader` registry (`_generatedTyped`/`_runtimeTyped`/`TypeOf`, the discovery branch); rename the lookup `Readers.Typed` → `App.Type.Reader`. The per-type `Convert` hooks + `catalog/Conversion.cs` router (the generic reader delegates to them).
 - **Q7 — `code.load` runtime registration:** `Register()` (`:125`) survives but feeds the **typed** (`ITypeReader`) table, not the dead delegate one; a DLL shipping a static `Read` is wrapped in an `ITypeReader` adapter at registration.
@@ -161,15 +169,16 @@ Each phase: what **dies**, what **stays**. Value-ctor retirement is deliberately
 
 ## Reader-coverage worklist
 
-The registry is **total**: a **specific** reader for streaming/structured types, and **one generic default reader** that **delegates** to each type's `Convert` hook (no per-scalar reader files, no `Convert` *door*).
+The registry is **total**, split by **raw shape**: string-raw → the thin generic reader; byte-raw → binary-family specific readers; structured → structured specific readers. No per-scalar reader files, no `Convert` *door*.
 
-- **Specific readers:** `dict`, `list`, `table`, `object`; `binary` (`byte[]`→`binary`) and kinded binary (`image`/`archive`/`file`/`directory` content) where the decode is non-trivial.
-- **Generic default reader → `type.Convert`:** the scalars — `bool, number, text, guid, duration, date, datetime, time, url, path, primitive`. Their `Convert` hooks already exist and stay put.
+- **Structured specific readers:** `dict`, `list`, `table`, `object`.
+- **Binary-family specific readers (byte-raw):** `binary` (`byte[]`→`binary`), and `image`/`archive`/`table`/`file`/`directory` when the `kind` names one. `byte[]` is born `binary` (`kind=mime/.ext`); it never reaches the generic reader; decode-to-text is the explicit `as text`.
+- **Thin generic default reader (string-raw) → `type.Convert`:** the string scalars — `number, bool, guid, date, datetime, time, url, text, primitive` (and `duration`). One delegation to the per-type hook, zero branching; if it wants an `if (type==…)`, split a specific reader instead.
 - **No raw materialization** (never a value slot): `null` rides as the raw token → typed absence; `compare`, `signature` (own envelope), `permission`, `clr` (value floor — only via `Create(object)`). Confirm each is unreachable from a value slot.
 
 ## Settled design questions
 
-1. **Generic reader holds or delegates?** **Delegates** to `type.Convert` (per-type hook). One reader class, coercion stays distributed on the types (OBP). The `Convert` *name* at the per-type hook stays; there is no `Convert`/`type.Read` *door*.
+1. **Generic reader holds or delegates?** **Delegates** to `type.Convert` (per-type hook). It is **thin — string-raw scalars only, zero branching**; `byte[]` is the binary family, not the generic reader. The `Convert` *name* at the per-type hook stays; there is no `Convert`/`type.Read` *door*. If it grows an `if (type==…)`, split a specific reader (Ingi).
 2. **One creation door?** Yes — `app.type.Create(source) => App.Type.Reader(source).Read(source)`, returning `(item?, Error?)`.
 3. **`%ref%` → variable in the reader?** Yes — `text`/`variable` reader, gated on `ReadContext.Template == "plang"`; `source` carries the template flag.
 4. **Serializer-independent?** Yes — `read(IReader)` (mirror of `value.Write(IWriter)`); `json` is one `IReader`; thin STJ adapter only.
@@ -180,12 +189,13 @@ The registry is **total**: a **specific** reader for streaming/structured types,
 9. **Properties lazy?** Yes — property value slots captured raw too (invariant 1, Q6).
 10. **`code.load` readers?** `Register()` → the `ITypeReader` table; static `Read` wrapped in an adapter (Q7).
 11. **Value-ctor scope?** Decided at Phase 6 (Q4).
+12. **Sync or async read?** **Async** — `read(IReader) → Task<Data>` (Ingi). Verify is async; reads do I/O, writes don't (read pulls / write pushes, not both-sync). The one sync-over-async bridge is the thin STJ `JsonConverter<Data>` adapter at the perimeter.
 
 ## OBP validation pass
 
 | Surface | Check | Verdict |
 |---|---|---|
-| `read(IReader, View)` | format-agnostic, mirror of `value.Write(IWriter)`; `View` injected for the signature reader | settled. No `JsonSerializer.Deserialize<Data>` entry; thin STJ adapter only. |
+| `read(IReader, View) → Task<Data>` | format-agnostic, **async**; `View` injected for the signature reader | settled. Mirror with `Write` is pull/push, not sync/sync — reads do I/O. No `JsonSerializer.Deserialize<Data>` entry; the thin STJ adapter is the one sync-over-async bridge, at the perimeter. |
 | existing `IReader` | already has `Peek`/`BeginObject`/`NextName`/`RawValue`/`Skip`/typed pulls | **use as-is — do NOT invent `Field`/`Raw`** (the earlier sketch was a parallel-surface smell). |
 | `@schema` dispatch — `App.Reader(schema)` | tag through the registry, not `if signature` | settled. `signature`/`data` registered readers. |
 | `app.type.Create(source) -> (item?, Error?)` | one line, whole carrier in, no decompose, no throw | settled. Absorbs `Deserialize`; no `Convert` door. |
