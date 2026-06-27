@@ -166,3 +166,23 @@ is captured raw and parsed only on its own `.Value()`. Add this to invariant 1.
 Still net-positive: one lazy door, registry dispatch for the envelope, no DOM.
 The corrections keep the error model, OBP placement, and template semantics that
 the v1 unification would have regressed.
+
+---
+
+## Decided (Ingi) — `read(IReader)` is async
+
+The v1 plan presents `read(IReader)` as sync (the mirror of sync
+`value.Write(IWriter)`). But verify-on-read is async — today it's sync-over-async
+(`Wire.cs:248`: `RunAction(...).GetAwaiter().GetResult()`), tolerated only
+because it hides inside a sync `JsonConverter.Read`.
+
+**Decision: the read is async — `read(IReader) -> Task<Data>`.** Verify is async,
+so the read is. This breaks the sync-`Write` mirror, and that's correct: **reads
+do I/O** (signature verify now, `path`/`url` content later), **writes don't**.
+The symmetry is "read pulls / write pushes," not "both sync." Drop the
+`.GetAwaiter().GetResult()` — the signature reader `await`s verify; the whole
+`read`/`App.Reader(schema).Read(r, v)` chain returns `Task`. The thin
+`JsonConverter<Data>` STJ adapter (sync `Read` signature) is the one place that
+bridges back to sync — it `.GetAwaiter().GetResult()`s the async `read` at the
+STJ boundary, where there is no choice. That single bridge is the only
+sync-over-async left, and it lives at the perimeter, not in the read core.
