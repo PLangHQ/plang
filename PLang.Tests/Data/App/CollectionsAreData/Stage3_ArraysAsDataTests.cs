@@ -27,7 +27,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
         // UnwrapJsonElement on a json array returns the native list value type whose
         // elements are Data — not a raw List<object?>. F1 closes (A).
         using var doc = JsonDocument.Parse("[1,\"two\"]");
-        var result = global::app.type.item.serializer.json.Parse(doc.RootElement);
+        var result = new global::app.type.item.serializer.json(global::PLang.Tests.TestApp.SharedContext).Parse(doc.RootElement);
         await Assert.That(result).IsTypeOf<ListV>();
         var list = (ListV)result!;
         list.Context = app.User.Context;

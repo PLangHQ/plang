@@ -837,7 +837,7 @@ public class DataTests : System.IAsyncDisposable
         var options = new System.Text.Json.JsonDocumentOptions { MaxDepth = 300 };
         using var doc = System.Text.Json.JsonDocument.Parse(json, options);
 
-        var ex = Assert.Throws<InvalidOperationException>(() => global::app.type.item.serializer.json.Parse(doc.RootElement));
+        var ex = Assert.Throws<InvalidOperationException>(() => new global::app.type.item.serializer.json(global::PLang.Tests.TestApp.SharedContext).Parse(doc.RootElement));
         await Assert.That(ex.Message).Contains("maximum depth");
     }
 
@@ -848,7 +848,7 @@ public class DataTests : System.IAsyncDisposable
         // convention); decimal is opt-in via `as number/decimal`.
         var json = "{\"price\":19.99}";
         using var doc = System.Text.Json.JsonDocument.Parse(json);
-        var result = global::app.type.item.serializer.json.Parse(doc.RootElement) as app.type.dict.@this;
+        var result = new global::app.type.item.serializer.json(global::PLang.Tests.TestApp.SharedContext).Parse(doc.RootElement) as app.type.dict.@this;
 
         await Assert.That(result).IsNotNull();
         result!.Context = _app.User.Context;
@@ -864,7 +864,7 @@ public class DataTests : System.IAsyncDisposable
     {
         var json = "{\"count\":42}";
         using var doc = System.Text.Json.JsonDocument.Parse(json);
-        var result = global::app.type.item.serializer.json.Parse(doc.RootElement) as app.type.dict.@this;
+        var result = new global::app.type.item.serializer.json(global::PLang.Tests.TestApp.SharedContext).Parse(doc.RootElement) as app.type.dict.@this;
 
         await Assert.That(result).IsNotNull();
         result!.Context = _app.User.Context;

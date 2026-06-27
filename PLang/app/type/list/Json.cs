@@ -32,16 +32,11 @@ public sealed class Json : JsonConverter<@this>
         writer.WriteEndArray();
     }
 
+    // Write-only projection. A list is never READ back through STJ — every read
+    // flows through the context-carrying path (the wire Reader for .pr/channels,
+    // json.Parse for a string typed `as json`). Refused loudly rather than
+    // silently producing a context-less value.
     public override @this Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
-    {
-        var element = JsonElement.ParseValue(ref reader);
-        // Store raw, type on read — the json entry parse builds a native list
-        // whose slots hold raw scalars / native sub-containers, not a Data per
-        // element. Empty/non-array falls back to an empty list. The parser is born
-        // with the context the channel options read toward (an attribute converter
-        // can't take it via ctor), so the list's elements are born-with-context.
-        var context = global::app.channel.serializer.json.Converter.On(options)
-            ?? throw new JsonException("A list deserialized through a JSON options bag with no plang context-carrying converter — context is required to born the value.");
-        return new global::app.type.item.serializer.json(context).Parse(element) as @this ?? new @this { Context = context };
-    }
+        => throw new System.NotSupportedException(
+            "A list is not read through STJ — read it through the context-carrying Reader (wire) or json.Parse.");
 }

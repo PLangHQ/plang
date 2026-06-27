@@ -26,21 +26,6 @@ public sealed class Converter : JsonConverterFactory
     public Converter() { _context = null; }
     public Converter(global::app.actor.context.@this context) { _context = context; }
 
-    // The context this serializer reads toward — the native dict/list converters
-    // (attribute-instantiated, so they can't take it via ctor) read it off the
-    // options to birth their parsed containers born-with-context.
-    public global::app.actor.context.@this? Context => _context;
-
-    /// <summary>The actor context carried by the <see cref="Converter"/> registered on
-    /// <paramref name="options"/> — the channel json options always register one. Null
-    /// only on a raw STJ options bag with no plang converter (no context to read toward).</summary>
-    public static global::app.actor.context.@this? On(System.Text.Json.JsonSerializerOptions options)
-    {
-        foreach (var converter in options.Converters)
-            if (converter is Converter plang) return plang.Context;
-        return null;
-    }
-
     // Only the abstract path.@this slot, matching exactly what the deleted
     // path.JsonConverter covered — concrete-subclass-typed slots fall through to
     // STJ default as they did before (no behavior change).
