@@ -351,7 +351,7 @@ public sealed class @this : IAsyncDisposable
                     if (defaultAttr != null)
                         desc += $" = {FormatDefault(defaultAttr.Value)}";
 
-                    parameters.Add(new data.@this(prop.Name, desc));
+                    parameters.Add(new data.@this(prop.Name, desc, context: App.System.Context));
                 }
 
                 // IChannel actions: source-gen reads action.Parameters["channel"] to resolve
