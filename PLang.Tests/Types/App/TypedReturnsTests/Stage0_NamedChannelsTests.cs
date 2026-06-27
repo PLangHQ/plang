@@ -55,7 +55,7 @@ public class Stage0_NamedChannelsTests
     public async Task Channels_NoOpSink_WriteSucceedsWithoutSubscribers()
     {
         var sink = Channels.Channel("nonexistent");
-        var result = await sink.WriteAsync(Data.Ok("payload"));
+        var result = await sink.WriteAsync(_app.Ok("payload"));
         await result.IsSuccess();
     }
 
@@ -123,15 +123,15 @@ public class Stage0_NamedChannelsTests
         var sink = Channels.Channel("builder");
         await Assert.That(sink).IsTypeOf<NoopChannel>();
 
-        var result = await sink.WriteAsync(Data.Ok(Warning("file.read", "msg")));
+        var result = await sink.WriteAsync(_app.Ok(Warning("file.read", "msg")));
 
         await result.IsSuccess();
     }
 
     // The build-warning payload shape: a native dict {action, message}, mirroring
     // what file.read writes to the "builder" channel.
-    private static global::app.type.dict.@this Warning(string action, string message)
-        => new global::app.type.dict.@this().Set("action", action).Set("message", message);
+    private global::app.type.dict.@this Warning(string action, string message)
+        => new global::app.type.dict.@this { Context = _app.User.Context }.Set("action", action).Set("message", message);
 
     // Two distinct channel names resolve to two distinct channel instances —
     // they are independent registry entries, not aliases. End-to-end isolation
