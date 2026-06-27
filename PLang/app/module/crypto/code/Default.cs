@@ -14,13 +14,6 @@ public class Default : ICrypto
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
-    // Context-less fallback — single source of truth lives on plang.@this so
-    // Transport.Compress and crypto.Hash never drift. Used by Hash when called
-    // outside of an actor scope (test fixtures, raw ICrypto consumers);
-    // production goes through the registered serializer.
-    private static global::app.channel.serializer.plang.@this _fallbackPlang
-        => global::app.channel.serializer.plang.@this.ContextLessFallback;
-
     public async Task<data.@this<global::app.module.crypto.type.hash.@this>> Hash(Hash action)
     {
         var data = action.Data;
@@ -55,7 +48,8 @@ public class Default : ICrypto
                 return action.Context.Error<global::app.module.crypto.type.hash.@this>(new ActionError(
                     "Registered application/plang serializer is not the canonical plang.@this; hash bytes would diverge from wire bytes.",
                     "SerializerMismatch", 500));
-            var serializer = (registered as global::app.channel.serializer.plang.@this) ?? _fallbackPlang;
+            var serializer = (registered as global::app.channel.serializer.plang.@this)
+                             ?? new global::app.channel.serializer.plang.@this(action.Context);
             // The value writes its OWN canonical bytes via data.Output — deterministic (fixed
             // key order, entries insertion-order); sign and verify both run it, so they agree
             // regardless of the wire format. View.Out omits the binding name (hash is name-

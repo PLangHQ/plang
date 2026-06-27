@@ -50,7 +50,7 @@ public class MutationInvalidatesRawTests
         var d = data.FromRaw("{\"port\":8080}", type.Create("object", "json", context: ctx), ctx, "cfg");
         d.SetValue("mutated");   // mutation clears _raw — raw is no longer authoritative
 
-        var wire = (await global::app.channel.serializer.plang.@this.ContextLessFallback.Serialize(d).Value())!.Clr<string>()!;
+        var wire = (await new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext).Serialize(d).Value())!.Clr<string>()!;
         await Assert.That(wire).Contains("\"value\":\"mutated\""); // renderer output
         await Assert.That(wire).DoesNotContain("8080");           // not the stale raw
     }

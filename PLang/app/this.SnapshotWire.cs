@@ -23,13 +23,18 @@ public sealed partial class @this
         => s.Serialize(CurrentActor.Context);
 
     /// <summary>
-    /// Parses a JSON string back into a snapshot tree
-    /// (<see cref="global::app.snapshot.@this.Deserialize"/>). The result is the
-    /// same in-memory shape <see cref="Snapshot()"/> produces, so
-    /// <see cref="Restore"/> consumes it unchanged.
+    /// Parses a JSON string back into a snapshot tree through the value door — the
+    /// json rides as a <c>Data</c> in the current actor context and is asked for
+    /// <c>snapshot</c>, dispatching to <see cref="global::app.snapshot.@this.Create"/>
+    /// (born-with-context). The result is the same in-memory shape <see cref="Snapshot()"/>
+    /// produces, so <see cref="Restore"/> consumes it unchanged.
     /// </summary>
-    public global::app.snapshot.@this SnapshotFromWire(string json)
-        => global::app.snapshot.@this.Deserialize(json, CurrentActor.Context);
+    public async Task<global::app.snapshot.@this> SnapshotFromWire(string json)
+    {
+        var wire = new global::app.data.@this("", json, context: CurrentActor.Context);
+        return await wire.Value<global::app.snapshot.@this>()
+            ?? throw new System.InvalidOperationException("Snapshot could not be rebuilt from wire JSON");
+    }
 
     /// <summary>
     /// Load-and-resume from a stored snapshot's wire JSON: parse → <see cref="Restore"/>
@@ -38,6 +43,6 @@ public sealed partial class @this
     /// no live LLM. The caller reads the <c>.snapshot</c> file through the path
     /// verbs and hands the string here (System.IO stays out of the engine).
     /// </summary>
-    public Task<global::app.data.@this> ResumeFromWire(string json, global::app.actor.context.@this context)
-        => SnapshotFromWire(json).Resume(context);
+    public async Task<global::app.data.@this> ResumeFromWire(string json, global::app.actor.context.@this context)
+        => await (await SnapshotFromWire(json)).Resume(context);
 }

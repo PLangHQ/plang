@@ -50,7 +50,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
 
     [Test] public async Task WireConverter_Read_RandomJsonMissingReservedFields_ProducesTypedFailure()
     {
-        var plang = new global::app.channel.serializer.plang.@this();
+        var plang = new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext);
         // A JSON object with none of the reserved fields — Read parses, but
         // produces an effectively-empty Data (the converter ignores unknown
         // top-level fields). Typed-failure here means the call doesn't throw;

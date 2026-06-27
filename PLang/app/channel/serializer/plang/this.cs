@@ -51,13 +51,15 @@ public sealed class @this : ISerializer
     private readonly JsonSerializerOptions _store;
     private readonly JsonSerializerOptions _snapshot;
 
-    public @this() : this(null) { }
+    // The serializer is born with the actor context it writes toward — it never
+    // reaches into the data it is handed for a context. A data crossing this
+    // (per-actor) serializer belongs to this same context.
+    private readonly actor.context.@this _context;
 
-    public @this(actor.context.@this? context)
+    public @this(actor.context.@this context)
     {
-        var pathConverter = context != null
-            ? new global::app.channel.serializer.json.Converter(context)
-            : new global::app.channel.serializer.json.Converter();
+        _context = context;
+        var pathConverter = new global::app.channel.serializer.json.Converter(context);
 
         // Pass context so a lazily-deferred value slot read back through this
         // (per-actor) serializer carries the context it needs to materialize.
@@ -132,15 +134,6 @@ public sealed class @this : ISerializer
     internal JsonSerializerOptions SnapshotOptions => _snapshot;
 
     /// <summary>
-    /// Context-less fallback instance — used by callers (crypto.Hash,
-    /// Data.CompressAsync/DecompressAsync) that may run outside an actor
-    /// scope and still need the canonical wire shape. Single source of truth
-    /// so both Hash and Transport route through the same OutboundOptions
-    /// (no drift if the construction recipe changes).
-    /// </summary>
-    public static readonly @this ContextLessFallback = new @this();
-
-    /// <summary>
     /// View-aware stream write — the one place a Data drives its own wire via data.Output
     /// (Out = transport, Store = local persistence). Lazy refs are materialized up-front
     /// (await Load) so data.Output never meets an unresolved reference.
@@ -155,29 +148,29 @@ public sealed class @this : ISerializer
             // Sign-if-missing at the I/O boundary — a clean await. A Data crossing
             // application/plang in a real actor scope is wrapped in ONE signature layer;
             // skipped when no actor (internal serialize) or already a layer.
-            if (data.Context?.Actor != null && data.Peek() is not global::app.type.signature.@this)
+            if (_context.Actor != null && data.Peek() is not global::app.type.signature.@this)
             {
-                var signResult = await data.Context.App.RunAction(
-                    new app.module.signing.sign { Data = data }, data.Context);
+                var signResult = await _context.App.RunAction(
+                    new app.module.signing.sign { Data = data }, _context);
                 if (signResult.Success) data = signResult;
             }
             var options = view == global::app.View.Store ? _store : _outbound;
             await using var utf8 = new Utf8JsonWriter(stream);
             var writer = new global::app.channel.serializer.json.Writer(
-                utf8, options, view, data.Context?.App?.Type?.Renderers, emitsSchema: true);
+                utf8, options, view, _context.App.Type.Renderers, emitsSchema: true);
             // A layer (signature) writes its OWN @schema:<kind> envelope; a plain Data
             // writes the @schema:data layer. The layer-vs-data choice lives here, at the
             // serializer boundary — data.Output stays clean (@schema:data only).
             if (data.Peek() is global::app.type.signature.@this sig)
-                await sig.Output(writer, view, data.Context);
+                await sig.Output(writer, view, _context);
             else
-                await data.Output(writer, view, data.Context, layer: true);
+                await data.Output(writer, view, _context, layer: true);
             await utf8.FlushAsync(cancellationToken);
-            return data.Context.Ok();
+            return _context.Ok();
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
         {
-            return data.Context.Error(new error.ServiceError(
+            return _context.Error(new error.ServiceError(
                 $"Plang serialize failed: {ex.Message}", "PlangSerializeError", 400) { Exception = ex });
         }
     }
@@ -186,16 +179,16 @@ public sealed class @this : ISerializer
     {
         try
         {
-            if (stream.CanSeek && stream.Length == 0) return global::app.data.@this.Ok();
+            if (stream.CanSeek && stream.Length == 0) return _context.Ok();
             // The container IS a Data — return the reconstruction itself, never
             // an Ok envelope around it (the bare-Data double-wrap the store seam rejects).
             var options = view == global::app.View.Store ? _store : _inbound;
             var v = await JsonSerializer.DeserializeAsync<global::app.data.@this>(stream, options, cancellationToken);
-            return v ?? global::app.data.@this.Ok();
+            return v ?? _context.Ok();
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
         {
-            return global::app.data.@this.FromError(new error.ServiceError(
+            return _context.Error(new error.ServiceError(
                 $"Plang deserialize failed: {ex.Message}", "PlangDeserializeError", 400) { Exception = ex });
         }
     }

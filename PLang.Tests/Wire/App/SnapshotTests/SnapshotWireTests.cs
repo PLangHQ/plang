@@ -9,8 +9,8 @@ namespace PLang.Tests.App.SnapshotTests;
 /// </summary>
 public class SnapshotWireTests
 {
-    private static global::app.snapshot.@this RoundTrip(global::app.@this app, global::app.snapshot.@this snap)
-        => app.SnapshotFromWire(app.SnapshotToWire(snap));
+    private static async Task<global::app.snapshot.@this> RoundTrip(global::app.@this app, global::app.snapshot.@this snap)
+        => await app.SnapshotFromWire(app.SnapshotToWire(snap));
 
     [Test]
     public async Task Variables_SurviveWireRoundTrip_WithValueAndType()
@@ -19,7 +19,7 @@ public class SnapshotWireTests
         src.User.Context.Variable.Set("count", 42L);
         src.User.Context.Variable.Set("name", "plang");
 
-        var wired = RoundTrip(src, src.Snapshot());
+        var wired = await RoundTrip(src, src.Snapshot());
 
         var dst = global::PLang.Tests.TestApp.Create("/dst");
         dst.Restore(wired, dst.User.Context);
@@ -35,7 +35,7 @@ public class SnapshotWireTests
         src.Builder.IsEnabled = true;
         src.Tester.IsEnabled = true;
 
-        var wired = RoundTrip(src, src.Snapshot());
+        var wired = await RoundTrip(src, src.Snapshot());
 
         var dst = global::PLang.Tests.TestApp.Create("/dst");
         dst.Restore(wired, dst.User.Context);
@@ -54,7 +54,7 @@ public class SnapshotWireTests
         using (src.Error.Push(e1)) { }
         using (src.Error.Push(e2)) { }
 
-        var wired = RoundTrip(src, src.Snapshot());
+        var wired = await RoundTrip(src, src.Snapshot());
 
         var dst = global::PLang.Tests.TestApp.Create("/dst");
         dst.Restore(wired, dst.User.Context);
@@ -90,7 +90,7 @@ public class SnapshotWireTests
         frames.Add(f);
         cs.Write("frames", frames);
 
-        var wired = RoundTrip(src, snap);
+        var wired = await RoundTrip(src, snap);
 
         var rf = wired.Section("CallStack").Read<List<global::app.snapshot.@this>>("frames")!;
         await Assert.That(rf.Count).IsEqualTo(1);
@@ -228,7 +228,7 @@ public class SnapshotWireTests
 
         // Round-trip through the disk string, then patch %i% 1 → 2 (the fix the
         // operator/builder makes — the C# stand-in for `set %snap.variable.i% = 2`).
-        var snap = global::app.snapshot.@this.Deserialize(json, context);
+        var snap = (await new global::app.data.@this("", json, context: context).Value<global::app.snapshot.@this>())!;
         var vars = snap.Section("Variables").Read<List<global::app.data.@this>>("variables")!;
         var iVar = vars.First(v => v.Name == "i");
         iVar.SetValue(2L);
@@ -411,7 +411,7 @@ public class SnapshotWireTests
         }
 
         // Read the snapshot back as a value, bind it under %snap%.
-        var snap = global::app.snapshot.@this.Deserialize(json, context);
+        var snap = (await new global::app.data.@this("", json, context: context).Value<global::app.snapshot.@this>())!;
         context.Variable.Set("snap", snap);
 
         // Navigate + read: %snap.variables.x% is 1.
@@ -436,7 +436,7 @@ public class SnapshotWireTests
         await Assert.That(json.StartsWith("{")).IsTrue();
 
         var dst = global::PLang.Tests.TestApp.Create("/dst");
-        dst.Restore(src.SnapshotFromWire(json), dst.User.Context);
+        dst.Restore(await src.SnapshotFromWire(json), dst.User.Context);
 
         await Assert.That(dst.Builder.IsEnabled).IsFalse();
     }

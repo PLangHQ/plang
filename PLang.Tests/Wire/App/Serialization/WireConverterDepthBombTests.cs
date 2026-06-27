@@ -25,7 +25,7 @@ public class WireConverterDepthBombTests
     [Test] public async Task Deserialize_ShallowNesting_StillWorks()
     {
         // Sanity: 16-level nesting is within budget and round-trips.
-        var plang = new global::app.channel.serializer.plang.@this();
+        var plang = new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext);
         var json = DeeplyNestedWireJson(16);
         var result = plang.Deserialize(json);
         await result.IsSuccess();
@@ -36,7 +36,7 @@ public class WireConverterDepthBombTests
         // 200 levels: well past the 64-level cap. Must surface a typed
         // PlangDeserializeError, NOT a StackOverflowException (which would
         // unrecoverably crash the test process).
-        var plang = new global::app.channel.serializer.plang.@this();
+        var plang = new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext);
         var json = DeeplyNestedWireJson(200);
         var result = plang.Deserialize(json);
         await result.IsFailure();
@@ -46,7 +46,7 @@ public class WireConverterDepthBombTests
     [Test] public async Task Deserialize_DepthBomb_FromStream_RejectsAsTypedError()
     {
         // Same shape, async-stream path — covers the DeserializeAsync entry too.
-        var plang = new global::app.channel.serializer.plang.@this();
+        var plang = new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext);
         var json = DeeplyNestedWireJson(200);
         var bytes = Encoding.UTF8.GetBytes(json);
         using var ms = new MemoryStream(bytes);

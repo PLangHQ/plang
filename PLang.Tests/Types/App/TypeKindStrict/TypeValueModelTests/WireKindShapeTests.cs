@@ -10,10 +10,10 @@ namespace PLang.Tests.App.TypeKindStrict.TypeValueModelTests;
 public class WireKindShapeTests
 {
     private static JsonSerializerOptions Options
-        => global::app.channel.serializer.plang.@this.ContextLessFallback
+        => new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext)
             .GetType()
             .GetField("_outbound", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
-            .GetValue(global::app.channel.serializer.plang.@this.ContextLessFallback)
+            .GetValue(new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext))
             as JsonSerializerOptions
             ?? throw new System.InvalidOperationException("could not access plang outbound options");
 

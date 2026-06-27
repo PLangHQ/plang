@@ -96,8 +96,7 @@ public class LoadSeamTests
         var img = PathBackedPng("out.png");
         using var ms = new System.IO.MemoryStream();
 
-        var result = await global::app.channel.serializer.plang.@this
-            .ContextLessFallback.SerializeAsync(ms, Data.Ok(img));
+        var result = await new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext).SerializeAsync(ms, Data.Ok(img));
         await result.IsSuccess();
 
         var json = Encoding.UTF8.GetString(ms.ToArray());
@@ -111,8 +110,7 @@ public class LoadSeamTests
         img.RequireStrictKind("gif");
         using var ms = new System.IO.MemoryStream();
 
-        var result = await global::app.channel.serializer.plang.@this
-            .ContextLessFallback.SerializeAsync(ms, Data.Ok(img));
+        var result = await new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext).SerializeAsync(ms, Data.Ok(img));
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("StrictKindMismatch");

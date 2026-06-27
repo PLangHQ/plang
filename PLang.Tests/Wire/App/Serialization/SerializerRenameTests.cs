@@ -14,7 +14,7 @@ public class SerializerRenameTests
     // 1.3 — serializer.Type returns the MIME string on each concrete serializer.
     [Test] public async Task Type_OnPlangSerializer_ReturnsApplicationPlang()
     {
-        var s = new global::app.channel.serializer.plang.@this();
+        var s = new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(s.Type).IsEqualTo("application/plang");
     }
 
@@ -33,7 +33,7 @@ public class SerializerRenameTests
     // 1.4 — serializer.Extension returns the dotted extension on each concrete serializer.
     [Test] public async Task Extension_OnPlangSerializer_ReturnsDotPlang()
     {
-        var s = new global::app.channel.serializer.plang.@this();
+        var s = new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(s.Extension).IsEqualTo(".plang");
     }
 

@@ -36,23 +36,29 @@ public sealed partial class @this
     }
 
     /// <summary>
-    /// Reconstructs a snapshot tree from its wire string. The result is the same
-    /// in-memory shape <see cref="global::app.@this.Snapshot"/> produces, so
-    /// <see cref="global::app.@this.Restore"/> consumes it unchanged. The wire is
-    /// the Data envelope <c>{name, type, value:{…sections…}}</c>; the sections
-    /// object is read back per-section (the owner's type knowledge rebuilds each).
+    /// The born-with-context creation door (<c>Data.Value&lt;snapshot&gt;</c> dispatches
+    /// here): rebuilds a snapshot tree from its wire string, born in the asking
+    /// binding's context (<paramref name="asking"/><c>.Context</c> — never a loose
+    /// static context param). The result is the same in-memory shape
+    /// <see cref="global::app.@this.Snapshot"/> produces, so <see cref="global::app.@this.Restore"/>
+    /// consumes it unchanged. The wire is the Data envelope
+    /// <c>{name, type, value:{…sections…}}</c>; each section is read back by its owner.
     /// </summary>
-    public static @this Deserialize(string json, global::app.actor.context.@this? context = null)
+    public static @this? Create(global::app.type.item.@this value, global::app.data.@this asking)
     {
-        var opts = WireOptions(context);
+        if (value is @this self) return self;
+        string? json = value.Clr<string>();
+        if (string.IsNullOrEmpty(json)) return null;
+
+        var opts = new global::app.channel.serializer.plang.@this(asking.Context).SnapshotOptions;
         var parsed = JsonNode.Parse(json)?.AsObject()
             ?? throw new JsonException("Snapshot wire root is not a JSON object");
         // Envelope-tolerant: file.save serializes the snapshot as ONE Data
         // envelope ({name,type,value:{…sections…}}); peel that single layer to
         // the section object. (A double envelope would mean a Data was wrapped
         // in another Data upstream — that's a bug to fix at the source, not here.)
-        var root = parsed["value"] is JsonObject value && parsed.ContainsKey("type")
-            ? value
+        var root = parsed["value"] is JsonObject inner && parsed.ContainsKey("type")
+            ? inner
             : parsed;
         var s = new @this();
 
@@ -72,19 +78,4 @@ public sealed partial class @this
 
         return s;
     }
-
-    /// <summary>
-    /// The conversion seam <c>Data.As&lt;snapshot&gt;</c> reaches through the type
-    /// registry — a string-shaped value (the wire JSON read off disk) rebuilds
-    /// into the snapshot object. Kind is unused. Context-less: uses the
-    /// fallback serializer recipe (the wire carries no actor-bound state that
-    /// needs a live context to rehydrate).
-    /// </summary>
-    public static object? FromWire(string raw, string? kind)
-        => string.IsNullOrEmpty(raw) ? null : Deserialize(raw);
-
-    private static JsonSerializerOptions WireOptions(global::app.actor.context.@this? context)
-        => context != null
-            ? new global::app.channel.serializer.plang.@this(context).SnapshotOptions
-            : global::app.channel.serializer.plang.@this.ContextLessFallback.SnapshotOptions;
 }
