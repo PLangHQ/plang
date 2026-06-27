@@ -50,7 +50,7 @@ public partial class @this
             var askAction = new module.output.ask
             {
                 Context = Context,
-                Question = new data.@this<global::app.type.text.@this>("", question),
+                Question = new data.@this<global::app.type.text.@this>("", question, context: Context),
             };
             var askResult = await Context!.App.RunAction(askAction, Context);
 
