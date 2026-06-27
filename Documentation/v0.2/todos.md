@@ -1364,3 +1364,46 @@ clear choice: `LoadAll` returns `Data<list>`, and the 5 callers keep clean LINQ
 Wrinkle to resolve: `Value<T>()` is async but LINQ `Where` is sync — so list<T> needs a SYNC
 materialization path for enumeration (Peek<T>-based) or an async-LINQ surface. Settle that when
 doing the refactor; with it, (a) wins cleanly.
+
+---
+
+## 2026-06-27 — app.pr as signed app/code identity (the trust anchor for goals), distinct from the runtime actor identity
+
+Deferred out of the `context-never-null` Stage 5 (authenticity) — too big for that branch; the
+architect's Stage-5 model (`layer.Identity == Context.Actor.Identity`) is **wrong for code** and
+needs its own design pass.
+
+**The realization (Ingi):** the key that signs the *code* and the key that signs *runtime data*
+are two different identities with two different lifetimes:
+
+| | signs | lives in | travels with the app? |
+|---|---|---|---|
+| **App / developer identity** | goals + `.pr` at build time | **app.pr** (the app's published identity = the dev's public key) | **yes** — it *is* the app |
+| **Runtime actor identity** | runtime data the deployment produces | the deployment's sqlite (`/.db/system.sqlite`, `Identity` table) | **no** — regenerated per server |
+
+**Why `Context.Actor.Identity` is wrong for goals:** you build the app on your machine (your private
+key signs the goals), publish to a server, the server generates a *new* db key. Verifying a goal
+against the server's db key would reject your own legitimately-signed goals. So **code must verify
+against the app identity in app.pr**, not the reading actor's db key.
+
+**What this buys (the requirement):** "you can't just drop a goal file in without it being signed by
+the user." Falls out naturally — a foreign goal has a *valid* signature but `layer.Identity ≠
+app.pr's developer key` → rejected; unsigned → no signature layer → rejected.
+
+**Open design points to settle when implementing:**
+- **app.pr must carry the developer/app public key** (today it only has `id`/`name`/`created`/`version`).
+  app.pr becomes the self-signed root that ships with the app (pubkey + metadata).
+- The bootstrap **dependency cycle**: app.pr → `Id` → locates the settings store → holds the runtime
+  keypair → … . app.pr is read *before* any keypair is locatable, so it's the one artifact that can't
+  be verify-before-read normally — it's a self-signed root (verified against a key embedded in itself),
+  or read-raw-then-re-verify once a key is in memory.
+- The verify-on-read path must choose the expected identity by **what is being read** (code → app.pr
+  key; runtime data → actor db key), not by **who is reading**. That's a different shape than the
+  architect's single `Context.Actor.Identity` match.
+- Make app.pr **signed** on write (`app.@this.Save`, this.cs:409) and **verified** on read
+  (`app.@this.Load`, this.cs:373) — today it is neither.
+
+**Also (smaller, same area):** `app.@this.Load` reads app.pr as **raw JSON** via a `ReadText()` →
+`ReadBytes()` fallback, because app.pr is not a goal so the `.pr`→Goal MIME materialization doesn't
+hand back the JSON object and it falls through to raw bytes + `JsonDocument.Parse`. Clean this up when
+app.pr gets a real typed read path (it shouldn't be riding the goal-MIME path and falling back).
