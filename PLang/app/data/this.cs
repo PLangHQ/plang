@@ -211,6 +211,12 @@ public partial class @this
                 // which Build does not yet handle).
                 _type = type.Judge(_type);
         }
+
+        // A native container built by json.Parse arrives as a context-less passthrough
+        // item (Create returns an already-item unchanged). Stamp this Data's context
+        // onto the value so its entries/elements are born-with-context on navigation.
+        if (_context != null && _type is module.IContext valueContext && valueContext.Context == null)
+            valueContext.Context = _context;
     }
 
     /// <summary>
