@@ -223,7 +223,7 @@ public partial class @this
                 throw CycleError(nativeDict);
             try
             {
-                var copy = new app.type.dict.@this();
+                var copy = new app.type.dict.@this { Context = types?.Context };
                 foreach (var entry in nativeDict.Entries)
                     copy.Set(Entry(entry.Name, NormalizeValue(entry.Peek(), mode, visited, depth + 1, types), types));
                 return copy;
@@ -247,7 +247,7 @@ public partial class @this
                     // boxes) — re-boxing would nest a bare Data.
                     var normalized = NormalizeValue(e.Value, mode, visited, depth + 1, types);
                     if (normalized is @this nd) { nd.Name = name; built.Set(nd); }
-                    else built.Set(new @this(name, normalized));
+                    else built.Set(new @this(name, normalized, context: types?.Context));
                 }
                 return built;
             }
@@ -264,7 +264,7 @@ public partial class @this
                 throw CycleError(nativeList);
             try
             {
-                var copy = new app.type.list.@this();
+                var copy = new app.type.list.@this { Context = types?.Context };
                 foreach (var item in nativeList.Items)
                     copy.Add((@this)NormalizeValue(item, mode, visited, depth + 1, types)!);
                 return copy;
