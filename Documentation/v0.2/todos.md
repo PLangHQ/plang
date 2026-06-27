@@ -1407,3 +1407,18 @@ app.pr's developer key` → rejected; unsigned → no signature layer → reject
 `ReadBytes()` fallback, because app.pr is not a goal so the `.pr`→Goal MIME materialization doesn't
 hand back the JSON object and it falls through to raw bytes + `JsonDocument.Parse`. Clean this up when
 app.pr gets a real typed read path (it shouldn't be riding the goal-MIME path and falling back).
+
+---
+
+## 2026-06-27 — code providers (IHttp/ISigning/IIdentity/ICrypto/…) should implement IContext via source-gen
+
+Today code providers reach context per-call through `action.Context` and thread it down through
+helper methods as a parameter (e.g. http's `ParsePlangResponseAsync(..., actor.context.@this context, …)`).
+A provider is per-actor, so it could be **born with its context** the same way action handlers are:
+have the source generator give each code provider `Context` (implement `IContext`), so providers stop
+threading `action.Context` through every internal helper and stop keeping context-less static option
+bags (http's static `_transportInOptions` is the tell — it can't be context-ful because the field
+predates any context). Surfaced while eliminating `WireLocal` (the context-less `Data` STJ converter):
+http inbound needed a context to deserialize a `Data`, and the clean shape is "the provider has one,"
+not "thread it in." Bounded by: which providers, and whether the gen hook mirrors the action-handler
+`IContext` partial exactly.
