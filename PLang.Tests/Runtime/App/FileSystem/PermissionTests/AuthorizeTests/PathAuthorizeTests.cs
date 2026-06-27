@@ -36,7 +36,7 @@ public class PathAuthorizeTests
             global::app.module.output.ask action, CancellationToken ct = default)
         {
             var ans = _idx < Answers.Length ? Answers[_idx++] : "";
-            return Task.FromResult(global::app.data.@this.Ok(ans));
+            return Task.FromResult(action.Context.Ok(ans));
         }
     }
 
