@@ -37,7 +37,11 @@ public sealed class Json : JsonConverter<@this>
         var element = JsonElement.ParseValue(ref reader);
         // Store raw, type on read — the json entry parse builds a native list
         // whose slots hold raw scalars / native sub-containers, not a Data per
-        // element. Empty/non-array falls back to an empty list.
-        return global::app.type.item.serializer.json.Parse(element) as @this ?? new @this();
+        // element. Empty/non-array falls back to an empty list. The parser is born
+        // with the context the channel options read toward (an attribute converter
+        // can't take it via ctor), so the list's elements are born-with-context.
+        var context = global::app.channel.serializer.json.Converter.On(options)
+            ?? throw new JsonException("A list deserialized through a JSON options bag with no plang context-carrying converter — context is required to born the value.");
+        return new global::app.type.item.serializer.json(context).Parse(element) as @this ?? new @this { Context = context };
     }
 }

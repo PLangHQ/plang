@@ -131,14 +131,12 @@ public class CommandLineParser
 			var element = doc.RootElement;
 			return element.ValueKind switch
 			{
-				// CLI config is infra (a flag property bag, not a PLang value), so
-				// keep it as a raw Dictionary/List rather than the native dict/list
-				// value types — the --debug/--test/--app consumers branch on
-				// IDictionary<string,object?>. Object and array stay symmetric: both
-				// decompose to raw via Clr<object> (the dict/list CLR exit door, which
-				// recurses nested elements through each element's own Clr).
-				JsonValueKind.Object => ((app.type.dict.@this)app.type.item.serializer.json.Parse(element)!).Clr<object>(),
-				JsonValueKind.Array => ((app.type.list.@this)app.type.item.serializer.json.Parse(element)!).Clr<object>(),
+				// CLI config is infra (a flag property bag, not a PLang value), parsed
+				// pre-app with no actor context, so it walks straight to a raw
+				// Dictionary/List rather than the native dict/list value types — the
+				// --debug/--test/--app consumers branch on IDictionary<string,object?>.
+				JsonValueKind.Object => ElementToRaw(element),
+				JsonValueKind.Array => ElementToRaw(element),
 				JsonValueKind.Number => element.TryGetInt64(out var l) ? (object)l : element.GetDouble(),
 				JsonValueKind.True => true,
 				JsonValueKind.False => false,
@@ -153,4 +151,20 @@ public class CommandLineParser
 			return rawValue;
 		}
 	}
+
+	// A JSON element to a fully-raw CLR tree (Dictionary/List of raw scalars). No
+	// actor context exists yet at CLI-parse time, so this stays off the native
+	// value-type path entirely — the flag bag is infra, never a PLang value.
+	private static object? ElementToRaw(JsonElement element) => element.ValueKind switch
+	{
+		JsonValueKind.Object => element.EnumerateObject()
+			.ToDictionary(p => p.Name, p => ElementToRaw(p.Value)),
+		JsonValueKind.Array => element.EnumerateArray()
+			.Select(ElementToRaw).ToList(),
+		JsonValueKind.String => element.GetString(),
+		JsonValueKind.Number => element.TryGetInt64(out var l) ? (object)l : element.GetDouble(),
+		JsonValueKind.True => true,
+		JsonValueKind.False => false,
+		_ => null,
+	};
 }

@@ -43,7 +43,7 @@ public sealed class Default : IEvaluator
         }
         catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)
         {
-            return EvaluationError(left, (await operatorData.Value())!, right, ex);
+            return EvaluationError(operatorData.Context, left, (await operatorData.Value())!, right, ex);
         }
     }
 
@@ -61,12 +61,12 @@ public sealed class Default : IEvaluator
         return d;
     }
 
-    private static data.@this<global::app.type.@bool.@this> EvaluationError(data.@this? left, Operator op, data.@this? right, Exception ex)
+    private static data.@this<global::app.type.@bool.@this> EvaluationError(global::app.actor.context.@this ctx, data.@this? left, Operator op, data.@this? right, Exception ex)
     {
         var leftType = left?.Peek()?.GetType().Name ?? "null";
         var rightType = right?.Peek()?.GetType().Name ?? "null";
 
-        return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ValidationError(
+        return ctx.Error<global::app.type.@bool.@this>(new ValidationError(
             $"Condition evaluation failed: '{left?.Peek()}' ({leftType}) {op.Value} '{right?.Peek()}' ({rightType}) — {ex.Message}",
             "EvaluationError")
         {

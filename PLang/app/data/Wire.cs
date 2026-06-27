@@ -437,7 +437,7 @@ public class Wire : JsonConverter<@this>
                         }
                         // A declared type with no reader: born its natural value (scalar
                         // wrapper / native dict-list / reconstructed Data) in one pass.
-                        value = global::app.type.item.serializer.json.Parse(vdoc.RootElement);
+                        value = new global::app.type.item.serializer.json(_context).Parse(vdoc.RootElement);
                     }
                     break;
                 case "properties":

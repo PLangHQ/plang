@@ -383,7 +383,7 @@ public sealed class @this : item.@this
             return new global::app.type.dict.@this(objDict) { Context = context! };
         if (raw is System.Collections.IDictionary
             || (raw is System.Collections.IList && raw is not byte[]))
-            return global::app.type.item.serializer.json.Parse(
+            return new global::app.type.item.serializer.json(context).Parse(
                        System.Text.Json.JsonSerializer.SerializeToElement(raw))
                    as global::app.type.item.@this
                ?? throw new System.InvalidOperationException(
@@ -502,7 +502,7 @@ public sealed class @this : item.@this
             return Create(read, ctx);
 
         // No reader (object / untyped): lift the raw to its natural instance.
-        return Create(global::app.type.item.serializer.json.Parse(raw), ctx);
+        return Create(new global::app.type.item.serializer.json(ctx).Parse(raw), ctx);
     }
 
     internal item.@this Judge(item.@this value)
@@ -579,7 +579,7 @@ public sealed class @this : item.@this
             // object narrows to `dict` on first touch.
             var parsed = JsonSerializer.Deserialize<object?>(raw,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            return item.serializer.json.Parse(parsed);
+            return new item.serializer.json(Context!).Parse(parsed);
         }
 
         // Kinded scalar read-back: a string-shaped type whose value carries a

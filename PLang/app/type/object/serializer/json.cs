@@ -30,6 +30,6 @@ public static class json
         // parse — leaving JsonElement values would re-serialize as their
         // reflection shape ({"valueKind":...}) and navigate awkwardly.
         var parsed = JsonSerializer.Deserialize<object?>(s, _opts);
-        return global::app.type.item.serializer.json.Parse(parsed);
+        return new global::app.type.item.serializer.json(ctx.Context).Parse(parsed);
     }
 }

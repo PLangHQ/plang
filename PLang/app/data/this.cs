@@ -182,7 +182,7 @@ public partial class @this
         // The value is born WITH this Data's context — never context-less then
         // stamped. A value with no context can't reach its renderer/reader and
         // falls through to a clr carrier.
-        _type = global::app.type.@this.Create(global::app.type.item.serializer.json.Parse(value), _context);
+        _type = global::app.type.@this.Create(new global::app.type.item.serializer.json(_context).Parse(value), _context);
         Parent = parent;
         Path = BuildPath(parent, Name);
         IsInitialized = true;
@@ -211,12 +211,6 @@ public partial class @this
                 // which Build does not yet handle).
                 _type = type.Judge(_type);
         }
-
-        // A native container built by json.Parse arrives as a context-less passthrough
-        // item (Create returns an already-item unchanged). Stamp this Data's context
-        // onto the value so its entries/elements are born-with-context on navigation.
-        if (_context != null && _type is module.IContext valueContext && valueContext.Context == null)
-            valueContext.Context = _context;
     }
 
     /// <summary>
@@ -305,7 +299,7 @@ public partial class @this
     /// </summary>
     public virtual void SetValue(object? value)
     {
-        _type = global::app.type.@this.Create(global::app.type.item.serializer.json.Parse(value), _context);
+        _type = global::app.type.@this.Create(new global::app.type.item.serializer.json(_context).Parse(value), _context);
         Updated = System.DateTime.UtcNow;
         IsInitialized = true;
         if (_type is module.IContext contextual)
@@ -761,7 +755,7 @@ public partial class @this
         // named value. The type decides how to become itself; Data just holds it.
         var instance = typeEntity is { IsNull: false } && !typeEntity.Polymorphic
             ? typeEntity.Deserialize(innerValue, context)
-            : global::app.type.@this.Create(global::app.type.item.serializer.json.Parse(innerValue), context);
+            : global::app.type.@this.Create(new global::app.type.item.serializer.json(context).Parse(innerValue), context);
         return new @this(name, instance, context: context);
     }
 

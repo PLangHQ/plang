@@ -6,8 +6,15 @@ namespace app.type.item.serializer;
 /// stamps <c>{item, json}</c> and materializes through <c>(item, json)</c> here. Same
 /// json-string → CLR decode as the <c>(object, json)</c> reader — delegated, one pipeline.
 /// </summary>
-public static partial class json
+public partial class json
 {
+    // The parser is born with the context it births values from — a parsed native
+    // dict/list carries this context, so its entries/elements are born-with-context
+    // when read. No threading: the context rides the parser, set once at construction.
+    private readonly actor.context.@this _context;
+
+    public json(actor.context.@this context) => _context = context;
+
     public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
         => global::app.type.@object.serializer.json.Read(raw, kind, ctx);
 
@@ -31,7 +38,7 @@ public static partial class json
     /// via <c>RawValue()</c> (the structured minority). Cursor lands on the value's
     /// last token, per the reader contract.
     /// </summary>
-    internal static object? ReadSlot<TReader>(ref TReader reader,
+    internal object? ReadSlot<TReader>(ref TReader reader,
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
         => reader.Peek() switch
@@ -55,13 +62,13 @@ public static partial class json
             ? new text.@this(s, ctx.Template)
             : s;
 
-    private static object? ParseRaw(byte[] utf8)
+    private object? ParseRaw(byte[] utf8)
     {
         using var doc = System.Text.Json.JsonDocument.Parse(utf8);
         return Parse(doc.RootElement);
     }
 
-    internal static object? Parse(object? value, int depth = 0)
+    internal object? Parse(object? value, int depth = 0)
     {
         if (depth > MaxDepth)
             throw new System.InvalidOperationException($"JSON nesting exceeds maximum depth ({MaxDepth})");
@@ -113,17 +120,17 @@ public static partial class json
     // types itself when something reads it (the container's normalize-on-read).
     // A `@schema:data`-marked element is the one place a Data rides — it carries
     // its own type/signature, so it reconstructs as a Data straight into the slot.
-    private static dict.@this ObjectLeaf(System.Text.Json.JsonElement element, int depth)
+    private dict.@this ObjectLeaf(System.Text.Json.JsonElement element, int depth)
     {
-        var d = new dict.@this();
+        var d = new dict.@this { Context = _context };
         foreach (var prop in element.EnumerateObject())
             d.Set(prop.Name, RawSlot(prop.Value, depth + 1));
         return d;
     }
 
-    private static list.@this ArrayLeaf(System.Text.Json.JsonElement element, int depth)
+    private list.@this ArrayLeaf(System.Text.Json.JsonElement element, int depth)
     {
-        var l = new list.@this();
+        var l = new list.@this { Context = _context };
         foreach (var item in element.EnumerateArray())
             l.AddRaw(RawSlot(item, depth + 1));
         return l;
@@ -131,7 +138,7 @@ public static partial class json
 
     // One container slot from a json token — raw scalar, native sub-container
     // (itself lazy), or a reconstructed Data for a marked element.
-    private static object? RawSlot(System.Text.Json.JsonElement element, int depth)
+    private object? RawSlot(System.Text.Json.JsonElement element, int depth)
     {
         if (depth > MaxDepth)
             throw new System.InvalidOperationException($"JSON nesting exceeds maximum depth ({MaxDepth})");

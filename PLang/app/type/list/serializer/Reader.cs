@@ -18,9 +18,10 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     {
         if (reader.Null()) return new global::app.type.@null.@this("list", kind);
         reader.BeginArray();
-        var list = new global::app.type.list.@this();
+        var parser = new global::app.type.item.serializer.json(ctx.Context);
+        var list = new global::app.type.list.@this { Context = ctx.Context };
         while (reader.NextElement())
-            list.AddRaw(global::app.type.item.serializer.json.ReadSlot(ref reader, ctx));
+            list.AddRaw(parser.ReadSlot(ref reader, ctx));
         reader.EndArray();
         return list;
     }

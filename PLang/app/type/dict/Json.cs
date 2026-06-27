@@ -38,7 +38,11 @@ public sealed class Json : JsonConverter<@this>
         var element = JsonElement.ParseValue(ref reader);
         // Store raw, type on read — the json entry parse builds a native dict
         // whose slots hold raw scalars / native sub-containers, not a Data per
-        // entry. Empty/non-object falls back to an empty dict.
-        return global::app.type.item.serializer.json.Parse(element) as @this ?? new @this();
+        // entry. Empty/non-object falls back to an empty dict. The parser is born
+        // with the context the channel options read toward (an attribute converter
+        // can't take it via ctor), so the dict's entries are born-with-context.
+        var context = global::app.channel.serializer.json.Converter.On(options)
+            ?? throw new JsonException("A dict deserialized through a JSON options bag with no plang context-carrying converter — context is required to born the value.");
+        return new global::app.type.item.serializer.json(context).Parse(element) as @this ?? new @this { Context = context };
     }
 }

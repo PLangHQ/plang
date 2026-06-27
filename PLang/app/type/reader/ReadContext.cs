@@ -17,5 +17,5 @@ namespace app.type.reader;
 /// because the reader that read it was constructed in authored mode.</para>
 /// </summary>
 public sealed record ReadContext(
-    global::app.actor.context.@this? Context,
+    global::app.actor.context.@this Context,
     string? Template = null);

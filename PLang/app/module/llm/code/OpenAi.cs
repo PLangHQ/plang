@@ -563,7 +563,7 @@ public sealed class OpenAi : ILlm
         else
         {
             // Parse arguments and build GoalCall
-            var parameters = ParseToolArguments(toolCall.Arguments, goalCall.Parameters);
+            var parameters = ParseToolArguments(toolCall.Arguments, goalCall.Parameters, context);
             var parseError = parameters.Find(p => !p.Success);
             if (parseError != null)
             {
@@ -610,7 +610,7 @@ public sealed class OpenAi : ILlm
     /// <summary>
     /// Parses the LLM's JSON arguments string into List&lt;Data&gt; matching the GoalCall's parameter definitions.
     /// </summary>
-    private static List<data.@this> ParseToolArguments(string argumentsJson, List<data.@this>? parameterDefs)
+    private static List<data.@this> ParseToolArguments(string argumentsJson, List<data.@this>? parameterDefs, actor.context.@this context)
     {
         var result = new List<data.@this>();
 

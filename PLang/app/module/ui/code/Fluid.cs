@@ -89,7 +89,7 @@ public class Fluid : ITemplate
         // access. A JsonNode routes through the universal parse to natives, then
         // the same views. Converters run wherever FluidValue.Create does — both
         // the variable-binding loops below and nested access during rendering.
-        options.ValueConverters.Add(NativeCollectionConverter);
+        options.ValueConverters.Add(value => NativeCollectionConverter(value, action.Context));
 
         // The null citizen (typeless or typed-empty slot) renders as nothing and is
         // falsy — same as an undefined variable. Without this it would stringify via
@@ -178,13 +178,13 @@ public class Fluid : ITemplate
     /// copying. Returns <c>null</c> for anything else so Fluid's own mapping runs.
     /// (See the registration site for why this is needed.)
     /// </summary>
-    private static object? NativeCollectionConverter(object value) => value switch
+    private static object? NativeCollectionConverter(object value, global::app.actor.context.@this context) => value switch
     {
         app.type.dict.@this d => new NativeDictView(d),
         app.type.list.@this l => new NativeListView(l),
         // JsonNode isn't Fluid-readable either; parse it to natives (the parse is
         // structural, JSON-DOM sized) and the natives then ride the views above.
-        System.Text.Json.Nodes.JsonNode jn => app.type.item.serializer.json.Parse(jn) switch
+        System.Text.Json.Nodes.JsonNode jn => new app.type.item.serializer.json(context).Parse(jn) switch
         {
             app.type.dict.@this d => new NativeDictView(d),
             app.type.list.@this l => new NativeListView(l),
