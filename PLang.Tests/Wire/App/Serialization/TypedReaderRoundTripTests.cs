@@ -46,6 +46,13 @@ public class TypedReaderRoundTripTests
         => await Assert.That(ReadScalar(new global::app.type.text.serializer.Reader(), "\"hello\"", null).Clr<string>())
             .IsEqualTo("hello");
 
+    [Test] public async Task Code_Isolated()
+    {
+        var item = ReadScalar(new global::app.type.code.serializer.Reader(), "\"a = 1\"", "js");
+        await Assert.That(item).IsTypeOf<global::app.type.code.@this>();
+        await Assert.That(((global::app.type.code.@this)item).Source).IsEqualTo("a = 1");
+    }
+
     [Test] public async Task Number_Int_Isolated()
         => await Assert.That(ReadScalar(new global::app.type.number.serializer.Reader(), "42", "int").Clr<int>())
             .IsEqualTo(42);

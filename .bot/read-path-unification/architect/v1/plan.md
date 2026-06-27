@@ -169,16 +169,16 @@ Each phase: what **dies**, what **stays**. Value-ctor retirement is deliberately
 
 ## Reader-coverage worklist
 
-The registry is **total**, split by **raw shape**: string-raw → the thin generic reader; byte-raw → binary-family specific readers; structured → structured specific readers. No per-scalar reader files, no `Convert` *door*.
+**NO generic/fallback reader (Ingi, superseding the earlier "thin generic reader").** A generic reader is a *second execution path* (specific-file types vs. fallback types) plus a *fork* (its `switch`/`if` over token-kind = the exact thing we delete). Rejected. Instead: **every type ships its own `serializer/Reader.cs` (`ITypeReader`)** — one uniform path, the registry is total because every type is covered, no fallback, no switch. Each reader IS its type, so nothing is threaded in (`ReadContext` never grows). A `Reader.cs` is tiny (number's is ~30 lines: pull token, born).
 
-- **Structured specific readers:** `dict`, `list`, `table`, `object`.
-- **Binary-family specific readers (byte-raw):** `binary` (`byte[]`→`binary`), and `image`/`archive`/`table`/`file`/`directory` when the `kind` names one. `byte[]` is born `binary` (`kind=mime/.ext`); it never reaches the generic reader; decode-to-text is the explicit `as text`.
-- **Thin generic default reader (string-raw) → `type.Convert`:** the string scalars — `number, bool, guid, date, datetime, time, url, text, primitive` (and `duration`). One delegation to the per-type hook, zero branching; if it wants an `if (type==…)`, split a specific reader instead.
-- **No raw materialization** (never a value slot): `null` rides as the raw token → typed absence; `compare`, `signature` (own envelope), `permission`, `clr` (value floor — only via `Create(object)`). Confirm each is unreachable from a value slot.
+- **Already have an `ITypeReader`:** `number, bool, dict, list, guid, text, duration` (7).
+- **Need an `ITypeReader` ported from their `Of` static-`Read`** (this stage): `path, code, object(json), item(json), table(csv), image` (6). Each pulls its token(s) and borns — `path`→`reader.String()`+`Resolve`; `code`→string+kind; `object`/`item`→`item.json.ReadSlot` (structured token pull, already exists); `table`→`reader.String()`+csv parse; `image`→base64 string+`image.Convert` (byte-raw is the separate `binary` path).
+- **Render-only / never a value slot** (no reader): `url, directory, file, permission` (Write only); `null` rides as the raw token; `compare`, `signature` (own envelope), `clr` (value floor). Confirm each unreachable from a value slot.
+- **Adding the 6 readers exercises the WIRE path** (`Wire.cs:407` `Typed(...)`) — each port must preserve wire-read behavior (it replaces the `json.Parse` fallback for that type). Test green per type.
 
 ## Settled design questions
 
-1. **Generic reader holds or delegates?** **Delegates** to `type.Convert` (per-type hook). It is **thin — string-raw scalars only, zero branching**; `byte[]` is the binary family, not the generic reader. The `Convert` *name* at the per-type hook stays; there is no `Convert`/`type.Read` *door*. If it grows an `if (type==…)`, split a specific reader (Ingi).
+1. **Generic reader holds or delegates?** **Neither — there is NO generic reader (Ingi).** Every type has its own `serializer/Reader.cs` (`ITypeReader`), scalars included. One uniform read path; the registry is total by coverage, not by a fallback. A generic reader was rejected as a second path + a fork. The per-type `Convert` hook stays (a reader may delegate to it internally); there is no `Convert`/`type.Read` *door*.
 2. **One creation door?** Yes — `app.type.Create(source) => App.Type.Reader(source).Read(source)`, returning `(item?, Error?)`.
 3. **`%ref%` → variable in the reader?** Yes — `text`/`variable` reader, gated on `ReadContext.Template == "plang"`; `source` carries the template flag.
 4. **Serializer-independent?** Yes — `read(IReader)` (mirror of `value.Write(IWriter)`); `json` is one `IReader`; thin STJ adapter only.
