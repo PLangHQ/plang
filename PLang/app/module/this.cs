@@ -358,7 +358,7 @@ public sealed class @this : IAsyncDisposable
                 // the Channel slot. Surface that parameter to the LLM so it can emit a name
                 // from the actor's channel inventory.
                 if (typeof(IChannel).IsAssignableFrom(parameterType))
-                    parameters.Add(new data.@this("channel", "string?"));
+                    parameters.Add(new data.@this("channel", "string?", context: App.System.Context));
 
                 bool cacheable = true;
                 var actionAttr = parameterType.GetCustomAttribute<ActionAttribute>();
