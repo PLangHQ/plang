@@ -59,7 +59,7 @@ public class QueryCacheTests
 
         await result2.IsSuccess();
         await Assert.That(_handler.CallCount).IsEqualTo(1); // No additional HTTP call
-        await Assert.That(result2.Properties["Cached"]).IsEqualTo(true);
+        await Assert.That((await result2.Properties.Value("Cached"))).IsEqualTo(true);
     }
 
     [Test]
@@ -170,11 +170,11 @@ public class QueryCacheTests
         await result2.IsSuccess();
         await Assert.That((await result2.Value())?.ToString()).IsEqualTo("preserved");
         // Verify metadata was restored from cache
-        await Assert.That(result2.Properties["Cached"]).IsEqualTo(true);
-        await Assert.That(result2.Properties["RawResponse"]?.ToString()).IsEqualTo("preserved");
-        await Assert.That(result2.Properties["Model"]?.ToString()).IsEqualTo("gpt-5.4-nano");
-        await Assert.That(result2.Properties["PromptTokens"]).IsNotNull();
-        await Assert.That(result2.Properties["CompletionTokens"]).IsNotNull();
+        await Assert.That((await result2.Properties.Value("Cached"))).IsEqualTo(true);
+        await Assert.That((await result2.Properties.Value("RawResponse"))?.ToString()).IsEqualTo("preserved");
+        await Assert.That((await result2.Properties.Value("Model"))?.ToString()).IsEqualTo("gpt-5.4-nano");
+        await Assert.That((await result2.Properties.Value("PromptTokens"))).IsNotNull();
+        await Assert.That((await result2.Properties.Value("CompletionTokens"))).IsNotNull();
         // No additional HTTP call was made
         await Assert.That(_handler.CallCount).IsEqualTo(1);
     }

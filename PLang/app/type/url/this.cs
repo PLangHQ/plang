@@ -60,7 +60,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         var read = await Path.ReadBytes();
         if (!read.Success)
             throw new System.Net.Http.HttpRequestException(read.Error!.Message);
-        _contentType = read.Properties.Get<string>("contentType");
+        _contentType = await read.Properties.Get<string>("contentType");
         var bin = await read.Value();
         return _bytes = bin?.Value ?? System.Array.Empty<byte>();
     }

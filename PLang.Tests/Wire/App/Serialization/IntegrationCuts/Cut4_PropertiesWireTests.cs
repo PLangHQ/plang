@@ -75,8 +75,8 @@ public class Cut4_PropertiesWireTests
         var (_, back, app) = await WriteAndRead();
         await using (app)
         {
-            await Assert.That(back.Properties["cost"]).IsEqualTo(100L);
-            await Assert.That((back.Properties["model"])?.ToString()).IsEqualTo("claude-opus-4-7");
+            await Assert.That((await back.Properties.Value("cost"))).IsEqualTo(100L);
+            await Assert.That(((await back.Properties.Value("model")))?.ToString()).IsEqualTo("claude-opus-4-7");
         }
     }
 

@@ -151,7 +151,7 @@ public class SubscriberSurvivalTests
         context.Variable.Set(dv);
 
         await Assert.That(ReferenceEquals(prev.Properties, dv.Properties)).IsFalse();
-        await Assert.That(dv.Properties["annot"]).IsNull();
+        await Assert.That((await dv.Properties.Value("annot"))).IsNull();
     }
 
     // Variables.Remove fires OnDelete on the removed Data. Pinned so Phase 3

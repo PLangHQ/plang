@@ -96,7 +96,7 @@ public class VariableResolveTest : System.IAsyncDisposable
         }, context);
 
         var response = await context.Variable.Get("response");
-        await Assert.That(response.Properties["cost"]).IsEqualTo(100);
+        await Assert.That((await response.Properties.Value("cost"))).IsEqualTo(100);
     }
 
     [Test] public async Task VariableSet_MalformedBangSyntax_ReturnsTypedError()

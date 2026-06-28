@@ -310,10 +310,10 @@ public class RequestActionTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Properties["StatusCode"]).IsEqualTo(200);
-        await Assert.That(result.Properties["IsSuccess"]).IsEqualTo(true);
-        await Assert.That((result.Properties["Method"])?.ToString()).IsEqualTo("GET");
-        await Assert.That(result.Properties["Url"]!.ToString()).IsEqualTo("https://api.example.com/test");
+        await Assert.That((await result.Properties.Value("StatusCode"))).IsEqualTo(200);
+        await Assert.That((await result.Properties.Value("IsSuccess"))).IsEqualTo(true);
+        await Assert.That(((await result.Properties.Value("Method")))?.ToString()).IsEqualTo("GET");
+        await Assert.That((await result.Properties.Value("Url"))!.ToString()).IsEqualTo("https://api.example.com/test");
     }
 
     #endregion

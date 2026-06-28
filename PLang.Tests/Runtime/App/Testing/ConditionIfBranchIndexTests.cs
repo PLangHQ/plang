@@ -60,7 +60,7 @@ public class ConditionIfBranchIndexTests
         var result = await RunSingleStep(IfAction(1, "==", 1));
         await Assert.That(result).IsNotNull();
         await Assert.That(result.Properties.Contains("branchIndex")).IsTrue();
-        await Assert.That(result.Properties.Get<int>("branchIndex")).IsEqualTo(0);
+        await Assert.That((await result.Properties.Get<int>("branchIndex"))).IsEqualTo(0);
     }
 
     // Simple non-orchestrating form: if(false) → result.Properties["branchIndex"] == 1.
@@ -70,7 +70,7 @@ public class ConditionIfBranchIndexTests
         var result = await RunSingleStep(IfAction(1, "==", 2));
         await Assert.That(result).IsNotNull();
         await Assert.That(result.Properties.Contains("branchIndex")).IsTrue();
-        await Assert.That(result.Properties.Get<int>("branchIndex")).IsEqualTo(1);
+        await Assert.That((await result.Properties.Get<int>("branchIndex"))).IsEqualTo(1);
     }
 
     // Builds a multi-branch chain: if %x% [op1] [v1] ... elseif %x% [op2] [v2] ... [else ...].
@@ -126,7 +126,7 @@ public class ConditionIfBranchIndexTests
             (">", 5, "b", 2));
 
         await Assert.That(result).IsNotNull();
-        await Assert.That(result.Properties.Get<int>("branchIndex")).IsEqualTo(0);
+        await Assert.That((await result.Properties.Get<int>("branchIndex"))).IsEqualTo(0);
     }
 
     // if/elseif chain where the second condition matches → branchIndex == 1.
@@ -138,7 +138,7 @@ public class ConditionIfBranchIndexTests
             (">", 5, "b", 2));
 
         await Assert.That(result).IsNotNull();
-        await Assert.That(result.Properties.Get<int>("branchIndex")).IsEqualTo(1);
+        await Assert.That((await result.Properties.Get<int>("branchIndex"))).IsEqualTo(1);
     }
 
     // v1 semantics: an if/elseif chain where none of the conditions match produces

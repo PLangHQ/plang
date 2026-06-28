@@ -68,7 +68,7 @@ public class LlmIntegrationTests
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString() ?? "").Contains("42");
-        await Assert.That(result.Properties["TotalTokens"]).IsNotNull();
+        await Assert.That((await result.Properties.Value("TotalTokens"))).IsNotNull();
     }
 
     // --- Test 2: JSON schema response ---
@@ -99,7 +99,7 @@ public class LlmIntegrationTests
         var __low = global::app.type.item.@this.Lower<object>(await result.Value());
         var json = __low is JsonElement je ? je : JsonSerializer.SerializeToElement<object?>(__low is global::app.type.dict.@this _nd ? _nd.Clr<object>() : (await result.Value()));
         await Assert.That(json.TryGetProperty("sentiment", out _)).IsTrue();
-        await Assert.That(result.Properties["Format"]?.ToString()).IsEqualTo("json");
+        await Assert.That((await result.Properties.Value("Format"))?.ToString()).IsEqualTo("json");
     }
 
     // --- Test 3: Code format extraction ---
@@ -206,7 +206,7 @@ public class LlmIntegrationTests
         // The LLM should have attempted the tool, got an error (goal doesn't exist),
         // and then responded with something about not being able to get the weather
         await Assert.That((await result.Value())?.ToString() ?? "").IsNotEmpty();
-        var toolCallCount = result.Properties["ToolCallCount"];
+        var toolCallCount = (await result.Properties.Value("ToolCallCount"));
         await Assert.That(toolCallCount).IsNotNull();
     }
 
@@ -237,7 +237,7 @@ public class LlmIntegrationTests
 
         if (snapshot == null && result.Success)
         {
-            var json = BuildSnapshotFromResult(result);
+            var json = await BuildSnapshotFromResult(result);
             if (json != null)
                 LlmSnapshotHelper.SaveSnapshot(testName, messages, json);
         }
@@ -295,14 +295,14 @@ public class LlmIntegrationTests
         return result;
     }
 
-    private static string? BuildSnapshotFromResult(Data result)
+    private static async System.Threading.Tasks.Task<string?> BuildSnapshotFromResult(Data result)
     {
-        var rawResponse = result.Properties["RawResponse"]?.ToString();
+        var rawResponse = (await result.Properties.Value("RawResponse"))?.ToString();
         if (rawResponse == null) return null;
 
-        var model = result.Properties["Model"]?.ToString() ?? "gpt-5.4-nano";
-        var promptTokens = result.Properties["PromptTokens"] is int pt ? pt : 0;
-        var completionTokens = result.Properties["CompletionTokens"] is int ct ? ct : 0;
+        var model = (await result.Properties.Value("Model"))?.ToString() ?? "gpt-5.4-nano";
+        var promptTokens = (await result.Properties.Value("PromptTokens")) is int pt ? pt : 0;
+        var completionTokens = (await result.Properties.Value("CompletionTokens")) is int ct ? ct : 0;
 
         return JsonSerializer.Serialize(new
         {

@@ -439,12 +439,12 @@ public class RunActionTests
         var site = "/Cond.test.goal:0";
 
         // BranchLabels populated via the production subscriber reading
-        // result.Properties["branchLabel"] and calling RecordBranchLabel.
+        // (await result.Properties.Value("branchLabel")) and calling RecordBranchLabel.
         await Assert.That(_app.Tester.Coverage.BranchLabels.ContainsKey(site)).IsTrue();
         await Assert.That(_app.Tester.Coverage.BranchLabels[site].Contains("true")).IsTrue();
 
         // BranchChains populated via the production subscriber reading
-        // result.Properties["branchChain"] and calling RecordBranchChain.
+        // (await result.Properties.Value("branchChain")) and calling RecordBranchChain.
         await Assert.That(_app.Tester.Coverage.BranchChains.ContainsKey(site)).IsTrue();
         var chain = _app.Tester.Coverage.BranchChains[site];
         await Assert.That(chain.Count).IsEqualTo(2);

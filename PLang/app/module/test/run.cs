@@ -96,7 +96,7 @@ public partial class run : IContext
         // Site key for branches = "goalName:stepIndex"; matches what the report renders.
         var coverageBinding = new EventBinding(
             app.@event.Trigger.AfterAction,
-            (context, action, result) =>
+            async (context, action, result) =>
             {
                 if (action != null)
                 {
@@ -111,22 +111,22 @@ public partial class run : IContext
                         var goalId = goal?.Path?.ToString() ?? goal?.Name ?? "?";
                         var stepIndex = action.Step?.Index.ToString() ?? "?";
                         var site = $"{goalId}:{stepIndex}";
-                        childApp.Tester.Coverage.RecordBranch(site, result.Properties.Get<int>("branchIndex"));
+                        childApp.Tester.Coverage.RecordBranch(site, await result.Properties.Get<int>("branchIndex"));
                         if (result.Properties.Contains("branchLabel"))
                         {
-                            var label = result.Properties.Get<string>("branchLabel");
+                            var label = await result.Properties.Get<string>("branchLabel");
                             if (!string.IsNullOrEmpty(label))
                                 childApp.Tester.Coverage.RecordBranchLabel(site, label);
                         }
                         if (result.Properties.Contains("branchChain"))
                         {
-                            var chain = result.Properties["branchChain"] as List<string>;
+                            var chain = await result.Properties.Get<List<string>>("branchChain");
                             if (chain != null)
                                 childApp.Tester.Coverage.RecordBranchChain(site, chain);
                         }
                     }
                 }
-                return Task.FromResult(context.Ok());
+                return context.Ok();
             },
             priority: int.MaxValue,
             stopOnError: false);

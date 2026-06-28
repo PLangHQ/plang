@@ -50,7 +50,7 @@ public class AsTIdentityTests
         source.Properties.Set("meta", "abc");
         var result = source.ShallowClone<global::app.type.number.@this>(await source.Value<global::app.type.number.@this>());
         await Assert.That(ReferenceEquals(source.Properties, result.Properties)).IsTrue();
-        await Assert.That((result.Properties["meta"])?.ToString()).IsEqualTo("abc");
+        await Assert.That(((await result.Properties.Value("meta")))?.ToString()).IsEqualTo("abc");
     }
 
     // Rule 2 — variance fast path. Data<number>.Value<item>() (to the base item type) produces
@@ -79,7 +79,7 @@ public class AsTIdentityTests
         var wrapped = source.ShallowClone<global::app.type.list.@this>(await source.Value<global::app.type.list.@this>());
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();
         source.Properties.Set("annot", "via-source");
-        await Assert.That((wrapped.Properties["annot"])?.ToString()).IsEqualTo("via-source");
+        await Assert.That(((await wrapped.Properties.Value("annot")))?.ToString()).IsEqualTo("via-source");
     }
 
     // Variance fast path aliases all three event lists. Subscribing on either
@@ -125,7 +125,7 @@ public class AsTIdentityTests
         await Assert.That(ReferenceEquals(source, wrapped)).IsFalse();
         await Assert.That((await wrapped.Value())?.ToString()).IsEqualTo("42");
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();
-        await Assert.That((wrapped.Properties["note"])?.ToString()).IsEqualTo("hello");
+        await Assert.That(((await wrapped.Properties.Value("note")))?.ToString()).IsEqualTo("hello");
     }
 
     // Conversion failure path. The typed ask on a value that can't convert to T

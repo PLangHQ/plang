@@ -44,7 +44,7 @@ public class OrchestrateBranchCoverageTests
         var observed = new List<(PrAction action, bool isIfHead)>();
         _app.User.Context.Events.Register(new EventBinding(
             Trigger.AfterAction,
-            (context, action, result) =>
+            async (context, action, result) =>
             {
                 if (action != null)
                 {
@@ -58,10 +58,10 @@ public class OrchestrateBranchCoverageTests
                         var goalId = goal?.Path ?? goal?.Name ?? "?";
                         var stepIndex = action.Step?.Index.ToString() ?? "?";
                         var site = $"{goalId}:{stepIndex}";
-                        coverage.RecordBranch(site, result.Properties.Get<int>("branchIndex"));
+                        coverage.RecordBranch(site, (await result.Properties.Get<int>("branchIndex")));
                     }
                 }
-                return Task.FromResult(Data.Ok());
+                return Data.Ok();
             },
             priority: int.MaxValue,
             stopOnError: false));

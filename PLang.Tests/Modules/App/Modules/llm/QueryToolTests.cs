@@ -302,8 +302,8 @@ public class QueryToolTests
         await Assert.That(_handler.CallCount).IsEqualTo(4);
         await result.IsSuccess();
         // Loop exited via MaxToolCalls — result carries Truncated property
-        await Assert.That(result.Properties["Truncated"]).IsEqualTo(true);
-        await Assert.That(result.Properties["ToolCallCount"]).IsNotNull();
+        await Assert.That((await result.Properties.Value("Truncated"))).IsEqualTo(true);
+        await Assert.That((await result.Properties.Value("ToolCallCount"))).IsNotNull();
     }
 
     #endregion

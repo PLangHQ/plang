@@ -818,7 +818,7 @@ public class DataTests : System.IAsyncDisposable
 
         await decompressed.IsSuccess();
         // Properties ride on the wire — they round-trip through compress.
-        await Assert.That((decompressed.Properties["metadata"])?.ToString()).IsEqualTo("some value");
+        await Assert.That(((await decompressed.Properties.Value("metadata")))?.ToString()).IsEqualTo("some value");
     }
 
     // --- v5: Depth limit tests ---

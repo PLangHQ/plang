@@ -29,13 +29,14 @@ namespace app.data;
 /// different values.
 /// </para>
 /// </summary>
-public sealed class Properties : IDictionary<string, object?>
+public sealed class Properties : IEnumerable<KeyValuePair<string, object?>>
 {
     private readonly Dictionary<string, object?> _items = new(StringComparer.OrdinalIgnoreCase);
 
+    // WRITE only. A property value is READ through the async door (Value/Get) so it can ride
+    // lazily — a source-backed Data materializes on read — so there is no sync getter.
     public object? this[string key]
     {
-        get => _items.TryGetValue(key, out var v) ? v : null;
         set
         {
             EnsureSupportedValue(value);
@@ -50,34 +51,37 @@ public sealed class Properties : IDictionary<string, object?>
         _items.Add(key, value);
     }
 
-    public void Add(KeyValuePair<string, object?> item) => Add(item.Key, item.Value);
-
     public bool Remove(string key) => _items.Remove(key);
-    public bool Remove(KeyValuePair<string, object?> item)
-        => _items.TryGetValue(item.Key, out var v) && Equals(v, item.Value) && _items.Remove(item.Key);
-
     public bool ContainsKey(string key) => _items.ContainsKey(key);
     public bool Contains(string key) => _items.ContainsKey(key);
-    public bool Contains(KeyValuePair<string, object?> item)
-        => _items.TryGetValue(item.Key, out var v) && Equals(v, item.Value);
-
-    public bool TryGetValue(string key, out object? value) => _items.TryGetValue(key, out value);
 
     /// <summary>
-    /// Sets a property value. Equivalent to <c>this[name] = value</c> — kept as
-    /// a method form for callers that prefer the verb shape over an indexer
+    /// Sets a property value. Equivalent to <c>this[name] = value</c> — the verb form
     /// (e.g. <c>result.Properties.Set("branchIndex", 0)</c>).
     /// </summary>
     public void Set(string name, object? value) => this[name] = value;
 
     /// <summary>
-    /// Convenience reader: gets a property as T (primitive coercion via
-    /// <see cref="Convert.ChangeType(object?, System.Type)"/>) — returns
-    /// <c>default(T)</c> when the key is absent or the value cannot be coerced.
+    /// The materialized value at <paramref name="key"/> — async because a property value may
+    /// ride lazily (a source-backed Data materializes through its read door here); a
+    /// runtime-set primitive returns as-is. Null when the key is absent.
     /// </summary>
-    public T? Get<T>(string name)
+    public async System.Threading.Tasks.ValueTask<object?> Value(string key)
     {
-        if (!_items.TryGetValue(name, out var v) || v is null) return default;
+        if (!_items.TryGetValue(key, out var v) || v is null) return null;
+        if (v is global::app.data.@this d) return await d.Value();
+        return v;
+    }
+
+    /// <summary>
+    /// Convenience reader: the property as T (primitive coercion via
+    /// <see cref="Convert.ChangeType(object?, System.Type)"/>) — <c>default(T)</c> when absent
+    /// or not coercible. Async — see <see cref="Value"/>.
+    /// </summary>
+    public async System.Threading.Tasks.ValueTask<T?> Get<T>(string name)
+    {
+        var v = await Value(name);
+        if (v is null) return default;
         if (v is T typed) return typed;
         try { return (T)Convert.ChangeType(v, typeof(T)); }
         catch (Exception ex) when (ex is InvalidCastException or FormatException or OverflowException) { return default; }
@@ -86,12 +90,6 @@ public sealed class Properties : IDictionary<string, object?>
     public void Clear() => _items.Clear();
 
     public int Count => _items.Count;
-    public bool IsReadOnly => false;
-    public ICollection<string> Keys => _items.Keys;
-    public ICollection<object?> Values => _items.Values;
-
-    public void CopyTo(KeyValuePair<string, object?>[] array, int arrayIndex)
-        => ((ICollection<KeyValuePair<string, object?>>)_items).CopyTo(array, arrayIndex);
 
     public IEnumerator<KeyValuePair<string, object?>> GetEnumerator() => _items.GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => _items.GetEnumerator();

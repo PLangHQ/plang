@@ -19,14 +19,14 @@ public class PropertiesTests : System.IAsyncDisposable
     {
         var data = _app.Data("x", 0);
         data.Properties["key"] = "value";
-        await Assert.That(data.Properties["key"]).IsEqualTo("value");
+        await Assert.That((await data.Properties.Value("key"))).IsEqualTo("value");
     }
 
     [Test] public async Task Set_IntValue_RoundTrips()
     {
         var data = _app.Data("x", 0);
         data.Properties["n"] = 42;
-        await Assert.That(data.Properties["n"]).IsEqualTo(42);
+        await Assert.That((await data.Properties.Value("n"))).IsEqualTo(42);
     }
 
     [Test] public async Task SettingNull_RemovesKey()
@@ -40,7 +40,7 @@ public class PropertiesTests : System.IAsyncDisposable
     [Test] public async Task UnknownKey_ReturnsNull()
     {
         var data = _app.Data("x", 0);
-        await Assert.That(data.Properties["missing"]).IsNull();
+        await Assert.That((await data.Properties.Value("missing"))).IsNull();
     }
 
     [Test] public async Task DataInstanceAsValue_Rejected()
@@ -62,7 +62,7 @@ public class PropertiesTests : System.IAsyncDisposable
         props["k"] = "v";
         var clone = props.Clone();
         clone["k"] = "w";
-        await Assert.That(props["k"]).IsEqualTo("v");
-        await Assert.That(clone["k"]).IsEqualTo("w");
+        await Assert.That(await props.Value("k")).IsEqualTo("v");
+        await Assert.That(await clone.Value("k")).IsEqualTo("w");
     }
 }

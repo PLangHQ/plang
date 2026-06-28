@@ -44,7 +44,7 @@ public partial class @this
         switch (head)
         {
             case global::app.variable.path.Segment.Infra infra:
-                child = GetInfrastructureValue(infra.Name);
+                child = await GetInfrastructureValue(infra.Name);
                 break;
             case global::app.variable.path.Segment.Call call:
                 child = InvokeMethod(call.Method, call.Args);
@@ -202,7 +202,7 @@ public partial class @this
     /// Used when navigating with ! prefix: %user!Name%, %result!Error%, etc.
     /// Full hierarchy reflection — reaches any property on the Data class itself.
     /// </summary>
-    private @this GetInfrastructureValue(string key)
+    private async System.Threading.Tasks.ValueTask<@this> GetInfrastructureValue(string key)
     {
         // Stage 4: Properties win first — `%x!cost%` reads Properties["cost"].
         // Reflection-discovered Data infrastructure (Name, Type, Error, Success,
@@ -210,7 +210,7 @@ public partial class @this
         // when the key isn't a Property — keeps `%result!Llm%` working while
         // the Properties scope becomes the primary `!` namespace.
         if (Properties.ContainsKey(key))
-            return new @this(key, Properties[key], parent: this);
+            return new @this(key, await Properties.Value(key), parent: this);
 
         var prop = typeof(@this).GetProperty(key,
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
