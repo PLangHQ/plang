@@ -79,6 +79,28 @@ read(IReader r, View v):                        async; mirror of value.Write(IWr
 - `%ref%`/variable: must land in the text/variable reader before its Wire special-case is
   removed, or full-match `%x%` values regress. Verify with the ResolveValue_* tests.
 
+## LANDED (f9e82571e) — Leg A core: wire defers all values to lazy sources
+The wire read no longer borns values eagerly. Every value slot rides as a verbatim lazy
+`source` and materializes through the read door on first touch (json object→dict, array→list,
+scalar→its wrapper). Data + Wire neutral; TableXlsx throw green.
+- `source._template` (authored mode) → `ReadContext` → text reader interpolates `%ref%`.
+- `source.Write` keys inline-vs-quote on `_format` (json inline = byte-identical relay, so a
+  signature over an untouched dict/list still verifies; value content quoted). THIS was the
+  fix for the signature round-trip — verbatim source + correct Write, not eager dict.
+- format chosen by the captured token (string → value/text, else → plang/json).
+- registry `Reader` returns null (not throw); the serializer decides: **structured json with
+  no reader → natural dict/list; scalar with no reader → throw loudly** (table/xlsx). This is
+  the host-object case (a `type`-entity value `{name,kind}` → natural dict, the OLD behavior).
+- new `variable` reader (name-slot → `variable.Resolve`).
+- GONE: `typeRef.Build` eager born, inline `Typed.Read`, `json.Parse` natural, `IsDeferrableShape`.
+  STILL eager: `%x%` full-match, `goal.call` (TEMP).
+
+### Still ahead in Stage 2 (further thinning — not behavioral)
+- `read(IReader)` entry + no-DOM `RawValue()` (still STJ `JsonConverter` + `JsonDocument` DOM
+  in ReadBody). `@schema` registry dispatch + `signature` reader. Dead-code sweep
+  (`IsDeferrableShape`, `EmitRawVerbatim`, the now-dead `value`/typeRef.Build EndObject path).
+- `%ref%`→variable reader migration (defer `%x%` too, born the reference in the variable reader).
+
 ## Shipped + deltas from plan
 
 ### Slice-1 attempt (reverted to protect green — findings captured)
