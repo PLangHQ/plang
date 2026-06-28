@@ -111,10 +111,10 @@ public sealed class @this : global::app.data.schema.ISchemaReader
         return typedNull;
     }
 
-    // Properties read off the inner reader into the object?-valued bag. Making each value a
-    // lazy source (plan line 35) is blocked by the sync Properties[key] getter; an IReader
-    // rewrite (plan line 50) mis-advanced the signature-wrapped path — both logged in
-    // stage-final-cleanup #7. Kept on Utf8JsonReader for now.
+    // Properties read off the inner reader into the metadata bag. Property values are
+    // EAGERLY parsed (not deferred as sources): they are small metadata leaves — there is
+    // no large payload to skip, so a lazy source buys nothing. The one real laziness, a
+    // %ref% in a property value, is handled by the async read door (Properties.Value).
     private static Properties ReadPropertiesObject(ref Utf8JsonReader reader)
     {
         var props = new Properties();
