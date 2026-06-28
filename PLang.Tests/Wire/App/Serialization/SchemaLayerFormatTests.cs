@@ -71,7 +71,9 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
             contracts: new global::app.type.list.@this(new[] { app.Ok(new global::app.type.text.@this("C0")) }) { Context = app.User.Context });
 
         var options = new JsonSerializerOptions();
-        options.Converters.Add(new global::app.data.Wire());
+        // Production FromWire (ReadSignatureLayer) always passes the actor's Wire — give the
+        // test the same context-ful Wire (a context-less Wire is not a real read path).
+        options.Converters.Add(new global::app.data.Wire(global::app.View.Out, context: app.User.Context));
 
         using var doc = JsonDocument.Parse(Render(sig));
         var back = global::app.type.signature.@this.FromWire(doc.RootElement, options);

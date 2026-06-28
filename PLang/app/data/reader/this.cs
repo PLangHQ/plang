@@ -48,20 +48,17 @@ public sealed class @this
                 case "type":
                     // The type is the structured entity {name, kind?, strict?}. A bare string
                     // form (type:"string") is the OLD shape — invalid; throw so a stale .pr
-                    // surfaces loudly. The entity rides its own JsonConverter (STJ) — dip to
-                    // the inner reader (works context-less, the FromWire/Judge path has no
-                    // context; routing through the `type` reader needs App and NREs there until
-                    // the context-less births are gone). Context-less on birth, stamp it now.
+                    // surfaces loudly. The entity reads through its own reader (the `type`
+                    // reader, like any other value) — context stamped there.
                     if (reader.Peek() == global::app.channel.serializer.TokenKind.String)
                         throw new JsonException(
                             $"invalid .pr schema: 'type' must be an object {{name, ...}}, not the bare string "
                             + $"\"{reader.String()}\" (value slot '{(string.IsNullOrEmpty(name) ? "(unnamed)" : name)}').");
-                    if (reader.Null()) typeRef = null;
-                    else
-                    {
-                        typeRef = JsonSerializer.Deserialize<global::app.type.@this>(ref reader.Inner, options);
-                        if (typeRef != null) typeRef.Context = _context;
-                    }
+                    typeRef = reader.Null()
+                        ? null
+                        : _context.App.Type.Readers.Reader("type", null, _context)
+                              .Read(ref reader, null, new global::app.type.reader.ReadContext(_context, _template))
+                          as global::app.type.@this;
                     break;
                 case "value":
                     // TEMP: goal.call has no reader yet — born it inline off the inner reader.

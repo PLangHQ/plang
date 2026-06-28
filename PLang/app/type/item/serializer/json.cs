@@ -15,6 +15,18 @@ public partial class json
 
     public json(actor.context.@this context) => _context = context;
 
+    // Read options carrying a CONTEXT-FUL Wire for a nested Data — Options.Read adds the
+    // path converter but not the Wire, so without this a nested Deserialize<Data> falls to
+    // the [JsonConverter] default (a context-less Wire). Built once per parser.
+    private System.Text.Json.JsonSerializerOptions? _nestedOptions;
+    private System.Text.Json.JsonSerializerOptions NestedOptions()
+    {
+        if (_nestedOptions != null) return _nestedOptions;
+        var o = global::app.channel.serializer.json.Options.Read(_context);
+        o.Converters.Add(new global::app.data.Wire(global::app.View.Out, context: _context));
+        return _nestedOptions = o;
+    }
+
     public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
         => global::app.type.@object.serializer.json.Read(raw, kind, ctx);
 
@@ -84,7 +96,10 @@ public partial class json
                 System.Text.Json.JsonValueKind.Null => @null.@this.Instance,
                 System.Text.Json.JsonValueKind.Undefined => @null.@this.Instance,
                 System.Text.Json.JsonValueKind.Object => global::app.data.@this.IsDataMarked(element) || IsTypedEntry(element)
-                    ? System.Text.Json.JsonSerializer.Deserialize<global::app.data.@this>(element)
+                    // A nested Data reads through a CONTEXT-FUL Wire (the parser is born with
+                    // its context) — never the bare [JsonConverter] default, which is a
+                    // context-less Wire and leaves the nested read unable to reach App.
+                    ? System.Text.Json.JsonSerializer.Deserialize<global::app.data.@this>(element, NestedOptions())
                     : ObjectLeaf(element, depth),
                 System.Text.Json.JsonValueKind.Array => ArrayLeaf(element, depth),
                 _ => element,
