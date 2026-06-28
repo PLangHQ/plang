@@ -155,9 +155,23 @@ public class Wire : JsonConverter<@this>
     public override bool CanConvert(System.Type typeToConvert)
         => typeof(@this).IsAssignableFrom(typeToConvert);
 
+    // STJ-driven read (top-level via the entry, and nested Data inside lists). STJ hands a
+    // ref reader with no buffer, so a structured value slot must DOM (ReadBody, buffer null).
     public override @this Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
+        => ReadCore(ref reader, typeToConvert, options, buffer: null)!;
+
+    // Entry read over OWNED bytes — a structured value slot is sliced from the buffer raw
+    // (no DOM). The plang serializer's DeserializeAsync drives this; the bytes ARE the buffer.
+    public @this? ReadBuffered(byte[] bytes, JsonSerializerOptions options)
     {
-        if (reader.TokenType == JsonTokenType.Null) return null!;
+        var reader = new Utf8JsonReader(bytes);
+        reader.Read();
+        return ReadCore(ref reader, typeof(@this), options, bytes);
+    }
+
+    private @this? ReadCore(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options, byte[]? buffer)
+    {
+        if (reader.TokenType == JsonTokenType.Null) return null;
         if (reader.TokenType != JsonTokenType.StartObject)
             throw new JsonException("Expected StartObject for app.data.@this wire shape");
 
@@ -183,7 +197,7 @@ public class Wire : JsonConverter<@this>
         _readDepth.Value++;
         try
         {
-            var bodyData = ReadBody(ref reader, options);
+            var bodyData = ReadBody(ref reader, options, buffer);
             // When the caller asked for a typed Data<T>, wrap the base body
             // into a Data<T> so STJ's cast to typeToConvert succeeds. The
             // typed Data<T>.Value getter handles the dict-to-T conversion
@@ -277,7 +291,10 @@ public class Wire : JsonConverter<@this>
         return typed;
     }
 
-    private @this ReadBody(ref Utf8JsonReader reader, JsonSerializerOptions options)
+    // buffer is the OWNED bytes when the read came in through ReadBuffered (entry path), null
+    // when STJ-driven (nested). A non-null buffer lets a structured value slot be sliced raw
+    // (no DOM); null falls back to DOM. Same captured bytes either way.
+    private @this ReadBody(ref Utf8JsonReader reader, JsonSerializerOptions options, byte[]? buffer)
     {
         string name = "";
         type? typeRef = null;
@@ -417,11 +434,23 @@ public class Wire : JsonConverter<@this>
                             deferredRaw = RawScalar(ref reader);
                             deferredFormat = "application/plang";
                             break;
-                        // Structured (object → dict, array → list) — DOM the sub-tree for now;
-                        // slicing it raw needs the owned buffer (the follow-on no-DOM step).
+                        // Structured (object → dict, array → list). With the owned buffer in
+                        // hand, slice the sub-tree's raw bytes off it (no DOM): the token start
+                        // to the position just past the matching end. STJ-nested reads (no
+                        // buffer) DOM the sub-tree — same captured bytes, just allocated.
                         default:
-                            using (var vdoc = JsonDocument.ParseValue(ref reader))
+                            if (buffer != null)
+                            {
+                                int start = (int)reader.TokenStartIndex;
+                                reader.Skip();
+                                deferredRaw = System.Text.Encoding.UTF8.GetString(
+                                    buffer.AsSpan(start, (int)reader.BytesConsumed - start));
+                            }
+                            else
+                            {
+                                using var vdoc = JsonDocument.ParseValue(ref reader);
                                 deferredRaw = vdoc.RootElement.GetRawText();
+                            }
                             deferredFormat = "application/plang";
                             break;
                     }

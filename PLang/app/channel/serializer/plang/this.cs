@@ -196,9 +196,7 @@ public sealed class @this : ISerializer
             if (bytes.Length == 0) return _context.Ok();
             var wire = System.Linq.Enumerable.First(
                 System.Linq.Enumerable.OfType<global::app.data.Wire>(options.Converters));
-            var reader = new Utf8JsonReader(bytes);
-            reader.Read();   // position at the first token (StartObject / Null)
-            var v = wire.Read(ref reader, typeof(global::app.data.@this), options);
+            var v = wire.ReadBuffered(bytes, options);
             return v ?? _context.Ok();
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
