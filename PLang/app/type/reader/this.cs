@@ -191,7 +191,10 @@ public sealed class @this
                 && type.GetConstructor(System.Type.EmptyTypes) is { } ctor)
             {
                 var instance = (ITypeReader)ctor.Invoke(null);
-                _generatedTyped[(typeName, instance.Kind)] = instance;
+                // A reader may NAME its own type (a dotted name the namespace can't express,
+                // e.g. goal.call); otherwise the namespace segment names it.
+                var name = instance is INamedTypeReader named ? named.TypeName : typeName;
+                _generatedTyped[(name, instance.Kind)] = instance;
                 continue;
             }
 

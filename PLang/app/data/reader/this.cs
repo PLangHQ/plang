@@ -27,7 +27,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
         Properties? properties = null;
         string? deferredRaw = null;    // a value captured for lazy materialization
         string? deferredFormat = null; // the serializer the captured value needs (string→value, else json)
-        global::app.type.item.@this? born = null;   // a value born inline (goal.call TEMP)
+        global::app.type.item.@this? born = null;   // a value read eagerly (goal.call — born, not deferred)
 
         reader.BeginObject();
         while (reader.NextName(out var key))
@@ -53,16 +53,13 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                           as global::app.type.@this;
                     break;
                 case "value":
-                    // TEMP: goal.call has no reader yet — born it inline off the inner reader.
-                    // Its nested Data params still ride STJ, so build the read options from ctx
-                    // (the data reader itself needs no passed `options` — matches ITypeReader).
-                    // Remove once goal.call streams like any other structured value.
+                    // goal.call is read EAGERLY through its reader (a build/Peek consumer expects
+                    // the GoalCall, not a deferred source) — the reader builds its own options
+                    // for the nested Data params, so the data reader stays options-free.
                     if (typeRef is { IsNull: false } && typeRef.Name == "goal.call")
                     {
-                        var goalOptions = global::app.channel.serializer.json.Options.Read(ctx.Context);
-                        goalOptions.Converters.Add(new global::app.data.Wire(
-                            ctx.View, context: ctx.Context, template: ctx.Template));
-                        born = JsonSerializer.Deserialize<global::app.goal.GoalCall>(ref reader.Inner, goalOptions);
+                        born = ctx.Context.App.Type.Readers.Reader("goal.call", null, ctx.Context)
+                            .Read(ref reader, null, ctx);
                     }
                     else if (typeRef is not { IsNull: false })
                     {
@@ -93,7 +90,6 @@ public sealed class @this : global::app.data.schema.ISchemaReader
             }
         }
         reader.EndObject();
-
         if (born != null)
         {
             var d = new Data(name, born);
