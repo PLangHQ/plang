@@ -183,7 +183,22 @@ public sealed class @this : ISerializer
             // The container IS a Data — return the reconstruction itself, never
             // an Ok envelope around it (the bare-Data double-wrap the store seam rejects).
             var options = view == global::app.View.Store ? _store : _inbound;
-            var v = await JsonSerializer.DeserializeAsync<global::app.data.@this>(stream, options, cancellationToken);
+            // Own the buffer: read the bytes and drive the Wire read directly rather than
+            // letting STJ drive it. STJ hands a converter a ref reader WITHOUT the buffer, so
+            // a deferred value slot must DOM; with the buffer in hand the read can slice value
+            // slots raw (RawValue). The Wire converter still serves nested Data via STJ.
+            byte[] bytes;
+            using (var ms = new MemoryStream())
+            {
+                await stream.CopyToAsync(ms, cancellationToken);
+                bytes = ms.ToArray();
+            }
+            if (bytes.Length == 0) return _context.Ok();
+            var wire = System.Linq.Enumerable.First(
+                System.Linq.Enumerable.OfType<global::app.data.Wire>(options.Converters));
+            var reader = new Utf8JsonReader(bytes);
+            reader.Read();   // position at the first token (StartObject / Null)
+            var v = wire.Read(ref reader, typeof(global::app.data.@this), options);
             return v ?? _context.Ok();
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
