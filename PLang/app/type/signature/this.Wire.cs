@@ -109,7 +109,7 @@ public sealed partial class @this
             expires is { } ex ? new datetime(ex) : null, contracts);
     }
 
-    private static byte[] SafeBase64(string? s)
+    internal static byte[] SafeBase64(string? s)
     {
         if (string.IsNullOrEmpty(s)) return System.Array.Empty<byte>();
         try { return System.Convert.FromBase64String(s); }
