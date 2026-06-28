@@ -9,7 +9,12 @@ namespace app.channel.serializer;
 /// </summary>
 public sealed class Text : ISerializer
 {
-    public string Type => "text/plain";
+    /// <summary>The value/content mimetype this serializer owns — a bare value (text, a
+    /// path, a biginteger's digits) read through the value reader, written as a quoted
+    /// string. Every other (json-encoding) format rides inline.</summary>
+    public const string Mime = "text/plain";
+
+    public string Type => Mime;
     public string Extension => ".txt";
 
     private readonly Encoding _encoding;

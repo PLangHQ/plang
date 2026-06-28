@@ -153,24 +153,21 @@ public sealed class source : @this, module.IContext
     public override bool IsLeaf => true;
 
     /// <summary>
-    /// Verbatim passthrough — the raw form streams out untouched. A json-shaped raw
-    /// (object/item carrying <c>kind:json</c>, or a <c>number</c> literal) rides inline
-    /// and UNQUOTED via <see cref="global::app.channel.serializer.IWriter.Raw"/>; any
-    /// other raw string is a quoted string; bytes are base64. The declared
-    /// <c>{type, kind}</c> decides — not a content sniff. (Owns what Wire.Write's
-    /// EmitRawVerbatim used to do, so RawUntouched routes through data.Output.)
+    /// Verbatim passthrough — the raw form streams out untouched, byte-for-byte the bytes
+    /// that came in (so an untouched relay's signature still verifies). Bytes are base64.
+    /// The format the bytes were captured in decides the shape: a value/text format holds
+    /// the value's own CONTENT (text, a path, a biginteger's digits) → a quoted string;
+    /// every other (json-encoding) format holds JSON (a dict/list/number/bool slot) → it
+    /// rides inline and UNQUOTED via <see cref="global::app.channel.serializer.IWriter.Raw"/>.
     /// </summary>
     public override void Write(global::app.channel.serializer.IWriter w)
     {
         if (_value is byte[] b) { w.Bytes(b); return; }
         var s = _value.ToString() ?? "";
-        // The format the bytes were captured in decides the wire shape — JSON-encoded
-        // content (a dict/list/number/bool slot) rides inline and UNQUOTED (byte-identical
-        // passthrough); the value serializer's content (text, a path, a biginteger's digits)
-        // is a quoted string. This mirrors the capture, so an untouched relay is byte-for-byte
-        // the bytes that came in (and a signature over them still verifies).
-        if (string.Equals(_format, "application/plang", System.StringComparison.OrdinalIgnoreCase)) w.Raw(s);
-        else w.String(s);
+        if (string.Equals(_format, global::app.channel.serializer.Text.Mime, System.StringComparison.OrdinalIgnoreCase))
+            w.String(s);
+        else
+            w.Raw(s);
     }
 
 
