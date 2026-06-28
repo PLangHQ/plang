@@ -59,3 +59,12 @@ From the OBP review after extracting `app.data.reader.@this` and the no-DOM work
   non-verb-phrase shape, not flat `Wire*` constants.
 - **`json.Reader.RawValue` buffer-vs-DOM branch** — a fast-path/fallback (identical output,
   gated on owning the buffer). Transitional; vanishes when STJ is removed for nested Data.
+
+## 8. Inspect `app/data/this.cs` (+ partials) for removable code (logged 2026-06-28, Ingi)
+Data has accreted code that the read-path-unification work may have made dead or redundant.
+**`this.Normalize.cs` is a prime suspect** (the write path now flows through `source.Write` /
+`json.Writer` — Normalize may be partly or wholly superseded), and "more" beyond it. NOT a
+quick delete — needs inspection: trace each method's live callers before removing, confirm no
+behavior is lost (Data/Wire green + a write-path probe), watch for the wire-shape knowledge
+that legitimately lives there. Candidates to inspect: `this.Normalize.cs`, and any `this.*.cs`
+partial whose role overlaps the new reader/serializer split.
