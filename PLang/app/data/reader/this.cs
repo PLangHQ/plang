@@ -24,110 +24,64 @@ public sealed class @this
         _template = template;
     }
 
-    // buffer is the OWNED bytes when the read came in through the entry path, null when
-    // STJ-driven (nested). A non-null buffer lets a structured value slot be sliced raw (no
-    // DOM); null falls back to DOM. Same captured bytes either way.
-    public Data Read(ref Utf8JsonReader reader, JsonSerializerOptions options, byte[]? buffer)
+    // Reads through the IReader abstraction (json.Reader). The reader carries the owned bytes
+    // (entry path) so a structured value slices raw off the buffer with no DOM; the type
+    // entity + goal.call dip to the inner reader for their STJ JsonConverter (a json-bound
+    // sub-read) — the rest is format-agnostic IReader.
+    public Data Read(ref global::app.channel.serializer.json.Reader reader, JsonSerializerOptions options)
     {
         string name = "";
         global::app.type.@this? typeRef = null;
         Properties? properties = null;
-        string? deferredRaw = null;    // a scalar value captured for lazy materialization
+        string? deferredRaw = null;    // a value captured for lazy materialization
         string? deferredFormat = null; // the serializer the captured value needs (string→value, else json)
-        string? refValue = null;       // a full-match %x% value, born at EndObject when the type is known
-        global::app.type.item.@this? born = null;   // set when the type read its own value off the pass
+        string? refValue = null;       // a full-match %x% value, born below when the type is known
+        global::app.type.item.@this? born = null;   // a value born inline (goal.call TEMP)
 
-        while (reader.Read())
+        reader.BeginObject();
+        while (reader.NextName(out var key))
         {
-            if (reader.TokenType == JsonTokenType.EndObject)
-            {
-                if (refValue != null && born == null
-                    && typeRef is { IsNull: false } && typeRef.Name != "variable")
-                {
-                    // A full-match %x% declared as a real value type → a typed variable
-                    // reference: it resolves at .Value() (the variable hop), then the consumer
-                    // converts to T. Never read through the type's reader at load (which would
-                    // parse the literal "%x%" and null it). Name-slots (type:variable),
-                    // untyped refs, and content fall through unchanged.
-                    born = global::app.variable.@this.Reference(refValue, _context!);
-                }
-                if (born != null)
-                {
-                    // The declared type already read its own value off the pass, born at its
-                    // kind — no lift, no Build. Data is the dumb holder.
-                    var d = new Data(name, born);
-                    if (properties != null) d.Properties = properties;
-                    return d;
-                }
-                if (deferredRaw != null && typeRef != null)
-                {
-                    // Lazy value slot: rides as its raw source form and materializes on first
-                    // touch through the read door (the serializer the captured raw needs —
-                    // string content → value, else json — plus the authored template).
-                    var lazy = Data.FromRaw(deferredRaw, typeRef, _context, format: deferredFormat, template: _template);
-                    lazy.Name = name;
-                    if (properties != null) lazy.Properties = properties;
-                    return lazy;
-                }
-                // No value slot at all — a typed absence under its declared type. (Every
-                // PRESENT value set deferredRaw / born / refValue above and returned there;
-                // this is only reached when the wire carried {name, type, properties} with no
-                // value.)
-                var typedNull = new Data(name, (object?)null, typeRef);
-                if (properties != null) typedNull.Properties = properties;
-                return typedNull;
-            }
-            if (reader.TokenType != JsonTokenType.PropertyName)
-                throw new JsonException("Expected PropertyName inside app.data.@this wire shape");
-            var key = reader.GetString()!;
-            reader.Read();
             switch (key.ToLowerInvariant())
             {
                 case "name":
-                    name = reader.TokenType == JsonTokenType.Null ? "" : reader.GetString() ?? "";
+                    name = reader.Null() ? "" : reader.String();
                     break;
                 case "type":
                     // The type is the structured entity {name, kind?, strict?}. A bare string
-                    // form (type:"string", type:"text") is the OLD shape — invalid. Throw so a
-                    // stale/malformed .pr surfaces loudly instead of silently mis-borning.
-                    if (reader.TokenType == JsonTokenType.String)
+                    // form (type:"string") is the OLD shape — invalid; throw so a stale .pr
+                    // surfaces loudly. The entity rides its own JsonConverter, so dip to the
+                    // inner reader; context-less on birth, stamp it now.
+                    if (reader.Peek() == global::app.channel.serializer.TokenKind.String)
                         throw new JsonException(
                             $"invalid .pr schema: 'type' must be an object {{name, ...}}, not the bare string "
-                            + $"\"{reader.GetString()}\" (value slot '{(string.IsNullOrEmpty(name) ? "(unnamed)" : name)}').");
-                    if (reader.TokenType == JsonTokenType.Null) typeRef = null;
+                            + $"\"{reader.String()}\" (value slot '{(string.IsNullOrEmpty(name) ? "(unnamed)" : name)}').");
+                    if (reader.Null()) typeRef = null;
                     else
                     {
-                        typeRef = JsonSerializer.Deserialize<global::app.type.@this>(ref reader, options);
-                        // The type's JsonConverter has no actor scope, so the entity is born
-                        // context-less. Stamp the reader's context now — so the type can reach
-                        // its registry (App.Type) to build the value.
+                        typeRef = JsonSerializer.Deserialize<global::app.type.@this>(ref reader.Inner, options);
                         if (typeRef != null) typeRef.Context = _context;
                     }
                     break;
                 case "value":
-                    // A full-match %x% is a VARIABLE reference, whatever its declared type.
-                    // Capture it; at EndObject it borns a variable — a real-typed slot → a
-                    // reference resolving at .Value(). It must NOT run the declared type's
-                    // reader on the literal "%x%" (the list reader would choke on "%!data%").
-                    if (reader.TokenType == JsonTokenType.String && _template != null && _context != null
-                        && reader.GetString() is { } sv
-                        && Data.TryFullVarMatch(sv, out _))
+                    // A string token IS the value's own content. A full-match %x% is a VARIABLE
+                    // reference (born below) — NOT run through the declared type's reader (which
+                    // would parse the literal "%x%"); any other string is its text content.
+                    if (reader.Peek() == global::app.channel.serializer.TokenKind.String
+                        && _template != null && _context != null)
                     {
-                        refValue = sv;
+                        var sv = reader.String();
+                        if (Data.TryFullVarMatch(sv, out _)) refValue = sv;
+                        else { deferredRaw = sv; deferredFormat = global::app.channel.serializer.Text.Mime; }
                     }
-                    // TEMP: goal.call has no reader yet, so born it inline. Remove once it gets
-                    // a reader (then it streams like any other structured value).
+                    // TEMP: goal.call has no reader yet — born it inline off the inner reader.
+                    // Remove once it streams like any other structured value.
                     else if (typeRef is { IsNull: false } && typeRef.Name == "goal.call" && _context != null)
                     {
-                        using var vdoc = JsonDocument.ParseValue(ref reader);
-                        born = JsonSerializer.Deserialize<global::app.goal.GoalCall>(
-                            vdoc.RootElement.GetRawText(), options);
+                        born = JsonSerializer.Deserialize<global::app.goal.GoalCall>(ref reader.Inner, options);
                     }
                     else if (typeRef is not { IsNull: false })
                     {
-                        // Invalid .pr schema — DOM only on this error path to show the value.
-                        using var vdoc = JsonDocument.ParseValue(ref reader);
-                        var preview = vdoc.RootElement.GetRawText();
+                        var preview = System.Text.Encoding.UTF8.GetString(reader.RawValue());
                         if (preview.Length > 120) preview = preview[..120] + "…";
                         throw new JsonException(
                             $"invalid .pr schema: value slot '{(string.IsNullOrEmpty(name) ? "(unnamed)" : name)}' "
@@ -135,27 +89,48 @@ public sealed class @this
                     }
                     else
                     {
-                        // The value rides as its raw bytes — captured off the reader with no
-                        // DOM (scalar off the token, structured sliced from the owned buffer) —
-                        // and materializes lazily on first touch. A string token IS the value's
-                        // own content (→ value/text); any other token is json (→ plang/json).
-                        deferredFormat = reader.TokenType == JsonTokenType.String
+                        // The value rides as its raw bytes — off the reader, no DOM (scalar off
+                        // the token, structured sliced from the owned buffer) — materializing
+                        // lazily. A string is content (→ value/text); any other token is json.
+                        deferredFormat = reader.Peek() == global::app.channel.serializer.TokenKind.String
                             ? global::app.channel.serializer.Text.Mime : "application/plang";
-                        var jr = new global::app.channel.serializer.json.Reader(reader, buffer);
-                        deferredRaw = System.Text.Encoding.UTF8.GetString(jr.RawValue());
-                        reader = jr.Inner;
+                        deferredRaw = System.Text.Encoding.UTF8.GetString(reader.RawValue());
                     }
                     break;
                 case "properties":
-                    properties = ReadPropertiesObject(ref reader);
+                    properties = ReadPropertiesObject(ref reader.Inner);
                     break;
                 default:
                     reader.Skip();
                     break;
             }
         }
+        reader.EndObject();
 
-        throw new JsonException("Unterminated app.data.@this wire shape");
+        // A full-match %x% declared as a real value type → a typed variable reference; it
+        // resolves at .Value() (the variable hop), then the consumer converts to T.
+        if (refValue != null && born == null
+            && typeRef is { IsNull: false } && typeRef.Name != "variable")
+            born = global::app.variable.@this.Reference(refValue, _context!);
+        if (born != null)
+        {
+            var d = new Data(name, born);
+            if (properties != null) d.Properties = properties;
+            return d;
+        }
+        if (deferredRaw != null && typeRef != null)
+        {
+            // Lazy value slot: rides as its raw source form, materializes on first touch
+            // through the read door (the serializer the raw needs + the authored template).
+            var lazy = Data.FromRaw(deferredRaw, typeRef, _context, format: deferredFormat, template: _template);
+            lazy.Name = name;
+            if (properties != null) lazy.Properties = properties;
+            return lazy;
+        }
+        // No value slot — a typed absence under its declared type.
+        var typedNull = new Data(name, (object?)null, typeRef);
+        if (properties != null) typedNull.Properties = properties;
+        return typedNull;
     }
 
     private static Properties ReadPropertiesObject(ref Utf8JsonReader reader)

@@ -197,7 +197,9 @@ public class Wire : JsonConverter<@this>
         _readDepth.Value++;
         try
         {
-            var bodyData = new global::app.data.reader.@this(_context, _template).Read(ref reader, options, buffer);
+            var jr = new global::app.channel.serializer.json.Reader(reader, buffer);
+            var bodyData = new global::app.data.reader.@this(_context, _template).Read(ref jr, options);
+            reader = jr.Inner;
             // When the caller asked for a typed Data<T>, wrap the base body
             // into a Data<T> so STJ's cast to typeToConvert succeeds. The
             // typed Data<T>.Value getter handles the dict-to-T conversion
