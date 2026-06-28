@@ -198,7 +198,7 @@ public class Wire : JsonConverter<@this>
             // _context is non-null on every read path (no context-less Wire is constructed in
             // production); ReadContext.Context is non-null, so the boundary `!` is honest here.
             var ctx = new global::app.type.reader.ReadContext(_context!, _template, View);
-            var bodyData = global::app.data.schema.@this.Instance.Reader(schema).Read(ref jr, ctx, options);
+            var bodyData = global::app.data.schema.@this.Instance.Reader(schema).Read(ref jr, ctx);
             reader = jr.Inner;
             // When the caller asked for a typed Data<T>, wrap the base body
             // into a Data<T> so STJ's cast to typeToConvert succeeds. The

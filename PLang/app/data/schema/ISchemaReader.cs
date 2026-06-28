@@ -9,10 +9,10 @@ using Data = global::app.data.@this;
 /// reads the <c>{name, type, value, properties}</c> envelope, <c>signature</c> verifies the
 /// attestation layer and peels to the inner data.
 ///
-/// <para><paramref name="options"/> is STJ plumbing for the sub-reads that still ride their own
-/// JsonConverter (the goal.call TEMP, the signature layer's <c>FromWire</c>) — it drains as
-/// those gain readers. <c>ReadContext</c> carries the actor context, authored template, and the
-/// read <c>View</c> (the signature layer gates verify on it).</para>
+/// <para><c>ReadContext</c> carries the actor context, authored template, and the read
+/// <c>View</c> (the signature layer gates verify on it). No <c>options</c> — like
+/// <see cref="app.type.reader.ITypeReader"/>; the only STJ sub-read left (goal.call's nested
+/// Data params) builds its own options from the context.</para>
 /// </summary>
 public interface ISchemaReader
 {
@@ -21,6 +21,5 @@ public interface ISchemaReader
     string Schema { get; }
 
     Data Read(ref global::app.channel.serializer.json.Reader reader,
-        global::app.type.reader.ReadContext ctx,
-        System.Text.Json.JsonSerializerOptions options);
+        global::app.type.reader.ReadContext ctx);
 }

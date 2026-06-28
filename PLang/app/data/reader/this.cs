@@ -20,7 +20,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
     // (entry path) so a structured value slices raw off the buffer with no DOM; the goal.call
     // TEMP dips to the inner reader for its STJ JsonConverter — the rest is format-agnostic.
     public Data Read(ref global::app.channel.serializer.json.Reader reader,
-        global::app.type.reader.ReadContext ctx, JsonSerializerOptions options)
+        global::app.type.reader.ReadContext ctx)
     {
         string name = "";
         global::app.type.@this? typeRef = null;
@@ -54,10 +54,15 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                     break;
                 case "value":
                     // TEMP: goal.call has no reader yet — born it inline off the inner reader.
-                    // Remove once it streams like any other structured value.
+                    // Its nested Data params still ride STJ, so build the read options from ctx
+                    // (the data reader itself needs no passed `options` — matches ITypeReader).
+                    // Remove once goal.call streams like any other structured value.
                     if (typeRef is { IsNull: false } && typeRef.Name == "goal.call")
                     {
-                        born = JsonSerializer.Deserialize<global::app.goal.GoalCall>(ref reader.Inner, options);
+                        var goalOptions = global::app.channel.serializer.json.Options.Read(ctx.Context);
+                        goalOptions.Converters.Add(new global::app.data.Wire(
+                            ctx.View, context: ctx.Context, template: ctx.Template));
+                        born = JsonSerializer.Deserialize<global::app.goal.GoalCall>(ref reader.Inner, goalOptions);
                     }
                     else if (typeRef is not { IsNull: false })
                     {

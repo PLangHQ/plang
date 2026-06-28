@@ -18,7 +18,7 @@ public sealed class signature : ISchemaReader
     public string Schema => global::app.type.signature.@this.WireSchemaSignature;
 
     public Data Read(ref global::app.channel.serializer.json.Reader reader,
-        global::app.type.reader.ReadContext ctx, System.Text.Json.JsonSerializerOptions options)
+        global::app.type.reader.ReadContext ctx)
     {
         var context = ctx.Context;
 
@@ -68,7 +68,7 @@ public sealed class signature : ISchemaReader
                     break;
                 }
                 case "signature": sig = new(global::app.type.signature.@this.SafeBase64(reader.String())); break;
-                case "value": inner = new global::app.data.reader.@this().Read(ref reader, ctx, options); break;
+                case "value": inner = new global::app.data.reader.@this().Read(ref reader, ctx); break;
                 default: reader.Skip(); break;
             }
         }
