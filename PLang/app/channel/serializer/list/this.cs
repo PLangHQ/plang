@@ -63,6 +63,11 @@ public sealed class @this
         return s;
     }
 
+    /// <summary>Select a serializer by mimetype — the collection's selection API
+    /// (throws <see cref="UnregisteredMimeType"/> when absent, like
+    /// <see cref="GetByMimeType"/>).</summary>
+    public ISerializer this[string mimeType] => GetByMimeType(mimeType);
+
     /// <summary>
     /// Gets a serializer by MIME type. Strips charset suffix if present.
     /// </summary>

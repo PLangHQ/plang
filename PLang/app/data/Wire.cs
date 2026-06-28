@@ -314,7 +314,9 @@ public class Wire : JsonConverter<@this>
                     // Lazy value slot: a shape-typed value (object/table) rides as
                     // its raw source form and materializes on first touch through
                     // the reader — verbatim passthrough for untouched relay Data.
-                    var lazy = @this.FromRaw(deferredRaw, typeRef, _context);
+                    // The deferred slot is JSON-encoded wire text — read it back through
+                    // the plang (json) serializer, not the bare-value default.
+                    var lazy = @this.FromRaw(deferredRaw, typeRef, _context, format: "application/plang");
                     lazy.Name = name;
                     if (properties != null) lazy.Properties = properties;
                     return lazy;

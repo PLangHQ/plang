@@ -65,4 +65,16 @@ public sealed class Text : ISerializer
         if (await result.IsEmpty()) return result.Context.Ok<T>(default!);
         return result.ShallowClone<T>(await result.Value<T>());
     }
+
+    /// <summary>
+    /// Reads a held value into its plang type — a text value IS the raw string, so it
+    /// makes a <see cref="global::app.channel.serializer.value.Reader"/> over it
+    /// (one scalar token) and lets the type pull itself off it.
+    /// </summary>
+    public global::app.type.item.@this Read(object value, string typeName, string? kind, global::app.type.reader.ReadContext ctx)
+    {
+        var typeReader = ctx.Context.App.Type.Readers.Reader(typeName, kind, ctx.Context);
+        var reader = new global::app.channel.serializer.value.Reader(value);
+        return typeReader.Read(ref reader, kind, ctx);
+    }
 }

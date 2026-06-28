@@ -97,6 +97,29 @@ public sealed class @this
         return null;
     }
 
+    /// <summary>
+    /// The reader for a value of <paramref name="typeName"/>/<paramref name="kind"/> —
+    /// narrowing <c>binary</c> content to the type its kind names (<c>json→item</c>,
+    /// <c>jpg→image</c>, <c>csv→table</c>, <c>plang-goal→goal</c>). Throws LOUDLY when the
+    /// resolved type ships no reader: a type that can be a value must own a
+    /// <c>serializer/Reader.cs</c>. The throw is the visible signal — its test expects it,
+    /// so adding the reader one day breaks that test and we notice.
+    /// </summary>
+    public ITypeReader Reader(string typeName, string? kind, actor.context.@this context)
+    {
+        if (string.Equals(typeName, "binary", System.StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(kind))
+        {
+            // Narrow ONLY when the kind's type can actually read this kind; otherwise the
+            // bytes ride as binary (an xlsx file is binary bytes until an xlsx reader exists).
+            var inner = new global::app.type.kind.@this(kind!, context).Type.Name;
+            if (!string.Equals(inner, "binary", System.StringComparison.OrdinalIgnoreCase)
+                && Typed(inner, kind) is not null) typeName = inner;
+        }
+        return Typed(typeName, kind) ?? throw new System.NotSupportedException(
+            $"no reader for type '{typeName}'{(kind != null ? $" (kind '{kind}')" : "")} — "
+            + $"a value type must own app/type/{typeName}/serializer/Reader.cs.");
+    }
+
 
     /// <summary>
     /// The type whose reader is registered under <paramref name="kind"/> — a

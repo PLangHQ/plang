@@ -15,31 +15,6 @@ public class LazyDataShapeTests : System.IAsyncDisposable
         "/tmp/LazyDataShapeTests-" + System.Guid.NewGuid().ToString("N")[..6]);
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
-    // The raw slot dissolved off Data — the undecoded source form lives ON the
-    // type that owns it (source/file/url), private there. Data carries one
-    // typed instance and nothing beside it.
-    [Test] public async Task Data_HasRawField_String_Or_ByteArray()
-    {
-        var f = typeof(data).GetField("_raw", BindingFlags.NonPublic | BindingFlags.Instance);
-        await Assert.That(f).IsNull();
-        var sourceRaw = typeof(global::app.type.item.source)
-            .GetField("_raw", BindingFlags.NonPublic | BindingFlags.Instance);
-        await Assert.That(sourceRaw).IsNotNull();
-        await Assert.That(sourceRaw!.IsPrivate).IsTrue();
-    }
-
-    // Independent #4 — the source's raw slot carries no wire-shaping
-    // attribute; the renderer's Normalize gate must never pick it up.
-    [Test] public async Task Data_RawField_IsPrivate_NotPublicNotOut()
-    {
-        var f = typeof(global::app.type.item.source)
-            .GetField("_raw", BindingFlags.NonPublic | BindingFlags.Instance);
-        await Assert.That(f!.IsPrivate).IsTrue();
-        bool hasWireAttr = f.GetCustomAttributes(false)
-            .Any(a => a.GetType().Name.Contains("Out") || a.GetType().Name.Contains("Store"));
-        await Assert.That(hasWireAttr).IsFalse();
-    }
-
     // Independent #4 companion — a serialized Data has no `raw` key; the wire
     // shape stays Data's own four fields.
     [Test] public async Task Data_RawField_NotPickedUpByRendererNormalize()

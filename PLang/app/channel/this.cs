@@ -294,7 +294,13 @@ public abstract class @this : IAsyncDisposable, IDisposable
     private global::app.data.@this StampValue(byte[] raw)
     {
         var context = Actor?.Context;
-        return global::app.data.@this.FromRaw(raw, StampType(context), context, Name);
+        // The serializer that reads these bytes names itself — store its own Type. A
+        // registered mime (application/json) reads structured via its own reader; an
+        // unregistered one (a raw blob: image/png, application/plang-goal) is just bytes,
+        // read through the value reader (the text serializer), not forced through JSON.
+        var serializer = Channels?.Serializers.GetByType(Mime ?? "") ?? Channels?.Serializers.Text;
+        return global::app.data.@this.FromRaw(raw, StampType(context), context, Name,
+            format: serializer?.Type ?? "application/plang");
     }
 
     /// <summary>

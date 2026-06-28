@@ -211,4 +211,21 @@ public sealed class @this : ISerializer
         return data.As<T>();
     }
 
+    /// <summary>
+    /// Reads a held value's bytes into its plang type — the <c>.pr</c> wire is JSON,
+    /// so it makes a <see cref="global::app.channel.serializer.json.Reader"/> over the
+    /// bytes and lets the type pull itself off it (a type with no reader yet borns its
+    /// natural shape off the same pass). This is the door a lazy <c>source</c>
+    /// materializes through.
+    /// </summary>
+    public global::app.type.item.@this Read(object value, string typeName, string? kind, global::app.type.reader.ReadContext ctx)
+    {
+        var typeReader = ctx.Context.App.Type.Readers.Reader(typeName, kind, ctx.Context);
+        byte[] bytes = value as byte[] ?? System.Text.Encoding.UTF8.GetBytes(value?.ToString() ?? "");
+        var utf8 = new Utf8JsonReader(bytes);
+        utf8.Read();
+        var reader = new global::app.channel.serializer.json.Reader(utf8);
+        return typeReader.Read(ref reader, kind, ctx);
+    }
+
 }

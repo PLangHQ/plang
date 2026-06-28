@@ -38,7 +38,11 @@ public class TableTypeTests
     // raw bytes survive. Stamping does not require a reader to exist; it
     // is a promise about shape. With no (table, xlsx) reader, Materialize
     // hands back the raw byte[] unchanged.
-    [Test] public async Task TableXlsx_StampsButHasNoReaderYet_RidesAsRawBytes()
+    // A type/kind with no reader yet (table/xlsx) throws LOUDLY on read — the visible
+    // signal that the reader is missing. The day a table/xlsx reader is added, this test
+    // breaks and we update it to assert the parsed grid instead. (Silent ride-as-bytes
+    // would hide the gap.)
+    [Test] public async Task TableXlsx_HasNoReaderYet_ThrowsUntilOneIsAdded()
     {
         await using var app = NewApp();
         var ctx = app.User.Context;
@@ -46,8 +50,7 @@ public class TableTypeTests
 
         byte[] bytes = { 0x50, 0x4B, 0x03, 0x04 }; // PK.. zip header (xlsx is a zip)
         var d = data.FromRaw(bytes, type.Create("table", "xlsx", context: ctx), ctx, "sheet");
-        await Assert.That(global::app.type.item.@this.Lower<byte[]>(await d.Value())).IsEqualTo(bytes);
-        await Assert.That(d.HasRaw).IsTrue();
+        await Assert.ThrowsAsync<System.NotSupportedException>(async () => await d.Value());
     }
 
     // The shape claim — `table` advertises itself as a grid (rows,

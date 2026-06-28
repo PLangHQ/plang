@@ -13,24 +13,33 @@ namespace app.type.item;
 /// </summary>
 public sealed class source : @this, module.IContext
 {
-    private readonly object _raw;
+    private readonly object _value;
     private readonly string _type;
     private readonly string? _kind;
     private readonly bool _strict;
+    // The serializer whose encoding these bytes are in — the .pr wire is
+    // application/plang, a channel's content is its own mimetype. At .Value() the
+    // source selects this serializer and asks it to read the bytes (it makes the
+    // matching reader; the type pulls itself off it).
+    private readonly string _format;
 
+    // Context stays nullable until the context-less source births (Judge, WireLocal)
+    // are removed — the WireLocal/Judge phase. Then this goes non-null + born-in-ctor.
     [System.Text.Json.Serialization.JsonIgnore]
     public actor.context.@this? Context { get; set; }
 
-    public source(object raw, string typeName, string? kind, bool strict = false)
+    public source(object value, string typeName, string? kind, bool strict = false,
+        string format = "text/plain")
     {
-        _raw = raw ?? throw new System.ArgumentNullException(nameof(raw));
+        _value = value ?? throw new System.ArgumentNullException(nameof(value));
         _type = string.IsNullOrWhiteSpace(typeName) ? "item" : typeName;
         _kind = kind;
         _strict = strict;
+        _format = format;
     }
 
     /// <summary>The undecoded source form — <c>string</c> or <c>byte[]</c>.</summary>
-    public object Raw => _raw;
+    public object Raw => _value;
 
     /// <summary>The declared judgement, verbatim — the source IS the declared
     /// type, unparsed.</summary>
@@ -47,12 +56,12 @@ public sealed class source : @this, module.IContext
     /// </summary>
     public override object? Peek()
     {
-        if (_raw is byte[] b && _type.ToLowerInvariant() is "text")
+        if (_value is byte[] b && _type.ToLowerInvariant() is "text")
         {
             try { return new System.Text.UTF8Encoding(false, throwOnInvalidBytes: true).GetString(b); }
             catch (System.Text.DecoderFallbackException) { return b; }
         }
-        return _raw;
+        return _value;
     }
 
     /// <summary>Shared by reference — a source is immutable (its raw + declared
@@ -71,43 +80,29 @@ public sealed class source : @this, module.IContext
     /// <summary>Never final — the door parses the raw form into its value on read.</summary>
     internal override bool IsFinal => false;
 
-    public override async System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this asking)
+    public override async System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this data)
     {
-        var read = Context?.App.Type.Readers.Of(_type, _kind);
-        // A binary form off I/O carries only its kind; the kind names the type it
-        // narrows to, and that type's reader does the parse (json→item, jpg→image).
-        if (read == null && _kind != null && Context != null)
-        {
-            string inner = new global::app.type.kind.@this(_kind, Context).Type.Name;
-            read = Context.App.Type.Readers.Of(inner, _kind);
-        }
-        object? parsed;
+        await System.Threading.Tasks.Task.CompletedTask;
         try
         {
-            if (read != null)
-            {
-                parsed = read(_raw, _kind, new global::app.type.reader.ReadContext(Context));
-            }
-            else if (_raw is string s)
-            {
-                // No reader — a string raw with a known type reads via the type's own
-                // Convert (json→dict, WireReader, primitive coercion).
-                var entity = global::app.type.@this.Create(_type, _kind, context: Context);
-                parsed = entity.Convert(s);
-            }
-            else if (_raw is byte[] bytes && string.Equals(_type, "binary", System.StringComparison.OrdinalIgnoreCase))
-            {
-                // A raw byte form typed plainly `binary` (no domain type, no kind) IS
-                // a binary value — its face is its bytes; surface it as binary rather
-                // than leaving the source shell. A byte form with a SPECIFIC type/kind
-                // awaiting a reader (table/xlsx, image/heic) stays raw below until its
-                // reader exists.
-                parsed = new global::app.type.binary.@this(bytes);
-            }
+            // The serializer whose encoding these bytes are in reads them: it makes the
+            // matching reader (json for the .pr wire, a value reader for text content),
+            // and the type pulls itself off it. One door, every type — the source never
+            // makes a reader, never names a format.
+            global::app.type.item.@this item;
+            if (Context?.Actor?.Channel.Serializers is { } serializers)
+                item = serializers[_format].Read(_value, _type, _kind, new global::app.type.reader.ReadContext(Context));
+            // TEMP (WireLocal/Judge phase): a source born without context (the Judge
+            // fallback) can't reach a serializer — the type coerces the raw itself. Dies
+            // with the context-less births; until then this keeps those reads working.
+            else if (_value is string s)
+                item = global::app.type.@this.Create(global::app.type.@this.Create(_type, _kind, context: Context).Convert(s), Context);
             else
-            {
                 return this;
-            }
+
+            if (ReferenceEquals(item, this)) return this;
+            item.Accumulate(this);
+            return item;
         }
         catch (System.Exception ex) when (ex is System.Text.Json.JsonException or System.FormatException or System.InvalidOperationException)
         {
@@ -120,17 +115,11 @@ public sealed class source : @this, module.IContext
             var where = ex is System.Text.Json.JsonException je && (je.Path != null || je.LineNumber != null)
                 ? $" [at {je.Path ?? "?"}, line {je.LineNumber?.ToString() ?? "?"}]"
                 : "";
-            asking.Fail(new global::app.error.Error(
-                $"failed to read %{asking.Name}% as {_type}{(_kind != null ? $"/{_kind}" : "")}: {ex.Message}{where}",
+            data.Fail(new global::app.error.Error(
+                $"failed to read %{data.Name}% as {_type}{(_kind != null ? $"/{_kind}" : "")}: {ex.Message}{where}",
                 "MaterializeFailed", 400) { Exception = ex });
             return Absent;
         }
-
-        var answer = global::app.type.@this.Create(parsed, Context);
-        if (ReferenceEquals(answer, this)) return this;
-        answer.Accumulate(this);
-        await System.Threading.Tasks.Task.CompletedTask;
-        return answer;
     }
 
     /// <summary>
@@ -149,7 +138,7 @@ public sealed class source : @this, module.IContext
         return await materialized.Navigate(parent, key);
     }
 
-    public override bool IsTruthy() => _raw switch
+    public override bool IsTruthy() => _value switch
     {
         string s => s.Length > 0,
         byte[] b => b.Length > 0,
@@ -168,16 +157,16 @@ public sealed class source : @this, module.IContext
     /// </summary>
     public override void Write(global::app.channel.serializer.IWriter w)
     {
-        if (_raw is byte[] b) { w.Bytes(b); return; }
-        var s = _raw.ToString() ?? "";
+        if (_value is byte[] b) { w.Bytes(b); return; }
+        var s = _value.ToString() ?? "";
         bool isJson = (_type is "object" or "item" && string.Equals(_kind, "json", System.StringComparison.OrdinalIgnoreCase))
                       || _type == "number";
         if (isJson) w.Raw(s); else w.String(s);
     }
 
 
-    internal override object? Clr(System.Type target) => ClrConvert(_raw, target);
+    internal override object? Clr(System.Type target) => ClrConvert(_value, target);
 
     /// <summary>Display is the raw text form; bytes show as a size note, never decoded.</summary>
-    public override string ToString() => _raw is byte[] b ? $"({b.Length} bytes)" : _raw.ToString() ?? "";
+    public override string ToString() => _value is byte[] b ? $"({b.Length} bytes)" : _value.ToString() ?? "";
 }

@@ -324,10 +324,17 @@ public partial class @this
     /// instance's own door on first use. Used by the channel boundary and the
     /// wire reader; <c>set %x% = 5</c> still lifts the value directly.
     /// </summary>
-    public static @this FromRaw(object raw, type type, actor.context.@this? context = null, string name = "")
+    public static @this FromRaw(object raw, type type, actor.context.@this? context = null, string name = "",
+        string? format = null)
     {
+        // A `json` kind is JSON-encoded (object/dict/list/structured) — read it through
+        // the plang (json) serializer. Anything else is its own raw form (csv, image
+        // bytes, a biginteger's digits) — read through the value serializer. The caller
+        // may force a format (the wire passes application/plang for its encoded slots).
+        format ??= string.Equals(type?.Kind, "json", System.StringComparison.OrdinalIgnoreCase)
+            ? "application/plang" : "text/plain";
         var d = new @this(name) { _context = context! };
-        d._type = new global::app.type.item.source(raw, type?.Name ?? "", type?.Kind) { Context = context };
+        d._type = new global::app.type.item.source(raw, type?.Name ?? "", type?.Kind, format: format) { Context = context };
         return d;
     }
 
