@@ -169,7 +169,7 @@ public partial class json
             System.Text.Json.JsonValueKind.Null => null,
             System.Text.Json.JsonValueKind.Undefined => null,
             System.Text.Json.JsonValueKind.Object => global::app.data.@this.IsDataMarked(element)
-                ? System.Text.Json.JsonSerializer.Deserialize<global::app.data.@this>(element)
+                ? System.Text.Json.JsonSerializer.Deserialize<global::app.data.@this>(element, NestedOptions())
                 : ObjectLeaf(element, depth),
             System.Text.Json.JsonValueKind.Array => ArrayLeaf(element, depth),
             _ => element.GetRawText(),
