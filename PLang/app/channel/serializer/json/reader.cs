@@ -19,8 +19,13 @@ namespace app.channel.serializer.json;
 public ref struct Reader : IReader
 {
     private Utf8JsonReader _r;
+    // The bytes the reader is reading over, when this reader OWNS them (the entry path).
+    // With it, RawValue() slices a structured value's sub-tree straight off the buffer — no
+    // DOM. Null when STJ drives the read (nested Data): RawValue() falls back to DOM there.
+    private readonly byte[]? _buffer;
 
     public Reader(Utf8JsonReader r) => _r = r;
+    public Reader(Utf8JsonReader r, byte[]? buffer) { _r = r; _buffer = buffer; }
 
     /// <summary>
     /// The embedded reader, by ref — to copy the advanced position back into the
@@ -107,16 +112,34 @@ public ref struct Reader : IReader
     public void Skip() => _r.Skip();
 
     /// <summary>
-    /// Verbatim capture. The buffer-owning reader will slice the source span here;
-    /// until then (the STJ-converter entry hides its buffer) this re-encodes the
-    /// value's JSON text — a single round-trip, no DOM kept. A string value returns
-    /// its UTF-8 bytes directly; object/array re-emit their compact JSON.
+    /// The current value's raw bytes, off the reader — no DOM. A string is its UTF-8
+    /// content (unescaped); a number/bool/null is the literal off the token; a structured
+    /// value (object/array) is sliced from the owned buffer (token start → past Skip). Only
+    /// the buffer-less STJ-nested case falls back to a single JsonDocument round-trip.
     /// </summary>
     public byte[] RawValue()
     {
-        if (_r.TokenType == JsonTokenType.String)
-            return System.Text.Encoding.UTF8.GetBytes(_r.GetString() ?? "");
-        using JsonDocument doc = JsonDocument.ParseValue(ref _r);
-        return System.Text.Encoding.UTF8.GetBytes(doc.RootElement.GetRawText());
+        switch (_r.TokenType)
+        {
+            case JsonTokenType.String:
+                return System.Text.Encoding.UTF8.GetBytes(_r.GetString() ?? "");
+            case JsonTokenType.Null:
+                return "null"u8.ToArray();
+            case JsonTokenType.Number:
+            case JsonTokenType.True:
+            case JsonTokenType.False:
+                return _r.HasValueSequence
+                    ? System.Buffers.BuffersExtensions.ToArray(_r.ValueSequence)
+                    : _r.ValueSpan.ToArray();
+            default:   // StartObject / StartArray — a structured sub-tree
+                if (_buffer != null)
+                {
+                    int start = (int)_r.TokenStartIndex;
+                    _r.Skip();
+                    return _buffer.AsSpan(start, (int)_r.BytesConsumed - start).ToArray();
+                }
+                using (JsonDocument doc = JsonDocument.ParseValue(ref _r))
+                    return System.Text.Encoding.UTF8.GetBytes(doc.RootElement.GetRawText());
+        }
     }
 }

@@ -414,45 +414,17 @@ public class Wire : JsonConverter<@this>
                             $"invalid .pr schema: value slot '{(string.IsNullOrEmpty(name) ? "(unnamed)" : name)}' "
                             + $"has no declared type. Value was: {preview}");
                     }
-                    else switch (reader.TokenType)
+                    else
                     {
-                        // A string token IS the value's own content (text, a path, a
-                        // biginteger's digits) — captured unescaped off the token, no DOM.
-                        case JsonTokenType.String:
-                            deferredRaw = reader.GetString() ?? "";
-                            deferredFormat = global::app.channel.serializer.Text.Mime;
-                            break;
-                        // A null/number/bool scalar — its raw json text rides off the token,
-                        // no DOM (ValueSpan is the literal bytes; Null has no span).
-                        case JsonTokenType.Null:
-                            deferredRaw = "null";
-                            deferredFormat = "application/plang";
-                            break;
-                        case JsonTokenType.Number:
-                        case JsonTokenType.True:
-                        case JsonTokenType.False:
-                            deferredRaw = RawScalar(ref reader);
-                            deferredFormat = "application/plang";
-                            break;
-                        // Structured (object → dict, array → list). With the owned buffer in
-                        // hand, slice the sub-tree's raw bytes off it (no DOM): the token start
-                        // to the position just past the matching end. STJ-nested reads (no
-                        // buffer) DOM the sub-tree — same captured bytes, just allocated.
-                        default:
-                            if (buffer != null)
-                            {
-                                int start = (int)reader.TokenStartIndex;
-                                reader.Skip();
-                                deferredRaw = System.Text.Encoding.UTF8.GetString(
-                                    buffer.AsSpan(start, (int)reader.BytesConsumed - start));
-                            }
-                            else
-                            {
-                                using var vdoc = JsonDocument.ParseValue(ref reader);
-                                deferredRaw = vdoc.RootElement.GetRawText();
-                            }
-                            deferredFormat = "application/plang";
-                            break;
+                        // The value rides as its raw bytes — captured off the reader with no
+                        // DOM (scalar off the token, structured sliced from the owned buffer) —
+                        // and materializes lazily on first touch. A string token IS the value's
+                        // own content (→ value/text); any other token is json (→ plang/json).
+                        deferredFormat = reader.TokenType == JsonTokenType.String
+                            ? global::app.channel.serializer.Text.Mime : "application/plang";
+                        var jr = new global::app.channel.serializer.json.Reader(reader, buffer);
+                        deferredRaw = System.Text.Encoding.UTF8.GetString(jr.RawValue());
+                        reader = jr.Inner;
                     }
                     break;
                 case "properties":
@@ -466,14 +438,6 @@ public class Wire : JsonConverter<@this>
 
         throw new JsonException("Unterminated app.data.@this wire shape");
     }
-
-    // The current scalar token's raw json text (number/bool literal), straight off the
-    // reader — no DOM. ValueSpan is the single-buffer case (our owned entry); a token that
-    // straddles buffer segments (STJ streaming) presents as ValueSequence.
-    private static string RawScalar(ref Utf8JsonReader reader)
-        => reader.HasValueSequence
-            ? System.Text.Encoding.UTF8.GetString(System.Buffers.BuffersExtensions.ToArray(reader.ValueSequence))
-            : System.Text.Encoding.UTF8.GetString(reader.ValueSpan);
 
     // Emits an untouched raw-backed value verbatim into the value slot, keeping
     // the slot valid json. Raw json (object/json) and number literals are already
