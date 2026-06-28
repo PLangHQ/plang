@@ -57,38 +57,11 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
         await Assert.That(value.GetProperty("value").GetString()).IsEqualTo("Ingi");
     }
 
-    [Test] public async Task SignatureLayer_RoundTrips_ThroughFromWire()
-    {
-        var inner = new global::app.data.@this("user", "Ingi", global::app.type.@this.FromName("text"), context: app.User.Context);
-        var sig = new global::app.type.signature.@this(
-            value: inner,
-            algorithm: new global::app.type.text.@this("ed25519"),
-            nonce: new global::app.type.text.@this("9f"),
-            created: new global::app.type.datetime.@this(new System.DateTimeOffset(2026, 6, 15, 10, 0, 0, System.TimeSpan.Zero)),
-            identity: new global::app.type.text.@this("alice"),
-            hash: new global::app.module.crypto.type.hash.@this(System.Convert.FromBase64String("ZGlnZXN0"), "keccak256"),
-            signature: new global::app.type.binary.@this(System.Convert.FromBase64String("c2ln")),
-            contracts: new global::app.type.list.@this(new[] { app.Ok(new global::app.type.text.@this("C0")) }) { Context = app.User.Context });
-
-        var options = new JsonSerializerOptions();
-        // Production FromWire (ReadSignatureLayer) always passes the actor's Wire — give the
-        // test the same context-ful Wire (a context-less Wire is not a real read path).
-        options.Converters.Add(new global::app.data.Wire(global::app.View.Out, context: app.User.Context));
-
-        using var doc = JsonDocument.Parse(Render(sig));
-        var back = global::app.type.signature.@this.FromWire(doc.RootElement, options);
-
-        await Assert.That(back.Algorithm.ToString()).IsEqualTo("ed25519");
-        await Assert.That(back.Nonce.ToString()).IsEqualTo("9f");
-        await Assert.That(back.Identity.ToString()).IsEqualTo("alice");
-        await Assert.That(back.Created.Value).IsEqualTo(sig.Created.Value);
-        await Assert.That(back.Hash.Algorithm).IsEqualTo("keccak256");
-        await Assert.That(back.Hash.ToBase64()).IsEqualTo("ZGlnZXN0");
-        await Assert.That(System.Linq.Enumerable.ToList(back.ContractStrings())).IsEquivalentTo(new[] { "C0" });
-        await Assert.That(back.Value.Peek().ToString()).IsEqualTo("Ingi");
-        // ToSigningBytes is deterministic across a round-trip.
-        await Assert.That(back.ToSigningBytes()).IsEquivalentTo(sig.ToSigningBytes());
-    }
+    // (The signature LAYER reconstruction is now the @schema:signature reader, which streams
+    // the layer + verifies + peels — no FromWire no-verify rebuild to inspect field-by-field.
+    // The streamed reconstruction is covered end-to-end by the round-trip + verify tests, e.g.
+    // WireConverterSigningTests / Cut2_SignThenCompressTests / Cut1_NavigatedConfigJson: a
+    // mis-streamed field fails verify there.)
 
     [Test] public async Task SignatureLayer_OmitsExpiresAndContracts_WhenAbsent()
     {

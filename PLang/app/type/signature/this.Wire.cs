@@ -53,61 +53,9 @@ public sealed partial class @this
             ? System.Array.Empty<string>()
             : System.Linq.Enumerable.Select(Contracts.Items, d => d.Peek().ToString() ?? "");
 
-    /// <summary>
-    /// Reconstructs a signature layer from its wire object. The inner
-    /// <c>value</c> is read back as the Data it is (through the same wire
-    /// converter via <paramref name="options"/>); every other field maps to its
-    /// born-native type. Verification is the caller's job (the read boundary runs
-    /// the verify action) — FromWire only rebuilds.
-    /// </summary>
-    internal static @this FromWire(JsonElement el, JsonSerializerOptions options)
-    {
-        text algorithm = new("ed25519"), nonce = new(""), identity = new("");
-        System.DateTimeOffset created = default;
-        System.DateTimeOffset? expires = null;
-        string hashAlgo = "keccak256", hashValue = "";
-        binary sig = new(System.Array.Empty<byte>());
-        global::app.type.list.@this? contracts = null;
-        global::app.data.@this inner = global::app.data.@this.Ok((object?)null);
-
-        foreach (var prop in el.EnumerateObject())
-        {
-            switch (prop.Name.ToLowerInvariant())
-            {
-                case "@schema": break;
-                case "type": algorithm = new text(prop.Value.GetString() ?? "ed25519"); break;
-                case "nonce": nonce = new text(prop.Value.GetString() ?? ""); break;
-                case "created": created = prop.Value.GetDateTimeOffset(); break;
-                case "expires":
-                    expires = prop.Value.ValueKind == JsonValueKind.Null ? null : prop.Value.GetDateTimeOffset();
-                    break;
-                case "identity": identity = new text(prop.Value.GetString() ?? ""); break;
-                case "contracts":
-                {
-                    var items = new System.Collections.Generic.List<global::app.data.@this>();
-                    foreach (var c in prop.Value.EnumerateArray())
-                        items.Add(global::app.data.@this.Ok(new text(c.GetString() ?? "")));
-                    contracts = new global::app.type.list.@this(items);
-                    break;
-                }
-                case "hash":
-                    hashAlgo = prop.Value.TryGetProperty("type", out var ht) ? ht.GetString() ?? "keccak256" : "keccak256";
-                    hashValue = prop.Value.TryGetProperty("value", out var hv) ? hv.GetString() ?? "" : "";
-                    break;
-                case "signature":
-                    sig = new binary(SafeBase64(prop.Value.GetString()));
-                    break;
-                case "value":
-                    inner = prop.Value.Deserialize<global::app.data.@this>(options)
-                            ?? global::app.data.@this.Ok((object?)null);
-                    break;
-            }
-        }
-
-        return new @this(inner, algorithm, nonce, new datetime(created), identity,
-            new hash(SafeBase64(hashValue), hashAlgo), sig,
-            expires is { } ex ? new datetime(ex) : null, contracts);
-    }
+    // The signature layer is READ by the @schema:signature reader (app/data/schema/signature.cs),
+    // which streams the fields off the IReader and verifies — there is no DOM rebuild here. The
+    // reader reuses SafeBase64 below for the hash + signature bytes.
 
     internal static byte[] SafeBase64(string? s)
     {

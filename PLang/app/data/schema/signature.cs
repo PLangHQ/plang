@@ -3,16 +3,15 @@ namespace app.data.schema;
 using Data = global::app.data.@this;
 
 /// <summary>
-/// The <c>@schema:signature</c> reader — an attestation layer wrapping inner data. Rebuilds
-/// the layer (<see cref="global::app.type.signature.@this.FromWire"/>), AUTO-VERIFIES on read
-/// (runs the verify action — a bad/expired/wrong-key signature fails the read), and peels to
-/// the verified inner data. The verify is View-gated: a Store read skips the wire-freshness +
-/// nonce-replay window (at-rest artifacts re-present the same nonce by design; their own
-/// Expires is the time bound), a transport (Out) read keeps it.
+/// The <c>@schema:signature</c> reader — an attestation layer wrapping inner data. STREAMS the
+/// layer's fields off the reader and reads the inner <c>value</c> through the data reader, then
+/// AUTO-VERIFIES on read (runs the verify action — a bad/expired/wrong-key signature fails the
+/// read) and peels to the verified inner data. The verify is View-gated: a Store read skips the
+/// wire-freshness + nonce-replay window (at-rest artifacts re-present the same nonce by design;
+/// their own Expires is the time bound), a transport (Out) read keeps it.
 ///
-/// <para>Still DOM-based (FromWire) + sync-over-async verify — the security boundary the Wire
-/// owns, now dispatched like any other <c>@schema</c>. <c>options</c> feeds FromWire's inner
-/// <c>Deserialize</c>.</para>
+/// <para>Sync-over-async verify — the security boundary the Wire owns, now dispatched like any
+/// other <c>@schema</c>. <c>options</c> only feeds the inner data read's goal.call TEMP.</para>
 /// </summary>
 public sealed class signature : ISchemaReader
 {
