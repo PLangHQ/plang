@@ -98,14 +98,13 @@ public sealed class @this
     }
 
     /// <summary>
-    /// The reader for a value of <paramref name="typeName"/>/<paramref name="kind"/> —
-    /// narrowing <c>binary</c> content to the type its kind names (<c>json→item</c>,
-    /// <c>jpg→image</c>, <c>csv→table</c>, <c>plang-goal→goal</c>). Throws LOUDLY when the
-    /// resolved type ships no reader: a type that can be a value must own a
-    /// <c>serializer/Reader.cs</c>. The throw is the visible signal — its test expects it,
-    /// so adding the reader one day breaks that test and we notice.
+    /// The reader for a value of <paramref name="typeName"/>/<paramref name="kind"/>, or
+    /// <c>null</c> when none exists — narrowing <c>binary</c> content to the type its kind
+    /// names (<c>json→item</c>, <c>jpg→image</c>, <c>csv→table</c>, <c>plang-goal→goal</c>).
+    /// A null answer means the caller decides: a structured json value parses to its natural
+    /// dict/list; a scalar with no reader is a genuine gap (the serializer throws LOUDLY).
     /// </summary>
-    public ITypeReader Reader(string typeName, string? kind, actor.context.@this context)
+    public ITypeReader? Reader(string typeName, string? kind, actor.context.@this context)
     {
         if (string.Equals(typeName, "binary", System.StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(kind))
         {
@@ -115,9 +114,7 @@ public sealed class @this
             if (!string.Equals(inner, "binary", System.StringComparison.OrdinalIgnoreCase)
                 && Typed(inner, kind) is not null) typeName = inner;
         }
-        return Typed(typeName, kind) ?? throw new System.NotSupportedException(
-            $"no reader for type '{typeName}'{(kind != null ? $" (kind '{kind}')" : "")} — "
-            + $"a value type must own app/type/{typeName}/serializer/Reader.cs.");
+        return Typed(typeName, kind);
     }
 
 

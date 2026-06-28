@@ -325,7 +325,7 @@ public partial class @this
     /// wire reader; <c>set %x% = 5</c> still lifts the value directly.
     /// </summary>
     public static @this FromRaw(object raw, type type, actor.context.@this? context = null, string name = "",
-        string? format = null)
+        string? format = null, string? template = null)
     {
         // A `json` kind is JSON-encoded (object/dict/list/structured) — read it through
         // the plang (json) serializer. Anything else is its own raw form (csv, image
@@ -334,7 +334,7 @@ public partial class @this
         format ??= string.Equals(type?.Kind, "json", System.StringComparison.OrdinalIgnoreCase)
             ? "application/plang" : "text/plain";
         var d = new @this(name) { _context = context! };
-        d._type = new global::app.type.item.source(raw, type?.Name ?? "", type?.Kind, format: format) { Context = context };
+        d._type = new global::app.type.item.source(raw, type?.Name ?? "", type?.Kind, format: format, template: template) { Context = context };
         return d;
     }
 

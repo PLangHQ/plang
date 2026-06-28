@@ -22,6 +22,10 @@ public sealed class source : @this, module.IContext
     // source selects this serializer and asks it to read the bytes (it makes the
     // matching reader; the type pulls itself off it).
     private readonly string _format;
+    // The authored-content mode the bytes were read in ("plang" for a developer-authored
+    // goal/.pr, null for runtime ingest). Rides into the reader's ReadContext so a %ref%
+    // leaf borns a live template; the trust is the reader's mode, never the content.
+    private readonly string? _template;
 
     // Context stays nullable until the context-less source births (Judge, WireLocal)
     // are removed — the WireLocal/Judge phase. Then this goes non-null + born-in-ctor.
@@ -29,13 +33,14 @@ public sealed class source : @this, module.IContext
     public actor.context.@this? Context { get; set; }
 
     public source(object value, string typeName, string? kind, bool strict = false,
-        string format = "text/plain")
+        string format = "text/plain", string? template = null)
     {
         _value = value ?? throw new System.ArgumentNullException(nameof(value));
         _type = string.IsNullOrWhiteSpace(typeName) ? "item" : typeName;
         _kind = kind;
         _strict = strict;
         _format = format;
+        _template = template;
     }
 
     /// <summary>The undecoded source form — <c>string</c> or <c>byte[]</c>.</summary>
@@ -91,7 +96,7 @@ public sealed class source : @this, module.IContext
             // makes a reader, never names a format.
             global::app.type.item.@this item;
             if (Context?.Actor?.Channel.Serializers is { } serializers)
-                item = serializers[_format].Read(_value, _type, _kind, new global::app.type.reader.ReadContext(Context));
+                item = serializers[_format].Read(_value, _type, _kind, new global::app.type.reader.ReadContext(Context, _template));
             // TEMP (WireLocal/Judge phase): a source born without context (the Judge
             // fallback) can't reach a serializer — the type coerces the raw itself. Dies
             // with the context-less births; until then this keeps those reads working.
@@ -159,9 +164,13 @@ public sealed class source : @this, module.IContext
     {
         if (_value is byte[] b) { w.Bytes(b); return; }
         var s = _value.ToString() ?? "";
-        bool isJson = (_type is "object" or "item" && string.Equals(_kind, "json", System.StringComparison.OrdinalIgnoreCase))
-                      || _type == "number";
-        if (isJson) w.Raw(s); else w.String(s);
+        // The format the bytes were captured in decides the wire shape — JSON-encoded
+        // content (a dict/list/number/bool slot) rides inline and UNQUOTED (byte-identical
+        // passthrough); the value serializer's content (text, a path, a biginteger's digits)
+        // is a quoted string. This mirrors the capture, so an untouched relay is byte-for-byte
+        // the bytes that came in (and a signature over them still verifies).
+        if (string.Equals(_format, "application/plang", System.StringComparison.OrdinalIgnoreCase)) w.Raw(s);
+        else w.String(s);
     }
 
 

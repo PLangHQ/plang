@@ -75,6 +75,8 @@ public sealed class Text : ISerializer
     {
         var typeReader = ctx.Context.App.Type.Readers.Reader(typeName, kind, ctx.Context);
         var reader = new global::app.channel.serializer.value.Reader(value);
-        return typeReader.Read(ref reader, kind, ctx);
+        return typeReader != null
+            ? typeReader.Read(ref reader, kind, ctx)
+            : global::app.channel.serializer.Json.ReadNoReader(ref reader, typeName, kind, ctx);
     }
 }

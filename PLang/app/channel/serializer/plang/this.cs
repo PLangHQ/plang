@@ -225,7 +225,9 @@ public sealed class @this : ISerializer
         var utf8 = new Utf8JsonReader(bytes);
         utf8.Read();
         var reader = new global::app.channel.serializer.json.Reader(utf8);
-        return typeReader.Read(ref reader, kind, ctx);
+        return typeReader != null
+            ? typeReader.Read(ref reader, kind, ctx)
+            : global::app.channel.serializer.Json.ReadNoReader(ref reader, typeName, kind, ctx);
     }
 
 }

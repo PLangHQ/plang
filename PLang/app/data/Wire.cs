@@ -283,7 +283,8 @@ public class Wire : JsonConverter<@this>
         object? value = null;
         type? typeRef = null;
         Properties? properties = null;
-        string? deferredRaw = null;   // set when the value slot is captured for lazy materialization
+        string? deferredRaw = null;   // set when a scalar value is captured for lazy materialization
+        string? deferredFormat = null; // the serializer the captured scalar needs (string→value, else json)
         string? refValue = null;      // a full-match %x% value, born at EndObject when the type is known
         global::app.type.item.@this? born = null;   // set when the type read its own value off the pass
 
@@ -311,12 +312,10 @@ public class Wire : JsonConverter<@this>
                 }
                 if (deferredRaw != null && typeRef != null)
                 {
-                    // Lazy value slot: a shape-typed value (object/table) rides as
-                    // its raw source form and materializes on first touch through
-                    // the reader — verbatim passthrough for untouched relay Data.
-                    // The deferred slot is JSON-encoded wire text — read it back through
-                    // the plang (json) serializer, not the bare-value default.
-                    var lazy = @this.FromRaw(deferredRaw, typeRef, _context, format: "application/plang");
+                    // Lazy scalar value slot: rides as its raw source form and materializes
+                    // on first touch through the read door (the serializer the captured raw
+                    // needs — string content → value, else json — plus the authored template).
+                    var lazy = @this.FromRaw(deferredRaw, typeRef, _context, format: deferredFormat, template: _template);
                     lazy.Name = name;
                     if (properties != null) lazy.Properties = properties;
                     return lazy;
@@ -392,43 +391,23 @@ public class Wire : JsonConverter<@this>
                         refValue = sv;
                         value = sv;
                     }
-                    // Defer a shape-typed value (object/table) — capture its raw
-                    // source form and let it materialize lazily on first touch.
-                    else if (typeRef != null && IsDeferrableShape(typeRef))
-                    {
-                        using var vdoc = JsonDocument.ParseValue(ref reader);
-                        var el = vdoc.RootElement;
-                        deferredRaw = el.ValueKind == JsonValueKind.String
-                            ? el.GetString() ?? ""
-                            : el.GetRawText();
-                    }
-                    // The declared type reads its OWN value off the single pass — born at
-                    // its kind in one step (mirror of its IWriter render). goal.call borns
-                    // here too via its reader (params ride as references; no dict, no walk).
-                    else if (typeRef is { IsNull: false, Polymorphic: false } && _context != null
-                             && _context.App.Type.Readers.Typed(typeRef.Name, typeRef.Kind) is { } typed)
-                    {
-                        var jr = new global::app.channel.serializer.json.Reader(reader);
-                        born = typed.Read(ref jr, typeRef.Kind,
-                            new global::app.type.reader.ReadContext(_context, _template));
-                        reader = jr.Inner;
-                    }
-                    // TEMP: goal.call has no type reader yet, so born it inline. Deserialize
-                    // the descriptor AS a GoalCall through the SAME options — its nested
-                    // params (List<Data>) born through the Wire, so a %ref% param
-                    // (path=%path%) borns as a variable reference (resolved call-by-value at
-                    // injection), not a flattened literal. Remove once goal.call gets a reader.
+                    // TEMP: goal.call has no reader yet, so born it inline. Remove once it
+                    // gets a reader (then it streams like any other structured value).
                     else if (typeRef is { IsNull: false } && typeRef.Name == "goal.call" && _context != null)
                     {
                         using var vdoc = JsonDocument.ParseValue(ref reader);
                         born = JsonSerializer.Deserialize<global::app.goal.GoalCall>(
                             vdoc.RootElement.GetRawText(), options);
                     }
+                    // Every other value rides as a verbatim lazy source — it materializes
+                    // through the read door on first touch (json object → dict, array → list,
+                    // a scalar → its wrapper). A string token IS the value's own content (text,
+                    // a biginteger's digits) → value serializer; any other token is json →
+                    // plang/json. The source writes back byte-identical (it keys its inline-vs-
+                    // quote on this same format), so an untouched relay and its signature hold.
                     else
                     {
                         using var vdoc = JsonDocument.ParseValue(ref reader);
-                        // A value slot with no declared type is invalid .pr schema — throw,
-                        // never silently born a guessed shape. Name the slot + show the value.
                         if (typeRef is not { IsNull: false })
                         {
                             var preview = vdoc.RootElement.GetRawText();
@@ -437,9 +416,16 @@ public class Wire : JsonConverter<@this>
                                 $"invalid .pr schema: value slot '{(string.IsNullOrEmpty(name) ? "(unnamed)" : name)}' "
                                 + $"has no declared type. Value was: {preview}");
                         }
-                        // A declared type with no reader: born its natural value (scalar
-                        // wrapper / native dict-list / reconstructed Data) in one pass.
-                        value = new global::app.type.item.serializer.json(_context).Parse(vdoc.RootElement);
+                        if (vdoc.RootElement.ValueKind == JsonValueKind.String)
+                        {
+                            deferredRaw = vdoc.RootElement.GetString() ?? "";
+                            deferredFormat = "text/plain";
+                        }
+                        else
+                        {
+                            deferredRaw = vdoc.RootElement.GetRawText();
+                            deferredFormat = "application/plang";
+                        }
                     }
                     break;
                 case "properties":
