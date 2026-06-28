@@ -274,7 +274,7 @@ public class SerializerRegistryTests
 
         public Task<global::app.data.@this<T>> DeserializeAsync<T>(Stream stream, global::app.View view = global::app.View.Out, CancellationToken cancellationToken = default) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
             => Task.FromResult(global::app.data.@this<T>.Ok(default!));
-        public global::app.type.item.@this Read(object value, string typeName, string? kind, global::app.type.reader.ReadContext ctx) => global::app.type.@null.@this.Instance;
+        public global::app.type.item.@this Read(global::app.type.item.source source, global::app.type.reader.ReadContext ctx) => global::app.type.@null.@this.Instance;
 
         public global::app.data.@this<global::app.type.text.@this> Serialize(Data data)
             => global::app.data.@this<global::app.type.text.@this>.Ok((data.Peek())?.ToString() ?? "");

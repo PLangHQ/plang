@@ -71,10 +71,11 @@ public sealed class Text : ISerializer
     /// makes a <see cref="global::app.channel.serializer.value.Reader"/> over it
     /// (one scalar token) and lets the type pull itself off it.
     /// </summary>
-    public global::app.type.item.@this Read(object value, string typeName, string? kind, global::app.type.reader.ReadContext ctx)
+    public global::app.type.item.@this Read(global::app.type.item.source source, global::app.type.reader.ReadContext ctx)
     {
-        var typeReader = ctx.Context.App.Type.Readers.Reader(typeName, kind, ctx.Context);
-        var reader = new global::app.channel.serializer.value.Reader(value);
-        return typeReader.Read(ref reader, kind, ctx);
+        var type = source.Mint();
+        var typeReader = ctx.Context.App.Type.Readers.Reader(type.Name, type.Kind, ctx.Context);
+        var reader = new global::app.channel.serializer.value.Reader(source.Raw);
+        return typeReader.Read(ref reader, type.Kind, ctx);
     }
 }

@@ -218,14 +218,15 @@ public sealed class @this : ISerializer
     /// natural shape off the same pass). This is the door a lazy <c>source</c>
     /// materializes through.
     /// </summary>
-    public global::app.type.item.@this Read(object value, string typeName, string? kind, global::app.type.reader.ReadContext ctx)
+    public global::app.type.item.@this Read(global::app.type.item.source source, global::app.type.reader.ReadContext ctx)
     {
-        var typeReader = ctx.Context.App.Type.Readers.Reader(typeName, kind, ctx.Context);
-        byte[] bytes = value as byte[] ?? System.Text.Encoding.UTF8.GetBytes(value?.ToString() ?? "");
+        var type = source.Mint();
+        var typeReader = ctx.Context.App.Type.Readers.Reader(type.Name, type.Kind, ctx.Context);
+        byte[] bytes = source.Raw as byte[] ?? System.Text.Encoding.UTF8.GetBytes(source.Raw.ToString() ?? "");
         var utf8 = new Utf8JsonReader(bytes);
         utf8.Read();
         var reader = new global::app.channel.serializer.json.Reader(utf8);
-        return typeReader.Read(ref reader, kind, ctx);
+        return typeReader.Read(ref reader, type.Kind, ctx);
     }
 
 }

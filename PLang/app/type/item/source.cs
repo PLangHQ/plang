@@ -96,7 +96,7 @@ public sealed class source : @this, module.IContext
             // makes a reader, never names a format.
             global::app.type.item.@this item;
             if (Context?.Actor?.Channel.Serializers is { } serializers)
-                item = serializers[_format].Read(_value, _type, _kind, new global::app.type.reader.ReadContext(Context, _template));
+                item = serializers[_format].Read(this, new global::app.type.reader.ReadContext(Context, _template));
             // TEMP (WireLocal/Judge phase): a source born without context (the Judge
             // fallback) can't reach a serializer — the type coerces the raw itself. Dies
             // with the context-less births; until then this keeps those reads working.

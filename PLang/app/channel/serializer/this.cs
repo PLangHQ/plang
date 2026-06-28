@@ -43,13 +43,12 @@ public interface ISerializer
     Task<data.@this<T>> DeserializeAsync<T>(Stream stream, global::app.View view = global::app.View.Out, CancellationToken cancellationToken = default) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>;
 
     /// <summary>
-    /// Reads an already-held value (a <c>source</c>'s undecoded bytes/string from a
-    /// <c>.pr</c> or channel content) into its plang type. THIS serializer knows the
-    /// encoding its bytes are in, so it makes the matching <see cref="IReader"/> over
-    /// them; the type then pulls itself off that reader
-    /// (<c>App.Type.Reader(typeName, kind).Read</c>) — format-agnostic. The read-side
-    /// counterpart of the write renderer: the serializer owns the format, the type
-    /// owns the value.
+    /// Reads a <c>source</c>'s undecoded bytes (from a <c>.pr</c> or channel content) into
+    /// its plang type. THIS serializer knows the encoding its bytes are in, so it makes the
+    /// matching <see cref="IReader"/> over them; the type then pulls itself off that reader
+    /// (<c>App.Type.Reader(name, kind).Read</c>) — format-agnostic. The serializer navigates
+    /// the source for its raw + declared type; the read-side counterpart of the write
+    /// renderer (serializer owns the format, the type owns the value).
     /// </summary>
-    global::app.type.item.@this Read(object value, string typeName, string? kind, global::app.type.reader.ReadContext ctx);
+    global::app.type.item.@this Read(global::app.type.item.source source, global::app.type.reader.ReadContext ctx);
 }

@@ -136,14 +136,15 @@ public sealed class Json : ISerializer
     /// lets the type pull itself off it. A type with no reader yet borns its natural
     /// shape off the same pass.
     /// </summary>
-    public global::app.type.item.@this Read(object value, string typeName, string? kind, global::app.type.reader.ReadContext ctx)
+    public global::app.type.item.@this Read(global::app.type.item.source source, global::app.type.reader.ReadContext ctx)
     {
-        var typeReader = ctx.Context.App.Type.Readers.Reader(typeName, kind, ctx.Context);
-        byte[] bytes = value as byte[] ?? Encoding.UTF8.GetBytes(value?.ToString() ?? "");
+        var type = source.Mint();
+        var typeReader = ctx.Context.App.Type.Readers.Reader(type.Name, type.Kind, ctx.Context);
+        byte[] bytes = source.Raw as byte[] ?? Encoding.UTF8.GetBytes(source.Raw.ToString() ?? "");
         var utf8 = new Utf8JsonReader(bytes);
         utf8.Read();
         var reader = new global::app.channel.serializer.json.Reader(utf8);
-        return typeReader.Read(ref reader, kind, ctx);
+        return typeReader.Read(ref reader, type.Kind, ctx);
     }
 
     /// <summary>
