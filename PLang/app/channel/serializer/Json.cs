@@ -143,22 +143,7 @@ public sealed class Json : ISerializer
         var utf8 = new Utf8JsonReader(bytes);
         utf8.Read();
         var reader = new global::app.channel.serializer.json.Reader(utf8);
-        if (typeReader != null) return typeReader.Read(ref reader, kind, ctx);
-        // No reader: a structured json value parses to its natural dict/list; a scalar with
-        // no reader is a genuine gap → throw loudly (the missing-reader signal).
-        return ReadNoReader(ref reader, typeName, kind, ctx);
-    }
-
-    internal static global::app.type.item.@this ReadNoReader<TReader>(ref TReader reader,
-        string typeName, string? kind, global::app.type.reader.ReadContext ctx)
-        where TReader : global::app.channel.serializer.IReader, allows ref struct
-    {
-        if (reader.Peek() is global::app.channel.serializer.TokenKind.Object or global::app.channel.serializer.TokenKind.Array)
-            return global::app.type.@this.Create(
-                new global::app.type.item.serializer.json(ctx.Context).ReadSlot(ref reader, ctx), ctx.Context);
-        throw new System.NotSupportedException(
-            $"no reader for type '{typeName}'{(kind != null ? $" (kind '{kind}')" : "")} — "
-            + $"a value type must own app/type/{typeName}/serializer/Reader.cs.");
+        return typeReader.Read(ref reader, kind, ctx);
     }
 
     /// <summary>
