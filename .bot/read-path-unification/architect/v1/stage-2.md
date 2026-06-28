@@ -109,6 +109,27 @@ What it proved (do these as prerequisites in the real slice):
    throw — so the read door needs to distinguish "plang type with no reader (throw)" from
    "host object (clr)". Resolve that before/with this slice.
 
+### CORRECTION (Ingi) — json → dict/list, NOT a verbatim source
+The slice-1 attempt deferred **every** value (incl. structured json) as a verbatim-raw
+`source`. That's wrong for structured json and is what broke the 2 remaining tests:
+- **Cut1 config = a SIGNATURE round-trip.** The wire is signature-wrapped; on read
+  `back.Type` came back null (`null.@this`) — verify FAILED. Root: a json object deferred
+  as a verbatim `source` re-serializes **verbatim** (the captured raw text), which does not
+  match the `dict`'s **canonical structural** serialization the hash was computed over →
+  hash mismatch → verify null. (Not a reader/clr bug — a canonicalization bug.)
+- The type-entity case is the separate host-object→`clr` issue (unchanged).
+
+**The fix is the right split:**
+- **structured token (object → `dict`, array → `list`)** is parsed AT READ into the lazy
+  container (the container is built; its *entries* are the deferred `source`s). A `dict`/`list`
+  serializes structurally = canonical, so signatures stay stable.
+- **scalar token (string/number/bool)** → a verbatim `source` (lazy).
+
+So the `data` reader (and the interim `ReadBody` defer) must branch on the value's token:
+object/array → build dict/list now (entries lazy); scalar → source. NOT "defer everything."
+This also means the no-DOM `RawValue()` capture is only for the SCALAR leaves; structured
+values stream into dict/list via the existing `item.json` reader (lazy entries).
+
 ### Recommendation for the fresh pass
 Do prerequisites (1) template-on-source and (2) variable reader FIRST as their own tiny
 commits (they're correct regardless), THEN the defer-everything switch, THEN the
