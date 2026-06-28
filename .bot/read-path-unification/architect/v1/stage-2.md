@@ -80,4 +80,36 @@ read(IReader r, View v):                        async; mirror of value.Write(IWr
   removed, or full-match `%x%` values regress. Verify with the ResolveValue_* tests.
 
 ## Shipped + deltas from plan
-_(coder fills as slices land.)_
+
+### Slice-1 attempt (reverted to protect green — findings captured)
+Tried the conservative version of slice 1: keep the STJ converter + DOM, but make
+`ReadBody`'s value switch **defer ALL typed values** to `source` (kill the eager
+`typeRef.Build` / inline `Typed.Read` / `json.Parse` born), keep `%x%` full-match eager
+and `goal.call` TEMP, and let `FromRaw` pick the reader by kind (no forced format).
+Result: Wire neutral, Data 11 new → fixed down to **3** before reverting.
+
+What it proved (do these as prerequisites in the real slice):
+1. **Template must thread onto `source`.** Deferring template-bearing values (partial
+   `"hello %x%"`, goal params) breaks interpolation unless `source` carries `_template`
+   and `source.Value` passes it in `ReadContext` (→ text reader interpolates). Add
+   `_template` to `source` + `FromRaw(template:)`; Wire's deferred `FromRaw` passes `_template`.
+2. **`variable` needs a reader.** A `type:variable` name-slot defers and throws — add
+   `app/variable/serializer/Reader.cs` (`variable.@this.Resolve(reader.String(), ctx)`).
+   (This fixed the goal/ResolveValue/most-Defaults cluster.)
+3. **The remaining 2 tie into the `clr`/host-object work, NOT "add a reader":**
+   - a **`type`-entity value** (`new type("number","long")` as a param value) defers and
+     throws `no reader for type 'type'` — it's a host object → should be `clr`, not a plang
+     value type. (Defaults_ParameterOverridesDefault / ResolvedWhenParameterMissing.)
+   - an **object/json config** round-trips (serialize→deserialize) to a **`clr`** instead of
+     a `dict` → `clr.Navigate` NRE (Cut1_NavigatedConfigJson). Needs tracing — likely the
+     serialize-of-source / re-read loses the type, or the object reader path yields clr.
+
+   These connect to the goal→clr / clr-carrier cleanup. The throw-on-missing-reader is
+   right for plang types (table/xlsx) but a **host-object value should ride as `clr`**, not
+   throw — so the read door needs to distinguish "plang type with no reader (throw)" from
+   "host object (clr)". Resolve that before/with this slice.
+
+### Recommendation for the fresh pass
+Do prerequisites (1) template-on-source and (2) variable reader FIRST as their own tiny
+commits (they're correct regardless), THEN the defer-everything switch, THEN the
+host-object-as-clr distinction for (3). Each green via targeted 15s Data/Wire diffs.
