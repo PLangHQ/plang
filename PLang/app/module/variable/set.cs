@@ -168,18 +168,10 @@ public partial class Set : IContext, IBuildValidatable
             // the stored value stays born-typed either way.
             if (sourceValue is global::app.type.text.@this st) sourceValue = st.Clr<string>();
             else if (sourceValue is global::app.type.binary.@this sb) sourceValue = sb.Value;
-            // Type entity rides in a bare Data — `type` is not `: item`, so it can't be a
-            // Data<T> that auto-converts. Reconstruct it from whatever the .pr served:
-            //   - already a type.@this → use it;
-            //   - the `{name, kind?, strict?}` wire dict → TypeFromWire rebuilds name+kind+strict;
-            //   - a bare type-name (raw string or text wrapper) → FromName of its text.
-            // Only the dict goes through TypeFromWire — its string arm binds context onto the
-            // entity, which would resolve a kindless name's ClrType to the wrapper (number) rather
-            // than the raw CLR mate (Int32) the no-context FromName yields.
+            // The Type value reads through the `type` reader, so it materializes as the type
+            // entity itself ({name, kind?, strict?} → type.@this). A bare type-name (raw string)
+            // still names a type by name. No dict rebuild — that was the pre-reader path.
             var type = typeValue as global::app.type.@this
-                ?? (typeValue is global::app.type.dict.@this or System.Collections.Generic.IDictionary<string, object?>
-                        ? global::app.data.@this.TypeFromWire(typeValue, Context)
-                        : null)
                 ?? global::app.type.@this.FromName(typeValue.ToString()!);
             // Canonicalise kind through the format registry — `markdown` → `md`,
             // `jpeg` → `jpg`. The factory does this when a context is passed;
