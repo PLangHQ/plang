@@ -747,19 +747,29 @@ public partial class @this
     // to a Data slot must reconstruct the Data (value + type as a whole), not nest the
     // dict. Strict: only the marker counts — a user map with value/type/name keys but no
     // marker stays a plain dict.
+    [System.Obsolete(WireShapeObsolete)]
     internal static bool IsWireShape(object? raw)
         => WireSlot(raw, WireSchema) as string == WireSchemaData;
+
+    internal const string WireShapeObsolete =
+        "Legacy in-memory wire reconstruction. Values now read through their type's reader " +
+        "(data/type/actions readers) — this rebuilds from an already-materialized dict, which only " +
+        "happens after a Clr→JSON round-trip stripped the typed read. Last caller: Conversion.cs " +
+        "(Convert-to-Data). Do not add new callers.";
 
     // Reconstruct a Data from its wire shape ({name?, value, type}). The value is set
     // as a whole under its real type; a nested wire-shaped value is itself a Data. The
     // slot's name (not the wire dict's) is used so the value's identity is its content.
+    [System.Obsolete(WireShapeObsolete)]
     internal static @this FromWireShape(object? wire, string name, actor.context.@this? context)
     {
+#pragma warning disable CS0618 // the deprecated family calls its own members
         object? rawValue = WireSlot(wire, "value");
         object? innerValue = IsWireShape(rawValue)
             ? FromWireShape(rawValue, "", context)
             : rawValue;
         type? typeEntity = TypeFromWire(WireSlot(wire, "type"), context);
+#pragma warning restore CS0618
         // Deserialize raw -> item via the type's reader (Data-free), then wrap as a
         // named value. The type decides how to become itself; Data just holds it.
         var instance = typeEntity is { IsNull: false } && !typeEntity.Polymorphic
@@ -770,6 +780,7 @@ public partial class @this
 
     // Build a type entity from its wire form — a bare name string ("text") or the
     // structured {name, kind?, strict?} object (a native dict, navigated in place).
+    [System.Obsolete(WireShapeObsolete)]
     internal static type? TypeFromWire(object? t, actor.context.@this? context)
     {
         // `strict` rides the wire as a raw bool OR a born-native @bool.@this wrapper — unwrap
