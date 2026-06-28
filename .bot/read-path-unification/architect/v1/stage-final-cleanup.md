@@ -69,18 +69,17 @@ behavior is lost (Data/Wire green + a write-path probe), watch for the wire-shap
 that legitimately lives there. Candidates to inspect: `this.Normalize.cs`, and any `this.*.cs`
 partial whose role overlaps the new reader/serializer split.
 
-## 9. Properties read — plan line 35 (source) vs line 50 (IReader), findings (2026-06-28)
-Loose-end-1 of stage 2. Attempted, learned, deferred — kept on `ref Utf8JsonReader` (green).
-- **Line 35 (each prop value → RawValue → lazy `source`)** is BLOCKED by the **sync
-  `Properties[key]` getter** (`Properties : IDictionary<string, object?>`). A lazy `source`
-  can't answer a CLR value synchronously, and ~10–15 consumers read CLR directly
-  (`Create(kvp.Value).Clr(...)` for param binding, `%x!key%` reads, enumeration in
-  Normalize/Wire.Write). Making property access async is a large separate ripple — do it
-  with that, not here. Also note property values are written **bare/untyped**
-  (`NormalizeValue` → `jsonWriter.Value`), so a source would have to infer type from the token.
-- **Line 50 (read props via IReader, keep CLR)** — tried; the IReader rewrite
-  (`BeginObject`/`NextName`/`Number`) **mis-advanced on the signature-wrapped path**: a `42`
-  property read back as `double` (Properties_IntValue_ReadBackAsLong + Cut4 regressed). Root
-  not chased (marginal win); reverted. If revisited, trace the nested (buffer-null) read's
-  advance vs the Utf8JsonReader loop. The two Verb+Noun helpers (`ReadPropertiesObject`,
-  `ReadPropertyPrimitive`, #7) dissolve only with the line-35 source work.
+## 9. Properties read — route each value through the value reader (don't hand-roll) (2026-06-28)
+Loose-end-1 of stage 2. `ReadPropertiesObject`/`ReadPropertyPrimitive` are an OBP violation:
+they REINVENT value-reading (a bespoke string/number/object/array → CLR switch on the envelope
+reader) instead of using the path the value slot already uses (serializer → the type's reader).
+A property value IS a value — read it the SAME way; `Properties` owns the collection iteration.
+That dissolves both methods.
+
+Blocker (why it's deferred, not done): the **sync `Properties[key]` getter**
+(`Properties : IDictionary<string, object?>`) — routing through the value reader yields plang
+items, not raw CLR, and ~10–15 consumers read CLR directly (`Create(kvp.Value).Clr(...)`,
+`%x!key%`, Normalize/Wire.Write enumeration). So this is coupled to making property access
+async (or eagerly materializing). The fix is the PATTERN (don't invent a property reader),
+NOT an IReader rewrite of the hand-rolled switch — that attempt mis-advanced the
+signature-wrapped path (`42`→double) and was reverted. Kept on `Utf8JsonReader` until done right.
