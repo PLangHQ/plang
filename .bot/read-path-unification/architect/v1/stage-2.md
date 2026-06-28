@@ -95,11 +95,28 @@ scalar→its wrapper). Data + Wire neutral; TableXlsx throw green.
 - GONE: `typeRef.Build` eager born, inline `Typed.Read`, `json.Parse` natural, `IsDeferrableShape`.
   STILL eager: `%x%` full-match, `goal.call` (TEMP).
 
-### Still ahead in Stage 2 (further thinning — not behavioral)
-- `read(IReader)` entry + no-DOM `RawValue()` (still STJ `JsonConverter` + `JsonDocument` DOM
-  in ReadBody). `@schema` registry dispatch + `signature` reader. Dead-code sweep
-  (`IsDeferrableShape`, `EmitRawVerbatim`, the now-dead `value`/typeRef.Build EndObject path).
-- `%ref%`→variable reader migration (defer `%x%` too, born the reference in the variable reader).
+### LANDED — incremental thinning + read entry (a9ba4802b, 0c8f6cb64)
+- `serializer.Read(source)` — no decompose (OBP); the serializer navigates source.Raw/Mint.
+- `type` is a descriptor with a real reader (it IS an item.@this) — NO "untyped"/clr/dict
+  fallback. registry `Reader` throws again for a genuine gap (table/xlsx). `json.Untyped` gone.
+- Dead-code sweep: `typeRef.Build` eager born at EndObject, `IsDeferrableShape`, `value` local — gone.
+- `source.Write` format discriminator fixed (was `== application/plang`, mis-quoted an
+  application/json source) → `== Text.Mime` → quote; else inline. `Text.Mime` const.
+- **Read entry: `DeserializeAsync` owns the buffer** — reads bytes, drives the Wire converter
+  over a `Utf8JsonReader` on those bytes (not `JsonSerializer.Deserialize<Data>`). Both prod
+  and the sync test path route here. This is the prerequisite for no-DOM. Neutral.
+
+### Still ahead in Stage 2
+- **no-DOM `RawValue()`**: TWO parts — (a) route `ReadBody`'s value capture through
+  `json.Reader.RawValue()` (needs careful ref write-back across the json.Reader↔Utf8JsonReader
+  boundary — `_r` is held by value, write back via `.Inner`); (b) make `RawValue()` slice the
+  OWNED buffer span instead of its current internal `JsonDocument.ParseValue` (reader.cs:119) —
+  needs `json.Reader` to carry the `byte[]`. The buffer is now in hand at the entry; nested Data
+  (STJ-driven, no buffer) keeps DOM → the value capture forks buffer-vs-no-buffer (design it so
+  it's not two shapes). FRESH-SESSION work.
+- `@schema` registry dispatch + `signature` reader (async verify, View-gated; security-sensitive).
+- `%ref%`→variable reader migration (defer `%x%` too) — has an IsVariable/build-validation
+  subtlety; verify with ResolveValue_* tests.
 
 ## Shipped + deltas from plan
 
