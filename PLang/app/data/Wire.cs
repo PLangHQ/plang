@@ -280,7 +280,6 @@ public class Wire : JsonConverter<@this>
     private @this ReadBody(ref Utf8JsonReader reader, JsonSerializerOptions options)
     {
         string name = "";
-        object? value = null;
         type? typeRef = null;
         Properties? properties = null;
         string? deferredRaw = null;   // set when a scalar value is captured for lazy materialization
@@ -320,25 +319,11 @@ public class Wire : JsonConverter<@this>
                     if (properties != null) lazy.Properties = properties;
                     return lazy;
                 }
-                // Nested Data is not a shape — the wire never carries a Data in a
-                // value slot (Lift/clr forbid it). So the reader only builds from a
-                // real value: the declared type owns construction, else the value's
-                // own natural type stands.
-                @this data;
-                if (typeRef is { IsNull: false } && !typeRef.Polymorphic && typeRef.Context != null)
-                {
-                    // The declared TYPE builds the value itself — born at its kind in
-                    // one step (5 + {number,int} → number(int)). No lift-then-judge;
-                    // the type owns its construction.
-                    var instance = typeRef.Build(value);
-                    data = new @this(name, instance);
-                }
-                else
-                {
-                    // Polymorphic / no declared type / context-less: the value's own
-                    // natural type stands (the prior lift path; no kind to honor).
-                    data = new @this(name, value, typeRef);
-                }
+                // No value slot at all — a typed absence under its declared type. (Every
+                // PRESENT value set deferredRaw / born / refValue above and returned there;
+                // this is only reached when the wire carried {name, type, properties} with
+                // no value.)
+                var data = new @this(name, (object?)null, typeRef);
                 if (properties != null) data.Properties = properties;
                 return data;
             }
@@ -380,16 +365,13 @@ public class Wire : JsonConverter<@this>
                     // content falls through to the reader below.
                     // A full-match %x% is a VARIABLE reference, whatever its declared type.
                     // Capture it; at EndObject it borns a variable — a real-typed slot →
-                    // a reference resolving at .Value(); a type:variable name-slot → the raw
-                    // name for variable.Create. It must NOT run the declared type's reader on
-                    // the literal "%x%" (the list reader would choke on "%!data%"). Keep the
-                    // raw string in `value` so the name-slot path has it.
+                    // a reference resolving at .Value(). It must NOT run the declared type's
+                    // reader on the literal "%x%" (the list reader would choke on "%!data%").
                     if (reader.TokenType == JsonTokenType.String && _template != null && _context != null
                         && reader.GetString() is { } sv
                         && global::app.data.@this.TryFullVarMatch(sv, out _))
                     {
                         refValue = sv;
-                        value = sv;
                     }
                     // TEMP: goal.call has no reader yet, so born it inline. Remove once it
                     // gets a reader (then it streams like any other structured value).
@@ -439,14 +421,6 @@ public class Wire : JsonConverter<@this>
 
         throw new JsonException("Unterminated app.data.@this wire shape");
     }
-
-    // Shape-typed values that read themselves from a raw *encoded* source form (a
-    // tree or a grid). Requires a real encoding kind (json/xml/csv/…): a bare
-    // {object} with no kind is a nested Data envelope (Data's PLang name is
-    // "object"), which LiftDataIfShaped must rehydrate — not a raw payload to
-    // defer. Scalars/domain/dict<…> values also stay eager. Narrow, additive.
-    private static bool IsDeferrableShape(type t)
-        => t.Name is "object" or "item" or "table" && !string.IsNullOrEmpty(t.Kind);
 
     // Emits an untouched raw-backed value verbatim into the value slot, keeping
     // the slot valid json. Raw json (object/json) and number literals are already
