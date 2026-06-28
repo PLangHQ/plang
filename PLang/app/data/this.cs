@@ -369,6 +369,8 @@ public partial class @this
     /// <c>Action.StampTemplates</c>, wire-rebuilt actions, test fixtures
     /// authoring actions directly) — runtime input never passes here.
     /// </summary>
+    [System.Obsolete("Templates are stamped on read via ctx.Template (Wire.ReadOptions), not eagerly. " +
+        "Do not add new callers; existing ones are legacy to migrate.")]
     internal @this Authored()
     {
         if (_type is { } instance

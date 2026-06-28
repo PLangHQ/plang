@@ -1464,3 +1464,17 @@ sign=true, template=null)`; all call sites use named `context:` so the reorder i
 decide the nested-verify semantics (#1 — the load-bearing decision), fix the ReadBody births, flip
 `Wire._context`, then the test-fixture sweep. The insight is solid; the regression is all behavior the
 context-less path was silently skipping.
+
+## 2026-06-28 — actions / steps / modifiers: drop `IList<T>`, use internal `_items` (match the goal class)
+
+`actions.@this` (`goal/steps/step/actions/this.cs`), `steps.@this` (`goal/steps/this.cs`), and
+`modifiers.@this` (`.../action/modifiers/this.cs`) all inherit `IList<T>` — the old pattern. The IList
+is the source of TWO read paths for one type: STJ auto-deserializes a custom `IList<T>` (the main goal
+load), WHILE the lazy `Data<actions.@this>` recovery chain materializes via the type-system Convert hook
+→ `action.FromWire` + `FromWireShape`. Switch each to a private `_items` with a `Value` / indexer surface
++ its own reader (the `list<T>` / `Timings` / `keepalive` pattern — a no-IList collection owns its
+serialization). Dropping IList removes STJ's auto-path, leaving the reader as the single path — and
+`FromWire` + `FromWireShape`'s action use + the Convert hook all delete themselves. Then rename the
+plurals to the singular concept (`action`, `step`). Do all three together (modifiers nests in action).
+
+Being done on branch `collections-no-ilist` (off `read-path-unification`).
