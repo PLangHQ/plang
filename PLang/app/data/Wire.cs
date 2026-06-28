@@ -252,28 +252,6 @@ public class Wire : JsonConverter<@this>
     }
 
 
-    // Emits an untouched raw-backed value verbatim into the value slot, keeping
-    // the slot valid json. Raw json (object/json) and number literals are already
-    // json — write them raw (byte-identical passthrough). Any other raw string
-    // (text, csv, xml, yaml) json-encodes as a string; raw bytes base64.
-    private static void EmitRawVerbatim(Utf8JsonWriter writer, @this data)
-    {
-        var raw = data.Raw;
-        if (raw is byte[] bytes) { writer.WriteBase64StringValue(bytes); return; }
-        if (raw is string s)
-        {
-            var t = data.Type;
-            bool isJson = (t.Name is "object" or "item" && string.Equals(t.Kind, "json", System.StringComparison.OrdinalIgnoreCase))
-                          || t.Name == "number";
-            if (isJson) writer.WriteRawValue(s);
-            else writer.WriteStringValue(s);
-            return;
-        }
-        // No raw of a known shape — fall back to null (should not happen: caller
-        // gates on RawUntouched, which requires a non-null raw).
-        writer.WriteNullValue();
-    }
-
     public override void Write(Utf8JsonWriter writer, @this data, JsonSerializerOptions options)
     {
         var isHashOuter = IsHashOuter(data);
@@ -346,7 +324,9 @@ public class Wire : JsonConverter<@this>
         var jsonWriter = new app.channel.serializer.json.Writer(writer, options, View,
             renderers: data.Context?.App?.Type.Renderers);
         if (data.RawUntouched)
-            EmitRawVerbatim(writer, data);
+            // The untouched source writes ITSELF verbatim (byte-identical relay) — one verbatim
+            // writer, the same one the read door deferred to. (data.Peek() IS the source item.)
+            data.Peek().Write(jsonWriter);
         else
             jsonWriter.Value(data.Normalize(View));
 
