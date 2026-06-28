@@ -48,8 +48,10 @@ public sealed class @this
                 case "type":
                     // The type is the structured entity {name, kind?, strict?}. A bare string
                     // form (type:"string") is the OLD shape — invalid; throw so a stale .pr
-                    // surfaces loudly. The entity rides its own JsonConverter, so dip to the
-                    // inner reader; context-less on birth, stamp it now.
+                    // surfaces loudly. The entity rides its own JsonConverter (STJ) — dip to
+                    // the inner reader (works context-less, the FromWire/Judge path has no
+                    // context; routing through the `type` reader needs App and NREs there until
+                    // the context-less births are gone). Context-less on birth, stamp it now.
                     if (reader.Peek() == global::app.channel.serializer.TokenKind.String)
                         throw new JsonException(
                             $"invalid .pr schema: 'type' must be an object {{name, ...}}, not the bare string "

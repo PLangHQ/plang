@@ -191,3 +191,15 @@ values stream into dict/list via the existing `item.json` reader (lazy entries).
 Do prerequisites (1) template-on-source and (2) variable reader FIRST as their own tiny
 commits (they're correct regardless), THEN the defer-everything switch, THEN the
 host-object-as-clr distinction for (3). Each green via targeted 15s Data/Wire diffs.
+
+### Slice 2 finding (2026-06-28): clean abstraction is gated on the context-less births
+Tried option 2 (kill the `type` STJ dip by routing the type field through the `type` reader)
+to make `ISchemaReader.Read` clean (no `options`). BLOCKED: the `type` reader needs
+`App.Type.Readers` → context, but the `FromWire`/signature/Judge read is **context-less**
+(`_context` null) and NREs. `Deserialize<type>(options)` stays because it needs no context.
+So the dips (type, goal.call, signature-FromWire) can't be killed — and `ISchemaReader.Read`
+can't lose `options`/`View` — until the **context-less births are removed** (the WireLocal/Judge
+phase). Two paths for slice 2: (1) build the registry now with `Read(ref json.Reader, ReadContext,
+JsonSerializerOptions)` — honest that `options` is STJ-plumbing for the surviving dips; (2) do the
+context-less-births cleanup first, then the abstraction is clean. The dependency is real, not a
+preference.
