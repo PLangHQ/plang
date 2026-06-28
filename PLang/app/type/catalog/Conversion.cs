@@ -163,14 +163,9 @@ public sealed partial class @this
         // value's real type, so sign and verify would hash different canonical shapes.
         if (targetType == typeof(data.@this) && value is not data.@this)
         {
-            if (data.@this.IsWireShape(value))
-            {
-                object? wire = value as IDictionary<string, object?>
-                    ?? ((app.type.dict.@this)value).Clr<object>();
-                return (data.@this.FromWireShape(wire, "", context), null);
-            }
-            // A non-wire-shaped dict stays a dict inside the Data — don't unwrap
-            // to raw here, that would lose the native value type.
+            // A dict stays a dict inside the Data — don't unwrap to raw here, that would
+            // lose the native value type. (A serialized Data is read back AS a Data through
+            // the Wire's data reader, so it never reaches here as a @schema-marked dict.)
             return (new data.@this("", value, context: context), null);
         }
 
