@@ -35,7 +35,6 @@ public sealed class @this
         Properties? properties = null;
         string? deferredRaw = null;    // a value captured for lazy materialization
         string? deferredFormat = null; // the serializer the captured value needs (string→value, else json)
-        string? refValue = null;       // a full-match %x% value, born below when the type is known
         global::app.type.item.@this? born = null;   // a value born inline (goal.call TEMP)
 
         reader.BeginObject();
@@ -63,19 +62,9 @@ public sealed class @this
                     }
                     break;
                 case "value":
-                    // A string token IS the value's own content. A full-match %x% is a VARIABLE
-                    // reference (born below) — NOT run through the declared type's reader (which
-                    // would parse the literal "%x%"); any other string is its text content.
-                    if (reader.Peek() == global::app.channel.serializer.TokenKind.String
-                        && _template != null && _context != null)
-                    {
-                        var sv = reader.String();
-                        if (Data.TryFullVarMatch(sv, out _)) refValue = sv;
-                        else { deferredRaw = sv; deferredFormat = global::app.channel.serializer.Text.Mime; }
-                    }
                     // TEMP: goal.call has no reader yet — born it inline off the inner reader.
                     // Remove once it streams like any other structured value.
-                    else if (typeRef is { IsNull: false } && typeRef.Name == "goal.call" && _context != null)
+                    if (typeRef is { IsNull: false } && typeRef.Name == "goal.call" && _context != null)
                     {
                         born = JsonSerializer.Deserialize<global::app.goal.GoalCall>(ref reader.Inner, options);
                     }
@@ -91,7 +80,9 @@ public sealed class @this
                     {
                         // The value rides as its raw bytes — off the reader, no DOM (scalar off
                         // the token, structured sliced from the owned buffer) — materializing
-                        // lazily. A string is content (→ value/text); any other token is json.
+                        // lazily. A string is content (→ value/text), incl a full-match %ref%
+                        // which its source resolves on read (gated on the authored template);
+                        // any other token is json.
                         deferredFormat = reader.Peek() == global::app.channel.serializer.TokenKind.String
                             ? global::app.channel.serializer.Text.Mime : "application/plang";
                         deferredRaw = System.Text.Encoding.UTF8.GetString(reader.RawValue());
@@ -107,11 +98,6 @@ public sealed class @this
         }
         reader.EndObject();
 
-        // A full-match %x% declared as a real value type → a typed variable reference; it
-        // resolves at .Value() (the variable hop), then the consumer converts to T.
-        if (refValue != null && born == null
-            && typeRef is { IsNull: false } && typeRef.Name != "variable")
-            born = global::app.variable.@this.Reference(refValue, _context!);
         if (born != null)
         {
             var d = new Data(name, born);
