@@ -155,6 +155,19 @@ public class Wire : JsonConverter<@this>
     public override bool CanConvert(System.Type typeToConvert)
         => typeof(@this).IsAssignableFrom(typeToConvert);
 
+    /// <summary>
+    /// Read options carrying a context-ful Wire — the single place that builds them (a
+    /// nested Data / goal.call params deserialize through the Wire, so they need it; Options.Read
+    /// alone has no Wire). One source for the goal-read, nested-Data, and goal.call options.
+    /// Takes the whole <see cref="ReadContext"/> — never its decomposed fields.
+    /// </summary>
+    internal static JsonSerializerOptions ReadOptions(global::app.type.reader.ReadContext ctx)
+    {
+        var options = global::app.channel.serializer.json.Options.Read(ctx.Context);
+        options.Converters.Add(new Wire(ctx.View, context: ctx.Context, template: ctx.Template));
+        return options;
+    }
+
     // STJ-driven read (top-level via the entry, and nested Data inside lists). STJ hands a
     // ref reader with no buffer, so a structured value slot must DOM (ReadBody, buffer null).
     public override @this Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)

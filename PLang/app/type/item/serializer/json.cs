@@ -22,9 +22,8 @@ public partial class json
     private System.Text.Json.JsonSerializerOptions NestedOptions()
     {
         if (_nestedOptions != null) return _nestedOptions;
-        var o = global::app.channel.serializer.json.Options.Read(_context);
-        o.Converters.Add(new global::app.data.Wire(global::app.View.Out, context: _context));
-        return _nestedOptions = o;
+        return _nestedOptions = global::app.data.Wire.ReadOptions(
+            new global::app.type.reader.ReadContext(_context));
     }
 
     public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)

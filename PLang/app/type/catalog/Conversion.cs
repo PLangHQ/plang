@@ -53,12 +53,8 @@ public sealed partial class @this
     /// <c>%secret%</c> in a message stays literal.
     /// </summary>
     internal static JsonSerializerOptions GoalReadOptions(actor.context.@this context)
-    {
-        var options = ContextualReadOptions(context);
-        options.Converters.Add(new global::app.data.Wire(
-            global::app.View.Store, context: context, template: "plang"));
-        return options;
-    }
+        => global::app.data.Wire.ReadOptions(
+            new global::app.type.reader.ReadContext(context, "plang", global::app.View.Store));
 
     /// <summary>Internal accessor for the test facade — see <see cref="_caseInsensitiveRead"/>.</summary>
     internal static JsonSerializerOptions CaseInsensitiveRead => _caseInsensitiveRead;

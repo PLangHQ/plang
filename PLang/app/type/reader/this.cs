@@ -160,6 +160,10 @@ public sealed class @this
             if (_initialized) return;
             foreach (var asm in Assemblies)
                 IndexAssembly(asm);
+            // goal.call's dotted type name can't be derived from a serializer namespace
+            // (discovery keys by the last segment). Register it here — a localized hardcode
+            // that dies when goal.call folds into the streaming read. No discovery fork.
+            _generatedTyped[("goal.call", AnyKind)] = new global::app.goal.call.Reader();
             _initialized = true;
         }
     }
@@ -191,10 +195,7 @@ public sealed class @this
                 && type.GetConstructor(System.Type.EmptyTypes) is { } ctor)
             {
                 var instance = (ITypeReader)ctor.Invoke(null);
-                // A reader may NAME its own type (a dotted name the namespace can't express,
-                // e.g. goal.call); otherwise the namespace segment names it.
-                var name = instance is INamedTypeReader named ? named.TypeName : typeName;
-                _generatedTyped[(name, instance.Kind)] = instance;
+                _generatedTyped[(typeName, instance.Kind)] = instance;
                 continue;
             }
 
