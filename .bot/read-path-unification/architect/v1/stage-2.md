@@ -203,3 +203,19 @@ phase). Two paths for slice 2: (1) build the registry now with `Read(ref json.Re
 JsonSerializerOptions)` — honest that `options` is STJ-plumbing for the surviving dips; (2) do the
 context-less-births cleanup first, then the abstraction is clean. The dependency is real, not a
 preference.
+
+## LANDED — slices 2+3: @schema registry + signature reader (context drained first)
+- Drained the context-less reads first (the real blocker): item.json.Parse deserialized nested
+  Data with no options → context-less Wire; now passes a context-ful Wire (both leaves). One
+  test built `new Wire()` (context-less) — fixed to match production. No context-less Wire remains.
+- `app.data.schema.@this` registry (mirrors `app.type.reader.@this`), `ISchemaReader` (mirrors
+  `ITypeReader`). `data` reader is now STATELESS (context/template ride ReadContext, which grew
+  a `View`); `signature` reader extracted from `ReadSignatureLayer` (verify + peel). `ReadCore`:
+  probe @schema → `schema.@this.Instance.Reader(schema).Read(ref jr, ctx, options)`. The
+  `if signature` probe + `ReadSignatureLayer` are deleted.
+- `options` survives in `ISchemaReader.Read` only for goal.call (TEMP) + signature FromWire — the
+  type dip was killed (type field reads via the `type` reader). The signature reader's old
+  context-null fail-closed branch is dropped (context is always non-null now; a context-null read
+  would NRE = still no unwrap, not a hole) — revisit if a context-null path ever returns.
+
+Data 0 new, Wire 0 new throughout.

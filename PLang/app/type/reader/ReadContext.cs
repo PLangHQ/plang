@@ -18,4 +18,5 @@ namespace app.type.reader;
 /// </summary>
 public sealed record ReadContext(
     global::app.actor.context.@this Context,
-    string? Template = null);
+    string? Template = null,
+    global::app.View View = global::app.View.Out);

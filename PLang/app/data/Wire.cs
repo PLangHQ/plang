@@ -178,27 +178,27 @@ public class Wire : JsonConverter<@this>
         if (_readDepth.Value >= MaxReadDepth)
             throw new JsonException(
                 $"app.data.@this wire shape nested past MaxReadDepth ({MaxReadDepth}) — payload rejected to prevent stack overflow.");
-        // @schema dispatch: probe a struct COPY of the reader for the first
-        // property (the writer always emits @schema first). A `signature` layer
-        // wraps + attests the inner data — buffer it, rebuild via FromWire, run
-        // the verify action (auto-verify on read: a bad signature fails the read),
-        // peel to the inner data. Only the rare signature object buffers; the
-        // common `data` path leaves the original reader untouched for ReadBody.
+        // @schema dispatch: probe a struct COPY of the reader for the first property's value
+        // (the writer always emits @schema first), then hand the untouched reader to that
+        // schema's reader — `data` reads the envelope, `signature` verifies + peels. No
+        // `if signature` special-case; the registry owns the layers.
         var probe = reader;
         probe.Read();
-        if (probe.TokenType == JsonTokenType.PropertyName
-            && probe.GetString() == @this.WireSchema)
+        string schema = @this.WireSchemaData;
+        if (probe.TokenType == JsonTokenType.PropertyName && probe.GetString() == @this.WireSchema)
         {
             probe.Read();
-            if (probe.GetString() == global::app.type.signature.@this.WireSchemaSignature)
-                return ReadSignatureLayer(ref reader, options);
+            schema = probe.GetString() ?? @this.WireSchemaData;
         }
 
         _readDepth.Value++;
         try
         {
             var jr = new global::app.channel.serializer.json.Reader(reader, buffer);
-            var bodyData = new global::app.data.reader.@this(_context, _template).Read(ref jr, options);
+            // _context is non-null on every read path (no context-less Wire is constructed in
+            // production); ReadContext.Context is non-null, so the boundary `!` is honest here.
+            var ctx = new global::app.type.reader.ReadContext(_context!, _template, View);
+            var bodyData = global::app.data.schema.@this.Instance.Reader(schema).Read(ref jr, ctx, options);
             reader = jr.Inner;
             // When the caller asked for a typed Data<T>, wrap the base body
             // into a Data<T> so STJ's cast to typeToConvert succeeds. The
@@ -214,61 +214,6 @@ public class Wire : JsonConverter<@this>
         {
             _readDepth.Value--;
         }
-    }
-
-    // Reads a `signature` layer object: rebuild it, auto-verify (run the verify
-    // action — a bad/expired/wrong-key signature fails the READ), peel to the
-    // inner data. The peeled data carries the unwrapping actor's context.
-    private @this ReadSignatureLayer(ref Utf8JsonReader reader, JsonSerializerOptions options)
-    {
-        using var doc = JsonDocument.ParseValue(ref reader);
-        var layer = global::app.type.signature.@this.FromWire(doc.RootElement, options);
-
-        if (_context == null)
-        {
-            // Transport (Out) is the external attack surface: a signed payload that
-            // arrives with no actor to verify against must not be unwrapped — peeling
-            // it would return the inner as if verified. Fail closed.
-            if (View != global::app.View.Store)
-                return @this.FromError(new app.error.ServiceError(
-                    "Cannot verify a signature layer without an actor context.",
-                    "SignatureVerifyContextMissing", 400));
-
-            // At-rest (Store) artifacts — settings and permission grants — are read by
-            // the store without an actor context, so verify cannot run here; the stored
-            // grant is trusted on read. Tampering an at-rest artifact requires local
-            // filesystem write, i.e. actor-level access already. (At-rest verification
-            // needs the actor context carried into the store read.)
-            return layer.Value;
-        }
-
-        // The inner data is re-hashed during verify (canonicalized through the
-        // wire), so it needs the actor context the same way the outer does.
-        layer.Value.Context = _context;
-
-        var carrier = @this.Ok(layer);
-        carrier.Context = _context;
-        // At-rest artifacts (the Store view — permission grants, identities)
-        // re-present the same nonce on every read and outlive the wire-
-        // freshness window by design; their signature's own Expires is the
-        // only time bound. Transport reads (Out view) keep the freshness +
-        // nonce-replay defence.
-        var verifyAction = new app.module.signing.verify
-        {
-            Data = carrier,
-            SkipFreshnessCheck = new @this<global::app.type.@bool.@this>(
-                "", View == global::app.View.Store),
-        };
-        var verifyResult = _context.App
-            .RunAction(verifyAction, _context)
-            .GetAwaiter().GetResult();
-        if (!verifyResult.Success)
-            return @this.FromError(verifyResult.Error
-                ?? new app.error.ServiceError("Signature verification failed", "SignatureInvalid", 400));
-
-        var inner = layer.Value;
-        inner.Context = _context;
-        return inner;
     }
 
     private static @this WrapAsTyped(@this body, System.Type targetType)

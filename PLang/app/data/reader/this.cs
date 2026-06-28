@@ -6,29 +6,21 @@ using Properties = global::app.data.Properties;
 namespace app.data.reader;
 
 /// <summary>
-/// Reads a <c>@schema:data</c> wire object — <c>{name, type, value, properties}</c> — into a
-/// Data. The read counterpart of the Data writer: a value defers to a lazy <c>source</c>
-/// (captured raw off the reader, materialized through its type's reader on first touch), so
-/// this only assembles the envelope. Holds the read's actor context + authored template (the
-/// trust mode a value's <c>source</c> carries into its read). Dispatched from the Wire
-/// converter once it has read the <c>@schema</c>.
+/// The <c>@schema:data</c> reader — reads a Data wire object <c>{name, type, value,
+/// properties}</c> into a Data. The read counterpart of the Data writer: a value defers to a
+/// lazy <c>source</c> (captured raw off the reader, materialized through its type's reader on
+/// first touch), so this only assembles the envelope. Stateless — the per-read actor context +
+/// authored template ride on <see cref="ReadContext"/>, mirroring the type readers.
 /// </summary>
-public sealed class @this
+public sealed class @this : global::app.data.schema.ISchemaReader
 {
-    private readonly actor.context.@this? _context;
-    private readonly string? _template;
-
-    public @this(actor.context.@this? context, string? template)
-    {
-        _context = context;
-        _template = template;
-    }
+    public string Schema => "data";
 
     // Reads through the IReader abstraction (json.Reader). The reader carries the owned bytes
-    // (entry path) so a structured value slices raw off the buffer with no DOM; the type
-    // entity + goal.call dip to the inner reader for their STJ JsonConverter (a json-bound
-    // sub-read) — the rest is format-agnostic IReader.
-    public Data Read(ref global::app.channel.serializer.json.Reader reader, JsonSerializerOptions options)
+    // (entry path) so a structured value slices raw off the buffer with no DOM; the goal.call
+    // TEMP dips to the inner reader for its STJ JsonConverter — the rest is format-agnostic.
+    public Data Read(ref global::app.channel.serializer.json.Reader reader,
+        global::app.type.reader.ReadContext ctx, JsonSerializerOptions options)
     {
         string name = "";
         global::app.type.@this? typeRef = null;
@@ -56,14 +48,14 @@ public sealed class @this
                             + $"\"{reader.String()}\" (value slot '{(string.IsNullOrEmpty(name) ? "(unnamed)" : name)}').");
                     typeRef = reader.Null()
                         ? null
-                        : _context.App.Type.Readers.Reader("type", null, _context)
-                              .Read(ref reader, null, new global::app.type.reader.ReadContext(_context, _template))
+                        : ctx.Context.App.Type.Readers.Reader("type", null, ctx.Context)
+                              .Read(ref reader, null, ctx)
                           as global::app.type.@this;
                     break;
                 case "value":
                     // TEMP: goal.call has no reader yet — born it inline off the inner reader.
                     // Remove once it streams like any other structured value.
-                    if (typeRef is { IsNull: false } && typeRef.Name == "goal.call" && _context != null)
+                    if (typeRef is { IsNull: false } && typeRef.Name == "goal.call")
                     {
                         born = JsonSerializer.Deserialize<global::app.goal.GoalCall>(ref reader.Inner, options);
                     }
@@ -107,7 +99,7 @@ public sealed class @this
         {
             // Lazy value slot: rides as its raw source form, materializes on first touch
             // through the read door (the serializer the raw needs + the authored template).
-            var lazy = Data.FromRaw(deferredRaw, typeRef, _context, format: deferredFormat, template: _template);
+            var lazy = Data.FromRaw(deferredRaw, typeRef, ctx.Context, format: deferredFormat, template: ctx.Template);
             lazy.Name = name;
             if (properties != null) lazy.Properties = properties;
             return lazy;
