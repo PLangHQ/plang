@@ -119,6 +119,10 @@ public sealed class @this
         return typedNull;
     }
 
+    // Properties read off the inner reader into the object?-valued bag. Making each value a
+    // lazy source (plan line 35) is blocked by the sync Properties[key] getter; an IReader
+    // rewrite (plan line 50) mis-advanced the signature-wrapped path — both logged in
+    // stage-final-cleanup #7. Kept on Utf8JsonReader for now.
     private static Properties ReadPropertiesObject(ref Utf8JsonReader reader)
     {
         var props = new Properties();
@@ -133,8 +137,7 @@ public sealed class @this
                 throw new JsonException("Expected property name inside properties object");
             var key = reader.GetString()!;
             reader.Read();
-            object? value = ReadPropertyPrimitive(ref reader);
-            props[key] = value;
+            props[key] = ReadPropertyPrimitive(ref reader);
         }
         throw new JsonException("Unterminated properties object");
     }
