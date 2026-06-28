@@ -50,6 +50,10 @@ public sealed class @this : ISerializer
     private readonly JsonSerializerOptions _inbound;
     private readonly JsonSerializerOptions _store;
     private readonly JsonSerializerOptions _snapshot;
+    // The Wire for each read view — held so the buffer-owning entry drives it directly,
+    // instead of fishing it back out of options.Converters.
+    private readonly global::app.data.Wire _inboundWire;
+    private readonly global::app.data.Wire _storeWire;
 
     // The serializer is born with the actor context it writes toward — it never
     // reaches into the data it is handed for a context. A data crossing this
@@ -68,13 +72,15 @@ public sealed class @this : ISerializer
             pathConverter,
             global::app.channel.serializer.filter.Transport.ForOutbound);
 
+        _inboundWire = new global::app.data.Wire(global::app.View.Out, context: context);
         _inbound = BuildOptions(
-            new global::app.data.Wire(global::app.View.Out, context: context),
+            _inboundWire,
             pathConverter,
             global::app.channel.serializer.filter.Transport.ForInbound);
 
+        _storeWire = new global::app.data.Wire(global::app.View.Store, context: context);
         _store = BuildOptions(
-            new global::app.data.Wire(global::app.View.Store, context: context),
+            _storeWire,
             pathConverter,
             global::app.channel.serializer.filter.Transport.ForOutbound);
 
@@ -194,8 +200,7 @@ public sealed class @this : ISerializer
                 bytes = ms.ToArray();
             }
             if (bytes.Length == 0) return _context.Ok();
-            var wire = System.Linq.Enumerable.First(
-                System.Linq.Enumerable.OfType<global::app.data.Wire>(options.Converters));
+            var wire = view == global::app.View.Store ? _storeWire : _inboundWire;
             var v = wire.ReadBuffered(bytes, options);
             return v ?? _context.Ok();
         }

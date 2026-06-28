@@ -41,3 +41,21 @@ methods, and `type.Deserialize`'s `Of` use. Confirm no caller remains first.
 `source.Value` keeps a `Context == null → Create(...).Convert(s)` branch so the context-less
 `Judge` sources still read. It dies with the context-less births (#3, WireLocal/Judge phase) —
 delete it then so `source.Value` is the single serializer dispatch.
+
+## 7. OBP debt from the data.reader extraction (logged 2026-06-28)
+From the OBP review after extracting `app.data.reader.@this` and the no-DOM work:
+
+- **`ReadPropertiesObject` / `ReadPropertyPrimitive` are Verb+Noun** (now in `app/data/reader/this.cs`).
+  Linked to the next item — fixing properties-as-source dissolves both.
+- **Properties read into raw CLR** — `ReadPropertyPrimitive` builds `List<object?>` /
+  `Dictionary<string,object?>`. A property value should ride as a lazy `source` like a value
+  slot does (`never_lower_to_clr`), not a CLR bag. This is the "data reader pulls properties
+  via RawValue" item from the plan — the real OBP target. Doing it removes both Verb+Noun
+  helpers above.
+- **Duplicated wire field-name literals** (`"name"/"type"/"value"/"properties"` in the reader
+  switch + `Normalize`/`Wire.Write`). Tried single-sourcing as `Wire*` consts → reverted:
+  "Name"/"Type"/"Value" are verb-ambiguous so `WireName` etc. read as verb phrases (broke the
+  Verb+Noun rule). The literals are the wire contract; if single-sourced later it needs a
+  non-verb-phrase shape, not flat `Wire*` constants.
+- **`json.Reader.RawValue` buffer-vs-DOM branch** — a fast-path/fallback (identical output,
+  gated on owning the buffer). Transitional; vanishes when STJ is removed for nested Data.
