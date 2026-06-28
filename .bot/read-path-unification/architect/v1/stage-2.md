@@ -106,7 +106,25 @@ scalar→its wrapper). Data + Wire neutral; TableXlsx throw green.
   over a `Utf8JsonReader` on those bytes (not `JsonSerializer.Deserialize<Data>`). Both prod
   and the sync test path route here. This is the prerequisite for no-DOM. Neutral.
 
-### Still ahead in Stage 2
+### LANDED — no-DOM + data-reader extraction (335812089 … ad84b39d3)
+- **Read entry owns the buffer** — `DeserializeAsync` reads bytes, `Wire.ReadBuffered` drives
+  the read over them (not `JsonSerializer.Deserialize<Data>`). The serializer holds the Wire
+  per view (no `OfType<Wire>` reach).
+- **No-DOM value capture** — on `json.Reader.RawValue()`: string off the token, number/bool via
+  ValueSpan, structured sliced from the owned buffer. Only buffer-less STJ-nested + signature
+  inner + error-preview still DOM. `ReadBody`'s value switch collapsed to two lines.
+- **`data` reader extracted** — `ReadBody` + property readers moved to `app.data.reader.@this`
+  (the `@schema:data` reader). `Wire.ReadCore` dispatches: signature → ReadSignatureLayer, else
+  → `data.reader.Read(...)`. Wire ~600 → 418 lines.
+
+### Decided: signature stays at the Wire boundary
+`ReadSignatureLayer` is the verify-on-read security gate (coupled to `View`, the signing module,
+fail-closed-on-no-context) — it belongs at the wire boundary, not scattered into a separate
+reader. So the `@schema` registry (`App.Reader(schema)`) is dropped as over-engineering for one
+real dispatch target. Wire = STJ boundary + verify-security + `@schema` dispatch + write; the
+common envelope read delegates out. The stage's read-extraction is substantially complete.
+
+### Still ahead (all in stage-final-cleanup.md — deliberate later passes, not this stage)
 - **no-DOM `RawValue()`**: TWO parts — (a) route `ReadBody`'s value capture through
   `json.Reader.RawValue()` (needs careful ref write-back across the json.Reader↔Utf8JsonReader
   boundary — `_r` is held by value, write back via `.Inner`); (b) make `RawValue()` slice the
