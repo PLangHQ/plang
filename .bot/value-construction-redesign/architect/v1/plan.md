@@ -1,7 +1,7 @@
 # Value-construction redesign — architect plan (v1)
 
 **Branch:** `value-construction-redesign` (off `read-path-unification` @ `3ddcdb17f`)
-**Author:** architect. Settled with Ingi 2026-06-29; builds on the coder's investigation (`../../coder/v1/report.md`). For coder review before any staging — nothing is sequenced into stage files yet.
+**Author:** architect. Settled with Ingi 2026-06-29; incorporates the coder's plan review (`../../coder/v1/plan-review.md`) and investigation (`../../coder/v1/report.md`). Reviewed and approved — ready to sequence into stages.
 
 ## Why
 
@@ -23,18 +23,19 @@ TODAY — two doors bottom out at the same hook
   read  "5" + {number}  ──► source(raw, number) ──first use──► number/serializer/Reader.cs ──► number 5     (lazy, lookup table)
   set   "5"  ──► guess shape ──► text "5" ──► type.Convert ──► Conversions.Of ──► MethodInfo.Invoke ──► number 5   (eager, reflection, + throwaway text)
 
-PROPOSED — one door
+PROPOSED — one door, the reader chosen by the declared type
 
-  both  "5" + {number}  ──► source(raw, number) ──first use──► number/serializer/Reader.cs ──► number 5
+  "5"       + {number}  ──► source(raw, number, text/plain)        ──first use──► number reader (scalar) ──► number 5
+  '{"a":1}' + {dict}    ──► source(raw, dict,   application/plang) ──first use──► dict reader (json)     ──► dict
+  {a:1}     + {dict}    ──► json.Parse already returned a native dict ──► hold as-is (no source)
 ```
 
-The Data constructor, when a non-polymorphic type is declared:
-- **raw form (`string`/`byte[]`) + declared type** → mint `source(value, type)` and hand it to the born-typed holder ctor (`data/this.cs:222`). One carrier, lazy, parsed once.
-- **already a native value** (a built `number`, a `dict`, an `image`) → hold it as-is. No `source`, no re-convert.
-- **no value + declared type** → the typed absence (`null.@this(type.Name, type.Kind)`) — unchanged.
-- **polymorphic stamp / no declared type** → the natural lift (`Create(Parse(value))`) — unchanged; `string → text` is correct there, no double.
+The Data constructor, when a non-polymorphic type is declared, runs `json.Parse(value)` first (it natives-out a JSON `JsonElement`/`JsonNode`, leaves a plain string untouched — `json.cs:131`), then forks **three** ways:
+- **already a native value** (Parse returned a `dict`/`list`/`number`/…) → hold it as-is. No `source`, no re-convert. Containers already skip coercion today.
+- **still-raw string / `byte[]` + scalar type** (number, date, bool, guid, …) → mint `source(value, type, format = text/plain)` → the scalar (value) reader. **This is the double-convert win.**
+- **still-raw string + container type** (dict/list/object/item) → mint `source(value, type, format = application/plang)` → the json reader (`BeginObject`). A dynamic `%jsonStr% as dict` keeps working (Ingi, 2026-06-29).
 
-The predicate "raw form to defer vs already-born to hold" is the one judgement the coder must nail — it replaces the `Build`/`Judge` fork. See the leaf-trace.
+A still-raw string **never becomes a `text` *value***. It stays raw under its declared type until that type's reader parses it once. The one judgement the coder must nail is the `source`'s **format, picked from the declared type's reader mode** — scalar → `text/plain`, container → `application/plang` (`byte[]` follows `FromRaw`'s existing format logic). That replaces the `Build`/`Judge` fork. See the leaf-trace.
 
 ## Invariants (must hold at the end)
 
@@ -45,19 +46,19 @@ The predicate "raw form to defer vs already-born to hold" is the one judgement t
 
 ## Reader-coverage worklist (Stage 1 — the precondition)
 
-The lazy path materializes a `source` by resolving the type's `serializer/Reader.cs` (`channel/serializer/Text.cs:82` → `Readers.Reader(name, kind)` → throws if absent). It works **today** for the 13 types that ship a `Reader.cs`. Four types have a `Convert` hook but **no `serializer/` folder at all** — reachable today only via the eager route:
+The lazy path materializes a `source` by resolving the type's **`ITypeReader`** `serializer/Reader.cs` — reached via `channel/serializer/Text.cs:82` → `Readers.Reader(name, kind)`, which **throws `NotSupportedException` if absent** (`type/reader/this.cs:119`). The shape to mirror is **`number/serializer/Reader.cs`** (the `ITypeReader` pull), **not** `Default.cs` (a different `Of()`/whole-payload contract — do not send the coder there). For a scalar it is a one-liner: `reader.Null() ? null-typed : <family>.@this.Convert(reader.String(), kind, ctx.Context)`.
 
-| Type | Has Convert hook | Has `Reader.cs` | Action |
-|---|---|---|---|
-| number, text, bool, duration, guid, path, binary, image, list, dict, object, item, code | yes | yes | none — lazy path already covers |
-| **date** | yes | **no** | add `serializer/Reader.cs` — pull the raw string, delegate to `date.@this.Convert(raw, kind, ctx)` |
-| **datetime** | yes | **no** | add `serializer/Reader.cs` — delegate to `datetime.@this.Convert` |
-| **time** | yes | **no** | add `serializer/Reader.cs` — delegate to `time.@this.Convert` |
-| **choice** | yes | **no** | **investigate first** — `choice<T>` is keyed on the *enum's* name, not `"choice"` (see `type/this.cs:293` "a choice surfaces under its enum's name"). Confirm whether `as <Enum>` construction even reaches this ctor; if so, the reader registration must key by the enum name, not `choice`. Do not assume the scalar-3 shape fits. |
+The gate is **has a reader**, not has a hook. `object`/`item`/`code` have no `Convert` hook yet ride the lazy path via their own readers; `table` already ships a `Reader.cs`. The gaps reachable today only via the eager route:
 
-The construction `source` is `text/plain` format carrying a raw string, so a thin string-delegate reader (mirror of `number/serializer/Default.cs:62`, in the `ITypeReader` shape) is enough for construction. Verify each type's *wire* read separately — that is read-path-unification's concern, not a blocker here, but note any gap.
+| Gap | Status | Action |
+|---|---|---|
+| **date, datetime, time** | `Convert` hook, no `serializer/` folder | add an `ITypeReader` `serializer/Reader.cs` mirroring `number`'s — pull the string, delegate to the family `Convert` hook |
+| **file, directory, url, permission** | `serializer/` folder with **only `Default.cs`**, no `Reader.cs` | **if reachable** by `as file`/`as url`/… construction, `Readers.Reader` throws `NotSupportedException` — which `source.Value`'s catch (`source.cs:98`: only Json/Format/InvalidOperation) does **not** cover, so it escapes to the courier instead of failing the Data as `MaterializeFailed`. Add a reader, or prove it is not a construction target. |
+| **choice** | `Convert` in `choice/this.cs`, no serializer folder | **own sub-task** — see below |
 
-**Stage 1 exit:** every `(type, kind)` reachable by `as T` construction materializes through a `source`. Prove it — enumerate the reachable set, map each to its reader, log the map before anything is deleted.
+**choice — its own sub-task.** `choice<T>` is keyed under the *enum's* name, not `"choice"` (`type/this.cs:288-296`). Its reader must register under the enum name in the **runtime** table (`_runtimeTyped`, not the generated convention scan), take the scalar string token, and validate against **`ValidValues` membership** — not a string-ctor (closed-enum rule). First confirm `as <Enum>` construction even reaches this ctor; if it doesn't, choice needs no reader — record the trace. The scalar one-liner will **not** fit.
+
+**Stage 1 exit:** enumerate the *actual* `(type, kind)` set reachable by `as T` construction (don't assume the rows above are complete — `file`/`directory`/`url`/`permission` especially), map each to its reader, and add or justify-excluding each. Also decide whether `source.Value` should catch the missing-reader throw as defense — totality is the primary fix; this is belt-and-suspenders. Log the map before anything is deleted.
 
 ## Leaf-trace — incumbents and where each goes
 
@@ -65,7 +66,7 @@ The construction `source` is `text/plain` format carrying a raw string, so a thi
 |---|---|---|
 | **The ctor's `Build`/`Judge`/context fork** | `data/this.cs:193-212` | **rewritten** — declared type → mint `source(value, type)` for a raw form, hold as-is for a native value; the `if _context != null … Build : Judge` branch is deleted. This is the core change. |
 | **`Declare`'s `Build`/`Judge` fork** | `data/this.cs:241-253` | **rewritten** — the after-the-fact type stamp routes through the same single door (mint `source` / re-hold), no `Build`/`Judge`. Callers: `builder/code/Default.cs:927,943`. |
-| **`set %x% = … as T` eager pre-convert** | `variable/set.cs:248-269` | **reroute** — drop the `type.Convert(converted, ctx)` call (`:264`); construct once with the declared type (`new Data(name, rawValue, type)`). **Keep** the `keepAsIs` richer-type rule (`:255-257`) — an image bound to a `path` slot stays an image; that is real semantics, not redundancy. |
+| **`set %x% = … as T` eager pre-convert** | `variable/set.cs:248-269` | **reroute** — drop the `type.Convert(converted, ctx)` call (`:264`); construct once with the declared type, handing the ctor the **raw** value (`sourceValue`), not the eagerly-`converted` one. `sourceValue` may itself already be native (`RawUntouched → Value()`) — that is just the already-native → hold case, no special handling. **Keep** the `keepAsIs` richer-type rule (`:255-257`) — an image bound to a `path` slot stays an image; that is real semantics, not redundancy (and `keepAsIs` already passes `type = null`, so it never enters typed construction). |
 | **build-validate eager convert** | `builder/validateResponse.cs:222` | **reroute** — construct the value with the declared type and force materialization (`await data.Value()`) to surface a bad-literal failure at build, replacing the eager `type.Convert` check. |
 | **`Build(object?)`** | `type/this.cs:232` | **delete** — no callers after the ctor + `Declare` rewrite. |
 | **`Judge(item.@this)`** | `type/this.cs:538` | **delete** — Build's no-context twin; same two call sites. |
@@ -94,9 +95,9 @@ The construction `source` is `text/plain` format carrying a raw string, so a thi
 - **The born-typed holder ctor** (`data/this.cs:222`) — the clean "Data is a dumb holder of an already-built value" path. This is what the construction ctor delegates into.
 - **`source` + the reader registry** — these ARE the surviving door; they grow to absorb construction (Stages 1–2).
 
-## Relationship to read-path-unification (open Q7, settled)
+## Relationship to read-path-unification (settled — this branch lands first)
 
-This branch **owns the value-ctor retirement** that read-path-unification's Stage 6 stub deferred. That stub stays a no-op on its branch (already restored, per the coder's branch-out). Sequencing: this branch assumes the `source` + reader mechanism as the construction door; it should rebase onto / merge after whatever read-path-unification settles for the reader registry. **Confirm the merge order with Ingi before Stage 5 deletes anything** — the two branches touch `source.cs` and the reader registry, so a late rebase is cheaper than a conflict-heavy one.
+This branch **owns the value-ctor retirement** that read-path-unification's Stage 6 stub deferred. **Decided (Ingi, 2026-06-29): this branch lands first, then merges into `read-path-unification`.** So there is **no rebase gate on Stage 5** — delete freely against the current base (`3ddcdb17f`); reconciling these changes with read-path-unification's own in-flight edits to `source.cs` / the reader registry happens at *that* merge, and is read-path-unification's problem to absorb, not a constraint on this branch. Build, delete, and finish here on its own terms.
 
 ## Settled questions (from the coder's open list)
 
@@ -125,4 +126,4 @@ Any code shape implied here (the string-delegate reader, the ctor predicate, the
 
 ## For the coder
 
-Read this over and push back before we sequence anything into stages — challenge the predicate boundary (raw-vs-native), the `choice` keying, and the read-path-unification merge order in particular. The demolition worklist names a stage ordering as the *intended* sequence (readers → source → ctor flip → reroute → delete → OBP); it is the shape of the work, not committed stage files.
+The coder reviewed v1 (`../../coder/v1/plan-review.md`) and approved; its four corrections are folded above — the three-case predicate (format by type), the `Reader.cs` (not `Default.cs`) template, the wider reachable set + the `NotSupportedException` leak, and the `choice` sub-task. Merge order is settled (this branch lands first). The demolition worklist names a stage ordering as the *intended* sequence (readers → source → ctor flip → reroute → delete → OBP); it is the shape of the work, not committed stage files — sequence it when ready.
