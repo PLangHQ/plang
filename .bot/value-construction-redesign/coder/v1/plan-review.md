@@ -89,7 +89,7 @@ Whoever lands second rebases. Confirm order with Ingi before Stage 5 deletes any
 ## §5 — Small accuracies (non-blocking)
 
 - `set.cs` reroute confirmed accurate: it eager-`type.Convert(converted, Context)`s, then `new data.@this(name, converted, type)` re-converts in the ctor — the double/triple touch is real. The `keepAsIs` rule (richer-type-under-different-name, e.g. image→path slot) is genuine semantics; the plan correctly says keep it. Note `keepAsIs` already passes `type = null` to the ctor, so it never enters the typed-construction branch — consistent with the redesign.
-- Under the reroute, `set` must hand the ctor the **raw** value (`sourceValue`), not the eagerly-`converted` one. But `sourceValue` can itself already be native (line ~248 `if (Value.RawUntouched) sourceValue = await Value.Value()`), which is just the "already-native → hold" predicate case — no special handling, it falls out of §1.
+- Under the reroute, `set` must hand the ctor the **raw** value (`sourceValue`), not the eagerly-`converted` one. **CORRECTION (see §7):** I earlier said `sourceValue`-already-native "falls out of §1 as the hold case, no special handling." That is **wrong** — when the materialized value's type ≠ the declared type, holding skips the conversion. This is the §7 flaw.
 
 ---
 
@@ -102,3 +102,62 @@ Plan holds. Before sequencing into stage files:
 4. Merge order confirmed with Ingi before Stage 5 deletions.
 
 Everything else in the plan is ready to go.
+
+---
+
+# Addendum v2 — second crawl (post-v3 plan)
+
+Re-crawled the live construction/read path against plan v3. The from-raw redesign mechanically checks out (verified below). **One blocking flaw found** (§7) and one dangling reference to fix (§6).
+
+## Verified sound (the headline win stands)
+
+- **Scalar from-raw works.** `value.Reader` (`channel/serializer/value/reader.cs`) *parses* a raw string: `Int()`/`Long()`/`Double()` do `int.Parse(Str(), Inv)` etc. So `"5" + {number}` → `source(text/plain)` → `Text.Read` → `value.Reader` → `number/serializer/Reader.cs` → `5`. One conversion, no throwaway `text`. ✅
+- **Container from-raw works.** `source(application/plang)` → `plang.Read` (`channel/serializer/plang/this.cs:255`) UTF8-encodes `source.Raw` into a `Utf8JsonReader` → `json.Reader` → `dict/serializer/Reader.cs` `BeginObject()`. The format split (text/plain vs application/plang) is exactly the scalar-vs-structural seam — `value.Reader.BeginObject()` *throws by design*, so the split is load-bearing, not cosmetic. ✅
+- **Format keys resolve.** `serializers["text/plain"]` → Text serializer (scalar); `serializers["application/plang"]` → plang serializer (json). Both registered (`channel/serializer/list/this.cs:133,170`). ✅
+
+## §6 — `byte[]` format reference is wrong (fix the dangling pointer)
+
+Plan case 3 puts `string`/`byte[]` together under `text/plain`, and the predicate parenthetical says "`byte[]` follows `FromRaw`'s existing format logic."
+
+- `text/plain` is wrong for `byte[]` — `byte[] as image` is not text.
+- `FromRaw` is the **wrong reference**: it's the `dict`/`list` container factory (`dict/this.Convert.cs:6`, `list/this.Convert.cs:29`), `IDictionary`/`IEnumerable` → native. There is no `source.FromRaw`.
+
+The byte-backed readers already answer this — format comes from the type's kind→mime:
+```csharp
+// image/serializer/Reader.cs:23, Default.cs:27
+string mime = ctx.Context?.App.Format.Mime("." + (kind ?? "")) ?? $"image/{kind}";
+```
+**Fix:** drop `byte[]` from case 3's `text/plain` bullet and delete the `FromRaw` parenthetical. Let Stage 1's reachable trace assign the byte[] format from the declared type's kind→mime. Never `text/plain` for bytes.
+
+## §7 — BLOCKING: the fork converts from-RAW only; three call sites feed it an already-built value of the WRONG type, and "native → hold" silently skips the conversion
+
+The four-case fork handles *construction from a raw form*. But three live call sites do not pass a raw form — they pass an **already-materialized value of a different type** that needs **conversion**:
+
+| Call site | What it hands the type stamp | Today |
+|---|---|---|
+| `data.Declare(type)` (`builder/code/Default.cs:927,943`) | `p`'s `_item` is **already a built `text`** — `p.Peek() as text.@this` is read at `:934` | `type.Build(_item)` converts `text → number` |
+| `validateResponse.cs:222` | `resolved` is the materialized LLM value (`resolved as text.@this`, `:218`) | `p.Type.Convert(resolved, ctx)` — does the text convert to the target? |
+| `set %y% = %x% as number` (`set.cs:248`) | `sourceValue = await Value.Value()` — a **materialized** built value; the type-matches case already returned at `:240-246`, so the fall-through is exactly type-**differs** | eager `type.Convert(converted)` |
+
+Run each through plan v3's fork: `value` is a built `text.@this` (a wrong-typed native), not a raw string. `json.Parse(text.@this)` returns it untouched (only natives-out `JsonElement`/`JsonNode`), `Create` passes it through → **case 2 "already-native → hold as-is."** The declared type is **never applied**. Consequences:
+
+- **`Declare`:** stamps `number` but holds the `text` — type silently not applied.
+- **`validateResponse`:** the plan reroutes to "construct with declared type + `await data.Value()`." But case 2 holds the value and `Value()` succeeds → **the bad-literal check becomes a no-op.** `"abc" as number` would pass build validation.
+- **`set` (type-differs):** the plan's leaf-trace explicitly says "`sourceValue` already native → already-native → hold, no special handling." That is the bug verbatim — it drops the `as number` conversion on a materialized `%var%`.
+
+**Root:** the fork conflates two jobs:
+1. **construct from a raw form** → converges on `source` (the real double-convert; headline win — keep).
+2. **re-type an already-built value** → needs the per-type `Convert` hook applied to a value. *That is exactly what `Build`/`Judge` did.*
+
+Case 2 ("already-native → hold") is correct **only when the native value's type already equals the declared type.** When it's native-but-wrong-type, the value must be **converted**, not held. So **`Build` cannot be deleted outright** — the "apply a type's Convert hook to an existing item" operation survives for these three sites (it can be renamed/relocated onto the type or the value, but it stays).
+
+Why "mint a `source` from the built value" does **not** rescue this: to mint `source(raw, type)` you need the raw form, and a built `text` has **no clean raw accessor** — only `ToString()` (display edge, `text/this.cs:158`) and `Clr` (CLR lowering, `:162`). Routing through `ToString()` reintroduces the throwaway-text round-trip via the *display* edge (the exact asymmetry the coder's report flagged as unsolved), and breaks entirely for a built non-text value (a re-declared dict's `ToString()` is not its raw).
+
+**Fix for the plan:**
+- Split case 2: **native AND type == declared → hold; native AND type != declared → convert** (the surviving per-type `Convert` hook on the value).
+- Demote the leaf-trace claims: `Build`/`Judge` do **not** fully dissolve. The from-RAW double-convert dissolves into `source`; the **re-type-a-built-value** path keeps a (renamed) convert-existing-item operation, used by `Declare`, `validateResponse`, and `set`'s type-differs fall-through. Stage 5's "delete `Build`/`Judge`" must become "delete the *eager from-raw route*; keep the convert-existing-item hook under whatever name."
+- Trace `builder/code/Default.cs:920-945` explicitly: the `%var%`-skip guard at `:934-935` reads `p.Peek() as text.@this` and tests `StartsWith("%")` — it assumes a **text face**. If `Declare`'s input ever becomes a `source` instead, `Peek()` returns the raw string (not a `text.@this`), `sv` is null, and the guard mis-fires. Whatever the fix, keep `Declare`'s input shape consistent with this guard.
+
+## Net (v2)
+
+The from-raw redesign is correct and the headline double-convert win is real. But the plan **over-claims** that `Build`/`Judge` can be deleted: three call sites re-type an **already-built** value, which the fork's "native → hold" silently no-ops. Restate case 2 as a type-match split, keep a convert-existing-item operation (renamed) for those three sites, and fix the `byte[]`/`FromRaw` reference. With those, the plan is sound.
