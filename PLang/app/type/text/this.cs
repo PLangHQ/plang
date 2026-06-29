@@ -126,7 +126,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public @this(string value, string? template)
     {
         _value = value ?? string.Empty;
-        if (template != null && HasHoles) Template = template;
+        if (template != null && HasHoles(_value)) Template = template;
     }
 
     /// <summary>
@@ -196,14 +196,18 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return Template != null && global::app.data.@this.TryFullVarMatch(_value, out refName);
     }
 
-    /// <summary>True when the text contains <c>%ref%</c> holes — the authored
-    /// seam's detection (deterministic code, never the LLM).</summary>
-    internal bool HasHoles => System.Text.RegularExpressions.Regex.IsMatch(_value, "%[^%]+%");
+    private static readonly System.Text.RegularExpressions.Regex RefRx =
+        new("%[^%]+%", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    /// <summary>THE detector: true when <paramref name="s"/> contains a <c>%ref%</c> hole
+    /// (a <c>%variable%</c> reference) — the authored-template seam (deterministic code, never
+    /// the LLM). One home; every other %ref% check routes here.</summary>
+    internal static bool HasHoles(string s) => RefRx.IsMatch(s);
 
     /// <summary>The authored form of this text — itself when already stamped
     /// or hole-free; a stamped copy otherwise (the template seam).</summary>
     internal @this Authored()
-        => Template != null || !HasHoles ? this : new @this(_value) { Kind = Kind, Template = "plang" };
+        => Template != null || !HasHoles(_value) ? this : new @this(_value) { Kind = Kind, Template = "plang" };
 
     /// <summary>A re-kinded copy — same content, the declared kind stamped
     /// (the entry-judgement fold's text arm; values immutable, never restamped

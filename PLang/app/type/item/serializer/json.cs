@@ -69,7 +69,7 @@ public partial class json
     // fresh-per-read model (a raw string would born unstamped each read). Trust is
     // the reader's mode, never the content: a runtime-ingest slot is always raw.
     private static object? StringSlot(string s, global::app.type.reader.ReadContext ctx)
-        => ctx.Template != null && RefRegex().IsMatch(s)
+        => ctx.Template != null && global::app.type.text.@this.HasHoles(s)
             ? new text.@this(s, ctx.Template)
             : s;
 
@@ -182,12 +182,9 @@ public partial class json
     {
         // if/return, NOT a ternary: the common type of (string, text.@this)
         // would silently convert the wrapper back via text's implicit operator.
-        if (s.IndexOf('%') >= 0 && RefRegex().IsMatch(s)) return s;
+        if (global::app.type.text.@this.HasHoles(s)) return s;
         return new text.@this(s);
     }
-
-    [System.Text.RegularExpressions.GeneratedRegex("%[^%]+%")]
-    private static partial System.Text.RegularExpressions.Regex RefRegex();
 
     private static object NumberLeaf(System.Text.Json.JsonElement element)
     {

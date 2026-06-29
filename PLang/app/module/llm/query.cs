@@ -119,7 +119,7 @@ public partial class query : IContext, IBuildValidatable
             string.Equals(p.Name, "Schema", System.StringComparison.OrdinalIgnoreCase))?.Peek();
         if (schema is not (null or global::app.type.@null.@this)
             && !(schema is global::app.type.text.@this st
-                 && (st.Clr<string>() is "" or null || st.HasHoles)))
+                 && (st.Clr<string>() is "" or null || global::app.type.text.@this.HasHoles(st.ToString()))))
             return Task.FromResult(Context.Ok("json"));
 
         var format = __action?.Parameters?.FirstOrDefault(p =>

@@ -219,9 +219,24 @@ public sealed class @this : item.@this
         if (value is null) return new global::app.type.@null.@this(Name, Kind);
 
         // A container / domain value is already native (dict, list, path, image, …) —
-        // only scalars need a family to coerce them to a kind. (A variable-name target
-        // is built by its own Convert hook through the dispatch below — no special case.)
+        // only scalars need a family to coerce them to a kind.
         if (value is item.@this { IsLeaf: false } native) return native;
+
+        // Parity with Judge (so the context path handles what the no-context path did):
+        // a leaf's raw backing decides two cases before coercion.
+        var backing = value switch
+        {
+            text.@this t => t.ToString(),
+            item.source s => s.Raw as string,
+            _ => null,
+        };
+        // A raw-name declared type (Variable) NAMES a thing — `%s%` is the variable s, a
+        // write-target, not a value with a hole to render. Born as the resolved name.
+        if (typeof(app.variable.IRawNameResolvable).IsAssignableFrom(ClrType) && backing != null)
+            return app.variable.@this.Resolve(backing, Context!);
+        // A %ref% template defers its render — never coerce a live template.
+        if (backing != null && text.@this.HasHoles(backing) && value is item.@this template)
+            return template;
 
         var built = Convert(value, Context!);   // the family returns the born-native wrapper
         return built.Success && built.Peek() is item.@this it ? it : new global::app.type.@null.@this(Name, Kind);
@@ -551,8 +566,7 @@ public sealed class @this : item.@this
             // a declared label, and content off I/O is binary/kind (the kind narrows
             // on access), so the declaration never rides a clr label.
             return value;
-        if (backing is string str && str.Contains('%')
-            && System.Text.RegularExpressions.Regex.IsMatch(str, "%[^%]+%"))
+        if (backing is string str && text.@this.HasHoles(str))
             return value;
         return new item.source(backing, Name, Kind, Strict);
     }

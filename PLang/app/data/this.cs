@@ -455,7 +455,7 @@ public partial class @this
         switch (v)
         {
             case string s: return HasTemplateRef(s);
-            case global::app.type.text.@this t: return t.HasHoles;
+            case global::app.type.text.@this t: return HasTemplateRef(t.ToString());
             case IDictionary<string, object?> d:
                 foreach (var kv in d) if (RawGraphHasRef(kv.Value, depth + 1)) return true;
                 return false;
@@ -479,7 +479,7 @@ public partial class @this
     }
 
     private static bool HasTemplateRef(string value)
-        => System.Text.RegularExpressions.Regex.IsMatch(value, "%[^%]+%");
+        => global::app.type.text.@this.HasHoles(value);
 
     internal void SetValueDirect(object? value)
     {
