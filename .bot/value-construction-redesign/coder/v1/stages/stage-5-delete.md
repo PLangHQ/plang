@@ -14,18 +14,18 @@
 |---|---|---|
 | **`Judge(item.@this)`** | `type/this.cs:538` | grep `\.Judge(` → only the (now-rewritten) ctor/`Declare`, which no longer call it. Zero live callers. |
 | **`Deserialize(object?)`** | `type/this.cs:516` | already zero callers today (labelled "Replaces Judge" but unused). Confirm grep `\.Deserialize(` is empty, sweep. |
-| **`Build`'s from-raw scaffolding** | `type/this.cs:232` | the throwaway-`text` lift + the Variable (`IRawNameResolvable`) and `%ref%`-template special-cases (now `source`'s job, Stage 2). The **core** — apply the family hook to a built value — survives as case 2b's `Convert(item)`. See "gut, not delete" below. |
+| **`Build` leftover scaffolding** | `type/this.cs:232` | `Build` itself is **KEPT** (reimplemented in Stage 3 as the one construction entry: raw → `source`, built → hold/convert). Stage 3 already replaced the throwaway-`text` lift with `source` and moved the Variable/`%ref%` cases to `source`. Stage 5 only sweeps any *leftover* dead lines inside `Build` that Stage 3 left behind. Do **not** delete `Build`. See "thin, don't delete" below. |
 | **from-raw route into `Convert(object?, ctx)`** | `type/this.cs:177` | the raw-CLR `TryConvert` tail + the `null` arm the ctor now owns. The **method survives** as case 2b's engine (built-leaf → family hook). Thin it; do not delete. |
 | **`source` context-less string fallback** | `source.cs:120-129` (the `if (_value is string s)` branch) | construction now always carries context (born-with-context), so the fallback's last reason to exist is gone. Confirm no context-less `source` births remain. |
 
 ---
 
-## "Gut, not delete" — `Build` and the 2-arg `Convert`
+## "Thin, don't delete" — `Build` and the 2-arg `Convert`
 
-The plan is explicit: **the behavior survives, the from-raw route into it dies.**
+**The behavior survives; only the from-raw eager *route* dies.**
 
-- **`Build(object?)`** — if, after Stage 3/4, `Build` has zero callers, delete the method outright; its surviving core already lives in case 2b's `Convert(item)` (introduced Stage 2). If a caller remains that genuinely needs "make a value of this type from a built item", it should call `Convert(item)` — migrate it, then delete `Build`. Do **not** keep `Build` as a synonym.
-- **`Convert(object?, ctx)`** — keep it (or its `Convert(item.@this)` overload from Stage 2) as case 2b's engine. Remove only the parts no longer reached: the raw-CLR `TryConvert(value, target)` tail (that was the from-raw eager route — construction no longer enters here) and the `null` arm (the ctor's case 1 owns typed-null). Verify `catalog/Conversion.cs:231`'s marshalling use of `Conversions.Of` is unaffected — that is a *different* job (PLang value → C# parameter) and **stays** (see Stays-list).
+- **`Build(object?)`** — **KEPT** (Ingi: keep the name). It is the one construction entry, reimplemented in Stage 3 (raw → `source`, built → 2a hold / 2b `Convert`, null → typed-absence). The ctor and `Declare` both delegate to it. Stage 5 does **not** delete `Build`; it only removes any dead lines Stage 3's reimplementation orphaned (e.g. an unreachable branch left in place). Confirm `Build` no longer contains the throwaway-`text` lift or reflection.
+- **`Convert(object?, ctx)`** — keep it (or its `Convert(item.@this)` overload from Stage 2) as case 2b's engine, called from inside `Build`'s built-but-different branch. Remove only the parts no longer reached: the raw-CLR `TryConvert(value, target)` tail (that was the from-raw eager route — construction no longer enters here) and the `null` arm (the ctor's case 1 owns typed-null). Verify `catalog/Conversion.cs:231`'s marshalling use of `Conversions.Of` is unaffected — that is a *different* job (PLang value → C# parameter) and **stays** (see Stays-list).
 
 ---
 
@@ -44,8 +44,8 @@ The plan is explicit: **the behavior survives, the from-raw route into it dies.*
 
 ## Exit criteria
 
-- [ ] `Judge`, `Deserialize` deleted; `Build` deleted or migrated-then-deleted (no synonym left).
-- [ ] `Convert(object?, ctx)` thinned to case-2b's engine (from-raw `TryConvert` tail + `null` arm removed); `Convert(item)` is the construction caller's entry.
+- [ ] `Judge`, `Deserialize` deleted (zero callers). `Build` **kept** — confirm its throwaway-`text` lift + reflection are gone (Stage 3) and no dead branch lingers.
+- [ ] `Convert(object?, ctx)` thinned to case-2b's engine (from-raw `TryConvert` tail + `null` arm removed); `Convert(item)` is `Build`'s built-but-different branch.
 - [ ] `source.cs:120-129` context-less string fallback removed; no context-less `source` births remain.
 - [ ] Grep proofs recorded for each deletion (zero live callers before cut).
 - [ ] `catalog/Conversion.cs:231` marshalling still compiles + its tests pass (the `Conversions.Of` survivor).
@@ -53,7 +53,6 @@ The plan is explicit: **the behavior survives, the from-raw route into it dies.*
 
 ## What must NOT happen
 
-- Do not delete the per-type `Convert` hooks, `Create`, `Conversions.Of`, or the case-2b op.
-- Do not keep `Build` as an alias/synonym for `Convert(item)` — migrate callers, then delete.
+- Do not delete the per-type `Convert` hooks, `Create`, `Conversions.Of`, the case-2b op, or `Build`.
 - Do not bundle the marshalling-onto-reader-table cleanup into this stage.
 - Do not cut anything without its zero-caller grep proof in the commit.

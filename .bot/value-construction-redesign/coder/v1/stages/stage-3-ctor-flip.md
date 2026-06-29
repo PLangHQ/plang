@@ -1,8 +1,8 @@
 # Stage 3 — the ctor + Declare flip (the core change)
 
-**Goal:** rewrite the Data constructor's typed-construction block and `Declare` to the four-case fork. The `if _context != null … Build : Judge` branch dies; the context fork is gone.
+**Goal:** move the typed-construction fork **off the Data ctor and onto `type.Build`** (OBP Rule #1 — behavior on the owner). The ctor delegates in one line; `type.Build` is reimplemented to fork internally (raw → `source`, built → hold/convert, null → typed-absence). The `if _context != null … Build : Judge` context fork dies; `Declare` delegates to the same `type.Build`.
 
-**Kind:** flip. This is the heart. Both targets (from-raw `source`, case-2b `Convert(item)`) exist and are green from Stages 1–2, so this is a re-route.
+**Kind:** flip. This is the heart. Both targets (the from-raw `source` path, the case-2b `Convert(item)` op) exist and are green from Stages 1–2, so this is a re-route — the fork itself lives on the type, reading `this`, not in the ctor.
 
 **Depends on:** Stage 1 (every reachable type has a reader) + Stage 2 (source covers Variable/`%ref%`; `Convert(item)` exists; 2a sub-rules known).
 
@@ -28,55 +28,61 @@ The problem: `:184` eagerly `Create(Parse(value))`s — minting the throwaway `t
 
 ## The target fork
 
-`json.Parse(value)` first (it natives-out `JsonElement`/`JsonNode`; leaves a plain string untouched — `json.cs:131`). Then:
+**OBP — the fork lives on the `type`, NOT in the Data ctor.** Behavior belongs to the owner (OBP Rule #1): "make a value of this type from X" is the type's job, and the type already owns it via one call — `type.Build(_item)`. Do **not** spread the discriminants (container? scalar? bytes? same-type? re-kind?) into the Data ctor as free helpers — that decomposes the type (Rule #1 + #4) and is exactly the smell to avoid. The Data ctor stays dumb and **delegates**; the fork happens *inside* `type.Build`, where every discriminant reads the type's **own** state via `this`.
 
-```
-1  value == null (→ _item is null citizen)        → new @null.@this(type.Name, type.Kind)        [KEEP :195-199]
-2  parsed value is an already-built item.@this:
-   2a  its type == declared (incl. facet-match,
-       and same-type-missing-kind → re-kind)       → hold as-is (re-kind if needed)               [Stage 2 sub-rules]
-   2b  its type != declared                         → type.Convert(builtItem)  (the surviving op)
-3  parsed value is still a raw form (string/byte[]) → mint source(value, type, format-by-type), defer
-```
-
-**Format-by-type (case 3) — the judgement the coder must nail:**
-- scalar type (number/date/bool/guid/duration/text/path/time/…) → `format = "text/plain"` (the scalar `value.Reader`).
-- container type (dict/list/object/item) → `format = "application/plang"` (the json reader, `BeginObject`).
-- `byte[]` raw → `format = App.Format.Mime("." + kind)` (kind→mime, as the binary-family readers do) — **never `text/plain`**.
-
-Pick the format from the declared type's reader mode. A clean predicate (sketch — coder owns the final form):
+**The Data ctor (one delegation, no fork):**
 
 ```csharp
-string FormatFor(type t, object raw) =>
-    raw is byte[]            ? t.Context.App.Format.Mime("." + (t.Kind ?? "")) // kind→mime
-  : t.IsContainer()                                                            // dict/list/object/item
-                            ? global::app.channel.serializer.plang.@this.Mime  // application/plang
-  :                           global::app.channel.serializer.Text.Mime;        // text/plain
+var parsed = new json(_context).Parse(value);     // natives-out JsonElement/JsonNode; plain string untouched
+_item = type is { IsNull: false, Polymorphic: false }
+      ? type.Build(parsed)                          // the TYPE forks internally (raw / built / null)
+      : Create(parsed, _context);                   // polymorphic / no-declared-type — unchanged
 ```
 
-Verify the `IsContainer()` discriminant against how the type entity already classifies itself (do not invent a new flag if one exists — check `type.@this` for a kind/family predicate first; OBP smell #1/#5 if you add a parallel one).
+The eager `Create(Parse(value))` at `:184` now runs **only** for the polymorphic/no-type path — the throwaway-`text` lift no longer happens for a declared type.
 
-**Wiring the from-raw arm:** mint the `source` and hand it to the **born-typed holder ctor** path (`data/this.cs:222`) — i.e. `_item = new source(value, type.Name, type.Kind, format: FormatFor(...), ...)`. The `source` is itself an `item.@this`, so `_item` holds it directly; first `.Value()` parses it once. The eager `Create(Parse(value))` at `:184` must NOT run for case 3 (that is the throwaway-`text` it deletes). Restructure so `:184` runs only for the polymorphic / no-declared-type path.
+**`type.Build` reimplemented — no context fork, every branch reads `this`** (`type/this.cs:232`, keep the name per Ingi):
 
-**Crucial:** case 3 mints a `source`; it never calls `type.Convert`. Case 2b calls `type.Convert(item)`; it never mints a `source`. Keep them disjoint — that disjointness IS invariant #2 (one conversion).
+```csharp
+public item.@this Build(object? value)
+{
+    if (value is null) return new @null.@this(Name, Kind);          // case 1 — typed absence
+
+    if (value is item.@this built)                                  // case 2 — already a built value
+        return Mint().Name == built.Mint().Name                     // 2a: same type → hold (re-kind/facet per Stage 2)
+             ? built /* + re-kind if Kind!=null && built kindless; facet-match holds */
+             : Convert(built);                                      // 2b: different type → the surviving convert op
+
+    return new item.source(value, Name, Kind, format: RawFormat);   // case 3 — raw form → deferred source
+}
+```
+
+- **`RawFormat` is a noun on `type.@this`** (not a free `FormatFor(...)`): the type names the format its own raw form carries —
+  - container (dict/list/object/item) → `application/plang` (json reader, `BeginObject`),
+  - `byte[]`-backed (image/binary family) → `App.Format.Mime("." + Kind)` (kind→mime) — **never `text/plain`**,
+  - scalar → `text/plain` (the scalar `value.Reader`).
+  Reuse the type's existing kind/family classification — do **not** add a parallel `IsContainer` flag (OBP smell #1/#5); check `type.@this` for the discriminant it already has.
+- **2a/2b live inside `Build` reading `this`** — `Mint().Name`, `Kind`, `Facet(Name)` are all the type's own state. The same-type-missing-kind re-kind and the facet-match hold (the Stage 2 sub-rules, lifted from today's `Judge`) stay *inside* `Build`, not in free helpers.
+- **Disjoint:** case 3 mints a `source`, never calls `Convert`; case 2b calls `Convert`, never mints a `source`. That disjointness IS invariant #2 (one conversion).
+
+This makes `Build` **reimplemented** (raw branch mints a `source` instead of lift-to-text+convert), not "from-raw scaffolding carved out into the ctor." Stage 5 then thins `Build`'s *internals* (the throwaway-text + reflection die); `Build` survives as the one construction entry.
 
 ---
 
 ## Declare (`data/this.cs:241-253`)
 
-Same logic, on an already-constructed Data whose `_item` is a **built value** (its callers `builder/code/Default.cs:927,943` hand it a built `text`). So Declare is almost entirely a **case-2/2a/2b** site — there is no raw form here:
+Same owner, same call. `Declare` runs on an already-constructed Data whose `_item` is a **built value** (callers `builder/code/Default.cs:927,943` hand it a built `text`). So it delegates to the *same* `type.Build` — which routes a built value into case 2 (hold or convert):
 
 ```csharp
 internal void Declare(type declared)
 {
     if (declared is not { IsNull: false } || declared.Polymorphic) return;
     declared.Context ??= _context;
-    // _item is a built value: hold if already the declared type (2a, re-kind if needed),
-    // else convert (2b). No source — a built value has no clean raw to defer.
-    _item = SameType(_item, declared) ? ReKindIfNeeded(_item, declared)
-                                      : declared.Convert(_item);
+    _item = declared.Build(_item);   // built value → case 2 inside Build (2a hold / 2b convert). One door.
 }
 ```
+
+No free `SameType`/`ReKindIfNeeded` — that logic is inside `Build`. No `source` — a built value has no clean raw to defer, so case 2 converts (2b) or holds (2a).
 
 **Keep Declare's input a built value, NOT a `source`.** The `%var%`-skip guard at `builder/code/Default.cs:934-935` reads `p.Peek() as text.@this` + `StartsWith("%")`. If `Declare`'s input became a `source`, `Peek()` returns a raw string, the `as text.@this` cast nulls, and the guard mis-fires — a `%var%` reference would get a kind stamped. Do not change `p`'s construction to lazy at these call sites.
 
@@ -93,16 +99,19 @@ internal void Declare(type declared)
 
 ## Exit criteria
 
-- [ ] `data/this.cs` ctor rewritten to the four-case fork; `if _context != null Build : Judge` gone; `:184` eager lift no longer runs for declared-type raw forms.
-- [ ] `Declare` rewritten to 2a/2b (no `Build`/`Judge`, no `source`).
+- [ ] Data ctor delegates to `type.Build` for the declared-type path (one line, no fork in the ctor); the `if _context != null Build : Judge` **context fork** gone; `:184` eager lift no longer runs for declared-type raw forms.
+- [ ] `type.Build` reimplemented: case 1 typed-absence, case 2 built (2a hold/re-kind/facet, 2b `Convert`), case 3 raw → `source(…, RawFormat)`. No context fork. `RawFormat` is a noun on the type.
+- [ ] `Declare` delegates to `type.Build` (built value → case 2); no free `SameType`/`ReKindIfNeeded`, no `source`.
 - [ ] Tests: `"5" as number` → number, ONE conversion, no throwaway text (assert via a materialization counter or by tracing the reader is hit once); `'{"a":1}' as dict` → dict; `{a:1} as dict` → held; `text "5"` re-typed to number via 2b; typed-null preserved; JSON-null + empty-string edges.
-- [ ] `Build`/`Judge`/`Deserialize` still exist (deleted in Stage 5) — but the ctor + `Declare` no longer call `Build`/`Judge`. Grep proves it.
+- [ ] `Judge`/`Deserialize` still exist (deleted in Stage 5) but the ctor/`Declare` no longer call them. `Build` survives (reimplemented) — it IS the construction entry. Grep proves `Judge` has no live caller.
 - [ ] Global exit gates green.
 
 ## What must NOT happen
 
+- No fork in the Data ctor — the discriminants (container/scalar/bytes, same-type/re-kind) live inside `type.Build`, reading `this`. The ctor delegates.
+- No free helpers (`FormatFor`, `SameType`, `ReKindIfNeeded`) — behavior on the owner (OBP Rule #1). `RawFormat` is a noun on the type.
 - No `source` minted for a built value (case 2b converts; it cannot re-source — built `text` has no clean raw).
-- No `type.Convert` called for a raw form (case 3 defers via `source`).
+- No `Convert` called for a raw form (case 3 defers via `source`).
 - No Variable/`%ref%` special-case in the ctor (Stage 2 put them in `source`).
-- No deletion of `Build`/`Judge` yet (Stage 5, after `set`/`validateResponse` reroute in Stage 4).
+- No deletion of `Judge` yet (Stage 5, after `set`/`validateResponse` reroute in Stage 4). `Build` is kept (reimplemented), not deleted.
 - Don't add a parallel `IsContainer` flag if the type entity already exposes the discriminant.

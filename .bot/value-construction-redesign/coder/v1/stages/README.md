@@ -21,6 +21,8 @@ json.Parse(value) first, then:
 - **From-raw (case 3)** converges on `source` + the reader — the double-convert + throwaway-`text` + reflection all dissolve.
 - **Re-type-a-built-value (case 2b)** does NOT dissolve — three live sites hand the ctor a materialized wrong-typed value (Declare, validateResponse, `set`-type-differs). It keeps the per-type `Convert` hook applied to a built item (today's 2-arg `type.Convert(item)`, thinned).
 
+**OBP — the fork lives on the `type`, not the Data ctor.** Behavior belongs to the owner (Rule #1): "make a value of this type from X" is the type's job, owned by **`type.Build`** (kept, reimplemented). The Data ctor and `Declare` each **delegate** in one line; the raw/built/null fork happens *inside* `Build`, where every discriminant reads the type's own state via `this`. Format-by-type is a **noun** on the type (`RawFormat`), not a free `FormatFor(...)`. No free helpers (`SameType`/`ReKindIfNeeded`) in the ctor — that decomposes the type (Rule #1 + #4). This was a real correction after reading `Documentation/v0.2/object_pattern_formal.md`; the first draft of Stage 3 had the smell.
+
 ## Stage order (dependency-gated; additive → flip → reroute → delete → OBP)
 
 | # | File | Kind | One-liner |
@@ -29,7 +31,7 @@ json.Parse(value) first, then:
 | 2 | `stage-2-source-and-2b.md` | additive | `source` absorbs Build's `%ref%`/Variable cases; pin case-2b's named home |
 | 3 | `stage-3-ctor-flip.md` | flip | rewrite the ctor + `Declare` to the four-case fork |
 | 4 | `stage-4-caller-reroute.md` | flip | `set` + `validateResponse` drop their eager convert; route onto case 2b |
-| 5 | `stage-5-delete.md` | subtract | delete `Judge`/`Deserialize`/Build's from-raw scaffolding/source fallback; thin `Convert` |
+| 5 | `stage-5-delete.md` | subtract | delete `Judge`/`Deserialize`/source fallback; thin the 2-arg `Convert`; `Build` is kept (reimplemented) |
 | 6 | `stage-6-obp-docs-tests.md` | — | OBP scan, docs, full test sweep |
 
 ## Global exit gates (every stage)

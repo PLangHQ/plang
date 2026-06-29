@@ -1,6 +1,6 @@
 # Stage 4 — caller reroute (set + validateResponse drop their eager convert)
 
-**Goal:** the two sites that eagerly convert *before* constructing stop doing so, and let the ctor's case 2b do the one conversion. Removes the cross-file convert split (`set` ↔ ctor) — invariant #2, and OBP smell #4 (allocate-here/convert-there).
+**Goal:** the two sites that eagerly convert *before* constructing stop doing so, and let construction (the ctor → `type.Build` → case 2b) do the one conversion. Removes the cross-file convert split (`set` ↔ ctor) — invariant #2, and OBP smell #4 (allocate-here/convert-there).
 
 **Kind:** flip. Depends on Stage 3 (the ctor fork + case 2b exist).
 
@@ -22,7 +22,7 @@ var typedData = new data.@this(name, converted, keepAsIs ? null : type, context:
 The type-**matches** case already returned at `:240-246`. So the fall-through is a **materialized, type-differs** value — exactly case 2b.
 
 **Reroute:**
-- **Drop** the eager `type.Convert(converted, Context)` block (`:263-269`). The ctor's case 2b does that one conversion.
+- **Drop** the eager `type.Convert(converted, Context)` block (`:263-269`). Construction does it once — the ctor delegates to `type.Build`, whose case 2b converts.
 - **Construct with the declared type**, handing the ctor the value (`sourceValue` — built but type-differs → case 2b converts it; or still-raw → case 3). `new data.@this(name, sourceValue, keepAsIs ? null : type, context: Context)`.
 - **Keep** `keepAsIs` (`:255-257`) untouched — an image bound to a `path` slot stays an image. It already passes `type = null`, so it never enters typed construction. (This is the same facet-match semantics 2a respects; here it short-circuits before construction.)
 - Preserve the strict-kind-rides-to-load-seam behavior below `:273` — confirm it still fires on the case-2b/case-3 output.
@@ -48,7 +48,7 @@ Current: `var conv = p.Type.Convert(resolved, ctx); if (conv.Success) continue;`
 
 - [ ] `set.cs` no longer calls `type.Convert` itself; constructs once with the declared type; `keepAsIs` + strict-kind behavior preserved.
 - [ ] `validateResponse.cs` converts via construction+materialization; `"abc" as number` and a bad enum **still fail build** (test asserts this — it is the safety net).
-- [ ] Grep: the only remaining `type.Convert(` / `.Build(` / `.Judge(` callers are the ones Stage 5 deletes (the dead machinery), not live construction paths.
+- [ ] Grep: `set`/`validateResponse` no longer call `type.Convert(object?)` eagerly. The only `.Build(` callers are the ctor + `Declare` (the legit construction entry); `.Judge(` has no live caller (Stage 5 deletes it).
 - [ ] `IKindValidatable` deferral preserved (test a kind-validatable type that defers).
 - [ ] Global exit gates green.
 
