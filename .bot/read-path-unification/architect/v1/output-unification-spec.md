@@ -108,3 +108,64 @@ view emits `{name, type, value, properties}` without `@schema`; the Out/wire vie
 The 15 failed because deleting WireLocal dropped the param `value` on write (Data.Value is
 `[JsonIgnore]`; only WireLocal wrote it). With the `.pr` write going through `Output`, the value is
 written by the value's own `Output` — there's nothing to drop, and no WireLocal to delete-and-break.
+
+---
+
+# OBP structure — the implementation guide (code from this, not reactively)
+
+## The principle
+Serialization is **behavior owned by each value type**, named `Output`. There is no central dispatcher
+(Normalize — deleted), no second verb for the same behavior (Write — folded in), and no type-fork
+(`IsLeaf` — gone from the write path). **Polymorphism IS the dispatch.**
+
+## Ownership — who owns `Output`
+| owner | `Output` does | override? |
+|--|--|--|
+| **base `item.@this`** | reflect its tagged bag (`OutputTagged`) — the general "an object IS its View-selected properties" rule | the DEFAULT |
+| **leaf scalar** (number, text, bool, date, datetime, time, duration, guid, binary, choice, archive, null, source) | write the bare value (the old `Write` body) | yes |
+| **container / special shape** (dict→`{k:v}`, list→`[e]`, clr→host, signature→layer) | its own shape | yes |
+| **goal / step / action / any plain structural item** | — (base reflect handles it) | **NO** |
+
+The single question is "**am I a plain tagged bag, or a special shape?**" — answered by *overriding or
+not*, never by an `if (IsLeaf)`.
+
+## The reflection→wire boundary (the one irreducible adapter)
+`OutputTagged` reflects C# properties via `Tagged.PropertiesFor(type, view)` (the **View** picks the
+attribute set; `Entry.WireName` owns the casing — computed once, never re-cased at a call site). Each
+reflected value:
+- a plang `item.@this` → `await value.Output(...)` — it self-writes (**polymorphism**).
+- a C# scalar (string/bool/int/date/…) → `writer.Value(v)` — the **writer** owns primitive rendering.
+- *[bridge]* a raw C# collection → array of self-writes — **deleted** once steps/modifiers/parameters
+  become `item.@this` lists.
+
+This 2-branch (plang-value vs C#-scalar) is the **reflection adapter**, NOT a domain switch: it exists
+only because C# primitives can't self-write, and it does **not** grow per domain type. That is the line
+between "acceptable boundary" and "recreating Normalize."
+
+## Smells to guard while coding (the 8 + the ones specific here)
+- **central type-switch** — that WAS Normalize. Don't recreate it; `WriteReflected` stays 2-branch.
+- **type-fork** — no `IsLeaf` in the write path. Override-or-not is the dispatch.
+- **second method for one behavior** — no `Write` beside `Output` (fold it in).
+- **call-site transform (#5)** — casing lives on `Entry.WireName`, not re-derived per caller.
+- **courier touches `.Value` (#7)** — `Output` reads its OWN value (a leaf renders itself) or recurses
+  via a child's `Output`; it never reaches into a child `Data.Value`.
+- **construct-then-stamp / allocate-then-transform** — the writer streams; no intermediate tree
+  (that was Normalize's `dict` tree). Write straight to the writer.
+
+## End-state shape (what "done" looks like)
+- `item.Output` base = reflect; leaves + containers override; **goal/step/action have NO override**.
+- `steps`, `modifiers`, `action.parameters` are `item.@this` lists (self-write; the bridge branch is gone).
+- `table` has its own structural `Output`.
+- **Deleted:** `item.Write(IWriter)`, `Normalize`/`NormalizeValue`/`NormalizeObject`, `Wire`,
+  `WireLocal`, `PrWrite`, the `IsLeaf` write-path fork.
+- `.pr` write = `goal.Output(writer, View.Store)` via the channel (symmetric with the read) — unsigned,
+  structural (no `@schema`; a param is a Data by its `List<Data>` position).
+
+## Migration (green at each step; OBP-check each)
+1. ✅ base `OutputTagged` capability + goal/step/action dormant overrides.
+2. ✅ Store name-gating fix; `Entry.WireName`; `WriteReflected → writer.Value`.
+3. **`.pr` write → `goal.Output(Store)` via the channel**; round-trip + the 15 pass. ← next
+4. `steps` / `modifiers` / `action.parameters` → `item.@this` lists; drop the bridge branch in WriteReflected.
+5. leaves override `Output` (fold the `Write` body in); flip base `Output` → reflect; remove the
+   goal/step/action overrides; delete `Write` + convert its callers to `await Output`.
+6. delete `Normalize` / `Wire` / `WireLocal` / `PrWrite`. Full suite green.
