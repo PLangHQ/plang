@@ -208,5 +208,17 @@ between "acceptable boundary" and "recreating Normalize."
      tree); migrate the cycle/depth ones to assert `Output`'s guards, delete the pure tree-shape ones.
    `Normalize` stays as prod-dead-but-present code until then (harmless, still green, still test-pinned).
 
-8. leaves override `Output` (fold `Write` in); flip base `Output` → reflect; remove the
-   goal/step/action overrides; delete `Write`. (`PrWrite`: migrate its 2 test refs + `Utils.Json`, delete.)
+8. ✅ **`Normalize` physically deleted** (+ obsolete tests). Depth-guard **investigated** (Ingi's call):
+   `Output` only serializes plang TREES and `json.Writer` fail-closes on non-plang values, so the only
+   output cycle is a self-referential variable — reverted the cargo-culted general depth cap to the
+   **variable-specific** guard. **`PrWrite` + `StoreOnlyModifier` deleted** (dead; builder writes via
+   `goal.Output`); stale `Normalize` doc refs fixed; `GetGoalsTests` migrated off the absorbed
+   `Utils.Json.PrWrite`.
+
+9. **OPTIONAL (deferred) — fold `Write` into `Output`.** Today: `Output` IS the I/O verb; base
+   `item.Output` default delegates to `Write` (the leaf bare-form primitive), which a few structural
+   types (`signature`/`directory`/`permission`) also call directly. To literally remove `Write` (the
+   "one verb" purity Ingi wanted): flip base `Output` → reflect, give the ~18 leaf/structured-leaf
+   types an `Output` override (their `Write` body), migrate the direct `Write` callers to `Output`,
+   drop the goal/step/action/GoalCall overrides, delete `Write`. ~25 file touches for marginal gain
+   (`Write` is already subordinate to `Output`, not a parallel I/O verb). Left as a deliberate choice.
