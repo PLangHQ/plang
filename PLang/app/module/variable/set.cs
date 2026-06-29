@@ -261,11 +261,16 @@ public partial class Set : IContext, IBuildValidatable
             // carries the declared meaning and the value loads later.
             if (!keepAsIs && converted != null && !targetType.IsInstanceOfType(converted))
             {
-                var convResult = type.Convert(converted, Context);
-                if (convResult.Success)
-                    converted = convResult.Peek();
-                else if (!typeof(global::app.data.IKindValidatable).IsAssignableFrom(targetType))
-                    return convResult;
+                // Convert now throws on a bad conversion (the throw boundary). A
+                // kind-validatable target defers (validated at load); anything else
+                // surfaces the failure here.
+                try { converted = type.Convert(converted, Context); }
+                catch (System.Exception ex) when (ex is System.FormatException
+                                                  or System.InvalidOperationException or System.Text.Json.JsonException)
+                {
+                    if (!typeof(global::app.data.IKindValidatable).IsAssignableFrom(targetType))
+                        return Context.Error(new global::app.error.Error(ex.Message, "TypeConversionFailed", 400));
+                }
             }
 
             // The converted value already carries its type — store it in a Data directly

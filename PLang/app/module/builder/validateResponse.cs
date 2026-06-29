@@ -219,8 +219,13 @@ public partial class validateResponse : IContext
                     }
 
                     // Ask the declared type object whether it can be made from the value.
-                    var conv = p.Type.Convert(resolved, (goal.App ?? app)!.User.Context!);
-                    if (conv.Success) continue;
+                    // Convert now throws on a bad conversion (the throw boundary) — a clean
+                    // conversion means this parameter is valid; a throw is the bad-literal
+                    // case that must surface as a build error.
+                    try { p.Type.Convert(resolved, (goal.App ?? app)!.User.Context!); continue; }
+                    catch (System.Exception ex) when (ex is System.FormatException
+                                                      or System.InvalidOperationException or System.Text.Json.JsonException)
+                    { /* fall through to record the build error */ }
 
                     var validValues = (goal.App ?? app)?.Type.GetValidValues(targetType);
                     var hint = validValues != null && validValues.Length > 0

@@ -25,22 +25,23 @@ public class ConvertBuiltValueTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         var built = new global::app.type.text.@this("5");
+        // Convert returns the value (item.@this) directly now — no Data wrapper.
         var result = type.Create("number", null, context: ctx).Convert(built, ctx);
-        await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Peek()).IsTypeOf<global::app.type.number.@this>();
-        await Assert.That(((global::app.type.number.@this)result.Peek()!).Clr<long>()).IsEqualTo(5L);
+        await Assert.That(result).IsTypeOf<global::app.type.number.@this>();
+        await Assert.That(((global::app.type.number.@this)result).Clr<long>()).IsEqualTo(5L);
     }
 
-    [Test] public async Task ConvertBuiltText_BadNumber_Fails_NotHeld()
+    [Test] public async Task ConvertBuiltText_BadNumber_Throws_NotHeld()
     {
         await using var app = NewApp();
         var ctx = app.User.Context;
         var built = new global::app.type.text.@this("abc");
-        var result = type.Create("number", null, context: ctx).Convert(built, ctx);
-        // The build-time safety net: a bad literal must FAIL the convert, never
-        // be silently held as the original text (which would pass validation).
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Peek()).IsNotTypeOf<global::app.type.number.@this>();
+        // The build-time safety net: a bad literal must THROW (the throw boundary),
+        // never be silently held as the original text (which would pass validation).
+        // A throw rides MaterializeFailed at the source boundary; validateResponse
+        // catches it to record a build error.
+        await Assert.That(() => type.Create("number", null, context: ctx).Convert(built, ctx))
+            .Throws<System.Exception>();
     }
 
     [Test] public async Task ConvertBuiltValue_AlreadyType_RoundTrips()
@@ -52,7 +53,6 @@ public class ConvertBuiltValueTests
         var ctx = app.User.Context;
         var built = global::app.type.number.@this.From(5L);
         var result = type.Create("number", null, context: ctx).Convert(built, ctx);
-        await Assert.That(result.Success).IsTrue();
-        await Assert.That(((global::app.type.number.@this)result.Peek()!).Clr<long>()).IsEqualTo(5L);
+        await Assert.That(((global::app.type.number.@this)result).Clr<long>()).IsEqualTo(5L);
     }
 }

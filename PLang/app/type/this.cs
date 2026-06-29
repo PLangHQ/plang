@@ -174,10 +174,10 @@ public sealed class @this : item.@this
     /// type. <c>Convert.ChangeType</c> survives only as a leaf inside the general
     /// converter for genuine primitive coercions.
     /// </summary>
-    public global::app.data.@this Convert(object? value, actor.context.@this context)
+    public global::app.type.item.@this Convert(object? value, actor.context.@this context)
     {
         Context ??= context;
-        if (value is null) return context.Ok(value);
+        if (value is null) return new global::app.type.@null.@this(Name, Kind);
 
         // A born-native scalar source (`set %d% = "2026-01-01" as date` makes the literal a
         // text.@this first) — unwrap the leaf wrapper to its raw form so the target family's
@@ -188,32 +188,39 @@ public sealed class @this : item.@this
         // OBP: the concrete type owns its own construction. Resolve the family
         // class (text.@this, number.@this, …) and ask IT to make the value from
         // ours, passing our Kind. This entity only routes — it holds no per-type
-        // ("if text", "if number") knowledge.
+        // ("if text", "if number") knowledge. The hub still answers Data (Ok/Error);
+        // this door is the throw boundary — a bad conversion throws so it rides the
+        // same MaterializeFailed path as a bad reader parse (source.Value catches it).
         var familyClass = context.App.Type[Name]?.ClrType;
         var owned = context.App.Type.Conversions.Of(familyClass, value, Kind, context);
-        if (owned != null) return owned;
+        if (owned != null)
+            return owned.Success ? owned.Peek() : throw Failed(owned.Error);
 
-        var target = ClrType;
-        if (target == null)
-            return context.Error(new global::app.error.Error(
-                $"Unknown type '{Name}'", "UnknownType", 400));
+        var target = ClrType
+            ?? throw new System.InvalidOperationException($"Unknown type '{Name}'");
 
         // No family hook — a non-leaf value (dict/list) lowers ITSELF to the CLR mate
         // (dict→record deserialize, list→collection). The value owns it; no hub. Clr is
-        // terminal (throws on a real failure); this boundary returns Data — translate
-        // the failure into the Error this method contractually hands back.
+        // terminal; a real failure rethrows as the convert door's throw.
         if (value is global::app.type.item.@this iv)
         {
-            try { return context.Ok(iv.Clr(target)); }
+            try { return Create(iv.Clr(target), context); }
             catch (System.Exception ex) when (ex is System.InvalidCastException or System.FormatException
                                                or System.NotSupportedException or System.Text.Json.JsonException)
-            { return context.Error(new global::app.error.Error(ex.Message, "TypeConversionFailed", 400)); }
+            { throw new System.InvalidOperationException(ex.Message, ex); }
         }
 
         // A raw CLR input (a wire string → record, a primitive) — the raw→CLR deserialize
         // leaf, the last TryConvert use here; folds into the wire serializer next.
         var (c, err) = global::app.type.catalog.@this.TryConvert(value, target, context);
-        return err != null ? context.Error(err) : context.Ok(c);
+        if (err != null) throw Failed(err);
+        return Create(c, context);
+
+        // The hub/TryConvert report failure as an Error; this door reports it as a throw.
+        // source.Value re-authors the identity as MaterializeFailed at the binding, so the
+        // per-Error Key is not carried — the message is.
+        static System.Exception Failed(global::app.error.IError? error)
+            => new System.InvalidOperationException(error?.Message ?? "conversion failed");
     }
 
     /// <summary>
@@ -253,8 +260,9 @@ public sealed class @this : item.@this
         if (backing != null && text.@this.HasHoles(backing) && value is item.@this template)
             return template;
 
-        var built = Convert(value, Context!);   // the family returns the born-native wrapper
-        return built.Success && built.Peek() is item.@this it ? it : new global::app.type.@null.@this(Name, Kind);
+        // Convert is the throw boundary — a bad conversion throws (rides MaterializeFailed
+        // at the source boundary, or surfaces to the caller). No swallow to a typed null.
+        return Convert(value, Context!);
     }
 
     /// <summary>

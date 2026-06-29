@@ -271,11 +271,12 @@ public class SnapshotWireTests
 
         // `as snapshot` path: typeEntity.Convert(envelopeString, context).
         var te = new global::app.type.@this("snapshot") { Context = context };
+        // Convert returns the built value (item.@this) directly now — no Data wrapper to .Value().
         var conv = te.Convert(json, context);
-        await Assert.That((await conv.Value()) is global::app.snapshot.@this)
+        await Assert.That(conv is global::app.snapshot.@this)
             .IsTrue(); // ← if false, the as-snapshot conversion is the bug
 
-        context.Variable.Set("snap", (await conv.Value()));
+        context.Variable.Set("snap", conv);
         context.Variable.Set("snap.variables.x", 2L);
         await Assert.That(System.Convert.ToInt64((await (await context.Variable.Get("snap.variables.x")).Value()))).IsEqualTo(2L);
 
@@ -338,7 +339,7 @@ public class SnapshotWireTests
         }
 
         var te = new global::app.type.@this("snapshot") { Context = context };
-        var snap = (await te.Convert(json, context).Value()) as global::app.snapshot.@this;
+        var snap = te.Convert(json, context) as global::app.snapshot.@this;
         await Assert.That(snap).IsNotNull();
 
         context.Variable.Set("snap", snap);
