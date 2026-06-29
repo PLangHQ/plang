@@ -179,37 +179,23 @@ public partial class @this
         Name = CleanName(name);
         _context = context ?? parent?._context!;
         // The value is born WITH this Data's context — never context-less then
-        // stamped. A value with no context can't reach its renderer/reader and
-        // falls through to a clr carrier.
-        _item = global::app.type.@this.Create(new global::app.type.item.serializer.json(_context).Parse(value), _context);
+        // stamped. JSON natives-out here; a plain string stays a string for the
+        // type to decide.
+        var parsed = new global::app.type.item.serializer.json(_context).Parse(value);
+        // A declared, non-polymorphic type owns construction — ONE door. The type
+        // forks internally (raw → a lazy source at its format; a built value already
+        // of the type → hold; a different built type → re-type via its hook; null →
+        // typed absence). A polymorphic stamp / no declared type is the natural lift,
+        // the value's own truth stands.
+        if (type is { IsNull: false } && !type.Polymorphic)
+            _item = type.Build(parsed, _context);
+        else
+            _item = global::app.type.@this.Create(parsed, _context);
         Parent = parent;
         Path = BuildPath(parent, Name);
         IsInitialized = true;
         Created = System.DateTime.UtcNow;
         Updated = Created;
-        // A bare {object|item} stamp with no kind and no strict is the
-        // polymorphic NON-judgement — the value's own truth stands (and a null
-        // stays the null citizen, not a typed absence).
-        if (type is { IsNull: false } && !type.Polymorphic)
-        {
-            if (value == null && _item is global::app.type.@null.@this)
-                // A declared type with no value yet — a typed absence (a tool
-                // parameter slot, a typed null). The declaration must survive
-                // even with nothing to lift.
-                _item = new global::app.type.@null.@this(type.Name, type.Kind);
-            else if (_context != null)
-            {
-                // The type builds its value, born at its kind — same path as the
-                // wire read. Stamp the entity's context first (mirrors data.Type).
-                type.Context ??= _context;
-                _item = type.Build(_item);
-            }
-            else
-                // No context in scope — fall back to the kind-blind reconciliation
-                // (also still the home for variable-name targets and %ref% templates,
-                // which Build does not yet handle).
-                _item = type.Judge(_item);
-        }
     }
 
     /// <summary>
@@ -241,15 +227,11 @@ public partial class @this
     internal void Declare(type declared)
     {
         if (declared is not { IsNull: false } || declared.Polymorphic) return;
-        if (_context != null)
-        {
-            // The type builds its value, born at its kind (same path as the ctor /
-            // wire read). No context in scope → kind-blind reconciliation fallback.
-            declared.Context ??= _context;
-            _item = declared.Build(_item);
-        }
-        else
-            _item = declared.Judge(_item);
+        // The after-the-fact stamp routes through the SAME door as the ctor: the type
+        // builds from the current (already-built) value — a value already of the type
+        // holds (re-kind if needed), a different built type re-types, a %ref%/variable
+        // leaf is left for its own resolution. No Build/Judge context fork.
+        _item = declared.Build(_item, _context);
     }
 
     /// <summary>

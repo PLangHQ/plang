@@ -236,34 +236,72 @@ public sealed class @this : item.@this
     /// <see cref="Create(string, string?, bool, actor.context.@this?)"/> already owns
     /// that name for making a type ENTITY from a name. (A string is an object, so an
     /// instance <c>Create(object)</c> would be ambiguous with it.)</remarks>
-    public item.@this Build(object? value)
+    public item.@this Build(object? value, actor.context.@this context)
     {
-        if (value is null) return new global::app.type.@null.@this(Name, Kind);
+        // Typed absence — no value to lift; the declaration survives (a typed null,
+        // a tool-parameter slot). A JSON-null literal lands here too (the null citizen).
+        if (value is null or global::app.type.@null.@this) return new global::app.type.@null.@this(Name, Kind);
 
-        // A container / domain value is already native (dict, list, path, image, …) —
-        // only scalars need a family to coerce them to a kind.
+        // A raw form (string / byte[]) → defer through a source declared as THIS type,
+        // born WITH context. The format the type carries picks the reader (scalar → text,
+        // container → json, bytes → kind→mime). Parsed once, lazily, on first use — no
+        // throwaway text, no eager convert. The source IS the lazy door the read path uses.
+        if (value is string or byte[])
+            return new item.source(value, Name, Kind, Strict, RawFormat(value, context)) { Context = context };
+
+        // A container / domain value is already its native form (dict, list, path, image, …) — hold it.
         if (value is item.@this { IsLeaf: false } native) return native;
 
-        // Parity with Judge (so the context path handles what the no-context path did):
-        // a leaf's raw backing decides two cases before coercion.
-        var backing = value switch
+        // A built leaf (text/number/… or a source carrying its raw):
+        if (value is item.@this leaf)
         {
-            text.@this t => t.ToString(),
-            item.source s => s.Raw as string,
-            _ => null,
-        };
-        // A raw-name declared type (Variable) NAMES a thing — `%s%` is the variable s, a
-        // write-target, not a value with a hole to render. Born as the resolved name.
-        if (typeof(app.variable.IRawNameResolvable).IsAssignableFrom(ClrType) && backing != null)
-            return app.variable.@this.Resolve(backing, Context!);
-        // A %ref% template defers its render — never coerce a live template.
-        if (backing != null && text.@this.HasHoles(backing) && value is item.@this template)
-            return template;
+            var backing = leaf switch
+            {
+                text.@this t => t.ToString(),
+                item.source s => s.Raw as string,
+                _ => null,
+            };
+            // A raw-name declared type (Variable) NAMES a thing — `%s%` is the variable s, a
+            // write-target, not a value with a hole to render. Born as the resolved name.
+            if (typeof(app.variable.IRawNameResolvable).IsAssignableFrom(context.App.Type[Name]?.ClrType) && backing != null)
+                return app.variable.@this.Resolve(backing, context);
+            // A live %ref% template defers its render — never coerce a value with holes.
+            if (backing != null && text.@this.HasHoles(backing)) return leaf;
 
-        // Convert is the throw boundary — a bad conversion throws (rides MaterializeFailed
-        // at the source boundary, or surfaces to the caller). No swallow to a typed null.
-        return Convert(value, Context!);
+            // Already this type → hold; refine a kindless leaf to the declared kind.
+            var minted = leaf.Mint();
+            if (string.Equals(Name, minted.Name, System.StringComparison.OrdinalIgnoreCase))
+                return Kind != null && minted.Kind == null
+                    ? leaf switch
+                    {
+                        text.@this t => t.Kinded(Kind),
+                        binary.@this b => new binary.@this(b.Value) { Kind = Kind },
+                        _ => leaf,
+                    }
+                    : leaf;
+            // The value already carries this type as a facet (an image satisfies a path slot) → hold.
+            if (leaf.Facet(Name) != null) return leaf;
+            // A different type → re-type via the per-type hook. Convert is the throw boundary.
+            return Convert(leaf, context);
+        }
+
+        // A raw CLR scalar handed straight from C# (rare) → convert via the hook.
+        return Convert(value, context);
     }
+
+    /// <summary>
+    /// The wire format the type's raw form carries — picks the reader a minted
+    /// <see cref="item.source"/> materialises through. A container's raw is JSON
+    /// (the json reader streams it); a byte-backed family's raw is its bytes under
+    /// the kind's mime; everything else is a scalar text token.
+    /// </summary>
+    private string RawFormat(object raw, actor.context.@this context)
+        => raw is byte[]
+            ? context.App.Format.Mime("." + (Kind ?? "")) ?? "application/octet-stream"
+            : string.Equals(Name, "dict", System.StringComparison.OrdinalIgnoreCase)
+              || string.Equals(Name, "list", System.StringComparison.OrdinalIgnoreCase)
+                ? "application/plang"
+                : global::app.channel.serializer.Text.Mime;
 
     /// <summary>
     /// The driving type for a comparison between a value of this type and
@@ -532,7 +570,7 @@ public sealed class @this : item.@this
         if (typeof(app.variable.IRawNameResolvable).IsAssignableFrom(ClrType))
         {
             Context ??= ctx;
-            return Build(raw);
+            return Build(raw, ctx!);
         }
 
         var reader = ctx?.App.Type.Readers.Of(Name, Kind);
