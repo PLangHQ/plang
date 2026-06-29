@@ -1,16 +1,45 @@
 # Stage 4 — finish context-never-null for reads
 
-**Design authority:** `plan.md` "Phase 4". Stub — **firm up when Stage 3 is green + pushed.**
+**Design authority:** `plan.md` "Phase 4". Firmed up after Stage 3 green + pushed (`96cfb4c20`).
 
 ## Entry
-- Stage 3 green + pushed.
+- ✅ Stage 3 green + pushed.
+
+## ⚠️ Known coupling — WireLocal removal regresses "the 15"
+A prior attempt to delete `WireLocal` was **reverted: it regressed 15 tests** (commit `0ad8e9083`).
+Cause: `WireLocal` is the **context-less, `sign:false`** default `[JsonConverter]` on Data. Delete it
+and a bare `Deserialize<Data>` falls to the channel's **signing** Wire, which **activates verify-on-read**
+— and a fixture/context-less read has no actor to verify against → fail. So the `WireLocal` deletion
+is **coupled to Stage 5** (born-with-context fixtures + the 15). Do the safe flips here; gate the
+deletion on the Stage-5 fixture sweep (or do 4+5 as one push).
+
+## Live targets (verified)
+- `WireLocal` class: `data/WireLocal.cs` (`: Wire`, `base(View.Store, sign:false)`).
+- `[JsonConverter(typeof(WireLocal))]` on Data (`this.cs:24`) and `Data<T>` (`this.cs:920`).
+- `Wire._context!` null-forgiving at `Wire.cs:213` (the ReadContext build). No separate `_context==null`
+  fail-closed branch remains (already gone) — just the `!` guard.
+- `Data._context = null!` field init (`this.cs:36`); no-context fallbacks: ctor `else …Judge` arm
+  (`this.cs:201` guard `else if (_context != null)`), `Declare` (`:245`), guards at `:501`, `:721`.
+- `source` context-less arm: `source.Read` **branch 2** (`source.cs:126-127`, `_value is string → Convert`)
+  + `source._context` nullable (`source.cs:30-31`).
+- Data reads that MUST be context-ful before deletion: `item/serializer/json.cs:101,171` (NestedOptions ✅),
+  `http/code/Default.cs:513,562,834` (`_transportInOptions` — **verify it carries a context-ful Wire**),
+  plus any IMPLICIT nested-Data in an STJ tree whose options lack a Wire.
 
 ## Exit
-- `WireLocal` + both `[JsonConverter(typeof(WireLocal))]` deleted; the `_context==null` fail-closed branch + tripwire gone; `Wire._context` structurally non-null.
-- The `signature` reader verifies with the actor in scope. Build + both suites green.
+- `WireLocal` + both `[JsonConverter]` deleted; every Data read goes through a context-ful Wire
+  (`Wire.ReadOptions`) so verify-on-read has an actor.
+- `Wire._context`, `Data._context`, `source._context` structurally non-null; the no-context
+  `Judge`/`Convert` fallback arms (ctor else-Judge, `Declare` else-Judge, `source.Read` branch 2) deleted.
+- The `signature` reader verifies with the actor in scope. Build + both suites green; the 15 pass
+  because the read is correct (Stage-5 fixtures born-with-context), not because a branch was silenced.
 
-## Dies / Stays
-- See `plan.md` Phase 4 — populate + re-verify line numbers when this stage starts.
+## Plan of attack
+1. **Audit** the WireLocal consumers (above) — make every Data read context-ful (`_transportInOptions`
+   gets a context-ful Wire; find implicit nested-Data reads). Safe + independent.
+2. **Safe flips** that don't depend on deletion: prove `_context` is always present at the no-context
+   fallback sites, delete those arms (ctor else-Judge, `Declare`, `source.Read` branch 2), flip the fields.
+3. **Delete WireLocal** — gated on the Stage-5 fixture sweep (born-with-context) so the 15 hold.
 
 ## Shipped + deltas from plan
-_(coder fills.)_
+_(coder fills as Stage 4 lands.)_
