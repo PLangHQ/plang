@@ -192,5 +192,21 @@ between "acceptable boundary" and "recreating Normalize."
    arbitrary C# entry values (or keep that as the reflection adapter's job), (c) async-ify
    `Serialize`/`SnapshotToWire`, (d) verify the snapshot round-trip in the Runtime suite. A deliberate
    follow-up, NOT tail-of-session work. (`Wire` stays as the read bridge regardless.)
-6. leaves override `Output` (fold `Write` in); flip base `Output` → reflect; remove the
+6. ✅ **snapshot → Output** (bare, via `serializer.Default`); **`Wire.Write` gutted** (read-only
+   converter — 3 render tests migrated to `SerializeAsync`); **`EndRecord` off `Normalize`**. Result:
+   **`Normalize` has ZERO production callers — it is retired from the prod write path.**
+
+7. **Physically delete `Normalize`/`NormalizeValue`/`NormalizeObject`** — gated on two real things
+   (found when attempting it):
+   - **Cycle/depth guards.** `Normalize` had `CycleError` (visited-set) + a depth cap. `Output`
+     recurses (`Data.Output → _item.Output → children`) with only a self-referential-*variable* guard
+     (`_outputDepth`, cap 50) — **no general cycle/depth guard**. A cyclic value graph would stack-
+     overflow under `Output` where `Normalize` threw a typed error. Add cycle/depth guards to the
+     `Output` recursion BEFORE deleting `Normalize` (and before trusting `Output` on untrusted graphs).
+   - **8 test files** call `Data.Normalize` directly (`NormalizeTreeShapeTests`,
+     `NormalizeCycleAndDepthTests`, `NormalizePipelineHelper`, …) — obsolete (they pin the removed
+     tree); migrate the cycle/depth ones to assert `Output`'s guards, delete the pure tree-shape ones.
+   `Normalize` stays as prod-dead-but-present code until then (harmless, still green, still test-pinned).
+
+8. leaves override `Output` (fold `Write` in); flip base `Output` → reflect; remove the
    goal/step/action overrides; delete `Write`. (`PrWrite`: migrate its 2 test refs + `Utils.Json`, delete.)
