@@ -90,21 +90,7 @@ public sealed class source : @this, module.IContext
         await System.Threading.Tasks.Task.CompletedTask;
         try
         {
-            // The serializer whose encoding these bytes are in reads them: it makes the
-            // matching reader (json for the .pr wire, a value reader for text content),
-            // and the type pulls itself off it. One door, every type — the source never
-            // makes a reader, never names a format.
-            global::app.type.item.@this item;
-            if (Context?.Actor?.Channel.Serializers is { } serializers)
-                item = serializers[_format].Read(this, new global::app.type.reader.ReadContext(Context, _template));
-            // TEMP (WireLocal/Judge phase): a source born without context (the Judge
-            // fallback) can't reach a serializer — the type coerces the raw itself. Dies
-            // with the context-less births; until then this keeps those reads working.
-            else if (_value is string s)
-                item = global::app.type.@this.Create(global::app.type.@this.Create(_type, _kind, context: Context).Convert(s), Context);
-            else
-                return this;
-
+            var item = Read();
             if (ReferenceEquals(item, this)) return this;
             item.Accumulate(this);
             return item;
@@ -125,6 +111,21 @@ public sealed class source : @this, module.IContext
                 "MaterializeFailed", 400) { Exception = ex });
             return Absent;
         }
+    }
+
+    // The dispatch: the serializer whose encoding these bytes are in reads them — it makes the
+    // matching (type, kind) reader (json for the .pr wire, a value reader for text content) and
+    // the type pulls itself off it. One door, every type — the source never makes a reader, never
+    // names a format. (source.Value owns the try/catch + the binding-named failure story.)
+    private global::app.type.item.@this Read()
+    {
+        if (Context?.Actor?.Channel.Serializers is { } serializers)
+            return serializers[_format].Read(this, new global::app.type.reader.ReadContext(Context, _template));
+        // TEMP (context-never-null / Stage 4): a source born without context can't reach a
+        // serializer — the type coerces the raw itself. Dies with the context-less births.
+        if (_value is string s)
+            return global::app.type.@this.Create(global::app.type.@this.Create(_type, _kind, context: Context).Convert(s), Context);
+        return this;
     }
 
     /// <summary>

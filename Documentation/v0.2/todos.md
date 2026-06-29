@@ -1478,3 +1478,25 @@ serialization). Dropping IList removes STJ's auto-path, leaving the reader as th
 plurals to the singular concept (`action`, `step`). Do all three together (modifiers nests in action).
 
 Being done on branch `collections-no-ilist` (off `read-path-unification`).
+
+## 2026-06-29 — Properties as plang types (focused effort, off the read path)
+
+Today property values are a MIXED bag: the wire read lowers to raw CLR (`ReadPropertyPrimitive`)
+and C# writes set raw CLR, while the value slot borns plang types. Make properties hold plang
+types end to end (Ingi: "everything plang types").
+
+In place already: the async read door (`Properties.Value`/`Get<T>`) — no sync getter.
+
+The full change (a real bidirectional cascade — do it as its own piece):
+- **Setter wraps CLR → plang** (born-with-context). `Properties` carries the owning Data's context
+  (Data.Properties propagates it; a bare `new Properties()` in tests needs a context too).
+- **`Value` returns `item.@this`** (not `object?`); **`Get<T>` `.Clr` + coerces** at the getter.
+- **`%ref%` string → live template text, ALWAYS allowed on properties** (no authored gate — metadata
+  is developer-authored); resolves on read.
+- **WIRE WRITE must FLATTEN plang → flat primitive** — properties are flat metadata on the wire
+  (no type-wrapper, no signature). This was the bulk of the failures when attempted inline.
+- Removes the dead `v is Data d` fork in `Properties.Value` (the OBP smell that surfaced this).
+- ~25 tests to reconcile: wire-shape assertions + `Convert.ToInt64(await Value(...))` (now an `item`)
+  + standalone-Properties context.
+
+Attempted inline during read-path-unification; reverted to keep the read path focused.
