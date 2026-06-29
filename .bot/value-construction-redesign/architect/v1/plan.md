@@ -1,7 +1,7 @@
 # Value-construction redesign — architect plan (v1)
 
 **Branch:** `value-construction-redesign` (off `read-path-unification` @ `3ddcdb17f`)
-**Author:** architect. Settled with Ingi 2026-06-29; incorporates the coder's plan review (`../../coder/v1/plan-review.md`) and investigation (`../../coder/v1/report.md`). Reviewed and approved — ready to sequence into stages.
+**Author:** architect. Settled with Ingi 2026-06-29; incorporates the coder's plan review (`../../coder/v1/plan-review.md`), the codeanalyzer review (`../../codeanalyzer/v1/plan-review.md`), and the investigation (`../../coder/v1/report.md`). Codeanalyzer verdict: PASS — ready to sequence into stages.
 
 ## Why
 
@@ -30,10 +30,13 @@ PROPOSED — one door, the reader chosen by the declared type
   {a:1}     + {dict}    ──► json.Parse already returned a native dict ──► hold as-is (no source)
 ```
 
-The Data constructor, when a non-polymorphic type is declared, runs `json.Parse(value)` first (it natives-out a JSON `JsonElement`/`JsonNode`, leaves a plain string untouched — `json.cs:131`), then forks **three** ways:
-- **already a native value** (Parse returned a `dict`/`list`/`number`/…) → hold it as-is. No `source`, no re-convert. Containers already skip coercion today.
-- **still-raw string / `byte[]` + scalar type** (number, date, bool, guid, …) → mint `source(value, type, format = text/plain)` → the scalar (value) reader. **This is the double-convert win.**
-- **still-raw string + container type** (dict/list/object/item) → mint `source(value, type, format = application/plang)` → the json reader (`BeginObject`). A dynamic `%jsonStr% as dict` keeps working (Ingi, 2026-06-29).
+The Data constructor, when a non-polymorphic type is declared, runs `json.Parse(value)` first (it natives-out a JSON `JsonElement`/`JsonNode`, leaves a plain string untouched — `json.cs:131`), then forks **four** ways:
+1. **no value + declared type** → typed absence `null.@this(type.Name, type.Kind)` — the declaration survives with nothing to lift (tool-param slots, typed nulls). **unchanged** — this is the *first* arm of the live block (`data/this.cs:195-199`); it must survive the rewrite (`json.Parse(null)` matches none of cases 2–4, so a literal three-case rewrite would drop a typed null to a bare null citizen).
+2. **already a native value** (Parse returned a `dict`/`list`/`number`/…) → hold it as-is. No `source`, no re-convert. Containers already skip coercion today.
+3. **still-raw string / `byte[]` + scalar type** (number, date, bool, guid, …) → mint `source(value, type, format = text/plain)` → the scalar (value) reader. **This is the double-convert win.**
+4. **still-raw string + container type** (dict/list/object/item) → mint `source(value, type, format = application/plang)` → the json reader (`BeginObject`). A dynamic `%jsonStr% as dict` keeps working (Ingi, 2026-06-29).
+
+(A polymorphic stamp / no declared type is outside this block entirely — the natural lift `Create(Parse(value))`, unchanged; `string → text` is correct there, no double.)
 
 A still-raw string **never becomes a `text` *value***. It stays raw under its declared type until that type's reader parses it once. The one judgement the coder must nail is the `source`'s **format, picked from the declared type's reader mode** — scalar → `text/plain`, container → `application/plang` (`byte[]` follows `FromRaw`'s existing format logic). That replaces the `Build`/`Judge` fork. See the leaf-trace.
 
@@ -60,11 +63,15 @@ The gate is **has a reader**, not has a hook. `object`/`item`/`code` have no `Co
 
 **Stage 1 exit:** enumerate the *actual* `(type, kind)` set reachable by `as T` construction (don't assume the rows above are complete — `file`/`directory`/`url`/`permission` especially), map each to its reader, and add or justify-excluding each. Also decide whether `source.Value` should catch the missing-reader throw as defense — totality is the primary fix; this is belt-and-suspenders. Log the map before anything is deleted.
 
+Two reachable-set edges to resolve, not leave silent (codeanalyzer v1):
+- **`byte[]` + container type** has no arm — the fork pairs `byte[]` with the scalar case. Confirm it's unreachable, or assign it a format; don't let it fall through.
+- **`as binary` with a kind narrows** to the kind's inner type when that type owns a reader, else rides as `binary` (`type/reader/this.cs:111-118`). The reachable-`(type, kind)` trace must account for this branch — the flat per-type table won't surface it.
+
 ## Leaf-trace — incumbents and where each goes
 
 | Incumbent (leaf) | Where it lives now | Disposition |
 |---|---|---|
-| **The ctor's `Build`/`Judge`/context fork** | `data/this.cs:193-212` | **rewritten** — declared type → mint `source(value, type)` for a raw form, hold as-is for a native value; the `if _context != null … Build : Judge` branch is deleted. This is the core change. |
+| **The ctor's `Build`/`Judge`/context fork** | `data/this.cs:193-212` | **rewritten** — declared type → the four-case fork (see The shape). **Preserve** the `value == null` typed-absence guard (`:195-199`); mint `source(value, type)` (format by type) for a raw form; hold native as-is; delete the `if _context != null … Build : Judge` branch. This is the core change. |
 | **`Declare`'s `Build`/`Judge` fork** | `data/this.cs:241-253` | **rewritten** — the after-the-fact type stamp routes through the same single door (mint `source` / re-hold), no `Build`/`Judge`. Callers: `builder/code/Default.cs:927,943`. |
 | **`set %x% = … as T` eager pre-convert** | `variable/set.cs:248-269` | **reroute** — drop the `type.Convert(converted, ctx)` call (`:264`); construct once with the declared type, handing the ctor the **raw** value (`sourceValue`), not the eagerly-`converted` one. `sourceValue` may itself already be native (`RawUntouched → Value()`) — that is just the already-native → hold case, no special handling. **Keep** the `keepAsIs` richer-type rule (`:255-257`) — an image bound to a `path` slot stays an image; that is real semantics, not redundancy (and `keepAsIs` already passes `type = null`, so it never enters typed construction). |
 | **build-validate eager convert** | `builder/validateResponse.cs:222` | **reroute** — construct the value with the declared type and force materialization (`await data.Value()`) to surface a bad-literal failure at build, replacing the eager `type.Convert` check. |
@@ -126,4 +133,4 @@ Any code shape implied here (the string-delegate reader, the ctor predicate, the
 
 ## For the coder
 
-The coder reviewed v1 (`../../coder/v1/plan-review.md`) and approved; its four corrections are folded above — the three-case predicate (format by type), the `Reader.cs` (not `Default.cs`) template, the wider reachable set + the `NotSupportedException` leak, and the `choice` sub-task. Merge order is settled (this branch lands first). The demolition worklist names a stage ordering as the *intended* sequence (readers → source → ctor flip → reroute → delete → OBP); it is the shape of the work, not committed stage files — sequence it when ready.
+The coder reviewed v1 and approved; its four corrections are folded above — the predicate (now **four** cases: typed-absence + three value-bearing, format by type), the `Reader.cs` (not `Default.cs`) template, the wider reachable set + the `NotSupportedException` leak, and the `choice` sub-task. The codeanalyzer reviewed v2 and passed, with one required fix — the dropped **typed-absence** arm, now restored (case 1). Its two non-blocking notes (`byte[]` + container, `as binary` narrowing) are in the Stage-1 exit. Merge order is settled (this branch lands first). The demolition worklist names a stage ordering as the *intended* sequence (readers → source → ctor flip → reroute → delete → OBP); it is the shape of the work, not committed stage files — sequence it when ready.
