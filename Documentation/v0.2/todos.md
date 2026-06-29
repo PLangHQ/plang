@@ -1500,3 +1500,13 @@ The full change (a real bidirectional cascade — do it as its own piece):
   + standalone-Properties context.
 
 Attempted inline during read-path-unification; reverted to keep the read path focused.
+
+## 2026-06-29 — revisit text.@this.HasHoles (the %ref% detector)
+
+Created `text.@this.HasHoles(string)` as the single home for the `%[^%]+%` detector (was duplicated
+across text/data/item.json/Build/Judge/llm). After Stage 4, revisit:
+- **Home/name:** is `text` the right owner, or the **variable** concept ("does this string reference a
+  variable")? Is "HasHoles" (template-speak) the right name vs a variable-ref name?
+- **Relationship to `IsRef`:** there are two checks — "CONTAINS a %ref%" (HasHoles) vs "IS a single
+  %ref%" (`IsRef`, full-match, resolves the name; virtual on item/text/variable). Should they live
+  together under one concept instead of split across text + the IsRef virtuals?
