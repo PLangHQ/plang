@@ -50,7 +50,7 @@ public partial class @this
                 child = InvokeMethod(call.Method, call.Args);
                 break;
             case global::app.variable.path.Segment.Index index:
-                child = await _type.Navigate(this, await index.ResolveKey(_context?.Variable));
+                child = await _item.Navigate(this, await index.ResolveKey(_context?.Variable));
                 valuePlane = true;
                 // A non-literal index (`[planStep.index]`) that the container couldn't use:
                 // distinguish the common, confusing cause — the index variable itself is unset
@@ -78,7 +78,7 @@ public partial class @this
                 }
                 break;
             default: // Member (plain or quoted) — the VALUE owns navigation by key
-                child = await _type.Navigate(this, ((global::app.variable.path.Segment.Member)head!).Name);
+                child = await _item.Navigate(this, ((global::app.variable.path.Segment.Member)head!).Name);
                 valuePlane = true;
                 break;
         }
@@ -227,7 +227,7 @@ public partial class @this
         // the value narrowed. The instance's own chain answers — pre-narrow the
         // value IS the facet; post-narrow the prior chain holds the
         // location-only reference (the parse stamped it).
-        if (_type?.Facet(key) is { } facetValue)
+        if (_item?.Facet(key) is { } facetValue)
             return new @this(key, facetValue, parent: this);
 
         // Property plane on the value itself — `!path`/`!host`/`!size`/`!length`

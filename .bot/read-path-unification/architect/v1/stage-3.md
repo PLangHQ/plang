@@ -30,4 +30,17 @@
 - No `Data.Narrow` — the narrow is `Data.Value`'s own line.
 
 ## Shipped + deltas from plan
-_(coder fills as Stage 3 lands.)_
+- ✅ `source.Value` is the thin author shell — dispatch extracted to a private `source.Read()`.
+  **Delta:** option (b) — the try/catch + the binding-named `MaterializeFailed` story stay in
+  `source.Value` (it has `data.Name`); only the dispatch moved out. The dispatch lives in
+  `source.Read()`, **not** `app.type.Create` (the plan's wording) — `Create` can't reach `source`'s
+  private fields, and (b) keeps authoring local anyway.
+- ✅ `Cacheable` narrow — already present in `Data.Value()` (`this.cs`): keep the answer only when
+  `_item.Cacheable`. No change needed.
+- ✅ `%ref%` full-match → variable judgement in the text reader — done earlier in the branch.
+- ✅ `Data._type` → `_item` (the field holds the value ITEM, not a type) — blind rename, 61 refs.
+- ✅ `item.Value(asking)` parameter → `data`.
+- ⏭ **branch 2** (the context-less `Convert` in `source.Read`) — deferred to **Stage 4**: it exists
+  only for context-less sources, so it dies with context-never-null, not here.
+
+Stage 3 substance complete. The one carry-over (branch 2) is a Stage-4 deletion.

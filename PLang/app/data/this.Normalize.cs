@@ -47,7 +47,7 @@ public partial class @this
 
         // A reference binding resolves to its target binding before output. Guarded:
         // a self-referential binding (msg → msg) fails loud instead of looping.
-        if (_type is global::app.variable.@this vref && context != null)
+        if (_item is global::app.variable.@this vref && context != null)
         {
             if (_outputDepth.Value++ > 50)
             {
@@ -109,7 +109,7 @@ public partial class @this
 
         // The value writes itself — the type owns its per-format serialization (it holds
         // its own format map and picks by writer.Format, or writes its default form).
-        await _type.Output(writer, mode, context);
+        await _item.Output(writer, mode, context);
 
         if (writer.EmitsSchema)
         {

@@ -32,7 +32,7 @@ public partial class @this
     // value (raw source form, descriptor, lazy factory) lives ON the instance:
     // a file holds its own bytes, a source its declared {type, kind}, a
     // computed its factory.
-    private protected global::app.type.item.@this _type = global::app.type.@null.@this.Instance;
+    private protected global::app.type.item.@this _item = global::app.type.@null.@this.Instance;
     private protected actor.context.@this _context = null!;
 
     /// <summary>
@@ -113,11 +113,11 @@ public partial class @this
     [JsonIgnore]
     public actor.context.@this Context
     {
-        get => _context ?? (_type as module.IContext)?.Context!;
+        get => _context ?? (_item as module.IContext)?.Context!;
         set
         {
             _context = value;
-            if (value != null && _type is module.IContext contextual)
+            if (value != null && _item is module.IContext contextual)
                 contextual.Context = value;
         }
     }
@@ -139,7 +139,7 @@ public partial class @this
     /// "%x%" is literal text, not a reference.
     /// </summary>
     [JsonIgnore]
-    public bool IsVariable => _type.IsRef(out _);
+    public bool IsVariable => _item.IsRef(out _);
 
     /// <summary>
     /// True when the value carries any live <c>%variable%</c> reference (the
@@ -147,7 +147,7 @@ public partial class @this
     /// whole value IS a reference); this is "hello %name%" too.
     /// </summary>
     [JsonIgnore]
-    public bool HasVariableReference => _type?.Template != null;
+    public bool HasVariableReference => _item?.Template != null;
 
     [JsonIgnore]
     public DateTime Created { get; }
@@ -182,7 +182,7 @@ public partial class @this
         // The value is born WITH this Data's context — never context-less then
         // stamped. A value with no context can't reach its renderer/reader and
         // falls through to a clr carrier.
-        _type = global::app.type.@this.Create(new global::app.type.item.serializer.json(_context).Parse(value), _context);
+        _item = global::app.type.@this.Create(new global::app.type.item.serializer.json(_context).Parse(value), _context);
         Parent = parent;
         Path = BuildPath(parent, Name);
         IsInitialized = true;
@@ -193,23 +193,23 @@ public partial class @this
         // stays the null citizen, not a typed absence).
         if (type is { IsNull: false } && !type.Polymorphic)
         {
-            if (value == null && _type is global::app.type.@null.@this)
+            if (value == null && _item is global::app.type.@null.@this)
                 // A declared type with no value yet — a typed absence (a tool
                 // parameter slot, a typed null). The declaration must survive
                 // even with nothing to lift.
-                _type = new global::app.type.@null.@this(type.Name, type.Kind);
+                _item = new global::app.type.@null.@this(type.Name, type.Kind);
             else if (_context != null)
             {
                 // The type builds its value, born at its kind — same path as the
                 // wire read. Stamp the entity's context first (mirrors data.Type).
                 type.Context ??= _context;
-                _type = type.Build(_type);
+                _item = type.Build(_item);
             }
             else
                 // No context in scope — fall back to the kind-blind reconciliation
                 // (also still the home for variable-name targets and %ref% templates,
                 // which Build does not yet handle).
-                _type = type.Judge(_type);
+                _item = type.Judge(_item);
         }
     }
 
@@ -224,7 +224,7 @@ public partial class @this
         actor.context.@this? context = null)
     {
         Name = CleanName(name);
-        _type = instance ?? global::app.type.@null.@this.Instance;
+        _item = instance ?? global::app.type.@null.@this.Instance;
         Parent = parent;
         Path = BuildPath(parent, Name);
         IsInitialized = true;
@@ -247,10 +247,10 @@ public partial class @this
             // The type builds its value, born at its kind (same path as the ctor /
             // wire read). No context in scope → kind-blind reconciliation fallback.
             declared.Context ??= _context;
-            _type = declared.Build(_type);
+            _item = declared.Build(_item);
         }
         else
-            _type = declared.Judge(_type);
+            _item = declared.Judge(_item);
     }
 
     /// <summary>
@@ -268,11 +268,11 @@ public partial class @this
         // intact, exception never lost). The seams that own a consumed error
         // channel catch narrowly: the typed ask (slot error surfaced by the
         // pre-Run guard) and navigation (MaterializeFailed to the developer).
-        var answer = await _type.Value(this);
-        if (!ReferenceEquals(answer, _type) && _type.Cacheable)
+        var answer = await _item.Value(this);
+        if (!ReferenceEquals(answer, _item) && _item.Cacheable)
         {
             if (answer is module.IContext contextual) contextual.Context = _context;
-            _type = answer;
+            _item = answer;
         }
         return answer;
     }
@@ -282,7 +282,7 @@ public partial class @this
     /// file reading itself through the channel) and the wire writer. Couriers
     /// move the whole Data and never reach here.
     /// </summary>
-    internal global::app.type.item.@this? Instance => _type;
+    internal global::app.type.item.@this? Instance => _item;
 
     /// <summary>
     /// Value door with a fallback for when the resolved value is null — absent slot
@@ -299,13 +299,13 @@ public partial class @this
     /// </summary>
     public virtual void SetValue(object? value)
     {
-        _type = global::app.type.@this.Create(new global::app.type.item.serializer.json(_context).Parse(value), _context);
+        _item = global::app.type.@this.Create(new global::app.type.item.serializer.json(_context).Parse(value), _context);
         Updated = System.DateTime.UtcNow;
         IsInitialized = true;
-        if (_type is module.IContext contextual)
+        if (_item is module.IContext contextual)
             contextual.Context = _context;
         // Data owns OnChange — fires whenever the wrapped value mutates.
-        // Constructors set _type directly and bypass this. SetValueDirect also bypasses.
+        // Constructors set _item directly and bypass this. SetValueDirect also bypasses.
         FireOnChange(this);
     }
 
@@ -315,7 +315,7 @@ public partial class @this
     /// final-form value). ToString, Equals and debug views read here; they
     /// never load. A consumer that needs raw CLR is a .NET edge → Clr.
     /// </summary>
-    public virtual global::app.type.item.@this Peek() => _type ?? global::app.type.@null.@this.Instance;
+    public virtual global::app.type.item.@this Peek() => _item ?? global::app.type.@null.@this.Instance;
 
     /// <summary>
     /// Construct a source-backed (lazy) Data — the value is a
@@ -334,15 +334,15 @@ public partial class @this
         format ??= string.Equals(type?.Kind, "json", System.StringComparison.OrdinalIgnoreCase)
             ? "application/plang" : "text/plain";
         var d = new @this(name) { _context = context! };
-        d._type = new global::app.type.item.source(raw, type?.Name ?? "", type?.Kind, format: format, template: template) { Context = context };
+        d._item = new global::app.type.item.source(raw, type?.Name ?? "", type?.Kind, format: format, template: template) { Context = context };
         return d;
     }
 
     /// <summary>True when this Data is source-backed (holds an undecoded form held verbatim).</summary>
-    internal bool HasRaw => _type is global::app.type.item.source;
+    internal bool HasRaw => _item is global::app.type.item.source;
 
     /// <summary>The undecoded source form, or null for an authored/parsed value. Internal — never on the wire.</summary>
-    internal object? Raw => (_type as global::app.type.item.source)?.Raw;
+    internal object? Raw => (_item as global::app.type.item.source)?.Raw;
 
     /// <summary>
     /// True when this Data is source-backed and has NOT been parsed or mutated —
@@ -350,7 +350,7 @@ public partial class @this
     /// out untouched, with no parse-then-reserialize. (A parse rebinds the
     /// instance away from the source, so source-typed means untouched.)
     /// </summary>
-    internal bool RawUntouched => _type is global::app.type.item.source;
+    internal bool RawUntouched => _item is global::app.type.item.source;
 
     /// <summary>
     /// Updates the instance without triggering Value setter side effects (no unwrap,
@@ -373,7 +373,7 @@ public partial class @this
         "Do not add new callers; existing ones are legacy to migrate.")]
     internal @this Authored()
     {
-        if (_type is { } instance
+        if (_item is { } instance
             && StampedForm(instance) is { } stamped
             && !ReferenceEquals(stamped, instance))
             SetValueDirect(stamped);
@@ -462,7 +462,7 @@ public partial class @this
             case IList<object?> l:
                 foreach (var e in l) if (RawGraphHasRef(e, depth + 1)) return true;
                 return false;
-            case @this inner: return inner._type != null && RawGraphHasRef(inner._type.Peek(), depth + 1);
+            case @this inner: return inner._item != null && RawGraphHasRef(inner._item.Peek(), depth + 1);
             default: return false;
         }
     }
@@ -471,7 +471,7 @@ public partial class @this
     // stamped value). True when the entry holds (or now holds) a stamp.
     private static bool StampEntry(@this entry)
     {
-        if (entry._type is not { } inner) return false;
+        if (entry._item is not { } inner) return false;
         var stamped = StampedForm(inner);
         if (stamped != null && !ReferenceEquals(stamped, inner))
             entry.SetValueDirect(stamped);
@@ -492,13 +492,13 @@ public partial class @this
                 "A bare Data may not be stored as a value (SetValueDirect) — it would ride a clr carrier "
                 + "and reflect recursively on the wire. Pass the inner value, not the Data wrapper.\n"
                 + System.Environment.StackTrace);
-        _type = value is null ? null
+        _item = value is null ? null
             : value as global::app.type.item.@this
             ?? new Clr(value);
         // Context propagates immediately — a context-resolved identity (the
         // carrier's registry name) must be stable from the first mint, or the
         // signed canonical form drifts when a later bind stamps Context.
-        if (_type is module.IContext contextual && _context != null)
+        if (_item is module.IContext contextual && _context != null)
             contextual.Context = _context;
         Updated = System.DateTime.UtcNow;
         IsInitialized = true;
@@ -514,8 +514,8 @@ public partial class @this
             // Pure forward — the instance owns its identity and mints the
             // entity (chain included) itself; Data only stamps Context so
             // registry-backed reads (Is, fold properties) resolve.
-            if (_type == null) return type.Null;
-            var minted = _type.Type;
+            if (_item == null) return type.Null;
+            var minted = _item.Type;
             foreach (var entry in minted.List) entry.Context ??= _context;
             return minted;
         }
@@ -526,7 +526,7 @@ public partial class @this
     /// owner). Stays null for types without a kind.
     /// </summary>
     [JsonIgnore]
-    public string? Kind => _type?.Mint().Kind;
+    public string? Kind => _item?.Mint().Kind;
 
     /// <summary>
     /// Enumerates as (key, value) Data pairs. Data owns the knowledge of how to iterate:
@@ -534,19 +534,19 @@ public partial class @this
     /// single values yield (0, value). All results are Data — callers never see raw objects.
     /// </summary>
     public IEnumerable<(@this key, @this value)> EnumerateItems()
-        => _type.EnumerateItems(_context);
+        => _item.EnumerateItems(_context);
 
     /// <summary>Emptiness — the binding answers for absence (uninitialized,
     /// no value); the INSTANCE answers for its own emptiness (text knows
     /// whitespace, dict/list know zero entries, null knows it is empty).</summary>
     public async ValueTask<bool> IsEmpty()
-        => !IsInitialized || await _type.IsEmpty();
+        => !IsInitialized || await _item.IsEmpty();
 
     /// <summary>Presence — the binding's own question (absence is Data's one
     /// concern): initialized and holding neither absence citizen. Distinct
     /// from emptiness ("" and false are present) and truthiness.</summary>
     public bool HasValue => IsInitialized
-        && _type is not global::app.type.@null.@this;
+        && _item is not global::app.type.@null.@this;
 
     // The null *value* — a present null carrying the null.@this singleton, so
     // IsInitialized is true (distinct from NotFound/Uninitialized, which leave a
@@ -556,7 +556,7 @@ public partial class @this
     public static @this NotFound(string name = "")
     {
         var d = new @this(name);
-        d._type = global::app.type.@null.@this.Instance;
+        d._item = global::app.type.@null.@this.Instance;
         d.IsInitialized = false;
         return d;
     }
@@ -567,7 +567,7 @@ public partial class @this
     /// the gate every %ref% resolution branch checks. Unstamped values (runtime
     /// input, stored results) never resolve; their "%...%" content is literal.
     /// </summary>
-    private bool IsStampedTemplate => _type?.Template != null;
+    private bool IsStampedTemplate => _item?.Template != null;
 
     private static readonly System.Text.RegularExpressions.Regex FullVarMatchRegex =
         new(@"^%([^%]+)%$", System.Text.RegularExpressions.RegexOptions.Compiled);
@@ -627,7 +627,7 @@ public partial class @this
             Warnings = Warnings != null ? new List<Info>(Warnings) : null,
             Properties = Properties,
         };
-        clone._type = answer ?? global::app.type.item.@this.Absent;
+        clone._item = answer ?? global::app.type.item.@this.Absent;
         // Context rides the value — prefer the answer's own (born at I/O /
         // resolve), fall back to this binding's. Never push null down.
         clone.Context = (answer as module.IContext)?.Context ?? Context;
@@ -646,7 +646,7 @@ public partial class @this
 
     /// <summary>
     /// The typed FACE of this binding — a <see cref="@this{T}"/> over the SAME value, with
-    /// NO resolution and NO clone of the value. Shares <c>_type</c>, Context, Properties and
+    /// NO resolution and NO clone of the value. Shares <c>_item</c>, Context, Properties and
     /// event lists by reference: this binding and the view are two handles on one variable.
     /// It is <see cref="Value{T}"/> MINUS the resolve — the dispatch hands a typed view onto
     /// the action's property; the handler's own <c>.Value()</c> opens the door later. An
@@ -663,7 +663,7 @@ public partial class @this
             Properties = Properties,
             IsInitialized = IsInitialized,
         };
-        view._type = _type;
+        view._item = _item;
         view.Context = _context;
         view.OnCreate = OnCreate;
         view.OnChange = OnChange;
@@ -700,7 +700,7 @@ public partial class @this
         // Full-match live-variable hop — the canonical IS the variable's own
         // Data (mutations stay visible through Variables.Get). Stamp-gated:
         // an unstamped "%x%" is literal text and `this` is already canonical.
-        if (context?.Variable != null && _type.IsRef(out var varName))
+        if (context?.Variable != null && _item.IsRef(out var varName))
         {
             var resolved = await context.Variable.Get(varName);
             if (resolved == null || !resolved.IsInitialized)
@@ -716,7 +716,7 @@ public partial class @this
         // refs) — the door renders (the TYPE fills its own holes; never
         // cached); a transient Data carries the answer under the slot's name
         // with aliased state.
-        if (_type is { Template: not null } && (context ?? _context) != null)
+        if (_item is { Template: not null } && (context ?? _context) != null)
         {
             if (_context == null!) Context = context!;
             var rendered = await Value();
@@ -785,12 +785,12 @@ public partial class @this
     /// </summary>
     public virtual bool ToBoolean()
     {
-        if (!IsInitialized || _type == null) return false;
+        if (!IsInitialized || _item == null) return false;
         // The value owns its own truthiness (empty text / zero number / empty
         // dict / null are falsy) — the instance answers; there is no CLR case
         // table here. The carrier's truthiness covers a rung-2 POCO (present →
         // truthy), the source's its raw form.
-        return _type.IsTruthy();
+        return _item.IsTruthy();
     }
 
     /// <summary>
@@ -843,7 +843,7 @@ public partial class @this
         // The instance is shared by reference — values are immutable, so
         // sharing is always safe; the clone is a new Data pointing at the same
         // value (the `set %y% = %x%` rule).
-        clone._type = _type;
+        clone._item = _item;
         clone.Context = _context;
         return clone;
     }
@@ -863,7 +863,7 @@ public partial class @this
             Warnings = Warnings != null ? new List<Info>(Warnings) : null,
             Properties = Properties.Clone()
         };
-        clone._type = _type.Clone();
+        clone._item = _item.Clone();
         clone.Context = _context;
         return clone;
     }

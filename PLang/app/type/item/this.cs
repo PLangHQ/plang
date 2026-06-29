@@ -40,11 +40,11 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// <para><b>Failure:</b> every failure is authored by the type that failed
     /// — the door catches only its OWN known failure modes (file tells IO
     /// stories, source tells parse stories), reports via
-    /// <c>asking.Fail(error)</c> and answers <see cref="Absent"/>. A truly
+    /// <c>data.Fail(error)</c> and answers <see cref="Absent"/>. A truly
     /// unexpected exception is a bug and propagates. The blessed surface of
-    /// <paramref name="asking"/> here is <c>Fail</c> alone.</para>
+    /// <paramref name="data"/> here is <c>Fail</c> alone.</para>
     /// </summary>
-    public virtual System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this asking)
+    public virtual System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this data)
         => System.Threading.Tasks.ValueTask.FromResult(this);
 
     /// <summary>The value-less citizen — what a failed door answers (the error
