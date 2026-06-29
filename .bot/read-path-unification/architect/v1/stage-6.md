@@ -27,12 +27,19 @@ Three things make the routers CLR-centric; fix all three (do NOT cargo-cult the 
 1. **The hook is plang-typed in AND out — never `object?`, never returns `data`:**
    ```
    //  was:  static data.@this Convert(object? value, string? kind, context)   // CLR in, Data out
-   //  →     static item.@this Convert(item.@this value, string? kind, context) // plang in/out, THROWS on fail
+   //  →     static item.@this Convert(item.@this value, string? kind, context) // plang IN/OUT, THROWS on fail
    ```
-   The hook reads the source's content through plang accessors (`text.ToString()`, `source.Raw`) — no
-   `.Clr<object>()` lowering at the top. Failure THROWS a typed convert error (no `Data.Ok/Error` round
-   trip). The perimeter (`OfStatic`'s raw-string callers, e.g. the Text serializer's `Deserialize<T>`)
-   wraps `string → text.@this` BEFORE calling — "string only at the perimeter."
+   `Convert` is purely **`item → item`** — the value is ALREADY an item by here (the READ wraps
+   bytes→items upstream; there is NO string-wrap at `Convert`). The target reads the source through the
+   item's own **raw accessor** (`source.Raw`) — never `text.ToString()` (that is `text`'s *display* edge,
+   `text/this.cs:158`) and never `.Clr` (a lowering). Failure THROWS a typed convert error (no
+   `Data.Ok/Error` round trip).
+   - **Gap to settle while implementing:** `source` has a clean `public object Raw`; `text` exposes its
+     content only via `ToString()`/`.Clr` — it's the odd one out. Decide: either the value reaching
+     `Convert` is always a `source` (its `.Raw` is clean), or leaves get a uniform raw-content accessor
+     so `text` matches. Verify what actually flows into `Build` (source vs text) before coding the hooks.
+   - The lone raw-string entry (`OfStatic`'s context-less `Deserialize<T>(string)`) is the same
+     context-less path the context-never-null work deletes — not a perimeter `Convert` must serve.
 
 2. **Dispatch is keyed by the PLANG type, not `System.Type`, via a REGISTERED table (no per-call reflection):**
    ```
