@@ -34,12 +34,33 @@ deletion on the Stage-5 fixture sweep (or do 4+5 as one push).
 - The `signature` reader verifies with the actor in scope. Build + both suites green; the 15 pass
   because the read is correct (Stage-5 fixtures born-with-context), not because a branch was silenced.
 
-## Plan of attack
-1. **Audit** the WireLocal consumers (above) — make every Data read context-ful (`_transportInOptions`
-   gets a context-ful Wire; find implicit nested-Data reads). Safe + independent.
-2. **Safe flips** that don't depend on deletion: prove `_context` is always present at the no-context
-   fallback sites, delete those arms (ctor else-Judge, `Declare`, `source.Read` branch 2), flip the fields.
-3. **Delete WireLocal** — gated on the Stage-5 fixture sweep (born-with-context) so the 15 hold.
+## Mechanism (why removal regresses 15) — from the prior trace (todos.md 2026-06-27)
+`WireLocal` is context-less, so it hit `Wire`'s `if (_context == null)` "trust-at-rest / fail-closed"
+branch and **SKIPPED signature verify**. A context-ful `Wire` **RUNS verify on every nested
+`@schema:data`**. So once reads become context-ful, reconstructing an inner signed Data verifies where
+it never used to → 15 fail (baseline 21 → 36 on the naive attempt). Other surfaced bits: a serialize-side
+`clr.Navigate` NRE on a context-less clr, and `TypeOwnedReadParityTests` output diffs.
+
+## THE load-bearing decision (locked) — nested reconstruction skips verify
+An inner Data is **already covered by the OUTER signature**. So reconstructing a nested `@schema:data`
+must **NOT re-verify** — a **no-verify flag** on the Wire used for nested reconstruction. The OUTER read
+(a transport message, http inbound) DOES verify; inner layers don't. This is the decision the naive
+attempt lacked.
+
+## Plan of attack (focused unit)
+1. **No-verify flag** on `Wire` (and threaded to the `signature` reader) for nested reconstruction;
+   `json.NestedOptions` + the goal-param reconstruction use it. The OUTER transport read keeps verify.
+2. **Context-ful the holdouts:** `http _transportInOptions` → Store view + `Transport.ForInbound` +
+   context-ful Wire (NOT `InboundOptions` — that's Out view; the view mismatch was a regression).
+   `Wire.ReadBody`'s 3 context-less Data births → `context: _context`.
+3. **Flip + delete:** `Wire._context` non-null, delete the `_context==null` fail-closed block + the
+   parameterless `Wire()` ctor; delete `WireLocal` + both `[JsonConverter]`; delete the ctor/`Declare`
+   `else Judge` arms + `source.Read` branch 2; flip `Data._context`/`source._context` non-null.
+4. **Fixture sweep (Stage 5):** the residual fixture failures = born-with-context, so the 15 pass on a
+   correct read.
+
+> The prior trace's own note: "Do it as a focused unit (not at the tail of a long session)." The
+> nested-verify decision (#1) is the part the revert was missing.
 
 ## Shipped + deltas from plan
 _(coder fills as Stage 4 lands.)_
