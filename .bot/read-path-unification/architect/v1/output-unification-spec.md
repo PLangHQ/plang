@@ -178,10 +178,19 @@ between "acceptable boundary" and "recreating Normalize."
    reflection "still-exists" test (`App_SnapshotToWire_StillExists`). Real snapshots round-trip through
    the channel's `Output` (the Data-suite snapshot tests never touch `Serialize`). So it is effectively
    **dead legacy**.
-   **To do (focused, needs the hang-prone Runtime suite to confirm):** migrate its body to the channel
-   `Output` write (unsigned Store; needs `snapshot.@this.Output` + a `sign:false` on `SerializeAsync`;
-   `SnapshotToWire`/`Serialize` go async) OR delete it + the carve-out test if confirmed dead. Then
-   `Wire.Write` + `Normalize` / `NormalizeValue` / `NormalizeObject` + the `json.Writer` Data-tree cases
-   are dead and deletable. (`Wire` itself stays as the **read** bridge until the read leaves STJ.)
+   **Cost (traced, bigger than a domino):** the snapshot is a **dynamic key-value bag** —
+   `_entries: Dictionary<string, object?>` + nested `_sections` — NOT a `[Store]`-tagged class. So
+   `OutputTagged` is wrong for it (reflects `Entries`/`EntryCount`; `WriteReflected` writes a dict as an
+   array and does not deep-reflect arbitrary `object?` entries — that deep reflection is exactly what
+   `NormalizeObject` provides and what `Normalize` is still doing for the snapshot today). So the
+   snapshot needs its **own** custom `Output` (write `_sections` + `_entries` as an object, recursing
+   each entry value), not `OutputTagged`. And the Data-suite snapshot tests round-trip **in-memory**
+   (never call `Serialize`), so this serialization is **untested here** — verification needs the
+   hang-prone Runtime suite. **So `Normalize`/`Wire.Write` are the LIVE snapshot serializer (via the
+   legacy `snapshot.Serialize`), not dead code.** Retiring them = (a) write a custom `snapshot.Output`
+   over `_sections`/`_entries`, (b) extend `WriteReflected`/the writer to deep-handle `IDictionary` +
+   arbitrary C# entry values (or keep that as the reflection adapter's job), (c) async-ify
+   `Serialize`/`SnapshotToWire`, (d) verify the snapshot round-trip in the Runtime suite. A deliberate
+   follow-up, NOT tail-of-session work. (`Wire` stays as the read bridge regardless.)
 6. leaves override `Output` (fold `Write` in); flip base `Output` → reflect; remove the
    goal/step/action overrides; delete `Write`. (`PrWrite`: migrate its 2 test refs + `Utils.Json`, delete.)
