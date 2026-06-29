@@ -1,0 +1,58 @@
+using TUnit.Core;
+using TUnit.Assertions;
+using TUnit.Assertions.Extensions;
+using type = global::app.type.@this;
+
+namespace PLang.Tests.App.LazyDeserialize.ReaderRegistryTests;
+
+// Case 2b — re-typing an ALREADY-BUILT value to a declared type (the one thing
+// that does not dissolve into the from-raw source path). Three live sites hand
+// a materialized, wrong-typed value to construction (Declare, validateResponse,
+// set's type-differs fall-through). The engine is the type's 2-arg Convert hook
+// applied to the built item. These pins guard the behavior the ctor flip
+// (Stage 3) and the caller reroute (Stage 4) depend on:
+//   - a built value that CAN become the type → converts.
+//   - a built value that CANNOT → fails (an Error Data), NOT a silent hold.
+// The failure pin is the build-time safety net: validateResponse relies on this
+// convert failing so "abc" as number is caught at build, never held-and-passed.
+public class ConvertBuiltValueTests
+{
+    private static global::app.@this NewApp() => new(System.IO.Path.Combine(
+        System.IO.Path.GetTempPath(), "plang-convert2b-" + System.Guid.NewGuid().ToString("N")[..8]));
+
+    [Test] public async Task ConvertBuiltText_ToNumber_Succeeds()
+    {
+        await using var app = NewApp();
+        var ctx = app.User.Context;
+        var built = new global::app.type.text.@this("5");
+        var result = type.Create("number", null, context: ctx).Convert(built, ctx);
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Peek()).IsTypeOf<global::app.type.number.@this>();
+        await Assert.That(((global::app.type.number.@this)result.Peek()!).Clr<long>()).IsEqualTo(5L);
+    }
+
+    [Test] public async Task ConvertBuiltText_BadNumber_Fails_NotHeld()
+    {
+        await using var app = NewApp();
+        var ctx = app.User.Context;
+        var built = new global::app.type.text.@this("abc");
+        var result = type.Create("number", null, context: ctx).Convert(built, ctx);
+        // The build-time safety net: a bad literal must FAIL the convert, never
+        // be silently held as the original text (which would pass validation).
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Peek()).IsNotTypeOf<global::app.type.number.@this>();
+    }
+
+    [Test] public async Task ConvertBuiltValue_AlreadyType_RoundTrips()
+    {
+        // A built value re-typed to its OWN type round-trips to an equal value
+        // (Stage 3's case 2a holds this without a re-convert; the engine must at
+        // least not corrupt it).
+        await using var app = NewApp();
+        var ctx = app.User.Context;
+        var built = global::app.type.number.@this.From(5L);
+        var result = type.Create("number", null, context: ctx).Convert(built, ctx);
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(((global::app.type.number.@this)result.Peek()!).Clr<long>()).IsEqualTo(5L);
+    }
+}
