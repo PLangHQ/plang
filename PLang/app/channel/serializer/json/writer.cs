@@ -107,15 +107,7 @@ public sealed class Writer : IWriter
             foreach (var kvp in record.Properties)
             {
                 _writer.WritePropertyName(kvp.Key);
-                // Route through the same Value pipeline as the value slot,
-                // honoring the writer's configured view. Hard-coding View.Out
-                // here would silently strip [Sensitive] and [Store]-only
-                // fields when an inner Data is emitted inline during a
-                // Store-mode walk.
-                var normalized = app.data.@this.NormalizeValue(kvp.Value, _view,
-                    new HashSet<object>(System.Collections.Generic.ReferenceEqualityComparer.Instance),
-                    depth: 0);
-                Value(normalized);
+                Value(kvp.Value);
             }
             _writer.WriteEndObject();
         }
