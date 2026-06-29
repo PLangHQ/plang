@@ -10,7 +10,7 @@ namespace PLang.Tests.App.SnapshotTests;
 public class SnapshotWireTests
 {
     private static async Task<global::app.snapshot.@this> RoundTrip(global::app.@this app, global::app.snapshot.@this snap)
-        => await app.SnapshotFromWire(app.SnapshotToWire(snap));
+        => await app.SnapshotFromWire(await app.SnapshotToWire(snap));
 
     [Test]
     public async Task Variables_SurviveWireRoundTrip_WithValueAndType()
@@ -129,7 +129,7 @@ public class SnapshotWireTests
         string json;
         await using (var call = context.App.CallStack.Push(step1.Actions[0], context.Variable))
         {
-            json = app.SnapshotToWire(app.Snapshot());   // <-- to disk (string)
+            json = await app.SnapshotToWire(app.Snapshot());   // <-- to disk (string)
             await call.DisposeAsync();
         }
 
@@ -162,7 +162,7 @@ public class SnapshotWireTests
         string json;
         await using (var call = context.App.CallStack.Push(step1.Actions[0], context.Variable))
         {
-            json = app.SnapshotToWire(app.Snapshot());
+            json = await app.SnapshotToWire(app.Snapshot());
             await call.DisposeAsync();
         }
 
@@ -223,7 +223,7 @@ public class SnapshotWireTests
         await using (var startFrame = context.App.CallStack.Push(start.Steps[1].Actions[0], context.Variable))
         await using (var subFrame = context.App.CallStack.Push(sub.Steps[1].Actions[0], context.Variable))
         {
-            json = app.SnapshotToWire(app.Snapshot());
+            json = await app.SnapshotToWire(app.Snapshot());
         }
 
         // Round-trip through the disk string, then patch %i% 1 → 2 (the fix the
@@ -266,7 +266,7 @@ public class SnapshotWireTests
         string json;
         await using (var call = context.App.CallStack.Push(goal.Steps[1].Actions[0], context.Variable))
         {
-            json = app.SnapshotToWire(app.Snapshot());
+            json = await app.SnapshotToWire(app.Snapshot());
         }
 
         // `as snapshot` path: typeEntity.Convert(envelopeString, context).
@@ -334,7 +334,7 @@ public class SnapshotWireTests
         {
             var err = new ServiceError("boom", goal.Steps[1],
                 context.App.CallStack.Current!.SnapshotChain());
-            json = app.SnapshotToWire(app.Snapshot(err));   // throw-time overload
+            json = await app.SnapshotToWire(app.Snapshot(err));   // throw-time overload
         }
 
         var te = new global::app.type.@this("snapshot") { Context = context };
@@ -371,7 +371,7 @@ public class SnapshotWireTests
         context.Variable.Set("x", 1L);
         string json;
         await using (var call = context.App.CallStack.Push(goal.Steps[1].Actions[0], context.Variable))
-            json = app.SnapshotToWire(app.Snapshot());
+            json = await app.SnapshotToWire(app.Snapshot());
 
         // %snap% = string value, but TYPED as snapshot (what an honored `as snapshot` yields).
         context.Variable.Set(new global::app.data.@this(
@@ -407,7 +407,7 @@ public class SnapshotWireTests
         string json;
         await using (var call = context.App.CallStack.Push(goal.Steps[1].Actions[0], context.Variable))
         {
-            json = app.SnapshotToWire(app.Snapshot());
+            json = await app.SnapshotToWire(app.Snapshot());
         }
 
         // Read the snapshot back as a value, bind it under %snap%.
@@ -431,7 +431,7 @@ public class SnapshotWireTests
     public async Task EmptyApp_WireIsValidJson_AndRestoresClean()
     {
         var src = global::PLang.Tests.TestApp.Create("/src");
-        var json = src.SnapshotToWire(src.Snapshot());
+        var json = await src.SnapshotToWire(src.Snapshot());
 
         await Assert.That(json.StartsWith("{")).IsTrue();
 

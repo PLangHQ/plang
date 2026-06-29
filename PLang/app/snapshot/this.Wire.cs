@@ -25,14 +25,15 @@ public sealed partial class @this
     /// crossing). A context is required so the renderer + type registry are in
     /// scope.
     /// </summary>
-    public string Serialize(global::app.actor.context.@this context)
+    public async System.Threading.Tasks.Task<string> Serialize(global::app.actor.context.@this context)
     {
         var serializer = new global::app.channel.serializer.plang.@this(context);
-        var d = new global::app.data.@this<@this>("", this, new global::app.type.@this("snapshot"))
-        {
-            Context = context,
-        };
-        return JsonSerializer.Serialize(d, serializer.SnapshotOptions);
+        // The snapshot writes ITSELF via Output (base → Write → serializer.Default, section by section)
+        // — bare (no Data envelope, unsigned: it's internal in-process state). The read (Create) is
+        // envelope-tolerant, so the bare {…sections…} round-trips.
+        using var ms = new System.IO.MemoryStream();
+        await serializer.SerializeItemAsync(ms, this, global::app.View.Store);
+        return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }
 
     /// <summary>

@@ -19,7 +19,7 @@ public sealed partial class @this
     /// owns its wire shape (<see cref="global::app.snapshot.@this.Serialize"/>);
     /// this just threads the current actor context for the path converter.
     /// </summary>
-    public string SnapshotToWire(global::app.snapshot.@this s)
+    public System.Threading.Tasks.Task<string> SnapshotToWire(global::app.snapshot.@this s)
         => s.Serialize(CurrentActor.Context);
 
     /// <summary>
