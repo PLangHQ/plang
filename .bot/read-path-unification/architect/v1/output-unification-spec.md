@@ -164,8 +164,18 @@ between "acceptable boundary" and "recreating Normalize."
 ## Migration (green at each step; OBP-check each)
 1. ✅ base `OutputTagged` capability + goal/step/action dormant overrides.
 2. ✅ Store name-gating fix; `Entry.WireName`; `WriteReflected → writer.Value`.
-3. **`.pr` write → `goal.Output(Store)` via the channel**; round-trip + the 15 pass. ← next
-4. `steps` / `modifiers` / `action.parameters` → `item.@this` lists; drop the bridge branch in WriteReflected.
-5. leaves override `Output` (fold the `Write` body in); flip base `Output` → reflect; remove the
-   goal/step/action overrides; delete `Write` + convert its callers to `await Output`.
-6. delete `Normalize` / `Wire` / `WireLocal` / `PrWrite`. Full suite green.
+3. ✅ **`.pr` write → `goal.Output(Store)` via the channel** — round-trips, suite-validated.
+   (New `Output`s landed: `actions`, `GoalCall`, `type`-entity, variable Store-write; `Data` property
+   routes through `Data.Output`; variable-ref resolution gated to non-Store.)
+4. ✅ **WireLocal DELETED** — both `[JsonConverter]` attrs gone; the one obsolete test (context-less
+   `Deserialize<Data>` pin) updated to a context-ful read. The output-unification made this a 1-test
+   change, not 15.
+5. **NEXT — snapshot write → `Output`.** `snapshot.Serialize` (`snapshot/this.Wire.cs:35`) still does
+   `JsonSerializer.Serialize(Data, SnapshotOptions)` where `SnapshotOptions` registers
+   `new Wire(Store, sign:false)`. That is the ONLY remaining caller of `Wire.Write` (→ `Normalize`).
+   Migrate it to the channel `Output` write (unsigned, Store) — then `Wire.Write` + `Normalize` +
+   `NormalizeValue`/`NormalizeObject` + the `json.Writer` Data-tree cases are all dead. (`Wire` itself
+   stays as the **read** bridge — `Wire.ReadOptions` for nested-Data deserialize — until the read
+   leaves STJ too.) Verify with a snapshot round-trip (Runtime suite is hang-prone — guard with stdin).
+6. leaves override `Output` (fold `Write` in); flip base `Output` → reflect; remove the
+   goal/step/action overrides; delete `Write`. (`PrWrite`: migrate its 2 test refs + `Utils.Json`, delete.)
