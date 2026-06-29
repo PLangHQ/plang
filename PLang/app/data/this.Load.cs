@@ -10,8 +10,7 @@ namespace app.data;
 /// By the time the sync renderers read <c>image.Bytes</c>, the content is in
 /// memory.
 ///
-/// <para>Walks the same value shapes <see cref="NormalizeValue(object?, View, HashSet{object}, int)"/>
-/// walks (nested Data, dictionaries, lists), awaiting <see cref="ILoadable.LoadAsync"/>
+/// <para>Walks the value graph (nested Data, dictionaries, lists), awaiting <see cref="ILoadable.LoadAsync"/>
 /// on each reference fundamental it finds. Idempotent and cheap when nothing is
 /// lazy: an already-loaded image returns from its load seam immediately, and a
 /// graph with no <see cref="ILoadable"/> is a pure walk.</para>

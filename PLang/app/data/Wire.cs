@@ -9,9 +9,9 @@ using type = global::app.type.@this;
 /// Wire converter for <c>app.data.@this</c> — the single point where the
 /// canonical five-field shape <c>{name, type, value, properties, signature}</c>
 /// is emitted and parsed. The <c>properties</c> field is omitted when empty;
-/// <c>signature</c> is omitted when null. The <c>value</c> slot is built by
-/// <c>data.Normalize(View) → IWriter</c> so domain types ride as
-/// <c>[Out]</c>-tagged property bags; no per-type JsonConverter is needed.
+/// <c>signature</c> is omitted when null. The <c>value</c> slot is written by the value's own
+/// <c>Output</c> (each type emits its form; structural types reflect their <c>[Out]</c>-tagged
+/// properties via <c>OutputTagged</c>); no per-type JsonConverter is needed.
 ///
 /// <para>
 /// Sign-if-missing: each Data the converter visits during a Write walk gets

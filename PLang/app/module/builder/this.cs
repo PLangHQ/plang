@@ -38,43 +38,9 @@ public sealed partial class @this
     /// </summary>
     private readonly Dictionary<string, string> _prSnapshot = new(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>
-    /// JsonSerializerOptions for .pr file writes — only properties marked with [Store] are
-    /// included. CamelCase, indented, nulls omitted. Stage 27 absorbed from Utils.Json.PrWrite.
-    /// Internal so the test fixture can reach it.
-    /// </summary>
-    internal static readonly JsonSerializerOptions PrWrite = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
-        Converters = { new global::app.channel.serializer.json.Converter() },
-        TypeInfoResolver = new DefaultJsonTypeInfoResolver
-        {
-            Modifiers = { StoreOnlyModifier }
-        }
-    };
-
-    private static void StoreOnlyModifier(JsonTypeInfo typeInfo)
-    {
-        // Only filter properties on our own types (Goal, Step, Action, etc.)
-        // Leave framework types (List, Dictionary, Data, etc.) alone.
-        if (typeInfo.Kind != JsonTypeInfoKind.Object) return;
-
-        var ns = typeInfo.Type.Namespace;
-        if (ns == null || !ns.StartsWith("app.goal", StringComparison.Ordinal)) return;
-
-        foreach (var prop in typeInfo.Properties)
-        {
-            if (prop.AttributeProvider == null) continue;
-
-            var hasStore = prop.AttributeProvider
-                .GetCustomAttributes(typeof(StoreAttribute), inherit: true)
-                .Length > 0;
-
-            if (!hasStore)
-                prop.ShouldSerialize = (_, _) => false;
-        }
-    }
+    // .pr writes go through goal.Output (Store view) via the channel serializer — the old STJ PrWrite
+    // options + [Store]-filter modifier are gone. [Store] filtering now lives in the Output path
+    // (Tagged.PropertiesFor selects [Store] for View.Store; goal/step/action reflect via OutputTagged).
 
     /// <summary>
     /// Snapshots .pr file content if not already captured.
