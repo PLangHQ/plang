@@ -170,12 +170,18 @@ between "acceptable boundary" and "recreating Normalize."
 4. ✅ **WireLocal DELETED** — both `[JsonConverter]` attrs gone; the one obsolete test (context-less
    `Deserialize<Data>` pin) updated to a context-ful read. The output-unification made this a 1-test
    change, not 15.
-5. **NEXT — snapshot write → `Output`.** `snapshot.Serialize` (`snapshot/this.Wire.cs:35`) still does
-   `JsonSerializer.Serialize(Data, SnapshotOptions)` where `SnapshotOptions` registers
-   `new Wire(Store, sign:false)`. That is the ONLY remaining caller of `Wire.Write` (→ `Normalize`).
-   Migrate it to the channel `Output` write (unsigned, Store) — then `Wire.Write` + `Normalize` +
-   `NormalizeValue`/`NormalizeObject` + the `json.Writer` Data-tree cases are all dead. (`Wire` itself
-   stays as the **read** bridge — `Wire.ReadOptions` for nested-Data deserialize — until the read
-   leaves STJ too.) Verify with a snapshot round-trip (Runtime suite is hang-prone — guard with stdin).
+5. **NEXT — retire `snapshot.Serialize` (the last static `Wire.Write` reference).**
+   `snapshot.Serialize` (`snapshot/this.Wire.cs:35`) does `JsonSerializer.Serialize(Data, SnapshotOptions)`
+   where `SnapshotOptions` registers `new Wire(Store, sign:false)` — the ONLY remaining static
+   `Wire.Write` (→ `Normalize`) reference.
+   **Finding:** it is reached only via `App.SnapshotToWire`, which itself has **no real caller** — only a
+   reflection "still-exists" test (`App_SnapshotToWire_StillExists`). Real snapshots round-trip through
+   the channel's `Output` (the Data-suite snapshot tests never touch `Serialize`). So it is effectively
+   **dead legacy**.
+   **To do (focused, needs the hang-prone Runtime suite to confirm):** migrate its body to the channel
+   `Output` write (unsigned Store; needs `snapshot.@this.Output` + a `sign:false` on `SerializeAsync`;
+   `SnapshotToWire`/`Serialize` go async) OR delete it + the carve-out test if confirmed dead. Then
+   `Wire.Write` + `Normalize` / `NormalizeValue` / `NormalizeObject` + the `json.Writer` Data-tree cases
+   are dead and deletable. (`Wire` itself stays as the **read** bridge until the read leaves STJ.)
 6. leaves override `Output` (fold `Write` in); flip base `Output` → reflect; remove the
    goal/step/action overrides; delete `Write`. (`PrWrite`: migrate its 2 test refs + `Utils.Json`, delete.)
