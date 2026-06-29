@@ -18,10 +18,9 @@ using type = global::app.type.@this;
 /// Also serves as the universal result type (replaces Return).
 /// Partial class — split by concern: data.cs (core), data.Result.cs, data.Navigation.cs, data.Transport.cs.
 /// </summary>
-// A Data serializes as the canonical {@schema, name, type, value, …} shape on EVERY STJ
-// path via WireLocal, so it round-trips back to a Data (marker recognized) instead of a
-// reflected map. The channel's options-registered signing Wire outranks this on the wire.
-[System.Text.Json.Serialization.JsonConverter(typeof(WireLocal))]
+// A Data writes itself via Data.Output (value-owns-serialization) and reads through a context-ful
+// Wire registered in options (Wire.ReadOptions / the channel). There is NO context-less default
+// converter — every path that touches a Data carries context; born-with-context, no fail-open.
 public partial class @this
 {
     // THE value — the typed instance. It IS the value; Data never looks inside
@@ -915,9 +914,8 @@ public partial class @this
 /// Generic Data that carries a strongly-typed value.
 /// Inherits from Data, so it satisfies Task&lt;Data&gt; in the interface chain.
 /// </summary>
-// Type attributes don't inherit through the generic, so Data<T> carries WireLocal too
-// (its CanConvert/Read handle the typed wrap) — same one-shape-everywhere guarantee.
-[System.Text.Json.Serialization.JsonConverter(typeof(WireLocal))]
+// Data<T> reads/writes through the same context-ful Wire (reads) and Output (writes) as Data —
+// CanConvert covers the generic; there is no type-attribute converter.
 public class @this<T> : @this
     where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
 {

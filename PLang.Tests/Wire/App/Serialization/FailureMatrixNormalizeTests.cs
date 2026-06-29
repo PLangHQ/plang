@@ -40,13 +40,16 @@ public class FailureMatrixNormalizeTests : System.IAsyncDisposable
 
     [Test] public async Task MalformedWireBytes_TruncatedJson_RaisesTypedChannelError()
     {
-        // Truncated JSON surfaces as JsonException from STJ — the channel layer wraps
-        // it into a PlangDeserializeError. Pin the STJ-level behavior; the channel
-        // wrap is exercised in higher-level tests.
+        // Truncated JSON surfaces as JsonException through the read door (a Data reads via a
+        // context-ful Wire — there is no context-less default converter); the channel layer wraps
+        // it into a PlangDeserializeError. Pin the read-level behavior; the channel wrap is
+        // exercised in higher-level tests.
         var truncated = "{\"name\":\"x\",\"value\":";
+        var options = global::app.data.Wire.ReadOptions(
+            new global::app.type.reader.ReadContext(app.User.Context));
         try
         {
-            System.Text.Json.JsonSerializer.Deserialize<Data>(truncated);
+            System.Text.Json.JsonSerializer.Deserialize<Data>(truncated, options);
             await Assert.That(false).IsTrue().Because("Expected JsonException");
         }
         catch (System.Text.Json.JsonException)

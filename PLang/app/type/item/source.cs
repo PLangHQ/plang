@@ -27,8 +27,8 @@ public sealed class source : @this, module.IContext
     // leaf borns a live template; the trust is the reader's mode, never the content.
     private readonly string? _template;
 
-    // Context stays nullable until the context-less source births (Judge, WireLocal)
-    // are removed — the WireLocal/Judge phase. Then this goes non-null + born-in-ctor.
+    // Context stays nullable until the context-less source births (Judge) are removed — the Judge
+    // phase. (WireLocal is gone.) Then this goes non-null + born-in-ctor.
     [System.Text.Json.Serialization.JsonIgnore]
     public actor.context.@this? Context { get; set; }
 
