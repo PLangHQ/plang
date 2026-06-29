@@ -446,12 +446,10 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         writer.BeginObject();
         foreach (var entry in global::app.channel.serializer.filter.Tagged.PropertiesFor(GetType(), mode))
         {
-            var raw = entry.Property.Name;
-            var name = char.ToLowerInvariant(raw[0]) + raw.Substring(1);   // camelCase
-            if (entry.Masked) { writer.Name(name); writer.String("****"); continue; }
+            if (entry.Masked) { writer.Name(entry.WireName); writer.String("****"); continue; }
             var value = entry.Property.GetValue(this);
             if (value == null) continue;   // nulls omitted (WhenWritingNull)
-            writer.Name(name);
+            writer.Name(entry.WireName);
             await WriteReflected(writer, value, mode, context);
         }
         writer.EndObject();
@@ -466,18 +464,16 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     {
         switch (value)
         {
+            // A plang value writes ITSELF.
             case @this item: await item.Output(writer, mode, context); break;
-            case string s: writer.String(s); break;
-            case bool b: writer.Bool(b); break;
-            case int i: writer.Int(i); break;
-            case long l: writer.Long(l); break;
-            case System.Enum e: writer.Enum(e); break;
-            case byte[] bytes: writer.Bytes(bytes); break;
-            case System.Collections.IEnumerable seq:
+            // BRIDGE: a raw C# collection (goal.steps / action.modifiers / action.parameters, until
+            // those become item.@this lists) writes as an array of self-writes. Deleted once they are items.
+            case System.Collections.IEnumerable seq when value is not (string or byte[]):
                 writer.BeginArray(-1);
                 foreach (var el in seq) if (el != null) await WriteReflected(writer, el, mode, context);
                 writer.EndArray();
                 break;
+            // A raw C# scalar — the WRITER owns rendering each kind (string/bool/number/date/enum/…).
             default: writer.Value(value); break;
         }
     }

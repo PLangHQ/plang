@@ -28,7 +28,10 @@ namespace app.channel.serializer.filter;
 /// </summary>
 public static class Tagged
 {
-    public readonly record struct Entry(PropertyInfo Property, bool Masked);
+    // WireName is the property's serialized name (camelCase), computed once — never re-cased at a
+    // call site. Matches STJ's PropertyNamingPolicy.CamelCase so an Output-written shape round-trips
+    // through an STJ read.
+    public readonly record struct Entry(PropertyInfo Property, bool Masked, string WireName);
 
     private static readonly ConcurrentDictionary<(System.Type Type, global::app.View Mode), IReadOnlyList<Entry>> _cache = new();
 
@@ -111,7 +114,8 @@ public static class Tagged
             // travels — no observer to hide from.
             bool masked = mode != global::app.View.Store
                 && prop.IsDefined(typeof(MaskedAttribute), inherit: false);
-            entries.Add(new Entry(prop, masked));
+            entries.Add(new Entry(prop, masked,
+                System.Text.Json.JsonNamingPolicy.CamelCase.ConvertName(prop.Name)));
         }
 
         // Materialize as an array — fixed-size, no overhead vs List<T>'s

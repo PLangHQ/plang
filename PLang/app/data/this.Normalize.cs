@@ -74,17 +74,19 @@ public partial class @this
             writer.BeginObject();
             // @schema is the LAYER marker (data vs signature/encryption/compression) — written
             // ONLY at a layer boundary (the top payload). A nested typed value (a dict entry,
-            // the value slot's children) carries type+value without it. The binding label
-            // (name) likewise rides only on the Store-view layer (.pr params bind by name).
+            // the value slot's children) carries type+value without it.
             if (layer)
             {
                 writer.Name(global::app.data.@this.WireSchema);
                 writer.String(global::app.data.@this.WireSchemaData);
-                if (mode == View.Store)
-                {
-                    writer.Name("name");
-                    writer.String(Name);
-                }
+            }
+            // The binding label (name) rides on EVERY Store-view Data — .pr action params (nested,
+            // not a layer) and local persistence bind by name. The Out wire omits names entirely
+            // (a server's binding label is not API surface).
+            if (mode == View.Store)
+            {
+                writer.Name("name");
+                writer.String(Name);
             }
             if (!Type.IsNull)
             {
