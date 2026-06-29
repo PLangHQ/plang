@@ -15,13 +15,48 @@ So "retire `Build`/`Judge`" is really: **make construction a plang-typed message
 a CLR-typed dispatch in the ctor.** Change the signature first; the branches then have nowhere to live
 except on the owning type.
 
+## The convert machinery — plang-typed, name-keyed, no per-call reflection (centerpiece)
+Confirmed (2026-06-29): each target type already owns a `static Convert` hook (~12: number/text/date/
+…) — the conversion logic is already on the type. Ownership is **target-owned** and stays (Ingi: a new
+`calendar` accepts `text` by editing only `calendar`; source-owned would force editing `text` for every
+new target — an Open/Closed violation). So `Build`/central-`Convert` are just routers over these hooks.
+
+Three things make the routers CLR-centric; fix all three (do NOT cargo-cult the existing `object?`/
+`System.Type` shapes):
+
+1. **The hook is plang-typed in AND out — never `object?`, never returns `data`:**
+   ```
+   //  was:  static data.@this Convert(object? value, string? kind, context)   // CLR in, Data out
+   //  →     static item.@this Convert(item.@this value, string? kind, context) // plang in/out, THROWS on fail
+   ```
+   The hook reads the source's content through plang accessors (`text.ToString()`, `source.Raw`) — no
+   `.Clr<object>()` lowering at the top. Failure THROWS a typed convert error (no `Data.Ok/Error` round
+   trip). The perimeter (`OfStatic`'s raw-string callers, e.g. the Text serializer's `Deserialize<T>`)
+   wraps `string → text.@this` BEFORE calling — "string only at the perimeter."
+
+2. **Dispatch is keyed by the PLANG type, not `System.Type`, via a REGISTERED table (no per-call reflection):**
+   ```
+   private delegate item.@this Factory(item.@this value, string? kind, context);
+   Dictionary<string /* type name */, Factory>   // number→number.Convert, calendar→calendar.Convert, …
+   App.Type.Convert(typeName, value, context)  →  _factories[typeName](value, kind, context)
+   ```
+   Populated by **source-gen** (the generator already scans the type tree → emit the table; literal zero
+   reflection). Interim if needed: bind once via `Delegate.CreateDelegate` on a cache miss (reflect once,
+   never `MethodInfo.Invoke` per call). The CLR-boundary `OwnerOf(System.Type)` STAYS as-is — it's the
+   genuine .NET interop seam (`GetValue<int>` → which family), not a plang-type dispatch.
+
+3. **`Build` routes through it, plang-typed:**
+   ```
+   _item = targetType.Convert(_item, Context);   // item in, item out — no object?, no .Clr, no Data, no .Peek()
+   ```
+
 ## The work
-1. **`type.Build(object?)` → `Build(item.@this)`.** Then:
+1. **`type.Build(object?)` → `Build(item.@this)`**, routing through the plang-typed `Convert` table above
+   (target-owned — `targetType.Convert(value)`, NOT `value.ConvertTo`). Then:
    - `if (value is null)` → `if (value is @null.@this)`; `is item {IsLeaf:false} native` → `!value.IsLeaf`.
-   - The two parity branches I added dissolve **onto the types** (where they belong):
-     - a `variable` resolves its own name in its `Convert`/construction (`@this.Resolve(name)`),
+   - The two parity branches I added dissolve **onto the target types** (where they belong):
+     - a `variable` resolves its own name in its `Convert` (`@this.Resolve(name)`),
      - a `text` returns a `%ref%`-bearing text unchanged in its `Convert` ("a template defers").
-   - The coercion becomes a message — `value.ConvertTo(this)` / the family hook — not `Convert(object?)`.
 2. **Delete `Judge`** (`type/this.cs:538`) — `Build` now has parity, so the no-context path is redundant.
 3. **Delete the ctor's context-less arms** — `data/this.cs:211` (`else _item = type.Judge(_item)`) and
    `:252` (`Declare`'s `else Judge`). Context is structurally present after step 4.
