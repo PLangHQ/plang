@@ -72,7 +72,6 @@
     <Using Include="app.data.@this" Alias="Data" />
     <Using Include="app.data.Properties" Alias="Properties" />
     <Using Include="app.data.DynamicData" Alias="DynamicData" />
-    <Using Include="app.data.TString" Alias="TString" />
     <Using Include="app.variable.list.@this" Alias="Variables" />
     <Using Include="app.type.path" Alias="FileSystem" />
     <Using Include="app.type.path.@this" Alias="path" />

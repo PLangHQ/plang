@@ -713,13 +713,6 @@ public partial class @this
         return this;
     }
 
-    private static bool IsActionDestination(System.Type t)
-    {
-        var actionType = typeof(global::app.goal.steps.step.actions.action.@this);
-        if (t == actionType) return true;
-        return typeof(global::System.Collections.Generic.IEnumerable<global::app.goal.steps.step.actions.action.@this>).IsAssignableFrom(t);
-    }
-
     /// <summary>
     /// THE comparison entry — compares this value to <paramref name="other"/> and
     /// returns the sign-free <see cref="Comparison"/>. The driving type is decided
