@@ -62,5 +62,22 @@ attempt lacked.
 > The prior trace's own note: "Do it as a focused unit (not at the tail of a long session)." The
 > nested-verify decision (#1) is the part the revert was missing.
 
-## Shipped + deltas from plan
-_(coder fills as Stage 4 lands.)_
+## Shipped (prerequisites landed, green) + what's left
+**Landed + committed (all green, the WireLocal deletion's prerequisites):**
+- ✅ **Build parity** — `type.Build` now handles the Variable write-target (`%s%`) + `%ref%` template
+  defer, like `Judge` (additive; the ctor fork stays until Judge can die).
+- ✅ **No-verify-for-nested** — `ReadContext.Verify` + `Wire(verify)` threaded to the `signature` reader;
+  nested reconstruction (NestedOptions, GoalReadOptions, goal.call/actions readers) sets `Verify:false`.
+  This is the decision the prior revert lacked.
+- ✅ **http inbound context-ful** — `TransportIn(context)` (copy `[In]` + a context-ful Wire); the last
+  explicit context-less Data read is gone.
+- ✅ **`%ref%` regex deduped** to `text.@this.HasHoles(string)` (one home).
+
+**What's left — the WireLocal deletion = Stage 5.** Deleting `WireLocal` + the 2 `[JsonConverter]`
+attrs compiles clean and regresses **exactly the 15** (Defaults/FilePaths/ResolveValue/RunGoalAsync/
+StartGoal). The no-verify flag held (it's not the nested-verify cause). The 15 fail on **varied** causes:
+- the strict data reader throws `value slot has no declared type` on an untyped `%ref%` slot (`%!data%`)
+  that WireLocal tolerated → data-reader needs leniency: an untyped `%ref%` → text;
+- `[CreateVariableDeclined] %Name%` / `[CreateItemDeclined] %path%` → `%ref%`/path values reaching
+  `Create` instead of being deferred/resolved (a Build/resolve-path gap beyond the ctor `Build`).
+Reverted the deletion to keep the branch green; the deletion + these 15 are the focused Stage-5 debug.
