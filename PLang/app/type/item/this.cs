@@ -431,4 +431,55 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         return System.Threading.Tasks.ValueTask.CompletedTask;
     }
 
+    /// <summary>
+    /// Reflective Output for a STRUCTURAL item — writes its tagged property bag, the View selecting
+    /// the attribute set (<see cref="global::app.channel.serializer.filter.Tagged"/>:
+    /// <c>Out→[Out]</c>, <c>Store→[Store]</c>, <c>Debug→all</c>). Each property value writes ITSELF:
+    /// an <see cref="@this"/> via its own <see cref="Output"/>, a raw C# scalar via the writer, a
+    /// sequence as an array. The general-object wire form; leaves and special shapes
+    /// (dict/list/clr/…) override <see cref="Output"/> directly. Replaces <c>NormalizeObject</c>.
+    /// </summary>
+    protected async System.Threading.Tasks.ValueTask OutputTagged(
+        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context)
+    {
+        writer.BeginObject();
+        foreach (var entry in global::app.channel.serializer.filter.Tagged.PropertiesFor(GetType(), mode))
+        {
+            var raw = entry.Property.Name;
+            var name = char.ToLowerInvariant(raw[0]) + raw.Substring(1);   // camelCase
+            if (entry.Masked) { writer.Name(name); writer.String("****"); continue; }
+            var value = entry.Property.GetValue(this);
+            if (value == null) continue;   // nulls omitted (WhenWritingNull)
+            writer.Name(name);
+            await WriteReflected(writer, value, mode, context);
+        }
+        writer.EndObject();
+    }
+
+    // Writes a value reflected off a property: a plang value writes itself (Output), a sequence
+    // becomes an array of self-writes, a raw C# scalar goes through the writer. This is the
+    // reflection→wire boundary — C# primitives can't write themselves, so the writer renders them.
+    private static async System.Threading.Tasks.ValueTask WriteReflected(
+        global::app.channel.serializer.IWriter writer, object value, global::app.View mode,
+        global::app.actor.context.@this? context)
+    {
+        switch (value)
+        {
+            case @this item: await item.Output(writer, mode, context); break;
+            case string s: writer.String(s); break;
+            case bool b: writer.Bool(b); break;
+            case int i: writer.Int(i); break;
+            case long l: writer.Long(l); break;
+            case System.Enum e: writer.Enum(e); break;
+            case byte[] bytes: writer.Bytes(bytes); break;
+            case System.Collections.IEnumerable seq:
+                writer.BeginArray(-1);
+                foreach (var el in seq) if (el != null) await WriteReflected(writer, el, mode, context);
+                writer.EndArray();
+                break;
+            default: writer.Value(value); break;
+        }
+    }
+
 }

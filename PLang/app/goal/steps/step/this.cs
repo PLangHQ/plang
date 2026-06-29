@@ -12,6 +12,12 @@ namespace app.goal.steps.step;
 /// </summary>
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, module.IDataWrappable
 {
+    /// <summary>Self-write: a step is a structural item — its tagged fields (View selects the set).</summary>
+    public override System.Threading.Tasks.ValueTask Output(
+        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context)
+        => OutputTagged(writer, mode, context);
+
     /// <summary>
     /// Whether this step is disabled for the given execution.
     /// Per-execution state keyed by step identity, reached by passing the running

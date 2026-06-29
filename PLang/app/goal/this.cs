@@ -21,6 +21,13 @@ public enum Visibility
 /// </summary>
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, module.IDataWrappable
 {
+    /// <summary>Self-write: a goal is a structural item — its tagged fields, the View selecting
+    /// which set ([Store] for the .pr, [Out] for the wire). Replaces STJ + PrWrite.</summary>
+    public override System.Threading.Tasks.ValueTask Output(
+        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context)
+        => OutputTagged(writer, mode, context);
+
     private module.Events? _events;
     [JsonIgnore]
     public module.Events Events
