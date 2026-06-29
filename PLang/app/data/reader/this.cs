@@ -53,6 +53,13 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                           as global::app.type.@this;
                     break;
                 case "value":
+                    // An untyped string value rides as text — a %ref% or literal (text is the
+                    // fallback type). The no-type throw below is only for an untyped STRUCTURED
+                    // slot (a stale .pr), never a bare string.
+                    if (typeRef is not { IsNull: false }
+                        && reader.Peek() == global::app.channel.serializer.TokenKind.String)
+                        typeRef = global::app.type.@this.Create("text", context: ctx.Context);
+
                     // goal.call is read EAGERLY through its reader (a build/Peek consumer expects
                     // the GoalCall, not a deferred source) — the reader builds its own options
                     // for the nested Data params, so the data reader stays options-free.
@@ -60,6 +67,15 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                     {
                         born = ctx.Context.App.Type.Readers.Reader("goal.call", null, ctx.Context)
                             .Read(ref reader, null, ctx);
+                    }
+                    // A name-slot type (variable) NAMES a thing — born EAGER (resolved to the
+                    // Variable), never a deferred source: the name-slot read (Value<variable>) takes
+                    // the reference off Peek() WITHOUT opening the door, so the Variable must already
+                    // be there. Mirrors the old Judge resolve for type:variable.
+                    else if (typeRef is { IsNull: false } && typeRef.Name == "variable")
+                    {
+                        born = ctx.Context.App.Type.Readers.Reader(typeRef.Name, typeRef.Kind, ctx.Context)
+                            .Read(ref reader, typeRef.Kind, ctx);
                     }
                     else if (typeRef is not { IsNull: false })
                     {
