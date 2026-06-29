@@ -161,3 +161,15 @@ Why "mint a `source` from the built value" does **not** rescue this: to mint `so
 ## Net (v2)
 
 The from-raw redesign is correct and the headline double-convert win is real. But the plan **over-claims** that `Build`/`Judge` can be deleted: three call sites re-type an **already-built** value, which the fork's "native → hold" silently no-ops. Restate case 2 as a type-match split, keep a convert-existing-item operation (renamed) for those three sites, and fix the `byte[]`/`FromRaw` reference. With those, the plan is sound.
+
+---
+
+# Addendum v3 — for the architect (Build survives; reconcile the wording)
+
+Two coder/Ingi decisions while sequencing the stages, both touching the plan's framing:
+
+1. **`Build` is KEPT, not deleted** (Ingi, 2026-06-29). After reading `object_pattern_formal.md`, the OBP-correct shape puts the construction fork **on the type, not in the Data ctor** (Rule #1 — behavior on the owner). The type already owns construction via one call — `type.Build`. So the Data ctor + `Declare` **delegate** in one line, and `Build` is **reimplemented** to fork internally (raw → `source` with a type-owned `RawFormat` noun; built → 2a hold / 2b `Convert`; null → typed-absence). The throwaway-`text` + reflection die *inside* `Build`; the method stays as the single construction entry.
+
+2. **Plan wording to reconcile:** the leaf-trace / demolition still say "gut Build's from-raw scaffolding" and Stage 5 "delete dead machinery." Consistent in spirit (the from-raw eager route dies), but the *method* `Build` survives — please reword so the plan and the stage files agree before Stage 1 lands: Stage 5 deletes `Judge`/`Deserialize`/the `source` context-less fallback and thins the 2-arg `Convert`; it does **not** delete `Build`.
+
+The stage files (`stages/`) already reflect this. No design change — just the name/location of where the fork lives, and that `Build` is the keeper.
