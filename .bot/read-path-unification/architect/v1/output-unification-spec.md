@@ -23,7 +23,7 @@ wire shape?":
 ```
 item.Output  [base default]   = reflect via Tagged.PropertiesFor(GetType(), view)
                                  → for each [Store]/[Out] property: writer.Name(p); await p.value.Output(...)
-                                 (the general rule: an object's wire form IS its tagged property bag)
+                                 → for each property the VIEW selects (no hardcoded [Store])
 
 leaf scalars  (number, text, bool, date, datetime, time, duration, guid, binary, choice, archive,
                null, source, …)  → override Output = write the bare value   (old Write body moves in)
@@ -31,9 +31,19 @@ dict / list / clr / signature                       → override Output (special
 goal / step / action                                → NO override — base reflect handles them
 ```
 
-`Tagged.PropertiesFor(type, view)` (already exists; today it drives `NormalizeObject`) is the
-attribute-driven selector — `[Store]` for the `.pr`/Store view, `[Out]` for the wire, `[Masked]`
-honored. It moves from the deleted Normalize switch into the base `Output`.
+The general rule: **an object's wire form is its tagged property bag, and the View picks which
+attribute set** — there is no hardcoded `[Store]`. `Tagged.PropertiesFor(type, view)` (already exists;
+today it drives `NormalizeObject`) maps the View to the attribute set:
+
+```
+View.Out   → [Out]   properties   (wire, third-party-facing; [Sensitive] excluded, [Masked] → "****")
+View.Store → [Store] properties   (.pr / sqlite / disk; [Sensitive] included, [Masked] ignored)
+View.Debug → every public property (diagnostics)
+```
+
+The same `Output` serves every destination; the `view` flowing into `Output(writer, view, ctx)`
+decides. A `.pr` write is `goal.Output(w, View.Store, ctx)` → `[Store]` props; the wire is `View.Out`.
+`Tagged` moves from the deleted Normalize switch into the base `Output`.
 
 ## Everything that writes a value is an `item.@this`
 
@@ -67,8 +77,12 @@ no `PrWrite` options.
 
 `Data.Output` (this.Normalize.cs:79) already gates `@schema` + `name` on `layer && View.Store`. Once
 the `.pr` write is `Data.Output`, whether a `.pr` carries `@schema` is a one-line decision there —
-not an unavoidable consequence of reusing the wire converter. (Recommended: `.pr` stays structural —
-params are recognized as Data by the `List<Data>` schema position, `@schema` reserved for the wire.)
+not an unavoidable consequence of reusing the wire converter.
+
+**DECIDED (Ingi): the `.pr` stays structural — no `@schema` on disk.** A param is recognized as a
+Data by its `List<Data>` schema position (STJ/the reader knows the slot type), not by a marker.
+`@schema` is reserved for the **wire**, where a bare JSON object is genuinely ambiguous. So the Store
+view emits `{name, type, value, properties}` without `@schema`; the Out/wire view emits it.
 
 ## Deletions (the payoff)
 
