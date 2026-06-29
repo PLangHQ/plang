@@ -1,4 +1,3 @@
-using PLang.Tests.App.Serialization;
 using Dict = global::app.type.dict.@this;
 using type = global::app.type.@this;
 
@@ -44,29 +43,5 @@ public class Stage1_DictNavigationAndWriterTests : System.IAsyncDisposable
         await Assert.That(((global::app.type.number.@this)(await (await data.GetChild("age")).Value())!).Clr<long>()).IsEqualTo(30L);
         // A "count" intrinsic answers only when no real "count" key exists.
         await Assert.That(((global::app.type.number.@this)(await (await data.GetChild("count")).Value())!).ToInt32()).IsEqualTo(2);
-    }
-
-    [Test]
-    public async Task JsonWriter_PropertyBagArm_Deleted()
-    {
-        // writer.cs no longer has `case List<app.data.@this> propertyBag:` (E).
-        // A List<Data> now serializes as a JSON array; only a dict routes to `{}`.
-        var list = new List<Data> { app.Data("a", 1L), app.Data("b", 2L) };
-        var json = NormalizePipelineHelper.SerializeValueSlot(list);
-        await Assert.That(json.StartsWith("[")).IsTrue();
-        await Assert.That(json.StartsWith("{")).IsFalse();
-    }
-
-    [Test]
-    public async Task NormalizeObject_DomainRecord_ReturnsDict()
-    {
-        // data/this.Normalize.cs's NormalizeObject returns a dict for a C# domain record
-        // (e.g. identity) — not List<@this> (F). One object shape across the wire.
-        var identity = new global::app.module.identity.Identity { Name = "alice", PublicKey = "pk" };
-        var normalized = app.Data("", identity).Normalize();
-        await Assert.That(normalized).IsTypeOf<Dict>();
-        var d = (Dict)normalized!;
-        await Assert.That(d.Has("name")).IsTrue();
-        await Assert.That((await (d.Get("name"))!.Value())?.ToString()).IsEqualTo("alice");
     }
 }

@@ -14,30 +14,6 @@ public class FailureMatrixNormalizeTests : System.IAsyncDisposable
     private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/FailureMatrixNormalizeTests-" + System.Guid.NewGuid().ToString("N")[..6]);
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
-    private sealed class SensitiveAndOut
-    {
-        [global::app.Out, global::app.Sensitive] public string? S { get; set; }
-    }
-
-    [Test] public async Task SensitiveAndOut_OnSameProperty_FailsCompileTimeOrRuntime_Mutex()
-    {
-        // Sensitive wins — the property is hard-excluded even when Out is also present.
-        // Stage 2 enforces this via the Wire filter ordering: Sensitive check first.
-        var s = new SensitiveAndOut { S = "leak" };
-        var children = (new Data("", s, context: app.User.Context).Normalize())!.Children();
-        await Assert.That(children.Any(c => c.Name == "s")).IsFalse();
-    }
-
-    [Test] public async Task NoReconstructionStrategy_TypeWithoutCtorAndHook_RaisesTyped()
-    {
-        // Stage 3 territory — As<T> on a type with no ctor and no hook raises a typed
-        // NormalizeException. Stage 2 in isolation can't surface this; pin the symmetry:
-        // a type with no [Out] properties normalizes to an empty children list rather
-        // than throwing, which is the Normalize side of the same "no strategy" gap.
-        var children = (new Data("", new object(), context: app.User.Context).Normalize())!.Children();
-        await Assert.That(children.Count).IsEqualTo(0);
-    }
-
     [Test] public async Task MalformedWireBytes_TruncatedJson_RaisesTypedChannelError()
     {
         // Truncated JSON surfaces as JsonException through the read door (a Data reads via a
@@ -87,13 +63,5 @@ public class FailureMatrixNormalizeTests : System.IAsyncDisposable
         // setting.value has [Masked] applied (Stage 1). Reflection confirms.
         var p = typeof(global::app.module.settings.type.setting).GetProperty("value");
         await Assert.That(p!.IsDefined(typeof(global::app.MaskedAttribute), inherit: true)).IsTrue();
-    }
-
-    [Test] public async Task Normalize_OnTypeWithNonPropertyMember_AccessorFails_WrappedWithContext()
-    {
-        // Covered by NormalizeCycleAndDepthTests.Normalize_GetterThrows_* — pin the
-        // residue: an indexed property is skipped (not invoked), so no failure.
-        var children = (new Data("", new System.Collections.Generic.Dictionary<string, int>(), context: app.User.Context).Normalize())!.Children();
-        await Assert.That(children).IsNotNull();
     }
 }

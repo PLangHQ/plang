@@ -32,7 +32,7 @@ public static class TestApp
 
     /// <summary>
     /// A process-lifetime context for the static pre-wire test factories
-    /// (<c>Make</c>, <c>PrParam</c>, <c>NormalizePipelineHelper</c>). Those build the
+    /// (<c>Make</c>, <c>PrParam</c>). Those build the
     /// authored goal/param shape that is reborn with the real actor context when the
     /// goal is read through a channel (<c>RealGoalLoad.ViaChannel</c>), so this context
     /// is transient — it only has to be non-null so an authored literal value can

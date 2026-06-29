@@ -1,6 +1,5 @@
 using System.Reflection;
 using System.Text.Json;
-using PLang.Tests.App.Serialization;
 using ListV = global::app.type.list.@this;
 using DictV = global::app.type.dict.@this;
 using type = global::app.type.@this;
@@ -118,21 +117,6 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
         var res = d.ShallowClone<global::app.type.list.@this<global::app.type.number.@this>>(await d.Value<global::app.type.list.@this<global::app.type.number.@this>>());
         await res.IsSuccess();
         await Assert.That(res.GetValue<List<long>>()!).IsEquivalentTo(new List<long> { 1, 2, 3 });
-    }
-
-    [Test]
-    public async Task JsonWriter_DisambiguatesByValueType_DictBracesListBrackets()
-    {
-        // The writer disambiguates by wrapper type: dict → `{}`, list → `[]`. No ambiguity.
-        var list = new ListV { Context = app.User.Context };
-        list.Add(app.Data("", 1L));
-        var dict = new DictV { Context = app.User.Context };
-        dict.Set(app.Data("a", 1L));
-
-        var listJson = NormalizePipelineHelper.SerializeValueSlot(list);
-        var dictJson = NormalizePipelineHelper.SerializeValueSlot(dict);
-        await Assert.That(listJson.StartsWith("[")).IsTrue();
-        await Assert.That(dictJson.StartsWith("{")).IsTrue();
     }
 
     [Test]

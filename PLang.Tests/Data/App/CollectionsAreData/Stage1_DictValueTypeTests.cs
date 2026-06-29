@@ -1,4 +1,3 @@
-using PLang.Tests.App.Serialization;
 using Dict = global::app.type.dict.@this;
 
 namespace PLang.Tests.App.CollectionsAreData;
@@ -81,37 +80,6 @@ public class Stage1_DictValueTypeTests : System.IAsyncDisposable
         var d = new Dict { Context = app.User.Context };
         d.Set(app.Data("name", "a"));
         await Assert.That(await d.AsBooleanAsync()).IsTrue();
-    }
-
-    [Test]
-    public async Task JsonSerialize_EmptyDict_EmitsEmptyObject()
-    {
-        // dict's own renderer emits `{}` for an empty dict — not `[]` and not the property-bag arm.
-        var json = NormalizePipelineHelper.SerializeValueSlot(new Dict { Context = app.User.Context });
-        await Assert.That(json).IsEqualTo("{}");
-    }
-
-    [Test]
-    public async Task JsonSerialize_TwoEntries_EmitsKeyedObject()
-    {
-        // dict emits {"name":"a","age":30} — keyed by entry name, values via per-element renderer.
-        var d = new Dict { Context = app.User.Context };
-        d.Set(app.Data("name", "a"));
-        d.Set(app.Data("age", 30L));
-        var json = NormalizePipelineHelper.SerializeValueSlot(d);
-        await Assert.That(json).IsEqualTo("{\"name\":\"a\",\"age\":30}");
-    }
-
-    [Test]
-    public async Task JsonSerialize_NestedDict_EmitsNestedObject()
-    {
-        // dict holding a dict emits {"address":{"city":"Reyk"}} — nesting works through one renderer.
-        var inner = new Dict { Context = app.User.Context };
-        inner.Set(app.Data("city", "Reyk"));
-        var outer = new Dict { Context = app.User.Context };
-        outer.Set(app.Data("address", inner));
-        var json = NormalizePipelineHelper.SerializeValueSlot(outer);
-        await Assert.That(json).IsEqualTo("{\"address\":{\"city\":\"Reyk\"}}");
     }
 
     [Test]

@@ -1,20 +1,15 @@
-using System.Collections;
 using app;
-using app.channel.serializer.filter;
 
 namespace app.data;
 
 /// <summary>
-/// Data structural normalization. Walks <see cref="@this.Value"/> into a
-/// uniform tree whose runtime types are limited to: <c>null</c>, primitives
-/// (string, int, long, double, bool, DateTime, decimal), <c>byte[]</c>,
-/// <see cref="@this"/>, or <see cref="IList"/> of any of the above.
-/// Reflection fires here (one-time, cached by the wire-view filter) so
-/// format encoders never have to introspect arbitrary C# types.
+/// Data writes ITSELF to the wire — each type emits its own form via
+/// <see cref="@this.Output"/> / <c>item.Output</c>. One async pass, resolving
+/// lazily at each node — no pre-resolve walk, no Normalize tree.
 ///
-/// <para>Bounded: a visited-set guards against reference cycles, a depth cap
-/// prevents stack overflow on deep but acyclic graphs. Both raise typed
-/// errors hard at serialize-time — no silent truncation.</para>
+/// <para>Bounded: a depth cap on the self-write prevents stack overflow on a
+/// reference cycle (a graph that contains itself). It raises a typed error hard
+/// at serialize-time — no silent truncation.</para>
 /// </summary>
 public partial class @this
 {
@@ -33,17 +28,17 @@ public partial class @this
     private static readonly System.Threading.AsyncLocal<int> _outputDepth = new();
 
     /// <summary>
-    /// Data writes ITSELF to the wire — it owns its <c>@schema</c> layer (its identity),
-    /// then its <c>type</c>, then the underlying <c>value</c> (delegated to the item), then
-    /// <c>properties</c>. One async pass, resolving lazily at each node — no pre-resolve
-    /// walk, no Normalize tree. A Data holding a <c>%ref%</c> resolves it and outputs the
-    /// RESOLVED value's self-describing form (its real type+value), not <c>type:variable</c>.
-    /// </summary>
-    /// <summary>
-    /// Depth-guarded entry: bounds the recursive self-write so a reference cycle (a graph that
-    /// contains itself, or a self-referential variable) fails with a typed error instead of a stack
-    /// overflow — the guarantee the deleted <c>Normalize</c> walker gave via its visited-set + depth
-    /// cap. Every nested <c>Output</c> re-enters here, so the counter tracks true recursion depth.
+    /// Data writes ITSELF to the wire — it owns its <c>@schema</c> layer (its identity), then its
+    /// <c>type</c>, then the underlying <c>value</c> (delegated to the item), then <c>properties</c>.
+    /// One async pass, resolving lazily at each node — no pre-resolve walk, no Normalize tree. A Data
+    /// holding a <c>%ref%</c> resolves it and outputs the RESOLVED value's self-describing form (its
+    /// real type+value), not <c>type:variable</c>.
+    ///
+    /// <para>Depth-guarded: bounds the recursive self-write so a reference cycle (a graph that
+    /// contains itself, or a self-referential variable) fails with a typed <c>OutputMaxDepth</c> error
+    /// instead of a stack overflow — the guarantee the deleted <c>Normalize</c> walker gave via its
+    /// visited-set + depth cap. Every nested <c>Output</c> re-enters here, so the counter tracks true
+    /// recursion depth.</para>
     /// </summary>
     public async System.Threading.Tasks.ValueTask Output(
         global::app.channel.serializer.IWriter writer, View mode,
@@ -144,287 +139,4 @@ public partial class @this
             writer.EndObject();
         }
     }
-
-    public object? Normalize(View mode = View.Out)
-    {
-        var visited = new HashSet<object>(System.Collections.Generic.ReferenceEqualityComparer.Instance);
-        return NormalizeValue(Peek(), mode, visited, depth: 0, types: _context?.App?.Type);
-    }
-
-    /// <summary>
-    /// Walk a single value. Recurses on containers + domain objects; returns
-    /// already-tree values unchanged.
-    /// </summary>
-    internal static object? NormalizeValue(object? value, View mode, HashSet<object> visited, int depth)
-        => NormalizeValue(value, mode, visited, depth, types: null);
-
-    /// <summary>
-    /// Walk-with-types overload — when <paramref name="types"/> is non-null,
-    /// a value whose CLR type resolves to a registered <see cref="app.Attributes.PlangTypeAttribute"/>
-    /// name AND has at least one entry in <see cref="app.type.renderer.@this"/>
-    /// passes through unchanged (it renders itself via its own Write) rather than
-    /// being reflected. Bare (no-types) callers fall back to reflection — safe
-    /// default for tests / no-Context paths.
-    /// </summary>
-    internal static object? NormalizeValue(object? value, View mode, HashSet<object> visited, int depth,
-        app.type.catalog.@this? types)
-    {
-        if (depth > MaxNormalizeDepth)
-            throw new NormalizeException(
-                $"Normalize depth exceeded cap ({MaxNormalizeDepth}). Likely an unbounded structure.",
-                "NormalizeMaxDepthExceeded");
-
-        // Tree-native leaves ------------------------------------------------
-        if (value is null) return null;
-        if (value is string || value is bool
-            || value is System.DateTime || value is System.DateTimeOffset
-            || value is System.TimeSpan || value is System.Guid
-            || value is decimal || value is byte[])
-            return value;
-        // Enums are leaves — represented by name on the wire. Without this
-        // they (and DateTimeOffset/TimeSpan/Guid above) fall through to
-        // NormalizeObject which walks their public struct properties into
-        // an unusable property bag.
-        if (value is System.Enum) return value;
-        // Delegates aren't representable as a property bag — Method/Target
-        // walks blow up on reflection-only members like
-        // RuntimeType.DeclaringMethod. Emit as null leaf.
-        if (value is System.Delegate) return null;
-        if (value is int || value is long || value is double || value is float)
-            return value;
-
-        // A scalar leaf (the value says so via item.IsLeaf) rides the wire bare —
-        // pass it through unchanged and let json.Writer render it. dict/list/domain
-        // values are NOT leaves; they fall to their own branches below. The type-tag
-        // rides the Data envelope, so the value slot stays value-only.
-        if (value is app.type.item.@this leaf && leaf.IsLeaf)
-            return value;
-
-        // The foreign-object carrier is a CLOSED box (its Peek answers self), so
-        // reflect its HOST, never the carrier's own (Value/Context) surface. Unwrap
-        // to the host and normalize that — the host's [Out] property bag. (When the
-        // serializer fully collapses onto item.Write this branch dissolves, like the
-        // navigator chain did.)
-        if (value is Clr carrier)
-            return NormalizeValue(carrier.Clr<object>(), mode, visited, depth, types);
-
-        // Nested Data: normalize its Value into a fresh tree. Do NOT mutate the
-        // source Data — outbound serialization must be observation-only or
-        // domain values (Identity etc.) get replaced with their property-bag
-        // form on the original, breaking subsequent in-memory reads.
-        if (value is @this nested)
-        {
-            if (!visited.Add(nested))
-                throw CycleError(nested);
-            try
-            {
-                var innerNormalized = NormalizeValue(nested.Peek(), mode, visited, depth + 1, types);
-                if (ReferenceEquals(innerNormalized, nested.Peek())) return nested;
-                var copy = new @this(nested.Name, innerNormalized, nested.Type);
-                copy.Properties = nested.Properties;
-                return copy;
-            }
-            finally { visited.Remove(nested); }
-        }
-
-        // Native dict: walk its entries into a fresh dict of normalized values.
-        // Observation-only — the source dict is never mutated (outbound
-        // serialization must not rewrite in-memory values).
-        if (value is app.type.dict.@this nativeDict)
-        {
-            if (!visited.Add(nativeDict))
-                throw CycleError(nativeDict);
-            try
-            {
-                var copy = new app.type.dict.@this { Context = types?.Context };
-                foreach (var entry in nativeDict.Entries)
-                    copy.Set(Entry(entry.Name, NormalizeValue(entry.Peek(), mode, visited, depth + 1, types), types));
-                return copy;
-            }
-            finally { visited.Remove(nativeDict); }
-        }
-
-        // Raw dictionaries (infra dicts that still flow as values): become a
-        // native dict with keys as entry names — one object shape on the wire.
-        if (value is IDictionary rawDict)
-        {
-            if (!visited.Add(value))
-                throw CycleError(value);
-            try
-            {
-                var built = new app.type.dict.@this { Context = types?.Context };
-                foreach (DictionaryEntry e in rawDict)
-                {
-                    var name = e.Key?.ToString() ?? "";
-                    // A Data entry rides AS the dict entry (entries are Data
-                    // boxes) — re-boxing would nest a bare Data.
-                    var normalized = NormalizeValue(e.Value, mode, visited, depth + 1, types);
-                    if (normalized is @this nd) { nd.Name = name; built.Set(nd); }
-                    else built.Set(new @this(name, normalized, context: types?.Context));
-                }
-                return built;
-            }
-            finally { visited.Remove(value); }
-        }
-
-        // Native list: walk its element Data into a fresh list, normalizing each
-        // element's value. Elements stay Data so the wire writer self-describes
-        // them (a signed element keeps its envelope). Observation-only — the
-        // source list is never mutated.
-        if (value is app.type.list.@this nativeList)
-        {
-            if (!visited.Add(nativeList))
-                throw CycleError(nativeList);
-            try
-            {
-                var copy = new app.type.list.@this { Context = types?.Context };
-                foreach (var item in nativeList.Items)
-                    copy.Add((@this)NormalizeValue(item, mode, visited, depth + 1, types)!);
-                return copy;
-            }
-            finally { visited.Remove(nativeList); }
-        }
-
-        // Lists / arrays --------------------------------------------------
-        if (value is IEnumerable enumerable)
-        {
-            if (!visited.Add(value))
-                throw CycleError(value);
-            try
-            {
-                if (IsHomogeneousPrimitive(enumerable, out _))
-                {
-                    var bare = new List<object?>();
-                    foreach (var item in enumerable) bare.Add(item);
-                    return bare;
-                }
-
-                var wrapped = new List<object?>();
-                foreach (var item in enumerable)
-                {
-                    var normalized = NormalizeValue(item, mode, visited, depth + 1, types);
-                    wrapped.Add(normalized);
-                }
-                return wrapped;
-            }
-            finally { visited.Remove(value); }
-        }
-
-        // Renders-itself passthrough — when a registry is in scope, a value whose
-        // CLR type (or any ancestor in its inheritance chain) resolves to a
-        // [PlangType] name AND has a renderer passes through unchanged: it is an
-        // item that emits its own wire form via Write. Skips the reflection walk;
-        // [Sensitive] discipline becomes the value's own responsibility.
-        //
-        // The ancestor walk matches PLang's abstract-base pattern: a concrete
-        // FilePath / HttpPath inherits from the abstract path.@this; the
-        // renderer is registered under "path" but the runtime value is FilePath.
-        // Walking up finds the right registration without combinatorial
-        // per-subclass entries.
-        if (types != null)
-        {
-            for (var t = value.GetType(); t != null && t != typeof(object); t = t.BaseType)
-            {
-                var typeName = types.ResolveName(t);
-                if (typeName != null && types.Renderers.Has(typeName))
-                    // The value renders itself — pass it through unchanged so it
-                    // survives Data/dict/list boxing (Lift keeps an item as-is;
-                    // the writer dispatches item.Write). Every renderable value is
-                    // now an item; a non-item reaching here is a producer bug that
-                    // surfaces at the wire, not something to wrap in a sentinel.
-                    return value;
-            }
-        }
-
-        // Domain object: reflect into List<Data> children using the wire-view filter.
-        return NormalizeObject(value, mode, visited, depth, types);
-    }
-
-    // A normalized value that is itself a Data rides AS the dict entry (entries
-    // ARE Data boxes) — re-boxing it in `new @this(name, data)` nests a bare Data
-    // and trips Lift's guard. ShallowClone renames without mutating the source
-    // (outbound normalize is observation-only).
-    private static @this Entry(string name, object? normalized, app.type.catalog.@this? types)
-        => normalized is @this nd ? nd.ShallowClone(name) : new @this(name, normalized, context: types?.Context);
-
-    // A C# domain record reflects into the one object form — a native `dict`,
-    // not a parallel "property bag" list. One object shape across the wire.
-    private static app.type.dict.@this NormalizeObject(object obj, View mode, HashSet<object> visited, int depth,
-        app.type.catalog.@this? types)
-    {
-        if (!visited.Add(obj))
-            throw CycleError(obj);
-        try
-        {
-            var entries = app.channel.serializer.filter.Tagged.PropertiesFor(obj.GetType(), mode);
-            var built = new app.type.dict.@this { Context = types?.Context };
-
-            foreach (var entry in entries)
-            {
-                var name = entry.Property.Name.ToLowerInvariant();
-
-                if (entry.Masked)
-                {
-                    // [Masked] never invokes the getter — the value must not
-                    // traverse memory boundaries it shouldn't cross.
-                    built.Set(new @this(name, "****", context: types?.Context));
-                    continue;
-                }
-
-                object? raw;
-                try
-                {
-                    raw = entry.Property.GetValue(obj);
-                }
-                catch (System.Exception ex)
-                {
-                    throw new NormalizeException(
-                        $"Normalize failed reading {obj.GetType().Name}.{entry.Property.Name}: {ex.Message}",
-                        "NormalizeGetterThrew", ex);
-                }
-
-                try
-                {
-                    built.Set(Entry(name, NormalizeValue(raw, mode, visited, depth + 1, types: types), types));
-                }
-                catch (NormalizeException ex) when (ex.Key == "NormalizeCycleDetected")
-                {
-                    throw new NormalizeException(
-                        $"{obj.GetType().Name}.{entry.Property.Name} → {ex.Message}",
-                        "NormalizeCycleDetected", ex);
-                }
-            }
-
-            return built;
-        }
-        finally { visited.Remove(obj); }
-    }
-
-    private static bool IsHomogeneousPrimitive(IEnumerable enumerable, out System.Type? elementType)
-    {
-        elementType = null;
-        foreach (var item in enumerable)
-        {
-            if (item == null) return false;
-            var t = item.GetType();
-            if (!IsTreeLeafType(t)) return false;
-            if (elementType == null) elementType = t;
-            else if (elementType != t) return false;
-        }
-        return elementType != null;
-    }
-
-    // Keep in lockstep with the leaf cases in NormalizeValue (top of file).
-    private static bool IsTreeLeafType(System.Type t)
-        => t == typeof(string) || t == typeof(int) || t == typeof(long)
-        || t == typeof(double) || t == typeof(float) || t == typeof(bool)
-        || t == typeof(System.DateTime) || t == typeof(System.DateTimeOffset)
-        || t == typeof(System.TimeSpan) || t == typeof(System.Guid)
-        || t == typeof(decimal) || t == typeof(byte[])
-        || t.IsEnum;
-
-    private static System.Exception CycleError(object node)
-        => new NormalizeException(
-            $"Cycle detected during Normalize at type {node.GetType().Name}.",
-            "NormalizeCycleDetected");
 }
