@@ -121,11 +121,12 @@ public sealed class source : @this, module.IContext
     {
         if (Context?.Actor?.Channel.Serializers is { } serializers)
             return serializers[_format].Read(this, new global::app.type.reader.ReadContext(Context, _template));
-        // TEMP (context-never-null / Stage 4): a source born without context can't reach a
-        // serializer — the type coerces the raw itself. Dies with the context-less births.
-        if (_value is string s)
-            return global::app.type.@this.Create(global::app.type.@this.Create(_type, _kind, context: Context).Convert(s), Context);
-        return this;
+        // A source is always born WITH a context — the data ctor and FromRaw both stamp it,
+        // and the context-less Judge birth is gone. Reaching here means a source escaped that
+        // invariant; surface it as a clean MaterializeFailed (source.Value catches this), not a
+        // silent unparsed return or a born-without-context crash from a context-less Create.
+        throw new System.InvalidOperationException(
+            $"source declared '{_type}' reached read without a context — a source must be born with one.");
     }
 
     /// <summary>
