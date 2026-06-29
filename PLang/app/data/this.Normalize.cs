@@ -25,11 +25,11 @@ public partial class @this
     /// </summary>
     private const int MaxNormalizeDepth = 128;
 
-    /// <summary>
-    /// Normalize <see cref="Value"/> into the uniform tree. Idempotent — calling
-    /// twice produces the same shape. The default mode is <see cref="View.Out"/>;
-    /// pass <see cref="View.Debug"/> to bypass the <c>[Out]</c> whitelist.
-    /// </summary>
+    /// <summary>Hard cap on Output recursion depth — a graph deeper than this is almost certainly a
+    /// reference cycle. Bounds the self-write so a cycle fails typed, not via stack overflow.</summary>
+    private const int MaxOutputDepth = 128;
+
+    /// <summary>Tracks Output recursion depth (AsyncLocal — one chain per serialize walk).</summary>
     private static readonly System.Threading.AsyncLocal<int> _outputDepth = new();
 
     /// <summary>
@@ -39,33 +39,42 @@ public partial class @this
     /// walk, no Normalize tree. A Data holding a <c>%ref%</c> resolves it and outputs the
     /// RESOLVED value's self-describing form (its real type+value), not <c>type:variable</c>.
     /// </summary>
+    /// <summary>
+    /// Depth-guarded entry: bounds the recursive self-write so a reference cycle (a graph that
+    /// contains itself, or a self-referential variable) fails with a typed error instead of a stack
+    /// overflow — the guarantee the deleted <c>Normalize</c> walker gave via its visited-set + depth
+    /// cap. Every nested <c>Output</c> re-enters here, so the counter tracks true recursion depth.
+    /// </summary>
     public async System.Threading.Tasks.ValueTask Output(
         global::app.channel.serializer.IWriter writer, View mode,
         global::app.actor.context.@this? context = null, bool layer = false)
+    {
+        if (_outputDepth.Value >= MaxOutputDepth)
+            throw new global::app.error.AppException(
+                $"Output exceeded depth {MaxOutputDepth} — a value graph that deep is almost certainly "
+                + "a reference cycle.", "OutputMaxDepth", 500);
+        _outputDepth.Value++;
+        try { await OutputCore(writer, mode, context, layer); }
+        finally { _outputDepth.Value--; }
+    }
+
+    private async System.Threading.Tasks.ValueTask OutputCore(
+        global::app.channel.serializer.IWriter writer, View mode,
+        global::app.actor.context.@this? context, bool layer)
     {
         context ??= _context;
 
         // A reference binding resolves to its target binding before output — but ONLY for an
         // outbound/wire write (Out/Debug carry the resolved VALUE). A Store write (.pr) preserves
         // the authored ref verbatim — build time has no variables to resolve, and the ref IS the
-        // artifact. Guarded: a self-referential binding (msg → msg) fails loud instead of looping.
+        // artifact. A self-referential binding (msg → msg) trips the depth guard above.
         if (_item is global::app.variable.@this vref && context != null && mode != View.Store)
         {
-            if (_outputDepth.Value++ > 50)
-            {
-                _outputDepth.Value = 0;
-                throw new global::app.error.AppException(
-                    $"self-referential variable '{vref.Name}' on output", "OutputSelfReference", 500);
-            }
-            try
-            {
-                var resolved = await context.Variable.Get(vref.Name);
-                if (resolved == null || !resolved.IsInitialized)
-                    throw new global::app.error.VariableNotFoundException(vref.Name);
-                await resolved.Output(writer, mode, context, layer);
-                return;
-            }
-            finally { _outputDepth.Value--; }
+            var resolved = await context.Variable.Get(vref.Name);
+            if (resolved == null || !resolved.IsInitialized)
+                throw new global::app.error.VariableNotFoundException(vref.Name);
+            await resolved.Output(writer, mode, context, layer);
+            return;
         }
 
         // Only the self-describing wire (application/plang) opens the type envelope around
