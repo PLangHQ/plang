@@ -45,9 +45,11 @@ public partial class @this
     {
         context ??= _context;
 
-        // A reference binding resolves to its target binding before output. Guarded:
-        // a self-referential binding (msg → msg) fails loud instead of looping.
-        if (_item is global::app.variable.@this vref && context != null)
+        // A reference binding resolves to its target binding before output — but ONLY for an
+        // outbound/wire write (Out/Debug carry the resolved VALUE). A Store write (.pr) preserves
+        // the authored ref verbatim — build time has no variables to resolve, and the ref IS the
+        // artifact. Guarded: a self-referential binding (msg → msg) fails loud instead of looping.
+        if (_item is global::app.variable.@this vref && context != null && mode != View.Store)
         {
             if (_outputDepth.Value++ > 50)
             {

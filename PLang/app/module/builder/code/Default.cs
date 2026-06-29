@@ -271,7 +271,14 @@ public class Default : IBuilder
         var validation = await validateResponse.ValidateGoalState(goal);
         if (!validation.Success) return validation;
 
-        var json = JsonSerializer.Serialize(goal, global::app.module.builder.@this.PrWrite);
+        // The goal writes its OWN .pr through Output (the value-owns-serialization path), Store view,
+        // structural (no @schema — a param is a Data by its List<Data> position). Symmetric with the
+        // goal reader's bare read. Replaces STJ + PrWrite + the WireLocal/Normalize write track.
+        var serializer = (global::app.channel.serializer.plang.@this)
+            context.Actor.Channel.Serializers.GetOrDefault("application/plang");
+        using var ms = new System.IO.MemoryStream();
+        await serializer.SerializeItemAsync(ms, goal, global::app.View.Store);
+        var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
 
         var saveAction = new file.Save
         {

@@ -181,6 +181,22 @@ public sealed class @this : ISerializer
         }
     }
 
+    /// <summary>
+    /// Write a BARE item (a goal → its <c>.pr</c>) — the item drives its own wire via <c>Output</c>,
+    /// NOT wrapped in a Data envelope and NOT signed. The write counterpart to the goal reader's bare
+    /// read: <c>goal.Output(Store)</c> emits the structural <c>{name, steps, …}</c> the reader expects.
+    /// </summary>
+    public async Task SerializeItemAsync(Stream stream, global::app.type.item.@this item,
+        global::app.View view = global::app.View.Store, CancellationToken cancellationToken = default)
+    {
+        var options = view == global::app.View.Store ? _store : _outbound;
+        await using var utf8 = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true });
+        var writer = new global::app.channel.serializer.json.Writer(
+            utf8, options, view, _context.App.Type.Renderers, emitsSchema: true);
+        await item.Output(writer, view, _context);
+        await utf8.FlushAsync(cancellationToken);
+    }
+
     public async Task<global::app.data.@this> DeserializeAsync(Stream stream, global::app.View view = global::app.View.Out, CancellationToken cancellationToken = default)
     {
         try

@@ -12,6 +12,13 @@ namespace app.goal;
 [PlangType("goal.call")]
 public sealed class GoalCall : global::app.type.item.@this, global::app.type.item.ICreate<GoalCall>, module.IEvent
 {
+    /// <summary>Self-write: a call descriptor is a structural item — its tagged fields (GoalName,
+    /// Parameters, …), the View selecting the set.</summary>
+    public override System.Threading.Tasks.ValueTask Output(
+        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context)
+        => OutputTagged(writer, mode, context);
+
     /// <summary>The entity is "goal.call" (the namespace-tail default would say
     /// "goal", which is the goal entity's name, not this value's).</summary>
     protected internal override global::app.type.@this Mint()

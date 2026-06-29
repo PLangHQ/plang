@@ -32,6 +32,21 @@ namespace app.type;
 [JsonConverter(typeof(json))]
 public sealed class @this : item.@this
 {
+    /// <summary>Self-write: the type entity's <c>{name, kind?, strict?}</c> identity — the same
+    /// shape Data writes for its <c>type</c> field, used when a type entity rides as a VALUE
+    /// (e.g. a <c>variable.set</c> <c>Type</c> default).</summary>
+    public override System.Threading.Tasks.ValueTask Output(
+        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context)
+    {
+        writer.BeginObject();
+        writer.Name("name"); writer.String(Name);
+        if (!string.IsNullOrEmpty(Kind)) { writer.Name("kind"); writer.String(Kind!); }
+        if (Strict) { writer.Name("strict"); writer.Bool(true); }
+        writer.EndObject();
+        return System.Threading.Tasks.ValueTask.CompletedTask;
+    }
+
     [JsonPropertyName("name")]
     public string Name { get; }
 

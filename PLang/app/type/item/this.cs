@@ -466,6 +466,9 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         {
             // A plang value writes ITSELF.
             case @this item: await item.Output(writer, mode, context); break;
+            // A Data-typed property (action.parameters) self-writes too — async, so it routes here,
+            // NOT through writer.Value (sync, peels to the OLD Peek().Write path).
+            case global::app.data.@this d: await d.Output(writer, mode, context); break;
             // BRIDGE: a raw C# collection (goal.steps / action.modifiers / action.parameters, until
             // those become item.@this lists) writes as an array of self-writes. Deleted once they are items.
             case System.Collections.IEnumerable seq when value is not (string or byte[]):

@@ -114,8 +114,11 @@ public static class Tagged
             // travels — no observer to hide from.
             bool masked = mode != global::app.View.Store
                 && prop.IsDefined(typeof(MaskedAttribute), inherit: false);
-            entries.Add(new Entry(prop, masked,
-                System.Text.Json.JsonNamingPolicy.CamelCase.ConvertName(prop.Name)));
+            // [JsonPropertyName] wins (STJ honors it), else camelCase — so an Output-written shape
+            // matches what an STJ read expects, key for key.
+            var wireName = prop.GetCustomAttribute<System.Text.Json.Serialization.JsonPropertyNameAttribute>()?.Name
+                ?? System.Text.Json.JsonNamingPolicy.CamelCase.ConvertName(prop.Name);
+            entries.Add(new Entry(prop, masked, wireName));
         }
 
         // Materialize as an array — fixed-size, no overhead vs List<T>'s

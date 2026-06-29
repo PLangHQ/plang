@@ -25,8 +25,13 @@ public static class RealGoalLoad
     public static async Task<global::app.goal.@this> ViaChannel(
         global::app.@this app, global::app.goal.@this goal)
     {
-        var prJson = System.Text.Json.JsonSerializer.Serialize(
-            goal, global::app.module.builder.@this.PrWrite);
+        // Write the .pr the way the real builder now does — through goal.Output (Store), not STJ —
+        // so the test exercises the actual write path, not the soon-to-be-deleted PrWrite.
+        var serializer = (global::app.channel.serializer.plang.@this)
+            app.User.Channel.Serializers.GetOrDefault("application/plang");
+        using var outMs = new System.IO.MemoryStream();
+        await serializer.SerializeItemAsync(outMs, goal, global::app.View.Store);
+        var prJson = System.Text.Encoding.UTF8.GetString(outMs.ToArray());
 
         var ms = new System.IO.MemoryStream(System.Text.Encoding.UTF8.GetBytes(prJson));
         var channel = new global::app.channel.type.stream.@this(

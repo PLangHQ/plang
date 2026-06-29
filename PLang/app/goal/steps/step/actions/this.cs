@@ -6,6 +6,17 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 {
     private readonly List<action.@this> _items = new();
 
+    /// <summary>Self-write: a list of actions — an array of each action's own Output.</summary>
+    public override async System.Threading.Tasks.ValueTask Output(
+        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context)
+    {
+        writer.BeginArray(_items.Count);
+        foreach (var action in _items)
+            await action.Output(writer, mode, context);
+        writer.EndArray();
+    }
+
     public @this() { }
     public @this(IEnumerable<action.@this> actions) { _items = new List<action.@this>(actions); }
 
