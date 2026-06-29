@@ -50,6 +50,16 @@ public sealed class Default : IHttp
         }
     };
 
+    // Per-request inbound options: the [In] filter + a CONTEXT-FUL Wire so an inbound Data reads
+    // through the read door (verifies if it carries a signature — this is the OUTER message). Store
+    // view (an exact copy, not the Out wire view).
+    private JsonSerializerOptions TransportIn(actor.context.@this context)
+    {
+        var o = new JsonSerializerOptions(_transportInOptions);
+        o.Converters.Add(new global::app.data.Wire(global::app.View.Store, context: context));
+        return o;
+    }
+
     // Case-insensitive read for HTTP responses (signing, JSON body parsing, plang).
     // Stage 27 disperse-from-Json target — was Utils.Json.CaseInsensitiveRead.
     private readonly JsonSerializerOptions _caseInsensitiveRead = new()
@@ -510,7 +520,7 @@ public sealed class Default : IHttp
         data.@this? data;
         try
         {
-            data = JsonSerializer.Deserialize<data.@this>(body, _transportInOptions);
+            data = JsonSerializer.Deserialize<data.@this>(body, TransportIn(context));
         }
         catch (JsonException ex)
         {
@@ -559,7 +569,7 @@ public sealed class Default : IHttp
     {
         // Try deserializing as data.@this with transport options (may have Signature via [In])
         data.@this? data = null;
-        try { data = JsonSerializer.Deserialize<data.@this>(errorBody, _transportInOptions); }
+        try { data = JsonSerializer.Deserialize<data.@this>(errorBody, TransportIn(context)); }
         catch (JsonException) { /* not valid data.@this JSON — try legacy format below */ }
 
         // A signed response body reads back as a `signature` layer wrapping the
@@ -831,7 +841,7 @@ public sealed class Default : IHttp
             data.@this? data;
             try
             {
-                data = JsonSerializer.Deserialize<data.@this>(line, _transportInOptions);
+                data = JsonSerializer.Deserialize<data.@this>(line, TransportIn(context));
             }
             catch (JsonException)
             {
