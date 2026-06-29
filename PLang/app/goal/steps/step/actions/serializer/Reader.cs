@@ -19,7 +19,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     {
         // The nested params read through the Wire (ReadOptions carries ctx.Template), so their
         // %ref% holes ride as live templates already — no manual stamping.
-        var options = global::app.data.Wire.ReadOptions(ctx);
+        var options = global::app.data.Wire.ReadOptions(ctx with { Verify = false });
         return System.Text.Json.JsonSerializer
             .Deserialize<global::app.goal.steps.step.actions.@this>(reader.RawValue(), options)
             ?? new global::app.goal.steps.step.actions.@this();

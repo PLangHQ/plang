@@ -17,7 +17,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
-        var options = global::app.data.Wire.ReadOptions(ctx);
+        var options = global::app.data.Wire.ReadOptions(ctx with { Verify = false });
         return (global::app.type.item.@this?)System.Text.Json.JsonSerializer
                    .Deserialize<global::app.goal.GoalCall>(reader.RawValue(), options)
                ?? new global::app.type.@null.@this("goal.call", kind);

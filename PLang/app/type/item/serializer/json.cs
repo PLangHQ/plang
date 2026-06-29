@@ -22,8 +22,9 @@ public partial class json
     private System.Text.Json.JsonSerializerOptions NestedOptions()
     {
         if (_nestedOptions != null) return _nestedOptions;
+        // Nested reconstruction: skip verify — the inner Data is covered by the outer signature.
         return _nestedOptions = global::app.data.Wire.ReadOptions(
-            new global::app.type.reader.ReadContext(_context));
+            new global::app.type.reader.ReadContext(_context, Verify: false));
     }
 
     public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)

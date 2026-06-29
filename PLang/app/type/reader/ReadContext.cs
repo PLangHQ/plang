@@ -19,4 +19,7 @@ namespace app.type.reader;
 public sealed record ReadContext(
     global::app.actor.context.@this Context,
     string? Template = null,
-    global::app.View View = global::app.View.Out);
+    global::app.View View = global::app.View.Out,
+    // Verify a signed (@schema:signature) Data on read. The OUTER transport read verifies; a NESTED
+    // reconstruction sets false — an inner Data is already covered by the outer signature.
+    bool Verify = true);

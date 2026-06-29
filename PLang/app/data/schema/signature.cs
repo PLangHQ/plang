@@ -83,20 +83,26 @@ public sealed class signature : ISchemaReader
         // needs the actor context the same way the outer does.
         layer.Value.Context = context;
 
-        var carrier = Data.Ok(layer);
-        carrier.Context = context;
-        var verifyAction = new global::app.module.signing.verify
+        // The OUTER read verifies the signature; a NESTED reconstruction (ctx.Verify == false) peels
+        // without verifying — the inner Data is already covered by the outer signature, and an inner
+        // layer has no actor of its own to verify against.
+        if (ctx.Verify)
         {
-            Data = carrier,
-            SkipFreshnessCheck = new global::app.data.@this<global::app.type.@bool.@this>(
-                "", ctx.View == global::app.View.Store),
-        };
-        var verifyResult = context.App
-            .RunAction(verifyAction, context)
-            .GetAwaiter().GetResult();
-        if (!verifyResult.Success)
-            return Data.FromError(verifyResult.Error
-                ?? new global::app.error.ServiceError("Signature verification failed", "SignatureInvalid", 400));
+            var carrier = Data.Ok(layer);
+            carrier.Context = context;
+            var verifyAction = new global::app.module.signing.verify
+            {
+                Data = carrier,
+                SkipFreshnessCheck = new global::app.data.@this<global::app.type.@bool.@this>(
+                    "", ctx.View == global::app.View.Store),
+            };
+            var verifyResult = context.App
+                .RunAction(verifyAction, context)
+                .GetAwaiter().GetResult();
+            if (!verifyResult.Success)
+                return Data.FromError(verifyResult.Error
+                    ?? new global::app.error.ServiceError("Signature verification failed", "SignatureInvalid", 400));
+        }
 
         var peeled = layer.Value;
         peeled.Context = context;

@@ -53,8 +53,10 @@ public sealed partial class @this
     /// <c>%secret%</c> in a message stays literal.
     /// </summary>
     internal static JsonSerializerOptions GoalReadOptions(actor.context.@this context)
+        // A goal's nested Data step-params are reconstruction — skip verify (covered by the
+        // goal's own signature when it has one); they have no actor of their own.
         => global::app.data.Wire.ReadOptions(
-            new global::app.type.reader.ReadContext(context, "plang", global::app.View.Store));
+            new global::app.type.reader.ReadContext(context, "plang", global::app.View.Store, Verify: false));
 
     /// <summary>Internal accessor for the test facade — see <see cref="_caseInsensitiveRead"/>.</summary>
     internal static JsonSerializerOptions CaseInsensitiveRead => _caseInsensitiveRead;
