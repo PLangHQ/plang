@@ -30,10 +30,9 @@ public class NestedRegisteredTypeRoundTripTests
 
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var options = (JsonSerializerOptions)typeof(global::app.channel.serializer.plang.@this)
-            .GetField("_outbound", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
-            .GetValue(plang)!;
-        var json = JsonSerializer.Serialize(outer, options);
+        using var ms = new System.IO.MemoryStream();
+        await plang.SerializeAsync(ms, outer, global::app.View.Out);
+        var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         // Both nested path values must appear as strings, not as reflected
         // property bags ("\"absolute\":" would mean reflection fired).
         await Assert.That(json.Contains("a.txt")).IsTrue();

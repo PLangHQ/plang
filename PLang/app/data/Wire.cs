@@ -258,107 +258,11 @@ public class Wire : JsonConverter<@this>
     }
 
 
+    // A Data is WRITTEN via Data.Output (value-owns-serialization) through the channel/SerializeAsync —
+    // signing + signature-hoisting live there now. This converter is registered for READS only
+    // (Wire.ReadOptions → Wire.Read); STJ never serializes a Data through it. The override exists only
+    // to satisfy JsonConverter<Data>.
     public override void Write(Utf8JsonWriter writer, @this data, JsonSerializerOptions options)
-    {
-        var isHashOuter = IsHashOuter(data);
-        // Sign at the I/O boundary: a Data crossing application/plang within a
-        // real actor scope (Context.Actor non-null) is wrapped in a `signature`
-        // layer — ONE layer over the whole payload. Skipped when: signing is off
-        // (snapshot wire), no actor (internal serialise — test fixtures, .pr
-        // authoring, raw IClass calls), the hash-canonicalization pass
-        // (isHashOuter), or the value is already a layer (re-serialise / pre-signed).
-        if (Sign && !isHashOuter && data.Context?.Actor != null
-            && data.Peek() is not global::app.type.signature.@this)
-        {
-            var signResult = data.Context.App
-                .RunAction(new app.module.signing.sign { Data = data }, data.Context)
-                .GetAwaiter().GetResult();
-            if (signResult.Success) data = signResult;
-        }
-
-        // A layer value is HOISTED to top level: write the layer object itself
-        // ({@schema:signature, …, value:<inner record>}), not a data envelope
-        // wrapping it. One hoist rule serves every @schema layer. The inner data
-        // is written by the layer's own Write via json.Writer's nested-record
-        // arm — no STJ recursion, so it is not re-signed.
-        if (data.Peek() is global::app.type.signature.@this)
-        {
-            new app.channel.serializer.json.Writer(writer, options, View,
-                renderers: data.Context?.App?.Type.Renderers).Value(data.Peek());
-            return;
-        }
-
-        writer.WriteStartObject();
-        // @schema:data — the marker that says this JSON object IS a Data. First key,
-        // always present (signed: it's intrinsic wire identity, unlike name).
-        writer.WriteString(@this.WireSchema, @this.WireSchemaData);
-        // The variable name is a binding label, not part of the data's identity —
-        // excluded from the signed hash (isHashOuter) so a value verifies the
-        // same no matter which variable holds it, and excluded from the OUTBOUND
-        // wire entirely: a server's binding label is not API surface, and a
-        // client that used it would couple to a name the server may rename.
-        // The Store view keeps it — .pr action parameters and local persistence
-        // bind by name. The reader still accepts `name` from either form.
-        if (!isHashOuter && View == global::app.View.Store)
-            writer.WriteString("name", data.Name);
-
-        // type — emit as the structured entity {name, kind?, strict?} via the
-        // type's own JsonConverter. ONE field carrying the full identity; the
-        // historical flat sibling-key shape (`type` string + `kind` string)
-        // is gone. Null sentinel is skipped entirely so the wire stays compact.
-        if (!data.Type.IsNull)
-        {
-            writer.WritePropertyName("type");
-            JsonSerializer.Serialize(writer, data.Type, options);
-        }
-
-        writer.WritePropertyName("value");
-        // Verbatim passthrough: an untouched raw-backed Data (read lazily, relayed
-        // by a courier, never navigated) serializes its raw source form straight
-        // back out — no materialize, no parse-then-reserialize. The value slot
-        // must stay valid json, so raw json (object/json) and number literals emit
-        // raw; other raw strings json-encode; raw bytes base64.
-        // The value slot routes through Normalize + json.Writer. Domain
-        // objects emit as their filtered property bag;
-        // primitives, nested Data, and lists pass through unchanged. View
-        // selects the filter:
-        //   - View.Out (default) — third-party-facing, [Out] only, Sensitive
-        //     excluded, Masked emits "****".
-        //   - View.Store — local persistence (sqlite). [Store] only,
-        //     Sensitive included, Masked ignored. Round-trips local state.
-        //   - View.Debug — diagnostic dump.
-        var jsonWriter = new app.channel.serializer.json.Writer(writer, options, View,
-            renderers: data.Context?.App?.Type.Renderers);
-        if (data.RawUntouched)
-            // The untouched source writes ITSELF verbatim (byte-identical relay) — one verbatim
-            // writer, the same one the read door deferred to. (data.Peek() IS the source item.)
-            data.Peek().Write(jsonWriter);
-        else
-            jsonWriter.Value(data.Normalize(View));
-
-        // properties — nested object, omitted when empty to keep the wire compact.
-        // Sign-if-missing walks Value-graph Datas only, never Properties; the
-        // outer Data's signature covers the canonicalized wire (including this
-        // nested object), so tampering with any Property still invalidates the
-        // outer signature, but no per-Property attestations are conjured.
-        if (data.Properties.Count > 0)
-        {
-            writer.WritePropertyName("properties");
-            writer.WriteStartObject();
-            foreach (var kvp in data.Properties)
-            {
-                writer.WritePropertyName(kvp.Key);
-                // Route through Normalize + json.Writer same as the value slot,
-                // so [Out] / [Sensitive] / [Masked] discipline applies symmetrically
-                // if a caller deposits a domain object into Properties.
-                var normalized = @this.NormalizeValue(kvp.Value, View,
-                    new HashSet<object>(System.Collections.Generic.ReferenceEqualityComparer.Instance),
-                    depth: 0);
-                jsonWriter.Value(normalized);
-            }
-            writer.WriteEndObject();
-        }
-
-        writer.WriteEndObject();
-    }
+        => throw new System.NotSupportedException(
+            "Wire is a read-only converter — a Data writes itself via Data.Output, not STJ.");
 }

@@ -27,10 +27,9 @@ public class PathSerializerMigrationTests
 
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var json = JsonSerializer.Serialize(data,
-            (JsonSerializerOptions)typeof(global::app.channel.serializer.plang.@this)
-                .GetField("_outbound", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
-                .GetValue(plang)!);
+        using var ms = new System.IO.MemoryStream();
+        await plang.SerializeAsync(ms, data, global::app.View.Out);
+        var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         // The wire emits the value as a string. The exact content depends on
         // Relative computation against App root; we just assert it's a string
         // (not a property bag) and contains the file segment.
@@ -49,10 +48,9 @@ public class PathSerializerMigrationTests
 
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var options = (JsonSerializerOptions)typeof(global::app.channel.serializer.plang.@this)
-            .GetField("_outbound", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
-            .GetValue(plang)!;
-        var json = JsonSerializer.Serialize(data, options);
+        using var ms = new System.IO.MemoryStream();
+        await plang.SerializeAsync(ms, data, global::app.View.Out);
+        var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         await Assert.That(json.Contains("example.test")).IsTrue();
         await Assert.That(json.Contains("\"scheme\":")).IsFalse();
     }
