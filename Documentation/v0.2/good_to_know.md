@@ -91,3 +91,7 @@ Notes are split across the topic docs below. Each section title maps to its doc 
 - Born-typed variable decline — `Variable.Create` fails if input is not already a `variable.@this` → `variables.md`
 - `datetime` navigable members — `.Date`, `.TimeOfDay`, `.Offset`, `.Ticks`, `.DayOfYear`, `.DayOfWeek` navigate to typed PLang values → `type-system.md`
 - `Data.Clr<T>(fallback)` — async typed CLR extraction with a default for absent/null slots → `type-system.md`
+- Construction door — the Data ctor + `Declare` delegate to `type.Build(value, context)`; the type forks (raw → lazy `source` at its `RawFormat`, built-same-type → hold, built-different → `Convert`, null → typed absence). Born-with-context via param, no `type.Context ??=`. → `value-type-method-map.md`
+- `type.Convert(value, ctx)` is the throw boundary — returns `item.@this` (not `Data`) and THROWS on a bad conversion, so it rides the same `MaterializeFailed` path as a bad reader parse (`source.Value` catches it). The per-type leaf hooks + `Conversions.Of` hub still answer `Data` internally. → `value-type-method-map.md`
+- `Judge` / `Deserialize` are gone — the no-context construction twins; all construction is born-with-context through `type.Build`. The `source.Read` context-less fallback is gone too (a context-less source now throws → `MaterializeFailed`). → `value-type-method-map.md`
+- `date` / `datetime` / `time` ship an `ITypeReader` (`serializer/Reader.cs`) so `as date`/`as datetime`/`as time` literals materialize through `source` + the reader, not an eager `Convert` hook. → `type-system.md`
