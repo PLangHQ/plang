@@ -30,12 +30,21 @@ Renamed in `source` only. Finish across every override + factory: `item/this.cs:
 `path`, `text`, `url`, `file`, `computed`, `variable`, `ICreate.cs`, `list/this.Generic.cs`,
 `permission`, `snapshot/this.Wire.cs` (params + `<paramref>` + comments).
 
-## 5. Delete `Readers.Of` + the delegate registry (the Stage-1 goal proper)
-With every value type owning a `serializer/Reader.cs` and `source.Value` dispatching through
-the serializer + `App.Type.Readers.Reader(...)` (narrow + throw), the old whole-payload `Of`
-path is dead: delete `Readers.Of`, the `Read` delegate type, the `_generated`/`_runtime`
-tables, the static-`Read` discovery branch, the per-type `serializer/Default.cs` `static Read`
-methods, and `type.Deserialize`'s `Of` use. Confirm no caller remains first.
+## 5. Delete `Readers.Of` + the delegate registry (the Stage-1 goal proper)  *(prerequisite DONE — full teardown deferred)*
+**Done (`667b3e908`):** the lone `Readers.Of` caller (`json/converter.cs`'s path arm) now calls
+`path.@this.Resolve` directly. **`Of` has zero real callers.**
+
+**Remaining teardown (a ~15-file pass, deferred):** delete `Readers.Of`, the `Read` delegate type, the
+`_generated`/`_runtime` tables, the static-`Read` discovery branch in `IndexAssembly`, the **13 per-type
+`serializer/Default.cs` `static Read` decoders** (text/dict/number/duration/guid/image/list/object-json/
+path/code/bool/item-json/table-csv — the old whole-payload path the typed `Reader.cs` files superseded),
+and `type.Deserialize`'s `Of` use.
+
+**⚠️ Landmine — `TypeOf`:** `_generated.Keys` also feeds `Readers.TypeOf` (used by `kind/this.cs:34` +
+`type/this.cs:164` for `csv→table`, `json→item`). The teardown must re-point `TypeOf` at
+`_generatedTyped.Keys` — which only works if every kind-specific typed `Reader.cs` registers under the
+SAME kind token the `Default.cs` did (table's reader under `csv`, object's under `json`, NOT `*`). Verify
+typed-key coverage type-by-type BEFORE cutting, or `csv`/`json` kind lookup breaks silently.
 
 ## 6. TEMP context-less `Convert` fallback in `source.Value`
 `source.Value` keeps a `Context == null → Create(...).Convert(s)` branch so the context-less
