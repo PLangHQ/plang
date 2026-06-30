@@ -312,7 +312,7 @@
                 {
                   "name": "Actions",
                   "type": {
-                    "name": "list<action>"
+                    "name": "list"
                   },
                   "value": [
                     {
@@ -517,7 +517,7 @@
                 {
                   "name": "Messages",
                   "type": {
-                    "name": "list<llmmessage>"
+                    "name": "list"
                   },
                   "value": "%messages%"
                 },

@@ -107,7 +107,7 @@
                 {
                   "name": "Actions",
                   "type": {
-                    "name": "list<text>"
+                    "name": "list"
                   },
                   "value": "%planStep.actions%"
                 }
@@ -129,8 +129,7 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "list",
-                    "kind": "text"
+                    "name": "list"
                   },
                   "value": "%!data%"
                 }
@@ -166,7 +165,7 @@
                 {
                   "name": "Actions",
                   "type": {
-                    "name": "list<text>"
+                    "name": "list"
                   },
                   "value": "%planStep.actions%"
                 }
@@ -194,7 +193,7 @@
                 {
                   "name": "Actions",
                   "type": {
-                    "name": "list<text>"
+                    "name": "list"
                   },
                   "value": "%planStep.actions%"
                 }
@@ -216,8 +215,7 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "list",
-                    "kind": "text"
+                    "name": "list"
                   },
                   "value": "%!data%"
                 }
@@ -275,7 +273,7 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "list<dict<text,text>>"
+                    "name": "list"
                   },
                   "value": "%!data%"
                 }
@@ -664,8 +662,7 @@
                     {
                       "name": "Actions",
                       "type": {
-                        "name": "list",
-                        "kind": "action"
+                        "name": "list"
                       },
                       "value": [
                         {
@@ -866,7 +863,7 @@
                 {
                   "name": "Actions",
                   "type": {
-                    "name": "list<action>"
+                    "name": "list"
                   },
                   "value": "%goal.Steps[step.Index].Actions%"
                 }
@@ -880,8 +877,7 @@
                     {
                       "name": "Actions",
                       "type": {
-                        "name": "list",
-                        "kind": "action"
+                        "name": "list"
                       },
                       "value": [
                         {
@@ -986,7 +982,7 @@
                 {
                   "name": "Messages",
                   "type": {
-                    "name": "list<llmmessage>"
+                    "name": "list"
                   },
                   "value": "%messages%"
                 },
@@ -1060,7 +1056,7 @@
                     {
                       "name": "Actions",
                       "type": {
-                        "name": "list<action>"
+                        "name": "list"
                       },
                       "value": [
                         {
@@ -1335,7 +1331,7 @@
                 {
                   "name": "Messages",
                   "type": {
-                    "name": "list<llmmessage>"
+                    "name": "list"
                   },
                   "value": "%refineMessages%"
                 },
@@ -1661,7 +1657,7 @@
                 {
                   "name": "Messages",
                   "type": {
-                    "name": "list<llmmessage>"
+                    "name": "list"
                   },
                   "value": "%fixMessages%"
                 },

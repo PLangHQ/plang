@@ -113,7 +113,7 @@
             {
               "name": "Messages",
               "type": {
-                "name": "list<llmmessage>"
+                "name": "list"
               },
               "value": "%fixerMessages%"
             },

@@ -178,7 +178,7 @@
                 {
                   "name": "Actions",
                   "type": {
-                    "name": "list<action>"
+                    "name": "list"
                   },
                   "value": [
                     {
@@ -425,7 +425,7 @@
                 {
                   "name": "Actions",
                   "type": {
-                    "name": "list<action>"
+                    "name": "list"
                   },
                   "value": [
                     {
@@ -1074,7 +1074,7 @@
                     {
                       "name": "Actions",
                       "type": {
-                        "name": "list<action>"
+                        "name": "list"
                       },
                       "value": [
                         {
@@ -1163,7 +1163,7 @@
                     {
                       "name": "Actions",
                       "type": {
-                        "name": "list<action>"
+                        "name": "list"
                       },
                       "value": [
                         {
