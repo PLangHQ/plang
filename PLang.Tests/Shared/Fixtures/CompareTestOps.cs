@@ -10,8 +10,8 @@ public static class CompareTestOps
 {
     public static int Ord(object a, object b)
     {
-        var da = new Data("", a);
-        var db = new Data("", b);
+        var da = new Data("", a, context: global::PLang.Tests.TestApp.SharedContext);
+        var db = new Data("", b, context: global::PLang.Tests.TestApp.SharedContext);
         return Map(da.CompareValues(db, a, b));
     }
 
@@ -29,7 +29,7 @@ public static class CompareTestOps
     public static bool Eq(object? a, object? b)
     {
         if (a == null || b == null) return a == null && b == null;
-        return new Data("", a).CompareValues(new Data("", b), a, b) == global::app.data.Comparison.Equal;
+        return new Data("", a, context: global::PLang.Tests.TestApp.SharedContext).CompareValues(new Data("", b, context: global::PLang.Tests.TestApp.SharedContext), a, b) == global::app.data.Comparison.Equal;
     }
 
     private static int Map(global::app.data.Comparison c) => c switch
