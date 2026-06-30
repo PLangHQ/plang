@@ -5,7 +5,6 @@ using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.identity;
 
-[NotInParallel]
 public class MyIdentityResolverTests
 {
     private string _tempDir = null!;
@@ -17,6 +16,7 @@ public class MyIdentityResolverTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_myid_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = new PLangEngine(_tempDir);
+        global::PLang.Tests.TestApp.UseSharedIdentity(_app);
     }
 
     [After(Test)]

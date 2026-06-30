@@ -12,9 +12,15 @@ namespace PLang.Tests.App.FileSystem.PermissionTests.StorageTests;
 /// persisted ("a") grants behind one Find/Add/Revoke surface.
 public class ActorPermissionStorageTests
 {
-    private static global::app.@this NewApp() =>
-        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+    private static global::app.@this NewApp()
+    {
+        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-st-" + System.Guid.NewGuid().ToString("N")[..8]));
+        // Real grant signing, but skip the identity recreate-loop (production identity
+        // re-read fails verify → recreated keygen+sign each call, ~850ms).
+        global::PLang.Tests.TestApp.UseSharedIdentity(app);
+        return app;
+    }
 
     private static global::app.data.@this<PermissionRecord> Grant(
         global::app.@this app, string actor, string path, Verb? verb = null, MatchMode match = MatchMode.Exact)

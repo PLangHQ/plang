@@ -25,6 +25,7 @@ public class VerifyActionTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_verify_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = new PLangEngine(_tempDir);
+        global::PLang.Tests.TestApp.UseSharedIdentity(_app);
     }
 
     [After(Test)]

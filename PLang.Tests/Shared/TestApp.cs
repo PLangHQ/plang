@@ -47,6 +47,19 @@ public static class TestApp
     }
 
     /// <summary>
+    /// Inject the in-memory <see cref="global::PLang.Tests.Shared.TestIdentity"/> so identity
+    /// resolution is instant — the production provider re-reads+verifies the signed identity from
+    /// the store on every resolution, and a signed-Data canonicalization mismatch makes that read
+    /// fail, so it recreates the identity (keygen+sign+store) every call (~850ms). For real-signing
+    /// fixtures that need an identity to sign with but don't test the identity provider itself.
+    /// </summary>
+    public static void UseSharedIdentity(global::app.@this app)
+    {
+        app.Code.Register<global::app.module.identity.code.IIdentity>(new global::PLang.Tests.Shared.TestIdentity { IsBuiltIn = true });
+        app.Code.SetDefault<global::app.module.identity.code.IIdentity>("test-identity");
+    }
+
+    /// <summary>
     /// A plain on-disk app (real settings store at the given root — NOT in-memory like
     /// <see cref="Create"/>) but with the no-crypto <see cref="UseTestSigning"/> override.
     /// For fixtures that need a real root/persistence but exercise consent/permission FLOW,
