@@ -1522,3 +1522,21 @@ carries `verify.Root = true` (request state): normal checks run, the actor-ident
 skipped; keypair self-consistency (`PublicKey` re-derives from `PrivateKey`) lives in the identity
 provider. Decided on context-never-null, deferred per Ingi (2026-06-30). NOTE: the `%MyIdentity%`
 → `%Identity%` rename is explicitly OUT of scope.
+
+## 2026-06-30 — Finish the steps enumerator (OBP): execution asks for "next step"
+
+Today the `steps` enumerator filters `Disabled` (so it needs a context), AND execution
+(`Steps.RunAsync`) ALSO hand-rolls a `skipBelowIndent` skip. Two parallel skip mechanisms. The OBP
+end-state (Ingi): execution just iterates the steps and the STEPS own "what to give next"
+(condition-gated skipping) — retire `skipBelowIndent`, the enumerator IS the single source.
+
+NOTE (tried + reverted 2026-06-30): naively making the enumerator yield ALL steps (treating the
+`Disabled` mechanism as orphaned) BROKE `if/elseif/else` orchestration — `OrchestrateBranchCoverageTests`
+caught it. `condition.if` → `DisableChildrenOf` IS load-bearing for per-branch child enabling; it is
+NOT redundant with `skipBelowIndent` (which only handles the simple `if`). So the finish must
+reconcile orchestration's per-branch child handling, not just delete `DisableChildrenOf`. Larger,
+execution-control-flow change — its own effort, with execution-path tests.
+
+Because the enumerator legitimately needs context, the immediate fix for the failing tests is
+born-with-context (goals/steps created WITH context — tests via `Make`, prod `Goal.Parse` / the
+goal reader wiring `Steps.Context`), NOT removing the mechanism.
