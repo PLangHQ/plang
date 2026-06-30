@@ -1,92 +1,105 @@
 # plang build — crash-chain findings (for architect)
 
 **Branch:** `fix-plang-build` (off `context-never-null`).
-**Why this branch:** `plang build` does not complete — it crashes, and after each fix the
-*next* crash surfaces. Rather than bloat `context-never-null`, we walk the chain here.
-Decision (Ingi): there will likely be several of these before a full build runs.
+**Goal:** get `plang build` to run end-to-end. It crashes; each fix surfaces the next.
+**Baseline:** on the pre-session tip (`8b6d271fe`) `plang build` already crashed at crash #1 —
+these are pre-existing WIP breakage on the goal-load / goal-execution path, NOT regressions
+from the context-never-null session. The unit suites don't drive `plang build`, so this path
+stayed broken while suites were green.
 
-**Baseline fact:** on the pre-session tip (`8b6d271fe`) `plang build` already crashed at
-crash #1 below — so these are pre-existing WIP-branch breakage, NOT regressions from the
-context-never-null / canonicalization session. The session's work (Stage 3/4/6, signing
-canonicalization) is sound and committed on `context-never-null`; it's just that `plang build`
-never got far enough to exercise it.
+**The lens.** The Stage-3 getter flip (`Data.Context` = `_context`, no `(_item as IContext)?.Context!`
+fallback) is what *exposes* these: the fallback was silently papering over genuinely
+context-less / uninitialized values on the build path. Each crash below is a real value that
+was never properly born/initialized — the flip just makes it loud. **Fix roots (born/set the
+value), never `!= null` guards or static caches.**
 
 ---
 
-## Crash #1 — `step.Disabled` NRE at goal load  ✅ FIXED (commit on this branch)
+## Crash #1 — `step.Disabled` NRE at goal load  ✅ FIXED (root)
+
+`LoadFromFile` deserializes the goal tree (STJ → `steps.@this.Context` left null), then
+`foreach (goal.Steps)` to wire back-refs; the Steps enumerator reads `.Context` for
+per-execution `Disabled` state → null → NRE (`steps/this.cs:54` → `step/this.cs:27`).
+**Fix (root, not guard):** born `goal.Steps.Context = context` (root + sub-goals) at the
+`.pr`-load seam, beside `goal.App`. Committed.
+
+*Design note:* the goal tree is deserialized context-less and back-refs (`App`, `Step.Goal`,
+`Context`) are stamped after — construct-then-stamp at tree level. Cleaner: the goal reader
+(`goal/serializer/Reader.cs`, holds `ctx.Context`) borns the tree, or the goal carries a
+`Context` whose `Steps`/`Goals` getters cascade it (they already cascade `Goal`/`Parent`).
+Pick the single owner of "wire the deserialized goal tree."
+
+---
+
+## Crash #2 — `text.Value` self-resolution → StackOverflow
+
+`text.Value` for a whole `%x%` match: `Variable.Get(x)` → `resolved.Value()`. If `x`'s value
+is itself the template `%x%`, it recurses to SO (~6680 frames). **I added an AsyncLocal
+resolving-set guard and reverted it — that's a band-aid for the loop, not the cause.**
+
+**Root question:** *why is a variable's value an unresolved template naming itself?* This is
+the same family as #3 (below): a variable read on the build path comes back as its own
+unresolved `%ref%` instead of a concrete value. Likely the GoalCall call-by-value seam
+(`this.cs:586-596`) already documents this exact hazard — *"call Foo x=%x% → x resolves %x% →
+x and loops; so resolve the ref NOW before Set"* — but the equivalent doesn't hold on some
+other write path (action params? `set`/`set default`? the Executor's `Set("path", …)`?), so a
+self-referential binding gets stored and then loops on read. **Find the write that stores a
+bare self-ref; fix it there.** (A depth cap may still be warranted as defense-in-depth, but
+it is NOT the fix.)
+
+---
+
+## Crash #3 — `builder.goals` / `EmitBuildEvent` `path=%path%` → "path cannot be empty"
 
 **Trace**
 ```
-NRE at app.goal.steps.step.this.Disabled(context)        step/this.cs:27  (context.Get<bool>(...))
-  app.goal.steps.this.GetEnumerator()+MoveNext()         steps/this.cs:54 (step.Disabled(Context))
-  app.goal.GoalCall.LoadFromFile(...)                    GoalCall.cs:321  (foreach goal.Steps)
-  GoalCall.GetGoalAsync → App.RunGoalAsync → builder.RunAsync → App.Start
+ArgumentException: path cannot be empty   path/file/this.Validate.cs:33  (ValidatePath)
+  path.this.Resolve("")                   path/this.cs:128
+  path.this.Value(data)                   path/this.cs:106-110
+  data.Value<T>() / data.Value()
+  .pr value: %path% [path]   final: %path%
 ```
 
-**Root cause.** `LoadFromFile` deserializes the goal tree (STJ) — which leaves
-`steps.@this.Context` (`= null!`) unset — then `foreach (goal.Steps)` to wire back-refs.
-The Steps **enumerator** reads `.Context` to check per-execution `Disabled` state. At load
-there is no execution context yet → `Context` null → NRE. `step.Disabled` is *per-execution*
-state keyed by the running context; it has no business being consulted at load.
+**Mechanism (read carefully — the surfaced error masks the real one):**
+`path.Value` renders its template via `_location.Value(data)` (text resolution).
+`text.Value` resolves `%path%` → `Variable.Get("path")` → **`!resolved.IsInitialized`** →
+`data.Fail(VariableNotFound)` + returns `Absent`. Back in `path.Value`:
+`rendered = Absent.Clr<string>() ?? ""` = `""` → `Resolve("")` → `ValidatePath("")` **throws
+ArgumentException**. So the ArgumentException is a *secondary* crash that hides the real story:
+**the variable `path` reads back uninitialized.**
 
-**Fix (root, not a `!= null` guard).** Born the step collections' context at the `.pr`-load
-seam, alongside `goal.App`: `goal.Steps.Context = context` (root + each sub-goal). The tree
-is born with the read context — never null.
+**Why that's surprising / the root question.** `path` is set on `User.Context` by the Executor
+(builder mode: `Set("path", startupDirectory)`), Build runs on that same `User.Context`
+(`builder/this.cs:110-111`), and `Build.goal` step `set default %path% = "/"` runs first. Yet
+`Get("path")` reports `!IsInitialized`. So one of:
+  1. `variable.Set(name, stringValue)` borns a Data that reads back `IsInitialized == false`
+     (context-less birth via the getter flip? `IsInitialized` not set on that path?).
+  2. `set default` doesn't actually initialize the binding (registers a default, never sets).
+  3. the goal runs in a variable scope where the Executor's `User.Context` binding isn't
+     visible (overlay/Calls-scope — see the call-by-value comment at `this.cs:586`).
 
-**Design note for architect.** This is the deeper smell the branch is about: the goal tree is
-deserialized **context-less** and back-refs (`App`, `Step.Goal`, now `Context`) are stamped
-*after* in `LoadFromFile`. That's construct-then-stamp at the tree level. A cleaner shape:
-the **goal reader** (`goal/serializer/Reader.cs`, which holds `ctx.Context`) borns the tree
-with context, OR the goal carries a `Context` whose `Steps`/`Goals` getters cascade it (the
-getters already cascade `Goal`/`Parent` — `goal/this.cs:51`, `:58`). Worth deciding the single
-owner of "wire the deserialized goal tree."
+Need to confirm which by inspecting `variable.list.Set` / `IsInitialized` and `set default`
+semantics. (`--debug` itself currently crashes loading the debug goal — `GoalCall.LoadFromFile`
+→ `path.ReadBytes` — so step-trace debugging is unavailable; that's a separate breakage.)
+
+**Secondary (robustness, still not the root):** `path.Value` should NOT render a failed text
+resolution to `""` and call `Resolve("")` (which hard-throws `ArgumentException`). When
+`_location.Value(data)` fails / returns `Absent`, propagate that failure as a typed Data error
+instead of throwing. The hard `throw new ArgumentException` in `ValidatePath` is the wrong
+shape for an empty/unresolved path — but fixing it only changes the symptom from a throw to a
+typed error; `path` being uninitialized is the real bug.
 
 ---
 
-## Crash #2 — `text.Value` infinite recursion (StackOverflow)  ← CURRENT
+## Unifying picture
 
-**Trace (≈6680 repeating frames)**
-```
-app.type.text.this.Value(data)        text/this.cs:72
-  → context.Variable.Get(varName)     text/this.cs:79   (full %var% match)
-  → resolved.Value()                  text/this.cs:87
-  → app.data.this.Value()
-  → app.type.text.this.Value(data)    (loops)
-...
-  app.callstack.call.this.ExecuteAsync → action.RunAsync → step.RunAsync → Steps.RunAsync
-```
+Every crash is **variable / context state on the build's goal-execution path** that the
+getter-flip enforcement now surfaces: a collection context left null at load (#1), a variable
+that stores/returns its own unresolved `%ref%` (#2), a variable that reads back uninitialized
+(#3). The center of gravity is **`variable.list` (Set / Get / IsInitialized)** and the
+**deserialized-goal-tree wiring**. Recommend the architect decide the canonical "a variable
+binding is born initialized + with context, and a value-slot ref is resolved-at-write (never
+stored as a bare self-ref)" rule, then the chain collapses rather than being patched
+crash-by-crash.
 
-**Root cause.** `text.Value` for a stamped template that is a *whole* `%x%` reference does:
-```
-var resolved = await context.Variable.Get(varName);   // the value of %x%
-return await resolved.Value();                        // materialize it
-```
-If `%x%`'s stored value is itself the stamped template `%x%` (a self-reference, or a cycle
-`%x%`→`%y%`→`%x%`), `resolved.Value()` re-enters `text.Value` with the same template forever →
-StackOverflow. There is **no cycle/self-reference guard** in the resolve path.
-
-**Open questions for architect (need a decision):**
-1. **Is the self-reference legitimate input, or a setup bug?** During `plang build` some
-   variable resolves to a template naming itself. Need to find *which* variable and whether
-   the builder/`%!...%` infra is creating a self-referential stamp (e.g. a reserved var seeded
-   with its own `%name%`), vs. a genuine author cycle.
-2. **Fix location.** Options:
-   - Cycle/self-ref guard in `text.Value` / `Variable.Resolve` (a resolving-set or depth cap;
-     a `%x%` whose resolution reaches `%x%` again → typed error, not stack overflow).
-   - Fix at the source so a variable is never stamped with a template referencing its own name.
-   - `Variable.Get(varName)` returning the *same* binding it is resolving for → short-circuit.
-
-   Leaning toward: a guard is needed regardless (a stack overflow on cyclic input is a
-   DoS/robustness hole, like the wire `MaxReadDepth` cap), *and* root-cause the specific
-   self-ref the builder produces.
-
----
-
-## Pattern / expectation
-
-Both crashes are **context/resolution plumbing exposed only once a full goal actually loads
-and runs during build** — the unit suites don't drive `plang build`'s goal-execution path, so
-they stayed green while this path was broken. Expect more of this shape (context-null at a
-not-yet-wired seam; resolution cycles; deferred-source materialization) as the chain unwinds.
-Each will be fixed root-first (set/​born the value, not `!= null`) on this branch until
-`plang build` completes end-to-end.
+**Not done (deliberately, awaiting architect):** #2 and #3 roots. #1 is fixed at root.
