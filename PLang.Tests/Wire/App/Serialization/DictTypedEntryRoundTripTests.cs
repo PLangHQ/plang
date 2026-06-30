@@ -11,17 +11,11 @@ public class DictTypedEntryRoundTripTests
         => global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-dictentry-" + System.Guid.NewGuid().ToString("N")[..8]));
 
-    // Acceptance test for the context-never-null work (.bot/remove-goalcall/coder/
-    // plan.md): a context-less Store read drops nested typed entries
-    // to raw {type,value} dicts. Goes green when the context-less read narrow is retired
-    // and every Store read routes through the one context-ful Typed-reader path.
-    // Type-routing is verified: with a context-ful serializer the read borns each
-    // nested {type,value} entry back to its type (the context-less narrow is gone).
-    // DataHashMismatch is FIXED (hash now taken in the serialization view; back.Success is
-    // true). Remaining: a dict of nested typed entries doesn't reconstruct its container types
-    // through a Store round-trip (top-level comes back not-a-dict) — a separate nested-container
-    // read issue, not the signature canonicalization.
-    [Skip("Pending: nested dict/list container reconstruction through Store round-trip")]
+    // Acceptance test for the context-never-null work: a dict of nested typed entries
+    // ({type,value}, no @schema) round-trips through the Store wire with each entry's type
+    // preserved. With context never null + the hash-in-serialization-view fix, the read borns
+    // each nested entry back to its real type. The value is read lazily, so nested types
+    // materialize through the async Value door — Peek returns the deferred source.
     [Test]
     public async Task DictOfTypedEntries_StoreRoundTrip_PreservesNestedTypes()
     {
@@ -47,9 +41,9 @@ public class DictTypedEntryRoundTripTests
         var back = await serializer.DeserializeAsync<global::app.type.item.@this>(ms, global::app.View.Store);
 
         await Assert.That(back.Success).IsTrue();
-        var dict = back.Peek() as global::app.type.dict.@this;
+        // Materialize through the async Value door — Peek returns the deferred source.
+        var dict = (await back.Value()) as global::app.type.dict.@this;
         await Assert.That(dict).IsNotNull();
-        // The bug: steps comes back a {type,value} dict instead of a list.
         await Assert.That(dict!.Get("steps")!.Type?.Name).IsEqualTo("list");
         await Assert.That(dict.Get("description")!.Type?.Name).IsEqualTo("text");
     }

@@ -1510,3 +1510,15 @@ across text/data/item.json/Build/Judge/llm). After Stage 4, revisit:
 - **Relationship to `IsRef`:** there are two checks — "CONTAINS a %ref%" (HasHoles) vs "IS a single
   %ref%" (`IsRef`, full-match, resolves the name; virtual on item/text/variable). Should they live
   together under one concept instead of split across text + the IsRef virtuals?
+
+## 2026-06-30 — Stage 5: signing authenticity ("verify pins") — deferred
+
+`module/signing/code/Ed25519.VerifyAsync` step 6 checks the signature against the public key
+**embedded in the signature** (`layer.Identity`) — integrity, not authenticity. A local-write
+adversary can tamper stored data, re-sign with their OWN keypair, and pass. Fix: verify navigates
+its own `Context.Actor.Identity` and asserts `layer.Identity ==` it (no decomposed param — OBP
+Rule #2), reachable now that the read holds `context.Actor`. The bootstrap (loading the root key)
+carries `verify.Root = true` (request state): normal checks run, the actor-identity match is
+skipped; keypair self-consistency (`PublicKey` re-derives from `PrivateKey`) lives in the identity
+provider. Decided on context-never-null, deferred per Ingi (2026-06-30). NOTE: the `%MyIdentity%`
+→ `%Identity%` rename is explicitly OUT of scope.

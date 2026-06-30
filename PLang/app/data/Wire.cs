@@ -152,6 +152,15 @@ public class Wire : JsonConverter<@this>
         try
         {
             var jr = new global::app.channel.serializer.json.Reader(reader, buffer);
+            // Invariant tripwire (Stage 6): a Store read MUST carry context — that's what routes
+            // it through the typed wire reader instead of the retired context-less narrow that
+            // dropped nested typed entries. Context-never-null makes this unreachable; the throw
+            // guards against a future regression reintroducing a context-less Store read.
+            if (_context == null && View == global::app.View.Store)
+                throw new JsonException(
+                    "Store read with no context — the context-never-null invariant is violated. "
+                    + "A Store-view Data read must carry the actor context (it binds the typed wire reader). "
+                    + "Construct the Wire/serializer with its context.");
             // _context is non-null on every read path (no context-less Wire is constructed in
             // production); ReadContext.Context is non-null, so the boundary `!` is honest here.
             var ctx = new global::app.type.reader.ReadContext(_context!, _template, View, _verify, _deferVerify);
