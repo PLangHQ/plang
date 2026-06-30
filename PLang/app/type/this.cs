@@ -248,6 +248,12 @@ public sealed class @this : item.@this
     /// instance <c>Create(object)</c> would be ambiguous with it.)</remarks>
     public item.@this Build(object? value, actor.context.@this context, string? format = null)
     {
+        // context-never-null: a value is born WITH context. A null here is a construction site
+        // (a Data ctor / FromRaw) that forgot to pass one — fail with a pointer, not an NRE deep
+        // in materialization. (One-liner to delete once every call site is fixed.)
+        if (context is null) throw new System.InvalidOperationException(
+            $"context-never-null: building a '{Name}' value without a context — pass the actor context at the Data/FromRaw construction site.");
+
         // Typed absence — no value to lift; the declaration survives (a typed null,
         // a tool-parameter slot). A JSON-null literal lands here too (the null citizen).
         if (value is null or global::app.type.@null.@this) return new global::app.type.@null.@this(Name, Kind);
