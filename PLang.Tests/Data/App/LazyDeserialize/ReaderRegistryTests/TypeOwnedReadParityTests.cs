@@ -103,7 +103,7 @@ public class TypeOwnedReadParityTests
         await Assert.That(dict.Has("c")).IsTrue();
 
         // Parity against the incumbent inline json read on the type entity.
-        var prior = global::app.type.@this.Create("json").Convert(json);
+        var prior = global::app.type.@this.Create("json", context: global::PLang.Tests.TestApp.SharedContext).Convert(json);
         await Assert.That(System.Text.Json.JsonSerializer.Serialize(via))
             .IsEqualTo(System.Text.Json.JsonSerializer.Serialize(prior));
     }
