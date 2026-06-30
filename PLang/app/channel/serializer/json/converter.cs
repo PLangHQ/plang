@@ -36,10 +36,9 @@ public sealed class Converter : JsonConverterFactory
         => new PathConverter(_context);
 
     /// <summary>
-    /// The path arm. Read routes through the reader registry
-    /// (<c>App.Type.Readers.Of("path", …)</c>) so a mid-graph path field
-    /// materializes through the same <c>path.Read</c> the payload-level path
-    /// would reach; Write emits the portable wire string (identical to the
+    /// The path arm. Read resolves the raw string directly via
+    /// <c>path.@this.Resolve</c> so a mid-graph path field materializes the same way
+    /// the payload-level path would; Write emits the portable wire string (identical to the
     /// deleted <c>path.JsonConverter.Write</c>).
     /// </summary>
     private sealed class PathConverter : JsonConverter<global::app.type.path.@this>
@@ -72,12 +71,10 @@ public sealed class Converter : JsonConverterFactory
             }
             if (string.IsNullOrEmpty(raw)) return null;
 
+            // The path type owns its construction — resolve the raw string directly (what
+            // path/serializer/Default.Read did via the Readers.Of delegate; no reflection hop).
             if (_context != null)
-            {
-                var read = _context.App.Type.Readers.Of("path", null);
-                if (read != null)
-                    return read(raw!, null, new global::app.type.reader.ReadContext(_context)) as global::app.type.path.@this;
-            }
+                return global::app.type.path.@this.Resolve(raw!, _context);
             // No context — bare file-scheme stub; Authorize callers explode on it
             // (the contract the old context-less converter kept).
             return new global::app.type.path.file.@this(raw!, context: null) { Raw = raw! };
