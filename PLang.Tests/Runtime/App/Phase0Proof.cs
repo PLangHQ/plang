@@ -34,7 +34,7 @@ public class Phase0Proof
     public async Task Phase01_DataOk_StillWorks()
     {
         // INPUT: create a successful Data result
-        var result = Data.Ok("hello world");
+        var result = global::PLang.Tests.TestApp.SharedContext.Ok("hello world");
 
         // OUTPUT: Data has value, is successful
         await result.IsSuccess();
@@ -150,7 +150,7 @@ public class Phase0Proof
             count = 3,
             value = new List<object?> { 1, 2, 3 }
         };
-        var result = Data.Ok(listValue, global::app.type.@this.FromName("list"));
+        var result = global::PLang.Tests.TestApp.SharedContext.Ok(listValue, global::app.type.@this.FromName("list"));
 
         // OUTPUT: Type is "list", not the CLR type name
         await Assert.That(result.Type).IsNotNull();
@@ -161,7 +161,7 @@ public class Phase0Proof
     public async Task Phase04_ScalarType_AutoInferred()
     {
         // INPUT: Data.Ok with an int value (no explicit type)
-        var result = Data.Ok(42);
+        var result = global::PLang.Tests.TestApp.SharedContext.Ok(42);
 
         // OUTPUT: Type auto-inferred as "int"
         await Assert.That(result.Type).IsNotNull();

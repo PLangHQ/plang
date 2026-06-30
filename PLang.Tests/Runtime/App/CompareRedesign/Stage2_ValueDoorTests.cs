@@ -127,7 +127,7 @@ public class Stage2_ValueDoorTests : System.IAsyncDisposable
         // A %ref% value rides as a typed `text` (never a bare System.String); the
         // authored seam stamps the %hole% as a template (Template="plang"), which
         // is what marks it a variable reference.
-        var d = new Data("slot");
+        var d = new Data("slot", context: global::PLang.Tests.TestApp.SharedContext);
         d.SetValue("%x%");
         d.Authored();
         await Assert.That(d.Peek() is global::app.type.text.@this).IsTrue();

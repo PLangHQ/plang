@@ -22,13 +22,13 @@ public class Stage6_DiffRenameTests
     public async Task GoldenDiff_StillProducesSameDiffTrees_ForKnownCases()
     {
         // pick a representative case from the v1 DataCompareTests and assert Diff produces the same shape
-        var a = new Data("a", "hello");
-        var b = new Data("b", "hello");
+        var a = new Data("a", "hello", context: global::PLang.Tests.TestApp.SharedContext);
+        var b = new Data("b", "hello", context: global::PLang.Tests.TestApp.SharedContext);
         var result = a.Diff(b);
         var tree = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
         await Assert.That(tree).IsNotNull();
         await Assert.That(tree!["match"]).IsEqualTo(true);
-        var c = new Data("c", "different");
+        var c = new Data("c", "different", context: global::PLang.Tests.TestApp.SharedContext);
         var tree2 = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await a.Diff(c).Value());
         await Assert.That(tree2!["match"]).IsEqualTo(false);
     }

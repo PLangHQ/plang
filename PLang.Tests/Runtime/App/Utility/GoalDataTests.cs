@@ -105,7 +105,7 @@ public class GoalSerializationTests
                         {
                             Module = "http",
                             ActionName = "get",
-                            Parameters = new List<Data> { new Data("url", "https://api.example.com") },
+                            Parameters = new List<Data> { new Data("url", "https://api.example.com", context: global::PLang.Tests.TestApp.SharedContext) },
                         },
                         new global::app.goal.steps.step.actions.action.@this
                         {
@@ -113,8 +113,8 @@ public class GoalSerializationTests
                             ActionName = "set",
                             Parameters = new List<Data>
                             {
-                                new Data("Name", "response"),
-                                new Data("Value", "%!data%")
+                                new Data("Name", "response", context: global::PLang.Tests.TestApp.SharedContext),
+                                new Data("Value", "%!data%", context: global::PLang.Tests.TestApp.SharedContext)
                             }
                         }
                     }

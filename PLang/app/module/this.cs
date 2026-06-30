@@ -387,7 +387,7 @@ public sealed class @this : IAsyncDisposable
                 else
                 {
                     examples = parameterType.GetCustomAttributes<ExampleAttribute>()
-                        .Select(e => new data.@this(e.Plang, e.Mapping))
+                        .Select(e => new data.@this(e.Plang, e.Mapping, context: App.System.Context))
                         .ToList();
                 }
 
