@@ -78,9 +78,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// answer with the CONTENT's own instance (a json file answers as
     /// <c>dict</c>), this file stamped as its prior. Single storage: the parsed
     /// value is the one copy. FILE authors its own failures — an IO/parse
-    /// failure lands on the asking binding, answer absent.
+    /// failure lands on the data binding, answer absent.
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this asking)
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
         // The sample: one auth-gated read per value per program run — a later
         // narrow (another alias, a cached binding) serves from memory, never
@@ -92,15 +92,15 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         }
         catch (System.IO.IOException ex)
         {
-            asking.Fail(new global::app.error.Error(
+            data.Fail(new global::app.error.Error(
                 $"could not read '{Path}': {ex.Message}", "FileReadFailed", 400) { Exception = ex });
             return Absent;
         }
         var channel = new global::app.channel.type.file.@this(Path);
         var read = await channel.Read(bytes);
-        if (!read.Success) { asking.Fail(read.Error!); return Absent; }
+        if (!read.Success) { data.Fail(read.Error!); return Absent; }
         _ = await read.Value();
-        if (!read.Success) { asking.Fail(read.Error!); return Absent; }
+        if (!read.Success) { data.Fail(read.Error!); return Absent; }
         var answer = read.Instance;
         if (answer == null || ReferenceEquals(answer, this)) return this;
         answer.Accumulate(this);

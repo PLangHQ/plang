@@ -73,11 +73,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// and answer with the CONTENT's own instance, this url stamped as its
     /// prior. Single storage: the fetched bytes are released after the parse.
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this asking)
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
         // The sample: one consent-gated fetch per value per program run — the
         // channel stamps + parses FROM the sample, never a second GET.
-        // URL authors its own failures (fetch stories) onto the asking binding.
+        // URL authors its own failures (fetch stories) onto the data binding.
         byte[] bytes;
         try
         {
@@ -85,7 +85,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         }
         catch (System.Net.Http.HttpRequestException ex)
         {
-            asking.Fail(new global::app.error.Error(
+            data.Fail(new global::app.error.Error(
                 $"could not fetch '{Path}': {ex.Message}", "UrlFetchFailed", 400) { Exception = ex });
             return Absent;
         }
@@ -99,9 +99,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             read = await new global::app.channel.type.file.@this(Path).Read(bytes);
         else
             read = await new global::app.channel.type.http.@this("text/plain", bytes, Context).Read();
-        if (!read.Success) { asking.Fail(read.Error!); return Absent; }
+        if (!read.Success) { data.Fail(read.Error!); return Absent; }
         _ = await read.Value();
-        if (!read.Success) { asking.Fail(read.Error!); return Absent; }
+        if (!read.Success) { data.Fail(read.Error!); return Absent; }
         var answer = read.Instance;
         if (answer == null || ReferenceEquals(answer, this)) return this;
         answer.Accumulate(this);

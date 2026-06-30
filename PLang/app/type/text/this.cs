@@ -67,19 +67,19 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// variable's value through ITS own door (door recursion; the answer may
     /// be any type); partial (<c>"hello %name%"</c>) interpolates single-pass
     /// into fresh, unstamped text. An unset full-match ref is THIS type's own
-    /// failure story — reported on the asking binding, answer absent.
+    /// failure story — reported on the data binding, answer absent.
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this asking)
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
         if (Template == null) return this;
-        var context = asking.Context;
+        var context = data.Context;
         if (context?.Variable == null) return this;
         if (global::app.data.@this.TryFullVarMatch(_value, out var varName))
         {
             var resolved = await context.Variable.Get(varName);
             if (resolved == null || !resolved.IsInitialized)
             {
-                asking.Fail(new global::app.error.Error(
+                data.Fail(new global::app.error.Error(
                     $"%{varName}% is not set — nothing to answer for {_value}.",
                     "VariableNotFound", 404));
                 return Absent;

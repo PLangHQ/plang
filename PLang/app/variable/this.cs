@@ -80,7 +80,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// </summary>
     private static readonly System.Threading.AsyncLocal<int> _resolveDepth = new();
 
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this asking)
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
         // The value door is LOUD: a reference must resolve to a bound value. An absent
         // variable (NotFound) used to render null and the value vanished silently
@@ -94,7 +94,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         }
         try
         {
-            var resolved = await asking.Context.Variable.Get(Name);
+            var resolved = await data.Context.Variable.Get(Name);
             if (resolved is null || !resolved.IsInitialized)
                 throw new global::app.error.VariableNotFoundException(Name);
             return await resolved.Value();
@@ -110,11 +110,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// from a value at the ask. So the only valid input here is an existing
     /// Variable; anything else is a decline (a rendered value is not a name).
     /// </summary>
-    public static @this? Create(global::app.type.item.@this value, global::app.data.@this asking)
+    public static @this? Create(global::app.type.item.@this value, global::app.data.@this data)
     {
         if (value is @this v) return v;
-        asking.Fail(new global::app.error.Error(
-            $"%{asking.Name}% holds a {value.Mint().Name} — a variable names a thing; it is born typed (declare 'type:variable'), never created from a value.",
+        data.Fail(new global::app.error.Error(
+            $"%{data.Name}% holds a {value.Mint().Name} — a variable names a thing; it is born typed (declare 'type:variable'), never created from a value.",
             "CreateVariableDeclined", 400));
         return null;
     }

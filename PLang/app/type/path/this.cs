@@ -103,11 +103,11 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// resolved path via the scheme registry — so the result is a normal path
     /// whose sync accessors are safe. Never mutates this shared instance.
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this asking)
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
         if (_location.Cacheable) return this;   // literal location — already resolved
-        var rendered = (await _location.Value(asking)).Clr<string>() ?? "";
-        return Resolve(rendered, asking.Context ?? Context!);
+        var rendered = (await _location.Value(data)).Clr<string>() ?? "";
+        return Resolve(rendered, data.Context ?? Context!);
     }
 
     /// <summary>

@@ -38,20 +38,20 @@ public sealed partial class @this
 
     /// <summary>
     /// The born-with-context creation door (<c>Data.Value&lt;snapshot&gt;</c> dispatches
-    /// here): rebuilds a snapshot tree from its wire string, born in the asking
-    /// binding's context (<paramref name="asking"/><c>.Context</c> — never a loose
+    /// here): rebuilds a snapshot tree from its wire string, born in the data
+    /// binding's context (<paramref name="data"/><c>.Context</c> — never a loose
     /// static context param). The result is the same in-memory shape
     /// <see cref="global::app.@this.Snapshot"/> produces, so <see cref="global::app.@this.Restore"/>
     /// consumes it unchanged. The wire is the Data envelope
     /// <c>{name, type, value:{…sections…}}</c>; each section is read back by its owner.
     /// </summary>
-    public static @this? Create(global::app.type.item.@this value, global::app.data.@this asking)
+    public static @this? Create(global::app.type.item.@this value, global::app.data.@this data)
     {
         if (value is @this self) return self;
         string? json = value.Clr<string>();
         if (string.IsNullOrEmpty(json)) return null;
 
-        var opts = new global::app.channel.serializer.plang.@this(asking.Context).SnapshotOptions;
+        var opts = new global::app.channel.serializer.plang.@this(data.Context).SnapshotOptions;
         var parsed = JsonNode.Parse(json)?.AsObject()
             ?? throw new JsonException("Snapshot wire root is not a JSON object");
         // Envelope-tolerant: file.save serializes the snapshot as ONE Data

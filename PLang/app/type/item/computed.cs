@@ -37,7 +37,7 @@ public sealed class computed : @this, module.IContext
     /// <summary>Never final — the door computes a fresh answer on every read.</summary>
     internal override bool IsFinal => false;
 
-    public override System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this asking)
+    public override System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this data)
         => System.Threading.Tasks.ValueTask.FromResult(Compute());
 
     /// <summary>A computed materialises itself (runs the factory) before navigating —
