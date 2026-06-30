@@ -76,37 +76,20 @@ public class DiscoverActionTests
 
         if (prMissing) return relativePath;
 
-        // Build a Goal with matching steps+actions, serialize to .pr JSON.
-        var goal = new Goal
-        {
-            Name = goalName,
-            Path = "/" + relativePath,
-            BuilderVersion = prBuilderVersion,
-            Steps = new GoalSteps()
-        };
+        // Build the goal+steps through Make (the real construction path — born with context),
+        // never a hand-rolled new Goal/GoalSteps. Make.Goal serializes to .pr the same shape.
+        var stepDefs = new List<global::PLang.Tests.Shared.Make.StepDef>();
         for (int i = 0; i < stepTexts.Length; i++)
         {
-            var step = new Step { Index = i, Text = stepTexts[i] };
             var actionSpec = actions[i];
-            List<Data> parameters;
-            if (preConstructedParams != null && i < preConstructedParams.Length)
-            {
-                parameters = preConstructedParams[i].parameters;
-            }
-            else
-            {
-                parameters = actionSpec.parameters
-                    .Select(p => new Data(p.name, p.value, context: _app.User.Context))
-                    .ToList();
-            }
-            step.Actions.Add(new PrAction
-            {
-                Module = actionSpec.module,
-                ActionName = actionSpec.actionName,
-                Parameters = parameters
-            });
-            goal.Steps.Add(step);
+            var action = (preConstructedParams != null && i < preConstructedParams.Length)
+                ? global::PLang.Tests.Shared.Make.Action(actionSpec.module, actionSpec.actionName,
+                    preConstructedParams[i].parameters.Select(d => (d.Name, (object?)d)).ToArray())
+                : global::PLang.Tests.Shared.Make.Action(actionSpec.module, actionSpec.actionName, actionSpec.parameters);
+            stepDefs.Add(global::PLang.Tests.Shared.Make.Step(stepTexts[i], action));
         }
+        var goal = global::PLang.Tests.Shared.Make.Goal(goalName, "/" + relativePath, stepDefs.ToArray());
+        goal.BuilderVersion = prBuilderVersion;
         // Snapshot the canonical hash. If corruptHash, mutate one step text AFTER
         // the hash is locked in, so the stored .pr's hash diverges from a fresh parse.
         var _ = goal.Hash;
