@@ -103,3 +103,32 @@ stored as a bare self-ref)" rule, then the chain collapses rather than being pat
 crash-by-crash.
 
 **Not done (deliberately, awaiting architect):** #2 and #3 roots. #1 is fixed at root.
+
+---
+
+## Builder `.pr` audit — type naming leaks CLR (separate from runtime, feeds it)
+
+Reviewed all 11 `os/system/builder/**/*.pr`.
+
+**Structure: valid.** Every `type` is the entity form `{"name": …}` — no bare-string types,
+all parse as JSON. They pass the `data` reader's "type must be an object" gate.
+
+**Names: CLR-type leakage (builder bug).** Inline dict/list literals are stamped with raw .NET
+reflection names instead of PLang names:
+```
+set %trace% = { id:…, goal:… }   →   "type": { "name": "dictionary`2" }   // want: "dict"
+```
+- `dictionary`2` (CLR `Dictionary`2`) and `list`1` (`List`1`) — 13+ occurrences across
+  `BuildGoal/*.pr`, `BuildStep/*.pr`. The builder emits `Type.Name` (reflection) for an inferred
+  inline object/array literal instead of the PLang type name.
+- Inconsistent: list appears as `list`, `list<action>`, AND `list`1`; dict as `dict<text,text>`
+  AND `dictionary`2`. Also `int`/`double` where PLang's scalar is `number`.
+
+**Runtime impact.** `{name:"dictionary`2"}` → `TypeMapping` has no such PLang type → `UnknownType`
+/ null `ClrType` → the value won't resolve/navigate as a `dict`. Same family as the runtime
+resolution failures above. These `.pr` were built by a builder with the type-naming bug and need
+a rebuild once the builder runs — chicken-and-egg with the crash chain.
+
+**Where to fix:** the builder's literal-type inference (form + variable intent) must map an inline
+`{…}`/`[…]` to the PLang type (`dict`/`list`), never `Type.Name`. Single source: the PLang type
+name should come from the type registry, not CLR reflection.
