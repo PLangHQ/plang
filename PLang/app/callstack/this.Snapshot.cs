@@ -109,7 +109,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
         var frames = new List<global::app.snapshot.@this>();
         foreach (var call in orderedOuterFirst)
         {
-            var frame = new global::app.snapshot.@this();
+            var frame = new global::app.snapshot.@this(s.Context);
             // The Call captures itself and reports whether it's a resumable position;
             // goal-enter frames say no (no step/action to re-enter from).
             if (call.Capture(frame))
@@ -173,7 +173,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
         var frames = new List<global::app.snapshot.@this>();
         foreach (var frameIo in io.GetSectionList("frames"))
         {
-            var frame = new global::app.snapshot.@this();
+            var frame = new global::app.snapshot.@this(s.Context);
             call.@this.ReadFrame(frameIo, frame);
             frames.Add(frame);
         }

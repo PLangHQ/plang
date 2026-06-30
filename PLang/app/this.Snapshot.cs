@@ -15,7 +15,7 @@ public sealed partial class @this
     /// </summary>
     public snapshot.@this Snapshot()
     {
-        var s = new snapshot.@this();
+        var s = new snapshot.@this(CurrentActor.Context);
         CurrentActor.Context.Variable.Capture(s.Section("Variables"));
         Error.Capture(s.Section("Errors"));
         Code.Capture(s.Section("Providers"));
@@ -37,7 +37,7 @@ public sealed partial class @this
     /// </summary>
     public snapshot.@this Snapshot(global::app.error.IError error)
     {
-        var s = new snapshot.@this();
+        var s = new snapshot.@this(CurrentActor.Context);
         CurrentActor.Context.Variable.SnapshotAt(error).Capture(s.Section("Variables"));
         Error.Capture(s.Section("Errors"));
         Code.Capture(s.Section("Providers"));

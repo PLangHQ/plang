@@ -19,11 +19,17 @@ public sealed class Text : ISerializer
 
     private readonly Encoding _encoding;
     private readonly global::app.channel.serializer.Json _jsonFallback;
+    // The context deserialized values are born in — Deserialize has no Data to source one from
+    // (unlike Serialize, which uses data.Context). Born-with-context: a value can't be created
+    // without it. Per-actor Serializers pass their context; the default ctor stays for callers
+    // with no actor in scope (Deserialize then surfaces a clear NoContext error).
+    private readonly actor.context.@this? _context;
 
-    public Text(Encoding? encoding = null, global::app.channel.serializer.Json? jsonFallback = null)
+    public Text(actor.context.@this? context = null, Encoding? encoding = null, global::app.channel.serializer.Json? jsonFallback = null)
     {
+        _context = context;
         _encoding = encoding ?? Encoding.UTF8;
-        _jsonFallback = jsonFallback ?? new global::app.channel.serializer.Json();
+        _jsonFallback = jsonFallback ?? new global::app.channel.serializer.Json(context);
     }
 
     public async Task<data.@this> SerializeAsync(Stream stream, data.@this data, global::app.View view = global::app.View.Out, CancellationToken cancellationToken = default)
@@ -51,7 +57,11 @@ public sealed class Text : ISerializer
         {
             using var reader = new StreamReader(stream, _encoding, leaveOpen: true);
             var text = await reader.ReadToEndAsync(cancellationToken);
-            return global::app.data.@this.Ok(text);
+            if (_context == null)
+                return global::app.data.@this.FromError(new error.ServiceError(
+                    "Text serializer needs a context to born deserialized values — construct with new Text(context).",
+                    "NoContext", 500));
+            return _context.Ok(text);
         }
         catch (Exception ex) when (ex is IOException)
         {

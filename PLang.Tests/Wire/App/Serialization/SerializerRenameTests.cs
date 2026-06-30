@@ -26,7 +26,7 @@ public class SerializerRenameTests
 
     [Test] public async Task Type_OnTextSerializer_ReturnsTextPlain()
     {
-        var s = new global::app.channel.serializer.Text();
+        var s = new global::app.channel.serializer.Text(global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(s.Type).IsEqualTo("text/plain");
     }
 
@@ -45,7 +45,7 @@ public class SerializerRenameTests
 
     [Test] public async Task Extension_OnTextSerializer_ReturnsDotTxt()
     {
-        var s = new global::app.channel.serializer.Text();
+        var s = new global::app.channel.serializer.Text(global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(s.Extension).IsEqualTo(".txt");
     }
 

@@ -18,13 +18,24 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
+    /// The actor context this snapshot tree is born in. The snapshot renders its entries
+    /// as self-describing Data (its leaf serializer builds them), so it must carry the
+    /// context to born them — born-with-context, never construct-then-stamp. Sub-sections
+    /// inherit it. Read-back (<see cref="Create"/>) borns in the data binding's context.
+    /// </summary>
+    public global::app.actor.context.@this? Context { get; internal set; }
+
+    public @this() { }
+    public @this(global::app.actor.context.@this? context) { Context = context; }
+
+    /// <summary>
     /// Returns the named subsection, creating it if missing. Subsystems hand the
     /// returned subtree to their nested ISnapshot children — each owns its scope.
     /// </summary>
     public @this Section(string name)
     {
         if (_sections.TryGetValue(name, out var existing)) return existing;
-        var created = new @this();
+        var created = new @this(Context);
         _sections[name] = created;
         return created;
     }

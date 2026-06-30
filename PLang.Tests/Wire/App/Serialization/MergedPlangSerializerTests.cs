@@ -56,7 +56,7 @@ public class MergedPlangSerializerTests : System.IAsyncDisposable
 
     [Test] public async Task TextPlain_RoundTrip_DataOkHello_YieldsHelloLiteral()
     {
-        var text = new global::app.channel.serializer.Text();
+        var text = new global::app.channel.serializer.Text(global::PLang.Tests.TestApp.SharedContext);
         using var ms = new MemoryStream();
         await text.SerializeAsync(ms, app.Ok("hello"));
         var wire = System.Text.Encoding.UTF8.GetString(ms.ToArray()).TrimEnd();

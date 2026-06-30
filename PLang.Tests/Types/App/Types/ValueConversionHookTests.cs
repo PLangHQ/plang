@@ -41,7 +41,7 @@ public class ValueConversionHookTests
             System.Threading.Thread.CurrentThread.CurrentCulture =
                 System.Globalization.CultureInfo.GetCultureInfo("de-DE");
 
-            var serializer = new global::app.channel.serializer.Text();
+            var serializer = new global::app.channel.serializer.Text(global::PLang.Tests.TestApp.SharedContext);
             var dec = (await serializer.Deserialize<global::app.type.number.@this>("3.14").Value());
             await Assert.That(dec).IsEqualTo(3.14m);
 

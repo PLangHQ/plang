@@ -17,19 +17,21 @@ public static class Default
     public static void Write(global::app.snapshot.@this snap, IWriter writer)
         => writer.Value(Render(snap));
 
-    /// <summary>A snapshot node renders as an object: its entries then its sub-sections.</summary>
+    /// <summary>A snapshot node renders as an object: its entries then its sub-sections.
+    /// Entries born self-describing Data in the snapshot's own context (born-with-context).</summary>
     private static object? Render(global::app.snapshot.@this node)
     {
-        var obj = new global::app.type.dict.@this();
+        var ctx = node.Context;
+        var obj = new global::app.type.dict.@this { Context = ctx };
         foreach (var (key, value) in node.Entries)
-            obj.Set(new data.@this(key, Render(value)));
+            obj.Set(new data.@this(key, Render(value, ctx), context: ctx));
         foreach (var (name, section) in node.Sections)
-            obj.Set(new data.@this(name, Render(section)));
+            obj.Set(new data.@this(name, Render(section), context: ctx));
         return obj; // native dict → `{}` on the wire
     }
 
-    /// <summary>One entry value → a wire-tree node.</summary>
-    private static object? Render(object? value)
+    /// <summary>One entry value → a wire-tree node. Context borns nested Data/dicts.</summary>
+    private static object? Render(object? value, global::app.actor.context.@this? ctx)
     {
         switch (value)
         {
@@ -46,9 +48,9 @@ public static class Default
                 return err; // error is an item — it renders itself
             case System.Collections.IDictionary dict:
             {
-                var obj = new global::app.type.dict.@this();
+                var obj = new global::app.type.dict.@this { Context = ctx };
                 foreach (System.Collections.DictionaryEntry e in dict)
-                    obj.Set(new data.@this(e.Key?.ToString() ?? "", Render(e.Value)));
+                    obj.Set(new data.@this(e.Key?.ToString() ?? "", Render(e.Value, ctx), context: ctx));
                 return obj;
             }
             case List<data.@this> records:
@@ -56,19 +58,19 @@ public static class Default
             case System.Collections.IEnumerable seq:
             {
                 var arr = new List<object?>();
-                foreach (var item in seq) arr.Add(Render(item));
+                foreach (var item in seq) arr.Add(Render(item, ctx));
                 return arr;
             }
             default:
                 // A plain domain record (Provider Registration / DefaultOverride):
                 // reflect its public properties into an object. camelCase the keys
                 // so the Io read (case-insensitive) rebinds the record's ctor.
-                var node = new global::app.type.dict.@this();
+                var node = new global::app.type.dict.@this { Context = ctx };
                 foreach (var p in value.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
                 {
                     if (p.GetIndexParameters().Length > 0) continue;
                     var name = char.ToLowerInvariant(p.Name[0]) + p.Name[1..];
-                    node.Set(new data.@this(name, Render(p.GetValue(value))));
+                    node.Set(new data.@this(name, Render(p.GetValue(value), ctx), context: ctx));
                 }
                 return node;
         }

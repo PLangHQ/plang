@@ -61,7 +61,7 @@ public sealed partial class @this
         var root = parsed["value"] is JsonObject inner && parsed.ContainsKey("type")
             ? inner
             : parsed;
-        var s = new @this();
+        var s = new @this(data.Context);
 
         void Load(string name, System.Action<Io, @this> read)
         {
