@@ -32,7 +32,7 @@ public class Ed25519 : ISigning
         var identity = (Identity)(await identityResult.Value())!;
 
         // Hash the inner data — the digest binds the value into the signed bytes.
-        var hashResult = await app.RunAction<Hash>(new Hash { Data = action.Data, Algorithm = new data.@this<global::app.type.text.@this>("", "keccak256", context: action.Context) }, action.Context);
+        var hashResult = await app.RunAction<Hash>(new Hash { Data = action.Data, Algorithm = new data.@this<global::app.type.text.@this>("", "keccak256", context: action.Context), StoreView = action.StoreView }, action.Context);
         if (!hashResult.Success) return hashResult;
         if (await hashResult.Value() is not global::app.module.crypto.type.hash.@this hash)
             return action.Context.Error(new ActionError("Hashing produced no digest", "DataHashMismatch", 500));
@@ -120,8 +120,13 @@ public class Ed25519 : ISigning
         if (storedHash.Bytes.Length == 0)
             return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Missing data hash", "DataHashMismatch", 400));
 
+        // Re-hash in the same view the data was stored in. skipFreshness == (View == Store)
+        // (set by the reader / the Store-view caller), so it doubles as the hash view: a stored
+        // value is a property-bag carrying every [Store] field; hashing it in Out view (a subset)
+        // would diverge from the sign-time Store hash.
         var rehash = await app.RunAction<Hash>(
-            new Hash { Data = layer.Value, Algorithm = new data.@this<global::app.type.text.@this>("", storedHash.Algorithm, context: action.Context) }, action.Context);
+            new Hash { Data = layer.Value, Algorithm = new data.@this<global::app.type.text.@this>("", storedHash.Algorithm, context: action.Context),
+                       StoreView = new data.@this<global::app.type.@bool.@this>("", skipFreshness, context: action.Context) }, action.Context);
         if (!rehash.Success) return global::app.data.@this<global::app.type.@bool.@this>.From(rehash);
         if (await rehash.Value() is not global::app.module.crypto.type.hash.@this rehashValue || !rehashValue.DigestEquals(storedHash))
             return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));

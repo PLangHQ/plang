@@ -50,6 +50,13 @@ public class Default : ICrypto
                     "SerializerMismatch", 500));
             var serializer = (registered as global::app.channel.serializer.plang.@this)
                              ?? new global::app.channel.serializer.plang.@this(action.Context);
+            // Hash in the view the data is serialized in. A stored value's wire shape carries
+            // every [Store] field; its reconstruction is a property-bag that re-emits them all,
+            // so hashing in Out view (a subset) would diverge from the typed value's Out hash.
+            // Sign/verify pass the destination view so the digest is over the wire bytes.
+            var view = (action.StoreView != null && (await action.StoreView.Value())?.Value == true)
+                ? global::app.View.Store : global::app.View.Out;
+            var options = view == global::app.View.Store ? serializer.StoreOptions : serializer.OutboundOptions;
             // The value writes its OWN canonical bytes via data.Output — deterministic (fixed
             // key order, entries insertion-order); sign and verify both run it, so they agree
             // regardless of the wire format. View.Out omits the binding name (hash is name-
@@ -62,9 +69,9 @@ public class Default : ICrypto
             await using (var utf8 = new System.Text.Json.Utf8JsonWriter(hashStream))
             {
                 var writer = new global::app.channel.serializer.json.Writer(
-                    utf8, serializer.OutboundOptions, global::app.View.Out,
+                    utf8, options, view,
                     action.Context?.App?.Type?.Renderers, emitsSchema: true);
-                await data.Output(writer, global::app.View.Out, action.Context, layer: true);
+                await data.Output(writer, view, action.Context, layer: true);
             }
             bytes = hashStream.ToArray();
         }

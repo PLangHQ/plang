@@ -23,6 +23,13 @@ public partial class sign : global::app.type.item.@this, global::app.type.item.I
     /// Wire form is ISO 8601 (e.g. <c>"PT5M"</c>) via the global TimeSpan converter.</summary>
     public partial data.@this<global::app.type.duration.@this>? Expires { get; init; }
 
+    /// <summary>
+    /// Whether the data is being signed for the Store view (true) or transport/Out (false).
+    /// The hash is taken in this view so it matches the wire bytes the verifier re-hashes —
+    /// the serializer sets it from the view sign-if-missing fires in. Default false (Out).
+    /// </summary>
+    public partial data.@this<global::app.type.@bool.@this>? StoreView { get; init; }
+
     [Code]
     public partial ISigning Signer { get; }
 

@@ -12,6 +12,16 @@ public partial class Hash : IContext
     [Default("keccak256")]
     public partial data.@this<global::app.type.text.@this> Algorithm { get; init; }
 
+    /// <summary>
+    /// Canonicalize the value in the Store view (all <c>[Store]</c> fields) rather than the
+    /// default Out view. The hash must be taken in the SAME view the data is serialized in:
+    /// a stored value's wire-reconstruction is a property-bag carrying every <c>[Store]</c>
+    /// field, so re-hashing it in Out view (a subset) diverges from the typed value's Out
+    /// hash. Sign and verify both pass the data's destination view here so the digest is
+    /// over the exact bytes that cross the wire. Default false (Out, for transport).
+    /// </summary>
+    public partial data.@this<global::app.type.@bool.@this>? StoreView { get; init; }
+
     [Code]
     public partial ICrypto Crypto { get; }
 

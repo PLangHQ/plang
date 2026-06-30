@@ -159,7 +159,11 @@ public sealed class @this : ISerializer
             if (_context.Actor != null && data.Peek() is not global::app.type.signature.@this)
             {
                 var signResult = await _context.App.RunAction(
-                    new app.module.signing.sign { Data = data }, _context);
+                    new app.module.signing.sign { Data = data,
+                        // Hash in the view we're serializing in, so the verifier (re-hashing the
+                        // wire-reconstructed bag in the same view) gets matching bytes.
+                        StoreView = new app.data.@this<global::app.type.@bool.@this>("", view == global::app.View.Store, context: _context) },
+                    _context);
                 if (signResult.Success) data = signResult;
             }
             var options = view == global::app.View.Store ? _store : _outbound;
