@@ -41,6 +41,6 @@
 | 6 | [Invariant proof](stage-6-invariant-proof.md) | pending |
 | 7 | [Residual actor/context nullables](stage-7-residual-nullables.md) | pending |
 
-Dependency order: 1 first (foundation); 2 independent (sequence after 1 for clean diffs); 3 needs 1; 4 needs 1+3; 5 needs 4+1; 6 needs all. Stage 7 (added by a later nullable-object audit) closes gaps A–D didn't enumerate — the channel Actor fields, `context.CallStack`, the `type` identity nuance, the `!` residue; items 2–4 need 1+3, item 1 (channel Actor) needs Ingi's "is Service an actor" decision.
+Dependency order: 1 first (foundation); 2 independent (sequence after 1 for clean diffs); 3 needs 1; 4 needs 1+3; 5 needs 4+1; 6 needs all. Stage 7 (added by a later nullable-object audit) closes gaps A–D didn't enumerate — the channel Actor fields, `context.CallStack`, the `type` identity nuance, the `!` residue; items 2–4 need 1+3, item 1 (channel Actor) is decided — Service is a transient actor, so the fields flip genuinely non-null.
 
 **Status.** Design settled and stages carved. Ready for test-designer and coder.
