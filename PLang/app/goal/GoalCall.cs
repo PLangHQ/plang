@@ -323,22 +323,14 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
         // Wired here at the .pr-load seam, like App — never left null.
         goal.Steps.Context = context;
         foreach (var step in goal.Steps)
-        {
             step.Goal = goal;
-            foreach (var action in step.Actions)
-                action.StampTemplates();
-        }
         foreach (var subGoal in goal.Goals)
         {
             subGoal.App = app;
             subGoal.Parent = goal;
             subGoal.Steps.Context = context;
             foreach (var step in subGoal.Steps)
-            {
                 step.Goal = subGoal;
-                foreach (var action in step.Actions)
-                    action.StampTemplates();
-            }
         }
 
         // Stash where the .pr was loaded from — Goal.GetRuntimeDirectory uses this

@@ -40,12 +40,9 @@ public sealed class @this
     public void Add(goal.@this goal)
     {
         goal.App = App;
-        // Every registered goal is authored (.pr load, builder output,
-        // programmatic composition) — the template seam runs here, never on
-        // runtime input. %ref% holes in step parameters become live templates.
-        foreach (var step in goal.Steps)
-            foreach (var action in step.Actions)
-                action.StampTemplates();
+        // Templates are honored on READ from the type's explicit `template` flag (the build
+        // stamps it on an authored %ref% value) — not stamped eagerly here, never inferred
+        // from content. See app.type.@this.Template + data.reader.
         if (goal.PrPath == null)
             throw new ArgumentException($"Goal '{goal.Name}' must have a Path set. PrPath is derived from Path and is required for keying.");
         _goals[goal.PrPath] = goal;

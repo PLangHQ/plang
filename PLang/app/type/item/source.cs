@@ -49,7 +49,7 @@ public sealed class source : @this, module.IContext
     /// <summary>The declared judgement, verbatim — the source IS the declared
     /// type, unparsed.</summary>
     protected internal override global::app.type.@this Mint()
-        => new(_type, _kind, _strict);
+        => new(_type, _kind, _strict, _template);
 
     /// <summary>
     /// In memory now = the raw source form. A byte raw declared <c>text</c> decodes
@@ -85,6 +85,10 @@ public sealed class source : @this, module.IContext
     /// <summary>Never final — the door parses the raw form into its value on read.</summary>
     internal override bool IsFinal => false;
 
+    /// <summary>A template-bearing source re-resolves every read (its %refs% can change) — never
+    /// cached by the holding Data; a plain source parses once and caches. Mirrors text/dict/list.</summary>
+    public override bool Cacheable => _template == null;
+
     public override async System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this data)
     {
         await System.Threading.Tasks.Task.CompletedTask;
@@ -93,7 +97,10 @@ public sealed class source : @this, module.IContext
             var item = Read();
             if (ReferenceEquals(item, this)) return this;
             item.Accumulate(this);
-            return item;
+            // Resolve the materialized item — a template (text/dict/list) renders against live
+            // variables; a plain leaf/container answers itself. The source layer is transparent:
+            // "give me the value" returns the value, not an intermediate unrendered template.
+            return await item.Value(data);
         }
         catch (System.Exception ex) when (ex is System.Text.Json.JsonException or System.FormatException or System.InvalidOperationException)
         {

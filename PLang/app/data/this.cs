@@ -320,16 +320,13 @@ public partial class @this
     /// wire reader; <c>set %x% = 5</c> still lifts the value directly.
     /// </summary>
     public static @this FromRaw(object raw, type type, actor.context.@this? context = null, string name = "",
-        string? format = null, string? template = null)
+        string? format = null)
     {
-        // A `json` kind is JSON-encoded (object/dict/list/structured) — read it through
-        // the plang (json) serializer. Anything else is its own raw form (csv, image
-        // bytes, a biginteger's digits) — read through the value serializer. The caller
-        // may force a format (the wire passes application/plang for its encoded slots).
-        format ??= string.Equals(type?.Kind, "json", System.StringComparison.OrdinalIgnoreCase)
-            ? "application/plang" : "text/plain";
+        // The type owns making its value from a raw form — ONE source-maker (app.type.@this.Build),
+        // which carries the type's Name/Kind/Strict/format and its template flag. FromRaw is the
+        // Data wrapper around that. A caller may pass a format the wire knows from the slot's token.
         var d = new @this(name) { _context = context! };
-        d._item = new global::app.type.item.source(raw, type?.Name ?? "", type?.Kind, format: format, template: template) { Context = context };
+        d._item = type.Build(raw, context!, format);
         return d;
     }
 
@@ -685,20 +682,12 @@ public partial class @this
     {
         context = context ?? _context;
 
-        // Full-match live-variable hop — the canonical IS the variable's own
-        // Data (mutations stay visible through Variables.Get). Stamp-gated:
-        // an unstamped "%x%" is literal text and `this` is already canonical.
-        if (context?.Variable != null && _item.IsRef(out var varName))
-        {
-            var resolved = await context.Variable.Get(varName);
-            if (resolved == null || !resolved.IsInitialized)
-            {
-                var notFound = new @this(varName, null, null, Parent, context: context);
-                notFound.IsInitialized = false;
-                return notFound;
-            }
-            return resolved;
-        }
+        // Full-match live-variable hop — the canonical IS the variable's own Data (mutations
+        // stay visible through Variables.Get). Stamp-gated: an unstamped "%x%" is literal text
+        // and `this` is already canonical. The hop itself lives in CollapseRef (shared with the
+        // variable write door); for a full-match it is the whole canonicalization.
+        if (context?.Variable != null && _item.IsRef(out _))
+            return await CollapseRef(context);
 
         // Any other stamped template (partial text, container with nested
         // refs) — the door renders (the TYPE fills its own holes; never
@@ -717,6 +706,32 @@ public partial class @this
         }
 
         // Literal value — `this` is the canonical, return as-is.
+        return this;
+    }
+
+    /// <summary>
+    /// Full-match alias hop — a value that IS a single <c>%x%</c> reference resolves to the
+    /// CURRENT Data instance bound to <c>x</c> (or an uninitialized Data when <c>x</c> is unset).
+    /// A NAME-HOP, not a render: it never calls the value door, so it neither materializes a lazy
+    /// source nor recurses. Any other value (literal, partial template, container) is already
+    /// canonical at the binding layer and returns as-is. The variable write door runs every store
+    /// through this so a binding is never a live alias to a name (no <c>x = %x%</c> self-alias,
+    /// no <c>a→b→a</c> cycle) — the read door then derefs in one hop with no cycle guard.
+    /// </summary>
+    internal async System.Threading.Tasks.ValueTask<@this> CollapseRef(actor.context.@this? context = null)
+    {
+        context = context ?? _context;
+        if (context?.Variable != null && _item.IsRef(out var varName))
+        {
+            var resolved = await context.Variable.Get(varName);
+            if (resolved == null || !resolved.IsInitialized)
+            {
+                var notFound = new @this(varName, null, null, Parent, context: context);
+                notFound.IsInitialized = false;
+                return notFound;
+            }
+            return resolved;
+        }
         return this;
     }
 

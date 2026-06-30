@@ -26,7 +26,8 @@
                   {
                     "name": "goal",
                     "type": {
-                      "name": "text"
+                      "name": "text",
+                      "template": "plang"
                     },
                     "value": "%goal%"
                   }

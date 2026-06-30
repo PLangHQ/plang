@@ -31,7 +31,7 @@ public sealed class json : JsonConverter<@this?>
 
         if (reader.TokenType == JsonTokenType.StartObject)
         {
-            string? name = null, kind = null;
+            string? name = null, kind = null, template = null;
             bool strict = false;
             while (reader.Read())
             {
@@ -44,6 +44,7 @@ public sealed class json : JsonConverter<@this?>
                 {
                     case "name": name = reader.TokenType == JsonTokenType.Null ? null : reader.GetString(); break;
                     case "kind": kind = reader.TokenType == JsonTokenType.Null ? null : reader.GetString(); break;
+                    case "template": template = reader.TokenType == JsonTokenType.Null ? null : reader.GetString(); break;
                     case "strict":
                         if (reader.TokenType == JsonTokenType.True) strict = true;
                         else if (reader.TokenType == JsonTokenType.String
@@ -52,7 +53,7 @@ public sealed class json : JsonConverter<@this?>
                     default: reader.Skip(); break;
                 }
             }
-            return string.IsNullOrWhiteSpace(name) ? null : @this.Create(name!, kind, strict);
+            return string.IsNullOrWhiteSpace(name) ? null : @this.Create(name!, kind, strict, template: template);
         }
 
         // HACK (minimal, "just get the build working"): the build LLM occasionally
@@ -98,6 +99,7 @@ public sealed class json : JsonConverter<@this?>
         writer.WriteString("name", value.Name);
         if (!string.IsNullOrEmpty(value.Kind)) writer.WriteString("kind", value.Kind);
         if (value.Strict) writer.WriteBoolean("strict", true);
+        if (!string.IsNullOrEmpty(value.Template)) writer.WriteString("template", value.Template);
         writer.WriteEndObject();
     }
 }

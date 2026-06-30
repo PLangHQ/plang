@@ -118,6 +118,14 @@ public partial class @this
     {
         name = CleanName(name);
 
+        // Alias-collapse at the write door: a full-match %ref% value resolves to the CURRENT
+        // instance it names before binding, so a binding is never a live self-alias (x = %x%)
+        // or a link in a cycle (a = %b%, b = %a%). A name-hop, not a render — literals, partial
+        // templates, containers and lazy sources ride through unchanged. The read door then
+        // derefs in one hop and trusts bindings terminate; no read-side cycle guard.
+        if (value is data.@this incoming)
+            value = await incoming.CollapseRef(_context);
+
         // A write navigates to the parent then sets the leaf via CLR reflection,
         // which needs literal indices (a list element, a record field). Resolve any
         // variable index to its literal form first — through the path/segment engine
