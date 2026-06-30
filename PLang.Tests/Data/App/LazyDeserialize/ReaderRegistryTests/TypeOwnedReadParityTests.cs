@@ -38,7 +38,7 @@ public class TypeOwnedReadParityTests
         // The reader re-houses number.Convert: Read == Convert, value-identical
         // across int/long/decimal/double/float.
         var r = new global::app.type.reader.@this();
-        var ctx = new global::app.type.reader.ReadContext(null);
+        var ctx = new global::app.type.reader.ReadContext(global::PLang.Tests.TestApp.SharedContext);
         var read = r.Of("number", "int")!; // Default wildcard covers every kind
         await Assert.That(read("42", "int", ctx)).IsEqualTo((object)42);
         await Assert.That(read("42", "long", ctx)).IsEqualTo((object)42L);
@@ -53,7 +53,7 @@ public class TypeOwnedReadParityTests
         var bytes = new byte[] { 1, 2, 3, 4, 250, 99 };
         var b64 = System.Convert.ToBase64String(bytes);
         var r = new global::app.type.reader.@this();
-        var rc = new global::app.type.reader.ReadContext(null);
+        var rc = new global::app.type.reader.ReadContext(global::PLang.Tests.TestApp.SharedContext);
         var via = r.Of("hash", null)!(b64, "keccak256", rc) as global::app.module.crypto.type.hash.@this;
         var prior = global::app.module.crypto.type.hash.@this.FromWire(b64, "keccak256") as global::app.module.crypto.type.hash.@this;
         await Assert.That(via).IsNotNull();
@@ -81,7 +81,7 @@ public class TypeOwnedReadParityTests
         // duration's Read parses ISO-8601 to the same TimeSpan the format-layer
         // TimeSpanIso8601 converter produced (XmlConvert.ToTimeSpan).
         var r = new global::app.type.reader.@this();
-        var rc = new global::app.type.reader.ReadContext(null);
+        var rc = new global::app.type.reader.ReadContext(global::PLang.Tests.TestApp.SharedContext);
         var via = r.Of("duration", "iso8601")!("PT30S", "iso8601", rc);
         await Assert.That(((global::app.type.item.@this)via!).Clr<System.TimeSpan>()).IsEqualTo(System.Xml.XmlConvert.ToTimeSpan("PT30S"));
     }
@@ -94,7 +94,7 @@ public class TypeOwnedReadParityTests
         // { key: value, list: […], nested: {…} }.
         const string json = "{\"a\":1,\"b\":[1,2],\"c\":{\"d\":true}}";
         var r = new global::app.type.reader.@this();
-        var ctx = new global::app.type.reader.ReadContext(null);
+        var ctx = new global::app.type.reader.ReadContext(global::PLang.Tests.TestApp.SharedContext);
         var via = r.Of("object", "json")!(json, "json", ctx);
         await Assert.That(via).IsTypeOf<app.type.dict.@this>();
         var dict = (app.type.dict.@this)via!;

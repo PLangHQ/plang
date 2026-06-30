@@ -17,7 +17,7 @@ public class TypedReaderRoundTripTests
         var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
         utf8.Read();   // position on the value token
         var jr = new global::app.channel.serializer.json.Reader(utf8);
-        return typeReader.Read(ref jr, kind, new global::app.type.reader.ReadContext(null));
+        return typeReader.Read(ref jr, kind, new global::app.type.reader.ReadContext(global::PLang.Tests.TestApp.SharedContext));
     }
 
     [Test] public async Task Bool_True_Isolated()

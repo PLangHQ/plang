@@ -13,7 +13,7 @@ public class TextParamTypeOnWireTests
             app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         // No Context → no signing, so we see the raw {name, type?, value} shape.
-        var data = new global::app.data.@this("Content", "Hi %name%");
+        var data = new global::app.data.@this("Content", "Hi %name%", context: global::PLang.Tests.TestApp.SharedContext);
         var json = (await plang.Store(data).Value())!.Clr<string>()!;
 
         // A text param is self-describing — it carries its type, so the read is typed

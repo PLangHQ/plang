@@ -13,14 +13,14 @@ public class FailureMatrixTests : System.IAsyncDisposable
 
     [Test] public async Task PropertiesSet_DataInstanceValue_ThrowsArgumentException()
     {
-        var d = new global::app.data.@this("x", "y");
-        var inner = new global::app.data.@this("inner", "v");
+        var d = new global::app.data.@this("x", "y", context: global::PLang.Tests.TestApp.SharedContext);
+        var inner = new global::app.data.@this("inner", "v", context: global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(() => d.Properties["k"] = inner).Throws<ArgumentException>();
     }
 
     [Test] public async Task PropertiesSet_ArbitraryObjectValue_ThrowsArgumentException()
     {
-        var d = new global::app.data.@this("x", "y");
+        var d = new global::app.data.@this("x", "y", context: global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(() => d.Properties["k"] = new System.Threading.CancellationTokenSource()).Throws<ArgumentException>();
     }
 
@@ -62,7 +62,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
 
     [Test] public async Task Decompress_OnNonArchivedType_ReturnsSelfNoError()
     {
-        var d = new global::app.data.@this("x", "y", global::app.type.@this.FromName("text/plain"));
+        var d = new global::app.data.@this("x", "y", global::app.type.@this.FromName("text/plain"), context: global::PLang.Tests.TestApp.SharedContext);
         var result = d.Decompress();
         await Assert.That(ReferenceEquals(d, result)).IsTrue();
         await result.IsSuccess();
