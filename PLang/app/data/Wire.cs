@@ -12,37 +12,11 @@ using type = global::app.type.@this;
 /// <c>signature</c> is omitted when null. The <c>value</c> slot is written by the value's own
 /// <c>Output</c> (each type emits its form; structural types reflect their <c>[Out]</c>-tagged
 /// properties via <c>OutputTagged</c>); no per-type JsonConverter is needed.
-///
-/// <para>
-/// Sign-if-missing: each Data the converter visits during a Write walk gets
-/// <see cref="@this.EnsureSigned"/> fired before emission, idempotently — a
-/// Data that already carries a Signature is left alone. Forwarding chains
-/// preserve provenance because inner Datas that arrived already-signed never
-/// re-sign; new Datas in a freshly-wrapped outer get their own signature.
-/// </para>
-///
-/// <para>
-/// Hash carve-out: when crypto.Hash needs to canonicalize a Data D for
-/// signing, the converter is told (via <see cref="MarkOuterForHash"/>) that
-/// D is the "outer being signed right now." For that one Data, Write emits
-/// <c>{name, type, value, properties}</c> with <em>no</em> signature field
-/// and does NOT call EnsureSigned (which would loop). All inner Datas reached
-/// through the walk still go through sign-if-missing and emit their full
-/// shape, so the outer signature transitively binds inner attestations.
-/// </para>
+/// Read-only: a Data writes itself via <c>Data.Output</c> (signing lives there), so this
+/// converter only reads — its <c>Write</c> throws.
 /// </summary>
 public class Wire : JsonConverter<@this>
 {
-    // Ref-counted "outer being hashed right now" tracking. A plain HashSet
-    // would lose the marker when nested Hash calls run on the same Data
-    // instance (signing.verify re-hashing inner while outer Verify is mid-
-    // serialise; chained crypto.Hash through a goal whose own result is
-    // being signed): inner-disposal would Remove the Data the outer still
-    // depended on, and the next outer Write would think it was safe to
-    // EnsureSigned, causing recursion. Per-instance ref-count keeps each
-    // scope's lifetime independent.
-    private static readonly AsyncLocal<Dictionary<@this, int>?> _hashOuter = new();
-
     /// <summary>
     /// The view this converter emits in. Owned per-instance — the plang
     /// serializer keeps separate <see cref="System.Text.Json.JsonSerializerOptions"/>
@@ -95,47 +69,6 @@ public class Wire : JsonConverter<@this>
     // (NestedOptions, goal-param readers) is built with verify:false — the inner Data is already
     // covered by the outer signature, so re-verifying each layer is wrong (and needs no actor).
     private readonly bool _verify;
-
-    /// <summary>
-    /// Marks <paramref name="data"/> as the "outer being hashed right now."
-    /// While the returned scope is alive, the converter writes that one
-    /// Data's body without invoking <see cref="@this.EnsureSigned"/> and
-    /// without emitting its Signature field. Reference-counted: nested
-    /// MarkOuterForHash calls on the same Data instance compose correctly.
-    /// </summary>
-    public static IDisposable MarkOuterForHash(@this data)
-    {
-        var map = _hashOuter.Value ??= new Dictionary<@this, int>(ReferenceEqualityComparer.Instance);
-        map.TryGetValue(data, out var n);
-        map[data] = n + 1;
-        return new Scope(data);
-    }
-
-    private static bool IsHashOuter(@this data)
-    {
-        var map = _hashOuter.Value;
-        return map != null && map.TryGetValue(data, out var n) && n > 0;
-    }
-
-    private sealed class Scope : IDisposable
-    {
-        private readonly @this _data;
-        private bool _disposed;
-        public Scope(@this data) { _data = data; }
-        public void Dispose()
-        {
-            if (_disposed) return;
-            _disposed = true;
-            var map = _hashOuter.Value;
-            if (map == null) return;
-            if (map.TryGetValue(_data, out var n))
-            {
-                if (n <= 1) map.Remove(_data);
-                else map[_data] = n - 1;
-            }
-            if (map.Count == 0) _hashOuter.Value = null;
-        }
-    }
 
     // Hard ceiling on nested Data depth. STJ's own MaxDepth=64 caps a single
     // ParseValue call, but LiftDataIfShaped restarts STJ via

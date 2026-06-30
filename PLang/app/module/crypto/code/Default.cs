@@ -35,8 +35,8 @@ public class Default : ICrypto
         else
         {
             // Canonicalize through the same wire options the merged application/plang
-            // serializer uses, so hashed-bytes ≡ wire-bytes (minus the outermost
-            // Signature field, suppressed via Wire.MarkOuterForHash).
+            // serializer uses, so hashed-bytes ≡ wire-bytes. data.Output emits no
+            // signature field, so the hash is over the canonical body directly.
             // The outer signature transitively binds inner Datas' signatures.
             //
             // If something other than the canonical plang.@this is registered for
@@ -54,7 +54,7 @@ public class Default : ICrypto
             // key order, entries insertion-order); sign and verify both run it, so they agree
             // regardless of the wire format. View.Out omits the binding name (hash is name-
             // independent), and data.Output never emits a signature, so there's nothing to
-            // suppress — MarkOuterForHash is unnecessary in the layer model.
+            // suppress — no per-hash signature suppression is needed in the layer model.
             // TODO: serialize-to-MemoryStream-then-hash is the wrong shape — data.Output
             // should produce its hash intrinsically (write into a hashing writer), not via an
             // intermediate buffer. Correct behaviour, wrong means.

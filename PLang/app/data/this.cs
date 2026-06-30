@@ -543,13 +543,6 @@ public partial class @this
     }
     public static @this Uninitialized(string name) => NotFound(name);
 
-    /// <summary>
-    /// True when the held instance carries the builder-authored template stamp —
-    /// the gate every %ref% resolution branch checks. Unstamped values (runtime
-    /// input, stored results) never resolve; their "%...%" content is literal.
-    /// </summary>
-    private bool IsStampedTemplate => _item?.Template != null;
-
     private static readonly System.Text.RegularExpressions.Regex FullVarMatchRegex =
         new(@"^%([^%]+)%$", System.Text.RegularExpressions.RegexOptions.Compiled);
 
