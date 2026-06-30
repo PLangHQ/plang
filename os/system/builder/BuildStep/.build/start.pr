@@ -17,14 +17,16 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%step%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%goal.Steps[planStep.index]%"
             }
@@ -100,14 +102,16 @@
                 {
                   "name": "Step",
                   "type": {
-                    "name": "step"
+                    "name": "step",
+                    "template": "plang"
                   },
                   "value": "%step%"
                 },
                 {
                   "name": "Actions",
                   "type": {
-                    "name": "list<text>"
+                    "name": "list",
+                    "template": "plang"
                   },
                   "value": "%planStep.actions%"
                 }
@@ -122,7 +126,8 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%planStep.actions%"
                 },
@@ -130,7 +135,7 @@
                   "name": "Value",
                   "type": {
                     "name": "list",
-                    "kind": "text"
+                    "template": "plang"
                   },
                   "value": "%!data%"
                 }
@@ -166,7 +171,8 @@
                 {
                   "name": "Actions",
                   "type": {
-                    "name": "list<text>"
+                    "name": "list",
+                    "template": "plang"
                   },
                   "value": "%planStep.actions%"
                 }
@@ -194,7 +200,8 @@
                 {
                   "name": "Actions",
                   "type": {
-                    "name": "list<text>"
+                    "name": "list",
+                    "template": "plang"
                   },
                   "value": "%planStep.actions%"
                 }
@@ -209,7 +216,8 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%typeInfo%"
                 },
@@ -217,7 +225,7 @@
                   "name": "Value",
                   "type": {
                     "name": "list",
-                    "kind": "text"
+                    "template": "plang"
                   },
                   "value": "%!data%"
                 }
@@ -253,7 +261,8 @@
                 {
                   "name": "Goal",
                   "type": {
-                    "name": "goal"
+                    "name": "goal",
+                    "template": "plang"
                   },
                   "value": "%goal%"
                 }
@@ -268,14 +277,16 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%varTypes%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "list<dict<text,text>>"
+                    "name": "list",
+                    "template": "plang"
                   },
                   "value": "%!data%"
                 }
@@ -311,14 +322,16 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%stepVarTypes%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%varTypes[step.Index]%"
                 }
@@ -369,14 +382,16 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%stepForLlm%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "text"
+                    "name": "text",
+                    "template": "plang"
                   },
                   "value": "%!data%"
                 }
@@ -427,14 +442,16 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%actionDetails%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%!data%"
                 }
@@ -485,14 +502,16 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%buildStepPrompt%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "text"
+                    "name": "text",
+                    "template": "plang"
                   },
                   "value": "%!data%"
                 }
@@ -543,14 +562,16 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%buildStepUserMsg%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%!data%"
                 }
@@ -586,14 +607,15 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%messages%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "list`1"
+                    "name": "list"
                   },
                   "value": [
                     {
@@ -664,8 +686,7 @@
                     {
                       "name": "Actions",
                       "type": {
-                        "name": "list",
-                        "kind": "action"
+                        "name": "list"
                       },
                       "value": [
                         {
@@ -720,14 +741,15 @@
                 {
                   "name": "ListName",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%trace.stepPasses%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "dictionary`2"
+                    "name": "dict"
                   },
                   "value": {
                     "goal": "%goal.Name%",
@@ -780,14 +802,16 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%goal.Steps[step.Index].Actions%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%compileResult.actions%"
                 }
@@ -823,14 +847,16 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%goal.Steps[step.Index].Formal%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%compileResult.formal%"
                 }
@@ -866,7 +892,8 @@
                 {
                   "name": "Actions",
                   "type": {
-                    "name": "list<action>"
+                    "name": "list",
+                    "template": "plang"
                   },
                   "value": "%goal.Steps[step.Index].Actions%"
                 }
@@ -880,8 +907,7 @@
                     {
                       "name": "Actions",
                       "type": {
-                        "name": "list",
-                        "kind": "action"
+                        "name": "list"
                       },
                       "value": [
                         {
@@ -986,7 +1012,8 @@
                 {
                   "name": "Messages",
                   "type": {
-                    "name": "list<llmmessage>"
+                    "name": "list",
+                    "template": "plang"
                   },
                   "value": "%messages%"
                 },
@@ -1060,7 +1087,7 @@
                     {
                       "name": "Actions",
                       "type": {
-                        "name": "list<action>"
+                        "name": "list"
                       },
                       "value": [
                         {
@@ -1093,14 +1120,16 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%compileResult%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%!data%"
                 }
@@ -1136,7 +1165,8 @@
                 {
                   "name": "Left",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%compileResult.errors[0].key%"
                 },
@@ -1173,7 +1203,8 @@
                 {
                   "name": "Message",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "missing-actions: %compileResult.errors[0].message%"
                 },
@@ -1235,14 +1266,16 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%complaint%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "text"
+                    "name": "text",
+                    "template": "plang"
                   },
                   "value": "Compiler returned missing-actions for step %step.Index% (text: '%step.Text%'). Current action set is insufficient: %planStep.actions%. Reason: %!error.Message%. Return a corrected action set for step %step.Index% only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) — recovery confidence matters because it tells the dev whether even the correction is a guess."
                 },
@@ -1287,14 +1320,15 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%refineMessages%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "list`1"
+                    "name": "list"
                   },
                   "value": [
                     {
@@ -1335,14 +1369,15 @@
                 {
                   "name": "Messages",
                   "type": {
-                    "name": "list<llmmessage>"
+                    "name": "list",
+                    "template": "plang"
                   },
                   "value": "%refineMessages%"
                 },
                 {
                   "name": "Schema",
                   "type": {
-                    "name": "dictionary`2"
+                    "name": "dict"
                   },
                   "value": {
                     "index": "int",
@@ -1354,7 +1389,8 @@
                 {
                   "name": "Cache",
                   "type": {
-                    "name": "bool"
+                    "name": "bool",
+                    "template": "plang"
                   },
                   "value": "%!build.cache%"
                 },
@@ -1409,14 +1445,16 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%correction%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%!data%"
                 },
@@ -1461,14 +1499,16 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%planStep.actions%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%correction.actions%"
                 }
@@ -1504,14 +1544,16 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%trace.plan.steps[step.Index].actions%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%correction.actions%"
                 }
@@ -1559,13 +1601,6 @@
                           "name": "text"
                         },
                         "value": "step-missing-actions"
-                      },
-                      {
-                        "name": "step",
-                        "type": {
-                          "name": "text"
-                        },
-                        "value": "%step%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
@@ -1613,14 +1648,15 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%fixMessages%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "list`1"
+                    "name": "list"
                   },
                   "value": [
                     {
@@ -1661,7 +1697,8 @@
                 {
                   "name": "Messages",
                   "type": {
-                    "name": "list<llmmessage>"
+                    "name": "list",
+                    "template": "plang"
                   },
                   "value": "%fixMessages%"
                 },
@@ -1681,7 +1718,8 @@
                 {
                   "name": "Cache",
                   "type": {
-                    "name": "bool"
+                    "name": "bool",
+                    "template": "plang"
                   },
                   "value": "%!build.cache%"
                 },
@@ -1695,7 +1733,8 @@
                 {
                   "name": "previousConversation",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%compileResult%"
                 }
@@ -1743,14 +1782,16 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%compileResult%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%!data%"
                 }
@@ -1786,14 +1827,16 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%goal.Steps[step.Index].Actions%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%compileResult.actions%"
                 }
@@ -1829,14 +1872,16 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%goal.Steps[step.Index].Formal%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%compileResult.formal%"
                 }
@@ -1886,16 +1931,10 @@
                         "value": "step-validation-error"
                       },
                       {
-                        "name": "step",
-                        "type": {
-                          "name": "text"
-                        },
-                        "value": "%step%"
-                      },
-                      {
                         "name": "errorMessage",
                         "type": {
-                          "name": "text"
+                          "name": "text",
+                          "template": "plang"
                         },
                         "value": "%!error.Message%"
                       }
@@ -1959,16 +1998,10 @@
                         "value": "step-build-error"
                       },
                       {
-                        "name": "step",
-                        "type": {
-                          "name": "text"
-                        },
-                        "value": "%step%"
-                      },
-                      {
                         "name": "errorMessage",
                         "type": {
-                          "name": "text"
+                          "name": "text",
+                          "template": "plang"
                         },
                         "value": "%!error.Message%"
                       }
@@ -2000,7 +2033,8 @@
                 {
                   "name": "Message",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%!error%"
                 },
@@ -2053,7 +2087,8 @@
                 {
                   "name": "Left",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%compileResult.Cached%"
                 },
@@ -2102,13 +2137,6 @@
                           "name": "text"
                         },
                         "value": "step-cached"
-                      },
-                      {
-                        "name": "step",
-                        "type": {
-                          "name": "text"
-                        },
-                        "value": "%step%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
@@ -2138,7 +2166,8 @@
                 {
                   "name": "Left",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%compileResult.Cached%"
                 },
@@ -2187,13 +2216,6 @@
                           "name": "text"
                         },
                         "value": "step-fresh"
-                      },
-                      {
-                        "name": "step",
-                        "type": {
-                          "name": "text"
-                        },
-                        "value": "%step%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
@@ -2223,7 +2245,8 @@
                 {
                   "name": "Left",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%planStep.confidence%"
                 },
@@ -2272,13 +2295,6 @@
                           "name": "text"
                         },
                         "value": "confidence-warning-planner"
-                      },
-                      {
-                        "name": "planStep",
-                        "type": {
-                          "name": "text"
-                        },
-                        "value": "%planStep%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
@@ -2308,7 +2324,8 @@
                 {
                   "name": "Left",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%planStep.confidence%"
                 },
@@ -2357,13 +2374,6 @@
                           "name": "text"
                         },
                         "value": "confidence-warning-planner"
-                      },
-                      {
-                        "name": "planStep",
-                        "type": {
-                          "name": "text"
-                        },
-                        "value": "%planStep%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
@@ -2393,7 +2403,8 @@
                 {
                   "name": "Left",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%compileResult.confidence%"
                 },
@@ -2442,13 +2453,6 @@
                           "name": "text"
                         },
                         "value": "confidence-warning-compiler"
-                      },
-                      {
-                        "name": "compileResult",
-                        "type": {
-                          "name": "text"
-                        },
-                        "value": "%compileResult%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
@@ -2478,7 +2482,8 @@
                 {
                   "name": "Left",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%compileResult.confidence%"
                 },
@@ -2527,13 +2532,6 @@
                           "name": "text"
                         },
                         "value": "confidence-warning-compiler"
-                      },
-                      {
-                        "name": "compileResult",
-                        "type": {
-                          "name": "text"
-                        },
-                        "value": "%compileResult%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"

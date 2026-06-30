@@ -152,7 +152,7 @@ public partial class @this
     /// "%x%" is literal text, not a reference.
     /// </summary>
     [JsonIgnore]
-    public bool IsVariable => _item.IsRef(out _);
+    public bool IsVariable => _item is global::app.variable.@this;
 
     /// <summary>
     /// True when the value carries any live <c>%variable%</c> reference (the
@@ -320,16 +320,13 @@ public partial class @this
     /// wire reader; <c>set %x% = 5</c> still lifts the value directly.
     /// </summary>
     public static @this FromRaw(object raw, type type, actor.context.@this? context = null, string name = "",
-        string? format = null, string? template = null)
+        string? format = null)
     {
-        // A `json` kind is JSON-encoded (object/dict/list/structured) — read it through
-        // the plang (json) serializer. Anything else is its own raw form (csv, image
-        // bytes, a biginteger's digits) — read through the value serializer. The caller
-        // may force a format (the wire passes application/plang for its encoded slots).
-        format ??= string.Equals(type?.Kind, "json", System.StringComparison.OrdinalIgnoreCase)
-            ? "application/plang" : "text/plain";
+        // The type owns making its value from a raw form — ONE source-maker (app.type.@this.Build),
+        // which carries the type's Name/Kind/Strict/format and its template flag. FromRaw is the
+        // Data wrapper around that. A caller may pass a format the wire knows from the slot's token.
         var d = new @this(name) { _context = context! };
-        d._item = new global::app.type.item.source(raw, type?.Name ?? "", type?.Kind, format: format, template: template) { Context = context };
+        d._item = type.Build(raw, context!, format);
         return d;
     }
 
@@ -685,25 +682,23 @@ public partial class @this
     {
         context = context ?? _context;
 
-        // Full-match live-variable hop — the canonical IS the variable's own
-        // Data (mutations stay visible through Variables.Get). Stamp-gated:
-        // an unstamped "%x%" is literal text and `this` is already canonical.
-        if (context?.Variable != null && _item.IsRef(out var varName))
+        // A variable reference → the canonical IS the variable's own current Data (mutations stay
+        // visible through Variables.Get). _context is never null (born-with-context) — a null here
+        // is a violated invariant, so let it crash rather than nurse it with `?.`.
+        if (_item is global::app.variable.@this v)
         {
-            var resolved = await context.Variable.Get(varName);
+            var resolved = await _context.Variable.Get(v.Name);
             if (resolved == null || !resolved.IsInitialized)
             {
-                var notFound = new @this(varName, null, null, Parent, context: context);
+                var notFound = new @this(v.Name, null, null, Parent, context: _context);
                 notFound.IsInitialized = false;
                 return notFound;
             }
             return resolved;
         }
 
-        // Any other stamped template (partial text, container with nested
-        // refs) — the door renders (the TYPE fills its own holes; never
-        // cached); a transient Data carries the answer under the slot's name
-        // with aliased state.
+        // Any other stamped template (text/dict/list with %ref% holes) — the door renders (the
+        // TYPE fills its own holes; never cached); a transient Data carries the answer.
         if (_item is { Template: not null } && (context ?? _context) != null)
         {
             if (_context == null!) Context = context!;

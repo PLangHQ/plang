@@ -17,7 +17,8 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%path%"
             },
@@ -66,7 +67,8 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%!build.cache%"
             },
@@ -108,7 +110,8 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%!build.summary%"
             },
@@ -209,13 +212,6 @@
                       "name": "text"
                     },
                     "value": "build-path"
-                  },
-                  {
-                    "name": "path",
-                    "type": {
-                      "name": "text"
-                    },
-                    "value": "%path%"
                   }
                 ],
                 "prPath": "/system/builder/.build/emitbuildevent.pr"
@@ -245,7 +241,8 @@
             {
               "name": "Path",
               "type": {
-                "name": "path"
+                "name": "path",
+                "template": "plang"
               },
               "value": "%path%"
             }
@@ -260,14 +257,16 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%app%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%!data%"
             }
@@ -303,7 +302,8 @@
             {
               "name": "Path",
               "type": {
-                "name": "path"
+                "name": "path",
+                "template": "plang"
               },
               "value": "%path%"
             }
@@ -318,14 +318,16 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%goals%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "list"
+                "name": "list",
+                "template": "plang"
               },
               "value": "%!data%"
             }
@@ -373,13 +375,6 @@
                       "name": "text"
                     },
                     "value": "goals-found"
-                  },
-                  {
-                    "name": "goals",
-                    "type": {
-                      "name": "text"
-                    },
-                    "value": "%goals%"
                   }
                 ],
                 "prPath": "/system/builder/.build/emitbuildevent.pr"
@@ -409,7 +404,8 @@
             {
               "name": "Collection",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%goals%"
             }
@@ -433,7 +429,8 @@
                   {
                     "name": "goal",
                     "type": {
-                      "name": "text"
+                      "name": "text",
+                      "template": "plang"
                     },
                     "value": "%item%"
                   }
@@ -465,14 +462,16 @@
             {
               "name": "Path",
               "type": {
-                "name": "path"
+                "name": "path",
+                "template": "plang"
               },
               "value": "/.build/traces/%!trace.id%/manifest.json"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%traceGoals%"
             }

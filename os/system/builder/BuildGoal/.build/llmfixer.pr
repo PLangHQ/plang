@@ -33,7 +33,8 @@
                   {
                     "name": "errorMessage",
                     "type": {
-                      "name": "text"
+                      "name": "text",
+                      "template": "plang"
                     },
                     "value": "%!error.Message%"
                   }
@@ -65,14 +66,15 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%fixerMessages%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "list`1"
+                "name": "list"
               },
               "value": [
                 {
@@ -113,14 +115,15 @@
             {
               "name": "Messages",
               "type": {
-                "name": "list<llmmessage>"
+                "name": "list",
+                "template": "plang"
               },
               "value": "%fixerMessages%"
             },
             {
               "name": "Schema",
               "type": {
-                "name": "dictionary`2"
+                "name": "dict"
               },
               "value": {
                 "description": "string",
@@ -130,14 +133,16 @@
             {
               "name": "Cache",
               "type": {
-                "name": "bool"
+                "name": "bool",
+                "template": "plang"
               },
               "value": "%!build.cache%"
             },
             {
               "name": "ContinuePreviousConversation",
               "type": {
-                "name": "bool"
+                "name": "bool",
+                "template": "plang"
               },
               "value": "%plan%"
             },
@@ -153,28 +158,32 @@
             {
               "name": "temperature",
               "type": {
-                "name": "double"
+                "name": "number",
+                "kind": "double"
               },
               "value": 0
             },
             {
               "name": "maxtokens",
               "type": {
-                "name": "int"
+                "name": "number",
+                "kind": "int"
               },
               "value": 16000
             },
             {
               "name": "maxtoolcalls",
               "type": {
-                "name": "int"
+                "name": "number",
+                "kind": "int"
               },
               "value": 10
             },
             {
               "name": "maxvalidationretries",
               "type": {
-                "name": "int"
+                "name": "number",
+                "kind": "int"
               },
               "value": 0
             }
@@ -188,14 +197,16 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%plan%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%!data%"
             }

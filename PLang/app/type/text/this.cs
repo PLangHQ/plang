@@ -54,7 +54,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public string? Kind { get; init; }
 
     protected internal override global::app.type.@this Mint()
-        => new("text", typeof(string)) { Kind = Kind };
+        => new("text", typeof(string)) { Kind = Kind, Template = Template };
 
     /// <summary>A stamped template's answer depends on outside state (%refs%
     /// can change between uses) — never kept. Plain text caches as always.</summary>
@@ -186,15 +186,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The item emptiness hook — whitespace-only text is empty.</summary>
     public override System.Threading.Tasks.ValueTask<bool> IsEmpty()
         => System.Threading.Tasks.ValueTask.FromResult(string.IsNullOrWhiteSpace(_value));
-
-    /// <summary>True when this is a stamped template whose WHOLE text is one
-    /// live <c>%ref%</c> — the binding layer's classifier (full-match hops to
-    /// the live variable; partial renders). The ref's bare name comes out.</summary>
-    internal override bool IsRef(out string refName)
-    {
-        refName = "";
-        return Template != null && global::app.data.@this.TryFullVarMatch(_value, out refName);
-    }
 
     private static readonly System.Text.RegularExpressions.Regex RefRx =
         new("%[^%]+%", System.Text.RegularExpressions.RegexOptions.Compiled);

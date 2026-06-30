@@ -24,14 +24,16 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%actions%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%!data%"
             }
@@ -82,14 +84,16 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%actionSummary%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "text"
+                "name": "text",
+                "template": "plang"
               },
               "value": "%!data%"
             }
@@ -140,14 +144,16 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%goalForLlm%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "text"
+                "name": "text",
+                "template": "plang"
               },
               "value": "%!data%"
             }
@@ -198,14 +204,16 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%planPrompt%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "text"
+                "name": "text",
+                "template": "plang"
               },
               "value": "%!data%"
             }
@@ -241,14 +249,15 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%messages%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "list`1"
+                "name": "list"
               },
               "value": [
                 {
@@ -312,7 +321,7 @@
                 {
                   "name": "Actions",
                   "type": {
-                    "name": "list<action>"
+                    "name": "list"
                   },
                   "value": [
                     {
@@ -336,7 +345,8 @@
                 {
                   "name": "RetryCount",
                   "type": {
-                    "name": "int"
+                    "name": "number",
+                    "kind": "int"
                   },
                   "value": 2
                 }
@@ -366,14 +376,16 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%plan.system%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%planPrompt%"
             }
@@ -409,14 +421,16 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%plan.user%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%goalForLlm%"
             },
@@ -459,14 +473,15 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%plan.usage%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "dictionary`2"
+                "name": "dict"
               },
               "value": {
                 "model": "%plan.Model%",
@@ -517,14 +532,15 @@
                 {
                   "name": "Messages",
                   "type": {
-                    "name": "list<llmmessage>"
+                    "name": "list",
+                    "template": "plang"
                   },
                   "value": "%messages%"
                 },
                 {
                   "name": "Schema",
                   "type": {
-                    "name": "dictionary`2"
+                    "name": "dict"
                   },
                   "value": {
                     "description": "string",
@@ -543,7 +559,8 @@
                 {
                   "name": "Cache",
                   "type": {
-                    "name": "bool"
+                    "name": "bool",
+                    "template": "plang"
                   },
                   "value": "%!build.cache%"
                 },
@@ -566,28 +583,32 @@
                 {
                   "name": "temperature",
                   "type": {
-                    "name": "double"
+                    "name": "number",
+                    "kind": "double"
                   },
                   "value": 0
                 },
                 {
                   "name": "maxtokens",
                   "type": {
-                    "name": "int"
+                    "name": "number",
+                    "kind": "int"
                   },
                   "value": 16000
                 },
                 {
                   "name": "maxtoolcalls",
                   "type": {
-                    "name": "int"
+                    "name": "number",
+                    "kind": "int"
                   },
                   "value": 10
                 },
                 {
                   "name": "maxvalidationretries",
                   "type": {
-                    "name": "int"
+                    "name": "number",
+                    "kind": "int"
                   },
                   "value": 0
                 }
@@ -601,14 +622,16 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%plan%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%!data%"
                 }

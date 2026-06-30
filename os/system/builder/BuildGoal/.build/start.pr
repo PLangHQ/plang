@@ -29,13 +29,6 @@
                       "name": "text"
                     },
                     "value": "goalHeader"
-                  },
-                  {
-                    "name": "goal",
-                    "type": {
-                      "name": "text"
-                    },
-                    "value": "%goal%"
                   }
                 ],
                 "prPath": "/system/builder/.build/emitbuildevent.pr"
@@ -65,14 +58,16 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%buildStart%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%Now.Ticks%"
             }
@@ -108,14 +103,15 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%trace%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "dictionary`2"
+                "name": "dict"
               },
               "value": {
                 "id": "%!trace.id%",
@@ -178,7 +174,7 @@
                 {
                   "name": "Actions",
                   "type": {
-                    "name": "list<action>"
+                    "name": "list"
                   },
                   "value": [
                     {
@@ -225,14 +221,16 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%trace.plan%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%plan%"
             },
@@ -290,14 +288,16 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%compileSystemPrompt%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "text"
+                "name": "text",
+                "template": "plang"
               },
               "value": "%!data%"
             }
@@ -333,14 +333,16 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%trace.compileSystem%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%compileSystemPrompt%"
             },
@@ -383,7 +385,8 @@
             {
               "name": "Collection",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%plan.steps%"
             }
@@ -407,7 +410,8 @@
                   {
                     "name": "planStep",
                     "type": {
-                      "name": "text"
+                      "name": "text",
+                      "template": "plang"
                     },
                     "value": "%item%"
                   }
@@ -425,7 +429,7 @@
                 {
                   "name": "Actions",
                   "type": {
-                    "name": "list<action>"
+                    "name": "list"
                   },
                   "value": [
                     {
@@ -472,14 +476,16 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%parentGoal%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%goal%"
             },
@@ -522,7 +528,8 @@
             {
               "name": "Collection",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%parentGoal.Goals%"
             }
@@ -546,7 +553,8 @@
                   {
                     "name": "subGoal",
                     "type": {
-                      "name": "text"
+                      "name": "text",
+                      "template": "plang"
                     },
                     "value": "%item%"
                   }
@@ -578,14 +586,16 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%goal%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%parentGoal%"
             },
@@ -628,14 +638,16 @@
             {
               "name": "A",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%Now.Ticks%"
             },
             {
               "name": "B",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%buildStart%"
             }
@@ -650,14 +662,16 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%elapsedTicks%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%!data%"
             }
@@ -693,7 +707,8 @@
             {
               "name": "A",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%elapsedTicks%"
             },
@@ -715,14 +730,16 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%elapsedMs%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%!data%"
             }
@@ -758,14 +775,16 @@
             {
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%trace.durationMs%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%elapsedMs%"
             }
@@ -801,14 +820,16 @@
             {
               "name": "Path",
               "type": {
-                "name": "path"
+                "name": "path",
+                "template": "plang"
               },
               "value": "/.build/traces/%!trace.id%/%goal.Name%.json"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%trace%"
             }
@@ -836,14 +857,16 @@
             {
               "name": "ListName",
               "type": {
-                "name": "variable"
+                "name": "variable",
+                "template": "plang"
               },
               "value": "%traceGoals%"
             },
             {
               "name": "Value",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%goal.Name%"
             }
@@ -852,7 +875,8 @@
             {
               "name": "atindex",
               "type": {
-                "name": "int"
+                "name": "number",
+                "kind": "int"
               },
               "value": -1
             }
@@ -879,7 +903,8 @@
             {
               "name": "Goal",
               "type": {
-                "name": "goal"
+                "name": "goal",
+                "template": "plang"
               },
               "value": "%goal%"
             }
@@ -914,14 +939,16 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%goal%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%subGoal%"
                 },
@@ -976,13 +1003,6 @@
                           "name": "text"
                         },
                         "value": "subGoalHeader"
-                      },
-                      {
-                        "name": "goal",
-                        "type": {
-                          "name": "text"
-                        },
-                        "value": "%goal%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
@@ -1012,14 +1032,16 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%subgoalStart%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%Now.Ticks%"
                 }
@@ -1074,7 +1096,7 @@
                     {
                       "name": "Actions",
                       "type": {
-                        "name": "list<action>"
+                        "name": "list"
                       },
                       "value": [
                         {
@@ -1121,7 +1143,8 @@
                 {
                   "name": "Collection",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%plan.steps%"
                 }
@@ -1145,7 +1168,8 @@
                       {
                         "name": "planStep",
                         "type": {
-                          "name": "text"
+                          "name": "text",
+                          "template": "plang"
                         },
                         "value": "%item%"
                       }
@@ -1163,7 +1187,7 @@
                     {
                       "name": "Actions",
                       "type": {
-                        "name": "list<action>"
+                        "name": "list"
                       },
                       "value": [
                         {
@@ -1210,14 +1234,15 @@
                 {
                   "name": "ListName",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%trace.subGoals%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "dictionary`2"
+                    "name": "dict"
                   },
                   "value": {
                     "goal": "%goal%",
@@ -1229,7 +1254,8 @@
                 {
                   "name": "atindex",
                   "type": {
-                    "name": "int"
+                    "name": "number",
+                    "kind": "int"
                   },
                   "value": -1
                 }
@@ -1256,14 +1282,16 @@
                 {
                   "name": "A",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%Now.Ticks%"
                 },
                 {
                   "name": "B",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%subgoalStart%"
                 }
@@ -1278,14 +1306,16 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%elapsedTicks%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%!data%"
                 }
@@ -1321,7 +1351,8 @@
                 {
                   "name": "A",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%elapsedTicks%"
                 },
@@ -1343,14 +1374,16 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%subgoalMs%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%!data%"
                 }
@@ -1398,20 +1431,6 @@
                           "name": "text"
                         },
                         "value": "subGoalDone"
-                      },
-                      {
-                        "name": "goal",
-                        "type": {
-                          "name": "text"
-                        },
-                        "value": "%goal%"
-                      },
-                      {
-                        "name": "subgoalMs",
-                        "type": {
-                          "name": "text"
-                        },
-                        "value": "%subgoalMs%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
@@ -1473,16 +1492,10 @@
                         "value": "goalError"
                       },
                       {
-                        "name": "goal",
-                        "type": {
-                          "name": "text"
-                        },
-                        "value": "%goal%"
-                      },
-                      {
                         "name": "errorMessage",
                         "type": {
-                          "name": "text"
+                          "name": "text",
+                          "template": "plang"
                         },
                         "value": "%!data%.Message%"
                       }
@@ -1514,14 +1527,15 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "variable"
+                    "name": "variable",
+                    "template": "plang"
                   },
                   "value": "%trace.buildError%"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "dictionary`2"
+                    "name": "dict"
                   },
                   "value": {
                     "key": "%!error.Key%",
@@ -1561,14 +1575,16 @@
                 {
                   "name": "Path",
                   "type": {
-                    "name": "path"
+                    "name": "path",
+                    "template": "plang"
                   },
                   "value": "/.build/traces/%!trace.id%/%goal.Name%.json"
                 },
                 {
                   "name": "Value",
                   "type": {
-                    "name": "object"
+                    "name": "object",
+                    "template": "plang"
                   },
                   "value": "%trace%"
                 }
@@ -1596,14 +1612,16 @@
                 {
                   "name": "Message",
                   "type": {
-                    "name": "text"
+                    "name": "text",
+                    "template": "plang"
                   },
                   "value": "%!error%"
                 },
                 {
                   "name": "StatusCode",
                   "type": {
-                    "name": "int"
+                    "name": "number",
+                    "kind": "int"
                   },
                   "value": 500
                 }

@@ -90,21 +90,11 @@ public partial class @this
             }
             if (!Type.IsNull)
             {
+                // The type serializes ITSELF — {name, kind?, strict?, template?} — through its own
+                // Output. One owner of the type-entity wire shape (app.type.@this.Output); the Data
+                // writer does not re-implement it.
                 writer.Name("type");
-                writer.BeginObject();
-                writer.Name("name");
-                writer.String(Type.Name);
-                if (!string.IsNullOrEmpty(Type.Kind))
-                {
-                    writer.Name("kind");
-                    writer.String(Type.Kind!);
-                }
-                if (Type.Strict)
-                {
-                    writer.Name("strict");
-                    writer.Bool(true);
-                }
-                writer.EndObject();
+                await Type.Output(writer, mode, context);
             }
             writer.Name("value");
         }

@@ -100,10 +100,13 @@ public sealed class @this : global::app.data.schema.ISchemaReader
         {
             // Lazy value slot: rides as its raw source form, materializes on first touch
             // through the read door (the serializer the raw needs + the authored template).
-            var lazy = Data.FromRaw(deferredRaw, typeRef, ctx.Context, format: deferredFormat, template: ctx.Template);
-            lazy.Name = name;
-            if (properties != null) lazy.Properties = properties;
-            return lazy;
+            // FromRaw delegates to typeRef.Build, which carries typeRef's own template flag (the
+            // build stamped it on an authored %ref% value) — NOT inferred from content. A value
+            // with a %x% the build did not mark is plain data, never resolved.
+            var data = Data.FromRaw(deferredRaw, typeRef, ctx.Context, format: deferredFormat);
+            data.Name = name;
+            if (properties != null) data.Properties = properties;
+            return data;
         }
         // No value slot — a typed absence under its declared type.
         var typedNull = new Data(name, (object?)null, typeRef);

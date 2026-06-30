@@ -299,27 +299,11 @@ public partial class Set : IContext, IBuildValidatable
             return await Context.Variable.Set(typedData);
         }
 
-        // No forced type — bind a shallow clone under the target name. AsCanonical
-        // resolves the NAME hop (a full-match `%x%`/`%!data%` → the CURRENT Data
-        // instance it points at) WITHOUT computing its value (lazy preserved); storing
-        // `Value` directly would copy the reference to the name, so when a reused infra
-        // var like `%!data%` rebinds to the next action's result, the target would follow
-        // it (the `%msg%` self-reference that blocks the builder). ShallowClone gives the
-        // new slot its own Properties copy (the value instance is shared — immutable, safe).
-        // AsCanonical resolves the NAME hop (a full-match `%x%`/`%!data%` → the CURRENT
-        // Data instance it points at) without computing its value (lazy preserved), so the
-        // target binds to that instance, not the rebinding name — the fix for the `%msg%`
-        // self-reference.
-        var canonical = await Value.AsCanonical(Context);
-        // Binding to an UNSET reference (`set %x% = %unset%`, or a navigation that resolves
-        // to nothing) is an error — a missing value means something is wrong, surface it with
-        // the name rather than silently binding the absent citizen. Infra vars (`%!error%`)
-        // are legitimately unset (no error yet) and excepted; a present-null source is
-        // initialized and binds fine.
-        if (!canonical.IsInitialized && !canonical.Name.StartsWith('!'))
-            return Context.Error(new global::app.error.Error(
-                $"Variable '{canonical.Name}' not found", "VariableNotFound", 404));
-        return await Context.Variable.Set(name.Name, canonical.ShallowClone(name.Name));
+        // No forced type — just set the data. Data flows: bind the Value's Data under the target
+        // name as-is, without inspecting or computing it (no AsCanonical, no .Value). A reference
+        // or template resolves/renders on its own door at read; a literal is itself. A self-write
+        // (`set %a%=%a%`) is dropped at build, never handled here.
+        return await Context.Variable.Set(name.Name, Value);
     }
 
     /// <summary>

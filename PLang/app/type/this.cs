@@ -43,6 +43,7 @@ public sealed class @this : item.@this
         writer.Name("name"); writer.String(Name);
         if (!string.IsNullOrEmpty(Kind)) { writer.Name("kind"); writer.String(Kind!); }
         if (Strict) { writer.Name("strict"); writer.Bool(true); }
+        if (!string.IsNullOrEmpty(Template)) { writer.Name("template"); writer.String(Template!); }
         writer.EndObject();
         return System.Threading.Tasks.ValueTask.CompletedTask;
     }
@@ -65,6 +66,14 @@ public sealed class @this : item.@this
     /// <c>%var%</c>). Default false — kind is a hint.
     /// </summary>
     public bool Strict { get; init; }
+
+    /// <summary>
+    /// Authored-template mode ("plang") — set by the BUILD when the value is a developer-authored
+    /// <c>%ref%</c> template, carried in the <c>.pr</c> so the read honors it EXPLICITLY. The read
+    /// never infers it from value content (a runtime-ingested string that happens to contain
+    /// <c>%x%</c> is data, not a template). Null = a plain value. Mirrors <c>text.@this.Template</c>.
+    /// </summary>
+    public string? Template { get; init; }
 
     /// <summary>
     /// Catalog teaching for the <c>type</c> entry — the LLM-facing description
@@ -101,11 +110,12 @@ public sealed class @this : item.@this
     internal actor.context.@this? Context { get; set; }
 
     [JsonConstructor]
-    public @this(string name, string? kind = null, bool strict = false)
+    public @this(string name, string? kind = null, bool strict = false, string? template = null)
     {
         Name = Canonicalise(name);
         Kind = kind;
         Strict = strict;
+        Template = template;
         StampPrimitive(name);
         // Numeric precision tokens collapse into Kind when used as a name.
         // `new type("int")` → {Name:"number", Kind:"int"}: the precision
@@ -236,18 +246,27 @@ public sealed class @this : item.@this
     /// <see cref="Create(string, string?, bool, actor.context.@this?)"/> already owns
     /// that name for making a type ENTITY from a name. (A string is an object, so an
     /// instance <c>Create(object)</c> would be ambiguous with it.)</remarks>
-    public item.@this Build(object? value, actor.context.@this context)
+    public item.@this Build(object? value, actor.context.@this context, string? format = null)
     {
+        // context-never-null: a value is born WITH context. A null here is a construction site
+        // (a Data ctor / FromRaw) that forgot to pass one — fail with a pointer, not an NRE deep
+        // in materialization. (One-liner to delete once every call site is fixed.)
+        if (context is null) throw new System.InvalidOperationException(
+            $"context-never-null: building a '{Name}' value without a context — pass the actor context at the Data/FromRaw construction site.");
+
         // Typed absence — no value to lift; the declaration survives (a typed null,
         // a tool-parameter slot). A JSON-null literal lands here too (the null citizen).
         if (value is null or global::app.type.@null.@this) return new global::app.type.@null.@this(Name, Kind);
 
         // A raw form (string / byte[]) → defer through a source declared as THIS type,
         // born WITH context. The format the type carries picks the reader (scalar → text,
-        // container → json, bytes → kind→mime). Parsed once, lazily, on first use — no
-        // throwaway text, no eager convert. The source IS the lazy door the read path uses.
+        // container → json, bytes → kind→mime); a caller may override it (the wire knows the
+        // slot's encoding from its token). Parsed once, lazily, on first use. The source carries
+        // THIS type's template flag — the value resolves its %refs% only when the build marked
+        // it a template (never inferred from content). This is the ONE source-maker (FromRaw
+        // delegates here).
         if (value is string or byte[])
-            return new item.source(value, Name, Kind, Strict, RawFormat(value, context)) { Context = context };
+            return new item.source(value, Name, Kind, Strict, format ?? RawFormat(value, context), template: Template) { Context = context };
 
         // A container / domain value is already its native form (dict, list, path, image, …) — hold it.
         if (value is item.@this { IsLeaf: false } native) return native;
@@ -494,7 +513,7 @@ public sealed class @this : item.@this
     /// free-string <paramref name="kind"/>.
     /// </summary>
     public static @this Create(string name, string? kind = null, bool strict = false,
-        actor.context.@this? context = null)
+        actor.context.@this? context = null, string? template = null)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new System.ArgumentException("type name is required (empty or whitespace not allowed).", nameof(name));
@@ -521,7 +540,7 @@ public sealed class @this : item.@this
         if (kind != null && context != null)
             kind = context.App.Format.CanonicaliseKind(kind);
 
-        return new @this(name, kind, strict) { Context = context };
+        return new @this(name, kind, strict, template) { Context = context };
     }
 
     private static string Canonicalise(string name)

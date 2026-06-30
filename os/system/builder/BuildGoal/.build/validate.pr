@@ -17,7 +17,8 @@
             {
               "name": "Left",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%plan.steps.Count%"
             },
@@ -31,7 +32,8 @@
             {
               "name": "Right",
               "type": {
-                "name": "object"
+                "name": "object",
+                "template": "plang"
               },
               "value": "%goal.Steps.Count%"
             }
@@ -54,14 +56,16 @@
             {
               "name": "Message",
               "type": {
-                "name": "text"
+                "name": "text",
+                "template": "plang"
               },
               "value": "Planner returned %plan.steps.Count% step plans but goal has %goal.Steps.Count% steps."
             },
             {
               "name": "StatusCode",
               "type": {
-                "name": "int"
+                "name": "number",
+                "kind": "int"
               },
               "value": 500
             },

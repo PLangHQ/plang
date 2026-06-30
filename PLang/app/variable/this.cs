@@ -248,10 +248,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// reference; only the answer it returns is the current binding.</summary>
     public override bool Cacheable => false;
 
-    /// <summary>A variable value IS a reference — to the variable it names. So it reports
-    /// itself as a ref (name = <see cref="@this.Name"/>): AsCanonical resolves the name hop
-    /// to the current Data instance, and Data.IsVariable recognises it as a live reference.</summary>
-    internal override bool IsRef(out string refName) { refName = Name; return true; }
 
     /// <summary>Bare wire form: the raw reference as emitted, so a re-read
     /// reconstructs the same Name and WasPercentWrapped via <see cref="Convert"/>.</summary>
