@@ -61,7 +61,7 @@
             {
               "name": "StatusCode",
               "type": {
-                "name": "int"
+                "name": "number", "kind": "int"
               },
               "value": 500
             },

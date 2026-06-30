@@ -593,7 +593,7 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "list`1"
+                    "name": "list"
                   },
                   "value": [
                     {
@@ -727,7 +727,7 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "dictionary`2"
+                    "name": "dict"
                   },
                   "value": {
                     "goal": "%goal.Name%",
@@ -1294,7 +1294,7 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "list`1"
+                    "name": "list"
                   },
                   "value": [
                     {
@@ -1342,7 +1342,7 @@
                 {
                   "name": "Schema",
                   "type": {
-                    "name": "dictionary`2"
+                    "name": "dict"
                   },
                   "value": {
                     "index": "int",
@@ -1620,7 +1620,7 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "list`1"
+                    "name": "list"
                   },
                   "value": [
                     {

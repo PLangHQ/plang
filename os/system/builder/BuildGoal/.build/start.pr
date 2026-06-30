@@ -115,7 +115,7 @@
             {
               "name": "Value",
               "type": {
-                "name": "dictionary`2"
+                "name": "dict"
               },
               "value": {
                 "id": "%!trace.id%",
@@ -852,7 +852,7 @@
             {
               "name": "atindex",
               "type": {
-                "name": "int"
+                "name": "number", "kind": "int"
               },
               "value": -1
             }
@@ -1217,7 +1217,7 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "dictionary`2"
+                    "name": "dict"
                   },
                   "value": {
                     "goal": "%goal%",
@@ -1229,7 +1229,7 @@
                 {
                   "name": "atindex",
                   "type": {
-                    "name": "int"
+                    "name": "number", "kind": "int"
                   },
                   "value": -1
                 }
@@ -1521,7 +1521,7 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "dictionary`2"
+                    "name": "dict"
                   },
                   "value": {
                     "key": "%!error.Key%",
@@ -1603,7 +1603,7 @@
                 {
                   "name": "StatusCode",
                   "type": {
-                    "name": "int"
+                    "name": "number", "kind": "int"
                   },
                   "value": 500
                 }
