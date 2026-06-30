@@ -18,6 +18,28 @@ public partial class Call : IContext
     /// </summary>
     public partial data.@this<actor.@this>? Actor { get; init; }
 
+    /// <summary>
+    /// Build-time hook: drop a self-reference arg — one whose name equals the variable it
+    /// references (<c>path=%path%</c>). It is redundant: the callee already reads that variable
+    /// (shared scope, or reads cascade out of a fork), so passing it is the same as not passing
+    /// it. Detected by a build-time string check (never at runtime); the dropped arg is announced.
+    /// </summary>
+    public async Task<data.@this> Build()
+    {
+        var goalCall = await GoalName.Value();
+        if (goalCall?.Parameters == null) return Context.Ok();
+        for (int i = goalCall.Parameters.Count - 1; i >= 0; i--)
+        {
+            var p = goalCall.Parameters[i];
+            if (!string.Equals(p.Peek()?.ToString(), $"%{p.Name}%", System.StringComparison.OrdinalIgnoreCase))
+                continue;
+            await Context.App.Debug.Write(
+                $"build: dropped redundant self-reference '{p.Name}=%{p.Name}%' in call to {goalCall.Name}");
+            goalCall.Parameters.RemoveAt(i);
+        }
+        return Context.Ok();
+    }
+
     public async Task<data.@this> Run()
     {
         var goalCall = (await GoalName.Value())!;

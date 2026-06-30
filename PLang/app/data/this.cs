@@ -152,7 +152,7 @@ public partial class @this
     /// "%x%" is literal text, not a reference.
     /// </summary>
     [JsonIgnore]
-    public bool IsVariable => _item.IsRef(out _);
+    public bool IsVariable => _item is global::app.variable.@this;
 
     /// <summary>
     /// True when the value carries any live <c>%variable%</c> reference (the
@@ -682,17 +682,23 @@ public partial class @this
     {
         context = context ?? _context;
 
-        // Full-match live-variable hop — the canonical IS the variable's own Data (mutations
-        // stay visible through Variables.Get). Stamp-gated: an unstamped "%x%" is literal text
-        // and `this` is already canonical. The hop itself lives in CollapseRef (shared with the
-        // variable write door); for a full-match it is the whole canonicalization.
-        if (context?.Variable != null && _item.IsRef(out _))
-            return await CollapseRef(context);
+        // A variable reference → the canonical IS the variable's own current Data (mutations stay
+        // visible through Variables.Get). _context is never null (born-with-context) — a null here
+        // is a violated invariant, so let it crash rather than nurse it with `?.`.
+        if (_item is global::app.variable.@this v)
+        {
+            var resolved = await _context.Variable.Get(v.Name);
+            if (resolved == null || !resolved.IsInitialized)
+            {
+                var notFound = new @this(v.Name, null, null, Parent, context: _context);
+                notFound.IsInitialized = false;
+                return notFound;
+            }
+            return resolved;
+        }
 
-        // Any other stamped template (partial text, container with nested
-        // refs) — the door renders (the TYPE fills its own holes; never
-        // cached); a transient Data carries the answer under the slot's name
-        // with aliased state.
+        // Any other stamped template (text/dict/list with %ref% holes) — the door renders (the
+        // TYPE fills its own holes; never cached); a transient Data carries the answer.
         if (_item is { Template: not null } && (context ?? _context) != null)
         {
             if (_context == null!) Context = context!;
@@ -706,32 +712,6 @@ public partial class @this
         }
 
         // Literal value — `this` is the canonical, return as-is.
-        return this;
-    }
-
-    /// <summary>
-    /// Full-match alias hop — a value that IS a single <c>%x%</c> reference resolves to the
-    /// CURRENT Data instance bound to <c>x</c> (or an uninitialized Data when <c>x</c> is unset).
-    /// A NAME-HOP, not a render: it never calls the value door, so it neither materializes a lazy
-    /// source nor recurses. Any other value (literal, partial template, container) is already
-    /// canonical at the binding layer and returns as-is. The variable write door runs every store
-    /// through this so a binding is never a live alias to a name (no <c>x = %x%</c> self-alias,
-    /// no <c>a→b→a</c> cycle) — the read door then derefs in one hop with no cycle guard.
-    /// </summary>
-    internal async System.Threading.Tasks.ValueTask<@this> CollapseRef(actor.context.@this? context = null)
-    {
-        context = context ?? _context;
-        if (context?.Variable != null && _item.IsRef(out var varName))
-        {
-            var resolved = await context.Variable.Get(varName);
-            if (resolved == null || !resolved.IsInitialized)
-            {
-                var notFound = new @this(varName, null, null, Parent, context: context);
-                notFound.IsInitialized = false;
-                return notFound;
-            }
-            return resolved;
-        }
         return this;
     }
 

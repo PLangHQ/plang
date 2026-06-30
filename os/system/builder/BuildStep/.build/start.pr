@@ -1601,14 +1601,6 @@
                           "name": "text"
                         },
                         "value": "step-missing-actions"
-                      },
-                      {
-                        "name": "step",
-                        "type": {
-                          "name": "text",
-                          "template": "plang"
-                        },
-                        "value": "%step%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
@@ -1939,14 +1931,6 @@
                         "value": "step-validation-error"
                       },
                       {
-                        "name": "step",
-                        "type": {
-                          "name": "text",
-                          "template": "plang"
-                        },
-                        "value": "%step%"
-                      },
-                      {
                         "name": "errorMessage",
                         "type": {
                           "name": "text",
@@ -2012,14 +1996,6 @@
                           "name": "text"
                         },
                         "value": "step-build-error"
-                      },
-                      {
-                        "name": "step",
-                        "type": {
-                          "name": "text",
-                          "template": "plang"
-                        },
-                        "value": "%step%"
                       },
                       {
                         "name": "errorMessage",
@@ -2161,14 +2137,6 @@
                           "name": "text"
                         },
                         "value": "step-cached"
-                      },
-                      {
-                        "name": "step",
-                        "type": {
-                          "name": "text",
-                          "template": "plang"
-                        },
-                        "value": "%step%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
@@ -2248,14 +2216,6 @@
                           "name": "text"
                         },
                         "value": "step-fresh"
-                      },
-                      {
-                        "name": "step",
-                        "type": {
-                          "name": "text",
-                          "template": "plang"
-                        },
-                        "value": "%step%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
@@ -2335,14 +2295,6 @@
                           "name": "text"
                         },
                         "value": "confidence-warning-planner"
-                      },
-                      {
-                        "name": "planStep",
-                        "type": {
-                          "name": "text",
-                          "template": "plang"
-                        },
-                        "value": "%planStep%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
@@ -2422,14 +2374,6 @@
                           "name": "text"
                         },
                         "value": "confidence-warning-planner"
-                      },
-                      {
-                        "name": "planStep",
-                        "type": {
-                          "name": "text",
-                          "template": "plang"
-                        },
-                        "value": "%planStep%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
@@ -2509,14 +2453,6 @@
                           "name": "text"
                         },
                         "value": "confidence-warning-compiler"
-                      },
-                      {
-                        "name": "compileResult",
-                        "type": {
-                          "name": "text",
-                          "template": "plang"
-                        },
-                        "value": "%compileResult%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
@@ -2596,14 +2532,6 @@
                           "name": "text"
                         },
                         "value": "confidence-warning-compiler"
-                      },
-                      {
-                        "name": "compileResult",
-                        "type": {
-                          "name": "text",
-                          "template": "plang"
-                        },
-                        "value": "%compileResult%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"

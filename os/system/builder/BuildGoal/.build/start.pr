@@ -29,14 +29,6 @@
                       "name": "text"
                     },
                     "value": "goalHeader"
-                  },
-                  {
-                    "name": "goal",
-                    "type": {
-                      "name": "text",
-                      "template": "plang"
-                    },
-                    "value": "%goal%"
                   }
                 ],
                 "prPath": "/system/builder/.build/emitbuildevent.pr"
@@ -1011,14 +1003,6 @@
                           "name": "text"
                         },
                         "value": "subGoalHeader"
-                      },
-                      {
-                        "name": "goal",
-                        "type": {
-                          "name": "text",
-                          "template": "plang"
-                        },
-                        "value": "%goal%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
@@ -1447,22 +1431,6 @@
                           "name": "text"
                         },
                         "value": "subGoalDone"
-                      },
-                      {
-                        "name": "goal",
-                        "type": {
-                          "name": "text",
-                          "template": "plang"
-                        },
-                        "value": "%goal%"
-                      },
-                      {
-                        "name": "subgoalMs",
-                        "type": {
-                          "name": "text",
-                          "template": "plang"
-                        },
-                        "value": "%subgoalMs%"
                       }
                     ],
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
@@ -1522,14 +1490,6 @@
                           "name": "text"
                         },
                         "value": "goalError"
-                      },
-                      {
-                        "name": "goal",
-                        "type": {
-                          "name": "text",
-                          "template": "plang"
-                        },
-                        "value": "%goal%"
                       },
                       {
                         "name": "errorMessage",

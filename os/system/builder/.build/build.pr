@@ -212,14 +212,6 @@
                       "name": "text"
                     },
                     "value": "build-path"
-                  },
-                  {
-                    "name": "path",
-                    "type": {
-                      "name": "text",
-                      "template": "plang"
-                    },
-                    "value": "%path%"
                   }
                 ],
                 "prPath": "/system/builder/.build/emitbuildevent.pr"
@@ -383,14 +375,6 @@
                       "name": "text"
                     },
                     "value": "goals-found"
-                  },
-                  {
-                    "name": "goals",
-                    "type": {
-                      "name": "text",
-                      "template": "plang"
-                    },
-                    "value": "%goals%"
                   }
                 ],
                 "prPath": "/system/builder/.build/emitbuildevent.pr"
