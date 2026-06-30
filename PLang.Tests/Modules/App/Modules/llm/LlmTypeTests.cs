@@ -82,7 +82,7 @@ public class LlmTypeTests
     [Test]
     public async Task GoalCall_ExistingProperties_UnchangedAfterNewFields()
     {
-        await using var app = new global::app.@this("/test");
+        await using var app = global::PLang.Tests.TestApp.Plain("/test");
         var context = app.User.Context;
         var gc = new GoalCall
         {

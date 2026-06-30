@@ -21,7 +21,7 @@ public class Stage5MessagesEndToEndTests
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-s5-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        var app = new global::app.@this(root);
+        var app = global::PLang.Tests.TestApp.Plain(root);
         app.User.Channel.Register(new CannedChannel(answer));
 
         // Simulate /apps/Email/system.sqlite living outside the app root.
@@ -108,7 +108,7 @@ public class Stage5MessagesEndToEndTests
 
         // App #2 on the same root. Channel here has zero "a" answers — any
         // prompt that fires means the persisted grant was missed.
-        var app2 = new global::app.@this(root);
+        var app2 = global::PLang.Tests.TestApp.Plain(root);
         var statelessProbe = new StatelessChannel();
         app2.User.Channel.Register(statelessProbe);
         var path2 = new Path(foreignFile, app2.User.Context);
@@ -133,7 +133,7 @@ public class Stage5MessagesEndToEndTests
 
         // Advance clock by 10 minutes — past the default 5-minute
         // Config.TimeoutMs window that would otherwise expire the signature.
-        var app2 = new global::app.@this(root);
+        var app2 = global::PLang.Tests.TestApp.Plain(root);
         var statelessProbe = new StatelessChannel();
         app2.User.Channel.Register(statelessProbe);
         // Replace the DynamicData NowUtc with a static Data (the DynamicData's
@@ -165,7 +165,7 @@ public class Stage5MessagesEndToEndTests
 
         // app2: two reads. Each Find re-deserializes the grant → two real
         // VerifySignature passes → step 4 would NonceReplay the second.
-        var app2 = new global::app.@this(root);
+        var app2 = global::PLang.Tests.TestApp.Plain(root);
         app2.User.Channel.Register(new StatelessChannel());
         var path2 = new Path(foreignFile, app2.User.Context);
         var read1 = await path2.ReadText();   // verify #1 — nonce cached

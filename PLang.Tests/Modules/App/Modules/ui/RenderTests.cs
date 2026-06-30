@@ -16,7 +16,7 @@ public class RenderTests : IDisposable
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_ui_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir);
+        _app = global::PLang.Tests.TestApp.Plain(_tempDir);
         _provider = new global::app.module.ui.code.Fluid();
     }
 

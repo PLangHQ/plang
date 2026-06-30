@@ -23,8 +23,34 @@ public static class TestApp
         // IsBuiltIn keeps the mock out of the Code snapshot (it has no loadable
         // Source, so a captured registration would fail ProviderRestore). Restore
         // targets are themselves TestApp.Create'd, so they already carry the mock.
+        UseTestSigning(app);
+        return app;
+    }
+
+    /// <summary>
+    /// Swap in the no-crypto <see cref="global::PLang.Tests.Shared.TestSigning"/> mock so a test
+    /// app doesn't pay real ed25519 keygen + keccak256 + signing per Data — that crypto dominates
+    /// wall-clock and, run massively in parallel, makes suites look hung. For fixtures that build a
+    /// plain <c>app.@this</c> directly (their own root setup) but don't exercise REAL crypto.
+    /// Real-signing tests deliberately skip this and use a plain app.@this.
+    /// </summary>
+    public static void UseTestSigning(global::app.@this app)
+    {
         app.Code.Register<global::app.module.signing.code.ISigning>(new global::PLang.Tests.Shared.TestSigning { IsBuiltIn = true });
         app.Code.SetDefault<global::app.module.signing.code.ISigning>("test-signing");
+    }
+
+    /// <summary>
+    /// A plain on-disk app (real settings store at the given root — NOT in-memory like
+    /// <see cref="Create"/>) but with the no-crypto <see cref="UseTestSigning"/> override.
+    /// For fixtures that need a real root/persistence but exercise consent/permission FLOW,
+    /// not crypto correctness — so parallel real-ed25519 doesn't starve the suite. Drop-in
+    /// for <c>new app.@this(root)</c>.
+    /// </summary>
+    public static global::app.@this Plain(string absolutePath)
+    {
+        var app = new global::app.@this(absolutePath);
+        UseTestSigning(app);
         return app;
     }
 

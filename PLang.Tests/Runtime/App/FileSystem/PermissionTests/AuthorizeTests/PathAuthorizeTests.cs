@@ -14,7 +14,7 @@ namespace PLang.Tests.App.FileSystem.PermissionTests.AuthorizeTests;
 public class PathAuthorizeTests
 {
     private static global::app.@this NewApp() =>
-        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        global::PLang.Tests.TestApp.Plain(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-auth-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     /// Stub stateful channel — answers Ask with a pre-set canned line.

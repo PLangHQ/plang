@@ -61,7 +61,7 @@ public class AbsoluteDisciplineTests
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "db.sqlite");
         var dbPath = new FilePath(outOfRoot, app.User.Context);
         bool threw = false;
-        try { using var _ = new global::app.module.settings.Sqlite(dbPath, app.User.Context); }
+        try { using var _ = await global::app.module.settings.Sqlite.CreateAsync(dbPath, app.User.Context); }
         catch (System.InvalidOperationException) { threw = true; }
         await Assert.That(threw).IsTrue();
     }

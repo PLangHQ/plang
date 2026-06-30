@@ -18,7 +18,7 @@ public class Stage3_PathDemolitionTests
     {
         var dir = Path.Combine(Path.GetTempPath(), "plang_st3pd_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
-        var app = new global::app.@this(dir);
+        var app = global::PLang.Tests.TestApp.Plain(dir);
         return (app, app.User.Context, dir);
     }
 

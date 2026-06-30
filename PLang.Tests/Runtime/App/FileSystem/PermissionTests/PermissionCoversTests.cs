@@ -81,7 +81,7 @@ public class PermissionCoversTests
     {
         // Permission round-trips through ITS OWN wire (Write/Create via the plang
         // serializer's persistence path), not raw STJ — the grant owns its wire form.
-        await using var app = new global::app.@this("/test");
+        await using var app = global::PLang.Tests.TestApp.Plain("/test");
         var ctx = app.User.Context;
         var original = new Permission("user", "/p", global::app.type.permission.@this.AllVerbs, Match.Glob);
         var data = new global::app.data.@this<Permission>("", original, context: ctx);

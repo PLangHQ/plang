@@ -22,7 +22,11 @@ public class FileSystemPermissionFlowTests
         root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-fs-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        return new global::app.@this(root);
+        var app = new global::app.@this(root);
+        // Permission-FLOW tests exercise the consent gate, not crypto correctness — use the
+        // no-crypto signing mock so parallel real-ed25519 keygen/sign doesn't starve/hang.
+        global::PLang.Tests.TestApp.UseTestSigning(app);
+        return app;
     }
 
     private sealed class CannedChannel : global::app.channel.@this

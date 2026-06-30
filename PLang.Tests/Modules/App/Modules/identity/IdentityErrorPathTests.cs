@@ -50,7 +50,7 @@ public class IdentityErrorPathTests
     {
         // No identities exist → auto-create path → save fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            _app.SettingsStore));
+            await _app.SettingsStore));
 
         var result = await new global::app.module.identity.Get { Context = Ctx, Name = null }.Run();
         await result.IsFailure();
@@ -67,7 +67,7 @@ public class IdentityErrorPathTests
 
         // Now swap to failing DataSource — GetAll still works (delegates), but Set fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            _app.SettingsStore));
+            await _app.SettingsStore));
 
         var result = await new global::app.module.identity.Get { Context = Ctx, Name = null }.Run();
         await result.IsFailure();
@@ -81,7 +81,7 @@ public class IdentityErrorPathTests
     {
         // Swap to failing save — Get(null) calls GetOrCreateDefaultAsync which returns error
         SwapDataSource(_app, new FailingSaveDataSource(
-            _app.SettingsStore));
+            await _app.SettingsStore));
 
         var handler = new global::app.module.identity.Get { Context = Ctx, Name = null };
         var result = await handler.Run();
@@ -96,7 +96,7 @@ public class IdentityErrorPathTests
     {
         // Swap to failing save — Export(null) calls GetOrCreateDefaultAsync which returns error
         SwapDataSource(_app, new FailingSaveDataSource(
-            _app.SettingsStore));
+            await _app.SettingsStore));
 
         var handler = new Export { Context = Ctx, Name = null };
         var result = await handler.Run();
@@ -111,7 +111,7 @@ public class IdentityErrorPathTests
     {
         // Swap to failing save before %MyIdentity% resolves
         SwapDataSource(_app, new FailingSaveDataSource(
-            _app.SettingsStore));
+            await _app.SettingsStore));
 
         // Access %MyIdentity% — the computed cell calls the provider, which
         // fails; the answer is the present-null VALUE (the singleton).
@@ -132,7 +132,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save — clearing old default fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            _app.SettingsStore));
+            await _app.SettingsStore));
 
         var handler = new Create { Context = Ctx, Name = (global::app.type.text.@this)"new", SetAsDefault = (global::app.type.@bool.@this)true };
         var result = await handler.Run();
@@ -147,7 +147,7 @@ public class IdentityErrorPathTests
     {
         // Swap to failing save — saving the new identity fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            _app.SettingsStore));
+            await _app.SettingsStore));
 
         var handler = new Create { Context = Ctx, Name = (global::app.type.text.@this)"newid", SetAsDefault = (global::app.type.@bool.@this)false };
         var result = await handler.Run();
@@ -168,7 +168,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save — clearing old default fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            _app.SettingsStore));
+            await _app.SettingsStore));
 
         var handler = new SetDefault { Context = Ctx, Name = (global::app.type.text.@this)"new" };
         var result = await handler.Run();
@@ -187,7 +187,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save — saving the new default fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            _app.SettingsStore));
+            await _app.SettingsStore));
 
         var handler = new SetDefault { Context = Ctx, Name = (global::app.type.text.@this)"target" };
         var result = await handler.Run();
@@ -205,7 +205,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save — saving with new name fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            _app.SettingsStore));
+            await _app.SettingsStore));
 
         var handler = new Rename { Context = Ctx, Name = (global::app.type.text.@this)"oldname", NewName = (global::app.type.text.@this)"newname" };
         var result = await handler.Run();
@@ -223,7 +223,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing remove — save succeeds but remove fails
         SwapDataSource(_app, new FailingRemoveDataSource(
-            _app.SettingsStore));
+            await _app.SettingsStore));
 
         var handler = new Rename { Context = Ctx, Name = (global::app.type.text.@this)"oldname", NewName = (global::app.type.text.@this)"newname" };
         var result = await handler.Run();
@@ -241,7 +241,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save
         SwapDataSource(_app, new FailingSaveDataSource(
-            _app.SettingsStore));
+            await _app.SettingsStore));
 
         var handler = new Archive { Context = Ctx, Name = (global::app.type.text.@this)"toarchive" };
         var result = await handler.Run();
@@ -262,7 +262,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save
         SwapDataSource(_app, new FailingSaveDataSource(
-            _app.SettingsStore));
+            await _app.SettingsStore));
 
         var handler = new Unarchive { Context = Ctx, Name = (global::app.type.text.@this)"tounarchive" };
         var result = await handler.Run();
@@ -295,7 +295,7 @@ public class IdentityErrorPathTests
         // store hands back a typed FACE with no processing; a corrupt entry (a raw
         // number, not an identity) surfaces its decline only when the developer LIFTS
         // it — never inside the store.
-        var ds = _app.SettingsStore;
+        var ds = await _app.SettingsStore;
         await ds.Set("identity", "weird", new Data("weird", 42));
 
         var data   = await ds.Get<Identity>("identity", "weird");
@@ -308,7 +308,7 @@ public class IdentityErrorPathTests
     [Test]
     public async Task GetAll_SkipsUndeserializableEntries()
     {
-        var ds = _app.SettingsStore;
+        var ds = await _app.SettingsStore;
 
         // Store a valid identity via Create action
         var create = new Create { Context = Ctx, Name = (global::app.type.text.@this)"valid", SetAsDefault = (global::app.type.@bool.@this)true };

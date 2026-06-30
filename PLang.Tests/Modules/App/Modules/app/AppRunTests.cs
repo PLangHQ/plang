@@ -10,7 +10,7 @@ public class AppRunTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/app");
+        _app = global::PLang.Tests.TestApp.Plain("/app");
         _app.Goal.Add(new global::app.goal.@this
         {
             Name = "RunTarget",

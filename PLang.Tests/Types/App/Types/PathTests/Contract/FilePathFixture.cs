@@ -25,6 +25,7 @@ public sealed class FilePathFixture : IPathSchemeFixture, IDisposable
         System.IO.Directory.CreateDirectory(_appRoot);
         System.IO.Directory.CreateDirectory(_resourceDir);
         _app = new global::app.@this(_appRoot);
+        global::PLang.Tests.TestApp.UseTestSigning(_app);
     }
 
     public Task<Path> CreateFresh()
