@@ -69,6 +69,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// into fresh, unstamped text. An unset full-match ref is THIS type's own
     /// failure story — reported on the data binding, answer absent.
     /// </summary>
+    // Names currently being resolved on this async flow — cycle detection for %x%→…→%x%.
+    private static readonly System.Threading.AsyncLocal<HashSet<string>?> _resolving = new();
+
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
         if (Template == null) return this;
@@ -76,15 +79,31 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (context?.Variable == null) return this;
         if (global::app.data.@this.TryFullVarMatch(_value, out var varName))
         {
-            var resolved = await context.Variable.Get(varName);
-            if (resolved == null || !resolved.IsInitialized)
+            // Cycle guard: resolving %x% whose value is (transitively) %x% again would recurse
+            // until StackOverflow. Track the resolving chain on the async flow; a re-entry on the
+            // same name is a typed error, not a crash (robustness, like the wire MaxReadDepth cap).
+            var resolving = _resolving.Value ??= new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+            if (!resolving.Add(varName))
             {
                 data.Fail(new global::app.error.Error(
-                    $"%{varName}% is not set — nothing to answer for {_value}.",
-                    "VariableNotFound", 404));
+                    $"Variable resolution cycle: %{varName}% resolves back to itself "
+                    + $"(chain: {string.Join(" → ", resolving)} → {varName}).",
+                    "VariableCycle", 400));
                 return Absent;
             }
-            return await resolved.Value();
+            try
+            {
+                var resolved = await context.Variable.Get(varName);
+                if (resolved == null || !resolved.IsInitialized)
+                {
+                    data.Fail(new global::app.error.Error(
+                        $"%{varName}% is not set — nothing to answer for {_value}.",
+                        "VariableNotFound", 404));
+                    return Absent;
+                }
+                return await resolved.Value();
+            }
+            finally { resolving.Remove(varName); }
         }
         var interpolated = await context.Variable.Resolve(_value);
         return new @this(interpolated);
