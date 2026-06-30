@@ -51,11 +51,7 @@ public sealed class @this : IList<Step>, IContext
             var step = _items[i];
             step.Goal ??= Goal;
 
-            // Disabled is per-EXECUTION state keyed by the running context. At load /
-            // back-reference wiring there is no execution context yet (Context null) — nothing
-            // is disabled, so enumerate every step. (Guards the load-time NRE while keeping the
-            // execution-time skip.)
-            if (Context != null && step.Disabled(Context))
+            if (step.Disabled(Context))
             {
                 // Clear the disabled flag after skipping so re-execution works
                 step.Enable(Context);
