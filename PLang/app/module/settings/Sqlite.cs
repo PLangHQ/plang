@@ -26,19 +26,31 @@ public sealed class Sqlite : IStore
     private bool _disposed;
 
     /// <summary>
+    /// Builds a Sqlite over an already-authorized connection string. The async
+    /// gate work (Authorize + parent Mkdir) happens in <see cref="CreateAsync"/>
+    /// — the ctor itself does no I/O await, so it never sync-waits.
+    /// </summary>
+    private Sqlite(string connectionString, actor.context.@this context)
+    {
+        _serializer = new(context);
+        Context = context;
+        _connectionString = connectionString;
+        EnableWalMode();
+    }
+
+    /// <summary>
     /// Creates a Sqlite at the specified database path, creating the parent
     /// directory if absent. D9b take-over API: sqlite opens the file itself,
     /// so we explicitly Authorize(Write) on the path before handing its
     /// Absolute string to the connection string. Out-of-root paths the
     /// actor hasn't granted bubble up as an exception — sqlite never sees them.
+    /// Async all the way: no <c>GetAwaiter().GetResult()</c>, so parallel store
+    /// construction never starves the threadpool.
     /// </summary>
-    public Sqlite(global::app.type.path.@this dbPath, actor.context.@this context)
+    public static async Task<Sqlite> CreateAsync(global::app.type.path.@this dbPath, actor.context.@this context)
     {
-        _serializer = new(context);
-        Context = context;
-        // Take-over API: authorize before passing .Absolute. Sync-wait
-        // — Sqlite ctor is sync and the gate is the bootstrap path.
-        var auth = dbPath.Authorize(global::app.type.permission.Verb.Write).GetAwaiter().GetResult();
+        // Take-over API: authorize before passing .Absolute.
+        var auth = await dbPath.Authorize(global::app.type.permission.Verb.Write);
         if (!auth.Success)
             throw new InvalidOperationException(
                 $"Sqlite path '{dbPath}' is not authorized for write: {auth.Error?.Message}");
@@ -48,16 +60,16 @@ public sealed class Sqlite : IStore
         // above already covered the dbPath's write).
         var parent = dbPath.Parent;
         if (parent != null)
-            parent.Mkdir().GetAwaiter().GetResult();
+            await parent.Mkdir();
 
-        _connectionString = new SqliteConnectionStringBuilder
+        var connectionString = new SqliteConnectionStringBuilder
         {
             DataSource = dbPath.Absolute,
             Mode = SqliteOpenMode.ReadWriteCreate,
             Cache = SqliteCacheMode.Shared
         }.ToString();
 
-        EnableWalMode();
+        return new Sqlite(connectionString, context);
     }
 
     /// <summary>

@@ -35,7 +35,13 @@ namespace PLang
 
 			var (goalFile, parameters) = CommandLineParser.Parse(args);
 
-			var engine = new app.@this(startupDirectory);
+			// The CLI is the one interactive terminal owner: opt out of the
+			// ctor's non-interactive auto-wire and bind real stdin explicitly so
+			// `output.ask` prompts read the user's keystrokes. Ad-hoc/test apps
+			// keep the EOF-sink input from auto-wire.
+			var engine = new app.@this(startupDirectory, autoWireConsoleChannels: false);
+			app.@this.WireDefaultConsoleChannels(engine.System);
+			app.@this.WireDefaultConsoleChannels(engine.User);
 			engine.OsDirectory = engine.OsAbsolutePath;
 
 			var userVars = engine.User.Context.Variable;

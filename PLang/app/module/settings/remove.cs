@@ -14,7 +14,7 @@ public partial class Remove : IContext
     public async Task<data.@this<type.setting>> Run()
     {
         var key = (await Key.Value())!.Clr<string>()!;
-        var store = Context.App.SettingsStore;
+        var store = await Context.App.SettingsStore;
         var result = await store.Remove("settings", key);
 
         if (!result.Success)

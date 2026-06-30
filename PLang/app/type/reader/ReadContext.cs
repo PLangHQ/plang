@@ -22,4 +22,12 @@ public sealed record ReadContext(
     global::app.View View = global::app.View.Out,
     // Verify a signed (@schema:signature) Data on read. The OUTER transport read verifies; a NESTED
     // reconstruction sets false — an inner Data is already covered by the outer signature.
-    bool Verify = true);
+    bool Verify = true,
+    // Defer the (async) verify to the async caller instead of running it sync inside the
+    // `ref`-struct reader. The plang serializer sets this — it has an async boundary
+    // (DeserializeAsync) where it can `await` verify after the sync read, so it never
+    // sync-waits (no threadpool starvation under parallel reads). When false (HTTP
+    // transport, nested), verify runs inline as before. The reader stamps the unverified
+    // signature layer onto the peeled Data via Data.PendingVerification; the async caller
+    // verifies and clears it.
+    bool DeferVerify = false);

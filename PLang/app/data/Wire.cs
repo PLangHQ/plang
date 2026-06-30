@@ -56,19 +56,24 @@ public class Wire : JsonConverter<@this>
     public Wire() : this(global::app.View.Out) { }
 
     public Wire(global::app.View view, bool sign = true, actor.context.@this? context = null,
-        string? template = null, bool verify = true)
+        string? template = null, bool verify = true, bool deferVerify = false)
     {
         View = view;
         Sign = sign;
         _context = context;
         _template = template;
         _verify = verify;
+        _deferVerify = deferVerify;
     }
 
     // Verify a signed Data on read. The OUTER transport read verifies; a nested reconstruction
     // (NestedOptions, goal-param readers) is built with verify:false — the inner Data is already
     // covered by the outer signature, so re-verifying each layer is wrong (and needs no actor).
     private readonly bool _verify;
+
+    // Defer the async verify to the async deserialize caller instead of sync-waiting inside the
+    // `ref`-struct reader. Set on the plang serializer's read wires (they verify in DeserializeAsync).
+    private readonly bool _deferVerify;
 
     // Hard ceiling on nested Data depth. STJ's own MaxDepth=64 caps a single
     // ParseValue call, but LiftDataIfShaped restarts STJ via
@@ -103,7 +108,7 @@ public class Wire : JsonConverter<@this>
     internal static JsonSerializerOptions ReadOptions(global::app.type.reader.ReadContext ctx)
     {
         var options = global::app.channel.serializer.json.Options.Read(ctx.Context);
-        options.Converters.Add(new Wire(ctx.View, context: ctx.Context, template: ctx.Template, verify: ctx.Verify));
+        options.Converters.Add(new Wire(ctx.View, context: ctx.Context, template: ctx.Template, verify: ctx.Verify, deferVerify: ctx.DeferVerify));
         return options;
     }
 
@@ -149,7 +154,7 @@ public class Wire : JsonConverter<@this>
             var jr = new global::app.channel.serializer.json.Reader(reader, buffer);
             // _context is non-null on every read path (no context-less Wire is constructed in
             // production); ReadContext.Context is non-null, so the boundary `!` is honest here.
-            var ctx = new global::app.type.reader.ReadContext(_context!, _template, View, _verify);
+            var ctx = new global::app.type.reader.ReadContext(_context!, _template, View, _verify, _deferVerify);
             var bodyData = global::app.data.schema.@this.Instance.Reader(schema).Read(ref jr, ctx);
             reader = jr.Inner;
             // When the caller asked for a typed Data<T>, wrap the base body

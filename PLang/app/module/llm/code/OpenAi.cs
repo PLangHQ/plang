@@ -65,7 +65,7 @@ public sealed class OpenAi : ILlm
         var config = app.Config.For<http.Config>(context);
 
         // --- Config ---
-        var settings = app.SettingsStore;
+        var settings = await app.SettingsStore;
         var endpoint = await ResolveConfigAsync(settings, "llm.endpoint", "OPENAI_API_ENDPOINT",
             "https://api.openai.com/v1/chat/completions");
         var apiKey = await ResolveConfigAsync(settings, "llm.apiKey", "OPENAI_API_KEY", null);

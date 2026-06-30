@@ -121,6 +121,16 @@ public partial class @this
         }
     }
 
+    /// <summary>
+    /// A signed (@schema:signature) Data read in <see cref="app.type.reader.ReadContext.DeferVerify"/>
+    /// mode carries its unverified signature layer here instead of verifying inline inside the
+    /// sync `ref`-struct reader. The async deserialize caller verifies it (async, no sync-wait)
+    /// and clears it. Non-null = NOT YET VERIFIED — a transient read-path marker, never serialized.
+    /// </summary>
+    [JsonIgnore]
+    [LlmIgnore]
+    internal global::app.type.signature.@this? PendingVerification { get; set; }
+
     [JsonIgnore]
     public string Path { get; }
 

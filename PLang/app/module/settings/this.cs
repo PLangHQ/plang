@@ -31,7 +31,7 @@ public sealed class @this
         var remaining = dotIndex >= 0 ? path[(dotIndex + 1)..] : null;
 
         // A user setting from plang code is an item (any plang value), forced — never a raw string.
-        var result = await _app.SettingsStore.Get<global::app.type.item.@this>(SettingsTable, key);
+        var result = await (await _app.SettingsStore).Get<global::app.type.item.@this>(SettingsTable, key);
         if (!result.Success) return result;
 
         // A missing key resolves to the typed null/absent citizen, not C# null —
@@ -50,6 +50,6 @@ public sealed class @this
     }
 
     /// <summary>Stores a Data value under the given key in the settings table.</summary>
-    public Task<data.@this> Set(string key, data.@this value)
-        => _app.SettingsStore.Set(SettingsTable, key, value);
+    public async Task<data.@this> Set(string key, data.@this value)
+        => await (await _app.SettingsStore).Set(SettingsTable, key, value);
 }

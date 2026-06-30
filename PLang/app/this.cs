@@ -170,8 +170,8 @@ public sealed partial class @this : IAsyncDisposable
     /// Created lazily on first access so tests with fictional paths and apps
     /// that never touch settings don't pay for SQLite-file creation at boot.
     /// </summary>
-    public global::app.module.settings.IStore SettingsStore => _settingsStore.Value;
-    private Lazy<global::app.module.settings.IStore> _settingsStore = null!;
+    public Task<global::app.module.settings.IStore> SettingsStore => _settingsStore.Value;
+    private Lazy<Task<global::app.module.settings.IStore>> _settingsStore = null!;
 
     /// <summary>
     /// Shared (one per app) settings collection. Holds Data values keyed by
@@ -312,7 +312,7 @@ public sealed partial class @this : IAsyncDisposable
         Type = new type.catalog.@this(System.Context);
         Code = new AppCode(System.Context);
         Config = new config.@this();
-        _settingsStore = new Lazy<global::app.module.settings.IStore>(CreateSettingsStore);
+        _settingsStore = new Lazy<Task<global::app.module.settings.IStore>>(CreateSettingsStoreAsync);
         Settings = new global::app.module.settings.@this(this);
         _modules = modules ?? new global::app.module.@this();
         _modules.App = this;
@@ -331,13 +331,19 @@ public sealed partial class @this : IAsyncDisposable
         Type.Scheme.Register("https", (raw, context) => global::app.type.path.http.@this.Resolve(raw, context));
 
         // Auto-wire console channels for ad-hoc App constructions (sub-process
-        // test fixtures, embedded scenarios, C# tests). Entry points that own
-        // the wiring (PlangConsole's Executor) construct with autoWireConsoleChannels:false
-        // and call WireDefaultConsoleChannels themselves.
+        // test fixtures, embedded scenarios, C# tests, the `plang --test` child
+        // app). These are NOT the interactive terminal owner, so their input is
+        // a non-blocking EOF sink — a prompt fails fast with ChannelEof instead
+        // of reading the shared process stdin (which deadlocks under parallel
+        // tests). Ask I/O goes through channels: a caller that wants to answer
+        // registers its own input/ask channel (e.g. tests' CannedAnswerChannel).
+        // The one interactive owner — the CLI (Executor) — constructs with
+        // autoWireConsoleChannels:false and calls WireDefaultConsoleChannels
+        // itself to bind real stdin.
         if (autoWireConsoleChannels)
         {
-            WireDefaultConsoleChannels(System);
-            WireDefaultConsoleChannels(User);
+            WireConsoleChannels(System, interactiveInput: false);
+            WireConsoleChannels(User, interactiveInput: false);
         }
     }
 
@@ -350,10 +356,23 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     /// <summary>
     /// Wires the console standard streams onto the given actor's Channels under
-    /// the well-known names ("output", "error", "input"). PlangConsole calls
-    /// this for System and User after constructing the App.
+    /// the well-known names ("output", "error", "input"), with real interactive
+    /// stdin as the input source. The interactive CLI (Executor) calls this for
+    /// System and User after constructing the App with autoWireConsoleChannels:false.
+    /// Non-interactive constructions (tests, embedded, the test runner's child
+    /// app) get the EOF-sink input via the ctor's auto-wire instead.
     /// </summary>
     public static void WireDefaultConsoleChannels(global::app.actor.@this actor)
+        => WireConsoleChannels(actor, interactiveInput: true);
+
+    /// <summary>
+    /// Wires output/error to the console standard streams. The input channel
+    /// reads real stdin when <paramref name="interactiveInput"/> is true (the
+    /// one terminal owner — the CLI); otherwise it binds <see cref="System.IO.Stream.Null"/>,
+    /// a non-blocking EOF source, so a prompt with no registered answerer fails
+    /// fast with ChannelEof rather than blocking on the shared process stdin.
+    /// </summary>
+    public static void WireConsoleChannels(global::app.actor.@this actor, bool interactiveInput)
     {
         if (!actor.Channel.Contains(global::app.channel.list.@this.Output))
             actor.Channel.Register(new global::app.channel.type.stream.@this(
@@ -364,9 +383,17 @@ public sealed partial class @this : IAsyncDisposable
                 global::app.channel.list.@this.Error, Console.OpenStandardError(),
                 global::app.channel.ChannelDirection.Output, ownsStream: false));
         if (!actor.Channel.Contains(global::app.channel.list.@this.Input))
-            actor.Channel.Register(new global::app.channel.type.stream.@this(
-                global::app.channel.list.@this.Input, Console.OpenStandardInput(),
-                global::app.channel.ChannelDirection.Input, ownsStream: false));
+            actor.Channel.Register(interactiveInput
+                // The one terminal owner (CLI) reads real stdin.
+                ? new global::app.channel.type.stream.@this(
+                    global::app.channel.list.@this.Input, Console.OpenStandardInput(),
+                    global::app.channel.ChannelDirection.Input, ownsStream: false)
+                // Non-interactive: an empty in-memory stream — reads as instant
+                // EOF (ChannelEof), so a prompt with no registered answerer fails
+                // fast instead of blocking on the shared process stdin.
+                : global::app.channel.type.stream.@this.Memory(
+                    global::app.channel.list.@this.Input,
+                    global::app.channel.ChannelDirection.Input));
     }
 
     /// <summary>
@@ -581,7 +608,7 @@ public sealed partial class @this : IAsyncDisposable
         return await goal.RunAsync(context);
     }
 
-    private global::app.module.settings.IStore CreateSettingsStore()
+    private async Task<global::app.module.settings.IStore> CreateSettingsStoreAsync()
     {
         // Testing: in-memory db scoped by App.Id so per-test Apps never share state.
         // SQLite's shared-cache merges in-memory dbs with identical DataSource names,
@@ -589,10 +616,11 @@ public sealed partial class @this : IAsyncDisposable
         if (Tester.IsEnabled)
             return global::app.module.settings.Sqlite.InMemory($"system-{Id}", System.Context);
 
-        // Lift to Path: AuthGate fires inside the Sqlite ctor on Write,
-        // parent dir creation via path.Mkdir.
+        // Lift to Path: AuthGate fires inside Sqlite.CreateAsync on Write,
+        // parent dir creation via path.Mkdir. Async all the way — no sync-wait,
+        // so parallel App constructions never starve the threadpool.
         var dbPath = global::app.type.path.@this.Resolve("/.db/system.sqlite", System.Context);
-        return new global::app.module.settings.Sqlite(dbPath, System.Context);
+        return await global::app.module.settings.Sqlite.CreateAsync(dbPath, System.Context);
     }
 
     public async ValueTask DisposeAsync()

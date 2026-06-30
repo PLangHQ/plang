@@ -15,7 +15,7 @@ public partial class Get : IContext
     public async Task<data.@this> Run()
     {
         var key = (await Key.Value())!.Clr<string>()!;
-        var store = Context.App.SettingsStore;
+        var store = await Context.App.SettingsStore;
         var result = await store.Get<global::app.type.item.@this>(global::app.module.settings.@this.SettingsTable, key);
 
         if (!result.Success)

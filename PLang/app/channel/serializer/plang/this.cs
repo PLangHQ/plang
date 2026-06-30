@@ -72,13 +72,15 @@ public sealed class @this : ISerializer
             pathConverter,
             global::app.channel.serializer.filter.Transport.ForOutbound);
 
-        _inboundWire = new global::app.data.Wire(global::app.View.Out, context: context);
+        // deferVerify: this serializer reads through the async DeserializeAsync, so a signed
+        // Data's verify runs there (awaited) instead of sync-waiting inside the ref-struct reader.
+        _inboundWire = new global::app.data.Wire(global::app.View.Out, context: context, deferVerify: true);
         _inbound = BuildOptions(
             _inboundWire,
             pathConverter,
             global::app.channel.serializer.filter.Transport.ForInbound);
 
-        _storeWire = new global::app.data.Wire(global::app.View.Store, context: context);
+        _storeWire = new global::app.data.Wire(global::app.View.Store, context: context, deferVerify: true);
         _store = BuildOptions(
             _storeWire,
             pathConverter,
@@ -218,7 +220,29 @@ public sealed class @this : ISerializer
             if (bytes.Length == 0) return _context.Ok();
             var wire = view == global::app.View.Store ? _storeWire : _inboundWire;
             var v = wire.ReadBuffered(bytes, options);
-            return v ?? _context.Ok();
+            if (v == null) return _context.Ok();
+
+            // Deferred verify: the sync reader stamped the unverified signature layer here
+            // (it can't await inside a ref-struct reader). Verify it now, async — no sync-wait,
+            // so parallel reads never starve the threadpool. A bad/expired/wrong-key signature
+            // fails the read exactly as the inline path did.
+            if (v.PendingVerification is { } layer)
+            {
+                v.PendingVerification = null;
+                var carrier = _context.Ok(layer);
+                carrier.Context = _context;
+                var verifyAction = new global::app.module.signing.verify
+                {
+                    Data = carrier,
+                    SkipFreshnessCheck = new global::app.data.@this<global::app.type.@bool.@this>(
+                        "", view == global::app.View.Store),
+                };
+                var verifyResult = await _context.App.RunAction(verifyAction, _context);
+                if (!verifyResult.Success)
+                    return _context.Error(verifyResult.Error ?? new error.ServiceError(
+                        "Signature verification failed", "SignatureInvalid", 400));
+            }
+            return v;
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
         {

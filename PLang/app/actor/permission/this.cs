@@ -59,7 +59,7 @@ public sealed class @this
         // grants were ever used.
         try
         {
-            var stored = await _actor.App.SettingsStore.GetAll<Grant>(PermissionTable);
+            var stored = await (await _actor.App.SettingsStore).GetAll<Grant>(PermissionTable);
             if (stored.Success && await stored.Value() is { } list)
             {
                 foreach (var grantData in list.Items.Cast<global::app.data.@this>())
@@ -100,7 +100,7 @@ public sealed class @this
         // settings store; an in-memory grant is local and unsigned.
         if (persist)
         {
-            await _actor.App.SettingsStore.Set(PermissionTable, key, grant);
+            await (await _actor.App.SettingsStore).Set(PermissionTable, key, grant);
             return;
         }
 
@@ -130,7 +130,7 @@ public sealed class @this
             if (idx >= 0) { _inMemory.RemoveAt(idx); removed = true; }
         }
 
-        var sqliteResult = await _actor.App.SettingsStore.Remove(PermissionTable, match.Path);
+        var sqliteResult = await (await _actor.App.SettingsStore).Remove(PermissionTable, match.Path);
         if (sqliteResult.Success) removed = true;
         return removed;
     }

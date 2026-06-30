@@ -83,11 +83,23 @@ public sealed class signature : ISchemaReader
         // needs the actor context the same way the outer does.
         layer.Value.Context = context;
 
+        var peeled = layer.Value;
+        peeled.Context = context;
+
         // The OUTER read verifies the signature; a NESTED reconstruction (ctx.Verify == false) peels
         // without verifying — the inner Data is already covered by the outer signature, and an inner
         // layer has no actor of its own to verify against.
         if (ctx.Verify)
         {
+            if (ctx.DeferVerify)
+            {
+                // Async caller (DeserializeAsync) verifies after the sync read — a `ref`-struct
+                // reader can't `await`, and sync-waiting here starves the threadpool under
+                // parallel reads. Stamp the layer; the caller verifies + clears it.
+                peeled.PendingVerification = layer;
+                return peeled;
+            }
+
             var carrier = Data.Ok(layer);
             carrier.Context = context;
             var verifyAction = new global::app.module.signing.verify
@@ -104,8 +116,6 @@ public sealed class signature : ISchemaReader
                     ?? new global::app.error.ServiceError("Signature verification failed", "SignatureInvalid", 400));
         }
 
-        var peeled = layer.Value;
-        peeled.Context = context;
         return peeled;
     }
 }

@@ -204,7 +204,7 @@ public sealed class Default : IIdentity
     /// <summary>Loads a single identity by name from the settings store.</summary>
     internal async Task<data.@this<Identity>> Load(IContext action, string name)
     {
-        var store = action.Context.App.SettingsStore;
+        var store = await action.Context.App.SettingsStore;
         // Stored as the Identity item itself, so it round-trips as one.
         var result = await store.Get<Identity>(Table, name);
 
@@ -220,7 +220,7 @@ public sealed class Default : IIdentity
     /// <summary>Loads all identities (including archived) from the settings store.</summary>
     internal async Task<(List<Identity>? Identities, global::app.error.IError? Error)> LoadAll(IContext action)
     {
-        var store = action.Context.App.SettingsStore;
+        var store = await action.Context.App.SettingsStore;
         var result = await store.GetAll<Identity>(Table);
         if (!result.Success) return (null, result.Error);
 
@@ -266,7 +266,7 @@ public sealed class Default : IIdentity
     /// store decides the success shape; callers only check .Success / .Error.</summary>
     private async Task<data.@this> SaveAsync(IContext action, Identity identity)
     {
-        var store = action.Context.App.SettingsStore;
+        var store = await action.Context.App.SettingsStore;
         var data = new data.@this(identity.Name, identity, context: action.Context);
         return await store.Set(Table, identity.Name, data);
     }
@@ -274,7 +274,7 @@ public sealed class Default : IIdentity
     /// <summary>Removes an identity from store. Bare — same as SaveAsync.</summary>
     private async Task<data.@this> RemoveAsync(IContext action, Identity identity)
     {
-        var store = action.Context.App.SettingsStore;
+        var store = await action.Context.App.SettingsStore;
         return await store.Remove(Table, identity.Name);
     }
 

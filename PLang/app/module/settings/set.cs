@@ -16,7 +16,7 @@ public partial class Set : IContext
     {
         var key = (await Key.Value())!.Clr<string>()!;
         var val = Value == null ? null : await Value.Value();
-        var store = Context.App.SettingsStore;
+        var store = await Context.App.SettingsStore;
         var result = await store.Set("settings", key, new data.@this(key, val, context: Context));
 
         if (!result.Success)
