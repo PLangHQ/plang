@@ -27,7 +27,7 @@ public class StringPlainTests
         {
             Module = "matrix.plain",
             ActionName = "stringplain",
-            Parameters = new List<Data> { new Data("path", "hello") }
+            Parameters = new List<Data> { new Data("path", "hello", context: app.User.Context) }
         };
 
         // Touch property twice via Run() — Run returns Path which means the get fired.

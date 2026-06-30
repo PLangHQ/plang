@@ -43,6 +43,6 @@ public partial class DataWrappedStringUses : global::app.module.IContext
     {
         // Consume through the value door — lazy resolution happens here, not at Peek.
         var len = ((await Body.Value())?.ToString())?.Length ?? 0;
-        return global::app.data.@this.Ok(len);
+        return Context.Ok(len);
     }
 }

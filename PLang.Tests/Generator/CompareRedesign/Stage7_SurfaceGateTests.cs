@@ -124,8 +124,8 @@ public class Stage7_SurfaceGateTests
     public async Task DictKeys_ReturnsListOfText_NotIEnumerableString()
     {
         var d = new global::app.type.dict.@this();
-        d.Set(new Data("name", "a"));
-        d.Set(new Data("age", 30L));
+        d.Set(new Data("name", "a", context: global::PLang.Tests.TestApp.SharedContext));
+        d.Set(new Data("age", 30L, context: global::PLang.Tests.TestApp.SharedContext));
         object keys = d.Keys;
         await Assert.That(keys).IsTypeOf<global::app.type.list.@this<global::app.type.text.@this>>();
         var names = ((global::app.type.list.@this<global::app.type.text.@this>)keys)
@@ -137,8 +137,8 @@ public class Stage7_SurfaceGateTests
     public async Task ListCount_ReturnsNumber_NotInt()
     {
         var l = new global::app.type.list.@this();
-        l.Add(new Data("", 1));
-        l.Add(new Data("", 2));
+        l.Add(new Data("", 1, context: global::PLang.Tests.TestApp.SharedContext));
+        l.Add(new Data("", 2, context: global::PLang.Tests.TestApp.SharedContext));
         object count = l.Count;
         await Assert.That(count).IsTypeOf<global::app.type.number.@this>();
         await Assert.That(count.ToString()).IsEqualTo("2");

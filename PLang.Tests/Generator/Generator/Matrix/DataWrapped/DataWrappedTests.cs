@@ -100,7 +100,7 @@ public class DataWrappedActionListTests
             {
                 ["module"] = "variable",
                 ["action"] = "set",
-                ["parameters"] = new List<Data> { new Data("v", "%comment%") }
+                ["parameters"] = new List<Data> { new Data("v", "%comment%", context: app.User.Context) }
             }
         };
         var result = await MatrixRunner.RunAsync<DataWrappedActionList>(app,
@@ -126,7 +126,7 @@ public class DataWrappedActionListTests
             {
                 ["module"] = "variable",
                 ["action"] = "set",
-                ["parameters"] = new List<Data> { new Data("a", "%x%") }
+                ["parameters"] = new List<Data> { new Data("a", "%x%", context: app.User.Context) }
             }
         };
         var result = await MatrixRunner.RunAsync<DataWrappedActionList>(app,

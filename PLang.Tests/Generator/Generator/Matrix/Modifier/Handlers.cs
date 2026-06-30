@@ -6,7 +6,7 @@ public partial class ModifierAction : global::app.module.IContext, global::app.m
 {
     public partial global::app.data.@this<global::app.type.text.@this> Tag { get; init; }
 
-    public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
+    public Task<global::app.data.@this> Run() => Task.FromResult(Context.Ok());
 
     public Func<Task<global::app.data.@this>> Wrap(
         Func<Task<global::app.data.@this>> next,
@@ -17,7 +17,7 @@ public partial class ModifierAction : global::app.module.IContext, global::app.m
             var result = await next();
             // Tag-pass-through: append the modifier's Tag to the result so tests can verify wrap fired.
             if (result.Success && result.Peek() is global::app.type.text.@this st && st.Clr<string>() is { } s)
-                return global::app.data.@this.Ok($"{s}|{(Tag.Peek())}");
+                return Context.Ok($"{s}|{(Tag.Peek())}");
             return result;
         };
     }

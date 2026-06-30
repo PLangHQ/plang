@@ -85,7 +85,7 @@ public class Stage2_GetParameterLazyTests
         // error Data (SchemeNotRegistered), surfaced by the post-resolve guard — no NRE.
         await using var app = new global::app.@this("/app");
         var context = app.User.Context;
-        var slot = new Data("path", "s3://bucket/key") { Context = context };
+        var slot = new Data("path", "s3://bucket/key", context: context);
         var failedPath = slot.ShallowClone<global::app.type.path.@this>(await slot.Value<global::app.type.path.@this>());
         await failedPath.IsFailure();
         await Assert.That(failedPath.Error!.Key).IsEqualTo("SchemeNotRegistered");
