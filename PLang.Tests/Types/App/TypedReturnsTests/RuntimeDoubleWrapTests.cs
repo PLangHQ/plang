@@ -138,8 +138,8 @@ public class RuntimeDoubleWrapTests
         var app = new global::app.@this("/app");
         var context = app.User.Context;
         var users = new global::app.type.list.@this { Context = context };
-        var u1 = new global::app.type.dict.@this { Context = context }; u1.Set(new global::app.data.@this("age", 25L)); users.Add(new global::app.data.@this("", u1));
-        var u2 = new global::app.type.dict.@this { Context = context }; u2.Set(new global::app.data.@this("age", 15L)); users.Add(new global::app.data.@this("", u2));
+        var u1 = new global::app.type.dict.@this { Context = context }; u1.Set(new global::app.data.@this("age", 25L, context: context)); users.Add(new global::app.data.@this("", u1));
+        var u2 = new global::app.type.dict.@this { Context = context }; u2.Set(new global::app.data.@this("age", 15L, context: context)); users.Add(new global::app.data.@this("", u2));
         context.Variable.Set("users", users);
 
         var action = new global::app.module.list.Where
@@ -148,7 +148,7 @@ public class RuntimeDoubleWrapTests
             ListName = new @this("users"),
             Field = new global::app.data.@this<global::app.type.text.@this>("", "age"),
             Operator = new global::app.data.@this<global::app.type.choice.@this<global::app.module.condition.Operator>>("", new global::app.module.condition.Operator(">")),
-            Value = new global::app.data.@this("", 20L),
+            Value = new global::app.data.@this("", 20L, context: context),
         };
         var result = await action.Run();
         await result.IsSuccess();
