@@ -318,6 +318,10 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
         // This is an authored seam (a .pr off disk), so step parameters with
         // %ref% holes stamp as live templates here — same rule as goal.list.Add.
         goal.App = app;
+        // Born-with-context: the deserialized goal tree carries the load context onto its
+        // step collections (the Steps enumerator reads it for per-execution Disabled state).
+        // Wired here at the .pr-load seam, like App — never left null.
+        goal.Steps.Context = context;
         foreach (var step in goal.Steps)
         {
             step.Goal = goal;
@@ -328,6 +332,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
         {
             subGoal.App = app;
             subGoal.Parent = goal;
+            subGoal.Steps.Context = context;
             foreach (var step in subGoal.Steps)
             {
                 step.Goal = subGoal;
