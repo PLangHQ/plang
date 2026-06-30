@@ -29,7 +29,7 @@
 
 **Files.** Plan spine `plan.md`; deep dives `plan/mime-and-verify.md`, `plan/value-births.md`, `plan/step-context.md`, `plan/demolition.md`, `plan/after-flow.md` (end-to-end code flow in the non-null world, before/after at each junction). The "removed outright" consolidated list and the OBP self-audit are in `demolition.md`.
 
-**Stages.** Carved into six stage files at the architect root.
+**Stages.** Carved into seven stage files at the architect root (Stage 7 added later, from the nullable-object audit).
 
 | Stage | File | Status |
 |-------|------|--------|
@@ -39,7 +39,8 @@
 | 4 | [Serializer & store bind context — one read path](stage-4-serializer-binds-context.md) | pending |
 | 5 | [Authenticity & bootstrap](stage-5-authenticity-bootstrap.md) | pending |
 | 6 | [Invariant proof](stage-6-invariant-proof.md) | pending |
+| 7 | [Residual actor/context nullables](stage-7-residual-nullables.md) | pending |
 
-Dependency order: 1 first (foundation); 2 independent (sequence after 1 for clean diffs); 3 needs 1; 4 needs 1+3; 5 needs 4+1; 6 needs all.
+Dependency order: 1 first (foundation); 2 independent (sequence after 1 for clean diffs); 3 needs 1; 4 needs 1+3; 5 needs 4+1; 6 needs all. Stage 7 (added by a later nullable-object audit) closes gaps A–D didn't enumerate — the channel Actor fields, `context.CallStack`, the `type` identity nuance, the `!` residue; items 2–4 need 1+3, item 1 (channel Actor) needs Ingi's "is Service an actor" decision.
 
 **Status.** Design settled and stages carved. Ready for test-designer and coder.
