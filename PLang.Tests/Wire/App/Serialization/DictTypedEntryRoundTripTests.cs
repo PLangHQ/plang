@@ -17,10 +17,11 @@ public class DictTypedEntryRoundTripTests
     // and every Store read routes through the one context-ful Typed-reader path.
     // Type-routing is verified: with a context-ful serializer the read borns each
     // nested {type,value} entry back to its type (the context-less narrow is gone).
-    // Scalar sign/verify round-trips (WireConverterSigningTests green); this nested
-    // dict→list→dict case still hits DataHashMismatch — the re-read nested containers
-    // must canonicalize identically to the signed original (nested-determinism, tracked).
-    [Skip("Pending: nested-typed Store verify-on-read DataHashMismatch (nested canonicalization determinism)")]
+    // DataHashMismatch is FIXED (hash now taken in the serialization view; back.Success is
+    // true). Remaining: a dict of nested typed entries doesn't reconstruct its container types
+    // through a Store round-trip (top-level comes back not-a-dict) — a separate nested-container
+    // read issue, not the signature canonicalization.
+    [Skip("Pending: nested dict/list container reconstruction through Store round-trip")]
     [Test]
     public async Task DictOfTypedEntries_StoreRoundTrip_PreservesNestedTypes()
     {
