@@ -76,7 +76,7 @@ public class HashTypeTests
         var digest = await crypto.Hash(new global::app.module.crypto.Hash
         {
             Context = ctx,
-            Data = global::app.data.@this.Ok("hello"),
+            Data = ctx.Ok("hello"),
             Algorithm = new global::app.data.@this<global::app.type.text.@this>("Algorithm", "sha256"),
         });
         await digest.IsSuccess();
@@ -86,7 +86,7 @@ public class HashTypeTests
         var verify = new global::app.module.crypto.Verify
         {
             Context = ctx,
-            Data = global::app.data.@this.Ok("hello"),
+            Data = ctx.Ok("hello"),
             Hash = digest,
         };
         var result = await verify.Run();

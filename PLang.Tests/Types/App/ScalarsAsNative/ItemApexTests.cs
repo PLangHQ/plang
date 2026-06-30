@@ -72,7 +72,7 @@ public class ItemApexTests
         Item emptyList = new PList();
         Item five = Number.From(5);
         var fullDict = new Dict();
-        fullDict.Set(new Data("k", "v"));
+        fullDict.Set(new Data("k", "v", context: global::PLang.Tests.TestApp.SharedContext));
         Item nonEmptyDict = fullDict;
 
         await Assert.That(emptyDict.IsTruthy()).IsFalse();

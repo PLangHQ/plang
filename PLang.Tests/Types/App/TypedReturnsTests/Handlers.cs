@@ -20,7 +20,7 @@ public partial class BuildReturnsType : global::app.module.IContext
 {
     public partial global::app.data.@this<global::app.type.text.@this>? Tag { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
-    public Task<global::app.data.@this> Build() => Task.FromResult(global::app.data.@this.Ok("foo"));
+    public Task<global::app.data.@this> Build() => Task.FromResult(Context.Ok("foo"));
 }
 
 /// <summary>Build() returns Fail — exercises the abort-validation path.</summary>

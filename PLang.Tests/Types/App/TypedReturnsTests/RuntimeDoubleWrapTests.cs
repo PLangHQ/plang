@@ -78,7 +78,7 @@ public class RuntimeDoubleWrapTests
     public async Task MathAdd_OnLongs_ValueIsRawNotData()
     {
         var context = _app.User.Context;
-        var action = new MathAdd { Context = context, A = new Data("", 5L), B = new Data("", 3L) };
+        var action = new MathAdd { Context = context, A = new Data("", 5L, context: context), B = new Data("", 3L, context: context) };
         var result = await action.Run();
 
         await result.IsSuccess();

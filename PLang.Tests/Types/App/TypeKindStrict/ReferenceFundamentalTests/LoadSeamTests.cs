@@ -61,7 +61,7 @@ public class LoadSeamTests
         var img = PathBackedPng("nested.png");
         var dict = new System.Collections.Generic.Dictionary<string, object?> { ["avatar"] = img };
 
-        var error = await Data.Ok(dict).Load();
+        var error = await _app.User.Context.Ok(dict).Load();
 
         await Assert.That(error).IsNull();
         await Assert.That(img.Bytes).IsEquivalentTo(Png1x1);
@@ -86,7 +86,7 @@ public class LoadSeamTests
         await Assert.That((await Data.Ok(bytesBacked).Load())).IsNull();
 
         var scalar = new System.Collections.Generic.Dictionary<string, object?> { ["n"] = 42L, ["s"] = "x" };
-        await Assert.That((await Data.Ok(scalar).Load())).IsNull();
+        await Assert.That((await _app.User.Context.Ok(scalar).Load())).IsNull();
     }
 
     [Test] public async Task Serialize_PathBackedImage_EmitsRealBytes_NotEmpty()
