@@ -112,7 +112,11 @@ public partial class @this
     [JsonIgnore]
     public actor.context.@this Context
     {
-        get => _context ?? (_item as module.IContext)?.Context!;
+        // Born-with-context: _context is set at construction on every birth (Stage 3).
+        // No fallback to the item's context — a null here is a bug to fix at the caller,
+        // not a state to paper over. The setter still propagates a non-null context onto
+        // a context-aware value (adopt/rebind), never clobbering with null.
+        get => _context;
         set
         {
             _context = value;
