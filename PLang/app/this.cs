@@ -583,17 +583,12 @@ public sealed partial class @this : IAsyncDisposable
         if (goalCall.Parameters != null)
             foreach (var param in goalCall.Parameters)
             {
-                // Call-by-value at the boundary. A value-slot variable reference resolves to
-                // the caller's CURRENT binding NOW — before this Set overwrites the slot.
-                // Caller and callee share the store, so storing the bare reference would point
-                // the slot at itself (call Foo x=%x% → x resolves %x% → x) and loop when read.
-                // A literal / partial template is stored as-is and resolves at read.
+                // Data just flows — bind each arg's Data under its name as-is, no inspection,
+                // no resolve. It resolves/renders on its own door when the callee reads it.
+                // A self-reference arg (`call Foo x=%x%`) is dropped at build (goal.call.Build),
+                // never handled here.
                 param.Context = context;
-                if (param.Peek() is global::app.variable.@this)
-                    await context.Variable.Set(param.Name,
-                        new global::app.data.@this(param.Name, await param.Value(), context: context));
-                else
-                    await context.Variable.Set(param.Name, param);
+                await context.Variable.Set(param.Name, param);
             }
 
         return await ((Goal)(await goalResult.Value())!).RunAsync(context);
