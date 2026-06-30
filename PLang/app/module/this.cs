@@ -524,7 +524,7 @@ public sealed class @this : IAsyncDisposable
         {
             if (baseProps.Contains(prop.Name)) continue;
             var typeName = ((App?.Type?.GetTypeName(prop.PropertyType) ?? global::app.type.catalog.@this.GetTypeNameStatic(prop.PropertyType)));
-            properties.Add(new data.@this(prop.Name, typeName));
+            properties.Add(new data.@this(prop.Name, typeName, context: App.System.Context));
         }
 
         return properties.Count > 0 ? properties : null;

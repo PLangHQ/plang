@@ -75,11 +75,11 @@ public class SnapshotWireTests
         // it through the wire. The int keys must come back as int (not long) so
         // CallStack.Restore's Read<int> resolves them.
         var src = global::PLang.Tests.TestApp.Create("/src");
-        var snap = new global::app.snapshot.@this();
+        var snap = new global::app.snapshot.@this(src.User.Context);
         // Emulate one captured frame's scalar shape.
         var cs = snap.Section("CallStack");
         var frames = new List<global::app.snapshot.@this>();
-        var f = new global::app.snapshot.@this();
+        var f = new global::app.snapshot.@this(src.User.Context);
         f.Write("goalPrPath", "/.build/Start/00. Goal.pr");
         f.Write("goalHash", "abc123");
         f.Write("stepIndex", 3);
