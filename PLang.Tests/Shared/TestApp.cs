@@ -36,8 +36,14 @@ public static class TestApp
     /// </summary>
     public static void UseTestSigning(global::app.@this app)
     {
-        app.Code.Register<global::app.module.signing.code.ISigning>(new global::PLang.Tests.Shared.TestSigning { IsBuiltIn = true });
+        var provider = new global::PLang.Tests.Shared.TestSigning { IsBuiltIn = true };
+        // The built-in ed25519 is registered as BOTH ISigning and IKey (keygen). Replace both
+        // so identity creation skips real ed25519 keygen too — keygen is the dominant per-test
+        // crypto cost. Tests that assert real keys/keygen stay on the real provider.
+        app.Code.Register<global::app.module.signing.code.ISigning>(provider);
+        app.Code.Register<global::app.module.signing.code.IKey>(provider);
         app.Code.SetDefault<global::app.module.signing.code.ISigning>("test-signing");
+        app.Code.SetDefault<global::app.module.signing.code.IKey>("test-signing");
     }
 
     /// <summary>

@@ -5,6 +5,7 @@ using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.identity;
 
+[NotInParallel]
 public class IdentityHandlerTests
 {
     private string _tempDir = null!;
