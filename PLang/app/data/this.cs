@@ -830,14 +830,20 @@ public class @this<T> : @this
     public static @this<T> From(@this source)
     {
         if (source is @this<T> already) return already;
-        var copy = new @this<T>(source.Name, source.Peek() is T t ? t : default, source.Type)
+        // Born WITH the source's context — a retype/copy inherits the context the
+        // source was born with, never null (a null here would make the held value
+        // context-less). Constructed value-less so the ctor runs no Build/Create;
+        // the instance is then held AS-IS below.
+        var copy = new @this<T>(source.Name, context: source.Context)
         {
             Error = source.Error,
         };
-        // Sentinel/courier passthrough (an errored or suspended source whose
-        // value isn't T — the bubbled Ask): the instance rides whole so the
-        // sentinel's own type and exit semantics survive the typed boundary.
-        if (copy.Instance == null && source.Instance != null)
+        // Hold the source's instance whole — no re-Build. A re-Build would re-resolve
+        // a %ref%/variable value (breaking variable.set's store-as-is) and would
+        // re-run type work on an already-built value. This also carries the
+        // sentinel/courier passthrough: an errored or suspended source whose value
+        // isn't T rides whole so its own type and exit semantics survive the boundary.
+        if (source.Instance != null)
             copy.SetValueDirect(source.Instance);
         copy.Handled = source.Handled;
         copy.Returned = source.Returned;
