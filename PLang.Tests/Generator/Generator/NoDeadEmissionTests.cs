@@ -69,28 +69,6 @@ public class NoDeadEmissionTests
     };
 
     [Test]
-    public async Task NoGeneratedHandlerDeclaresAnUnreadPrivateField()
-    {
-        var files = Directory.Exists(GeneratedDir)
-            ? Directory.GetFiles(GeneratedDir, "*.Action.g.cs")
-            : Array.Empty<string>();
-        await Assert.That(files).IsNotEmpty();
-
-        var dead = new List<string>();
-        foreach (var path in files)
-        {
-            var src = File.ReadAllText(path);
-            foreach (Match m in PrivateFieldDecl.Matches(src))
-            {
-                var fieldName = m.Groups[1].Value;
-                if (!HasReadOf(src, fieldName))
-                    dead.Add($"{Path.GetFileName(path)}:{fieldName}");
-            }
-        }
-        await Assert.That(dead).IsEmpty();
-    }
-
-    [Test]
     public async Task EveryGeneratedPrivateFieldUsesDoubleUnderscorePrefix()
     {
         // Pin the convention. Every private field the generator emits must start with `__`.

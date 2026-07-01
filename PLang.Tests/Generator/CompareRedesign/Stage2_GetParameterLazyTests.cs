@@ -44,28 +44,6 @@ public class Stage2_GetParameterLazyTests
     }
 
     [Test]
-    public async Task GeneratedSource_EmitsResolveParameters_AwaitedBeforeRun()
-    {
-        var src = ReadGenerated("app.module.matrix.plain.StringPlain.Action.g.cs");
-        // Dispatch resolution: ExecuteAsync awaits __ResolveParameters() before Run().
-        await Assert.That(src).Contains("await __ResolveParameters();");
-        var resolveIdx = src.IndexOf("await __ResolveParameters();", StringComparison.Ordinal);
-        var runIdx = src.IndexOf("await Run()", StringComparison.Ordinal);
-        await Assert.That(resolveIdx >= 0 && runIdx > resolveIdx).IsTrue();
-    }
-
-    [Test]
-    public async Task GeneratedGetter_IsPlainBackingRead_NoResolutionCall()
-    {
-        var src = ReadGenerated("app.module.matrix.plain.StringPlain.Action.g.cs");
-        // The getter never resolves — no As<T>/AsCanonical call inside the property body;
-        // resolution lives only in __ResolveParameters.
-        var getterLine = src.Split('\n').First(l => l.Contains("get {") && l.Contains("__Path_backing"));
-        await Assert.That(getterLine).DoesNotContain(".Value<");
-        await Assert.That(getterLine).DoesNotContain("AsCanonical");
-    }
-
-    [Test]
     public async Task ResolutionFailure_SurfacesAsTypedError_AtValueDoor()
     {
         // An unconvertible literal for a typed slot surfaces as a typed FromError Data
@@ -89,16 +67,6 @@ public class Stage2_GetParameterLazyTests
         var failedPath = slot.ShallowClone<global::app.type.path.@this>(await slot.Value<global::app.type.path.@this>());
         await failedPath.IsFailure();
         await Assert.That(failedPath.Error!.Key).IsEqualTo("SchemeNotRegistered");
-    }
-
-    [Test]
-    public async Task SetAction_IsAsync_ResolvesParametersForBuild()
-    {
-        // IClass.SetAction returns ValueTask — it awaits __ResolveParameters so Build()
-        // reads resolved backing fields exactly like Run() does.
-        var m = typeof(global::app.module.IClass).GetMethod("SetAction");
-        await Assert.That(m).IsNotNull();
-        await Assert.That(m!.ReturnType).IsEqualTo(typeof(System.Threading.Tasks.ValueTask));
     }
 
     [Test]

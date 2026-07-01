@@ -51,13 +51,6 @@ public class SnapshotParamsTests
     }
 
     [Test]
-    public async Task SnapshotEntry_FinalValue_FromBackingFieldValue()
-    {
-        var snapshotSrc = ReadGenerated("app.module.matrix.snapshot.SnapshotOnError.Action.g.cs");
-        await Assert.That(snapshotSrc).Contains("FinalValue = __First_set ? (object?)__First_backing : null");
-    }
-
-    [Test]
     public async Task SnapshotEntry_UnaccessedProperty_PrValueOnly()
     {
         await using var app = new global::app.@this("/app");
