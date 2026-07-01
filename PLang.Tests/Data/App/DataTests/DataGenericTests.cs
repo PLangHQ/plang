@@ -21,7 +21,7 @@ public class DataGenericTests : System.IAsyncDisposable
     [Test]
     public async Task Ok_WithType_SetsType()
     {
-        var data = global::app.data.@this<global::app.type.number.@this>.Ok(42, Type.Int);
+        var data = _app.User.Context.Ok(42, Type.Int);
 
         await Assert.That((await data.Value())?.ToString()).IsEqualTo("42");
         await Assert.That(data.Type).IsNotNull();
