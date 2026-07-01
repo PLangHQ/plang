@@ -75,14 +75,14 @@ public class ModifierFoldTests
             ActionName = "set",
             Parameters = new List<global::app.data.@this>
             {
-                new("name", "%y%", new global::app.type.@this("variable")), new("value", "wrapped")
+                new("name", "%y%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "wrapped", context: global::PLang.Tests.TestApp.SharedContext)
             },
             Modifiers = new ActionModifiers
             {
                 new PrAction
                 {
                     Module = "timeout", ActionName = "after",
-                    Parameters = new List<global::app.data.@this> { new("ms", 5000) }
+                    Parameters = new List<global::app.data.@this> { new("ms", 5000, context: global::PLang.Tests.TestApp.SharedContext) }
                 }
             }
         };
@@ -104,19 +104,19 @@ public class ModifierFoldTests
             ActionName = "set",
             Parameters = new List<global::app.data.@this>
             {
-                new("name", "%z%", new global::app.type.@this("variable")), new("value", "nested")
+                new("name", "%z%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "nested", context: global::PLang.Tests.TestApp.SharedContext)
             },
             Modifiers = new ActionModifiers
             {
                 new PrAction
                 {
                     Module = "timeout", ActionName = "after",
-                    Parameters = new List<global::app.data.@this> { new("ms", 5000) }
+                    Parameters = new List<global::app.data.@this> { new("ms", 5000, context: global::PLang.Tests.TestApp.SharedContext) }
                 },
                 new PrAction
                 {
                     Module = "error", ActionName = "handle",
-                    Parameters = new List<global::app.data.@this> { new("ignoreError", true) }
+                    Parameters = new List<global::app.data.@this> { new("ignoreError", true, context: global::PLang.Tests.TestApp.SharedContext) }
                 }
             }
         };
@@ -137,28 +137,28 @@ public class ModifierFoldTests
             ActionName = "set",
             Parameters = new List<global::app.data.@this>
             {
-                new("name", "%q%", new global::app.type.@this("variable")), new("value", "full")
+                new("name", "%q%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "full", context: global::PLang.Tests.TestApp.SharedContext)
             },
             Modifiers = new ActionModifiers
             {
                 new PrAction
                 {
                     Module = "timeout", ActionName = "after",
-                    Parameters = new List<global::app.data.@this> { new("ms", 5000) }
+                    Parameters = new List<global::app.data.@this> { new("ms", 5000, context: global::PLang.Tests.TestApp.SharedContext) }
                 },
                 new PrAction
                 {
                     Module = "cache", ActionName = "wrap",
                     Parameters = new List<global::app.data.@this>
                     {
-                        new("durationMs", 60_000L),
-                        new("key", "fold-test-key")
+                        new("durationMs", 60_000L, context: global::PLang.Tests.TestApp.SharedContext),
+                        new("key", "fold-test-key", context: global::PLang.Tests.TestApp.SharedContext)
                     }
                 },
                 new PrAction
                 {
                     Module = "error", ActionName = "handle",
-                    Parameters = new List<global::app.data.@this> { new("ignoreError", true) }
+                    Parameters = new List<global::app.data.@this> { new("ignoreError", true, context: global::PLang.Tests.TestApp.SharedContext) }
                 }
             }
         };
@@ -179,7 +179,7 @@ public class ModifierFoldTests
             ActionName = "set",
             Parameters = new List<global::app.data.@this>
             {
-                new("name", "%nope%", new global::app.type.@this("variable")), new("value", "x")
+                new("name", "%nope%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "x", context: global::PLang.Tests.TestApp.SharedContext)
             },
             Modifiers = new ActionModifiers
             {
@@ -189,7 +189,7 @@ public class ModifierFoldTests
                     Module = "variable", ActionName = "set",
                     Parameters = new List<global::app.data.@this>
                     {
-                        new("name", "%bad%", new global::app.type.@this("variable")), new("value", "no")
+                        new("name", "%bad%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "no", context: global::PLang.Tests.TestApp.SharedContext)
                     }
                 }
             }

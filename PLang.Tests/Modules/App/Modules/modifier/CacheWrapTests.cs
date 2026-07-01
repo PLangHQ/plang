@@ -22,10 +22,10 @@ public class CacheWrapTests
     {
         var parameters = new List<global::app.data.@this>
         {
-            new("durationMs", durationMs),
-            new("sliding", sliding)
+            new("durationMs", durationMs, context: global::PLang.Tests.TestApp.SharedContext),
+            new("sliding", sliding, context: global::PLang.Tests.TestApp.SharedContext)
         };
-        if (key != null) parameters.Add(new("key", key));
+        if (key != null) parameters.Add(new("key", key, context: global::PLang.Tests.TestApp.SharedContext));
         return new PrAction
         {
             Module = "cache",
@@ -42,7 +42,7 @@ public class CacheWrapTests
             Module = "variable", ActionName = "set",
             Parameters = new List<global::app.data.@this>
             {
-                new("name", "%x%", new global::app.type.@this("variable")), new("value", "first")
+                new("name", "%x%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "first", context: global::PLang.Tests.TestApp.SharedContext)
             },
             Modifiers = new ActionModifiers { CacheModifier(60_000, "miss-key") }
         };
@@ -71,7 +71,7 @@ public class CacheWrapTests
             Module = "variable", ActionName = "set",
             Parameters = new List<global::app.data.@this>
             {
-                new("name", "%y%", new global::app.type.@this("variable")), new("value", "fresh-value")
+                new("name", "%y%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "fresh-value", context: global::PLang.Tests.TestApp.SharedContext)
             },
             Modifiers = new ActionModifiers { CacheModifier(60_000, "hit-key") }
         };
@@ -90,7 +90,7 @@ public class CacheWrapTests
         var action = new PrAction
         {
             Module = "error", ActionName = "throw",
-            Parameters = new List<global::app.data.@this> { new("message", "boom") },
+            Parameters = new List<global::app.data.@this> { new("message", "boom", context: global::PLang.Tests.TestApp.SharedContext) },
             Modifiers = new ActionModifiers { CacheModifier(60_000, "fail-key") }
         };
 
@@ -111,7 +111,7 @@ public class CacheWrapTests
             Module = "variable", ActionName = "set",
             Parameters = new List<global::app.data.@this>
             {
-                new("name", "%a%", new global::app.type.@this("variable")), new("value", "v")
+                new("name", "%a%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "v", context: global::PLang.Tests.TestApp.SharedContext)
             },
             Modifiers = new ActionModifiers { CacheModifier(60_000, "my-custom-key") }
         };
@@ -135,7 +135,7 @@ public class CacheWrapTests
             Module = "variable", ActionName = "set",
             Parameters = new List<global::app.data.@this>
             {
-                new("name", "%b%", new global::app.type.@this("variable")), new("value", "v")
+                new("name", "%b%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "v", context: global::PLang.Tests.TestApp.SharedContext)
             },
             Modifiers = new ActionModifiers { CacheModifier(60_000) } // no Key
         };
@@ -158,7 +158,7 @@ public class CacheWrapTests
             Module = "variable", ActionName = "set",
             Parameters = new List<global::app.data.@this>
             {
-                new("name", "%c%", new global::app.type.@this("variable")), new("value", "slide")
+                new("name", "%c%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "slide", context: global::PLang.Tests.TestApp.SharedContext)
             },
             Modifiers = new ActionModifiers { CacheModifier(60_000, "slide-key", sliding: true) }
         };
@@ -182,7 +182,7 @@ public class CacheWrapTests
             Module = "variable", ActionName = "set",
             Parameters = new List<global::app.data.@this>
             {
-                new("name", "%d%", new global::app.type.@this("variable")), new("value", "fresh")
+                new("name", "%d%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "fresh", context: global::PLang.Tests.TestApp.SharedContext)
             },
             Modifiers = new ActionModifiers { CacheModifier(60_000, "restore-key") }
         };

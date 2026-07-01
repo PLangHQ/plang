@@ -21,9 +21,9 @@ public class ErrorHandleTests
     private static PrAction Throw(string message, int? statusCode = null, string? key = null,
         ActionModifiers? modifiers = null)
     {
-        var parameters = new List<global::app.data.@this> { new("message", message) };
-        if (statusCode != null) parameters.Add(new("statusCode", statusCode.Value));
-        if (key != null) parameters.Add(new("key", key));
+        var parameters = new List<global::app.data.@this> { new("message", message, context: global::PLang.Tests.TestApp.SharedContext) };
+        if (statusCode != null) parameters.Add(new("statusCode", statusCode.Value, context: global::PLang.Tests.TestApp.SharedContext));
+        if (key != null) parameters.Add(new("key", key, context: global::PLang.Tests.TestApp.SharedContext));
         return new PrAction
         {
             Module = "error", ActionName = "throw",
@@ -51,7 +51,7 @@ public class ErrorHandleTests
             Module = "goal", ActionName = "call",
             Parameters = new List<global::app.data.@this>
             {
-                new("goalname", new Dictionary<string, object?> { ["name"] = goalName })
+                new("goalname", new Dictionary<string, object?> { ["name"] = goalName }, context: global::PLang.Tests.TestApp.SharedContext)
             }
         }
     };
@@ -64,7 +64,7 @@ public class ErrorHandleTests
             Module = "variable", ActionName = "set",
             Parameters = new List<global::app.data.@this>
             {
-                new("name", "%ok%", new global::app.type.@this("variable")), new("value", "v")
+                new("name", "%ok%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "v", context: global::PLang.Tests.TestApp.SharedContext)
             },
             Modifiers = new ActionModifiers { ErrorHandler(("ignoreError", true)) }
         };
@@ -290,7 +290,7 @@ public class ErrorHandleTests
         {
             Module = module, ActionName = actionName,
             Parameters = parameters.Select(p => new global::app.data.@this(p.name, p.value,
-                PrParam.IsVarNameSlot(module, actionName, p.name) ? new global::app.type.@this("variable") : null)).ToList()
+                PrParam.IsVarNameSlot(module, actionName, p.name) ? new global::app.type.@this("variable") : null, context: global::PLang.Tests.TestApp.SharedContext)).ToList()
         };
         var step = new Step { Text = $"test step for {name}" };
         step.Actions.Add(prAction);
