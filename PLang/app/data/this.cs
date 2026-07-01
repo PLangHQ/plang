@@ -830,7 +830,7 @@ public class @this<T> : @this
     public static @this<T> From(@this source)
     {
         if (source is @this<T> already) return already;
-        var copy = new @this<T>(source.Name, source.Peek() is T t ? t : default, source.Type)
+        var copy = new @this<T>(source.Name, source.Peek() is T t ? t : default, source.Type, context: source.Context)
         {
             Error = source.Error,
         };

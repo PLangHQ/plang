@@ -41,7 +41,7 @@ public class Stage2_PlaneResolverTests
         // %x!type% → headline type name (post-narrow: `dict`)
         await using var app = NewApp();
         var d = new Data("x", new Dictionary<string, object?> { ["k"] = 1 },
-            global::app.type.@this.FromName("dict")) { Context = app.User.Context };
+            global::app.type.@this.FromName("dict"), context: app.User.Context);
         var t = await d.GetChild("!type");
         await Assert.That(((await t.Value()) as global::app.type.@this)?.Name).IsEqualTo("dict");
     }
