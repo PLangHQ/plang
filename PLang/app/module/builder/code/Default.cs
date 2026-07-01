@@ -908,7 +908,7 @@ public class Default : IBuilder
     /// without this, an LLM-emitted value that can't convert to the declared type
     /// would silently keep the wrong-typed value and the runtime would fail later.
     /// </summary>
-    private static List<string> NormalizeParameterTypes(Actions actions, global::app.module.@this modules,
+    internal static List<string> NormalizeParameterTypes(Actions actions, global::app.module.@this modules,
         actor.context.@this context)
     {
         var errors = new List<string>();
@@ -948,17 +948,6 @@ public class Default : IBuilder
                         var kind = context.App.Type.KindHooks.Of(underlying, p.Peek());
                         if (kind != null)
                             p.Declare(new app.type.@this(p.Type.Name) { Kind = kind });
-                    }
-
-                    // A value carrying a %ref% is an authored template — stamp the flag
-                    // at build (the ONE content-detection, deterministic, baked into the
-                    // .pr). Read and render trust the flag and never re-scan the content.
-                    // Preserve the declared type name/kind/strict; only add the template.
-                    var refFace = p.Peek() as global::app.type.text.@this;
-                    if (refFace != null && global::app.type.text.@this.HasHoles(refFace.ToString()))
-                    {
-                        var t = p.Type;
-                        p.Declare(new app.type.@this(t?.Name ?? "object", t?.Kind, t?.Strict ?? false, "plang"));
                     }
                 }
             }
@@ -1020,6 +1009,19 @@ public class Default : IBuilder
                     p.SetValue(conv.Peek());
                 else if (conv.Error != null)
                     errors.Add($"{a.Module}.{a.ActionName}.{p.Name}: {conv.Error.Message}");
+            }
+
+            // Template flag — the ONE %var% detection, done at build. A param whose value
+            // carries a %var% is an authored template; stamp type.template="plang" so the
+            // .pr carries it and runtime read/render trust it (never re-scan content). Runs
+            // LAST so type/kind normalization + conversion can't clobber the flag. The leaf
+            // answers its own raw string face (text's chars, a source's raw).
+            foreach (var p in a.Parameters)
+            {
+                var raw = (p.Peek() as global::app.type.item.@this)?.RawText;
+                if (raw == null || !global::app.type.text.@this.HasHoles(raw)) continue;
+                var t = p.Type;
+                p.Declare(new app.type.@this(t?.Name ?? "object", t?.Kind, t?.Strict ?? false, "plang"));
             }
         }
         return errors;

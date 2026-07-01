@@ -276,18 +276,22 @@ public sealed class @this : item.@this
         {
             // The leaf answers its own raw string face (text's chars, a source's raw); null if it has none.
             var backing = leaf.RawText;
-            // A raw-name declared type (Variable) NAMES a thing — `%s%` is the variable s, a
-            // write-target, not a value with a hole to render. Born as the resolved name.
+            // A raw-name declared type (variable) NAMES a thing — `%s%` is the variable s, a
+            // write-target, not a value to render. Born as the resolved name.
             if (typeof(app.variable.IRawNameResolvable).IsAssignableFrom(context.App.Type[Name]?.ClrType) && backing != null)
                 return app.variable.@this.Resolve(backing, context);
-            // A live %ref% template defers its render — never coerce a value with holes.
-            if (backing != null && text.@this.HasHoles(backing)) return leaf;
 
-            // Already this type → hold; refine a kindless leaf to the declared kind
-            // (the leaf owns "how do I take a kind").
+            // Already this type → hold; refine a matching leaf to the declared kind /
+            // template. The type carries the flags — the builder decided them; runtime
+            // trusts them and never inspects the content for %var%.
             var minted = leaf.Mint();
             if (string.Equals(Name, minted.Name, System.StringComparison.OrdinalIgnoreCase))
-                return Kind != null && minted.Kind == null ? leaf.Kinded(Kind) : leaf;
+            {
+                var refined = Kind != null && minted.Kind == null ? leaf.Kinded(Kind) : leaf;
+                if (Template != null && refined is text.@this rt && rt.Template == null)
+                    refined = new text.@this(rt.ToString(), Template) { Kind = rt.Kind };
+                return refined;
+            }
             // The value already carries this type as a facet (an image satisfies a path slot) → hold.
             if (leaf.Facet(Name) != null) return leaf;
             // A different type → re-type via the per-type hook. Convert is the throw boundary.
