@@ -26,6 +26,10 @@ public sealed class @this : global::app.type.item.@this, global::app.module.ICon
                 + "Return the inner value via its own factory, never wrap a Data.");
     }
 
+    /// <summary>Born WITH context — the carrier navigates/serializes through it (child
+    /// values, type resolution). Used when wrapping a host object for navigation.</summary>
+    public @this(object value, global::app.actor.context.@this? context) : this(value) => Context = context;
+
     /// <summary>
     /// A foreign host object is the apex of the value lattice — the un-narrowed <c>item</c>
     /// (≈ C# <c>object</c>) — so it reports <c>type=item</c> with its C# identity in

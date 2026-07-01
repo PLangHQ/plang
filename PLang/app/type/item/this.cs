@@ -101,7 +101,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     public virtual System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(
         global::app.data.@this parent, string key)
-        => new global::app.type.clr.@this(this).Navigate(parent, key);
+        => new global::app.type.clr.@this(this, parent.Context).Navigate(parent, key);
 
     /// <summary>
     /// Iteration as <c>(key, value)</c> pairs — the value owns how it iterates,
