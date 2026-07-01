@@ -32,7 +32,7 @@ public class NamePropagationTests
         var context = _app.User.Context;
         context.Variable.Set(new global::app.data.@this("products", global::app.type.list.@this.FromRaw(new List<object?> { "a" }, context), context: context));
 
-        var paramData = new Data("List", "%products%", context: context).Authored();
+        var paramData = new Data("List", "%products%", new global::app.type.@this("text", null, false, "plang"), context: context);
         var result = paramData.ShallowClone<global::app.type.list.@this>(await paramData.Value<global::app.type.list.@this>());
 
         await Assert.That(result.Name).IsEqualTo("products");
@@ -45,7 +45,7 @@ public class NamePropagationTests
     public async Task Name_LiteralValue_KeepsSlotName()
     {
         var context = _app.User.Context;
-        var paramData = new Data("Variable", "user", context: context).Authored();
+        var paramData = new Data("Variable", "user", context: context);
         var result = paramData.ShallowClone<global::app.type.text.@this>(await paramData.Value<global::app.type.text.@this>());
         await Assert.That(result.Name).IsEqualTo("Variable");
     }
@@ -59,7 +59,7 @@ public class NamePropagationTests
         var context = _app.User.Context;
         context.Variable.Set(new global::app.data.@this<global::app.type.text.@this>("name", "world", context: context));
 
-        var paramData = new Data("Greeting", "hello %name%!", context: context).Authored();
+        var paramData = new Data("Greeting", "hello %name%!", new global::app.type.@this("text", null, false, "plang"), context: context);
         var result = paramData.ShallowClone<global::app.type.text.@this>(await paramData.Value<global::app.type.text.@this>());
         await Assert.That(result.Name).IsEqualTo("Greeting");
         await Assert.That((await result.Value())!.Value).IsEqualTo("hello world!");
@@ -72,7 +72,7 @@ public class NamePropagationTests
     public async Task Name_UnsetVariable_PropagatesVarName_NotInitialized()
     {
         var context = _app.User.Context;
-        var paramData = new Data("X", "%missing%", context: context).Authored();
+        var paramData = new Data("X", "%missing%", new global::app.type.@this("text", null, false, "plang"), context: context);
         var result = paramData.ShallowClone<global::app.type.text.@this>(await paramData.Value<global::app.type.text.@this>());
         await Assert.That(result.Name).IsEqualTo("missing");
         await Assert.That(result.IsInitialized).IsFalse();
@@ -87,7 +87,7 @@ public class NamePropagationTests
         var context = _app.User.Context;
         context.Variable.Set(new global::app.data.@this<global::app.type.text.@this>("b", "expanded", context: context));
 
-        var paramData = new Data("Items", new List<object?> { "a", "%b%", "c" }, context: context).Authored();
+        var paramData = TemplateStamp.Container("Items", new List<object?> { "a", "%b%", "c" }, context);
         var result = paramData.ShallowClone<global::app.type.list.@this>(await paramData.Value<global::app.type.list.@this>());
         await Assert.That(result.Name).IsEqualTo("Items");
     }
@@ -104,7 +104,7 @@ public class NamePropagationTests
         context.Variable.Set(new global::app.data.@this<global::app.type.number.@this>("b", 42, context: context));
         context.Variable.Set(new global::app.data.@this<global::app.type.text.@this>("a", "%b%", context: context));
 
-        var paramData = new Data("Slot", "%a%", context: context).Authored();
+        var paramData = new Data("Slot", "%a%", new global::app.type.@this("text", null, false, "plang"), context: context);
         var result = paramData.ShallowClone<global::app.type.text.@this>(await paramData.Value<global::app.type.text.@this>());
         await Assert.That(result.Name).IsEqualTo("a");
         await Assert.That((await result.Value())!.Value).IsEqualTo("%b%");

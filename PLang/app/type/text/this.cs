@@ -199,11 +199,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// the LLM). One home; every other %ref% check routes here.</summary>
     internal static bool HasHoles(string s) => RefRx.IsMatch(s);
 
-    /// <summary>The authored form of this text — itself when already stamped
-    /// or hole-free; a stamped copy otherwise (the template seam).</summary>
-    internal @this Authored()
-        => Template != null || !HasHoles(_value) ? this : new @this(_value) { Kind = Kind, Template = "plang" };
-
     /// <summary>A re-kinded copy — same content, the declared kind stamped
     /// (values immutable, never restamped in place).</summary>
     public override global::app.type.item.@this Kinded(string? kind) => new @this(_value) { Kind = kind, Template = Template };

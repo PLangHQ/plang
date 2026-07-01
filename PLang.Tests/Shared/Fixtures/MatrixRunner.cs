@@ -49,7 +49,7 @@ public static class MatrixRunner
         };
         // Tests author actions the way the builder does — same template seam
         // the .pr load applies, so %ref% parameters resolve live at dispatch.
-        action.StampTemplates();
+        TemplateStamp.Apply(action);
 
         var context = app.User.Context;
         if (variables != null)
@@ -88,7 +88,7 @@ public static class MatrixRunner
         };
         // Tests author actions the way the builder does — same template seam
         // the .pr load applies, so %ref% parameters resolve live at dispatch.
-        action.StampTemplates();
+        TemplateStamp.Apply(action);
 
         var context = app.User.Context;
         if (variables != null)

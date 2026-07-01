@@ -22,7 +22,7 @@ public static class TestAction
         };
         // Tests author actions the way the builder does — same template seam
         // the .pr load applies, so %ref% parameters resolve live at dispatch.
-        act.StampTemplates();
+        TemplateStamp.Apply(act);
         return act;
     }
 

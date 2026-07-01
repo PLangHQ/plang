@@ -146,7 +146,7 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_PlainDataTarget_LiteralParameter_ReturnsParameterDataAsIs()
     {
-        var paramData = new Data("Slot", "literal value", context: _app.User.Context).Authored();
+        var paramData = new Data("Slot", "literal value", context: _app.User.Context);
         var canonical = await paramData.AsCanonical();
         await Assert.That(ReferenceEquals(paramData, canonical)).IsTrue();
     }
@@ -159,10 +159,10 @@ public class AsTIdentityTests
     public async Task AsT_PlainDataTarget_VarReference_ReturnsLiveVariableData()
     {
         var context = _app.User.Context;
-        var live = new global::app.data.@this("products", global::app.type.list.@this.FromRaw(new List<object?> { "a", "b" }, context), context: context).Authored();
+        var live = new global::app.data.@this("products", global::app.type.list.@this.FromRaw(new List<object?> { "a", "b" }, context), context: context);
         context.Variable.Set(live);
 
-        var paramData = new Data("Slot", "%products%", context: context).Authored();
+        var paramData = new Data("Slot", "%products%", new global::app.type.@this("text", null, false, "plang"), context: context);
         var canonical = await paramData.AsCanonical();
 
         await Assert.That(ReferenceEquals(canonical, live)).IsTrue();
@@ -181,7 +181,7 @@ public class AsTIdentityTests
         var context = _app.User.Context;
         context.Variable.Set("greeting", "hello");
         var raw = new List<object?> { "%greeting%", "literal" };
-        var paramData = new Data("Slot", raw, context: context).Authored();
+        var paramData = TemplateStamp.Container("Slot", raw, context);
 
         var canonical = await paramData.AsCanonical();
 
@@ -200,7 +200,7 @@ public class AsTIdentityTests
         var context = _app.User.Context;
         context.Variable.Set("prompt", "You are a compiler");
         var raw = new Dictionary<string, object?> { ["role"] = "system", ["content"] = "%prompt%" };
-        var paramData = new Data("Slot", raw, context: context).Authored();
+        var paramData = TemplateStamp.Container("Slot", raw, context);
 
         var canonical = await paramData.AsCanonical();
 
@@ -224,7 +224,7 @@ public class AsTIdentityTests
             new Dictionary<string, object?> { ["Role"] = "system", ["Content"] = "%prompt%" },
             new Dictionary<string, object?> { ["Role"] = "user",   ["Content"] = "%user%" }
         };
-        var paramData = new Data("messages", raw, context: context).Authored();
+        var paramData = TemplateStamp.Container("messages", raw, context);
 
         var canonical = await paramData.AsCanonical();
 
@@ -246,7 +246,7 @@ public class AsTIdentityTests
     {
         var context = _app.User.Context;
         var raw = new List<object?> { "a", "b", "c" };
-        var paramData = new Data("items", raw, context: context).Authored();
+        var paramData = new Data("items", raw, context: context);
 
         var canonical = await paramData.AsCanonical();
 
@@ -271,7 +271,7 @@ public class AsTIdentityTests
         var context = _app.User.Context;
         context.Variable.Set(new global::app.data.DynamicData("!error", () => "boom"));
         var raw = new Dictionary<string, object?> { ["message"] = "%!error%" };
-        var paramData = new Data("trace.buildError", raw, context: context).Authored();
+        var paramData = TemplateStamp.Container("trace.buildError", raw, context);
 
         var canonical = await paramData.AsCanonical();
 

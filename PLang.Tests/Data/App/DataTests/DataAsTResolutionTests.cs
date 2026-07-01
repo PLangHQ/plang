@@ -18,7 +18,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_ValueAlreadyT_FastPathWrap()
     {
-        var data = new Data("count", 42, context: _app.User.Context).Authored();
+        var data = new Data("count", 42, context: _app.User.Context);
         var result = data.ShallowClone<global::app.type.number.@this>(await data.Value<global::app.type.number.@this>());
         await Assert.That(result).IsTypeOf<global::app.data.@this<global::app.type.number.@this>>();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("42");
@@ -29,7 +29,7 @@ public class DataAsTResolutionTests
     public async Task AsT_FullVarMatch_ReturnsVariableValue()
     {
         _app.User.Context.Variable.Set("path", "/tmp/x.txt");
-        var data = new Data("p", "%path%", context: _app.User.Context).Authored();
+        var data = new Data("p", "%path%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
         var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
 
@@ -41,7 +41,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_FullVarMatch_MissingVariable_ReturnsErrorOrNotFound()
     {
-        var data = new Data("p", "%missing%", context: _app.User.Context).Authored();
+        var data = new Data("p", "%missing%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
         var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
 
@@ -55,7 +55,7 @@ public class DataAsTResolutionTests
     public async Task AsT_Interpolation_CallsResolve()
     {
         _app.User.Context.Variable.Set("name", "world");
-        var data = new Data("greeting", "Hello %name%", context: _app.User.Context).Authored();
+        var data = new Data("greeting", "Hello %name%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
         var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
 
@@ -68,7 +68,7 @@ public class DataAsTResolutionTests
     {
         _app.User.Context.Variable.Set("greeting", "hello");
         var raw = new List<object?> { "%greeting%", "world" };
-        var data = new Data("list", raw, context: _app.User.Context).Authored();
+        var data = TemplateStamp.Container("list", raw, _app.User.Context);
 
         var result = data.ShallowClone<global::app.type.list.@this<global::app.type.text.@this>>(await data.Value<global::app.type.list.@this<global::app.type.text.@this>>());
 
@@ -84,7 +84,7 @@ public class DataAsTResolutionTests
     {
         _app.User.Context.Variable.Set("prompt", "You are a compiler");
         var raw = new Dictionary<string, object?> { ["role"] = "system", ["content"] = "%prompt%" };
-        var data = new Data("dict", raw, context: _app.User.Context).Authored();
+        var data = TemplateStamp.Container("dict", raw, _app.User.Context);
 
         var result = data.ShallowClone<global::app.type.dict.@this>(await data.Value<global::app.type.dict.@this>());
 
@@ -97,7 +97,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_TypeWithStaticResolve_StringValue_DispatchesToResolve()
     {
-        var data = new Data("file", "subdir/file.txt", context: _app.User.Context).Authored();
+        var data = new Data("file", "subdir/file.txt", context: _app.User.Context);
 
         var result = data.ShallowClone<global::app.type.path.@this>(await data.Value<global::app.type.path.@this>());
 
@@ -110,7 +110,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_ConversionFailure_ReturnsFromError()
     {
-        var data = new Data("count", "not-a-number", context: _app.User.Context).Authored();
+        var data = new Data("count", "not-a-number", context: _app.User.Context);
 
         var result = data.ShallowClone<global::app.type.number.@this>(await data.Value<global::app.type.number.@this>());
 
@@ -123,7 +123,7 @@ public class DataAsTResolutionTests
     public async Task AsT_CalledTwice_FreshResolutionEachCall()
     {
         _app.User.Context.Variable.Set("x", "first");
-        var data = new Data("v", "%x%", context: _app.User.Context).Authored();
+        var data = new Data("v", "%x%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
         var first = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
         await Assert.That((await first.Value())?.ToString()).IsEqualTo("first");
@@ -141,7 +141,7 @@ public class DataAsTResolutionTests
     public async Task AsT_DoesNotMutateOriginalDataValue()
     {
         _app.User.Context.Variable.Set("x", "resolved");
-        var data = new Data("v", "%x%", context: _app.User.Context).Authored();
+        var data = new Data("v", "%x%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
         var resolved = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
         await Assert.That((await resolved.Value())?.ToString()).IsEqualTo("resolved");
@@ -160,7 +160,7 @@ public class DataAsTResolutionTests
     {
         _app.User.Context.Variable.Set("a", "%b%");
         _app.User.Context.Variable.Set("b", "%a%");
-        var data = new Data("ref", "%a%", context: _app.User.Context).Authored();
+        var data = new Data("ref", "%a%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
         var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
 
@@ -176,7 +176,7 @@ public class DataAsTResolutionTests
     public async Task AsT_StoredSelfRef_ReturnedVerbatim()
     {
         _app.User.Context.Variable.Set("x", "%x%");
-        var data = new Data("ref", "%x%", context: _app.User.Context).Authored();
+        var data = new Data("ref", "%x%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
         var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
 
@@ -192,7 +192,7 @@ public class DataAsTResolutionTests
     public async Task AsT_PartialMatchInterpolatesOncesThenStops()
     {
         _app.User.Context.Variable.Set("x", "%x%");
-        var data = new Data("greeting", "hello %x%", context: _app.User.Context).Authored();
+        var data = new Data("greeting", "hello %x%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
         var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
 
@@ -210,7 +210,7 @@ public class DataAsTResolutionTests
     {
         _app.User.Context.Variable.Set("a", "X-%b%");
         _app.User.Context.Variable.Set("b", "Y-%a%");
-        var data = new Data("ref", "%a%", context: _app.User.Context).Authored();
+        var data = new Data("ref", "%a%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
         var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
 
@@ -230,7 +230,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("c", "%d%");
         _app.User.Context.Variable.Set("d", "%e%");
         _app.User.Context.Variable.Set("e", "leaf-value");
-        var data = new Data("chain", "%a%", context: _app.User.Context).Authored();
+        var data = new Data("chain", "%a%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
         var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
 
@@ -266,7 +266,7 @@ public class DataAsTResolutionTests
         };
         context.Variable.Set(new global::app.data.@this<global::app.type.list.@this<global::app.type.item.@this>>("messages", global::app.type.list.@this<global::app.type.item.@this>.Of(System.Linq.Enumerable.Select(stored, d => _app.Data("", d))), context: context));
 
-        var paramData = new Data("Messages", "%messages%", context: context).Authored();
+        var paramData = new Data("Messages", "%messages%", new global::app.type.@this("text", null, false, "plang"), context: context);
         var result = paramData.ShallowClone<global::app.type.list.@this<global::app.type.dict.@this>>(await paramData.Value<global::app.type.list.@this<global::app.type.dict.@this>>());
 
         await result.IsSuccess();
@@ -302,7 +302,7 @@ public class DataAsTResolutionTests
         context.Variable.Set(new global::app.data.@this<global::app.type.list.@this<global::app.type.item.@this>>("fixerMessages", global::app.type.list.@this<global::app.type.item.@this>.Of(System.Linq.Enumerable.Select(stored, d => _app.Data("", d))), context: context));
 
         // Mirrors how llm.query reads %fixerMessages% — typed slot is List<LlmMessage>.
-        var paramData = new Data("Messages", "%fixerMessages%", context: context).Authored();
+        var paramData = new Data("Messages", "%fixerMessages%", new global::app.type.@this("text", null, false, "plang"), context: context);
         var result = paramData.ShallowClone<global::app.type.list.@this<global::app.module.llm.LlmMessage>>(await paramData.Value<global::app.type.list.@this<global::app.module.llm.LlmMessage>>());
 
         await result.IsSuccess();

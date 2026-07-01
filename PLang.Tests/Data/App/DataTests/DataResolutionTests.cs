@@ -21,7 +21,7 @@ public class DataResolutionTests
     [Test]
     public async Task SharedParameterData_AsTBetweenChanges_YieldsTwoResults()
     {
-        var data = new Data("v", "%x%", context: _app.User.Context).Authored();
+        var data = new Data("v", "%x%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
         _app.User.Context.Variable.Set("x", "first");
         var first = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
@@ -36,7 +36,7 @@ public class DataResolutionTests
     [Test]
     public async Task LoopIteration_PropertyResolvesPerCall()
     {
-        var data = new Data("v", "%i%", context: _app.User.Context).Authored();
+        var data = new Data("v", "%i%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
         var seen = new List<string?>();
         for (int i = 0; i < 3; i++)
@@ -55,7 +55,7 @@ public class DataResolutionTests
     [Test]
     public async Task SubGoalCall_EachGoalSeesOwnResolvedView()
     {
-        var data = new Data("v", "%scope%", context: _app.User.Context).Authored();
+        var data = new Data("v", "%scope%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
         _app.User.Context.Variable.Set("scope", "parent");
         var parentView = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
 
@@ -79,7 +79,7 @@ public class DataResolutionTests
     public async Task FullVarMatch_VariableHoldsData_UnwrappedCleanly()
     {
         _app.User.Context.Variable.Set("count", 42);
-        var data = new Data("c", "%count%", context: _app.User.Context).Authored();
+        var data = new Data("c", "%count%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
         var result = data.ShallowClone<global::app.type.number.@this>(await data.Value<global::app.type.number.@this>());
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("42");
@@ -93,7 +93,7 @@ public class DataResolutionTests
         {
             new Dictionary<string, object?> { ["role"] = "system", ["content"] = "%comment%" }
         };
-        var data = new Data("messages", raw, context: _app.User.Context).Authored();
+        var data = TemplateStamp.Container("messages", raw, _app.User.Context);
 
         _app.User.Context.Variable.Set("comment", "value1");
         var first = data.ShallowClone<global::app.type.list.@this<global::app.module.llm.LlmMessage>>(await data.Value<global::app.type.list.@this<global::app.module.llm.LlmMessage>>());
@@ -109,7 +109,7 @@ public class DataResolutionTests
     public async Task ConcurrentAsT_OnSharedParameterData_NoRace()
     {
         _app.User.Context.Variable.Set("x", "value");
-        var data = new Data("v", "%x%", context: _app.User.Context).Authored();
+        var data = new Data("v", "%x%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
         var tasks = Enumerable.Range(0, 50).Select(_ => Task.Run(async () =>
         {

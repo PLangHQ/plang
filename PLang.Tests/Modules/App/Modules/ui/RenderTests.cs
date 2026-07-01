@@ -699,7 +699,7 @@ public class RenderTests : IDisposable
         };
         // Tests author actions the way the builder does — same template seam
         // the .pr load applies, so %ref% parameters resolve live at dispatch.
-        action.StampTemplates();
+        TemplateStamp.Apply(action);
         return new Step
         {
             Index = index,
