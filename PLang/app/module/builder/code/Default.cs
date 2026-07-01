@@ -949,6 +949,17 @@ public class Default : IBuilder
                         if (kind != null)
                             p.Declare(new app.type.@this(p.Type.Name) { Kind = kind });
                     }
+
+                    // A value carrying a %ref% is an authored template — stamp the flag
+                    // at build (the ONE content-detection, deterministic, baked into the
+                    // .pr). Read and render trust the flag and never re-scan the content.
+                    // Preserve the declared type name/kind/strict; only add the template.
+                    var refFace = p.Peek() as global::app.type.text.@this;
+                    if (refFace != null && global::app.type.text.@this.HasHoles(refFace.ToString()))
+                    {
+                        var t = p.Type;
+                        p.Declare(new app.type.@this(t?.Name ?? "object", t?.Kind, t?.Strict ?? false, "plang"));
+                    }
                 }
             }
 
