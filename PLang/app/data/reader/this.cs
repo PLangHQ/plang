@@ -108,8 +108,10 @@ public sealed class @this : global::app.data.schema.ISchemaReader
             if (properties != null) data.Properties = properties;
             return data;
         }
-        // No value slot — a typed absence under its declared type.
-        var typedNull = new Data(name, (object?)null, typeRef);
+        // No value slot — a typed absence under its declared type. Born WITH the read
+        // context: a typed null is still a value construction (type.Build), so it must
+        // carry context like every other Data built on this read path.
+        var typedNull = new Data(name, (object?)null, typeRef, context: ctx.Context);
         if (properties != null) typedNull.Properties = properties;
         return typedNull;
     }
