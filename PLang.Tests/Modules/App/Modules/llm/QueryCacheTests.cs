@@ -49,12 +49,14 @@ public class QueryCacheTests
 
         var action = LlmTestHelper.MakeQuery(Ctx, userText: "cache test");
 
+        await action.Attach(null, Ctx);
         var result1 = await action.Run();
         await result1.IsSuccess();
         await Assert.That(_handler.CallCount).IsEqualTo(1);
 
         // Second call — should hit cache
         var action2 = LlmTestHelper.MakeQuery(Ctx, userText: "cache test");
+        await action2.Attach(null, Ctx);
         var result2 = await action2.Run();
 
         await result2.IsSuccess();
@@ -69,9 +71,11 @@ public class QueryCacheTests
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("answer")));
 
         var action1 = LlmTestHelper.MakeQuery(Ctx, userText: "question 1");
+        await action1.Attach(null, Ctx);
         await action1.Run();
 
         var action2 = LlmTestHelper.MakeQuery(Ctx, userText: "question 2");
+        await action2.Attach(null, Ctx);
         await action2.Run();
 
         await Assert.That(_handler.CallCount).IsEqualTo(2); // Both made HTTP calls
@@ -93,7 +97,9 @@ public class QueryCacheTests
             Cache = (global::app.type.@bool.@this)false
         };
 
+        await action.Attach(null, Ctx);
         await action.Run();
+        await action.Attach(null, Ctx);
         await action.Run();
 
         await Assert.That(_handler.CallCount).IsEqualTo(2);
@@ -119,7 +125,9 @@ public class QueryCacheTests
             }.ToListData<GoalCall>()
         };
 
+        await action.Attach(null, Ctx);
         await action.Run();
+        await action.Attach(null, Ctx);
         await action.Run();
 
         await Assert.That(_handler.CallCount).IsEqualTo(2); // Cache skipped
@@ -133,6 +141,7 @@ public class QueryCacheTests
 
         // Call with default model
         var action1 = LlmTestHelper.MakeQuery(Ctx, userText: "same");
+        await action1.Attach(null, Ctx);
         await action1.Run();
 
         // Same message but different model — should be cache miss
@@ -146,6 +155,7 @@ public class QueryCacheTests
             }.ToListData<LlmMessage>(),
             Model = (global::app.type.text.@this)"gpt-4o"
         };
+        await action2.Attach(null, Ctx);
         await action2.Run();
 
         await Assert.That(_handler.CallCount).IsEqualTo(2);
@@ -159,11 +169,13 @@ public class QueryCacheTests
                 LlmTestHelper.MakeCompletionResponse("preserved", promptTokens: 5, completionTokens: 10)));
 
         var action = LlmTestHelper.MakeQuery(Ctx, userText: "props test");
+        await action.Attach(null, Ctx);
         var result1 = await action.Run();
         await result1.IsSuccess();
 
         // Cache hit — goes through RestoreFromCache which deserializes cached value + metadata
         var action2 = LlmTestHelper.MakeQuery(Ctx, userText: "props test");
+        await action2.Attach(null, Ctx);
         var result2 = await action2.Run();
 
         // Verify the cached result value matches original

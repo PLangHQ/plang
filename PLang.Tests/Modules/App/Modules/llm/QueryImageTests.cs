@@ -62,6 +62,7 @@ public class QueryImageTests
                 }
             }.ToListData<LlmMessage>()
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -95,6 +96,7 @@ public class QueryImageTests
                 }
             }.ToListData<LlmMessage>()
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -127,6 +129,7 @@ public class QueryImageTests
                 }
             }.ToListData<LlmMessage>()
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -156,6 +159,7 @@ public class QueryImageTests
                 }
             }.ToListData<LlmMessage>()
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -187,6 +191,7 @@ public class QueryImageTests
                 }
             }.ToListData<LlmMessage>()
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();

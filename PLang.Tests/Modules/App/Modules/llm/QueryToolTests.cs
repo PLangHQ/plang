@@ -71,9 +71,10 @@ public class QueryToolTests
             }.ToListData<LlmMessage>(),
             Tools = new List<GoalCall>
             {
-                new GoalCall { Name = "GetWeather", Parameters = new List<Data> { new Data("city", null, global::app.type.@this.String) } }
+                new GoalCall { Name = "GetWeather", Parameters = new List<Data> { new Data("city", null, global::app.type.@this.String, context: Ctx) } }
             }.ToListData<GoalCall>()
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -114,6 +115,7 @@ public class QueryToolTests
                 new GoalCall { Name = "ToolB", Parallel = false }
             }.ToListData<GoalCall>()
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -151,6 +153,7 @@ public class QueryToolTests
                 new GoalCall { Name = "ToolB", Parallel = true }
             }.ToListData<GoalCall>()
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -188,6 +191,7 @@ public class QueryToolTests
                 new GoalCall { Name = "ToolB", Parallel = false }
             }.ToListData<GoalCall>()
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -225,6 +229,7 @@ public class QueryToolTests
                 new GoalCall { Name = "FailTool" }
             }.ToListData<GoalCall>()
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -261,6 +266,7 @@ public class QueryToolTests
                 new GoalCall { Name = "KnownTool" }
             }.ToListData<GoalCall>()
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -292,6 +298,7 @@ public class QueryToolTests
             }.ToListData<GoalCall>(),
             MaxToolCalls = (global::app.type.number.@this)3
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         // MaxToolCalls = (global::app.type.number.@this)3, 1 tool/round:
@@ -333,12 +340,13 @@ public class QueryToolTests
                     Name = "TestTool",
                     Parameters = new List<Data>
                     {
-                        new Data("city", null, global::app.type.@this.String),     // required (no default)
-                        new Data("units", "metric", global::app.type.@this.String) // optional (has default)
+                        new Data("city", null, global::app.type.@this.String, context: Ctx),     // required (no default)
+                        new Data("units", "metric", global::app.type.@this.String, context: Ctx) // optional (has default)
                     }
                 }
             }.ToListData<GoalCall>()
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
@@ -367,11 +375,12 @@ public class QueryToolTests
                     Name = "TestTool",
                     Parameters = new List<Data>
                     {
-                        new Data("query", null, global::app.type.@this.String)
+                        new Data("query", null, global::app.type.@this.String, context: Ctx)
                     }
                 }
             }.ToListData<GoalCall>()
         };
+        await action.Attach(null, Ctx);
         await action.Run();
 
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
@@ -401,6 +410,7 @@ public class QueryToolTests
                 }
             }.ToListData<GoalCall>()
         };
+        await action.Attach(null, Ctx);
         await action.Run();
 
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
@@ -443,12 +453,13 @@ public class QueryToolTests
                     Name = "GetWeather",
                     Parameters = new List<Data>
                     {
-                        new Data("city", null, global::app.type.@this.String),       // required
-                        new Data("units", "metric", global::app.type.@this.String)   // optional, default "metric"
+                        new Data("city", null, global::app.type.@this.String, context: Ctx),       // required
+                        new Data("units", "metric", global::app.type.@this.String, context: Ctx)   // optional, default "metric"
                     }
                 }
             }.ToListData<GoalCall>()
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -484,15 +495,16 @@ public class QueryToolTests
                     Name = "TypedTool",
                     Parameters = new List<Data>
                     {
-                        new Data("name", null, global::app.type.@this.String),
-                        new Data("count", null, new global::app.type.@this("int")),
-                        new Data("enabled", null, new global::app.type.@this("bool")),
-                        new Data("items", null, new global::app.type.@this("list")),
-                        new Data("config", null, new global::app.type.@this("object"))
+                        new Data("name", null, global::app.type.@this.String, context: Ctx),
+                        new Data("count", null, new global::app.type.@this("int"), context: Ctx),
+                        new Data("enabled", null, new global::app.type.@this("bool"), context: Ctx),
+                        new Data("items", null, new global::app.type.@this("list"), context: Ctx),
+                        new Data("config", null, new global::app.type.@this("object"), context: Ctx)
                     }
                 }
             }.ToListData<GoalCall>()
         };
+        await action.Attach(null, Ctx);
         await action.Run();
 
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
@@ -538,6 +550,7 @@ public class QueryToolTests
                 new GoalCall { Name = "MixedTool" }
             }.ToListData<GoalCall>()
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -582,6 +595,7 @@ public class QueryToolTests
                 new GoalCall { Name = "ToolB", Parallel = true }
             }.ToListData<GoalCall>()
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();

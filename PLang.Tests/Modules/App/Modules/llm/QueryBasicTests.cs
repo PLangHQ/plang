@@ -51,6 +51,7 @@ public class QueryBasicTests
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("Hello world")));
 
         var action = LlmTestHelper.MakeQuery(Ctx);
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -76,6 +77,7 @@ public class QueryBasicTests
             Messages = action.Messages,
             Model = (global::app.type.text.@this)"gpt-4o"
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -100,6 +102,7 @@ public class QueryBasicTests
             Temperature = (global::app.type.number.@this)0.7,
             MaxTokens = (global::app.type.number.@this)2000
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -119,6 +122,7 @@ public class QueryBasicTests
             LlmTestHelper.JsonResponse("{\"error\":{\"message\":\"Bad request\"}}", System.Net.HttpStatusCode.BadRequest));
 
         var action = LlmTestHelper.MakeQuery(Ctx);
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsFailure();
@@ -134,6 +138,7 @@ public class QueryBasicTests
                 System.Net.HttpStatusCode.InternalServerError));
 
         var action = LlmTestHelper.MakeQuery(Ctx);
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsFailure();
@@ -154,6 +159,7 @@ public class QueryBasicTests
                     promptTokens: 15, completionTokens: 25, cachedTokens: 5)));
 
         var action = LlmTestHelper.MakeQuery(Ctx);
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -187,6 +193,7 @@ public class QueryBasicTests
             }.ToListData<LlmMessage>(),
             Model = new global::app.data.@this<global::app.type.text.@this>("Model", "claude-99-future")
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -208,6 +215,7 @@ public class QueryBasicTests
                     model: "gpt-5.4-nano")));
 
         var action = LlmTestHelper.MakeQuery(Ctx);
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -241,6 +249,7 @@ public class QueryBasicTests
             }.ToListData<LlmMessage>(),
             Model = new global::app.data.@this<global::app.type.text.@this>("Model", "gpt-5.4-mini-2026-03-17")
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -281,6 +290,7 @@ public class QueryBasicTests
                 new GoalCall { Name = "Echo" }
             }.ToListData<GoalCall>()
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();

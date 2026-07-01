@@ -77,6 +77,7 @@ public class QueryCallbackTests
         };
 
         // Should complete without crashing even though LogToolCall goal doesn't exist
+        await action.Attach(null, Ctx);
         var result = await action.Run();
         await result.IsSuccess();
     }
@@ -116,6 +117,7 @@ public class QueryCallbackTests
             OnToolCall = new GoalCall { Name = "ToolCallHandler" }
         };
 
+        await action.Attach(null, Ctx);
         var result = await action.Run();
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("got data");
@@ -140,6 +142,7 @@ public class QueryCallbackTests
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("valid response")));
 
         var action = LlmTestHelper.MakeQuery(Ctx);
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -170,6 +173,7 @@ public class QueryCallbackTests
             MaxValidationRetries = (global::app.type.number.@this)2
         };
 
+        await action.Attach(null, Ctx);
         var result = await action.Run();
         // After MaxValidationRetries, should return error
         await result.IsFailure();
@@ -198,6 +202,7 @@ public class QueryCallbackTests
             MaxValidationRetries = (global::app.type.number.@this)3
         };
 
+        await action.Attach(null, Ctx);
         var result = await action.Run();
         await result.IsFailure();
         // Validation goal doesn't exist → file-not-found error on each retry
@@ -238,6 +243,7 @@ public class QueryCallbackTests
         // Tool round should not trigger validation
         // Final content round will trigger validation (which fails since goal doesn't exist)
         // But with MaxValidationRetries = (global::app.type.number.@this)1, we get one retry then error
+        await action.Attach(null, Ctx);
         var result = await action.Run();
         // The key thing: it should have made it past the tool round to the validation phase
         await Assert.That(_handler.CallCount).IsGreaterThanOrEqualTo(2);
@@ -266,6 +272,7 @@ public class QueryCallbackTests
         };
 
         // With streaming enabled, the request should have stream:true
+        await action.Attach(null, Ctx);
         var result = await action.Run();
         // Verify the request had stream=true
         if (_handler.LastRequest != null)
@@ -292,6 +299,7 @@ public class QueryCallbackTests
             OnStream = new GoalCall { Name = "StreamHandler" }
         };
 
+        await action.Attach(null, Ctx);
         var result = await action.Run();
         // At minimum, shouldn't crash
         await Assert.That(result).IsNotNull();

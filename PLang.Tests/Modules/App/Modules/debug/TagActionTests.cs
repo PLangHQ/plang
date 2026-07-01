@@ -18,7 +18,7 @@ public class TagActionTests
         var action = new Tag
         {
             Context = app.User.Context,
-            Pairs = new Dictionary<string, string> { ["k1"] = "v1", ["k2"] = "v2" }.ToDictData()
+            Pairs = new Dictionary<string, string> { ["k1"] = "v1", ["k2"] = "v2" }.ToDictData(app.User.Context)
         };
         await action.Run();
 

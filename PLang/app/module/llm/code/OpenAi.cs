@@ -632,7 +632,7 @@ public sealed class OpenAi : ILlm
                     JsonValueKind.Null => null,
                     _ => prop.Value.GetRawText()
                 };
-                result.Add(new data.@this(prop.Name, value));
+                result.Add(new data.@this(prop.Name, value, context: context));
             }
         }
         catch (JsonException ex)

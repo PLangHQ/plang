@@ -7,18 +7,21 @@ namespace PLang.Tests;
 /// </summary>
 public static class CollectionTestExtensions
 {
-    public static global::app.data.@this<global::app.type.list.@this> ToListData(this System.Collections.IEnumerable raw)
-        => new("", global::app.type.list.@this.FromRaw(raw, null)!);
+    public static global::app.data.@this<global::app.type.list.@this> ToListData(this System.Collections.IEnumerable raw, global::app.actor.context.@this? context = null)
+        => new("", global::app.type.list.@this.FromRaw(raw, context)!, context: context);
 
-    public static global::app.data.@this<global::app.type.list.@this<T>> ToListData<T>(this System.Collections.IEnumerable raw)
+    public static global::app.data.@this<global::app.type.list.@this<T>> ToListData<T>(this System.Collections.IEnumerable raw, global::app.actor.context.@this? context = null)
         where T : global::app.type.item.@this
-        => new("", global::app.type.list.@this<T>.Of(raw));
+        => new("", global::app.type.list.@this<T>.Of(raw), context: context);
 
-    public static global::app.data.@this<global::app.type.dict.@this> ToDictData(this System.Collections.IDictionary raw)
+    public static global::app.data.@this<global::app.type.dict.@this> ToDictData(this System.Collections.IDictionary raw, global::app.actor.context.@this? context = null)
     {
         var d = new global::app.type.dict.@this();
         foreach (System.Collections.DictionaryEntry e in raw)
             d.Set(e.Key.ToString()!, e.Value);
-        return new("", d);
+        // Propagate context onto the dict so lazy Slot materialization borns its
+        // entry values WITH a context (dict.Context propagates to every entry).
+        if (context != null) d.Context = context;
+        return new("", d, context: context);
     }
 }

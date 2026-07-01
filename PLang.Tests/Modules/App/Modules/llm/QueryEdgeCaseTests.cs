@@ -49,6 +49,7 @@ public class QueryEdgeCaseTests
             Context = Ctx,
             Messages = new List<LlmMessage>().ToListData<LlmMessage>()
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsFailure();
@@ -89,6 +90,7 @@ public class QueryEdgeCaseTests
             }.ToListData<GoalCall>(),
             MaxToolCalls = (global::app.type.number.@this)5
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         // MaxToolCalls = (global::app.type.number.@this)5, 3 tools/round (with batch-slice fix):
@@ -131,6 +133,7 @@ public class QueryEdgeCaseTests
                 new GoalCall { Name = "NoArgTool" }
             }.ToListData<GoalCall>()
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -143,6 +146,7 @@ public class QueryEdgeCaseTests
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("")));
 
         var action = LlmTestHelper.MakeQuery(Ctx);
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();

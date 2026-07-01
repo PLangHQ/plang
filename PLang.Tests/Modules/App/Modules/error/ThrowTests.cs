@@ -62,7 +62,7 @@ public class ThrowTests
         var (context, _) = CreateContext();
         var original = new global::app.error.ServiceError("original boom", "OriginalKey", 418);
 
-        var action = new Throw { Context = context, Data = Data.Ok(original) };
+        var action = new Throw { Context = context, Data = context.Ok(original) };
         var result = await action.Run();
 
         await result.IsFailure();
