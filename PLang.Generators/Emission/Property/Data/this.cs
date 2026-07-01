@@ -82,9 +82,10 @@ public sealed record @this(
     {
         if (IsPlainData)
         {
-            // Plain Data slot — the CANONICAL Data: live variable for full-match %var%,
-            // the parameter itself for a literal.
-            sb.AppendLine($"        {TypeName} {Local} = await __ResolveData(action, \"{ParamName}\", context).AsCanonical(context);");
+            // Plain Data slot — hand over the Data reference as-is. No eager resolve: a
+            // %var%/template resolves lazily on its own door (await Value()), so the handler
+            // decides (variable.set stores the ref verbatim; a reader renders it). Data flows.
+            sb.AppendLine($"        {TypeName} {Local} = __ResolveData(action, \"{ParamName}\", context);");
             sb.AppendLine($"        if (!{Local}.Success) return (null, __PrefixActionContext({Local}.Error!, action));");
         }
         else if (IsNullable)
