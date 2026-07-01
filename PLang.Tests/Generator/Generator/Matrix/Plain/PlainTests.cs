@@ -30,13 +30,13 @@ public class StringPlainTests
             Parameters = new List<Data> { new Data("path", "hello", context: app.User.Context) }
         };
 
-        // Touch property twice via Run() — Run returns Path which means the get fired.
-        // Since Run is invoked through ExecuteAsync once, we assert reference equality
-        // by inspecting the same handler's field via reflection.
-        var result1 = await handler.ExecuteAsync(action, app.User.Context);
-        // Second read of the same property should return same instance — direct property access:
-        var first = handler.Path;
-        var second = handler.Path;
+        // Touch property twice via the resolved instance — Resolve populates the
+        // backing field once; reading Path twice must return the same cached instance.
+        var (h, err) = await handler.Resolve(action, app.User.Context);
+        await Assert.That(err).IsNull();
+        var resolved = (StringPlain)h!;
+        var first = resolved.Path;
+        var second = resolved.Path;
         await Assert.That(ReferenceEquals(first, second)).IsTrue();
     }
 

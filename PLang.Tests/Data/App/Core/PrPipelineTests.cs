@@ -257,10 +257,13 @@ public class PrPipelineTests
         public global::app.actor.context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
 
-        public async Task<Data> ExecuteAsync(global::app.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
+        public Task<global::app.error.IError?> Attach(global::app.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
+        { Action = action; App = context.App!; Context = context; return Task.FromResult<global::app.error.IError?>(null); }
+
+        public async Task<Data> Execute()
         {
-            App = context.App!;
-            Context = context;
+            var action = Action;
+            var context = Context;
             var contentData = action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "Data", StringComparison.OrdinalIgnoreCase));
             object? raw = contentData.Peek();
             object? content = (raw as global::app.type.text.@this)?.Clr<string>() ?? raw;

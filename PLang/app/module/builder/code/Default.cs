@@ -612,9 +612,16 @@ public class Default : IBuilder
         var errors = new List<string>();
         foreach (var a in actions)
         {
-            var (handler, _) = modules.GetCodeGenerated(a);
+            var (shell, _) = modules.GetCodeGenerated(a);
+            if (shell == null) continue;
+            // Resolve builds a populated instance (params decoded); Build() reads them.
+            var (handler, resolveErr) = await shell.Resolve(a, context);
+            if (resolveErr != null)
+            {
+                errors.Add($"{a.Module}.{a.ActionName}: {resolveErr.Message}");
+                break;
+            }
             if (handler is not global::app.module.IClass classified) continue;
-            await classified.SetAction(a, context);
             var buildResult = await classified.Build();
             if (!buildResult.Success)
             {

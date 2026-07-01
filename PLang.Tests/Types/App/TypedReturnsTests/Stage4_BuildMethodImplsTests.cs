@@ -32,11 +32,11 @@ public class Stage4_BuildMethodImplsTests
     private async Task<Data> Build(string module, string action, params (string name, object? value)[] parameters)
     {
         var a = Make(module, action, parameters);
-        var (handler, err) = _app.Module.GetCodeGenerated(a);
+        var (shell, err) = _app.Module.GetCodeGenerated(a);
         await Assert.That(err).IsNull();
-        var classified = (IClass)handler!;
-        classified.SetAction(a, _app.User.Context);
-        return await classified.Build();
+        var (handler, resolveErr) = await shell!.Resolve(a, _app.User.Context);
+        await Assert.That(resolveErr).IsNull();
+        return await ((IClass)handler!).Build();
     }
 
     // --- file.read.Build() ---

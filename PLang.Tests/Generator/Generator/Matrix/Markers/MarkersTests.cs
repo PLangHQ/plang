@@ -18,10 +18,10 @@ public class IContextHandlerTests
     public async Task IContextHandler_ContextSameInstance_AsExecuteAsyncArg()
     {
         await using var app = new global::app.@this("/app");
-        var handler = new IContextHandler();
         var action = new PrAction { Module = "matrix.markers", ActionName = "icontexthandler" };
-        await handler.ExecuteAsync(action, app.User.Context);
-        await Assert.That(ReferenceEquals(handler.Context, app.User.Context)).IsTrue();
+        var (h, err) = await new IContextHandler().Resolve(action, app.User.Context);
+        await Assert.That(err).IsNull();
+        await Assert.That(ReferenceEquals(((IContextHandler)h!).Context, app.User.Context)).IsTrue();
     }
 }
 

@@ -97,8 +97,9 @@ public static class MatrixRunner
                 context.Variable.Set(kv.Key, kv.Value);
         }
 
-        var handler = new TAction();
-        var data = await handler.ExecuteAsync(action, context);
+        var shell = new TAction();
+        var (handler, resolveErr) = await shell.Resolve(action, context);
+        var data = resolveErr != null ? context.Error(resolveErr) : await handler!.Execute();
         var snapshot = (data.Error as global::app.error.Error)?.Params;
         return new Result(data, snapshot);
     }

@@ -552,11 +552,9 @@ public class EngineTests
         public bool IsDisposed { get; private set; }
 
         public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
-        public Task<Data> ExecuteAsync(global::app.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
-        {
-            Initialize(context.App!, context);
-            return Task.FromResult(context.App!.Ok());
-        }
+        public Task<global::app.error.IError?> Attach(global::app.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
+        { Action = action; Initialize(context.App!, context); return Task.FromResult<global::app.error.IError?>(null); }
+        public Task<Data> Execute() => Task.FromResult(Context.App!.Ok());
         public void Dispose() => IsDisposed = true;
     }
 
@@ -569,11 +567,9 @@ public class EngineTests
         public bool IsDisposed { get; private set; }
 
         public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
-        public Task<Data> ExecuteAsync(global::app.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
-        {
-            Initialize(context.App!, context);
-            return Task.FromResult(context.App!.Ok());
-        }
+        public Task<global::app.error.IError?> Attach(global::app.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
+        { Action = action; Initialize(context.App!, context); return Task.FromResult<global::app.error.IError?>(null); }
+        public Task<Data> Execute() => Task.FromResult(Context.App!.Ok());
         public ValueTask DisposeAsync() { IsDisposed = true; return ValueTask.CompletedTask; }
     }
 
@@ -585,7 +581,7 @@ public class EngineTests
         public System.Type? ParameterType => null;
 
         public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
-        public Task<Data> ExecuteAsync(global::app.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
+        public Task<Data> Execute()
         {
             throw new InvalidOperationException("Test exception");
         }

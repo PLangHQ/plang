@@ -156,10 +156,9 @@ public class Stage4_TypeHintPrecedenceTests
     public async Task OutputAsk_Build_ReturnsBareOk_DefersToHint()
     {
         var action = Make("output", "ask", ("Question", "?"));
-        var (handler, _) = _app.Module.GetCodeGenerated(action);
-        var classified = (IClass)handler!;
-        classified.SetAction(action, _app.User.Context);
-        var result = await classified.Build();
+        var (shell, _) = _app.Module.GetCodeGenerated(action);
+        var (handler, _) = await shell!.Resolve(action, _app.User.Context);
+        var result = await ((IClass)handler!).Build();
 
         await result.IsSuccess();
         await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue()

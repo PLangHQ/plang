@@ -187,8 +187,8 @@ public class GeneratorValidationTests
         // CLR exception (NRE, InvalidCast) surfaces as a ServiceError carrying
         // "{module}.{action}: {ExType}: {msg}" instead of an anonymous bare throw.
         // The catch converts to a ServiceError; there is deliberately no finally —
-        // lifecycle/cleanup still lives in Call.ExecuteAsync, not the generated body.
-        await Assert.That(generated).Contains("try { __runResult = await Run(); }");
+        // lifecycle/cleanup still lives in Call.ExecuteAsync, not the generated Execute().
+        await Assert.That(generated).Contains("try { return await Run(); }");
         await Assert.That(generated.Contains("finally\n") || generated.Contains("finally {")
             || generated.Contains("finally\r\n") || generated.Contains("finally    {")).IsFalse();
     }
@@ -197,10 +197,9 @@ public class GeneratorValidationTests
     public async Task GeneratedExecuteAsync_CallsRunDirectly()
     {
         var generated = ReadAnyGeneratedHandler();
-        // ExecuteAsync invokes Run() inline (inside the try/catch wrap), not via a
-        // wrapper method. v6 split the call into capture-and-recheck so Data<T> getters
-        // that capture resolution errors during Run can surface them post-Run.
-        await Assert.That(generated).Contains("__runResult = await Run();");
+        // Execute() invokes Run() inline (inside the try/catch wrap), not via a
+        // wrapper method.
+        await Assert.That(generated).Contains("return await Run();");
     }
 
     [Test]

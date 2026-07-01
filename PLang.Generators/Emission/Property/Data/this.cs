@@ -5,8 +5,10 @@ namespace PLang.Generators.Emission.Property.Data;
 
 /// <summary>
 /// Emits a parameter property whose declared type is Data&lt;T&gt; or plain Data
-/// (Data&lt;object&gt;-equivalent). Resolution flows through Action.GetParameter +
-/// Data.As&lt;T&gt;(Context) — the v4 uniform shape.
+/// (Data&lt;object&gt;-equivalent). The property is a plain <c>init</c> auto-property;
+/// Resolve() decodes the .pr parameter into a local and binds it via the object
+/// initializer. Inline C# composition (prebound) sets the params it needs; the
+/// field-initializer fallback covers an absent slot.
 /// </summary>
 public sealed record @this(
     string Name,
@@ -21,34 +23,35 @@ public sealed record @this(
 {
     public override void EmitProperty(StringBuilder sb)
     {
-        // Backing field — Data<T>? regardless of property nullability so init can set it
-        sb.AppendLine($"    private {TypeName}? {Backing};");
-        sb.AppendLine($"    private bool {SetFlag};");
         var nullable = IsNullable ? "?" : "";
-        // Optional (`?`) params keep their nullable TYPE but are never actually null —
-        // the getter binds Data.Uninitialized for an absent slot. [NotNull] tells flow
-        // analysis the truth so `await Mime.Value()` doesn't trip CS8602.
+        // A partial-property implementation can't be an auto-property (C# CS9250), so the
+        // resolved Data lives in a plain backing field. This is dumb storage — no "set"
+        // flag, no getter fallback logic, no reset. The instance is the per-execution
+        // home, built fresh per action run: Resolve() binds each param via the object
+        // initializer; inline C# composition (prebound) sets the params it needs. The
+        // field-initializer default covers an absent slot (prebound didn't set it):
+        // absent optional -> non-null Uninitialized (null model), [Default] -> literal.
+        // These construct context-free (Uninitialized has no value; a [Default] literal
+        // rides the (name, item) ctor, which skips type.Build).
+        sb.AppendLine($"    private {TypeName}? {Backing} = {Fallback};");
+        // Optional (`?`) params keep their nullable TYPE but are never actually null.
+        // [NotNull] tells flow analysis the truth so `await Mime.Value()` doesn't trip CS8602.
         if (IsNullable)
             sb.AppendLine("    [System.Diagnostics.CodeAnalysis.NotNull]");
         sb.AppendLine($"    public partial {TypeName}{nullable} {Name}");
         sb.AppendLine("    {");
-
-        // The getter is a plain backing read — resolution happens at DISPATCH
-        // (__ResolveParameters, awaited by ExecuteAsync/SetAction before Run/Build),
-        // landing the resolved Data in the backing field: the handler instance is the
-        // per-execution home, so the shared .pr parameter is never written to. The
-        // sync fallback below only fires for direct C# composition (no action ran):
-        // absent optional -> non-null Uninitialized (null model), [Default] -> literal.
-        string fallback = IsPlainData
-            ? $"global::app.data.@this.Uninitialized(\"{ParamName}\")"
-            : DefaultValue != null
-                ? $"new global::app.data.@this<{InnerType}>(\"{ParamName}\", {DefaultExpr})"
-                : $"global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\")";
-        sb.AppendLine($"        get {{ if (!{SetFlag}) {{ {Backing} = {fallback}; {SetFlag} = true; }} return {Backing}!; }}");
-        sb.AppendLine($"        init {{ {Backing} = value; {SetFlag} = true; }}");
+        sb.AppendLine($"        get => {Backing}!;");
+        sb.AppendLine($"        init => {Backing} = value;");
         sb.AppendLine("    }");
         sb.AppendLine();
     }
+
+    /// <summary>Field-initializer / absent-slot value: Uninitialized, or the [Default] literal.</summary>
+    private string Fallback => IsPlainData
+        ? $"global::app.data.@this.Uninitialized(\"{ParamName}\")"
+        : DefaultValue != null
+            ? $"new global::app.data.@this<{InnerType}>(\"{ParamName}\", {DefaultExpr})"
+            : $"global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\")";
 
     // For choice<X>, a [Default(X.Member)] arrives as X's underlying value (an int
     // for an enum). Cast through X so int -> X -> choice<X> chains: (choice<X>)(X)(0).
@@ -63,45 +66,57 @@ public sealed record @this(
         }
     }
 
-    public override void EmitDispatchResolve(StringBuilder sb)
+    /// <summary>Local variable name the resolved Data lands in inside Resolve().</summary>
+    private string Local => $"__{Name}";
+
+    /// <summary>Object-initializer fragment binding the resolved local to the init property.</summary>
+    public string InitAssignment => $"{Name} = {Local}";
+
+    /// <summary>
+    /// Emits this param's resolution inside Resolve(): decode the .pr parameter's
+    /// %var%/literal form (async, in this execution's context) into a local. A resolution
+    /// failure short-circuits Resolve with the prefixed error. The object initializer
+    /// then binds <see cref="InitAssignment"/> onto the fresh instance.
+    /// </summary>
+    public override void EmitResolveLocal(StringBuilder sb)
     {
-        // Dispatch-time resolution: decode the .pr parameter's %var%/literal form once
-        // per execution, in this execution's context, into the backing field. The
-        // `!set` guard respects init-supplied values (direct C# composition).
-        // Resolution failures land on the resolved Data's Error; ExecuteAsync's
-        // __resolutionError guard surfaces them before Run().
-        sb.AppendLine($"        if (!{SetFlag})");
-        sb.AppendLine("        {");
         if (IsPlainData)
         {
             // Plain Data slot — the CANONICAL Data: live variable for full-match %var%,
             // the parameter itself for a literal.
-            sb.AppendLine($"            {Backing} = await __ResolveData(\"{ParamName}\").AsCanonical(Context);");
-            sb.AppendLine($"            if (!{Backing}.Success) __resolutionError = {Backing};");
+            sb.AppendLine($"        {TypeName} {Local} = await __ResolveData(action, \"{ParamName}\", context).AsCanonical(context);");
+            sb.AppendLine($"        if (!{Local}.Success) return (null, __PrefixActionContext({Local}.Error!, action));");
         }
         else if (IsNullable)
         {
-            sb.AppendLine($"            var __d = __ResolveData(\"{ParamName}\");");
-            sb.AppendLine($"            {Backing} = await __d.IsEmpty() ? global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\") : __d.As<{InnerType}>();");
-            sb.AppendLine($"            if (!{Backing}.Success) __resolutionError = {Backing};");
+            sb.AppendLine($"        {TypeName} {Local};");
+            sb.AppendLine("        {");
+            sb.AppendLine($"            var __d = __ResolveData(action, \"{ParamName}\", context);");
+            sb.AppendLine($"            {Local} = await __d.IsEmpty() ? global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\") : __d.As<{InnerType}>();");
+            sb.AppendLine($"            if (!{Local}.Success) return (null, __PrefixActionContext({Local}.Error!, action));");
+            sb.AppendLine("        }");
         }
         else if (DefaultValue != null)
         {
             // [Default] fires on an absent slot AND on a null-resolving value
             // (`mime: %unsetVar%` lands on the default too).
-            sb.AppendLine($"            var __d = __ResolveData(\"{ParamName}\");");
-            sb.AppendLine($"            {Backing} = await __d.IsEmpty() ? new global::app.data.@this<{InnerType}>(\"{ParamName}\", {DefaultExpr}) : __d.As<{InnerType}>();");
-            sb.AppendLine($"            if (!{Backing}.Success) __resolutionError = {Backing};");
-            sb.AppendLine($"            else if ({Backing}.Peek() is global::app.type.@null.@this) {Backing} = new global::app.data.@this<{InnerType}>(\"{ParamName}\", {DefaultExpr});");
+            sb.AppendLine($"        {TypeName} {Local};");
+            sb.AppendLine("        {");
+            sb.AppendLine($"            var __d = __ResolveData(action, \"{ParamName}\", context);");
+            sb.AppendLine($"            {Local} = await __d.IsEmpty() ? new global::app.data.@this<{InnerType}>(\"{ParamName}\", {DefaultExpr}) : __d.As<{InnerType}>();");
+            sb.AppendLine($"            if (!{Local}.Success) return (null, __PrefixActionContext({Local}.Error!, action));");
+            sb.AppendLine($"            else if ({Local}.Peek() is global::app.type.@null.@this) {Local} = new global::app.data.@this<{InnerType}>(\"{ParamName}\", {DefaultExpr});");
+            sb.AppendLine("        }");
         }
         else
         {
-            sb.AppendLine($"            var __d = __ResolveData(\"{ParamName}\");");
-            sb.AppendLine($"            {Backing} = __d.As<{InnerType}>();");
-            sb.AppendLine($"            if (!{Backing}.Success) __resolutionError = {Backing};");
+            sb.AppendLine($"        {TypeName} {Local};");
+            sb.AppendLine("        {");
+            sb.AppendLine($"            var __d = __ResolveData(action, \"{ParamName}\", context);");
+            sb.AppendLine($"            {Local} = __d.As<{InnerType}>();");
+            sb.AppendLine($"            if (!{Local}.Success) return (null, __PrefixActionContext({Local}.Error!, action));");
+            sb.AppendLine("        }");
         }
-        sb.AppendLine($"            {SetFlag} = true;");
-        sb.AppendLine("        }");
     }
 
     public override void EmitSnapshotEntry(StringBuilder sb)
@@ -113,14 +128,12 @@ public sealed record @this(
         var prValueExpr = IsSensitive
             ? "__pr?.Peek() != null ? \"******\" : null"
             : "__pr?.Peek()";
-        // Sensitive masking matches PrValue's null-guard pattern: a property accessed but
-        // resolved to a null inner value reports null FinalValue, not '******'. Distinguishes
-        // 'accessed-and-null' from 'accessed-and-redacted' for post-mortem analysis. {Backing}
-        // is Data<T>? — the wrapper can exist with a null inner value after a null-resolving As<T>;
-        // we mask only when there's an actual resolved value to redact.
+        // The instance is always fully populated (every param is bound at construction),
+        // so the final value reads straight off the property. Sensitive params mask a
+        // present value; a null inner value reports null (accessed-and-null, not redacted).
         var finalValueExpr = IsSensitive
-            ? $"{SetFlag} ? ({Backing}?.Peek() != null ? (object?)\"******\" : null) : null"
-            : $"{SetFlag} ? (object?){Backing} : null";
+            ? $"({Name}.Peek() != null ? (object?)\"******\" : null)"
+            : $"(object?){Name}";
         sb.AppendLine($"        {{");
         sb.AppendLine($"            var __pr = __action?.Parameters?.FirstOrDefault(p => string.Equals(p.Name, \"{Name}\", System.StringComparison.OrdinalIgnoreCase));");
         sb.AppendLine($"            __pr ??= __action?.Defaults?.FirstOrDefault(p => string.Equals(p.Name, \"{Name}\", System.StringComparison.OrdinalIgnoreCase));");
@@ -130,7 +143,7 @@ public sealed record @this(
         sb.AppendLine($"                PrValue = {prValueExpr},");
         sb.AppendLine($"                PrType = __pr?.Type?.Name,");
         sb.AppendLine($"                FinalValue = {finalValueExpr},");
-        sb.AppendLine($"                WasAccessed = {SetFlag}");
+        sb.AppendLine($"                WasAccessed = true");
         sb.AppendLine($"            }});");
         sb.AppendLine($"        }}");
     }

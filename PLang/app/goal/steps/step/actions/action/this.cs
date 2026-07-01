@@ -337,11 +337,14 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         // so the inner `using anchor` disposes first.
         await using var _ = call;
         using var _anchor = context.AnchorScope(this);
-        // PreboundHandler path: handler properties are already set by inline C#
-        // composition. Pass `null` to ExecuteAsync so the generated reset/resolve
-        // loop is skipped — matches the former App.RunAction behaviour.
+        // PreboundHandler path: params are already set by inline C# composition, so we
+        // skip Resolve and just Attach the runtime markers, then Execute.
         if (PreboundHandler != null)
-            return await handler!.ExecuteAsync(null!, context);
+        {
+            var attachErr = await handler!.Attach(this, context);
+            if (attachErr != null) return context.Error(attachErr);
+            return await handler.Execute();
+        }
         return await call.ExecuteAsync(handler!, context);
     }
 
@@ -354,8 +357,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         Func<Task<global::app.data.@this>> next,
         actor.context.@this context)
     {
-        var (handler, error) = context.App!.Module.GetCodeGenerated(this);
+        var (shell, error) = context.App!.Module.GetCodeGenerated(this);
         if (error != null) return (null, error);
+        // Resolve populates the handler's params so Wrap() reads real values.
+        var (handler, resolveErr) = await shell!.Resolve(this, context);
+        if (resolveErr != null) return (null, resolveErr);
         if (handler is not module.IModifier mod)
         {
             // Pinpoint WHERE the misplaced "modifier" lives. Modifier Actions don't
@@ -380,7 +386,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                 "ModifierError", 400));
         }
 
-        await handler.ExecuteAsync(this, context);
         return (mod.Wrap(next, context), null);
     }
 

@@ -61,8 +61,7 @@ public record FakeDataPathAction : global::app.module.ICodeGenerated
 
     public Task<Data> Run() => Task.FromResult(Data.Ok());
 
-    public Task<Data> ExecuteAsync(global::app.goal.steps.step.actions.action.@this action,
-        global::app.actor.context.@this context) => Task.FromResult(Data.Ok());
+    public Task<Data> Execute() => Task.FromResult(Data.Ok());
 }
 
 // Fake action with concrete return type
@@ -71,8 +70,7 @@ public class FakeGetPath : global::app.module.ICodeGenerated
 {
     public Task<FakePathResult> Run() => Task.FromResult(new FakePathResult());
 
-    public Task<Data> ExecuteAsync(global::app.goal.steps.step.actions.action.@this action,
-        global::app.actor.context.@this context) => Task.FromResult(Data.Ok());
+    public Task<Data> Execute() => Task.FromResult(Data.Ok());
 }
 
 // Fake action returning plain Data
@@ -81,8 +79,7 @@ public class FakeBasicAction : global::app.module.ICodeGenerated
 {
     public Task<Data> Run() => Task.FromResult(Data.Ok("hello"));
 
-    public Task<Data> ExecuteAsync(global::app.goal.steps.step.actions.action.@this action,
-        global::app.actor.context.@this context) => Task.FromResult(Data.Ok());
+    public Task<Data> Execute() => Task.FromResult(Data.Ok());
 }
 
 // Fake return type simulating Path-like properties

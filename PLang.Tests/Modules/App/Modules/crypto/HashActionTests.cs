@@ -180,8 +180,13 @@ public class HashActionTests
     [Test]
     public async Task Verify_NullHash_ReturnsError()
     {
-        var verifyAction = new Verify { Data = Data.Ok("hello"), Hash = null!, Algorithm = (global::app.type.text.@this)"keccak256" };
-        var result = await verifyAction.ExecuteAsync(new PrAction { Module = "crypto", ActionName = "verify" }, Ctx);
+        var action = new PrAction
+        {
+            Module = "crypto", ActionName = "verify",
+            Parameters = new List<Data> { new Data("data", "hello"), new Data("hash", null), new Data("algorithm", "keccak256") }
+        };
+        var (h, err) = await new Verify().Resolve(action, Ctx);
+        var result = err != null ? Ctx.Error(err) : await h!.Execute();
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();

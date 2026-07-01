@@ -68,5 +68,5 @@ public partial class request : IContext
     /// variable.set can stamp Response.Body's expected shape. Variable
     /// references and unknown extensions defer to runtime Content-Type dispatch.
     /// </summary>
-    public Task<data.@this> Build() => HttpBuildHelpers.InferTypeFromUrl(__action, __app, "Url");
+    public Task<data.@this> Build() => HttpBuildHelpers.InferTypeFromUrl(__action, Context.App, "Url");
 }

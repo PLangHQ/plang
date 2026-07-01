@@ -8,15 +8,19 @@ using CodeProperty = PLang.Generators.Emission.Property.Code.@this;
 namespace PLang.Generators.Emission.Action;
 
 /// <summary>
-/// Per-handler emission. Builds the partial-class shell, marker auto-provisions,
-/// per-property bodies (delegated to ActionProperty.EmitProperty), the thin
-/// ExecuteAsync, and the __SnapshotParams body (delegated to
-/// ActionProperty.EmitSnapshotEntry).
+/// Per-handler emission. A handler instance is the per-execution home, built fresh
+/// for every action run:
+///   Resolve(action, context) — validates, decodes each .pr parameter into a local,
+///     constructs a fresh instance via the object initializer (init auto-props), then
+///     Attach()es runtime markers. Returns the ready handler (or a resolution error).
+///   Attach(action, context)  — sets Context / Action / Step / Static / Channel / [Code]
+///     provider / IEvent on THIS instance. Called by Resolve, and directly on prebound
+///     (inline C#-composed) handlers whose params are already set.
+///   Execute()                — runs the handler's typed Run(), wrapping bare exceptions
+///     with the action's module.action context.
 ///
 /// Emission uses C# raw string literals (`$$"""..."""`). With `$$`, single `{` `}`
-/// are literal and `{{name}}` is interpolation, so the emitted shape reads top-to-
-/// bottom as it would appear in the generated .g.cs file. The closing `"""` column
-/// determines how much leading whitespace is stripped from each line.
+/// are literal and `{{name}}` is interpolation.
 /// </summary>
 public static class @this
 {
@@ -41,13 +45,14 @@ public static class @this
             """);
 
         EmitMarkers(sb, info);
-        EmitResolutionState(sb);
+        EmitInstanceState(sb);
         EmitProperties(sb, info);
         EmitDataAndErrorHelpers(sb, info);
-        EmitExecuteAsync(sb, info);
-        EmitSetAction(sb, info);
+        EmitResolve(sb, info);
+        EmitAttach(sb, info);
+        EmitExecute(sb);
+        EmitHelpers(sb);
         EmitSnapshotPublic(sb);
-        EmitLegacyHelpers(sb);
         EmitSnapshotInternal(sb, info);
 
         sb.AppendLine("}");
@@ -56,11 +61,12 @@ public static class @this
 
     private static void EmitMarkers(StringBuilder sb, ActionClassInfo info)
     {
-        if (info.ImplementsIContext)
-            sb.Append("""
-                    public global::app.actor.context.@this Context { get; set; } = null!;
+        // Context is universal — every action runs inside one, and any value the handler
+        // produces borns with it (Data() -> Context.Ok). Emitted unconditionally.
+        sb.Append("""
+                public global::app.actor.context.@this Context { get; set; } = null!;
 
-                """);
+            """);
         if (info.ImplementsIChannel)
             sb.Append("""
                     public global::app.channel.@this Channel { get; set; } = null!;
@@ -83,12 +89,12 @@ public static class @this
                 """);
     }
 
-    private static void EmitResolutionState(StringBuilder sb)
+    private static void EmitInstanceState(StringBuilder sb)
     {
+        // The action is held only so __SnapshotParams can read the .pr-side values on
+        // the failure path. Set in Attach.
         sb.Append("""
                 private global::app.goal.steps.step.actions.action.@this? __action;
-                private global::app.@this? __app;
-                private global::app.data.@this? __resolutionError;
 
             """);
     }
@@ -101,13 +107,14 @@ public static class @this
 
     private static void EmitDataAndErrorHelpers(StringBuilder sb, ActionClassInfo info)
     {
+        // A handler that produces a value borns it with its own Context (context-never-null).
         var hasDataProp = info.Properties.Any(p => p.Name == "Data");
         if (!hasDataProp)
         {
             sb.Append("""
-                    protected static global::app.data.@this Data() => global::app.data.@this.Ok();
-                    protected static global::app.data.@this Data(object? value) => global::app.data.@this.Ok(value);
-                    protected static global::app.data.@this Data(object? value, global::app.type.@this? type) => global::app.data.@this.Ok(value, type);
+                    protected global::app.data.@this Data() => Context.Ok();
+                    protected global::app.data.@this Data(object? value) => Context.Ok(value);
+                    protected global::app.data.@this Data(object? value, global::app.type.@this? type) => Context.Ok(value, type);
 
                 """);
         }
@@ -122,59 +129,108 @@ public static class @this
         sb.AppendLine();
     }
 
-    private static void EmitExecuteAsync(StringBuilder sb, ActionClassInfo info)
+    private static void EmitResolve(StringBuilder sb, ActionClassInfo info)
     {
         sb.Append("""
-                public async System.Threading.Tasks.Task<global::app.data.@this> ExecuteAsync(
+                public async System.Threading.Tasks.Task<(global::app.module.ICodeGenerated?, global::app.error.IError?)> Resolve(
                     global::app.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
                 {
-                    __action = action;
-                    __app = context.App;
-                    var app = __app!;
-                    __resolutionError = null;
-                    if (action != null)
-                    {
-
-            """);
-
-        // Reset backing fields per call so reused handler instances re-derive.
-        // Skip when action is null (direct C# composition via init keeps init values).
-        foreach (var prop in info.Properties)
-        {
-            if (prop is CodeProperty) continue;
-            sb.Append($$"""
-                                __{{prop.Name}}_backing = default;
-                                __{{prop.Name}}_set = false;
-
-                    """);
-        }
-
-        sb.Append("""
-                    }
-                    var __step = __action?.Step;
+                    var app = context.App!;
+                    var __step = action?.Step;
                     var __callFrames = context.CallStack?.Current?.SnapshotChain() ?? (System.Collections.Generic.IReadOnlyList<global::app.callstack.call.@this>)System.Array.Empty<global::app.callstack.call.@this>();
 
             """);
 
-        if (info.ImplementsIContext) sb.AppendLine("        Context = context;");
-        if (info.ImplementsIChannel)
+        // [IsNotNull] validation
+        if (info.HasAnyIsNotNull)
         {
-            sb.Append("""
-                        {
-                            // The channel param rides as a text value after born-native —
-                            // its string face is the channel name (a raw `as string` would
-                            // null a text.@this and silently default to Output).
-                            var __channelName = __action?.Parameters?.FirstOrDefault(d => string.Equals(d.Name, "channel", System.StringComparison.OrdinalIgnoreCase))?.Peek()?.ToString();
-                            Channel = (context.Actor ?? app.User).Channel.Resolve(__channelName);
-                            if (Channel == null)
-                                return global::app.data.@this.FromError(new global::app.error.ServiceError(
-                                    $"Channel '{__channelName ?? "output"}' not found", __step, __callFrames, "ChannelNotFound", 404));
-                        }
+            sb.AppendLine("        if (action?.Parameters != null)");
+            sb.AppendLine("        {");
+            foreach (var name in info.IsNotNullProperties)
+            {
+                var lower = name.ToLowerInvariant();
+                sb.Append($$"""
+                                if ((action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Peek().IsNull) ?? true)
+                                    return (null, new global::app.error.ServiceError(
+                                        "'{{lower}}' must have a value", __step, __callFrames, "ValueRequired", 400));
 
-                """);
+                    """);
+            }
+            sb.AppendLine("        }");
         }
-        if (info.ImplementsIAction) sb.AppendLine("        Action = __action!;");
-        if (info.ImplementsIStep) sb.AppendLine("        Step = __action?.Step!;");
+
+        // Missing-required-parameter validation for IRawNameResolvable slots.
+        var rawNameProps = info.Properties
+            .OfType<DataProperty>()
+            .Where(p => p.IsRawNameResolvable && !p.IsNullable)
+            .ToList();
+        if (rawNameProps.Count > 0)
+        {
+            sb.AppendLine("        if (action?.Parameters != null)");
+            sb.AppendLine("        {");
+            foreach (var prop in rawNameProps)
+            {
+                var lower = prop.Name.ToLowerInvariant();
+                sb.Append($$"""
+                                if (action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Peek() == null)
+                                    return (null, new global::app.error.ServiceError(
+                                        "Required parameter '{{lower}}' is missing or null", __step, __callFrames, "MissingRequiredParameter", 400));
+
+                    """);
+            }
+            sb.AppendLine("        }");
+        }
+
+        // Resolve each parameter into a local (decode %var%/literal in this context).
+        var dataProps = info.Properties.OfType<DataProperty>().ToList();
+        foreach (var prop in dataProps)
+            prop.EmitResolveLocal(sb);
+
+        sb.AppendLine();
+
+        // Construct the fresh instance, binding resolved params via the object initializer.
+        if (dataProps.Count == 0)
+        {
+            sb.AppendLine($"        var __instance = new {info.ClassName}();");
+        }
+        else
+        {
+            sb.AppendLine($"        var __instance = new {info.ClassName}");
+            sb.AppendLine("        {");
+            for (int i = 0; i < dataProps.Count; i++)
+            {
+                var comma = i < dataProps.Count - 1 ? "," : "";
+                sb.AppendLine($"            {dataProps[i].InitAssignment}{comma}");
+            }
+            sb.AppendLine("        };");
+        }
+
+        sb.Append("""
+
+                    var __err = await __instance.Attach(action, context);
+                    if (__err != null) return (null, __err);
+                    return (__instance, null);
+                }
+
+            """);
+    }
+
+    private static void EmitAttach(StringBuilder sb, ActionClassInfo info)
+    {
+        sb.Append("""
+                public async System.Threading.Tasks.Task<global::app.error.IError?> Attach(
+                    global::app.goal.steps.step.actions.action.@this? action, global::app.actor.context.@this context)
+                {
+                    var app = context.App!;
+                    Context = context;
+                    __action = action;
+                    var __step = action?.Step;
+                    var __callFrames = context.CallStack?.Current?.SnapshotChain() ?? (System.Collections.Generic.IReadOnlyList<global::app.callstack.call.@this>)System.Array.Empty<global::app.callstack.call.@this>();
+
+            """);
+
+        if (info.ImplementsIAction) sb.AppendLine("        Action = action!;");
+        if (info.ImplementsIStep) sb.AppendLine("        Step = action?.Step!;");
         if (info.ImplementsIStatic)
         {
             const string prefix = "app.module.";
@@ -183,20 +239,28 @@ public static class @this
                 : info.Namespace;
             sb.AppendLine($"        Static = context.GetModuleStatic(\"{moduleName}\");");
         }
-
-        // Eager [Code] resolution
-        foreach (var prop in info.Properties.OfType<CodeProperty>())
+        if (info.ImplementsIChannel)
         {
-            sb.Append($$"""
-                        var (__{{prop.Name}}_provider, __{{prop.Name}}_err) = app.Code.Get<{{prop.TypeName}}>();
-                        if (__{{prop.Name}}_err != null) return global::app.data.@this.FromError(__{{prop.Name}}_err);
-                        __{{prop.Name}}_backing = __{{prop.Name}}_provider!;
+            sb.Append("""
+                        {
+                            // The channel param rides as a text value after born-native —
+                            // its string face is the channel name (a raw `as string` would
+                            // null a text.@this and silently default to Output).
+                            var __channelName = action?.Parameters?.FirstOrDefault(d => string.Equals(d.Name, "channel", System.StringComparison.OrdinalIgnoreCase))?.Peek()?.ToString();
+                            Channel = (context.Actor ?? app.User).Channel.Resolve(__channelName);
+                            if (Channel == null)
+                                return new global::app.error.ServiceError(
+                                    $"Channel '{__channelName ?? "output"}' not found", __step, __callFrames, "ChannelNotFound", 404);
+                        }
 
                 """);
         }
-        sb.AppendLine();
 
-        // IEvent surface
+        // [Code] providers
+        foreach (var prop in info.Properties.OfType<CodeProperty>())
+            prop.EmitAttach(sb);
+
+        // IEvent surface — reads the (now-populated) param props.
         foreach (var name in info.IEventPropertyNames)
         {
             sb.Append($$"""
@@ -206,165 +270,60 @@ public static class @this
                 """);
         }
 
-        // [IsNotNull] validation
-        if (info.HasAnyIsNotNull)
-        {
-            sb.AppendLine("        if (__action?.Parameters != null)");
-            sb.AppendLine("        {");
-            foreach (var name in info.IsNotNullProperties)
-            {
-                var lower = name.ToLowerInvariant();
-                // A null value is the @null citizen, never C# null — Peek() never
-                // returns null, so test the value's own IsNull. A missing parameter
-                // (FirstOrDefault → null) short-circuits the ?. to true and also fires.
-                sb.Append($$"""
-                                if ((__action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Peek().IsNull) ?? true)
-                                    return global::app.data.@this.FromError(new global::app.error.ServiceError(
-                                        "'{{lower}}' must have a value", __step, __callFrames, "ValueRequired", 400));
-
-                    """);
-            }
-            sb.AppendLine("        }");
-        }
-
-        // Missing-required-parameter validation for IRawNameResolvable slots.
-        // Restores pre-v7 RawScalarValidations contract — missing or null variable-name
-        // parameter surfaces a MissingRequiredParameter ServiceError before Run() is
-        // invoked, instead of bubbling up as an NRE through the implicit Variable→string
-        // operator. Auditor v2 finding #1.
-        var rawNameProps = info.Properties
-            .OfType<DataProperty>()
-            .Where(p => p.IsRawNameResolvable && !p.IsNullable)
-            .ToList();
-        if (rawNameProps.Count > 0)
-        {
-            sb.AppendLine("        if (__action?.Parameters != null)");
-            sb.AppendLine("        {");
-            foreach (var prop in rawNameProps)
-            {
-                // Mirror IsNotNull's serialization convention: lowercase the property name
-                // for the parameter-list match, which is how .pr emits parameter keys.
-                var lower = prop.Name.ToLowerInvariant();
-                sb.Append($$"""
-                                if (__action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Peek() == null)
-                                    return global::app.data.@this.FromError(new global::app.error.ServiceError(
-                                        "Required parameter '{{lower}}' is missing or null", __step, __callFrames, "MissingRequiredParameter", 400));
-
-                    """);
-            }
-            sb.AppendLine("        }");
-        }
-
         sb.Append("""
-                    await __ResolveParameters();
-                    if (__resolutionError != null) return __PrefixActionContext(__resolutionError);
+                    await System.Threading.Tasks.Task.CompletedTask;
+                    return null;
+                }
 
-                    global::app.data.@this __runResult;
-                    try { __runResult = await Run(); }
+            """);
+    }
+
+    private static void EmitExecute(StringBuilder sb)
+    {
+        sb.Append("""
+                public async System.Threading.Tasks.Task<global::app.data.@this> Execute()
+                {
+                    try { return await Run(); }
                     catch (System.Exception ex) when (ex is not (System.OperationCanceledException or System.OutOfMemoryException or System.StackOverflowException))
                     {
                         // Bare exceptions from Run() (NRE, InvalidCast, etc.) reach the user
                         // as "Object reference not set" with no module.action context. Wrap
                         // here so the message tells the reader which action's Run() threw.
-                        // Original exception preserved on the ServiceError.Exception so the
-                        // C# stack stays available for diagnostic display.
-                        var mod = __action?.Module ?? "?";
-                        var act = __action?.ActionName ?? "?";
+                        var __mod = __action?.Module ?? "?";
+                        var __act = __action?.ActionName ?? "?";
+                        var __step = __action?.Step;
+                        var __callFrames = Context?.CallStack?.Current?.SnapshotChain() ?? (System.Collections.Generic.IReadOnlyList<global::app.callstack.call.@this>)System.Array.Empty<global::app.callstack.call.@this>();
                         return global::app.data.@this.FromError(new global::app.error.ServiceError(
-                            $"{mod}.{act}: {ex.GetType().Name}: {ex.Message}",
+                            $"{__mod}.{__act}: {ex.GetType().Name}: {ex.Message}",
                             __step!, __callFrames, ex.GetType().Name, 500)
                         { Exception = ex });
                     }
-                    if (__resolutionError != null) return __PrefixActionContext(__resolutionError);
-                    return __runResult;
-                }
-
-                // Wraps the resolution error with the action's module.action context so the
-                // reader can locate the failing call site without reading the call stack. The
-                // raw error from Data<T>.As<T> only carries source/target type names — useless
-                // without knowing which action and parameter the conversion was for.
-                private global::app.data.@this __PrefixActionContext(global::app.data.@this err)
-                {
-                    if (__action == null || err.Error == null) return err;
-                    var orig = err.Error;
-                    var msg = $"{__action.Module}.{__action.ActionName}: {orig.Message}";
-                    return global::app.data.@this.FromError(new global::app.error.ActionError(msg, orig.Key ?? "ActionError", orig.StatusCode));
-                }
-
-            """);
-
-        EmitResolveParameters(sb, info);
-    }
-
-    /// <summary>
-    /// Dispatch-time parameter resolution: each Data parameter's %var%/literal form
-    /// decodes (async, in this execution's context) into its backing field before
-    /// Run()/Build() touches the property — the handler instance is the per-execution
-    /// home, so the shared .pr parameter is never written to. Getters become plain
-    /// backing reads; an unused param costs one cheap decode, never a content load
-    /// (content I/O lives in the value's own door).
-    /// </summary>
-    private static void EmitResolveParameters(StringBuilder sb, ActionClassInfo info)
-    {
-        sb.Append("""
-                private async System.Threading.Tasks.ValueTask __ResolveParameters()
-                {
-
-            """);
-        foreach (var prop in info.Properties)
-            prop.EmitDispatchResolve(sb);
-        // No Data params: keep the await contract trivially satisfied.
-        sb.Append("""
-                    await System.Threading.Tasks.Task.CompletedTask;
                 }
 
             """);
     }
 
-    /// <summary>
-    /// SetAction prepares the handler for <c>Build()</c> invocation from the validate pass:
-    /// stamps __action/__app so the lazy property getters can resolve, and clears any
-    /// cached backing fields from a prior call. Mirrors ExecuteAsync's setup minus the
-    /// runtime-only steps (Channel resolve, IEvent wiring, [Code] eager, IsNotNull,
-    /// Run try/catch). Build() reads its own parameters via the generated property
-    /// getters exactly the same way Run() does.
-    /// </summary>
-    private static void EmitSetAction(StringBuilder sb, ActionClassInfo info)
+    private static void EmitHelpers(StringBuilder sb)
     {
         sb.Append("""
-                public async System.Threading.Tasks.ValueTask SetAction(
-                    global::app.goal.steps.step.actions.action.@this action,
-                    global::app.actor.context.@this context)
+                private static global::app.data.@this __ResolveData(
+                    global::app.goal.steps.step.actions.action.@this? action, string name, global::app.actor.context.@this context)
                 {
-                    __action = action;
-                    __app = context.App;
-                    __resolutionError = null;
-                    if (action != null)
-                    {
+                    var data = action?.GetParameter(name, context);
+                    if (data == null) return global::app.data.@this.NotFound(name);
+                    data.Context = context;
+                    return data;
+                }
 
-            """);
-
-        foreach (var prop in info.Properties)
-        {
-            if (prop is CodeProperty) continue;
-            sb.Append($$"""
-                                __{{prop.Name}}_backing = default;
-                                __{{prop.Name}}_set = false;
-
-                    """);
-        }
-
-        sb.Append("""
-                    }
-
-            """);
-
-        if (info.ImplementsIContext) sb.AppendLine("        Context = context;");
-        if (info.ImplementsIAction) sb.AppendLine("        Action = action!;");
-        if (info.ImplementsIStep) sb.AppendLine("        Step = action?.Step!;");
-
-        sb.Append("""
-                    await __ResolveParameters();
+                // Wraps a resolution error with the action's module.action context so the
+                // reader can locate the failing call site. The raw error from Data<T>.As<T>
+                // only carries source/target type names — useless without the action name.
+                private static global::app.error.IError __PrefixActionContext(
+                    global::app.error.IError err, global::app.goal.steps.step.actions.action.@this? action)
+                {
+                    if (action == null) return err;
+                    var msg = $"{action.Module}.{action.ActionName}: {err.Message}";
+                    return new global::app.error.ActionError(msg, err.Key ?? "ActionError", err.StatusCode);
                 }
 
             """);
@@ -372,27 +331,10 @@ public static class @this
 
     private static void EmitSnapshotPublic(StringBuilder sb)
     {
-        // Public surface for App.Run's catch path.
+        // Public surface for the call-stack catch path.
         sb.Append("""
                 public System.Collections.Generic.List<global::app.error.ParamSnapshot> SnapshotParams()
                     => __SnapshotParams();
-
-            """);
-    }
-
-    private static void EmitLegacyHelpers(StringBuilder sb)
-    {
-        // After v5: only __ResolveData remains. Legacy scalar/[VariableName] emission
-        // (which used __Resolve<T>, __HasParam, __StripPercent) is gone — Variable-name
-        // slots are Data<Variable> and route through the Data emitter's __ResolveData.
-        sb.Append("""
-                private global::app.data.@this __ResolveData(string name)
-                {
-                    var data = __action?.GetParameter(name, Context!);
-                    if (data == null) return global::app.data.@this.NotFound(name);
-                    data.Context = Context;
-                    return data;
-                }
 
             """);
     }

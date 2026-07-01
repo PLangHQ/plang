@@ -214,9 +214,7 @@ internal class ThrowingMatrixHandler : global::app.module.IAction, global::app.m
     public void Initialize(global::app.@this engine, global::app.actor.context.@this context)
     { App = engine; Context = context; }
 
-    public Task<global::app.data.@this> ExecuteAsync(
-        global::app.goal.steps.step.actions.action.@this action,
-        global::app.actor.context.@this context)
+    public Task<global::app.data.@this> Execute()
     {
         throw new InvalidOperationException("forced throw");
     }
@@ -233,9 +231,7 @@ internal class OceThrowingHandler : global::app.module.IAction, global::app.modu
     public void Initialize(global::app.@this engine, global::app.actor.context.@this context)
     { App = engine; Context = context; }
 
-    public Task<global::app.data.@this> ExecuteAsync(
-        global::app.goal.steps.step.actions.action.@this action,
-        global::app.actor.context.@this context)
+    public Task<global::app.data.@this> Execute()
     {
         throw new OperationCanceledException("simulated cancellation");
     }

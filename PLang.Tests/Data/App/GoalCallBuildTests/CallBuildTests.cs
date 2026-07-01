@@ -33,9 +33,9 @@ public class CallBuildTests
             Parameters = new List<Data> { new Data("GoalName", goalCall, context: ctx) }
         };
 
-        var handler = new global::app.module.goal.Call();
-        await ((global::app.module.IClass)handler).SetAction(action, ctx);
-        await ((global::app.module.IClass)handler).Build();
+        var (handler, err) = await new global::app.module.goal.Call().Resolve(action, ctx);
+        await Assert.That(err).IsNull();
+        await ((global::app.module.IClass)handler!).Build();
 
         var names = goalCall.Parameters.Select(p => p.Name).ToList();
         await Assert.That(names).DoesNotContain("path");   // self-ref dropped

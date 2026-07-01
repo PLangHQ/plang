@@ -55,5 +55,5 @@ public partial class upload : IContext
     // Plain Data — body lazy (from Content-Type), metadata in Properties.
     public async Task<data.@this> Run() => await Http.UploadAsync(this);
 
-    public Task<data.@this> Build() => HttpBuildHelpers.InferTypeFromUrl(__action, __app, "Url");
+    public Task<data.@this> Build() => HttpBuildHelpers.InferTypeFromUrl(__action, Context.App, "Url");
 }

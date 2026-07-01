@@ -216,7 +216,7 @@ public sealed partial class @this : IAsyncDisposable
 
     /// <summary>
     /// Executes the resolved handler under this Call frame. Wraps:
-    ///   - <c>handler.ExecuteAsync(action, context)</c> invocation
+    ///   - <c>handler.Resolve(action, context)</c> then <c>Execute()</c> invocation
     ///   - error stamping: <c>SnapshotParams</c> onto <c>Error.Params</c>,
     ///     <c>CallFrames</c> from <see cref="SnapshotChain"/> if not already set
     ///   - this.Errors.Add and CallStack.Audit.Add on failure
@@ -228,15 +228,26 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public async Task<data.@this> ExecuteAsync(module.ICodeGenerated handler, actor.context.@this context)
     {
+        // `handler` is the throwaway registry shell; Resolve builds the fresh, populated
+        // instance we actually run. `real` is captured for the catch-path snapshot.
+        module.ICodeGenerated? real = null;
         try
         {
-            var result = await handler.ExecuteAsync(Action, context);
+            var (resolved, resolveErr) = await handler.Resolve(Action, context);
+            if (resolveErr != null)
+            {
+                if (resolveErr is Error rerr && rerr.CallFrames.Count == 0) rerr.CallFrames = SnapshotChain();
+                Errors.Add(resolveErr);
+                _stack.Audit.Add(resolveErr);
+                return context.Error(resolveErr);
+            }
+            real = resolved;
+            var result = await real!.Execute();
             // Stamp __SnapshotParams onto Error.Params if the handler returned an error
-            // without one already populated. (Generator no longer attaches snapshots
-            // inside ExecuteAsync — that responsibility lives here.)
+            // without one already populated. (The snapshot lives here, not in the handler.)
             if (!result.Success && result.Error is Error err)
             {
-                if (err.Params == null) err.Params = handler.SnapshotParams();
+                if (err.Params == null) err.Params = real.SnapshotParams();
                 // Capture the failing Call chain so error.handle (and other downstream
                 // observers) can identify the failing Call after this scope's Push pops.
                 // Snapshot is index-[0]=self, walking Caller upward — matches the
@@ -248,14 +259,14 @@ public sealed partial class @this : IAsyncDisposable
             return result;
         }
         // Deliberately catches OperationCanceledException — timeout.after depends on this:
-        // the inner action's generated ExecuteAsync swallows OCE into a ServiceError result,
+        // the inner action's generated Execute() swallows OCE into a ServiceError result,
         // so timeout.after detects the timeout via CTS state + failed result, not via OCE
         // bubbling up. Step.RunAsync's catch DOES exclude OCE — that asymmetry is intentional.
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
             var serviceErr = new ServiceError(
                 ex.Message, Action.Step!, SnapshotChain(), "ServiceError", 400) { Exception = ex };
-            serviceErr.Params = handler.SnapshotParams();
+            serviceErr.Params = real?.SnapshotParams();
             Errors.Add(serviceErr);
             _stack.Audit.Add(serviceErr);
             return context.Error(serviceErr);
