@@ -27,7 +27,7 @@ public static class TemplateStamp
             {
                 // Leaf: flag the declared type so the item rebuilds as a template
                 // (Declare re-runs type.Build, which re-kinds a %ref% text to Template="plang").
-                if (global::app.type.text.@this.HasHoles(raw))
+                if (global::app.type.text.@this.HasVariable(raw))
                 {
                     var t = p.Type;
                     p.Declare(new global::app.type.@this(t?.Name ?? "object", t?.Kind, t?.Strict ?? false, "plang"));
@@ -51,7 +51,7 @@ public static class TemplateStamp
         switch (instance)
         {
             case global::app.type.text.@this t:
-                return t.Template == null && global::app.type.text.@this.HasHoles(t.ToString())
+                return t.Template == null && global::app.type.text.@this.HasVariable(t.ToString())
                     ? new global::app.type.text.@this(t.ToString(), "plang") { Kind = t.Kind }
                     : null;
 
@@ -106,7 +106,7 @@ public static class TemplateStamp
     {
         switch (raw)
         {
-            case string s when global::app.type.text.@this.HasHoles(s):
+            case string s when global::app.type.text.@this.HasVariable(s):
                 return new global::app.type.text.@this(s, "plang");
 
             case IDictionary<string, object?> d:

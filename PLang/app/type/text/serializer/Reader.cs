@@ -8,7 +8,7 @@ namespace app.type.text.serializer;
 /// (<c>ctx.Template</c>): an authored goal read carries <c>"plang"</c> and a
 /// <c>%ref%</c> leaf borns a live template; a runtime-ingest read carries null and
 /// the same bytes print literally. Text owns the holes-decision
-/// (<see cref="app.type.text.@this.HasHoles"/>); resolution stays lazy at the door.
+/// (<see cref="app.type.text.@this.HasVariable"/>); resolution stays lazy at the door.
 /// </summary>
 public sealed class Reader : global::app.type.reader.ITypeReader
 {

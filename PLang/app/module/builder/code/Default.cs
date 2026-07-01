@@ -1019,7 +1019,7 @@ public class Default : IBuilder
             foreach (var p in a.Parameters)
             {
                 var raw = (p.Peek() as global::app.type.item.@this)?.RawText;
-                if (raw == null || !global::app.type.text.@this.HasHoles(raw)) continue;
+                if (raw == null || !global::app.type.text.@this.HasVariable(raw)) continue;
                 var t = p.Type;
                 p.Declare(new app.type.@this(t?.Name ?? "object", t?.Kind, t?.Strict ?? false, "plang"));
             }

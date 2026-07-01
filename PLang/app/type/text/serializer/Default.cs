@@ -9,7 +9,7 @@ namespace app.type.text.serializer;
 ///
 /// <para>A value slot of <c>text</c> permits a <c>%var%</c> reference, so the
 /// text is built with <c>canTemplate:true</c> — text itself decides whether the
-/// raw actually carries a template (<see cref="app.type.text.@this.HasHoles"/>);
+/// raw actually carries a template (<see cref="app.type.text.@this.HasVariable"/>);
 /// resolution stays lazy at the door. No <c>Write</c> here — text renders through
 /// its own <see cref="app.type.text.@this.Write"/> / json converter; this file
 /// only adds the read side.</para>

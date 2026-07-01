@@ -117,7 +117,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// authored-content mode the reader carries — <c>"plang"</c> when the bytes are
     /// developer-authored (a goal/<c>.pr</c>), null for runtime-ingest. Text decides
     /// for itself whether there is actually a template to stamp: only a value with a
-    /// <c>%ref%</c> hole (<see cref="HasHoles"/>) keeps the mode, so a holeless string
+    /// <c>%var%</c> (<see cref="HasVariable"/>) keeps the mode, so a plain string
     /// never reports as a variable reference. Resolution stays lazy — nothing renders
     /// until the door (<see cref="Value"/>). The trust is the mode, not the content:
     /// a structural text (a dict key, a type name) or a runtime-ingest value is born
@@ -131,7 +131,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         // stamps per-slot inside containers (Documentation/v0.2/todos.md 2026-07-01) —
         // flagging literal slots changes their canonicalization/signing. Top-level params
         // are flagged by the builder (a holey value passes this gate anyway).
-        if (template != null && HasHoles(_value)) Template = template;
+        if (template != null && HasVariable(_value)) Template = template;
     }
 
     /// <summary>
@@ -195,10 +195,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     private static readonly System.Text.RegularExpressions.Regex RefRx =
         new("%[^%]+%", System.Text.RegularExpressions.RegexOptions.Compiled);
 
-    /// <summary>THE detector: true when <paramref name="s"/> contains a <c>%ref%</c> hole
-    /// (a <c>%variable%</c> reference) — the authored-template seam (deterministic code, never
-    /// the LLM). One home; every other %ref% check routes here.</summary>
-    internal static bool HasHoles(string s) => RefRx.IsMatch(s);
+    /// <summary>THE detector: true when <paramref name="s"/> contains a <c>%var%</c>
+    /// reference — the authored-template seam (deterministic code, never the LLM). One
+    /// home; every %var% check routes here.</summary>
+    internal static bool HasVariable(string s) => RefRx.IsMatch(s);
 
     /// <summary>A re-kinded copy — same content, the declared kind stamped
     /// (values immutable, never restamped in place).</summary>
