@@ -201,9 +201,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         => Template != null || !HasHoles(_value) ? this : new @this(_value) { Kind = Kind, Template = "plang" };
 
     /// <summary>A re-kinded copy — same content, the declared kind stamped
-    /// (the entry-judgement fold's text arm; values immutable, never restamped
-    /// in place).</summary>
-    internal @this Kinded(string? kind) => new(_value) { Kind = kind, Template = Template };
+    /// (values immutable, never restamped in place).</summary>
+    public override global::app.type.item.@this Kinded(string? kind) => new @this(_value) { Kind = kind, Template = Template };
+
+    /// <summary>text's raw string face — its characters.</summary>
+    public override string? RawText => _value;
 
     public bool Contains(string other) =>
         _value.Contains(other ?? string.Empty, System.StringComparison.OrdinalIgnoreCase);

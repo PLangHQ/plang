@@ -274,12 +274,8 @@ public sealed class @this : item.@this
         // A built leaf (text/number/… or a source carrying its raw):
         if (value is item.@this leaf)
         {
-            var backing = leaf switch
-            {
-                text.@this t => t.ToString(),
-                item.source s => s.Raw as string,
-                _ => null,
-            };
+            // The leaf answers its own raw string face (text's chars, a source's raw); null if it has none.
+            var backing = leaf.RawText;
             // A raw-name declared type (Variable) NAMES a thing — `%s%` is the variable s, a
             // write-target, not a value with a hole to render. Born as the resolved name.
             if (typeof(app.variable.IRawNameResolvable).IsAssignableFrom(context.App.Type[Name]?.ClrType) && backing != null)
@@ -287,17 +283,11 @@ public sealed class @this : item.@this
             // A live %ref% template defers its render — never coerce a value with holes.
             if (backing != null && text.@this.HasHoles(backing)) return leaf;
 
-            // Already this type → hold; refine a kindless leaf to the declared kind.
+            // Already this type → hold; refine a kindless leaf to the declared kind
+            // (the leaf owns "how do I take a kind").
             var minted = leaf.Mint();
             if (string.Equals(Name, minted.Name, System.StringComparison.OrdinalIgnoreCase))
-                return Kind != null && minted.Kind == null
-                    ? leaf switch
-                    {
-                        text.@this t => t.Kinded(Kind),
-                        binary.@this b => new binary.@this(b.Value) { Kind = Kind },
-                        _ => leaf,
-                    }
-                    : leaf;
+                return Kind != null && minted.Kind == null ? leaf.Kinded(Kind) : leaf;
             // The value already carries this type as a facet (an image satisfies a path slot) → hold.
             if (leaf.Facet(Name) != null) return leaf;
             // A different type → re-type via the per-type hook. Convert is the throw boundary.

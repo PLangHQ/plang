@@ -22,6 +22,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     public @this(byte[] value) { Value = value ?? System.Array.Empty<byte>(); }
 
+    /// <summary>A re-kinded copy — same bytes, the declared kind stamped.</summary>
+    public override global::app.type.item.@this Kinded(string? kind) => new @this(Value) { Kind = kind };
+
     // INBOUND only — the entry lift (`.Ok(bytes)` constructs). The outbound
     // implicit (binary → byte[]) is gone: every site was a silent CLR exit;
     // a reader names the bytes face (`.Value`) at a real .NET edge. byte[] is

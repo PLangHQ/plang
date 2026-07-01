@@ -46,6 +46,9 @@ public sealed class source : @this, module.IContext
     /// <summary>The undecoded source form — <c>string</c> or <c>byte[]</c>.</summary>
     public object Raw => _value;
 
+    /// <summary>The raw string face, when the source carries text (not bytes).</summary>
+    public override string? RawText => _value as string;
+
     /// <summary>The declared judgement, verbatim — the source IS the declared
     /// type, unparsed.</summary>
     protected internal override global::app.type.@this Mint()

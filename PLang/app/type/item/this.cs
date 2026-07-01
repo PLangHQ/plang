@@ -381,6 +381,21 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual @this Narrow() => this;
 
     /// <summary>
+    /// Applies a declared <paramref name="kind"/> to a kindless leaf, answering the
+    /// type's own way (text re-mints with the kind, binary rebuilds). The default is a
+    /// no-op — a value whose kind doesn't apply (or that already carries one) returns
+    /// self. Owns the "how do I take a kind" knowledge on the leaf, not in a caller switch.
+    /// </summary>
+    public virtual @this Kinded(string? kind) => this;
+
+    /// <summary>
+    /// The raw string form this leaf carries, if any (text's characters, a source's
+    /// undecoded raw) — used to spot a Variable name or an unrendered %ref% template.
+    /// Default null: the leaf has no raw string face.
+    /// </summary>
+    public virtual string? RawText => null;
+
+    /// <summary>
     /// True for a scalar leaf — a value with no sub-structure that rides the wire as
     /// a single bare token (text/number/bool/date-family/duration/binary/null/choice).
     /// Normalize passes a leaf straight to the writer (which renders it bare); a
