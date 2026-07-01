@@ -94,11 +94,6 @@ public partial class discover : IContext
             ?? Goal.Parse((await goalRead.Value())?.ToString() ?? "", goalFile)
             ?? new Goal { Path = goalFile };
 
-        // Born-with-context: a goal read for discovery carries the discover action's
-        // context onto its step collection so the Steps enumerator can read
-        // per-execution Disabled state. Same seam as GoalCall's .pr-load — never null.
-        sourceGoal.Steps.Context = Context;
-
         // A goal whose source has a `tag this test 'skip'` step is PARKED: it registers
         // Skipped straight from the source text — before any build/freshness/.pr check — so
         // a deferred but REAL test reads honestly as Skipped, never as a no-op pass and never
