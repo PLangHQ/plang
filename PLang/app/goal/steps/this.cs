@@ -51,7 +51,11 @@ public sealed class @this : IList<Step>, IContext
             var step = _items[i];
             step.Goal ??= Goal;
 
-            if (step.Disabled(Context))
+            // Disabled state is per-execution, keyed by the running context. Without a
+            // context this is a structural iteration (STJ serialization, Hash, discovery)
+            // — no execution has disabled anything, so yield every step. The context is
+            // borne at the .pr-load seam (GoalCall) for execution-time iteration.
+            if (Context != null && step.Disabled(Context))
             {
                 // Clear the disabled flag after skipping so re-execution works
                 step.Enable(Context);

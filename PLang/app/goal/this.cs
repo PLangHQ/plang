@@ -66,7 +66,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override string ToString()
     {
         var sb = new StringBuilder(Name);
-        foreach (var step in Steps)
+        // Structural rendering — every step, not the disabled-skip enumerator.
+        foreach (var step in _steps.Value)
         {
             sb.AppendLine();
             sb.Append(new string(' ', step.Indent * 4));
@@ -134,7 +135,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
             var sb = new StringBuilder();
             sb.Append(Name);
-            foreach (var step in Steps)
+            // Structural identity — iterate every step (the raw list), never the
+            // disabled-skip enumerator. A hash that skipped a per-execution-disabled
+            // step would drift with execution state and needs no context.
+            foreach (var step in _steps.Value)
                 sb.Append(step.Text);
 
             _hash = Convert.ToHexString(
@@ -210,7 +214,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
         lines.Add(Name);
 
-        foreach (var step in Steps)
+        // Structural rendering — every step, not the disabled-skip enumerator.
+        foreach (var step in _steps.Value)
         {
             if (!string.IsNullOrEmpty(step.Comment))
                 lines.Add($"/ {step.Comment}");
