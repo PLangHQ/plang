@@ -337,7 +337,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task GetChild_NullValue_ReturnsNotInitialized()
     {
-        var ov = new Data("test");
+        var ov = new Data("test", context: global::PLang.Tests.TestApp.SharedContext);
 
         var child = await ov.GetChild("anything");
 

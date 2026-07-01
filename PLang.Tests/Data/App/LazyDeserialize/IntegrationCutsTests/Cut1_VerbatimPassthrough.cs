@@ -23,7 +23,7 @@ public class Cut1_VerbatimPassthrough
     // value slot — byte-identical, no re-encode — and never materializes.
     [Test] public async Task Cut1_UntouchedConfigJson_SerializesByteIdentical()
     {
-        var d = data.FromRaw(ConfigJson, type.Create("object", "json"));
+        var d = data.FromRaw(ConfigJson, type.Create("object", "json"), global::PLang.Tests.TestApp.SharedContext);
         d.Name = "cfg";
         var wire = (await new plang(global::PLang.Tests.TestApp.SharedContext).Serialize(d).Value())!.Clr<string>()!;
         await Assert.That(wire).Contains("\"value\":" + ConfigJson); // raw verbatim, not re-encoded
@@ -34,7 +34,7 @@ public class Cut1_VerbatimPassthrough
     // identical, with zero materialization.
     [Test] public async Task Cut1_UntouchedWirePayload_SerializesByteIdentical()
     {
-        var d = data.FromRaw(ConfigJson, type.Create("object", "json"));
+        var d = data.FromRaw(ConfigJson, type.Create("object", "json"), global::PLang.Tests.TestApp.SharedContext);
         d.Name = "cfg";
         var wire1 = (await new plang(global::PLang.Tests.TestApp.SharedContext).Serialize(d).Value())!.Clr<string>()!;
         var back = new plang(global::PLang.Tests.TestApp.SharedContext).Deserialize(wire1); // deferred (raw-backed)
@@ -62,7 +62,7 @@ public class Cut1_VerbatimPassthrough
     // is MaterializeCount, which counts reader dispatches per Data).
     [Test] public async Task Cut1_ReaderProbeCount_StaysZero_OnUntouchedPath()
     {
-        var d = data.FromRaw(ConfigJson, type.Create("object", "json"));
+        var d = data.FromRaw(ConfigJson, type.Create("object", "json"), global::PLang.Tests.TestApp.SharedContext);
         d.Name = "cfg";
         _ = (await new plang(global::PLang.Tests.TestApp.SharedContext).Serialize(d).Value())!.Clr<string>()!;
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);

@@ -17,7 +17,7 @@ public class ScalarAccessTests
     // valid UTF-8 — its face stays bytes (decode to text is the explicit `as text`).
     [Test] public async Task Scalar_BytesValue_StaysBytes_NotGuessedAsText()
     {
-        var d = data.FromRaw(Encoding.UTF8.GetBytes("héllo"), type.Create("bytes")); // 6 valid-UTF-8 bytes
+        var d = data.FromRaw(Encoding.UTF8.GetBytes("héllo"), type.Create("bytes"), global::PLang.Tests.TestApp.SharedContext); // 6 valid-UTF-8 bytes
         await Assert.That(d.Peek()?.ToString()).IsEqualTo("(6 bytes)");
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
@@ -26,7 +26,7 @@ public class ScalarAccessTests
     [Test] public async Task Scalar_BytesValue_StaysBytes_WhenInvalidUtf8()
     {
         byte[] invalid = { 0xFF, 0xFE, 0x00, 0x80 };
-        var d = data.FromRaw(invalid, type.Create("bytes"));
+        var d = data.FromRaw(invalid, type.Create("bytes"), global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(d.Peek()?.ToString()).IsEqualTo("(4 bytes)");
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
@@ -34,7 +34,7 @@ public class ScalarAccessTests
     [Test] public async Task Scalar_TextValue_ReturnsString_NoStructuredParse()
     {
         const string json = "{\"port\":8080}";
-        var d = data.FromRaw(json, type.Create("object", "json"));
+        var d = data.FromRaw(json, type.Create("object", "json"), global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(d.Peek()?.ToString()).IsEqualTo(json); // the raw string, not a dict
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);       // never parsed
     }
