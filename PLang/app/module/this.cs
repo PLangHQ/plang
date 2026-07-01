@@ -556,7 +556,7 @@ public sealed class @this : IAsyncDisposable
                     if (excludeParams.Contains(prop.Name)) continue;
                     var value = prop.GetValue(instance);
                     if (value == null) continue;
-                    defaults.Add(new data.@this(prop.Name.ToLowerInvariant(), value));
+                    defaults.Add(new data.@this(prop.Name.ToLowerInvariant(), value, context: App.System.Context));
                 }
                 return defaults;
             }
@@ -570,7 +570,7 @@ public sealed class @this : IAsyncDisposable
             var attrs = prop.GetCustomAttributes(typeof(DefaultAttribute), false);
             if (attrs.Length == 0) continue;
             attrDefaults.Add(new data.@this(prop.Name.ToLowerInvariant(),
-                ((DefaultAttribute)attrs[0]).Value));
+                ((DefaultAttribute)attrs[0]).Value, context: App.System.Context));
         }
         return attrDefaults.Count > 0 ? attrDefaults : null;
     }
