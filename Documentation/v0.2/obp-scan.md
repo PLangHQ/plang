@@ -74,4 +74,4 @@ forks → unplanned API surface → names → "same thing twice?" → "non-leaf 
 
 ---
 
-**Last scanned:** `c357a3921` (fix-plang-build merge + template flag + data-flows + handler-dispatch refactor — 2026-07-01). Update after each scan.
+**Last scanned:** `fa5a9b3ef` (born-context migration + Modules test authoring + Navigate/Data<T>.From/read/dict/channel/OpenAi fixes + structural steps enumerator — 2026-07-01; alarms clean, one borderline: `sourceGoal.Steps.Context =` construct-then-stamp in discover.cs). Update after each scan.
