@@ -126,10 +126,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public @this(string value, string? template)
     {
         _value = value ?? string.Empty;
-        // Container inner slots (list/dict entries) have no per-slot .pr type flag — the
-        // authored read mode + a %var% in the content is what marks them a template. Until
-        // the builder stamps inside containers, this gate stays for the slot path. Top-level
-        // params are flagged by the builder (a holey value passes this gate anyway).
+        // Container inner slots (list/dict entries) have no per-slot .pr flag; the authored
+        // read mode + a %var% in the content marks them. This gate stays until the builder
+        // stamps per-slot inside containers (Documentation/v0.2/todos.md 2026-07-01) —
+        // flagging literal slots changes their canonicalization/signing. Top-level params
+        // are flagged by the builder (a holey value passes this gate anyway).
         if (template != null && HasHoles(_value)) Template = template;
     }
 

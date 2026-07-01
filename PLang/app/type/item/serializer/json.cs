@@ -64,11 +64,11 @@ public partial class json
             _ => ParseRaw(reader.RawValue()),
         };
 
-    // A string slot stays a raw scalar (store raw, type on read) UNLESS the read is
-    // authored and the string carries a %ref% hole — then it rides as a stamped
-    // text item (the "elevated slot"), so the template survives the container's
-    // fresh-per-read model (a raw string would born unstamped each read). Trust is
-    // the reader's mode, never the content: a runtime-ingest slot is always raw.
+    // A %ref% string slot in an authored container rides as a stamped text item (so the
+    // template survives the container's fresh-per-read); a literal slot stays a raw scalar
+    // (flagging it would change its canonicalization/signing). A runtime-ingest slot is
+    // never a template (injection-safe). The per-slot HasHoles here goes once the builder
+    // stamps inside containers — Documentation/v0.2/todos.md 2026-07-01.
     private static object? StringSlot(string s, global::app.type.reader.ReadContext ctx)
         => ctx.Template != null && global::app.type.text.@this.HasHoles(s)
             ? new text.@this(s, ctx.Template)

@@ -1540,3 +1540,23 @@ execution-control-flow change — its own effort, with execution-path tests.
 Because the enumerator legitimately needs context, the immediate fix for the failing tests is
 born-with-context (goals/steps created WITH context — tests via `Make`, prod `Goal.Parse` / the
 goal reader wiring `Steps.Context`), NOT removing the mechanism.
+
+## 2026-07-01 — Per-slot template stamping inside containers (the "more correct" way)
+
+Detection of `%var%` moved to build for TOP-LEVEL params (the builder stamps
+`type.template="plang"`; runtime trusts it). Container inner slots (list/dict
+entries) took the pragmatic **ambient-mode** route: a slot in an AUTHORED read
+(`ctx.Template != null`) is flagged as a template; a runtime-ingest slot is not
+(injection-safe). A holeless authored slot is flagged but renders to itself
+(fast-exits at `!Contains('%')`).
+
+The MORE CORRECT (and Ingi's preferred) shape is **per-slot stamping at build**:
+`set %dict% = name:%name%, price:100` → only the `name` slot carries
+`type.template="plang"` in the .pr; `price` does not. That is precise (no literal
+slots flagged) and puts the decision explicitly in the .pr — but it requires the
+container value to stop being compact raw JSON and become a per-entry
+`{type, value}` Data-tree so each slot can carry its own type/flag. That's a real
+serialization + reader + size/round-trip change. Deferred.
+
+Both are injection-safe (runtime-ingested `%x%` never renders). This todo is the
+precision/explicitness upgrade, not a correctness fix.
