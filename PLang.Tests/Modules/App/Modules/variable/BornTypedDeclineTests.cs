@@ -16,7 +16,7 @@ public class BornTypedDeclineTests
     {
         var ctx = _app.User.Context;
         global::app.type.item.@this textValue = new global::app.type.text.@this("some value");
-        var asking = new Data("Name", "Name") { Context = ctx };
+        var asking = new Data("Name", "Name", context: ctx);
 
         var result = global::app.variable.@this.Create(textValue, asking);
 
@@ -31,7 +31,7 @@ public class BornTypedDeclineTests
     {
         var ctx = _app.User.Context;
         var v = global::app.variable.@this.Resolve("%x%", ctx);
-        var asking = new Data("Name", "x") { Context = ctx };
+        var asking = new Data("Name", "x", context: ctx);
 
         var result = global::app.variable.@this.Create(v, asking);
 
@@ -53,8 +53,8 @@ public class BornTypedDeclineTests
             ActionName = "set",
             Parameters = new List<Data>
             {
-                new Data("name", "%path%", global::app.type.@this.FromName("string")),
-                new Data("value", "."),
+                new Data("name", "%path%", global::app.type.@this.FromName("string"), context: ctx),
+                new Data("value", ".", context: ctx),
             }
         };
 
@@ -76,8 +76,8 @@ public class BornTypedDeclineTests
             ActionName = "set",
             Parameters = new List<Data>
             {
-                new Data("name", "path", new global::app.type.@this("variable")),
-                new Data("value", "."),
+                new Data("name", "path", new global::app.type.@this("variable"), context: ctx),
+                new Data("value", ".", context: ctx),
             }
         };
 

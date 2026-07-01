@@ -42,7 +42,7 @@ public class ValidateActionsTests
     {
         var actions = new StepActions
         {
-            new Action { Module = "file", ActionName = "read", Parameters = new List<Data> { new("Path", "test.txt") } }
+            new Action { Module = "file", ActionName = "read", Parameters = new List<Data> { new("Path", "test.txt", context: _app.User.Context) } }
         };
 
         var action = new validate { Context = _app.User.Context, Actions = actions };
@@ -83,7 +83,7 @@ public class ValidateActionsTests
         });
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "dosomething.pr"), prJson);
 
-        var goalCallData = new Data("GoalName", new global::app.goal.GoalCall { Name = "DoSomething" });
+        var goalCallData = new Data("GoalName", new global::app.goal.GoalCall { Name = "DoSomething" }, context: _app.User.Context);
 
         var actions = new StepActions
         {
@@ -110,7 +110,7 @@ public class ValidateActionsTests
     [Test]
     public async Task ValidateActions_DynamicNames_Skipped()
     {
-        var goalCallData = new Data("GoalName", new global::app.goal.GoalCall { Name = "%dynamicGoal%" });
+        var goalCallData = new Data("GoalName", new global::app.goal.GoalCall { Name = "%dynamicGoal%" }, context: _app.User.Context);
 
         var actions = new StepActions
         {
@@ -138,7 +138,7 @@ public class ValidateActionsTests
             {
                 Module = "file",
                 ActionName = "list",
-                Parameters = new List<Data> { new("Path", "docs/") }
+                Parameters = new List<Data> { new("Path", "docs/", context: _app.User.Context) }
             }
         };
 
@@ -168,9 +168,9 @@ public class ValidateActionsTests
                 ActionName = "if",
                 Parameters = new List<Data>
                 {
-                    new("Left", "%flag%"),
-                    new("Operator", "==", new global::app.type.@this("string")),
-                    new("Right", "false", new global::app.type.@this("bool"))
+                    new("Left", "%flag%", context: _app.User.Context),
+                    new("Operator", "==", new global::app.type.@this("string"), context: _app.User.Context),
+                    new("Right", "false", new global::app.type.@this("bool"), context: _app.User.Context)
                 }
             }
         };
@@ -199,9 +199,9 @@ public class ValidateActionsTests
                 ActionName = "if",
                 Parameters = new List<Data>
                 {
-                    new("Left", "%count%"),
-                    new("Operator", ">", new global::app.type.@this("string")),
-                    new("Right", "5", new global::app.type.@this("number", "int"))
+                    new("Left", "%count%", context: _app.User.Context),
+                    new("Operator", ">", new global::app.type.@this("string"), context: _app.User.Context),
+                    new("Right", "5", new global::app.type.@this("number", "int"), context: _app.User.Context)
                 }
             }
         };
@@ -228,9 +228,9 @@ public class ValidateActionsTests
                 ActionName = "if",
                 Parameters = new List<Data>
                 {
-                    new("Left", "%flag%", new global::app.type.@this("bool")),
-                    new("Operator", "=="),
-                    new("Right", true, new global::app.type.@this("bool"))
+                    new("Left", "%flag%", new global::app.type.@this("bool"), context: _app.User.Context),
+                    new("Operator", "==", context: _app.User.Context),
+                    new("Right", true, new global::app.type.@this("bool"), context: _app.User.Context)
                 }
             }
         };

@@ -140,7 +140,7 @@ public class SetTypeInferenceTests
         var src = new List<object?> { "a", "b", "c" };
         var lst = new global::app.type.list.@this(src) { Context = context };
 
-        lst.SetAt(2, new Data("", 9L));
+        lst.SetAt(2, new Data("", 9L, context: context));
 
         await Assert.That(ReferenceEquals(lst.Clr<List<object?>>(), src)).IsFalse();
         await Assert.That((await lst.At(2)!.Value())).IsTypeOf<global::app.type.number.@this>();
@@ -217,7 +217,7 @@ public class SetTypeInferenceTests
     {
         var context = _app.User.Context;
         var x = new global::app.type.list.@this { Context = context };
-        x.Add(new Data("", 1L)); x.Add(new Data("", 2L));
+        x.Add(new Data("", 1L, context: context)); x.Add(new Data("", 2L, context: context));
         context.Variable.Set("x", x);
 
         var alias = TestAction.Create("variable", "set", ("name", "%y%"), ("value", "%x%"));

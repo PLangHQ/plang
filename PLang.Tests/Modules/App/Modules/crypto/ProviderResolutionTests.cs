@@ -41,7 +41,8 @@ public class ProviderResolutionTests
         _app.Code.Register<ICrypto>(mock);
         _app.Code.SetDefault<ICrypto>("mock");
 
-        var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = (global::app.type.text.@this)"keccak256" };
+        var action = new Hash { Context = Ctx, Data = Ctx.Ok("hello"), Algorithm = (global::app.type.text.@this)"keccak256" };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -54,7 +55,8 @@ public class ProviderResolutionTests
     public async Task Hash_NoProviderConfigured_FallsToBuiltInDefault()
     {
         // Fresh engine, no crypto settings — should use global::app.module.crypto.code.Default
-        var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = (global::app.type.text.@this)"keccak256" };
+        var action = new Hash { Context = Ctx, Data = Ctx.Ok("hello"), Algorithm = (global::app.type.text.@this)"keccak256" };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -72,7 +74,8 @@ public class ProviderResolutionTests
         _app.Code.SetDefault<ICrypto>("always-true");
 
         // Even with garbage hash, mock returns true
-        var action = new Verify { Context = Ctx, Data = Data.Ok("hello"), Hash = Data.Ok(Convert.ToBase64String(new byte[32])), Algorithm = (global::app.type.text.@this)"keccak256" };
+        var action = new Verify { Context = Ctx, Data = Ctx.Ok("hello"), Hash = Ctx.Ok(Convert.ToBase64String(new byte[32])), Algorithm = (global::app.type.text.@this)"keccak256" };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();

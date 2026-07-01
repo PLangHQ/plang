@@ -71,7 +71,7 @@ public class ForeachErrorPropagationTests
             Module = "condition", ActionName = "if",
             Parameters = new List<Data>
             {
-                new Data("Left", true), new Data("Operator", "=="), new Data("Right", true)
+                new Data("Left", true, context: context), new Data("Operator", "==", context: context), new Data("Right", true, context: context)
             }
         };
         var innerGoalCall = new Action
@@ -79,7 +79,7 @@ public class ForeachErrorPropagationTests
             Module = "goal", ActionName = "call",
             Parameters = new List<Data>
             {
-                new Data("goalname", new Dictionary<string, object?> { ["name"] = "MissingGoal" })
+                new Data("goalname", new Dictionary<string, object?> { ["name"] = "MissingGoal" }, context: context)
             }
         };
         var innerStep = new Step

@@ -213,7 +213,7 @@ public class EventHandlerTests
         var goalToCall = new GoalCall
         {
             Name = "AfterCallback",
-            Parameters = new List<Data> { new Data("callbackRan", true) }
+            Parameters = new List<Data> { new Data("callbackRan", true, context: context) }
         };
         var onAction = new On
         {

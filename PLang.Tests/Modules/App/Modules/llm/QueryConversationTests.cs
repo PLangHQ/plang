@@ -62,6 +62,7 @@ public class QueryConversationTests
             }.ToListData<LlmMessage>(),
             Cache = (global::app.type.@bool.@this)false
         };
+        await action1.Attach(null, Ctx);
         await action1.Run();
 
         // Second query with continuation
@@ -75,6 +76,7 @@ public class QueryConversationTests
             ContinuePreviousConversation = (global::app.type.@bool.@this)true,
             Cache = (global::app.type.@bool.@this)false
         };
+        await action2.Attach(null, Ctx);
         await action2.Run();
 
         // Second request should contain previous messages
@@ -95,6 +97,7 @@ public class QueryConversationTests
         // First query — stores conversation
         var action1 = LlmTestHelper.MakeQuery(Ctx, userText: "first question");
         action1 = new query { Context = Ctx, Messages = action1.Messages, Cache = (global::app.type.@bool.@this)false };
+        await action1.Attach(null, Ctx);
         await action1.Run();
 
         // Second query with ContinuePreviousConversation = (global::app.type.@bool.@this)false — should clear
@@ -108,6 +111,7 @@ public class QueryConversationTests
             ContinuePreviousConversation = (global::app.type.@bool.@this)false,
             Cache = (global::app.type.@bool.@this)false
         };
+        await action2.Attach(null, Ctx);
         await action2.Run();
 
         // Second request should NOT contain first question
@@ -130,9 +134,10 @@ public class QueryConversationTests
                 new LlmMessage { Role = "system", Content = "analyze" },
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
-            Schema = global::app.data.@this.Ok("{ok: bool}"),
+            Schema = Ctx.Ok("{ok: bool}"),
             Cache = (global::app.type.@bool.@this)false
         };
+        await action1.Attach(null, Ctx);
         await action1.Run();
 
         // Second query continuing conversation with same schema
@@ -143,10 +148,11 @@ public class QueryConversationTests
             {
                 new LlmMessage { Role = "user", Content = "again" }
             }.ToListData<LlmMessage>(),
-            Schema = global::app.data.@this.Ok("{ok: bool}"),
+            Schema = Ctx.Ok("{ok: bool}"),
             ContinuePreviousConversation = (global::app.type.@bool.@this)true,
             Cache = (global::app.type.@bool.@this)false
         };
+        await action2.Attach(null, Ctx);
         await action2.Run();
 
         // The system message should NOT have doubled format instructions
@@ -171,9 +177,10 @@ public class QueryConversationTests
                 new LlmMessage { Role = "system", Content = "analyze" },
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
-            Schema = global::app.data.@this.Ok("{result: string}"),
+            Schema = Ctx.Ok("{result: string}"),
             Cache = (global::app.type.@bool.@this)false
         };
+        await action1.Attach(null, Ctx);
         await action1.Run();
 
         // Second query: no schema, continue conversation → should reuse
@@ -187,6 +194,7 @@ public class QueryConversationTests
             ContinuePreviousConversation = (global::app.type.@bool.@this)true,
             Cache = (global::app.type.@bool.@this)false
         };
+        await action2.Attach(null, Ctx);
         await action2.Run();
 
         var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
@@ -207,9 +215,10 @@ public class QueryConversationTests
             {
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
-            Schema = global::app.data.@this.Ok("{oldSchema: string}"),
+            Schema = Ctx.Ok("{oldSchema: string}"),
             Cache = (global::app.type.@bool.@this)false
         };
+        await action1.Attach(null, Ctx);
         await action1.Run();
 
         // Second query with schema B
@@ -220,10 +229,11 @@ public class QueryConversationTests
             {
                 new LlmMessage { Role = "user", Content = "test2" }
             }.ToListData<LlmMessage>(),
-            Schema = global::app.data.@this.Ok("{newSchema: int}"),
+            Schema = Ctx.Ok("{newSchema: int}"),
             ContinuePreviousConversation = (global::app.type.@bool.@this)true,
             Cache = (global::app.type.@bool.@this)false
         };
+        await action2.Attach(null, Ctx);
         await action2.Run();
 
         var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();

@@ -57,7 +57,7 @@ public class GoalCallTests
             GoalName = new GoalCall
             {
                 Name = "TestGoal",
-                Parameters = new List<Data> { new Data("myParam", "myValue") }
+                Parameters = new List<Data> { new Data("myParam", "myValue", context: _app.User.Context) }
             }
         };
         var result = await action.Run();

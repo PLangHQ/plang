@@ -37,7 +37,7 @@ public class TagActionTests
         var action = new Tag
         {
             Context = app.User.Context,
-            Label = new global::app.data.@this<global::app.type.text.@this>("Label", "manual-checkpoint")
+            Label = new global::app.data.@this<global::app.type.text.@this>("Label", "manual-checkpoint", context: app.User.Context)
         };
         await action.Run();
 
@@ -52,7 +52,7 @@ public class TagActionTests
         var action = new Tag
         {
             Context = app.User.Context,
-            Label = new global::app.data.@this<global::app.type.text.@this>("Label", "x")
+            Label = new global::app.data.@this<global::app.type.text.@this>("Label", "x", context: app.User.Context)
         };
         var result = await action.Run();
         await result.IsSuccess();
@@ -68,7 +68,7 @@ public class TagActionTests
         var action = new Tag
         {
             Context = app.User.Context,
-            Label = new global::app.data.@this<global::app.type.text.@this>("Label", "x")
+            Label = new global::app.data.@this<global::app.type.text.@this>("Label", "x", context: app.User.Context)
         };
         await action.Run();
         await Assert.That(call.Tags.Count).IsEqualTo(1);

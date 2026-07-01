@@ -92,6 +92,7 @@ public class RequestActionTests
         });
 
         var action = new request { Context = Ctx, Url = (global::app.type.text.@this)"https://api.example.com/users/1", Unsigned = (global::app.type.@bool.@this)true };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -108,6 +109,7 @@ public class RequestActionTests
     public async Task Get_NoProtocol_AutoPrefixesHttps()
     {
         var action = new request { Context = Ctx, Url = (global::app.type.text.@this)"api.example.com/users", Unsigned = (global::app.type.@bool.@this)true };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -132,9 +134,10 @@ public class RequestActionTests
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/users",
             Method = (global::app.type.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.POST,
-            Body = new global::app.data.@this("", new Dictionary<string, object> { ["name"] = "Alice" }),
+            Body = new global::app.data.@this("", new Dictionary<string, object> { ["name"] = "Alice" }, context: Ctx),
             Unsigned = (global::app.type.@bool.@this)true
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -152,9 +155,10 @@ public class RequestActionTests
             Url = (global::app.type.text.@this)"https://api.example.com/login",
             Method = (global::app.type.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.POST,
             ContentType = (global::app.type.text.@this)"application/x-www-form-urlencoded",
-            Body = new global::app.data.@this("", new Dictionary<string, object> { ["user"] = "alice", ["pass"] = "secret" }),
+            Body = new global::app.data.@this("", new Dictionary<string, object> { ["user"] = "alice", ["pass"] = "secret" }, context: Ctx),
             Unsigned = (global::app.type.@bool.@this)true
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -171,6 +175,7 @@ public class RequestActionTests
             Headers = new Dictionary<string, object> { ["X-Custom"] = "test-value" }.ToDictData(),
             Unsigned = (global::app.type.@bool.@this)true
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -187,6 +192,7 @@ public class RequestActionTests
         });
 
         var action = new request { Context = Ctx, Url = (global::app.type.text.@this)"https://api.example.com/xml", Unsigned = (global::app.type.@bool.@this)true };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -203,6 +209,7 @@ public class RequestActionTests
         });
 
         var action = new request { Context = Ctx, Url = (global::app.type.text.@this)"https://api.example.com/text", Unsigned = (global::app.type.@bool.@this)true };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -221,6 +228,7 @@ public class RequestActionTests
             Body = null,
             Unsigned = (global::app.type.@bool.@this)true
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -240,6 +248,7 @@ public class RequestActionTests
         });
 
         var action = new request { Context = Ctx, Url = (global::app.type.text.@this)"https://api.example.com/missing", Unsigned = (global::app.type.@bool.@this)true };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsFailure();
@@ -256,6 +265,7 @@ public class RequestActionTests
         });
 
         var action = new request { Context = Ctx, Url = (global::app.type.text.@this)"https://api.example.com/error", Unsigned = (global::app.type.@bool.@this)true };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsFailure();
@@ -271,6 +281,7 @@ public class RequestActionTests
     public async Task Get_RelativeUrlNoBaseUrl_ReturnsError()
     {
         var action = new request { Context = Ctx, Url = (global::app.type.text.@this)"/users", Unsigned = (global::app.type.@bool.@this)true };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsFailure();
@@ -283,6 +294,7 @@ public class RequestActionTests
         _app.Config.Set("http.BaseUrl", "https://api.example.com", Ctx, isDefault: true);
 
         var action = new request { Context = Ctx, Url = (global::app.type.text.@this)"/users/1", Unsigned = (global::app.type.@bool.@this)true };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -307,6 +319,7 @@ public class RequestActionTests
         };
 
         var action = new request { Context = Ctx, Url = (global::app.type.text.@this)"https://api.example.com/test", Unsigned = (global::app.type.@bool.@this)true };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -336,6 +349,7 @@ public class RequestActionTests
             TimeoutInSec = (global::app.type.number.@this)1,
             Unsigned = (global::app.type.@bool.@this)true
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsFailure();
@@ -350,6 +364,7 @@ public class RequestActionTests
     public async Task Get_UnsignedTrue_NoSignatureHeader()
     {
         var action = new request { Context = Ctx, Url = (global::app.type.text.@this)"https://api.example.com/public", Unsigned = (global::app.type.@bool.@this)true };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -365,6 +380,7 @@ public class RequestActionTests
         });
 
         var action = new request { Context = Ctx, Url = (global::app.type.text.@this)"https://api.example.com/plang", Unsigned = (global::app.type.@bool.@this)true };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsFailure();
@@ -393,6 +409,7 @@ public class RequestActionTests
 
         // This will fail because ProcessChunk goal doesn't exist, but it proves
         // the provider received the streaming request and tried to process it
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         // Stream callback goal doesn't exist — but the request was made with ResponseHeadersRead
@@ -412,6 +429,7 @@ public class RequestActionTests
         });
 
         var action = new request { Context = Ctx, Url = (global::app.type.text.@this)"https://api.example.com/bad-json", Unsigned = (global::app.type.@bool.@this)true };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -433,6 +451,7 @@ public class RequestActionTests
         });
 
         var action = new request { Context = Ctx, Url = (global::app.type.text.@this)"https://api.example.com/image", Unsigned = (global::app.type.@bool.@this)true };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -453,6 +472,7 @@ public class RequestActionTests
         _handler.Handler = _ => throw new HttpRequestException("Service Unavailable", null, HttpStatusCode.ServiceUnavailable);
 
         var action = new request { Context = Ctx, Url = (global::app.type.text.@this)"https://api.example.com/down", Unsigned = (global::app.type.@bool.@this)true };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsFailure();
@@ -466,6 +486,7 @@ public class RequestActionTests
         _handler.Handler = _ => throw new IOException("Connection reset");
 
         var action = new request { Context = Ctx, Url = (global::app.type.text.@this)"https://api.example.com/reset", Unsigned = (global::app.type.@bool.@this)true };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsFailure();
@@ -479,6 +500,7 @@ public class RequestActionTests
         _handler.Handler = _ => throw new FormatException("Bad encoding");
 
         var action = new request { Context = Ctx, Url = (global::app.type.text.@this)"https://api.example.com/bad", Unsigned = (global::app.type.@bool.@this)true };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsFailure();
@@ -505,6 +527,7 @@ public class RequestActionTests
             OnStream = new global::app.goal.GoalCall { Name = "HandleLine" },
             Unsigned = (global::app.type.@bool.@this)true
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         // Stream processed successfully (callback goal not found writes to stderr, doesn't abort)
@@ -531,6 +554,7 @@ public class RequestActionTests
             OnStream = new global::app.goal.GoalCall { Name = "HandleSSE" },
             Unsigned = (global::app.type.@bool.@this)true
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -555,6 +579,7 @@ public class RequestActionTests
             OnStream = new global::app.goal.GoalCall { Name = "HandleSSE" },
             Unsigned = (global::app.type.@bool.@this)true
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -582,6 +607,7 @@ public class RequestActionTests
             StreamAs = (global::app.type.choice.@this<global::app.module.http.StreamFormat>)StreamFormat.Bytes,
             Unsigned = (global::app.type.@bool.@this)true
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -608,6 +634,7 @@ public class RequestActionTests
             OnStream = new global::app.goal.GoalCall { Name = "HandleLine" },
             Unsigned = (global::app.type.@bool.@this)true
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsFailure();
@@ -630,10 +657,11 @@ public class RequestActionTests
             OnStream = new global::app.goal.GoalCall
             {
                 Name = "HandleChunk",
-                Parameters = new List<Data> { new Data("myChunk") }
+                Parameters = new List<Data> { new Data("myChunk", context: Ctx) }
             },
             Unsigned = (global::app.type.@bool.@this)true
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -657,6 +685,7 @@ public class RequestActionTests
             OnStream = new global::app.goal.GoalCall { Name = "HandlePlang" },
             Unsigned = (global::app.type.@bool.@this)true
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsFailure();
@@ -676,6 +705,7 @@ public class RequestActionTests
             Headers = new Dictionary<string, object> { ["X-Custom"] = "step-value", ["X-Shared"] = "overridden" }.ToDictData(),
             Unsigned = (global::app.type.@bool.@this)true
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -695,10 +725,11 @@ public class RequestActionTests
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/content",
             Method = (global::app.type.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.POST,
-            Body = new global::app.data.@this("", "test body"),
+            Body = new global::app.data.@this("", "test body", context: Ctx),
             Headers = new Dictionary<string, object> { ["Content-Encoding"] = "gzip", ["X-Custom"] = "req-header" }.ToDictData(),
             Unsigned = (global::app.type.@bool.@this)true
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -725,6 +756,7 @@ public class RequestActionTests
         });
 
         var action = new request { Context = Ctx, Url = (global::app.type.text.@this)"https://api.example.com/big", Unsigned = (global::app.type.@bool.@this)true };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsFailure();
@@ -746,6 +778,7 @@ public class RequestActionTests
         });
 
         var action = new request { Context = Ctx, Url = (global::app.type.text.@this)"https://api.example.com/big-binary", Unsigned = (global::app.type.@bool.@this)true };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsFailure();
@@ -763,6 +796,7 @@ public class RequestActionTests
         });
 
         var action = new request { Context = Ctx, Url = (global::app.type.text.@this)"https://api.example.com/small", Unsigned = (global::app.type.@bool.@this)true };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -788,6 +822,7 @@ public class RequestActionTests
             OnStream = new global::app.goal.GoalCall { Name = "HandleSSE" },
             Unsigned = (global::app.type.@bool.@this)true
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         // Stream completes (overflow is non-fatal — emits error to stderr, clears buffer, continues)

@@ -27,7 +27,7 @@ public class ListTests
     {
         var (context, memory) = CreateContext();
 
-        var action = new Add { Context = context, ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "first")};
+        var action = new Add { Context = context, ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "first", context: context)};
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -43,7 +43,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b" });
 
-        var action = new Add { Context = context, ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "c")};
+        var action = new Add { Context = context, ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "c", context: context)};
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -58,7 +58,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "c" });
 
-        var action = new Add { Context = context, ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "b"), AtIndex = (global::app.type.number.@this)1 };
+        var action = new Add { Context = context, ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "b", context: context), AtIndex = (global::app.type.number.@this)1 };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -74,9 +74,9 @@ public class ListTests
         // copied) — in-place mutation of either side shows through both names.
         var (context, memory) = CreateContext();
         var aList = new global::app.type.list.@this { Context = context };
-        aList.Add(new global::app.data.@this("", 10L)); aList.Add(new global::app.data.@this("", 20L));
+        aList.Add(new global::app.data.@this("", 10L, context: context)); aList.Add(new global::app.data.@this("", 20L, context: context));
         var bList = new global::app.type.list.@this { Context = context };
-        bList.Add(new global::app.data.@this("", 50L)); bList.Add(new global::app.data.@this("", 60L));
+        bList.Add(new global::app.data.@this("", 50L, context: context)); bList.Add(new global::app.data.@this("", 60L, context: context));
         memory.Set("a", aList);
         memory.Set("b", bList);
 
@@ -88,12 +88,12 @@ public class ListTests
         await Assert.That(a!.Count).IsEqualTo(4);   // flat [10,20,50,60]
 
         // write-through: mutate the leaf in %a% that came from %b% → visible via %b%.
-        a.SetAt(2, new global::app.data.@this("", 99L));
+        a.SetAt(2, new global::app.data.@this("", 99L, context: context));
         await Assert.That((await a.At(2)!.Value())?.ToString()).IsEqualTo("99");
         await Assert.That((await b!.At(0)!.Value())?.ToString()).IsEqualTo("99");
 
         // read-view: mutate %b% → %a% flattens through the shared row and tracks it.
-        b.Add(new global::app.data.@this("", 70L));
+        b.Add(new global::app.data.@this("", 70L, context: context));
         await Assert.That(a.Count).IsEqualTo(5);
     }
 
@@ -105,7 +105,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
-        var action = new Remove { Context = context, ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "b")};
+        var action = new Remove { Context = context, ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "b", context: context)};
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -179,7 +179,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b" });
 
-        var action = new Contains { Context = context, ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "a")};
+        var action = new Contains { Context = context, ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "a", context: context)};
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -192,7 +192,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b" });
 
-        var action = new Contains { Context = context, ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "z")};
+        var action = new Contains { Context = context, ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "z", context: context)};
         var result = await action.Run();
 
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("false");
@@ -232,7 +232,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
-        var action = new IndexOf { Context = context, ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "b")};
+        var action = new IndexOf { Context = context, ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "b", context: context)};
         var result = await action.Run();
 
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("1");
@@ -352,7 +352,7 @@ public class ListTests
             ListName = new app.variable.@this("items"),
             Key = (global::app.type.text.@this)"level",
             Operator = (global::app.type.choice.@this<global::app.module.condition.Operator>)new global::app.module.condition.Operator("=="),
-            Value = new global::app.data.@this("", "high")
+            Value = new global::app.data.@this("", "high", context: context)
         };
         var result = await action.Run();
 
@@ -376,7 +376,7 @@ public class ListTests
             ListName = new app.variable.@this("items"),
             Key = (global::app.type.text.@this)"level",
             Operator = (global::app.type.choice.@this<global::app.module.condition.Operator>)new global::app.module.condition.Operator("=="),
-            Value = new global::app.data.@this("", "high")
+            Value = new global::app.data.@this("", "high", context: context)
         };
         var result = await action.Run();
 
@@ -396,7 +396,7 @@ public class ListTests
             ListName = new app.variable.@this("items"),
             Key = (global::app.type.text.@this)"level",
             Operator = (global::app.type.choice.@this<global::app.module.condition.Operator>)new global::app.module.condition.Operator("=="),
-            Value = new global::app.data.@this("", "high")
+            Value = new global::app.data.@this("", "high", context: context)
         };
         var result = await action.Run();
 
@@ -420,7 +420,7 @@ public class ListTests
             ListName = new app.variable.@this("items"),
             Key = (global::app.type.text.@this)"status",
             Operator = (global::app.type.choice.@this<global::app.module.condition.Operator>)new global::app.module.condition.Operator("!="),
-            Value = new global::app.data.@this("", "active")
+            Value = new global::app.data.@this("", "active", context: context)
         };
         var result = await action.Run();
 

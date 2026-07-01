@@ -61,7 +61,7 @@ public class CacheWrapTests
     public async Task Wrap_CacheHit_ReturnsCachedSkipsAction()
     {
         // Pre-populate the cache with a known Data value
-        var stashed = global::app.data.@this.Ok("cached-value");
+        var stashed = Ctx.Ok("cached-value");
         await Ctx.App!.Cache.SetAsync("hit-key", stashed,
             new CacheSettings { DurationMs = 60_000, Sliding = false });
 
@@ -174,7 +174,7 @@ public class CacheWrapTests
     {
         // Pre-cache a value, then execute — the handler should put the cached Data
         // into Variables under name !data so the next action can read it via %!data%.
-        var stashed = global::app.data.@this.Ok("restored");        await Ctx.App!.Cache.SetAsync("restore-key", stashed,
+        var stashed = Ctx.Ok("restored");        await Ctx.App!.Cache.SetAsync("restore-key", stashed,
             new CacheSettings { DurationMs = 60_000, Sliding = false });
 
         var action = new PrAction

@@ -30,17 +30,17 @@ public class FileHandlerTests : IDisposable
         System.IO.Path.Combine(_tempDir, relativePath);
 
     private global::app.data.@this<PLangPath> MakePath(string relativePath) =>
-        new("", new PLangFilePath(TempPath(relativePath)) { Context = _app.User.Context });
+        new("", new PLangFilePath(TempPath(relativePath)) { Context = _app.User.Context }, context: _app.User.Context);
 
     private global::app.data.@this<PLangPath> MakeAbsPath(string absolutePath) =>
-        new("", new PLangFilePath(absolutePath) { Context = _app.User.Context });
+        new("", new PLangFilePath(absolutePath) { Context = _app.User.Context }, context: _app.User.Context);
 
     // --- Save ---
 
     [Test]
     public async Task Save_ReturnsFileWithCorrectPaths()
     {
-        var action = new Save { Context = _app.User.Context, Path = MakePath("test.txt"), Value = Data.Ok("hello") };
+        var action = new Save { Context = _app.User.Context, Path = MakePath("test.txt"), Value = _app.User.Context.Ok("hello") };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -53,7 +53,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Save_FileExists_AfterSave()
     {
-        var action = new Save { Context = _app.User.Context, Path = MakePath("exists.txt"), Value = Data.Ok("data") };
+        var action = new Save { Context = _app.User.Context, Path = MakePath("exists.txt"), Value = _app.User.Context.Ok("data") };
         await action.Run();
 
         await Assert.That(System.IO.File.Exists(TempPath("exists.txt"))).IsTrue();
@@ -122,7 +122,7 @@ public class FileHandlerTests : IDisposable
         {
             Context = _app.User.Context,
             Path = MakePath("template.txt"),
-            ResolveVariables = new global::app.data.@this<global::app.type.@bool.@this>("ResolveVariables", true)
+            ResolveVariables = new global::app.data.@this<global::app.type.@bool.@this>("ResolveVariables", true, context: _app.User.Context)
         };
         var result = await action.Run();
 
@@ -142,7 +142,7 @@ public class FileHandlerTests : IDisposable
         {
             Context = _app.User.Context,
             Path = MakePath("literal.txt"),
-            ResolveVariables = new global::app.data.@this<global::app.type.@bool.@this>("ResolveVariables", false)
+            ResolveVariables = new global::app.data.@this<global::app.type.@bool.@this>("ResolveVariables", false, context: _app.User.Context)
         };
         var result = await action.Run();
 
@@ -162,7 +162,7 @@ public class FileHandlerTests : IDisposable
         {
             Context = _app.User.Context,
             Path = MakePath("untrusted.txt"),
-            ResolveVariables = new global::app.data.@this<global::app.type.@bool.@this>("ResolveVariables", true)
+            ResolveVariables = new global::app.data.@this<global::app.type.@bool.@this>("ResolveVariables", true, context: _app.User.Context)
         };
         var result = await action.Run();
 

@@ -35,15 +35,15 @@ public class ListAddIdentityTests
     {
         var (context, vars) = Ctx();
         var existing = new global::app.type.list.@this();
-        existing.Add(new Data("", "a"));
-        existing.Add(new Data("", "b"));
+        existing.Add(new Data("", "a", context: context));
+        existing.Add(new Data("", "b", context: context));
         vars.Set("products", existing);
 
         var action = new Add
 		{
             Context = context,
             ListName = new app.variable.@this("products"),
-            Value = new Data("", "c")
+            Value = new Data("", "c", context: context)
         };
         var result = await action.Run();
 
@@ -64,15 +64,15 @@ public class ListAddIdentityTests
     {
         var (context, vars) = Ctx();
         var live = new global::app.type.list.@this();
-        live.Add(new Data("", 1));
-        live.Add(new Data("", 2));
+        live.Add(new Data("", 1, context: context));
+        live.Add(new Data("", 2, context: context));
         vars.Set("products", live);
 
         var action = new Add
 		{
             Context = context,
             ListName = new app.variable.@this("products"),
-            Value = new Data("", 3)
+            Value = new Data("", 3, context: context)
         };
         var result = await action.Run();
 
@@ -122,19 +122,19 @@ public class ListAddIdentityTests
     {
         var (context, vars) = Ctx();
         var orphan = new global::app.type.list.@this();
-        orphan.Add(new Data("", "x"));
+        orphan.Add(new Data("", "x", context: context));
         vars.Set("products", orphan);
 
         // Replace under the same name — variable.set's Variables.Set replaces the binding.
         var fresh = new global::app.type.list.@this();
-        fresh.Add(new Data("", "y"));
+        fresh.Add(new Data("", "y", context: context));
         vars.Set("products", fresh);
 
         var action = new Add
 		{
             Context = context,
             ListName = new app.variable.@this("products"),
-            Value = new Data("", "z")
+            Value = new Data("", "z", context: context)
         };
         var result = await action.Run();
 

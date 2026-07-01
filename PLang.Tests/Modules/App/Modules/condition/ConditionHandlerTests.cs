@@ -31,7 +31,8 @@ public class ConditionHandlerTests : IDisposable
     [Test]
     public async Task IfTrue_NoGoals_ReturnsSuccessWithTrue()
     {
-        var action = new If { Context = _app.User.Context, Left = Data.Ok(true), Operator = (global::app.type.choice.@this<Operator>)new Operator("=="), Right = Data.Ok(true) };
+        var action = new If { Context = _app.User.Context, Left = _app.User.Context.Ok(true), Operator = (global::app.type.choice.@this<Operator>)new Operator("=="), Right = _app.User.Context.Ok(true) };
+        await action.Attach(null, _app.User.Context);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -41,7 +42,8 @@ public class ConditionHandlerTests : IDisposable
     [Test]
     public async Task IfFalse_NoGoals_ReturnsSuccessWithFalse()
     {
-        var action = new If { Context = _app.User.Context, Left = Data.Ok(false), Operator = (global::app.type.choice.@this<Operator>)new Operator("=="), Right = Data.Ok(true) };
+        var action = new If { Context = _app.User.Context, Left = _app.User.Context.Ok(false), Operator = (global::app.type.choice.@this<Operator>)new Operator("=="), Right = _app.User.Context.Ok(true) };
+        await action.Attach(null, _app.User.Context);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -64,13 +66,13 @@ public class ConditionHandlerTests : IDisposable
             Module = "condition", ActionName = "if",
             Parameters = new List<Data>
             {
-                new Data("Left", true), new Data("Operator", "=="), new Data("Right", true)
+                new Data("Left", true, context: _app.User.Context), new Data("Operator", "==", context: _app.User.Context), new Data("Right", true, context: _app.User.Context)
             }
         };
         var thenAction = new Action
         {
             Module = "output", ActionName = "write",
-            Parameters = new List<Data> { new Data("Data", "true-branch") }
+            Parameters = new List<Data> { new Data("Data", "true-branch", context: _app.User.Context) }
         };
 
         var step = new Step
@@ -103,26 +105,26 @@ public class ConditionHandlerTests : IDisposable
             Module = "condition", ActionName = "if",
             Parameters = new List<Data>
             {
-                new Data("Left", false), new Data("Operator", "=="), new Data("Right", true)
+                new Data("Left", false, context: _app.User.Context), new Data("Operator", "==", context: _app.User.Context), new Data("Right", true, context: _app.User.Context)
             }
         };
         var thenAction = new Action
         {
             Module = "output", ActionName = "write",
-            Parameters = new List<Data> { new Data("Data", "then-branch") }
+            Parameters = new List<Data> { new Data("Data", "then-branch", context: _app.User.Context) }
         };
         var elseCondAction = new Action
         {
             Module = "condition", ActionName = "if",
             Parameters = new List<Data>
             {
-                new Data("Left", true), new Data("Operator", "=="), new Data("Right", true)
+                new Data("Left", true, context: _app.User.Context), new Data("Operator", "==", context: _app.User.Context), new Data("Right", true, context: _app.User.Context)
             }
         };
         var elseAction = new Action
         {
             Module = "output", ActionName = "write",
-            Parameters = new List<Data> { new Data("Data", "else-branch") }
+            Parameters = new List<Data> { new Data("Data", "else-branch", context: _app.User.Context) }
         };
 
         var step = new Step

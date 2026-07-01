@@ -10,10 +10,10 @@ public class DefaultCryptoProviderTests
     private readonly global::app.module.crypto.code.Default _provider = new();
 
     private static Hash HashAction(object data, string algorithm = "keccak256")
-        => new() { Data = Data.Ok(data), Algorithm = (global::app.type.text.@this)algorithm };
+        => new() { Data = global::PLang.Tests.TestApp.SharedContext.Ok(data), Algorithm = (global::app.type.text.@this)algorithm };
 
     private static Verify VerifyAction(object data, string expectedHash, string algorithm = "keccak256")
-        => new() { Data = Data.Ok(data), Hash = Data.Ok(expectedHash), Algorithm = (global::app.type.text.@this)algorithm };
+        => new() { Data = global::PLang.Tests.TestApp.SharedContext.Ok(data), Hash = global::PLang.Tests.TestApp.SharedContext.Ok(expectedHash), Algorithm = (global::app.type.text.@this)algorithm };
 
     // --- Hash ---
 

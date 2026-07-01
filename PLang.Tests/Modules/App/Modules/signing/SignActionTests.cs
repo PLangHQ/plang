@@ -48,8 +48,8 @@ public class SignActionTests
         var action = new sign
         {
             Context = Ctx,
-            Data = new Data("", data),
-            Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(contracts, Ctx)),
+            Data = new Data("", data, context: Ctx),
+            Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(contracts, Ctx), context: Ctx),
             Expires = expires.HasValue ? (global::app.type.duration.@this)expires.Value : null,
             Headers = headers?.ToDictData()
         };
@@ -91,7 +91,9 @@ public class SignActionTests
     public async Task Sign_Identity_MatchesPublicKey()
     {
         // Create identity first to capture public key
-        var identityResult = await new Get { Context = Ctx, Name = null }.Run();
+        var getAction = new Get { Context = Ctx, Name = null };
+        await getAction.Attach(null, Ctx);
+        var identityResult = await getAction.Run();
         var publicKey = ((await identityResult.Value()) as Identity)!.PublicKey;
 
         var result = await SignData("test data");
@@ -208,7 +210,9 @@ public class SignActionTests
     public async Task Sign_CustomDefaultProvider_UsesIt()
     {
         // Ensure identity exists with the default ed25519 provider first
-        await new Get { Context = Ctx, Name = null }.Run();
+        var getAction = new Get { Context = Ctx, Name = null };
+        await getAction.Attach(null, Ctx);
+        await getAction.Run();
 
         var mock = new MockSigningProvider("mock");
         _app.Code.Register<ISigning>(mock);
@@ -256,7 +260,9 @@ public class SignActionTests
     public async Task Sign_ProviderThrows_ReturnsDataFromError()
     {
         // Ensure identity exists first
-        await new Get { Context = Ctx, Name = null }.Run();
+        var getAction = new Get { Context = Ctx, Name = null };
+        await getAction.Attach(null, Ctx);
+        await getAction.Run();
 
         var throwing = new ThrowingSigningProvider();
         _app.Code.Register<ISigning>(throwing);

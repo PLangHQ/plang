@@ -45,7 +45,7 @@ public class MergeStepTests
             Text = "do something",
             Actions = new StepActions(new[]
             {
-                new Action { Module = "output", ActionName = "write", Parameters = new List<Data> { new("Message", "hi") } }
+                new Action { Module = "output", ActionName = "write", Parameters = new List<Data> { new("Message", "hi", context: _app.User.Context) } }
             })
         };
 

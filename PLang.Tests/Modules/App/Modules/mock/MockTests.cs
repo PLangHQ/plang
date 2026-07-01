@@ -25,7 +25,7 @@ public class MockTests
         {
             Context = context,
             Pattern = (global::app.type.text.@this)"file.read",
-            Return = new global::app.data.@this("", "test content")        };
+            Return = new global::app.data.@this("", "test content", context: context)        };
 
         var result = await action.Run();
         await result.IsSuccess();
@@ -63,7 +63,7 @@ public class MockTests
         {
             Context = context,
             Pattern = (global::app.type.text.@this)"file.read",
-            Return = new global::app.data.@this("", "mocked")        };
+            Return = new global::app.data.@this("", "mocked", context: context)        };
 
         var beforeCount = context.Events.Count;
         await action.Run();
@@ -80,7 +80,7 @@ public class MockTests
         {
             Context = context,
             Pattern = (global::app.type.text.@this)"file.read",
-            Return = new global::app.data.@this("", "mocked")        };
+            Return = new global::app.data.@this("", "mocked", context: context)        };
 
         var result = await action.Run();
         var handle = (global::app.mock.@this)(await result.Value())!;
@@ -174,7 +174,7 @@ public class MockTests
         {
             Context = context,
             Pattern = (global::app.type.text.@this)"file.read",
-            Return = new global::app.data.@this("", "mocked")        };
+            Return = new global::app.data.@this("", "mocked", context: context)        };
         var mockResult = await mockAction.Run();
         var handle = (global::app.mock.@this)(await mockResult.Value())!;
 
@@ -201,14 +201,14 @@ public class MockTests
         {
             Context = context,
             Pattern = (global::app.type.text.@this)"file.read",
-            Return = new global::app.data.@this("", "mocked1")        };
+            Return = new global::app.data.@this("", "mocked1", context: context)        };
         await mock1.Run();
 
         var mock2 = new intercept
         {
             Context = context,
             Pattern = (global::app.type.text.@this)"output.write",
-            Return = new global::app.data.@this("", "mocked2")        };
+            Return = new global::app.data.@this("", "mocked2", context: context)        };
         await mock2.Run();
 
         await Assert.That(context.Events.Count).IsGreaterThanOrEqualTo(2);

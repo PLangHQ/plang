@@ -23,7 +23,7 @@ public class MergeTests
             Text = "do something",
             Actions = new StepActions(new[]
             {
-                new Action { Module = "output", ActionName = "write", Parameters = new List<Data> { new("Message", "hello") } }
+                new Action { Module = "output", ActionName = "write", Parameters = new List<Data> { new("Message", "hello", context: global::PLang.Tests.TestApp.SharedContext) } }
             })
         };
 

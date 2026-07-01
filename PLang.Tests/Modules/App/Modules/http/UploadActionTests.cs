@@ -71,11 +71,12 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/upload",
-            Content = new global::app.data.@this("", "Hello upload"),
+            Content = new global::app.data.@this("", "Hello upload", context: Ctx),
             As = (global::app.type.choice.@this<global::app.module.http.ContentAs>)ContentAs.Text,
             Unsigned = (global::app.type.@bool.@this)true
         };
 
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -94,11 +95,12 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/upload",
-            Content = new global::app.data.@this("", "upload.txt"),
+            Content = new global::app.data.@this("", "upload.txt", context: Ctx),
             As = (global::app.type.choice.@this<global::app.module.http.ContentAs>)ContentAs.File,
             Unsigned = (global::app.type.@bool.@this)true
         };
 
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -116,11 +118,12 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/upload",
-            Content = new global::app.data.@this("", b64),
+            Content = new global::app.data.@this("", b64, context: Ctx),
             As = (global::app.type.choice.@this<global::app.module.http.ContentAs>)ContentAs.Base64,
             Unsigned = (global::app.type.@bool.@this)true
         };
 
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -138,10 +141,11 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/upload",
-            Content = new global::app.data.@this("", "auto.txt"),
+            Content = new global::app.data.@this("", "auto.txt", context: Ctx),
             Unsigned = (global::app.type.@bool.@this)true
         };
 
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -157,10 +161,11 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/upload",
-            Content = new global::app.data.@this("", "just a string, not a file path"),
+            Content = new global::app.data.@this("", "just a string, not a file path", context: Ctx),
             Unsigned = (global::app.type.@bool.@this)true
         };
 
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -175,12 +180,13 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/upload",
-            Content = new global::app.data.@this("", "data"),
+            Content = new global::app.data.@this("", "data", context: Ctx),
             Method = (global::app.type.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.PUT,
             As = (global::app.type.choice.@this<global::app.module.http.ContentAs>)ContentAs.Text,
             Unsigned = (global::app.type.@bool.@this)true
         };
 
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -199,11 +205,12 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/upload",
-            Content = new global::app.data.@this("", "data"),
+            Content = new global::app.data.@this("", "data", context: Ctx),
             As = (global::app.type.choice.@this<global::app.module.http.ContentAs>)ContentAs.Text,
             Unsigned = (global::app.type.@bool.@this)true
         };
 
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -224,10 +231,11 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/upload",
-            Content = new global::app.data.@this("", new Dictionary<string, object> { ["name"] = "Alice", ["age"] = "30" }),
+            Content = new global::app.data.@this("", new Dictionary<string, object> { ["name"] = "Alice", ["age"] = "30" }, context: Ctx),
             Unsigned = (global::app.type.@bool.@this)true
         };
 
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -248,11 +256,12 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/upload",
-            Content = new global::app.data.@this("", new Dictionary<string, object> { ["field1"] = "value1" }),
+            Content = new global::app.data.@this("", new Dictionary<string, object> { ["field1"] = "value1" }, context: Ctx),
             As = (global::app.type.choice.@this<global::app.module.http.ContentAs>)ContentAs.Form,
             Unsigned = (global::app.type.@bool.@this)true
         };
 
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -275,11 +284,12 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/upload",
-            Content = new global::app.data.@this("", new Dictionary<string, object> { ["title"] = "My Doc", ["file"] = "@document.pdf" }),
+            Content = new global::app.data.@this("", new Dictionary<string, object> { ["title"] = "My Doc", ["file"] = "@document.pdf" }, context: Ctx),
             As = (global::app.type.choice.@this<global::app.module.http.ContentAs>)ContentAs.Form,
             Unsigned = (global::app.type.@bool.@this)true
         };
 
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -309,10 +319,11 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/upload",
-            Content = new global::app.data.@this("", new List<string> { "a", "b", "c" }),
+            Content = new global::app.data.@this("", new List<string> { "a", "b", "c" }, context: Ctx),
             Unsigned = (global::app.type.@bool.@this)true
         };
 
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();

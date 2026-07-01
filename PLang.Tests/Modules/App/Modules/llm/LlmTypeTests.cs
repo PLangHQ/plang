@@ -88,7 +88,7 @@ public class LlmTypeTests
         {
             Name = "MyGoal",
             Parallel = true,
-            Parameters = new List<Data> { new Data("param1", "value1") },
+            Parameters = new List<Data> { new Data("param1", "value1", context: context) },
             PrPath = global::app.type.path.@this.Resolve("/test/.build/mygoal.pr", context)
         };
 

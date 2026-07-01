@@ -62,8 +62,9 @@ public class QueryFormatTests
                 new LlmMessage { Role = "system", Content = "analyze" },
                 new LlmMessage { Role = "user", Content = "I love this" }
             }.ToListData<LlmMessage>(),
-            Schema = global::app.data.@this.Ok("{sentiment: string}")
+            Schema = Ctx.Ok("{sentiment: string}")
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -84,6 +85,7 @@ public class QueryFormatTests
         };
 
         var action = LlmTestHelper.MakeQuery(Ctx);
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -109,8 +111,9 @@ public class QueryFormatTests
             {
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
-            Schema = global::app.data.@this.Ok("{sentiment: string, score: number}")
+            Schema = Ctx.Ok("{sentiment: string, score: number}")
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -135,8 +138,9 @@ public class QueryFormatTests
             {
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
-            Schema = global::app.data.@this.Ok("{result: string}")
+            Schema = Ctx.Ok("{result: string}")
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsFailure();
@@ -157,8 +161,9 @@ public class QueryFormatTests
             {
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
-            Schema = global::app.data.@this.Ok("{answer: int}")
+            Schema = Ctx.Ok("{answer: int}")
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -184,6 +189,7 @@ public class QueryFormatTests
             }.ToListData<LlmMessage>(),
             Format = (global::app.type.text.@this)"python"
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -206,6 +212,7 @@ public class QueryFormatTests
             }.ToListData<LlmMessage>(),
             Format = (global::app.type.text.@this)"md"
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -227,6 +234,7 @@ public class QueryFormatTests
             }.ToListData<LlmMessage>(),
             Format = (global::app.type.text.@this)"python"
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -255,8 +263,9 @@ public class QueryFormatTests
                 new LlmMessage { Role = "system", Content = "You are a helpful assistant" },
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
-            Schema = global::app.data.@this.Ok("{ok: bool}")
+            Schema = Ctx.Ok("{ok: bool}")
         };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         // System message should contain BOTH original text AND format instruction

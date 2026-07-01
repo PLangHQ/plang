@@ -126,7 +126,7 @@ public class StepFromDictConversionTests
         var rootEl = doc.RootElement.Clone();
 
         // Wrap in Data as llm.query does: data.@this.Ok(resultValue)
-        var stepData = Data.Ok(rootEl);
+        var stepData = global::PLang.Tests.TestApp.SharedContext.Ok(rootEl);
         var dictValue = await stepData.Value(); // UnwrapJsonElement runs in ctor
 
         // Then As<Step>() to mirror merge.cs: __ResolveData("stepfromllm").Value<Step>()

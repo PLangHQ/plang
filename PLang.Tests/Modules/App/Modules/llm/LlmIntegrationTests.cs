@@ -86,7 +86,7 @@ public class LlmIntegrationTests
         {
             Context = Ctx,
             Messages = messages.ToListData<LlmMessage>(),
-            Schema = global::app.data.@this.Ok("{\"sentiment\": \"string\", \"score\": \"number\"}"),
+            Schema = Ctx.Ok("{\"sentiment\": \"string\", \"score\": \"number\"}"),
             Temperature = (global::app.type.number.@this)0.0,
             MaxTokens = (global::app.type.number.@this)100,
             Cache = (global::app.type.@bool.@this)false
@@ -193,7 +193,7 @@ public class LlmIntegrationTests
                 Name = "GetWeather",
                 Parameters = new List<Data>
                 {
-                    new Data("city", null, global::app.type.@this.String)
+                    new Data("city", null, global::app.type.@this.String, context: Ctx)
                 }
             }
         };
@@ -233,6 +233,7 @@ public class LlmIntegrationTests
             return null; // skip
         }
 
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         if (snapshot == null && result.Success)
@@ -285,6 +286,7 @@ public class LlmIntegrationTests
             Cache = (global::app.type.@bool.@this)false
         };
 
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         if (captureHandler != null && result.Success && captureHandler.Responses.Count > 0)

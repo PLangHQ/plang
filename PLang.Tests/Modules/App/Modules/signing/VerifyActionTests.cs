@@ -48,8 +48,8 @@ public class VerifyActionTests
         var action = new sign
         {
             Context = Ctx,
-            Data = new Data("", data),
-            Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(contracts, Ctx)),
+            Data = new Data("", data, context: Ctx),
+            Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(contracts, Ctx), context: Ctx),
             Expires = expires.HasValue ? (global::app.type.duration.@this)expires.Value : null,
             Headers = headers?.ToDictData()
         };
@@ -63,7 +63,7 @@ public class VerifyActionTests
         {
             Context = Ctx,
             Data = signedData,
-            Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(contracts, Ctx)),
+            Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(contracts, Ctx), context: Ctx),
             Headers = headers?.ToDictData(),
             TimeoutMs = timeoutMs.HasValue ? (global::app.type.number.@this)timeoutMs.Value : null
         };
@@ -89,9 +89,7 @@ public class VerifyActionTests
             l.Value, algorithm ?? l.Algorithm, l.Nonce, created ?? l.Created,
             l.Identity, hash ?? l.Hash, signature ?? l.Signature, l.Expires,
             contractsNull ? null : l.Contracts);
-        var d = Data.Ok(rebuilt);
-        d.Context = signed.Context;
-        return d;
+        return signed.Context.Ok(rebuilt);
     }
 
     #region Happy Path
@@ -112,7 +110,7 @@ public class VerifyActionTests
     [Test]
     public async Task Verify_NoSignature_Error()
     {
-        var data = Data.Ok("unsigned");
+        var data = Ctx.Ok("unsigned");
         var result = await VerifyHelper(data, contracts: new List<string> { "C0" });
 
         await result.IsFailure();

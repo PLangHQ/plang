@@ -41,7 +41,7 @@ public class RenderTests : IDisposable
     public async Task Render_InlineTemplate_SubstitutesVariables()
     {
         var context = _app.User.Context;
-        context.Variable.Set(new Data("name", "World"));
+        context.Variable.Set(new Data("name", "World", context: context));
         var action = new Render { Context = context, Template = (global::app.type.text.@this)"Hello {{ name }}", IsFile = (global::app.type.@bool.@this)false };
 
         var result = await _provider.Render(action);
@@ -55,7 +55,7 @@ public class RenderTests : IDisposable
     {
         WriteTemplateFile("greeting.html", "Hello {{ name }}!");
         var context = _app.User.Context;
-        context.Variable.Set(new Data("name", "PLang"));
+        context.Variable.Set(new Data("name", "PLang", context: context));
         var action = new Render { Context = context, Template = (global::app.type.text.@this)"greeting.html", IsFile = (global::app.type.@bool.@this)true };
 
         var result = await _provider.Render(action);
@@ -121,8 +121,8 @@ public class RenderTests : IDisposable
     public async Task Render_VariablesVariables_AccessibleInTemplate()
     {
         var context = _app.User.Context;
-        context.Variable.Set(new Data("greeting", "Hello"));
-        context.Variable.Set(new Data("target", "World"));
+        context.Variable.Set(new Data("greeting", "Hello", context: context));
+        context.Variable.Set(new Data("target", "World", context: context));
         var action = new Render { Context = context, Template = (global::app.type.text.@this)"{{ greeting }} {{ target }}", IsFile = (global::app.type.@bool.@this)false };
 
         var result = await _provider.Render(action);
@@ -135,8 +135,8 @@ public class RenderTests : IDisposable
     public async Task Render_ExplicitParams_OverrideVariables()
     {
         var context = _app.User.Context;
-        context.Variable.Set(new Data("name", "MemoryValue"));
-        var overrideParam = new Data("name", "ParamValue");
+        context.Variable.Set(new Data("name", "MemoryValue", context: context));
+        var overrideParam = new Data("name", "ParamValue", context: context);
         var action = new Render
         {
             Context = context,
@@ -155,7 +155,7 @@ public class RenderTests : IDisposable
     public async Task Render_ExplicitParams_CreateAliases()
     {
         var context = _app.User.Context;
-        var aliasParam = new Data("title", "My Page");
+        var aliasParam = new Data("title", "My Page", context: context);
         var action = new Render
         {
             Context = context,
@@ -174,8 +174,8 @@ public class RenderTests : IDisposable
     public async Task Render_ScopedVars_SkippedFromVariables()
     {
         var context = _app.User.Context;
-        context.Variable.Set(new Data("visible", "yes"));
-        context.Variable.Set(new Data("!hidden", "secret"));
+        context.Variable.Set(new Data("visible", "yes", context: context));
+        context.Variable.Set(new Data("!hidden", "secret", context: context));
         var action = new Render
         {
             Context = context,
@@ -275,7 +275,7 @@ public class RenderTests : IDisposable
     {
         WriteTemplateFile("greet.html", "Hello {{ name }}");
         var context = _app.User.Context;
-        context.Variable.Set(new Data("name", "World"));
+        context.Variable.Set(new Data("name", "World", context: context));
         var action = new Render
         {
             Context = context,
@@ -341,7 +341,7 @@ public class RenderTests : IDisposable
     {
         var context = _app.User.Context;
         var user = new Dictionary<string, object?> { ["name"] = "Alice", ["age"] = 30 };
-        context.Variable.Set(new Data("user", user));
+        context.Variable.Set(new Data("user", user, context: context));
         var action = new Render
         {
             Context = context,
@@ -359,7 +359,7 @@ public class RenderTests : IDisposable
     public async Task Render_ListIteration_WorksInForLoop()
     {
         var context = _app.User.Context;
-        context.Variable.Set(new Data("items", new List<string> { "a", "b", "c" }));
+        context.Variable.Set(new Data("items", new List<string> { "a", "b", "c" }, context: context));
         var action = new Render
         {
             Context = context,
@@ -377,7 +377,7 @@ public class RenderTests : IDisposable
     public async Task Render_NullVariable_RendersEmpty()
     {
         var context = _app.User.Context;
-        context.Variable.Set(new Data("name", null));
+        context.Variable.Set(new Data("name", null, context: context));
         var action = new Render
         {
             Context = context,
@@ -414,7 +414,7 @@ public class RenderTests : IDisposable
         var context = _app.User.Context;
         // Data wraps a complex object — template should navigate the inner object, not Data properties
         var user = new Dictionary<string, object?> { ["name"] = "Alice", ["age"] = 30 };
-        context.Variable.Set(new Data("user", user));
+        context.Variable.Set(new Data("user", user, context: context));
         var action = new Render
         {
             Context = context,
@@ -434,7 +434,7 @@ public class RenderTests : IDisposable
     public async Task Render_NullDotNavigation_NoException()
     {
         var context = _app.User.Context;
-        context.Variable.Set(new Data("user", null));
+        context.Variable.Set(new Data("user", null, context: context));
         var action = new Render
         {
             Context = context,
@@ -482,7 +482,7 @@ public class RenderTests : IDisposable
         _app.Goal.Add(goal);
 
         var context = _app.User.Context;
-        context.Variable.Set(new Data("goalName", "DynamicGoal"));
+        context.Variable.Set(new Data("goalName", "DynamicGoal", context: context));
         var action = new Render
         {
             Context = context,
@@ -581,7 +581,7 @@ public class RenderTests : IDisposable
     public async Task Render_HtmlInVariable_IsNotEscaped()
     {
         var context = _app.User.Context;
-        context.Variable.Set(new Data("name", "<script>alert(1)</script>"));
+        context.Variable.Set(new Data("name", "<script>alert(1)</script>", context: context));
         var action = new Render
         {
             Context = context,
@@ -603,7 +603,7 @@ public class RenderTests : IDisposable
     public async Task Render_IsFileNull_InlineWithLiquidSyntax_TreatedAsInline()
     {
         var context = _app.User.Context;
-        context.Variable.Set(new Data("name", "World"));
+        context.Variable.Set(new Data("name", "World", context: context));
         // IsFile=null + template contains {{ — auto-detect should treat as inline
         var action = new Render
         {
@@ -623,7 +623,7 @@ public class RenderTests : IDisposable
     {
         WriteTemplateFile("auto.html", "Auto-detected {{ greeting }}");
         var context = _app.User.Context;
-        context.Variable.Set(new Data("greeting", "Hi"));
+        context.Variable.Set(new Data("greeting", "Hi", context: context));
         // IsFile=null + template looks like a file path (has extension, no Liquid syntax)
         var action = new Render
         {
