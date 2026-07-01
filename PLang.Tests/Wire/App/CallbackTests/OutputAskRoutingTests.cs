@@ -83,10 +83,11 @@ public class OutputAskRoutingTests
     {
         var app = NewApp();
         var ch = new TestMessageChannel("input");
+        app.User.Channel.Register(ch);
         var action = new ask
         {
             Context = app.User.Context,
-            Question = new global::app.data.@this<global::app.type.text.@this>("", "Allow X?")
+            Question = new global::app.data.@this<global::app.type.text.@this>("", "Allow X?", context: app.User.Context)
         };
         var result = await ch.Ask(action);
         await Assert.That((await result.Value())).IsTypeOf<global::app.module.output.Ask>();
@@ -98,10 +99,11 @@ public class OutputAskRoutingTests
     {
         var app = NewApp();
         var ch = new TestMessageChannel("input");
+        app.User.Channel.Register(ch);
         var action = new ask
         {
             Context = app.User.Context,
-            Question = new global::app.data.@this<global::app.type.text.@this>("", "?")
+            Question = new global::app.data.@this<global::app.type.text.@this>("", "?", context: app.User.Context)
         };
         var result = await ch.Ask(action);
         await Assert.That(result.Snapshot).IsNotNull();
