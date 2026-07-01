@@ -106,7 +106,7 @@ public class SetupTests
         // Pre-record step1 with a distinctive marker value via raw DataSource.
         // Record() would overwrite with {goalPath, stepIndex, stepText, executedAt, error}.
         // If step1 is skipped, the marker survives.
-        await (await _app.SettingsStore).Set("setup", "skip_hash1", new Data("skip_hash1", "MARKER_NOT_RE_EXECUTED"));
+        await (await _app.SettingsStore).Set("setup", "skip_hash1", new Data("skip_hash1", "MARKER_NOT_RE_EXECUTED", context: _app.User.Context));
 
         // Run setup — step1 should be skipped, step2 should run
         var result = await _app.Goal.Setup.RunAsync(_app, _app.User.Context);

@@ -75,7 +75,7 @@ public class NonNullInvariantTests
             .Because("guard: if the static path ever learns about 'path', this test no longer proves what its name claims.");
 
         var d = new global::app.data.@this("", "any/raw/value",
-            new global::app.type.@this("path")) { Context = app.User.Context };
+            new global::app.type.@this("path"), context: app.User.Context);
         await Assert.That(d.Type.ClrType).IsNotNull()
             .Because("registry knows 'path' → typeof(global::app.type.path.@this); static fallback returns null.");
         await Assert.That(d.Type.ClrType!.Name).IsEqualTo("this")

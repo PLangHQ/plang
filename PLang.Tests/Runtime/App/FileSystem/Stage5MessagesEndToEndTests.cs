@@ -141,7 +141,7 @@ public class Stage5MessagesEndToEndTests
         // would be a no-op — we must replace with a fresh Data instance).
         app2.User.Context.Variable.Set(
             new global::app.data.@this("NowUtc", DateTimeOffset.UtcNow.AddMinutes(10),
-                global::app.type.@this.DateTime));
+                global::app.type.@this.DateTime, context: app2.User.Context));
 
         var path2 = new Path(foreignFile, app2.User.Context);
         var secondRead = await path2.ReadText();
