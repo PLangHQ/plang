@@ -18,6 +18,7 @@ public sealed class Json : ISerializer
     public string Extension => ".json";
 
     private readonly JsonSerializerOptions _options;
+    private readonly actor.context.@this? _context;
     private readonly ConcurrentDictionary<View, Json> _viewCache = new();
 
     public Json(JsonSerializerOptions? options = null) : this(options, null) { }
@@ -26,6 +27,7 @@ public sealed class Json : ISerializer
 
     private Json(JsonSerializerOptions? options, actor.context.@this? context)
     {
+        _context = context;
         // When `options` is supplied (ForView / WithIndentation paths), it
         // already carries the PathJsonConverter via STJ's copy semantics —
         // don't allocate a fresh one we'd throw away. Only the `??` branch
@@ -68,7 +70,7 @@ public sealed class Json : ISerializer
                     Modifiers = { global::app.channel.serializer.filter.Sensitive.Strip, global::app.channel.serializer.filter.View.For(v) }
                 }
             };
-            return new Json(viewOptions);
+            return new Json(viewOptions, _context);
         });
     }
 
@@ -106,7 +108,7 @@ public sealed class Json : ISerializer
         {
             if (stream.CanSeek && stream.Length == 0) return global::app.data.@this.Ok();
             var v = await JsonSerializer.DeserializeAsync<object?>(stream, _options, cancellationToken);
-            return global::app.data.@this.Ok(v);
+            return _context is null ? global::app.data.@this.Ok(v) : _context.Ok(v);
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
         {

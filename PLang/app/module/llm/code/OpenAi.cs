@@ -1063,7 +1063,7 @@ public sealed class OpenAi : ILlm
             resultValue = ParseResultValue(rawResp, fmt) ?? resultValue;
         }
 
-        var result = global::app.data.@this.Ok(resultValue);
+        var result = cached.Context.Ok(resultValue);
         SetProp(result, "Cached", true);
         foreach (var kvp in props)
             SetProp(result, kvp.Key, kvp.Value);

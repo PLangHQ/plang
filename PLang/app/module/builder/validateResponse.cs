@@ -243,7 +243,7 @@ public partial class validateResponse : IContext
             return global::app.data.@this.FromError(new global::app.error.ActionError(message, "ValidationErrors", 400));
         }
 
-        return global::app.data.@this.Ok(true);
+        return (goal.App ?? app)!.User.Context!.Ok(true);
     }
 }
 

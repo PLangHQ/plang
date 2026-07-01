@@ -37,6 +37,6 @@ internal static class HttpBuildHelpers
         if (inferred.IsNull || app.Type.Get(inferred.Name) == null)
             return Task.FromResult(data.@this.Ok());
 
-        return Task.FromResult(data.@this.Ok(inferred));
+        return Task.FromResult(app.User.Context.Ok(inferred));
     }
 }

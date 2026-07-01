@@ -379,7 +379,7 @@ public sealed class @this
             }
             Add(primary);
 
-            return data.@this.Ok(primary);
+            return readResult.Context.Ok(primary);
         }
         catch (Exception ex)
         {
