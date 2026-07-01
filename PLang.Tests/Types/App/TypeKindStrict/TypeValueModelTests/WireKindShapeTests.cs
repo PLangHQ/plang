@@ -22,7 +22,7 @@ public class WireKindShapeTests
 
     [Test] public async Task Wire_Write_EmitsTypeAsStructuredEntity()
     {
-        var d = new global::app.data.@this("x", "hi", new global::app.type.@this("text", "md"));
+        var d = new global::app.data.@this("x", "hi", new global::app.type.@this("text", "md"), context: global::PLang.Tests.TestApp.SharedContext);
         var json = ToJson(d);
         // ONE `type` field carrying the dict. No flat sibling `kind` key.
         await Assert.That(json.Contains("\"type\":{\"name\":\"text\",\"kind\":\"md\"}")).IsTrue();
@@ -31,7 +31,7 @@ public class WireKindShapeTests
 
     [Test] public async Task Wire_Write_OmitsKindWhenNull()
     {
-        var d = new global::app.data.@this("x", "hi", new global::app.type.@this("text"));
+        var d = new global::app.data.@this("x", "hi", new global::app.type.@this("text"), context: global::PLang.Tests.TestApp.SharedContext);
         var json = ToJson(d);
         await Assert.That(json.Contains("\"type\":{\"name\":\"text\"}")).IsTrue();
         await Assert.That(json.Contains("\"kind\"")).IsFalse();
@@ -39,7 +39,7 @@ public class WireKindShapeTests
 
     [Test] public async Task Wire_Write_NoTypeColonKindCompositeString()
     {
-        var d = new global::app.data.@this("x", "hi", new global::app.type.@this("text", "md"));
+        var d = new global::app.data.@this("x", "hi", new global::app.type.@this("text", "md"), context: global::PLang.Tests.TestApp.SharedContext);
         var json = ToJson(d);
         await Assert.That(json.Contains("text:md")).IsFalse();
         await Assert.That(json.Contains("\"text/md\"")).IsFalse();
@@ -47,7 +47,7 @@ public class WireKindShapeTests
 
     [Test] public async Task Wire_RoundTrip_PreservesNameKindStrict()
     {
-        var d = new global::app.data.@this("x", "data", new global::app.type.@this("image", "gif"));
+        var d = new global::app.data.@this("x", "data", new global::app.type.@this("image", "gif"), context: global::PLang.Tests.TestApp.SharedContext);
         var json = ToJson(d);
         var roundTripped = FromJson(json);
         await Assert.That(roundTripped.Type.Name).IsEqualTo("image");

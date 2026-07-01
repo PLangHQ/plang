@@ -23,7 +23,7 @@ public class DataKindFoldTests
 
     [Test] public async Task Data_KindGetter_ReadsTypeKind()
     {
-        var d = new DataT("x", "hello", new TypeEntity("text", "md"));
+        var d = new DataT("x", "hello", new TypeEntity("text", "md"), context: global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(d.Kind).IsEqualTo("md");
         await Assert.That(d.Type.Kind).IsEqualTo("md");
     }

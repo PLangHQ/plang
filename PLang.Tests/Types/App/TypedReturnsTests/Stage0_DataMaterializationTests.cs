@@ -35,10 +35,7 @@ public class Stage0_DataMaterializationTests
     [Test]
     public async Task Data_PropertyAccess_UsesDeclaredTypeForMaterialization()
     {
-        var src = new Data("x", "{\"a\":1}", new global::app.type.@this("json"))
-        {
-            Context = _app.User.Context
-        };
+        var src = new Data("x", "{\"a\":1}", new global::app.type.@this("json"), context: _app.User.Context);
 
         var aValue = await src.GetChild("a");
 
@@ -51,10 +48,7 @@ public class Stage0_DataMaterializationTests
     [Test]
     public async Task Data_Materialization_CachesResultOnFirstAccess()
     {
-        var src = new Data("x", "{\"a\":1}", new global::app.type.@this("json"))
-        {
-            Context = _app.User.Context
-        };
+        var src = new Data("x", "{\"a\":1}", new global::app.type.@this("json"), context: _app.User.Context);
 
         _ = await src.GetChild("a");
         var firstMaterialized = await src.Value();
@@ -71,7 +65,7 @@ public class Stage0_DataMaterializationTests
     public async Task Data_VariableSet_NoParsingAtSetTime()
     {
         const string raw = "a,b,c\n1,2,3";
-        var src = new Data("x", raw, new global::app.type.@this("csv"));
+        var src = new Data("x", raw, new global::app.type.@this("csv"), context: _app.User.Context);
 
         await Assert.That((await src.Value())?.ToString()).IsEqualTo(raw)
             .Because("Setting a typed Data must not invoke the materializer.");
