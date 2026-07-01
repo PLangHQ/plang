@@ -71,8 +71,7 @@ public sealed partial class @this
 			sb.AppendLine($"/ {Comment}");
 		sb.AppendLine(Name);
 
-		// Structural rendering — every step, not the disabled-skip enumerator.
-		foreach (var step in _steps.Value)
+		foreach (var step in Steps)
 		{
 			if (!string.IsNullOrEmpty(step.Comment))
 				sb.AppendLine($"/ {step.Comment}");
