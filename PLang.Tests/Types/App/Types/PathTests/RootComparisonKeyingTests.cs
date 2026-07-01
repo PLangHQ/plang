@@ -57,21 +57,4 @@ public class RootComparisonKeyingTests
         // would correctly identify these as the same goal.
         await Assert.That(a.Equals(b)).IsTrue();
     }
-
-    [Test] public async Task StepDisabledKey_InterpolatesPrPathRelative_NotRawObject()
-    {
-        var app = NewApp(out _);
-        var context = app.User.Context;
-        var goal = new Goal
-        {
-            Name = "Test",
-            Path = global::app.type.path.@this.Resolve("/Start.goal", context)
-        };
-        var step = new Step { Index = 0, Text = "noop", Goal = goal };
-        // step.DisabledKey is private — test indirectly: Disabled get/set roundtrips.
-        // The key shape is `step:<PrPath>:<index>:disabled` — Goal?.PrPath inside
-        // interpolation needs to render as a string, not "@this { ... }".
-        step.Disable(context);
-        await Assert.That(step.Disabled(context)).IsTrue();
-    }
 }

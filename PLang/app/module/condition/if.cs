@@ -28,13 +28,7 @@ public partial class If : IContext, IStep
         var conditionResult = await evalResult.ToBooleanAsync();
         if (await Negate.ToBooleanAsync()) conditionResult = !conditionResult;
 
-        // Mark indented sub-steps: disabled when false, clean when true
         var userStep = Step;
-        if (userStep?.Goal != null)
-        {
-            var disableContext = Context.App!.System.Context;
-            userStep.Goal.Steps.DisableChildrenOf(userStep, !conditionResult, disableContext);
-        }
 
         // Orchestrate if/elseif/else when there are multiple actions in this step.
         // Guard is step-scoped on Context._data (not Variables) so:

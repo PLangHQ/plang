@@ -18,21 +18,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         global::app.actor.context.@this? context)
         => OutputTagged(writer, mode, context);
 
-    /// <summary>
-    /// Whether this step is disabled for the given execution.
-    /// Per-execution state keyed by step identity, reached by passing the running
-    /// context — concurrent executions don't interfere. Set by the condition module
-    /// when a condition is false to mark indented sub-steps.
-    /// </summary>
-    public bool Disabled(actor.context.@this context) => context.Get<bool>(DisabledKey);
-
-    /// <summary>Disables this step for the given execution.</summary>
-    public void Disable(actor.context.@this context) => context.Set(DisabledKey, true);
-
-    /// <summary>Re-enables this step for the given execution (clears the disabled flag).</summary>
-    public void Enable(actor.context.@this context) => context.Set<bool>(DisabledKey, default);
-
-    private string DisabledKey => $"step:{Goal?.PrPath}:{Index}:disabled";
 
     private module.Events? _events;
     [JsonIgnore]

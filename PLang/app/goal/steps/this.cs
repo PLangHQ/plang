@@ -17,8 +17,6 @@ public sealed class @this : IList<Step>, IContext
     [System.Text.Json.Serialization.JsonIgnore]
     public global::app.goal.@this Goal { get; set; } = null!;
 
-    public List<Step> Value => _items;
-
     // --- IList<Step> implementation ---
 
     public Step this[int index]
@@ -98,21 +96,6 @@ public sealed class @this : IList<Step>, IContext
                     break;
                 }
             }
-        }
-    }
-
-    /// <summary>
-    /// Marks indented children of the given parent step as disabled / enabled.
-    /// Walks forward from parent.Index until a sibling-or-lower-indent step is found.
-    /// Used by condition.if to gate its sub-steps on the evaluation result.
-    /// </summary>
-    public void DisableChildrenOf(Step parent, bool disabled, actor.context.@this context)
-    {
-        for (int i = parent.Index + 1; i < _items.Count; i++)
-        {
-            if (_items[i].Indent <= parent.Indent) break;
-            if (disabled) _items[i].Disable(context);
-            else _items[i].Enable(context);
         }
     }
 

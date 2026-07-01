@@ -359,7 +359,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// </summary>
     public void ForEachAction(System.Action<Step, global::app.goal.steps.step.actions.action.@this> visitor)
     {
-        foreach (var step in _steps.Value)
+        foreach (var step in Steps)
             foreach (var action in step.Actions)
                 visitor(step, action);
     }
