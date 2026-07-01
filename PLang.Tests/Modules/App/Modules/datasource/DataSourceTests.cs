@@ -41,7 +41,7 @@ public class DataSourceTests
     public async Task Set_ThenGet_ReturnsValue()
     {
         using var ds = await CreateDataSource();
-        var setResult = await ds.Set("settings", "ApiKey", new Data("ApiKey", "sk-123"));
+        var setResult = await ds.Set("settings", "ApiKey", new Data("ApiKey", "sk-123", context: _app.System.Context!));
         await setResult.IsSuccess();
 
         var getResult = await ds.Get<global::app.type.item.@this>("settings", "ApiKey");
@@ -62,8 +62,8 @@ public class DataSourceTests
     public async Task Set_OverwritesExistingValue()
     {
         using var ds = await CreateDataSource();
-        await ds.Set("settings", "ApiKey", new Data("ApiKey", "old-value"));
-        await ds.Set("settings", "ApiKey", new Data("ApiKey", "new-value"));
+        await ds.Set("settings", "ApiKey", new Data("ApiKey", "old-value", context: _app.System.Context!));
+        await ds.Set("settings", "ApiKey", new Data("ApiKey", "new-value", context: _app.System.Context!));
 
         var result = await ds.Get<global::app.type.item.@this>("settings", "ApiKey");
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("new-value");
@@ -73,7 +73,7 @@ public class DataSourceTests
     public async Task Remove_DeletesKey()
     {
         using var ds = await CreateDataSource();
-        await ds.Set("settings", "ApiKey", new Data("ApiKey", "sk-123"));
+        await ds.Set("settings", "ApiKey", new Data("ApiKey", "sk-123", context: _app.System.Context!));
         var removeResult = await ds.Remove("settings", "ApiKey");
         await removeResult.IsSuccess();
 
@@ -93,7 +93,7 @@ public class DataSourceTests
     public async Task Exists_ReturnsTrueWhenKeyExists()
     {
         using var ds = await CreateDataSource();
-        await ds.Set("settings", "ApiKey", new Data("ApiKey", "sk-123"));
+        await ds.Set("settings", "ApiKey", new Data("ApiKey", "sk-123", context: _app.System.Context!));
         var result = await ds.Exists("settings", "ApiKey");
         await result.IsSuccess();
         await Assert.That((await result.Value())!.Value).IsTrue();
@@ -112,8 +112,8 @@ public class DataSourceTests
     public async Task GetAll_ReturnsAllKeyValuePairs()
     {
         using var ds = await CreateDataSource();
-        await ds.Set("settings", "Key1", new Data("Key1", "Value1"));
-        await ds.Set("settings", "Key2", new Data("Key2", "Value2"));
+        await ds.Set("settings", "Key1", new Data("Key1", "Value1", context: _app.System.Context!));
+        await ds.Set("settings", "Key2", new Data("Key2", "Value2", context: _app.System.Context!));
 
         var result = await ds.GetAll<global::app.type.item.@this>("settings");
         await result.IsSuccess();
@@ -125,8 +125,8 @@ public class DataSourceTests
     public async Task Tables_ReturnsTableNames()
     {
         using var ds = await CreateDataSource();
-        await ds.Set("settings", "Key1", new Data("Key1", "Value1"));
-        await ds.Set("encryption", "Key2", new Data("Key2", "Value2"));
+        await ds.Set("settings", "Key1", new Data("Key1", "Value1", context: _app.System.Context!));
+        await ds.Set("encryption", "Key2", new Data("Key2", "Value2", context: _app.System.Context!));
 
         var result = await ds.Tables();
         await result.IsSuccess();
@@ -139,7 +139,7 @@ public class DataSourceTests
     public async Task Set_NullValue_StoresAndRetrieves()
     {
         using var ds = await CreateDataSource();
-        await ds.Set("settings", "NullKey", new Data("NullKey", null));
+        await ds.Set("settings", "NullKey", new Data("NullKey", null, context: _app.System.Context!));
         var result = await ds.Get<global::app.type.item.@this>("settings", "NullKey");
         await result.IsSuccess();
         await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
@@ -149,7 +149,7 @@ public class DataSourceTests
     public async Task Set_IntegerValue_PreservesType()
     {
         using var ds = await CreateDataSource();
-        await ds.Set("settings", "Count", new Data("Count", 42));
+        await ds.Set("settings", "Count", new Data("Count", 42, context: _app.System.Context!));
         var result = await ds.Get<global::app.type.item.@this>("settings", "Count");
         await result.IsSuccess();
         // JSON deserialization may box as long
@@ -161,8 +161,8 @@ public class DataSourceTests
     public async Task MultipleTables_AreIsolated()
     {
         using var ds = await CreateDataSource();
-        await ds.Set("settings", "Key", new Data("Key", "SettingsValue"));
-        await ds.Set("encryption", "Key", new Data("Key", "EncryptionValue"));
+        await ds.Set("settings", "Key", new Data("Key", "SettingsValue", context: _app.System.Context!));
+        await ds.Set("encryption", "Key", new Data("Key", "EncryptionValue", context: _app.System.Context!));
 
         var settingsResult = await ds.Get<global::app.type.item.@this>("settings", "Key");
         var encryptionResult = await ds.Get<global::app.type.item.@this>("encryption", "Key");
@@ -185,7 +185,7 @@ public class DataSourceTests
     {
         using var ds = await CreateDataSource();
         // Special chars should be stripped, leaving "settingsDROPTABLEsettings"
-        var result = await ds.Set("settings; DROP TABLE settings", "Key", new Data("Key", "Value"));
+        var result = await ds.Set("settings; DROP TABLE settings", "Key", new Data("Key", "Value", context: _app.System.Context!));
         await result.IsSuccess();
 
         // Should be retrievable using the same dirty name (sanitized identically)
@@ -198,7 +198,7 @@ public class DataSourceTests
     public async Task Set_TableNameWithUnderscores_PreservesUnderscores()
     {
         using var ds = await CreateDataSource();
-        var result = await ds.Set("my_table", "Key", new Data("Key", "Value"));
+        var result = await ds.Set("my_table", "Key", new Data("Key", "Value", context: _app.System.Context!));
         await result.IsSuccess();
 
         var getResult = await ds.Get<global::app.type.item.@this>("my_table", "Key");
@@ -210,7 +210,7 @@ public class DataSourceTests
     {
         using var ds = await CreateDataSource();
         // All chars stripped → empty → "default_table"
-        var result = await ds.Set("!!!", "Key", new Data("Key", "Value"));
+        var result = await ds.Set("!!!", "Key", new Data("Key", "Value", context: _app.System.Context!));
         await result.IsSuccess();
 
         var getResult = await ds.Get<global::app.type.item.@this>("!!!", "Key");
@@ -221,7 +221,7 @@ public class DataSourceTests
     public async Task Set_MixedCaseTableName_NormalizesToLowercase()
     {
         using var ds = await CreateDataSource();
-        await ds.Set("Settings", "Key", new Data("Key", "Value1"));
+        await ds.Set("Settings", "Key", new Data("Key", "Value1", context: _app.System.Context!));
 
         // Same name in different case should hit the same table
         var getResult = await ds.Get<global::app.type.item.@this>("settings", "Key");
@@ -279,7 +279,7 @@ public class DataSourceTests
         using var ds = global::app.module.settings.Sqlite.InMemory("test_crud", _app.User.Context);
 
         // Set
-        var setResult = await ds.Set("items", "key1", new Data("key1", "value1"));
+        var setResult = await ds.Set("items", "key1", new Data("key1", "value1", context: _app.System.Context!));
         await setResult.IsSuccess();
 
         // Get
@@ -292,7 +292,7 @@ public class DataSourceTests
         await Assert.That((await existsResult.Value())!.Value).IsTrue();
 
         // GetAll
-        await ds.Set("items", "key2", new Data("key2", "value2"));
+        await ds.Set("items", "key2", new Data("key2", "value2", context: _app.System.Context!));
         var allResult = await ds.GetAll<global::app.type.item.@this>("items");
         var items = (await allResult.Value<global::app.type.list.@this>())!.ToList();
         await Assert.That(items.Count).IsEqualTo(2);
@@ -310,7 +310,7 @@ public class DataSourceTests
         using var ds = global::app.module.settings.Sqlite.InMemory("test_schema", _app.User.Context);
 
         // First operation creates the table
-        await ds.Set("persistent", "key1", new Data("key1", "value1"));
+        await ds.Set("persistent", "key1", new Data("key1", "value1", context: _app.System.Context!));
 
         // Second operation should see the same table (no re-creation needed)
         var result = await ds.Get<global::app.type.item.@this>("persistent", "key1");
@@ -330,8 +330,8 @@ public class DataSourceTests
         using var ds1 = global::app.module.settings.Sqlite.InMemory("db_alpha", _app.User.Context);
         using var ds2 = global::app.module.settings.Sqlite.InMemory("db_beta", _app.User.Context);
 
-        await ds1.Set("shared", "key", new Data("key", "alpha_value"));
-        await ds2.Set("shared", "key", new Data("key", "beta_value"));
+        await ds1.Set("shared", "key", new Data("key", "alpha_value", context: _app.System.Context!));
+        await ds2.Set("shared", "key", new Data("key", "beta_value", context: _app.System.Context!));
 
         var result1 = await ds1.Get<global::app.type.item.@this>("shared", "key");
         var result2 = await ds2.Get<global::app.type.item.@this>("shared", "key");
@@ -345,7 +345,7 @@ public class DataSourceTests
     {
         // Create, populate, dispose
         var ds1 = global::app.module.settings.Sqlite.InMemory("disposable_db", _app.User.Context);
-        await ds1.Set("data", "key", new Data("key", "value"));
+        await ds1.Set("data", "key", new Data("key", "value", context: _app.System.Context!));
         ds1.Dispose();
 
         // New datasource with same name should start empty (sentinel closed → DB vanished)
@@ -363,7 +363,7 @@ public class DataSourceTests
 
         // app.SettingsStore is in-memory under Testing — no .db directory created.
         var ds = await engine.SettingsStore;
-        var setResult = await ds.Set("test_table", "k", new Data("k", "v"));
+        var setResult = await ds.Set("test_table", "k", new Data("k", "v", context: _app.System.Context!));
         await setResult.IsSuccess();
 
         var getResult = await ds.Get<global::app.type.item.@this>("test_table", "k");
@@ -381,7 +381,7 @@ public class DataSourceTests
         // Testing not enabled → file-backed system.sqlite.
 
         var ds = await engine.SettingsStore;
-        var setResult = await ds.Set("file_table", "k", new Data("k", "v"));
+        var setResult = await ds.Set("file_table", "k", new Data("k", "v", context: _app.System.Context!));
         await setResult.IsSuccess();
 
         // Verify .db directory WAS created on disk
