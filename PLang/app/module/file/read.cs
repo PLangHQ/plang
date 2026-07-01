@@ -39,8 +39,8 @@ public partial class Read : IContext
         // first examination through the door.
         if (path is global::app.type.path.http.@this)
             return new data.@this("url", new global::app.type.url.@this(path!),
-                global::app.type.@this.Create("url", path!.Extension is { Length: > 0 } ue ? ue.TrimStart('.') : null, context: Context))
-                { Context = Context };
+                global::app.type.@this.Create("url", path!.Extension is { Length: > 0 } ue ? ue.TrimStart('.') : null, context: Context),
+                context: Context);
 
         // Stat once: NotFound surfaces at the read step (not at first touch),
         // and the stat tells file from directory.
@@ -53,7 +53,7 @@ public partial class Read : IContext
 
         if (info.IsFile == false)
             return new data.@this("directory", new global::app.type.directory.@this(path),
-                global::app.type.@this.Create("directory", null, context: Context)) { Context = Context };
+                global::app.type.@this.Create("directory", null, context: Context), context: Context);
 
         // The plang container (.pr) IS structured Data — a Goal, not content to
         // narrow. Deserialize eagerly through the channel as before.
@@ -98,7 +98,7 @@ public partial class Read : IContext
         // inference input — `.json` narrows to dict, `.csv` to table/list).
         var kind = path.Extension is { Length: > 0 } ext ? ext.TrimStart('.') : null;
         return new data.@this(path.FileName, new global::app.type.file.@this(path),
-            global::app.type.@this.Create("file", kind, context: Context)) { Context = Context };
+            global::app.type.@this.Create("file", kind, context: Context), context: Context);
     }
 
     /// <summary>
