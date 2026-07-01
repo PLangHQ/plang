@@ -74,4 +74,4 @@ forks → unplanned API surface → names → "same thing twice?" → "non-leaf 
 
 ---
 
-**Last scanned:** `c41ca232d` (read-path-unification, output-unification complete — pre-Stage-6 — 2026-06-29). Update after each scan.
+**Last scanned:** `c357a3921` (fix-plang-build merge + template flag + data-flows + handler-dispatch refactor — 2026-07-01). Update after each scan.
