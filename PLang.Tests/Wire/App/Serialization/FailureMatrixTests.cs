@@ -85,6 +85,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
         var crypto = new global::app.module.crypto.code.Default();
         var action = new global::app.module.crypto.Hash
         {
+            Context = app.User.Context,
             Data = app.Ok("x"),
             Algorithm = new global::app.data.@this<global::app.type.text.@this>("", "md5")
         };

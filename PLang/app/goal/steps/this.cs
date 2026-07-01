@@ -41,25 +41,12 @@ public sealed class @this : IList<Step>, IContext
     public void RemoveAt(int index) => _items.RemoveAt(index);
 
     /// <summary>
-    /// Custom enumerator that stamps context on each step and skips disabled steps.
-    /// The condition module marks indented sub-steps as disabled when a condition is false.
+    /// Structural iteration — every step, no execution context. The disabled-skip is
+    /// execution-only; RunAsync does it via skipBelowIndent, so the enumerator never filters.
     /// </summary>
     public IEnumerator<Step> GetEnumerator()
     {
-        for (int i = 0; i < _items.Count; i++)
-        {
-            var step = _items[i];
-            step.Goal ??= Goal;
-
-            if (step.Disabled(Context))
-            {
-                // Clear the disabled flag after skipping so re-execution works
-                step.Enable(Context);
-                continue;
-            }
-
-            yield return step;
-        }
+        foreach (var step in _items) { step.Goal ??= Goal; yield return step; }
     }
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
