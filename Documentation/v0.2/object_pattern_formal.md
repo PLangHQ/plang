@@ -274,6 +274,8 @@ return result;
 
 Data owns its own composition through `Merge()`. The collection calls merge — it never inspects the data structure directly.
 
+**Even a legitimate new `Data` holds the built value whole — never re-Build it.** When you genuinely must construct a new `Data` (a typed view via `Data<T>.From`, a copy, a retype), carry the source's *already-built* value instance as-is (`SetValueDirect(source.Instance)`) and born the wrapper value-less **with the source's context**. Do NOT reconstruct through the `(name, value, type)` ctor — that re-runs `type.Build`, which (a) **re-resolves** a `%var%`/template value (breaking store-as-is: `variable.set` must keep the reference, not render it — the value renders on its own door, at read) and (b) re-types an already-built value. `Build`/`Create` run exactly ONCE, at the boundary where the value originates; a copy or retype is not a second origination. (This is why `Data<T>.From` borns value-less with `source.Context` and holds `source.Instance` directly, rather than rebuilding via the value ctor.)
+
 ### 8. No redundant wrappers
 
 If the data a callee needs already exists on an object the caller has, pass that object. Don't create a new class that copies fields into a different shape.
