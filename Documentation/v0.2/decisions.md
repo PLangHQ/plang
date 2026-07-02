@@ -17,8 +17,12 @@ agreed: generated properties keep only a dumb backing field (CS9250 forces the f
 check:  ! grep -rq "SetFlag\|__set\b\|_set = false" PLang.Generators/Emission/
 
 ## variable-set-stores-as-is
-agreed: variable.set forwards the source Data verbatim; no AsCanonical and no .Value on the store path (data just flows; the reference resolves at read).
+agreed: variable.set forwards the source Data verbatim (no AsCanonical, no .Value on the store path). A reference VALUE (%x%) resolves to the referenced Data INSTANCE at store — Get the instance, value door never opened, so the value stays lazy and renders at read. The marker is NOT stored verbatim (would go stale as !data rebinds, and self-assign would cycle on the door).
 check:  ! grep -q "\.AsCanonical(" PLang/app/module/variable/set.cs
+
+## variable-ref-binds-instance
+agreed: a %ref% value in the store resolves to the referenced Data instance (Get), bound under the target name — never .Value() on the store path, never the marker stored verbatim.
+check:  grep -q "reference.Peek() is global::app.variable.@this" PLang/app/variable/list/this.cs
 
 ## steps-enumerator-is-structural
 agreed: the step enumerator yields every step with no execution context (no Disabled filter); execution skips via RunAsync's skipBelowIndent. No context dependency in the enumerator.
