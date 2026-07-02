@@ -293,9 +293,12 @@ public static class @this
                         var __act = __action?.ActionName ?? "?";
                         var __step = __action?.Step;
                         var __callFrames = Context?.CallStack?.Current?.SnapshotChain() ?? (System.Collections.Generic.IReadOnlyList<global::app.callstack.call.@this>)System.Array.Empty<global::app.callstack.call.@this>();
+                        // A typed AppException carries a domain Key (VariableNotFound, …) — preserve
+                        // it; a bare exception falls back to its type name.
+                        var __ap = ex as global::app.error.AppException;
                         return global::app.data.@this.FromError(new global::app.error.ServiceError(
                             $"{__mod}.{__act}: {ex.GetType().Name}: {ex.Message}",
-                            __step!, __callFrames, ex.GetType().Name, 500)
+                            __step!, __callFrames, __ap?.Key ?? ex.GetType().Name, __ap?.StatusCode ?? 500)
                         { Exception = ex });
                     }
                 }

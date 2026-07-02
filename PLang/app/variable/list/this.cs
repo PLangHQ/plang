@@ -720,10 +720,17 @@ public partial class @this
             if (skipInfrastructure && varName.StartsWith('!')) continue;
             if (resolved.ContainsKey(varName)) continue;
             var dataVar = await Get(varName);
-            // A missing variable is left literal (the replace below keeps %match%).
-            // The citizen for a not-found slot renders as "" (not C# null), so guard
-            // on existence here — otherwise an unresolved %!x% would substitute empty.
-            if (dataVar == null || !dataVar.IsInitialized) continue;
+            // A reference to an unset USER variable is an error at the reference site —
+            // strict, like any typed language, and consistent with the full-match door
+            // (variable.Value / text.Value both throw/Fail on an absent ref). Infrastructure
+            // refs (%!x%) are optionally-present engine internals (%!error% with no error,
+            // etc.) — they stay literal on absence, never error, whether or not
+            // skipInfrastructure is set.
+            if (dataVar == null || !dataVar.IsInitialized)
+            {
+                if (varName.StartsWith('!')) continue;   // infra ref absent → leave literal
+                throw new global::app.error.VariableNotFoundException(varName);
+            }
             string? s;
             if (dataVar?.Peek() is global::app.type.file.@this or global::app.type.url.@this)
             {

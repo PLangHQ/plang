@@ -15,12 +15,14 @@ public partial class Write : IContext, IChannel
     public async Task<data.@this> Run()
     {
         var outer = Data ?? Context.Ok();
-        // %-resolution applies to in-memory strings only — Peek, don't open the door:
-        // forcing the parse here would break verbatim passthrough (an untouched
-        // file-read Data writes out its raw bytes, not a re-serialised object).
-        if (outer.Peek() is global::app.type.text.@this { Template: not null } st)
+        // A template value fills its %refs% against live variables before write. Detect via
+        // the uniform template signal (HasVariableReference = _item.Template != null), NOT a
+        // single concrete type — so a source-born template resolves the same as a text-born
+        // one. Peek, don't open the door: a plain (no-template) file read has no template
+        // flag, so its raw bytes pass through untouched.
+        if (outer.HasVariableReference && outer.Peek().RawText is { } raw)
         {
-            var resolved = await Context.Variable.Resolve(st.Clr<string>()!, skipInfrastructure: true);
+            var resolved = await Context.Variable.Resolve(raw, skipInfrastructure: true);
             outer = Context.Ok(resolved);
         }
         return await Channel.WriteAsync(outer);

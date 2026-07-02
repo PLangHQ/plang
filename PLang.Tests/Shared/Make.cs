@@ -83,6 +83,12 @@ public static class Make
         string name, object? value, global::app.type.@this type)
         => (name, new global::app.data.@this(name, value, type, context: global::PLang.Tests.TestApp.SharedContext));
 
+    /// <summary>A text parameter carrying an interpolation template (an embedded or full
+    /// <c>%ref%</c>) — models the builder stamping <c>type.template="plang"</c> on a value
+    /// that contains a <c>%var%</c>. The read fills the holes against live variables.</summary>
+    public static (string name, object? value) Template(string name, string value)
+        => Param(name, value, new global::app.type.@this("text", template: "plang"));
+
     /// <summary>
     /// Wraps an action with one or more modifier actions (e.g. <c>timeout.after</c>,
     /// <c>error.handle</c>, <c>cache</c>). The modifiers run around the inner action;

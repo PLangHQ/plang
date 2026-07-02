@@ -41,6 +41,12 @@ public sealed class source : @this, module.IContext
         _strict = strict;
         _format = format;
         _template = template;
+        // Expose the authored template on the standard Template property (not just the
+        // private _template), so peek-time consumers — HasVariableReference, output.write —
+        // see a source-born template the same way they see a text-born one. Trust the flag
+        // the builder stamped; do not re-scan the content. (Minimal fix; the right fix moves
+        // resolution into the value's own door — see output-resolution-unification-plan.md.)
+        Template = template;
     }
 
     /// <summary>The undecoded source form — <c>string</c> or <c>byte[]</c>.</summary>
