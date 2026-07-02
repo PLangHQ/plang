@@ -56,7 +56,7 @@ public class HashActionTests
     [Test]
     public async Task Hash_ObjectInput_ProducesDeterministicHash()
     {
-        var refHash = await new global::app.module.crypto.code.Default().Hash(new Hash { Data = Ctx.Ok("hello"), Algorithm = (global::app.type.text.@this)"keccak256" });
+        var refHash = await new global::app.module.crypto.code.Default().Hash(new Hash { Context = Ctx, Data = Ctx.Ok("hello"), Algorithm = (global::app.type.text.@this)"keccak256" });
 
         var action = new Hash { Context = Ctx, Data = Ctx.Ok("hello"), Algorithm = (global::app.type.text.@this)"keccak256" };
         await action.Attach(null, Ctx);

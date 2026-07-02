@@ -364,7 +364,8 @@ public class IdentityErrorPathTests
     {
         var field = typeof(global::app.@this).GetField("_settingsStore",
             BindingFlags.NonPublic | BindingFlags.Instance);
-        field!.SetValue(app, new Lazy<global::app.module.settings.IStore>(() => newDataSource));
+        field!.SetValue(app, new Lazy<System.Threading.Tasks.Task<global::app.module.settings.IStore>>(
+            () => System.Threading.Tasks.Task.FromResult(newDataSource)));
     }
 
     /// <summary>

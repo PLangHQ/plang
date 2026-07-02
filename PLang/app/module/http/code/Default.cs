@@ -93,7 +93,10 @@ public sealed class Default : IHttp
 
         // Build body
         HttpContent? httpContent = null;
-        var bodyVal = action.Body == null ? null : await action.Body.Value();
+        // An absent body is an Uninitialized Data whose value door answers @null (not C#
+        // null) — guard on IsEmpty so a no-body request (GET, etc.) skips serialization
+        // instead of serializing an empty value.
+        var bodyVal = action.Body == null || await action.Body.IsEmpty() ? null : await action.Body.Value();
         if (bodyVal != null)
         {
             if (contentType.Equals("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase)
