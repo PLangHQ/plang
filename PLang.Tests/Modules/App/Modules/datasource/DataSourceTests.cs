@@ -6,6 +6,10 @@ using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.datasource;
 
+// Each test spins up a full PLangEngine + its own SQLite datasource. Run in parallel
+// with each other they contend on SQLite init/connection state and deadlock the pool
+// (alone or serial they pass in ~33s). Serialize the class so the suite doesn't stall.
+[NotInParallel]
 public class DataSourceTests
 {
     private string _tempDir = null!;
