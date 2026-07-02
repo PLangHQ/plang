@@ -46,11 +46,21 @@ miss it** → a template born as a source is written **literally**. This is the 
 
 ## 2. Target invariant
 
-> **A value writes itself.** Resolution lives ONLY in the item's own door. `Output` on
-> `View.Out` emits the RESOLVED form (through the item's own resolution); on `View.Store`
-> it emits the authored form VERBATIM. `output.write` collapses to `channel.write(data)` —
-> zero special-cases. A value shape is resolved because it *is* that shape, reached by
-> reference — never because an upstream guard recognized it.
+> **A value writes itself. `Data` never asks what the item is.**
+>
+> The governing rule: **`Data.Output` contains ZERO `_item is <Type>` questions.** Its body
+> reduces to `await _item.Output(writer, mode, context)` (plus the mode/writer-level schema
+> envelope, which is about the *view and writer*, not the item's type). `Data` holds a
+> reference and says "output yourself"; the item — variable, text, number, dict — owns
+> everything about how it renders, including `View.Store` (verbatim) vs `View.Out`
+> (resolved). A variable jumps to its binding, a text fills its holes, a number prints —
+> none of that is `Data`'s business.
+>
+> Consequences: resolution lives ONLY in each item's own door. `output.write` collapses to
+> `channel.write(data)`. A value is resolved because it *is* that shape (reached by
+> reference), never because an upstream guard type-tested it. **Any `is <ConcreteType>` on
+> `_item` in a relay layer (`Data`, the courier, the wire) is the smell we are removing —
+> not relocating.**
 
 ---
 
@@ -97,8 +107,12 @@ miss it** → a template born as a source is written **literally**. This is the 
   `mode != Store` (materialize → the materialized item's `Output`), else raw passthrough;
   or (b) `source.Output` checks `Mint().Template`. **A no-template source always writes raw
   (file-read passthrough preserved).**
-- **`Data.Output`** — DELETE the `_item is variable.@this` branch (now owned by
-  `variable.Output`). Keep the Store/name/schema-envelope logic untouched.
+- **`Data.Output`** — DELETE the `_item is variable.@this` branch. After this, the method
+  must contain **zero `_item is <Type>` questions** — it delegates via
+  `await _item.Output(writer, mode, context)`. Keep only the mode/writer-level schema
+  envelope (Store name, `@schema`, type entity) — that is about the view and writer, not
+  the item's type. This is the acceptance test for the whole change: grep `Data.Output` for
+  `_item is` and expect nothing.
 - **`output.write.Run`** — DELETE the template block → `return await Channel.WriteAsync(Data)`.
 - **`mock/intercept`** — same block → route through the door.
 - **DELETE dead `AsCanonical`.**
