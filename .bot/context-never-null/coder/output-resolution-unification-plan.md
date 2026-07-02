@@ -182,11 +182,13 @@ Two consequences:
      every other template), and resolution flows through `source.Value` — the one seam. No
      `ResolveVariables` param, no manual engine call. See §12.
    **Security note (state, don't skip):** without `skipInfrastructure`, a `template="plang"`
-   file read resolves *all* refs including `%!infra%`. Infra vars are runtime state
-   (`%!app%`/`%!callStack%`/`%!data%`/`%!error%`…), **not** the secrets/settings namespace, so
-   the disclosure surface is limited to runtime internals — and only for content a developer
-   *explicitly stamped* as a plang template (they vouch for it). The protection becomes "don't
-   stamp untrusted content as plang," not a per-call filter. Confirmed acceptable (Ingi).
+   file read resolves *all* refs including `%!infra%`. This is safe because the interpolation is
+   **authored in the goal, in plain sight** — `- read file.txt and load vars, write to %content%`
+   — which is what stamps `template="plang"` at build. The trust anchor is the authored PLang, not
+   the file's content: "load vars" is an explicit, readable instruction, so `%!infra%` resolving
+   there is the developer's stated intent, never a hidden default. (Infra vars are runtime state —
+   `%!app%`/`%!callStack%`/`%!data%`/`%!error%` — not the secrets/settings namespace.) Confirmed
+   acceptable (Ingi).
 5. **Scope of THIS pass.** Minimum = items #4-section changes (fixes the bug, removes the
    red-flag special-cases). Optional now vs deferred: consolidating the grammar detectors
    (#3), the ref-detector forms (#4), dict/list render (#5), the `Resolve` naming (#7).
