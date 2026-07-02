@@ -4,10 +4,10 @@ using Base = PLang.Generators.Emission.Property.@this;
 namespace PLang.Generators.Emission.Property.Code;
 
 /// <summary>
-/// Emits a [Code]-attributed property — a getter-only partial property backed by a
-/// field that Attach() fills from app.Code.Get&lt;T&gt;(). Not a parameter: no .pr
-/// value, no snapshot entry. Attach writes the backing field directly (the property
-/// is getter-only), so the provider resolves once per execution with error handling.
+/// Emits a [Code]-attributed property — a getter-only partial property that lazily
+/// resolves its service provider from app.Code on first access, cached in the `field`
+/// keyword's compiler-managed store. Backing-free (no hand-written field). Not a
+/// parameter: no .pr value, no snapshot entry, nothing to do in Attach.
 /// </summary>
 public sealed record @this(
     string Name,
@@ -17,15 +17,16 @@ public sealed record @this(
 {
     public override void EmitProperty(StringBuilder sb)
     {
+        // [Code] keeps a small service-cache field, filled by Attach with error handling —
+        // NOT the param machinery. (A lazy getter can't surface the "provider not registered"
+        // error, only NRE.)
         sb.AppendLine($"    private {TypeName}? {Backing};");
         sb.AppendLine($"    public partial {TypeName} {Name} => {Backing}!;");
         sb.AppendLine();
     }
 
-    /// <summary>
-    /// Resolves the [Code] service provider into the backing field inside Attach(). A
-    /// resolution failure short-circuits Attach with the error.
-    /// </summary>
+    /// <summary>Resolves the [Code] provider into the field in Attach; surfaces the
+    /// "not registered" error instead of a later NRE.</summary>
     public override void EmitAttach(StringBuilder sb)
     {
         sb.AppendLine($"        {{");

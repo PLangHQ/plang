@@ -31,3 +31,7 @@ check:  ! grep -q "public List<Step> Value" PLang/app/goal/steps/this.cs
 ## builder-detects-var-at-build
 agreed: %var% detection happens ONLY at build — the builder stamps type.template="plang"; runtime trusts the flag and never re-scans content (HasVariable lives at the build stamp).
 check:  grep -q "HasVariable" PLang/app/module/builder/code/Default.cs
+
+## data-params-backing-free
+agreed: generated Data param props use the `field` keyword (compiler backing) — no hand-written __backing in the Data property emitter
+check:  grep -q "get => field" PLang.Generators/Emission/Property/Data/this.cs

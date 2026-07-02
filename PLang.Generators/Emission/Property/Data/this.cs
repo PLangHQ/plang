@@ -24,25 +24,14 @@ public sealed record @this(
     public override void EmitProperty(StringBuilder sb)
     {
         var nullable = IsNullable ? "?" : "";
-        // A partial-property implementation can't be an auto-property (C# CS9250), so the
-        // resolved Data lives in a plain backing field. This is dumb storage — no "set"
-        // flag, no getter fallback logic, no reset. The instance is the per-execution
-        // home, built fresh per action run: Resolve() binds each param via the object
-        // initializer; inline C# composition (prebound) sets the params it needs. The
-        // field-initializer default covers an absent slot (prebound didn't set it):
-        // absent optional -> non-null Uninitialized (null model), [Default] -> literal.
-        // These construct context-free (Uninitialized has no value; a [Default] literal
-        // rides the (name, item) ctor, which skips type.Build).
-        sb.AppendLine($"    private {TypeName}? {Backing} = {Fallback};");
         // Optional (`?`) params keep their nullable TYPE but are never actually null.
         // [NotNull] tells flow analysis the truth so `await Mime.Value()` doesn't trip CS8602.
         if (IsNullable)
             sb.AppendLine("    [System.Diagnostics.CodeAnalysis.NotNull]");
-        sb.AppendLine($"    public partial {TypeName}{nullable} {Name}");
-        sb.AppendLine("    {");
-        sb.AppendLine($"        get => {Backing}!;");
-        sb.AppendLine($"        init => {Backing} = value;");
-        sb.AppendLine("    }");
+        // Backing-free: the `field` keyword's compiler store — no hand-written field, no
+        // flag / fallback / reset machinery. The field-initializer covers an absent slot
+        // (Uninitialized / [Default] literal); Resolve() binds the value via the object initializer.
+        sb.AppendLine($"    public partial {TypeName}{nullable} {Name} {{ get => field!; init => field = value; }} = {Fallback};");
         sb.AppendLine();
     }
 
