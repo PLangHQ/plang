@@ -75,6 +75,7 @@ public class DownloadActionTests
             Unsigned = (global::app.type.@bool.@this)true
         };
 
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -98,6 +99,7 @@ public class DownloadActionTests
             Unsigned = (global::app.type.@bool.@this)true
         };
 
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsFailure();
