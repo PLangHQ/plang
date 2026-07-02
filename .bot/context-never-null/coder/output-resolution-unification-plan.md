@@ -95,26 +95,33 @@ miss it** → a template born as a source is written **literally**. This is the 
 
 ## 4. The changes, per layer
 
-**Move resolution INTO the items; delete the bolted-on guards.**
+**Do NOT add per-type `Output` resolution.** (First-draft instinct — see §9.1: it just
+re-implements the `Value` door inside `Output`, the same "two ways" smell.) The minimal
+form is **`Output = Value()-then-write`, owned once by `Data.Output`:**
 
-- **`variable.@this`** — add an `Output` override: `mode != Store` → `Get(Name)` then
-  `resolved.Output(writer, mode, context)`; else `Write` the raw `%ref%`. (This is the
-  branch lifted out of `Data.Output`.) Carries the cycle guard.
-- **`text.@this`** — add an `Output` override: `Template != null && mode != Store` →
-  render (its existing partial-interpolation path) then write; else `Write` raw.
-- **`item.source`** — the born form of a string. Either (a) expose `_template` on the base
-  `Template` property so `HasVariableReference` sees it and `source.Output` resolves when
-  `mode != Store` (materialize → the materialized item's `Output`), else raw passthrough;
-  or (b) `source.Output` checks `Mint().Template`. **A no-template source always writes raw
-  (file-read passthrough preserved).**
-- **`Data.Output`** — DELETE the `_item is variable.@this` branch. After this, the method
-  must contain **zero `_item is <Type>` questions** — it delegates via
-  `await _item.Output(writer, mode, context)`. Keep only the mode/writer-level schema
-  envelope (Store name, `@schema`, type entity) — that is about the view and writer, not
-  the item's type. This is the acceptance test for the whole change: grep `Data.Output` for
-  `_item is` and expect nothing.
+```
+Data.Output(writer, mode, context):
+    … envelope (Store name / @schema / type — about VIEW+WRITER, not the item's type) …
+    if (mode == Store)  await _item.Output(writer, Store, context);               // verbatim raw
+    else                await (await this.Value()).Output(writer, Store, context); // resolve via the DOOR, then write raw
+```
+
+- **`Data.Output`** — DELETE the `_item is variable.@this` branch. After this the method has
+  **zero `_item is <Type>` questions**. It owns the Store/Out switch above; the item only
+  ever provides `Write` (raw form) + `Value` (resolved form), both of which already exist.
+  Acceptance test: grep `Data.Output` for `_item is` → nothing.
+- **`Value` door is the single resolution seam** (already present): `text.Value` (template),
+  `source.Value` (materialize + resolve — the Model-B seam, §decision-6), `variable.Value`
+  (untyped ref), `dict/list.Value` (deep render), scalars (`this`). **No new `Output`
+  overrides on any type** — `text.Output`/`source.Output`/`variable.Output` should NOT be
+  written; if you find yourself adding one, resolution has leaked out of the door again.
+- **`source.Value`** — the Model-B work: resolve the `%ref%` ONCE (via the store engine),
+  then `T.Create(resolved)`. This is where a no-template source must still pass through raw
+  (see §9.3 — the passthrough fork; may forbid the naive `Value()-then-write` for a plain
+  file read).
 - **`output.write.Run`** — DELETE the template block → `return await Channel.WriteAsync(Data)`.
-- **`mock/intercept`** — same block → route through the door.
+- **`mock/intercept`** — DELETE its duplicate template block → let the value resolve itself.
+- **DELETE dead `AsCanonical`.**
 - **DELETE dead `AsCanonical`.**
 - **Born contract (prerequisite):** full-match `%x%` → `variable`; embedded `"hi %x%"` →
   `text` + template flag (the builder stamps it — decision `builder-detects-var-at-build`).
@@ -207,16 +214,77 @@ miss it** → a template born as a source is written **literally**. This is the 
 
 ## 8. Sequencing (each step a green, independently-verified commit)
 
-1. **Born contract** — full-match `%x%` → variable, embedded → text+template (builder side +
-   confirm the two doors are the sole resolvers). Removes `text.Value` full-match branch.
-2. **`variable.Output` override + delete `Data.Output` variable-branch.** Must be
-   behavior-neutral — verify full-suite failure counts identical pre/post (same method used
-   for the `IName` rename).
-3. **`text.Output` override + `source` template exposure.** Fixes the embedded bug.
-4. **Delete `output.write` block + `mock/intercept` block → `channel.write(data)`; delete
-   dead `AsCanonical`.**
-5. **(optional follow-up)** consolidate grammar detectors, ref-detector forms, dict/list
-   render, and the `Resolve` naming collision.
+*Resolve §9's forks FIRST — decision #6 (source seam), #2/§9.3 (passthrough), §9.2 (collapse
+`variable`-value-ref into `source`?). They change what the steps below even are.*
 
-Steps 2-4 each need a full-suite baseline diff (WIP branch has ~127 pre-existing reds;
-only the delta matters). Store/signing tests are the tripwire on every step.
+1. **`source.Value` is the Model-B seam** — resolve `%ref%` once, then `T.Create(resolved)`,
+   so `%x% as number` resolves (fixes the per-type-reader gap, `number/serializer/Reader`).
+   Settle the passthrough rule (§9.3) here.
+2. **`Data.Output = Value()-then-write`** (§4) — delete the `_item is variable.@this` branch;
+   Store→raw, Out→`Value()`-then-write. Must be behavior-neutral: verify full-suite failure
+   counts identical pre/post (same method as the `IName` rename). **No per-type `Output`
+   overrides added** (§9.1).
+3. **Delete `output.write` block + `mock/intercept` block → `channel.write(data)`; delete
+   dead `AsCanonical`.** This is where the embedded + source-born bugs actually go green.
+4. **(optional follow-up)** collapse `variable`-value-ref into `source` (§9.2), consolidate
+   grammar detectors (§dup-3), ref-detector forms (§dup-4), dict/list render (§dup-5), the
+   `Resolve` naming collision (§dup-7).
+
+Each step needs a full-suite baseline diff (WIP branch has ~127 pre-existing reds; only the
+delta matters). Store/signing tests are the tripwire on every step.
+
+---
+
+## 9. Known weaknesses & open forks — ARCHITECT READ THIS
+
+The invariant (§2) is right; the *first-draft flow was not the minimal expression of it*,
+and two forks below are unsettled design, not chosen. Do not treat §4 as final until these
+are resolved.
+
+**9.1 — `Output` must NOT re-implement the `Value` door (the trap I fell into first).**
+The obvious move is `text.Output`/`source.Output`/`variable.Output` each resolving. That
+*duplicates* their `Value` doors — the same "two ways" smell, reintroduced one layer over.
+The minimal form is `Data.Output = Store?raw : Value()-then-write` (§4): resolution lives
+ONLY in `Value`; `Output` calls it. **Red flag during implementation:** if a PR adds an
+`Output` override that resolves, resolution has leaked out of the door again.
+
+**9.2 — Two reference carriers is a fork; `variable` has a split personality.** `source`
+carries typed refs (`%x% as T`); `variable.@this` carries the untyped bare ref (`%x%`). But
+a bare `%x%` is just `%x% as <unknown>` — the same resolve minus a coercion, so
+`variable`-as-value-ref ≈ `source{ T = dynamic }`. Worse, `variable.@this` is ALSO the
+name/write-target type (`set %numb% =`) which must NEVER resolve. Same type, opposite
+behaviors. **Cleaner end state:** `source` carries *all* value references; `variable.@this`
+is *only* names/write-targets. **Caveat:** this partly unwinds the just-landed
+born-as-variable value-slot work (`variable-ref-binds-instance` decision) — architect must
+decide whether to collapse now or keep the two carriers.
+
+**9.3 — The clean `Value()-then-write` breaks verbatim passthrough (unresolved).** A plain
+file read (`read big.json` → `source`, no template) would be MATERIALIZED and RE-SERIALIZED
+on output — exactly what today's `output.write` Peeks to avoid ("writes raw bytes, not a
+re-serialised object"). So the elegant unification conflicts with byte-exact passthrough.
+Any "is this already raw / has no ref?" fast-path risks reintroducing a state/type question
+(§9.1's smell). **This is decision #2 and it may block the minimal design — resolve it
+before building §4.**
+
+**9.4 — "Store-verbatim vs Out-resolved" is one rule; keep it in one place.** If the
+Store/Out branch lives per-type (`mode==Store ? raw : resolve` in each carrier), one type
+forgetting the check silently leaks a resolved value into a `.pr` / signature. §4's
+`Data.Output`-owns-the-switch form avoids this; a per-type design must not.
+
+**9.5 — The resolve primitive + cycle guard have one home, not three.** `resolve(raw)` is
+the STORE's engine (`variable.list.Resolve`/`Get`); `source` and `variable` are callers. The
+cycle guard (`a=%b%,b=%a%`) must live at that primitive, ONCE — today it is copied
+(`variable._resolveDepth`, `Data._outputDepth`, `dict._renderDepth`). Any design leaving two
+guards will drift into an SO on one path and a typed error on another.
+
+**9.6 — Signing boundary is now sharper and more dangerous.** Post-change, Out is *resolved*
+(non-deterministic — depends on live variable state); Store is *raw*. Every hash/signature
+MUST be computed on the Store view only. This was already a landmine (`DataHashMismatch`
+history); the change makes an Out-view hash catastrophically wrong. State it as an invariant
++ a test, do not assume it.
+
+**9.7 — `Peek()` ≠ `Value()` type under Model B.** `%numb% as number` Peeks as a `source`
+but Values as a `number`. Any consumer that branches on the *peeked* type sees the wrong
+type. This is lazy-by-design, but it is a live footgun — several sites branch on `Peek()`
+(the `variable-ref-binds-instance` reach-in in `variable/list` is one). Audit `Peek() is`
+sites for assumptions that the peeked type equals the resolved type.
