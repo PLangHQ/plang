@@ -263,7 +263,7 @@ public sealed class @this : item.@this
         // BEFORE the string→source branch (else it becomes a deferred source and reading
         // the name resolves it as a lookup → throws).
         if (value is string rawName
-            && typeof(app.variable.IRawNameResolvable).IsAssignableFrom(context.App.Type[Name]?.ClrType))
+            && context.App.Type[Name]?.ClrType == typeof(app.variable.@this))
             return app.variable.@this.Resolve(rawName, context);
 
         // A raw form (string / byte[]) → defer through a source declared as THIS type,
@@ -286,7 +286,7 @@ public sealed class @this : item.@this
             var backing = leaf.RawText;
             // A raw-name declared type (variable) NAMES a thing — `%s%` is the variable s, a
             // write-target, not a value to render. Born as the resolved name.
-            if (typeof(app.variable.IRawNameResolvable).IsAssignableFrom(context.App.Type[Name]?.ClrType) && backing != null)
+            if (context.App.Type[Name]?.ClrType == typeof(app.variable.@this) && backing != null)
                 return app.variable.@this.Resolve(backing, context);
 
             // Already this type → hold; refine a matching leaf to the declared kind /

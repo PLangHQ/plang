@@ -67,13 +67,13 @@ public class IncrementalCacheTests
     {
         var propsA = new PropertyBase[]
         {
-            new DataProperty("First", "global::app.data.@this<global::app.type.text.@this>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
-            new DataProperty("Second", "global::app.data.@this<global::app.type.number.@this>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
+            new DataProperty("First", "global::app.data.@this<global::app.type.text.@this>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false, IsName: false),
+            new DataProperty("Second", "global::app.data.@this<global::app.type.number.@this>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false, IsName: false),
         };
         var propsB = new PropertyBase[]
         {
-            new DataProperty("First", "global::app.data.@this<global::app.type.text.@this>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
-            new DataProperty("Second", "global::app.data.@this<global::app.type.number.@this>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
+            new DataProperty("First", "global::app.data.@this<global::app.type.text.@this>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false, IsName: false),
+            new DataProperty("Second", "global::app.data.@this<global::app.type.number.@this>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false, IsName: false),
         };
 
         var a = MakeInfo("X", propsA);

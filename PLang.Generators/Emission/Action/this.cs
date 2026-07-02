@@ -159,16 +159,16 @@ public static class @this
             sb.AppendLine("        }");
         }
 
-        // Missing-required-parameter validation for IRawNameResolvable slots.
-        var rawNameProps = info.Properties
+        // Missing-required-parameter validation for name slots (Data<variable>, non-nullable).
+        var nameProps = info.Properties
             .OfType<DataProperty>()
-            .Where(p => p.IsRawNameResolvable && !p.IsNullable)
+            .Where(p => p.IsName && !p.IsNullable)
             .ToList();
-        if (rawNameProps.Count > 0)
+        if (nameProps.Count > 0)
         {
             sb.AppendLine("        if (action?.Parameters != null)");
             sb.AppendLine("        {");
-            foreach (var prop in rawNameProps)
+            foreach (var prop in nameProps)
             {
                 var lower = prop.Name.ToLowerInvariant();
                 sb.Append($$"""

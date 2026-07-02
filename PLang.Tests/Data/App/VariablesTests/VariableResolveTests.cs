@@ -6,7 +6,7 @@ namespace PLang.Tests.App.VariablesTests;
 // Contract tests for App.Variables.Variable — the typed variable-name carrier introduced
 // in architect/v5 to replace [VariableName] string. Variable.Resolve is invoked by the
 // source generator's Data<T> emit through the Data.Value<T> raw-name dispatch (Variable
-// implements IRawNameResolvable). Symmetry contract: both "%x%" and "x" produce Name == "x".
+// is an IName). Symmetry contract: both "%x%" and "x" produce Name == "x".
 
 public class VariableResolveTests
 {

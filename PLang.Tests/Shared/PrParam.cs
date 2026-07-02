@@ -21,11 +21,10 @@ public static class PrParam
             .ToList();
 
     /// <summary>
-    /// True when the action handler declares this parameter as a raw-name slot —
-    /// <c>Data&lt;T&gt;</c> with <c>T : IRawNameResolvable</c> (Variable). Read
-    /// straight off the handler's property declaration, not a hand-maintained
-    /// list, so every list/loop/variable name slot is covered automatically and
-    /// stays correct as actions change.
+    /// True when the action handler declares this parameter as a name slot —
+    /// <c>Data&lt;variable&gt;</c>. Read straight off the handler's property
+    /// declaration, not a hand-maintained list, so every list/loop/variable name
+    /// slot is covered automatically and stays correct as actions change.
     /// </summary>
     public static bool IsVarNameSlot(string module, string action, string key)
     {
@@ -36,8 +35,7 @@ public static class PrParam
         var t = System.Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
         if (!t.IsGenericType || t.GetGenericTypeDefinition() != typeof(global::app.data.@this<>)) return false;
 
-        return typeof(global::app.variable.IRawNameResolvable)
-            .IsAssignableFrom(t.GetGenericArguments()[0]);
+        return t.GetGenericArguments()[0] == typeof(global::app.variable.@this);
     }
 
     // (module, action) → handler type, discovered once by reflecting [Action] over

@@ -55,12 +55,12 @@ public class ItemConstraintTests
     }
 
     [Test]
-    public async Task Variable_IsItem_SatisfiesSlotAndKeepsIRawNameResolvable()
+    public async Task Variable_IsItem_SatisfiesSlotAndIsName()
     {
-        // Variable : item (slot-fit) AND still IRawNameResolvable (raw-name binding).
+        // Variable : item (slot-fit) AND still IName (raw-name binding).
         // Orthogonal concerns, both held.
         await Assert.That(IsItem(typeof(global::app.variable.@this))).IsTrue();
-        await Assert.That(typeof(global::app.variable.IRawNameResolvable)
+        await Assert.That(typeof(global::app.variable.IName)
             .IsAssignableFrom(typeof(global::app.variable.@this))).IsTrue();
     }
 

@@ -18,7 +18,7 @@ public sealed record @this(
     string? InnerType,    // T inside Data<T>; null for plain Data
     string? DefaultValue, // [Default(...)] literal expression; null when absent
     bool IsSensitive,    // [Sensitive] — masks PrValue/FinalValue in __SnapshotParams
-    bool IsRawNameResolvable)  // T : IRawNameResolvable — emit MissingRequiredParameter guard on null .Value
+    bool IsName)  // T : app.variable.IName — emit MissingRequiredParameter guard on null .Value
     : Base(Name, TypeName)
 {
     public override void EmitProperty(StringBuilder sb)

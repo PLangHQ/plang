@@ -12,7 +12,7 @@ namespace PLang.Tests.Generator.Diagnostics;
 //
 // [VariableName] string was a transitional carve-out; it is deleted in v5.
 // Variable-name slots use Data<Variable> (App.Variables.Variable, with the
-// IRawNameResolvable marker that bypasses %var% substitution in Data.Value<T>()).
+// IName marker that bypasses %var% substitution in Data.Value<T>()).
 //
 // PLNG001 still rejects raw scalars (the original purpose of the diagnostic).
 //

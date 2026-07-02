@@ -7,7 +7,7 @@ namespace PLang.Tests.Generator;
 /// specific Key, not let a null Variable flow into the handler body where
 /// the implicit Variable→string operator would NRE and bubble up as a
 /// generic "StepError". The generator emits a MissingRequiredParameter
-/// ServiceError when a Data&lt;T : IRawNameResolvable&gt; slot resolves to
+/// ServiceError when a Data&lt;variable&gt; slot resolves to
 /// null Value; this test pins the contract one row per handler.
 ///
 /// One row per handler whose contract this pins. Foreach (loop) is intentionally

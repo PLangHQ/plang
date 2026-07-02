@@ -8,7 +8,7 @@ namespace app.variable;
 ///
 /// <see cref="Resolve(string, Actor.Context.@this)"/> is invoked by the source
 /// generator's <c>Data&lt;T&gt;</c> emit through the <c>Data.As&lt;T&gt;</c> raw-name
-/// dispatch — see <see cref="IRawNameResolvable"/>. Both <c>"%x%"</c> and bare
+/// dispatch — see <see cref="IName"/>. Both <c>"%x%"</c> and bare
 /// <c>"x"</c> resolve to the same canonical <c>Name = "x"</c>;
 /// <see cref="WasPercentWrapped"/> preserves the LLM-emission shape for future
 /// build-time validators.
@@ -17,7 +17,7 @@ namespace app.variable;
 /// lands. Variable itself is a value, not a wrapper.
 /// </summary>
 [global::app.Attributes.PlangType]
-public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IRawNameResolvable
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IName
 {
     /// <summary>The canonical variable name (percent-stripped).</summary>
     [Out] public string Name { get; }
@@ -129,7 +129,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// Source-generator convention: types declared as <c>Data&lt;T&gt;</c> on action
     /// properties are constructed from a raw string via this static method. The
     /// <c>Data.As&lt;T&gt;</c> raw-name dispatch reflects to find it (bypassing
-    /// <c>%var%</c> substitution because Variable implements <see cref="IRawNameResolvable"/>).
+    /// <c>%var%</c> substitution because Variable is an <see cref="IName"/>).
     ///
     /// Symmetry with <c>__StripPercent</c>: both <c>%x%</c> and <c>x</c> produce
     /// <c>Name = "x"</c>. <c>WasPercentWrapped</c> records which form was on the
