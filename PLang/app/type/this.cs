@@ -258,6 +258,14 @@ public sealed class @this : item.@this
         // a tool-parameter slot). A JSON-null literal lands here too (the null citizen).
         if (value is null or global::app.type.@null.@this) return new global::app.type.@null.@this(Name, Kind);
 
+        // A raw-name declared type (variable) NAMES a thing — a raw string name is the
+        // variable itself, a write-target, not a value to defer. Born as the name object
+        // BEFORE the string→source branch (else it becomes a deferred source and reading
+        // the name resolves it as a lookup → throws).
+        if (value is string rawName
+            && typeof(app.variable.IRawNameResolvable).IsAssignableFrom(context.App.Type[Name]?.ClrType))
+            return app.variable.@this.Resolve(rawName, context);
+
         // A raw form (string / byte[]) → defer through a source declared as THIS type,
         // born WITH context. The format the type carries picks the reader (scalar → text,
         // container → json, bytes → kind→mime); a caller may override it (the wire knows the

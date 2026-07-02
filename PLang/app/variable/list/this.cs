@@ -7,9 +7,10 @@ using app.actor.context;
 namespace app.variable.list;
 
 /// <summary>
-/// Thread-safe variable storage for App.
+/// Thread-safe variable storage for App. This is the STORE (a collection), not a value
+/// type — the "variable" type name belongs to variable.@this (the raw-name value); this
+/// class must not claim it, or App.Type["variable"] shadows the name-object.
 /// </summary>
-[global::app.Attributes.PlangType("variable")]
 public partial class @this
 {
     // Symmetric write+read for snapshot cloning. Pure config bag — `static readonly`
@@ -116,6 +117,20 @@ public partial class @this
     /// </summary>
     public async System.Threading.Tasks.ValueTask<data.@this> Set(string name, object? value)
     {
+        // A reference value (%x%) binds the referenced Data INSTANCE — not the reference
+        // marker, not its resolved value. Get the instance (lazy stays lazy) and alias it
+        // under `name`. Storing the marker as-is would go stale (!data rebinds every action)
+        // and a self-assign (`set %a% = %a%`) would cycle on the value door; instance-binding
+        // avoids both. The value door is never opened here — no eager read.
+        if (value is data.@this reference && reference.Peek() is global::app.variable.@this named)
+        {
+            data.@this source = await Get(named.Name);
+            if (!source.IsInitialized)
+                return _context.Error(new global::app.error.Error(
+                    $"%{named.Name}% is not set — nothing to assign.", "VariableNotFound", 404));
+            value = source;
+        }
+
         // Names arrive clean — the builder normalizes them before the .pr, and runtime C# callers
         // construct clean names; the store does not re-process at runtime.
 
