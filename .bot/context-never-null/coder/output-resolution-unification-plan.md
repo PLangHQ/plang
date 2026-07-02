@@ -144,26 +144,33 @@ miss it** → a template born as a source is written **literally**. This is the 
    red-flag special-cases). Optional now vs deferred: consolidating the grammar detectors
    (#3), the ref-detector forms (#4), dict/list render (#5), the `Resolve` naming (#7).
 
-6. **How does a TYPED reference born — and who resolves it?** A full-match `%var%` is not
-   always `variable`; it borns as its DECLARED type. Today the types split two ways, and
-   THAT split is itself the smell:
-   - **Reference-carriers** born as their type and resolve their own ref in `Value`:
-     `text` (`Template`), `path` (`_location`), `variable` (`Name`), `source` (raw).
-   - **Non-carriers** (`number`, `bool`, `datetime`, `image`, `null`) inherit base `Value`
-     → return `this` → cannot hold a ref. A `%var% as number` must born as a carrier
-     (`variable`/`text`) and be coerced to number on read (`As<number>`).
-   So `%var% as path` resolves itself (Model B); `%var% as number` resolves elsewhere and
-   coerces (Model A). **Decide one uniform model:**
-   - **Model B (item-owns-it, fully uniform):** every type can born carrying a `%var%` and
-     resolves it in its own door. Scalars gain a reference mode. Maximally OBP; largest
-     surface (every type touched).
-   - **Model A (few carriers + coerce):** a reference is ALWAYS a carrier
-     (`variable`/`text`); the declared scalar type is a read-side coercion, never a born
-     form. Scalars stay concrete; fewer types touched; the "declared type" rides as
-     coercion metadata, not as the born type.
-   This decision governs how many types §4's `Output`/`Value` work touches, and whether
-   `path`'s self-resolving location is the template for all types or the exception to fold
-   away. It is upstream of everything else here.
+6. **How does a TYPED reference born — and who resolves it? → DECIDED: Model B (Ingi).**
+   ANY type can be a `%var%`. `set %numb% = %userInput% as number` → the value's declared
+   type is `number`, so it borns as a `number` reference (`%numb%` reads as a number).
+   **Implemented via the universal carrier `source`, NOT by teaching every scalar about
+   refs.** The carrier already exists (`type.Build:276` borns `%x% as T` as
+   `source{ raw, type=T, template }`); the gap is that resolution is done TWO ways:
+   - `text`'s reader honors `ReadContext.Template` and resolves the `%ref%`;
+   - `number`/`bool`/`datetime`/`image` readers IGNORE it and just parse their token — so
+     `%userInput% as number` fails today (`number/serializer/Reader.cs` parses raw
+     `"%userInput%"` → `@null`).
+
+   **The rule for Model B:** `source` resolves its `%ref%` **once, uniformly** (via the
+   variable engine), THEN coerces the resolved value to the declared type `T`:
+   ```
+   source.Value / source.Output (mode != Store):
+       1. resolved = resolve(raw, context)      // ONE place — source. Uniform for every T.
+       2. return T.Create(resolved)             // number/bool/datetime stay concrete & dumb
+   ```
+   Scalars are never touched — they never learn about `%ref%`. `variable.@this` stays as
+   the carrier for an UNTYPED bare full-ref (`write out %var%`, type = whatever `var`
+   holds); `%x% as T` rides `source{T}`. `text` (embedded template) and `path`
+   (`_location`) either fold their resolution into this single `source` seam or remain as
+   already-materialized-form resolvers — architect to decide whether they collapse into
+   `source` or stay as post-materialization refiners.
+
+   This is upstream of everything: it says the ONE reference-resolution seam is `source`
+   (+ `variable` for the untyped ref), and §4's `Output` work delegates to it.
 
 ---
 
