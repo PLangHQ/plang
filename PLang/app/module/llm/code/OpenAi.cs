@@ -640,7 +640,7 @@ public sealed class OpenAi : ILlm
             // Return error Data so the caller sees the parse failure with full exception
             return new List<data.@this>
             {
-                global::app.data.@this.FromError(ActionError.FromException(ex, "JsonParseError", 400))
+                context.Error(ActionError.FromException(ex, "JsonParseError", 400))
             };
         }
 

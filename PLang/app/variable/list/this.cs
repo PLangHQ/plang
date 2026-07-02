@@ -641,8 +641,11 @@ public partial class @this
         where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
         var existing = await Get(name);
-        if (existing == null || !existing.IsInitialized)
-            return data.@this<T>.Uninitialized(name);
+        // Get never returns null and hands back a context-ful NotFound on a miss — return
+        // its typed view (a value-less Data<T> with context intact), don't synthesize a
+        // context-less Uninitialized.
+        if (!existing.IsInitialized)
+            return existing.As<T>();
         if (existing is data.@this<T> already) return already;          // identity hop
         var item = await existing.Value<T>();                          // T.Create(await Value(), existing)
         if (item == null) return data.@this<T>.From(existing);         // decline carries the error

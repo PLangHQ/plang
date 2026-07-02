@@ -159,7 +159,9 @@ public sealed class @this
             var vars = _engine.User.Context.Variable;
             foreach (var v in Variables.Where(v => v.Event.HasValue))
             {
-                var placeholder = data.@this.Uninitialized(v.Name);
+                // Born with context (Uninitialized == a value-less NotFound); the watched
+                // variable's placeholder must carry a context like every other Data.
+                var placeholder = _engine.User.Context.NotFound(v.Name);
                 if (v.Event == DebugEvent.OnCreate)
                     placeholder.OnCreate.Add((data) => LogEvent(v.Name, "CREATED", data));
                 if (v.Event == DebugEvent.OnChange)

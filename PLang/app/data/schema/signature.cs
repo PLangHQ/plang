@@ -112,7 +112,7 @@ public sealed class signature : ISchemaReader
                 .RunAction(verifyAction, context)
                 .GetAwaiter().GetResult();
             if (!verifyResult.Success)
-                return Data.FromError(verifyResult.Error
+                return context.Error(verifyResult.Error
                     ?? new global::app.error.ServiceError("Signature verification failed", "SignatureInvalid", 400));
         }
 

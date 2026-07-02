@@ -50,7 +50,7 @@ public partial class discover : IContext
 
         // List routes through AuthGate(Read). Out-of-root: prompt or denial.
         var listed = await root.List((await Pattern.Value())!.Clr<string>()!, (await Recursive.Value())!.Value);
-        if (!listed.Success) return data.@this<global::app.type.list.@this<global::app.tester.test.@this>>.FromError(listed.Error!);
+        if (!listed.Success) return Context.Error<global::app.type.list.@this<global::app.tester.test.@this>>(listed.Error!);
         if (await listed.Value() == null) return empty;
 
         var include = Context.App.Tester.Include;

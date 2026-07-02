@@ -504,7 +504,7 @@ public sealed partial class @this : IAsyncDisposable
         where TResult : global::app.type.item.@this, global::app.type.item.ICreate<TResult>
     {
         var result = await RunAction(handler, context);
-        if (!result.Success) return data.@this<TResult>.FromError(result.Error!);
+        if (!result.Success) return context.Error<TResult>(result.Error!);
         return data.@this<TResult>.Ok((TResult)(await result.Value())!);
     }
 

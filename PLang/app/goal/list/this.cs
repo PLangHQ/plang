@@ -367,9 +367,9 @@ public sealed class @this
             // land wired). This collection only wires the parsed goal into the registry.
             var readResult = await prPath.ReadText();
             if (!readResult.Success || readResult.Peek().IsNull)
-                return data.@this.FromError(readResult.Error ?? new Error($"Failed to read goal file: {prPath}"));
+                return app.System.Context.Error(readResult.Error ?? new Error($"Failed to read goal file: {prPath}"));
             if (await readResult.Value() is not goal.@this primary)
-                return data.@this.FromError(new Error($"Failed to parse goal file: {prPath}"));
+                return app.System.Context.Error(new Error($"Failed to parse goal file: {prPath}"));
 
             foreach (var step in primary.Steps)
             {
@@ -383,7 +383,7 @@ public sealed class @this
         }
         catch (Exception ex)
         {
-            return data.@this.FromError(Error.FromException(ex));
+            return app.System.Context.Error(Error.FromException(ex));
         }
     }
 
