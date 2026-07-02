@@ -11,7 +11,7 @@ public class ContextVariableTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/test");
+        _app = TestApp.Create("/test");
     }
 
     [Test]

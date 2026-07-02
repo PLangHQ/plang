@@ -15,7 +15,7 @@ public class Stage4_TypeHintPrecedenceTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this(System.IO.Path.Combine(
+        _app = TestApp.Create(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-stage4hint-" + System.Guid.NewGuid().ToString("N")[..8]));
     }
 

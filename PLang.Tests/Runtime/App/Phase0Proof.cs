@@ -172,7 +172,7 @@ public class Phase0Proof
     public async Task Phase05_CultureInfo_DefaultsToInvariant()
     {
         // INPUT: new Engine
-        await using var engine = new global::app.@this("/app");
+        await using var engine = TestApp.Create("/app");
 
         // OUTPUT: culture defaults to InvariantCulture
         await Assert.That(engine.Culture).IsEqualTo(System.Globalization.CultureInfo.InvariantCulture);

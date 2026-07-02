@@ -18,7 +18,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_stage3_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir);
+        _app = TestApp.Create(_tempDir);
     }
 
     public void Dispose()

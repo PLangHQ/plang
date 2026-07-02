@@ -35,7 +35,7 @@ public class ImageValueTests
 
     [Test] public async Task Image_FromFileRead_PathReferencesSourceFile()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-img-" + System.Guid.NewGuid().ToString("N")[..8]));
         var raw = System.IO.Path.Combine(app.AbsolutePath, "photo.png");
         var p = global::app.type.path.@this.Resolve(raw, app.User.Context);

@@ -17,7 +17,7 @@ public class SettingsApplyTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new PLangEngine("/app");
+        _app = TestApp.Create("/app");
         _ctx = new global::app.actor.context.@this(_app, _app.User, new Variables(_app.User.Context));
     }
 

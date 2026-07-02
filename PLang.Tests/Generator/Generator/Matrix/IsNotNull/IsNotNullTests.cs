@@ -8,7 +8,7 @@ public class IsNotNullPropTests
     [Test]
     public async Task IsNotNullProp_NonNullValue_PassesValidation()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<IsNotNullProp>(app,
             parameters: new[] { ("required", (object?)"value") });
         await result.Data.IsSuccess();
@@ -19,7 +19,7 @@ public class IsNotNullPropTests
     [Test]
     public async Task IsNotNullProp_NullValue_RejectedWithError()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<IsNotNullProp>(app,
             parameters: new[] { ("required", (object?)null) });
         await result.Data.IsFailure();
@@ -29,7 +29,7 @@ public class IsNotNullPropTests
     [Test]
     public async Task IsNotNullProp_Missing_RejectedWithError()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         // No "required" parameter at all — but the [IsNotNull] check only fires when
         // the parameter IS present with null Value (per current generator contract).
         // Missing parameter is a different validation path. Either rejection counts as
@@ -42,7 +42,7 @@ public class IsNotNullPropTests
     [Test]
     public async Task IsNotNullProp_ErrorMessage_IdentifiesProperty()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<IsNotNullProp>(app,
             parameters: new[] { ("required", (object?)null) });
         await Assert.That(result.Data.Error!.Message).Contains("required");

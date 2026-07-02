@@ -16,14 +16,14 @@ public class ModuleAddTests
     {
         var assemblyPath = typeof(global::app.@this).Assembly.Location;
         var assemblyDir = global::System.IO.Path.GetDirectoryName(assemblyPath)!;
-        var app = new global::app.@this(assemblyDir);
+        var app = TestApp.Create(assemblyDir);
         return (app.User.Context, app, assemblyPath);
     }
 
     [Test]
     public async Task Add_NonexistentPath_ReturnsError()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var context = app.User.Context;
 
         var add = new Add

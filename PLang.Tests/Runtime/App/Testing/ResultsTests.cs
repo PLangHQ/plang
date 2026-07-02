@@ -15,7 +15,7 @@ public class ResultsTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/test");
+        _app = TestApp.Create("/test");
     }
 
     private static global::app.tester.Run NewRun(string name = "T") =>

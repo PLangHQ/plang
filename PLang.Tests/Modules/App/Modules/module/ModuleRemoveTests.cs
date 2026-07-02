@@ -11,7 +11,7 @@ public class ModuleRemoveTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new PLangEngine("/app");
+        _app = TestApp.Create("/app");
     }
 
     [After(Test)]

@@ -22,7 +22,7 @@ public class QueryImageTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_llm_img_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = TestApp.Create(_tempDir);
         _handler = LlmTestHelper.SetupMockHttp(_app);
     }
 

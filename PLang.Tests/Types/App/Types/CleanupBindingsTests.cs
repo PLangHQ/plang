@@ -51,7 +51,7 @@ public class CleanupBindingsTests
 
     [Test] public async Task DateTime_Parse_Iso8601_WithTimezone_RoundTrips()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-dt-" + System.Guid.NewGuid().ToString("N")[..8]));
         var dt = global::app.type.datetime.@this.Resolve("2024-03-15T10:30:00+02:00", app.User.Context);
         await Assert.That(dt).IsNotNull();
@@ -61,7 +61,7 @@ public class CleanupBindingsTests
 
     [Test] public async Task Duration_Parse_DotColonForm_RoundTrips()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-d1-" + System.Guid.NewGuid().ToString("N")[..8]));
         var d = global::app.type.duration.@this.Resolve("1.02:03:04", app.User.Context);
         await Assert.That(d).IsNotNull();
@@ -71,7 +71,7 @@ public class CleanupBindingsTests
 
     [Test] public async Task Duration_Parse_Iso8601_PT5M_RoundTrips()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-d2-" + System.Guid.NewGuid().ToString("N")[..8]));
         var d = global::app.type.duration.@this.Resolve("PT5M", app.User.Context);
         await Assert.That(d).IsNotNull();

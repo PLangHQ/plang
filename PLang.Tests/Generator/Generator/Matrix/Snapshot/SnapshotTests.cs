@@ -9,7 +9,7 @@ public class SnapshotOnErrorTests
     [Test]
     public async Task SnapshotOnError_ErrorMidRun_AttachesParamsToError()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<SnapshotOnError>(app,
             parameters: new[] { ("first", (object?)"a"), ("second", (object?)42) });
 
@@ -21,7 +21,7 @@ public class SnapshotOnErrorTests
     [Test]
     public async Task SnapshotOnError_AccessedProperty_FinalValuePresent()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<SnapshotOnError>(app,
             parameters: new[] { ("first", (object?)"hello"), ("second", (object?)42) });
 
@@ -33,7 +33,7 @@ public class SnapshotOnErrorTests
     [Test]
     public async Task SnapshotOnError_UnaccessedProperty_FinalValueNull()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<SnapshotOnError>(app,
             parameters: new[] { ("first", (object?)"hello"), ("second", (object?)42) });
 
@@ -48,7 +48,7 @@ public class SnapshotOnErrorTests
     [Test]
     public async Task SnapshotOnError_PrValueIsRaw_NoResolution()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<SnapshotOnError>(app,
             parameters: new[] { ("first", (object?)"hello-raw"), ("second", (object?)42) });
 
@@ -60,7 +60,7 @@ public class SnapshotOnErrorTests
     [Test]
     public async Task SnapshotOnError_HandlerSucceeds_NoSnapshotAttached()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<StringPlain>(app,
             parameters: new[] { ("path", (object?)"hello") });
         await result.Data.IsSuccess();
@@ -74,7 +74,7 @@ public class SnapshotOnErrorTests
     [Test]
     public async Task SnapshotOnError_SensitiveProperty_MasksPrValueAndFinalValue()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<SensitiveSnapshot>(app,
             parameters: new[]
             {
@@ -106,7 +106,7 @@ public class SnapshotOnErrorTests
     [Skip("The error-snapshot of a null-resolving [Sensitive] param is owned by the eager dispatch-resolve; reworked by the pure-lazy source-gen refactor. See todos 2026-06-15.")]
     public async Task SnapshotOnError_SensitiveProperty_NullPrValue_StaysNull()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<SensitiveSnapshot>(app,
             parameters: new[]
             {

@@ -177,7 +177,7 @@ public class LibrariesTests
     public async Task GetCodeGenerated_BuiltInAction_ReturnsAction()
     {
         var modules = new global::app.module.@this();
-        await using var engine = new global::app.@this("/app", modules);
+        await using var engine = TestApp.Create("/app", modules);
         var context = engine.User.Context;
 
         var (action, error) = modules.GetCodeGenerated(new PrAction { Module = "variable", ActionName = "set" });
@@ -192,7 +192,7 @@ public class LibrariesTests
         var modules = new global::app.module.@this();
         var action = new MockCodeGenHandler();
         modules.Register("custom", "run", action);
-        await using var engine = new global::app.@this("/app", modules);
+        await using var engine = TestApp.Create("/app", modules);
         var context = engine.User.Context;
 
         var (result, error) = modules.GetCodeGenerated(new PrAction { Module = "custom", ActionName = "run" });
@@ -206,7 +206,7 @@ public class LibrariesTests
     {
         var modules = new global::app.module.@this();
         modules.Register("legacy", "do", new MockHandler());
-        await using var engine = new global::app.@this("/app", modules);
+        await using var engine = TestApp.Create("/app", modules);
         var context = engine.User.Context;
 
         var (action, error) = modules.GetCodeGenerated(new PrAction { Module = "legacy", ActionName = "do" });
@@ -220,7 +220,7 @@ public class LibrariesTests
     public async Task GetCodeGenerated_NotFound_ReturnsActionNotFound()
     {
         var modules = new global::app.module.@this();
-        await using var engine = new global::app.@this("/app", modules);
+        await using var engine = TestApp.Create("/app", modules);
         var context = engine.User.Context;
 
         var (action, error) = modules.GetCodeGenerated(new PrAction { Module = "nonexistent_xyz", ActionName = "nope" });
@@ -239,7 +239,7 @@ public class LibrariesTests
         modules.Register("custom", "run", handler1);
         modules.Register("custom", "run", handler2);
 
-        await using var engine = new global::app.@this("/app", modules);
+        await using var engine = TestApp.Create("/app", modules);
         var context = engine.User.Context;
 
         var (result, error) = modules.GetCodeGenerated(new PrAction { Module = "custom", ActionName = "run" });
@@ -252,7 +252,7 @@ public class LibrariesTests
     public async Task GetCodeGenerated_TypeBased_CreatesNewInstance()
     {
         var modules = new global::app.module.@this();
-        await using var engine = new global::app.@this("/app", modules);
+        await using var engine = TestApp.Create("/app", modules);
         var context = engine.User.Context;
 
         // variable.set is type-registered (discovered via [Action] attribute)

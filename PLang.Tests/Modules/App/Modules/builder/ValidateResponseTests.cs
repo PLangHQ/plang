@@ -9,7 +9,7 @@ public class ValidateResponseTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/app");
+        _app = TestApp.Create("/app");
     }
 
     private Goal MakeGoal(int stepCount)

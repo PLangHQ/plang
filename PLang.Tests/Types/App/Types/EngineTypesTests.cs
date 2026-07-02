@@ -608,7 +608,7 @@ public class EngineTypesTests
     [Test]
     public async Task Add_CustomType_LazyDerivationUsesEngineTypes()
     {
-        await using var engine = new global::app.@this("/test");
+        await using var engine = TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
 
         // Add a custom type mapping that static TypeMapping does NOT have
@@ -630,7 +630,7 @@ public class EngineTypesTests
     [Test]
     public async Task Engine_HasTypesProperty()
     {
-        await using var engine = new global::app.@this("/test");
+        await using var engine = TestApp.Create("/test");
 
         await Assert.That(engine.Type).IsNotNull();
         await Assert.That(engine.Type.Clr("string")).IsEqualTo(typeof(string));

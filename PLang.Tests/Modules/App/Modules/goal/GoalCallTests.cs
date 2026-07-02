@@ -10,7 +10,7 @@ public class GoalCallTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/app");
+        _app = TestApp.Create("/app");
         // Register a stub goal that call.cs can find
         _app.Goal.Add(new global::app.goal.@this
         {

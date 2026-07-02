@@ -16,7 +16,7 @@ public class RuntimeDoubleWrapTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::app.@this("/app");
+    public void Setup() => _app = TestApp.Create("/app");
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
@@ -135,7 +135,7 @@ public class RuntimeDoubleWrapTests
     {
         // where wraps a list/dict value (owned construction), never an inner Data —
         // so Data<object>.Ok does not double-wrap.
-        var app = new global::app.@this("/app");
+        var app = TestApp.Create("/app");
         var context = app.User.Context;
         var users = new global::app.type.list.@this { Context = context };
         var u1 = new global::app.type.dict.@this { Context = context }; u1.Set(new global::app.data.@this("age", 25L, context: context)); users.Add(new global::app.data.@this("", u1));

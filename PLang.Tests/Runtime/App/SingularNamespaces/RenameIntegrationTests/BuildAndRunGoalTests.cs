@@ -16,7 +16,7 @@ public class BuildAndRunGoalTests
     // (variable.Set, output.Write, …) resolve through the renamed namespaces.
     [Test] public async Task SmallGoal_BuildsAndRuns_EndToEnd_AfterRename()
     {
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         // Smoke: the renamed namespaces compile and the renamed-module action types exist.
         var setType = app.Module.GetActionType("variable", "set");
         await Assert.That(setType).IsNotNull();
@@ -31,7 +31,7 @@ public class BuildAndRunGoalTests
     // the generated handler resolved at dispatch.
     [Test] public async Task GeneratedActionHandler_ResolvesViaAppModule_UnderNewShape()
     {
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         var fileType = app.Module.GetActionType("file", "read");
         await Assert.That(fileType).IsNotNull();
         await Assert.That(fileType!.Namespace).StartsWith("app.module.file");

@@ -9,7 +9,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() { _app = new global::app.@this("/app"); }
+    public void Setup() { _app = TestApp.Create("/app"); }
 
     private static readonly byte[] GifBytes = new byte[]
     {

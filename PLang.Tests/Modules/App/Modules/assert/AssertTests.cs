@@ -18,7 +18,7 @@ public class AssertTests
 {
     private (global::app.actor.context.@this context, Variables memory) CreateContext()
     {
-        var app = new global::app.@this("/app");
+        var app = TestApp.Create("/app");
         return (app.User.Context, app.User.Context.Variable);
     }
 
@@ -220,7 +220,7 @@ public class AssertTests
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-assertpath-" + tag + "-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
-        return (new global::app.@this(root), root);
+        return (TestApp.Create(root), root);
     }
 
     [Test]

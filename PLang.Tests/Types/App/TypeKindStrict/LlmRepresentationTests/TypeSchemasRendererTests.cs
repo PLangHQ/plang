@@ -11,7 +11,7 @@ public class TypeSchemasRendererTests
 {
     [Test] public async Task Schema_Kinds_AdvertisesNumberPrecisions()
     {
-        await using var app = new global::app.@this("/test");
+        await using var app = TestApp.Create("/test");
         var kinds = (app.Module.Schema.Build()).Kinds;
         await Assert.That(kinds.ContainsKey("number")).IsTrue();
         await Assert.That(kinds["number"]).Contains("int");
@@ -20,7 +20,7 @@ public class TypeSchemasRendererTests
 
     [Test] public async Task Schema_Kinds_AdvertisesTextExtensions()
     {
-        await using var app = new global::app.@this("/test");
+        await using var app = TestApp.Create("/test");
         var kinds = (app.Module.Schema.Build()).Kinds;
         await Assert.That(kinds.ContainsKey("text")).IsTrue();
         await Assert.That(kinds["text"]).Contains("md");
@@ -28,7 +28,7 @@ public class TypeSchemasRendererTests
 
     [Test] public async Task Schema_Kinds_AdvertisesImageExtensions()
     {
-        await using var app = new global::app.@this("/test");
+        await using var app = TestApp.Create("/test");
         var kinds = (app.Module.Schema.Build()).Kinds;
         await Assert.That(kinds.ContainsKey("image")).IsTrue();
         await Assert.That(kinds["image"]).Contains("gif");
@@ -37,7 +37,7 @@ public class TypeSchemasRendererTests
 
     [Test] public async Task Schema_Types_StillCarriesRecordFields()
     {
-        await using var app = new global::app.@this("/test");
+        await using var app = TestApp.Create("/test");
         var record = (app.Module.Schema.Build()).Types
             .FirstOrDefault(t => t.Fields != null && t.Fields.Count > 0);
         await Assert.That(record).IsNotNull();
@@ -45,7 +45,7 @@ public class TypeSchemasRendererTests
 
     [Test] public async Task Schema_Types_StillCarriesEnumValues()
     {
-        await using var app = new global::app.@this("/test");
+        await using var app = TestApp.Create("/test");
         var anEnum = (app.Module.Schema.Build()).Types
             .FirstOrDefault(t => t.Values != null && t.Values.Count > 0);
         await Assert.That(anEnum).IsNotNull();
@@ -56,7 +56,7 @@ public class TypeSchemasRendererTests
         // The `type` entity is taught explicitly in the prompt — it does NOT
         // appear as a record/scalar entry (rendering it as a catalog scalar
         // confuses the LLM).
-        await using var app = new global::app.@this("/test");
+        await using var app = TestApp.Create("/test");
         var schema = app.Module.Schema.Build();
         await Assert.That(schema.Types.Any(t => t.Name == "type")).IsFalse();
     }

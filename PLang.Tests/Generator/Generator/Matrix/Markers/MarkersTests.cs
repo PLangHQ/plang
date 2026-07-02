@@ -8,7 +8,7 @@ public class IContextHandlerTests
     [Test]
     public async Task IContextHandler_ContextAssigned_BeforeRun()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<IContextHandler>(app);
         // Handler.Run returns Data.Ok(Context != null) — true means it was assigned.
         await Assert.That((await result.Data.Value())?.ToString()).IsEqualTo("true");
@@ -17,7 +17,7 @@ public class IContextHandlerTests
     [Test]
     public async Task IContextHandler_ContextSameInstance_AsExecuteAsyncArg()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var action = new PrAction { Module = "matrix.markers", ActionName = "icontexthandler" };
         var (h, err) = await new IContextHandler().Resolve(action, app.User.Context);
         await Assert.That(err).IsNull();
@@ -30,7 +30,7 @@ public class IChannelHandlerTests
     [Test]
     public async Task IChannelHandler_ChannelsAssigned_BeforeRun()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         global::app.@this.WireDefaultConsoleChannels(app.User);
         var result = await MatrixRunner.RunAsync<IChannelHandler>(app);
         await Assert.That((await result.Data.Value())?.ToString()).IsEqualTo("true");
@@ -42,7 +42,7 @@ public class IActionHandlerTests
     [Test]
     public async Task IActionHandler_ActionAssigned_BeforeRun()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<IActionHandler>(app);
         await Assert.That((await result.Data.Value())?.ToString()).IsEqualTo("true");
     }
@@ -53,7 +53,7 @@ public class IStepHandlerTests
     [Test]
     public async Task IStepHandler_StepAssigned_BeforeRun()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var step = new Step { Index = 0, Text = "step" };
         var result = await MatrixRunner.RunAsync<IStepHandler>(app, step: step);
         await Assert.That((await result.Data.Value())?.ToString()).IsEqualTo("true");
@@ -65,7 +65,7 @@ public class IStaticHandlerTests
     [Test]
     public async Task IStaticHandler_StaticAssigned_BeforeRun()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<IStaticHandler>(app);
         await Assert.That((await result.Data.Value())?.ToString()).IsEqualTo("true");
     }
@@ -78,7 +78,7 @@ public class MultiMarkerHandlerTests
     [Test]
     public async Task MultiMarker_AllSlotsAssigned_BeforeRun()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         global::app.@this.WireDefaultConsoleChannels(app.User);
 
         var context = await MatrixRunner.RunAsync<IContextHandler>(app);

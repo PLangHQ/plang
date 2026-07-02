@@ -8,7 +8,7 @@ public class ProviderPropTests
     [Test]
     public async Task ProviderProp_Registered_InjectedBeforeRun()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         app.Code.Register<IFakeProvider>(new FakeProvider());
 
         var result = await MatrixRunner.RunAsync<ProviderProp>(app);
@@ -19,7 +19,7 @@ public class ProviderPropTests
     [Test]
     public async Task ProviderProp_ReadTwice_SameInstance()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var provider = new FakeProvider();
         app.Code.Register<IFakeProvider>(provider);
 
@@ -38,7 +38,7 @@ public class ProviderMissingTests
     [Test]
     public async Task ProviderMissing_Unregistered_ShortCircuitsWithError()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         // IUnregisteredProvider is NOT registered.
 
         var result = await MatrixRunner.RunAsync<ProviderMissing>(app);
@@ -49,7 +49,7 @@ public class ProviderMissingTests
     [Test]
     public async Task ProviderMissing_ErrorMessage_IdentifiesProviderType()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<ProviderMissing>(app);
         await Assert.That(result.Data.Error!.Message).Contains("IUnregisteredProvider");
     }

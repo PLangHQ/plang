@@ -16,7 +16,7 @@ public class TestingClassTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/test");
+        _app = TestApp.Create("/test");
     }
 
     // Fresh Testing starts disabled — today's stub behavior is preserved.

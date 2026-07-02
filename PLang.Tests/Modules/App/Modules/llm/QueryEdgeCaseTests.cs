@@ -23,7 +23,7 @@ public class QueryEdgeCaseTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_llm_edge_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = TestApp.Create(_tempDir);
         _handler = LlmTestHelper.SetupMockHttp(_app);
     }
 
@@ -162,7 +162,7 @@ public class QueryEdgeCaseTests
         var tempDir2 = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_llm_noprov_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(tempDir2);
-        var engine2 = new PLangEngine(tempDir2);
+        var engine2 = TestApp.Create(tempDir2);
 
         try
         {

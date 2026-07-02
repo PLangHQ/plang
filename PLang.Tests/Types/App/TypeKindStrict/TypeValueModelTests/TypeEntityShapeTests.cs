@@ -35,7 +35,7 @@ public class TypeEntityShapeTests
         var t = typeof(TypeEntity);
         await Assert.That(t.GetProperty("ClrType", BindingFlags.Public | BindingFlags.Instance)).IsNull();
         // Interior access still works through the registry — App.Type.Clr(name).
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         await Assert.That(app.Type.Clr("int")).IsEqualTo(typeof(int));
     }
 
@@ -55,7 +55,7 @@ public class TypeEntityShapeTests
 
     [Test] public async Task Entity_Kinds_PopulatedForNumber()
     {
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         var num = app.Type["number"];
         await Assert.That(num.Kinds).IsNotNull();
         await Assert.That(num.Kinds!).Contains("int");
@@ -66,7 +66,7 @@ public class TypeEntityShapeTests
 
     [Test] public async Task Entity_Compressible_DerivesFromName()
     {
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         // Compressible reads App.Format.Compressible(Name). Pre-stamped image
         // entity carries a Context, so the path runs end-to-end without throw.
         var image = app.Type["image"];

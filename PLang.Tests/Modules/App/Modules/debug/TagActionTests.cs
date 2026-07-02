@@ -12,7 +12,7 @@ public class TagActionTests
         // dispatch pushes another Call under it. Tag must write to the OUTER (caller),
         // not its own Call which pops immediately when Run returns. Otherwise the next
         // step's assertion can't see the tag.
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         await using var outer = app.CallStack.Push(MakeAction("Goal"));
         await using var tagCall = app.CallStack.Push(MakeAction("TagDispatch", module: "debug", actionName: "tag"));
         var action = new Tag
@@ -32,7 +32,7 @@ public class TagActionTests
     [Test]
     public async Task Tag_LabelForm_SetsTagsLabelTrue()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         await using var call = app.CallStack.Push(MakeAction("Goal"));
         var action = new Tag
         {
@@ -47,7 +47,7 @@ public class TagActionTests
     [Test]
     public async Task Tag_NoOpWhenCurrentNull()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         // No Push — Current is null.
         var action = new Tag
         {
@@ -61,7 +61,7 @@ public class TagActionTests
     [Test]
     public async Task Tag_StartsEmpty_WriteGoesThroughTagsType()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         await using var call = app.CallStack.Push(MakeAction("Goal"));
         await Assert.That(call.Tags.Count).IsEqualTo(0);
 

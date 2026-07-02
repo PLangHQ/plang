@@ -31,7 +31,7 @@ public class MarkdownTeachingOrphanTests
         _mdRoot = Path.Combine(_tempDir, "mdroot");
         Directory.CreateDirectory(Path.Combine(_mdRoot, "fixturemod"));
 
-        _app = new PLangEngine(_tempDir);
+        _app = TestApp.Create(_tempDir);
         _app.Module.MarkdownTeachingRoot = _mdRoot;
         _app.Module.RegisterType("fixturemod", "setvalue", typeof(FixtureAction));
 

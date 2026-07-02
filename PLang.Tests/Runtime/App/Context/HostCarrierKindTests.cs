@@ -15,7 +15,7 @@ public class HostCarrierKindTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::app.@this("/test");
+    public void Setup() => _app = TestApp.Create("/test");
 
     // The %!app% handle is a lazy computed cell; its kind materialises when the
     // value is read. Read the value, then re-home it in a Data so Type/Kind are

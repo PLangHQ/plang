@@ -22,7 +22,7 @@ public class ValidatePathTests
         root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-vp-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        return new global::app.@this(root);
+        return TestApp.Create(root);
     }
 
     [Test] public async Task PlangRootedPath_GetsRootPrefix()

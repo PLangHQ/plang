@@ -345,7 +345,7 @@ public class StepErrorTests
     public async Task FromException_CreatesStepErrorWithStep()
     {
         var ex = new Exception("Step crashed");
-        await using var engine = new global::app.@this("/app");
+        await using var engine = TestApp.Create("/app");
         using var context = new global::app.actor.context.@this(engine, engine.User);
         var step = new Step { Text = "test step" };
         context.Step = step;

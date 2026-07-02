@@ -9,7 +9,7 @@ public class MathTests
 {
     private (global::app.actor.context.@this context, Variables memory) CreateContext()
     {
-        var app = new global::app.@this("/app");
+        var app = TestApp.Create("/app");
         return (app.User.Context, app.User.Context.Variable);
     }
 

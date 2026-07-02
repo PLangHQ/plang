@@ -15,7 +15,7 @@ public class MyIdentityResolverTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_myid_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = TestApp.Create(_tempDir);
         global::PLang.Tests.TestApp.UseSharedIdentity(_app);
     }
 

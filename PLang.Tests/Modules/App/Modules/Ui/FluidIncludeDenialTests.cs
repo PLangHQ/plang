@@ -34,7 +34,7 @@ public class FluidIncludeDenialTests
         root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-fluid-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        return new PLangEngine(root);
+        return TestApp.Create(root);
     }
 
     [Test] public async Task FluidInclude_TemplateOutsideRoot_DeniedByAuthGate()

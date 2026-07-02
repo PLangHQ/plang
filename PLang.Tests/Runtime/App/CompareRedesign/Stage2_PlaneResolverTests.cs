@@ -52,7 +52,7 @@ public class Stage2_PlaneResolverTests
         // %x!type.list% post-narrow → [dict, file] (newest at index 0)
         var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-st2chain-" + System.Guid.NewGuid().ToString("N")[..8]);
         Directory.CreateDirectory(dir);
-        await using var app = new global::app.@this(dir);
+        await using var app = TestApp.Create(dir);
         try
         {
             File.WriteAllText(System.IO.Path.Combine(dir, "c.json"), "{\"a\":1}");

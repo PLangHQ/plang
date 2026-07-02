@@ -30,7 +30,7 @@ public class SqliteAuthorizeDenialTests
         root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-sqlite-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        return new PLangEngine(root);
+        return TestApp.Create(root);
     }
 
     [Test] public async Task SqliteOpen_DataSourceOutsideRoot_DeniedAnswer_DoesNotOpenDb()

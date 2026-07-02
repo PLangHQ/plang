@@ -17,7 +17,7 @@ public class ImageParseTests
     private static readonly byte[] JpegBytes = new byte[] { 0xFF, 0xD8, 0xFF, 0xE0, 0x00 };
 
     private static global::app.@this NewApp()
-        => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        => TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-imgparse-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     [Test] public async Task Resolve_FilePath_Constructs_FromFileBytes()

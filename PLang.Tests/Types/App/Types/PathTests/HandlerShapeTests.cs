@@ -101,7 +101,7 @@ public class HandlerShapeTests
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-hs-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
-        var app = new global::app.@this(root);
+        var app = TestApp.Create(root);
         var fp = global::app.type.path.file.@this.Resolve("doc.txt", app.User.Context);
         await fp.WriteText("delegated body");
 
@@ -121,7 +121,7 @@ public class HandlerShapeTests
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-hs2-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
-        var app = new global::app.@this(root);
+        var app = TestApp.Create(root);
         app.User.Channel.Register(new CannedNoChannel());
 
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-foreign-" + System.Guid.NewGuid().ToString("N"));
@@ -146,7 +146,7 @@ public class HandlerShapeTests
         // grant is denied — existence is gated, not a free filesystem oracle.
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-n1-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
-        var app = new global::app.@this(root);
+        var app = TestApp.Create(root);
         app.User.Channel.Register(new CannedNoChannel());
 
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-n1-foreign-" + System.Guid.NewGuid().ToString("N"));

@@ -15,7 +15,7 @@ public class IdentityDataTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_idvar_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = TestApp.Create(_tempDir);
     }
 
     [After(Test)]
