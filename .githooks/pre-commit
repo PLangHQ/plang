@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# .git/hooks/pre-commit  (or .githooks/pre-commit with core.hooksPath)
+# Blocks the commit if any agreed design decision has diverged.
+#
+# Bypass is deliberately noisy: `git commit --no-verify` skips it, so CI must run the same
+# verifier server-side to make this authoritative (see README "Wiring").
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+VERIFIER="$REPO_ROOT/scripts/verify-decisions.sh"
+
+if [ ! -x "$VERIFIER" ]; then
+    echo "decision-guard: verifier missing at $VERIFIER — run install.sh. (Not blocking this commit.)"
+    exit 0
+fi
+
+if ! "$VERIFIER" "$REPO_ROOT/Documentation/v0.2/decisions.md"; then
+    echo ""
+    echo "COMMIT BLOCKED by decision-guard. A design decision no longer holds in the code."
+    exit 1
+fi
