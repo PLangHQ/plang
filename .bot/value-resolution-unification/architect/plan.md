@@ -14,7 +14,7 @@ hits `.pr` persistence, signatures, and all output.
 
 ## Why
 
-Resolving a `%ref%` or a template happens **two ways** today. On the READ path a value resolves
+Resolving a `%var%` or a template happens **two ways** today. On the READ path a value resolves
 **itself** through its `Value(data)` door. On the WRITE path values write **raw** and resolution
 is **bolted on upstream** as type-specific special-cases (`Data.Output` tests `_item is variable`,
 `output.write` Peeks for `text{Template}`, `mock/intercept` duplicates it). Special-cases are the
@@ -47,14 +47,14 @@ the box and never open it or ask what type it holds.
 
 | # | decision | status |
 |---|---|---|
-| 1 | **Absent user ref → throw, uniformly** (`VariableNotFound`, full OR partial); infra `%!x%` stays literal on absence | DONE `e8519aa60` |
+| 1 | **Absent user variable → throw, uniformly** (`VariableNotFound`, full OR partial); infra `%!x%` stays literal on absence | DONE `e8519aa60` |
 | 2 | **`Data.Output` gate = `mode != Store && !_item.Cacheable`** — Data owns the view, item owns resolve+raw; zero type-tests | planned (this pass) |
 | 3 | **Passthrough is not a decision** — dissolved by the `!Cacheable` gate (a no-template source is `Cacheable` → raw → byte-exact) | dissolved |
 | 4 | **One cycle guard** — `variable.Value._resolveDepth`; delete `Data._outputDepth` | planned |
 | 5 | **`skipInfrastructure` DELETED** — OBP smell; both callers removed | planned |
-| 6 | **Model B** — a typed ref (`%x% as T`) rides `source`; `source` resolves the `%ref%` once, then coerces to `T`; scalars never learn about refs | settled earlier |
+| 6 | **Model B** — a typed variable (`%x% as T`) rides `source`; `source` resolves the `%var%` once, then coerces to `T`; scalars never learn about variables | settled earlier |
 | 7 | **`Resolve` collision → constructor** — delete static `variable.@this.Resolve`; parse folds into `new variable.@this(raw)`; `list.Resolve` → `Render` | planned |
-| 8 | **Carrier collapse — `variable` is name-only** — every value reference rides `source`; `variable.@this` is ONLY a name/write-target | planned |
+| 8 | **Carrier collapse — `variable` is name-only** — a variable used for its value rides `source`; `variable.@this` is ONLY a name/write-target | planned |
 | 9 | **Swift value semantics + deep copy-on-write** — `set %a% = %b%` gives `%a%` its own copy; deep split on mutate. REVERSES the 2026-06-10 C# reference-semantics ruling | planned (own pass) |
 | 10 | **`file/read` stamps `template="plang"`** — drop `ResolveVariables` + the manual `Resolve` | planned |
 | 11 | **One write verb: `Output`** — delete `Write`; fold each leaf's `Write` body into an `Output` override | planned |
@@ -75,7 +75,7 @@ Data.Output(writer, mode, context):
 ```
 
 - **The gate is `!Cacheable`, not "always `Value()` on Out".** `Cacheable == false` already means
-  "I hold live `%refs%`" and is declared on every item — `text.Cacheable => Template == null`,
+  "I hold a live `%var%`" and is declared on every item — `text.Cacheable => Template == null`,
   `source.Cacheable => _template == null`, `variable.Cacheable => false`, base `=> true`. It reads
   item STATE the item owns (same family as `IsLeaf`/`IsFinal`) — **not** a type-test, **not**
   `.Value` (Rule #7 clean).
@@ -87,10 +87,10 @@ Data.Output(writer, mode, context):
 
 ### The `Value` door — the single resolution seam
 
-`source.Value` is THE seam. It resolves the `%ref%` once (via the store engine), then `T.Create`
+`source.Value` is THE seam. It resolves the `%var%` once (via the store engine), then `T.Create`
 coerces to the declared type. Bare `%x%` → `source{type=item}` (item = apex, identity coercion —
 there is no "dynamic" type). `%x% as number` → `source{type=number}`. Embedded `"hi %x%"` →
-`source{template}`. Scalars (`number`/`bool`/`datetime`) stay concrete and never learn about refs.
+`source{template}`. Scalars (`number`/`bool`/`datetime`) stay concrete and never learn about variables.
 **No new `Output` overrides that resolve** — if a PR adds `text.Output`/`source.Output` that
 resolves, resolution has leaked back out of the door.
 
@@ -150,8 +150,9 @@ one seam. Delete the `ResolveVariables` parameter and the manual `Resolve(conten
 skipInfrastructure:true)`. A plain read (no stamp) stays a no-template source → `Cacheable` →
 byte-exact passthrough.
 
-**Security:** without `skipInfrastructure`, a `template="plang"` file resolves all refs including
-`%!infra%`. This is safe because the interpolation is **authored in the goal, in plain sight** —
+**Security:** without `skipInfrastructure`, a `template="plang"` file resolves all variables
+including infra `%!x%`. This is safe because the interpolation is **authored in the goal, in plain
+sight** —
 `- read file.txt and load vars, write to %content%` — which is what stamps `template="plang"`. The
 trust anchor is the authored PLang, not the file's content; `%!infra%` resolving there is the
 developer's stated intent. (Infra vars are runtime state — `%!app%`/`%!callStack%`/`%!data%` — not
@@ -161,7 +162,7 @@ the secrets/settings namespace.)
 
 ## Carrier collapse — demolition & leaf-trace (decision #8)
 
-`variable.@this` becomes name-only; every value reference is a `source`. Traced from
+`variable.@this` becomes name-only; a variable used for its value is a `source`. Traced from
 `is variable.@this` / `Peek() is variable` / `HasVariableReference` / `IsVariable`.
 
 ### Dies outright
@@ -173,24 +174,24 @@ the secrets/settings namespace.)
 | `data/this.Output.cs:50` | `_item is variable.@this` resolve branch | deleted by decision #2 gate |
 | `data.cs:566` (`AsCanonical`) | `if (_item is variable.@this v)` | dead method — delete whole |
 | `data.cs:155` (`IsVariable`) | `_item is variable.@this` detector | delete — zero callers after collapse |
-| `variable/list/this.cs:739` | interpolation engine `else if (Peek() is variable.@this)` | dies — a stored value is never a bare ref |
+| `variable/list/this.cs:739` | interpolation engine `else if (Peek() is variable.@this)` | dies — a stored value is never a bare variable |
 
 ### Re-express on `source` (the real work — NOT delete)
 
 | site | what it is | re-expression |
 |---|---|---|
 | `variable/list/this.cs:120-125` (`Set`) | `variable-ref-binds-instance` (currently C# reference semantics) | flips to Swift COW (decision #9) — `set %a% = %b%` shares the instance with a shared-flag, splits on first mutation |
-| `condition/code/Default.cs:58` (`TolerateAbsentVariable`) | `Peek() is variable.@this` → tolerate absent ref | tolerate an absent **`source`** ref the same way |
+| `condition/code/Default.cs:58` (`TolerateAbsentVariable`) | `Peek() is variable.@this` → tolerate an absent variable | tolerate an absent **`source`** the same way |
 | `builder/validateResponse.cs:174` | `Peek() is variable.@this \|\| HasVariableReference` | the `is variable` half → `source`; keep the template half |
 
 ### Stays (genuine NAME role — correct)
 
 | site | why it stays |
 |---|---|
-| `data.cs:471` (`As<variable>`) | a name slot wants the reference ITSELF (its name), not its value |
+| `data.cs:471` (`As<variable>`) | a name slot wants the variable ITSELF (its name), not its value |
 | `type/this.cs:265-267, 287-290` | born-as-variable in `Create` — now fires ONLY for `type:variable` name slots |
 | `variable/serializer/Reader.cs` | reads a name-slot off the wire → `new variable.@this(reader.String())` (decision #7) |
-| `variable/set.cs:35,54` (`HasVariableReference`) | template-based check — survives; review under ref-detector consolidation |
+| `variable/set.cs:35,54` (`HasVariableReference`) | template-based check — survives; review under variable-detector consolidation |
 
 ### `Resolve` → constructor (decision #7)
 
@@ -252,8 +253,8 @@ the `data-value-model` memory stays on the OLD reference semantics until this co
 
 ```
  PLANG      - write out %x%
- BUILD      compiler → action output.write; %x% is a value ref → source{ type:item, value:"%x%", template:plang }
- .pr        output.write { Data: <that source> }                       ← builder stamps it a reference
+ BUILD      compiler → action output.write; %x% is a variable → source{ type:item, value:"%x%", template:plang }
+ .pr        output.write { Data: <that source> }                       ← builder stamps it a variable
  LOAD       born source, lazy/unresolved; the Data box just holds it
  RUN        output.write.Run(): return Channel.WriteAsync(Data)        ← whole Data, courier never opens the box
  SERIALIZE  Channel → writer → Data.Output(writer, view=Out, ctx)
@@ -264,7 +265,7 @@ the `data-value-model` memory stays on the OLD reference semantics until this co
 ```
 
 Same door, other view: `Data.Output(writer, view=Store)` → gate takes the raw branch → the source
-writes itself verbatim `"%x%"` (authored ref preserved for signing/round-trip). The **view** is
+writes itself verbatim `"%x%"` (the authored `%var%` preserved for signing/round-trip). The **view** is
 the only switch, and it lives in one place.
 
 ---
@@ -273,7 +274,7 @@ the only switch, and it lives in one place.
 
 0. **`Resolve` → `new variable.@this(raw)`** (decision #7) + `list.Resolve` → `Render`. Standalone,
    behavior-neutral.
-1. **`source.Value` is the Model-B seam** — resolve `%ref%` once, then coerce to `T`
+1. **`source.Value` is the Model-B seam** — resolve `%var%` once, then coerce to `T`
    (`%x% as number` resolves; fixes the per-type-reader gap).
 2. **`Data.Output` gate on `!Cacheable`** (decision #2) — delete the `_item is variable` branch and
    `_outputDepth`; pass `mode` through. Behavior-neutral: verify full-suite failure counts
@@ -299,7 +300,7 @@ supersedes its `skipInfrastructure` use.
 ## Sensitivity & risk
 
 - **Store view is load-bearing for signing/hashing** (history: `DataHashMismatch`). The authored
-  `%ref%` MUST round-trip verbatim under `View.Store`; every Output change leaves Store
+  `%var%` MUST round-trip verbatim under `View.Store`; every Output change leaves Store
   byte-identical. `json/writer.cs:BeginRecord` (the parallel STJ envelope) stays in sync.
 - **One door, wide blast radius.** `Data.Output` is THE value-write door for both
   `application/plang` and the text serializer. A regression hits `.pr`, signatures, channel output,
@@ -317,7 +318,7 @@ supersedes its `skipInfrastructure` use.
 - **Must stay green:** signing/round-trip (`Store` verbatim), `Wire`/`Data` born-native round-trip,
   channel/output suites, `condition` (tolerant absent), `mock/intercept`.
 - **New tests:** (a) a source-born template resolves on Out; (b) a plain file-read source writes raw
-  (passthrough); (c) `View.Store` preserves `%ref%` verbatim; (d) absent user ref → `VariableNotFound`;
+  (passthrough); (c) `View.Store` preserves `%var%` verbatim; (d) absent user variable → `VariableNotFound`;
   (e) `set %a% = %b%; add to %b%` leaves `%a%` unchanged (Swift COW); (f) deep COW — `set %a%[0].x`
   does not touch `%b%`.
 - Guard with a `decisions.md` entry (`value-owns-its-output`, `variable-is-name-only`,
