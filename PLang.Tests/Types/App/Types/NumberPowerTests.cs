@@ -15,42 +15,37 @@ public class NumberPowerTests
     [Test] public async Task Power_TwoPowTen_ReturnsKindInt_1024()
     {
         var r = number.Power(number.From(2), number.From(10), PPolicy.Lenient);
-        await r.IsSuccess();
-        await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Int);
-        await Assert.That(((global::app.type.number.@this)(await r.Value())!).Clr<int>()).IsEqualTo(1024);
+        await Assert.That(r.Kind).IsEqualTo(PKind.Int);
+        await Assert.That(((global::app.type.number.@this)r).Clr<int>()).IsEqualTo(1024);
     }
 
     [Test] public async Task Power_TwoPowNegOne_ReturnsHalf_NotZero()
     {
         var r = number.Power(number.From(2), number.From(-1), PPolicy.Lenient);
-        await r.IsSuccess();
         // Leaves integer track — returns 0.5 (as double under lenient).
-        await Assert.That((await r.Value())!.Kind == PKind.Double || (await r.Value())!.Kind == PKind.Decimal).IsTrue();
-        await Assert.That(((global::app.type.number.@this)(await r.Value())!).Clr<double>()).IsEqualTo(0.5);
+        await Assert.That(r.Kind == PKind.Double || r.Kind == PKind.Decimal).IsTrue();
+        await Assert.That(((global::app.type.number.@this)r).Clr<double>()).IsEqualTo(0.5);
     }
 
     [Test] public async Task Power_TwoPowHalf_PromotesToDouble()
     {
         var r = number.Power(number.From(2), number.From(0.5), PPolicy.Lenient);
-        await r.IsSuccess();
-        await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Double);
+        await Assert.That(r.Kind).IsEqualTo(PKind.Double);
     }
 
     [Test] public async Task Power_LargeExponent_Overflow_PromoteMode_Widens()
     {
         // 2^40 overflows int → widens to long; under Promote.
         var r = number.Power(number.From(2), number.From(40), PPolicy.Lenient);
-        await r.IsSuccess();
         // long range or decimal — past int.
-        await Assert.That((await r.Value())!.Kind == PKind.Long || (await r.Value())!.Kind == PKind.Decimal).IsTrue();
+        await Assert.That(r.Kind == PKind.Long || r.Kind == PKind.Decimal).IsTrue();
     }
 
     [Test] public async Task Power_LargeExponent_Overflow_ThrowMode_DataFailMathOverflow()
     {
-        var r = number.Power(number.From(int.MaxValue), number.From(10),
-            new PPolicy { Overflow = POverflow.Throw, Precision = PPrecision.Double });
-        await r.IsFailure();
-        await Assert.That(r.Error?.Key).IsEqualTo("MathOverflow");
+        var ex = await Assert.That(() => number.Power(number.From(int.MaxValue), number.From(10),
+            new PPolicy { Overflow = POverflow.Throw, Precision = PPrecision.Double })).Throws<global::app.error.AppException>();
+        await Assert.That(ex!.Key).IsEqualTo("MathOverflow");
     }
 
     [Test] public async Task Power_ExponentAtCap_SmallBase_StillSucceeds()
@@ -58,17 +53,15 @@ public class NumberPowerTests
         // Boundary: |exp| == MaxPowerExponent is allowed. 1^64 = 1 (no overflow).
         var r = number.Power(number.From(1), number.From(number.MaxPowerExponent),
             PPolicy.Lenient);
-        await r.IsSuccess();
     }
 
     [Test] public async Task Power_ExponentJustOverCap_TypedFailure_PowerExponentTooLarge()
     {
         // CPU-DoS guard: untrusted exponent above the cap surfaces a typed
         // Data.Fail instead of spinning the actor's core.
-        var r = number.Power(number.From(2), number.From(number.MaxPowerExponent + 1),
-            PPolicy.Lenient);
-        await r.IsFailure();
-        await Assert.That(r.Error?.Key).IsEqualTo("PowerExponentTooLarge");
+        var ex = await Assert.That(() => number.Power(number.From(2), number.From(number.MaxPowerExponent + 1),
+            PPolicy.Lenient)).Throws<global::app.error.AppException>();
+        await Assert.That(ex!.Key).IsEqualTo("PowerExponentTooLarge");
     }
 
     [Test] public async Task Power_NegativeExponentBeyondCap_DecimalPrecision_TypedFailure()
@@ -78,10 +71,9 @@ public class NumberPowerTests
         // Error, so the explicit Precision=Decimal override selects the loop.)
         // Other precision modes route through Math.Pow which is constant-time
         // and skips the cap.
-        var r = number.Power(number.From(2), number.From(-number.MaxPowerExponent - 1),
-            new PPolicy { Overflow = POverflow.Promote, Precision = PPrecision.Decimal });
-        await r.IsFailure();
-        await Assert.That(r.Error?.Key).IsEqualTo("PowerExponentTooLarge");
+        var ex = await Assert.That(() => number.Power(number.From(2), number.From(-number.MaxPowerExponent - 1),
+            new PPolicy { Overflow = POverflow.Promote, Precision = PPrecision.Decimal })).Throws<global::app.error.AppException>();
+        await Assert.That(ex!.Key).IsEqualTo("PowerExponentTooLarge");
     }
 
     [Test] public async Task Power_DoubleBase_LargeExponent_SkipsCap_UsesMathPow()
@@ -90,15 +82,13 @@ public class NumberPowerTests
         // (constant time) and is not subject to the magnitude limit.
         var r = number.Power(number.From(2.0), number.From(1000),
             PPolicy.Lenient);
-        await r.IsSuccess();
-        await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Double);
+        await Assert.That(r.Kind).IsEqualTo(PKind.Double);
     }
 
     [Test] public async Task Power_NegativeExponent_DoubleBase_SkipsCap()
     {
         var r = number.Power(number.From(2), number.From(-1000),
             PPolicy.Lenient);
-        await r.IsSuccess();
     }
 
     [Test] public async Task Power_FractionalExponent_NotSubjectToCap()
@@ -108,7 +98,6 @@ public class NumberPowerTests
         // larger than the cap still succeeds without spinning a loop.
         var r = number.Power(number.From(2), number.From(100.5),
             PPolicy.Lenient);
-        await r.IsSuccess();
-        await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Double);
+        await Assert.That(r.Kind).IsEqualTo(PKind.Double);
     }
 }

@@ -8,57 +8,43 @@ namespace app.type.number;
 /// kind that fits (Promote) or stay strict-width (Throw); binary floats compute
 /// in <c>double</c>; decimals in <c>decimal</c>; the <c>double ⊕ decimal</c> mix
 /// is resolved by <see cref="PrecisionMode"/> (Error by default). Each method
-/// returns <see cref="global::app.data.@this{T}"/>; exceptions surface as typed
-/// <c>Data.Fail</c>.
+/// returns the <see cref="@this"/> VALUE and THROWS a keyed AppException on error
+/// (no context here to born a Data); the context-ful <c>math.*</c> handler turns the
+/// throw into a native plang Data error.
 /// </summary>
 public sealed partial class @this
 {
     /// <summary>Loop-protective cap on integer-track power exponents (CPU-DoS guard).</summary>
     public const long MaxPowerExponent = 64;
 
-    public static global::app.data.@this<@this> Add(@this a, @this b, NumberPolicy policy)
+    public static @this Add(@this a, @this b, NumberPolicy policy)
         => Wrap(() => DoOp(a, b, ArithOp.Add, policy));
-    public static global::app.data.@this<@this> Subtract(@this a, @this b, NumberPolicy policy)
+    public static @this Subtract(@this a, @this b, NumberPolicy policy)
         => Wrap(() => DoOp(a, b, ArithOp.Sub, policy));
-    public static global::app.data.@this<@this> Multiply(@this a, @this b, NumberPolicy policy)
+    public static @this Multiply(@this a, @this b, NumberPolicy policy)
         => Wrap(() => DoOp(a, b, ArithOp.Mul, policy));
-    public static global::app.data.@this<@this> Modulo(@this a, @this b, NumberPolicy policy)
+    public static @this Modulo(@this a, @this b, NumberPolicy policy)
         => Wrap(() => DoOp(a, b, ArithOp.Mod, policy));
-    public static global::app.data.@this<@this> Divide(@this a, @this b, NumberPolicy policy)
+    public static @this Divide(@this a, @this b, NumberPolicy policy)
         => Wrap(() => DoDivide(a, b, policy));
-    public static global::app.data.@this<@this> IntDivide(@this a, @this b, NumberPolicy policy)
+    public static @this IntDivide(@this a, @this b, NumberPolicy policy)
         => Wrap(() => DoIntDivide(a, b, policy));
-    public static global::app.data.@this<@this> Power(@this a, @this b, NumberPolicy policy)
+    public static @this Power(@this a, @this b, NumberPolicy policy)
         => Wrap(() => DoPower(a, b, policy));
 
-    private static global::app.data.@this<@this> Wrap(System.Func<@this> compute)
+    // A pure numeric op returns its VALUE and THROWS a keyed AppException on error. It has no
+    // context, so it cannot born an error Data — the context-ful boundary (the math.* handler /
+    // the action dispatch, which preserves AppException.Key) turns the throw into a native plang
+    // Data error. END STATE: math becomes [Code] like signing (see the math module TODO +
+    // Documentation/v0.2/todos.md) and number returns Data directly — everything flows through Data.
+    private static @this Wrap(System.Func<@this> compute)
     {
-        try { return global::app.data.@this<@this>.Ok(compute()); }
-        catch (System.DivideByZeroException ex)
-        {
-            return global::app.data.@this<@this>.FromError(
-                new global::app.error.ServiceError(ex.Message, "DivideByZero", 400) { Exception = ex });
-        }
-        catch (PrecisionMixException ex)
-        {
-            return global::app.data.@this<@this>.FromError(
-                new global::app.error.ServiceError(ex.Message, "PrecisionMixRequiresChoice", 400) { Exception = ex });
-        }
-        catch (System.OverflowException ex)
-        {
-            return global::app.data.@this<@this>.FromError(
-                new global::app.error.ServiceError(ex.Message, "MathOverflow", 400) { Exception = ex });
-        }
-        catch (PowerExponentTooLargeException ex)
-        {
-            return global::app.data.@this<@this>.FromError(
-                new global::app.error.ServiceError(ex.Message, "PowerExponentTooLarge", 400) { Exception = ex });
-        }
-        catch (System.ArithmeticException ex)
-        {
-            return global::app.data.@this<@this>.FromError(
-                new global::app.error.ServiceError(ex.Message, "ArithmeticError", 400) { Exception = ex });
-        }
+        try { return compute(); }
+        catch (System.DivideByZeroException ex) { throw new global::app.error.AppException(ex.Message, ex, "DivideByZero", 400); }
+        catch (PrecisionMixException ex) { throw new global::app.error.AppException(ex.Message, ex, "PrecisionMixRequiresChoice", 400); }
+        catch (System.OverflowException ex) { throw new global::app.error.AppException(ex.Message, ex, "MathOverflow", 400); }
+        catch (PowerExponentTooLargeException ex) { throw new global::app.error.AppException(ex.Message, ex, "PowerExponentTooLarge", 400); }
+        catch (System.ArithmeticException ex) { throw new global::app.error.AppException(ex.Message, ex, "ArithmeticError", 400); }
     }
 
     private sealed class PowerExponentTooLargeException : System.Exception

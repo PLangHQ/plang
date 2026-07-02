@@ -1560,3 +1560,30 @@ serialization + reader + size/round-trip change. Deferred.
 
 Both are injection-safe (runtime-ingested `%x%` never renders). This todo is the
 precision/explicitness upgrade, not a correctness fix.
+
+## 2026-07-02 — value ops throw; the boundary owns the Data error (context-never-null)
+
+A pure value operation has no context, so it cannot born a context-ful error Data. The
+rule: **the value op returns its VALUE and THROWS a keyed AppException on error; the
+context-ful boundary (a `[Code]` provider, or the action dispatch — both preserve
+`AppException.Key`) turns the throw into a native plang Data error.** Everything still
+flows through Data; the error is just born where context lives.
+
+**Done as the model:** `number` arithmetic (`Add`/`Power`/`Sqrt`/… in `type/number/
+this.{Arithmetic,Unary}.cs`) now return `@this` + throw; `math` became a `[Code]` module
+(`module/math/code/{IMath,Default}`, registered in `module/code/this.cs`) whose provider
+owns the compute + context-ful error-wrapping — exactly like signing (`Signer.SignAsync`)
+and crypto (`Crypto.Hash`). Every `math.*` handler is now `Run() => Math.X(this)`.
+
+**Still context-less (migrate the same way — either give the module a `[Code]` provider,
+or let the value op throw + a context-ful boundary wrap):**
+- `module/signing/code/Ed25519.cs` low-level `Sign(byte[],key)` / `Verify(...)` return
+  `Data<…>.FromError` (context-less). Signing HAS `[Code]` (ISigning) — move the wrapping
+  into `SignAsync`/`VerifyAsync` and have the primitive throw.
+- `channel/serializer/{Json,Text}.cs` — `FromError` on the nullable `_context` field
+  (tied to making serializer `_context` non-null).
+- `module/http/code/Default.cs` helper methods (`ExecuteHttpAsync`, etc.) — `FromError`
+  with no context in the helper scope.
+- `type/convert/this.cs` — the ONE legitimate context-free path (scalar parse with no App):
+  its `FromError` stays (verified: throwing there breaks direct callers). Not a violation.
+- `module/builder/validateResponse.cs` `Validate(...)` — static method, nullable `app`.

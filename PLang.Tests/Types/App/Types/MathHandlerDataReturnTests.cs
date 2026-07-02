@@ -62,18 +62,16 @@ public class MathHandlerDataReturnTests
     [Test] public async Task MathHandler_Overflow_ReturnsDataFail_NotException()
     {
         // Covered end-to-end by NumberArithmeticTests.Overflow_Throw_HandlerPathReturnsDataError.
-        var r = number.Add(number.From(decimal.MaxValue), number.From(decimal.MaxValue),
-            global::app.type.number.NumberPolicy.Strict);
-        await r.IsFailure();
-        await Assert.That(r.Error?.Key).IsEqualTo("MathOverflow");
+        var ex = await Assert.That(() => number.Add(number.From(decimal.MaxValue), number.From(decimal.MaxValue),
+            global::app.type.number.NumberPolicy.Strict)).Throws<global::app.error.AppException>();
+        await Assert.That(ex!.Key).IsEqualTo("MathOverflow");
     }
 
     [Test] public async Task MathHandler_DivByZero_ReturnsDataFail_NotException()
     {
-        var r = number.Divide(number.From(7), number.From(0),
-            global::app.type.number.NumberPolicy.Lenient);
-        await r.IsFailure();
-        await Assert.That(r.Error?.Key).IsEqualTo("DivideByZero");
+        var ex = await Assert.That(() => number.Divide(number.From(7), number.From(0),
+            global::app.type.number.NumberPolicy.Lenient)).Throws<global::app.error.AppException>();
+        await Assert.That(ex!.Key).IsEqualTo("DivideByZero");
     }
 
     [Test] public async Task MathHandler_ReadsPolicyViaAppConfigForNumberConfig()

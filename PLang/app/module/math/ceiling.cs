@@ -8,12 +8,8 @@ public partial class Ceiling : IContext
 {
     public partial data.@this Value { get; init; }
 
-    public async Task<data.@this<number>> Run()
-    {
-        var n = number.FromObject(await Value.Value());
-        if (n == null)
-            return Context.Error<number>(
-                new global::app.error.ValidationError("math.ceiling requires a number", "InvalidInput"));
-        return number.Ceiling(n);
-    }
+    [Code]
+    public partial global::app.module.math.code.IMath Math { get; }
+
+    public async Task<data.@this<number>> Run() => await Math.Ceiling(this);
 }

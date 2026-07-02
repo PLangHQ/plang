@@ -38,6 +38,7 @@ public class RuntimeDoubleWrapTests
         context.Variable.Set("xs", new List<object?> { 42L, "two", "three" });
 
         var action = new First { Context = context, ListName = new @this("xs") };
+        await action.Attach(null, context);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -53,6 +54,7 @@ public class RuntimeDoubleWrapTests
         context.Variable.Set("xs", new List<object?> { "a", "b", "c" });
 
         var action = new Get { Context = context, ListName = new @this("xs"), Index = (global::app.type.number.@this)1 };
+        await action.Attach(null, context);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -67,6 +69,7 @@ public class RuntimeDoubleWrapTests
         context.Variable.Set("xs", new List<object?> { 1L, 2L, 3L });
 
         var action = new Last { Context = context, ListName = new @this("xs") };
+        await action.Attach(null, context);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -79,6 +82,7 @@ public class RuntimeDoubleWrapTests
     {
         var context = _app.User.Context;
         var action = new MathAdd { Context = context, A = new Data("", 5L, context: context), B = new Data("", 3L, context: context) };
+        await action.Attach(null, context);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -150,6 +154,7 @@ public class RuntimeDoubleWrapTests
             Operator = new global::app.data.@this<global::app.type.choice.@this<global::app.module.condition.Operator>>("", new global::app.module.condition.Operator(">")),
             Value = new global::app.data.@this("", 20L, context: context),
         };
+        await action.Attach(null, context);
         var result = await action.Run();
         await result.IsSuccess();
         await Assert.That((await result.Value())).IsTypeOf<global::app.type.list.@this>();

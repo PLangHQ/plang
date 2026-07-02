@@ -34,14 +34,8 @@ public partial class Power : IContext
     public partial data.@this<global::app.type.choice.@this<POverflow>>? Overflow { get; init; }
     public partial data.@this<global::app.type.choice.@this<PPrecision>>? Precision { get; init; }
 
-    public async Task<data.@this<number>> Run()
-    {
-        var policy = MathPolicy.Resolve(Context, (Overflow == null ? null : await Overflow.Value())?.Value, (Precision == null ? null : await Precision.Value())?.Value);
-        var an = number.FromObject(await Base.Value());
-        var bn = number.FromObject(await Exponent.Value());
-        if (an == null || bn == null)
-            return Context.Error<number>(
-                new global::app.error.ValidationError("math.power requires base and exponent", "InvalidInput"));
-        return number.Power(an, bn, policy);
-    }
+    [Code]
+    public partial global::app.module.math.code.IMath Math { get; }
+
+    public async Task<data.@this<number>> Run() => await Math.Power(this);
 }

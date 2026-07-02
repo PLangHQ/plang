@@ -20,7 +20,6 @@ public class Cut5_NumberTowerRoundTrip
     private static async Task RoundTrips(number n, System.Type expectedClr)
     {
         var r = number.Convert(n.ToString(), n.KindLabel, null!);
-        await r.IsSuccess();
         await Assert.That(((global::app.type.number.@this)(await r.Value())!).BoxedValue.GetType()).IsEqualTo(expectedClr);
     }
 
@@ -41,17 +40,15 @@ public class Cut5_NumberTowerRoundTrip
     [Test] public async Task Cut5_PromoteThenNarrow_NoSilentWrap()
     {
         var r = number.Add(number.From(3000000000u), number.From(2000000000u), PPolicy.Lenient);
-        await r.IsSuccess();
-        await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Long);
-        await Assert.That((await r.Value())!.ToInt64()).IsEqualTo(5000000000L);
+        await Assert.That(r.Kind).IsEqualTo(PKind.Long);
+        await Assert.That(r.ToInt64()).IsEqualTo(5000000000L);
     }
 
     // Negative — the explicit-cast wall. double⊕decimal raises rather than
     // silently picking one carrier.
     [Test] public async Task Cut5_DoubleDecimal_RaisesExplicitCastError()
     {
-        var r = number.Add(number.From(1.5d), number.From(0.1m), PPolicy.Lenient);
-        await r.IsFailure();
-        await Assert.That(r.Error?.Key).IsEqualTo("PrecisionMixRequiresChoice");
+        var ex = await Assert.That(() => number.Add(number.From(1.5d), number.From(0.1m), PPolicy.Lenient)).Throws<global::app.error.AppException>();
+        await Assert.That(ex!.Key).IsEqualTo("PrecisionMixRequiresChoice");
     }
 }
