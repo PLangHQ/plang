@@ -144,6 +144,27 @@ miss it** → a template born as a source is written **literally**. This is the 
    red-flag special-cases). Optional now vs deferred: consolidating the grammar detectors
    (#3), the ref-detector forms (#4), dict/list render (#5), the `Resolve` naming (#7).
 
+6. **How does a TYPED reference born — and who resolves it?** A full-match `%var%` is not
+   always `variable`; it borns as its DECLARED type. Today the types split two ways, and
+   THAT split is itself the smell:
+   - **Reference-carriers** born as their type and resolve their own ref in `Value`:
+     `text` (`Template`), `path` (`_location`), `variable` (`Name`), `source` (raw).
+   - **Non-carriers** (`number`, `bool`, `datetime`, `image`, `null`) inherit base `Value`
+     → return `this` → cannot hold a ref. A `%var% as number` must born as a carrier
+     (`variable`/`text`) and be coerced to number on read (`As<number>`).
+   So `%var% as path` resolves itself (Model B); `%var% as number` resolves elsewhere and
+   coerces (Model A). **Decide one uniform model:**
+   - **Model B (item-owns-it, fully uniform):** every type can born carrying a `%var%` and
+     resolves it in its own door. Scalars gain a reference mode. Maximally OBP; largest
+     surface (every type touched).
+   - **Model A (few carriers + coerce):** a reference is ALWAYS a carrier
+     (`variable`/`text`); the declared scalar type is a read-side coercion, never a born
+     form. Scalars stay concrete; fewer types touched; the "declared type" rides as
+     coercion metadata, not as the born type.
+   This decision governs how many types §4's `Output`/`Value` work touches, and whether
+   `path`'s self-resolving location is the template for all types or the exception to fold
+   away. It is upstream of everything else here.
+
 ---
 
 ## 6. Sensitivity & risk
