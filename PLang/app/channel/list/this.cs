@@ -129,7 +129,11 @@ public sealed class @this : IAsyncDisposable
     public channel.@this Channel(string name)
         => _channels.TryGetValue(name, out var channel) ? channel : NoOp;
 
-    private static readonly channel.type.noop.@this NoOp = new("__noop__");
+    // Per-list (not static): the sentinel carries THIS list's context so a Read on a
+    // missing channel returns a context-ful ChannelNotFound. Lazy — the first miss is at
+    // runtime, by which point the app/actor context is up.
+    private channel.type.noop.@this? _noop;
+    private channel.type.noop.@this NoOp => _noop ??= new("__noop__", Context);
 
     public void Register(channel.@this channel)
     {

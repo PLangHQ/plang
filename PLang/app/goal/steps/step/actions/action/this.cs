@@ -236,14 +236,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return data ?? context.NotFound(name);
     }
 
-    /// <summary>By-name parameter access for the generated dispatch:
-    /// <c>action["name"].As&lt;T&gt;(context)</c>. A param, else a Default, else a non-null
-    /// <see cref="global::app.data.@this.NotFound"/> so <c>.As&lt;T&gt;()</c> stays safe on an absent slot.</summary>
-    public global::app.data.@this this[string name]
-        => Parameters?.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase))
-           ?? Defaults?.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase))
-           ?? global::app.data.@this.NotFound(name);
-
     /// <summary>
     /// Runs this action: lifecycle events → dispatch → return mapping.
     /// Context travels as parameter — actions are shared objects, not per-request.
