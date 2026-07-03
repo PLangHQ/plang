@@ -8,7 +8,10 @@ namespace PLang.Tests;
 public static class CollectionTestExtensions
 {
     public static global::app.data.@this<global::app.type.list.@this> ToListData(this System.Collections.IEnumerable raw, global::app.actor.context.@this? context = null)
-        => new("", global::app.type.list.@this.FromRaw(raw, context)!, context: context);
+    {
+        context ??= global::PLang.Tests.TestApp.SharedContext;
+        return new("", global::app.type.list.@this.FromRaw(raw, context)!, context: context);
+    }
 
     public static global::app.data.@this<global::app.type.list.@this<T>> ToListData<T>(this System.Collections.IEnumerable raw, global::app.actor.context.@this? context = null)
         where T : global::app.type.item.@this
