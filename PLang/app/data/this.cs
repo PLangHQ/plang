@@ -364,7 +364,7 @@ public partial class @this
                 + System.Environment.StackTrace);
         _item = value is null ? null
             : value as global::app.type.item.@this
-            ?? new Clr(value);
+            ?? new Clr(value, _context);
         // Context propagates immediately — a context-resolved identity (the
         // carrier's registry name) must be stable from the first mint, or the
         // signed canonical form drifts when a later bind stamps Context.

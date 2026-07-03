@@ -501,7 +501,7 @@ public sealed class @this : item.@this
         }
         // Unowned — rung 2: a strongly-typed C# object rides as item with kind naming
         // the class; the carrier's Peek answers the real instance.
-        return new Clr(raw) { Context = context };
+        return new Clr(raw, context);
     }
     public static @this FromName(string typeName) => new(typeName);
 
