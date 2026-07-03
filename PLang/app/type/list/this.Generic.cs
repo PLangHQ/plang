@@ -32,13 +32,4 @@ public sealed class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
         return global::app.type.@this.Create(value.Clr<object>(), data.Context) is @this lifted
             ? new @this<T>(lifted) { Context = data.Context! } : null;
     }
-
-    /// <summary>Build a typed list from raw element values — each wrapped in a Data row.</summary>
-    public static @this<T> Of(System.Collections.IEnumerable items)
-    {
-        var l = new @this<T>();
-        foreach (var i in items)
-            l.Add(i is global::app.data.@this d ? d : new global::app.data.@this("", i));
-        return l;
-    }
 }

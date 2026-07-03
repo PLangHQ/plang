@@ -74,7 +74,7 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_Variance_PropertiesAliased()
     {
-        var inner = global::app.type.list.@this<global::app.type.number.@this>.Of(new[] { _app.Data("", 1), _app.Data("", 2) });
+        var inner = new global::app.type.list.@this<global::app.type.number.@this>(new[] { _app.Data("", 1), _app.Data("", 2) });
         var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", inner, context: _app.User.Context);
         var wrapped = source.ShallowClone<global::app.type.list.@this>(await source.Value<global::app.type.list.@this>());
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();
@@ -87,7 +87,7 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_Variance_OnChangeAliased_FireOnSourceVisibleThroughWrapped()
     {
-        var inner = global::app.type.list.@this<global::app.type.number.@this>.Of(new[] { _app.Data("", 1) });
+        var inner = new global::app.type.list.@this<global::app.type.number.@this>(new[] { _app.Data("", 1) });
         var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", inner, context: _app.User.Context);
         var wrapped = source.ShallowClone<global::app.type.list.@this>(await source.Value<global::app.type.list.@this>());
         await Assert.That(ReferenceEquals(source.OnChange, wrapped.OnChange)).IsTrue();
@@ -104,7 +104,7 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_Variance_PostWrapSubscribe_VisibleThroughBothRefs()
     {
-        var inner = global::app.type.list.@this<global::app.type.number.@this>.Of(new[] { _app.Data("", 1) });
+        var inner = new global::app.type.list.@this<global::app.type.number.@this>(new[] { _app.Data("", 1) });
         var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", inner, context: _app.User.Context);
         var wrapped = source.ShallowClone<global::app.type.list.@this>(await source.Value<global::app.type.list.@this>());
         Action<Data, Data> handler = (_, _) => { };

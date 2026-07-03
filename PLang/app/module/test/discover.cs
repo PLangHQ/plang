@@ -56,16 +56,17 @@ public partial class discover : IContext
         var include = Context.App.Tester.Include;
         var exclude = Context.App.Tester.Exclude;
 
-        var files = new List<global::app.tester.test.@this>();
+        var files = new List<data.@this>();
         var list = await listed.Value();
         foreach (var row in list!)
         {
             // .test.goal files only resolve under the file scheme; foreign schemes
             // skip silently. The List call already returned filesystem paths.
             if (await row.Value<global::app.type.path.@this>() is not FilePath fileMatch) continue;
-            files.Add(await DiscoverOne(fileMatch, app, include, exclude));
+            files.Add(new data.@this("", await DiscoverOne(fileMatch, app, include, exclude), context: Context));
         }
-        return data.@this<global::app.type.list.@this<global::app.tester.test.@this>>.Ok(global::app.type.list.@this<global::app.tester.test.@this>.Of(files));
+        return Context.Ok<global::app.type.list.@this<global::app.tester.test.@this>>(
+            new global::app.type.list.@this<global::app.tester.test.@this>(files) { Context = Context });
     }
 
     /// <summary>Discovers metadata for a single .test.goal file (FilePath form).</summary>

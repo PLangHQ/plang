@@ -17,7 +17,9 @@ public partial class goals : IContext
         var result = await Builder.Goals(this);
         if (!result.Success) return data.@this<global::app.type.list.@this<Goal>>.From(result);
         var goals = global::app.type.item.@this.Lower<List<Goal>>(await result.Value()) ?? new List<Goal>();
-        var typed = data.@this<global::app.type.list.@this<Goal>>.Ok(global::app.type.list.@this<Goal>.Of(goals));
+        var rows = goals.Select(g => new data.@this("", g, context: Context));
+        var typed = Context.Ok<global::app.type.list.@this<Goal>>(
+            new global::app.type.list.@this<Goal>(rows) { Context = Context });
         typed.Warnings = result.Warnings;   // forward builder warnings (corrupt .pr, etc.)
         return typed;
     }

@@ -264,7 +264,7 @@ public class DataAsTResolutionTests
                 ["Content"] = "literal text with %x% and %y% inside"
             }
         };
-        context.Variable.Set(new global::app.data.@this<global::app.type.list.@this<global::app.type.item.@this>>("messages", global::app.type.list.@this<global::app.type.item.@this>.Of(System.Linq.Enumerable.Select(stored, d => _app.Data("", d))), context: context));
+        context.Variable.Set(new global::app.data.@this<global::app.type.list.@this<global::app.type.item.@this>>("messages", new global::app.type.list.@this<global::app.type.item.@this>(System.Linq.Enumerable.Select(stored, d => _app.Data("", d))), context: context));
 
         var paramData = new Data("Messages", "%messages%", new global::app.type.@this("text", null, false, "plang"), context: context);
         var result = paramData.ShallowClone<global::app.type.list.@this<global::app.type.dict.@this>>(await paramData.Value<global::app.type.list.@this<global::app.type.dict.@this>>());
@@ -299,7 +299,7 @@ public class DataAsTResolutionTests
                 ["Content"] = "literal text with %goal.Name% and %buildStart% inside"
             }
         };
-        context.Variable.Set(new global::app.data.@this<global::app.type.list.@this<global::app.type.item.@this>>("fixerMessages", global::app.type.list.@this<global::app.type.item.@this>.Of(System.Linq.Enumerable.Select(stored, d => _app.Data("", d))), context: context));
+        context.Variable.Set(new global::app.data.@this<global::app.type.list.@this<global::app.type.item.@this>>("fixerMessages", new global::app.type.list.@this<global::app.type.item.@this>(System.Linq.Enumerable.Select(stored, d => _app.Data("", d))), context: context));
 
         // Mirrors how llm.query reads %fixerMessages% — typed slot is List<LlmMessage>.
         var paramData = new Data("Messages", "%fixerMessages%", new global::app.type.@this("text", null, false, "plang"), context: context);

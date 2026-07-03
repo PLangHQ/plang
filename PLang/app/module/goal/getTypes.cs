@@ -65,10 +65,10 @@ public partial class getTypes : IContext
         {
             var nd = new global::app.type.dict.@this();
             foreach (var kv in d) nd.Set(kv.Key, kv.Value);
-            return nd;
+            return new data.@this("", nd, context: Context);
         });
-        return data.@this<global::app.type.list.@this<global::app.type.dict.@this>>.Ok(
-            global::app.type.list.@this<global::app.type.dict.@this>.Of(rows));
+        return Context.Ok<global::app.type.list.@this<global::app.type.dict.@this>>(
+            new global::app.type.list.@this<global::app.type.dict.@this>(rows) { Context = Context });
     }
 
     private static void ProcessAction(
