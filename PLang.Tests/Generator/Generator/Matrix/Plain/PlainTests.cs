@@ -127,7 +127,7 @@ public class PathPlainTests
     public async Task PathPlain_PathValue_FastPath()
     {
         await using var app = TestApp.Create("/app");
-        var path = new global::app.type.path.file.@this("/already-a-path.txt");
+        var path = new global::app.type.path.file.@this("/already-a-path.txt", global::PLang.Tests.TestApp.SharedContext);
         var result = await MatrixRunner.RunAsync<PathPlain>(app,
             parameters: new[] { ("file", (object?)path) });
         var typed = result.Data as global::app.data.@this<global::app.type.path.@this>;

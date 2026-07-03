@@ -46,7 +46,7 @@ public class PathDerivationVerbTests
     {
         var sep = System.IO.Path.DirectorySeparatorChar;
         var root = sep.ToString();
-        var p = new FilePath(root);
+        var p = new FilePath(root, global::PLang.Tests.TestApp.SharedContext);
         var parent = p.Parent;
         // Root returns itself — no further parent, never throws.
         await Assert.That(parent.Absolute).IsEqualTo(root);

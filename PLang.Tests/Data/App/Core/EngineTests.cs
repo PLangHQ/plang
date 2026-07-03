@@ -252,7 +252,7 @@ public class EngineTests
     public async Task RunGoalAsync_EmptyGoal_ReturnsSuccess()
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
-        var goal = new Goal { Name = "EmptyGoal", Path = "/EmptyGoal.goal" };
+        var goal = new Goal { Name = "EmptyGoal", Path = global::app.type.path.@this.Resolve("/EmptyGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
         goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
@@ -268,7 +268,7 @@ public class EngineTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Path = "/TestGoal.goal",
+            Path = global::app.type.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext),
             Steps = new GoalSteps
             {
                 MakeStep("variable", "set",
@@ -292,7 +292,7 @@ public class EngineTests
     public async Task RunGoalAsync_SetsContextGoal()
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
-        var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
+        var goal = new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
         goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
         var context = engine.User.Context;
@@ -308,7 +308,7 @@ public class EngineTests
     public async Task RunGoalAsync_PushesCall()
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
-        var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
+        var goal = new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
         goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
@@ -345,7 +345,7 @@ public class EngineTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Path = "/TestGoal.goal",
+            Path = global::app.type.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext),
             Steps = new GoalSteps
             {
                 MakeStep("variable", "get", index: 0, text: "get variable")

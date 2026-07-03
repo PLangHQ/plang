@@ -20,8 +20,8 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         if (reader.Null()) return new global::app.type.@null.@this("path", kind);
         string s = reader.String();
         if (string.IsNullOrEmpty(s)) return new global::app.type.@null.@this("path", kind);
-        return ctx.Context != null
-            ? global::app.type.path.@this.Resolve(s, ctx.Context)
-            : new global::app.type.path.file.@this(s, context: null) { Raw = s };
+        // Born-with-context: the read context always carries the actor scope; a path resolves
+        // through the scheme registry with it (no context-less stub).
+        return global::app.type.path.@this.Resolve(s, ctx.Context);
     }
 }

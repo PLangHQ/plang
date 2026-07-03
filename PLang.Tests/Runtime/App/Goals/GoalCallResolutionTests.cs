@@ -54,7 +54,7 @@ public class GoalCallResolutionTests
     {
         var abs = System.IO.Path.Combine(_tempDir, relativePrPath.Replace('/', System.IO.Path.DirectorySeparatorChar));
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(abs)!);
-        var goal = new PLangGoal { Name = goalName, Path = "/" + goalName, Steps = new GoalSteps() };
+        var goal = new PLangGoal { Name = goalName, Path = global::app.type.path.@this.Resolve("/" + goalName, global::PLang.Tests.TestApp.SharedContext), Steps = new GoalSteps() };
         _ = goal.Hash; // ensures serializable shape is snapshotted
         System.IO.File.WriteAllText(abs, JsonSerializer.Serialize(goal, global::app.Utils.Json.CamelCaseIndented));
     }
@@ -65,7 +65,7 @@ public class GoalCallResolutionTests
     /// </summary>
     private PLangAction CallerAt(string callerGoalPath)
     {
-        var goal = new PLangGoal { Name = "Caller", Path = callerGoalPath, Steps = new GoalSteps() };
+        var goal = new PLangGoal { Name = "Caller", Path = global::app.type.path.@this.Resolve(callerGoalPath, global::PLang.Tests.TestApp.SharedContext), Steps = new GoalSteps() };
         var step = new Step { Index = 0, Text = "call something", Goal = goal };
         goal.Steps.Add(step);
         var action = new PLangAction { Module = "goal", ActionName = "call", Step = step };
@@ -144,7 +144,7 @@ public class GoalCallResolutionTests
         var call = new GoalCall
         {
             Name = "BuildGoal/Start",
-            PrPath = "/system/builder/BuildGoal/.build/start.pr",
+            PrPath = global::app.type.path.@this.Resolve("/system/builder/BuildGoal/.build/start.pr", global::PLang.Tests.TestApp.SharedContext),
             Action = caller
         };
         var result = await call.GetGoalAsync(_app, _app.User.Context);

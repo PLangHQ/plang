@@ -17,7 +17,7 @@ public class EventCacheInvalidationTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
         using var context = new global::app.actor.context.@this(engine, engine.User);
-        var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
+        var goal = new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("\\TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
 
         // Register first event
         context.Events.Register(new EventBinding(
@@ -45,7 +45,7 @@ public class EventCacheInvalidationTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
         using var context = new global::app.actor.context.@this(engine, engine.User);
-        var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
+        var goal = new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("\\TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
         var step = new Step { Text = "do something" };
         step.Goal = goal;
 
@@ -109,7 +109,7 @@ public class EventCacheInvalidationTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
         using var context = new global::app.actor.context.@this(engine, engine.User);
-        var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
+        var goal = new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("\\TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
 
         // Register and cache
         context.Events.Register(new EventBinding(

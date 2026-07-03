@@ -102,7 +102,7 @@ public class Phase0Proof
     {
         // INPUT: Application error (400)
         var step = new Step { Index = 0, Text = "validate %email% is not empty" };
-        var goal = new Goal { Name = "Start", Path = "Start.goal" };
+        var goal = new Goal { Name = "Start", Path = global::app.type.path.@this.Resolve("Start.goal", global::PLang.Tests.TestApp.SharedContext) };
         step.Goal = goal;
         var error = new ValidationError("Email address is required", step);
 
@@ -120,7 +120,7 @@ public class Phase0Proof
     {
         // INPUT: Runtime error (500) with exception
         var step = new Step { Index = 0, Text = "read file data.txt" };
-        var goal = new Goal { Name = "Start", Path = "Start.goal" };
+        var goal = new Goal { Name = "Start", Path = global::app.type.path.@this.Resolve("Start.goal", global::PLang.Tests.TestApp.SharedContext) };
         step.Goal = goal;
         var ex = new InvalidOperationException("Access denied");
         var error = new Error("Failed to read file", step, "FileError", 500)

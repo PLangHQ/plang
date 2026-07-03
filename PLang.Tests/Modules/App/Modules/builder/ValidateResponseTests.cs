@@ -14,7 +14,7 @@ public class ValidateResponseTests
 
     private Goal MakeGoal(int stepCount)
     {
-        var goal = new Goal { Name = "TestGoal", Path = "/Test.goal" };
+        var goal = new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("/Test.goal", global::PLang.Tests.TestApp.SharedContext) };
         for (int i = 0; i < stepCount; i++)
             goal.Steps.Add(new Step { Index = i, Text = $"step {i}" });
         return goal;
@@ -22,7 +22,7 @@ public class ValidateResponseTests
 
     private Goal MakeGoalWithPriorActions(int stepCount)
     {
-        var goal = new Goal { Name = "TestGoal", Path = "/Test.goal" };
+        var goal = new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("/Test.goal", global::PLang.Tests.TestApp.SharedContext) };
         for (int i = 0; i < stepCount; i++)
         {
             var step = new Step { Index = i, Text = $"step {i}" };

@@ -19,7 +19,7 @@ public sealed partial class @this : global::app.type.path.@this
     /// scheme registry, implicit <c>string→path</c>) gets the canonical
     /// invariant for free.
     /// </summary>
-    public @this(string absolutePath, actor.context.@this? context = null)
+    public @this(string absolutePath, actor.context.@this context)
         : base(Canonicalize(absolutePath), context)
     {
     }

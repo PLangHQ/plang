@@ -190,7 +190,7 @@ public class RenderTests : IDisposable
         var goal = new Goal
         {
             Name = "Greeter",
-            Path = "/Greeter.goal",
+            Path = global::app.type.path.@this.Resolve("/Greeter.goal", global::PLang.Tests.TestApp.SharedContext),
             Steps = new GoalSteps
             {
                 MakeStep("variable", "set",
@@ -416,7 +416,7 @@ public class RenderTests : IDisposable
     public async Task Render_CallGoal_EmptyGoalReturnsEmptyOutput()
     {
         // An empty goal (no steps) returns Data.Ok() — callGoal writes "" to output
-        var goal = new Goal { Name = "EmptyGoal", Path = "/EmptyGoal.goal" };
+        var goal = new Goal { Name = "EmptyGoal", Path = global::app.type.path.@this.Resolve("/EmptyGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
         _app.Goal.Add(goal);
 
         var context = _app.User.Context;
@@ -436,7 +436,7 @@ public class RenderTests : IDisposable
     public async Task Render_CallGoal_GoalNameFromVariable()
     {
         // callGoal can use a Liquid variable for the goal name
-        var goal = new Goal { Name = "DynamicGoal", Path = "/DynamicGoal.goal" };
+        var goal = new Goal { Name = "DynamicGoal", Path = global::app.type.path.@this.Resolve("/DynamicGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
         _app.Goal.Add(goal);
 
         var context = _app.User.Context;
@@ -459,7 +459,7 @@ public class RenderTests : IDisposable
         var goal = new Goal
         {
             Name = "GetNumber",
-            Path = "/GetNumber.goal",
+            Path = global::app.type.path.@this.Resolve("/GetNumber.goal", global::PLang.Tests.TestApp.SharedContext),
             Steps = new GoalSteps
             {
                 MakeStep("variable", "set",

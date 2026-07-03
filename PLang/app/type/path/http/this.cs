@@ -61,7 +61,7 @@ public sealed partial class @this : global::app.type.path.@this
 
     private readonly Uri _uri;
 
-    public @this(string raw, actor.context.@this? context = null)
+    public @this(string raw, actor.context.@this context)
         : base(raw, context)
     {
         if (!Uri.TryCreate(raw, UriKind.Absolute, out var uri))

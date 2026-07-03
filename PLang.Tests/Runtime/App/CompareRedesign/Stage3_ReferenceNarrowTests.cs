@@ -64,7 +64,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     public async Task ReadHttpUrl_ReturnsUrlType_NotFile()
     {
         // remote scheme routes to `url` with NO fetch — pure construction
-        var http = new global::app.type.path.http.@this("http://example.com/data.json") { Context = _app.User.Context };
+        var http = new global::app.type.path.http.@this("http://example.com/data.json", _app.User.Context) {};
         var action = new Read(_app.User.Context) { Path = new global::app.data.@this<PLangPath>("", http) };
         var result = await action.Run();
         await result.IsSuccess();

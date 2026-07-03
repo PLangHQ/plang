@@ -126,7 +126,7 @@ public class CacheWrapTests
     public async Task Wrap_DefaultKey_DerivedFromGoalPathAndStepIndex()
     {
         // Populate context.Step so default key resolver can read Goal.Path + Step.Index
-        var goal = new Goal { Path = "/foo/bar.goal" };
+        var goal = new Goal { Path = global::app.type.path.@this.Resolve("/foo/bar.goal", global::PLang.Tests.TestApp.SharedContext) };
         var step = new Step { Index = 7, Goal = goal };
         Ctx.Step = step;
 

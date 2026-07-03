@@ -8,7 +8,7 @@ public class SnapshotAtErrorTests
     private static (global::app.@this app, ActionEntity action) BuildLive(string name)
     {
         var app = global::PLang.Tests.TestApp.Create("/test");
-        var goal = new Goal { Name = name, Path = $"/{name}.goal" };
+        var goal = new Goal { Name = name, Path = global::app.type.path.@this.Resolve($"/{name}.goal", global::PLang.Tests.TestApp.SharedContext) };
         var step = new Step { Index = 0, Text = "step", Goal = goal };
         var action = new ActionEntity { Module = "test", ActionName = "test" };
         action.Step = step; step.Actions.Add(action); goal.Steps.Add(step);

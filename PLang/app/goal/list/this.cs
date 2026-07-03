@@ -327,12 +327,10 @@ public sealed class @this
         if (string.IsNullOrEmpty(prPath))
             return null;
 
-        // Resolve the raw string through the scheme registry when App is wired
-        // so dict lookups key on the canonical Path. Test fixtures often skip
-        // App wiring — fall back to the implicit string→Path stub.
-        global::app.type.path.@this key = App?.System?.Context is { } context
-            ? global::app.type.path.@this.Resolve(prPath, context)
-            : prPath;
+        // Resolve the raw string through the scheme registry so dict lookups key on
+        // the canonical Path (born with the System context — always available).
+        global::app.type.path.@this key =
+            global::app.type.path.@this.Resolve(prPath, App.System.Context);
         if (_goals.TryGetValue(key, out var cached))
             return cached.IsSetup ? null : cached;
         if (_byPath.TryGetValue(key, out cached))

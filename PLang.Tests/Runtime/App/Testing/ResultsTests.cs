@@ -19,7 +19,7 @@ public class ResultsTests
     }
 
     private static global::app.tester.Run NewRun(string name = "T") =>
-        new(new global::app.tester.test.@this { Goal = new Goal { Name = name, Path = $"/Tests/{name}.test.goal" } });
+        new(new global::app.tester.test.@this { Goal = new Goal { Name = name, Path = global::app.type.path.@this.Resolve($"/Tests/{name}.test.goal", global::PLang.Tests.TestApp.SharedContext) } });
 
     // Fresh Results starts empty — Count == 0, enumeration yields nothing.
     [Test]

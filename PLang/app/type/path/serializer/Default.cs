@@ -31,7 +31,7 @@ public static class Default
     public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
     {
         if (raw is not string s || string.IsNullOrEmpty(s)) return null;
-        if (ctx.Context != null) return global::app.type.path.@this.Resolve(s, ctx.Context);
-        return new global::app.type.path.file.@this(s, context: null) { Raw = s };
+        // Born-with-context: the read context always carries the actor scope.
+        return global::app.type.path.@this.Resolve(s, ctx.Context);
     }
 }

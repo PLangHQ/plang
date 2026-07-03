@@ -60,7 +60,7 @@ public class SnapshotResumeTests
         // one of its actions (synthesise suspension), snapshot, then Resume.
         var app = NewApp();
         var context = app.User.Context;
-        var goal = new Goal { Name = "G", Path = "/G.goal", PrPath = "/G.pr" };
+        var goal = new Goal { Name = "G", Path = global::app.type.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         var step0 = SetStep(0, "s0", "first"); step0.Goal = goal;
         var step1 = SetStep(1, "s1", "second"); step1.Goal = goal;
         goal.Steps.Add(step0); goal.Steps.Add(step1);

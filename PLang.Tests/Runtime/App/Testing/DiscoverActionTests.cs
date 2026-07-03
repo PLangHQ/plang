@@ -224,7 +224,7 @@ public class DiscoverActionTests
         var helper = new Goal
         {
             Name = "Helper",
-            Path = "/Helper.goal",
+            Path = global::app.type.path.@this.Resolve("/Helper.goal", global::PLang.Tests.TestApp.SharedContext),
             Steps = new GoalSteps
             {
                 new Step

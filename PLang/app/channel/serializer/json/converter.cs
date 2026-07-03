@@ -73,11 +73,9 @@ public sealed class Converter : JsonConverterFactory
 
             // The path type owns its construction — resolve the raw string directly (what
             // path/serializer/Default.Read did via the Readers.Of delegate; no reflection hop).
-            if (_context != null)
-                return global::app.type.path.@this.Resolve(raw!, _context);
-            // No context — bare file-scheme stub; Authorize callers explode on it
-            // (the contract the old context-less converter kept).
-            return new global::app.type.path.file.@this(raw!, context: null) { Raw = raw! };
+            // Born-with-context: the converter carries the actor scope (the Json serializer
+            // always wires it), so the path resolves through the scheme registry with it.
+            return global::app.type.path.@this.Resolve(raw!, _context!);
         }
 
         public override void Write(Utf8JsonWriter writer, global::app.type.path.@this value, JsonSerializerOptions options)

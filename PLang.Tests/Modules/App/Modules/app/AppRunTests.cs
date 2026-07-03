@@ -14,7 +14,7 @@ public class AppRunTests
         _app.Goal.Add(new global::app.goal.@this
         {
             Name = "RunTarget",
-            Path = "/RunTarget.goal"
+            Path = global::app.type.path.@this.Resolve("/RunTarget.goal", global::PLang.Tests.TestApp.SharedContext)
         });
     }
 

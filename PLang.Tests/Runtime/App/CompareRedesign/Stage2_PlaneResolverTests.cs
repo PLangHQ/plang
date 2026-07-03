@@ -57,7 +57,7 @@ public class Stage2_PlaneResolverTests
         {
             File.WriteAllText(System.IO.Path.Combine(dir, "c.json"), "{\"a\":1}");
             var read = new global::app.module.file.Read(app.User.Context) { Path = new global::app.data.@this<global::app.type.path.@this>("",
-                    new global::app.type.path.file.@this(System.IO.Path.Combine(dir, "c.json")) { Context = app.User.Context }),
+                    new global::app.type.path.file.@this(System.IO.Path.Combine(dir, "c.json"), app.User.Context) {}),
             };
             var data = await read.Run();
             await data.GetChild("a");                       // narrow

@@ -153,7 +153,7 @@ public class Stage7_SurfaceGateTests
         File.WriteAllText(tmp, "12345");
         try
         {
-            var fp = new global::app.type.path.file.@this(tmp);
+            var fp = new global::app.type.path.file.@this(tmp, global::PLang.Tests.TestApp.SharedContext);
             object size = fp.Size;
             await Assert.That(size).IsTypeOf<global::app.type.number.@this>();
             await Assert.That(size.ToString()).IsEqualTo("5");

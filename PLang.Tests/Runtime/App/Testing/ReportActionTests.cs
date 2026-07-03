@@ -48,7 +48,7 @@ public class ReportActionTests
         var goal = new Goal
         {
             Name = name,
-            Path = $"/Tests/{name}.test.goal",
+            Path = global::app.type.path.@this.Resolve($"/Tests/{name}.test.goal", global::PLang.Tests.TestApp.SharedContext),
             Hash = "deadbeef",
             BuilderVersion = "v1"
         };
