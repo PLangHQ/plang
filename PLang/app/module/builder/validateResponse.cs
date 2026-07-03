@@ -240,7 +240,7 @@ public partial class validateResponse : IContext
         if (errors.Count > 0)
         {
             var message = string.Join("\n", errors.Select(e => $"- {e}"));
-            return global::app.data.@this.FromError(new global::app.error.ActionError(message, "ValidationErrors", 400));
+            return (goal.App ?? app)!.User.Context!.Error(new global::app.error.ActionError(message, "ValidationErrors", 400));
         }
 
         return (goal.App ?? app)!.User.Context!.Ok(true);
