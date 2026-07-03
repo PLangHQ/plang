@@ -41,7 +41,7 @@ public class Stage2_PlaneResolverTests
         // %x!type% → headline type name (post-narrow: `dict`)
         await using var app = NewApp();
         var d = new Data("x", new Dictionary<string, object?> { ["k"] = 1 },
-            global::app.type.@this.FromName("dict"), context: app.User.Context);
+            global::PLang.Tests.TestApp.SharedContext.Type.Create("dict"), context: app.User.Context);
         var t = await d.GetChild("!type");
         await Assert.That(((await t.Value()) as global::app.type.@this)?.Name).IsEqualTo("dict");
     }
@@ -52,15 +52,12 @@ public class Stage2_PlaneResolverTests
         // %x!type.list% post-narrow → [dict, file] (newest at index 0)
         var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-st2chain-" + System.Guid.NewGuid().ToString("N")[..8]);
         Directory.CreateDirectory(dir);
-        await using var app = new global::app.@this(dir);
+        await using var app = TestApp.Create(dir);
         try
         {
             File.WriteAllText(System.IO.Path.Combine(dir, "c.json"), "{\"a\":1}");
-            var read = new global::app.module.file.Read
-            {
-                Context = app.User.Context,
-                Path = new global::app.data.@this<global::app.type.path.@this>("",
-                    new global::app.type.path.file.@this(System.IO.Path.Combine(dir, "c.json")) { Context = app.User.Context }),
+            var read = new global::app.module.file.Read(app.User.Context) { Path = new global::app.data.@this<global::app.type.path.@this>("",
+                    new global::app.type.path.file.@this(System.IO.Path.Combine(dir, "c.json"), app.User.Context) {}),
             };
             var data = await read.Run();
             await data.GetChild("a");                       // narrow
@@ -95,7 +92,7 @@ public class Stage2_PlaneResolverTests
     public async Task AtSchemaBlocked_AsDictKey_WireMarkerOnly()
     {
         // @schema is the wire marker — the dict write seam rejects it as a key
-        var d = new global::app.type.dict.@this();
+        var d = new global::app.type.dict.@this(global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(() => d.Set("@schema", "data")).Throws<ArgumentException>();
         await Assert.That(() => d.Set(new Data("@schema", "data"))).Throws<ArgumentException>();
         // ordinary keys unaffected; envelope recognition reads the marker off

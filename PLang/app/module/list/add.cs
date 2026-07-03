@@ -20,7 +20,7 @@ public partial class Add : IContext
         if (list == null)
         {
             // Promote a non-list (or legacy raw list) value into the native list type.
-            list = new app.type.list.@this { Context = Context };
+            list = new app.type.list.@this(Context);
             if (data.HasValue)
                 list.Add(new data.@this("", existing, context: Context));
             await Context.Variable.Set(listName, list);
@@ -40,6 +40,6 @@ public partial class Add : IContext
         else
             list.Add(toAdd);
 
-        return Context.Ok<type.list>(new type.list { count = list.CountRaw, value = list }, app.type.@this.FromName("list"));
+        return Context.Ok<type.list>(new type.list { count = list.CountRaw, value = list }, Context.Type.Create("list"));
     }
 }

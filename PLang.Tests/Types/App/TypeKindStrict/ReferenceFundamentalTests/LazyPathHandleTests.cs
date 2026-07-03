@@ -18,7 +18,7 @@ public class LazyPathHandleTests
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-lazy-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        _app = new global::app.@this(root);
+        _app = TestApp.Create(root);
     }
 
     [After(Test)]

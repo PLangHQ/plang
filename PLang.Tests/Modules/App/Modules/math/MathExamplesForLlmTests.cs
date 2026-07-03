@@ -20,7 +20,7 @@ public class MathExamplesForLlmTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new PLangEngine("/test");
+        _app = TestApp.Create("/test");
         _app.Builder.IsEnabled = true;
     }
 

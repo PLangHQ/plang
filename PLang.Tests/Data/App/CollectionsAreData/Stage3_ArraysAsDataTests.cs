@@ -60,7 +60,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
     public async Task ListValueType_HoldsListOfData()
     {
         // app/type/list/'s value type holds List<data.@this> — symmetric to dict.
-        var list = new ListV { Context = app.User.Context };
+        var list = new ListV(app.User.Context);
         list.Add(app.Data("", 1L));
         list.Add(app.Data("", "x"));
         await Assert.That(list.Count).IsEqualTo(2);
@@ -75,7 +75,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
         // returns the SAME element Data it holds (identity/signature intact), and the
         // implicit-first (`%list.name%` → list[0].name) stays.
         var element = app.Data("", "first");
-        var list = new ListV { Context = app.User.Context };
+        var list = new ListV(app.User.Context);
         list.Add(element);
         list.Add(app.Data("", "second"));
         var data = app.Data("items", list);
@@ -86,8 +86,8 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
         await Assert.That(((global::app.type.number.@this)(await (await data.GetChild("count")).Value())!).ToInt32()).IsEqualTo(2);
 
         // Implicit-first through a list of dicts.
-        var people = new ListV { Context = app.User.Context };
-        var p0 = new DictV { Context = app.User.Context };
+        var people = new ListV(app.User.Context);
+        var p0 = new DictV(app.User.Context);
         p0.Set(app.Data("name", "alice"));
         people.Add(app.Data("", p0));
         var peopleData = app.Data("people", people);
@@ -109,7 +109,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
         // Coercing the list value type to a typed List<T> reads each element Data's value (I).
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var list = new ListV { Context = app.User.Context };
+        var list = new ListV(app.User.Context);
         list.Add(app.Data("", 1L));
         list.Add(app.Data("", 2L));
         list.Add(app.Data("", 3L));
@@ -139,7 +139,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
 
-        var list = new ListV { Context = app.User.Context };
+        var list = new ListV(app.User.Context);
         list.Add(app.Data("signed", "hello world"));
         var listData = app.Data("list", list);
 
@@ -158,7 +158,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
         var method = typeof(global::app.module.builder.code.Default).GetMethod("ToStepList",
             BindingFlags.NonPublic | BindingFlags.Static);
         await Assert.That(method).IsNotNull();
-        var list = new ListV { Context = app.User.Context };
+        var list = new ListV(app.User.Context);
         list.Add(app.Data("", "variable.set"));
         list.Add(app.Data("", "list.add"));
         var result = method!.Invoke(null, new object?[] { list }) as List<object>;

@@ -17,7 +17,7 @@ public class Stage0_NamedChannelsTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::app.@this("/app");
+    public void Setup() => _app = TestApp.Create("/app");
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
@@ -50,13 +50,16 @@ public class Stage0_NamedChannelsTests
         await Assert.That(resolved).IsTypeOf<NoopChannel>();
     }
 
-    // Writing to the no-op sink completes successfully — nothing observable, no throw.
+    // Addressing a channel that isn't registered is an error (ChannelNotFound), not a
+    // silent sink — the null-object surfaces the mistake at the call site instead of
+    // dropping the payload.
     [Test]
-    public async Task Channels_NoOpSink_WriteSucceedsWithoutSubscribers()
+    public async Task Channels_NonexistentChannel_Write_ReturnsChannelNotFound()
     {
         var sink = Channels.Channel("nonexistent");
         var result = await sink.WriteAsync(_app.Ok("payload"));
-        await result.IsSuccess();
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("ChannelNotFound");
     }
 
     // After a build-side Register, Channel("builder") returns the real channel,
@@ -115,23 +118,26 @@ public class Stage0_NamedChannelsTests
             .Because("Write must have routed to the real channel, not the no-op fallback.");
     }
 
-    // Outside a build, "builder" is not registered → Channel("builder") falls back
-    // to the no-op sink → writes drop silently with no side effect.
+    // Outside a build, "builder" is not registered → Channel("builder") returns the
+    // sentinel, whose write is a ChannelNotFound error. Best-effort callers (file.read's
+    // advisory warning) ignore the result, so the warning simply isn't written — but the
+    // channel doesn't pretend the write succeeded.
     [Test]
-    public async Task BuildWarning_WriteToBuilderChannel_OutsideBuild_DropsSilently()
+    public async Task BuildWarning_WriteToBuilderChannel_OutsideBuild_ReturnsChannelNotFound()
     {
         var sink = Channels.Channel("builder");
         await Assert.That(sink).IsTypeOf<NoopChannel>();
 
         var result = await sink.WriteAsync(_app.Ok(Warning("file.read", "msg")));
 
-        await result.IsSuccess();
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("ChannelNotFound");
     }
 
     // The build-warning payload shape: a native dict {action, message}, mirroring
     // what file.read writes to the "builder" channel.
     private global::app.type.dict.@this Warning(string action, string message)
-        => new global::app.type.dict.@this { Context = _app.User.Context }.Set("action", action).Set("message", message);
+        => new global::app.type.dict.@this(_app.User.Context).Set("action", action).Set("message", message);
 
     // Two distinct channel names resolve to two distinct channel instances —
     // they are independent registry entries, not aliases. End-to-end isolation

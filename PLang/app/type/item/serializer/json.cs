@@ -137,7 +137,7 @@ public partial class json
     // its own type/signature, so it reconstructs as a Data straight into the slot.
     private dict.@this ObjectLeaf(System.Text.Json.JsonElement element, int depth)
     {
-        var d = new dict.@this { Context = _context };
+        var d = new dict.@this(_context);
         foreach (var prop in element.EnumerateObject())
             d.Set(prop.Name, RawSlot(prop.Value, depth + 1));
         return d;
@@ -145,7 +145,7 @@ public partial class json
 
     private list.@this ArrayLeaf(System.Text.Json.JsonElement element, int depth)
     {
-        var l = new list.@this { Context = _context };
+        var l = new list.@this(_context);
         foreach (var item in element.EnumerateArray())
             l.AddRaw(RawSlot(item, depth + 1));
         return l;

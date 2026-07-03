@@ -79,16 +79,16 @@ public class VariableResolveTest : System.IAsyncDisposable
 
     [Test] public async Task VariableSet_BangSyntax_WritesProperty()
     {
-        await using var app = new global::app.@this("/tmp/var-set-bang-" + System.Guid.NewGuid().ToString("N")[..8]);
+        await using var app = TestApp.Create("/tmp/var-set-bang-" + System.Guid.NewGuid().ToString("N")[..8]);
         var context = app.User.Context;
 
-        await app.RunAction<global::app.module.variable.Set>(new global::app.module.variable.Set
+        await app.RunAction<global::app.module.variable.Set>(new global::app.module.variable.Set(app.User.Context)
         {
             Name = new global::app.data.@this<global::app.variable.@this>("", new global::app.variable.@this("response")),
             Value = app.User.Context.Ok("hello"),
         }, context);
 
-        await app.RunAction<global::app.module.variable.Set>(new global::app.module.variable.Set
+        await app.RunAction<global::app.module.variable.Set>(new global::app.module.variable.Set(app.User.Context)
         {
             Name = new global::app.data.@this<global::app.variable.@this>("",
                 global::app.variable.@this.Resolve("%response!cost%", context)),
@@ -101,16 +101,16 @@ public class VariableResolveTest : System.IAsyncDisposable
 
     [Test] public async Task VariableSet_MalformedBangSyntax_ReturnsTypedError()
     {
-        await using var app = new global::app.@this("/tmp/var-set-malformed-" + System.Guid.NewGuid().ToString("N")[..8]);
+        await using var app = TestApp.Create("/tmp/var-set-malformed-" + System.Guid.NewGuid().ToString("N")[..8]);
         var context = app.User.Context;
 
-        await app.RunAction<global::app.module.variable.Set>(new global::app.module.variable.Set
+        await app.RunAction<global::app.module.variable.Set>(new global::app.module.variable.Set(app.User.Context)
         {
             Name = new global::app.data.@this<global::app.variable.@this>("", new global::app.variable.@this("response")),
             Value = app.User.Context.Ok("hello"),
         }, context);
 
-        var result = await app.RunAction<global::app.module.variable.Set>(new global::app.module.variable.Set
+        var result = await app.RunAction<global::app.module.variable.Set>(new global::app.module.variable.Set(app.User.Context)
         {
             Name = new global::app.data.@this<global::app.variable.@this>("",
                 global::app.variable.@this.Resolve("%response!!cost%", context)),

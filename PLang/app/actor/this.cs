@@ -115,7 +115,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         Context.Variable.RegisterNavigable("Settings", path => app.Settings.Get(path, Context));
 
         // Register %!app% — navigates the App object graph (e.g., %!app.tester.IsEnabled%)
-        Context.Variable.Set("!app", new data.DynamicData("!app", () => app));
+        Context.Variable.Set("!app", new data.DynamicData("!app", () => app, Context));
 
         // Register lazy %MyIdentity% — resolves to the System actor's default identity.
         // Data.DynamicData re-evaluates on each access, so changes via setDefault/rename are reflected.
@@ -123,9 +123,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         {
             var (idProvider, _) = app.Code.Get<IIdentity>();
             if (idProvider == null) return null;
-            var result = idProvider.GetOrCreateDefaultAsync(new global::app.module.identity.Get { Context = app.System.Context }).GetAwaiter().GetResult();
+            var result = idProvider.GetOrCreateDefaultAsync(new global::app.module.identity.Get(app.System.Context)).GetAwaiter().GetResult();
             return result.Success ? global::app.type.item.@this.Lower<Identity>(result.Peek()) : null;
-        }));
+        }, Context));
     }
 
     /// <summary>

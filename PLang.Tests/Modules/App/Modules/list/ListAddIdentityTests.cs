@@ -20,7 +20,7 @@ public class ListAddIdentityTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::app.@this("/app");
+    public void Setup() => _app = TestApp.Create("/app");
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
@@ -34,15 +34,12 @@ public class ListAddIdentityTests
     public async Task ListAdd_PlainDataList_MutatesLiveVariableValueDirectly()
     {
         var (context, vars) = Ctx();
-        var existing = new global::app.type.list.@this();
+        var existing = new global::app.type.list.@this(global::PLang.Tests.TestApp.SharedContext);
         existing.Add(new Data("", "a", context: context));
         existing.Add(new Data("", "b", context: context));
         vars.Set("products", existing);
 
-        var action = new Add
-		{
-            Context = context,
-            ListName = new app.variable.@this("products"),
+        var action = new Add(context) { ListName = new app.variable.@this("products"),
             Value = new Data("", "c", context: context)
         };
         var result = await action.Run();
@@ -63,15 +60,12 @@ public class ListAddIdentityTests
     public async Task ListAdd_ReturnsLiveVariableData_NotNewData()
     {
         var (context, vars) = Ctx();
-        var live = new global::app.type.list.@this();
+        var live = new global::app.type.list.@this(global::PLang.Tests.TestApp.SharedContext);
         live.Add(new Data("", 1, context: context));
         live.Add(new Data("", 2, context: context));
         vars.Set("products", live);
 
-        var action = new Add
-		{
-            Context = context,
-            ListName = new app.variable.@this("products"),
+        var action = new Add(context) { ListName = new app.variable.@this("products"),
             Value = new Data("", 3, context: context)
         };
         var result = await action.Run();
@@ -91,17 +85,14 @@ public class ListAddIdentityTests
     public async Task ListAdd_ItemAsLiveVarRef_AppendsCurrentValue()
     {
         var (context, vars) = Ctx();
-        vars.Set("products", new global::app.type.list.@this());
+        vars.Set("products", new global::app.type.list.@this(global::PLang.Tests.TestApp.SharedContext));
 
         // C# direct-composition path bypasses the .pr resolver, so we wrap "hello"
         // explicitly the same way Data emit would after AsCanonical resolves %item%.
         vars.Set("item", "hello");
         var liveItem = await vars.Get("item");
 
-        var action = new Add
-		{
-            Context = context,
-            ListName = new app.variable.@this("products"),
+        var action = new Add(context) { ListName = new app.variable.@this("products"),
             Value = liveItem
         };
         var result = await action.Run();
@@ -121,19 +112,16 @@ public class ListAddIdentityTests
     public async Task ListAdd_AfterReplacement_HandlerSeesNewValue()
     {
         var (context, vars) = Ctx();
-        var orphan = new global::app.type.list.@this();
+        var orphan = new global::app.type.list.@this(global::PLang.Tests.TestApp.SharedContext);
         orphan.Add(new Data("", "x", context: context));
         vars.Set("products", orphan);
 
         // Replace under the same name — variable.set's Variables.Set replaces the binding.
-        var fresh = new global::app.type.list.@this();
+        var fresh = new global::app.type.list.@this(global::PLang.Tests.TestApp.SharedContext);
         fresh.Add(new Data("", "y", context: context));
         vars.Set("products", fresh);
 
-        var action = new Add
-		{
-            Context = context,
-            ListName = new app.variable.@this("products"),
+        var action = new Add(context) { ListName = new app.variable.@this("products"),
             Value = new Data("", "z", context: context)
         };
         var result = await action.Run();

@@ -36,7 +36,7 @@ public partial class getTypes : IContext
     public async Task<data.@this<global::app.type.list.@this<global::app.type.dict.@this>>> Run()
     {
         var goal = ((await Goal.Value()) as global::app.goal.@this)!;
-        var modules = Context.App!.Module;
+        var modules = Context.App.Module;
 
         var perStep = new List<Dictionary<string, string>>(goal.Steps.Count);
         var working = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -54,7 +54,7 @@ public partial class getTypes : IContext
 
             foreach (var action in goal.Steps[i].Actions ?? new())
             {
-                ProcessAction(action, working, snapshot, ref chainReturnType, modules, Context.App!);
+                ProcessAction(action, working, snapshot, ref chainReturnType, modules, Context.App);
             }
         }
 
@@ -63,12 +63,12 @@ public partial class getTypes : IContext
         // Each step's type-map becomes a native dict; the per-step list is list<dict>.
         var rows = perStep.Select(d =>
         {
-            var nd = new global::app.type.dict.@this();
+            var nd = new global::app.type.dict.@this(Context);
             foreach (var kv in d) nd.Set(kv.Key, kv.Value);
-            return nd;
+            return new data.@this("", nd, context: Context);
         });
-        return data.@this<global::app.type.list.@this<global::app.type.dict.@this>>.Ok(
-            global::app.type.list.@this<global::app.type.dict.@this>.Of(rows));
+        return Context.Ok<global::app.type.list.@this<global::app.type.dict.@this>>(
+            new global::app.type.list.@this<global::app.type.dict.@this>(rows, Context));
     }
 
     private static void ProcessAction(

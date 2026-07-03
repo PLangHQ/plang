@@ -50,15 +50,20 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     private static bool IsWrapped(object? slot)
         => slot is Data or global::app.type.item.@this;
 
-    public @this() => _value = new(System.StringComparer.OrdinalIgnoreCase);
+    public @this(actor.context.@this context)
+        : this(new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase), context) { }
 
     /// <summary>Aliases a foreign CLR dictionary as the backing — true O(1), no walk,
     /// no copy. The handoff contract: the source becomes the backing (its slots are
     /// raw values, type-on-read). A pure read keeps it pristine, so <see cref="Clr"/>
     /// hands the same instance back; the first write diverges it (<see cref="_hasWrapped"/>).
     /// The comparer is the source's own — PLang's own dicts are built case-insensitive
-    /// via the default ctor.</summary>
-    internal @this(Dictionary<string, object?> backing) => _value = backing;
+    /// via the default ctor. Born WITH context — every entry reads/serializes through it.</summary>
+    internal @this(Dictionary<string, object?> backing, actor.context.@this context)
+    {
+        _value = backing;
+        _context = context ?? throw new System.ArgumentNullException(nameof(context));
+    }
 
     /// <summary>
     /// Context for runtime access. When set, propagates onto every entry Data so
@@ -66,7 +71,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// mirrors <c>Data</c>'s own IContext propagation to its inner value.
     /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
-    public actor.context.@this? Context
+    public actor.context.@this Context
     {
         get => _context;
         set
@@ -75,7 +80,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             // A clean dict's slots are raw — nothing context-bearing to walk, so
             // assigning context stays O(1). Reads born their entries with _context
             // (Slot); a wrapped slot is reached here only after a write diverged it.
-            if (value == null || !_hasWrapped) return;
+            if (!_hasWrapped) return;
             foreach (var slot in _value.Values)
             {
                 if (slot is Data d) d.Context = value;
@@ -93,7 +98,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         var raw = _value[key];
         if (raw is Data d)
         {
-            if (_context != null) d.Context = _context;
+            d.Context = _context;
             // The dict key is authoritative — a nested entry value carries no name of
             // its own on the wire (only the key rides, as the JSON property name), so a
             // reconstructed entry borns Name="". Re-stamp the key, matching the raw-slot
@@ -104,18 +109,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         }
         // Born a FRESH Data each read — never cached back. Leaving the slot raw keeps
         // the aliased backing pristine, so the CLR exit door stays same-ref.
-        return new Data(key, global::app.type.@this.Create(raw, _context), context: _context!);
+        return new Data(key, global::app.type.@this.Create(raw, _context), context: _context);
     }
-    private actor.context.@this? _context;
-
-    // module.IContext is non-nullable; the interface setter funnels through the
-    // nullable property above (the parse seam builds a dict before any scope is
-    // wired, so the slot must tolerate null).
-    actor.context.@this module.IContext.Context
-    {
-        get => _context!;
-        set => Context = value;
-    }
+    private actor.context.@this _context = null!;
 
     /// <summary>Number of entries.</summary>
     /// <summary>Entry count as the PLang <c>number</c> (the public surface
@@ -131,7 +127,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         get
         {
-            var keys = new global::app.type.list.@this<global::app.type.text.@this>();
+            var keys = new global::app.type.list.@this<global::app.type.text.@this>(_context);
             foreach (var k in _value.Keys)
                 keys.Add(new Data(k, new global::app.type.text.@this(k)));
             return keys;
@@ -258,7 +254,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// </summary>
     public @this Set(Data value)
     {
-        if (_context != null) value.Context = _context;
+        value.Context = _context;
         Put(value.Name, value);
         return this;
     }
@@ -270,7 +266,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// </summary>
     public @this Set(string key, object? value)
     {
-        if (value is Data d && _context != null) d.Context = _context;
+        if (value is Data d) d.Context = _context;
         Put(key, value);
         return this;
     }
@@ -389,7 +385,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             {
                 if (rendered == null)
                 {
-                    rendered = new @this { Context = _context };
+                    rendered = new @this(_context);
                     foreach (var prior in _value.Keys)
                     {
                         if (prior == key) break;

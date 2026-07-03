@@ -23,7 +23,7 @@ public class DownloadActionTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_http_dl_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = TestApp.Create(_tempDir);
 
         _handler = new MockHttpMessageHandler();
         var provider = new Default(_handler) { Name = "test" };
@@ -68,13 +68,11 @@ public class DownloadActionTests
             Content = new System.Net.Http.StringContent("downloaded data", Encoding.UTF8, "text/plain")
         });
 
-        var action = new download
-        {
-            Context = Ctx,
-            Url = (global::app.type.text.@this)"https://example.com/file.txt",
+        var action = new download(Ctx) { Url = (global::app.type.text.@this)"https://example.com/file.txt",
             Unsigned = (global::app.type.@bool.@this)true
         };
 
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -91,13 +89,11 @@ public class DownloadActionTests
             Content = new System.Net.Http.StringContent("Not Found")
         });
 
-        var action = new download
-        {
-            Context = Ctx,
-            Url = (global::app.type.text.@this)"https://example.com/missing.txt",
+        var action = new download(Ctx) { Url = (global::app.type.text.@this)"https://example.com/missing.txt",
             Unsigned = (global::app.type.@bool.@this)true
         };
 
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsFailure();

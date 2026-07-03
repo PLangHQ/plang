@@ -226,7 +226,7 @@ public class PropertiesWireShapeTests
             back.Context = d.Context;
             var app = d.Context!.App;
             var verify = await app.RunAction<global::app.module.signing.verify>(
-                new global::app.module.signing.verify
+                new global::app.module.signing.verify(app.User.Context)
                 {
                     Data = back,
                     SkipFreshnessCheck = new global::app.data.@this<global::app.type.@bool.@this>("", true)

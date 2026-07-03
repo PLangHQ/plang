@@ -10,12 +10,8 @@ public partial class Round : IContext
     [Default(0)]
     public partial data.@this<global::app.type.number.@this> Decimals { get; init; }
 
-    public async Task<data.@this<number>> Run()
-    {
-        var n = number.FromObject(await Value.Value());
-        if (n == null)
-            return Context.Error<number>(
-                new global::app.error.ValidationError("math.round requires a number", "InvalidInput"));
-        return number.Round(n, (await Decimals.Value())!);
-    }
+    [Code]
+    public partial global::app.module.math.code.IMath Math { get; }
+
+    public async Task<data.@this<number>> Run() => await Math.Round(this);
 }

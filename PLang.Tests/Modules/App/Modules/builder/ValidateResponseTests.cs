@@ -9,12 +9,12 @@ public class ValidateResponseTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/app");
+        _app = TestApp.Create("/app");
     }
 
     private Goal MakeGoal(int stepCount)
     {
-        var goal = new Goal { Name = "TestGoal", Path = "/Test.goal" };
+        var goal = new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("/Test.goal", global::PLang.Tests.TestApp.SharedContext) };
         for (int i = 0; i < stepCount; i++)
             goal.Steps.Add(new Step { Index = i, Text = $"step {i}" });
         return goal;
@@ -22,7 +22,7 @@ public class ValidateResponseTests
 
     private Goal MakeGoalWithPriorActions(int stepCount)
     {
-        var goal = new Goal { Name = "TestGoal", Path = "/Test.goal" };
+        var goal = new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("/Test.goal", global::PLang.Tests.TestApp.SharedContext) };
         for (int i = 0; i < stepCount; i++)
         {
             var step = new Step { Index = i, Text = $"step {i}" };
@@ -43,10 +43,7 @@ public class ValidateResponseTests
     private static validateResponse Make(BuildResponse response, Goal goal,
         global::app.@this app)
     {
-        return new validateResponse
-        {
-            Context = app.User.Context,
-            StepResults = new global::app.data.@this<BuildResponse>("", response),
+        return new validateResponse(app.User.Context) { StepResults = new global::app.data.@this<BuildResponse>("", response),
             Goal = new global::app.data.@this<Goal>("", goal)
         };
     }
@@ -114,10 +111,7 @@ public class ValidateResponseTests
     [Test]
     public async Task NullInputs_ReturnsError()
     {
-        var action = new validateResponse
-        {
-            Context = _app.User.Context,
-            StepResults = new global::app.data.@this<BuildResponse>(),
+        var action = new validateResponse(_app.User.Context) { StepResults = new global::app.data.@this<BuildResponse>(),
             Goal = new global::app.data.@this<Goal>(),
         };
         var result = await action.Run();

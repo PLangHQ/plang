@@ -119,7 +119,7 @@ public class SnapshotWireTests
             System.IO.Path.GetTempPath(), "plang-wire-" + System.Guid.NewGuid().ToString("N")[..8]));
         var context = app.User.Context;
 
-        var goal = new Goal { Name = "G", Path = "/G.goal", PrPath = "/G.pr" };
+        var goal = new Goal { Name = "G", Path = global::app.type.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         var step0 = SetStep(0, "s0", "first"); step0.Goal = goal;
         var step1 = SetStep(1, "s1", "second"); step1.Goal = goal;
         goal.Steps.Add(step0); goal.Steps.Add(step1);
@@ -153,7 +153,7 @@ public class SnapshotWireTests
             System.IO.Path.GetTempPath(), "plang-conv-" + System.Guid.NewGuid().ToString("N")[..8]));
         var context = app.User.Context;
 
-        var goal = new Goal { Name = "G", Path = "/G.goal", PrPath = "/G.pr" };
+        var goal = new Goal { Name = "G", Path = global::app.type.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         var step0 = SetStep(0, "s0", "first"); step0.Goal = goal;
         var step1 = SetStep(1, "s1", "second"); step1.Goal = goal;
         goal.Steps.Add(step0); goal.Steps.Add(step1);
@@ -203,14 +203,14 @@ public class SnapshotWireTests
         context.Variable.Set("i", 1L);
 
         // Start: [0] set a, [1] the call to Sub, [2] post-call marker (the unwind proof).
-        var start = new Goal { Name = "Start", Path = "/Start.goal", PrPath = "/Start.pr" };
+        var start = new Goal { Name = "Start", Path = global::app.type.path.@this.Resolve("/Start.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.path.@this.Resolve("/Start.pr", global::PLang.Tests.TestApp.SharedContext) };
         var st0 = SetStep(0, "a", "A");                 st0.Goal = start;
         var st1 = SetStep(1, "calledSub", "yes");       st1.Goal = start;   // stands in for `call Sub`
         var st2 = SetStepRef(2, "entryReached", "END"); st2.Goal = start;   // post-call: only runs on unwind
         start.Steps.Add(st0); start.Steps.Add(st1); start.Steps.Add(st2);
 
         // Sub: [0] set b, [1] the throw point (suspended here), [2] continuation reading %i%.
-        var sub = new Goal { Name = "Sub", Path = "/Sub.goal", PrPath = "/Sub.pr" };
+        var sub = new Goal { Name = "Sub", Path = global::app.type.path.@this.Resolve("/Sub.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.path.@this.Resolve("/Sub.pr", global::PLang.Tests.TestApp.SharedContext) };
         var sb0 = SetStep(0, "b", "B");                  sb0.Goal = sub;
         var sb1 = SetStep(1, "passedThrow", "ok");       sb1.Goal = sub;    // the `throw if i==1` step
         var sb2 = SetStepRef(2, "seenI", "%i%");         sb2.Goal = sub;    // reads the patched value
@@ -256,7 +256,7 @@ public class SnapshotWireTests
             System.IO.Path.GetTempPath(), "plang-aspath-" + System.Guid.NewGuid().ToString("N")[..8]));
         var context = app.User.Context;
 
-        var goal = new Goal { Name = "G", Path = "/G.goal", PrPath = "/G.pr" };
+        var goal = new Goal { Name = "G", Path = global::app.type.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         var step0 = SetStep(0, "x", "1");          step0.Goal = goal;
         var step1 = SetStepRef(1, "seen", "%x%");  step1.Goal = goal;
         goal.Steps.Add(step0); goal.Steps.Add(step1);
@@ -323,7 +323,7 @@ public class SnapshotWireTests
             System.IO.Path.GetTempPath(), "plang-tt-" + System.Guid.NewGuid().ToString("N")[..8]));
         var context = app.User.Context;
 
-        var goal = new Goal { Name = "G", Path = "/G.goal", PrPath = "/G.pr" };
+        var goal = new Goal { Name = "G", Path = global::app.type.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         var step0 = SetStep(0, "x", "1");          step0.Goal = goal;
         var step1 = SetStepRef(1, "seen", "%x%");  step1.Goal = goal;
         goal.Steps.Add(step0); goal.Steps.Add(step1);
@@ -363,7 +363,7 @@ public class SnapshotWireTests
             System.IO.Path.GetTempPath(), "plang-typed-" + System.Guid.NewGuid().ToString("N")[..8]));
         var context = app.User.Context;
 
-        var goal = new Goal { Name = "G", Path = "/G.goal", PrPath = "/G.pr" };
+        var goal = new Goal { Name = "G", Path = global::app.type.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         var step0 = SetStep(0, "x", "1");          step0.Goal = goal;
         var step1 = SetStepRef(1, "seen", "%x%");  step1.Goal = goal;
         goal.Steps.Add(step0); goal.Steps.Add(step1);
@@ -397,7 +397,7 @@ public class SnapshotWireTests
             System.IO.Path.GetTempPath(), "plang-nav-" + System.Guid.NewGuid().ToString("N")[..8]));
         var context = app.User.Context;
 
-        var goal = new Goal { Name = "G", Path = "/G.goal", PrPath = "/G.pr" };
+        var goal = new Goal { Name = "G", Path = global::app.type.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         var step0 = SetStep(0, "x", "1");                step0.Goal = goal;
         var step1 = SetStepRef(1, "seen", "%x%");        step1.Goal = goal;   // reads the edited value
         goal.Steps.Add(step0); goal.Steps.Add(step1);

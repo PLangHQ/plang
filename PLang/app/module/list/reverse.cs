@@ -17,6 +17,6 @@ public partial class Reverse : IContext
         await Context.Variable.Set((await ListName.Value()), nl);
 
         nl.Reverse();
-        return Context.Ok<type.list>(new type.list { count = nl.CountRaw, value = nl }, app.type.@this.FromName("list"));
+        return Context.Ok<type.list>(new type.list { count = nl.CountRaw, value = nl }, Context.Type.Create("list"));
     }
 }

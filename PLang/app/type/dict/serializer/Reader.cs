@@ -19,7 +19,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         if (reader.Null()) return new global::app.type.@null.@this("dict", kind);
         reader.BeginObject();
         var parser = new global::app.type.item.serializer.json(ctx.Context);
-        var dict = new global::app.type.dict.@this { Context = ctx.Context };
+        var dict = new global::app.type.dict.@this(ctx.Context);
         while (reader.NextName(out var name))
             dict.Set(name, parser.ReadSlot(ref reader, ctx));
         reader.EndObject();

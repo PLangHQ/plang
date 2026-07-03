@@ -24,23 +24,23 @@ public partial class Group : IContext
             var keyValue = keyData.IsInitialized ? (await keyData.Value())?.ToString() ?? "" : "";
             if (!buckets.TryGetValue(keyValue, out var bucket))
             {
-                bucket = new app.type.list.@this { Context = Context };
+                bucket = new app.type.list.@this(Context);
                 buckets[keyValue] = bucket;
                 order.Add(keyValue);
             }
             bucket.Add(item);
         }
 
-        var result = new app.type.list.@this { Context = Context };
+        var result = new app.type.list.@this(Context);
         foreach (var k in order)
         {
-            var bucketDict = new app.type.dict.@this { Context = Context };
+            var bucketDict = new app.type.dict.@this(Context);
             bucketDict.Set(new global::app.data.@this("key", k, context: Context));
             bucketDict.Set(new global::app.data.@this("items", buckets[k], context: Context));
             result.Add(new global::app.data.@this("", bucketDict, context: Context));
         }
 
         return Context.Ok<type.list>(
-            new type.list { count = result.CountRaw, value = result }, app.type.@this.FromName("list"));
+            new type.list { count = result.CountRaw, value = result }, Context.Type.Create("list"));
     }
 }

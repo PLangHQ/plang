@@ -10,7 +10,7 @@ public class CallSnapshotTests
         string module = "test", string actionName = "test")
     {
         var app = global::PLang.Tests.TestApp.Create("/test");
-        var goal = new Goal { Name = goalName, Path = $"/{goalName}.goal" };
+        var goal = new Goal { Name = goalName, Path = global::app.type.path.@this.Resolve($"/{goalName}.goal", global::PLang.Tests.TestApp.SharedContext) };
         var step = new Step { Index = 0, Text = stepText, Goal = goal };
         var action = new ActionEntity { Module = module, ActionName = actionName };
         action.Step = step;
@@ -28,7 +28,7 @@ public class CallSnapshotTests
         var stack = app.CallStack;
         await using var call = stack.Push(action);
 
-        var snap = new Snapshot();
+        var snap = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
         call.Capture(snap);
 
         await Assert.That(snap.Read<string>("goalPrPath")).IsEqualTo(action.Step!.Goal!.PrPath?.ToString());
@@ -45,7 +45,7 @@ public class CallSnapshotTests
         var stack = app.CallStack;
         await using var call = stack.Push(action);
 
-        var snap = new Snapshot();
+        var snap = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
         call.Capture(snap);
 
         await Assert.That(snap.Read<int>("stepIndex")).IsEqualTo(0);
@@ -65,7 +65,7 @@ public class CallSnapshotTests
             var dstGoal = new Goal
             {
                 Name = "ResolveGoal",
-                Path = "/ResolveGoal.goal"
+                Path = global::app.type.path.@this.Resolve("/ResolveGoal.goal", global::PLang.Tests.TestApp.SharedContext)
             };
             var dstStep = new Step { Index = 0, Text = action.Step!.Text, Goal = dstGoal };
             var dstAction = new ActionEntity { Module = "test", ActionName = "test" };
@@ -112,7 +112,7 @@ public class CallSnapshotTests
 
             // Fresh App with the same path but different hash (different step prose).
             var dst = global::PLang.Tests.TestApp.Create("/dst");
-            var dstGoal = new Goal { Name = "HashGoal", Path = "/HashGoal.goal" };
+            var dstGoal = new Goal { Name = "HashGoal", Path = global::app.type.path.@this.Resolve("/HashGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
             var dstStep = new Step { Index = 0, Text = "DIFFERENT step text", Goal = dstGoal };
             var dstAction = new ActionEntity { Module = "test", ActionName = "test" };
             dstAction.Step = dstStep;
@@ -138,7 +138,7 @@ public class CallSnapshotTests
             var snap = src.Snapshot();
 
             var dst = global::PLang.Tests.TestApp.Create("/dst");
-            var dstGoal = new Goal { Name = "PureGoal", Path = "/PureGoal.goal" };
+            var dstGoal = new Goal { Name = "PureGoal", Path = global::app.type.path.@this.Resolve("/PureGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
             var dstStep = new Step { Index = 0, Text = action.Step!.Text, Goal = dstGoal };
             var dstAction = new ActionEntity { Module = "test", ActionName = "test" };
             dstAction.Step = dstStep;
@@ -178,7 +178,7 @@ public class CallSnapshotTests
         app.CallStack.Flags = app.CallStack.Flags with { Timing = true };
         await using var call = app.CallStack.Push(action);
 
-        var snap = new Snapshot();
+        var snap = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
         call.Capture(snap);
 
         // Drop bucket: timing tier and any in-flight network state never reach the snapshot.

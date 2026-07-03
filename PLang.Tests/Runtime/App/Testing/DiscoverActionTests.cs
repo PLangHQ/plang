@@ -29,7 +29,7 @@ public class DiscoverActionTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-discover-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir);
+        _app = TestApp.Create(_tempDir);
     }
 
     [After(Test)]
@@ -119,10 +119,7 @@ public class DiscoverActionTests
 
     private async Task<List<global::app.tester.test.@this>> Discover(string path = ".", bool recursive = true)
     {
-        var action = new global::app.module.test.discover
-        {
-            Context = _app.User.Context,
-            Path = global::app.data.@this<global::app.type.path.@this>.Ok(
+        var action = new global::app.module.test.discover(_app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(
                 global::app.type.path.@this.Resolve(path, _app.User.Context)),
             Pattern = new global::app.data.@this<global::app.type.text.@this>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<global::app.type.@bool.@this>("Recursive", recursive)
@@ -227,7 +224,7 @@ public class DiscoverActionTests
         var helper = new Goal
         {
             Name = "Helper",
-            Path = "/Helper.goal",
+            Path = global::app.type.path.@this.Resolve("/Helper.goal", global::PLang.Tests.TestApp.SharedContext),
             Steps = new GoalSteps
             {
                 new Step
@@ -252,7 +249,7 @@ public class DiscoverActionTests
             {
                 ("goal", "call", new List<Data>
                 {
-                    new("GoalName", new GoalCall { Name = "Helper" }, global::app.type.@this.FromName("goal.call"), context: _app.User.Context)
+                    new("GoalName", new GoalCall { Name = "Helper" }, global::PLang.Tests.TestApp.SharedContext.Type.Create("goal.call"), context: _app.User.Context)
                 })
             });
 

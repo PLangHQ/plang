@@ -242,7 +242,7 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
-        var result = await engine.RunGoalAsync(new GoalCall { Name = "NonexistentGoal" });
+        var result = await engine.RunGoalAsync(new GoalCall { Name = "NonexistentGoal" }, engine.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
@@ -252,11 +252,11 @@ public class EngineTests
     public async Task RunGoalAsync_EmptyGoal_ReturnsSuccess()
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
-        var goal = new Goal { Name = "EmptyGoal", Path = "/EmptyGoal.goal" };
+        var goal = new Goal { Name = "EmptyGoal", Path = global::app.type.path.@this.Resolve("/EmptyGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
         goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
-        var result = await engine.RunGoalAsync(new GoalCall { Name = "EmptyGoal" });
+        var result = await engine.RunGoalAsync(new GoalCall { Name = "EmptyGoal" }, engine.User.Context);
 
         await result.IsSuccess();
     }
@@ -268,7 +268,7 @@ public class EngineTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Path = "/TestGoal.goal",
+            Path = global::app.type.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext),
             Steps = new GoalSteps
             {
                 MakeStep("variable", "set",
@@ -282,7 +282,7 @@ public class EngineTests
         // Cancel via the engine's shutdown — Goal.RunAsync checks context.CancellationToken
         engine.RequestShutdown();
 
-        var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" });
+        var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" }, engine.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Cancelled");
@@ -292,7 +292,7 @@ public class EngineTests
     public async Task RunGoalAsync_SetsContextGoal()
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
-        var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
+        var goal = new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
         goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
         var context = engine.User.Context;
@@ -308,7 +308,7 @@ public class EngineTests
     public async Task RunGoalAsync_PushesCall()
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
-        var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
+        var goal = new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
         goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
@@ -345,7 +345,7 @@ public class EngineTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Path = "/TestGoal.goal",
+            Path = global::app.type.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext),
             Steps = new GoalSteps
             {
                 MakeStep("variable", "get", index: 0, text: "get variable")
@@ -355,7 +355,7 @@ public class EngineTests
         goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
-        var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" });
+        var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" }, engine.User.Context);
 
         await result.IsFailure();
     }

@@ -22,7 +22,7 @@ public class QueryImageTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_llm_img_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = TestApp.Create(_tempDir);
         _handler = LlmTestHelper.SetupMockHttp(_app);
     }
 
@@ -49,10 +49,7 @@ public class QueryImageTests
             return LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("I see an image"));
         };
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage
                 {
@@ -83,10 +80,7 @@ public class QueryImageTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("I see pixels")));
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage
                 {
@@ -116,10 +110,7 @@ public class QueryImageTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("jpeg")));
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage
                 {
@@ -146,10 +137,7 @@ public class QueryImageTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("base64")));
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage
                 {
@@ -174,10 +162,7 @@ public class QueryImageTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("I see both")));
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage
                 {

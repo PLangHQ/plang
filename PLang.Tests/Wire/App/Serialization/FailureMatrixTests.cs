@@ -39,7 +39,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
         var back = plang.Deserialize(tampered);
         back.Context = app.User.Context;
         var verify = await app.RunAction<global::app.module.signing.verify>(
-            new global::app.module.signing.verify
+            new global::app.module.signing.verify(app.User.Context)
             {
                 Data = back,
                 SkipFreshnessCheck = new global::app.data.@this<global::app.type.@bool.@this>("", true)
@@ -62,7 +62,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
 
     [Test] public async Task Decompress_OnNonArchivedType_ReturnsSelfNoError()
     {
-        var d = new global::app.data.@this("x", "y", global::app.type.@this.FromName("text/plain"), context: global::PLang.Tests.TestApp.SharedContext);
+        var d = new global::app.data.@this("x", "y", global::PLang.Tests.TestApp.SharedContext.Type.Create("text/plain"), context: global::PLang.Tests.TestApp.SharedContext);
         var result = d.Decompress();
         await Assert.That(ReferenceEquals(d, result)).IsTrue();
         await result.IsSuccess();
@@ -83,10 +83,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
     [Test] public async Task CryptoHash_WithUnsupportedAlgorithm_ReturnsDataWithUnsupportedAlgorithmError()
     {
         var crypto = new global::app.module.crypto.code.Default();
-        var action = new global::app.module.crypto.Hash
-        {
-            Context = app.User.Context,
-            Data = app.Ok("x"),
+        var action = new global::app.module.crypto.Hash(app.User.Context) { Data = app.Ok("x"),
             Algorithm = new global::app.data.@this<global::app.type.text.@this>("", "md5")
         };
         var result = await crypto.Hash(action);
@@ -115,7 +112,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
         // Empty MemoryStream — ReadLineAsync returns null (EOF).
         var ch = new global::app.channel.type.stream.@this("input", new MemoryStream(),
             global::app.channel.ChannelDirection.Bidirectional);
-        var action = new global::app.module.output.ask
+        var action = new global::app.module.output.ask(app.User.Context)
         {
             Question = new global::app.data.@this<global::app.type.text.@this>("", "")
         };

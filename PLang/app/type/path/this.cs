@@ -57,22 +57,20 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     private string? _relative;
 
     /// <summary>
-    /// App root directory — resolved from Context. The string-derived path
-    /// properties (Relative, Extension, …) need it; they throw if accessed
-    /// before Context is wired (only CLI-parse-time / direct test construction
-    /// skip it — by any real flow Context is always available).
+    /// App root directory — resolved from Context. A path is always born with
+    /// Context (the ctors require it); the string-derived properties (Relative,
+    /// Extension, …) still throw if App itself isn't wired yet.
     /// </summary>
-    private string RootAbsolutePath => Context?.App?.AbsolutePath
+    private string RootAbsolutePath => Context.App?.AbsolutePath
         ?? throw new InvalidOperationException(
             "Path requires Context with App — wire it before accessing path-derived properties");
 
     /// <summary>
-    /// Creates a Path. Context is optional at construction so utilities that
-    /// build Paths before runtime is up (CLI parser, source generators) can
-    /// construct them; Context arrives via the IContext setter when the Path
-    /// is wrapped in Data&lt;Path&gt; or set on a runtime object.
+    /// Creates a Path born with its actor Context — every scheme subclass
+    /// requires it, so a path resolves scheme-correct and fully wired the
+    /// moment it lands. The public setter stays for IContext scope propagation.
     /// </summary>
-    protected @this(string path, actor.context.@this? context = null)
+    protected @this(string path, actor.context.@this context)
     {
         // Producers that resolved the path hand the resolved form here and
         // override the as-typed location via the Raw init; a verbatim
@@ -117,7 +115,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// which contains cycles; serializing it blows up trace files.
     /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
-    public actor.context.@this? Context { get; set; }
+    public actor.context.@this Context { get; set; } = null!;
 
     /// <summary>Source generator convention — auto-wraps string parameters.</summary>
     /// <summary>
@@ -155,9 +153,9 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
         {
             if (_relative != null) return _relative;
 
-            // No Context (test fixtures, JSON deserialize without scope) — no root
+            // App not wired yet (bootstrap, before runtime is up) — no root
             // anchor, so the portable form is the as-typed location.
-            if (Context?.App == null)
+            if (Context.App == null)
                 return _relative = _location.Clr<string>() ?? "";
 
             var rootAbsolutePath = RootAbsolutePath;
@@ -187,7 +185,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     [LlmBuilder] public string FileNameWithoutExtension
         => _fileNameWithoutExtension ??= PathHelper.GetFileNameWithoutExtension(_location.Clr<string>() ?? "");
     [LlmBuilder] public string Directory => _directory ??= PathHelper.GetDirectoryName(Absolute) ?? Absolute;
-    [LlmBuilder] public string MimeType => Context?.App?.Format?.Mime(Extension) ?? "application/octet-stream";
+    [LlmBuilder] public string MimeType => Context.App?.Format?.Mime(Extension) ?? "application/octet-stream";
 
     [LlmBuilder] public bool IsFile => !string.IsNullOrEmpty(Extension);
     [LlmBuilder] public bool IsDirectory => string.IsNullOrEmpty(Extension);
@@ -234,7 +232,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// <c>Format.TypeFromExtension(p.Extension)</c>.
     /// </summary>
     public global::app.type.@this Kind =>
-        Context?.App?.Format?.TypeFromExtension(Extension) ?? global::app.type.@this.Null;
+        Context.App?.Format?.TypeFromExtension(Extension) ?? global::app.type.@this.Null;
 
     /// <summary>
     /// Converts this path to a GoalCall. Derives PrPath from the .goal file path.
@@ -308,16 +306,6 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     public override int GetHashCode() =>
         StringComparer.FromComparison(RootComparison).GetHashCode(Absolute);
 
-    /// <summary>
-    /// Convenience: <c>"some/file.goal"</c> automatically lifts to a file-scheme
-    /// Path with Context=null. Use sites are test fixtures, in-memory Goals
-    /// built from string literals, and JSON deserialize paths that don't have
-    /// a Context available. Production code with a Context in scope should go
-    /// through <see cref="Resolve(string, actor.context.@this)"/> instead so the
-    /// scheme registry picks the right subclass and Context wires immediately.
-    /// </summary>
-    public static implicit operator @this(string raw)
-        => new file.@this(raw) { Raw = raw };
 
     /// <summary>
     /// A Path implicitly stringifies to its <see cref="ToString"/> representation.

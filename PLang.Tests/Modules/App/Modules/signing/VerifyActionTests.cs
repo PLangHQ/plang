@@ -45,10 +45,7 @@ public class VerifyActionTests
     private async Task<Data> SignHelper(object data, List<string>? contracts = null,
         TimeSpan? expires = null, Dictionary<string, object>? headers = null)
     {
-        var action = new sign
-        {
-            Context = Ctx,
-            Data = new Data("", data, context: Ctx),
+        var action = new sign(Ctx) { Data = new Data("", data, context: Ctx),
             Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(contracts, Ctx), context: Ctx),
             Expires = expires.HasValue ? (global::app.type.duration.@this)expires.Value : null,
             Headers = headers?.ToDictData()
@@ -59,10 +56,7 @@ public class VerifyActionTests
     private async Task<Data> VerifyHelper(Data signedData, List<string>? contracts = null,
         Dictionary<string, object>? headers = null, long? timeoutMs = null)
     {
-        var action = new verify
-        {
-            Context = Ctx,
-            Data = signedData,
+        var action = new verify(Ctx) { Data = signedData,
             Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(contracts, Ctx), context: Ctx),
             Headers = headers?.ToDictData(),
             TimeoutMs = timeoutMs.HasValue ? (global::app.type.number.@this)timeoutMs.Value : null

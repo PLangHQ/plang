@@ -19,7 +19,7 @@ public partial class Range : IContext
             return Context.Error<type.list>(
                 new app.error.ValidationError("Step cannot be zero", "InvalidStep"));
 
-        var list = new app.type.list.@this { Context = Context };
+        var list = new app.type.list.@this(Context);
         int start = (await Start.Value())!.ToInt32(), end = (await End.Value())!.ToInt32(), step = stepN.ToInt32();
         if (step > 0)
         {
@@ -32,6 +32,6 @@ public partial class Range : IContext
                 list.Add(new global::app.data.@this("", i, context: Context));
         }
 
-        return Context.Ok<type.list>(new type.list { count = list.CountRaw, value = list }, app.type.@this.FromName("list"));
+        return Context.Ok<type.list>(new type.list { count = list.CountRaw, value = list }, Context.Type.Create("list"));
     }
 }

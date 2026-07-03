@@ -33,10 +33,7 @@ public class Stage3_PathDemolitionTests
 
     private static async Task<Data> Read(global::app.actor.context.@this context, global::app.type.path.@this p)
     {
-        var action = new global::app.module.file.Read
-        {
-            Context = context,
-            Path = new global::app.data.@this<global::app.type.path.@this>("", p),
+        var action = new global::app.module.file.Read(context) { Path = new global::app.data.@this<global::app.type.path.@this>("", p),
         };
         var result = await action.Run();
         await result.IsSuccess();
@@ -71,7 +68,7 @@ public class Stage3_PathDemolitionTests
         // path.Write(IWriter) emits the as-typed location string verbatim
         foreach (var loc in new[] { "//file.txt", "/file.txt", "test/try.txt", "c:/my/path.txt" })
         {
-            var p = new global::app.type.path.file.@this(loc) { Raw = loc };
+            var p = new global::app.type.path.file.@this(loc, global::PLang.Tests.TestApp.SharedContext) { Raw = loc };
             using var ms = new MemoryStream();
             using var jw = new Utf8JsonWriter(ms);
             p.Write(new global::app.channel.serializer.json.Writer(jw));
@@ -84,7 +81,7 @@ public class Stage3_PathDemolitionTests
     public async Task PathToString_LocationOnly_NeverContentFirst()
     {
         // ToString returns the location string only; Content is gone entirely
-        var p = new global::app.type.path.file.@this("/some/file.json") { Raw = "/some/file.json" };
+        var p = new global::app.type.path.file.@this("/some/file.json", global::PLang.Tests.TestApp.SharedContext) { Raw = "/some/file.json" };
         await Assert.That(p.ToString()).IsEqualTo("/some/file.json");
     }
 
@@ -149,7 +146,7 @@ public class Stage3_PathDemolitionTests
         File.WriteAllText(Path.Combine(dir, "docs", "a.txt"), "alpha");
         File.WriteAllText(Path.Combine(dir, "docs", "b.txt"), "beta");
 
-        var result = await Read(context, new PLangFilePath(Path.Combine(dir, "docs")) { Context = context });
+        var result = await Read(context, new PLangFilePath(Path.Combine(dir, "docs"), context) {});
         var directory = (global::app.type.directory.@this)result.Peek()!;
         var listing = await directory.List();
         await Assert.That(listing).IsTypeOf<global::app.type.list.@this<global::app.type.path.@this>>();
@@ -166,7 +163,7 @@ public class Stage3_PathDemolitionTests
         Directory.CreateDirectory(Path.Combine(dir, "docs"));
         File.WriteAllText(Path.Combine(dir, "docs", "a.txt"), "TOP-SECRET-CONTENT");
 
-        var result = await Read(context, new PLangFilePath(Path.Combine(dir, "docs")) { Context = context });
+        var result = await Read(context, new PLangFilePath(Path.Combine(dir, "docs"), context) {});
         var json = await SerializePlang(app, result);
         await Assert.That(json).Contains("a.txt");
         await Assert.That(json).DoesNotContain("TOP-SECRET-CONTENT");
@@ -214,7 +211,7 @@ public class Stage3_PathDemolitionTests
         await using var _ = app;
         File.WriteAllText(Path.Combine(dir, "note.txt"), "the raw note");
 
-        var result = await Read(context, new PLangFilePath(Path.Combine(dir, "note.txt")) { Context = context });
+        var result = await Read(context, new PLangFilePath(Path.Combine(dir, "note.txt"), context) {});
         var json = await SerializePlang(app, result);
         await Assert.That(json).Contains("the raw note");
         // serialization loads but never narrows — still the file headline
@@ -228,7 +225,7 @@ public class Stage3_PathDemolitionTests
         await using var _ = app;
         File.WriteAllText(Path.Combine(dir, "config.json"), "{\"port\":8080}");
 
-        var result = await Read(context, new PLangFilePath(Path.Combine(dir, "config.json")) { Context = context });
+        var result = await Read(context, new PLangFilePath(Path.Combine(dir, "config.json"), context) {});
         await result.GetChild("port");                  // examination → narrow
         await Assert.That(result.Type!.Name).IsEqualTo("dict");
         var json = await SerializePlang(app, result);
@@ -240,7 +237,7 @@ public class Stage3_PathDemolitionTests
     public async Task PathWriteOut_LocationOnly_NotContent()
     {
         // a `path` value has one face — the renderer entry emits the location string
-        var p = new global::app.type.path.file.@this("docs/readme.md") { Raw = "docs/readme.md" };
+        var p = new global::app.type.path.file.@this("docs/readme.md", global::PLang.Tests.TestApp.SharedContext) { Raw = "docs/readme.md" };
         using var ms = new MemoryStream();
         using var jw = new Utf8JsonWriter(ms);
         global::app.type.path.serializer.Default.Write(p, new global::app.channel.serializer.json.Writer(jw));
@@ -256,7 +253,7 @@ public class Stage3_PathDemolitionTests
         var (app, context, dir) = MakeApp();
         await using var _ = app;
         File.WriteAllText(Path.Combine(dir, "config.json"), "{\"port\":8080}");
-        var result = await Read(context, new PLangFilePath(Path.Combine(dir, "config.json")) { Context = context });
+        var result = await Read(context, new PLangFilePath(Path.Combine(dir, "config.json"), context) {});
         await context.Variable.Set("config", result);
 
         await context.Variable.Set("config.y", 1);

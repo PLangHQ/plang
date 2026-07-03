@@ -9,7 +9,7 @@ public class ClearTests
 {
     private (global::app.actor.context.@this context, Variables memory) CreateContext()
     {
-        var app = new global::app.@this("/app");
+        var app = TestApp.Create("/app");
         return (app.User.Context, app.User.Context.Variable);
     }
 
@@ -20,7 +20,7 @@ public class ClearTests
         memory.Set("var1", "value1");
         memory.Set("var2", "value2");
 
-        var action = new Clear { Context = context };
+        var action = new Clear(context);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -34,7 +34,7 @@ public class ClearTests
         var (context, memory) = CreateContext();
         memory.Set("userVar", "value");
 
-        var action = new Clear { Context = context };
+        var action = new Clear(context);
         await action.Run();
 
         await Assert.That(memory.Contains("Now")).IsTrue();

@@ -504,7 +504,7 @@ public sealed partial class @this : IAsyncDisposable
         where TResult : global::app.type.item.@this, global::app.type.item.ICreate<TResult>
     {
         var result = await RunAction(handler, context);
-        if (!result.Success) return data.@this<TResult>.FromError(result.Error!);
+        if (!result.Success) return context.Error<TResult>(result.Error!);
         return data.@this<TResult>.Ok((TResult)(await result.Value())!);
     }
 
@@ -525,7 +525,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Bootstrap: loads app identity, resolves the goal file, runs it.
     /// Building is routed to the PLang builder (system/builder/).
     /// </summary>
-    public async Task<data.@this> Start(actor.context.@this? context = null)
+    public async Task<data.@this> Start()
     {
         await Load();
 
@@ -537,7 +537,8 @@ public sealed partial class @this : IAsyncDisposable
             if (!invariant.Success) return invariant;
         }
 
-        context ??= System.Context;
+        // Start runs as System (the bootstrap actor) then switches to User for user code.
+        var context = System.Context;
         CurrentActor = System;
 
         // Build → PLang builder (runs as User — user is building their code)
@@ -565,9 +566,8 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     // Returns bare Data — the catalog renders this as `→ returns data`
     // (polymorphic; called goal can return any value).
-    public async Task<data.@this> RunGoalAsync(GoalCall goalCall, actor.context.@this? context = null, CancellationToken ct = default)
+    public async Task<data.@this> RunGoalAsync(GoalCall goalCall, actor.context.@this context, CancellationToken ct = default)
     {
-        context ??= User.Context;
         var goalResult = await goalCall.GetGoalAsync(this, context);
         if (!goalResult.Success) return goalResult;
 
@@ -597,9 +597,8 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Runs a goal already in memory. Delegates to Goal.RunAsync.
     /// </summary>
-    public async Task<data.@this> RunGoalAsync(Goal goal, actor.context.@this? context = null, CancellationToken ct = default)
+    public async Task<data.@this> RunGoalAsync(Goal goal, actor.context.@this context, CancellationToken ct = default)
     {
-        context ??= User.Context;
         return await goal.RunAsync(context);
     }
 

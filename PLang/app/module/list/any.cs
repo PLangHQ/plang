@@ -28,9 +28,9 @@ public partial class Any : IContext
         {
             var left = await item.GetChild(key);
             if (await op.Evaluate(left, right))
-                return Context.Ok<global::app.type.@bool.@this>(true, app.type.@this.FromName("bool"));
+                return Context.Ok<global::app.type.@bool.@this>(true, Context.Type.Create("bool"));
         }
 
-        return Context.Ok<global::app.type.@bool.@this>(false, app.type.@this.FromName("bool"));
+        return Context.Ok<global::app.type.@bool.@this>(false, Context.Type.Create("bool"));
     }
 }

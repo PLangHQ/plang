@@ -21,7 +21,7 @@ public class GoalMimeDeserializationTests
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-mime-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
-        return (new global::app.@this(root), root);
+        return (TestApp.Create(root), root);
     }
 
     private const string SimpleGoalText =

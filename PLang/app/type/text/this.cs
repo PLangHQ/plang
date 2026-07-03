@@ -220,18 +220,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public @this Replace(string oldValue, string newValue) =>
         new(_value.Replace(oldValue ?? string.Empty, newValue ?? string.Empty));
 
-    /// <summary>Split into a native <c>list</c> of <c>text</c> values.</summary>
-    public global::app.type.list.@this Split(string separator)
-    {
-        var list = new global::app.type.list.@this();
-        var parts = string.IsNullOrEmpty(separator)
-            ? new[] { _value }
-            : _value.Split(separator);
-        foreach (var part in parts)
-            list.Add(new global::app.data.@this("", new @this(part)));
-        return list;
-    }
-
     // ---- Truthiness (item) ----
 
     /// <summary>Empty text is falsy; any non-empty text is truthy.</summary>

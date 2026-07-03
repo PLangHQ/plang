@@ -23,7 +23,7 @@ public class QueryCacheTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_llm_cache_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = TestApp.Create(_tempDir);
         _handler = LlmTestHelper.SetupMockHttp(_app);
     }
 
@@ -87,10 +87,7 @@ public class QueryCacheTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("answer")));
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "same question" }
             }.ToListData<LlmMessage>(),
@@ -111,10 +108,7 @@ public class QueryCacheTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("tool result")));
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "use tools" }
             }.ToListData<LlmMessage>(),
@@ -145,10 +139,7 @@ public class QueryCacheTests
         await action1.Run();
 
         // Same message but different model — should be cache miss
-        var action2 = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action2 = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "system", Content = "You are helpful" },
                 new LlmMessage { Role = "user", Content = "same" }

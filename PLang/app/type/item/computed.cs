@@ -17,11 +17,13 @@ public sealed class computed : @this, module.IContext
     /// computation's result lifts with context — a host object the factory returns
     /// (<c>%!app%</c>) can then resolve its registry name (its kind) on mint.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
-    public actor.context.@this? Context { get; set; }
+    public actor.context.@this Context { get; set; } = null!;
 
-    public computed(System.Func<object?> factory, string? declaredTypeName = null, string? declaredKind = null)
+    public computed(System.Func<object?> factory, actor.context.@this context,
+        string? declaredTypeName = null, string? declaredKind = null)
     {
         _factory = factory ?? throw new System.ArgumentNullException(nameof(factory));
+        Context = context ?? throw new System.ArgumentNullException(nameof(context));
         _declared = declaredTypeName;
         _declaredKind = declaredKind;
     }

@@ -20,7 +20,7 @@ public class GetTypeInfoTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_builder_typeinfo_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = TestApp.Create(_tempDir);
         _app.Builder.IsEnabled = true;
     }
 
@@ -39,7 +39,7 @@ public class GetTypeInfoTests
     [Test]
     public async Task GetTypeInfo_ReturnsBuilderTypeNames()
     {
-        var action = new types { Context = _app.User.Context };
+        var action = new types(_app.User.Context);
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -53,7 +53,7 @@ public class GetTypeInfoTests
     [Test]
     public async Task GetTypeInfo_ReturnsComplexTypeSchemas()
     {
-        var action = new types { Context = _app.User.Context };
+        var action = new types(_app.User.Context);
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();

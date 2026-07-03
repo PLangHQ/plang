@@ -24,7 +24,7 @@ public class QueryBasicTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_llm_basic_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = TestApp.Create(_tempDir);
         _handler = LlmTestHelper.SetupMockHttp(_app);
     }
 
@@ -71,10 +71,7 @@ public class QueryBasicTests
         };
 
         var action = LlmTestHelper.MakeQuery(Ctx);
-        action = new query
-        {
-            Context = Ctx,
-            Messages = action.Messages,
+        action = new query(Ctx) { Messages = action.Messages,
             Model = (global::app.type.text.@this)"gpt-4o"
         };
         await action.Attach(null, Ctx);
@@ -92,10 +89,7 @@ public class QueryBasicTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("ok")));
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
@@ -183,10 +177,7 @@ public class QueryBasicTests
             LlmTestHelper.JsonResponse(
                 LlmTestHelper.MakeCompletionResponse("ok", model: "claude-99-future")));
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "system", Content = "You are helpful" },
                 new LlmMessage { Role = "user", Content = "Hello" }
@@ -239,10 +230,7 @@ public class QueryBasicTests
                     model: "gpt-5.4-mini-2026-03-17")));
 
         // Pricing lookup uses the action's Model; set it to the dated variant.
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "system", Content = "You are helpful" },
                 new LlmMessage { Role = "user", Content = "Hello" }
@@ -278,10 +266,7 @@ public class QueryBasicTests
                     model: "gpt-5.4-nano")));
         };
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "go" }
             }.ToListData<LlmMessage>(),

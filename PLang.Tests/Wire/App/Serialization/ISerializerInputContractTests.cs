@@ -18,7 +18,7 @@ public class ISerializerInputContractTests : System.IAsyncDisposable
     [Test]
     public async Task SerializeAsync_AcceptsDataArgument_ReturnsTaskData()
     {
-        var json = new global::app.channel.serializer.Json();
+        var json = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         using var ms = new MemoryStream();
         var result = await json.SerializeAsync(ms, app.Ok("hello"));
         await Assert.That(result).IsNotNull();

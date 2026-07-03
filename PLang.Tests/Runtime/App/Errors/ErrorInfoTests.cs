@@ -179,7 +179,7 @@ public class ErrorTests
     [Test]
     public async Task Format_IncludesGoalAndStep()
     {
-        var goal = new Goal { Name = "Start", Path = "Start.goal" };
+        var goal = new Goal { Name = "Start", Path = global::app.type.path.@this.Resolve("Start.goal", global::PLang.Tests.TestApp.SharedContext) };
         var step = new Step { Index = 2, Text = "write to file", LineNumber = 5 };
         step.Goal = goal;
         var error = new Error("File not found", step);
@@ -345,7 +345,7 @@ public class StepErrorTests
     public async Task FromException_CreatesStepErrorWithStep()
     {
         var ex = new Exception("Step crashed");
-        await using var engine = new global::app.@this("/app");
+        await using var engine = TestApp.Create("/app");
         using var context = new global::app.actor.context.@this(engine, engine.User);
         var step = new Step { Text = "test step" };
         context.Step = step;

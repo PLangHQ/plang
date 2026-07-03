@@ -42,30 +42,31 @@ public partial class discover : IContext
 
     public async Task<data.@this<global::app.type.list.@this<global::app.tester.test.@this>>> Run()
     {
-        var app = Context.App!;
-        var empty = data.@this<global::app.type.list.@this<global::app.tester.test.@this>>.Ok(new global::app.type.list.@this<global::app.tester.test.@this>());
+        var app = Context.App;
+        var empty = data.@this<global::app.type.list.@this<global::app.tester.test.@this>>.Ok(new global::app.type.list.@this<global::app.tester.test.@this>(Context));
 
         var root = await Path.Value();
         if (root == null) return empty;
 
         // List routes through AuthGate(Read). Out-of-root: prompt or denial.
         var listed = await root.List((await Pattern.Value())!.Clr<string>()!, (await Recursive.Value())!.Value);
-        if (!listed.Success) return data.@this<global::app.type.list.@this<global::app.tester.test.@this>>.FromError(listed.Error!);
+        if (!listed.Success) return Context.Error<global::app.type.list.@this<global::app.tester.test.@this>>(listed.Error!);
         if (await listed.Value() == null) return empty;
 
         var include = Context.App.Tester.Include;
         var exclude = Context.App.Tester.Exclude;
 
-        var files = new List<global::app.tester.test.@this>();
+        var files = new List<data.@this>();
         var list = await listed.Value();
         foreach (var row in list!)
         {
             // .test.goal files only resolve under the file scheme; foreign schemes
             // skip silently. The List call already returned filesystem paths.
             if (await row.Value<global::app.type.path.@this>() is not FilePath fileMatch) continue;
-            files.Add(await DiscoverOne(fileMatch, app, include, exclude));
+            files.Add(new data.@this("", await DiscoverOne(fileMatch, app, include, exclude), context: Context));
         }
-        return data.@this<global::app.type.list.@this<global::app.tester.test.@this>>.Ok(global::app.type.list.@this<global::app.tester.test.@this>.Of(files));
+        return Context.Ok<global::app.type.list.@this<global::app.tester.test.@this>>(
+            new global::app.type.list.@this<global::app.tester.test.@this>(files, Context));
     }
 
     /// <summary>Discovers metadata for a single .test.goal file (FilePath form).</summary>
@@ -172,7 +173,7 @@ public partial class discover : IContext
 
         // Seed branch-coverage chains.
         var chainVisited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        SeedBranchChains(prGoal, Context.App!.Tester.Coverage, chainVisited);
+        SeedBranchChains(prGoal, Context.App.Tester.Coverage, chainVisited);
 
         var file = new global::app.tester.test.@this
         {
@@ -257,7 +258,7 @@ public partial class discover : IContext
         if (depth > 50) return;
         if (!visited.Add(goal.Name)) return;
 
-        var modules = Context.App!.Module;
+        var modules = Context.App.Module;
         var subGoals = new List<Goal>();
         goal.ForEachAction((step, action) =>
         {
@@ -332,7 +333,7 @@ public partial class discover : IContext
                 var targetName = ResolveStaticGoalName(action);
                 if (targetName != null)
                 {
-                    var sub = Context.App!.Goal.Get(targetName);
+                    var sub = Context.App.Goal.Get(targetName);
                     if (sub != null) subGoals.Add(sub);
                 }
             }

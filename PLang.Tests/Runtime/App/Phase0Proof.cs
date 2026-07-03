@@ -102,7 +102,7 @@ public class Phase0Proof
     {
         // INPUT: Application error (400)
         var step = new Step { Index = 0, Text = "validate %email% is not empty" };
-        var goal = new Goal { Name = "Start", Path = "Start.goal" };
+        var goal = new Goal { Name = "Start", Path = global::app.type.path.@this.Resolve("Start.goal", global::PLang.Tests.TestApp.SharedContext) };
         step.Goal = goal;
         var error = new ValidationError("Email address is required", step);
 
@@ -120,7 +120,7 @@ public class Phase0Proof
     {
         // INPUT: Runtime error (500) with exception
         var step = new Step { Index = 0, Text = "read file data.txt" };
-        var goal = new Goal { Name = "Start", Path = "Start.goal" };
+        var goal = new Goal { Name = "Start", Path = global::app.type.path.@this.Resolve("Start.goal", global::PLang.Tests.TestApp.SharedContext) };
         step.Goal = goal;
         var ex = new InvalidOperationException("Access denied");
         var error = new Error("Failed to read file", step, "FileError", 500)
@@ -150,7 +150,7 @@ public class Phase0Proof
             count = 3,
             value = new List<object?> { 1, 2, 3 }
         };
-        var result = global::PLang.Tests.TestApp.SharedContext.Ok(listValue, global::app.type.@this.FromName("list"));
+        var result = global::PLang.Tests.TestApp.SharedContext.Ok(listValue, global::PLang.Tests.TestApp.SharedContext.Type.Create("list"));
 
         // OUTPUT: Type is "list", not the CLR type name
         await Assert.That(result.Type).IsNotNull();
@@ -172,7 +172,7 @@ public class Phase0Proof
     public async Task Phase05_CultureInfo_DefaultsToInvariant()
     {
         // INPUT: new Engine
-        await using var engine = new global::app.@this("/app");
+        await using var engine = TestApp.Create("/app");
 
         // OUTPUT: culture defaults to InvariantCulture
         await Assert.That(engine.Culture).IsEqualTo(System.Globalization.CultureInfo.InvariantCulture);

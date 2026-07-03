@@ -25,7 +25,7 @@ public class ReportActionTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-report-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir);
+        _app = TestApp.Create(_tempDir);
         _captureStream = new System.IO.MemoryStream();
         _app.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, _captureStream,
@@ -48,7 +48,7 @@ public class ReportActionTests
         var goal = new Goal
         {
             Name = name,
-            Path = $"/Tests/{name}.test.goal",
+            Path = global::app.type.path.@this.Resolve($"/Tests/{name}.test.goal", global::PLang.Tests.TestApp.SharedContext),
             Hash = "deadbeef",
             BuilderVersion = "v1"
         };
@@ -60,7 +60,7 @@ public class ReportActionTests
 
     private async Task Report()
     {
-        var action = new global::app.module.test.report { Context = _app.User.Context };
+        var action = new global::app.module.test.report(_app.User.Context);
         await action.Run();
     }
 

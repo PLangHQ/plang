@@ -53,7 +53,7 @@ public class RunActionTests
         var goal = new Goal
         {
             Name = goalName,
-            Path = "/" + relativePath,
+            Path = global::app.type.path.@this.Resolve("/" + relativePath, global::PLang.Tests.TestApp.SharedContext),
             Steps = new GoalSteps()
         };
         for (int i = 0; i < actions.Length; i++)
@@ -84,10 +84,7 @@ public class RunActionTests
 
     private async Task<Results> RunTests(List<global::app.tester.test.@this> tests, int? parallel = null, int? timeoutSec = null)
     {
-        var action = new global::app.module.test.run
-        {
-            Context = _app.User.Context,
-            Tests = tests.ToListData<global::app.tester.test.@this>(),
+        var action = new global::app.module.test.run(_app.User.Context) { Tests = tests.ToListData<global::app.tester.test.@this>(),
             Parallel = parallel.HasValue ? new global::app.data.@this<global::app.type.number.@this>("Parallel", parallel.Value, context: _app.User.Context) : null,
             Timeout = timeoutSec.HasValue ? new global::app.data.@this<global::app.type.number.@this>("Timeout", timeoutSec.Value, context: _app.User.Context) : null
         };
@@ -340,10 +337,10 @@ public class RunActionTests
                 ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("x"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) })
             });
             var stale = new global::app.tester.test.@this {
-                Goal = new Goal { Name = "Stale", Path = "/Stale.test.goal" },
+                Goal = new Goal { Name = "Stale", Path = global::app.type.path.@this.Resolve("/Stale.test.goal", global::PLang.Tests.TestApp.SharedContext) },
                 Status = global::app.tester.Status.Stale, StatusReason = "no .pr" };
             var skipped = new global::app.tester.test.@this {
-                Goal = new Goal { Name = "Skip", Path = "/Skip.test.goal" },
+                Goal = new Goal { Name = "Skip", Path = global::app.type.path.@this.Resolve("/Skip.test.goal", global::PLang.Tests.TestApp.SharedContext) },
                 Status = global::app.tester.Status.Skipped, StatusReason = "excluded by tag" };
 
             var results = await RunTests(new List<global::app.tester.test.@this> { ready, stale, skipped });
@@ -523,7 +520,7 @@ public class RunActionTests
         var helperGoal = new Goal
         {
             Name = "Helper",
-            Path = "/Helper.goal",
+            Path = global::app.type.path.@this.Resolve("/Helper.goal", global::PLang.Tests.TestApp.SharedContext),
             Steps = new GoalSteps
             {
                 new Step { Index = 0, Text = "h0", Actions = new StepActions
@@ -553,7 +550,7 @@ public class RunActionTests
             ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("a"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) }),
             ("goal", "call", new List<Data>
             {
-                new("GoalName", new GoalCall { Name = "Helper" }, global::app.type.@this.FromName("goal.call"), context: _app.User.Context)
+                new("GoalName", new GoalCall { Name = "Helper" }, global::PLang.Tests.TestApp.SharedContext.Type.Create("goal.call"), context: _app.User.Context)
             }),
             ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("b"), context: _app.User.Context), new("Value", 2, context: _app.User.Context) })
         });

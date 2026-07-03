@@ -16,9 +16,13 @@ public interface ISigning : IKey
     /// <summary>Full verification pipeline: type check, timeout, nonce, contracts, hash, verify.</summary>
     Task<data.@this<global::app.type.@bool.@this>> VerifyAsync(verify action);
 
-    /// <summary>Low-level: signs bytes with the given private key. Returns signature bytes.</summary>
-    data.@this<global::app.type.binary.@this> Sign(byte[] data, string privateKey);
+    /// <summary>Low-level crypto primitive: signs the unsigned signature's canonical bytes with the
+    /// private key, returns the signature bytes. No context (shared provider) — throws on failure;
+    /// the [Code] boundary wraps. Takes the signature whole; decomposes only at the NSec call.</summary>
+    global::app.type.binary.@this Sign(global::app.type.signature.@this unsigned, global::app.type.text.@this privateKey);
 
-    /// <summary>Low-level: verifies a signature against data and public key.</summary>
-    data.@this<global::app.type.@bool.@this> Verify(byte[] data, byte[] signature, string publicKey);
+    /// <summary>Low-level crypto primitive: true if the signature verifies against its own identity.
+    /// Throws on bad key/signature input; the [Code] boundary maps false → SignatureInvalid. Takes
+    /// the signature whole — Identity is the public key, ToSigningBytes the payload.</summary>
+    global::app.type.@bool.@this Verify(global::app.type.signature.@this signature);
 }

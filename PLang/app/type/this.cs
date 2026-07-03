@@ -274,7 +274,7 @@ public sealed class @this : item.@this
         // it a template (never inferred from content). This is the ONE source-maker (FromRaw
         // delegates here).
         if (value is string or byte[])
-            return new item.source(value, Name, Kind, Strict, format ?? RawFormat(value, context), template: Template) { Context = context };
+            return new item.source(value, Name, Kind, context, Strict, format ?? RawFormat(value, context), template: Template);
 
         // A container / domain value is already its native form (dict, list, path, image, …) — hold it.
         if (value is item.@this { IsLeaf: false } native) return native;
@@ -463,21 +463,21 @@ public sealed class @this : item.@this
         // A sequence of Data builds a native list DIRECTLY, preserving the actual
         // Data instances — their names, types and signatures.
         if (raw is System.Collections.Generic.IEnumerable<global::app.data.@this> dataSeq)
-            return new global::app.type.list.@this(dataSeq) { Context = context! };
+            return new global::app.type.list.@this(dataSeq, context!);
 
         // A sequence of native plang VALUES (item.@this) narrows to a native list
         // that owns the wrapping (no JSON round-trip that would degrade strong values).
         if (raw is System.Collections.Generic.IEnumerable<global::app.type.item.@this> itemSeq)
-            return new global::app.type.list.@this(itemSeq) { Context = context! };
+            return new global::app.type.list.@this(itemSeq, context!);
 
         // Foreign C# containers narrow to their native plang type. The common handoff
         // shapes alias their backing BY REFERENCE — O(1), no walk, no JSON (a
         // million-row List<object?> costs one pointer copy); other shapes narrow off
         // the wire. byte[] is excluded — bytes are the binary leaf, not a list.
         if (raw is System.Collections.Generic.List<object?> objList)
-            return new global::app.type.list.@this(objList) { Context = context! };
+            return new global::app.type.list.@this(objList, context!);
         if (raw is System.Collections.Generic.Dictionary<string, object?> objDict)
-            return new global::app.type.dict.@this(objDict) { Context = context! };
+            return new global::app.type.dict.@this(objDict, context!);
         if (raw is System.Collections.IDictionary
             || (raw is System.Collections.IList && raw is not byte[]))
             return new global::app.type.item.serializer.json(context).Parse(
@@ -501,9 +501,8 @@ public sealed class @this : item.@this
         }
         // Unowned — rung 2: a strongly-typed C# object rides as item with kind naming
         // the class; the carrier's Peek answers the real instance.
-        return new Clr(raw) { Context = context };
+        return new Clr(raw, context);
     }
-    public static @this FromName(string typeName) => new(typeName);
 
     /// <summary>
     /// Normalising factory — the single entry point the LLM, build pipeline,
@@ -702,7 +701,7 @@ public sealed class @this : item.@this
         if (string.IsNullOrWhiteSpace(typeName)) return false;
         if (string.Equals(typeName, "item", System.StringComparison.OrdinalIgnoreCase)) return true;
         if (string.Equals(Name, typeName, System.StringComparison.OrdinalIgnoreCase)) return true;
-        var other = Context?.App.Type[typeName] ?? FromName(typeName);
+        var other = Context?.App.Type[typeName] ?? new @this(typeName);
         other.Context ??= Context;
         return Is(other);
     }
@@ -817,14 +816,14 @@ public sealed class @this : item.@this
         // Fold properties (Fields/Values/Example/Shape/...) are App-keyed —
         // resolving them requires the registry, which requires Context. An
         // unstamped entity reaching this point means a producer forgot to
-        // propagate Context onto a `type.@this` minted from FromName(...);
+        // propagate Context onto a `type.@this` minted without a context;
         // returning null silently would mask the bug at the read site and
         // surface it as wrong LLM prompts / wrong schema decisions far away.
         if (Context == null)
             throw new System.InvalidOperationException(
                 $"type.@this(\"{Name}\") has no Context — schema properties "
                 + "(Fields/Values/Example/Shape/etc.) require a stamped entity. "
-                + "This is a producer bug: whoever minted this type via FromName "
+                + "This is a producer bug: whoever minted this type without a context "
                 + "did not propagate Context. Primitive identity reads "
                 + "(.Name/.ClrType) do not hit this path.");
         if (!Context.App.Type.ComplexSchemas().TryGetValue(Name, out var match)) return this;

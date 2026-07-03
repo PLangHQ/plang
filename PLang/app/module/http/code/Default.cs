@@ -71,7 +71,7 @@ public sealed class Default : IHttp
 
     // --- IHttp: action-level methods ---
 
-    public Task<data.@this> SendAsync(request action) => ExecuteHttpAsync(async () =>
+    public Task<data.@this> SendAsync(request action) => ExecuteHttpAsync(action.Context, async () =>
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
         var app = action.Context.App;
@@ -84,7 +84,7 @@ public sealed class Default : IHttp
         string contentType = (action.ContentType == null ? null : await action.ContentType.Value()) is { } ctv ? ctv.Clr<string>()! : config.Resolve("ContentType", "application/json");
         var encoding = (await action.Encoding.Value())?.Clr<string>() ?? config.Resolve("Encoding", "utf-8");
 
-        var urlResult = ResolveUrl((await action.Url.Value())!.Clr<string>()!, config);
+        var urlResult = ResolveUrl((await action.Url.Value())!.Clr<string>()!, config, action.Context);
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = (await urlResult.Value())!.Clr<string>()!;
 
@@ -93,7 +93,10 @@ public sealed class Default : IHttp
 
         // Build body
         HttpContent? httpContent = null;
-        var bodyVal = action.Body == null ? null : await action.Body.Value();
+        // An absent body is an Uninitialized Data whose value door answers @null (not C#
+        // null) — guard on IsEmpty so a no-body request (GET, etc.) skips serialization
+        // instead of serializing an empty value.
+        var bodyVal = action.Body == null || await action.Body.IsEmpty() ? null : await action.Body.Value();
         if (bodyVal != null)
         {
             if (contentType.Equals("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase)
@@ -154,7 +157,7 @@ public sealed class Default : IHttp
         }
     });
 
-    public Task<data.@this> DownloadAsync(download action) => ExecuteHttpAsync(async () =>
+    public Task<data.@this> DownloadAsync(download action) => ExecuteHttpAsync(action.Context, async () =>
     {
         var app = action.Context.App;
         var config = app.Config.For<Config>(action.Context);
@@ -163,7 +166,7 @@ public sealed class Default : IHttp
         var timeout = action.TimeoutInSec == null ? config.Resolve("TimeoutInSec", 30)
             : (await action.TimeoutInSec.Value())?.ToDouble() ?? 0;
         if (timeout <= 0) timeout = config.Resolve("TimeoutInSec", 30);
-        var urlResult = ResolveUrl((await action.Url.Value())!.Clr<string>()!, config);
+        var urlResult = ResolveUrl((await action.Url.Value())!.Clr<string>()!, config, action.Context);
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = (await urlResult.Value())!.Clr<string>()!;
 
@@ -179,7 +182,7 @@ public sealed class Default : IHttp
 
         if (!response.IsSuccessStatusCode)
         {
-            var (err, _) = await ReadErrorResponseAsync(response, requestMessage, ct: cts.Token);
+            var (err, _) = await ReadErrorResponseAsync(response, requestMessage, action.Context, cts.Token);
             return err;
         }
 
@@ -194,7 +197,7 @@ public sealed class Default : IHttp
         return action.Context.Ok(buffer.ToArray());
     });
 
-    public Task<data.@this> UploadAsync(upload action) => ExecuteHttpAsync(async () =>
+    public Task<data.@this> UploadAsync(upload action) => ExecuteHttpAsync(action.Context, async () =>
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
         var app = action.Context.App;
@@ -206,7 +209,7 @@ public sealed class Default : IHttp
         if (timeout <= 0) timeout = config.Resolve("TimeoutInSec", 30);
         var encoding = (await action.Encoding.Value())?.Clr<string>() ?? config.Resolve("Encoding", "utf-8");
 
-        var urlResult = ResolveUrl((await action.Url.Value())!.Clr<string>()!, config);
+        var urlResult = ResolveUrl((await action.Url.Value())!.Clr<string>()!, config, action.Context);
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = (await urlResult.Value())!.Clr<string>()!;
 
@@ -243,7 +246,7 @@ public sealed class Default : IHttp
 
     // --- Unified error handling ---
 
-    private async Task<data.@this> ExecuteHttpAsync(Func<Task<data.@this>> operation)
+    private async Task<data.@this> ExecuteHttpAsync(actor.context.@this context, Func<Task<data.@this>> operation)
     {
         try
         {
@@ -260,7 +263,7 @@ public sealed class Default : IHttp
                 FormatException => ("InvalidContent", 400),
                 _ => ("HttpError", 500)
             };
-            return global::app.data.@this.FromError(new ServiceError(ex.Message, key, statusCode));
+            return context.Error(new ServiceError(ex.Message, key, statusCode));
         }
     }
 
@@ -275,7 +278,7 @@ public sealed class Default : IHttp
     /// of being laundered through the outer catch.
     /// </summary>
     private static async Task<data.@this<global::app.type.binary.@this>> ReadLimitedBytesAsync(
-        HttpContent content, long maxBytes, CancellationToken ct = default)
+        HttpContent content, long maxBytes, actor.context.@this context, CancellationToken ct = default)
     {
         using var stream = await content.ReadAsStreamAsync(ct);
         using var limited = new MemoryStream();
@@ -289,7 +292,7 @@ public sealed class Default : IHttp
         {
             totalRead += bytesRead;
             if (totalRead > maxBytes)
-                return data.@this<global::app.type.binary.@this>.FromError(new ServiceError(
+                return context.Error<global::app.type.binary.@this>(new ServiceError(
                     $"Response body exceeds maximum size of {FormatBytes(maxBytes)}",
                     "ResponseTooLarge", 413));
             limited.Write(buffer, 0, bytesRead);
@@ -299,7 +302,7 @@ public sealed class Default : IHttp
             if (elapsed >= 30)
             {
                 if (throughputBytes / elapsed < 1024)
-                    return data.@this<global::app.type.binary.@this>.FromError(new ServiceError(
+                    return context.Error<global::app.type.binary.@this>(new ServiceError(
                         "Response too slow — possible slow-loris attack",
                         "SlowResponse", 408));
                 throughputStart = DateTimeOffset.UtcNow;
@@ -307,7 +310,7 @@ public sealed class Default : IHttp
             }
         }
 
-        return data.@this<global::app.type.binary.@this>.Ok(limited.ToArray());
+        return context.Ok<global::app.type.binary.@this>(limited.ToArray());
     }
 
     /// <summary>
@@ -316,11 +319,11 @@ public sealed class Default : IHttp
     /// lives in one place.
     /// </summary>
     private static async Task<data.@this<global::app.type.text.@this>> ReadLimitedStringAsync(
-        HttpContent content, long maxBytes, CancellationToken ct = default)
+        HttpContent content, long maxBytes, actor.context.@this context, CancellationToken ct = default)
     {
-        var bytes = await ReadLimitedBytesAsync(content, maxBytes, ct);
-        if (!bytes.Success) return data.@this<global::app.type.text.@this>.FromError(bytes.Error!);
-        return data.@this<global::app.type.text.@this>.Ok(Encoding.UTF8.GetString((await bytes.Value())!.Clr<byte[]>()!));
+        var bytes = await ReadLimitedBytesAsync(content, maxBytes, context, ct);
+        if (!bytes.Success) return context.Error<global::app.type.text.@this>(bytes.Error!);
+        return context.Ok<global::app.type.text.@this>(Encoding.UTF8.GetString((await bytes.Value())!.Clr<byte[]>()!));
     }
 
     // --- Internal HTTP transport ---
@@ -394,19 +397,19 @@ public sealed class Default : IHttp
 
     // --- URL resolution ---
 
-    private static data.@this<global::app.type.text.@this> ResolveUrl(string url, ModuleView<Config> config)
+    private static data.@this<global::app.type.text.@this> ResolveUrl(string url, ModuleView<Config> config, actor.context.@this context)
     {
         var baseUrl = config.Resolve<string?>("BaseUrl", null);
 
         if (url.StartsWith('/'))
         {
             if (string.IsNullOrEmpty(baseUrl))
-                return data.@this<global::app.type.text.@this>.FromError(new ServiceError(
+                return context.Error<global::app.type.text.@this>(new ServiceError(
                     "Relative URL requires a BaseUrl configuration. Use 'configure http, base url https://...'",
                     "NoBaseUrl", 400));
 
             baseUrl = baseUrl.TrimEnd('/');
-            return data.@this<global::app.type.text.@this>.Ok(baseUrl + url);
+            return context.Ok<global::app.type.text.@this>(baseUrl + url);
         }
 
         if (!url.Contains("://"))
@@ -416,12 +419,12 @@ public sealed class Default : IHttp
         if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
         {
             if (uri.Scheme != "http" && uri.Scheme != "https")
-                return data.@this<global::app.type.text.@this>.FromError(new ServiceError(
+                return context.Error<global::app.type.text.@this>(new ServiceError(
                     $"Only http:// and https:// URLs are allowed, got {uri.Scheme}://",
                     "InvalidUrlScheme", 400));
         }
 
-        return data.@this<global::app.type.text.@this>.Ok(url);
+        return context.Ok<global::app.type.text.@this>(url);
     }
 
     // --- Response parsing ---
@@ -440,7 +443,7 @@ public sealed class Default : IHttp
 
         if (!response.IsSuccessStatusCode)
         {
-            var (errorData, errorBody) = await ReadErrorResponseAsync(response, request);
+            var (errorData, errorBody) = await ReadErrorResponseAsync(response, request, context);
 
             if (!unsigned && !string.IsNullOrEmpty(errorBody))
             {
@@ -472,7 +475,7 @@ public sealed class Default : IHttp
         // the body is NOT deserialized at read time, it materializes on first
         // touch (navigation / As<T>) through the reader registry. A status check
         // (%response!status%) reads a Property and never touches the body.
-        var bytesRead = await ReadLimitedBytesAsync(response.Content, maxResponseSize);
+        var bytesRead = await ReadLimitedBytesAsync(response.Content, maxResponseSize, context);
         if (!bytesRead.Success)
         {
             BuildProperties(bytesRead, request, response);
@@ -509,7 +512,7 @@ public sealed class Default : IHttp
         actor.context.@this context,
         long maxResponseSize = DefaultMaxResponseSize)
     {
-        var bodyRead = await ReadLimitedStringAsync(response.Content, maxResponseSize);
+        var bodyRead = await ReadLimitedStringAsync(response.Content, maxResponseSize, context);
         if (!bodyRead.Success)
         {
             BuildProperties(bodyRead, request, response);
@@ -541,9 +544,8 @@ public sealed class Default : IHttp
         }
 
         // Data.Signature is populated from the wire via [In] — pass straight to verify
-        var verifyAction = new signing.verify
+        var verifyAction = new signing.verify(context)
         {
-            Context = context,
             Data = data
         };
 
@@ -576,7 +578,7 @@ public sealed class Default : IHttp
         // inner data (the read boundary auto-verifies; verify peels it).
         if (data?.Peek() is global::app.type.signature.@this layer)
         {
-            var verifyAction = new signing.verify { Context = context, Data = data };
+            var verifyAction = new signing.verify(context) { Data = data };
             var verifyResult = await app.RunAction<signing.verify>(verifyAction, context);
             if (verifyResult.Success)
                 await context.Variable.Set("!ServiceIdentity", layer.Identity.ToString());
@@ -588,17 +590,17 @@ public sealed class Default : IHttp
     /// Returns the error Data and the raw error body (for signed error extraction).
     /// </summary>
     private static async Task<(data.@this Error, string Body)> ReadErrorResponseAsync(
-        HttpResponseMessage response, HttpRequestMessage request, CancellationToken ct = default)
+        HttpResponseMessage response, HttpRequestMessage request, actor.context.@this context, CancellationToken ct = default)
     {
         var errorBody = "";
         try
         {
-            var read = await ReadLimitedStringAsync(response.Content, MaxErrorBodySize, ct);
+            var read = await ReadLimitedStringAsync(response.Content, MaxErrorBodySize, context, ct);
             // Best effort: ignore size-cap / slow-loris failures here, proceed with empty body.
             if (read.Success) errorBody = (await read.Value())!.Clr<string>()!;
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { /* best effort — read failed (network/IO), proceed with empty */ }
-        var err = global::app.data.@this.FromError(new ServiceError(
+        var err = context.Error(new ServiceError(
             $"{(int)response.StatusCode} {response.ReasonPhrase}: {errorBody}".Trim(),
             "HttpError", (int)response.StatusCode));
         BuildProperties(err, request, response);
@@ -663,7 +665,7 @@ public sealed class Default : IHttp
         {
             using (response)
             {
-                var (err, _) = await ReadErrorResponseAsync(response, request, ct);
+                var (err, _) = await ReadErrorResponseAsync(response, request, context, ct);
                 return err;
             }
         }
@@ -852,9 +854,8 @@ public sealed class Default : IHttp
             if (data == null) continue;
 
             // Verify signature — pass Data straight to verify
-            var verifyAction = new signing.verify
+            var verifyAction = new signing.verify(context)
             {
-                Context = context,
                 Data = data
             };
 

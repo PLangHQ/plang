@@ -15,33 +15,33 @@ public class TypeIsTests
 
     [Test] public async Task Is_SameName_True()
     {
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         await Assert.That(app.Type["image"].Is(app.Type["image"])).IsTrue();
     }
 
     [Test] public async Task Is_Facet_ImageIsPath()
     {
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         // image declares static Type = ["image","path"] — it has-a path.
         await Assert.That(app.Type["image"].Is(app.Type["path"])).IsTrue();
     }
 
     [Test] public async Task Is_NonFacet_ImageIsNotText()
     {
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         // image has a Mime string but does NOT declare text as a facet.
         await Assert.That(app.Type["image"].Is(app.Type["text"])).IsFalse();
     }
 
     [Test] public async Task Is_NotSymmetric_PathIsNotImage()
     {
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         await Assert.That(app.Type["path"].Is(app.Type["image"])).IsFalse();
     }
 
     [Test] public async Task Set_ImageBoundToPathSlot_KeptAsImage_NotDowngraded()
     {
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         var ctx = app.User.Context;
         var img = new image(PngHeader, "image/png");
 

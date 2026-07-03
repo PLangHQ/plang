@@ -12,7 +12,7 @@ public class HashTypeTests
 {
     [Test] public async Task HashType_Resolves_ViaRegistry()
     {
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         var t = app.Type["hash"];
         await Assert.That(t.Name).IsEqualTo("hash");
         await Assert.That(t.ClrType).IsEqualTo(typeof(hash));
@@ -24,7 +24,7 @@ public class HashTypeTests
         // resolves the kind when validating `verify %bla%` and how getTypes
         // maps a produced variable. The per-step LLM prompt table does NOT
         // carry them (hash is a result type, not a fundamental the LLM emits).
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         var kinds = app.Type["hash"].Kinds!;
         await Assert.That(kinds).Contains("sha256");
         await Assert.That(kinds).Contains("keccak256");
@@ -34,7 +34,7 @@ public class HashTypeTests
     {
         // The prompt's kind table is scoped to fundamentals; a result type's
         // algorithms are noise the LLM never chooses from.
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         await Assert.That((app.Module.Schema.Build()).Kinds.ContainsKey("hash")).IsFalse();
     }
 
@@ -49,7 +49,7 @@ public class HashTypeTests
 
     [Test] public async Task CryptoHash_ReturnsHashValueWithAlgorithmKind()
     {
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         var ctx = app.User.Context;
         var action = TestAction.Create("crypto", "hash",
             ("data", "hello"), ("algorithm", "sha256"));
@@ -65,7 +65,7 @@ public class HashTypeTests
 
     [Test] public async Task CryptoVerify_DefaultsAlgorithmFromHashValue()
     {
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         var ctx = app.User.Context;
         var crypto = new global::app.module.crypto.code.Default();
 
@@ -73,20 +73,14 @@ public class HashTypeTests
         // the produced hash value directly — no manual base64, no manual type
         // stamp. The algorithm rides on the hash value (sha256), so verify must
         // succeed with NO explicit Algorithm (which defaults to keccak256).
-        var digest = await crypto.Hash(new global::app.module.crypto.Hash
-        {
-            Context = ctx,
-            Data = ctx.Ok("hello"),
+        var digest = await crypto.Hash(new global::app.module.crypto.Hash(ctx) { Data = ctx.Ok("hello"),
             Algorithm = new global::app.data.@this<global::app.type.text.@this>("Algorithm", "sha256"),
         });
         await digest.IsSuccess();
         await Assert.That((await digest.Value()) is hash).IsTrue();
         await Assert.That(((hash)(await digest.Value())!).Algorithm).IsEqualTo("sha256");
 
-        var verify = new global::app.module.crypto.Verify
-        {
-            Context = ctx,
-            Data = ctx.Ok("hello"),
+        var verify = new global::app.module.crypto.Verify(ctx) { Data = ctx.Ok("hello"),
             Hash = digest,
         };
         var result = await verify.Run();

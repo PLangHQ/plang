@@ -101,14 +101,11 @@ public class HandlerShapeTests
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-hs-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
-        var app = new global::app.@this(root);
+        var app = TestApp.Create(root);
         var fp = global::app.type.path.file.@this.Resolve("doc.txt", app.User.Context);
         await fp.WriteText("delegated body");
 
-        var handler = new global::app.module.file.Read
-        {
-            Context = app.User.Context,
-            Path = new global::app.data.@this<global::app.type.path.@this>("", fp),
+        var handler = new global::app.module.file.Read(app.User.Context) { Path = new global::app.data.@this<global::app.type.path.@this>("", fp),
         };
         var viaHandler = await handler.Run();
         var viaPath = await global::app.type.path.file.@this.Resolve("doc.txt", app.User.Context).ReadText();
@@ -121,7 +118,7 @@ public class HandlerShapeTests
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-hs2-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
-        var app = new global::app.@this(root);
+        var app = TestApp.Create(root);
         app.User.Channel.Register(new CannedNoChannel());
 
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-foreign-" + System.Guid.NewGuid().ToString("N"));
@@ -130,10 +127,7 @@ public class HandlerShapeTests
         System.IO.File.WriteAllText(target, "secret");
 
         var fp = new global::app.type.path.file.@this(target, app.User.Context);
-        var handler = new global::app.module.file.Read
-        {
-            Context = app.User.Context,
-            Path = new global::app.data.@this<global::app.type.path.@this>("", fp),
+        var handler = new global::app.module.file.Read(app.User.Context) { Path = new global::app.data.@this<global::app.type.path.@this>("", fp),
         };
         var result = await handler.Run();
         await result.IsFailure();
@@ -146,7 +140,7 @@ public class HandlerShapeTests
         // grant is denied — existence is gated, not a free filesystem oracle.
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-n1-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
-        var app = new global::app.@this(root);
+        var app = TestApp.Create(root);
         app.User.Channel.Register(new CannedNoChannel());
 
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-n1-foreign-" + System.Guid.NewGuid().ToString("N"));

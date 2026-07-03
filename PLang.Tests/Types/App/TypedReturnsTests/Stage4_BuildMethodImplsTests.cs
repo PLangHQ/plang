@@ -14,7 +14,7 @@ public class Stage4_BuildMethodImplsTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this(System.IO.Path.Combine(
+        _app = TestApp.Create(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-stage4-" + System.Guid.NewGuid().ToString("N")[..8]));
     }
 
@@ -32,7 +32,7 @@ public class Stage4_BuildMethodImplsTests
     private async Task<Data> Build(string module, string action, params (string name, object? value)[] parameters)
     {
         var a = Make(module, action, parameters);
-        var (shell, err) = _app.Module.GetCodeGenerated(a);
+        var (shell, err) = _app.Module.GetCodeGenerated(a, _app.User.Context);
         await Assert.That(err).IsNull();
         var (handler, resolveErr) = await shell!.Resolve(a, _app.User.Context);
         await Assert.That(resolveErr).IsNull();

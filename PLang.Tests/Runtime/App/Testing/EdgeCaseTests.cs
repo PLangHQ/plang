@@ -23,7 +23,7 @@ public class EdgeCaseTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-edge-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir);
+        _app = TestApp.Create(_tempDir);
         _captureStream = new System.IO.MemoryStream();
         _app.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, _captureStream,
@@ -78,10 +78,7 @@ public class EdgeCaseTests
         // inner grandchild-runs).
 
         var emptyList = new List<global::app.tester.test.@this>();
-        var outerAction = new global::app.module.test.run
-        {
-            Context = _app.User.Context,
-            Tests = emptyList.ToListData<global::app.tester.test.@this>(),
+        var outerAction = new global::app.module.test.run(_app.User.Context) { Tests = emptyList.ToListData<global::app.tester.test.@this>(),
             Parallel = null,
             Timeout = null
         };
@@ -97,10 +94,7 @@ public class EdgeCaseTests
     [Test]
     public async Task Discover_PathTraversal_OutsideProjectRoot_Rejected()
     {
-        var action = new global::app.module.test.discover
-        {
-            Context = _app.User.Context,
-            Path = global::app.data.@this<global::app.type.path.@this>.Ok(
+        var action = new global::app.module.test.discover(_app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(
                 global::app.type.path.@this.Resolve("../../../etc", _app.User.Context)),
             Pattern = new global::app.data.@this<global::app.type.text.@this>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<global::app.type.@bool.@this>("Recursive", true)
@@ -125,12 +119,12 @@ public class EdgeCaseTests
     [Test]
     public async Task Report_ConsoleCapture_AnsiEscapeSequences_Stripped()
     {
-        var run = new global::app.tester.Run(new global::app.tester.test.@this { Goal = new Goal { Name = "X", Path = "/Tests/X.test.goal" } });
+        var run = new global::app.tester.Run(new global::app.tester.test.@this { Goal = new Goal { Name = "X", Path = global::app.type.path.@this.Resolve("/Tests/X.test.goal", global::PLang.Tests.TestApp.SharedContext) } });
         run.Output = "\x1B[32mFAKE OK\x1B[0m\x1B[2JCLEARED";
         run.Complete(global::app.tester.Status.Fail, new global::app.error.AssertionError(1, 2));
         _app.Tester.Results.Add(run);
 
-        var action = new global::app.module.test.report { Context = _app.User.Context };
+        var action = new global::app.module.test.report(_app.User.Context);
         await action.Run();
 
         var output = CapturedOutput();

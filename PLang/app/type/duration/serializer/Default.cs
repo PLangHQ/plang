@@ -11,5 +11,5 @@ namespace app.type.duration.serializer;
 public static class Default
 {
     public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
-        => global::app.type.duration.@this.Convert(raw, kind, ctx.Context!).Peek();
+        => global::app.type.duration.@this.Convert(raw, kind, ctx.Context).Peek();
 }

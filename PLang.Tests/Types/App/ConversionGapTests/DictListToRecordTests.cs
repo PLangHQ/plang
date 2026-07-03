@@ -13,7 +13,7 @@ public class DictListToRecordTests
 {
     private static global::app.type.dict.@this Dict(string role, string content)
     {
-        var d = new global::app.type.dict.@this();
+        var d = new global::app.type.dict.@this(global::PLang.Tests.TestApp.SharedContext);
         d.Set("Role", role);
         d.Set("Content", content);
         return d;
@@ -24,11 +24,11 @@ public class DictListToRecordTests
     {
         // The live path: a list bound to a list<T> slot re-tags (Value<list<T>>);
         // each row stays a dict, converting to T only when read.
-        var lst = new global::app.type.list.@this();
+        var lst = new global::app.type.list.@this(global::PLang.Tests.TestApp.SharedContext);
         lst.Add(new Data("", Dict("system", "sys-msg")));
         lst.Add(new Data("", Dict("user", "hi")));
 
-        var typed = await new Data("", lst).Value<global::app.type.list.@this<LlmMessage>>();
+        var typed = await new Data("", lst, context: global::PLang.Tests.TestApp.SharedContext).Value<global::app.type.list.@this<LlmMessage>>();
 
         await Assert.That(typed).IsNotNull();
         await Assert.That(typed!.Items.Count).IsEqualTo(2);

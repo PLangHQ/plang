@@ -21,7 +21,7 @@ public class SaveGoalsTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_builder_savegoals_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = TestApp.Create(_tempDir);
         _app.Builder.IsEnabled = true;
     }
 
@@ -49,7 +49,7 @@ public class SaveGoalsTests
             Steps = new GoalSteps { step }
         };
 
-        var action = new goalsSave { Context = _app.User.Context, Goal = goal };
+        var action = new goalsSave(_app.User.Context) { Goal = goal };
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -74,7 +74,7 @@ public class SaveGoalsTests
             Description = null
         };
 
-        var action = new goalsSave { Context = _app.User.Context, Goal = goal };
+        var action = new goalsSave(_app.User.Context) { Goal = goal };
         await _app.RunAction(action, _app.User.Context);
 
         var prPath = System.IO.Path.Combine(_tempDir, ".build", "test.pr");
@@ -102,7 +102,7 @@ public class SaveGoalsTests
             }
         };
 
-        var action = new goalsSave { Context = _app.User.Context, Goal = goal };
+        var action = new goalsSave(_app.User.Context) { Goal = goal };
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -122,7 +122,7 @@ public class SaveGoalsTests
     public async Task SaveGoal_NoPrPath_ReturnsError()
     {
         var goal = new Goal { Name = "Test" }; // No Path → no PrPath
-        var action = new goalsSave { Context = _app.User.Context, Goal = goal };
+        var action = new goalsSave(_app.User.Context) { Goal = goal };
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsFailure();

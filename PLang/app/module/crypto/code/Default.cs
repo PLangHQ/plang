@@ -128,9 +128,8 @@ public class Default : ICrypto
 
         // Recompute through crypto.hash so the algorithm switch stays in one
         // place (no forked digest logic here).
-        var hashResult = await Hash(new Hash
+        var hashResult = await Hash(new Hash(action.Context)
         {
-            Context = action.Context,
             Data = action.Data,
             Algorithm = new global::app.data.@this<global::app.type.text.@this>("Algorithm", algorithm, context: action.Context),
         });

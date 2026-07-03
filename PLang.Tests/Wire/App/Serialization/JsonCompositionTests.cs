@@ -21,7 +21,7 @@ public class JsonCompositionTests : System.IAsyncDisposable
 
     [Test] public async Task Json_WithConverter_ReturnsNewInstance_WithConverterRegistered()
     {
-        var json = new Json();
+        var json = new Json(global::PLang.Tests.TestApp.SharedContext);
         var withProbe = json.WithConverter(new Probe());
         await Assert.That(withProbe).IsNotEqualTo(json);
 
@@ -31,7 +31,7 @@ public class JsonCompositionTests : System.IAsyncDisposable
 
     [Test] public async Task Json_WithConverter_DoesNotMutateOriginalInstance()
     {
-        var json = new Json();
+        var json = new Json(global::PLang.Tests.TestApp.SharedContext);
         var original = (await json.Serialize(app.Ok("hello")).Value())!.Clr<string>()!;
         json.WithConverter(new Probe());
         var afterCompose = (await json.Serialize(app.Ok("hello")).Value())!.Clr<string>()!;
@@ -40,7 +40,7 @@ public class JsonCompositionTests : System.IAsyncDisposable
 
     [Test] public async Task Json_WithModifier_ReturnsNewInstance_WithModifierOnResolver()
     {
-        var json = new Json();
+        var json = new Json(global::PLang.Tests.TestApp.SharedContext);
         bool fired = false;
         var withMod = json.WithModifier(_ => { fired = true; });
         // Drive serialization to invoke the resolver.
@@ -51,7 +51,7 @@ public class JsonCompositionTests : System.IAsyncDisposable
 
     [Test] public async Task Json_WithModifier_DoesNotMutateOriginalInstance()
     {
-        var json = new Json();
+        var json = new Json(global::PLang.Tests.TestApp.SharedContext);
         bool firedOnOriginal = false;
         json.WithModifier(_ => { firedOnOriginal = true; });
         json.Serialize(app.Ok("x"));
@@ -61,14 +61,14 @@ public class JsonCompositionTests : System.IAsyncDisposable
 
     [Test] public async Task Json_ForInbound_AppliesTransportForInboundModifier()
     {
-        var json = new Json();
+        var json = new Json(global::PLang.Tests.TestApp.SharedContext);
         var inbound = json.ForInbound();
         await Assert.That(inbound).IsNotEqualTo(json);
     }
 
     [Test] public async Task Json_ForView_StillApplies_TransportForViewModifier()
     {
-        var json = new Json();
+        var json = new Json(global::PLang.Tests.TestApp.SharedContext);
         var view = json.ForView(global::app.View.Debug);
         await Assert.That(view).IsNotEqualTo(json);
     }

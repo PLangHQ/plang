@@ -9,7 +9,7 @@ public class Cut1_TypedSetRoundTripsKind
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() { _app = new global::app.@this("/app"); }
+    public void Setup() { _app = TestApp.Create("/app"); }
 
     // An EXPLICIT kind (`as text/md`) round-trips onto the minted variable. A
     // bare literal's spelling never derives a kind (that's the stage-8 rule) —

@@ -24,7 +24,7 @@ public class ConfigureActionTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_http_cfg_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = TestApp.Create(_tempDir);
     }
 
     [After(Test)]
@@ -44,7 +44,8 @@ public class ConfigureActionTests
     [Test]
     public async Task Configure_SetsTimeoutOnScopeChain()
     {
-        var action = new configure { Context = Ctx, TimeoutInSec = (global::app.type.number.@this)60 };
+        var action = new configure(Ctx) { TimeoutInSec = (global::app.type.number.@this)60 };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -55,7 +56,8 @@ public class ConfigureActionTests
     [Test]
     public async Task Configure_BaseUrl_WrittenToScope()
     {
-        var action = new configure { Context = Ctx, BaseUrl = (global::app.type.text.@this)"https://api.example.com/v2" };
+        var action = new configure(Ctx) { BaseUrl = (global::app.type.text.@this)"https://api.example.com/v2" };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -66,7 +68,8 @@ public class ConfigureActionTests
     [Test]
     public async Task Configure_DefaultTrue_SetsEngineLevel()
     {
-        var action = new configure { Context = Ctx, TimeoutInSec = (global::app.type.number.@this)120, Default = (global::app.type.@bool.@this)true };
+        var action = new configure(Ctx) { TimeoutInSec = (global::app.type.number.@this)120, Default = (global::app.type.@bool.@this)true };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -80,7 +83,8 @@ public class ConfigureActionTests
     [Test]
     public async Task Configure_DefaultFalse_ScopedToContext()
     {
-        var action = new configure { Context = Ctx, TimeoutInSec = (global::app.type.number.@this)90, Default = (global::app.type.@bool.@this)false };
+        var action = new configure(Ctx) { TimeoutInSec = (global::app.type.number.@this)90, Default = (global::app.type.@bool.@this)false };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -104,10 +108,12 @@ public class ConfigureActionTests
         _app.Code.Register<IHttp>(provider);
         _app.Code.SetDefault<IHttp>("default");
 
-        var req = new request { Context = Ctx, Url = (global::app.type.text.@this)"https://example.com", Unsigned = (global::app.type.@bool.@this)true };
+        var req = new request(Ctx) { Url = (global::app.type.text.@this)"https://example.com", Unsigned = (global::app.type.@bool.@this)true };
+        await req.Attach(null, Ctx);
         await req.Run(); // locks the client
 
-        var action = new configure { Context = Ctx, FollowRedirects = (global::app.type.@bool.@this)false };
+        var action = new configure(Ctx) { FollowRedirects = (global::app.type.@bool.@this)false };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsFailure();
@@ -118,7 +124,8 @@ public class ConfigureActionTests
     public async Task Configure_NullProperties_NotWritten()
     {
         // Only set BaseUrl, leave everything else null
-        var action = new configure { Context = Ctx, BaseUrl = (global::app.type.text.@this)"https://api.example.com" };
+        var action = new configure(Ctx) { BaseUrl = (global::app.type.text.@this)"https://api.example.com" };
+        await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -131,7 +138,8 @@ public class ConfigureActionTests
     public async Task Configure_PerStepTimeout_OverridesConfiguredTimeout()
     {
         // Configure module-level timeout = 60
-        var configAction = new configure { Context = Ctx, TimeoutInSec = (global::app.type.number.@this)60 };
+        var configAction = new configure(Ctx) { TimeoutInSec = (global::app.type.number.@this)60 };
+        await configAction.Attach(null, Ctx);
         await configAction.Run();
 
         // Verify config has 60
@@ -146,13 +154,11 @@ public class ConfigureActionTests
         _app.Code.Register<IHttp>(provider);
         _app.Code.SetDefault<IHttp>("timeout-test");
 
-        var requestAction = new request
-        {
-            Context = Ctx,
-            Url = (global::app.type.text.@this)"https://api.example.com/slow",
+        var requestAction = new request(Ctx) { Url = (global::app.type.text.@this)"https://api.example.com/slow",
             TimeoutInSec = (global::app.type.number.@this)1, // per-step override: 1 second
             Unsigned = (global::app.type.@bool.@this)true
         };
+        await requestAction.Attach(null, Ctx);
         var result = await requestAction.Run();
 
         // Should timeout at 1s (per-step), not wait 60s (configured)

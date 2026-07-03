@@ -23,7 +23,7 @@ public class TestMetadataTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-meta-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir);
+        _app = TestApp.Create(_tempDir);
         _captureStream = new System.IO.MemoryStream();
         _app.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, _captureStream,
@@ -46,7 +46,7 @@ public class TestMetadataTests
         var goal = new Goal
         {
             Name = name,
-            Path = $"/Tests/{name}.test.goal",
+            Path = global::app.type.path.@this.Resolve($"/Tests/{name}.test.goal", global::PLang.Tests.TestApp.SharedContext),
             Hash = goalHash,
             BuilderVersion = builderVersion
         };
@@ -83,7 +83,7 @@ public class TestMetadataTests
     {
         _app.Tester.Results.Add(NewRun("T", builderVersion: "v1.0"));
 
-        var action = new global::app.module.test.report { Context = _app.User.Context };
+        var action = new global::app.module.test.report(_app.User.Context);
         await action.Run();
 
         var jsonPath = System.IO.Path.Combine(_tempDir, ".test", "results.json");
@@ -105,7 +105,7 @@ public class TestMetadataTests
         _app.Version = "v2.0"; // current app builder version
         _app.Tester.Results.Add(NewRun("T", builderVersion: "v1.0")); // stale
 
-        var action = new global::app.module.test.report { Context = _app.User.Context };
+        var action = new global::app.module.test.report(_app.User.Context);
         await action.Run();
 
         var output = CapturedOutput();

@@ -258,7 +258,7 @@ public sealed class @this
     /// The goal currently executing — reads CallStack.Current.Action.Step.Goal.
     /// Null at rest (no execution in flight).
     /// </summary>
-    public goal.@this? current => App?.CallStack?.Current?.Action?.Step?.Goal;
+    public goal.@this? current => App?.CallStack.Current?.Action?.Step?.Goal;
 
     /// <summary>
     /// Removes a goal.
@@ -327,12 +327,10 @@ public sealed class @this
         if (string.IsNullOrEmpty(prPath))
             return null;
 
-        // Resolve the raw string through the scheme registry when App is wired
-        // so dict lookups key on the canonical Path. Test fixtures often skip
-        // App wiring — fall back to the implicit string→Path stub.
-        global::app.type.path.@this key = App?.System?.Context is { } context
-            ? global::app.type.path.@this.Resolve(prPath, context)
-            : prPath;
+        // Resolve the raw string through the scheme registry so dict lookups key on
+        // the canonical Path (born with the System context — always available).
+        global::app.type.path.@this key =
+            global::app.type.path.@this.Resolve(prPath, App.System.Context);
         if (_goals.TryGetValue(key, out var cached))
             return cached.IsSetup ? null : cached;
         if (_byPath.TryGetValue(key, out cached))
@@ -367,9 +365,9 @@ public sealed class @this
             // land wired). This collection only wires the parsed goal into the registry.
             var readResult = await prPath.ReadText();
             if (!readResult.Success || readResult.Peek().IsNull)
-                return data.@this.FromError(readResult.Error ?? new Error($"Failed to read goal file: {prPath}"));
+                return app.System.Context.Error(readResult.Error ?? new Error($"Failed to read goal file: {prPath}"));
             if (await readResult.Value() is not goal.@this primary)
-                return data.@this.FromError(new Error($"Failed to parse goal file: {prPath}"));
+                return app.System.Context.Error(new Error($"Failed to parse goal file: {prPath}"));
 
             foreach (var step in primary.Steps)
             {
@@ -383,20 +381,19 @@ public sealed class @this
         }
         catch (Exception ex)
         {
-            return data.@this.FromError(Error.FromException(ex));
+            return app.System.Context.Error(Error.FromException(ex));
         }
     }
 
     /// <summary>
     /// Loads all goals from a directory.
     /// </summary>
-    public async Task<data.@this> LoadFromDirectoryAsync(app.@this app, string directory, string pattern = "*.pr", actor.context.@this? context = null, CancellationToken cancellationToken = default)
+    public async Task<data.@this> LoadFromDirectoryAsync(app.@this app, string directory, actor.context.@this context, string pattern = "*.pr", CancellationToken cancellationToken = default)
     {
         try
         {
             // Lift to path.List — gated through AuthGate(Read). In-root walks
             // fast-pass; out-of-root would prompt or deny.
-            context = context ?? app.System.Context!;
             var dirPath = global::app.type.path.@this.Resolve(directory, context);
             var listed = await dirPath.List(pattern, recursive: true);
             if (!listed.Success || listed.Peek().IsNull)

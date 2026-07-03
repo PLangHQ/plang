@@ -7,7 +7,7 @@ public class DescribeTests
     [Test]
     public async Task Describe_ActionWithConcreteReturnType_IncludesReturnTypeProperties()
     {
-        var app = new global::app.@this("/test"); var modules = app.Module;
+        var app = TestApp.Create("/test"); var modules = app.Module;
         modules.RegisterType("testmod", "getpath", typeof(FakeGetPath));
 
         var actions = await modules.Describe();
@@ -29,7 +29,7 @@ public class DescribeTests
     [Test]
     public async Task Describe_ActionReturningData_HasNullReturnType()
     {
-        var app = new global::app.@this("/test"); var modules = app.Module;
+        var app = TestApp.Create("/test"); var modules = app.Module;
         modules.RegisterType("testmod", "basic", typeof(FakeBasicAction));
 
         var actions = await modules.Describe();
@@ -41,7 +41,7 @@ public class DescribeTests
     [Test]
     public async Task Describe_DataWrappedProperty_ShowsInnerTypeName()
     {
-        var app = new global::app.@this("/test"); var modules = app.Module;
+        var app = TestApp.Create("/test"); var modules = app.Module;
         modules.RegisterType("testmod", "datapath", typeof(FakeDataPathAction));
 
         var actions = await modules.Describe();

@@ -123,7 +123,7 @@ public class Stage7_SurfaceGateTests
     [Test]
     public async Task DictKeys_ReturnsListOfText_NotIEnumerableString()
     {
-        var d = new global::app.type.dict.@this();
+        var d = new global::app.type.dict.@this(global::PLang.Tests.TestApp.SharedContext);
         d.Set(new Data("name", "a", context: global::PLang.Tests.TestApp.SharedContext));
         d.Set(new Data("age", 30L, context: global::PLang.Tests.TestApp.SharedContext));
         object keys = d.Keys;
@@ -136,13 +136,13 @@ public class Stage7_SurfaceGateTests
     [Test]
     public async Task ListCount_ReturnsNumber_NotInt()
     {
-        var l = new global::app.type.list.@this();
+        var l = new global::app.type.list.@this(global::PLang.Tests.TestApp.SharedContext);
         l.Add(new Data("", 1, context: global::PLang.Tests.TestApp.SharedContext));
         l.Add(new Data("", 2, context: global::PLang.Tests.TestApp.SharedContext));
         object count = l.Count;
         await Assert.That(count).IsTypeOf<global::app.type.number.@this>();
         await Assert.That(count.ToString()).IsEqualTo("2");
-        object dictCount = new global::app.type.dict.@this().Count;
+        object dictCount = new global::app.type.dict.@this(global::PLang.Tests.TestApp.SharedContext).Count;
         await Assert.That(dictCount).IsTypeOf<global::app.type.number.@this>();
     }
 
@@ -153,7 +153,7 @@ public class Stage7_SurfaceGateTests
         File.WriteAllText(tmp, "12345");
         try
         {
-            var fp = new global::app.type.path.file.@this(tmp);
+            var fp = new global::app.type.path.file.@this(tmp, global::PLang.Tests.TestApp.SharedContext);
             object size = fp.Size;
             await Assert.That(size).IsTypeOf<global::app.type.number.@this>();
             await Assert.That(size.ToString()).IsEqualTo("5");

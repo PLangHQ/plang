@@ -30,7 +30,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private byte[]? _bytes;
 
     [System.Text.Json.Serialization.JsonIgnore]
-    public actor.context.@this? Context
+    public actor.context.@this Context
     {
         get => Path.Context;
         set => Path.Context = value;
@@ -49,7 +49,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// never reads content.</summary>
     protected internal override global::app.type.@this Mint()
     {
-        var t = Context?.App.Format.TypeFromExtension(Path.Extension);
+        var t = Context.App.Format.TypeFromExtension(Path.Extension);
         return new global::app.type.@this("file", typeof(@this)) { Kind = t is { IsNull: false } ? t.Kind : null };
     }
 

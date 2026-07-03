@@ -43,14 +43,10 @@ public class TextWrapperTests
     }
 
     [Test]
-    public async Task Text_SubstringAndSplit_BehavioralOps()
+    public async Task Text_Substring_BehavioralOp()
     {
-        // substring(start, len) returns text; split(sep) returns a list of text.
+        // substring(start, len) returns text.
         await Assert.That(new Text("hello").Substring(1, 3).ToString()).IsEqualTo("ell");
-        var parts = new Text("a,b,c").Split(",");
-        await Assert.That(parts.Count).IsEqualTo(3);
-        await Assert.That(((Text)(await parts.At(0)!.Value())!).ToString()).IsEqualTo("a");
-        await Assert.That(((Text)(await parts.At(2)!.Value())!).ToString()).IsEqualTo("c");
     }
 
     [Test]

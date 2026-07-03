@@ -15,8 +15,8 @@ public class Stage4_PerTypeCompareTests
     private static async Task<Comparison> Cmp(global::app.@this app, object? a, object? b,
         string? aType = null, string? bType = null)
     {
-        var da = new Data("a", a, aType == null ? null : global::app.type.@this.FromName(aType), context: app.User.Context);
-        var db = new Data("b", b, bType == null ? null : global::app.type.@this.FromName(bType), context: app.User.Context);
+        var da = new Data("a", a, aType == null ? null : global::PLang.Tests.TestApp.SharedContext.Type.Create(aType), context: app.User.Context);
+        var db = new Data("b", b, bType == null ? null : global::PLang.Tests.TestApp.SharedContext.Type.Create(bType), context: app.User.Context);
         return await da.Compare(db);
     }
 
@@ -109,7 +109,7 @@ public class Stage4_PerTypeCompareTests
         var ctx = app.User.Context;
         static global::app.type.list.@this L(global::app.actor.context.@this c, params object[] items)
         {
-            var l = new global::app.type.list.@this { Context = c };
+            var l = new global::app.type.list.@this(c);
             foreach (var i in items) l.Add(new Data("", i, context: c));
             return l;
         }
@@ -173,7 +173,7 @@ public class Stage4_PerTypeCompareTests
         // sort places null entries last
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var list = new global::app.type.list.@this { Context = ctx };
+        var list = new global::app.type.list.@this(ctx);
         list.Add(new Data("", 3, context: ctx));
         list.Add(new Data("", null, context: ctx));
         list.Add(new Data("", 1, context: ctx));

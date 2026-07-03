@@ -33,7 +33,7 @@ public class Stage2_GetParameterLazyTests
     [Test]
     public async Task DispatchResolution_HandlerSeesResolvedValue_SharedPrParamUntouched()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<global::app.module.matrix.resolution.FullVarMatch>(app,
             parameters: new[] { ("path", (object?)"%path%") },
             variables: new Dictionary<string, object?> { ["path"] = "/tmp/x.txt" });
@@ -48,7 +48,7 @@ public class Stage2_GetParameterLazyTests
     {
         // An unconvertible literal for a typed slot surfaces as a typed FromError Data
         // when the value is materialised at its door — never an NRE inside Run().
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<global::app.module.matrix.plain.IntPlain>(app,
             parameters: new[] { ("count", (object?)"not-a-number") });
         var typed = result.Data as global::app.data.@this<global::app.type.number.@this>;
@@ -61,7 +61,7 @@ public class Stage2_GetParameterLazyTests
     {
         // file.read with an unregistered scheme: the path conversion fails as a typed
         // error Data (SchemeNotRegistered), surfaced by the post-resolve guard — no NRE.
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var context = app.User.Context;
         var slot = new Data("path", "s3://bucket/key", context: context);
         var failedPath = slot.ShallowClone<global::app.type.path.@this>(await slot.Value<global::app.type.path.@this>());

@@ -41,7 +41,7 @@ public partial class run : IContext
         if (list != null)
             foreach (var row in list)
                 if (await row.Value() is global::app.tester.test.@this test) tests.Add(test);
-        var parentApp = Context.App!;
+        var parentApp = Context.App;
         // The number lowers itself — absent slot falls to the stated default.
         int parallel = Parallel == null ? parentApp.Tester.Parallel
             : (await Parallel.Value())?.ToInt32() ?? parentApp.Tester.Parallel;

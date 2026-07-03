@@ -58,10 +58,8 @@ public sealed partial class @this
     /// the App is left in a partially-restored state and the caller is responsible
     /// for treating the failure as a referent-integrity violation.
     /// </summary>
-    public void Restore(snapshot.@this s, actor.context.@this? context = null)
+    public void Restore(snapshot.@this s, actor.context.@this context)
     {
-        context = context ?? CurrentActor.Context;
-
         if (s.HasSection("Providers")) global::app.module.code.@this.Restore(s.Section("Providers"), context);
         if (s.HasSection("Variables")) global::app.variable.list.@this.Restore(s.Section("Variables"), context);
         if (s.HasSection("Errors"))    global::app.error.list.@this.Restore(s.Section("Errors"), context);

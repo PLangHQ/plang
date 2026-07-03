@@ -28,7 +28,7 @@ public partial class @this
 
     private @this ShallowCloneStore()
     {
-        var copy = new @this { _context = _context };
+        var copy = new @this(_context);
         foreach (var kvp in _variables)
         {
             // Same skip rule as Clone(): per-execution cells are shared live, never

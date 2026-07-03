@@ -20,7 +20,7 @@ public class PathDerivationVerbTests
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-deriv-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
-        var app = new global::app.@this(root);
+        var app = TestApp.Create(root);
         var abs = System.IO.Path.Combine(root, relUnderRoot.TrimStart('/'));
         return (app, new FilePath(abs, app.User.Context));
     }
@@ -31,7 +31,7 @@ public class PathDerivationVerbTests
         // check inheritance; an App with arbitrary root is fine.
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-deriv-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
-        var app = new global::app.@this(root);
+        var app = TestApp.Create(root);
         return new HttpPath(url, app.User.Context);
     }
 
@@ -46,7 +46,7 @@ public class PathDerivationVerbTests
     {
         var sep = System.IO.Path.DirectorySeparatorChar;
         var root = sep.ToString();
-        var p = new FilePath(root);
+        var p = new FilePath(root, global::PLang.Tests.TestApp.SharedContext);
         var parent = p.Parent;
         // Root returns itself — no further parent, never throws.
         await Assert.That(parent.Absolute).IsEqualTo(root);

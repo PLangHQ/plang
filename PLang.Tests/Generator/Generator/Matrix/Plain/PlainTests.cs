@@ -10,7 +10,7 @@ public class StringPlainTests
     [Test]
     public async Task StringPlain_LiteralValue_ResolvesToTypedData()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<StringPlain>(app,
             parameters: new[] { ("path", (object?)"hello") });
         var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
@@ -21,8 +21,8 @@ public class StringPlainTests
     public async Task StringPlain_ReadTwice_ReturnsCachedBackingField()
     {
         // Direct ExecuteAsync — read the property twice through the handler instance.
-        await using var app = new global::app.@this("/app");
-        var handler = new StringPlain();
+        await using var app = TestApp.Create("/app");
+        var handler = new StringPlain(app.User.Context);
         var action = new PrAction
         {
             Module = "matrix.plain",
@@ -43,7 +43,7 @@ public class StringPlainTests
     [Test]
     public async Task StringPlain_EmptyString_PreservedAsEmpty()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<StringPlain>(app,
             parameters: new[] { ("path", (object?)"") });
         var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
@@ -56,7 +56,7 @@ public class IntPlainTests
     [Test]
     public async Task IntPlain_StringValue_ConvertsToInt()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<IntPlain>(app,
             parameters: new[] { ("count", (object?)"42") });
         var typed = result.Data as global::app.data.@this<global::app.type.number.@this>;
@@ -66,7 +66,7 @@ public class IntPlainTests
     [Test]
     public async Task IntPlain_IntValue_FastPath()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<IntPlain>(app,
             parameters: new[] { ("count", (object?)42) });
         var typed = result.Data as global::app.data.@this<global::app.type.number.@this>;
@@ -76,7 +76,7 @@ public class IntPlainTests
     [Test]
     public async Task IntPlain_UnconvertibleString_SurfacesFromError()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<IntPlain>(app,
             parameters: new[] { ("count", (object?)"not-a-number") });
         // Lazy: the conversion runs at the typed value door, so the failure surfaces
@@ -92,7 +92,7 @@ public class BoolPlainTests
     [Test]
     public async Task BoolPlain_StringTrue_ConvertsToBool()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<BoolPlain>(app,
             parameters: new[] { ("flag", (object?)"true") });
         var typed = result.Data as global::app.data.@this<global::app.type.@bool.@this>;
@@ -102,7 +102,7 @@ public class BoolPlainTests
     [Test]
     public async Task BoolPlain_BoolValue_FastPath()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<BoolPlain>(app,
             parameters: new[] { ("flag", (object?)true) });
         var typed = result.Data as global::app.data.@this<global::app.type.@bool.@this>;
@@ -115,7 +115,7 @@ public class PathPlainTests
     [Test]
     public async Task PathPlain_StringValue_UsesStaticResolve()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<PathPlain>(app,
             parameters: new[] { ("file", (object?)"data/x.txt") });
         var typed = result.Data as global::app.data.@this<global::app.type.path.@this>;
@@ -126,8 +126,8 @@ public class PathPlainTests
     [Test]
     public async Task PathPlain_PathValue_FastPath()
     {
-        await using var app = new global::app.@this("/app");
-        var path = new global::app.type.path.file.@this("/already-a-path.txt");
+        await using var app = TestApp.Create("/app");
+        var path = new global::app.type.path.file.@this("/already-a-path.txt", global::PLang.Tests.TestApp.SharedContext);
         var result = await MatrixRunner.RunAsync<PathPlain>(app,
             parameters: new[] { ("file", (object?)path) });
         var typed = result.Data as global::app.data.@this<global::app.type.path.@this>;

@@ -264,8 +264,12 @@ public sealed partial class @this : IAsyncDisposable
         // bubbling up. Step.RunAsync's catch DOES exclude OCE — that asymmetry is intentional.
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
+            // A typed AppException carries a domain Key (VariableNotFound, GoalNotFound, …) —
+            // preserve it; a bare exception defaults to ServiceError. Losing the Key here is
+            // why an unset %ref% surfaced as "ServiceError" instead of "VariableNotFound".
+            var appEx = ex as global::app.error.AppException;
             var serviceErr = new ServiceError(
-                ex.Message, Action.Step!, SnapshotChain(), "ServiceError", 400) { Exception = ex };
+                ex.Message, Action.Step!, SnapshotChain(), appEx?.Key ?? "ServiceError", appEx?.StatusCode ?? 400) { Exception = ex };
             serviceErr.Params = real?.SnapshotParams();
             Errors.Add(serviceErr);
             _stack.Audit.Add(serviceErr);

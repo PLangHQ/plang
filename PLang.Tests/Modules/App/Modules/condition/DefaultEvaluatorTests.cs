@@ -13,10 +13,10 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
     private Data D(object? value) => value == null ? new Data("") : _app.User.Context.Ok(value);
 
     private Task<global::app.data.@this<global::app.type.@bool.@this>> Eval(object? left, string op, object? right)
-        => _eval.Evaluate(new Compare { Context = _app.User.Context, Left = D(left), Operator = _app.User.Context.Ok<global::app.type.choice.@this<Operator>>((global::app.type.choice.@this<Operator>)new Operator(op)), Right = D(right) });
+        => _eval.Evaluate(new Compare(_app.User.Context) { Left = D(left), Operator = _app.User.Context.Ok<global::app.type.choice.@this<Operator>>((global::app.type.choice.@this<Operator>)new Operator(op)), Right = D(right) });
 
     private Task<global::app.data.@this<global::app.type.@bool.@this>> EvalIf(object? left, string op = "==", object? right = null)
-        => _eval.Evaluate(new If { Context = _app.User.Context, Left = D(left), Operator = _app.User.Context.Ok<global::app.type.choice.@this<Operator>>((global::app.type.choice.@this<Operator>)new Operator(op)), Right = D(right) });
+        => _eval.Evaluate(new If(_app.User.Context) { Left = D(left), Operator = _app.User.Context.Ok<global::app.type.choice.@this<Operator>>((global::app.type.choice.@this<Operator>)new Operator(op)), Right = D(right) });
 
     private bool IsTrue(global::app.data.@this<global::app.type.@bool.@this> result) => result.Success && (result.Peek() as global::app.type.@bool.@this)?.Value == true;
     private bool IsFalse(global::app.data.@this<global::app.type.@bool.@this> result) => result.Success && (result.Peek() as global::app.type.@bool.@this)?.Value == false;
@@ -161,7 +161,7 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-eval-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
-        var app = new global::app.@this(root);
+        var app = TestApp.Create(root);
         var file = System.IO.Path.Combine(root, "present.txt");
         System.IO.File.WriteAllText(file, "x");
         var fp = new global::app.type.path.file.@this(file, app.User.Context);
@@ -173,7 +173,7 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-eval-missing-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
-        var app = new global::app.@this(root);
+        var app = TestApp.Create(root);
         var missing = System.IO.Path.Combine(root, "not-here.txt");
         var fp = new global::app.type.path.file.@this(missing, app.User.Context);
         await Assert.That(IsFalse(await EvalIf(fp, "==", true))).IsTrue();

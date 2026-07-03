@@ -25,7 +25,7 @@ public class AssertionErrorVariablesTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/test");
+        _app = TestApp.Create("/test");
     }
 
     private Data D(object? value) => value == null ? new Data("") : _app.User.Context.Ok(value);
@@ -63,7 +63,7 @@ public class AssertionErrorVariablesTests
         context.Variable.Set("score", 42);
         context.Variable.Set("label", "foo");
 
-        var action = new AssertEquals { Context = context, Expected = D(1), Actual = D(2) };
+        var action = new AssertEquals(context) { Expected = D(1), Actual = D(2) };
         var result = await action.Run();
 
         await result.IsFailure();
@@ -82,7 +82,7 @@ public class AssertionErrorVariablesTests
         var context = _app.User.Context;
         context.Variable.Set("x", 1);
 
-        var action = new AssertEquals { Context = context, Expected = D(5), Actual = D(5) };
+        var action = new AssertEquals(context) { Expected = D(5), Actual = D(5) };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -102,15 +102,15 @@ public class AssertionErrorVariablesTests
 
         var failures = new List<Data>
         {
-            await new AssertEquals { Context = context, Expected = D(1), Actual = D(2) }.Run(),
-            await new AssertNotEquals { Context = context, Expected = D(1), Actual = D(1) }.Run(),
-            await new AssertIsTrue { Context = context, Value = D(false) }.Run(),
-            await new AssertIsFalse { Context = context, Value = D(true) }.Run(),
-            await new AssertIsNull { Context = context, Value = D(42) }.Run(),
-            await new AssertIsNotNull { Context = context, Value = D(null) }.Run(),
-            await new AssertContains { Context = context, Value = D("zzz"), Container = D("hello") }.Run(),
-            await new AssertGreaterThan { Context = context, A = D(1), B = D(5) }.Run(),
-            await new AssertLessThan { Context = context, A = D(5), B = D(1) }.Run()
+            await new AssertEquals(context) { Expected = D(1), Actual = D(2) }.Run(),
+            await new AssertNotEquals(context) { Expected = D(1), Actual = D(1) }.Run(),
+            await new AssertIsTrue(context) { Value = D(false) }.Run(),
+            await new AssertIsFalse(context) { Value = D(true) }.Run(),
+            await new AssertIsNull(context) { Value = D(42) }.Run(),
+            await new AssertIsNotNull(context) { Value = D(null) }.Run(),
+            await new AssertContains(context) { Value = D("zzz"), Container = D("hello") }.Run(),
+            await new AssertGreaterThan(context) { A = D(1), B = D(5) }.Run(),
+            await new AssertLessThan(context) { A = D(5), B = D(1) }.Run()
         };
 
         foreach (var result in failures)

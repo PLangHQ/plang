@@ -12,7 +12,7 @@ namespace PLang.Tests.App.Types;
 public class NumberPolicyResolutionTests
 {
     private static global::app.@this NewApp()
-        => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        => TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-policy-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     [Test] public async Task Resolve_StepLevel_OverridesContext()

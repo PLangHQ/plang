@@ -36,10 +36,10 @@ public partial class Where : IContext
         if (subjectVal is app.type.list.@this list)
         {
             // list.where delegates to dict.where per element — subject is each element.
-            var kept = new app.type.list.@this { Context = Context };
+            var kept = new app.type.list.@this(Context);
             foreach (var item in list.Items)
                 if (await Keep(item, field, op)) kept.Add(item);
-            return Context.Ok(kept, app.type.@this.FromName("list"));
+            return Context.Ok(kept, Context.Type.Create("list"));
         }
 
         if (subjectVal is app.type.dict.@this)
@@ -47,7 +47,7 @@ public partial class Where : IContext
             // dict.where is the leaf — subject is the dict itself, kept or dropped.
             bool keep = await Keep(subject, field, op);
             return Context.Ok(keep ? subjectVal : null,
-                app.type.@this.FromName("dict"));
+                Context.Type.Create("dict"));
         }
 
         // The apex has no fields to scope into — `5 where age > 20` is meaningless.

@@ -56,9 +56,9 @@ public sealed class @this
         }
         catch (TargetInvocationException ex)
         {
-            // Infra dispatch door: context is legitimately null for context-free
-            // callers (the Text serializer's Deserialize<T>), so the error Data is
-            // born from the context only when one is in hand.
+            // Infra dispatch door: context is legitimately null for context-free callers
+            // (the Text serializer's Deserialize<T>), so the error Data is born from the
+            // context only when one is in hand.
             var error = new global::app.error.Error(
                 (ex.InnerException ?? ex).Message, "TypeConversionFailed", 400);
             return context != null ? context.Error(error) : global::app.data.@this.FromError(error);

@@ -8,7 +8,7 @@ public class DataPlainTests
     [Test]
     public async Task DataPlain_StringValue_PassesThrough()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<global::app.module.matrix.dataplain.DataPlain>(app,
             parameters: new[] { ("payload", (object?)"hello") });
         await Assert.That((await result.Data.Value())?.ToString()).IsEqualTo("hello");
@@ -17,7 +17,7 @@ public class DataPlainTests
     [Test]
     public async Task DataPlain_IntValue_PassesThrough()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<global::app.module.matrix.dataplain.DataPlain>(app,
             parameters: new[] { ("payload", (object?)42) });
         await Assert.That((await result.Data.Value())?.ToString()).IsEqualTo("42");
@@ -26,7 +26,7 @@ public class DataPlainTests
     [Test]
     public async Task DataPlain_ListValue_PassesThrough()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var raw = new List<object?> { 1, 2, 3 };
         var result = await MatrixRunner.RunAsync<global::app.module.matrix.dataplain.DataPlain>(app,
             parameters: new[] { ("payload", (object?)raw) });
@@ -40,7 +40,7 @@ public class DataPlainTests
     [Test]
     public async Task DataPlain_DictValue_PassesThrough()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var raw = new Dictionary<string, object?> { ["a"] = 1, ["b"] = 2 };
         var result = await MatrixRunner.RunAsync<global::app.module.matrix.dataplain.DataPlain>(app,
             parameters: new[] { ("payload", (object?)raw) });
@@ -51,7 +51,7 @@ public class DataPlainTests
     [Test]
     public async Task DataPlain_VarReference_ResolvesAsObject()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<global::app.module.matrix.dataplain.DataPlain>(app,
             parameters: new[] { ("payload", (object?)"%name%") },
             variables: new Dictionary<string, object?> { ["name"] = "world" });

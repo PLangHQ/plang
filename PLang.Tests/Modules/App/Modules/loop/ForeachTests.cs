@@ -21,7 +21,7 @@ public class ForeachTests
         var items = new List<object?> { "a", "b", "c" };
         context.Variable.Set("items", items);
 
-        _app.Goal.Add(new Goal { Name = "ProcessItem", Path = "/ProcessItem.goal", Steps = new GoalSteps() });
+        _app.Goal.Add(new Goal { Name = "ProcessItem", Path = global::app.type.path.@this.Resolve("/ProcessItem.goal", global::PLang.Tests.TestApp.SharedContext), Steps = new GoalSteps() });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("ForeachRunner",
             Make.Step("foreach %items%, call ProcessItem item=%item%",
@@ -59,7 +59,7 @@ public class ForeachTests
         var context = _app.User.Context;
         context.Variable.Set("items", new List<object?> { "hello" });
 
-        _app.Goal.Add(new Goal { Name = "DoNothing", Path = "/DoNothing.goal", Steps = new GoalSteps() });
+        _app.Goal.Add(new Goal { Name = "DoNothing", Path = global::app.type.path.@this.Resolve("/DoNothing.goal", global::PLang.Tests.TestApp.SharedContext), Steps = new GoalSteps() });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("SetsItemRunner",
             Make.Step("foreach %items%, call DoNothing item=%myItem%",
@@ -82,7 +82,7 @@ public class ForeachTests
         var dict = new Dictionary<string, object?> { ["name"] = "Alice", ["age"] = 30 };
         context.Variable.Set("dict", dict);
 
-        _app.Goal.Add(new Goal { Name = "DictGoal", Path = "/DictGoal.goal", Steps = new GoalSteps() });
+        _app.Goal.Add(new Goal { Name = "DictGoal", Path = global::app.type.path.@this.Resolve("/DictGoal.goal", global::PLang.Tests.TestApp.SharedContext), Steps = new GoalSteps() });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("DictRunner",
             Make.Step("foreach %dict%, call DictGoal item=%val%",
@@ -105,7 +105,7 @@ public class ForeachTests
         var dict = new Dictionary<string, object?> { ["greeting"] = "hello" };
         context.Variable.Set("dict", dict);
 
-        _app.Goal.Add(new Goal { Name = "Noop", Path = "/Noop.goal", Steps = new GoalSteps() });
+        _app.Goal.Add(new Goal { Name = "Noop", Path = global::app.type.path.@this.Resolve("/Noop.goal", global::PLang.Tests.TestApp.SharedContext), Steps = new GoalSteps() });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("DictKeyRunner",
             Make.Step("foreach %dict%, call Noop",

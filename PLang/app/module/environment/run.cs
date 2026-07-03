@@ -20,7 +20,7 @@ public partial class run : IContext
         // Polymorphic: forwarded result type depends on the dispatched target.
         var goalName = GoalName == null ? null : await GoalName.Value();
         if (goalName != null)
-            return await Context.App!.RunGoalAsync(goalName, Context);
+            return await Context.App.RunGoalAsync(goalName, Context);
 
         var step = Step == null ? null : await Step.Value();
         if (step != null)

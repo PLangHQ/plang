@@ -24,7 +24,7 @@ public sealed class FilePathFixture : IPathSchemeFixture, IDisposable
         _resourceDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-cfx-res-" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_appRoot);
         System.IO.Directory.CreateDirectory(_resourceDir);
-        _app = new global::app.@this(_appRoot);
+        _app = TestApp.Create(_appRoot);
         global::PLang.Tests.TestApp.UseTestSigning(_app);
     }
 

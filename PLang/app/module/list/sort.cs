@@ -41,6 +41,6 @@ public partial class Sort : IContext
             return Context.Error<type.list>(
                 new app.error.ValidationError(ex.Message));
         }
-        return Context.Ok<type.list>(new type.list { count = nl.CountRaw, value = nl }, app.type.@this.FromName("list"));
+        return Context.Ok<type.list>(new type.list { count = nl.CountRaw, value = nl }, Context.Type.Create("list"));
     }
 }

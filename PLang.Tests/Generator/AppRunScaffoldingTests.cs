@@ -69,7 +69,7 @@ public class AppRunScaffoldingTests
     {
         MatrixRunner.EnsureRegistered<StringPlain>(_app);
 
-        var goalBefore = new Goal { Name = "before-goal", Path = "/g.goal" };
+        var goalBefore = new Goal { Name = "before-goal", Path = global::app.type.path.@this.Resolve("/g.goal", global::PLang.Tests.TestApp.SharedContext) };
         _app.User.Context.Goal = goalBefore;
 
         var step = new Step { Index = 0, Text = "s" };

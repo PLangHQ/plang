@@ -155,9 +155,8 @@ public class Default : IBuilder
             // System.IO.Path arithmetic needed.
             rootRelative = global::app.type.path.@this.Resolve(searchPath, context).Absolute;
 
-        var listAction = new file.List
+        var listAction = new file.List(context)
         {
-            Context = context,
             Path = context.Ok<path>(path.Resolve(rootRelative, context)),
             Pattern = new data.@this<global::app.type.text.@this>("", "*.goal", context: context),
             Recursive = new data.@this<global::app.type.@bool.@this>("", true, context: context)
@@ -205,7 +204,7 @@ public class Default : IBuilder
 
         foreach (var file in files)
         {
-            var readAction = new file.Read { Context = context, Path = context.Ok<path>(file) };
+            var readAction = new file.Read(context) { Path = context.Ok<path>(file) };
             var readResult = await app.RunAction(readAction, context);
             if (!readResult.Success)
             {
@@ -268,7 +267,7 @@ public class Default : IBuilder
         // non-keep steps) that slipped past the in-pipeline validateResponse and
         // ApplyStep stages. Refusing to write the .pr is preferable to saving a half-
         // built artifact that the runtime can't execute.
-        var validation = await validateResponse.ValidateGoalState(goal);
+        var validation = await BuildResponse.FromGoalState(goal).Validate(goal);
         if (!validation.Success) return validation;
 
         // The goal writes its OWN .pr through Output (the value-owns-serialization path), Store view,
@@ -280,9 +279,8 @@ public class Default : IBuilder
         await serializer.SerializeItemAsync(ms, goal, global::app.View.Store);
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
 
-        var saveAction = new file.Save
+        var saveAction = new file.Save(context)
         {
-            Context = context,
             Path = context.Ok<path>(prPath),
             Value = new data.@this("", json, context: context)
         };
@@ -612,7 +610,7 @@ public class Default : IBuilder
         var errors = new List<string>();
         foreach (var a in actions)
         {
-            var (shell, _) = modules.GetCodeGenerated(a);
+            var (shell, _) = modules.GetCodeGenerated(a, context);
             if (shell == null) continue;
             // Resolve builds a populated instance (params decoded); Build() reads them.
             var (handler, resolveErr) = await shell.Resolve(a, context);
@@ -628,47 +626,15 @@ public class Default : IBuilder
                 errors.Add($"{a.Module}.{a.ActionName}: {buildResult.Error?.Message ?? "Build() failed"}");
                 break;
             }
-            // Build() may return either the structured type entity (file.read,
-            // post-Stage-6) or a bare type-name string (llm.query → "json",
-            // legacy handlers). Normalize a string to the structured form so
-            // the terminal variable.set always gets a {name, kind?} Type.
-            var hint = await buildResult.Value();
-            if (hint is global::app.type.@this typeEntity)
-                StampOnTerminalVariableSet(actions, typeEntity);
-            // A bare type-name (legacy handlers) rides as text — its string
-            // face normalizes to the structured form.
-            else if (hint is global::app.type.text.@this
-                     && hint.ToString() is { Length: > 0 } typeName)
-                StampOnTerminalVariableSet(actions, app.type.@this.Create(typeName, context: context));
+            // Publish this action's Build() result as %!buildData% — the handle the
+            // NEXT action's Build() reads to see what it captures (mirrors runtime's
+            // %!data%, but build-scoped so it can't clobber the runtime %!data% the
+            // System actor uses while the builder runs). The pass stays generic: it
+            // never special-cases variable.set; each handler decides whether to use
+            // %!buildData% (variable.set.Build does).
+            await context.Variable.Set("!buildData", buildResult);
         }
         return errors;
-    }
-
-    /// <summary>
-    /// Walks the step's actions backwards for the trailing variable.set and
-    /// stamps the inferred typeName on its "Type" parameter (replace-or-insert).
-    /// Last-write wins when multiple Build()s in the same step produce types.
-    /// </summary>
-    private static void StampOnTerminalVariableSet(Actions actions, app.type.@this inferred)
-    {
-        for (int i = actions.Count - 1; i >= 0; i--)
-        {
-            var a = actions[i];
-            if (!string.Equals(a.Module, "variable", StringComparison.OrdinalIgnoreCase)) continue;
-            if (!string.Equals(a.ActionName, "set", StringComparison.OrdinalIgnoreCase)) continue;
-
-            // User hint precedence: any explicit Type parameter the LLM emitted
-            // (including the literal "object") is treated as the developer's
-            // (type) hint and wins over Build()'s inference. Build only stamps
-            // when no Type parameter is present at all.
-            var existing = a.Parameters.FirstOrDefault(p =>
-                string.Equals(p.Name, "Type", StringComparison.OrdinalIgnoreCase));
-            if (existing != null) return;
-            // The Type parameter VALUE is the structured type entity; the
-            // parameter's own type is "type" (post-Stage-4 shape).
-            a.Parameters.Add(new data.@this("Type", inferred));
-            return;
-        }
     }
 
     // --- Merge ---
@@ -1089,9 +1055,8 @@ public class Default : IBuilder
         var prPath = goal.PrPath;
         if (prPath == null) return errors;
 
-        var readAction = new file.Read
+        var readAction = new file.Read(context)
         {
-            Context = context,
             Path = context.Ok<path>(prPath)
         };
         var readResult = await app.RunAction(readAction, context);

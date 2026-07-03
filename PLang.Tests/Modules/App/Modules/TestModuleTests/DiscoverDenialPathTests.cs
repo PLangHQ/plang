@@ -24,7 +24,7 @@ public class DiscoverDenialPathTests
         root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-discover-deny-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        return new PLangEngine(root);
+        return TestApp.Create(root);
     }
 
     [Test] public async Task Discover_WithTestPathOutsideRoot_DenialNotSilentEmpty()
@@ -32,10 +32,7 @@ public class DiscoverDenialPathTests
         var app = NewApp(out _);
         app.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = "//etc";
-        var action = new global::app.module.test.discover
-        {
-            Context = app.User.Context,
-            Path = global::app.data.@this<global::app.type.path.@this>.Ok(
+        var action = new global::app.module.test.discover(app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(
                 global::app.type.path.@this.Resolve(outOfRoot, app.User.Context)),
             Pattern = new global::app.data.@this<global::app.type.text.@this>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<global::app.type.@bool.@this>("Recursive", false)
@@ -49,10 +46,7 @@ public class DiscoverDenialPathTests
     {
         var app = NewApp(out _);
         app.User.Channel.Register(new CannedChannel("n"));
-        var action = new global::app.module.test.discover
-        {
-            Context = app.User.Context,
-            Path = global::app.data.@this<global::app.type.path.@this>.Ok(
+        var action = new global::app.module.test.discover(app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(
                 global::app.type.path.@this.Resolve("//../../../etc", app.User.Context)),
             Pattern = new global::app.data.@this<global::app.type.text.@this>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<global::app.type.@bool.@this>("Recursive", false)

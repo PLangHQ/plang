@@ -60,7 +60,7 @@ public static class TemplateStamp
                 var items = l.Items;   // materialize once — entries rebind in place
                 bool any = false;
                 foreach (var entry in items) any |= StampEntry(entry, context);
-                return any ? new global::app.type.list.@this(items) { Template = "plang", Context = context } : null;
+                return any ? new global::app.type.list.@this(items, context) { Template = "plang" } : null;
             }
 
             case global::app.type.dict.@this d when d.Template == null:
@@ -69,7 +69,7 @@ public static class TemplateStamp
                 bool any = false;
                 foreach (var entry in entries) any |= StampEntry(entry, context);
                 if (!any) return null;
-                var stampedDict = new global::app.type.dict.@this { Template = "plang", Context = context };
+                var stampedDict = new global::app.type.dict.@this(context) { Template = "plang" };
                 foreach (var entry in entries) stampedDict.Set(entry);
                 return stampedDict;
             }
@@ -111,7 +111,7 @@ public static class TemplateStamp
 
             case IDictionary<string, object?> d:
             {
-                var dict = new global::app.type.dict.@this { Template = "plang", Context = context };
+                var dict = new global::app.type.dict.@this(context) { Template = "plang" };
                 foreach (var kv in d)
                     dict.Set(new global::app.data.@this(kv.Key, Build(kv.Value, context), context: context));
                 return dict;
@@ -122,7 +122,7 @@ public static class TemplateStamp
                 var items = new List<global::app.data.@this>();
                 foreach (var el in e)
                     items.Add(new global::app.data.@this("", Build(el, context), context: context));
-                return new global::app.type.list.@this(items) { Template = "plang", Context = context };
+                return new global::app.type.list.@this(items, context) { Template = "plang" };
             }
 
             // A literal leaf (holeless string, number, bool) — built as its plain type.

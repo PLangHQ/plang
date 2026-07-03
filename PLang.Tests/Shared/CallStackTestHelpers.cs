@@ -11,7 +11,7 @@ internal static class CallStackTestHelpers
 {
     public static ActionEntity MakeAction(string goalName = "TestGoal", string module = "test", string actionName = "test")
     {
-        var goal = new Goal { Name = goalName, Path = $"/{goalName}.goal" };
+        var goal = new Goal { Name = goalName, Path = global::app.type.path.@this.Resolve($"/{goalName}.goal", global::PLang.Tests.TestApp.SharedContext) };
         var step = new Step { Index = 0, Text = "test step", Goal = goal };
         var action = new ActionEntity { Module = module, ActionName = actionName };
         action.Step = step;

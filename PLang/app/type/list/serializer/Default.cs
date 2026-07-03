@@ -12,5 +12,5 @@ namespace app.type.list.serializer;
 public static class Default
 {
     public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
-        => global::app.type.list.@this.Convert(raw, kind, ctx.Context!)?.Peek();
+        => global::app.type.list.@this.Convert(raw, kind, ctx.Context)?.Peek();
 }

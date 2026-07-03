@@ -17,7 +17,7 @@ public class CodeValueTests
 
     [Test] public async Task Code_Resolve_String_DetectsLanguageOrDefaultsToText()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-code-" + System.Guid.NewGuid().ToString("N")[..8]));
         var c1 = code.Resolve("using System;", app.User.Context);
         await Assert.That(c1!.Language).IsEqualTo("csharp");

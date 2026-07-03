@@ -44,7 +44,7 @@ public class Wire : JsonConverter<@this>
     // fallback (hashing, headless) — a deferred Data then materializes via the
     // type's own Convert. Owned per-instance, like View, set at the per-actor
     // serializer's construction site.
-    private readonly actor.context.@this? _context;
+    private readonly actor.context.@this _context;
 
     // The authored-content mode threaded into every value read this converter
     // drives — "plang" only on the dedicated goal/.pr-load Wire (a %ref% leaf borns
@@ -53,14 +53,12 @@ public class Wire : JsonConverter<@this>
     // inferred from the bytes. Owned per-instance, like View/Sign.
     private readonly string? _template;
 
-    public Wire() : this(global::app.View.Out) { }
-
-    public Wire(global::app.View view, bool sign = true, actor.context.@this? context = null,
+    public Wire(global::app.View view, actor.context.@this context, bool sign = true,
         string? template = null, bool verify = true, bool deferVerify = false)
     {
         View = view;
         Sign = sign;
-        _context = context;
+        _context = context ?? throw new System.ArgumentNullException(nameof(context));
         _template = template;
         _verify = verify;
         _deferVerify = deferVerify;
@@ -152,18 +150,9 @@ public class Wire : JsonConverter<@this>
         try
         {
             var jr = new global::app.channel.serializer.json.Reader(reader, buffer);
-            // Invariant tripwire (Stage 6): a Store read MUST carry context — that's what routes
-            // it through the typed wire reader instead of the retired context-less narrow that
-            // dropped nested typed entries. Context-never-null makes this unreachable; the throw
-            // guards against a future regression reintroducing a context-less Store read.
-            if (_context == null && View == global::app.View.Store)
-                throw new JsonException(
-                    "Store read with no context — the context-never-null invariant is violated. "
-                    + "A Store-view Data read must carry the actor context (it binds the typed wire reader). "
-                    + "Construct the Wire/serializer with its context.");
-            // _context is non-null on every read path (no context-less Wire is constructed in
-            // production); ReadContext.Context is non-null, so the boundary `!` is honest here.
-            var ctx = new global::app.type.reader.ReadContext(_context!, _template, View, _verify, _deferVerify);
+            // _context is non-null (born-in-ctor); the Store read routes through the typed wire
+            // reader that binds nested typed entries.
+            var ctx = new global::app.type.reader.ReadContext(_context, _template, View, _verify, _deferVerify);
             var bodyData = global::app.data.schema.@this.Instance.Reader(schema).Read(ref jr, ctx);
             reader = jr.Inner;
             // When the caller asked for a typed Data<T>, wrap the base body

@@ -39,7 +39,7 @@ public static class @this
 
             namespace {{info.Namespace}};
 
-            partial class {{info.ClassName}} : global::app.module.ICodeGenerated, global::app.module.IClass
+            partial class {{info.ClassName}}(global::app.actor.context.@this __ctx) : global::app.module.ICodeGenerated, global::app.module.IClass
             {
 
             """);
@@ -64,7 +64,7 @@ public static class @this
         // Context is universal — every action runs inside one, and any value the handler
         // produces borns with it (Data() -> Context.Ok). Emitted unconditionally.
         sb.Append("""
-                public global::app.actor.context.@this Context { get; set; } = null!;
+                public global::app.actor.context.@this Context { get; set; } = __ctx;
 
             """);
         if (info.ImplementsIChannel)
@@ -191,11 +191,11 @@ public static class @this
         // Construct the fresh instance, binding resolved params via the object initializer.
         if (dataProps.Count == 0)
         {
-            sb.AppendLine($"        var __instance = new {info.ClassName}();");
+            sb.AppendLine($"        var __instance = new {info.ClassName}(context);");
         }
         else
         {
-            sb.AppendLine($"        var __instance = new {info.ClassName}");
+            sb.AppendLine($"        var __instance = new {info.ClassName}(context)");
             sb.AppendLine("        {");
             for (int i = 0; i < dataProps.Count; i++)
             {
@@ -222,7 +222,6 @@ public static class @this
                     global::app.goal.steps.step.actions.action.@this? action, global::app.actor.context.@this context)
                 {
                     var app = context.App!;
-                    Context = context;
                     __action = action;
                     var __step = action?.Step;
                     var __callFrames = context.CallStack?.Current?.SnapshotChain() ?? (System.Collections.Generic.IReadOnlyList<global::app.callstack.call.@this>)System.Array.Empty<global::app.callstack.call.@this>();
@@ -293,9 +292,12 @@ public static class @this
                         var __act = __action?.ActionName ?? "?";
                         var __step = __action?.Step;
                         var __callFrames = Context?.CallStack?.Current?.SnapshotChain() ?? (System.Collections.Generic.IReadOnlyList<global::app.callstack.call.@this>)System.Array.Empty<global::app.callstack.call.@this>();
+                        // A typed AppException carries a domain Key (VariableNotFound, …) — preserve
+                        // it; a bare exception falls back to its type name.
+                        var __ap = ex as global::app.error.AppException;
                         return global::app.data.@this.FromError(new global::app.error.ServiceError(
                             $"{__mod}.{__act}: {ex.GetType().Name}: {ex.Message}",
-                            __step!, __callFrames, ex.GetType().Name, 500)
+                            __step!, __callFrames, __ap?.Key ?? ex.GetType().Name, __ap?.StatusCode ?? 500)
                         { Exception = ex });
                     }
                 }

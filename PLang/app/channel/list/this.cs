@@ -62,10 +62,10 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     public static readonly string[] Defaults = [Output, Error, Input];
 
-    public @this(app.@this app, Serializers? serializers = null)
+    public @this(app.@this app, Serializers serializers)
     {
         _app = app;
-        Serializers = serializers ?? new Serializers();
+        Serializers = serializers;
         // Stage 1: ctor no longer opens console streams. Entry point wires (Stage 6).
     }
 
@@ -129,7 +129,11 @@ public sealed class @this : IAsyncDisposable
     public channel.@this Channel(string name)
         => _channels.TryGetValue(name, out var channel) ? channel : NoOp;
 
-    private static readonly channel.type.noop.@this NoOp = new("__noop__");
+    // Per-list (not static): the sentinel carries THIS list's context so a Read on a
+    // missing channel returns a context-ful ChannelNotFound. Lazy — the first miss is at
+    // runtime, by which point the app/actor context is up.
+    private channel.type.noop.@this? _noop;
+    private channel.type.noop.@this NoOp => _noop ??= new("__noop__", Context);
 
     public void Register(channel.@this channel)
     {

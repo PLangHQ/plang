@@ -222,9 +222,8 @@ public sealed class OpenAi : ILlm
             if (!string.IsNullOrEmpty(apiKey))
                 headers["Authorization"] = $"Bearer {apiKey}";
 
-            var httpAction = new request
+            var httpAction = new request(context)
             {
-                Context = context,
                 Url = new data.@this<global::app.type.text.@this>("", endpoint),
                 Method = new data.@this<global::app.type.choice.@this<PlangHttpMethod>>("", PlangHttpMethod.POST),
                 Body = new data.@this("", body, context: context),
@@ -640,7 +639,7 @@ public sealed class OpenAi : ILlm
             // Return error Data so the caller sees the parse failure with full exception
             return new List<data.@this>
             {
-                global::app.data.@this.FromError(ActionError.FromException(ex, "JsonParseError", 400))
+                context.Error(ActionError.FromException(ex, "JsonParseError", 400))
             };
         }
 
@@ -650,7 +649,7 @@ public sealed class OpenAi : ILlm
             foreach (var def in parameterDefs)
             {
                 if (!result.Any(r => r.Name == def.Name) && !def.Peek().IsNull)
-                    result.Add(new data.@this(def.Name, def.Peek()));
+                    result.Add(new data.@this(def.Name, def.Peek(), context: context));
             }
         }
 

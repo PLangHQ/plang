@@ -26,7 +26,7 @@ public class AbsoluteDisciplineTests
         root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-abs-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        return new PLangEngine(root);
+        return TestApp.Create(root);
     }
 
     [Test] public async Task TakeOverApi_AuthorizeFirst_OutOfRootDenial_PreventsAbsoluteUse()

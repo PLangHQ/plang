@@ -76,17 +76,40 @@ public class Ed25519ProviderTests
 
     #endregion
 
+    // The low-level Sign/Verify now take the signature whole (no decomposition at the call
+    // site) and speak plang types. They return the VALUE and THROW on bad crypto input — the
+    // [Code] boundary (SignAsync/VerifyAsync) maps throws → SignatureInvalid/SigningError.
+    private static global::app.type.signature.@this Unsigned(string identityPublicKey, string nonce = "nonce-1")
+        => new(
+            value: TestApp.SharedContext.Ok(new global::app.type.text.@this("payload")),
+            algorithm: new global::app.type.text.@this("ed25519"),
+            nonce: new global::app.type.text.@this(nonce),
+            created: new global::app.type.datetime.@this(DateTimeOffset.UnixEpoch),
+            identity: new global::app.type.text.@this(identityPublicKey),
+            hash: new global::app.module.crypto.type.hash.@this(Array.Empty<byte>(), "keccak256"),
+            signature: new global::app.type.binary.@this(Array.Empty<byte>()));
+
+    // A copy of a signed signature with one field swapped — for the mismatch tests.
+    private static global::app.type.signature.@this Rebuilt(global::app.type.signature.@this s,
+        string? nonce = null, string? identity = null, global::app.type.binary.@this? signature = null)
+        => new(s.Value, s.Algorithm,
+            nonce == null ? s.Nonce : new global::app.type.text.@this(nonce), s.Created,
+            identity == null ? s.Identity : new global::app.type.text.@this(identity),
+            s.Hash, signature ?? s.Signature, s.Expires, s.Contracts);
+
+    private global::app.type.signature.@this Signed(KeyPair kp, string nonce = "nonce-1")
+    {
+        var unsigned = Unsigned(kp.PublicKey, nonce);
+        return unsigned.Signed(_provider.Sign(unsigned, new global::app.type.text.@this(kp.PrivateKey)));
+    }
+
     #region Sign
 
     [Test]
     public async Task Sign_ProducesNonEmpty64ByteSignature()
     {
         var kp = _provider.GenerateKeyPair().keys!;
-        var data = Encoding.UTF8.GetBytes("hello");
-
-        var result = _provider.Sign(data, kp.PrivateKey);
-        await result.IsSuccess();
-        var signature = ((global::app.type.binary.@this)(await result.Value())!).Value;
+        var signature = _provider.Sign(Unsigned(kp.PublicKey), new global::app.type.text.@this(kp.PrivateKey)).Value;
 
         await Assert.That(signature.Length).IsEqualTo(64);
         await Assert.That(signature.Any(b => b != 0)).IsTrue();
@@ -96,22 +119,18 @@ public class Ed25519ProviderTests
     public async Task Sign_DifferentData_DifferentSignatures()
     {
         var kp = _provider.GenerateKeyPair().keys!;
-        var result1 = _provider.Sign(Encoding.UTF8.GetBytes("hello"), kp.PrivateKey);
-        var result2 = _provider.Sign(Encoding.UTF8.GetBytes("world"), kp.PrivateKey);
-        var sig1 = ((global::app.type.binary.@this)(await result1.Value())!).Value;
-        var sig2 = ((global::app.type.binary.@this)(await result2.Value())!).Value;
+        var privateKey = new global::app.type.text.@this(kp.PrivateKey);
+        var sig1 = _provider.Sign(Unsigned(kp.PublicKey, "nonce-1"), privateKey).Value;
+        var sig2 = _provider.Sign(Unsigned(kp.PublicKey, "nonce-2"), privateKey).Value;
 
         await Assert.That(sig1.SequenceEqual(sig2)).IsFalse();
     }
 
     [Test]
-    public async Task Sign_InvalidBase64PrivateKey_ReturnsSigningError()
+    public async Task Sign_InvalidBase64PrivateKey_Throws()
     {
-        var data = Encoding.UTF8.GetBytes("hello");
-        var result = _provider.Sign(data, "not-valid-base64!!!");
-
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("SigningError");
+        await Assert.That(() => _provider.Sign(Unsigned("pub"), new global::app.type.text.@this("not-valid-base64!!!")))
+            .Throws<FormatException>();
     }
 
     #endregion
@@ -122,67 +141,43 @@ public class Ed25519ProviderTests
     public async Task Verify_RoundTrip_ReturnsTrue()
     {
         var kp = _provider.GenerateKeyPair().keys!;
-        var data = Encoding.UTF8.GetBytes("test data");
-        var signature = ((global::app.type.binary.@this)(await _provider.Sign(data, kp.PrivateKey).Value())!).Value;
-
-        var result = _provider.Verify(data, signature, kp.PublicKey);
-
-        await result.IsSuccess();
-        await Assert.That((await result.Value())!.Value).IsTrue();
+        await Assert.That(_provider.Verify(Signed(kp)).Value).IsTrue();
     }
 
     [Test]
-    public async Task Verify_WrongData_ReturnsError()
+    public async Task Verify_WrongData_ReturnsFalse()
     {
         var kp = _provider.GenerateKeyPair().keys!;
-        var signature = ((global::app.type.binary.@this)(await _provider.Sign(Encoding.UTF8.GetBytes("hello"), kp.PrivateKey).Value())!).Value;
-
-        var result = _provider.Verify(Encoding.UTF8.GetBytes("different"), signature, kp.PublicKey);
-
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("SignatureInvalid");
+        // Same signature bytes but different signing payload (changed nonce) — no longer matches.
+        var tampered = Rebuilt(Signed(kp), nonce: "nonce-CHANGED");
+        await Assert.That(_provider.Verify(tampered).Value).IsFalse();
     }
 
     [Test]
-    public async Task Verify_WrongPublicKey_ReturnsError()
+    public async Task Verify_WrongPublicKey_ReturnsFalse()
     {
         var kp1 = _provider.GenerateKeyPair().keys!;
         var kp2 = _provider.GenerateKeyPair().keys!;
-        var data = Encoding.UTF8.GetBytes("test data");
-        var signature = ((global::app.type.binary.@this)(await _provider.Sign(data, kp1.PrivateKey).Value())!).Value;
-
-        var result = _provider.Verify(data, signature, kp2.PublicKey);
-
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("SignatureInvalid");
+        var wrongIdentity = Rebuilt(Signed(kp1), identity: kp2.PublicKey);
+        await Assert.That(_provider.Verify(wrongIdentity).Value).IsFalse();
     }
 
     [Test]
-    public async Task Verify_TamperedSignature_ReturnsError()
+    public async Task Verify_TamperedSignature_ReturnsFalse()
     {
         var kp = _provider.GenerateKeyPair().keys!;
-        var data = Encoding.UTF8.GetBytes("test data");
-        var signature = ((global::app.type.binary.@this)(await _provider.Sign(data, kp.PrivateKey).Value())!).Value;
-
-        // Flip the first byte
-        signature[0] = (byte)(signature[0] ^ 0xFF);
-
-        var result = _provider.Verify(data, signature, kp.PublicKey);
-
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("SignatureInvalid");
+        var signed = Signed(kp);
+        var bytes = (byte[])signed.Signature.Value.Clone();
+        bytes[0] ^= 0xFF;
+        var tampered = Rebuilt(signed, signature: new global::app.type.binary.@this(bytes));
+        await Assert.That(_provider.Verify(tampered).Value).IsFalse();
     }
 
     [Test]
-    public async Task Verify_InvalidBase64PublicKey_ReturnsSignatureInvalid()
+    public async Task Verify_InvalidBase64PublicKey_Throws()
     {
-        var data = Encoding.UTF8.GetBytes("hello");
-        var signature = new byte[64];
-
-        var result = _provider.Verify(data, signature, "not-valid-base64!!!");
-
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("SignatureInvalid");
+        var signed = Unsigned("not-valid-base64!!!").Signed(new global::app.type.binary.@this(new byte[64]));
+        await Assert.That(() => _provider.Verify(signed)).Throws<FormatException>();
     }
 
     #endregion

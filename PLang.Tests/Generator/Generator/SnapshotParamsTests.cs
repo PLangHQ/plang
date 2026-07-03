@@ -53,7 +53,7 @@ public class SnapshotParamsTests
     [Test]
     public async Task SnapshotEntry_UnaccessedProperty_PrValueOnly()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<SnapshotOnError>(app,
             parameters: new[] { ("first", (object?)"a"), ("second", (object?)42) });
 
@@ -70,7 +70,7 @@ public class SnapshotParamsTests
     [Test]
     public async Task SnapshotEntry_AccessedProperty_BothPresent_Distinct()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         app.User.Context.Variable.Set("name", "world");
         var result = await MatrixRunner.RunAsync<SnapshotOnError>(app,
             parameters: new[] { ("first", (object?)"hello %name%"), ("second", (object?)42) });
@@ -86,7 +86,7 @@ public class SnapshotParamsTests
     [Test]
     public async Task Snapshot_AttachedToError_OnFailure()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<SnapshotOnError>(app,
             parameters: new[] { ("first", (object?)"a"), ("second", (object?)42) });
         await result.Data.IsFailure();
@@ -96,7 +96,7 @@ public class SnapshotParamsTests
     [Test]
     public async Task Snapshot_NotAttached_OnSuccess()
     {
-        await using var app = new global::app.@this("/app");
+        await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<StringPlain>(app,
             parameters: new[] { ("path", (object?)"hello") });
         await result.Data.IsSuccess();

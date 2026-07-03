@@ -15,7 +15,7 @@ public class MyIdentityResolverTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_myid_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = TestApp.Plain(_tempDir);
         global::PLang.Tests.TestApp.UseSharedIdentity(_app);
     }
 
@@ -85,9 +85,11 @@ public class MyIdentityResolverTests
         var context = _app.System.Context;
 
         // Create two identities
-        var h1 = new Create { Context = context, Name = (global::app.type.text.@this)"first", SetAsDefault = (global::app.type.@bool.@this)true };
+        var h1 = new Create(context) { Name = (global::app.type.text.@this)"first", SetAsDefault = (global::app.type.@bool.@this)true };
+        await h1.Attach(null, context);
         await h1.Run();
-        var h2 = new Create { Context = context, Name = (global::app.type.text.@this)"second", SetAsDefault = (global::app.type.@bool.@this)false };
+        var h2 = new Create(context) { Name = (global::app.type.text.@this)"second", SetAsDefault = (global::app.type.@bool.@this)false };
+        await h2.Attach(null, context);
         await h2.Run();
 
         // Verify %MyIdentity% is "first" — DynamicData re-evaluates on each access
@@ -96,7 +98,8 @@ public class MyIdentityResolverTests
         await Assert.That(id1!.Name).IsEqualTo("first");
 
         // Switch default
-        var setDefault = new SetDefault { Context = context, Name = (global::app.type.text.@this)"second" };
+        var setDefault = new SetDefault(context) { Name = (global::app.type.text.@this)"second" };
+        await setDefault.Attach(null, context);
         await setDefault.Run();
 
         // %MyIdentity% should now be "second" — DynamicData lambda calls provider again

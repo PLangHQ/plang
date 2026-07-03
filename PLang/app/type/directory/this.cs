@@ -23,7 +23,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private global::app.type.list.@this<global::app.type.path.@this>? _list;
 
     [System.Text.Json.Serialization.JsonIgnore]
-    public actor.context.@this? Context
+    public actor.context.@this Context
     {
         get => Path.Context;
         set => Path.Context = value;

@@ -10,7 +10,7 @@ public class SleepTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/app");
+        _app = TestApp.Create("/app");
     }
 
     [After(Test)]

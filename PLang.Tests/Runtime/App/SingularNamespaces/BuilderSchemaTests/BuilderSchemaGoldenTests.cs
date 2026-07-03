@@ -15,7 +15,7 @@ public class BuilderSchemaGoldenTests
         // catalog shape — PrimitiveNames is the fundamental vocabulary, Types is
         // the step-action catalog, Kinds is scoped to fundamental families only
         // (result types like hash stay registered but never join this table).
-        await using var app = new global::app.@this("/test");
+        await using var app = TestApp.Create("/test");
         var schema = app.Module.Schema.Build();
         await Assert.That(schema.PrimitiveNames.Count).IsGreaterThan(10);
         await Assert.That(schema.Types.Count).IsGreaterThan(20);

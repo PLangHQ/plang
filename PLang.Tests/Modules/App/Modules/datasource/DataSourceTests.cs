@@ -16,7 +16,7 @@ public class DataSourceTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_ds_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = TestApp.Plain(_tempDir);
     }
 
     [After(Test)]
@@ -358,7 +358,7 @@ public class DataSourceTests
     [Test]
     public async Task App_UsesInMemory_WhenTestingEnabled()
     {
-        await using var engine = new PLangEngine(_tempDir);
+        await using var engine = TestApp.Plain(_tempDir);
         engine.Tester.IsEnabled = true;
 
         // app.SettingsStore is in-memory under Testing — no .db directory created.
@@ -377,7 +377,7 @@ public class DataSourceTests
     [Test]
     public async Task App_UsesFileBacked_ByDefault()
     {
-        await using var engine = new PLangEngine(_tempDir);
+        await using var engine = TestApp.Plain(_tempDir);
         // Testing not enabled → file-backed system.sqlite.
 
         var ds = await engine.SettingsStore;

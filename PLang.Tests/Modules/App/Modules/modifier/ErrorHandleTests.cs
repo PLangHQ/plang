@@ -12,7 +12,7 @@ public class ErrorHandleTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/app");
+        _app = TestApp.Create("/app");
     }
 
     [After(Test)]
@@ -294,7 +294,7 @@ public class ErrorHandleTests
         };
         var step = new Step { Text = $"test step for {name}" };
         step.Actions.Add(prAction);
-        var goal = new Goal { Name = name, Path = $"/{name}.goal" };
+        var goal = new Goal { Name = name, Path = global::app.type.path.@this.Resolve($"/{name}.goal", global::PLang.Tests.TestApp.SharedContext) };
         goal.Steps.Add(step);
         _app.Goal.Add(goal);
         return goal;

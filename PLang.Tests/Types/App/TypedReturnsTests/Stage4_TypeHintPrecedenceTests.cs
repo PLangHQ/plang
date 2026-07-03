@@ -15,7 +15,7 @@ public class Stage4_TypeHintPrecedenceTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this(System.IO.Path.Combine(
+        _app = TestApp.Create(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-stage4hint-" + System.Guid.NewGuid().ToString("N")[..8]));
     }
 
@@ -156,7 +156,7 @@ public class Stage4_TypeHintPrecedenceTests
     public async Task OutputAsk_Build_ReturnsBareOk_DefersToHint()
     {
         var action = Make("output", "ask", ("Question", "?"));
-        var (shell, _) = _app.Module.GetCodeGenerated(action);
+        var (shell, _) = _app.Module.GetCodeGenerated(action, _app.User.Context);
         var (handler, _) = await shell!.Resolve(action, _app.User.Context);
         var result = await ((IClass)handler!).Build();
 

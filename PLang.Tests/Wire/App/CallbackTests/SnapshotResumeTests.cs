@@ -27,7 +27,7 @@ public class SnapshotResumeTests
     {
         var app = NewApp();
         var data = app.Ok("v"); // Snapshot = null
-        var handler = new run { Context = app.User.Context, Callback = data };
+        var handler = new run(app.User.Context) { Callback = data };
         var result = await handler.Run();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NoSnapshot");
@@ -37,8 +37,8 @@ public class SnapshotResumeTests
     {
         var app = NewApp();
         var data = app.Ok("v");
-        data.Snapshot = new global::app.snapshot.@this(); // empty snapshot
-        var handler = new run { Context = app.User.Context, Callback = data };
+        data.Snapshot = new global::app.snapshot.@this(global::PLang.Tests.TestApp.SharedContext); // empty snapshot
+        var handler = new run(app.User.Context) { Callback = data };
         var result = await handler.Run();
         // Empty snapshot → no CallStack section → RestoredChain null → NoPosition.
         // Confirms delegation reached Resume (we don't get NoSnapshot).
@@ -48,7 +48,7 @@ public class SnapshotResumeTests
     [Test] public async Task SnapshotResume_EmptyChainAfterRestore_ReturnsNoPositionError()
     {
         var app = NewApp();
-        var snap = new global::app.snapshot.@this();
+        var snap = new global::app.snapshot.@this(global::PLang.Tests.TestApp.SharedContext);
         var result = await snap.Resume(app.User.Context);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NoPosition");
@@ -60,7 +60,7 @@ public class SnapshotResumeTests
         // one of its actions (synthesise suspension), snapshot, then Resume.
         var app = NewApp();
         var context = app.User.Context;
-        var goal = new Goal { Name = "G", Path = "/G.goal", PrPath = "/G.pr" };
+        var goal = new Goal { Name = "G", Path = global::app.type.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         var step0 = SetStep(0, "s0", "first"); step0.Goal = goal;
         var step1 = SetStep(1, "s1", "second"); step1.Goal = goal;
         goal.Steps.Add(step0); goal.Steps.Add(step1);
@@ -88,7 +88,7 @@ public class SnapshotResumeTests
         // just pin the API contract: ResumeChain handles >1 frame without
         // throwing on the recursive walk.
         var app = NewApp();
-        var snap = new global::app.snapshot.@this();
+        var snap = new global::app.snapshot.@this(global::PLang.Tests.TestApp.SharedContext);
         var result = await snap.Resume(app.User.Context);
         // Empty chain → NoPosition; demonstrates recursion entry doesn't NRE.
         await Assert.That(result.Error!.Key).IsEqualTo("NoPosition");

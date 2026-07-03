@@ -13,7 +13,7 @@ public class GoalAccessorTests
 {
     [Test] public async Task AppGoal_IndexByName_ReturnsTheNamedGoal()
     {
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         var goal = new global::app.goal.@this { Name = "AlphaGoal", Path = global::app.type.path.@this.Resolve("/AlphaGoal.goal", app.User.Context), PrPath = global::app.type.path.@this.Resolve("/.build/AlphaGoal/00.pr", app.User.Context) };
         app.Goal.Add(goal);
         await Assert.That(app.Goal["AlphaGoal"].Name).IsEqualTo("AlphaGoal");
@@ -21,7 +21,7 @@ public class GoalAccessorTests
 
     [Test] public async Task AppGoal_IndexByPrPath_ReturnsTheGoalForThatPath()
     {
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         var goal = new global::app.goal.@this { Name = "BetaGoal", Path = global::app.type.path.@this.Resolve("/BetaGoal.goal", app.User.Context), PrPath = global::app.type.path.@this.Resolve("/.build/BetaGoal/00.pr", app.User.Context) };
         app.Goal.Add(goal);
         // Index by the stored PrPath instance — path equality is value-based on Absolute.
@@ -30,7 +30,7 @@ public class GoalAccessorTests
 
     [Test] public async Task AppGoal_IndexByPathInstance_ReturnsSameGoalAsStringPath()
     {
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         var goal = new global::app.goal.@this { Name = "Gamma", Path = global::app.type.path.@this.Resolve("/Gamma.goal", app.User.Context), PrPath = global::app.type.path.@this.Resolve("/.build/Gamma/00.pr", app.User.Context) };
         app.Goal.Add(goal);
         await Assert.That(app.Goal[goal.Path!].Name).IsEqualTo(app.Goal["Gamma"].Name);
@@ -38,7 +38,7 @@ public class GoalAccessorTests
 
     [Test] public async Task AppGoalList_Enumerates_LoadedGoals_ExcludingSetup()
     {
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         var ctx = app.User.Context;
         app.Goal.Add(new global::app.goal.@this { Name = "Public", Path = global::app.type.path.@this.Resolve("/Public.goal", ctx), PrPath = global::app.type.path.@this.Resolve("/.build/Public/00.pr", ctx) });
         app.Goal.Add(new global::app.goal.@this { Name = "Setup", Path = global::app.type.path.@this.Resolve("/Setup.goal", ctx), PrPath = global::app.type.path.@this.Resolve("/.build/Setup/00.pr", ctx), IsSetup = true });
@@ -51,19 +51,19 @@ public class GoalAccessorTests
     {
         // Wiring of `.current` through CallStack is covered by the broader integration
         // suite — here we assert the field exists and reads from CallStack.
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         await Assert.That(app.Goal.current).IsNull();
     }
 
     [Test] public async Task AppGoalCurrent_AtRest_IsNull()
     {
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         await Assert.That(app.Goal.current).IsNull();
     }
 
     [Test] public async Task AppGoal_IndexOfUnknownName_ThrowsTypedError()
     {
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         await Assert.That(() => { _ = app.Goal["nope"]; return Task.CompletedTask; })
             .Throws<KeyNotFoundException>();
     }

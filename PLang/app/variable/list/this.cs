@@ -81,21 +81,14 @@ public partial class @this
     /// Production ctor — born from the owning context. Every Variables in a running
     /// App belongs to exactly one context, passed in here.
     /// </summary>
-    public @this(actor.context.@this context) : this()
+    public @this(actor.context.@this context)
     {
         Context = context;
-    }
-
-    public @this()
-    {
-        // Test seam — production constructs via @this(context). _context is wired by
-        // the owning context's ctor (or Context setter) before any read.
-        _context = null!;
-        // System variables seeded directly (Set is async now; simple names, no navigation,
-        // no subscribers at construction — Context is wired later).
-        _variables["Now"] = new data.DynamicData("Now", () => DateTimeOffset.Now, app.type.@this.DateTime);
-        _variables["NowUtc"] = new data.DynamicData("NowUtc", () => DateTimeOffset.UtcNow, app.type.@this.DateTime);
-        _variables["GUID"] = new data.DynamicData("GUID", () => Guid.NewGuid(), app.type.@this.FromName("guid"));
+        // System variables are born WITH context — a computed lifts its factory result
+        // through the registry, so it must hold a context at birth (not stamped after).
+        _variables["Now"] = new data.DynamicData("Now", () => DateTimeOffset.Now, context, app.type.@this.DateTime);
+        _variables["NowUtc"] = new data.DynamicData("NowUtc", () => DateTimeOffset.UtcNow, context, app.type.@this.DateTime);
+        _variables["GUID"] = new data.DynamicData("GUID", () => Guid.NewGuid(), context, context.Type.Create("guid"));
     }
 
     /// <summary>
@@ -286,8 +279,7 @@ public partial class @this
         {
             // Root doesn't exist — create it as a native dict so dot-path properties
             // work and the value owns its own write.
-            root = new data.@this(rootName, new global::app.type.dict.@this());
-            root.Context = _context;
+            root = new data.@this(rootName, new global::app.type.dict.@this(_context), context: _context);
             _variables[rootName] = root;
         }
 
@@ -641,8 +633,11 @@ public partial class @this
         where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
         var existing = await Get(name);
-        if (existing == null || !existing.IsInitialized)
-            return data.@this<T>.Uninitialized(name);
+        // Get never returns null and hands back a context-ful NotFound on a miss — return
+        // its typed view (a value-less Data<T> with context intact), don't synthesize a
+        // context-less Uninitialized.
+        if (!existing.IsInitialized)
+            return existing.As<T>();
         if (existing is data.@this<T> already) return already;          // identity hop
         var item = await existing.Value<T>();                          // T.Create(await Value(), existing)
         if (item == null) return data.@this<T>.From(existing);         // decline carries the error
@@ -720,10 +715,17 @@ public partial class @this
             if (skipInfrastructure && varName.StartsWith('!')) continue;
             if (resolved.ContainsKey(varName)) continue;
             var dataVar = await Get(varName);
-            // A missing variable is left literal (the replace below keeps %match%).
-            // The citizen for a not-found slot renders as "" (not C# null), so guard
-            // on existence here — otherwise an unresolved %!x% would substitute empty.
-            if (dataVar == null || !dataVar.IsInitialized) continue;
+            // A reference to an unset USER variable is an error at the reference site —
+            // strict, like any typed language, and consistent with the full-match door
+            // (variable.Value / text.Value both throw/Fail on an absent ref). Infrastructure
+            // refs (%!x%) are optionally-present engine internals (%!error% with no error,
+            // etc.) — they stay literal on absence, never error, whether or not
+            // skipInfrastructure is set.
+            if (dataVar == null || !dataVar.IsInitialized)
+            {
+                if (varName.StartsWith('!')) continue;   // infra ref absent → leave literal
+                throw new global::app.error.VariableNotFoundException(varName);
+            }
             string? s;
             if (dataVar?.Peek() is global::app.type.file.@this or global::app.type.url.@this)
             {
@@ -791,7 +793,7 @@ public partial class @this
     /// </summary>
     public @this Clone()
     {
-        var clone = new @this();
+        var clone = new @this(_context);
         foreach (var kvp in _variables)
         {
             // Data.DynamicData (Now, GUID, etc.) — already in clone from constructor
@@ -936,7 +938,10 @@ public class @thisAccessor : IVariablesAccessor
 
     public @this Current
     {
-        get => _current.Value ?? (_current.Value = new @this());
+        // No lazy-create: a Variables store is always Set on the async flow before it is
+        // read (born from its owning context). A null here is a caller reading before set —
+        // surface it, never paper it over with a context-less store.
+        get => _current.Value!;
         set => _current.Value = value;
     }
 }

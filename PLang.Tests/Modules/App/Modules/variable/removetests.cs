@@ -9,7 +9,7 @@ public class RemoveTests
 {
     private (global::app.actor.context.@this context, Variables memory) CreateContext()
     {
-        var app = new global::app.@this("/app");
+        var app = TestApp.Create("/app");
         return (app.User.Context, app.User.Context.Variable);
     }
 
@@ -19,7 +19,7 @@ public class RemoveTests
         var (context, memory) = CreateContext();
         memory.Set("testVar", "testValue");
 
-        var action = new Remove { Context = context, Name = new app.variable.@this("testVar") };
+        var action = new Remove(context) { Name = new app.variable.@this("testVar") };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -31,7 +31,7 @@ public class RemoveTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Remove { Context = context, Name = new app.variable.@this("nonexistent") };
+        var action = new Remove(context) { Name = new app.variable.@this("nonexistent") };
         var result = await action.Run();
 
         await result.IsSuccess();

@@ -11,7 +11,7 @@ public class Cut3_LlmSeesOneUnifiedVocabulary
 {
     [Test] public async Task Schema_Kinds_CoversAdvertisedAndExtensionFamilies()
     {
-        await using var app = new global::app.@this("/test");
+        await using var app = TestApp.Create("/test");
         var kinds = (app.Module.Schema.Build()).Kinds;
         // Advertised (number): closed precision list.
         await Assert.That(kinds["number"]).Contains("int");
@@ -25,7 +25,7 @@ public class Cut3_LlmSeesOneUnifiedVocabulary
 
     [Test] public async Task Schema_DoesNotSurfaceTypeEntityAsCatalogEntry()
     {
-        await using var app = new global::app.@this("/test");
+        await using var app = TestApp.Create("/test");
         var schema = app.Module.Schema.Build();
         // The `type` and `data` entities are deliberately excluded from the
         // per-step catalog walk — their shape is taught explicitly in the
@@ -36,7 +36,7 @@ public class Cut3_LlmSeesOneUnifiedVocabulary
 
     [Test] public async Task Schema_PrimitiveNames_CarriesCanonicalNamesOnly()
     {
-        await using var app = new global::app.@this("/test");
+        await using var app = TestApp.Create("/test");
         var primitives = (app.Module.Schema.Build()).PrimitiveNames;
         await Assert.That(primitives).Contains("text");
         await Assert.That(primitives).Contains("number");

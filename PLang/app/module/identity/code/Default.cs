@@ -177,8 +177,10 @@ public sealed class Default : IIdentity
     {
         var (items, err) = await LoadAll(action);
         if (err != null) return action.Context.Error<global::app.type.list.@this<Identity>>(err);
-        var active = items!.Where(i => !i.IsArchived).ToList();
-        return action.Context.Ok<global::app.type.list.@this<Identity>>(global::app.type.list.@this<Identity>.Of(active));
+        var active = items!.Where(i => !i.IsArchived)
+            .Select(i => new data.@this("", i, context: action.Context)).ToList();
+        return action.Context.Ok<global::app.type.list.@this<Identity>>(
+            new global::app.type.list.@this<Identity>(active, action.Context));
     }
 
     public async Task<data.@this<Identity>> ExportAsync(Export action)

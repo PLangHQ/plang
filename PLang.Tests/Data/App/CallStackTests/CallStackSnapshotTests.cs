@@ -7,7 +7,7 @@ public class CallStackSnapshotTests
     private static (Goal goal, Step step, ActionEntity action) MakeFrame(
         string goalName, string stepText = "step", string module = "test", string actionName = "test")
     {
-        var goal = new Goal { Name = goalName, Path = $"/{goalName}.goal" };
+        var goal = new Goal { Name = goalName, Path = global::app.type.path.@this.Resolve($"/{goalName}.goal", global::PLang.Tests.TestApp.SharedContext) };
         var step = new Step { Index = 0, Text = stepText, Goal = goal };
         var action = new ActionEntity { Module = module, ActionName = actionName };
         action.Step = step;
@@ -34,7 +34,7 @@ public class CallStackSnapshotTests
         await using var outer = stack.Push(a1);
         await using var inner = stack.Push(a2);
 
-        var section = new Snapshot();
+        var section = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
         stack.Capture(section);
 
         var frames = section.Read<List<Snapshot>>("frames")!;
@@ -58,7 +58,7 @@ public class CallStackSnapshotTests
         await using (var parent = stack.Push(a1))
         {
             await using (var child = stack.Push(a2)) { /* completes here */ }
-            var section = new Snapshot();
+            var section = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
             stack.Capture(section);
             var frames = section.Read<List<Snapshot>>("frames")!;
             await Assert.That(frames.Count).IsEqualTo(1);

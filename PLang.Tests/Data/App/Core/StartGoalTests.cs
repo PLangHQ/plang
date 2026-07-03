@@ -24,11 +24,11 @@ public class StartGoalTests
             Make.Step("set %name% = \"Plang\"",
                 Make.Action("variable", "set", Make.Param("Name", "name", "variable"), ("Value", "Plang"))),
             Make.Step("write out %name%",
-                Make.Action("output", "write", ("Data", "%name%"))),
+                Make.Action("output", "write", Make.Template("Data", "%name%"))),
             Make.Step("set %newVarName% = %name%",
                 Make.Action("variable", "set", Make.Param("Name", "newVarName", "variable"), Make.Param("Value", "%name%", "variable"))),
             Make.Step("write out \"NewVar: %newVarName%\"",
-                Make.Action("output", "write", ("Data", "NewVar: %newVarName%")))));
+                Make.Action("output", "write", Make.Template("Data", "NewVar: %newVarName%")))));
         goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
@@ -84,7 +84,7 @@ public class StartGoalTests
             Make.Step("set user",
                 Make.Action("variable", "set", Make.Param("Name", "user", "variable"), ("Value", "World"))),
             Make.Step("write Hello %user%!",
-                Make.Action("output", "write", ("Data", "Hello %user%!")))));
+                Make.Action("output", "write", Make.Template("Data", "Hello %user%!")))));
         goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
@@ -116,8 +116,11 @@ public class StartGoalTests
         await Assert.That(capture.Lines).Contains("no variables here");
     }
 
+    // An EMBEDDED reference to an unset variable is an error, same as a full-match one —
+    // strict semantics: any %unknown% that isn't set fails at the reference site, never
+    // renders literal or empty.
     [Test]
-    public async Task ResolveValue_MissingVariable_ResolvesToEmptyString()
+    public async Task ResolveValue_EmbeddedMissingVariable_FailsVariableNotFound()
     {
         await using var engine = TestApp.Create("/app");
 
@@ -126,15 +129,15 @@ public class StartGoalTests
 
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
             Make.Step("write with unknown var",
-                Make.Action("output", "write", ("Data", "Value: %unknown%")))));
+                Make.Action("output", "write", Make.Template("Data", "Value: %unknown%")))));
         goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
-        await result.IsSuccess();
-        await Assert.That(capture.Lines).Contains("Value: ");
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("VariableNotFound");
     }
 
     // Referencing an unset variable is an error, not a silent null — `set result =
@@ -257,23 +260,15 @@ public class StartGoalTests
 
         public async Task<Data> Execute()
         {
-            var action = Action;
-            var context = Context;
-            var contentData = action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "Data", StringComparison.OrdinalIgnoreCase));
-            object? raw = contentData?.Peek();
-            object? content = (raw as global::app.type.text.@this)?.Clr<string>() ?? raw;
-            if (content is string str && str.Contains('%'))
+            var contentData = Action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "Data", StringComparison.OrdinalIgnoreCase));
+            if (contentData != null)
             {
-                var fullMatch = System.Text.RegularExpressions.Regex.Match(str, @"^%([^%]+)%$");
-                if (fullMatch.Success)
-                    content = await context.Variable.GetValue(fullMatch.Groups[1].Value);
-                else
-                    content = System.Text.RegularExpressions.Regex.Replace(str, @"%([^%]+)%",
-                        m => context.Variable.Peek(m.Groups[1].Value)?.Peek()?.ToString() ?? "");
+                // Resolve via the value's OWN door — a template (text- or source-born) fills
+                // its %refs%; a plain value answers itself. Mirrors real output.write, no regex.
+                var item = await contentData.Value();
+                Lines.Add(item?.ToString() ?? "");
             }
-            if (content != null)
-                Lines.Add(content.ToString()!);
-            return context.App.Ok();
+            return Context.App.Ok();
         }
     }
 

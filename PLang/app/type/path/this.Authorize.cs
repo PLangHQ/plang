@@ -47,9 +47,8 @@ public partial class @this
             var hint = AuthorizationHint(verb);
             var hintSuffix = string.IsNullOrEmpty(hint) ? "" : " " + hint;
             var question = $"{prefix}Allow {actor.Name} to {VerbLabel(verb)} {Absolute}?{hintSuffix} (y/n/a)";
-            var askAction = new module.output.ask
+            var askAction = new module.output.ask(Context!)
             {
-                Context = Context,
                 Question = new data.@this<global::app.type.text.@this>("", question, context: Context),
             };
             var askResult = await Context!.App.RunAction(askAction, Context);

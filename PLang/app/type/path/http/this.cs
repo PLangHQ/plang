@@ -61,7 +61,7 @@ public sealed partial class @this : global::app.type.path.@this
 
     private readonly Uri _uri;
 
-    public @this(string raw, actor.context.@this? context = null)
+    public @this(string raw, actor.context.@this context)
         : base(raw, context)
     {
         if (!Uri.TryCreate(raw, UriKind.Absolute, out var uri))
@@ -444,9 +444,8 @@ public sealed partial class @this : global::app.type.path.@this
             // path produces a fresh, destination-specific signature. Path only by
             // design — the recipient validates the host against itself.
             var canonical = $"{method}\n{_uri.PathAndQuery}\n{body ?? ""}";
-            var sign = new module.signing.sign
+            var sign = new module.signing.sign(Context!)
             {
-                Context = Context,
                 Data = new data.@this("", canonical, context: Context),
             };
             var signResult = await Context.App.RunAction<module.signing.sign>(sign, Context);

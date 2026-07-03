@@ -13,7 +13,7 @@ public class TemplateStampOnReadTests
         utf8.Read();
         var jr = new global::app.channel.serializer.json.Reader(utf8);
         return (global::app.type.text.@this)new global::app.type.text.serializer.Reader()
-            .Read(ref jr, null, new global::app.type.reader.ReadContext(null, mode));
+            .Read(ref jr, null, new global::app.type.reader.ReadContext(global::PLang.Tests.TestApp.SharedContext, mode));
     }
 
     [Test] public async Task AuthoredMode_StampsRefText()
@@ -32,7 +32,7 @@ public class TemplateStampOnReadTests
         utf8.Read();
         var jr = new global::app.channel.serializer.json.Reader(utf8);
         return (global::app.type.list.@this)new global::app.type.list.serializer.Reader()
-            .Read(ref jr, null, new global::app.type.reader.ReadContext(null, mode));
+            .Read(ref jr, null, new global::app.type.reader.ReadContext(global::PLang.Tests.TestApp.SharedContext, mode));
     }
 
     // A templated string slot in an authored container rides as a stamped item;

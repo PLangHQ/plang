@@ -18,14 +18,14 @@ public class TagActionTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/test");
+        _app = TestApp.Create("/test");
     }
 
     [After(Test)]
     public async Task Teardown() => await _app.DisposeAsync();
 
     private static global::app.tester.Run NewRun() =>
-        new(new global::app.tester.test.@this { Goal = new Goal { Name = "T", Path = "/Tests/T.test.goal" } });
+        new(new global::app.tester.test.@this { Goal = new Goal { Name = "T", Path = global::app.type.path.@this.Resolve("/Tests/T.test.goal", global::PLang.Tests.TestApp.SharedContext) } });
 
     // When Testing.CurrentTest is set (test in flight), test.tag with Tags=["http","fast"]
     // writes both tags into CurrentTest.UserTags.
@@ -34,10 +34,7 @@ public class TagActionTests
     {
         _app.Tester.CurrentTest = NewRun();
 
-        var action = new Tag
-        {
-            Context = _app.User.Context,
-            Tags = new global::app.data.@this<global::app.type.list.@this>("Tags", global::app.type.list.@this.FromRaw(new[] { "http", "fast" }, _app.User.Context))
+        var action = new Tag(_app.User.Context) { Tags = new global::app.data.@this<global::app.type.list.@this>("Tags", global::app.type.list.@this.FromRaw(new[] { "http", "fast" }, _app.User.Context))
         };
         var result = await action.Run();
 
@@ -55,10 +52,7 @@ public class TagActionTests
         var beforeResultCount = _app.Tester.Results.Count;
         var beforeVarCount = _app.User.Context.Variable.GetNames().Count();
 
-        var action = new Tag
-        {
-            Context = _app.User.Context,
-            Tags = new global::app.data.@this<global::app.type.list.@this>("Tags", global::app.type.list.@this.FromRaw(new[] { "t1" }, _app.User.Context))
+        var action = new Tag(_app.User.Context) { Tags = new global::app.data.@this<global::app.type.list.@this>("Tags", global::app.type.list.@this.FromRaw(new[] { "t1" }, _app.User.Context))
         };
         var result = await action.Run();
 
@@ -75,10 +69,7 @@ public class TagActionTests
     {
         _app.Tester.CurrentTest = null;
 
-        var action = new Tag
-        {
-            Context = _app.User.Context,
-            Tags = new global::app.data.@this<global::app.type.list.@this>("Tags", global::app.type.list.@this.FromRaw(new[] { "ignored" }, _app.User.Context))
+        var action = new Tag(_app.User.Context) { Tags = new global::app.data.@this<global::app.type.list.@this>("Tags", global::app.type.list.@this.FromRaw(new[] { "ignored" }, _app.User.Context))
         };
         var result = await action.Run();
 
@@ -94,20 +85,11 @@ public class TagActionTests
     {
         _app.Tester.CurrentTest = NewRun();
 
-        await new Tag
-        {
-            Context = _app.User.Context,
-            Tags = new global::app.data.@this<global::app.type.list.@this>("Tags", global::app.type.list.@this.FromRaw(new[] { "http" }, _app.User.Context))
+        await new Tag(_app.User.Context) { Tags = new global::app.data.@this<global::app.type.list.@this>("Tags", global::app.type.list.@this.FromRaw(new[] { "http" }, _app.User.Context))
         }.Run();
-        await new Tag
-        {
-            Context = _app.User.Context,
-            Tags = new global::app.data.@this<global::app.type.list.@this>("Tags", global::app.type.list.@this.FromRaw(new[] { "fast", "slow" }, _app.User.Context))
+        await new Tag(_app.User.Context) { Tags = new global::app.data.@this<global::app.type.list.@this>("Tags", global::app.type.list.@this.FromRaw(new[] { "fast", "slow" }, _app.User.Context))
         }.Run();
-        await new Tag
-        {
-            Context = _app.User.Context,
-            Tags = new global::app.data.@this<global::app.type.list.@this>("Tags", global::app.type.list.@this.FromRaw(new[] { "http" }, _app.User.Context)) // duplicate
+        await new Tag(_app.User.Context) { Tags = new global::app.data.@this<global::app.type.list.@this>("Tags", global::app.type.list.@this.FromRaw(new[] { "http" }, _app.User.Context)) // duplicate
         }.Run();
 
         await Assert.That(_app.Tester.CurrentTest.UserTags.Count).IsEqualTo(3);

@@ -23,7 +23,7 @@ public class QueryEdgeCaseTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_llm_edge_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = TestApp.Create(_tempDir);
         _handler = LlmTestHelper.SetupMockHttp(_app);
     }
 
@@ -44,10 +44,7 @@ public class QueryEdgeCaseTests
     [Test]
     public async Task Query_EmptyMessages_ReturnsError()
     {
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>().ToListData<LlmMessage>()
+        var action = new query(Ctx) { Messages = new List<LlmMessage>().ToListData<LlmMessage>()
         };
         await action.Attach(null, Ctx);
         var result = await action.Run();
@@ -75,10 +72,7 @@ public class QueryEdgeCaseTests
                 LlmTestHelper.MakeCompletionResponse("done")));
         };
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "multi tools" }
             }.ToListData<LlmMessage>(),
@@ -121,10 +115,7 @@ public class QueryEdgeCaseTests
                 LlmTestHelper.MakeCompletionResponse("handled")));
         };
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "null args" }
             }.ToListData<LlmMessage>(),
@@ -162,7 +153,7 @@ public class QueryEdgeCaseTests
         var tempDir2 = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_llm_noprov_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(tempDir2);
-        var engine2 = new PLangEngine(tempDir2);
+        var engine2 = TestApp.Create(tempDir2);
 
         try
         {

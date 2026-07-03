@@ -254,6 +254,7 @@ public sealed partial class @this : IAsyncDisposable
         RegisterBuiltIn<IKey>(ed25519);
         RegisterBuiltIn<IIdentity>(new global::app.module.identity.code.Default());
         RegisterBuiltIn<ICrypto>(new global::app.module.crypto.code.Default());
+        RegisterBuiltIn<global::app.module.math.code.IMath>(new global::app.module.math.code.Default());
         RegisterBuiltIn<global::app.module.http.code.IHttp>(new global::app.module.http.code.Default());
         RegisterBuiltIn<global::app.module.condition.code.IEvaluator>(new global::app.module.condition.code.Default());
         RegisterBuiltIn<global::app.module.assert.code.IAssert>(new global::app.module.assert.code.Default());

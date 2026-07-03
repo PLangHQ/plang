@@ -12,7 +12,7 @@ public class TemporalOperatorTests
     private static Data D(object? value) => value == null ? new Data("") : global::PLang.Tests.TestApp.SharedContext.Ok(value);
 
     private Task<global::app.data.@this<global::app.type.@bool.@this>> Eval(object? left, string op, object? right)
-        => _eval.Evaluate(new Compare { Left = D(left), Operator = global::PLang.Tests.TestApp.SharedContext.Ok<global::app.type.choice.@this<Operator>>((global::app.type.choice.@this<Operator>)new Operator(op)), Right = D(right) });
+        => _eval.Evaluate(new Compare(global::PLang.Tests.TestApp.SharedContext) { Left = D(left), Operator = global::PLang.Tests.TestApp.SharedContext.Ok<global::app.type.choice.@this<Operator>>((global::app.type.choice.@this<Operator>)new Operator(op)), Right = D(right) });
 
     private bool IsTrue(global::app.data.@this<global::app.type.@bool.@this> r) => r.Success && (r.Peek() as global::app.type.@bool.@this)?.Value == true;
     private bool IsFalse(global::app.data.@this<global::app.type.@bool.@this> r) => r.Success && (r.Peek() as global::app.type.@bool.@this)?.Value == false;

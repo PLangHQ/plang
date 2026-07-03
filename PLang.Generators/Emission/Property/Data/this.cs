@@ -35,23 +35,28 @@ public sealed record @this(
         sb.AppendLine();
     }
 
-    /// <summary>Field-initializer / absent-slot value: Uninitialized, or the [Default] literal.</summary>
+    /// <summary>Field-initializer / absent-slot value: Uninitialized, or the [Default] literal
+    /// born WITH context. The default rides as its raw literal through the (sync) As&lt;T&gt;
+    /// door under __ctx — so a context-needing inner type (path) borns its value with a real
+    /// context, never through a context-less cast operator.</summary>
     private string Fallback => IsPlainData
         ? $"global::app.data.@this.Uninitialized(\"{ParamName}\")"
         : DefaultValue != null
-            ? $"new global::app.data.@this<{InnerType}>(\"{ParamName}\", {DefaultExpr})"
+            ? $"new global::app.data.@this(\"{ParamName}\", {DefaultRaw}, context: __ctx).As<{InnerType}>()"
             : $"global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\")";
 
-    // For choice<X>, a [Default(X.Member)] arrives as X's underlying value (an int
-    // for an enum). Cast through X so int -> X -> choice<X> chains: (choice<X>)(X)(0).
-    private string DefaultExpr
+    /// <summary>The [Default] literal, unwrapped of the inner-type cast so the Data borns it
+    /// with context instead of a context-less <c>({T})(literal)</c> operator. For choice&lt;X&gt;
+    /// a [Default(X.Member)] arrives as X's underlying value, so keep the <c>(X)</c> cast
+    /// (int -&gt; X) — the Data then borns X into choice&lt;X&gt;.</summary>
+    private string DefaultRaw
     {
         get
         {
             const string ChoicePrefix = "global::app.type.choice.@this<";
             return (InnerType != null && InnerType.StartsWith(ChoicePrefix, System.StringComparison.Ordinal))
-                ? $"({InnerType})({InnerType.Substring(ChoicePrefix.Length, InnerType.Length - ChoicePrefix.Length - 1)})({DefaultValue})"
-                : $"({InnerType})({DefaultValue})";
+                ? $"({InnerType.Substring(ChoicePrefix.Length, InnerType.Length - ChoicePrefix.Length - 1)})({DefaultValue})"
+                : $"{DefaultValue}";
         }
     }
 
@@ -93,9 +98,9 @@ public sealed record @this(
             sb.AppendLine($"        {TypeName} {Local};");
             sb.AppendLine("        {");
             sb.AppendLine($"            var __d = __ResolveData(action, \"{ParamName}\", context);");
-            sb.AppendLine($"            {Local} = await __d.IsEmpty() ? new global::app.data.@this<{InnerType}>(\"{ParamName}\", {DefaultExpr}) : __d.As<{InnerType}>();");
+            sb.AppendLine($"            {Local} = await __d.IsEmpty() ? new global::app.data.@this(\"{ParamName}\", {DefaultRaw}, context: context).As<{InnerType}>() : __d.As<{InnerType}>();");
             sb.AppendLine($"            if (!{Local}.Success) return (null, __PrefixActionContext({Local}.Error!, action));");
-            sb.AppendLine($"            else if ({Local}.Peek() is global::app.type.@null.@this) {Local} = new global::app.data.@this<{InnerType}>(\"{ParamName}\", {DefaultExpr});");
+            sb.AppendLine($"            else if ({Local}.Peek() is global::app.type.@null.@this) {Local} = new global::app.data.@this(\"{ParamName}\", {DefaultRaw}, context: context).As<{InnerType}>();");
             sb.AppendLine("        }");
         }
         else

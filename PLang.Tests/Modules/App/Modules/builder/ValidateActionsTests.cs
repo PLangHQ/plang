@@ -21,7 +21,7 @@ public class ValidateActionsTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_builder_validate_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = TestApp.Create(_tempDir);
         _app.Builder.IsEnabled = true;
     }
 
@@ -45,7 +45,7 @@ public class ValidateActionsTests
             new Action { Module = "file", ActionName = "read", Parameters = new List<Data> { new("Path", "test.txt", context: _app.User.Context) } }
         };
 
-        var action = new validate { Context = _app.User.Context, Actions = actions };
+        var action = new validate(_app.User.Context) { Actions = actions };
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -60,7 +60,7 @@ public class ValidateActionsTests
             new Action { Module = "nonexistent", ActionName = "fake" }
         };
 
-        var action = new validate { Context = _app.User.Context, Actions = actions };
+        var action = new validate(_app.User.Context) { Actions = actions };
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsFailure();
@@ -96,7 +96,7 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate { Context = _app.User.Context, Actions = actions };
+        var action = new validate(_app.User.Context) { Actions = actions };
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -122,7 +122,7 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate { Context = _app.User.Context, Actions = actions };
+        var action = new validate(_app.User.Context) { Actions = actions };
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -142,7 +142,7 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate { Context = _app.User.Context, Actions = actions };
+        var action = new validate(_app.User.Context) { Actions = actions };
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -175,7 +175,7 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate { Context = _app.User.Context, Actions = actions };
+        var action = new validate(_app.User.Context) { Actions = actions };
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -206,7 +206,7 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate { Context = _app.User.Context, Actions = actions };
+        var action = new validate(_app.User.Context) { Actions = actions };
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -235,7 +235,7 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate { Context = _app.User.Context, Actions = actions };
+        var action = new validate(_app.User.Context) { Actions = actions };
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -258,7 +258,7 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate { Context = _app.User.Context, Actions = actions };
+        var action = new validate(_app.User.Context) { Actions = actions };
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();

@@ -12,7 +12,7 @@ public class OtherAccessorsTests
 {
     [Test] public async Task AppEvent_RegisterUnregister_RoundTripsBinding()
     {
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         var binding = new global::app.@event.lifecycle.binding.@this(
             global::app.@event.Trigger.AfterAction, async (_, _, _) => global::app.data.@this.Ok());
         var id = app.Event.Register(binding);
@@ -22,7 +22,7 @@ public class OtherAccessorsTests
 
     [Test] public async Task AppEvent_GetBindings_ReturnsTheRegisteredBindings()
     {
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         var binding = new global::app.@event.lifecycle.binding.@this(
             global::app.@event.Trigger.AfterAction, async (_, _, _) => global::app.data.@this.Ok());
         app.Event.Register(binding);
@@ -32,14 +32,14 @@ public class OtherAccessorsTests
 
     [Test] public async Task AppFormat_LookupByName_ReturnsMimeAndCompressibleInfo()
     {
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         await Assert.That(app.Format.Mime(".jpg")).IsEqualTo("image/jpeg");
         await Assert.That(app.Format.Kind(".jpg")).IsEqualTo("image");
     }
 
     [Test] public async Task ContextVariable_IndexByName_AfterSet_ReturnsValue()
     {
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         app.User.Context.Variable.Set("x", "hello");
         await Assert.That((await (await app.User.Context.Variable.Get("x")).Value())?.ToString()).IsEqualTo("hello");
     }
@@ -56,7 +56,7 @@ public class OtherAccessorsTests
 
     [Test] public async Task AppError_PushAndCount_RoundTripsThroughTheRegistry()
     {
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         var err = new global::app.error.Error("boom");
         using (app.Error.Push(err))
         {
@@ -67,7 +67,7 @@ public class OtherAccessorsTests
 
     [Test] public async Task AppError_Trail_RestoreTrail_ReplaysTheErrorChain()
     {
-        await using var app = new PLangEngine("/test");
+        await using var app = TestApp.Create("/test");
         var a = new global::app.error.Error("A");
         var b = new global::app.error.Error("B");
         using (app.Error.Push(a)) { using (app.Error.Push(b)) { } }

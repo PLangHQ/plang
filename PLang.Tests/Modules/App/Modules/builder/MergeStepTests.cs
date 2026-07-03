@@ -20,7 +20,7 @@ public class MergeStepTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_builder_mergestep_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = TestApp.Create(_tempDir);
         _app.Builder.IsEnabled = true;
     }
 
@@ -49,7 +49,7 @@ public class MergeStepTests
             })
         };
 
-        var action = new merge { Context = _app.User.Context, Step = target, StepFromLlm = source };
+        var action = new merge(_app.User.Context) { Step = target, StepFromLlm = source };
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();

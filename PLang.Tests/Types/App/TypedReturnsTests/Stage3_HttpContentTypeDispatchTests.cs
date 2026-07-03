@@ -25,7 +25,7 @@ public class Stage3_HttpContentTypeDispatchTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-stage3-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir);
+        _app = TestApp.Create(_tempDir);
 
         _handler = new StubHandler();
         var provider = new Default(_handler) { Name = "test" };
@@ -54,7 +54,7 @@ public class Stage3_HttpContentTypeDispatchTests
             shape(resp);
             return resp;
         };
-        var action = new request { Context = _app.User.Context, Url = (global::app.type.text.@this)url, Unsigned = (global::app.type.@bool.@this)true };
+        var action = new request(_app.User.Context) { Url = (global::app.type.text.@this)url, Unsigned = (global::app.type.@bool.@this)true };
         var result = await action.Run();
         await result.IsSuccess();
         return result;

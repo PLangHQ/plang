@@ -22,7 +22,7 @@ public static class Default
     private static object? Render(global::app.snapshot.@this node)
     {
         var ctx = node.Context;
-        var obj = new global::app.type.dict.@this { Context = ctx };
+        var obj = new global::app.type.dict.@this(ctx);
         foreach (var (key, value) in node.Entries)
             obj.Set(new data.@this(key, Render(value, ctx), context: ctx));
         foreach (var (name, section) in node.Sections)
@@ -48,7 +48,7 @@ public static class Default
                 return err; // error is an item — it renders itself
             case System.Collections.IDictionary dict:
             {
-                var obj = new global::app.type.dict.@this { Context = ctx };
+                var obj = new global::app.type.dict.@this(ctx);
                 foreach (System.Collections.DictionaryEntry e in dict)
                     obj.Set(new data.@this(e.Key?.ToString() ?? "", Render(e.Value, ctx), context: ctx));
                 return obj;
@@ -65,7 +65,7 @@ public static class Default
                 // A plain domain record (Provider Registration / DefaultOverride):
                 // reflect its public properties into an object. camelCase the keys
                 // so the Io read (case-insensitive) rebinds the record's ctor.
-                var node = new global::app.type.dict.@this { Context = ctx };
+                var node = new global::app.type.dict.@this(ctx);
                 foreach (var p in value.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
                 {
                     if (p.GetIndexParameters().Length > 0) continue;

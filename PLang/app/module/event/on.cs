@@ -40,7 +40,7 @@ public partial class On : IContext
     public async Task<data.@this<global::app.type.text.@this>> Run()
     {
         // Resolve target actor — default to current context's actor
-        var targetActor = (Actor == null ? null : await Actor.Value()) ?? Context.Actor ?? Context.App!.User;
+        var targetActor = (Actor == null ? null : await Actor.Value()) ?? Context.Actor ?? Context.App.User;
 
         var goalToCall = (await GoalToCall.Value())!;
         Func<actor.context.@this, global::app.goal.steps.step.actions.action.@this?, data.@this?, Task<data.@this>> handler =

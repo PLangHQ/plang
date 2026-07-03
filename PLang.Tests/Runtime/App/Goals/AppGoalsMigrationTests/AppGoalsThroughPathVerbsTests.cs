@@ -16,7 +16,7 @@ public class AppGoalsThroughPathVerbsTests
             "plang-appgoals-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
         await Task.CompletedTask;
-        return (new PLangEngine(root), root);
+        return (TestApp.Create(root), root);
     }
 
     [Test] public async Task LoadFromDirectoryAsync_UsesPathListNotDirectoryGetFiles()
@@ -28,7 +28,7 @@ public class AppGoalsThroughPathVerbsTests
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "a.pr"), "{\"name\":\"A\",\"path\":\"/A.goal\"}");
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "b.pr"), "{\"name\":\"B\",\"path\":\"/B.goal\"}");
 
-        var result = await app.Goal.LoadFromDirectoryAsync(app, root);
+        var result = await app.Goal.LoadFromDirectoryAsync(app, root, app.System.Context);
         await result.IsSuccess();
         await Assert.That(app.Goal.Get("A")).IsNotNull();
         await Assert.That(app.Goal.Get("B")).IsNotNull();
@@ -41,7 +41,7 @@ public class AppGoalsThroughPathVerbsTests
         System.IO.Directory.CreateDirectory(sub);
         System.IO.File.WriteAllText(System.IO.Path.Combine(sub, "deepgoal.pr"),
             "{\"name\":\"DeepGoal\",\"path\":\"/sub/deep/DeepGoal.goal\"}");
-        var result = await app.Goal.LoadFromDirectoryAsync(app, root);
+        var result = await app.Goal.LoadFromDirectoryAsync(app, root, app.System.Context);
         await result.IsSuccess();
         await Assert.That(app.Goal.Get("DeepGoal")).IsNotNull();
     }
@@ -120,7 +120,7 @@ public class AppGoalsThroughPathVerbsTests
         await app1.Save();
         await app1.DisposeAsync();
 
-        var app2 = new PLangEngine(root);
+        var app2 = TestApp.Create(root);
         await app2.Load();
         await Assert.That(app2.Name).IsEqualTo("RoundTrip");
         await app2.DisposeAsync();

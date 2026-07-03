@@ -19,9 +19,9 @@ public class EventHandlerTests
     private On MakeOn(global::app.actor.context.@this context, global::app.@event.Trigger type, string goalName,
         string? goalPattern = null, string? stepPattern = null, string? actionPattern = null,
         bool isRegex = false, int priority = 0)
-        => new()
+        => new(context)
         {
-            Context = context,
+            
             Trigger = (global::app.type.choice.@this<global::app.@event.Trigger>)type,
             GoalToCall = new GoalCall { Name = goalName },
             GoalPattern = (global::app.type.text.@this)goalPattern,
@@ -104,7 +104,7 @@ public class EventHandlerTests
 
         await Assert.That(context.Events.Count).IsEqualTo(1);
 
-        var removeHandler = new Remove { Context = context, EventId = (global::app.type.text.@this)eventId };
+        var removeHandler = new Remove(context) { EventId = (global::app.type.text.@this)eventId };
         var removeResult = await removeHandler.Run();
 
         await removeResult.IsSuccess();
@@ -170,10 +170,10 @@ public class EventHandlerTests
         var context = _app.User.Context;
 
         // Register the callback goal (empty — just needs to be found)
-        _app.Goal.Add(new Goal { Name = "OnBeforeCallback", Path = "/OnBeforeCallback.goal" });
+        _app.Goal.Add(new Goal { Name = "OnBeforeCallback", Path = global::app.type.path.@this.Resolve("/OnBeforeCallback.goal", global::PLang.Tests.TestApp.SharedContext) });
 
         // Register the target goal to run
-        _app.Goal.Add(new Goal { Name = "TargetGoal", Path = "/TargetGoal.goal" });
+        _app.Goal.Add(new Goal { Name = "TargetGoal", Path = global::app.type.path.@this.Resolve("/TargetGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
 
         // Set a marker so we can detect the callback ran
         // The event handler passes GoalToCall with parameters — RunGoalAsync injects them
@@ -206,8 +206,8 @@ public class EventHandlerTests
 
         // The callback goal — when it runs, RunGoalAsync injects its parameters
         // We give it a parameter so we can verify it was called
-        _app.Goal.Add(new Goal { Name = "AfterCallback", Path = "/AfterCallback.goal" });
-        _app.Goal.Add(new Goal { Name = "MainGoal", Path = "/MainGoal.goal" });
+        _app.Goal.Add(new Goal { Name = "AfterCallback", Path = global::app.type.path.@this.Resolve("/AfterCallback.goal", global::PLang.Tests.TestApp.SharedContext) });
+        _app.Goal.Add(new Goal { Name = "MainGoal", Path = global::app.type.path.@this.Resolve("/MainGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
 
         // Register AfterGoal event with a GoalCall that has a parameter
         var goalToCall = new GoalCall
@@ -215,10 +215,7 @@ public class EventHandlerTests
             Name = "AfterCallback",
             Parameters = new List<Data> { new Data("callbackRan", true, context: context) }
         };
-        var onAction = new On
-        {
-            Context = context,
-            Trigger = (global::app.type.choice.@this<global::app.@event.Trigger>)global::app.@event.Trigger.AfterGoal,
+        var onAction = new On(context) { Trigger = (global::app.type.choice.@this<global::app.@event.Trigger>)global::app.@event.Trigger.AfterGoal,
             GoalToCall = goalToCall,
             GoalPattern = (global::app.type.text.@this)"MainGoal"
         };

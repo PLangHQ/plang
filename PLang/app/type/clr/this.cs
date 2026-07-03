@@ -13,11 +13,14 @@ public sealed class @this : global::app.type.item.@this, global::app.module.ICon
     public object Value { get; }
 
     [System.Text.Json.Serialization.JsonIgnore]
-    public global::app.actor.context.@this? Context { get; set; }
+    public global::app.actor.context.@this Context { get; set; } = null!;
 
-    public @this(object value)
+    /// <summary>Born WITH context — the carrier navigates/serializes through it (child
+    /// values, type resolution). A clr always wraps a host for a wired scope.</summary>
+    public @this(object value, global::app.actor.context.@this context)
     {
         Value = value ?? throw new System.ArgumentNullException(nameof(value));
+        Context = context ?? throw new System.ArgumentNullException(nameof(context));
         // Nested Data is not a shape: a Data never rides as a value (Lift forbids it). The
         // carrier is for foreign host objects only — carrying a Data here is courier debt.
         if (value is global::app.data.@this)
@@ -25,10 +28,6 @@ public sealed class @this : global::app.type.item.@this, global::app.module.ICon
                 "A Data may not be carried in a clr — nested Data is not a supported shape. "
                 + "Return the inner value via its own factory, never wrap a Data.");
     }
-
-    /// <summary>Born WITH context — the carrier navigates/serializes through it (child
-    /// values, type resolution). Used when wrapping a host object for navigation.</summary>
-    public @this(object value, global::app.actor.context.@this? context) : this(value) => Context = context;
 
     /// <summary>
     /// A foreign host object is the apex of the value lattice — the un-narrowed <c>item</c>
@@ -41,7 +40,7 @@ public sealed class @this : global::app.type.item.@this, global::app.module.ICon
     protected internal override global::app.type.@this Mint()
     {
         var clrType = Value.GetType();
-        var kind = Context?.App.Type.ResolveName(clrType)
+        var kind = Context.App.Type.ResolveName(clrType)
                    ?? clrType.FullName
                    ?? clrType.Name;
         return new global::app.type.@this("item", kind);

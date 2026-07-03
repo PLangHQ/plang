@@ -12,13 +12,13 @@ namespace app.type.number;
 /// </summary>
 public sealed partial class @this
 {
-    public static global::app.data.@this<@this> Abs(@this a) => Wrap(() => DoAbs(a));
-    public static global::app.data.@this<@this> Floor(@this a) => Wrap(() => DoFloor(a));
-    public static global::app.data.@this<@this> Ceiling(@this a) => Wrap(() => DoCeiling(a));
-    public static global::app.data.@this<@this> Sqrt(@this a) => Wrap(() => DoSqrt(a));
-    public static global::app.data.@this<@this> Round(@this a, @this decimals) => Wrap(() => DoRound(a, decimals));
-    public static global::app.data.@this<@this> Min(@this a, @this b, NumberPolicy policy) => Wrap(() => a.CompareTo(b) <= 0 ? a : b);
-    public static global::app.data.@this<@this> Max(@this a, @this b, NumberPolicy policy) => Wrap(() => a.CompareTo(b) >= 0 ? a : b);
+    public static @this Abs(@this a) => Wrap(() => DoAbs(a));
+    public static @this Floor(@this a) => Wrap(() => DoFloor(a));
+    public static @this Ceiling(@this a) => Wrap(() => DoCeiling(a));
+    public static @this Sqrt(@this a) => Wrap(() => DoSqrt(a));
+    public static @this Round(@this a, @this decimals) => Wrap(() => DoRound(a, decimals));
+    public static @this Min(@this a, @this b, NumberPolicy policy) => Wrap(() => a.CompareTo(b) <= 0 ? a : b);
+    public static @this Max(@this a, @this b, NumberPolicy policy) => Wrap(() => a.CompareTo(b) >= 0 ? a : b);
 
     private static @this FromDoubleAsKind(double m, NumberKind k) => k switch
     {

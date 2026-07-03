@@ -14,7 +14,7 @@ public class AppRunTests
         _app.Goal.Add(new global::app.goal.@this
         {
             Name = "RunTarget",
-            Path = "/RunTarget.goal"
+            Path = global::app.type.path.@this.Resolve("/RunTarget.goal", global::PLang.Tests.TestApp.SharedContext)
         });
     }
 
@@ -24,10 +24,7 @@ public class AppRunTests
     [Test]
     public async Task Run_GoalCall_ResolvesAndRuns()
     {
-        var action = new run
-        {
-            Context = _app.User.Context,
-            GoalName = new GoalCall { Name = "RunTarget" }
+        var action = new run(_app.User.Context) { GoalName = new GoalCall { Name = "RunTarget" }
         };
         var result = await action.Run();
 
@@ -37,10 +34,7 @@ public class AppRunTests
     [Test]
     public async Task Run_MissingGoal_ReturnsError()
     {
-        var action = new run
-        {
-            Context = _app.User.Context,
-            GoalName = new GoalCall { Name = "DoesNotExist" }
+        var action = new run(_app.User.Context) { GoalName = new GoalCall { Name = "DoesNotExist" }
         };
         var result = await action.Run();
 
@@ -55,10 +49,7 @@ public class AppRunTests
             Text = "test step",
             Index = 0
         };
-        var action = new run
-        {
-            Context = _app.User.Context,
-            Step = step
+        var action = new run(_app.User.Context) { Step = step
         };
         var result = await action.Run();
 
@@ -69,10 +60,7 @@ public class AppRunTests
     [Test]
     public async Task Run_NoInput_ReturnsError()
     {
-        var action = new run
-        {
-            Context = _app.User.Context,
-            GoalName = null,
+        var action = new run(_app.User.Context) { GoalName = null,
             Step = null,
             Action = null
         };

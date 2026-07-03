@@ -9,7 +9,7 @@ public class MathTests
 {
     private (global::app.actor.context.@this context, Variables memory) CreateContext()
     {
-        var app = new global::app.@this("/app");
+        var app = TestApp.Create("/app");
         return (app.User.Context, app.User.Context.Variable);
     }
 
@@ -20,7 +20,8 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Add { Context = context, A = new global::app.data.@this("", 3, context: context), B = new global::app.data.@this("", 4, context: context)};
+        var action = new Add(context) { A = new global::app.data.@this("", 3, context: context), B = new global::app.data.@this("", 4, context: context)};
+        await action.Attach(null, context);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -35,7 +36,8 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Add { Context = context, A = new global::app.data.@this("", 3, context: context), B = new global::app.data.@this("", 4.5, context: context)};
+        var action = new Add(context) { A = new global::app.data.@this("", 3, context: context), B = new global::app.data.@this("", 4.5, context: context)};
+        await action.Attach(null, context);
         var result = await action.Run();
 
         await Assert.That((await result.Value())).IsEqualTo(7.5);
@@ -49,7 +51,8 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Subtract { Context = context, A = new global::app.data.@this("", 10, context: context), B = new global::app.data.@this("", 3, context: context)};
+        var action = new Subtract(context) { A = new global::app.data.@this("", 10, context: context), B = new global::app.data.@this("", 3, context: context)};
+        await action.Attach(null, context);
         var result = await action.Run();
 
         await Assert.That((await result.Value())).IsEqualTo(7);
@@ -62,7 +65,8 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Multiply { Context = context, A = new global::app.data.@this("", 6, context: context), B = new global::app.data.@this("", 7, context: context)};
+        var action = new Multiply(context) { A = new global::app.data.@this("", 6, context: context), B = new global::app.data.@this("", 7, context: context)};
+        await action.Attach(null, context);
         var result = await action.Run();
 
         await Assert.That((await result.Value())).IsEqualTo(42);
@@ -75,7 +79,8 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Divide { Context = context, A = new global::app.data.@this("", 10.0, context: context), B = new global::app.data.@this("", 3.0, context: context)};
+        var action = new Divide(context) { A = new global::app.data.@this("", 10.0, context: context), B = new global::app.data.@this("", 3.0, context: context)};
+        await action.Attach(null, context);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -88,7 +93,8 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Divide { Context = context, A = new global::app.data.@this("", 10, context: context), B = new global::app.data.@this("", 0, context: context)};
+        var action = new Divide(context) { A = new global::app.data.@this("", 10, context: context), B = new global::app.data.@this("", 0, context: context)};
+        await action.Attach(null, context);
         var result = await action.Run();
 
         await result.IsFailure();
@@ -101,7 +107,8 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Modulo { Context = context, A = new global::app.data.@this("", 10, context: context), B = new global::app.data.@this("", 3, context: context)};
+        var action = new Modulo(context) { A = new global::app.data.@this("", 10, context: context), B = new global::app.data.@this("", 3, context: context)};
+        await action.Attach(null, context);
         var result = await action.Run();
 
         await Assert.That((await result.Value())).IsEqualTo(1);
@@ -114,7 +121,8 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Power { Context = context, Base = new global::app.data.@this("", 2, context: context), Exponent = new global::app.data.@this("", 10, context: context)};
+        var action = new Power(context) { Base = new global::app.data.@this("", 2, context: context), Exponent = new global::app.data.@this("", 10, context: context)};
+        await action.Attach(null, context);
         var result = await action.Run();
 
         await Assert.That((await result.Value())).IsEqualTo(1024);
@@ -127,7 +135,8 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Sqrt { Context = context, Value = new global::app.data.@this("", 16, context: context)};
+        var action = new Sqrt(context) { Value = new global::app.data.@this("", 16, context: context)};
+        await action.Attach(null, context);
         var result = await action.Run();
 
         await Assert.That((await result.Value())).IsEqualTo(4.0);
@@ -138,7 +147,8 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Sqrt { Context = context, Value = new global::app.data.@this("", -1, context: context)};
+        var action = new Sqrt(context) { Value = new global::app.data.@this("", -1, context: context)};
+        await action.Attach(null, context);
         var result = await action.Run();
 
         await result.IsFailure();
@@ -154,7 +164,8 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Abs { Context = context, Value = new global::app.data.@this("", -42, context: context)};
+        var action = new Abs(context) { Value = new global::app.data.@this("", -42, context: context)};
+        await action.Attach(null, context);
         var result = await action.Run();
 
         await Assert.That((await result.Value())).IsEqualTo(42);
@@ -167,7 +178,8 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Round { Context = context, Value = new global::app.data.@this("", 3.14159, context: context), Decimals = (global::app.type.number.@this)2 };
+        var action = new Round(context) { Value = new global::app.data.@this("", 3.14159, context: context), Decimals = (global::app.type.number.@this)2 };
+        await action.Attach(null, context);
         var result = await action.Run();
 
         await Assert.That((await result.Value())).IsEqualTo(3.14);
@@ -180,7 +192,8 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Floor { Context = context, Value = new global::app.data.@this("", 3.7, context: context)};
+        var action = new Floor(context) { Value = new global::app.data.@this("", 3.7, context: context)};
+        await action.Attach(null, context);
         var result = await action.Run();
 
         await Assert.That(Convert.ToDouble((await result.Value()))).IsEqualTo(3.0);
@@ -191,7 +204,8 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Ceiling { Context = context, Value = new global::app.data.@this("", 3.2, context: context)};
+        var action = new Ceiling(context) { Value = new global::app.data.@this("", 3.2, context: context)};
+        await action.Attach(null, context);
         var result = await action.Run();
 
         await Assert.That(Convert.ToDouble((await result.Value()))).IsEqualTo(4.0);
@@ -204,7 +218,8 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Min { Context = context, A = new global::app.data.@this("", 5, context: context), B = new global::app.data.@this("", 3, context: context)};
+        var action = new Min(context) { A = new global::app.data.@this("", 5, context: context), B = new global::app.data.@this("", 3, context: context)};
+        await action.Attach(null, context);
         var result = await action.Run();
 
         await Assert.That((await result.Value())).IsEqualTo(3);
@@ -215,7 +230,8 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Max { Context = context, A = new global::app.data.@this("", 5, context: context), B = new global::app.data.@this("", 3, context: context)};
+        var action = new Max(context) { A = new global::app.data.@this("", 5, context: context), B = new global::app.data.@this("", 3, context: context)};
+        await action.Attach(null, context);
         var result = await action.Run();
 
         await Assert.That((await result.Value())).IsEqualTo(5);
@@ -228,7 +244,8 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new global::app.module.math.Random { Context = context, Min = (global::app.type.number.@this)1, Max = (global::app.type.number.@this)10 };
+        var action = new global::app.module.math.Random(context) { Min = (global::app.type.number.@this)1, Max = (global::app.type.number.@this)10 };
+        await action.Attach(null, context);
         var result = await action.Run();
 
         await result.IsSuccess();

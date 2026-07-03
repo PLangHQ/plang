@@ -14,7 +14,7 @@ public class Stage6_ConsumersTests
         System.IO.Path.GetTempPath(), "plang-stage6-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     private static Data D(global::app.@this app, object? v, string typeName)
-        => new("x", v, global::app.type.@this.FromName(typeName), context: app.User.Context);
+        => new("x", v, global::PLang.Tests.TestApp.SharedContext.Type.Create(typeName), context: app.User.Context);
 
     private static string RepoRoot()
     {
@@ -94,7 +94,7 @@ public class Stage6_ConsumersTests
             File.WriteAllText(System.IO.Path.Combine(dir, "tiny.txt"), "a");
             File.WriteAllText(System.IO.Path.Combine(dir, "mid.txt"), new string('b', 10));
 
-            var files = new global::app.type.list.@this { Context = ctx };
+            var files = new global::app.type.list.@this(ctx);
             foreach (var name in new[] { "big.txt", "tiny.txt", "mid.txt" })
                 files.Add(new Data(name, new global::app.type.path.file.@this(System.IO.Path.Combine(dir, name), context: ctx), context: ctx));
 
@@ -127,7 +127,7 @@ public class Stage6_ConsumersTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         var dict = global::app.type.dict.@this.FromRaw(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
-        var list = new global::app.type.list.@this { Context = ctx };
+        var list = new global::app.type.list.@this(ctx);
         list.Add(new Data("", dict, context: ctx));
         var holder = new Data("l", list, context: ctx);
         // membership never errors: the Incomparable element pair is just "not this one"
@@ -141,13 +141,10 @@ public class Stage6_ConsumersTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         var dict = global::app.type.dict.@this.FromRaw(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
-        var list = new global::app.type.list.@this { Context = ctx };
+        var list = new global::app.type.list.@this(ctx);
         list.Add(new Data("", dict, context: ctx));
         await ctx.Variable.Set("items", list);
-        var result = await app.RunAction(new global::app.module.list.IndexOf
-        {
-            Context = ctx,
-            ListName = new global::app.data.@this<global::app.variable.@this>("", new global::app.variable.@this("items")),
+        var result = await app.RunAction(new global::app.module.list.IndexOf(ctx) { ListName = new global::app.data.@this<global::app.variable.@this>("", new global::app.variable.@this("items")),
             Value = D(app, 99, "number"),
         }, ctx);
         await result.IsSuccess();
@@ -161,15 +158,12 @@ public class Stage6_ConsumersTests
         var ctx = app.User.Context;
         // a mixed list (dict + number) dedups without error — Incomparable pairs never match
         var dict = global::app.type.dict.@this.FromRaw(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
-        var list = new global::app.type.list.@this { Context = ctx };
+        var list = new global::app.type.list.@this(ctx);
         list.Add(new Data("", dict, context: ctx));
         list.Add(new Data("", 5, context: ctx));
         list.Add(new Data("", 5, context: ctx));
         await ctx.Variable.Set("items", list);
-        var result = await app.RunAction(new global::app.module.list.Unique
-        {
-            Context = ctx,
-            ListName = new global::app.data.@this<global::app.variable.@this>("", new global::app.variable.@this("items")),
+        var result = await app.RunAction(new global::app.module.list.Unique(ctx) { ListName = new global::app.data.@this<global::app.variable.@this>("", new global::app.variable.@this("items")),
         }, ctx);
         await result.IsSuccess();
     }

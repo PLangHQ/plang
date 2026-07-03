@@ -27,20 +27,27 @@ public sealed class source : @this, module.IContext
     // leaf borns a live template; the trust is the reader's mode, never the content.
     private readonly string? _template;
 
-    // Context stays nullable until the context-less source births (Judge) are removed — the Judge
-    // phase. (WireLocal is gone.) Then this goes non-null + born-in-ctor.
+    // Born WITH context — a source is minted only by type.Build (the sole birth site),
+    // which always has a wired scope; the context-less births (the "Judge" phase) are gone.
     [System.Text.Json.Serialization.JsonIgnore]
-    public actor.context.@this? Context { get; set; }
+    public actor.context.@this Context { get; set; } = null!;
 
-    public source(object value, string typeName, string? kind, bool strict = false,
+    public source(object value, string typeName, string? kind, actor.context.@this context, bool strict = false,
         string format = "text/plain", string? template = null)
     {
         _value = value ?? throw new System.ArgumentNullException(nameof(value));
+        Context = context ?? throw new System.ArgumentNullException(nameof(context));
         _type = string.IsNullOrWhiteSpace(typeName) ? "item" : typeName;
         _kind = kind;
         _strict = strict;
         _format = format;
         _template = template;
+        // Expose the authored template on the standard Template property (not just the
+        // private _template), so peek-time consumers — HasVariableReference, output.write —
+        // see a source-born template the same way they see a text-born one. Trust the flag
+        // the builder stamped; do not re-scan the content. (Minimal fix; the right fix moves
+        // resolution into the value's own door — see output-resolution-unification-plan.md.)
+        Template = template;
     }
 
     /// <summary>The undecoded source form — <c>string</c> or <c>byte[]</c>.</summary>
@@ -129,14 +136,13 @@ public sealed class source : @this, module.IContext
     // names a format. (source.Value owns the try/catch + the binding-named failure story.)
     private global::app.type.item.@this Read()
     {
-        if (Context?.Actor?.Channel.Serializers is { } serializers)
+        if (Context.Actor?.Channel.Serializers is { } serializers)
             return serializers[_format].Read(this, new global::app.type.reader.ReadContext(Context, _template));
-        // A source is always born WITH a context — the data ctor and FromRaw both stamp it,
-        // and the context-less Judge birth is gone. Reaching here means a source escaped that
-        // invariant; surface it as a clean MaterializeFailed (source.Value catches this), not a
-        // silent unparsed return or a born-without-context crash from a context-less Create.
+        // Context is guaranteed (born-in-ctor); reaching here means its Actor/Channel isn't
+        // wired yet. Surface it as a clean MaterializeFailed (source.Value catches this), not a
+        // silent unparsed return.
         throw new System.InvalidOperationException(
-            $"source declared '{_type}' reached read without a context — a source must be born with one.");
+            $"source declared '{_type}' reached read before its actor channel was wired.");
     }
 
     /// <summary>

@@ -81,7 +81,7 @@ public class ProvidersSnapshotTests
     {
         // Captured runtime registration's DLL/source can't be loaded → referent-integrity
         // hard error. No silent fallback to system default.
-        var snap = new Snapshot();
+        var snap = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
         snap.Section("Providers").Write("registrations", new List<global::app.module.code.@this.Registration>
         {
             new(typeof(global::app.data.code.IGrep).AssemblyQualifiedName!,
@@ -103,7 +103,7 @@ public class ProvidersSnapshotTests
     {
         // Registrations succeed but default-selection name doesn't match any registered
         // provider → referent-integrity hard error.
-        var snap = new Snapshot();
+        var snap = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
         snap.Section("Providers").Write("registrations", new List<global::app.module.code.@this.Registration>());
         snap.Section("Providers").Write("defaultOverrides", new List<global::app.module.code.@this.DefaultOverride>
         {

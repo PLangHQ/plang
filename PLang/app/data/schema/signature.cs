@@ -52,7 +52,7 @@ public sealed class signature : ISchemaReader
                     while (reader.NextElement())
                         items.Add(Data.Ok(new global::app.type.text.@this(reader.String())));
                     reader.EndArray();
-                    contracts = new global::app.type.list.@this(items);
+                    contracts = new global::app.type.list.@this(items, context);
                     break;
                 }
                 case "hash":
@@ -102,7 +102,7 @@ public sealed class signature : ISchemaReader
 
             var carrier = Data.Ok(layer);
             carrier.Context = context;
-            var verifyAction = new global::app.module.signing.verify
+            var verifyAction = new global::app.module.signing.verify(context)
             {
                 Data = carrier,
                 SkipFreshnessCheck = new global::app.data.@this<global::app.type.@bool.@this>(
@@ -112,7 +112,7 @@ public sealed class signature : ISchemaReader
                 .RunAction(verifyAction, context)
                 .GetAwaiter().GetResult();
             if (!verifyResult.Success)
-                return Data.FromError(verifyResult.Error
+                return context.Error(verifyResult.Error
                     ?? new global::app.error.ServiceError("Signature verification failed", "SignatureInvalid", 400));
         }
 
