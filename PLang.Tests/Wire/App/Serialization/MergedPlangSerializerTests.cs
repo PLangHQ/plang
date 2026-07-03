@@ -11,19 +11,19 @@ public class MergedPlangSerializerTests : System.IAsyncDisposable
 
     [Test] public async Task Serializers_GetByType_ApplicationPlangData_ReturnsNull()
     {
-        var reg = new global::app.channel.serializer.list.@this();
+        var reg = new global::app.channel.serializer.list.@this(global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(reg.GetByType("application/plang+data")).IsNull();
     }
 
     [Test] public async Task Serializers_PdataExtension_DoesNotResolve()
     {
-        var reg = new global::app.channel.serializer.list.@this();
+        var reg = new global::app.channel.serializer.list.@this(global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(reg.GetByExtension(".pdata")).IsNull();
     }
 
     [Test] public async Task Serializers_GetByType_ApplicationPlang_ReturnsMergedSerializer()
     {
-        var reg = new global::app.channel.serializer.list.@this();
+        var reg = new global::app.channel.serializer.list.@this(global::PLang.Tests.TestApp.SharedContext);
         var s = reg.GetByType("application/plang");
         await Assert.That(s).IsNotNull();
         await Assert.That(s).IsTypeOf<global::app.channel.serializer.plang.@this>();
@@ -31,7 +31,7 @@ public class MergedPlangSerializerTests : System.IAsyncDisposable
 
     [Test] public async Task Serializers_PlangExtension_ResolvesMergedSerializer()
     {
-        var reg = new global::app.channel.serializer.list.@this();
+        var reg = new global::app.channel.serializer.list.@this(global::PLang.Tests.TestApp.SharedContext);
         var s = reg.GetByExtension(".plang");
         await Assert.That(s).IsNotNull();
         await Assert.That(s).IsTypeOf<global::app.channel.serializer.plang.@this>();
@@ -65,7 +65,7 @@ public class MergedPlangSerializerTests : System.IAsyncDisposable
 
     [Test] public async Task ApplicationJson_RoundTrip_DataOkHello_StripsWrapperOnWire()
     {
-        var json = new global::app.channel.serializer.Json();
+        var json = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         using var ms = new MemoryStream();
         await json.SerializeAsync(ms, app.Ok("hello"));
         var wire = System.Text.Encoding.UTF8.GetString(ms.ToArray()).TrimEnd();

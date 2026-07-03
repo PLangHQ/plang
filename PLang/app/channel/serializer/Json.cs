@@ -18,14 +18,15 @@ public sealed class Json : ISerializer
     public string Extension => ".json";
 
     private readonly JsonSerializerOptions _options;
-    private readonly actor.context.@this? _context;
+    private readonly actor.context.@this _context;
     private readonly ConcurrentDictionary<View, Json> _viewCache = new();
 
-    public Json(JsonSerializerOptions? options = null) : this(options, null) { }
+    // Born-with-context: a serializer belongs to an actor, and an actor always has a context —
+    // it's the context deserialized values are born on (Serialize sources it from the incoming
+    // Data instead). There is no context-less serializer.
+    public Json(actor.context.@this context) : this(null, context) { }
 
-    public Json(actor.context.@this? context) : this(null, context) { }
-
-    private Json(JsonSerializerOptions? options, actor.context.@this? context)
+    private Json(JsonSerializerOptions? options, actor.context.@this context)
     {
         _context = context;
         // When `options` is supplied (ForView / WithIndentation paths), it
@@ -49,9 +50,7 @@ public sealed class Json : ISerializer
                 // STJ — without this it reflects its C# surface (Entries → Data …)
                 // and cycles.
                 new global::app.type.dict.Json(),
-                context != null
-                    ? new global::app.channel.serializer.json.Converter(context)
-                    : new global::app.channel.serializer.json.Converter()
+                new global::app.channel.serializer.json.Converter(context)
             }
         };
     }
@@ -106,13 +105,13 @@ public sealed class Json : ISerializer
     {
         try
         {
-            if (stream.CanSeek && stream.Length == 0) return global::app.data.@this.Ok();
+            if (stream.CanSeek && stream.Length == 0) return _context.Ok();
             var v = await JsonSerializer.DeserializeAsync<object?>(stream, _options, cancellationToken);
-            return _context is null ? global::app.data.@this.Ok(v) : _context.Ok(v);
+            return _context.Ok(v);
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
         {
-            return global::app.data.@this.FromError(new error.ServiceError(
+            return _context.Error(new error.ServiceError(
                 $"JSON deserialize failed: {ex.Message}", "JsonDeserializeError", 400) { Exception = ex });
         }
     }
@@ -121,13 +120,13 @@ public sealed class Json : ISerializer
     {
         try
         {
-            if (stream.CanSeek && stream.Length == 0) return global::app.data.@this<T>.Ok(default!);
+            if (stream.CanSeek && stream.Length == 0) return _context.Ok<T>(default!);
             var v = await JsonSerializer.DeserializeAsync<T>(stream, _options, cancellationToken);
-            return global::app.data.@this<T>.Ok(v!);
+            return _context.Ok<T>(v!);
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
         {
-            return global::app.data.@this<T>.FromError(new error.ServiceError(
+            return _context.Error<T>(new error.ServiceError(
                 $"JSON deserialize failed: {ex.Message}", "JsonDeserializeError", 400) { Exception = ex });
         }
     }
@@ -158,7 +157,7 @@ public sealed class Json : ISerializer
         {
             WriteIndented = true
         };
-        return new Json(newOptions);
+        return new Json(newOptions, _context);
     }
 
     /// <summary>
@@ -170,7 +169,7 @@ public sealed class Json : ISerializer
     {
         var newOptions = new JsonSerializerOptions(_options);
         newOptions.Converters.Add(converter);
-        return new Json(newOptions);
+        return new Json(newOptions, _context);
     }
 
     /// <summary>
@@ -187,7 +186,7 @@ public sealed class Json : ISerializer
         foreach (var m in existing.Modifiers) resolver.Modifiers.Add(m);
         resolver.Modifiers.Add(modifier);
         newOptions.TypeInfoResolver = resolver;
-        return new Json(newOptions);
+        return new Json(newOptions, _context);
     }
 
     /// <summary>

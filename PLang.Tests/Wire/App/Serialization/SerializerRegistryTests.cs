@@ -8,7 +8,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task Constructor_RegistersDefaultSerializers()
     {
-        var registry = new SerializerRegistry();
+        var registry = new SerializerRegistry(global::PLang.Tests.TestApp.SharedContext);
 
         await Assert.That(registry.GetByType("application/json")).IsNotNull();
         await Assert.That(registry.GetByType("text/plain")).IsNotNull();
@@ -17,7 +17,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task Default_ReturnsJsonSerializer()
     {
-        var registry = new SerializerRegistry();
+        var registry = new SerializerRegistry(global::PLang.Tests.TestApp.SharedContext);
 
         var defaultSerializer = registry.Default;
 
@@ -27,7 +27,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task Default_CanBeSet()
     {
-        var registry = new SerializerRegistry();
+        var registry = new SerializerRegistry(global::PLang.Tests.TestApp.SharedContext);
         var textSerializer = registry.Text;
 
         registry.Default = textSerializer;
@@ -38,7 +38,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task Default_SetNull_ThrowsArgumentNullException()
     {
-        var registry = new SerializerRegistry();
+        var registry = new SerializerRegistry(global::PLang.Tests.TestApp.SharedContext);
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () =>
         {
@@ -49,7 +49,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task Json_ReturnsJsonSerializer()
     {
-        var registry = new SerializerRegistry();
+        var registry = new SerializerRegistry(global::PLang.Tests.TestApp.SharedContext);
 
         var json = registry.Json;
 
@@ -59,7 +59,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task Text_ReturnsTextSerializer()
     {
-        var registry = new SerializerRegistry();
+        var registry = new SerializerRegistry(global::PLang.Tests.TestApp.SharedContext);
 
         var text = registry.Text;
 
@@ -69,7 +69,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task Register_AddsSerializer()
     {
-        var registry = new SerializerRegistry();
+        var registry = new SerializerRegistry(global::PLang.Tests.TestApp.SharedContext);
         var customSerializer = new CustomSerializer();
 
         registry.Register(customSerializer);
@@ -80,7 +80,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task Register_AddsToExtensionLookup()
     {
-        var registry = new SerializerRegistry();
+        var registry = new SerializerRegistry(global::PLang.Tests.TestApp.SharedContext);
         var customSerializer = new CustomSerializer();
 
         registry.Register(customSerializer);
@@ -91,7 +91,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetByContentType_ExactMatch_ReturnsSerializer()
     {
-        var registry = new SerializerRegistry();
+        var registry = new SerializerRegistry(global::PLang.Tests.TestApp.SharedContext);
 
         var serializer = registry.GetByType("application/json");
 
@@ -102,7 +102,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetByContentType_WithCharset_ReturnsSerializer()
     {
-        var registry = new SerializerRegistry();
+        var registry = new SerializerRegistry(global::PLang.Tests.TestApp.SharedContext);
 
         var serializer = registry.GetByType("application/json; charset=utf-8");
 
@@ -113,7 +113,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetByContentType_AlternativeJsonType_ReturnsJsonSerializer()
     {
-        var registry = new SerializerRegistry();
+        var registry = new SerializerRegistry(global::PLang.Tests.TestApp.SharedContext);
 
         var serializer = registry.GetByType("text/json");
 
@@ -124,7 +124,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetByContentType_CaseInsensitive()
     {
-        var registry = new SerializerRegistry();
+        var registry = new SerializerRegistry(global::PLang.Tests.TestApp.SharedContext);
 
         var lower = registry.GetByType("application/json");
         var upper = registry.GetByType("APPLICATION/JSON");
@@ -138,7 +138,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetByContentType_Unknown_ReturnsNull()
     {
-        var registry = new SerializerRegistry();
+        var registry = new SerializerRegistry(global::PLang.Tests.TestApp.SharedContext);
 
         var serializer = registry.GetByType("unknown/type");
 
@@ -148,7 +148,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetByExtension_ExactMatch_ReturnsSerializer()
     {
-        var registry = new SerializerRegistry();
+        var registry = new SerializerRegistry(global::PLang.Tests.TestApp.SharedContext);
 
         var serializer = registry.GetByExtension(".json");
 
@@ -158,7 +158,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetByExtension_WithoutDot_AddsDot()
     {
-        var registry = new SerializerRegistry();
+        var registry = new SerializerRegistry(global::PLang.Tests.TestApp.SharedContext);
 
         var serializer = registry.GetByExtension("json");
 
@@ -168,7 +168,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetByExtension_TextExtension_ReturnsTextSerializer()
     {
-        var registry = new SerializerRegistry();
+        var registry = new SerializerRegistry(global::PLang.Tests.TestApp.SharedContext);
 
         var serializer = registry.GetByExtension(".txt");
 
@@ -179,7 +179,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetByExtension_CaseInsensitive()
     {
-        var registry = new SerializerRegistry();
+        var registry = new SerializerRegistry(global::PLang.Tests.TestApp.SharedContext);
 
         var lower = registry.GetByExtension(".json");
         var upper = registry.GetByExtension(".JSON");
@@ -191,7 +191,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetByExtension_Unknown_ReturnsNull()
     {
-        var registry = new SerializerRegistry();
+        var registry = new SerializerRegistry(global::PLang.Tests.TestApp.SharedContext);
 
         var serializer = registry.GetByExtension(".xyz");
 
@@ -201,7 +201,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetOrDefault_WithContentType_ReturnsSerializer()
     {
-        var registry = new SerializerRegistry();
+        var registry = new SerializerRegistry(global::PLang.Tests.TestApp.SharedContext);
 
         var serializer = registry.GetOrDefault("text/plain");
 
@@ -211,7 +211,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetOrDefault_NullContentType_ReturnsDefault()
     {
-        var registry = new SerializerRegistry();
+        var registry = new SerializerRegistry(global::PLang.Tests.TestApp.SharedContext);
 
         var serializer = registry.GetOrDefault(null);
 
@@ -221,7 +221,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetOrDefault_EmptyContentType_ReturnsDefault()
     {
-        var registry = new SerializerRegistry();
+        var registry = new SerializerRegistry(global::PLang.Tests.TestApp.SharedContext);
 
         var serializer = registry.GetOrDefault("");
 
@@ -231,7 +231,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetOrDefault_UnknownContentType_ReturnsDefault()
     {
-        var registry = new SerializerRegistry();
+        var registry = new SerializerRegistry(global::PLang.Tests.TestApp.SharedContext);
 
         var serializer = registry.GetOrDefault("unknown/type");
 
@@ -241,7 +241,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task ContentTypes_ReturnsAllRegisteredTypes()
     {
-        var registry = new SerializerRegistry();
+        var registry = new SerializerRegistry(global::PLang.Tests.TestApp.SharedContext);
 
         var types = registry.Types.ToList();
 
@@ -253,7 +253,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task Extensions_ReturnsAllRegisteredExtensions()
     {
-        var registry = new SerializerRegistry();
+        var registry = new SerializerRegistry(global::PLang.Tests.TestApp.SharedContext);
 
         var extensions = registry.Extensions.ToList();
 

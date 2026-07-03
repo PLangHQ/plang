@@ -13,7 +13,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task ContentType_ReturnsApplicationJson()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
 
         await Assert.That(serializer.Type).IsEqualTo("application/json");
     }
@@ -21,7 +21,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task FileExtension_ReturnsJson()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
 
         await Assert.That(serializer.Extension).IsEqualTo(".json");
     }
@@ -29,7 +29,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task Serialize_SimpleString_ReturnsJsonString()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
 
         var json = (await serializer.Serialize(app.Ok("hello")).Value())!.Clr<string>()!;
 
@@ -39,7 +39,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task Serialize_Number_ReturnsJsonNumber()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
 
         var json = (await serializer.Serialize(app.Ok(42)).Value())!.Clr<string>()!;
 
@@ -49,7 +49,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task Serialize_Boolean_ReturnsJsonBoolean()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
 
         var jsonTrue = (await serializer.Serialize(app.Ok(true)).Value())!.Clr<string>()!;
         var jsonFalse = (await serializer.Serialize(app.Ok(false)).Value())!.Clr<string>()!;
@@ -61,7 +61,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task Serialize_Null_ReturnsNullString()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
 
         var json = (await serializer.Serialize(app.Ok(null)).Value())!.Clr<string>()!;
 
@@ -71,7 +71,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task Serialize_Object_ReturnsCamelCaseJson()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         var obj = new { FirstName = "John", LastName = "Doe" };
 
         var json = (await serializer.Serialize(app.Ok(obj)).Value())!.Clr<string>()!;
@@ -83,7 +83,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task Serialize_Object_IgnoresNullProperties()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         var obj = new TestClass { Name = "John", Value = null };
 
         var json = (await serializer.Serialize(app.Ok(obj)).Value())!.Clr<string>()!;
@@ -94,7 +94,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task Serialize_Array_ReturnsJsonArray()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         var arr = new[] { 1, 2, 3 };
 
         var json = (await serializer.Serialize(app.Ok(arr)).Value())!.Clr<string>()!;
@@ -105,7 +105,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task Serialize_Dictionary_ReturnsJsonObject()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         var dict = new Dictionary<string, int> { { "a", 1 }, { "b", 2 } };
 
         var json = (await serializer.Serialize(app.Ok(dict)).Value())!.Clr<string>()!;
@@ -117,7 +117,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task Deserialize_SimpleString_ReturnsString()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
 
         var result = (await serializer.Deserialize<global::app.type.text.@this>("\"hello\"").Value())!;
 
@@ -127,7 +127,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task Deserialize_Number_ReturnsNumber()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
 
         var result = (await serializer.Deserialize<global::app.type.number.@this>("42").Value())!;
 
@@ -137,7 +137,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task Deserialize_Boolean_ReturnsBoolean()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
 
         var resultTrue = (await serializer.Deserialize<global::app.type.@bool.@this>("true").Value())!;
         var resultFalse = (await serializer.Deserialize<global::app.type.@bool.@this>("false").Value())!;
@@ -149,7 +149,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task Deserialize_Null_ReturnsNull()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
 
         var result = (await serializer.Deserialize<global::app.type.text.@this>("null").Value())!;
 
@@ -159,7 +159,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task Deserialize_EmptyString_ReturnsDefault()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
 
         var result = (await serializer.Deserialize<global::app.type.text.@this>("").Value())!;
 
@@ -169,7 +169,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task Deserialize_Object_ReturnsObject()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         var json = "{\"name\":\"John\",\"value\":42}";
 
         var result = (await serializer.Deserialize<TestClass>(json).Value())!;
@@ -182,7 +182,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task Deserialize_CaseInsensitive()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         var json = "{\"NAME\":\"John\"}";
 
         var result = (await serializer.Deserialize<TestClass>(json).Value())!;
@@ -193,7 +193,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task Deserialize_WithType_ReturnsObject()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         var json = "{\"name\":\"John\"}";
 
         var result = (await serializer.Deserialize<TestClass>(json).Value())!;
@@ -205,7 +205,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task SerializeAsync_WritesToStream()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         using var stream = new MemoryStream();
 
         await serializer.SerializeAsync(stream, app.Ok(new { Name = "test" }));
@@ -219,7 +219,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task SerializeAsync_Null_WritesNullString()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         using var stream = new MemoryStream();
 
         await serializer.SerializeAsync(stream, app.Ok(null));
@@ -232,7 +232,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task DeserializeAsync_Generic_ReadsFromStream()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         var json = "{\"name\":\"John\",\"value\":42}";
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
 
@@ -246,7 +246,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task DeserializeAsync_EmptyStream_ReturnsDefault()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         using var stream = new MemoryStream();
 
         var result = (await (await serializer.DeserializeAsync<TestClass>(stream)).Value())!;
@@ -257,7 +257,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task DeserializeAsync_WithType_ReadsFromStream()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         var json = "{\"name\":\"John\"}";
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
 
@@ -269,7 +269,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task Roundtrip_PreservesData()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         var original = new TestClass { Name = "John", Value = 42 };
 
         var json = (await serializer.Serialize(app.Ok(original)).Value())!.Clr<string>()!;
@@ -282,7 +282,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task Roundtrip_StreamBased_PreservesData()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         var original = new TestClass { Name = "Test", Value = 123 };
         using var stream = new MemoryStream();
 
@@ -297,7 +297,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task WithIndentation_ReturnsNewSerializer()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
 
         var indented = serializer.WithIndentation();
 
@@ -307,7 +307,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task WithIndentation_ProducesFormattedOutput()
     {
-        var serializer = new global::app.channel.serializer.Json().WithIndentation();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext).WithIndentation();
         var obj = new { Name = "test" };
 
         var json = (await serializer.Serialize(app.Ok(obj)).Value())!.Clr<string>()!;
@@ -318,7 +318,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task Serialize_Enum_UsesCamelCase()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         var obj = new { Status = LocalStatus.Active };
 
         var json = (await serializer.Serialize(app.Ok(obj)).Value())!.Clr<string>()!;
@@ -329,7 +329,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task Serialize_WithExplicitType_SerializesCorrectly()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         object value = 42;
 
         var json = (await serializer.Serialize(app.Ok(value)).Value())!.Clr<string>()!;
@@ -340,7 +340,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task SerializeAsync_WithCancellation_RespectsCancellation()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         using var stream = new MemoryStream();
         var cts = new CancellationTokenSource();
         cts.Cancel();
@@ -356,7 +356,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task DeserializeAsync_MalformedJson_ReturnsDataFail()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("{not valid json"));
 
         var result = await serializer.DeserializeAsync<TestClass>(stream);
@@ -369,7 +369,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task DeserializeAsync_Generic_MalformedJson_ReturnsDataFail()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("{broken"));
 
         var result = await serializer.DeserializeAsync<TestClass>(stream);
@@ -381,7 +381,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task Deserialize_String_MalformedJson_ReturnsDataFail()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
 
         var result = serializer.Deserialize<TestClass>("{not valid");
 
@@ -392,7 +392,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     [Test]
     public async Task DeserializeGeneric_String_MalformedJson_ReturnsDataFail()
     {
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
 
         var result = serializer.Deserialize<TestClass>("{not valid");
 

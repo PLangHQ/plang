@@ -20,7 +20,7 @@ public class SerializerRenameTests
 
     [Test] public async Task Type_OnJsonSerializer_ReturnsApplicationJson()
     {
-        var s = new global::app.channel.serializer.Json();
+        var s = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(s.Type).IsEqualTo("application/json");
     }
 
@@ -39,7 +39,7 @@ public class SerializerRenameTests
 
     [Test] public async Task Extension_OnJsonSerializer_ReturnsDotJson()
     {
-        var s = new global::app.channel.serializer.Json();
+        var s = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(s.Extension).IsEqualTo(".json");
     }
 
@@ -53,7 +53,7 @@ public class SerializerRenameTests
     //       GetByContentType name is gone.
     [Test] public async Task Serializers_GetByType_ResolvesPlangSerializer()
     {
-        var registry = new global::app.channel.serializer.list.@this();
+        var registry = new global::app.channel.serializer.list.@this(global::PLang.Tests.TestApp.SharedContext);
         var plang = registry.GetByType("application/plang");
         await Assert.That(plang).IsNotNull();
         await Assert.That(plang!.Type).IsEqualTo("application/plang");
@@ -69,7 +69,7 @@ public class SerializerRenameTests
     // 1.6 — Serializers.Types enumerable lists registered MIMEs; ContentTypes is gone.
     [Test] public async Task Serializers_Types_EnumeratesRegisteredMimes()
     {
-        var registry = new global::app.channel.serializer.list.@this();
+        var registry = new global::app.channel.serializer.list.@this(global::PLang.Tests.TestApp.SharedContext);
         var types = registry.Types.ToList();
         await Assert.That(types).Contains("application/json");
         await Assert.That(types).Contains("application/plang");

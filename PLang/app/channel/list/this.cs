@@ -62,10 +62,10 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     public static readonly string[] Defaults = [Output, Error, Input];
 
-    public @this(app.@this app, Serializers? serializers = null)
+    public @this(app.@this app, Serializers serializers)
     {
         _app = app;
-        Serializers = serializers ?? new Serializers();
+        Serializers = serializers;
         // Stage 1: ctor no longer opens console streams. Entry point wires (Stage 6).
     }
 

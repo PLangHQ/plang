@@ -59,7 +59,7 @@ public class SensitivePropertyFilterTests
             Created = DateTime.UtcNow
         };
 
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         var json = (await serializer.Serialize(_app.Ok(identity)).Value())!.Clr<string>()!;
 
         await Assert.That(json).Contains("pubkey123");
@@ -91,7 +91,7 @@ public class SensitivePropertyFilterTests
         // A type without [Sensitive] should serialize normally
         var obj = new { Name = (global::app.type.text.@this)"test", Value = 42 };
 
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         var json = (await serializer.Serialize(_app.Ok(obj)).Value())!.Clr<string>()!;
 
         await Assert.That(json).Contains("test");
@@ -110,7 +110,7 @@ public class SensitivePropertyFilterTests
         };
 
         // ForView should also strip [Sensitive] in addition to view filtering
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         var storeSerializer = serializer.ForView(View.Store);
         var storeJson = (await storeSerializer.Serialize(_app.Ok(identity)).Value())!.Clr<string>()!;
 
@@ -203,7 +203,7 @@ public class SensitivePropertyFilterTests
         var result = await create.Run();
         var identity = (await result.Value()) as Identity;
 
-        var serializer = new global::app.channel.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         var json = (await serializer.Serialize(_app.Ok(identity)).Value())!.Clr<string>()!;
 
         // Deserialize back to check values — raw Contains() fails when base64 '+' is escaped to '\u002B'
