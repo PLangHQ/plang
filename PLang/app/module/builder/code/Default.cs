@@ -268,7 +268,7 @@ public class Default : IBuilder
         // non-keep steps) that slipped past the in-pipeline validateResponse and
         // ApplyStep stages. Refusing to write the .pr is preferable to saving a half-
         // built artifact that the runtime can't execute.
-        var validation = await validateResponse.ValidateGoalState(goal);
+        var validation = await BuildResponse.FromGoalState(goal).Validate(goal);
         if (!validation.Success) return validation;
 
         // The goal writes its OWN .pr through Output (the value-owns-serialization path), Store view,
