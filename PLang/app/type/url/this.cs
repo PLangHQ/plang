@@ -25,7 +25,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private string? _contentType;
 
     [System.Text.Json.Serialization.JsonIgnore]
-    public actor.context.@this? Context
+    public actor.context.@this Context
     {
         get => Path.Context;
         set => Path.Context = value;
@@ -46,7 +46,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// form through the format registry — location metadata, never fetches.</summary>
     protected internal override global::app.type.@this Mint()
     {
-        var t = Context?.App.Format.TypeFromExtension(Path.Extension);
+        var t = Context.App.Format.TypeFromExtension(Path.Extension);
         return new global::app.type.@this("url", typeof(@this)) { Kind = t is { IsNull: false } ? t.Kind : null };
     }
 
@@ -95,7 +95,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         global::app.data.@this read;
         if (!string.IsNullOrEmpty(_contentType))
             read = await new global::app.channel.type.http.@this(_contentType, bytes, Context).Read();
-        else if (Context?.App.Format.TypeFromExtension(Path.Extension) is { IsNull: false })
+        else if (Context.App.Format.TypeFromExtension(Path.Extension) is { IsNull: false })
             read = await new global::app.channel.type.file.@this(Path).Read(bytes);
         else
             read = await new global::app.channel.type.http.@this("text/plain", bytes, Context).Read();
