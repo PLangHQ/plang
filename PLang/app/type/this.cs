@@ -274,7 +274,7 @@ public sealed class @this : item.@this
         // it a template (never inferred from content). This is the ONE source-maker (FromRaw
         // delegates here).
         if (value is string or byte[])
-            return new item.source(value, Name, Kind, Strict, format ?? RawFormat(value, context), template: Template) { Context = context };
+            return new item.source(value, Name, Kind, context, Strict, format ?? RawFormat(value, context), template: Template);
 
         // A container / domain value is already its native form (dict, list, path, image, …) — hold it.
         if (value is item.@this { IsLeaf: false } native) return native;
