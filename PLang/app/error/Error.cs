@@ -56,10 +56,39 @@ public class Error : global::app.type.item.@this, IError
 
     public List<IError> ErrorChain { get; } = new();
 
-    /// <summary>The error renders itself — its flattened wire shape, owned by the
-    /// error serializer (symmetric with the <c>ErrorWire</c> read side).</summary>
+    /// <summary>The error renders itself — its flattened wire shape, written straight
+    /// to the wire (no intermediate value). $type discriminates the subtype; the
+    /// recursive ErrorChain lets each nested error write itself. The live
+    /// back-references that can't round-trip (Exception, Step, Goal, CallFrames) are
+    /// dropped — the snapshot's CallStack section carries the chain. Symmetric with the
+    /// read side (<c>ErrorWire</c>).</summary>
     public override void Write(global::app.channel.serializer.IWriter writer)
-        => global::app.error.serializer.Default.Write(this, writer);
+    {
+        writer.BeginObject();
+        writer.Name("$type");       writer.String(GetType().Name);
+        writer.Name("id");          writer.String(Id);
+        writer.Name("message");     writer.String(Message);
+        writer.Name("key");         writer.String(Key);
+        writer.Name("statusCode");  writer.Int(StatusCode);
+        writer.Name("createdUtc");  writer.DateTime(CreatedUtc);
+        writer.Name("category");    writer.String(Category.ToString());
+        if (FixSuggestion != null) { writer.Name("fixSuggestion"); writer.String(FixSuggestion); }
+        if (HelpfulLinks != null)  { writer.Name("helpfulLinks");  writer.String(HelpfulLinks); }
+        WriteSpecific(writer);
+        if (ErrorChain is { Count: > 0 })
+        {
+            writer.Name("errorChain");
+            writer.BeginArray(ErrorChain.Count);
+            foreach (var c in ErrorChain)
+                ((global::app.type.item.@this)c).Write(writer); // each error is an item — it writes itself
+            writer.EndArray();
+        }
+        writer.EndObject();
+    }
+
+    /// <summary>Subtypes add their own wire fields here — written mid-object, after the
+    /// common fields and before <c>errorChain</c>. Base errors have none.</summary>
+    protected virtual void WriteSpecific(global::app.channel.serializer.IWriter writer) { }
 
     /// <summary>
     /// Back-reference to the App that observed this error. Set by <see cref="@this.Push"/>
