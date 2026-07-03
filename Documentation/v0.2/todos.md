@@ -1575,15 +1575,18 @@ this.{Arithmetic,Unary}.cs`) now return `@this` + throw; `math` became a `[Code]
 owns the compute + context-ful error-wrapping — exactly like signing (`Signer.SignAsync`)
 and crypto (`Crypto.Hash`). Every `math.*` handler is now `Run() => Math.X(this)`.
 
-**Still context-less (migrate the same way — either give the module a `[Code]` provider,
-or let the value op throw + a context-ful boundary wrap):**
-- `module/signing/code/Ed25519.cs` low-level `Sign(byte[],key)` / `Verify(...)` return
-  `Data<…>.FromError` (context-less). Signing HAS `[Code]` (ISigning) — move the wrapping
-  into `SignAsync`/`VerifyAsync` and have the primitive throw.
+**Done:**
+- `module/signing/code/Ed25519.cs` — low-level `Sign`/`Verify` now speak plang types, take
+  the whole signature (no decomposition), throw on failure; `SignAsync`/`VerifyAsync` born the
+  context-ful error. (commit `5dfe6dbcb`)
+- `module/http/code/Default.cs` — threaded `context` through the 5 error-bearing helpers
+  (`ExecuteHttpAsync`, `ReadLimited{Bytes,String}Async`, `ResolveUrl`, `ReadErrorResponseAsync`);
+  every error/ok Data is now born with context. Stayed Data-returning (not throw) because the
+  errors carry response Properties. (commit `6ba9e6e4e`)
+
+**Still context-less (migrate the same way):**
 - `channel/serializer/{Json,Text}.cs` — `FromError` on the nullable `_context` field
-  (tied to making serializer `_context` non-null).
-- `module/http/code/Default.cs` helper methods (`ExecuteHttpAsync`, etc.) — `FromError`
-  with no context in the helper scope.
+  (tied to making serializer `_context` non-null; legit context-free mode via `Json(options)`).
 - `type/convert/this.cs` — the ONE legitimate context-free path (scalar parse with no App):
   its `FromError` stays (verified: throwing there breaks direct callers). Not a violation.
 - `module/builder/validateResponse.cs` `Validate(...)` — static method, nullable `app`.
