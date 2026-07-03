@@ -1584,9 +1584,14 @@ and crypto (`Crypto.Hash`). Every `math.*` handler is now `Run() => Math.X(this)
   every error/ok Data is now born with context. Stayed Data-returning (not throw) because the
   errors carry response Properties. (commit `6ba9e6e4e`)
 
-**Still context-less (migrate the same way):**
-- `channel/serializer/{Json,Text}.cs` — `FromError` on the nullable `_context` field
-  (tied to making serializer `_context` non-null; legit context-free mode via `Json(options)`).
+**Done (cont.):**
+- `channel/serializer/{Json,Text}.cs` — `_context` is now non-null (an actor always has a
+  context; the "no-actor" premise was fiction). Removed the parameterless Serializers ctor and
+  the silent context-less births; service threads its context. (commit `b43ac3df6`)
+- `module/builder/validateResponse.cs` — the static `Validate` moved onto its owner as
+  `BuildResponse.Validate(goal, app?)` + `BuildResponse.FromGoalState(goal)`; error born via
+  `goal.App` context. (commits `aeaafcab5`, `c9db83d67`)
+
+**Still context-less (legitimate — leave):**
 - `type/convert/this.cs` — the ONE legitimate context-free path (scalar parse with no App):
   its `FromError` stays (verified: throwing there breaks direct callers). Not a violation.
-- `module/builder/validateResponse.cs` `Validate(...)` — static method, nullable `app`.
