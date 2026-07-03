@@ -81,36 +81,40 @@ public class Default : IAssert
     {
         // The door, not Materialize — a reference (file/url) yields its raw
         // content for containment, the scalar contract.
-        var v = action.Value == null ? null : await action.Value.Value();
-        var c = action.Container == null ? null : await action.Container.Value();
+        var vItem = action.Value == null ? null : await action.Value.Value();
+        var cItem = action.Container == null ? null : await action.Container.Value();
 
         // Symmetric containment: the Value/Container names don't match the
         // natural reading "X contains Y" (haystack/needle), so the builder
         // LLM sometimes flips them. Tolerate both orderings — pass if either
-        // side contains the other. Both sides must be non-null to avoid
-        // string.Contains("") trivially passing on every haystack.
-        if (v != null && c != null && (await ContainsValue(v, c) || await ContainsValue(c, v)))
+        // side contains the other. The item is the haystack; the needle is the
+        // ORIGINAL context-ful Data (action.Value / action.Container), never a
+        // fresh re-wrap. Both sides must be non-null to avoid string.Contains("")
+        // trivially passing on every haystack.
+        if (vItem != null && cItem != null
+            && (await vItem.Contains(action.Container!) || await cItem.Contains(action.Value!)))
             return action.Context.Ok<global::app.type.@bool.@this>(true);
 
         return action.Context.Error<global::app.type.@bool.@this>(new AssertionError(
-            FormatValue(c), v,
+            FormatValue(cItem), vItem,
             action.Message?.Peek()?.ToString() ?? "Container does not contain value"));
     }
 
     public async Task<data.@this<global::app.type.@bool.@this>> NotContains(NotContains action)
     {
-        var v = action.Value == null ? null : await action.Value.Value();
-        var c = action.Container == null ? null : await action.Container.Value();
+        var vItem = action.Value == null ? null : await action.Value.Value();
+        var cItem = action.Container == null ? null : await action.Container.Value();
 
         // Same symmetric tolerance as Contains: fail if either side contains
         // the other (otherwise the builder LLM's Value/Container flip would
         // make this assertion silently pass). If either side is null we
         // can't claim containment, so assertion passes vacuously.
-        if (v == null || c == null || (!await ContainsValue(v, c) && !await ContainsValue(c, v)))
+        if (vItem == null || cItem == null
+            || (!await vItem.Contains(action.Container!) && !await cItem.Contains(action.Value!)))
             return action.Context.Ok<global::app.type.@bool.@this>(true);
 
         return action.Context.Error<global::app.type.@bool.@this>(new AssertionError(
-            $"absent: {FormatValue(c)}", v,
+            $"absent: {FormatValue(cItem)}", vItem,
             action.Message?.Peek()?.ToString() ?? "Container contains value but should not"));
     }
 
@@ -151,18 +155,6 @@ public class Default : IAssert
     /// </summary>
     private static async Task<bool> ResolveTruthy(data.@this? data)
         => data != null && await data.ToBooleanAsync();
-
-    // Membership — the ITEM owns the answer (text substring, list element
-    // equality through THE comparison entry, dict key, directory listing).
-    // A door answer still in raw CLR shape (rung-2 carrier) lifts first.
-    private static async Task<bool> ContainsValue(object? container, object? value)
-    {
-        var c = container as global::app.type.item.@this
-            ?? global::app.type.@this.Create(container);
-        if (c == null) return false;
-        var needle = value as data.@this ?? new data.@this("", value);
-        return await c.Contains(needle);
-    }
 
     private static string FormatValue(object? value) => global::app.Diagnostics.Format.Value(value);
 }
