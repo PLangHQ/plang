@@ -6,7 +6,7 @@ public class SnapshotInterfaceTests
     public async Task ISnapshotted_Capture_AppendsTypedEntries_ToSnapshot()
     {
         // Capture writes typed entries; Restore reads them back in order.
-        var s = new Snapshot();
+        var s = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
         var section = s.Section("MySection");
         section.Write("name", "alice");
         section.Write<int>("age", 42);

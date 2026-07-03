@@ -23,10 +23,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// context to born them — born-with-context, never construct-then-stamp. Sub-sections
     /// inherit it. Read-back (<see cref="Create"/>) borns in the data binding's context.
     /// </summary>
-    public global::app.actor.context.@this? Context { get; internal set; }
+    public global::app.actor.context.@this Context { get; internal set; }
 
-    public @this() { }
-    public @this(global::app.actor.context.@this? context) { Context = context; }
+    public @this(global::app.actor.context.@this context) { Context = context; }
 
     /// <summary>
     /// Returns the named subsection, creating it if missing. Subsystems hand the

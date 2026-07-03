@@ -34,7 +34,7 @@ public class CallStackSnapshotTests
         await using var outer = stack.Push(a1);
         await using var inner = stack.Push(a2);
 
-        var section = new Snapshot();
+        var section = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
         stack.Capture(section);
 
         var frames = section.Read<List<Snapshot>>("frames")!;
@@ -58,7 +58,7 @@ public class CallStackSnapshotTests
         await using (var parent = stack.Push(a1))
         {
             await using (var child = stack.Push(a2)) { /* completes here */ }
-            var section = new Snapshot();
+            var section = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
             stack.Capture(section);
             var frames = section.Read<List<Snapshot>>("frames")!;
             await Assert.That(frames.Count).IsEqualTo(1);

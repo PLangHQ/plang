@@ -28,7 +28,7 @@ public class CallSnapshotTests
         var stack = app.CallStack;
         await using var call = stack.Push(action);
 
-        var snap = new Snapshot();
+        var snap = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
         call.Capture(snap);
 
         await Assert.That(snap.Read<string>("goalPrPath")).IsEqualTo(action.Step!.Goal!.PrPath?.ToString());
@@ -45,7 +45,7 @@ public class CallSnapshotTests
         var stack = app.CallStack;
         await using var call = stack.Push(action);
 
-        var snap = new Snapshot();
+        var snap = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
         call.Capture(snap);
 
         await Assert.That(snap.Read<int>("stepIndex")).IsEqualTo(0);
@@ -178,7 +178,7 @@ public class CallSnapshotTests
         app.CallStack.Flags = app.CallStack.Flags with { Timing = true };
         await using var call = app.CallStack.Push(action);
 
-        var snap = new Snapshot();
+        var snap = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
         call.Capture(snap);
 
         // Drop bucket: timing tier and any in-flight network state never reach the snapshot.

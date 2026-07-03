@@ -37,7 +37,7 @@ public class SnapshotResumeTests
     {
         var app = NewApp();
         var data = app.Ok("v");
-        data.Snapshot = new global::app.snapshot.@this(); // empty snapshot
+        data.Snapshot = new global::app.snapshot.@this(global::PLang.Tests.TestApp.SharedContext); // empty snapshot
         var handler = new run { Context = app.User.Context, Callback = data };
         var result = await handler.Run();
         // Empty snapshot → no CallStack section → RestoredChain null → NoPosition.
@@ -48,7 +48,7 @@ public class SnapshotResumeTests
     [Test] public async Task SnapshotResume_EmptyChainAfterRestore_ReturnsNoPositionError()
     {
         var app = NewApp();
-        var snap = new global::app.snapshot.@this();
+        var snap = new global::app.snapshot.@this(global::PLang.Tests.TestApp.SharedContext);
         var result = await snap.Resume(app.User.Context);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NoPosition");
@@ -88,7 +88,7 @@ public class SnapshotResumeTests
         // just pin the API contract: ResumeChain handles >1 frame without
         // throwing on the recursive walk.
         var app = NewApp();
-        var snap = new global::app.snapshot.@this();
+        var snap = new global::app.snapshot.@this(global::PLang.Tests.TestApp.SharedContext);
         var result = await snap.Resume(app.User.Context);
         // Empty chain → NoPosition; demonstrates recursion entry doesn't NRE.
         await Assert.That(result.Error!.Key).IsEqualTo("NoPosition");
