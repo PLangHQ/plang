@@ -42,7 +42,7 @@ public partial class discover : IContext
 
     public async Task<data.@this<global::app.type.list.@this<global::app.tester.test.@this>>> Run()
     {
-        var app = Context.App!;
+        var app = Context.App;
         var empty = data.@this<global::app.type.list.@this<global::app.tester.test.@this>>.Ok(new global::app.type.list.@this<global::app.tester.test.@this>(Context));
 
         var root = await Path.Value();
@@ -173,7 +173,7 @@ public partial class discover : IContext
 
         // Seed branch-coverage chains.
         var chainVisited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        SeedBranchChains(prGoal, Context.App!.Tester.Coverage, chainVisited);
+        SeedBranchChains(prGoal, Context.App.Tester.Coverage, chainVisited);
 
         var file = new global::app.tester.test.@this
         {
@@ -258,7 +258,7 @@ public partial class discover : IContext
         if (depth > 50) return;
         if (!visited.Add(goal.Name)) return;
 
-        var modules = Context.App!.Module;
+        var modules = Context.App.Module;
         var subGoals = new List<Goal>();
         goal.ForEachAction((step, action) =>
         {
@@ -333,7 +333,7 @@ public partial class discover : IContext
                 var targetName = ResolveStaticGoalName(action);
                 if (targetName != null)
                 {
-                    var sub = Context.App!.Goal.Get(targetName);
+                    var sub = Context.App.Goal.Get(targetName);
                     if (sub != null) subGoals.Add(sub);
                 }
             }

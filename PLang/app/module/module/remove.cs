@@ -14,7 +14,7 @@ public partial class Remove : IContext
 
     public async Task<data.@this> Run()
     {
-        var app = Context.App!;
+        var app = Context.App;
         if (!app.Module.Contains((await Name.Value())!.Clr<string>()!))
             return Error(
                 new app.error.ServiceError($"Module '{(await Name.Value())}' not found", "NotFound", 404));

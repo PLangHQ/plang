@@ -258,7 +258,7 @@ public sealed class @this
     /// The goal currently executing — reads CallStack.Current.Action.Step.Goal.
     /// Null at rest (no execution in flight).
     /// </summary>
-    public goal.@this? current => App?.CallStack?.Current?.Action?.Step?.Goal;
+    public goal.@this? current => App?.CallStack.Current?.Action?.Step?.Goal;
 
     /// <summary>
     /// Removes a goal.

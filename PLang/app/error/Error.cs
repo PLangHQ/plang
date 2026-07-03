@@ -205,7 +205,7 @@ public class Error : global::app.type.item.@this, IError
     {
         Goal = context.Goal;
         Context = context;
-        CallFrames = context.CallStack?.Current?.SnapshotChain() ?? (IReadOnlyList<Call>)Array.Empty<Call>();
+        CallFrames = context.CallStack.Current?.SnapshotChain() ?? (IReadOnlyList<Call>)Array.Empty<Call>();
     }
 
     /// <summary>

@@ -60,5 +60,5 @@ public static class Default
     /// raw value parses invariant-culture, exactly as the eager convert path did.
     /// </summary>
     public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
-        => global::app.type.number.@this.Convert(raw, kind, ctx.Context!).Peek();
+        => global::app.type.number.@this.Convert(raw, kind, ctx.Context).Peek();
 }

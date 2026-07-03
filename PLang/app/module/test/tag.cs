@@ -16,7 +16,7 @@ public partial class Tag : IContext
 
     public async Task<data.@this> Run()
     {
-        var currentTest = Context.App!.Tester.CurrentTest;
+        var currentTest = Context.App.Tester.CurrentTest;
         if (currentTest != null
             && (Tags == null ? null : global::app.type.item.@this.Lower<string[]>(await Tags.Value())) is { } tags)
         {

@@ -11,7 +11,7 @@ public partial class Add : IContext
 
     public async Task<data.@this> Run()
     {
-        var app = Context.App!;
+        var app = Context.App;
         var dllPath = (await Path.Value())!;
 
         // ExistsAsync runs first so the "Module not found" message stays the

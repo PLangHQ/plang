@@ -53,7 +53,7 @@ public sealed class @this : IDisposable
     /// The app's call tree. Read-through to <c>App.CallStack</c> — single tree per run,
     /// fork-safe via AsyncLocal. PLang <c>%!callStack%</c> still resolves through this getter.
     /// </summary>
-    public CallStackType? CallStack => App?.CallStack;
+    public CallStackType CallStack => App.CallStack;
 
     /// <summary>
     /// Whether this is an async execution.

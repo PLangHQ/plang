@@ -36,7 +36,7 @@ public partial class getTypes : IContext
     public async Task<data.@this<global::app.type.list.@this<global::app.type.dict.@this>>> Run()
     {
         var goal = ((await Goal.Value()) as global::app.goal.@this)!;
-        var modules = Context.App!.Module;
+        var modules = Context.App.Module;
 
         var perStep = new List<Dictionary<string, string>>(goal.Steps.Count);
         var working = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -54,7 +54,7 @@ public partial class getTypes : IContext
 
             foreach (var action in goal.Steps[i].Actions ?? new())
             {
-                ProcessAction(action, working, snapshot, ref chainReturnType, modules, Context.App!);
+                ProcessAction(action, working, snapshot, ref chainReturnType, modules, Context.App);
             }
         }
 

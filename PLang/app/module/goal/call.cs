@@ -53,6 +53,6 @@ public partial class Call : IContext
         // actor's context. Only resolve Actor when it actually holds one, so a null
         // value never tries to convert into an actor.
         var execContext = (Actor == null || await Actor.IsEmpty() ? null : await Actor.Value())?.Context ?? Context;
-        return await Context.App!.RunGoalAsync(goalCall, execContext);
+        return await Context.App.RunGoalAsync(goalCall, execContext);
     }
 }
