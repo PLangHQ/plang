@@ -390,13 +390,12 @@ public sealed class @this
     /// <summary>
     /// Loads all goals from a directory.
     /// </summary>
-    public async Task<data.@this> LoadFromDirectoryAsync(app.@this app, string directory, string pattern = "*.pr", actor.context.@this? context = null, CancellationToken cancellationToken = default)
+    public async Task<data.@this> LoadFromDirectoryAsync(app.@this app, string directory, actor.context.@this context, string pattern = "*.pr", CancellationToken cancellationToken = default)
     {
         try
         {
             // Lift to path.List — gated through AuthGate(Read). In-root walks
             // fast-pass; out-of-root would prompt or deny.
-            context = context ?? app.System.Context!;
             var dirPath = global::app.type.path.@this.Resolve(directory, context);
             var listed = await dirPath.List(pattern, recursive: true);
             if (!listed.Success || listed.Peek().IsNull)

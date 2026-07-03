@@ -242,7 +242,7 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
-        var result = await engine.RunGoalAsync(new GoalCall { Name = "NonexistentGoal" });
+        var result = await engine.RunGoalAsync(new GoalCall { Name = "NonexistentGoal" }, engine.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
@@ -256,7 +256,7 @@ public class EngineTests
         goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
-        var result = await engine.RunGoalAsync(new GoalCall { Name = "EmptyGoal" });
+        var result = await engine.RunGoalAsync(new GoalCall { Name = "EmptyGoal" }, engine.User.Context);
 
         await result.IsSuccess();
     }
@@ -282,7 +282,7 @@ public class EngineTests
         // Cancel via the engine's shutdown — Goal.RunAsync checks context.CancellationToken
         engine.RequestShutdown();
 
-        var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" });
+        var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" }, engine.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Cancelled");
@@ -355,7 +355,7 @@ public class EngineTests
         goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
-        var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" });
+        var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" }, engine.User.Context);
 
         await result.IsFailure();
     }
