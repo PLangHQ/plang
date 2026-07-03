@@ -197,9 +197,7 @@ public class SignActionTests
 
         var sd = Layer(result);
         var provider = new Ed25519();
-        var verifyResult = provider.Verify(sd.ToSigningBytes(), sd.Signature.Value, sd.Identity.ToString());
-        await verifyResult.IsSuccess();
-        await Assert.That((await verifyResult.Value())!.Value).IsTrue();
+        await Assert.That(provider.Verify(sd).Value).IsTrue();
     }
 
     #endregion
@@ -289,8 +287,8 @@ public class SignActionTests
         public MockSigningProvider(string name) { Name = name; }
 
         public (KeyPair? keys, global::app.error.IError? error) GenerateKeyPair() => _inner.GenerateKeyPair();
-        public global::app.data.@this<global::app.type.binary.@this> Sign(byte[] data, string privateKey) => _inner.Sign(data, privateKey);
-        public global::app.data.@this<global::app.type.@bool.@this> Verify(byte[] data, byte[] signature, string publicKey) => _inner.Verify(data, signature, publicKey);
+        public global::app.type.binary.@this Sign(global::app.type.signature.@this unsigned, global::app.type.text.@this privateKey) => _inner.Sign(unsigned, privateKey);
+        public global::app.type.@bool.@this Verify(global::app.type.signature.@this signature) => _inner.Verify(signature);
         public async Task<global::app.data.@this> SignAsync(sign action) { SignCalled = true; return await _inner.SignAsync(action); }
         public Task<global::app.data.@this<global::app.type.@bool.@this>> VerifyAsync(verify action) => _inner.VerifyAsync(action);
     }
@@ -304,8 +302,8 @@ public class SignActionTests
 
         public string? Source { get; set; }
         public (KeyPair? keys, global::app.error.IError? error) GenerateKeyPair() => (null, new ActionError("Key generation failed", "KeyGenerationError", 500));
-        public global::app.data.@this<global::app.type.binary.@this> Sign(byte[] data, string privateKey) => global::app.data.@this<global::app.type.binary.@this>.FromError(new ActionError("Sign failed", "SigningError", 500));
-        public global::app.data.@this<global::app.type.@bool.@this> Verify(byte[] data, byte[] signature, string publicKey) => global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Verify failed", "SignatureInvalid", 400));
+        public global::app.type.binary.@this Sign(global::app.type.signature.@this unsigned, global::app.type.text.@this privateKey) => throw new global::app.error.AppException("Sign failed", "SigningError", 500);
+        public global::app.type.@bool.@this Verify(global::app.type.signature.@this signature) => throw new global::app.error.AppException("Verify failed", "SignatureInvalid", 400);
         public Task<global::app.data.@this> SignAsync(sign action) => Task.FromResult(global::app.data.@this.FromError(new ActionError("Sign failed", "SigningError", 500)));
         public Task<global::app.data.@this<global::app.type.@bool.@this>> VerifyAsync(verify action) => Task.FromResult(global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Verify failed", "SignatureInvalid", 400)));
     }

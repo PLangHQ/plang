@@ -18,11 +18,11 @@ public class NoCtorSigningProvider : ISigning
     public (KeyPair? keys, app.error.IError? error) GenerateKeyPair()
         => (new KeyPair("pub", "priv"), null);
 
-    public app.data.@this<global::app.type.binary.@this> Sign(byte[] data, string privateKey)
-        => app.data.@this<global::app.type.binary.@this>.Ok(new byte[64]);
+    public global::app.type.binary.@this Sign(global::app.type.signature.@this unsigned, global::app.type.text.@this privateKey)
+        => new global::app.type.binary.@this(new byte[64]);
 
-    public app.data.@this<global::app.type.@bool.@this> Verify(byte[] data, byte[] signature, string publicKey)
-        => app.data.@this<global::app.type.@bool.@this>.Ok(true);
+    public global::app.type.@bool.@this Verify(global::app.type.signature.@this signature)
+        => new global::app.type.@bool.@this(true);
 
     public Task<app.data.@this> SignAsync(sign action)
         => Task.FromResult(app.data.@this.Ok());

@@ -43,9 +43,9 @@ public class Ed25519 : ISigning
             ? now.Add(expiry.Value) : null;
         var contracts = action.Contracts == null ? null : await action.Contracts.Value();
 
-        // Build the unsigned layer wrapping the data, compute its signing bytes,
+        // Build the unsigned signature wrapping the data, compute its signing bytes,
         // sign with the identity's private key, stamp the signature in.
-        var layer = new global::app.type.signature.@this(
+        var unsigned = new global::app.type.signature.@this(
             value: action.Data!,
             algorithm: new global::app.type.text.@this(Name),
             nonce: new global::app.type.text.@this(nonce),
@@ -56,16 +56,20 @@ public class Ed25519 : ISigning
             expires: expires is { } e ? new global::app.type.datetime.@this(e) : null,
             contracts: contracts);
 
-        var signResult = Sign(layer.ToSigningBytes(), identity.PrivateKey);
-        if (!signResult.Success) return signResult;
-        var signed = layer.Signed((await signResult.Value())!);
-
-        return action.Context.Ok(signed);
+        try
+        {
+            var signed = unsigned.Signed(Sign(unsigned, new global::app.type.text.@this(identity.PrivateKey)));
+            return action.Context.Ok(signed);
+        }
+        catch (Exception ex)
+        {
+            return action.Context.Error(ActionError.FromException(ex, "SigningError", 500));
+        }
     }
 
     public virtual async Task<data.@this<global::app.type.@bool.@this>> VerifyAsync(verify action)
     {
-        if (action.Data?.Peek() is not global::app.type.signature.@this layer)
+        if (action.Data?.Peek() is not global::app.type.signature.@this signature)
             return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Data has no signature", "NoSignature", 400));
 
         var app = action.Context.App;
@@ -84,13 +88,13 @@ public class Ed25519 : ISigning
         // whose intrinsic lifetime is governed by step 2's Expires.
         if (!skipFreshness)
         {
-            var age = now - layer.Created.Value;
+            var age = now - signature.Created.Value;
             if (age.TotalMilliseconds > effectiveTimeout)
                 return action.Context.Error<global::app.type.@bool.@this>(new ActionError($"Signature timed out (age: {age.TotalMilliseconds:F0}ms, timeout: {effectiveTimeout}ms)", "TimedOut", 400));
         }
 
         // 2. Expiry check (signature's intrinsic lifetime — null = permanent).
-        if (layer.Expires is { } exp && now > exp.Value)
+        if (signature.Expires is { } exp && now > exp.Value)
             return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Signature has expired", "Expired", 400));
 
         // 3. Nonce replay check — paired with step 1 (wire-freshness). For
@@ -98,7 +102,7 @@ public class Ed25519 : ISigning
         // which isn't replay; skip alongside step 1.
         if (!skipFreshness)
         {
-            var nonceCacheKey = $"nonce:{layer.Nonce}";
+            var nonceCacheKey = $"nonce:{signature.Nonce}";
             var cacheSettings = new CacheSettings { DurationMs = effectiveTimeout };
             var nonceAdded = await app.Cache.TryAddAsync(nonceCacheKey, action.Context.Ok(true), cacheSettings);
             if (!nonceAdded)
@@ -111,12 +115,12 @@ public class Ed25519 : ISigning
         var expectedContracts = contractsList == null ? null
             : System.Linq.Enumerable.ToList(System.Linq.Enumerable.Select(
                 contractsList.Items, d => d.Peek().ToString() ?? ""));
-        if (!ContractsMatch(System.Linq.Enumerable.ToList(layer.ContractStrings()), expectedContracts))
+        if (!ContractsMatch(System.Linq.Enumerable.ToList(signature.ContractStrings()), expectedContracts))
             return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Contract mismatch", "ContractMismatch", 400));
 
         // 5. Data hash verification — rehash the inner value, compare to the
         // signed digest (which carries its own algorithm).
-        var storedHash = layer.Hash;
+        var storedHash = signature.Hash;
         if (storedHash.Bytes.Length == 0)
             return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Missing data hash", "DataHashMismatch", 400));
 
@@ -125,20 +129,27 @@ public class Ed25519 : ISigning
         // value is a property-bag carrying every [Store] field; hashing it in Out view (a subset)
         // would diverge from the sign-time Store hash.
         var rehash = await app.RunAction<Hash>(
-            new Hash { Data = layer.Value, Algorithm = new data.@this<global::app.type.text.@this>("", storedHash.Algorithm, context: action.Context),
+            new Hash { Data = signature.Value, Algorithm = new data.@this<global::app.type.text.@this>("", storedHash.Algorithm, context: action.Context),
                        StoreView = new data.@this<global::app.type.@bool.@this>("", skipFreshness, context: action.Context) }, action.Context);
         if (!rehash.Success) return global::app.data.@this<global::app.type.@bool.@this>.From(rehash);
         if (await rehash.Value() is not global::app.module.crypto.type.hash.@this rehashValue || !rehashValue.DigestEquals(storedHash))
             return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
 
-        // 6. Signature verification — over the layer's canonical signing bytes.
-        if (layer.Signature.Value.Length == 0)
+        // 6. Signature verification — over the signature's canonical signing bytes.
+        if (signature.Signature.Value.Length == 0)
             return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Missing signature", "SignatureInvalid", 400));
 
-        var verifyResult = Verify(layer.ToSigningBytes(), layer.Signature.Value, layer.Identity.ToString());
-        if (!verifyResult.Success) return global::app.data.@this<global::app.type.@bool.@this>.From(verifyResult);
-
-        return action.Context.Ok<global::app.type.@bool.@this>(true);
+        try
+        {
+            if (!Verify(signature).Value)
+                return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Signature verification failed", "SignatureInvalid", 400));
+            return action.Context.Ok<global::app.type.@bool.@this>(true);
+        }
+        catch (Exception ex) when (ex is FormatException or ArgumentException
+            or System.Security.Cryptography.CryptographicException or InvalidOperationException)
+        {
+            return action.Context.Error<global::app.type.@bool.@this>(ActionError.FromException(ex, "SignatureInvalid", 400));
+        }
     }
 
     private static bool ContractsMatch(List<string>? signed, List<string>? required)
@@ -177,44 +188,25 @@ public class Ed25519 : ISigning
         }
     }
 
-    public data.@this<global::app.type.binary.@this> Sign(byte[] data, string privateKeyBase64)
+    // Low-level crypto primitives: no context (a shared provider serves every actor), so they
+    // return the VALUE and THROW on failure. The context-ful [Code] boundary (SignAsync /
+    // VerifyAsync, which hold action.Context) borns the data.error. Same shape as number ops.
+    // They speak plang types; CLR appears only at the NSec call (the 3rd-party perimeter), where
+    // the signature is decomposed into its signing bytes / identity / signature bytes.
+    public global::app.type.binary.@this Sign(global::app.type.signature.@this unsigned, global::app.type.text.@this privateKey)
     {
-        try
-        {
-            var algorithm = SignatureAlgorithm.Ed25519;
-            var privateKeyBytes = Convert.FromBase64String(privateKeyBase64);
-
-            using var key = Key.Import(algorithm, privateKeyBytes, KeyBlobFormat.RawPrivateKey,
-                new KeyCreationParameters { ExportPolicy = KeyExportPolicies.AllowPlaintextExport });
-
-            var signature = algorithm.Sign(key, data);
-            return global::app.data.@this<global::app.type.binary.@this>.Ok(signature);
-        }
-        catch (Exception ex)
-        {
-            return global::app.data.@this<global::app.type.binary.@this>.FromError(ActionError.FromException(ex, "SigningError", 500));
-        }
+        var algorithm = SignatureAlgorithm.Ed25519;
+        var privateKeyBytes = Convert.FromBase64String(privateKey.ToString());
+        using var key = Key.Import(algorithm, privateKeyBytes, KeyBlobFormat.RawPrivateKey,
+            new KeyCreationParameters { ExportPolicy = KeyExportPolicies.AllowPlaintextExport });
+        return new global::app.type.binary.@this(algorithm.Sign(key, unsigned.ToSigningBytes()));
     }
 
-    public data.@this<global::app.type.@bool.@this> Verify(byte[] data, byte[] signature, string publicKeyBase64)
+    public global::app.type.@bool.@this Verify(global::app.type.signature.@this signature)
     {
-        try
-        {
-            var algorithm = SignatureAlgorithm.Ed25519;
-            var publicKeyBytes = Convert.FromBase64String(publicKeyBase64);
-
-            var publicKey = NSec.Cryptography.PublicKey.Import(algorithm, publicKeyBytes, KeyBlobFormat.RawPublicKey);
-            var isValid = algorithm.Verify(publicKey, data, signature);
-
-            if (!isValid)
-                return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Signature verification failed", "SignatureInvalid", 400));
-
-            return global::app.data.@this<global::app.type.@bool.@this>.Ok(true);
-        }
-        catch (Exception ex) when (ex is FormatException or ArgumentException
-            or System.Security.Cryptography.CryptographicException or InvalidOperationException)
-        {
-            return global::app.data.@this<global::app.type.@bool.@this>.FromError(ActionError.FromException(ex, "SignatureInvalid", 400));
-        }
+        var algorithm = SignatureAlgorithm.Ed25519;
+        var publicKeyBytes = Convert.FromBase64String(signature.Identity.ToString());
+        var nsecPublicKey = NSec.Cryptography.PublicKey.Import(algorithm, publicKeyBytes, KeyBlobFormat.RawPublicKey);
+        return new global::app.type.@bool.@this(algorithm.Verify(nsecPublicKey, signature.ToSigningBytes(), signature.Signature.Value));
     }
 }

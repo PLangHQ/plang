@@ -406,8 +406,8 @@ public class ProviderModuleTests
         public MockSigningProvider(string name) { Name = name; }
 
         public (KeyPair? keys, global::app.error.IError? error) GenerateKeyPair() => (new KeyPair("mockPub", "mockPriv"), null);
-        public global::app.data.@this<global::app.type.binary.@this> Sign(byte[] data, string privateKey) => global::app.data.@this<global::app.type.binary.@this>.Ok(new byte[64]);
-        public global::app.data.@this<global::app.type.@bool.@this> Verify(byte[] data, byte[] signature, string publicKey) => global::app.data.@this<global::app.type.@bool.@this>.Ok(true);
+        public global::app.type.binary.@this Sign(global::app.type.signature.@this unsigned, global::app.type.text.@this privateKey) => new global::app.type.binary.@this(new byte[64]);
+        public global::app.type.@bool.@this Verify(global::app.type.signature.@this signature) => new global::app.type.@bool.@this(true);
         public Task<global::app.data.@this> SignAsync(sign action) => Task.FromResult(global::app.data.@this.Ok());
         public Task<global::app.data.@this<global::app.type.@bool.@this>> VerifyAsync(verify action) => Task.FromResult(global::app.data.@this<global::app.type.@bool.@this>.Ok(true));
     }
