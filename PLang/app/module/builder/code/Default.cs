@@ -628,18 +628,13 @@ public class Default : IBuilder
                 errors.Add($"{a.Module}.{a.ActionName}: {buildResult.Error?.Message ?? "Build() failed"}");
                 break;
             }
-            // Build() may return either the structured type entity (file.read,
-            // post-Stage-6) or a bare type-name string (llm.query → "json",
-            // legacy handlers). Normalize a string to the structured form so
-            // the terminal variable.set always gets a {name, kind?} Type.
-            var hint = await buildResult.Value();
-            if (hint is global::app.type.@this typeEntity)
-                actions.StampTerminalType(typeEntity, context);
-            // A bare type-name (legacy handlers) rides as text — its string
-            // face normalizes to the structured form.
-            else if (hint is global::app.type.text.@this
-                     && hint.ToString() is { Length: > 0 } typeName)
-                actions.StampTerminalType(app.type.@this.Create(typeName, context: context), context);
+            // Publish this action's Build() result as %!buildData% — the handle the
+            // NEXT action's Build() reads to see what it captures (mirrors runtime's
+            // %!data%, but build-scoped so it can't clobber the runtime %!data% the
+            // System actor uses while the builder runs). The pass stays generic: it
+            // never special-cases variable.set; each handler decides whether to use
+            // %!buildData% (variable.set.Build does).
+            await context.Variable.Set("!buildData", buildResult);
         }
         return errors;
     }

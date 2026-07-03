@@ -75,6 +75,31 @@ public partial class Set : IContext, IBuildValidatable
     [Default(false)]
     public partial data.@this<global::app.type.@bool.@this> AsDefault { get; init; }
 
+    // Build-time: with no `as` clause, adopt the type of what I capture. The
+    // preceding action published its return as %!buildData%; I take its type onto
+    // my own Type parameter. An explicit user hint (Type present) wins — I only
+    // stamp when absent. The build pass stays generic; the decision lives here.
+    // (Build-scoped handle, distinct from runtime's %!data%, which the System
+    // actor is actively using while the builder runs.)
+    public async Task<data.@this> Build()
+    {
+        // TAPER (see .bot/context-never-null/coder/builder-read-unification-plan.md): the
+        // clean typed version (this.Type = …, one deserializer) pends the architect. For
+        // now, adopt the type of what I capture (%!buildData%, published by the build pass
+        // from the preceding action) by writing my Type param via __action.Parameters.
+        // User hint wins — an authored Type param already present is left alone.
+        foreach (var p in __action.Parameters)
+            if (string.Equals(p.Name, "Type", System.StringComparison.OrdinalIgnoreCase)) return Context.Ok();
+
+        var source = (await Context.Variable.Get("!buildData")).Peek();
+        var inferred = source as global::app.type.@this
+            ?? (source is global::app.type.text.@this t && t.ToString() is { Length: > 0 } n
+                ? global::app.type.@this.Create(n, context: Context) : null);
+        if (inferred is { IsNull: false })
+            __action.Parameters.Add(new data.@this("Type", inferred, context: Context));
+        return Context.Ok();
+    }
+
     public async Task<data.@this> Run()
     {
         // Resolve the name door up front; the VALUE door stays closed on this path —

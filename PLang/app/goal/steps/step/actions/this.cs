@@ -35,26 +35,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public void Add(action.@this item) => _items.Add(item);
     public void AddRange(IEnumerable<action.@this> items) => _items.AddRange(items);
     public void Clear() => _items.Clear();
-
-    /// <summary>
-    /// Build-time type inference: the trailing <c>variable.set</c> adopts
-    /// <paramref name="inferred"/> as its <c>Type</c> parameter, unless it already
-    /// declares one (an explicit user hint wins). Walks backwards for the terminal
-    /// set; last inference in a step wins. No-op when the step has no variable.set.
-    /// </summary>
-    public void StampTerminalType(global::app.type.@this inferred, global::app.actor.context.@this context)
-    {
-        for (int i = _items.Count - 1; i >= 0; i--)
-        {
-            var a = _items[i];
-            if (!string.Equals(a.Module, "variable", System.StringComparison.OrdinalIgnoreCase)) continue;
-            if (!string.Equals(a.ActionName, "set", System.StringComparison.OrdinalIgnoreCase)) continue;
-            foreach (var p in a.Parameters)
-                if (string.Equals(p.Name, "Type", System.StringComparison.OrdinalIgnoreCase)) return;
-            a.Parameters.Add(new global::app.data.@this("Type", inferred, context: context));
-            return;
-        }
-    }
     public bool Contains(action.@this item) => _items.Contains(item);
     public void CopyTo(action.@this[] array, int arrayIndex) => _items.CopyTo(array, arrayIndex);
     public int IndexOf(action.@this item) => _items.IndexOf(item);
