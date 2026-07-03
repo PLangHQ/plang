@@ -26,7 +26,7 @@ public class ModuleRemoveTests
         // "variable" is a built-in module
         await Assert.That(_app.Module.Contains("variable")).IsTrue();
 
-        var action = new Remove { Context = _app.User.Context, Name = (global::app.type.text.@this)"variable" };
+        var action = new Remove(_app.User.Context) { Name = (global::app.type.text.@this)"variable" };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -36,7 +36,7 @@ public class ModuleRemoveTests
     [Test]
     public async Task Remove_NonexistentModule_ReturnsNotFound()
     {
-        var action = new Remove { Context = _app.User.Context, Name = (global::app.type.text.@this)"nonexistent" };
+        var action = new Remove(_app.User.Context) { Name = (global::app.type.text.@this)"nonexistent" };
         var result = await action.Run();
 
         await result.IsFailure();
@@ -47,10 +47,10 @@ public class ModuleRemoveTests
     [Test]
     public async Task Remove_ThenActions_NotResolvable()
     {
-        var action = new Remove { Context = _app.User.Context, Name = (global::app.type.text.@this)"variable" };
+        var action = new Remove(_app.User.Context) { Name = (global::app.type.text.@this)"variable" };
         await action.Run();
 
-        var (resolved, error) = _app.Module.GetCodeGenerated(new PrAction { Module = "variable", ActionName = "set" });
+        var (resolved, error) = _app.Module.GetCodeGenerated(new PrAction { Module = "variable", ActionName = "set" }, global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(resolved).IsNull();
         await Assert.That(error).IsNotNull();
     }

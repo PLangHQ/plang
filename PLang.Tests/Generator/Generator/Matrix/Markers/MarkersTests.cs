@@ -19,7 +19,7 @@ public class IContextHandlerTests
     {
         await using var app = TestApp.Create("/app");
         var action = new PrAction { Module = "matrix.markers", ActionName = "icontexthandler" };
-        var (h, err) = await new IContextHandler().Resolve(action, app.User.Context);
+        var (h, err) = await new IContextHandler(app.User.Context).Resolve(action, app.User.Context);
         await Assert.That(err).IsNull();
         await Assert.That(ReferenceEquals(((IContextHandler)h!).Context, app.User.Context)).IsTrue();
     }

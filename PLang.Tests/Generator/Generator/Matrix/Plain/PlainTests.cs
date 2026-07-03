@@ -22,7 +22,7 @@ public class StringPlainTests
     {
         // Direct ExecuteAsync — read the property twice through the handler instance.
         await using var app = TestApp.Create("/app");
-        var handler = new StringPlain();
+        var handler = new StringPlain(app.User.Context);
         var action = new PrAction
         {
             Module = "matrix.plain",

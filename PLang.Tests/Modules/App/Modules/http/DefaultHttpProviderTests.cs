@@ -41,10 +41,7 @@ public class DefaultHttpProviderTests
     public async Task Provider_Configure_AcceptsValidConfig()
     {
         var provider = new Default();
-        var action = new configure
-        {
-            Context = Ctx,
-            FollowRedirects = (global::app.type.@bool.@this)true,
+        var action = new configure(Ctx) { FollowRedirects = (global::app.type.@bool.@this)true,
             MaxRedirects = (global::app.type.number.@this)5
         };
 
@@ -58,10 +55,7 @@ public class DefaultHttpProviderTests
     public async Task Provider_Configure_SetsTimeout()
     {
         var provider = new Default();
-        var action = new configure
-        {
-            Context = Ctx,
-            TimeoutInSec = (global::app.type.number.@this)60
+        var action = new configure(Ctx) { TimeoutInSec = (global::app.type.number.@this)60
         };
 
         var result = provider.Configure(action);
@@ -78,10 +72,7 @@ public class DefaultHttpProviderTests
     public async Task Provider_Configure_SetsBaseUrl()
     {
         var provider = new Default();
-        var action = new configure
-        {
-            Context = Ctx,
-            BaseUrl = (global::app.type.text.@this)"https://api.example.com"
+        var action = new configure(Ctx) { BaseUrl = (global::app.type.text.@this)"https://api.example.com"
         };
 
         var result = provider.Configure(action);

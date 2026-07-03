@@ -39,7 +39,7 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_ReturnsAllModulesAndActions()
     {
-        var action = new GetActions { Context = _app.User.Context };
+        var action = new GetActions(_app.User.Context);
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -51,7 +51,7 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_ParameterTypes_IncludeNullableMarkers()
     {
-        var action = new GetActions { Context = _app.User.Context };
+        var action = new GetActions(_app.User.Context);
         var result = await _app.RunAction(action, _app.User.Context);
         var actions = (StepActions)(await result.Value())!;
 
@@ -65,7 +65,7 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_VariableNameParams_Marked()
     {
-        var action = new GetActions { Context = _app.User.Context };
+        var action = new GetActions(_app.User.Context);
         var result = await _app.RunAction(action, _app.User.Context);
         var actions = (StepActions)(await result.Value())!;
 
@@ -82,7 +82,7 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_DefaultValues_Included()
     {
-        var action = new GetActions { Context = _app.User.Context };
+        var action = new GetActions(_app.User.Context);
         var result = await _app.RunAction(action, _app.User.Context);
         var actions = (StepActions)(await result.Value())!;
 
@@ -98,7 +98,7 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_CacheableFlag_FromActionAttribute()
     {
-        var action = new GetActions { Context = _app.User.Context };
+        var action = new GetActions(_app.User.Context);
         var result = await _app.RunAction(action, _app.User.Context);
         var actions = (StepActions)(await result.Value())!;
 
@@ -116,7 +116,7 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_ExcludesProviderProperties()
     {
-        var action = new GetActions { Context = _app.User.Context };
+        var action = new GetActions(_app.User.Context);
         var result = await _app.RunAction(action, _app.User.Context);
         var actions = (StepActions)(await result.Value())!;
 
@@ -145,10 +145,7 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_ActionsFilter_RestrictsToNamed()
     {
-        var action = new GetActions
-        {
-            Context = _app.User.Context,
-            Actions = new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(new List<string> { "file.read", "file.save" }, _app.User.Context))
+        var action = new GetActions(_app.User.Context) { Actions = new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(new List<string> { "file.read", "file.save" }, _app.User.Context))
         };
         var result = await _app.RunAction(action, _app.User.Context);
 
@@ -166,14 +163,11 @@ public class GetActionsTests
         // Empty list semantic = "no filter" (matches the Default.cs check
         // `if (filter is { Count: > 0 })`). A regression that flipped this to
         // "filter to nothing" would silently drop every action.
-        var unfiltered = new GetActions { Context = _app.User.Context };
+        var unfiltered = new GetActions(_app.User.Context);
         var fullResult = await _app.RunAction(unfiltered, _app.User.Context);
         var fullCount = ((StepActions)(await fullResult.Value())!).Count;
 
-        var action = new GetActions
-        {
-            Context = _app.User.Context,
-            Actions = new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(new List<string>(), _app.User.Context))
+        var action = new GetActions(_app.User.Context) { Actions = new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(new List<string>(), _app.User.Context))
         };
         var result = await _app.RunAction(action, _app.User.Context);
 
@@ -186,10 +180,7 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_ActionsFilter_UnknownName_ReturnsEmptyNoError()
     {
-        var action = new GetActions
-        {
-            Context = _app.User.Context,
-            Actions = new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(new List<string> { "nonexistent.action" }, _app.User.Context))
+        var action = new GetActions(_app.User.Context) { Actions = new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(new List<string> { "nonexistent.action" }, _app.User.Context))
         };
         var result = await _app.RunAction(action, _app.User.Context);
 
@@ -202,10 +193,7 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_ActionsFilter_IsCaseInsensitive()
     {
-        var action = new GetActions
-        {
-            Context = _app.User.Context,
-            Actions = new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(new List<string> { "File.Read", "FILE.SAVE" }, _app.User.Context))
+        var action = new GetActions(_app.User.Context) { Actions = new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(new List<string> { "File.Read", "FILE.SAVE" }, _app.User.Context))
         };
         var result = await _app.RunAction(action, _app.User.Context);
 

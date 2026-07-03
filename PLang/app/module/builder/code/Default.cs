@@ -155,9 +155,8 @@ public class Default : IBuilder
             // System.IO.Path arithmetic needed.
             rootRelative = global::app.type.path.@this.Resolve(searchPath, context).Absolute;
 
-        var listAction = new file.List
+        var listAction = new file.List(context)
         {
-            Context = context,
             Path = context.Ok<path>(path.Resolve(rootRelative, context)),
             Pattern = new data.@this<global::app.type.text.@this>("", "*.goal", context: context),
             Recursive = new data.@this<global::app.type.@bool.@this>("", true, context: context)
@@ -205,7 +204,7 @@ public class Default : IBuilder
 
         foreach (var file in files)
         {
-            var readAction = new file.Read { Context = context, Path = context.Ok<path>(file) };
+            var readAction = new file.Read(context) { Path = context.Ok<path>(file) };
             var readResult = await app.RunAction(readAction, context);
             if (!readResult.Success)
             {
@@ -280,9 +279,8 @@ public class Default : IBuilder
         await serializer.SerializeItemAsync(ms, goal, global::app.View.Store);
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
 
-        var saveAction = new file.Save
+        var saveAction = new file.Save(context)
         {
-            Context = context,
             Path = context.Ok<path>(prPath),
             Value = new data.@this("", json, context: context)
         };
@@ -612,7 +610,7 @@ public class Default : IBuilder
         var errors = new List<string>();
         foreach (var a in actions)
         {
-            var (shell, _) = modules.GetCodeGenerated(a);
+            var (shell, _) = modules.GetCodeGenerated(a, context);
             if (shell == null) continue;
             // Resolve builds a populated instance (params decoded); Build() reads them.
             var (handler, resolveErr) = await shell.Resolve(a, context);
@@ -1057,9 +1055,8 @@ public class Default : IBuilder
         var prPath = goal.PrPath;
         if (prPath == null) return errors;
 
-        var readAction = new file.Read
+        var readAction = new file.Read(context)
         {
-            Context = context,
             Path = context.Ok<path>(prPath)
         };
         var readResult = await app.RunAction(readAction, context);

@@ -65,7 +65,7 @@ public class Stage0_BuildMethodTests
     [Test]
     public async Task IClass_BuildDefaultImpl_ReturnsDataOkNoValue()
     {
-        var handler = (IClass)new NoopBuild();
+        var handler = (IClass)new NoopBuild(_app.User.Context);
         var result = await handler.Build();
         await result.IsSuccess();
         await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();

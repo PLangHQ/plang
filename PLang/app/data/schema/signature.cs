@@ -102,7 +102,7 @@ public sealed class signature : ISchemaReader
 
             var carrier = Data.Ok(layer);
             carrier.Context = context;
-            var verifyAction = new global::app.module.signing.verify
+            var verifyAction = new global::app.module.signing.verify(context)
             {
                 Data = carrier,
                 SkipFreshnessCheck = new global::app.data.@this<global::app.type.@bool.@this>(

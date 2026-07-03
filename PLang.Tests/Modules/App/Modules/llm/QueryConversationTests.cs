@@ -52,10 +52,7 @@ public class QueryConversationTests
         };
 
         // First query
-        var action1 = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action1 = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "system", Content = "You are helpful" },
                 new LlmMessage { Role = "user", Content = "What is 2+2?" }
@@ -66,10 +63,7 @@ public class QueryConversationTests
         await action1.Run();
 
         // Second query with continuation
-        var action2 = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action2 = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "And 3+3?" }
             }.ToListData<LlmMessage>(),
@@ -96,15 +90,12 @@ public class QueryConversationTests
 
         // First query — stores conversation
         var action1 = LlmTestHelper.MakeQuery(Ctx, userText: "first question");
-        action1 = new query { Context = Ctx, Messages = action1.Messages, Cache = (global::app.type.@bool.@this)false };
+        action1 = new query(Ctx) { Messages = action1.Messages, Cache = (global::app.type.@bool.@this)false };
         await action1.Attach(null, Ctx);
         await action1.Run();
 
         // Second query with ContinuePreviousConversation = (global::app.type.@bool.@this)false — should clear
-        var action2 = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action2 = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "fresh start" }
             }.ToListData<LlmMessage>(),
@@ -126,10 +117,7 @@ public class QueryConversationTests
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("{\"ok\":true}")));
 
         // First query with schema
-        var action1 = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action1 = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "system", Content = "analyze" },
                 new LlmMessage { Role = "user", Content = "test" }
@@ -141,10 +129,7 @@ public class QueryConversationTests
         await action1.Run();
 
         // Second query continuing conversation with same schema
-        var action2 = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action2 = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "again" }
             }.ToListData<LlmMessage>(),
@@ -169,10 +154,7 @@ public class QueryConversationTests
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("{\"result\":\"ok\"}")));
 
         // First query with schema
-        var action1 = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action1 = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "system", Content = "analyze" },
                 new LlmMessage { Role = "user", Content = "test" }
@@ -184,10 +166,7 @@ public class QueryConversationTests
         await action1.Run();
 
         // Second query: no schema, continue conversation → should reuse
-        var action2 = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action2 = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "again" }
             }.ToListData<LlmMessage>(),
@@ -208,10 +187,7 @@ public class QueryConversationTests
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("{\"data\":1}")));
 
         // First query with schema A
-        var action1 = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action1 = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
@@ -222,10 +198,7 @@ public class QueryConversationTests
         await action1.Run();
 
         // Second query with schema B
-        var action2 = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action2 = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test2" }
             }.ToListData<LlmMessage>(),

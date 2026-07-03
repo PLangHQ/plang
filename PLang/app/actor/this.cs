@@ -123,7 +123,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         {
             var (idProvider, _) = app.Code.Get<IIdentity>();
             if (idProvider == null) return null;
-            var result = idProvider.GetOrCreateDefaultAsync(new global::app.module.identity.Get { Context = app.System.Context }).GetAwaiter().GetResult();
+            var result = idProvider.GetOrCreateDefaultAsync(new global::app.module.identity.Get(app.System.Context)).GetAwaiter().GetResult();
             return result.Success ? global::app.type.item.@this.Lower<Identity>(result.Peek()) : null;
         }));
     }

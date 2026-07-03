@@ -105,7 +105,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
         var ch = new StreamChannel("i", ms, ChannelDirection.Bidirectional, ownsStream: false)
         { Mime = "text/plain" };
         app.User.Channel.Register(ch);
-        var result = await ch.Ask(new global::app.module.output.ask { Question = new global::app.data.@this<global::app.type.text.@this>("", "", context: app.User.Context) });
+        var result = await ch.Ask(new global::app.module.output.ask(app.User.Context) { Question = new global::app.data.@this<global::app.type.text.@this>("", "", context: app.User.Context) });
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("answer");
     }
@@ -125,7 +125,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
             Encoding = "iso-8859-1"
         };
         app.User.Channel.Register(ch);
-        var result = await ch.Ask(new global::app.module.output.ask { Question = new global::app.data.@this<global::app.type.text.@this>("", "", context: app.User.Context) });
+        var result = await ch.Ask(new global::app.module.output.ask(app.User.Context) { Question = new global::app.data.@this<global::app.type.text.@this>("", "", context: app.User.Context) });
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("é");
     }
@@ -141,7 +141,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
             Timeout = TimeSpan.FromMilliseconds(100)
         };
         app.User.Channel.Register(ch);
-        var result = await ch.Ask(new global::app.module.output.ask { Question = new global::app.data.@this<global::app.type.text.@this>("", "", context: app.User.Context) });
+        var result = await ch.Ask(new global::app.module.output.ask(app.User.Context) { Question = new global::app.data.@this<global::app.type.text.@this>("", "", context: app.User.Context) });
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("AskTimeout");
     }

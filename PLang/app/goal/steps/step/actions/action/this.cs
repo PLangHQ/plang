@@ -304,7 +304,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         }
         else
         {
-            (handler, error) = app.Module.GetCodeGenerated(this);
+            (handler, error) = app.Module.GetCodeGenerated(this, context);
             if (error != null) return context.Error(error);
         }
 
@@ -349,7 +349,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         Func<Task<global::app.data.@this>> next,
         actor.context.@this context)
     {
-        var (shell, error) = context.App!.Module.GetCodeGenerated(this);
+        var (shell, error) = context.App!.Module.GetCodeGenerated(this, context);
         if (error != null) return (null, error);
         // Resolve populates the handler's params so Wrap() reads real values.
         var (handler, resolveErr) = await shell!.Resolve(this, context);

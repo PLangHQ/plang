@@ -26,7 +26,7 @@ public class SkipActionTests
     {
         var context = _app.User.Context;
 
-        var action = new SkipAction { Context = context, Value = new global::app.data.@this("", "override-value", context: context)};
+        var action = new SkipAction(context) { Value = new global::app.data.@this("", "override-value", context: context)};
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -39,7 +39,7 @@ public class SkipActionTests
     {
         var context = _app.User.Context;
 
-        var action = new SkipAction { Context = context, Value = null };
+        var action = new SkipAction(context) { Value = null };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -52,7 +52,7 @@ public class SkipActionTests
     {
         var context = _app.User.Context;
 
-        var action = new SkipAction { Context = context, Value = new global::app.data.@this("", 42, context: context)};
+        var action = new SkipAction(context) { Value = new global::app.data.@this("", 42, context: context)};
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -65,7 +65,7 @@ public class SkipActionTests
         var context = _app.User.Context;
         var obj = new Dictionary<string, object> { ["status"] = 200 };
 
-        var action = new SkipAction { Context = context, Value = new global::app.data.@this("", obj, context: context)};
+        var action = new SkipAction(context) { Value = new global::app.data.@this("", obj, context: context)};
         var result = await action.Run();
 
         await result.IsSuccess();

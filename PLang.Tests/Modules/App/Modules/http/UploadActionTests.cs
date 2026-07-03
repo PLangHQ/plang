@@ -67,10 +67,7 @@ public class UploadActionTests
     [Test]
     public async Task Upload_TextContent_SendsStringContent()
     {
-        var action = new upload
-        {
-            Context = Ctx,
-            Url = (global::app.type.text.@this)"https://api.example.com/upload",
+        var action = new upload(Ctx) { Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", "Hello upload", context: Ctx),
             As = (global::app.type.choice.@this<global::app.module.http.ContentAs>)ContentAs.Text,
             Unsigned = (global::app.type.@bool.@this)true
@@ -91,10 +88,7 @@ public class UploadActionTests
         var filePath = System.IO.Path.Combine(_tempDir, "upload.txt");
         await System.IO.File.WriteAllTextAsync(filePath, "file data");
 
-        var action = new upload
-        {
-            Context = Ctx,
-            Url = (global::app.type.text.@this)"https://api.example.com/upload",
+        var action = new upload(Ctx) { Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", "upload.txt", context: Ctx),
             As = (global::app.type.choice.@this<global::app.module.http.ContentAs>)ContentAs.File,
             Unsigned = (global::app.type.@bool.@this)true
@@ -114,10 +108,7 @@ public class UploadActionTests
         var original = "hello base64";
         var b64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(original));
 
-        var action = new upload
-        {
-            Context = Ctx,
-            Url = (global::app.type.text.@this)"https://api.example.com/upload",
+        var action = new upload(Ctx) { Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", b64, context: Ctx),
             As = (global::app.type.choice.@this<global::app.module.http.ContentAs>)ContentAs.Base64,
             Unsigned = (global::app.type.@bool.@this)true
@@ -137,10 +128,7 @@ public class UploadActionTests
         var filePath = System.IO.Path.Combine(_tempDir, "auto.txt");
         await System.IO.File.WriteAllTextAsync(filePath, "auto content");
 
-        var action = new upload
-        {
-            Context = Ctx,
-            Url = (global::app.type.text.@this)"https://api.example.com/upload",
+        var action = new upload(Ctx) { Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", "auto.txt", context: Ctx),
             Unsigned = (global::app.type.@bool.@this)true
         };
@@ -157,10 +145,7 @@ public class UploadActionTests
     [Test]
     public async Task Upload_AutoDetectString_WhenNoFile()
     {
-        var action = new upload
-        {
-            Context = Ctx,
-            Url = (global::app.type.text.@this)"https://api.example.com/upload",
+        var action = new upload(Ctx) { Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", "just a string, not a file path", context: Ctx),
             Unsigned = (global::app.type.@bool.@this)true
         };
@@ -176,10 +161,7 @@ public class UploadActionTests
     [Test]
     public async Task Upload_CustomMethod_UsedCorrectly()
     {
-        var action = new upload
-        {
-            Context = Ctx,
-            Url = (global::app.type.text.@this)"https://api.example.com/upload",
+        var action = new upload(Ctx) { Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", "data", context: Ctx),
             Method = (global::app.type.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.PUT,
             As = (global::app.type.choice.@this<global::app.module.http.ContentAs>)ContentAs.Text,
@@ -201,10 +183,7 @@ public class UploadActionTests
             Content = new System.Net.Http.StringContent("{\"id\":42}", Encoding.UTF8, "application/json")
         });
 
-        var action = new upload
-        {
-            Context = Ctx,
-            Url = (global::app.type.text.@this)"https://api.example.com/upload",
+        var action = new upload(Ctx) { Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", "data", context: Ctx),
             As = (global::app.type.choice.@this<global::app.module.http.ContentAs>)ContentAs.Text,
             Unsigned = (global::app.type.@bool.@this)true
@@ -227,10 +206,7 @@ public class UploadActionTests
     [Test]
     public async Task Upload_DictAutoDetect_SendsMultipartForm()
     {
-        var action = new upload
-        {
-            Context = Ctx,
-            Url = (global::app.type.text.@this)"https://api.example.com/upload",
+        var action = new upload(Ctx) { Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", new Dictionary<string, object> { ["name"] = "Alice", ["age"] = "30" }, context: Ctx),
             Unsigned = (global::app.type.@bool.@this)true
         };
@@ -252,10 +228,7 @@ public class UploadActionTests
     [Test]
     public async Task Upload_FormExplicit_SendsMultipartForm()
     {
-        var action = new upload
-        {
-            Context = Ctx,
-            Url = (global::app.type.text.@this)"https://api.example.com/upload",
+        var action = new upload(Ctx) { Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", new Dictionary<string, object> { ["field1"] = "value1" }, context: Ctx),
             As = (global::app.type.choice.@this<global::app.module.http.ContentAs>)ContentAs.Form,
             Unsigned = (global::app.type.@bool.@this)true
@@ -280,10 +253,7 @@ public class UploadActionTests
         var filePath = System.IO.Path.Combine(_tempDir, "document.pdf");
         await System.IO.File.WriteAllTextAsync(filePath, "fake pdf content");
 
-        var action = new upload
-        {
-            Context = Ctx,
-            Url = (global::app.type.text.@this)"https://api.example.com/upload",
+        var action = new upload(Ctx) { Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", new Dictionary<string, object> { ["title"] = "My Doc", ["file"] = "@document.pdf" }, context: Ctx),
             As = (global::app.type.choice.@this<global::app.module.http.ContentAs>)ContentAs.Form,
             Unsigned = (global::app.type.@bool.@this)true
@@ -315,10 +285,7 @@ public class UploadActionTests
     public async Task Upload_AutoDetectObject_SendsJson()
     {
         // Non-dict, non-string object → serialized as JSON
-        var action = new upload
-        {
-            Context = Ctx,
-            Url = (global::app.type.text.@this)"https://api.example.com/upload",
+        var action = new upload(Ctx) { Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", new List<string> { "a", "b", "c" }, context: Ctx),
             Unsigned = (global::app.type.@bool.@this)true
         };

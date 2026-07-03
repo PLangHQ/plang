@@ -66,10 +66,7 @@ public class PathTypeMapperTests
 
         // Resolve a Path the way a handler parameter does, then run file.read.
         var (value, _) = Conversion.TryConvert("greeting.txt", typeof(PLangPath), context);
-        var read = new global::app.module.file.Read
-        {
-            Context = context,
-            Path = new global::app.data.@this<PLangPath>("", (PLangPath)value!),
+        var read = new global::app.module.file.Read(context) { Path = new global::app.data.@this<PLangPath>("", (PLangPath)value!),
         };
         var result = await read.Run();
         await result.IsSuccess();

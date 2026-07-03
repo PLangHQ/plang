@@ -391,9 +391,8 @@ public sealed partial class @this
             if (!destOk)   sb.Append("\n  - write ").Append(destination.Absolute);
             sb.Append("\n(y/n/a — covers all)");
 
-            var askAction = new module.output.ask
+            var askAction = new module.output.ask(Context!)
             {
-                Context = Context,
                 Question = new data.@this<global::app.type.text.@this>("", sb.ToString()),
             };
             var askResult = await Context!.App.RunAction(askAction, Context);

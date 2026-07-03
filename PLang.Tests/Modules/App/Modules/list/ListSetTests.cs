@@ -18,7 +18,7 @@ public class ListSetTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
-        var action = new Set { Context = context, ListName = new app.variable.@this("myList"), Index = (global::app.type.number.@this)1, Value = new global::app.data.@this("", "replaced", context: context)};
+        var action = new Set(context) { ListName = new app.variable.@this("myList"), Index = (global::app.type.number.@this)1, Value = new global::app.data.@this("", "replaced", context: context)};
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -32,7 +32,7 @@ public class ListSetTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "old", "keep" });
 
-        var action = new Set { Context = context, ListName = new app.variable.@this("myList"), Index = (global::app.type.number.@this)0, Value = new global::app.data.@this("", "new", context: context)};
+        var action = new Set(context) { ListName = new app.variable.@this("myList"), Index = (global::app.type.number.@this)0, Value = new global::app.data.@this("", "new", context: context)};
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -47,7 +47,7 @@ public class ListSetTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b" });
 
-        var action = new Set { Context = context, ListName = new app.variable.@this("myList"), Index = (global::app.type.number.@this)5, Value = new global::app.data.@this("", "x", context: context)};
+        var action = new Set(context) { ListName = new app.variable.@this("myList"), Index = (global::app.type.number.@this)5, Value = new global::app.data.@this("", "x", context: context)};
         var result = await action.Run();
 
         await result.IsFailure();
@@ -60,7 +60,7 @@ public class ListSetTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a" });
 
-        var action = new Set { Context = context, ListName = new app.variable.@this("myList"), Index = (global::app.type.number.@this)(-1), Value = new global::app.data.@this("", "x", context: context)};
+        var action = new Set(context) { ListName = new app.variable.@this("myList"), Index = (global::app.type.number.@this)(-1), Value = new global::app.data.@this("", "x", context: context)};
         var result = await action.Run();
 
         await result.IsFailure();
@@ -73,7 +73,7 @@ public class ListSetTests
         var (context, memory) = CreateContext();
         memory.Set("myList", "not a list");
 
-        var action = new Set { Context = context, ListName = new app.variable.@this("myList"), Index = (global::app.type.number.@this)0, Value = new global::app.data.@this("", "x", context: context)};
+        var action = new Set(context) { ListName = new app.variable.@this("myList"), Index = (global::app.type.number.@this)0, Value = new global::app.data.@this("", "x", context: context)};
         var result = await action.Run();
 
         await result.IsFailure();
@@ -85,7 +85,7 @@ public class ListSetTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Set { Context = context, ListName = new app.variable.@this("missing"), Index = (global::app.type.number.@this)0, Value = new global::app.data.@this("", "x", context: context)};
+        var action = new Set(context) { ListName = new app.variable.@this("missing"), Index = (global::app.type.number.@this)0, Value = new global::app.data.@this("", "x", context: context)};
         var result = await action.Run();
 
         await result.IsFailure();
@@ -97,7 +97,7 @@ public class ListSetTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b" });
 
-        var action = new Set { Context = context, ListName = new app.variable.@this("myList"), Index = (global::app.type.number.@this)0, Value = null };
+        var action = new Set(context) { ListName = new app.variable.@this("myList"), Index = (global::app.type.number.@this)0, Value = null };
         var result = await action.Run();
 
         await result.IsSuccess();

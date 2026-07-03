@@ -35,7 +35,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
 
     private async Task<Data> Read(string rel)
     {
-        var action = new Read { Context = _app.User.Context, Path = MakePath(rel) };
+        var action = new Read(_app.User.Context) { Path = MakePath(rel) };
         var result = await action.Run();
         await result.IsSuccess();
         return result;
@@ -65,7 +65,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     {
         // remote scheme routes to `url` with NO fetch — pure construction
         var http = new global::app.type.path.http.@this("http://example.com/data.json") { Context = _app.User.Context };
-        var action = new Read { Context = _app.User.Context, Path = new global::app.data.@this<PLangPath>("", http) };
+        var action = new Read(_app.User.Context) { Path = new global::app.data.@this<PLangPath>("", http) };
         var result = await action.Run();
         await result.IsSuccess();
         await Assert.That(result.Type!.Name).IsEqualTo("url");

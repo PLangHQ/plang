@@ -44,7 +44,7 @@ public class DataSnapshotTests : System.IAsyncDisposable
     [Test] public async Task ActionSnapshotHelper_ReturnsNonNull()
     {
         var app = NewApp();
-        var handler = new ask { Context = app.User.Context };
+        var handler = new ask(app.User.Context);
         var snap = handler.Snapshot();
         await Assert.That(snap).IsNotNull();
     }
@@ -52,7 +52,7 @@ public class DataSnapshotTests : System.IAsyncDisposable
     [Test] public async Task ActionSnapshotHelper_MatchesContextAppSnapshot()
     {
         var app = NewApp();
-        var handler = new ask { Context = app.User.Context };
+        var handler = new ask(app.User.Context);
         var viaHandler = handler.Snapshot();
         var viaApp = app.Snapshot();
         // Both factories build a fresh full snapshot — same shape (App tree),

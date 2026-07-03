@@ -92,7 +92,7 @@ public class Cut4_PropertiesWireTests
             var back = plang.Deserialize(tampered);
             back.Context = app.User.Context;
             var verify = await app.RunAction<global::app.module.signing.verify>(
-                new global::app.module.signing.verify
+                new global::app.module.signing.verify(app.User.Context)
                 {
                     Data = back,
                     SkipFreshnessCheck = new global::app.data.@this<global::app.type.@bool.@this>("", true)

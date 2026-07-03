@@ -56,10 +56,7 @@ public class LlmIntegrationTests
             new LlmMessage { Role = "user", Content = "What is 7 * 6?" }
         };
 
-        var result = await RunWithSnapshot("SimpleCalculation", messages, new query
-        {
-            Context = Ctx,
-            Messages = messages.ToListData<LlmMessage>(),
+        var result = await RunWithSnapshot("SimpleCalculation", messages, new query(Ctx) { Messages = messages.ToListData<LlmMessage>(),
             Temperature = (global::app.type.number.@this)0.0,
             MaxTokens = (global::app.type.number.@this)50,
             Cache = (global::app.type.@bool.@this)false
@@ -82,10 +79,7 @@ public class LlmIntegrationTests
             new LlmMessage { Role = "user", Content = "I absolutely love sunny days at the beach!" }
         };
 
-        var result = await RunWithSnapshot("JsonSchema", messages, new query
-        {
-            Context = Ctx,
-            Messages = messages.ToListData<LlmMessage>(),
+        var result = await RunWithSnapshot("JsonSchema", messages, new query(Ctx) { Messages = messages.ToListData<LlmMessage>(),
             Schema = Ctx.Ok("{\"sentiment\": \"string\", \"score\": \"number\"}"),
             Temperature = (global::app.type.number.@this)0.0,
             MaxTokens = (global::app.type.number.@this)100,
@@ -113,10 +107,7 @@ public class LlmIntegrationTests
             new LlmMessage { Role = "user", Content = "Write a Python function that returns the sum of two numbers." }
         };
 
-        var result = await RunWithSnapshot("PythonFormat", messages, new query
-        {
-            Context = Ctx,
-            Messages = messages.ToListData<LlmMessage>(),
+        var result = await RunWithSnapshot("PythonFormat", messages, new query(Ctx) { Messages = messages.ToListData<LlmMessage>(),
             Format = (global::app.type.text.@this)"python",
             Temperature = (global::app.type.number.@this)0.0,
             MaxTokens = (global::app.type.number.@this)200,
@@ -143,10 +134,7 @@ public class LlmIntegrationTests
             new LlmMessage { Role = "user", Content = "My name is Alice." }
         };
 
-        var result1 = await RunWithSnapshot("ConvPart1", messages1, new query
-        {
-            Context = Ctx,
-            Messages = messages1.ToListData<LlmMessage>(),
+        var result1 = await RunWithSnapshot("ConvPart1", messages1, new query(Ctx) { Messages = messages1.ToListData<LlmMessage>(),
             Temperature = (global::app.type.number.@this)0.0,
             MaxTokens = (global::app.type.number.@this)50,
             Cache = (global::app.type.@bool.@this)false
@@ -160,10 +148,7 @@ public class LlmIntegrationTests
             new LlmMessage { Role = "user", Content = "What is my name?" }
         };
 
-        var result2 = await RunWithSnapshot("ConvPart2", messages2, new query
-        {
-            Context = Ctx,
-            Messages = messages2.ToListData<LlmMessage>(),
+        var result2 = await RunWithSnapshot("ConvPart2", messages2, new query(Ctx) { Messages = messages2.ToListData<LlmMessage>(),
             ContinuePreviousConversation = (global::app.type.@bool.@this)true,
             Temperature = (global::app.type.number.@this)0.0,
             MaxTokens = (global::app.type.number.@this)50,
@@ -276,10 +261,7 @@ public class LlmIntegrationTests
             _app.Code.SetDefault<IHttp>("capture");
         }
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = messages.ToListData<LlmMessage>(),
+        var action = new query(Ctx) { Messages = messages.ToListData<LlmMessage>(),
             Tools = tools.ToListData<GoalCall>(),
             Temperature = (global::app.type.number.@this)0.0,
             MaxTokens = (global::app.type.number.@this)200,

@@ -99,10 +99,7 @@ public class ProviderModuleTests
     [Test]
     public async Task Load_NonExistentDll_ReturnsLoadError()
     {
-        var action = new global::app.module.code.load
-        {
-            Context = Ctx,
-            Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve("/nonexistent/path/fake.dll", Ctx))
+        var action = new global::app.module.code.load(Ctx) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve("/nonexistent/path/fake.dll", Ctx))
         };
         var result = await action.Run();
 
@@ -113,10 +110,7 @@ public class ProviderModuleTests
     [Test]
     public async Task Load_NullPath_ReturnsValidationError()
     {
-        var action = new global::app.module.code.load
-        {
-            Context = Ctx,
-            Path = null
+        var action = new global::app.module.code.load(Ctx) { Path = null
         };
         var result = await action.Run();
 
@@ -135,10 +129,7 @@ public class ProviderModuleTests
             return;
         }
 
-        var action = new global::app.module.code.load
-        {
-            Context = Ctx,
-            Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve("/" + dllPath, Ctx)),
+        var action = new global::app.module.code.load(Ctx) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve("/" + dllPath, Ctx)),
         };
         var result = await action.Run();
 
@@ -159,10 +150,7 @@ public class ProviderModuleTests
             return;
         }
 
-        var action = new global::app.module.code.load
-        {
-            Context = Ctx,
-            Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve("/" + dllPath, Ctx)),
+        var action = new global::app.module.code.load(Ctx) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve("/" + dllPath, Ctx)),
         };
         var result = await action.Run();
 
@@ -181,10 +169,7 @@ public class ProviderModuleTests
             return;
         }
 
-        var action = new global::app.module.code.load
-        {
-            Context = Ctx,
-            Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve("/" + dllPath, Ctx)),
+        var action = new global::app.module.code.load(Ctx) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve("/" + dllPath, Ctx)),
         };
         var result = await action.Run();
 
@@ -202,10 +187,7 @@ public class ProviderModuleTests
         _app.Code.Register<ISigning>(new MockSigningProvider("first"));
         _app.Code.Register<ISigning>(new MockSigningProvider("second"));
 
-        var action = new global::app.module.code.remove
-        {
-            Context = Ctx,
-            Name = (global::app.type.text.@this)"second",
+        var action = new global::app.module.code.remove(Ctx) { Name = (global::app.type.text.@this)"second",
             Type = (global::app.type.text.@this)"signing"
         };
         var result = await action.Run();
@@ -218,10 +200,7 @@ public class ProviderModuleTests
     public async Task Remove_Default_ReturnsError()
     {
         // ed25519 is registered as default at engine startup
-        var action = new global::app.module.code.remove
-        {
-            Context = Ctx,
-            Name = (global::app.type.text.@this)"ed25519",
+        var action = new global::app.module.code.remove(Ctx) { Name = (global::app.type.text.@this)"ed25519",
             Type = (global::app.type.text.@this)"signing"
         };
         var result = await action.Run();
@@ -233,10 +212,7 @@ public class ProviderModuleTests
     [Test]
     public async Task Remove_NonExistent_ReturnsError()
     {
-        var action = new global::app.module.code.remove
-        {
-            Context = Ctx,
-            Name = (global::app.type.text.@this)"unknown",
+        var action = new global::app.module.code.remove(Ctx) { Name = (global::app.type.text.@this)"unknown",
             Type = (global::app.type.text.@this)"signing"
         };
         var result = await action.Run();
@@ -248,10 +224,7 @@ public class ProviderModuleTests
     [Test]
     public async Task Remove_UnknownType_ReturnsError()
     {
-        var action = new global::app.module.code.remove
-        {
-            Context = Ctx,
-            Name = (global::app.type.text.@this)"anything",
+        var action = new global::app.module.code.remove(Ctx) { Name = (global::app.type.text.@this)"anything",
             Type = (global::app.type.text.@this)"invalid"
         };
         var result = await action.Run();
@@ -272,10 +245,7 @@ public class ProviderModuleTests
         _app.Code.Register<ISigning>(first);
         _app.Code.Register<ISigning>(second);
 
-        var action = new global::app.module.code.setDefault
-        {
-            Context = Ctx,
-            Name = (global::app.type.text.@this)"second",
+        var action = new global::app.module.code.setDefault(Ctx) { Name = (global::app.type.text.@this)"second",
             Type = (global::app.type.text.@this)"signing"
         };
         var result = await action.Run();
@@ -290,10 +260,7 @@ public class ProviderModuleTests
     {
         _app.Code.Register<ISigning>(new MockSigningProvider("first"));
 
-        var action = new global::app.module.code.setDefault
-        {
-            Context = Ctx,
-            Name = (global::app.type.text.@this)"unknown",
+        var action = new global::app.module.code.setDefault(Ctx) { Name = (global::app.type.text.@this)"unknown",
             Type = (global::app.type.text.@this)"signing"
         };
         var result = await action.Run();
@@ -305,10 +272,7 @@ public class ProviderModuleTests
     [Test]
     public async Task SetDefault_UnknownType_ReturnsError()
     {
-        var action = new global::app.module.code.setDefault
-        {
-            Context = Ctx,
-            Name = (global::app.type.text.@this)"anything",
+        var action = new global::app.module.code.setDefault(Ctx) { Name = (global::app.type.text.@this)"anything",
             Type = (global::app.type.text.@this)"invalid"
         };
         var result = await action.Run();
@@ -350,10 +314,7 @@ public class ProviderModuleTests
     {
         _app.Code.Register<ISigning>(new MockSigningProvider("extra"));
 
-        var action = new global::app.module.code.list
-        {
-            Context = Ctx,
-            Type = null
+        var action = new global::app.module.code.list(Ctx) { Type = null
         };
         var result = await action.Run();
 
@@ -368,10 +329,7 @@ public class ProviderModuleTests
     {
         _app.Code.Register<ISigning>(new MockSigningProvider("extra"));
 
-        var action = new global::app.module.code.list
-        {
-            Context = Ctx,
-            Type = (global::app.type.text.@this)"signing"
+        var action = new global::app.module.code.list(Ctx) { Type = (global::app.type.text.@this)"signing"
         };
         var result = await action.Run();
 
@@ -381,10 +339,7 @@ public class ProviderModuleTests
     [Test]
     public async Task ListAction_UnknownType_ReturnsError()
     {
-        var action = new global::app.module.code.list
-        {
-            Context = Ctx,
-            Type = (global::app.type.text.@this)"quantum"
+        var action = new global::app.module.code.list(Ctx) { Type = (global::app.type.text.@this)"quantum"
         };
         var result = await action.Run();
 

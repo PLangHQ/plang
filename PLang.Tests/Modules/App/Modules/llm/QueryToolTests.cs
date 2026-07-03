@@ -62,10 +62,7 @@ public class QueryToolTests
                 LlmTestHelper.MakeCompletionResponse("The weather in London is sunny")));
         };
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "What's the weather?" }
             }.ToListData<LlmMessage>(),
@@ -102,10 +99,7 @@ public class QueryToolTests
                 LlmTestHelper.MakeCompletionResponse("done")));
         };
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "do both" }
             }.ToListData<LlmMessage>(),
@@ -140,10 +134,7 @@ public class QueryToolTests
                 LlmTestHelper.MakeCompletionResponse("parallel done")));
         };
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "do both parallel" }
             }.ToListData<LlmMessage>(),
@@ -178,10 +169,7 @@ public class QueryToolTests
                 LlmTestHelper.MakeCompletionResponse("mixed done")));
         };
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "mixed" }
             }.ToListData<LlmMessage>(),
@@ -217,10 +205,7 @@ public class QueryToolTests
                 LlmTestHelper.MakeCompletionResponse("handled the error")));
         };
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "call failing tool" }
             }.ToListData<LlmMessage>(),
@@ -254,10 +239,7 @@ public class QueryToolTests
                 LlmTestHelper.MakeCompletionResponse("no such tool")));
         };
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "call unknown" }
             }.ToListData<LlmMessage>(),
@@ -285,10 +267,7 @@ public class QueryToolTests
         _handler.Handler = _ => Task.FromResult(LlmTestHelper.JsonResponse(
             LlmTestHelper.MakeToolCallResponse(("call_x", "InfiniteTool", "{}"))));
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "loop forever" }
             }.ToListData<LlmMessage>(),
@@ -326,10 +305,7 @@ public class QueryToolTests
             return LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("ok"));
         };
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
@@ -361,10 +337,7 @@ public class QueryToolTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("ok")));
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
@@ -394,10 +367,7 @@ public class QueryToolTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("ok")));
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
@@ -439,10 +409,7 @@ public class QueryToolTests
                 LlmTestHelper.MakeCompletionResponse("London is 20C")));
         };
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "Weather in London?" }
             }.ToListData<LlmMessage>(),
@@ -481,10 +448,7 @@ public class QueryToolTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("ok")));
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
@@ -538,10 +502,7 @@ public class QueryToolTests
                 LlmTestHelper.MakeCompletionResponse("parsed all types")));
         };
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "mixed types" }
             }.ToListData<LlmMessage>(),
@@ -582,10 +543,7 @@ public class QueryToolTests
                 LlmTestHelper.MakeCompletionResponse("both done")));
         };
 
-        var action = new query
-        {
-            Context = Ctx,
-            Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "parallel" }
             }.ToListData<LlmMessage>(),

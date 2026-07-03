@@ -81,7 +81,7 @@ public class Cut2_SignThenCompressTests
         restored.Context = app.User.Context;
 
         var verify = await app.RunAction<global::app.module.signing.verify>(
-            new global::app.module.signing.verify
+            new global::app.module.signing.verify(app.User.Context)
             {
                 Data = restored,
                 SkipFreshnessCheck = new global::app.data.@this<global::app.type.@bool.@this>("", true)

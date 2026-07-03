@@ -40,7 +40,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Save_ReturnsFileWithCorrectPaths()
     {
-        var action = new Save { Context = _app.User.Context, Path = MakePath("test.txt"), Value = _app.User.Context.Ok("hello") };
+        var action = new Save(_app.User.Context) { Path = MakePath("test.txt"), Value = _app.User.Context.Ok("hello") };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -53,7 +53,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Save_FileExists_AfterSave()
     {
-        var action = new Save { Context = _app.User.Context, Path = MakePath("exists.txt"), Value = _app.User.Context.Ok("data") };
+        var action = new Save(_app.User.Context) { Path = MakePath("exists.txt"), Value = _app.User.Context.Ok("data") };
         await action.Run();
 
         await Assert.That(System.IO.File.Exists(TempPath("exists.txt"))).IsTrue();
@@ -66,7 +66,7 @@ public class FileHandlerTests : IDisposable
     {
         System.IO.File.WriteAllText(TempPath("read.txt"), "content here");
 
-        var action = new Read { Context = _app.User.Context, Path = MakePath("read.txt") };
+        var action = new Read(_app.User.Context) { Path = MakePath("read.txt") };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -95,7 +95,7 @@ public class FileHandlerTests : IDisposable
     {
         System.IO.File.WriteAllText(TempPath("lazy.txt"), "lazy content");
 
-        var action = new Read { Context = _app.User.Context, Path = MakePath("lazy.txt") };
+        var action = new Read(_app.User.Context) { Path = MakePath("lazy.txt") };
         var result = await action.Run();
 
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("lazy content");
@@ -104,7 +104,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Read_NonexistentFile_ReturnsError()
     {
-        var action = new Read { Context = _app.User.Context, Path = MakePath("nonexistent.txt") };
+        var action = new Read(_app.User.Context) { Path = MakePath("nonexistent.txt") };
         var result = await action.Run();
 
         await result.IsFailure();
@@ -118,10 +118,7 @@ public class FileHandlerTests : IDisposable
         System.IO.File.WriteAllText(TempPath("template.txt"), "Hello %name%, welcome");
         _app.User.Context.Variable.Set("name", "Ingi");
 
-        var action = new Read
-        {
-            Context = _app.User.Context,
-            Path = MakePath("template.txt"),
+        var action = new Read(_app.User.Context) { Path = MakePath("template.txt"),
             ResolveVariables = new global::app.data.@this<global::app.type.@bool.@this>("ResolveVariables", true, context: _app.User.Context)
         };
         var result = await action.Run();
@@ -138,10 +135,7 @@ public class FileHandlerTests : IDisposable
         System.IO.File.WriteAllText(TempPath("literal.txt"), "Hello %name%, welcome");
         _app.User.Context.Variable.Set("name", "Ingi");
 
-        var action = new Read
-        {
-            Context = _app.User.Context,
-            Path = MakePath("literal.txt"),
+        var action = new Read(_app.User.Context) { Path = MakePath("literal.txt"),
             ResolveVariables = new global::app.data.@this<global::app.type.@bool.@this>("ResolveVariables", false, context: _app.User.Context)
         };
         var result = await action.Run();
@@ -158,10 +152,7 @@ public class FileHandlerTests : IDisposable
         // guard, a malicious file could leak runtime internals through %!app.Id%.
         System.IO.File.WriteAllText(TempPath("untrusted.txt"), "id is %!app.Id%");
 
-        var action = new Read
-        {
-            Context = _app.User.Context,
-            Path = MakePath("untrusted.txt"),
+        var action = new Read(_app.User.Context) { Path = MakePath("untrusted.txt"),
             ResolveVariables = new global::app.data.@this<global::app.type.@bool.@this>("ResolveVariables", true, context: _app.User.Context)
         };
         var result = await action.Run();
@@ -178,7 +169,7 @@ public class FileHandlerTests : IDisposable
     {
         System.IO.File.WriteAllText(TempPath("src.txt"), "source data");
 
-        var action = new Copy { Context = _app.User.Context, Source = MakePath("src.txt"), Destination = MakePath("dst.txt") };
+        var action = new Copy(_app.User.Context) { Source = MakePath("src.txt"), Destination = MakePath("dst.txt") };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -190,7 +181,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Copy_NonexistentSource_ReturnsFileNotFound()
     {
-        var action = new Copy { Context = _app.User.Context, Source = MakePath("nope.txt"), Destination = MakePath("dst.txt") };
+        var action = new Copy(_app.User.Context) { Source = MakePath("nope.txt"), Destination = MakePath("dst.txt") };
         var result = await action.Run();
 
         await result.IsFailure();
@@ -203,7 +194,7 @@ public class FileHandlerTests : IDisposable
         System.IO.Directory.CreateDirectory(srcDir);
         System.IO.File.WriteAllText(System.IO.Path.Combine(srcDir, "a.txt"), "a");
 
-        var action = new Copy { Context = _app.User.Context, Source = MakeAbsPath(srcDir), Destination = MakePath("copy_dir_dst") };
+        var action = new Copy(_app.User.Context) { Source = MakeAbsPath(srcDir), Destination = MakePath("copy_dir_dst") };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -217,7 +208,7 @@ public class FileHandlerTests : IDisposable
     {
         System.IO.File.WriteAllText(TempPath("move_src.txt"), "move data");
 
-        var action = new Move { Context = _app.User.Context, Source = MakePath("move_src.txt"), Destination = MakePath("move_dst.txt") };
+        var action = new Move(_app.User.Context) { Source = MakePath("move_src.txt"), Destination = MakePath("move_dst.txt") };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -229,7 +220,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Move_NonexistentSource_ReturnsFileNotFound()
     {
-        var action = new Move { Context = _app.User.Context, Source = MakePath("nope.txt"), Destination = MakePath("dst.txt") };
+        var action = new Move(_app.User.Context) { Source = MakePath("nope.txt"), Destination = MakePath("dst.txt") };
         var result = await action.Run();
 
         await result.IsFailure();
@@ -242,7 +233,7 @@ public class FileHandlerTests : IDisposable
         System.IO.Directory.CreateDirectory(srcDir);
         System.IO.File.WriteAllText(System.IO.Path.Combine(srcDir, "a.txt"), "a");
 
-        var action = new Move { Context = _app.User.Context, Source = MakeAbsPath(srcDir), Destination = MakePath("move_dir_dst") };
+        var action = new Move(_app.User.Context) { Source = MakeAbsPath(srcDir), Destination = MakePath("move_dir_dst") };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -257,7 +248,7 @@ public class FileHandlerTests : IDisposable
     {
         System.IO.File.WriteAllText(TempPath("del.txt"), "delete me");
 
-        var action = new Delete { Context = _app.User.Context, Path = MakePath("del.txt") };
+        var action = new Delete(_app.User.Context) { Path = MakePath("del.txt") };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -269,7 +260,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Delete_NonexistentFile_ReturnsError()
     {
-        var action = new Delete { Context = _app.User.Context, Path = MakePath("nope.txt") };
+        var action = new Delete(_app.User.Context) { Path = MakePath("nope.txt") };
         var result = await action.Run();
 
         await result.IsFailure();
@@ -278,7 +269,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Delete_NonexistentFile_IgnoreIfNotFound_ReturnsSuccess()
     {
-        var action = new Delete { Context = _app.User.Context, Path = MakePath("nope.txt"), IgnoreIfNotFound = (global::app.type.@bool.@this)true };
+        var action = new Delete(_app.User.Context) { Path = MakePath("nope.txt"), IgnoreIfNotFound = (global::app.type.@bool.@this)true };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -291,7 +282,7 @@ public class FileHandlerTests : IDisposable
         System.IO.Directory.CreateDirectory(dir);
         System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "child.txt"), "data");
 
-        var action = new Delete { Context = _app.User.Context, Path = MakeAbsPath(dir), Recursive = (global::app.type.@bool.@this)true };
+        var action = new Delete(_app.User.Context) { Path = MakeAbsPath(dir), Recursive = (global::app.type.@bool.@this)true };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -305,7 +296,7 @@ public class FileHandlerTests : IDisposable
     {
         System.IO.File.WriteAllText(TempPath("check.txt"), "present");
 
-        var action = new Exists { Context = _app.User.Context, Path = MakePath("check.txt") };
+        var action = new Exists(_app.User.Context) { Path = MakePath("check.txt") };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -317,7 +308,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Exists_NonexistentFile_ReturnsFalse()
     {
-        var action = new Exists { Context = _app.User.Context, Path = MakePath("missing.txt") };
+        var action = new Exists(_app.User.Context) { Path = MakePath("missing.txt") };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -336,7 +327,7 @@ public class FileHandlerTests : IDisposable
         System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "a.txt"), "a");
         System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "b.txt"), "b");
 
-        var action = new List { Context = _app.User.Context, Path = MakeAbsPath(subDir) };
+        var action = new List(_app.User.Context) { Path = MakeAbsPath(subDir) };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -353,7 +344,7 @@ public class FileHandlerTests : IDisposable
         System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "a.txt"), "a");
         System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "b.md"), "b");
 
-        var action = new List { Context = _app.User.Context, Path = MakeAbsPath(subDir), Pattern = (global::app.type.text.@this)"*.txt" };
+        var action = new List(_app.User.Context) { Path = MakeAbsPath(subDir), Pattern = (global::app.type.text.@this)"*.txt" };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -372,7 +363,7 @@ public class FileHandlerTests : IDisposable
         System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "top.txt"), "top");
         System.IO.File.WriteAllText(System.IO.Path.Combine(nested, "deep.txt"), "deep");
 
-        var action = new List { Context = _app.User.Context, Path = MakeAbsPath(subDir), Recursive = (global::app.type.@bool.@this)true };
+        var action = new List(_app.User.Context) { Path = MakeAbsPath(subDir), Recursive = (global::app.type.@bool.@this)true };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -384,7 +375,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task List_NonexistentDirectory_ReturnsError()
     {
-        var action = new List { Context = _app.User.Context, Path = MakePath("nodir") };
+        var action = new List(_app.User.Context) { Path = MakePath("nodir") };
         var result = await action.Run();
 
         await result.IsFailure();
@@ -397,7 +388,7 @@ public class FileHandlerTests : IDisposable
     {
         System.IO.File.WriteAllText(TempPath("doc.md"), "# Hello");
 
-        var action = new Read { Context = _app.User.Context, Path = MakePath("doc.md") };
+        var action = new Read(_app.User.Context) { Path = MakePath("doc.md") };
         var result = await action.Run();
 
         // Stage 3: a read is a `file` REFERENCE — name is the headline "file",
@@ -411,7 +402,7 @@ public class FileHandlerTests : IDisposable
     {
         System.IO.File.WriteAllText(TempPath("sized.txt"), "12345");
 
-        var action = new Read { Context = _app.User.Context, Path = MakePath("sized.txt") };
+        var action = new Read(_app.User.Context) { Path = MakePath("sized.txt") };
         var result = await action.Run();
         var content = (await result.Value())?.ToString();
 
@@ -423,7 +414,7 @@ public class FileHandlerTests : IDisposable
     {
         System.IO.File.WriteAllText(TempPath("tostring.txt"), "file-content");
 
-        var action = new Read { Context = _app.User.Context, Path = MakePath("tostring.txt") };
+        var action = new Read(_app.User.Context) { Path = MakePath("tostring.txt") };
         var result = await action.Run();
 
         await Assert.That((await result.Value())!.ToString()).IsEqualTo("file-content");

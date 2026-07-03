@@ -84,10 +84,7 @@ public class RunActionTests
 
     private async Task<Results> RunTests(List<global::app.tester.test.@this> tests, int? parallel = null, int? timeoutSec = null)
     {
-        var action = new global::app.module.test.run
-        {
-            Context = _app.User.Context,
-            Tests = tests.ToListData<global::app.tester.test.@this>(),
+        var action = new global::app.module.test.run(_app.User.Context) { Tests = tests.ToListData<global::app.tester.test.@this>(),
             Parallel = parallel.HasValue ? new global::app.data.@this<global::app.type.number.@this>("Parallel", parallel.Value, context: _app.User.Context) : null,
             Timeout = timeoutSec.HasValue ? new global::app.data.@this<global::app.type.number.@this>("Timeout", timeoutSec.Value, context: _app.User.Context) : null
         };

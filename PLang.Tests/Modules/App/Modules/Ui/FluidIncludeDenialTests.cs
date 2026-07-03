@@ -56,10 +56,7 @@ public class FluidIncludeDenialTests
         System.IO.File.WriteAllText(System.IO.Path.Combine(outOfRoot, "secret.liquid"), "SECRET_TOKEN");
 
         var fluid = new global::app.module.ui.code.Fluid();
-        var action = new global::app.module.ui.Render
-        {
-            Context = app.User.Context,
-            Template = new global::app.data.@this<global::app.type.text.@this>("Template",
+        var action = new global::app.module.ui.Render(app.User.Context) { Template = new global::app.data.@this<global::app.type.text.@this>("Template",
                 "{% include '" + outOfRoot + "/secret.liquid' %}"),
             IsFile = new global::app.data.@this<global::app.type.@bool.@this>("IsFile", false)
         };
@@ -88,10 +85,7 @@ public class FluidIncludeDenialTests
         app.User.Context.Goal = goal;
 
         var fluid = new global::app.module.ui.code.Fluid();
-        var action = new global::app.module.ui.Render
-        {
-            Context = app.User.Context,
-            Template = new global::app.data.@this<global::app.type.text.@this>("Template", "{% include 'partials/footer.liquid' %}"),
+        var action = new global::app.module.ui.Render(app.User.Context) { Template = new global::app.data.@this<global::app.type.text.@this>("Template", "{% include 'partials/footer.liquid' %}"),
             IsFile = new global::app.data.@this<global::app.type.@bool.@this>("IsFile", false)
         };
         var result = await fluid.Render(action);

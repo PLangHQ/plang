@@ -105,10 +105,7 @@ public class HandlerShapeTests
         var fp = global::app.type.path.file.@this.Resolve("doc.txt", app.User.Context);
         await fp.WriteText("delegated body");
 
-        var handler = new global::app.module.file.Read
-        {
-            Context = app.User.Context,
-            Path = new global::app.data.@this<global::app.type.path.@this>("", fp),
+        var handler = new global::app.module.file.Read(app.User.Context) { Path = new global::app.data.@this<global::app.type.path.@this>("", fp),
         };
         var viaHandler = await handler.Run();
         var viaPath = await global::app.type.path.file.@this.Resolve("doc.txt", app.User.Context).ReadText();
@@ -130,10 +127,7 @@ public class HandlerShapeTests
         System.IO.File.WriteAllText(target, "secret");
 
         var fp = new global::app.type.path.file.@this(target, app.User.Context);
-        var handler = new global::app.module.file.Read
-        {
-            Context = app.User.Context,
-            Path = new global::app.data.@this<global::app.type.path.@this>("", fp),
+        var handler = new global::app.module.file.Read(app.User.Context) { Path = new global::app.data.@this<global::app.type.path.@this>("", fp),
         };
         var result = await handler.Run();
         await result.IsFailure();

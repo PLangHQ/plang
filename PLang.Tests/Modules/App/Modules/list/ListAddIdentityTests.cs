@@ -39,10 +39,7 @@ public class ListAddIdentityTests
         existing.Add(new Data("", "b", context: context));
         vars.Set("products", existing);
 
-        var action = new Add
-		{
-            Context = context,
-            ListName = new app.variable.@this("products"),
+        var action = new Add(context) { ListName = new app.variable.@this("products"),
             Value = new Data("", "c", context: context)
         };
         var result = await action.Run();
@@ -68,10 +65,7 @@ public class ListAddIdentityTests
         live.Add(new Data("", 2, context: context));
         vars.Set("products", live);
 
-        var action = new Add
-		{
-            Context = context,
-            ListName = new app.variable.@this("products"),
+        var action = new Add(context) { ListName = new app.variable.@this("products"),
             Value = new Data("", 3, context: context)
         };
         var result = await action.Run();
@@ -98,10 +92,7 @@ public class ListAddIdentityTests
         vars.Set("item", "hello");
         var liveItem = await vars.Get("item");
 
-        var action = new Add
-		{
-            Context = context,
-            ListName = new app.variable.@this("products"),
+        var action = new Add(context) { ListName = new app.variable.@this("products"),
             Value = liveItem
         };
         var result = await action.Run();
@@ -130,10 +121,7 @@ public class ListAddIdentityTests
         fresh.Add(new Data("", "y", context: context));
         vars.Set("products", fresh);
 
-        var action = new Add
-		{
-            Context = context,
-            ListName = new app.variable.@this("products"),
+        var action = new Add(context) { ListName = new app.variable.@this("products"),
             Value = new Data("", "z", context: context)
         };
         var result = await action.Run();

@@ -28,7 +28,7 @@ public class CompareHandlerTests : IDisposable
     [Test]
     public async Task Run_GreaterThan_ReturnsDataWithTrue()
     {
-        var action = new Compare { Context = _app.User.Context, Left = _app.User.Context.Ok(10), Operator = _app.User.Context.Ok<global::app.type.choice.@this<Operator>>((global::app.type.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5) };
+        var action = new Compare(_app.User.Context) { Left = _app.User.Context.Ok(10), Operator = _app.User.Context.Ok<global::app.type.choice.@this<Operator>>((global::app.type.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5) };
         await action.Attach(null, _app.User.Context);
         var result = await action.Run();
 
@@ -39,7 +39,7 @@ public class CompareHandlerTests : IDisposable
     [Test]
     public async Task Run_GreaterThan_Fails_ReturnsDataWithFalse()
     {
-        var action = new Compare { Context = _app.User.Context, Left = _app.User.Context.Ok(3), Operator = _app.User.Context.Ok<global::app.type.choice.@this<Operator>>((global::app.type.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5) };
+        var action = new Compare(_app.User.Context) { Left = _app.User.Context.Ok(3), Operator = _app.User.Context.Ok<global::app.type.choice.@this<Operator>>((global::app.type.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5) };
         await action.Attach(null, _app.User.Context);
         var result = await action.Run();
 
@@ -50,7 +50,7 @@ public class CompareHandlerTests : IDisposable
     [Test]
     public async Task Run_ResultValueIsBool()
     {
-        var action = new Compare { Context = _app.User.Context, Left = _app.User.Context.Ok(5), Operator = _app.User.Context.Ok<global::app.type.choice.@this<Operator>>((global::app.type.choice.@this<Operator>)new Operator("==")), Right = _app.User.Context.Ok(5) };
+        var action = new Compare(_app.User.Context) { Left = _app.User.Context.Ok(5), Operator = _app.User.Context.Ok<global::app.type.choice.@this<Operator>>((global::app.type.choice.@this<Operator>)new Operator("==")), Right = _app.User.Context.Ok(5) };
         await action.Attach(null, _app.User.Context);
         var result = await action.Run();
 
@@ -68,7 +68,7 @@ public class CompareHandlerTests : IDisposable
     [Test]
     public async Task Run_NonComparableType_ReturnsEvaluationError()
     {
-        var action = new Compare { Context = _app.User.Context, Left = _app.User.Context.Ok(new object()), Operator = _app.User.Context.Ok<global::app.type.choice.@this<Operator>>((global::app.type.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5) };
+        var action = new Compare(_app.User.Context) { Left = _app.User.Context.Ok(new object()), Operator = _app.User.Context.Ok<global::app.type.choice.@this<Operator>>((global::app.type.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5) };
         await action.Attach(null, _app.User.Context);
         var result = await action.Run();
 

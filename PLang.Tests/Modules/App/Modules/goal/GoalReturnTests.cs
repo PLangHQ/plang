@@ -14,7 +14,7 @@ public class GoalReturnTests
     public async Task Return_NullData_ReturnsOkWithReturnedFlag()
     {
         var (context, _) = CreateContext();
-        var action = new Return { Context = context, Data = null };
+        var action = new Return(context) { Data = null };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -27,7 +27,7 @@ public class GoalReturnTests
     {
         var (context, _) = CreateContext();
         var data = context.Ok("hello");
-        var action = new Return { Context = context, Data = data };
+        var action = new Return(context) { Data = data };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -39,7 +39,7 @@ public class GoalReturnTests
     public async Task Return_DepthGreaterThanOne_SetsReturnDepth()
     {
         var (context, _) = CreateContext();
-        var action = new Return { Context = context, Data = context.Ok(), Depth = (global::app.type.number.@this)3 };
+        var action = new Return(context) { Data = context.Ok(), Depth = (global::app.type.number.@this)3 };
         var result = await action.Run();
 
         await Assert.That(result.Returned).IsTrue();
@@ -50,7 +50,7 @@ public class GoalReturnTests
     public async Task Return_DepthZero_DefaultsToOne()
     {
         var (context, _) = CreateContext();
-        var action = new Return { Context = context, Data = context.Ok(), Depth = (global::app.type.number.@this)0 };
+        var action = new Return(context) { Data = context.Ok(), Depth = (global::app.type.number.@this)0 };
         var result = await action.Run();
 
         await Assert.That(result.ReturnDepth).IsEqualTo(1);
@@ -60,7 +60,7 @@ public class GoalReturnTests
     public async Task Return_NegativeDepth_DefaultsToOne()
     {
         var (context, _) = CreateContext();
-        var action = new Return { Context = context, Data = context.Ok(), Depth = (global::app.type.number.@this)(-5) };
+        var action = new Return(context) { Data = context.Ok(), Depth = (global::app.type.number.@this)(-5) };
         var result = await action.Run();
 
         await Assert.That(result.ReturnDepth).IsEqualTo(1);
@@ -72,7 +72,7 @@ public class GoalReturnTests
         var (context, _) = CreateContext();
         var error = global::app.data.@this.FromError(
             new global::app.error.Error("something broke", "TestError", 500));
-        var action = new Return { Context = context, Data = error };
+        var action = new Return(context) { Data = error };
         var result = await action.Run();
 
         await result.IsFailure();

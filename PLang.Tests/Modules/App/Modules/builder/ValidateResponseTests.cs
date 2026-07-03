@@ -43,10 +43,7 @@ public class ValidateResponseTests
     private static validateResponse Make(BuildResponse response, Goal goal,
         global::app.@this app)
     {
-        return new validateResponse
-        {
-            Context = app.User.Context,
-            StepResults = new global::app.data.@this<BuildResponse>("", response),
+        return new validateResponse(app.User.Context) { StepResults = new global::app.data.@this<BuildResponse>("", response),
             Goal = new global::app.data.@this<Goal>("", goal)
         };
     }
@@ -114,10 +111,7 @@ public class ValidateResponseTests
     [Test]
     public async Task NullInputs_ReturnsError()
     {
-        var action = new validateResponse
-        {
-            Context = _app.User.Context,
-            StepResults = new global::app.data.@this<BuildResponse>(),
+        var action = new validateResponse(_app.User.Context) { StepResults = new global::app.data.@this<BuildResponse>(),
             Goal = new global::app.data.@this<Goal>(),
         };
         var result = await action.Run();

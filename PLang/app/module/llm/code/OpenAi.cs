@@ -222,9 +222,8 @@ public sealed class OpenAi : ILlm
             if (!string.IsNullOrEmpty(apiKey))
                 headers["Authorization"] = $"Bearer {apiKey}";
 
-            var httpAction = new request
+            var httpAction = new request(context)
             {
-                Context = context,
                 Url = new data.@this<global::app.type.text.@this>("", endpoint),
                 Method = new data.@this<global::app.type.choice.@this<PlangHttpMethod>>("", PlangHttpMethod.POST),
                 Body = new data.@this("", body, context: context),

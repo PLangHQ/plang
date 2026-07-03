@@ -54,10 +54,7 @@ public class Stage4_ChannelResolutionTests
         app.User.Channel.Register(new StreamChannel("output", captured, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
 
-        var write = new global::app.module.output.Write
-        {
-            Context = app.User.Context,
-            Data = app.Ok("hello-default"),
+        var write = new global::app.module.output.Write(app.User.Context) { Data = app.Ok("hello-default"),
             Channel = app.User.Channel.Resolve(null)
         };
         // Direct Run skips ExecuteAsync's reset of init backing fields.
@@ -75,10 +72,7 @@ public class Stage4_ChannelResolutionTests
         app.User.Channel.Register(new StreamChannel("logger", loggerCapture, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
 
-        var write = new global::app.module.output.Write
-        {
-            Context = app.User.Context,
-            Data = app.Ok("targetted"),
+        var write = new global::app.module.output.Write(app.User.Context) { Data = app.Ok("targetted"),
             Channel = app.User.Channel.Resolve("logger")
         };
         await write.Run();
@@ -98,10 +92,7 @@ public class Stage4_ChannelResolutionTests
         var data = app.Ok("payload");
         data.Properties.Set("custom-prop", "x");
 
-        var write = new global::app.module.output.Write
-        {
-            Context = app.User.Context,
-            Data = data,
+        var write = new global::app.module.output.Write(app.User.Context) { Data = data,
             Channel = probe
         };
         await write.Run();

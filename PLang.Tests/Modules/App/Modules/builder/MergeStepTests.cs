@@ -49,7 +49,7 @@ public class MergeStepTests
             })
         };
 
-        var action = new merge { Context = _app.User.Context, Step = target, StepFromLlm = source };
+        var action = new merge(_app.User.Context) { Step = target, StepFromLlm = source };
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();

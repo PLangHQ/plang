@@ -159,7 +159,7 @@ public sealed class @this : ISerializer
             if (_context.Actor != null && data.Peek() is not global::app.type.signature.@this)
             {
                 var signResult = await _context.App.RunAction(
-                    new app.module.signing.sign { Data = data,
+                    new app.module.signing.sign(_context) { Data = data,
                         // Hash in the view we're serializing in, so the verifier (re-hashing the
                         // wire-reconstructed bag in the same view) gets matching bytes.
                         StoreView = new app.data.@this<global::app.type.@bool.@this>("", view == global::app.View.Store, context: _context) },
@@ -235,7 +235,7 @@ public sealed class @this : ISerializer
                 v.PendingVerification = null;
                 var carrier = _context.Ok(layer);
                 carrier.Context = _context;
-                var verifyAction = new global::app.module.signing.verify
+                var verifyAction = new global::app.module.signing.verify(_context)
                 {
                     Data = carrier,
                     SkipFreshnessCheck = new global::app.data.@this<global::app.type.@bool.@this>(

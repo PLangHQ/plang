@@ -19,9 +19,9 @@ public class EventHandlerTests
     private On MakeOn(global::app.actor.context.@this context, global::app.@event.Trigger type, string goalName,
         string? goalPattern = null, string? stepPattern = null, string? actionPattern = null,
         bool isRegex = false, int priority = 0)
-        => new()
+        => new(context)
         {
-            Context = context,
+            
             Trigger = (global::app.type.choice.@this<global::app.@event.Trigger>)type,
             GoalToCall = new GoalCall { Name = goalName },
             GoalPattern = (global::app.type.text.@this)goalPattern,
@@ -104,7 +104,7 @@ public class EventHandlerTests
 
         await Assert.That(context.Events.Count).IsEqualTo(1);
 
-        var removeHandler = new Remove { Context = context, EventId = (global::app.type.text.@this)eventId };
+        var removeHandler = new Remove(context) { EventId = (global::app.type.text.@this)eventId };
         var removeResult = await removeHandler.Run();
 
         await removeResult.IsSuccess();
@@ -215,10 +215,7 @@ public class EventHandlerTests
             Name = "AfterCallback",
             Parameters = new List<Data> { new Data("callbackRan", true, context: context) }
         };
-        var onAction = new On
-        {
-            Context = context,
-            Trigger = (global::app.type.choice.@this<global::app.@event.Trigger>)global::app.@event.Trigger.AfterGoal,
+        var onAction = new On(context) { Trigger = (global::app.type.choice.@this<global::app.@event.Trigger>)global::app.@event.Trigger.AfterGoal,
             GoalToCall = goalToCall,
             GoalPattern = (global::app.type.text.@this)"MainGoal"
         };

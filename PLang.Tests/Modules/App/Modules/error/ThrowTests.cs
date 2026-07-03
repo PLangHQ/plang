@@ -20,7 +20,7 @@ public class ThrowTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Throw { Context = context, Message = (Text)"Something went wrong", StatusCode = (global::app.type.number.@this)500 };
+        var action = new Throw(context) { Message = (Text)"Something went wrong", StatusCode = (global::app.type.number.@this)500 };
         var result = await action.Run();
 
         await result.IsFailure();
@@ -33,7 +33,7 @@ public class ThrowTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Throw { Context = context, Message = (Text)"Not found", StatusCode = (global::app.type.number.@this)404, Key = (Text)"NotFound" };
+        var action = new Throw(context) { Message = (Text)"Not found", StatusCode = (global::app.type.number.@this)404, Key = (Text)"NotFound" };
         var result = await action.Run();
 
         await result.IsFailure();
@@ -46,7 +46,7 @@ public class ThrowTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Throw { Context = context, Message = (Text)"Server error" };
+        var action = new Throw(context) { Message = (Text)"Server error" };
         var result = await action.Run();
 
         await result.IsFailure();
@@ -62,7 +62,7 @@ public class ThrowTests
         var (context, _) = CreateContext();
         var original = new global::app.error.ServiceError("original boom", "OriginalKey", 418);
 
-        var action = new Throw { Context = context, Data = context.Ok(original) };
+        var action = new Throw(context) { Data = context.Ok(original) };
         var result = await action.Run();
 
         await result.IsFailure();
@@ -78,7 +78,7 @@ public class ThrowTests
         // never flattened. Reachable as %!error.data%.
         var (context, _) = CreateContext();
 
-        var action = new Throw { Context = context, Data = Data.Ok((Text)"order-123") };
+        var action = new Throw(context) { Data = Data.Ok((Text)"order-123") };
         var result = await action.Run();
 
         await result.IsFailure();
@@ -98,7 +98,7 @@ public class ThrowTests
         var (context, _) = CreateContext();
         var inner = new ListType(new[] { Data.Ok((Text)"order-123"), Data.Ok((Text)"item-9") });
 
-        var action = new Throw { Context = context, Data = Data.Ok(inner) };
+        var action = new Throw(context) { Data = Data.Ok(inner) };
         var result = await action.Run();
 
         await result.IsFailure();
@@ -116,7 +116,7 @@ public class ThrowTests
         // The attached value shows in the error display (Format), not as a type name.
         var (context, _) = CreateContext();
 
-        var action = new Throw { Context = context, Message = (Text)"checkout failed", Data = Data.Ok((Text)"order-123") };
+        var action = new Throw(context) { Message = (Text)"checkout failed", Data = Data.Ok((Text)"order-123") };
         var result = await action.Run();
 
         var formatted = result.Error!.Format();

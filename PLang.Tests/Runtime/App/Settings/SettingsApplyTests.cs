@@ -31,7 +31,7 @@ public class SettingsApplyTests
     [Test]
     public async Task Apply_WritesNonNullPropertiesToScope()
     {
-        var source = new configure { Context = _ctx, TimeoutInSec = (global::app.type.number.@this)60, BaseUrl = (global::app.type.text.@this)"https://api.example.com" };
+        var source = new configure(_ctx) { TimeoutInSec = (global::app.type.number.@this)60, BaseUrl = (global::app.type.text.@this)"https://api.example.com" };
 
         _app.Config.Apply<Config>(source, _ctx);
 
@@ -44,7 +44,7 @@ public class SettingsApplyTests
     public async Task Apply_SkipsNullProperties()
     {
         // Only set TimeoutInSec, leave BaseUrl null
-        var source = new configure { Context = _ctx, TimeoutInSec = (global::app.type.number.@this)45 };
+        var source = new configure(_ctx) { TimeoutInSec = (global::app.type.number.@this)45 };
 
         _app.Config.Apply<Config>(source, _ctx);
 
@@ -58,7 +58,7 @@ public class SettingsApplyTests
     public async Task Apply_IgnoresPropertiesNotInConfig()
     {
         // configure has a "Default" bool property that Config does not have
-        var source = new configure { Context = _ctx, TimeoutInSec = (global::app.type.number.@this)10, Default = (global::app.type.@bool.@this)true };
+        var source = new configure(_ctx) { TimeoutInSec = (global::app.type.number.@this)10, Default = (global::app.type.@bool.@this)true };
 
         _app.Config.Apply<Config>(source, _ctx);
 
@@ -72,7 +72,7 @@ public class SettingsApplyTests
     [Test]
     public async Task Apply_IsDefaultTrue_WritesToEngineDefaults()
     {
-        var source = new configure { Context = _ctx, TimeoutInSec = (global::app.type.number.@this)120 };
+        var source = new configure(_ctx) { TimeoutInSec = (global::app.type.number.@this)120 };
 
         _app.Config.Apply<Config>(source, _ctx, isDefault: true);
 
@@ -85,7 +85,7 @@ public class SettingsApplyTests
     [Test]
     public async Task Apply_IsDefaultFalse_ScopedToContext()
     {
-        var source = new configure { Context = _ctx, TimeoutInSec = (global::app.type.number.@this)90 };
+        var source = new configure(_ctx) { TimeoutInSec = (global::app.type.number.@this)90 };
 
         _app.Config.Apply<Config>(source, _ctx, isDefault: false);
 
@@ -102,7 +102,7 @@ public class SettingsApplyTests
     [Test]
     public async Task Apply_NullableValueType_WrittenWhenHasValue()
     {
-        var source = new configure { Context = _ctx, FollowRedirects = (global::app.type.@bool.@this)false };
+        var source = new configure(_ctx) { FollowRedirects = (global::app.type.@bool.@this)false };
 
         _app.Config.Apply<Config>(source, _ctx);
 
@@ -114,7 +114,7 @@ public class SettingsApplyTests
     public async Task Apply_DictionaryProperty_Written()
     {
         var headers = new Dictionary<string, object> { ["Authorization"] = "Bearer tok" };
-        var source = new configure { Context = _ctx, DefaultHeaders = headers.ToDictData() };
+        var source = new configure(_ctx) { DefaultHeaders = headers.ToDictData() };
 
         _app.Config.Apply<Config>(source, _ctx);
 
@@ -128,11 +128,11 @@ public class SettingsApplyTests
     public async Task Apply_MultipleCallsMergeInScope()
     {
         // First apply sets timeout
-        var source1 = new configure { Context = _ctx, TimeoutInSec = (global::app.type.number.@this)60 };
+        var source1 = new configure(_ctx) { TimeoutInSec = (global::app.type.number.@this)60 };
         _app.Config.Apply<Config>(source1, _ctx);
 
         // Second apply sets base URL — timeout should still be there
-        var source2 = new configure { Context = _ctx, BaseUrl = (global::app.type.text.@this)"https://api.test.com" };
+        var source2 = new configure(_ctx) { BaseUrl = (global::app.type.text.@this)"https://api.test.com" };
         _app.Config.Apply<Config>(source2, _ctx);
 
         var view = _app.Config.For<Config>(_ctx);

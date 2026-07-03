@@ -25,10 +25,7 @@ public class GoalCallTests
     [Test]
     public async Task Call_ExistingGoal_RunsSuccessfully()
     {
-        var action = new Call
-        {
-            Context = _app.User.Context,
-            GoalName = new GoalCall { Name = "TestGoal" }
+        var action = new Call(_app.User.Context) { GoalName = new GoalCall { Name = "TestGoal" }
         };
         var result = await action.Run();
 
@@ -38,10 +35,7 @@ public class GoalCallTests
     [Test]
     public async Task Call_MissingGoal_ReturnsError()
     {
-        var action = new Call
-        {
-            Context = _app.User.Context,
-            GoalName = new GoalCall { Name = "NonExistent" }
+        var action = new Call(_app.User.Context) { GoalName = new GoalCall { Name = "NonExistent" }
         };
         var result = await action.Run();
 
@@ -51,10 +45,7 @@ public class GoalCallTests
     [Test]
     public async Task Call_WithParameters_InjectsOnContext()
     {
-        var action = new Call
-        {
-            Context = _app.User.Context,
-            GoalName = new GoalCall
+        var action = new Call(_app.User.Context) { GoalName = new GoalCall
             {
                 Name = "TestGoal",
                 Parameters = new List<Data> { new Data("myParam", "myValue", context: _app.User.Context) }
@@ -72,10 +63,7 @@ public class GoalCallTests
     public async Task Call_NullActor_UsesCurrentContext()
     {
         _app.User.Context.Variable.Set("marker", "fromCaller");
-        var action = new Call
-        {
-            Context = _app.User.Context,
-            GoalName = new GoalCall { Name = "TestGoal" },
+        var action = new Call(_app.User.Context) { GoalName = new GoalCall { Name = "TestGoal" },
             Actor = null
         };
         var result = await action.Run();

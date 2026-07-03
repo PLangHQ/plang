@@ -21,10 +21,7 @@ public class MockTests
     public async Task Action_SimpleReturn_CreatesHandle()
     {
         var (context, _, _) = CreateContext();
-        var action = new intercept
-        {
-            Context = context,
-            Pattern = (global::app.type.text.@this)"file.read",
+        var action = new intercept(context) { Pattern = (global::app.type.text.@this)"file.read",
             Return = new global::app.data.@this("", "test content", context: context)        };
 
         var result = await action.Run();
@@ -42,10 +39,7 @@ public class MockTests
     public async Task Action_Spy_CreatesSpyHandle()
     {
         var (context, _, _) = CreateContext();
-        var action = new intercept
-        {
-            Context = context,
-            Pattern = (global::app.type.text.@this)"output.write"
+        var action = new intercept(context) { Pattern = (global::app.type.text.@this)"output.write"
         };
 
         var result = await action.Run();
@@ -59,10 +53,7 @@ public class MockTests
     public async Task Action_RegistersBeforeActionEvent()
     {
         var (context, _, _) = CreateContext();
-        var action = new intercept
-        {
-            Context = context,
-            Pattern = (global::app.type.text.@this)"file.read",
+        var action = new intercept(context) { Pattern = (global::app.type.text.@this)"file.read",
             Return = new global::app.data.@this("", "mocked", context: context)        };
 
         var beforeCount = context.Events.Count;
@@ -76,10 +67,7 @@ public class MockTests
     public async Task Action_EventBindingId_IsPopulated()
     {
         var (context, _, _) = CreateContext();
-        var action = new intercept
-        {
-            Context = context,
-            Pattern = (global::app.type.text.@this)"file.read",
+        var action = new intercept(context) { Pattern = (global::app.type.text.@this)"file.read",
             Return = new global::app.data.@this("", "mocked", context: context)        };
 
         var result = await action.Run();
@@ -103,10 +91,7 @@ public class MockTests
         handle.RecordCall(new Dictionary<string, object?> { ["path"] = "test.txt" });
         handle.RecordCall(new Dictionary<string, object?> { ["path"] = "other.txt" });
 
-        var verify = new Verify
-        {
-            Context = context,
-            Mock = handle,
+        var verify = new Verify(context) { Mock = handle,
             ExpectedCount = (global::app.type.number.@this)2
         };
 
@@ -125,10 +110,7 @@ public class MockTests
         };
         handle.RecordCall(new Dictionary<string, object?> { ["path"] = "test.txt" });
 
-        var verify = new Verify
-        {
-            Context = context,
-            Mock = handle,
+        var verify = new Verify(context) { Mock = handle,
             ExpectedCount = (global::app.type.number.@this)3
         };
 
@@ -147,10 +129,7 @@ public class MockTests
             Pattern = "file.read"
         };
 
-        var verify = new Verify
-        {
-            Context = context,
-            Mock = handle,
+        var verify = new Verify(context) { Mock = handle,
             ExpectedCount = (global::app.type.number.@this)1,
             Message = (global::app.type.text.@this)"file.read should be called once"
         };
@@ -170,10 +149,7 @@ public class MockTests
         var (context, _, _) = CreateContext();
 
         // Register a mock
-        var mockAction = new intercept
-        {
-            Context = context,
-            Pattern = (global::app.type.text.@this)"file.read",
+        var mockAction = new intercept(context) { Pattern = (global::app.type.text.@this)"file.read",
             Return = new global::app.data.@this("", "mocked", context: context)        };
         var mockResult = await mockAction.Run();
         var handle = (global::app.mock.@this)(await mockResult.Value())!;
@@ -181,10 +157,7 @@ public class MockTests
         var countBefore = context.Events.Count;
 
         // Reset the specific mock
-        var reset = new Reset
-        {
-            Context = context,
-            Mock = handle
+        var reset = new Reset(context) { Mock = handle
         };
         var resetResult = await reset.Run();
         await resetResult.IsSuccess();
@@ -197,27 +170,18 @@ public class MockTests
         var (context, _, _) = CreateContext();
 
         // Register two mocks
-        var mock1 = new intercept
-        {
-            Context = context,
-            Pattern = (global::app.type.text.@this)"file.read",
+        var mock1 = new intercept(context) { Pattern = (global::app.type.text.@this)"file.read",
             Return = new global::app.data.@this("", "mocked1", context: context)        };
         await mock1.Run();
 
-        var mock2 = new intercept
-        {
-            Context = context,
-            Pattern = (global::app.type.text.@this)"output.write",
+        var mock2 = new intercept(context) { Pattern = (global::app.type.text.@this)"output.write",
             Return = new global::app.data.@this("", "mocked2", context: context)        };
         await mock2.Run();
 
         await Assert.That(context.Events.Count).IsGreaterThanOrEqualTo(2);
 
         // Reset all mocks
-        var reset = new Reset
-        {
-            Context = context,
-            Mock = null
+        var reset = new Reset(context) { Mock = null
         };
         var resetResult = await reset.Run();
         await resetResult.IsSuccess();

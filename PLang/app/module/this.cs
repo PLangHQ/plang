@@ -107,13 +107,13 @@ public sealed class @this : IAsyncDisposable
     /// Resolves a handler for a .pr action. Navigates the action for module/actionName.
     /// </summary>
     public (ICodeGenerated? Handler, IError? Error) GetCodeGenerated(
-        global::app.goal.steps.step.actions.action.@this action)
+        global::app.goal.steps.step.actions.action.@this action, actor.context.@this context)
     {
         if (!_modules.TryGetValue(action.Module, out var actions) ||
             !actions.TryGetValue(action.ActionName, out var entry))
             return (null, ActionError.NotFound($"Action '{action.Module}.{action.ActionName}'"));
 
-        var handler = entry.Create();
+        var handler = entry.Create(context);
         if (handler == null)
             return (null, new ActionError(
                 $"Action '{action.Module}.{action.ActionName}' does not implement ICodeGenerated",
@@ -603,13 +603,15 @@ public sealed class @this : IAsyncDisposable
 /// </summary>
 public record ActionEntry(Type? Type, IAction? Instance)
 {
-    public ICodeGenerated? Create()
+    public ICodeGenerated? Create(global::app.actor.context.@this context)
     {
+        // Shared mock instances (test-only) ignore per-call context — they set it via Attach.
         if (Instance is ICodeGenerated cg)
             return cg;
 
+        // Generated actions are born WITH context — their primary ctor takes it.
         if (Type != null && typeof(ICodeGenerated).IsAssignableFrom(Type))
-            return (ICodeGenerated)Activator.CreateInstance(Type)!;
+            return (ICodeGenerated)Activator.CreateInstance(Type, context)!;
 
         return null;
     }

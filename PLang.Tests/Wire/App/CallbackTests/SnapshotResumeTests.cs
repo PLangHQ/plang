@@ -27,7 +27,7 @@ public class SnapshotResumeTests
     {
         var app = NewApp();
         var data = app.Ok("v"); // Snapshot = null
-        var handler = new run { Context = app.User.Context, Callback = data };
+        var handler = new run(app.User.Context) { Callback = data };
         var result = await handler.Run();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NoSnapshot");
@@ -38,7 +38,7 @@ public class SnapshotResumeTests
         var app = NewApp();
         var data = app.Ok("v");
         data.Snapshot = new global::app.snapshot.@this(global::PLang.Tests.TestApp.SharedContext); // empty snapshot
-        var handler = new run { Context = app.User.Context, Callback = data };
+        var handler = new run(app.User.Context) { Callback = data };
         var result = await handler.Run();
         // Empty snapshot → no CallStack section → RestoredChain null → NoPosition.
         // Confirms delegation reached Resume (we don't get NoSnapshot).

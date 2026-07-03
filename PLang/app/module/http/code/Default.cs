@@ -544,9 +544,8 @@ public sealed class Default : IHttp
         }
 
         // Data.Signature is populated from the wire via [In] — pass straight to verify
-        var verifyAction = new signing.verify
+        var verifyAction = new signing.verify(context)
         {
-            Context = context,
             Data = data
         };
 
@@ -579,7 +578,7 @@ public sealed class Default : IHttp
         // inner data (the read boundary auto-verifies; verify peels it).
         if (data?.Peek() is global::app.type.signature.@this layer)
         {
-            var verifyAction = new signing.verify { Context = context, Data = data };
+            var verifyAction = new signing.verify(context) { Data = data };
             var verifyResult = await app.RunAction<signing.verify>(verifyAction, context);
             if (verifyResult.Success)
                 await context.Variable.Set("!ServiceIdentity", layer.Identity.ToString());
@@ -855,9 +854,8 @@ public sealed class Default : IHttp
             if (data == null) continue;
 
             // Verify signature — pass Data straight to verify
-            var verifyAction = new signing.verify
+            var verifyAction = new signing.verify(context)
             {
-                Context = context,
                 Data = data
             };
 

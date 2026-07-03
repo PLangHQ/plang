@@ -50,10 +50,7 @@ public class FileReadBuildTests
         try
         {
             var p = global::app.type.path.@this.Resolve(abs, app.User.Context);
-            var action = new global::app.module.file.Read
-            {
-                Context = app.User.Context,
-                Path = global::app.data.@this<global::app.type.path.@this>.Ok(p),
+            var action = new global::app.module.file.Read(app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(p),
             };
             var result = await action.Run();
             await result.IsSuccess();
@@ -73,10 +70,7 @@ public class FileReadBuildTests
         try
         {
             var p = global::app.type.path.@this.Resolve(abs, app.User.Context);
-            var action = new global::app.module.file.Read
-            {
-                Context = app.User.Context,
-                Path = global::app.data.@this<global::app.type.path.@this>.Ok(p),
+            var action = new global::app.module.file.Read(app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(p),
             };
             var result = await action.Run();
             await result.IsSuccess();
