@@ -147,7 +147,7 @@ public partial class Read : IContext
                 // `action` is the source attribution (the handler reduces to its
                 // own identity; a live handler has no wire form).
                 string source = __action == null ? "" : $"{__action.Module}.{__action.ActionName}";
-                var warning = new global::app.type.dict.@this { Context = Context }
+                var warning = new global::app.type.dict.@this(Context)
                     .Set("action", source)
                     .Set("message", $"file.read: literal path '{raw}' does not exist on disk");
                 await Context.Actor.Channel.Channel("builder").WriteAsync(Context.Ok(warning));

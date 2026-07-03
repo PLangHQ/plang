@@ -87,7 +87,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
 
         // Implicit-first through a list of dicts.
         var people = new ListV { Context = app.User.Context };
-        var p0 = new DictV { Context = app.User.Context };
+        var p0 = new DictV(app.User.Context);
         p0.Set(app.Data("name", "alice"));
         people.Add(app.Data("", p0));
         var peopleData = app.Data("people", people);

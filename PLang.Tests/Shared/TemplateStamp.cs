@@ -69,7 +69,7 @@ public static class TemplateStamp
                 bool any = false;
                 foreach (var entry in entries) any |= StampEntry(entry, context);
                 if (!any) return null;
-                var stampedDict = new global::app.type.dict.@this { Template = "plang", Context = context };
+                var stampedDict = new global::app.type.dict.@this(context) { Template = "plang" };
                 foreach (var entry in entries) stampedDict.Set(entry);
                 return stampedDict;
             }
@@ -111,7 +111,7 @@ public static class TemplateStamp
 
             case IDictionary<string, object?> d:
             {
-                var dict = new global::app.type.dict.@this { Template = "plang", Context = context };
+                var dict = new global::app.type.dict.@this(context) { Template = "plang" };
                 foreach (var kv in d)
                     dict.Set(new global::app.data.@this(kv.Key, Build(kv.Value, context), context: context));
                 return dict;

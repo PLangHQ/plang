@@ -137,7 +137,7 @@ public class Stage0_NamedChannelsTests
     // The build-warning payload shape: a native dict {action, message}, mirroring
     // what file.read writes to the "builder" channel.
     private global::app.type.dict.@this Warning(string action, string message)
-        => new global::app.type.dict.@this { Context = _app.User.Context }.Set("action", action).Set("message", message);
+        => new global::app.type.dict.@this(_app.User.Context).Set("action", action).Set("message", message);
 
     // Two distinct channel names resolve to two distinct channel instances —
     // they are independent registry entries, not aliases. End-to-end isolation

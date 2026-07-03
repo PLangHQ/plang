@@ -63,7 +63,7 @@ public partial class getTypes : IContext
         // Each step's type-map becomes a native dict; the per-step list is list<dict>.
         var rows = perStep.Select(d =>
         {
-            var nd = new global::app.type.dict.@this();
+            var nd = new global::app.type.dict.@this(Context);
             foreach (var kv in d) nd.Set(kv.Key, kv.Value);
             return new data.@this("", nd, context: Context);
         });

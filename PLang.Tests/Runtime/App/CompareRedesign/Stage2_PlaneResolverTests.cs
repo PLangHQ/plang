@@ -92,7 +92,7 @@ public class Stage2_PlaneResolverTests
     public async Task AtSchemaBlocked_AsDictKey_WireMarkerOnly()
     {
         // @schema is the wire marker — the dict write seam rejects it as a key
-        var d = new global::app.type.dict.@this();
+        var d = new global::app.type.dict.@this(global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(() => d.Set("@schema", "data")).Throws<ArgumentException>();
         await Assert.That(() => d.Set(new Data("@schema", "data"))).Throws<ArgumentException>();
         // ordinary keys unaffected; envelope recognition reads the marker off

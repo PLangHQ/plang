@@ -76,8 +76,8 @@ public class RowModelTests : System.IAsyncDisposable
     public async Task DictRow_IsWeightOne_NotFlattened()
     {
         var a = new ListV { Context = app.User.Context };
-        var d1 = new DictV { Context = app.User.Context }; d1.Set(app.Data("x", 1L));
-        var d2 = new DictV { Context = app.User.Context }; d2.Set(app.Data("x", 2L));
+        var d1 = new DictV(app.User.Context); d1.Set(app.Data("x", 1L));
+        var d2 = new DictV(app.User.Context); d2.Set(app.Data("x", 2L));
         a.Add(D(d1)); a.Add(D(d2));             // [{x:1}, {x:2}]
 
         await Assert.That(a.Count).IsEqualTo(2);            // dicts are whole items

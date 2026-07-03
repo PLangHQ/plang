@@ -123,7 +123,7 @@ public class Stage7_SurfaceGateTests
     [Test]
     public async Task DictKeys_ReturnsListOfText_NotIEnumerableString()
     {
-        var d = new global::app.type.dict.@this();
+        var d = new global::app.type.dict.@this(global::PLang.Tests.TestApp.SharedContext);
         d.Set(new Data("name", "a", context: global::PLang.Tests.TestApp.SharedContext));
         d.Set(new Data("age", 30L, context: global::PLang.Tests.TestApp.SharedContext));
         object keys = d.Keys;
@@ -142,7 +142,7 @@ public class Stage7_SurfaceGateTests
         object count = l.Count;
         await Assert.That(count).IsTypeOf<global::app.type.number.@this>();
         await Assert.That(count.ToString()).IsEqualTo("2");
-        object dictCount = new global::app.type.dict.@this().Count;
+        object dictCount = new global::app.type.dict.@this(global::PLang.Tests.TestApp.SharedContext).Count;
         await Assert.That(dictCount).IsTypeOf<global::app.type.number.@this>();
     }
 

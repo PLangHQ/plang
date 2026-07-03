@@ -47,7 +47,7 @@ public class ItemApexTests
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.DeclaredOnly,
             null, new[] { typeof(object), typeof(object) }, null)).IsNull();
         // dict declares its OWN hook — equality-only (NotEqual for unequal, no order).
-        await Assert.That(Dict.Compare(new Dict(), new Dict())).IsEqualTo(global::app.data.Comparison.Equal);
+        await Assert.That(Dict.Compare(new Dict(global::PLang.Tests.TestApp.SharedContext), new Dict(global::PLang.Tests.TestApp.SharedContext))).IsEqualTo(global::app.data.Comparison.Equal);
     }
 
     [Test]
@@ -55,8 +55,8 @@ public class ItemApexTests
     {
         // dict stays equality-only under `item` — equal dicts answer Equal (order 0),
         // UNEQUAL dicts answer NotEqual, which has no order: the boundary errors.
-        var d1 = new Dict(); d1.Set("a", 1);
-        var d2 = new Dict(); d2.Set("a", 2);
+        var d1 = new Dict(global::PLang.Tests.TestApp.SharedContext); d1.Set("a", 1);
+        var d2 = new Dict(global::PLang.Tests.TestApp.SharedContext); d2.Set("a", 2);
         await Assert.That(() => CompareTestOps.OrdD(new Data("a", d1), new Data("b", d2)))
             .Throws<global::app.data.IncomparableException>();
         // list, which DOES implement IOrderableValue, still sorts (empty == empty).
@@ -68,10 +68,10 @@ public class ItemApexTests
     {
         // A dict, a number, and an empty list treated as `item` each report their
         // truthiness through the base — the universal contract `item` *does* carry.
-        Item emptyDict = new Dict();
+        Item emptyDict = new Dict(global::PLang.Tests.TestApp.SharedContext);
         Item emptyList = new PList();
         Item five = Number.From(5);
-        var fullDict = new Dict();
+        var fullDict = new Dict(global::PLang.Tests.TestApp.SharedContext);
         fullDict.Set(new Data("k", "v", context: global::PLang.Tests.TestApp.SharedContext));
         Item nonEmptyDict = fullDict;
 
@@ -90,7 +90,7 @@ public class ItemApexTests
         // An already-narrowed subtype (dict/list/number) inherits the no-op narrow:
         // it returns self, carrying no un-narrowed state. (The un-narrowed
         // item-kind-json blob rides on Data, not on item.@this — storage-free apex.)
-        Item dict = new Dict();
+        Item dict = new Dict(global::PLang.Tests.TestApp.SharedContext);
         Item list = new PList();
         Item num = Number.From(1);
         await Assert.That(ReferenceEquals(dict.Narrow(), dict)).IsTrue();

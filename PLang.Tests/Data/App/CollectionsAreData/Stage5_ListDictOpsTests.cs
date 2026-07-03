@@ -20,7 +20,7 @@ public class Stage5_ListDictOpsTests
     [After(Test)] public async Task TearDown() { await _app.DisposeAsync(); }
     private (global::app.actor.context.@this ctx, Variables vars) Ctx() => (_app.User.Context, _app.User.Context.Variable);
     private Data D(object? v) => _app.Data("", v);
-    private DictV Person(string field, object? val) { var d = new DictV { Context = _app.User.Context }; d.Set(_app.Data(field, val)); return d; }
+    private DictV Person(string field, object? val) { var d = new DictV(_app.User.Context); d.Set(_app.Data(field, val)); return d; }
 
     private Where WhereAction(global::app.actor.context.@this ctx, string var, string field, string op, object? value)
         => new(ctx) {  ListName = new app.variable.@this(var), Field = new global::app.data.@this<global::app.type.text.@this>("", field, context: ctx),

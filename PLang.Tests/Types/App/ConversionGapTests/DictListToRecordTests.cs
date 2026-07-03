@@ -13,7 +13,7 @@ public class DictListToRecordTests
 {
     private static global::app.type.dict.@this Dict(string role, string content)
     {
-        var d = new global::app.type.dict.@this();
+        var d = new global::app.type.dict.@this(global::PLang.Tests.TestApp.SharedContext);
         d.Set("Role", role);
         d.Set("Content", content);
         return d;
