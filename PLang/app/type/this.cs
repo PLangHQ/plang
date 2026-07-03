@@ -463,19 +463,19 @@ public sealed class @this : item.@this
         // A sequence of Data builds a native list DIRECTLY, preserving the actual
         // Data instances — their names, types and signatures.
         if (raw is System.Collections.Generic.IEnumerable<global::app.data.@this> dataSeq)
-            return new global::app.type.list.@this(dataSeq) { Context = context! };
+            return new global::app.type.list.@this(dataSeq, context!);
 
         // A sequence of native plang VALUES (item.@this) narrows to a native list
         // that owns the wrapping (no JSON round-trip that would degrade strong values).
         if (raw is System.Collections.Generic.IEnumerable<global::app.type.item.@this> itemSeq)
-            return new global::app.type.list.@this(itemSeq) { Context = context! };
+            return new global::app.type.list.@this(itemSeq, context!);
 
         // Foreign C# containers narrow to their native plang type. The common handoff
         // shapes alias their backing BY REFERENCE — O(1), no walk, no JSON (a
         // million-row List<object?> costs one pointer copy); other shapes narrow off
         // the wire. byte[] is excluded — bytes are the binary leaf, not a list.
         if (raw is System.Collections.Generic.List<object?> objList)
-            return new global::app.type.list.@this(objList) { Context = context! };
+            return new global::app.type.list.@this(objList, context!);
         if (raw is System.Collections.Generic.Dictionary<string, object?> objDict)
             return new global::app.type.dict.@this(objDict, context!);
         if (raw is System.Collections.IDictionary

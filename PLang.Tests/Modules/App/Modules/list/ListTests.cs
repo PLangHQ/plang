@@ -73,9 +73,9 @@ public class ListTests
         // list INSTANCE (the entry mints its own Data pointing at it, nothing
         // copied) — in-place mutation of either side shows through both names.
         var (context, memory) = CreateContext();
-        var aList = new global::app.type.list.@this { Context = context };
+        var aList = new global::app.type.list.@this(context);
         aList.Add(new global::app.data.@this("", 10L, context: context)); aList.Add(new global::app.data.@this("", 20L, context: context));
-        var bList = new global::app.type.list.@this { Context = context };
+        var bList = new global::app.type.list.@this(context);
         bList.Add(new global::app.data.@this("", 50L, context: context)); bList.Add(new global::app.data.@this("", 60L, context: context));
         memory.Set("a", aList);
         memory.Set("b", bList);

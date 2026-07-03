@@ -13,7 +13,7 @@ public class NestedTypedRoundTripTests
     {
         var app = global::PLang.Tests.TestApp.Create("/nest");
         var ctx = app.User.Context;
-        var steps = new global::app.type.list.@this { Context = ctx }
+        var steps = new global::app.type.list.@this(ctx)
             .Add(new global::app.data.@this("", new global::app.type.dict.@this(ctx).Set("index", 1L), context: ctx));
         var plan = new global::app.type.dict.@this(ctx)
             .Set("description", "a plan")

@@ -68,7 +68,7 @@ public partial class getTypes : IContext
             return new data.@this("", nd, context: Context);
         });
         return Context.Ok<global::app.type.list.@this<global::app.type.dict.@this>>(
-            new global::app.type.list.@this<global::app.type.dict.@this>(rows) { Context = Context });
+            new global::app.type.list.@this<global::app.type.dict.@this>(rows, Context));
     }
 
     private static void ProcessAction(

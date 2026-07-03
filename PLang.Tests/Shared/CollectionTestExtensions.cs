@@ -13,7 +13,8 @@ public static class CollectionTestExtensions
     public static global::app.data.@this<global::app.type.list.@this<T>> ToListData<T>(this System.Collections.IEnumerable raw, global::app.actor.context.@this? context = null)
         where T : global::app.type.item.@this
     {
-        var l = new global::app.type.list.@this<T>() { Context = context };
+        context ??= global::PLang.Tests.TestApp.SharedContext;
+        var l = new global::app.type.list.@this<T>(context);
         foreach (var i in raw)
             l.Add(i is global::app.data.@this d ? d : new global::app.data.@this("", i, context: context));
         return new("", l, context: context);

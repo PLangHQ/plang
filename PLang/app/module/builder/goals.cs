@@ -19,7 +19,7 @@ public partial class goals : IContext
         var goals = global::app.type.item.@this.Lower<List<Goal>>(await result.Value()) ?? new List<Goal>();
         var rows = goals.Select(g => new data.@this("", g, context: Context));
         var typed = Context.Ok<global::app.type.list.@this<Goal>>(
-            new global::app.type.list.@this<Goal>(rows) { Context = Context });
+            new global::app.type.list.@this<Goal>(rows, Context));
         typed.Warnings = result.Warnings;   // forward builder warnings (corrupt .pr, etc.)
         return typed;
     }

@@ -55,7 +55,7 @@ public partial class Throw : IContext
         global::app.data.@this<List>? attached = null;
         if (Data != null)
         {
-            List list = thrown as List ?? new List(new[] { Data });
+            List list = thrown as List ?? new List(new[] { Data }, Context);
             attached = Context.Ok<List>(list);
             attached.Context = Context;
         }

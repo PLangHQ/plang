@@ -14,7 +14,7 @@ public partial class @this
         global::app.actor.context.@this context)
     {
         if (value is string s && string.IsNullOrWhiteSpace(s))
-            return context.Ok(new @this { Context = context });
+            return context.Ok(new @this(context));
         return null;
     }
 
@@ -31,7 +31,7 @@ public partial class @this
         if (value is @this native) return native;
         if (value is string || value is not System.Collections.IEnumerable seq) return null;
 
-        var list = new @this { Context = context };
+        var list = new @this(context);
         foreach (var item in seq)
         {
             if (item is global::app.data.@this existing) { list.Add(existing); continue; }

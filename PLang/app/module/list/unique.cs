@@ -26,7 +26,7 @@ public partial class Unique : IContext
                 if (await item.Compare(k) == global::app.data.Comparison.Equal) { dup = true; break; }
             if (!dup) kept.Add(item);
         }
-        var deduped = new app.type.list.@this(kept) { Context = Context };
+        var deduped = new app.type.list.@this(kept, Context);
         return Context.Ok<type.list>(
             new type.list { count = deduped.CountRaw, value = deduped }, app.type.@this.FromName("list"));
     }

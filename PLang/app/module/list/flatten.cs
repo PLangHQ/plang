@@ -14,7 +14,7 @@ public partial class Flatten : IContext
             return Context.Error<type.list>(
                 new app.error.ValidationError($"Variable '{(await ListName.Value())}' is not a list"));
 
-        var flat = new app.type.list.@this { Context = Context };
+        var flat = new app.type.list.@this(Context);
         await FlattenNative(nl, flat);
         return Context.Ok<type.list>(new type.list { count = flat.CountRaw, value = flat }, app.type.@this.FromName("list"));
     }

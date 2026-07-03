@@ -57,26 +57,28 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     private static bool IsWrapped(object? slot)
         => slot is Data or global::app.type.item.@this;
 
-    public @this() => _items = new();
-    public @this(IEnumerable<Data> items) { _items = new(items); _hasWrapped = true; }
+    public @this(actor.context.@this context) : this(new List<object?>(), context) { }
+    public @this(IEnumerable<Data> items, actor.context.@this context) : this(new List<object?>(items), context) { _hasWrapped = true; }
 
     /// <summary>Builds from a sequence of native plang VALUES — each wrapped in its
     /// own row Data, preserving the strong value (a list&lt;type&gt; keeps real type
     /// instances, never degraded to dicts on a JSON round-trip). The value-sequence
     /// sibling of the <see cref="Data"/>-sequence ctor above — the list owns how a
     /// sequence of values becomes its rows; callers just hand over the values.</summary>
-    public @this(IEnumerable<global::app.type.item.@this> values)
-    {
-        _items = new(values.Select(v => (object?)new Data("", v)));
-        _hasWrapped = true;
-    }
+    public @this(IEnumerable<global::app.type.item.@this> values, actor.context.@this context)
+        : this(new List<object?>(values.Select(v => (object?)new Data("", v, context: context))), context) { _hasWrapped = true; }
 
     /// <summary>Aliases a foreign CLR list as this list's backing — O(1), no walk,
     /// no copy. The handoff contract: the source becomes the backing, so its slots
     /// are assumed raw CLR values (the all-raw invariant <see cref="_hasWrapped"/> tracks
     /// from here). A pure read keeps the backing pristine, so the CLR exit door hands
-    /// the same instance back; the first write elevates a slot and the backing diverges.</summary>
-    internal @this(List<object?> backing) => _items = backing;
+    /// the same instance back; the first write elevates a slot and the backing diverges.
+    /// Born WITH context — every row reads/serializes through it.</summary>
+    internal @this(List<object?> backing, actor.context.@this context)
+    {
+        _items = backing;
+        _context = context ?? throw new System.ArgumentNullException(nameof(context));
+    }
 
     // Type-on-read: the row at `i` as a FRESH Data wrapping the raw slot — never
     // cached back. Leaving the slot raw keeps the backing pristine (enumeration-safe,
@@ -87,7 +89,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         var raw = _items[i];
         if (raw is Data d)
         {
-            if (_context != null) d.Context = _context;
+            d.Context = _context;
             return d;
         }
         return new Data("", global::app.type.@this.Create(raw, _context), context: _context);
@@ -109,7 +111,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// own raw slots; a Data carries its own type.</summary>
     internal @this AddRaw(object? raw)
     {
-        if (raw is Data d && _context != null) d.Context = _context;
+        if (raw is Data d) d.Context = _context;
         if (IsWrapped(raw)) _hasWrapped = true;   // a Data / nested wrapper diverges the backing
         _items.Add(raw);
         return this;
@@ -120,7 +122,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// navigation / serialization has a wired scope — mirrors dict.
     /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
-    public actor.context.@this? Context
+    public actor.context.@this Context
     {
         get => _context;
         set
@@ -130,7 +132,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             // walk so assigning a million-row aliased list stays O(1). Reads born
             // their rows with _context lazily (Row); a wrapped slot is reached
             // here only when the backing already diverged.
-            if (value == null || !_hasWrapped) return;
+            if (!_hasWrapped) return;
             foreach (var slot in _items)
             {
                 if (slot is Data d) d.Context = value;
@@ -138,13 +140,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             }
         }
     }
-    private actor.context.@this? _context;
-
-    actor.context.@this module.IContext.Context
-    {
-        get => _context!;
-        set => Context = value;
-    }
+    private actor.context.@this _context = null!;
 
     // A list is a list of ROWS (`_items`). Each row holds its raw value (or the
     // Data it was added with) and types itself on read.
@@ -271,7 +267,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// row's weight (1, or the item's flattened count when it is a list) surfaces via Count.</summary>
     public @this Add(Data item)
     {
-        if (_context != null) item.Context = _context;
+        item.Context = _context;
         _hasWrapped = true;
         _items.Add(item);
         return this;
@@ -281,7 +277,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// (clamped to [0, Count]).</summary>
     internal @this Insert(int index, Data item)
     {
-        if (_context != null) item.Context = _context;
+        item.Context = _context;
         _hasWrapped = true;
         if (index < 0) index = 0;
         if (Locate(index, out int row, out int offset, out @this? inner))
@@ -412,7 +408,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     {
         _hasWrapped = true;
         _items.Clear();
-        if (_context != null) foreach (var d in flat) d.Context = _context;
+        foreach (var d in flat) d.Context = _context;
         _items.AddRange(flat);
     }
 
@@ -429,7 +425,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>Replaces (or appends at Count) the leaf at the flattened <paramref name="index"/>.</summary>
     internal void SetAt(int index, Data value)
     {
-        if (_context != null) value.Context = _context;
+        value.Context = _context;
         _hasWrapped = true;
         if (Locate(index, out int row, out int offset, out @this? inner))
         {
@@ -549,7 +545,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// seam the base render uses so it never hard-codes the non-generic type. The
     /// generic <c>list&lt;T&gt;</c> overrides it so render/clone preserve the
     /// element-type tag (a <c>list&lt;path&gt;</c> stays a <c>list&lt;path&gt;</c>).</summary>
-    protected virtual @this Empty() => new();
+    protected virtual @this Empty() => new(_context);
 
     /// <summary>A container is never final — an element may be non-final (a template,
     /// a nested container), so a read must go through the door. Value() short-circuits
@@ -575,7 +571,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
                     // list<path>, not a bare list.@this, or the element-type tag is
                     // lost and Data.Value<list<path>>() can no longer recognise it.
                     rendered = Empty();
-                    rendered.Context = _context;
                     for (int j = 0; j < i; j++) rendered.AddRaw(_items[j]);
                 }
                 var name = slot is Data sd ? sd.Name : "";

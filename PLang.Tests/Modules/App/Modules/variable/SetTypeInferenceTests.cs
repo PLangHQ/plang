@@ -138,7 +138,7 @@ public class SetTypeInferenceTests
     {
         var context = _app.User.Context;
         var src = new List<object?> { "a", "b", "c" };
-        var lst = new global::app.type.list.@this(src) { Context = context };
+        var lst = new global::app.type.list.@this(src, context);
 
         lst.SetAt(2, new Data("", 9L, context: context));
 
@@ -216,7 +216,7 @@ public class SetTypeInferenceTests
     public async Task Set_ListAlias_InPlaceAddVisibleThroughBothNames()
     {
         var context = _app.User.Context;
-        var x = new global::app.type.list.@this { Context = context };
+        var x = new global::app.type.list.@this(context);
         x.Add(new Data("", 1L, context: context)); x.Add(new Data("", 2L, context: context));
         context.Variable.Set("x", x);
 

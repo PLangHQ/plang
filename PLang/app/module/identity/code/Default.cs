@@ -180,7 +180,7 @@ public sealed class Default : IIdentity
         var active = items!.Where(i => !i.IsArchived)
             .Select(i => new data.@this("", i, context: action.Context)).ToList();
         return action.Context.Ok<global::app.type.list.@this<Identity>>(
-            new global::app.type.list.@this<Identity>(active) { Context = action.Context });
+            new global::app.type.list.@this<Identity>(active, action.Context));
     }
 
     public async Task<data.@this<Identity>> ExportAsync(Export action)

@@ -145,7 +145,7 @@ public partial class json
 
     private list.@this ArrayLeaf(System.Text.Json.JsonElement element, int depth)
     {
-        var l = new list.@this { Context = _context };
+        var l = new list.@this(_context);
         foreach (var item in element.EnumerateArray())
             l.AddRaw(RawSlot(item, depth + 1));
         return l;

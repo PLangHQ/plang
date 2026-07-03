@@ -15,7 +15,7 @@ public class RowModelTests : System.IAsyncDisposable
 
     private ListV Of(params long[] xs)
     {
-        var l = new ListV { Context = app.User.Context };
+        var l = new ListV(app.User.Context);
         foreach (var x in xs) l.Add(D(x));
         return l;
     }
@@ -75,7 +75,7 @@ public class RowModelTests : System.IAsyncDisposable
     [Test]
     public async Task DictRow_IsWeightOne_NotFlattened()
     {
-        var a = new ListV { Context = app.User.Context };
+        var a = new ListV(app.User.Context);
         var d1 = new DictV(app.User.Context); d1.Set(app.Data("x", 1L));
         var d2 = new DictV(app.User.Context); d2.Set(app.Data("x", 2L));
         a.Add(D(d1)); a.Add(D(d2));             // [{x:1}, {x:2}]

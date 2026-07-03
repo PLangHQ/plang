@@ -14,12 +14,12 @@ namespace app.type.list;
 public sealed class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
     where T : global::app.type.item.@this
 {
-    public @this() : base() { }
-    public @this(System.Collections.Generic.IEnumerable<global::app.data.@this> items) : base(items) { }
+    public @this(global::app.actor.context.@this context) : base(context) { }
+    public @this(System.Collections.Generic.IEnumerable<global::app.data.@this> items, global::app.actor.context.@this context) : base(items, context) { }
 
     /// <summary>Render/clone preserve the element-type tag — a list&lt;T&gt; stays
     /// a list&lt;T&gt; instead of degrading to the non-generic base.</summary>
-    protected override global::app.type.list.@this Empty() => new @this<T>();
+    protected override global::app.type.list.@this Empty() => new @this<T>(Context);
 
     /// <summary>A <c>list&lt;T&gt;</c> is a RE-TAG of a list, not an element walk: wrap the
     /// list's rows as-is. Each row converts to <typeparamref name="T"/> only when taken out
@@ -27,9 +27,9 @@ public sealed class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
     public static new @this<T>? Create(global::app.type.item.@this value, global::app.data.@this data)
     {
         if (value is @this<T> already) return already;
-        if (value is @this list) return new @this<T>(list) { Context = data.Context! };
+        if (value is @this list) return new @this<T>(list, data.Context!);
         // A single value / raw container lifts to a base list first, then re-tags.
         return global::app.type.@this.Create(value.Clr<object>(), data.Context) is @this lifted
-            ? new @this<T>(lifted) { Context = data.Context! } : null;
+            ? new @this<T>(lifted, data.Context!) : null;
     }
 }

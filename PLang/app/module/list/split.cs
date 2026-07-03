@@ -18,7 +18,7 @@ public partial class Split : IContext
             : StringSplitOptions.None;
 
         var parts = (await Value.Value())!.Clr<string>()!.Split(new[] { (await Separator.Value())!.Clr<string>()! }, options);
-        var list = new app.type.list.@this { Context = Context };
+        var list = new app.type.list.@this(Context);
         foreach (var part in parts)
             list.Add(new global::app.data.@this("", part, context: Context));
 

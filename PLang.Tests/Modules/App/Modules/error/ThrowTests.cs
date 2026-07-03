@@ -96,7 +96,7 @@ public class ThrowTests
         // `- throw %order%, %item%` — multiple values ride as a plang list, each
         // element keeping its own value/type.
         var (context, _) = CreateContext();
-        var inner = new ListType(new[] { Data.Ok((Text)"order-123"), Data.Ok((Text)"item-9") });
+        var inner = new ListType(new[] { Data.Ok((Text)"order-123"), Data.Ok((Text)"item-9") }, global::PLang.Tests.TestApp.SharedContext);
 
         var action = new Throw(context) { Data = Data.Ok(inner) };
         var result = await action.Run();

@@ -136,7 +136,7 @@ public class Stage7_SurfaceGateTests
     [Test]
     public async Task ListCount_ReturnsNumber_NotInt()
     {
-        var l = new global::app.type.list.@this();
+        var l = new global::app.type.list.@this(global::PLang.Tests.TestApp.SharedContext);
         l.Add(new Data("", 1, context: global::PLang.Tests.TestApp.SharedContext));
         l.Add(new Data("", 2, context: global::PLang.Tests.TestApp.SharedContext));
         object count = l.Count;

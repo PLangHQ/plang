@@ -24,14 +24,14 @@ public partial class Group : IContext
             var keyValue = keyData.IsInitialized ? (await keyData.Value())?.ToString() ?? "" : "";
             if (!buckets.TryGetValue(keyValue, out var bucket))
             {
-                bucket = new app.type.list.@this { Context = Context };
+                bucket = new app.type.list.@this(Context);
                 buckets[keyValue] = bucket;
                 order.Add(keyValue);
             }
             bucket.Add(item);
         }
 
-        var result = new app.type.list.@this { Context = Context };
+        var result = new app.type.list.@this(Context);
         foreach (var k in order)
         {
             var bucketDict = new app.type.dict.@this(Context);

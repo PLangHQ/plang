@@ -127,7 +127,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         get
         {
-            var keys = new global::app.type.list.@this<global::app.type.text.@this>();
+            var keys = new global::app.type.list.@this<global::app.type.text.@this>(_context);
             foreach (var k in _value.Keys)
                 keys.Add(new Data(k, new global::app.type.text.@this(k)));
             return keys;

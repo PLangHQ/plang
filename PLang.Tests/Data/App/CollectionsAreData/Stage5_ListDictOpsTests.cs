@@ -30,7 +30,7 @@ public class Stage5_ListDictOpsTests
     public async Task WhereOnList_FiltersByPredicate()
     {
         var (ctx, vars) = Ctx();
-        var users = new ListV { Context = ctx };
+        var users = new ListV(ctx);
         users.Add(_app.Data("", Person("age", 25L)));
         users.Add(_app.Data("", Person("age", 15L)));
         users.Add(_app.Data("", Person("age", 40L)));
@@ -72,7 +72,7 @@ public class Stage5_ListDictOpsTests
     public async Task SortByField_OrdersNumerically()
     {
         var (ctx, vars) = Ctx();
-        var people = new ListV { Context = ctx };
+        var people = new ListV(ctx);
         people.Add(_app.Data("", Person("age", 30L)));
         people.Add(_app.Data("", Person("age", 10L)));
         people.Add(_app.Data("", Person("age", 20L)));
@@ -92,7 +92,7 @@ public class Stage5_ListDictOpsTests
         // that's an EXPECTED data condition, so sort RETURNS a Data error (it does not throw —
         // a thrown exception would escape the `on error` handler pipeline).
         var (ctx, vars) = Ctx();
-        var dicts = new ListV { Context = ctx };
+        var dicts = new ListV(ctx);
         dicts.Add(_app.Data("", Person("city", "Reyk")));
         dicts.Add(_app.Data("", Person("city", "Oslo")));
         vars.Set("dicts", dicts);
@@ -106,7 +106,7 @@ public class Stage5_ListDictOpsTests
     public async Task UniqueUsesCompareEquality()
     {
         var (ctx, vars) = Ctx();
-        var values = new ListV { Context = ctx };
+        var values = new ListV(ctx);
         values.Add(_app.Data("", Person("city", "Reyk")));
         values.Add(_app.Data("", Person("city", "Reyk")));   // structurally equal
         values.Add(_app.Data("", Person("city", "Oslo")));
@@ -122,7 +122,7 @@ public class Stage5_ListDictOpsTests
     public async Task GroupByField_BucketsAreNavigableLists()
     {
         var (ctx, vars) = Ctx();
-        var people = new ListV { Context = ctx };
+        var people = new ListV(ctx);
         people.Add(_app.Data("", Person("city", "Reyk")));
         people.Add(_app.Data("", Person("city", "Oslo")));
         people.Add(_app.Data("", Person("city", "Reyk")));

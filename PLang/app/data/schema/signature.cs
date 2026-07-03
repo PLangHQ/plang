@@ -52,7 +52,7 @@ public sealed class signature : ISchemaReader
                     while (reader.NextElement())
                         items.Add(Data.Ok(new global::app.type.text.@this(reader.String())));
                     reader.EndArray();
-                    contracts = new global::app.type.list.@this(items);
+                    contracts = new global::app.type.list.@this(items, context);
                     break;
                 }
                 case "hash":
