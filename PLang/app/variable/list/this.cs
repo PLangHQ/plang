@@ -81,21 +81,14 @@ public partial class @this
     /// Production ctor — born from the owning context. Every Variables in a running
     /// App belongs to exactly one context, passed in here.
     /// </summary>
-    public @this(actor.context.@this context) : this()
+    public @this(actor.context.@this context)
     {
         Context = context;
-    }
-
-    public @this()
-    {
-        // Test seam — production constructs via @this(context). _context is wired by
-        // the owning context's ctor (or Context setter) before any read.
-        _context = null!;
-        // System variables seeded directly (Set is async now; simple names, no navigation,
-        // no subscribers at construction — Context is wired later).
-        _variables["Now"] = new data.DynamicData("Now", () => DateTimeOffset.Now, app.type.@this.DateTime);
-        _variables["NowUtc"] = new data.DynamicData("NowUtc", () => DateTimeOffset.UtcNow, app.type.@this.DateTime);
-        _variables["GUID"] = new data.DynamicData("GUID", () => Guid.NewGuid(), app.type.@this.FromName("guid"));
+        // System variables are born WITH context — a computed lifts its factory result
+        // through the registry, so it must hold a context at birth (not stamped after).
+        _variables["Now"] = new data.DynamicData("Now", () => DateTimeOffset.Now, context, app.type.@this.DateTime);
+        _variables["NowUtc"] = new data.DynamicData("NowUtc", () => DateTimeOffset.UtcNow, context, app.type.@this.DateTime);
+        _variables["GUID"] = new data.DynamicData("GUID", () => Guid.NewGuid(), context, app.type.@this.FromName("guid"));
     }
 
     /// <summary>
@@ -800,7 +793,7 @@ public partial class @this
     /// </summary>
     public @this Clone()
     {
-        var clone = new @this();
+        var clone = new @this(_context);
         foreach (var kvp in _variables)
         {
             // Data.DynamicData (Now, GUID, etc.) — already in clone from constructor
@@ -945,7 +938,10 @@ public class @thisAccessor : IVariablesAccessor
 
     public @this Current
     {
-        get => _current.Value ?? (_current.Value = new @this());
+        // No lazy-create: a Variables store is always Set on the async flow before it is
+        // read (born from its owning context). A null here is a caller reading before set —
+        // surface it, never paper it over with a context-less store.
+        get => _current.Value!;
         set => _current.Value = value;
     }
 }

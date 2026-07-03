@@ -165,23 +165,23 @@ public sealed class @this : IDisposable
         var vars = Variable;
 
         // All context variables are lazy — context has app, fetch at request time
-        vars.Set(new data.DynamicData("!app", () => App));
-        vars.Set(new data.DynamicData("!context", () => this));
-        vars.Set(new data.DynamicData("!variables", () => Variable));
-        vars.Set(new data.DynamicData("!callStack", () => CallStack));
-        vars.Set(new data.DynamicData("!trace", () => Trace));
-        vars.Set(new data.DynamicData("!channels", () => Actor.Channel));
-        vars.Set(new data.DynamicData("!serializers", () => Actor.Channel.Serializers));
-        vars.Set(new data.DynamicData("!goal", () => Goal));
-        vars.Set(new data.DynamicData("!step", () => Step));
+        vars.Set(new data.DynamicData("!app", () => App, this));
+        vars.Set(new data.DynamicData("!context", () => this, this));
+        vars.Set(new data.DynamicData("!variables", () => Variable, this));
+        vars.Set(new data.DynamicData("!callStack", () => CallStack, this));
+        vars.Set(new data.DynamicData("!trace", () => Trace, this));
+        vars.Set(new data.DynamicData("!channels", () => Actor.Channel, this));
+        vars.Set(new data.DynamicData("!serializers", () => Actor.Channel.Serializers, this));
+        vars.Set(new data.DynamicData("!goal", () => Goal, this));
+        vars.Set(new data.DynamicData("!step", () => Step, this));
         // %!error% reads from App.Errors.@this — an AsyncLocal scope managed by
         // error.handle.Wrap via using(app.error.Push(caught)) { ... }. Null outside any
         // active recovery scope; in nested handlers each scope sees its own caught error
         // (LIFO restore on dispose). AsyncLocal is parallelism-safe by construction.
-        vars.Set(new data.DynamicData("!error", () => App.Error.Error));
-        vars.Set(new data.DynamicData("!data", () => App.System.Context.Variable.Peek("data")?.Peek()));
-        vars.Set(new data.DynamicData("!event", () => Event ?? App.System?.Context?.Event));
-        vars.Set(new data.DynamicData("!test", () => Test));
+        vars.Set(new data.DynamicData("!error", () => App.Error.Error, this));
+        vars.Set(new data.DynamicData("!data", () => App.System.Context.Variable.Peek("data")?.Peek(), this));
+        vars.Set(new data.DynamicData("!event", () => Event ?? App.System?.Context?.Event, this));
+        vars.Set(new data.DynamicData("!test", () => Test, this));
     }
 
     // --- Value births ---

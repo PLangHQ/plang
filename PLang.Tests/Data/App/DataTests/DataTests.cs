@@ -964,7 +964,7 @@ public class DynamicDataTests : System.IAsyncDisposable
     public async Task Constructor_CreatesWithFactory()
     {
         var counter = 0;
-        var dov = new DynamicData("counter", () => ++counter) { Context = _app.User.Context };
+        var dov = new DynamicData("counter", () => ++counter, _app.User.Context);
 
         await Assert.That(dov.Name).IsEqualTo("counter");
     }
@@ -973,7 +973,7 @@ public class DynamicDataTests : System.IAsyncDisposable
     public async Task Value_CallsFactoryEachTime()
     {
         var counter = 0;
-        var dov = new DynamicData("counter", () => ++counter) { Context = _app.User.Context };
+        var dov = new DynamicData("counter", () => ++counter, _app.User.Context);
 
         var value1 = await dov.Value();
         var value2 = await dov.Value();
@@ -987,7 +987,7 @@ public class DynamicDataTests : System.IAsyncDisposable
     [Test]
     public async Task Value_WithType_SetsType()
     {
-        var dov = new DynamicData("now", () => DateTime.Now, Type.DateTime) { Context = _app.User.Context };
+        var dov = new DynamicData("now", () => DateTime.Now, _app.User.Context, Type.DateTime);
 
         await Assert.That(dov.Type).IsNotNull();
         // plang-types Stage 6: datetime rebound to DateTimeOffset.
@@ -998,7 +998,7 @@ public class DynamicDataTests : System.IAsyncDisposable
     public async Task Value_ReturnsCurrentValue()
     {
         var now = DateTime.UtcNow;
-        var dov = new DynamicData("now", () => now) { Context = _app.User.Context };
+        var dov = new DynamicData("now", () => now, _app.User.Context);
 
         await Assert.That(global::app.type.item.@this.Lower<System.DateTimeOffset>(await dov.Value())).IsEqualTo(now);
     }

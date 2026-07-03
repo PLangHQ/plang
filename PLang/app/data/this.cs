@@ -873,11 +873,12 @@ public class @this<T> : @this
 /// </summary>
 public class DynamicData : @this
 {
-    public DynamicData(string name, Func<object?> valueFactory, type? type = null)
+    public DynamicData(string name, Func<object?> valueFactory, actor.context.@this context, type? type = null)
         // The declared type rides on the computed instance itself (its label),
         // not through the entry judgement — a computed answers fresh and must
-        // stay reachable as the instance.
-        : base(name, new global::app.type.item.computed(valueFactory, type?.IsNull == false ? type.Name : null, type?.Kind))
+        // stay reachable as the instance. Born WITH context — the computed lifts
+        // its factory result through it, no post-construction stamp.
+        : base(name, new global::app.type.item.computed(valueFactory, context, type?.IsNull == false ? type.Name : null, type?.Kind), context: context)
     {
     }
 }

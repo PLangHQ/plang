@@ -269,7 +269,7 @@ public class AsTIdentityTests
     public async Task AsT_PlainDataTarget_DictWithInfraVar_ResolvesAtCanonicalWalk()
     {
         var context = _app.User.Context;
-        context.Variable.Set(new global::app.data.DynamicData("!error", () => "boom"));
+        context.Variable.Set(new global::app.data.DynamicData("!error", () => "boom", context));
         var raw = new Dictionary<string, object?> { ["message"] = "%!error%" };
         var paramData = TemplateStamp.Container("trace.buildError", raw, context);
 

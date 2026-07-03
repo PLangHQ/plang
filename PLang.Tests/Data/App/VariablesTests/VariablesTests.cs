@@ -810,13 +810,14 @@ public class VariablesAccessorTests : System.IAsyncDisposable
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     [Test]
-    public async Task Current_ReturnsNewStackIfNotSet()
+    public async Task Current_ReturnsNull_IfNotSet()
     {
+        // No lazy-create: a Variables store must be Set on the async flow before it is read.
         var accessor = new global::app.variable.list.@thisAccessor();
 
         var stack = accessor.Current;
 
-        await Assert.That(stack).IsNotNull();
+        await Assert.That(stack).IsNull();
     }
 
     [Test]

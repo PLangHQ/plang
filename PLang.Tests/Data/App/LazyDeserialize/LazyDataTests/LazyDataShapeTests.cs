@@ -37,7 +37,7 @@ public class LazyDataShapeTests : System.IAsyncDisposable
         await Assert.That(factoryOverload).IsNull();
 
         int calls = 0;
-        var d = _app.Data("f", new global::app.type.item.computed(() => { calls++; return 42; }) { Context = _app.User.Context });
+        var d = _app.Data("f", new global::app.type.item.computed(() => { calls++; return 42; }, _app.User.Context));
         await Assert.That((await d.Value())?.ToString()).IsEqualTo("42");
         await Assert.That((await d.Value())?.ToString()).IsEqualTo("42");
         // Fresh at every use — a computed answer is never kept.
