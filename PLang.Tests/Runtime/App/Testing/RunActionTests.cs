@@ -550,7 +550,7 @@ public class RunActionTests
             ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("a"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) }),
             ("goal", "call", new List<Data>
             {
-                new("GoalName", new GoalCall { Name = "Helper" }, global::app.type.@this.FromName("goal.call"), context: _app.User.Context)
+                new("GoalName", new GoalCall { Name = "Helper" }, global::PLang.Tests.TestApp.SharedContext.Type.Create("goal.call"), context: _app.User.Context)
             }),
             ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("b"), context: _app.User.Context), new("Value", 2, context: _app.User.Context) })
         });

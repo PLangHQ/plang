@@ -62,7 +62,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
 
     [Test] public async Task Decompress_OnNonArchivedType_ReturnsSelfNoError()
     {
-        var d = new global::app.data.@this("x", "y", global::app.type.@this.FromName("text/plain"), context: global::PLang.Tests.TestApp.SharedContext);
+        var d = new global::app.data.@this("x", "y", global::PLang.Tests.TestApp.SharedContext.Type.Create("text/plain"), context: global::PLang.Tests.TestApp.SharedContext);
         var result = d.Decompress();
         await Assert.That(ReferenceEquals(d, result)).IsTrue();
         await result.IsSuccess();

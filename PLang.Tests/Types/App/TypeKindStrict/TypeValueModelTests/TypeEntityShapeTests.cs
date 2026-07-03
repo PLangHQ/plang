@@ -82,7 +82,7 @@ public class TypeEntityShapeTests
         // Context, then reading a fold property (Fields, Description, …), must
         // throw the InvalidOperationException so the bug surfaces at the read
         // site rather than silently returning null.
-        var orphan = TypeEntity.FromName("identity");  // catalog-shaped name; no Context stamped
+        var orphan = new global::app.type.@this("identity");  // catalog-shaped name; no Context stamped
         await Assert.That(() => { var _ = orphan.Fields; }).Throws<System.InvalidOperationException>();
     }
 }

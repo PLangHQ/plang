@@ -14,7 +14,7 @@ public class Stage6_ConsumersTests
         System.IO.Path.GetTempPath(), "plang-stage6-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     private static Data D(global::app.@this app, object? v, string typeName)
-        => new("x", v, global::app.type.@this.FromName(typeName), context: app.User.Context);
+        => new("x", v, global::PLang.Tests.TestApp.SharedContext.Type.Create(typeName), context: app.User.Context);
 
     private static string RepoRoot()
     {

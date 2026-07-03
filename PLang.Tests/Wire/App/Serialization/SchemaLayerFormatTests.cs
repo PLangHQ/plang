@@ -27,7 +27,7 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
 
     [Test] public async Task SignatureLayer_RendersFlat_SchemaSignature_WrappingInnerData()
     {
-        var inner = new global::app.data.@this("user", "Ingi", global::app.type.@this.FromName("text"), context: app.User.Context);
+        var inner = new global::app.data.@this("user", "Ingi", global::PLang.Tests.TestApp.SharedContext.Type.Create("text"), context: app.User.Context);
         var sig = new global::app.type.signature.@this(
             value: inner,
             algorithm: new global::app.type.text.@this("ed25519"),
@@ -65,7 +65,7 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
 
     [Test] public async Task SignatureLayer_OmitsExpiresAndContracts_WhenAbsent()
     {
-        var inner = new global::app.data.@this("x", "y", global::app.type.@this.FromName("text"), context: app.User.Context);
+        var inner = new global::app.data.@this("x", "y", global::PLang.Tests.TestApp.SharedContext.Type.Create("text"), context: app.User.Context);
         var sig = new global::app.type.signature.@this(
             value: inner,
             algorithm: new global::app.type.text.@this("ed25519"),

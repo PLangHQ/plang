@@ -40,6 +40,6 @@ public partial class Add : IContext
         else
             list.Add(toAdd);
 
-        return Context.Ok<type.list>(new type.list { count = list.CountRaw, value = list }, app.type.@this.FromName("list"));
+        return Context.Ok<type.list>(new type.list { count = list.CountRaw, value = list }, Context.Type.Create("list"));
     }
 }

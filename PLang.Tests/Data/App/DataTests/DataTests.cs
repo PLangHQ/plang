@@ -662,7 +662,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Decompress_NonArchived_ReturnsSelf()
     {
-        var data = _app.Data("", "Hello", Type.FromName("text"));
+        var data = _app.Data("", "Hello", global::PLang.Tests.TestApp.SharedContext.Type.Create("text"));
 
         var result = data.Decompress();
 
@@ -688,7 +688,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Encrypt_ReturnsSelf_NoCryptoYet()
     {
-        var data = _app.Data("", "secret", Type.FromName("text"));
+        var data = _app.Data("", "secret", global::PLang.Tests.TestApp.SharedContext.Type.Create("text"));
 
         var result = data.Encrypt();
 
@@ -698,7 +698,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Decrypt_NonEncrypted_ReturnsSelf()
     {
-        var data = _app.Data("", "Hello", Type.FromName("text"));
+        var data = _app.Data("", "Hello", global::PLang.Tests.TestApp.SharedContext.Type.Create("text"));
 
         var result = data.Decrypt();
 
@@ -710,7 +710,7 @@ public class DataTests : System.IAsyncDisposable
     {
         // A Data declared as "encrypted" — Decrypt is a no-op until a crypto
         // service exists, returning self.
-        var encrypted = _app.Data("", new byte[] { 1, 2 }, Type.FromName("encrypted"));
+        var encrypted = _app.Data("", new byte[] { 1, 2 }, global::PLang.Tests.TestApp.SharedContext.Type.Create("encrypted"));
 
         var result = encrypted.Decrypt();
 

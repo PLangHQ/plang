@@ -12,7 +12,7 @@ public class Stage4_RankTests
         System.IO.Path.GetTempPath(), "plang-stage4r-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     private static Data D(global::app.@this app, object? v, string typeName)
-        => new("x", v, global::app.type.@this.FromName(typeName), context: app.User.Context);
+        => new("x", v, global::PLang.Tests.TestApp.SharedContext.Type.Create(typeName), context: app.User.Context);
 
     [Test]
     public async Task Rank_NumberOverText_DateOverText_TextIsFloor()

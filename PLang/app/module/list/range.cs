@@ -32,6 +32,6 @@ public partial class Range : IContext
                 list.Add(new global::app.data.@this("", i, context: Context));
         }
 
-        return Context.Ok<type.list>(new type.list { count = list.CountRaw, value = list }, app.type.@this.FromName("list"));
+        return Context.Ok<type.list>(new type.list { count = list.CountRaw, value = list }, Context.Type.Create("list"));
     }
 }

@@ -38,6 +38,13 @@ public sealed class @this : IDisposable
     public app.@this App { get; }
 
     /// <summary>
+    /// Context-bound type-entity minter — <c>Context.Type.Create("list")</c> borns a type
+    /// stamped with this context (its App-keyed schema fold resolves without a later stamp).
+    /// The born-with-context replacement for the static <c>type.@this.FromName</c>.
+    /// </summary>
+    public global::app.type.factory Type => new(this);
+
+    /// <summary>
     /// Variables for this execution.
     /// </summary>
     public Variables Variable { get; }

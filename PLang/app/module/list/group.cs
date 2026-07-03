@@ -41,6 +41,6 @@ public partial class Group : IContext
         }
 
         return Context.Ok<type.list>(
-            new type.list { count = result.CountRaw, value = result }, app.type.@this.FromName("list"));
+            new type.list { count = result.CountRaw, value = result }, Context.Type.Create("list"));
     }
 }

@@ -197,7 +197,7 @@ public partial class Set : IContext, IBuildValidatable
             // entity itself ({name, kind?, strict?} → type.@this). A bare type-name (raw string)
             // still names a type by name. No dict rebuild — that was the pre-reader path.
             var type = typeValue as global::app.type.@this
-                ?? global::app.type.@this.FromName(typeValue.ToString()!);
+                ?? Context.Type.Create(typeValue.ToString()!);
             // Canonicalise kind through the format registry — `markdown` → `md`,
             // `jpeg` → `jpg`. The factory does this when a context is passed;
             // the .pr round-trip loses the context, so we run it again here.

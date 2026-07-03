@@ -503,7 +503,6 @@ public sealed class @this : item.@this
         // the class; the carrier's Peek answers the real instance.
         return new Clr(raw, context);
     }
-    public static @this FromName(string typeName) => new(typeName);
 
     /// <summary>
     /// Normalising factory — the single entry point the LLM, build pipeline,
@@ -702,7 +701,7 @@ public sealed class @this : item.@this
         if (string.IsNullOrWhiteSpace(typeName)) return false;
         if (string.Equals(typeName, "item", System.StringComparison.OrdinalIgnoreCase)) return true;
         if (string.Equals(Name, typeName, System.StringComparison.OrdinalIgnoreCase)) return true;
-        var other = Context?.App.Type[typeName] ?? FromName(typeName);
+        var other = Context?.App.Type[typeName] ?? new @this(typeName);
         other.Context ??= Context;
         return Is(other);
     }
@@ -817,14 +816,14 @@ public sealed class @this : item.@this
         // Fold properties (Fields/Values/Example/Shape/...) are App-keyed —
         // resolving them requires the registry, which requires Context. An
         // unstamped entity reaching this point means a producer forgot to
-        // propagate Context onto a `type.@this` minted from FromName(...);
+        // propagate Context onto a `type.@this` minted without a context;
         // returning null silently would mask the bug at the read site and
         // surface it as wrong LLM prompts / wrong schema decisions far away.
         if (Context == null)
             throw new System.InvalidOperationException(
                 $"type.@this(\"{Name}\") has no Context — schema properties "
                 + "(Fields/Values/Example/Shape/etc.) require a stamped entity. "
-                + "This is a producer bug: whoever minted this type via FromName "
+                + "This is a producer bug: whoever minted this type without a context "
                 + "did not propagate Context. Primitive identity reads "
                 + "(.Name/.ClrType) do not hit this path.");
         if (!Context.App.Type.ComplexSchemas().TryGetValue(Name, out var match)) return this;

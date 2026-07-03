@@ -53,7 +53,7 @@ public class BornTypedDeclineTests
             ActionName = "set",
             Parameters = new List<Data>
             {
-                new Data("name", "%path%", global::app.type.@this.FromName("string"), context: ctx),
+                new Data("name", "%path%", global::PLang.Tests.TestApp.SharedContext.Type.Create("string"), context: ctx),
                 new Data("value", ".", context: ctx),
             }
         };

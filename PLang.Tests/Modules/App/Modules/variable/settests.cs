@@ -132,7 +132,7 @@ public class SetTests
     {
         var parameters = new List<Data>
         {
-            new Data("Value", "%myVar%", global::app.type.@this.FromName("int"), context: _app.User.Context)
+            new Data("Value", "%myVar%", global::PLang.Tests.TestApp.SharedContext.Type.Create("int"), context: _app.User.Context)
         };
         var result = global::app.module.variable.Set.ValidateBuild(parameters);
 
@@ -144,7 +144,7 @@ public class SetTests
     {
         var parameters = new List<Data>
         {
-            new Data("Value", "not a number", global::app.type.@this.FromName("int"), context: _app.User.Context)
+            new Data("Value", "not a number", global::PLang.Tests.TestApp.SharedContext.Type.Create("int"), context: _app.User.Context)
         };
         var result = global::app.module.variable.Set.ValidateBuild(parameters);
 
@@ -157,7 +157,7 @@ public class SetTests
     {
         var parameters = new List<Data>
         {
-            new Data("Value", 42, global::app.type.@this.FromName("int"), context: _app.User.Context)
+            new Data("Value", 42, global::PLang.Tests.TestApp.SharedContext.Type.Create("int"), context: _app.User.Context)
         };
         var result = global::app.module.variable.Set.ValidateBuild(parameters);
 

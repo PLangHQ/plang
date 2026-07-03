@@ -24,6 +24,6 @@ public partial class Remove : IContext
         var atIndex = (await AtIndex.Value())!;
         if (atIndex >= 0) nl.RemoveAt(atIndex);
         else nl.Remove((await Value.Value()));
-        return Context.Ok<type.list>(new type.list { count = nl.CountRaw, value = nl }, app.type.@this.FromName("list"));
+        return Context.Ok<type.list>(new type.list { count = nl.CountRaw, value = nl }, Context.Type.Create("list"));
     }
 }

@@ -26,7 +26,7 @@ public class TypeTests
     [Test]
     public async Task FromName_WithString_CreatesType()
     {
-        var type = Type.FromName("string");
+        var type = global::PLang.Tests.TestApp.SharedContext.Type.Create("string");
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(string));
         await Assert.That(type.Name).IsEqualTo("text");
@@ -35,7 +35,7 @@ public class TypeTests
     [Test]
     public async Task FromName_WithInt_CreatesType()
     {
-        var type = Type.FromName("int");
+        var type = new global::app.type.@this("int");
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(int));
     }
@@ -43,7 +43,7 @@ public class TypeTests
     [Test]
     public async Task FromName_WithList_CreatesType()
     {
-        var type = Type.FromName("list");
+        var type = global::PLang.Tests.TestApp.SharedContext.Type.Create("list");
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(app.type.list.@this));
     }
@@ -51,7 +51,7 @@ public class TypeTests
     [Test]
     public async Task FromName_WithDict_CreatesType()
     {
-        var type = Type.FromName("dict");
+        var type = global::PLang.Tests.TestApp.SharedContext.Type.Create("dict");
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(app.type.dict.@this));
     }
@@ -59,7 +59,7 @@ public class TypeTests
     [Test]
     public async Task FromName_WithUnknownType_ReturnsNullClrType()
     {
-        var type = Type.FromName("unknowntype");
+        var type = global::PLang.Tests.TestApp.SharedContext.Type.Create("unknowntype");
 
         await Assert.That(type.Name).IsEqualTo("unknowntype");
         await Assert.That(type.ClrType).IsNull();

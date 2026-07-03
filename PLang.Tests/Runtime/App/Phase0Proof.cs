@@ -150,7 +150,7 @@ public class Phase0Proof
             count = 3,
             value = new List<object?> { 1, 2, 3 }
         };
-        var result = global::PLang.Tests.TestApp.SharedContext.Ok(listValue, global::app.type.@this.FromName("list"));
+        var result = global::PLang.Tests.TestApp.SharedContext.Ok(listValue, global::PLang.Tests.TestApp.SharedContext.Type.Create("list"));
 
         // OUTPUT: Type is "list", not the CLR type name
         await Assert.That(result.Type).IsNotNull();

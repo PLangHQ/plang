@@ -15,8 +15,8 @@ public class Stage4_PerTypeCompareTests
     private static async Task<Comparison> Cmp(global::app.@this app, object? a, object? b,
         string? aType = null, string? bType = null)
     {
-        var da = new Data("a", a, aType == null ? null : global::app.type.@this.FromName(aType), context: app.User.Context);
-        var db = new Data("b", b, bType == null ? null : global::app.type.@this.FromName(bType), context: app.User.Context);
+        var da = new Data("a", a, aType == null ? null : global::PLang.Tests.TestApp.SharedContext.Type.Create(aType), context: app.User.Context);
+        var db = new Data("b", b, bType == null ? null : global::PLang.Tests.TestApp.SharedContext.Type.Create(bType), context: app.User.Context);
         return await da.Compare(db);
     }
 

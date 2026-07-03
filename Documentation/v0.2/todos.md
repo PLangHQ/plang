@@ -1595,3 +1595,29 @@ and crypto (`Crypto.Hash`). Every `math.*` handler is now `Run() => Math.X(this)
 **Still context-less (legitimate — leave):**
 - `type/convert/this.cs` — the ONE legitimate context-free path (scalar parse with no App):
   its `FromError` stays (verified: throwing there breaks direct callers). Not a violation.
+
+## 2026-07-03 — Split `type.@this` three ways (dissolve the optional Context)
+
+`type.@this.Context` is `actor.context.@this?` (nullable) because the type-*entity*
+has a dual nature: **identity** (Name/Kind/Strict/Template/lattice) is context-free
+(minted by `base.Mint() => new(NamespaceTail(GetType()))`, `@null`, the statics), but the
+**schema fold** (Fields/Values/Example/Shape → `Context.App.Type.ComplexSchemas()`) needs
+context. Ingi: "dual nature sounds bad, can we separate them?" — yes, and it *deletes* the
+optional field rather than making it non-null.
+
+The clean shape is a THREE-way split (verified by tracing every `Context` read in
+`app/type/this.cs`):
+1. **`type.@this` = pure identity** — Name/Kind/Strict/Template/`Is`/`Facet`/`Accumulate`/
+   statics. **No Context field.** Born context-free everywhere.
+2. **fold → `type.schema`** — Fields/Values/Example/Shape/ComplexSchemas, **born non-null with
+   context**, obtained via `context` only when schema is actually needed.
+3. **operations take `context` as a param** — `Rank` (l.337), `Is(typeName)` (l.705),
+   `Scheme` (l.792), `ClrType` (l.159) currently read the field; `Build`/`Convert` already
+   take a context param. Thread context into the remaining ones (callers run in
+   context-bearing flows — comparisons, path-scheme, substitutability).
+
+Result: `type.@this` loses its `Context` field entirely — optional context *deleted*, not
+softened. Genuine refactor (move fold + its consumers, thread ~4 operation call sites), not a
+2-line change. Prereq groundwork landing now: `context.Type.Create` (removes the static
+`FromName`, borns runtime type mints with context) — see
+`.bot/context-never-null/coder/type-context-via-create-plan.md`.

@@ -88,7 +88,7 @@ public partial class @this
         // through the registry, so it must hold a context at birth (not stamped after).
         _variables["Now"] = new data.DynamicData("Now", () => DateTimeOffset.Now, context, app.type.@this.DateTime);
         _variables["NowUtc"] = new data.DynamicData("NowUtc", () => DateTimeOffset.UtcNow, context, app.type.@this.DateTime);
-        _variables["GUID"] = new data.DynamicData("GUID", () => Guid.NewGuid(), context, app.type.@this.FromName("guid"));
+        _variables["GUID"] = new data.DynamicData("GUID", () => Guid.NewGuid(), context, context.Type.Create("guid"));
     }
 
     /// <summary>
