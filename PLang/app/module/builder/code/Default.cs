@@ -634,41 +634,14 @@ public class Default : IBuilder
             // the terminal variable.set always gets a {name, kind?} Type.
             var hint = await buildResult.Value();
             if (hint is global::app.type.@this typeEntity)
-                StampOnTerminalVariableSet(actions, typeEntity);
+                actions.StampTerminalType(typeEntity, context);
             // A bare type-name (legacy handlers) rides as text — its string
             // face normalizes to the structured form.
             else if (hint is global::app.type.text.@this
                      && hint.ToString() is { Length: > 0 } typeName)
-                StampOnTerminalVariableSet(actions, app.type.@this.Create(typeName, context: context));
+                actions.StampTerminalType(app.type.@this.Create(typeName, context: context), context);
         }
         return errors;
-    }
-
-    /// <summary>
-    /// Walks the step's actions backwards for the trailing variable.set and
-    /// stamps the inferred typeName on its "Type" parameter (replace-or-insert).
-    /// Last-write wins when multiple Build()s in the same step produce types.
-    /// </summary>
-    private static void StampOnTerminalVariableSet(Actions actions, app.type.@this inferred)
-    {
-        for (int i = actions.Count - 1; i >= 0; i--)
-        {
-            var a = actions[i];
-            if (!string.Equals(a.Module, "variable", StringComparison.OrdinalIgnoreCase)) continue;
-            if (!string.Equals(a.ActionName, "set", StringComparison.OrdinalIgnoreCase)) continue;
-
-            // User hint precedence: any explicit Type parameter the LLM emitted
-            // (including the literal "object") is treated as the developer's
-            // (type) hint and wins over Build()'s inference. Build only stamps
-            // when no Type parameter is present at all.
-            var existing = a.Parameters.FirstOrDefault(p =>
-                string.Equals(p.Name, "Type", StringComparison.OrdinalIgnoreCase));
-            if (existing != null) return;
-            // The Type parameter VALUE is the structured type entity; the
-            // parameter's own type is "type" (post-Stage-4 shape).
-            a.Parameters.Add(new data.@this("Type", inferred));
-            return;
-        }
     }
 
     // --- Merge ---

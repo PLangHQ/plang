@@ -650,7 +650,7 @@ public sealed class OpenAi : ILlm
             foreach (var def in parameterDefs)
             {
                 if (!result.Any(r => r.Name == def.Name) && !def.Peek().IsNull)
-                    result.Add(new data.@this(def.Name, def.Peek()));
+                    result.Add(new data.@this(def.Name, def.Peek(), context: context));
             }
         }
 

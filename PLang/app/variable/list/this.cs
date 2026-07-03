@@ -286,8 +286,7 @@ public partial class @this
         {
             // Root doesn't exist — create it as a native dict so dot-path properties
             // work and the value owns its own write.
-            root = new data.@this(rootName, new global::app.type.dict.@this());
-            root.Context = _context;
+            root = new data.@this(rootName, new global::app.type.dict.@this(), context: _context);
             _variables[rootName] = root;
         }
 
