@@ -142,7 +142,13 @@ The `Config` records hold **raw CLR** today (OBP/leaf-type smell). Moving them t
 | `llm.query.model` | `string?` (already `data<text>?`) | already `text` ✓ |
 | `environment.number.*` (precision policy) | CLR | `number` / plang types |
 
-**Number caveat for the coder:** `environment.number.Config` is a **cross-action policy** read by `MathPolicy` across many math ops, not one action's param — it does not map to a single action's `[Default]`. It wants a **module-level setting on `number`** (`%!number.precision%`), read via `context.Setting("number.precision")` directly. This is the clean example of a module-level (not action-param) scope-backed setting; the model already covers it ("a setting is a settable property on any node").
+**Number caveat for the coder — the cleanest collapse of the three, and it fixes a drift.** `environment.number.Config` (`Overflow = Promote`, `Precision = Double`) is a **cross-action policy** read by `MathPolicy.Resolve` (`math/code/Default.cs:36`) across every math op — not one action's param. It does **not** map to a per-action `[Default]` (no single owning action; `math.add`/`math.subtract`/… share the one knob). It becomes a **node-level setting** read directly, default inline at the read site:
+
+```csharp
+Overflow = stepOverflow ?? context.Setting("environment.number.overflow").As<...>() ?? POverflow.Promote
+```
+
+`MathPolicy` already passes those fallbacks (`view.Resolve("overflow", Promote)`), so the `Config` record deletes with nothing left behind. **Deleting it fixes a live drift:** the record declares `Precision = Double`; `MathPolicy`'s fallback passes `Error` (with a comment arguing Error is correct). Two defaults for one setting, already disagreeing — collapse to `MathPolicy`'s inline `Error`. The step-override params (`stepOverflow`/`stepPrecision`) stay as the action handlers' nullable params (layer 1); `MathPolicy` consults them, then the setting, then the inline default. Honest path is `%!environment.number.overflow%` — the current `number.*` key is the `ResolvePrefix` last-segment **remap** the design kills. This is the model's proof it must cover node-level settings, not only action-param ones ("a setting is a settable property on any node").
 
 ---
 
@@ -159,7 +165,7 @@ The `Config` records hold **raw CLR** today (OBP/leaf-type smell). Moving them t
 - `http/code/Default.cs` — the `For<Config>` + `Resolve(...)` layering at `:78,163,204,243` and `ModuleView` params at `:333,345,357,400`.
 - `llm/code/OpenAi.cs:65` — the `For<http.Config>` model read.
 - `signing/code/Ed25519.cs:80-83` — the `For<Config>` + `Resolve("TimeoutMs")` layering.
-- `math/MathPolicy.cs:21` — `For<...number.Config>` → `context.Setting("number.precision")`.
+- `math/MathPolicy.cs:21` — `For<...number.Config>` → `context.Setting("environment.number.overflow"/".precision")` directly, defaults inline (deletes `environment.number.Config`; fixes the Double/Error drift).
 - `Modules.GetDefaults` `IConfigure` branch (`module/this.cs:542-551`).
 
 **Dies — the `IConfig` interface on `http.configure`** (Q1 decides configure's fate).
