@@ -1407,3 +1407,15 @@ Make the offset policy a **runtime config** so the user decides
 **default** when we implement it (UTC is the safer default for reproducible/signed
 data). Context: surfaced during the clr-removal work when `datetime` was given
 ownership of plain `DateTime` (`app/type/datetime/this.Owns.cs`).
+
+## 2026-07-05 — Environment as a rich object (Culture folds under it)
+Today `app.Environment` is a flat `string` ("production"/"development") and
+`app.Culture` is a separate flat top-level `CultureInfo` property. Ingi wants
+`Environment` to become a rich object holding "a lot of stuff" — culture, and
+other environment-scoped config — so `Culture` moves *under* `Environment`
+(reachable as e.g. `--environment={"culture":...}` / `%!environment.culture%`)
+rather than being its own app-root property/flag. Interim on the
+`cli-app-property-override` branch: `Culture` is set to `internal set` (not a CLI
+flag) pending this work, so we don't ship a `--culture=` flag we'd have to move.
+Context: surfaced during the CLI-as-app-property design — see
+`.bot/cli-app-property-override/architect/plan.md` §3 audit.

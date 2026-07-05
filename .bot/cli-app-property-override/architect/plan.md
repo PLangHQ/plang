@@ -20,6 +20,8 @@ Every `--flag` names a public-settable property on the app root. The value build
    → Cache (bool)       ← false
 ```
 
+**The flag path is the app-tree path — exactly.** A flag maps to wherever a property actually lives in the app object graph; nothing is remapped, folded, or shorthanded. `app.CallStack.Flags` is reached by `--callstack={"flags":{...}}` (or `%!callstack.flags%`), because `CallStack` is a top-level app node — *not* by folding callstack config under `--debug`. Any "this flag really configures that other node" is a special case, and special cases are what this design removes. One consequence up front: `Debug` stops writing `CallStack.Flags` (it does today) — that cross-node write is exactly the special case; callstack config flows through `--callstack`.
+
 Two stages, no reordering of bootstrap:
 
 - **`CommandLineParser.Parse` stays syntactic** — argv → `{flag → raw JSON}`. It validates JSON and hands back a raw CLR tree (strings/dicts/lists). No context, no plang types — there is no app yet, and a value can't be born without context.
@@ -74,6 +76,27 @@ App-root setter audit:
 | `CurrentActor` | public set | **internal set** | runtime execution state |
 | `Cache` | public set | **internal set** | future `--cache={"name":"redis"}` — the cache loads its own dll by name; out of scope now |
 
+### The audit is a tree-wide sweep, not a root table
+
+Because the flag path *is* the app-tree path, the walk descends through getter-containers and sets any public-set leaf at any depth (`--build={"files":...}` reaches `Build.Files` *through* the `Build` getter). So "public set = config surface" is only true after **every public setter reachable through the walk is audited and the run-state ones demoted to `internal`**. Run-state keeps leaking as a public setter — `CurrentActor`, `Tester.CurrentTest`, `CallStack.Variables`, `Run.Output` are all public-set for a runtime reason, not config. The sweep is what makes the surface honest; it is a real chunk of the branch's work, not a root-only edit.
+
+Leaf findings from the current tree (crawled — the config subsystems + the getter-containers):
+
+| Node | Leaf | Today | Set to | Note |
+|---|---|---|---|---|
+| `Build` | `Files`, `Cache` | public set | **public set** | clean config |
+| `Debug` | `Goal`, `Step`, `Variables`, `MaxLength`, `Grep`, `Verbose`, `Llm` | public set | **public set** | debug knobs; `--debug={"goal":"Start","step":3}` maps straight to `Goal`/`Step` (so the `Start:3` scalar shorthand just dies, §4) |
+| `Debug` | `Level`, `Llm.Output` | `string` | **`choice`/enum** | fixed value sets — tighten per §5 |
+| `Tester` | `Verbose` | public set | **public set** | clean |
+| `Tester` | `TimeoutSeconds`, `Parallel`, `Format` | `int`/`int`/`string` | **`uint`/`uint`/enum** | §5 |
+| `Tester` | `Include`, `Exclude` | `HashSet<string> { get; }` | **settable form** | get-only today — the walk can't reach them; need `{ get; set; }` (List/set) so `--tester={"include":["tag"]}` lands |
+| `Tester` | `CurrentTest` | `Run? { get; set; }` | **`internal set`** | run state, not config |
+| `Tester` | `Results`, `Coverage` | `{ get; }` | unchanged | run output — correctly get-only |
+| `CallStack` | `Flags` | public set | **public set** | reached by `--callstack={"flags":...}` (its real tree location), not folded under `--debug` |
+| `CallStack` | `Variables` | public set | **`internal set`** | run state |
+
+`Config`, `Settings`, `Format`, `KeepAlive`, `Event`, `Error` have no public-set leaves — the walk reaches them but there's nothing to set. (`Code`/`Statics` not yet descended — sweep them too.)
+
 ## 4. No shorthands
 
 `[{"name":"foo"}]` only — never `["foo"] → [{"name":"foo"}]`. Shorthands are special cases; add them later if a real need shows up. Drop the `variables` normalization in `Debug.Apply`.
@@ -85,7 +108,7 @@ App-root setter audit:
 - `TimeoutSeconds` → `uint`. Conversion rejects `-5` on its own; `0` means "no timeout" (the runner decides how to treat it). No positive-check.
 - `Parallel` → `uint`. `0` means "auto degree" (the runner picks). No positive-check.
 - `Format` → an enum / `choice<T>`. An unknown value is rejected by the conversion, not a hand-rolled `case`.
-- Include / Exclude tags → `List<string>`, set by the walk.
+- Include / Exclude tags → `List<string> { get; set; }`. They're `HashSet<string> { get; }` (get-only) today, so the walk can't reach them — give them a public settable form. `Apply`'s `.Clear()`-then-add becomes a plain assign of a fresh list.
 
 `Tester.Apply` dies entirely — it was only loose types plus a missing generic mechanism.
 
@@ -108,7 +131,9 @@ await context.Diagnostic($"llm.query: no pricing entry for model {model}");
 
 ### B. Debug session activation — on birth
 
-Everything `Debug.Apply` wires runs in `new Debug(context)` + populate: subscribe watchers, hook `OnBeforeRequest`/`OnAfterResponse` for LLM tracing, compile the grep regex, set `CallStack.Flags`, wire the debug channel sink. Null session = none of it wired; subscriber lists are simply empty, so no event site null-checks `app.Debug`. The `_applied` idempotency guard disappears — born once.
+Everything `Debug.Apply` wires runs in `new Debug(context)` + populate: subscribe watchers, hook `OnBeforeRequest`/`OnAfterResponse` for LLM tracing, compile the grep regex, wire the debug channel sink. Null session = none of it wired; subscriber lists are simply empty, so no event site null-checks `app.Debug`. The `_applied` idempotency guard disappears — born once.
+
+Debug does **not** set `CallStack.Flags` — that cross-node write is the special case the tree-mirror rule (§1) removes. Callstack config flows through `--callstack` → `app.CallStack.Flags` on its own, wherever `CallStack` sits in the tree. Drop the `callstack` key handling from the old `Apply` entirely.
 
 ### C. App entry dispatch — dissolve to an entry action
 
@@ -163,6 +188,9 @@ Dies in this branch:
 - The four-way flag branch + `build`/`builder` normalization + `--builder` alias in `Configure`.
 - The `variables` shorthand normalization in `Debug.Apply` (§4).
 - `_app` fields on the three subsystems — reach context instead.
+- The `callstack` key handling in the old `Debug.Apply` (the `CallStack.Flags` cross-node write) — callstack config goes via `--callstack` (§1, §6.B).
+- **Public setters demoted to `internal set`** across the reachable tree — the run-state sweep: `CurrentActor`, `Tester.CurrentTest`, `CallStack.Variables`, `Run.Output`, plus the app-root identity/runtime setters in §3. This is a sweep of every public setter the walk can reach, not a fixed list.
+- `Tester.Include`/`Exclude` change from `HashSet<string> { get; }` to a public settable `List<string>` (§5) — get-only can't be walked.
 
 Stays (explicit):
 
@@ -179,6 +207,8 @@ Stays (explicit):
 |---|---|---|
 | `app.Build/Debug/Tester` nullable, born `new T(context)` | born-with-context; presence = state | Correct — no `IsEnabled`, no per-class enable leaf |
 | Access level = exposure | category named by the language, not a bolt-on marker | Correct — walk filters `SetMethod.IsPublic` |
+| Flag path = app-tree path | no remap/fold/special-case (callstack via `--callstack`, not `--debug`) | Correct — Debug's `CallStack.Flags` write removed |
+| Run-state as public setter | `CurrentActor`, `CurrentTest`, `CallStack.Variables`, `Run.Output` | Demote to `internal` — tree-wide sweep, not a fixed list |
 | Walk uses the conversion catalog per leaf | type builds itself from raw | Correct — the actual fix |
 | `catalog.Populate` static | applies config to another type from outside (smell #1) | Removed — app-owned walk |
 | `Debug.Write` via nullable session | ambient capability through a session object | Fixed — `context.Diagnostic` → channel |
@@ -191,9 +221,10 @@ Stays (explicit):
 
 1. `app.Builder → app.Build` rename; drop the `--builder` alias + `Configure` normalization.
 2. Subsystems nullable, `new T(context)`, `_app` → `Context.App`; delete `IsEnabled`.
-3. The convert walk in `Configure` (app-owned), public-setter-only, over `!`-flags; delete the four-way branch and `catalog.Populate`.
-4. Validation onto the types (`uint` timeout/parallel, enum/`choice` format); delete `Tester.Apply`.
-5. `Debug.Write` → `context.Diagnostic`; `Debug.Apply` activation → the ctor; delete `_applied` + the shorthand.
-6. Dissolve entry dispatch (build/test/store) to an entry action set at birth.
-7. D sites: mechanical `!= null` + TODO (§9); the full inversion is a separate branch.
-8. Regression: `--build={"files":[...]}` builds and runs `Hello.goal` with no startup crash.
+3. The convert walk in `Configure` (app-owned, reusable navigator per §1), public-setter-only, over `!`-flags; delete the four-way branch and `catalog.Populate`.
+4. Run-state sweep: demote every public setter the walk can reach that isn't config (`CurrentActor`, `Tester.CurrentTest`, `CallStack.Variables`, `Run.Output`, …) to `internal`; give `Tester.Include`/`Exclude` a settable `List<string>`.
+5. Validation onto the types (`uint` timeout/parallel, enum/`choice` format); delete `Tester.Apply`.
+6. `Debug.Write` → `context.Diagnostic`; `Debug.Apply` activation → the ctor; delete `_applied`, the shorthand, and the `callstack` cross-node write.
+7. Dissolve entry dispatch (build/test/store) to an entry action set at birth.
+8. D sites: mechanical `!= null` + TODO (§9); the full inversion is a separate branch.
+9. Regression: `--build={"files":[...]}` builds and runs `Hello.goal` with no startup crash.
