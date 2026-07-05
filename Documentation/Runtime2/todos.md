@@ -1419,3 +1419,27 @@ rather than being its own app-root property/flag. Interim on the
 flag) pending this work, so we don't ship a `--culture=` flag we'd have to move.
 Context: surfaced during the CLI-as-app-property design — see
 `.bot/cli-app-property-override/architect/plan.md` §3 audit.
+
+## 2026-07-05 — Debugger runtime toggle: suspend vs teardown semantics
+Runtime toggling of debug mode (turn debug on/off from plang mid-run, e.g. an app
+that enables debug at start, runs forever, disables + re-enables later) needs real
+design — deferred to startup-only on the `cli-app-property-override` branch. The
+problem: debug binds two ways — step/goal/action tracing as persistent plang
+`EventBinding`s in `context.Events` (debug/this.cs:229–267), and variable watches as
+C# delegates on Data placeholders (debug/this.cs:158–179) — and both handlers close
+over the C# Debug instance. Today there is **no teardown at all**: nothing
+unregisters those EventBindings, so `app.Debug = null` would not actually turn debug
+off (the bindings keep firing through the closure), and re-enabling would
+double-register. Two operations are conflated into one null/non-null switch:
+- **suspend** — pause output, keep the watches (config must survive the toggle)
+- **teardown** — drop everything
+"`= null` = off" only models teardown; a forever-running app that toggles wants
+suspend. Recommended direction (option B): debug *observations* stay registered as
+persistent plang events; "debug mode on/off" gates the **debug channel sink** (§6.A
+of the plan) — the events fire but write to a sinkless channel when suspended, resume
+when rewired; `= null` reserved for real teardown, which needs an `Unregister` path
+on the event registry that doesn't exist yet. Also fold the variable watches into
+plang events (the step/goal ones already are) so the whole thing is event-native.
+Context: `.bot/cli-app-property-override/architect/plan.md` §2/§6.B — this branch
+ships startup-only activation (born once, `_applied` removed, no teardown), no
+runtime-toggle claim.
