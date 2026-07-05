@@ -31,6 +31,8 @@ The developer should think **one thing: a setting.** This branch collapses the t
 
 **One word: `setting`, singular.** No `config`, `options`, `configuration`. A setting is a **public-settable, plang-typed property on an app-tree node**; its address *is* the node's location in the tree. No marker attribute — a public setter is the "settable" signal. The plang name always equals the C# folder; any divergence is a bug to fix, not a mapping to support.
 
+**The path is read off the real tree — never designed.** You don't pick the semantically-purest home; you put the setting where the code that owns the behavior actually lives, and the path falls out. No **invented nodes** (`%!number.overflow%` when there is no `number` module), no relocating to a "cleaner" namespace, no custom paths. A setting consumed by exactly one module lives on that module (`math` owns overflow/precision — see the number case below); the "consumer vs owner" question only arises when a *separate, independently-addressable* node genuinely exists.
+
 Two sigils, **same vocabulary**, split by lifetime (this split is the only thing the developer sees):
 
 | Sigil | Means | Written by | Persisted? |
@@ -142,15 +144,15 @@ The `Config` records hold **raw CLR** today (OBP/leaf-type smell). Moving them t
 | `llm.query.model` | `string?` (already `data<text>?`) | already `text` ✓ |
 | `environment.number.*` (precision policy) | CLR | `number` / plang types |
 
-**Number caveat for the coder — the cleanest collapse of the three, and it fixes a drift.** `environment.number.Config` (`Overflow = Promote`, `Precision = Double`) is a **cross-action policy** read by `MathPolicy.Resolve` (`math/code/Default.cs:36`) across every math op — not one action's param. It does **not** map to a per-action `[Default]` (no single owning action; `math.add`/`math.subtract`/… share the one knob). It becomes a **node-level setting** read directly, default inline at the read site:
+**Number caveat for the coder — the cleanest collapse of the three, and it fixes a drift.** `environment.number.Config` (`Overflow = Promote`, `Precision = Double`) is a **cross-action policy** read by `MathPolicy.Resolve` (`math/code/Default.cs:36`) across every math op — not one action's param. It does **not** map to a per-action `[Default]` (no single owning action; `math.add`/`math.subtract`/… share the one knob). It becomes a **module-level setting on `math`** (its sole consumer and real home), read directly, default inline at the read site:
 
 ```csharp
-Overflow = stepOverflow ?? context.Setting("environment.number.overflow").As<...>() ?? POverflow.Promote
+Overflow = stepOverflow ?? context.Setting["math.overflow"].As<...>() ?? POverflow.Promote
 ```
 
 `MathPolicy` already passes those fallbacks (`view.Resolve("overflow", Promote)`), so the `Config` record deletes with nothing left behind. **Deleting it fixes a live drift:** the record declares `Precision = Double`; `MathPolicy`'s fallback passes `Error` (with a comment arguing Error is correct). Two defaults for one setting, already disagreeing — collapse to `MathPolicy`'s inline `Error`. The step-override params (`stepOverflow`/`stepPrecision`) stay as the action handlers' nullable params (layer 1); `MathPolicy` consults them, then the setting, then the inline default. This is the model's proof it must cover node-level settings, not only action-param ones ("a setting is a settable property on any node").
 
-**Path home is a decision (open Q6), and it is NOT `math`.** `math` only *reads* this policy — homing a setting under its consumer is the "this flag configures that other node" special case the design kills. Overflow/precision is `number`'s own behavior. Two honest homes: `%!environment.number.overflow%` (current namespace — the docstring calls it "an app-wide environment knob") or `%!number.overflow%` (move the policy onto `number` itself). I lean `%!number.overflow%` — transparent, single-concept. Either way the current `number.*` key from the `ResolvePrefix` last-segment **remap** dies.
+**Path home = `math`, read off the real tree.** The path is not designed for semantic purity — it's read off where the owning code actually lives. `%!number.overflow%` is a **custom path** (there is no `number` module; `app.type.number` is a type, not a node) — invented, forbidden. `%!environment.number.overflow%` is a mismatch (`environment` is env/run config; the `Config` record floats in that namespace). The setting's real home is `math` — the module that holds the arithmetic behavior and its **sole consumer** (`MathPolicy` is the only reader). Here the **consumer is the owner**, and that does *not* violate the parent's tree-mirror rule: that rule only bites when a *separate, independently-addressable* node exists (callstack had `--callstack` to flow to); overflow/precision has no such node. So `%!math.overflow%` / `%!math.precision%`; the `number.*` key from the `ResolvePrefix` last-segment **remap** dies.
 
 ---
 
@@ -167,7 +169,7 @@ Overflow = stepOverflow ?? context.Setting("environment.number.overflow").As<...
 - `http/code/Default.cs` — the `For<Config>` + `Resolve(...)` layering at `:78,163,204,243` and `ModuleView` params at `:333,345,357,400`.
 - `llm/code/OpenAi.cs:65` — the `For<http.Config>` model read.
 - `signing/code/Ed25519.cs:80-83` — the `For<Config>` + `Resolve("TimeoutMs")` layering.
-- `math/MathPolicy.cs:21` — `For<...number.Config>` → `context.Setting("environment.number.overflow"/".precision")` directly, defaults inline (deletes `environment.number.Config`; fixes the Double/Error drift).
+- `math/MathPolicy.cs:21` — `For<...number.Config>` → `context.Setting["math.overflow"/"math.precision"]` directly, defaults inline (deletes `environment.number.Config`; rehomes the policy onto `math`, its sole consumer; fixes the Double/Error drift).
 - `Modules.GetDefaults` `IConfigure` branch (`module/this.cs:542-551`).
 
 **Dies — the `IConfig` interface on `http.configure`** (Q1 decides configure's fate).
@@ -224,4 +226,4 @@ No new interface for the `%!%` door beyond what's needed (honoring the parent's 
 3. **The `!` prefix overload** — `%!buildData%` (a transient build-pass result handle) and `%!build.cache%` (a subsystem mirror) are `!`-prefixed *variables* today. If `%!path%` now navigates the setting tree, does it navigate-then-fallback-to-variable, or do the system-transients move off `!`?
 4. **Staging vs the parent** — pull the parent's Direct walk into this branch (so `%!build.files%` is demonstrable end-to-end here), or keep the subsystem side as a documented dependency?
 5. **Sanity-check the leaf trace** — is `environment.number.Config` really the only cross-action (module-level, non-param) setting, or are there others hiding behind `For<T>` that don't map to a single action's `[Default]`?
-6. **Number-policy home** — `%!number.overflow%` (move policy onto `number`) or `%!environment.number.overflow%` (keep current namespace)? Not `math` (consumer, not owner). Ingi leans `number`; confirm before the coder rehomes.
+6. **Number-policy home = `math`** (settled with Ingi). `MathPolicy` is the sole consumer and `math` is the real module node; `%!number.overflow%` is a custom path (no `number` module) and `%!environment.number.overflow%` is a mismatch. Rehome `Overflow`/`Precision` onto `math` as `%!math.overflow%` / `%!math.precision%`. Coder: confirm `math` is genuinely the only reader before rehoming (ties to Q5's sweep).
