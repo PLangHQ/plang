@@ -1,7 +1,7 @@
 using System.Reflection;
 using app.Attributes;
 using app.error;
-using app.tester;
+using app.test;
 using app.Utils;
 using app.variable;
 using Goal = app.goal.@this;
@@ -17,7 +17,7 @@ namespace app.module.test;
 /// test.tag actions) and auto-tags (via [RequiresCapability] on the action
 /// handlers referenced in the .pr, recursing through static goal.call chains),
 /// then applies the Testing.Include/Exclude tag filters. Returns a
-/// List&lt;global::app.tester.test.@this&gt; that test.run consumes.
+/// List&lt;global::app.test.@this&gt; that test.run consumes.
 ///
 /// <para>The pre-AuthGate scan that this handler used to do —
 /// <c>StartsWith(rootPrefix)</c> hand-rolled containment + raw
@@ -40,21 +40,23 @@ public partial class discover : IContext
     [Default(true)]
     public partial data.@this<global::app.type.@bool.@this> Recursive { get; init; }
 
-    public async Task<data.@this<global::app.type.list.@this<global::app.tester.test.@this>>> Run()
+    public async Task<data.@this<global::app.type.list.@this<global::app.test.@this>>> Run()
     {
         var app = Context.App;
-        var empty = data.@this<global::app.type.list.@this<global::app.tester.test.@this>>.Ok(new global::app.type.list.@this<global::app.tester.test.@this>(Context));
+        var empty = data.@this<global::app.type.list.@this<global::app.test.@this>>.Ok(new global::app.type.list.@this<global::app.test.@this>(Context));
 
         var root = await Path.Value();
         if (root == null) return empty;
 
         // List routes through AuthGate(Read). Out-of-root: prompt or denial.
         var listed = await root.List((await Pattern.Value())!.Clr<string>()!, (await Recursive.Value())!.Value);
-        if (!listed.Success) return Context.Error<global::app.type.list.@this<global::app.tester.test.@this>>(listed.Error!);
+        if (!listed.Success) return Context.Error<global::app.type.list.@this<global::app.test.@this>>(listed.Error!);
         if (await listed.Value() == null) return empty;
 
-        var include = Context.App.Tester.Include;
-        var exclude = Context.App.Tester.Exclude;
+        // text is a case-insensitive value (Equals/GetHashCode are OrdinalIgnoreCase),
+        // so tag matching is text-to-text — no lowering to string.
+        var include = Context.App.Test.Include.Select(r => (global::app.type.text.@this)r.Peek()).ToHashSet();
+        var exclude = Context.App.Test.Exclude.Select(r => (global::app.type.text.@this)r.Peek()).ToHashSet();
 
         var files = new List<data.@this>();
         var list = await listed.Value();
@@ -65,13 +67,13 @@ public partial class discover : IContext
             if (await row.Value<global::app.type.path.@this>() is not FilePath fileMatch) continue;
             files.Add(new data.@this("", await DiscoverOne(fileMatch, app, include, exclude), context: Context));
         }
-        return Context.Ok<global::app.type.list.@this<global::app.tester.test.@this>>(
-            new global::app.type.list.@this<global::app.tester.test.@this>(files, Context));
+        return Context.Ok<global::app.type.list.@this<global::app.test.@this>>(
+            new global::app.type.list.@this<global::app.test.@this>(files, Context));
     }
 
     /// <summary>Discovers metadata for a single .test.goal file (FilePath form).</summary>
-    private async Task<global::app.tester.test.@this> DiscoverOne(FilePath goalFile, global::app.@this app,
-        HashSet<string> include, HashSet<string> exclude)
+    private async Task<global::app.test.@this> DiscoverOne(FilePath goalFile, global::app.@this app,
+        HashSet<global::app.type.text.@this> include, HashSet<global::app.type.text.@this> exclude)
     {
         // Read the .goal source first — even when the .pr is missing or
         // corrupt, the source goal is enough to identify the file.
@@ -82,10 +84,10 @@ public partial class discover : IContext
         {
             // Build a minimal goal from just the file's path so Test.Goal
             // is never null. Status=Stale with the read error as reason.
-            return new global::app.tester.test.@this
+            return new global::app.test.@this(Context)
             {
                 Goal = new Goal { Path = goalFile },
-                Status = global::app.tester.Status.Stale,
+                Status = global::app.test.Status.Stale,
                 StatusReason = "goal read error: " + (goalRead.Error?.Message ?? "")
             };
         }
@@ -100,10 +102,10 @@ public partial class discover : IContext
         // a deferred but REAL test reads honestly as Skipped, never as a no-op pass and never
         // as a stale failure. The tag step needn't be built or run. Re-enable by removing it.
         if (HasSkipTag(sourceGoal))
-            return new global::app.tester.test.@this
+            return new global::app.test.@this(Context)
             {
                 Goal = sourceGoal,
-                Status = global::app.tester.Status.Skipped,
+                Status = global::app.test.Status.Skipped,
                 StatusReason = "tagged 'skip'"
             };
 
@@ -113,10 +115,10 @@ public partial class discover : IContext
 
         if (prFile == null)
         {
-            return new global::app.tester.test.@this
+            return new global::app.test.@this(Context)
             {
                 Goal = sourceGoal,
-                Status = global::app.tester.Status.Stale,
+                Status = global::app.test.Status.Stale,
                 StatusReason = "no PrPath derivable from goal source"
             };
         }
@@ -124,10 +126,10 @@ public partial class discover : IContext
         var prExists = await prFile.ExistsAsync();
         if (!prExists.Success || (await prExists.Value())?.Value != true)
         {
-            return new global::app.tester.test.@this
+            return new global::app.test.@this(Context)
             {
                 Goal = sourceGoal,
-                Status = global::app.tester.Status.Stale,
+                Status = global::app.test.Status.Stale,
                 StatusReason = "no .pr"
             };
         }
@@ -137,64 +139,65 @@ public partial class discover : IContext
         var prRead = await prFile.ReadText();
         if (!prRead.Success)
         {
-            return new global::app.tester.test.@this
+            return new global::app.test.@this(Context)
             {
                 Goal = sourceGoal,
-                Status = global::app.tester.Status.Stale,
+                Status = global::app.test.Status.Stale,
                 StatusReason = prRead.Error?.Message ?? "pr corrupt"
             };
         }
         var prGoal = (await prRead.Value()) as Goal;
         if (prGoal == null)
         {
-            return new global::app.tester.test.@this
+            return new global::app.test.@this(Context)
             {
                 Goal = sourceGoal,
-                Status = global::app.tester.Status.Stale,
+                Status = global::app.test.Status.Stale,
                 StatusReason = "pr corrupt"
             };
         }
 
         if (!string.Equals(sourceGoal.Hash, prGoal.Hash, StringComparison.OrdinalIgnoreCase))
         {
-            return new global::app.tester.test.@this
+            return new global::app.test.@this(Context)
             {
                 Goal = sourceGoal,
-                Status = global::app.tester.Status.Stale,
+                Status = global::app.test.Status.Stale,
                 StatusReason = "rebuild needed"
             };
         }
 
-        // Tags: user-declared (test.tag actions) + auto (handler [RequiresCapability]).
-        var tags = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        ExtractUserTags(prGoal, tags);
-        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        ExtractAutoTags(prGoal, tags, visited);
-
-        // Seed branch-coverage chains.
-        var chainVisited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        SeedBranchChains(prGoal, Context.App.Tester.Coverage, chainVisited);
-
-        var file = new global::app.tester.test.@this
+        var file = new global::app.test.@this(Context)
         {
             Goal = prGoal,
         };
-        foreach (var tag in tags) file.Tags.Add(tag);
 
-        // Filter: exclude wins over include.
-        if (exclude.Count > 0 && exclude.Overlaps(file.Tags))
+        // Tags on the test as text: user-declared (test.tag actions, moved as text)
+        // + auto (handler [RequiresCapability], string→text at the attribute perimeter).
+        ExtractUserTags(prGoal, file);
+        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        ExtractAutoTags(prGoal, file, visited);
+
+        // Seed branch-coverage chains.
+        var chainVisited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        SeedBranchChains(prGoal, Context.App.Test.Coverage, chainVisited);
+
+        // Filter: exclude wins over include. Match the test's tags against the CLI
+        // include/exclude sets — text-to-text (case-insensitive lives on text).
+        var fileTags = file.Tags.Select(r => (global::app.type.text.@this)r.Peek()).ToHashSet();
+        if (exclude.Count > 0 && exclude.Overlaps(fileTags))
         {
-            file.Status = global::app.tester.Status.Skipped;
+            file.Status = global::app.test.Status.Skipped;
             file.StatusReason = "excluded by tag";
         }
-        else if (include.Count > 0 && !include.Overlaps(file.Tags))
+        else if (include.Count > 0 && !include.Overlaps(fileTags))
         {
-            file.Status = global::app.tester.Status.Skipped;
+            file.Status = global::app.test.Status.Skipped;
             file.StatusReason = "no include match";
         }
         else
         {
-            file.Status = global::app.tester.Status.Ready;
+            file.Status = global::app.test.Status.Ready;
         }
         return file;
     }
@@ -221,7 +224,7 @@ public partial class discover : IContext
     /// </summary>
     public static bool IsSkipTagStep(string text) => SkipTagRegex.IsMatch(text);
 
-    private static void ExtractUserTags(Goal goal, HashSet<string> tags)
+    private static void ExtractUserTags(Goal goal, global::app.test.@this file)
     {
         goal.ForEachAction((step, action) =>
         {
@@ -229,31 +232,20 @@ public partial class discover : IContext
             if (!string.Equals(action.ActionName, "tag", StringComparison.OrdinalIgnoreCase)) return;
             var tagsParam = action.Parameters.FirstOrDefault(p =>
                 string.Equals(p.Name, "Tags", StringComparison.OrdinalIgnoreCase));
-            if (tagsParam?.Peek() is app.type.list.@this nativeList)
+            switch (tagsParam?.Peek())
             {
-                // The Tags param is the native list value type — read each element's value.
-                foreach (var item in nativeList.Items)
-                {
-                    var s = item.Peek()?.ToString();
-                    if (!string.IsNullOrWhiteSpace(s)) tags.Add(s);
-                }
-            }
-            else if (tagsParam?.Peek() is System.Collections.IEnumerable enumerable and not string)
-            {
-                foreach (var item in enumerable)
-                {
-                    var s = item?.ToString();
-                    if (!string.IsNullOrWhiteSpace(s)) tags.Add(s);
-                }
-            }
-            else if (tagsParam?.Peek() is global::app.type.text.@this single && single.IsTruthy())
-            {
-                tags.Add(single.Clr<string>()!);
+                // The Tags param IS a list<text> — move its text rows straight in.
+                case app.type.list.@this nativeList:
+                    file.Tags.Add(nativeList);
+                    break;
+                case global::app.type.text.@this single when single.IsTruthy():
+                    file.Tags.Add(single);
+                    break;
             }
         });
     }
 
-    private void ExtractAutoTags(Goal goal, HashSet<string> tags, HashSet<string> visited, int depth = 0)
+    private void ExtractAutoTags(Goal goal, global::app.test.@this file, HashSet<string> visited, int depth = 0)
     {
         if (depth > 50) return;
         if (!visited.Add(goal.Name)) return;
@@ -266,7 +258,7 @@ public partial class discover : IContext
             var attr = type?.GetCustomAttribute<RequiresCapabilityAttribute>();
             if (attr != null)
                 foreach (var cap in attr.Capabilities)
-                    tags.Add(cap);
+                    file.Tags.Add(new global::app.type.text.@this(cap));
 
             if (string.Equals(action.Module, "goal", StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(action.ActionName, "call", StringComparison.OrdinalIgnoreCase))
@@ -280,7 +272,7 @@ public partial class discover : IContext
             }
         });
         foreach (var sub in subGoals)
-            ExtractAutoTags(sub, tags, visited, depth + 1);
+            ExtractAutoTags(sub, file, visited, depth + 1);
     }
 
     private static string? ResolveStaticGoalName(app.goal.steps.step.actions.action.@this action)
@@ -305,7 +297,7 @@ public partial class discover : IContext
         return name;
     }
 
-    private void SeedBranchChains(Goal goal, app.tester.Coverage coverage, HashSet<string> visited, int depth = 0)
+    private void SeedBranchChains(Goal goal, app.test.Coverage coverage, HashSet<string> visited, int depth = 0)
     {
         if (depth > 50) return;
         if (!visited.Add(goal.Name)) return;

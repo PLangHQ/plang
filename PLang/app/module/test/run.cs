@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 using app.error;
-using app.tester;
+using app.test;
 using app.variable;
 using EventBinding = app.@event.lifecycle.binding.@this;
 
@@ -9,9 +9,9 @@ namespace app.module.test;
 
 /// <summary>
 /// Main test-runner loop. C# handler — NOT a PLang foreach, immune to the silent-skip
-/// bug that motivated this module. For each Ready global::app.tester.test.@this, spins up a fresh App
+/// bug that motivated this module. For each Ready global::app.module.test.test, spins up a fresh App
 /// instance (file boundary = App boundary), subscribes AfterAction for coverage,
-/// runs the test's entry goal under a timeout CancellationToken, records a global::app.tester.Run,
+/// runs the test's entry goal under a timeout CancellationToken, records a global::app.test.Run,
 /// merges the child's Coverage into the parent, then releases the App.
 /// Parallel execution is throttled by a SemaphoreSlim (Parallel / Testing.Parallel).
 /// Never throws for child-test failures — failure is data, loop stays parallel-safe.
@@ -29,28 +29,31 @@ public partial class run : IContext
     internal static event Action<app.@this>? ChildAppCreated;
 
     [IsNotNull]
-    public partial data.@this<global::app.type.list.@this<global::app.tester.test.@this>> Tests { get; init; }
+    public partial data.@this<global::app.type.list.@this<global::app.test.@this>> Tests { get; init; }
 
     public partial data.@this<global::app.type.number.@this>? Parallel { get; init; }
     public partial data.@this<global::app.type.number.@this>? Timeout { get; init; }
 
-    public async Task<data.@this<global::app.tester.Results>> Run()
+    public async Task<data.@this<global::app.type.list.@this<global::app.test.@this>>> Run()
     {
-        var tests = new List<global::app.tester.test.@this>();
+        var tests = new List<global::app.test.@this>();
         var list = await Tests.Value();
         if (list != null)
             foreach (var row in list)
-                if (await row.Value() is global::app.tester.test.@this test) tests.Add(test);
+                if (await row.Value() is global::app.test.@this test) tests.Add(test);
         var parentApp = Context.App;
         // The number lowers itself — absent slot falls to the stated default.
-        int parallel = Parallel == null ? parentApp.Tester.Parallel
-            : (await Parallel.Value())?.ToInt32() ?? parentApp.Tester.Parallel;
-        double timeoutSeconds = Timeout == null ? parentApp.Tester.TimeoutSeconds
-            : (await Timeout.Value())?.ToDouble() ?? parentApp.Tester.TimeoutSeconds;
+        int parallel = Parallel == null ? parentApp.Test.Parallel.ToInt32()
+            : (await Parallel.Value())?.ToInt32() ?? parentApp.Test.Parallel.ToInt32();
+        double timeoutSeconds = Timeout == null ? parentApp.Test.TimeoutSeconds.ToDouble()
+            : (await Timeout.Value())?.ToDouble() ?? parentApp.Test.TimeoutSeconds.ToDouble();
         var timeout = TimeSpan.FromSeconds(timeoutSeconds);
 
+        // The executed tests ARE the result — each carries its own outcome after run.
+        // The list holds the test objects the run loop mutates in place.
+        var executed = new global::app.type.list.@this<global::app.test.@this>(tests, Context);
         if (tests.Count == 0)
-            return Context.Ok<global::app.tester.Results>(parentApp.Tester.Results);
+            return Context.Ok<global::app.type.list.@this<global::app.test.@this>>(executed);
 
         if (parallel < 1) parallel = 1;
 
@@ -63,19 +66,17 @@ public partial class run : IContext
         });
 
         await Task.WhenAll(tasks);
-        return Context.Ok<global::app.tester.Results>(parentApp.Tester.Results);
+        return Context.Ok<global::app.type.list.@this<global::app.test.@this>>(executed);
     }
 
-    private async Task RunSingleAsync(global::app.tester.test.@this test, TimeSpan timeout, app.@this parentApp)
+    private async Task RunSingleAsync(global::app.test.@this test, TimeSpan timeout, app.@this parentApp)
     {
         // Non-ready tests (Stale, Skipped, etc.) are recorded but not executed —
         // the report surfaces them with their discovery-time status. Hiding them
         // would hurt CI visibility.
-        if (test.Status != global::app.tester.Status.Ready)
+        if (test.Status != global::app.test.Status.Ready)
         {
-            var skipRun = new global::app.tester.Run(test);
-            skipRun.Complete(test.Status, skipRun.Error);
-            parentApp.Tester.Results.Add(skipRun);
+            parentApp.Test.Add(test);
             return;
         }
 
@@ -87,10 +88,10 @@ public partial class run : IContext
         await using var childApp = new app.@this(parentApp.AbsolutePath);
         childApp.OsDirectory = parentApp.OsDirectory;
         childApp.Parent = parentApp;
-        childApp.Tester.IsEnabled = true;
+        childApp.Test.IsEnabled = true;
 
-        var testRun = new global::app.tester.Run(test);
-        childApp.Tester.CurrentTest = testRun;
+        test.Start();
+        childApp.Test.Current = test;
 
         // Coverage subscriber — records every handler fire and every branch index observed.
         // Site key for branches = "goalName:stepIndex"; matches what the report renders.
@@ -100,7 +101,7 @@ public partial class run : IContext
             {
                 if (action != null)
                 {
-                    childApp.Tester.Coverage.RecordModuleAction(action.Module, action.ActionName);
+                    childApp.Test.Coverage.RecordModuleAction(action.Module, action.ActionName);
 
                     if (action.IsIfHead
                         && result != null && result.Properties.Contains("branchIndex"))
@@ -111,18 +112,18 @@ public partial class run : IContext
                         var goalId = goal?.Path?.ToString() ?? goal?.Name ?? "?";
                         var stepIndex = action.Step?.Index.ToString() ?? "?";
                         var site = $"{goalId}:{stepIndex}";
-                        childApp.Tester.Coverage.RecordBranch(site, await result.Properties.Get<int>("branchIndex"));
+                        childApp.Test.Coverage.RecordBranch(site, await result.Properties.Get<int>("branchIndex"));
                         if (result.Properties.Contains("branchLabel"))
                         {
                             var label = await result.Properties.Get<string>("branchLabel");
                             if (!string.IsNullOrEmpty(label))
-                                childApp.Tester.Coverage.RecordBranchLabel(site, label);
+                                childApp.Test.Coverage.RecordBranchLabel(site, label);
                         }
                         if (result.Properties.Contains("branchChain"))
                         {
                             var chain = await result.Properties.Get<List<string>>("branchChain");
                             if (chain != null)
-                                childApp.Tester.Coverage.RecordBranchChain(site, chain);
+                                childApp.Test.Coverage.RecordBranchChain(site, chain);
                         }
                     }
                 }
@@ -162,17 +163,15 @@ public partial class run : IContext
         // fire until the sub-goal returns.
         var stepStarts = new Dictionary<int, long>();
         var entryGoalPath = test.Goal.Path?.ToString();
-        bool IsEntryGoalStep(global::app.goal.steps.step.@this? step)
-            => step != null
-            && string.Equals(step.Goal?.Path?.ToString(), entryGoalPath, StringComparison.Ordinal);
+        bool IsEntryGoalStep(global::app.goal.steps.step.@this step)
+            => string.Equals(step.Goal.Path?.ToString(), entryGoalPath, StringComparison.Ordinal);
 
         var beforeStepBinding = new EventBinding(
             app.@event.Trigger.BeforeStep,
             (context, _, _) =>
             {
-                var step = context.Step;
-                if (IsEntryGoalStep(step))
-                    stepStarts[step!.Index] = Stopwatch.GetTimestamp();
+                if (context.Step is { } step && IsEntryGoalStep(step))
+                    stepStarts[step.Index] = Stopwatch.GetTimestamp();
                 return Task.FromResult(context.Ok());
             },
             priority: int.MaxValue,
@@ -181,11 +180,14 @@ public partial class run : IContext
             app.@event.Trigger.AfterStep,
             (context, _, _) =>
             {
-                var step = context.Step;
-                if (IsEntryGoalStep(step) && stepStarts.Remove(step!.Index, out var start))
+                if (context.Step is { } step && IsEntryGoalStep(step) && stepStarts.Remove(step.Index, out var start))
                 {
                     var ms = (Stopwatch.GetTimestamp() - start) * 1000.0 / Stopwatch.Frequency;
-                    testRun.Timings.Add(step.Index, ms);
+                    test.Timings.Add(new global::app.test.timing.@this
+                    {
+                        Step = step,
+                        Elapsed = TimeSpan.FromMilliseconds(ms)
+                    });
                 }
                 return Task.FromResult(context.Ok());
             },
@@ -213,26 +215,26 @@ public partial class run : IContext
             var goalCall = new GoalCall { PrPath = test.Goal.PrPath };
             var result = await childApp.RunGoalAsync(goalCall, childApp.User.Context, cts.Token);
             if (cts.IsCancellationRequested && !Context.CancellationToken.IsCancellationRequested)
-                testRun.Complete(global::app.tester.Status.Timeout);
+                test.Complete(global::app.test.Status.Timeout);
             else
-                testRun.Complete(result);
+                test.Complete(result);
         }
         catch (OperationCanceledException) when (cts.IsCancellationRequested && !Context.CancellationToken.IsCancellationRequested)
         {
-            testRun.Complete(global::app.tester.Status.Timeout);
+            test.Complete(global::app.test.Status.Timeout);
         }
         catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
         {
-            testRun.Complete(global::app.tester.Status.Fail,
+            test.Complete(global::app.test.Status.Fail,
                 new ServiceError(ex.Message, "TestRunError", 500) { Exception = ex });
         }
         finally
         {
             childApp.User.Context.PopCancellation();
-            testRun.Output = outputBuf.Length > 0 ? outputBuf.ToString() : null;
+            test.Stdout = outputBuf.Length > 0 ? outputBuf.ToString() : null;
         }
 
-        parentApp.Tester.Coverage.Merge(childApp.Tester.Coverage);
-        parentApp.Tester.Results.Add(testRun);
+        parentApp.Test.Coverage.Merge(childApp.Test.Coverage);
+        parentApp.Test.Add(test);
     }
 }

@@ -1,6 +1,6 @@
 using app.module.condition;
 using app.module.condition.code;
-using app.tester;
+using app.test;
 
 namespace PLang.Tests.App.Tester;
 

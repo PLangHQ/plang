@@ -52,6 +52,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public double TotalHours => Value.TotalHours;
     public double TotalMinutes => Value.TotalMinutes;
     public double TotalSeconds => Value.TotalSeconds;
+    public double TotalMilliseconds => Value.TotalMilliseconds;
 
     /// <summary>Bare ISO-8601 duration form (e.g. <c>PT1H30M</c>) — the serializer renders this.</summary>
     public override string ToString() => System.Xml.XmlConvert.ToString(Value);

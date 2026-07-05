@@ -16,10 +16,18 @@ public sealed class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
 {
     public @this(global::app.actor.context.@this context) : base(context) { }
     public @this(System.Collections.Generic.IEnumerable<global::app.data.@this> items, global::app.actor.context.@this context) : base(items, context) { }
+    public @this(System.Collections.Generic.IEnumerable<global::app.type.item.@this> values, global::app.actor.context.@this context) : base(values, context) { }
 
     /// <summary>Render/clone preserve the element-type tag — a list&lt;T&gt; stays
     /// a list&lt;T&gt; instead of degrading to the non-generic base.</summary>
     protected override global::app.type.list.@this Empty() => new @this<T>(Context);
+
+    /// <summary>Value-membership typed to the element — because the parameter is
+    /// <typeparamref name="T"/>, a caller can pass what converts to T (e.g. a bare
+    /// <c>string</c> to a <c>list&lt;text&gt;</c>: <c>Contains("http")</c> lifts via
+    /// <c>text</c>'s own <c>string</c> operator). Routes through the base membership.</summary>
+    public System.Threading.Tasks.ValueTask<global::app.type.@bool.@this> Contains(T value)
+        => Contains((global::app.type.item.@this)value);
 
     /// <summary>A <c>list&lt;T&gt;</c> is a RE-TAG of a list, not an element walk: wrap the
     /// list's rows as-is. Each row converts to <typeparamref name="T"/> only when taken out

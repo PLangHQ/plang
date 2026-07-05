@@ -65,13 +65,6 @@ public class Stage0_PlangTypeRemovalTests
             .Because("Named [PlangType(name)] is reserved for names that can't be derived from class/@this.");
     }
 
-    // Results derives "results" from class name lowercased.
-    [Test]
-    public async Task Results_PlangTypeName_DerivesFromClassNameLowercased()
-    {
-        var name = _app.Type.Name(typeof(global::app.tester.Results));
-        await Assert.That(name).IsEqualTo("results");
-    }
 
     // app.mock.@this is an @this class — its PLang type name derives
     // from the last namespace segment ("mock"), not the class name ("@this").
@@ -82,14 +75,14 @@ public class Stage0_PlangTypeRemovalTests
         await Assert.That(name).IsEqualTo("mock");
     }
 
-    // app.tester.test.@this is an @this class — its PLang type name derives
-    // from the last namespace segment ("test"), not the class name ("@this").
+    // app.test.@this is a named value type carrying [PlangType("test")] —
+    // its PLang name is the explicit attribute value ("test").
     [Test]
-    public async Task Test_PlangTypeName_DerivesFromClassName_AfterRename()
+    public async Task Test_PlangTypeName_IsExplicitAttributeValue()
     {
-        var name = _app.Type.Name(typeof(global::app.tester.test.@this));
+        var name = _app.Type.Name(typeof(global::app.test.@this));
         await Assert.That(name).IsEqualTo("test")
-            .Because("@this convention takes the last namespace segment as the PLang type name.");
+            .Because("[PlangType(\"test\")] sets the PLang type name explicitly.");
     }
 
     // @this classes use the last namespace segment, not the literal "this".

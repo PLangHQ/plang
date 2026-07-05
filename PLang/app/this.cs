@@ -165,7 +165,7 @@ public sealed partial class @this : IAsyncDisposable
 
     /// <summary>
     /// App-level persistent key-value store backed by <c>.db/system.sqlite</c>
-    /// (or in-memory under Tester.IsEnabled). One per app — actors share it.
+    /// (or in-memory under Test.IsEnabled). One per app — actors share it.
     /// Modules own their tables (<c>encryption</c>, <c>settings</c>, <c>llm-cache</c>, etc.).
     /// Created lazily on first access so tests with fictional paths and apps
     /// that never touch settings don't pay for SQLite-file creation at boot.
@@ -193,9 +193,10 @@ public sealed partial class @this : IAsyncDisposable
     public global::app.error.list.@this Error { get; }
 
     /// <summary>
-    /// Test runner. Discovers and runs *.test.goal files with assertion tracking.
+    /// Test session — the collection of discovered/run *.test.goal tests plus
+    /// run-wide state (coverage, config, per-status tallies).
     /// </summary>
-    public global::app.tester.@this Tester { get; }
+    public global::app.test.list.@this Test { get; }
 
     /// <summary>
     /// Builder mode controller. When enabled, actors use in-memory datasources.
@@ -307,7 +308,7 @@ public sealed partial class @this : IAsyncDisposable
 
         Event = new global::app.@event.list.@this();
         Debug = new Debugging(this);
-        Tester = new global::app.tester.@this(this);
+        Test = new global::app.test.list.@this(this);
         Builder = new global::app.module.builder.@this(this);
         Type = new type.catalog.@this(System.Context);
         Code = new AppCode(System.Context);
@@ -607,7 +608,7 @@ public sealed partial class @this : IAsyncDisposable
         // Testing: in-memory db scoped by App.Id so per-test Apps never share state.
         // SQLite's shared-cache merges in-memory dbs with identical DataSource names,
         // so the App.Id scoping is load-bearing.
-        if (Tester.IsEnabled)
+        if (Test.IsEnabled)
             return global::app.module.settings.Sqlite.InMemory($"system-{Id}", System.Context);
 
         // Lift to Path: AuthGate fires inside Sqlite.CreateAsync on Write,

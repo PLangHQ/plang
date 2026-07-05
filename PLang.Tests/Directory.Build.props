@@ -81,7 +81,7 @@
     <Using Include="app.callstack.@this" Alias="CallStack" />
     <Using Include="app.callstack.Flags" Alias="Flags" />
     <Using Include="app.module.debug.@this" Alias="Debugging" />
-    <Using Include="app.tester.@this" Alias="Tester" />
+    <Using Include="app.test.@this" Alias="Tester" />
     <Using Include="app.snapshot.@this" Alias="Snapshot" />
     <Using Include="app.snapshot.ISnapshot" Alias="ISnapshot" />
     <Using Include="app.Statics.@this" Alias="AppStatics" />

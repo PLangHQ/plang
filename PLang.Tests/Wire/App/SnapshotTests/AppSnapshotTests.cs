@@ -13,7 +13,7 @@ public class AppSnapshotTests
         await Assert.That(snap.HasSection("Providers")).IsTrue();
         await Assert.That(snap.HasSection("Statics")).IsTrue();
         await Assert.That(snap.HasSection("Build")).IsTrue();
-        await Assert.That(snap.HasSection("Testing")).IsTrue();
+        await Assert.That(snap.HasSection("Test")).IsTrue();
         await Assert.That(snap.HasSection("CallStack")).IsTrue();
     }
 
@@ -23,7 +23,7 @@ public class AppSnapshotTests
         var src = global::PLang.Tests.TestApp.Create("/src");
         src.User.Context.Variable.Set("x", 1);
         src.Builder.IsEnabled = true;
-        src.Tester.IsEnabled = true;
+        src.Test.IsEnabled = true;
 
         var snap = src.Snapshot();
 
@@ -32,7 +32,7 @@ public class AppSnapshotTests
 
         await Assert.That((await (await dst.User.Context.Variable.Get("x")).Value())?.ToString()).IsEqualTo("1");
         await Assert.That(dst.Builder.IsEnabled).IsTrue();
-        await Assert.That(dst.Tester.IsEnabled).IsTrue();
+        await Assert.That(dst.Test.IsEnabled).IsTrue();
     }
 
     [Test]

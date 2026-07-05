@@ -1,11 +1,11 @@
 using System.Text.Json;
-using app.tester;
+using app.test;
 
 namespace PLang.Tests.App.Tester;
 
 /// <summary>
 /// Batch 13 — per-test metadata.
-/// Every global::app.tester.Run captures the builder version that produced its .pr, plus the
+/// Every global::app.test.Run captures the builder version that produced its .pr, plus the
 /// Goal.Hash from the .pr. Surfaced in results.json so tooling can correlate
 /// drift: if the current plang builder is a newer version than the one that
 /// produced a test's .pr, the report flags it. Drift is informational, not
@@ -41,7 +41,7 @@ public class TestMetadataTests
 
     private string CapturedOutput() => System.Text.Encoding.UTF8.GetString(_captureStream.ToArray());
 
-    private static global::app.tester.Run NewRun(string name, string? builderVersion = null, string? goalHash = "deadbeef")
+    private static global::app.test.@this NewTest(string name, string? builderVersion = null, string? goalHash = "deadbeef")
     {
         var goal = new Goal
         {
@@ -50,50 +50,35 @@ public class TestMetadataTests
             Hash = goalHash,
             BuilderVersion = builderVersion
         };
-        var run = new global::app.tester.Run(new global::app.tester.test.@this { Goal = goal });
-        run.Complete(global::app.tester.Status.Pass);
-        return run;
+        var test = new global::app.test.@this(global::PLang.Tests.TestApp.SharedContext) { Goal = goal };
+        test.Complete(global::app.test.Status.Pass);
+        return test;
     }
 
     // The .pr file carries a builder-version field (written at build time). At
-    // discovery, global::app.tester.Run reads and stores it in its Metadata so the report can
+    // discovery, global::app.test.Run reads and stores it in its Metadata so the report can
     // surface "built by version X".
     [Test]
     public async Task Metadata_TestRun_CapturesBuilderVersionFromPr()
     {
-        var run = NewRun("T", builderVersion: "v1.2.3");
-        await Assert.That(run.Test.Goal.BuilderVersion).IsEqualTo("v1.2.3");
+        var test = NewTest("T", builderVersion: "v1.2.3");
+        await Assert.That(test.Goal.BuilderVersion).IsEqualTo("v1.2.3");
     }
 
-    // global::app.tester.Run captures Goal.Hash (Name + Steps.Text SHA-256) from the .pr.
+    // global::app.test.Run captures Goal.Hash (Name + Steps.Text SHA-256) from the .pr.
     // Combined with current-file Goal.Hash, enables drift correlation: "this
     // .pr was built from goal text at hash Y".
     [Test]
     public async Task Metadata_TestRun_CapturesGoalHashFromPr()
     {
-        var run = NewRun("T", goalHash: "abc123");
-        await Assert.That(run.Test.Goal.Hash).IsEqualTo("abc123");
+        var test = NewTest("T", goalHash: "abc123");
+        await Assert.That(test.Goal.Hash).IsEqualTo("abc123");
     }
 
-    // results.json exposes the builder version per test run entry. Tooling can
-    // spot tests built by an old builder version and prompt a rebuild. Surfacing
-    // the field is a report contract — dropping it breaks downstream parsers.
-    [Test]
-    public async Task Metadata_Report_SurfacesBuilderVersion_InResultsJson()
-    {
-        _app.Tester.Results.Add(NewRun("T", builderVersion: "v1.0"));
-
-        var action = new global::app.module.test.report(_app.User.Context);
-        await action.Run();
-
-        var jsonPath = System.IO.Path.Combine(_tempDir, ".test", "results.json");
-        var json = await System.IO.File.ReadAllTextAsync(jsonPath);
-        using var doc = JsonDocument.Parse(json);
-
-        var runsArray = doc.RootElement.GetProperty("runs");
-        var first = runsArray[0];
-        await Assert.That(first.GetProperty("builderVersion").GetString()).IsEqualTo("v1.0");
-    }
+    // builderVersion is internal build bookkeeping ([Store, Debug] on Goal) — it is
+    // deliberately NOT in results.json, which is the [Out] view we hand the user.
+    // Drift is surfaced in the console (Metadata_Report_FlagsDrift...), reading
+    // Goal.BuilderVersion directly — the artifact doesn't need to carry it.
 
     // When the current plang builder version differs from the .pr's builder
     // version, the report flags the test with a "builder drift" note.
@@ -103,7 +88,7 @@ public class TestMetadataTests
     public async Task Metadata_Report_FlagsDriftWhenPrBuilderVersionMismatchesCurrent()
     {
         _app.Version = "v2.0"; // current app builder version
-        _app.Tester.Results.Add(NewRun("T", builderVersion: "v1.0")); // stale
+        _app.Test.Add(NewTest("T", builderVersion: "v1.0")); // stale
 
         var action = new global::app.module.test.report(_app.User.Context);
         await action.Run();

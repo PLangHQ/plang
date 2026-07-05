@@ -138,7 +138,7 @@ public class OperatorTests : System.IAsyncDisposable
     public async Task Equal_EnumLeft_StringRight_NormalizesToEnumName()
     {
         var op = new Operator("==");
-        var matches = await op.Evaluate(D(global::app.tester.Status.Timeout), D("Timeout"));
+        var matches = await op.Evaluate(D(global::app.test.Status.Timeout), D("Timeout"));
         await Assert.That(matches).IsTrue();
     }
 
@@ -146,7 +146,7 @@ public class OperatorTests : System.IAsyncDisposable
     public async Task Equal_StringLeft_EnumRight_NormalizesToEnumName()
     {
         var op = new Operator("==");
-        var matches = await op.Evaluate(D("Fail"), D(global::app.tester.Status.Fail));
+        var matches = await op.Evaluate(D("Fail"), D(global::app.test.Status.Fail));
         await Assert.That(matches).IsTrue();
     }
 
@@ -154,7 +154,7 @@ public class OperatorTests : System.IAsyncDisposable
     public async Task Equal_EnumVsMismatchedString_DoesNotMatch()
     {
         var op = new Operator("==");
-        var matches = await op.Evaluate(D(global::app.tester.Status.Pass), D("Fail"));
+        var matches = await op.Evaluate(D(global::app.test.Status.Pass), D("Fail"));
         await Assert.That(matches).IsFalse();
     }
 }

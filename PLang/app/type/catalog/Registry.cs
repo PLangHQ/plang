@@ -118,9 +118,9 @@ public sealed partial class @this
             if (_initialized) return;
             SeedClrPrimitives();
             // An explicitly-aliased [PlangType] name (one that diverges from the
-            // type's own inferred name — e.g. [PlangType("test")] on app.tester.@this,
-            // whose namespace tail is "tester") must not steal the name→type resolve
-            // slot from a type that naturally owns it (app.tester.test.@this). So the
+            // type's own inferred name — a kind label that redirects to a name the
+            // type's namespace/class does not itself carry) must not steal the
+            // name→type resolve slot from a type that naturally owns that name. So the
             // type→name (kind) mapping records immediately, but the alias's name→type
             // claim is deferred to a second pass that runs after every natural owner
             // has registered. The kind direction is collision-free (keyed by type);

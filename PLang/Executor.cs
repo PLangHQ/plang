@@ -61,13 +61,13 @@ namespace PLang
 			if ((parameters.TryGetValue("!tester", out var testValue) && testValue is not false) ||
 			    (parameters.TryGetValue("!test", out testValue) && testValue is not false))
 			{
-				engine.Tester.IsEnabled = true;
+				engine.Test.IsEnabled = true;
 				if (!parameters.ContainsKey("path"))
 					userVars.Set("path", startupDirectory);
 
 				if (testValue is IDictionary<string, object?> testDict)
 				{
-					var applyResult = engine.Tester.Apply(testDict);
+					var applyResult = engine.Test.Apply(testDict);
 					if (!applyResult.Success) return (null, applyResult);
 				}
 			}
@@ -101,7 +101,7 @@ namespace PLang
 
 			// Set the goal file on system context — Start() reads it
 			// Tester mode routes to system test runner instead of Start.goal
-			if (engine.Tester.IsEnabled && goalFile == "Start.goal")
+			if (engine.Test.IsEnabled && goalFile == "Start.goal")
 			{
 				engine.System.Context.Variable.Set("goalFile", "/system/.build/test.pr");
 				return (engine, null);

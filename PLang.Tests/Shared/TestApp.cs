@@ -17,7 +17,7 @@ public static class TestApp
         bool autoWireConsoleChannels = true)
     {
         var app = new global::app.@this(absolutePath, modules, environment, autoWireConsoleChannels);
-        app.Tester.IsEnabled = true;   // in-memory settings store — no on-disk pollution
+        app.Test.IsEnabled = true;   // in-memory settings store — no on-disk pollution
         // Swap in the no-crypto signing mock so tests don't pay ed25519 keygen +
         // keccak256 + signing per Data. Real-signing tests use a plain app.@this.
         // IsBuiltIn keeps the mock out of the Code snapshot (it has no loadable

@@ -1,4 +1,4 @@
-namespace app.tester;
+namespace app.test;
 
 /// <summary>
 /// Lifecycle status of a discovered or executed test.

@@ -14,7 +14,7 @@ namespace app.Diagnostics;
 /// Distinct from storage (keeps sensitive data) and user output (strips it entirely).
 /// Stage 27 absorbed this from <c>Utils.Json.DiagnosticOutput</c> + <c>FormatForDiagnostic</c>.
 ///
-/// Static class because all three consumers (Tester reports, AssertionError messages,
+/// Static class because all three consumers (Test reports, AssertionError messages,
 /// modules/assert) call from static contexts where no App is in scope. The state held is
 /// a single immutable JsonSerializerOptions — Rule C exception class for pure-config bags
 /// with no instance variation. Not named <c>@this</c> because there is no

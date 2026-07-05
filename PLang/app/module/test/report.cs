@@ -1,42 +1,37 @@
-using System.Security;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using app.error;
-using app.tester;
 using app.variable;
 
 namespace app.module.test;
 
 /// <summary>
-/// Writes the run-wide Results to the console (always) and to a single file artefact
-/// (either .test/results.json or .test/junit.xml, selected by Testing.Format).
-/// Console output: summary line + per-test status, with a failure block that includes
-/// Expected/Actual and the Variables snapshot captured on AssertionError.
-/// Also emits two coverage tables: module.action universe vs observed, and per-site
-/// branch-index coverage for condition.if. The .test/ directory lives at the app root
-/// (users scope a run with Testing.Include/Exclude — output location stays predictable).
+/// Writes the run-wide tests to the console (always) and to a single file artefact
+/// (either .test/results.json or .test/junit.xml, selected by Test.Format).
+/// The json artefact is the tests' own wire form — each test serializes its [Out]
+/// fields, no hand-mapped shape. Console output: summary line + per-test status,
+/// with a failure block that includes Expected/Actual and the Variables snapshot
+/// captured on AssertionError, plus two coverage tables (module.action universe vs
+/// observed, and per-site branch coverage for condition.if). The .test/ directory
+/// lives at the app root.
 /// </summary>
 [Action("report", Cacheable = false)]
 public partial class report : IContext
 {
-    public partial data.@this<app.tester.Results>? Results { get; init; }
+    public partial data.@this<global::app.type.list.@this<global::app.test.@this>>? Results { get; init; }
     public partial data.@this<global::app.type.text.@this>? Format { get; init; }
 
     public async Task<data.@this> Run()
     {
-        var results = (Results == null ? null : await Results.Value()) ?? Context.App.Tester.Results;
-        var testing = Context.App.Tester;
-        var format = (Format == null ? null : (await Format.Value())?.Clr<string>()) ?? testing.Format;
+        var testing = Context.App.Test;
+        var results = await ResolveTests();
+        var format = await ResolveFormat(testing);
 
         // Suppress the console summary when we're nested inside another test
-        // (CurrentTest is set by test.run when it spins up the per-test child
-        // App). The parent test consumes results via the returned Data
-        // Properties (content, summaryPass, summaryFail, etc.); printing the
-        // nested run's status lines to stdout would otherwise pollute the
-        // outer `plang --test` output and look like top-level test failures.
-        if (testing.CurrentTest == null)
+        // (Current is set by test.run when it spins up the per-test child App).
+        // The parent test consumes results via the returned Data Properties;
+        // printing the nested run's status lines would pollute the outer output.
+        if (testing.Current == null)
         {
             var console = new StringBuilder();
             RenderConsole(console, results, testing);
@@ -44,82 +39,103 @@ public partial class report : IContext
             await Context.App.CurrentActor.Channel.WriteTextAsync(global::app.channel.list.@this.Output, console.ToString());
         }
 
-        // Write the file artefact through path verbs (gated). .test/ lives
-        // at the app root.
+        // Write the file artefact through path verbs (gated). .test/ lives at the app root.
         var context = Context;
-        string reportFile;
         string content;
         global::app.type.path.@this writeTarget;
-        switch (format)
+        if (format == global::app.test.Format.JUnit)
         {
-            case "junit":
-                content = BuildJUnit(results);
-                writeTarget = global::app.type.path.@this.Resolve("/.test/junit.xml", context);
-                break;
-            default: // "json"
-                content = BuildJson(results, testing);
-                writeTarget = global::app.type.path.@this.Resolve("/.test/results.json", context);
-                break;
+            content = new global::app.test.junit.@this(results).ToString();
+            writeTarget = global::app.type.path.@this.Resolve("/.test/junit.xml", context);
         }
-        // WriteText creates parent dirs via EnsureParentDir; AuthGate(Write)
-        // fast-passes in-root and prompts/denies otherwise.
+        else
+        {
+            // The json artefact IS the tests' wire form — each test writes its [Out] fields.
+            content = await Wire(results);
+            writeTarget = global::app.type.path.@this.Resolve("/.test/results.json", context);
+        }
+        // WriteText creates parent dirs via EnsureParentDir; AuthGate(Write) gates it.
         var written = await writeTarget.WriteText(content);
         if (!written.Success) return Context.Error(written.Error!);
-        reportFile = writeTarget.Absolute;
 
-        // Surface the artefact for observability: PLang tests inspect these on
-        // %report% (the write-to target) without a filesystem round-trip, which
-        // hits goal-relative path resolution edge cases inside child Apps. All
-        // values are primitives / scalars so assert.equals / assert.isTrue can
-        // validate them unambiguously (assert.contains on long content strings
-        // is sensitive to the builder LLM's Value/Container param ordering).
-        var summary = results.Summary();
-        int variableSnapshotCount = 0;
-        foreach (var run in results)
-        {
-            if (run.Error is AssertionError ae && ae.Variables is { Count: > 0 })
-                variableSnapshotCount++;
-        }
+        // Surface the artefact for observability: PLang tests inspect these on %report%
+        // without a filesystem round-trip. All values are scalars so assert.* validate them.
+        var summary = global::app.test.list.@this.Summary(results);
+        int variableSnapshotCount = results.Count(t => t.Error is AssertionError { Variables: { Count: > 0 } });
 
-        var result = Context.Ok(results);
-        result.Properties.Set("format", format);
-        result.Properties.Set("reportPath", reportFile);
+        // Return the tests so a parent runner can propagate them via `write to %results%`.
+        var result = Context.Ok<global::app.type.list.@this<global::app.test.@this>>(
+            new global::app.type.list.@this<global::app.test.@this>(results, Context));
+        result.Properties.Set("format", format.ToString());
+        result.Properties.Set("reportPath", writeTarget.Absolute);
         result.Properties.Set("content", content);
         result.Properties.Set("summaryTotal", results.Count);
-        result.Properties.Set("summaryPass", summary[global::app.tester.Status.Pass]);
-        result.Properties.Set("summaryFail", summary[global::app.tester.Status.Fail]);
+        result.Properties.Set("summaryPass", summary[global::app.test.Status.Pass]);
+        result.Properties.Set("summaryFail", summary[global::app.test.Status.Fail]);
         result.Properties.Set("variableSnapshotCount", variableSnapshotCount);
         return result;
     }
 
-    private static void RenderConsole(StringBuilder sb, app.tester.Results results, app.tester.@this testing)
+    // Resolve the tests to report: an explicit %results% list (each row Data-wrapped,
+    // unwrap once at the boundary) or the session's accumulated tests.
+    private async Task<IReadOnlyList<global::app.test.@this>> ResolveTests()
     {
-        var summary = results.Summary();
-        var total = results.Count;
-        sb.AppendLine($"Test summary: {total} total, "
-            + $"{summary[global::app.tester.Status.Pass]} pass, {summary[global::app.tester.Status.Fail]} fail, "
-            + $"{summary[global::app.tester.Status.Timeout]} timeout, {summary[global::app.tester.Status.Stale]} stale, "
-            + $"{summary[global::app.tester.Status.Skipped]} skipped");
+        var passed = Results == null ? null : await Results.Value();
+        if (passed == null) return Context.App.Test.Tests;
+        var tests = new List<global::app.test.@this>();
+        foreach (var row in passed)
+            if (await row.Value() is global::app.test.@this t) tests.Add(t);
+        return tests;
+    }
 
-        foreach (var run in results)
+    // The Format param overrides the session default when present.
+    private async Task<global::app.test.Format> ResolveFormat(global::app.test.list.@this testing)
+    {
+        var over = Format == null ? null : (await Format.Value())?.Clr<string>();
+        if (over == null) return testing.Format;
+        return string.Equals(over, "junit", StringComparison.OrdinalIgnoreCase)
+            ? global::app.test.Format.JUnit
+            : global::app.test.Format.Json;
+    }
+
+    // The tests serialize themselves through the single wire serializer — each test's
+    // [Out] fields become the artefact. No hand-built shape.
+    private async Task<string> Wire(IReadOnlyList<global::app.test.@this> results)
+    {
+        var list = new global::app.type.list.@this<global::app.test.@this>(results, Context);
+        var serializer = new global::app.channel.serializer.plang.@this(Context);
+        using var ms = new System.IO.MemoryStream();
+        await serializer.SerializeItemAsync(ms, list, global::app.View.Out);
+        return System.Text.Encoding.UTF8.GetString(ms.ToArray());
+    }
+
+    private static void RenderConsole(StringBuilder sb, IReadOnlyList<global::app.test.@this> results, global::app.test.list.@this testing)
+    {
+        var summary = global::app.test.list.@this.Summary(results);
+        sb.AppendLine($"Test summary: {results.Count} total, "
+            + $"{summary[global::app.test.Status.Pass]} pass, {summary[global::app.test.Status.Fail]} fail, "
+            + $"{summary[global::app.test.Status.Timeout]} timeout, {summary[global::app.test.Status.Stale]} stale, "
+            + $"{summary[global::app.test.Status.Skipped]} skipped");
+
+        var currentBuilderVersion = testing.App.Version;
+        foreach (var test in results)
         {
-            var currentBuilderVersion = ResolveBuilderVersion(testing);
-            var drift = !string.IsNullOrEmpty(run.Test.Goal.BuilderVersion)
+            var drift = !string.IsNullOrEmpty(test.Goal.BuilderVersion)
                 && !string.IsNullOrEmpty(currentBuilderVersion)
-                && !string.Equals(run.Test.Goal.BuilderVersion, currentBuilderVersion, StringComparison.Ordinal);
+                && !string.Equals(test.Goal.BuilderVersion, currentBuilderVersion, StringComparison.Ordinal);
 
-            sb.AppendLine($"  [{run.Status}] {run.Test.Goal.Path} ({run.Duration.TotalMilliseconds:F0}ms)"
+            sb.AppendLine($"  [{test.Status}] {test.Goal.Path} ({test.Duration.TotalMilliseconds:F0}ms)"
                 + (drift ? " [builder drift]" : ""));
 
-            if (run.Status == global::app.tester.Status.Fail && run.Error != null)
-                RenderFailure(sb, run);
+            if (test.Status == global::app.test.Status.Fail && test.Error != null)
+                RenderFailure(sb, test);
         }
     }
 
-    private static void RenderFailure(StringBuilder sb, global::app.tester.Run run)
+    private static void RenderFailure(StringBuilder sb, global::app.test.@this test)
     {
-        sb.AppendLine("    FAIL: " + run.Test.Goal.Path);
-        if (run.Error is AssertionError assert)
+        sb.AppendLine("    FAIL: " + test.Goal.Path);
+        if (test.Error is AssertionError assert)
         {
             sb.AppendLine($"      Expected: {FormatValue(assert.Expected)}");
             sb.AppendLine($"      Actual:   {FormatValue(assert.Actual)}");
@@ -132,17 +148,18 @@ public partial class report : IContext
         }
         else
         {
-            sb.AppendLine($"      Error: {run.Error?.Message}");
+            sb.AppendLine($"      Error: {test.Error?.Message}");
         }
-        if (!string.IsNullOrEmpty(run.Output))
+        var output = test.Stdout?.Clr<string>();
+        if (!string.IsNullOrEmpty(output))
         {
             sb.AppendLine("      Output:");
-            foreach (var line in StripAnsi(run.Output).Split('\n'))
+            foreach (var line in StripAnsi(output).Split('\n'))
                 sb.AppendLine("        " + line);
         }
     }
 
-    private static void RenderCoverageTables(StringBuilder sb, app.tester.@this testing, global::app.module.@this modules)
+    private static void RenderCoverageTables(StringBuilder sb, global::app.test.list.@this testing, global::app.module.@this modules)
     {
         sb.AppendLine();
         sb.AppendLine("Module.action coverage:");
@@ -185,8 +202,6 @@ public partial class report : IContext
             var declared = chains.TryGetValue(site, out var chain) ? chain : null;
             var observedLabels = labelsMap.TryGetValue(site, out var labels) ? labels : new HashSet<string>();
 
-            // Fall back to observed-as-declared when no chain was recorded (safety net
-            // for runtime paths that skip seeding, e.g. tests that call test.run directly).
             bool labelBacked = true;
             if (declared == null || declared.Count == 0)
             {
@@ -194,9 +209,6 @@ public partial class report : IContext
                     declared = observedLabels.OrderBy(SortLabel).ToList();
                 else if (indicesMap.TryGetValue(site, out var indices))
                 {
-                    // Render raw indices so Coverage.RecordBranch-only callers still
-                    // produce readable output — no declared chain means we treat every
-                    // observed index as the full universe.
                     declared = indices.OrderBy(i => i).Select(i => i.ToString()).ToList();
                     labelBacked = false;
                 }
@@ -207,7 +219,6 @@ public partial class report : IContext
             var parts = new List<string>();
             foreach (var branch in declared)
             {
-                // Without labels, anything in 'declared' is by construction observed.
                 var hit = labelBacked ? observedLabels.Contains(branch) : true;
                 parts.Add((hit ? "✅ " : "❌ ") + branch);
                 declaredTotal++;
@@ -247,105 +258,6 @@ public partial class report : IContext
         _ when label.StartsWith("elseif[") => "5" + label,
         _ => label
     };
-
-    private static string BuildJson(app.tester.Results results, app.tester.@this testing)
-    {
-        var runs = new List<object>();
-        foreach (var run in results)
-        {
-            runs.Add(new
-            {
-                path = run.Test.Goal.Path?.ToString(),
-                entryGoal = run.Test.Goal.Name,
-                status = run.Status.ToString(),
-                durationMs = run.Duration.TotalMilliseconds,
-                goalHash = run.Test.Goal.Hash,
-                builderVersion = run.Test.Goal.BuilderVersion,
-                tags = run.Test.Tags.Concat(run.UserTags).Distinct().ToList(),
-                error = run.Error?.Message,
-                expected = (run.Error as AssertionError)?.Expected,
-                actual = (run.Error as AssertionError)?.Actual,
-                variables = (run.Error as AssertionError)?.Variables,
-                output = run.Output ?? "",
-                timings = run.Timings.Select(t => new { stepIndex = t.StepIndex, ms = t.Ms }).ToList()
-            });
-        }
-        // Structured coverage block — no emoji; downstream tooling renders as it likes.
-        var branchCoverage = new Dictionary<string, object>();
-        var labelsMap = testing.Coverage.BranchLabels;
-        var chains = testing.Coverage.BranchChains;
-        foreach (var site in chains.Keys.Concat(labelsMap.Keys).Distinct())
-        {
-            var declared = chains.TryGetValue(site, out var chain) ? (IReadOnlyList<string>)chain : Array.Empty<string>();
-            var observed = labelsMap.TryGetValue(site, out var labels) ? labels.ToList() : new List<string>();
-            branchCoverage[site] = new { declared, observed };
-        }
-
-        var outer = new
-        {
-            summary = results.Summary().ToDictionary(kv => kv.Key.ToString(), kv => kv.Value),
-            builderVersion = ResolveBuilderVersion(testing),
-            runs,
-            branchCoverage
-        };
-        return JsonSerializer.Serialize(outer, ReportOptions);
-    }
-
-    // Local options clone with IgnoreCycles. Needed because AssertionError.Variables
-    // can carry runtime objects whose graph reaches back into App.CallStack
-    // (Error → CallFrames → Caller → Chain → …). Default options abort on cycle and
-    // the whole results.json fails to write. Clone (not mutate the shared Format.Options)
-    // — other callers of Format.Options should not silently lose cycle detection.
-    // Follow-up: prune Error/CallFrame instances out of the Variables snapshot at
-    // capture time (see Documentation/v0.2/todos.md "Variables snapshot cycle prune").
-    private static readonly JsonSerializerOptions ReportOptions
-        = new(global::app.Diagnostics.Format.Options) { ReferenceHandler = ReferenceHandler.IgnoreCycles };
-
-    private static string BuildJUnit(app.tester.Results results)
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-        sb.AppendLine($"<testsuites tests=\"{results.Count}\" failures=\"{results.Count(r => r.Status == global::app.tester.Status.Fail)}\" errors=\"0\">");
-        // Group by the goal's parent folder (path verb, no string surgery).
-        var byPath = results.GroupBy(r => r.Test.Goal.Path?.Parent?.ToString() ?? "");
-        foreach (var group in byPath)
-        {
-            var suiteTests = group.ToList();
-            var failures = suiteTests.Count(r => r.Status == global::app.tester.Status.Fail);
-            var timeSec = suiteTests.Sum(r => r.Duration.TotalSeconds);
-            sb.AppendLine($"  <testsuite name=\"{SecurityElement.Escape(group.Key)}\" tests=\"{suiteTests.Count}\" failures=\"{failures}\" time=\"{timeSec:F3}\">");
-            foreach (var run in suiteTests)
-            {
-                var name = SecurityElement.Escape(run.Test.Goal.Path?.ToString() ?? "") ?? "";
-                sb.Append($"    <testcase name=\"{name}\" time=\"{run.Duration.TotalSeconds:F3}\"");
-                if (run.Status == global::app.tester.Status.Pass) sb.AppendLine(" />");
-                else
-                {
-                    sb.AppendLine(">");
-                    switch (run.Status)
-                    {
-                        case global::app.tester.Status.Fail:
-                            sb.AppendLine($"      <failure>{SecurityElement.Escape(run.Error?.Message ?? "fail")}</failure>");
-                            break;
-                        case global::app.tester.Status.Timeout:
-                            sb.AppendLine($"      <failure type=\"timeout\">timeout</failure>");
-                            break;
-                        case global::app.tester.Status.Stale:
-                        case global::app.tester.Status.Skipped:
-                            sb.AppendLine($"      <skipped>{SecurityElement.Escape(run.Test.StatusReason ?? run.Status.ToString())}</skipped>");
-                            break;
-                    }
-                    sb.AppendLine("    </testcase>");
-                }
-            }
-            sb.AppendLine("  </testsuite>");
-        }
-        sb.AppendLine("</testsuites>");
-        return sb.ToString();
-    }
-
-    private static string? ResolveBuilderVersion(app.tester.@this testing) =>
-        testing.App.Version;
 
     private static string FormatValue(object? value) => global::app.Diagnostics.Format.Value(value);
 

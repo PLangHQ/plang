@@ -67,7 +67,7 @@ global using AppStatics = app.Statics.@this;
 // Standalone concepts
 global using ICache = app.module.cache.ICache;
 global using Debugging = app.module.debug.@this;
-global using Tester = app.tester.@this;
+global using Test = app.test.@this;
 
 // Call: not a global alias — app.module.goal.Call (the goal.call action handler) collides.
 // Use app.callstack.call.@this fully qualified, or per-file alias.

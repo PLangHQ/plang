@@ -114,7 +114,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         // lambda captures *this* actor's Context so per-actor context propagates.
         Context.Variable.RegisterNavigable("Settings", path => app.Settings.Get(path, Context));
 
-        // Register %!app% — navigates the App object graph (e.g., %!app.tester.IsEnabled%)
+        // Register %!app% — navigates the App object graph (e.g., %!app.test.IsEnabled%)
         Context.Variable.Set("!app", new data.DynamicData("!app", () => app, Context));
 
         // Register lazy %MyIdentity% — resolves to the System actor's default identity.

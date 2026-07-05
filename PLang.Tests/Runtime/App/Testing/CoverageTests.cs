@@ -1,4 +1,4 @@
-using app.tester;
+using app.test;
 
 namespace PLang.Tests.App.Tester;
 
@@ -23,7 +23,7 @@ public class CoverageTests
     [Test]
     public async Task NewInstance_ModuleActions_ObservedIsEmpty()
     {
-        var coverage = _app.Tester.Coverage;
+        var coverage = _app.Test.Coverage;
         await Assert.That(coverage.ModuleActions.Any()).IsFalse();
     }
 
@@ -31,7 +31,7 @@ public class CoverageTests
     [Test]
     public async Task NewInstance_Branches_ObservedIsEmpty()
     {
-        var coverage = _app.Tester.Coverage;
+        var coverage = _app.Test.Coverage;
         await Assert.That(coverage.Branches.Count).IsEqualTo(0);
     }
 
@@ -40,7 +40,7 @@ public class CoverageTests
     [Test]
     public async Task RecordModuleAction_AddsObservationToSet()
     {
-        var coverage = _app.Tester.Coverage;
+        var coverage = _app.Test.Coverage;
         coverage.RecordModuleAction("http", "request");
         coverage.RecordModuleAction("http", "request");
         coverage.RecordModuleAction("variable", "set");
@@ -56,7 +56,7 @@ public class CoverageTests
     [Test]
     public async Task RecordBranch_AtSameSite_AccumulatesIndicesObserved()
     {
-        var coverage = _app.Tester.Coverage;
+        var coverage = _app.Test.Coverage;
         coverage.RecordBranch("GoalA:3", 0);
         coverage.RecordBranch("GoalA:3", 1);
         coverage.RecordBranch("GoalA:3", 0); // idempotent
@@ -72,7 +72,7 @@ public class CoverageTests
     [Test]
     public async Task Merge_FromChildCoverage_UnionsModuleActionsAndBranches()
     {
-        var parent = _app.Tester.Coverage;
+        var parent = _app.Test.Coverage;
         parent.RecordModuleAction("http", "request");
         parent.RecordBranch("G:1", 0);
 
@@ -99,7 +99,7 @@ public class CoverageTests
     [Test]
     public async Task RecordBranchLabel_SiteAndLabel_Recorded()
     {
-        var coverage = _app.Tester.Coverage;
+        var coverage = _app.Test.Coverage;
         coverage.RecordBranchLabel("G:3", "if");
 
         await Assert.That(coverage.BranchLabels.ContainsKey("G:3")).IsTrue();
@@ -110,7 +110,7 @@ public class CoverageTests
     [Test]
     public async Task RecordBranchLabel_SameSite_Multiple_Accumulated()
     {
-        var coverage = _app.Tester.Coverage;
+        var coverage = _app.Test.Coverage;
         coverage.RecordBranchLabel("G:3", "if");
         coverage.RecordBranchLabel("G:3", "elseif[1]");
         coverage.RecordBranchLabel("G:3", "if"); // idempotent — set semantics
@@ -126,7 +126,7 @@ public class CoverageTests
     [Test]
     public async Task RecordBranchChain_FirstWins_SecondIgnored()
     {
-        var coverage = _app.Tester.Coverage;
+        var coverage = _app.Test.Coverage;
         coverage.RecordBranchChain("G:3", new List<string> { "if", "elseif[1]", "else" });
         coverage.RecordBranchChain("G:3", new List<string> { "true", "false" }); // ignored
 
@@ -142,7 +142,7 @@ public class CoverageTests
     [Test]
     public async Task RecordBranchChain_EmptyOrNull_Ignored()
     {
-        var coverage = _app.Tester.Coverage;
+        var coverage = _app.Test.Coverage;
         coverage.RecordBranchChain("G:3", new List<string>());
         coverage.RecordBranchChain("G:3", null!);
 
@@ -154,7 +154,7 @@ public class CoverageTests
     [Test]
     public async Task Merge_UnionsBranchLabels()
     {
-        var parent = _app.Tester.Coverage;
+        var parent = _app.Test.Coverage;
         parent.RecordBranchLabel("G:1", "if");
 
         var child = new Coverage();
@@ -175,7 +175,7 @@ public class CoverageTests
     [Test]
     public async Task Merge_UnionsBranchChains_FirstWins()
     {
-        var parent = _app.Tester.Coverage;
+        var parent = _app.Test.Coverage;
         parent.RecordBranchChain("G:1", new List<string> { "if", "else" });
 
         var child = new Coverage();

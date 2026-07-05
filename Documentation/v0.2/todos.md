@@ -1621,3 +1621,12 @@ softened. Genuine refactor (move fold + its consumers, thread ~4 operation call 
 2-line change. Prereq groundwork landing now: `context.Type.Create` (removes the static
 `FromName`, borns runtime type mints with context) — see
 `.bot/context-never-null/coder/type-context-via-create-plan.md`.
+
+## 2026-07-05 — plang predicates should return @bool (not CLR bool)
+`list<T>.Contains(item)`/`Contains(T)` now return the plang `@bool` (with
+`operator true`/`false` on `@bool` for boolean-context use, no silent `bool`
+downgrade). The other list predicates — `IsEmpty()`, and any `bool`-returning
+plang-type method — still return CLR `bool`. Migrate them in a dedicated
+"plang predicates return @bool" pass. Also revisit: the list backing is a
+three-way polymorphic slot (raw CLR | Data | item); the "list stores items
+intrinsically (drop the Data-row envelope)" redesign is the bigger follow-up.

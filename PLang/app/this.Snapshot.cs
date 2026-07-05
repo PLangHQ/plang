@@ -21,7 +21,7 @@ public sealed partial class @this
         Code.Capture(s.Section("Providers"));
         Statics.Capture(s.Section("Statics"));
         Builder.Capture(s.Section("Build"));
-        Tester.Capture(s.Section("Testing"));
+        Test.Capture(s.Section("Test"));
         CallStack.Capture(s.Section("CallStack"));
         return s;
     }
@@ -43,7 +43,7 @@ public sealed partial class @this
         Code.Capture(s.Section("Providers"));
         Statics.Capture(s.Section("Statics"));
         Builder.Capture(s.Section("Build"));
-        Tester.Capture(s.Section("Testing"));
+        Test.Capture(s.Section("Test"));
         CallStack.Capture(s.Section("CallStack"), error.CallFrames);
         return s;
     }
@@ -65,7 +65,7 @@ public sealed partial class @this
         if (s.HasSection("Errors"))    global::app.error.list.@this.Restore(s.Section("Errors"), context);
         if (s.HasSection("Statics"))   global::app.Statics.@this.Restore(s.Section("Statics"), context);
         if (s.HasSection("Build"))     global::app.module.builder.@this.Restore(s.Section("Build"), context);
-        if (s.HasSection("Testing"))   global::app.tester.@this.Restore(s.Section("Testing"), context);
+        if (s.HasSection("Test"))   global::app.test.list.@this.Restore(s.Section("Test"), context);
         if (s.HasSection("CallStack")) global::app.callstack.@this.Restore(s.Section("CallStack"), context);
     }
 }

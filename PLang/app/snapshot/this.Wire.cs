@@ -74,7 +74,7 @@ public sealed partial class @this
         Load("Providers", global::app.module.code.@this.Read);
         Load("Statics",   global::app.Statics.@this.Read);
         Load("Build",     global::app.module.builder.@this.Read);
-        Load("Testing",   global::app.tester.@this.Read);
+        Load("Test",   global::app.test.list.@this.Read);
         Load("CallStack", global::app.callstack.@this.Read);
 
         return s;

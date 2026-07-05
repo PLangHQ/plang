@@ -33,7 +33,7 @@ public class SnapshotWireTests
     {
         var src = global::PLang.Tests.TestApp.Create("/src");
         src.Builder.IsEnabled = true;
-        src.Tester.IsEnabled = true;
+        src.Test.IsEnabled = true;
 
         var wired = await RoundTrip(src, src.Snapshot());
 
@@ -41,7 +41,7 @@ public class SnapshotWireTests
         dst.Restore(wired, dst.User.Context);
 
         await Assert.That(dst.Builder.IsEnabled).IsTrue();
-        await Assert.That(dst.Tester.IsEnabled).IsTrue();
+        await Assert.That(dst.Test.IsEnabled).IsTrue();
     }
 
     [Test]

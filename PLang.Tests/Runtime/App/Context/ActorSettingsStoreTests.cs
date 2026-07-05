@@ -54,13 +54,13 @@ public class ActorSettingsStoreTests
         // with identical DataSource names, so the App.Id scoping is load-bearing.
         await using (var engine = global::PLang.Tests.TestApp.Plain(_testDir))
         {
-            engine.Tester.IsEnabled = true;
+            engine.Test.IsEnabled = true;
             await (await engine.SettingsStore).Set("LlmCache", "testkey", engine.User.Context.Ok("cached_response"));
         }
 
         await using (var engine2 = global::PLang.Tests.TestApp.Plain(_testDir))
         {
-            engine2.Tester.IsEnabled = true;
+            engine2.Test.IsEnabled = true;
             var result = await (await engine2.SettingsStore).Get<global::app.type.item.@this>("LlmCache", "testkey");
             // A missing key yields an empty value (the plang null/absent citizen),
             // never C# null — assert emptiness the plang way, not TUnit IsNull.
@@ -75,7 +75,7 @@ public class ActorSettingsStoreTests
         // The store persists the Store view (incl. [Sensitive] PrivateKey) and hands
         // back a Data<Identity> face; the typed lift (.Value()) reconstructs the item.
         await using var engine = global::PLang.Tests.TestApp.Plain(_testDir);
-        engine.Tester.IsEnabled = true;
+        engine.Test.IsEnabled = true;
 
         var original = new global::app.module.identity.Identity("work")
             { PublicKey = "pub-abc", PrivateKey = "priv-xyz", IsDefault = true };

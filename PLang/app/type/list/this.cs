@@ -265,6 +265,25 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>Appends one row holding <paramref name="item"/> (build-at-edge for the
     /// parse seam and list.add). O(1) — never reads or merges the existing rows; the
     /// row's weight (1, or the item's flattened count when it is a list) surfaces via Count.</summary>
+    /// <summary>Appends a single native value as its own row — the list owns the
+    /// row-wrapping, callers hand over the bare value (a <c>text</c>, a <c>timing</c>,
+    /// …), never a hand-built <c>Data</c>.</summary>
+    public @this Add(global::app.type.item.@this value)
+    {
+        _hasWrapped = true;
+        _items.Add(value);
+        return this;
+    }
+
+    /// <summary>Appends every element of <paramref name="other"/> (the <c>Add(list)</c>
+    /// form — no separate AddRange). Resolves ahead of <see cref="Add(global::app.type.item.@this)"/>
+    /// for a list argument, so a list flattens in rather than nesting as one row.</summary>
+    public @this Add(@this other)
+    {
+        foreach (Data row in other) Add(row);
+        return this;
+    }
+
     public @this Add(Data item)
     {
         item.Context = _context;
@@ -593,6 +612,14 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             if (await Row(i).Compare(needle) == global::app.data.Comparison.Equal) return true;
         return false;
     }
+
+    /// <summary>Value-membership for a bare value — wraps it as a row and routes through
+    /// the same <see cref="Contains(Data)"/> comparison (a <c>text</c> matches
+    /// case-insensitively via its own equality). The <c>Add(item)</c> sibling for asks;
+    /// returns the plang <c>@bool</c>. (TODO: the other list predicates — IsEmpty, etc. —
+    /// still return CLR bool; migrate them in the "plang predicates return @bool" pass.)</summary>
+    public async System.Threading.Tasks.ValueTask<global::app.type.@bool.@this> Contains(global::app.type.item.@this value)
+        => await Contains(new Data("", value, context: _context));
 
     /// <summary>The item emptiness hook — no entries.</summary>
     public override System.Threading.Tasks.ValueTask<bool> IsEmpty()

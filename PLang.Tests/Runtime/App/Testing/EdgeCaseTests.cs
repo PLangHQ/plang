@@ -1,5 +1,5 @@
 using System.Text.Json;
-using app.tester;
+using app.test;
 
 namespace PLang.Tests.App.Tester;
 
@@ -46,7 +46,7 @@ public class EdgeCaseTests
     [Test]
     public async Task Config_Timeout_Negative_RejectedWithError()
     {
-        var result = _app.Tester.Apply(new Dictionary<string, object?> { ["timeout"] = -5 });
+        var result = _app.Test.Apply(new Dictionary<string, object?> { ["timeout"] = -5 });
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("timeout");
     }
@@ -57,10 +57,10 @@ public class EdgeCaseTests
     [Test]
     public async Task Config_Parallel_ZeroOrNegative_RejectedWithError()
     {
-        var zero = _app.Tester.Apply(new Dictionary<string, object?> { ["parallel"] = 0 });
+        var zero = _app.Test.Apply(new Dictionary<string, object?> { ["parallel"] = 0 });
         await zero.IsFailure();
 
-        var neg = _app.Tester.Apply(new Dictionary<string, object?> { ["parallel"] = -1 });
+        var neg = _app.Test.Apply(new Dictionary<string, object?> { ["parallel"] = -1 });
         await neg.IsFailure();
     }
 
@@ -77,15 +77,15 @@ public class EdgeCaseTests
         // test so the Results grow — verify count is from the outer action, not the
         // inner grandchild-runs).
 
-        var emptyList = new List<global::app.tester.test.@this>();
-        var outerAction = new global::app.module.test.run(_app.User.Context) { Tests = emptyList.ToListData<global::app.tester.test.@this>(),
+        var emptyList = new List<global::app.test.@this>();
+        var outerAction = new global::app.module.test.run(_app.User.Context) { Tests = emptyList.ToListData<global::app.test.@this>(),
             Parallel = null,
             Timeout = null
         };
         var outerResult = await outerAction.Run();
 
         await outerResult.IsSuccess();
-        await Assert.That(_app.Tester.Results.Count).IsEqualTo(0);
+        await Assert.That(_app.Test.Count).IsEqualTo(0);
     }
 
     // --test={"path":"../../../etc"} → rejected. Discovery is constrained to
@@ -106,7 +106,7 @@ public class EdgeCaseTests
         var result = await action.Run();
         if (result.Success)
         {
-            var files = result.GetValue<List<global::app.tester.test.@this>>() ?? new List<global::app.tester.test.@this>();
+            var files = result.GetValue<List<global::app.test.@this>>() ?? new List<global::app.test.@this>();
             await Assert.That(files.Count).IsEqualTo(0);
         }
     }
@@ -119,10 +119,10 @@ public class EdgeCaseTests
     [Test]
     public async Task Report_ConsoleCapture_AnsiEscapeSequences_Stripped()
     {
-        var run = new global::app.tester.Run(new global::app.tester.test.@this { Goal = new Goal { Name = "X", Path = global::app.type.path.@this.Resolve("/Tests/X.test.goal", global::PLang.Tests.TestApp.SharedContext) } });
-        run.Output = "\x1B[32mFAKE OK\x1B[0m\x1B[2JCLEARED";
-        run.Complete(global::app.tester.Status.Fail, new global::app.error.AssertionError(1, 2));
-        _app.Tester.Results.Add(run);
+        var run = new global::app.test.@this(global::PLang.Tests.TestApp.SharedContext) { Goal = new Goal { Name = "X", Path = global::app.type.path.@this.Resolve("/Tests/X.test.goal", global::PLang.Tests.TestApp.SharedContext) } };
+        run.Stdout = "\x1B[32mFAKE OK\x1B[0m\x1B[2JCLEARED";
+        run.Complete(global::app.test.Status.Fail, new global::app.error.AssertionError(1, 2));
+        _app.Test.Add(run);
 
         var action = new global::app.module.test.report(_app.User.Context);
         await action.Run();
@@ -142,7 +142,7 @@ public class EdgeCaseTests
     [Test]
     public async Task Config_Format_InvalidValue_RejectedWithError()
     {
-        var result = _app.Tester.Apply(new Dictionary<string, object?> { ["format"] = "csv" });
+        var result = _app.Test.Apply(new Dictionary<string, object?> { ["format"] = "csv" });
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("format");
     }

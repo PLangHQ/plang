@@ -39,6 +39,12 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public static bool operator ==(bool a, @this? b) => b == a;
     public static bool operator !=(bool a, @this? b) => !(b == a);
 
+    // Boolean-context usage (if/while/&&/||) WITHOUT downgrading to CLR bool — the
+    // value stays @bool everywhere except an explicit ==/.Value read. Deliberately
+    // NOT `implicit operator bool`, which would silently degrade @bool at every boundary.
+    public static bool operator true(@this b) => b.Value;
+    public static bool operator false(@this b) => !b.Value;
+
     /// <summary>The CLR exit door — bool hands its own backing.</summary>
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
 

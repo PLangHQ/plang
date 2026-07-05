@@ -22,15 +22,15 @@ public class Stage2_MechanicalTypings_Part1Tests
     public async Task TestDiscover_Run_ReturnsTaskDataListOfTest()
     {
         var ret = RunReturnType<global::app.module.test.discover>();
-        var expected = typeof(Task<global::app.data.@this<global::app.type.list.@this<global::app.tester.test.@this>>>);
+        var expected = typeof(Task<global::app.data.@this<global::app.type.list.@this<global::app.test.@this>>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
 
     [Test]
-    public async Task TestRun_Run_ReturnsTaskDataOfResults()
+    public async Task TestRun_Run_ReturnsTaskDataListOfTest()
     {
         var ret = RunReturnType<global::app.module.test.run>();
-        var expected = typeof(Task<global::app.data.@this<global::app.tester.Results>>);
+        var expected = typeof(Task<global::app.data.@this<global::app.type.list.@this<global::app.test.@this>>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
 
@@ -75,12 +75,12 @@ public class Stage2_MechanicalTypings_Part1Tests
     }
 
     [Test]
-    public async Task ModulesDescribe_TestRun_AdvertisesResultsReturnType()
+    public async Task ModulesDescribe_TestRun_AdvertisesListOfTestReturnType()
     {
         var rendered = await _app.Module.Describe();
         var row = rendered.FirstOrDefault(a => a.Module == "test" && a.ActionName == "run");
         await Assert.That(row).IsNotNull();
-        await Assert.That(row!.ReturnTypeName).IsEqualTo("results");
+        await Assert.That(row!.ReturnTypeName).IsEqualTo("list<test>");
     }
 
     // Catalog renders output.ask's return as "ask" — the runtime return type
