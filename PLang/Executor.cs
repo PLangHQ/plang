@@ -85,7 +85,7 @@ namespace PLang
 			parameters.TryGetValue("!build", out var buildValue);
 			if (builderValue is not (null or false) || buildValue is not (null or false))
 			{
-				engine.Builder.IsEnabled = true;
+				engine.Build.IsEnabled = true;
 				if (!parameters.ContainsKey("path"))
 					userVars.Set("path", startupDirectory);
 
@@ -93,10 +93,10 @@ namespace PLang
 				var buildDict = builderValue as IDictionary<string, object?>
 				             ?? buildValue as IDictionary<string, object?>;
 				if (buildDict != null)
-					global::app.type.catalog.@this.Populate(engine.Builder, buildDict, engine.User.Context);
+					global::app.type.catalog.@this.Populate(engine.Build, buildDict, engine.User.Context);
 
 				// Sync cache flag to %!build.cache% for Build.goal
-				userVars.Set("!build.cache", engine.Builder.Cache);
+				userVars.Set("!build.cache", engine.Build.Cache);
 			}
 
 			// Set the goal file on system context — Start() reads it

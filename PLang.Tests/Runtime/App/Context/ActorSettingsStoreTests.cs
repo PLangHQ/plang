@@ -33,13 +33,13 @@ public class ActorSettingsStoreTests
         // LLM cache and other persistent system data live across builds.
         await using (var engine = global::PLang.Tests.TestApp.Plain(_testDir))
         {
-            engine.Builder.IsEnabled = true;
+            engine.Build.IsEnabled = true;
             await (await engine.SettingsStore).Set("LlmCache", "testkey", engine.User.Context.Ok("cached_response"));
         }
 
         await using (var engine2 = global::PLang.Tests.TestApp.Plain(_testDir))
         {
-            engine2.Builder.IsEnabled = true;
+            engine2.Build.IsEnabled = true;
             var result = await (await engine2.SettingsStore).Get<global::app.type.item.@this>("LlmCache", "testkey");
             await Assert.That((await result.Value())).IsNotNull();
             await Assert.That((await result.Value())!.ToString()).IsEqualTo("cached_response");

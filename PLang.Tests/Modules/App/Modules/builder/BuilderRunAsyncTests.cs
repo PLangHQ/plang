@@ -31,7 +31,7 @@ public class BuilderRunAsyncTests
             "plang_test_builder_runasync_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = TestApp.Create(_tempDir);
-        _app.Builder.IsEnabled = true;
+        _app.Build.IsEnabled = true;
     }
 
     [After(Test)]
@@ -70,7 +70,7 @@ public class BuilderRunAsyncTests
             .IsTrue()
             .Because("test harness must redirect stdin for the headless branch to be reachable");
 
-        var result = await _app.Builder.RunAsync();
+        var result = await _app.Build.RunAsync();
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
@@ -90,7 +90,7 @@ public class BuilderRunAsyncTests
     {
         WriteAppMarker();
 
-        var result = await _app.Builder.RunAsync();
+        var result = await _app.Build.RunAsync();
 
         // The build may fail (no system/builder tree in temp dir), but the
         // failure key must not be the bootstrap guard.

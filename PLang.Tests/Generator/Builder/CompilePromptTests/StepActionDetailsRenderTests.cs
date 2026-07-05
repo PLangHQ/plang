@@ -1,7 +1,7 @@
 using Fluid;
 using PrAction2 = global::app.goal.steps.step.actions.action.@this;
 
-namespace PLang.Tests.Builder.CompilePromptTests;
+namespace PLang.Tests.Build.CompilePromptTests;
 
 /// <summary>
 /// Renderer behavior for the per-action teaching markdown.

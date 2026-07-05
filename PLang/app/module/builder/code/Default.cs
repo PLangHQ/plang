@@ -169,11 +169,11 @@ public class Default : IBuilder
         if (files == null || files.Count == 0)
             return context.Ok(new List<Goal>());
 
-        // Filter by app.Builder.Files if set (--build={"files":[...]})
+        // Filter by app.Build.Files if set (--build={"files":[...]})
         // Honor the user's specified order — building has bootstrapping concerns
         // (e.g., system/builder rebuilding itself: BuildGoal must come LAST so
         // earlier iterations use the previous in-memory build pipeline).
-        var buildFiles = app.Builder.Files;
+        var buildFiles = app.Build.Files;
         if (buildFiles.Count > 0)
         {
             // Ensure filter paths have Context so FileName/Relative work

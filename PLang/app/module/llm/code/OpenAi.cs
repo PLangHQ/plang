@@ -154,7 +154,7 @@ public sealed class OpenAi : ILlm
         // the per-call param is fragile (most don't), so the override lives here.
         // Gating cacheKey also skips the write below (guarded by cacheKey != null),
         // so cache:false is a full bypass: no read, no stale entry left behind.
-        var buildCacheOff = app.Builder.IsEnabled && !app.Builder.Cache;
+        var buildCacheOff = app.Build.IsEnabled && !app.Build.Cache;
         // The .NET edge: the tool list lowers itself once; reused below.
         List<GoalCall>? goalTools = action.Tools == null ? null
             : global::app.type.item.@this.Lower<List<GoalCall>>(await action.Tools.Value());

@@ -10,10 +10,10 @@ public sealed partial class @this : ISnapshot
     public void Capture(global::app.snapshot.@this s) => s.Write("isEnabled", IsEnabled);
 
     /// <summary>
-    /// Restores the build-mode bit on the live App.Builder instance.
+    /// Restores the build-mode bit on the live App.Build instance.
     /// </summary>
     public static void Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
-        => context.App.Builder.IsEnabled = s.Read<bool>("isEnabled");
+        => context.App.Build.IsEnabled = s.Read<bool>("isEnabled");
 
     public static void Read(global::app.snapshot.Io io, global::app.snapshot.@this section)
         => section.Write("isEnabled", io.Get<bool>("isEnabled"));

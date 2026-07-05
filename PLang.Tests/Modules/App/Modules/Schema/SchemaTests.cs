@@ -18,7 +18,7 @@ public class SchemaTests
     public void Setup()
     {
         _app = TestApp.Create("/test");
-        _app.Builder.IsEnabled = true;
+        _app.Build.IsEnabled = true;
     }
 
     [After(Test)]

@@ -22,7 +22,7 @@ public class SaveGoalsTests
             "plang_test_builder_savegoals_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = TestApp.Create(_tempDir);
-        _app.Builder.IsEnabled = true;
+        _app.Build.IsEnabled = true;
     }
 
     [After(Test)]

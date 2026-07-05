@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace PLang.Tests.Builder.CompilePromptTests;
+namespace PLang.Tests.Build.CompilePromptTests;
 
 /// <summary>
 /// Architect's load-bearing verification (per

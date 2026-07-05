@@ -32,7 +32,7 @@ public class SnapshotWireTests
     public async Task BuildAndTestingBits_SurviveWireRoundTrip()
     {
         var src = global::PLang.Tests.TestApp.Create("/src");
-        src.Builder.IsEnabled = true;
+        src.Build.IsEnabled = true;
         src.Test.IsEnabled = true;
 
         var wired = await RoundTrip(src, src.Snapshot());
@@ -40,7 +40,7 @@ public class SnapshotWireTests
         var dst = global::PLang.Tests.TestApp.Create("/dst");
         dst.Restore(wired, dst.User.Context);
 
-        await Assert.That(dst.Builder.IsEnabled).IsTrue();
+        await Assert.That(dst.Build.IsEnabled).IsTrue();
         await Assert.That(dst.Test.IsEnabled).IsTrue();
     }
 
@@ -439,6 +439,6 @@ public class SnapshotWireTests
         var dst = global::PLang.Tests.TestApp.Create("/dst");
         dst.Restore(await src.SnapshotFromWire(json), dst.User.Context);
 
-        await Assert.That(dst.Builder.IsEnabled).IsFalse();
+        await Assert.That(dst.Build.IsEnabled).IsFalse();
     }
 }

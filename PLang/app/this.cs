@@ -199,9 +199,9 @@ public sealed partial class @this : IAsyncDisposable
     public global::app.test.list.@this Test { get; }
 
     /// <summary>
-    /// Builder mode controller. When enabled, actors use in-memory datasources.
+    /// Build mode controller. When enabled, actors use in-memory datasources.
     /// </summary>
-    public global::app.module.builder.@this Builder { get; }
+    public global::app.module.builder.@this Build { get; }
 
     /// <summary>
     /// Allow creating a new app if none exists. Set via --app={"create":true}. Default false.
@@ -309,7 +309,7 @@ public sealed partial class @this : IAsyncDisposable
         Event = new global::app.@event.list.@this();
         Debug = new Debugging(this);
         Test = new global::app.test.list.@this(this);
-        Builder = new global::app.module.builder.@this(this);
+        Build = new global::app.module.builder.@this(this);
         Type = new type.catalog.@this(System.Context);
         Code = new AppCode(System.Context);
         Config = new config.@this();
@@ -543,7 +543,7 @@ public sealed partial class @this : IAsyncDisposable
         CurrentActor = System;
 
         // Build → PLang builder (runs as User — user is building their code)
-        if (Builder.IsEnabled) return await Builder.RunAsync();
+        if (Build.IsEnabled) return await Build.RunAsync();
 
         // Resolve goal file
         var goalFile = await (await context.Variable.Get("goalFile")).Clr<string?>(null);
