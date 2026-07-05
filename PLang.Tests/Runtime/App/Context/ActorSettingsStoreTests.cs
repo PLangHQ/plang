@@ -33,13 +33,13 @@ public class ActorSettingsStoreTests
         // LLM cache and other persistent system data live across builds.
         await using (var engine = global::PLang.Tests.TestApp.Plain(_testDir))
         {
-            engine.Build.IsEnabled = true;
+            engine.Build = new global::app.module.builder.@this(engine.System.Context);
             await (await engine.SettingsStore).Set("LlmCache", "testkey", engine.User.Context.Ok("cached_response"));
         }
 
         await using (var engine2 = global::PLang.Tests.TestApp.Plain(_testDir))
         {
-            engine2.Build.IsEnabled = true;
+            engine2.Build = new global::app.module.builder.@this(engine2.System.Context);
             var result = await (await engine2.SettingsStore).Get<global::app.type.item.@this>("LlmCache", "testkey");
             await Assert.That((await result.Value())).IsNotNull();
             await Assert.That((await result.Value())!.ToString()).IsEqualTo("cached_response");
@@ -54,13 +54,13 @@ public class ActorSettingsStoreTests
         // with identical DataSource names, so the App.Id scoping is load-bearing.
         await using (var engine = global::PLang.Tests.TestApp.Plain(_testDir))
         {
-            engine.Test.IsEnabled = true;
+            engine.Test = new global::app.test.list.@this(engine.System.Context);
             await (await engine.SettingsStore).Set("LlmCache", "testkey", engine.User.Context.Ok("cached_response"));
         }
 
         await using (var engine2 = global::PLang.Tests.TestApp.Plain(_testDir))
         {
-            engine2.Test.IsEnabled = true;
+            engine2.Test = new global::app.test.list.@this(engine2.System.Context);
             var result = await (await engine2.SettingsStore).Get<global::app.type.item.@this>("LlmCache", "testkey");
             // A missing key yields an empty value (the plang null/absent citizen),
             // never C# null — assert emptiness the plang way, not TUnit IsNull.
@@ -75,7 +75,7 @@ public class ActorSettingsStoreTests
         // The store persists the Store view (incl. [Sensitive] PrivateKey) and hands
         // back a Data<Identity> face; the typed lift (.Value()) reconstructs the item.
         await using var engine = global::PLang.Tests.TestApp.Plain(_testDir);
-        engine.Test.IsEnabled = true;
+        engine.Test = new global::app.test.list.@this(engine.System.Context);
 
         var original = new global::app.module.identity.Identity("work")
             { PublicKey = "pub-abc", PrivateKey = "priv-xyz", IsDefault = true };

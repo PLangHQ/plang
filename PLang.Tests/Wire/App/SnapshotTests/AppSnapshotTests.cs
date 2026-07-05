@@ -6,6 +6,9 @@ public class AppSnapshotTests
     public async Task App_Snapshot_WalksISnapshottedProperties_AndAggregatesIntoTree()
     {
         var app = global::PLang.Tests.TestApp.Create("/test");
+        // Build/Test are presence-based — a section appears only when the mode is on.
+        // TestApp enables Test; turn Build on too so both sections show up.
+        app.Build = new global::app.module.builder.@this(app.System.Context);
         var snap = app.Snapshot();
 
         await Assert.That(snap.HasSection("Variables")).IsTrue();
@@ -22,8 +25,8 @@ public class AppSnapshotTests
     {
         var src = global::PLang.Tests.TestApp.Create("/src");
         src.User.Context.Variable.Set("x", 1);
-        src.Build.IsEnabled = true;
-        src.Test.IsEnabled = true;
+        src.Build = new global::app.module.builder.@this(src.System.Context);
+        src.Test = new global::app.test.list.@this(src.System.Context);
 
         var snap = src.Snapshot();
 
@@ -31,8 +34,8 @@ public class AppSnapshotTests
         dst.Restore(snap, dst.User.Context);
 
         await Assert.That((await (await dst.User.Context.Variable.Get("x")).Value())?.ToString()).IsEqualTo("1");
-        await Assert.That(dst.Build.IsEnabled).IsTrue();
-        await Assert.That(dst.Test.IsEnabled).IsTrue();
+        await Assert.That(dst.Build != null).IsTrue();
+        await Assert.That(dst.Test != null).IsTrue();
     }
 
     [Test]

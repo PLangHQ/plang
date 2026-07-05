@@ -53,15 +53,18 @@ namespace PLang
 				userVars.Set(param.Key, param.Value);
 			}
 
-			// Debug mode
+			// Debug mode — born under --debug (presence = enabled)
 			if (parameters.TryGetValue("!debug", out var debugValue) && debugValue is not false)
+			{
+				engine.Debug = new Debugging(engine.System.Context);
 				engine.Debug.Apply(debugValue);
+			}
 
 			// Tester mode (--tester or legacy --test)
 			if ((parameters.TryGetValue("!tester", out var testValue) && testValue is not false) ||
 			    (parameters.TryGetValue("!test", out testValue) && testValue is not false))
 			{
-				engine.Test.IsEnabled = true;
+				engine.Test = new global::app.test.list.@this(engine.System.Context);
 				if (!parameters.ContainsKey("path"))
 					userVars.Set("path", startupDirectory);
 
@@ -85,7 +88,7 @@ namespace PLang
 			parameters.TryGetValue("!build", out var buildValue);
 			if (builderValue is not (null or false) || buildValue is not (null or false))
 			{
-				engine.Build.IsEnabled = true;
+				engine.Build = new global::app.module.builder.@this(engine.System.Context);
 				if (!parameters.ContainsKey("path"))
 					userVars.Set("path", startupDirectory);
 
@@ -101,7 +104,7 @@ namespace PLang
 
 			// Set the goal file on system context — Start() reads it
 			// Tester mode routes to system test runner instead of Start.goal
-			if (engine.Test.IsEnabled && goalFile == "Start.goal")
+			if (engine.Test != null && goalFile == "Start.goal")
 			{
 				engine.System.Context.Variable.Set("goalFile", "/system/.build/test.pr");
 				return (engine, null);

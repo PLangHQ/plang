@@ -60,9 +60,12 @@ public sealed partial class @this
 
 
         // During build: use snapshotted .pr content to avoid reading overwritten files.
-        if (Context.App.Build.IsEnabled && Extension == ".pr")
+        // TODO(build-mode-inversion): build mode sniffed from a foreign layer (the file
+        // op shouldn't know build mode exists) — invert to a build-born .pr read decorator (plan §6.D).
+        var build = Context.App.Build;
+        if (build != null && Extension == ".pr")
         {
-            var snapshot = Context.App.Build.GetPrSnapshot(Absolute);
+            var snapshot = build.GetPrSnapshot(Absolute);
             if (snapshot != null)
             {
                 var mime = Context.App.Format.Mime(Extension);
@@ -102,8 +105,10 @@ public sealed partial class @this
             {
                 var text = await System.IO.File.ReadAllTextAsync(Absolute);
 
-                if (Context.App.Build.IsEnabled && Extension == ".pr")
-                    Context.App.Build.SnapshotPrFile(Absolute, text);
+                // TODO(build-mode-inversion): foreign-layer build sniff — invert (plan §6.D).
+                var buildSnap = Context.App.Build;
+                if (buildSnap != null && Extension == ".pr")
+                    buildSnap.SnapshotPrFile(Absolute, text);
 
                 if (materialized != null && materialized != typeof(string))
                 {

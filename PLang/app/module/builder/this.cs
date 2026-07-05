@@ -13,12 +13,8 @@ namespace app.module.builder;
 /// </summary>
 public sealed partial class @this
 {
-    private readonly app.@this _app;
+    private readonly actor.context.@this _context;
 
-    /// <summary>
-    /// Whether build mode is enabled.
-    /// </summary>
-    public bool IsEnabled { get; set; }
 
     /// <summary>
     /// Optional file filter. When set, only these files are built — IN ORDER.
@@ -59,13 +55,13 @@ public sealed partial class @this
         return _prSnapshot.TryGetValue(absolutePath, out var content) ? content : null;
     }
 
-    public @this(app.@this app)
+    public @this(actor.context.@this context)
     {
-        _app = app;
+        _context = context;
     }
 
-    /// <summary>The context this system-owned collection births its result Data from.</summary>
-    private actor.context.@this Context => _app.System.Context;
+    /// <summary>The context this subsystem was born with (system-scoped).</summary>
+    private actor.context.@this Context => _context;
 
     /// <summary>
     /// Build-mode bootstrap. Confirms the app should be created (interactive y/n
@@ -76,29 +72,29 @@ public sealed partial class @this
     /// </summary>
     public async Task<data.@this> RunAsync()
     {
-        var appPrPath = global::app.type.path.@this.Resolve("/.build/app.pr", _app.System.Context!);
+        var appPrPath = global::app.type.path.@this.Resolve("/.build/app.pr", _context.App.System.Context!);
         var appPrExists = await appPrPath.ExistsAsync();
         // No app marker on disk → confirm creation (or error when headless).
         // Was inverted (fired when the marker DID exist) — that forced every
         // build of an existing app to need --app={"create":true}.
-        if ((!appPrExists.Success || (await appPrExists.Value())?.Value != true) && !_app.Create)
+        if ((!appPrExists.Success || (await appPrExists.Value())?.Value != true) && !_context.App.Create)
         {
             if (Console.IsInputRedirected)
                 return Context.Error(new global::app.error.ServiceError(
-                    $"No app found at {_app.AbsolutePath}. Run plang build from your app's root directory, or use --app={{\"create\":true}}.", "NoAppFound", 400));
+                    $"No app found at {_context.App.AbsolutePath}. Run plang build from your app's root directory, or use --app={{\"create\":true}}.", "NoAppFound", 400));
 
             // Channels are wired by the entry point (PlangConsole) before Run.
             // The User actor's "output"/"input" channels wrap stdout/stdin — write
             // the prompt to output, then ReadLine off the input stream. Two-call
             // because the default channels are direction-split (output write-only,
             // input read-only) so Stream.Ask can't bridge them.
-            var outputChannel = _app.User.Channel.Get(global::app.channel.list.@this.Output) as global::app.channel.type.stream.@this;
-            var inputChannel = _app.User.Channel.Get(global::app.channel.list.@this.Input) as global::app.channel.type.stream.@this;
+            var outputChannel = _context.App.User.Channel.Get(global::app.channel.list.@this.Output) as global::app.channel.type.stream.@this;
+            var inputChannel = _context.App.User.Channel.Get(global::app.channel.list.@this.Input) as global::app.channel.type.stream.@this;
             if (outputChannel == null || inputChannel == null)
                 return Context.Error(new global::app.error.ServiceError(
                     "Default channels not wired — cannot prompt for app creation.", "MissingRequiredChannelAtBoot", 500));
 
-            await outputChannel.WriteTextAsync($"No app found at {_app.AbsolutePath}. Create new app? (y/n): ");
+            await outputChannel.WriteTextAsync($"No app found at {_context.App.AbsolutePath}. Create new app? (y/n): ");
             using var reader = new StreamReader(inputChannel.Stream, leaveOpen: true);
             var answer = (await reader.ReadLineAsync())?.Trim().ToLowerInvariant();
             if (answer != "y" && answer != "yes")
@@ -106,8 +102,8 @@ public sealed partial class @this
                     "Build cancelled. Run plang build from your app's root directory.", "BuildCancelled", 400));
         }
 
-        _app.CurrentActor = _app.User;
-        var buildCall = new GoalCall { Name = "Build", PrPath = global::app.type.path.@this.Resolve("/system/builder/.build/build.pr", _app.User.Context) };
-        return await _app.RunGoalAsync(buildCall, _app.User.Context);
+        _context.App.CurrentActor = _context.App.User;
+        var buildCall = new GoalCall { Name = "Build", PrPath = global::app.type.path.@this.Resolve("/system/builder/.build/build.pr", _context.App.User.Context) };
+        return await _context.App.RunGoalAsync(buildCall, _context.App.User.Context);
     }
 }

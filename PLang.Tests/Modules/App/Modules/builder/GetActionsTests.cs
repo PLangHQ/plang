@@ -21,7 +21,7 @@ public class GetActionsTests
             "plang_test_builder_actions_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = TestApp.Create(_tempDir);
-        _app.Build.IsEnabled = true;
+        _app.Build = new global::app.module.builder.@this(_app.System.Context);
     }
 
     [After(Test)]

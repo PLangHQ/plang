@@ -25,14 +25,14 @@ public class StaticsAndModesSnapshotTests
     {
         // App.Build is a @this with IsEnabled; Capture/Restore round-trips that bool.
         var src = global::PLang.Tests.TestApp.Create("/src");
-        src.Build.IsEnabled = true;
+        src.Build = new global::app.module.builder.@this(src.System.Context);
 
         var snap = src.Snapshot();
         var dst = global::PLang.Tests.TestApp.Create("/dst");
-        await Assert.That(dst.Build.IsEnabled).IsFalse(); // pre-restore baseline
+        await Assert.That(dst.Build != null).IsFalse(); // pre-restore baseline
         dst.Restore(snap, dst.User.Context);
 
-        await Assert.That(dst.Build.IsEnabled).IsTrue();
+        await Assert.That(dst.Build != null).IsTrue();
     }
 
     [Test]
@@ -40,13 +40,13 @@ public class StaticsAndModesSnapshotTests
     {
         // App.Test is a @this with IsEnabled; Capture/Restore round-trips that bool.
         var src = global::PLang.Tests.TestApp.Create("/src");
-        src.Test.IsEnabled = true;
+        src.Test = new global::app.test.list.@this(src.System.Context);
 
         var snap = src.Snapshot();
         var dst = global::PLang.Tests.TestApp.Create("/dst");
-        await Assert.That(dst.Test.IsEnabled).IsFalse();
+        await Assert.That(dst.Test != null).IsFalse();
         dst.Restore(snap, dst.User.Context);
 
-        await Assert.That(dst.Test.IsEnabled).IsTrue();
+        await Assert.That(dst.Test != null).IsTrue();
     }
 }

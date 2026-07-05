@@ -22,7 +22,10 @@ public class RunActionTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-run-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = global::PLang.Tests.TestApp.Plain(_tempDir);
+        // In-memory (Create) rooted at the temp dir — the fixtures are files on disk,
+        // but the settings store needn't be. Create also spins up the test session
+        // the runner accumulates into.
+        _app = global::PLang.Tests.TestApp.Create(_tempDir);
     }
 
     [After(Test)]
@@ -283,7 +286,7 @@ public class RunActionTests
         }
     }
 
-    // testApp.Test.IsEnabled = true before the test starts. Subsystems that branch
+    // testApp.Test = new global::app.test.list.@this(testApp.System.Context) before the test starts. Subsystems that branch
     // on test mode (in-memory DBs, stubbed identity, etc.) observe the flag.
     // Uses the ChildAppCreated hook to snapshot IsEnabled directly on the child App.
     [Test]
@@ -294,7 +297,7 @@ public class RunActionTests
         void Probe(global::app.@this childApp)
         {
             if (childApp.AbsolutePath.StartsWith(_tempDir))
-                observed = childApp.Test.IsEnabled;
+                observed = childApp.Test != null;
         }
         global::app.module.test.run.ChildAppCreated += Probe;
         try

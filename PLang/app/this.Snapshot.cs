@@ -20,8 +20,8 @@ public sealed partial class @this
         Error.Capture(s.Section("Errors"));
         Code.Capture(s.Section("Providers"));
         Statics.Capture(s.Section("Statics"));
-        Build.Capture(s.Section("Build"));
-        Test.Capture(s.Section("Test"));
+        Build?.Capture(s.Section("Build"));
+        Test?.Capture(s.Section("Test"));
         CallStack.Capture(s.Section("CallStack"));
         return s;
     }
@@ -42,8 +42,8 @@ public sealed partial class @this
         Error.Capture(s.Section("Errors"));
         Code.Capture(s.Section("Providers"));
         Statics.Capture(s.Section("Statics"));
-        Build.Capture(s.Section("Build"));
-        Test.Capture(s.Section("Test"));
+        Build?.Capture(s.Section("Build"));
+        Test?.Capture(s.Section("Test"));
         CallStack.Capture(s.Section("CallStack"), error.CallFrames);
         return s;
     }

@@ -154,7 +154,10 @@ public sealed class OpenAi : ILlm
         // the per-call param is fragile (most don't), so the override lives here.
         // Gating cacheKey also skips the write below (guarded by cacheKey != null),
         // so cache:false is a full bypass: no read, no stale entry left behind.
-        var buildCacheOff = app.Build.IsEnabled && !app.Build.Cache;
+        // TODO(build-mode-inversion): llm sniffs build mode from a foreign layer — invert
+        // (build-born sets cache-off as config the llm reads via action.Cache) (plan §6.D).
+        var build = app.Build;
+        var buildCacheOff = build != null && !build.Cache;
         // The .NET edge: the tool list lowers itself once; reused below.
         List<GoalCall>? goalTools = action.Tools == null ? null
             : global::app.type.item.@this.Lower<List<GoalCall>>(await action.Tools.Value());
@@ -279,7 +282,7 @@ public sealed class OpenAi : ILlm
                 else if (!unknownModelLogged)
                 {
                     unknownModelLogged = true;
-                    await context.App.Debug.Write($"llm.query: no pricing entry for model {model}, cost not computed");
+                    await (context.App.Debug?.Write($"llm.query: no pricing entry for model {model}, cost not computed") ?? Task.CompletedTask);
                 }
             }
 

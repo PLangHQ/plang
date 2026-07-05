@@ -182,9 +182,10 @@ public sealed partial class @this : IAsyncDisposable
     public global::app.module.settings.@this Settings { get; }
 
     /// <summary>
-    /// Debug mode controller. Registers event handlers for step/goal debug output.
+    /// Debug mode controller. null = off; non-null = on (born under --debug).
+    /// Presence is the enable signal — there is no IsEnabled.
     /// </summary>
-    public Debugging Debug { get; }
+    public Debugging? Debug { get; set; }
 
     /// <summary>
     /// Run-wide error scope. AsyncLocal-flowed current error (PLang <c>%!error%</c>) +
@@ -194,14 +195,15 @@ public sealed partial class @this : IAsyncDisposable
 
     /// <summary>
     /// Test session — the collection of discovered/run *.test.goal tests plus
-    /// run-wide state (coverage, config, per-status tallies).
+    /// run-wide state. null = not testing; non-null = a live session (born under --test).
     /// </summary>
-    public global::app.test.list.@this Test { get; }
+    public global::app.test.list.@this? Test { get; set; }
 
     /// <summary>
-    /// Build mode controller. When enabled, actors use in-memory datasources.
+    /// Build mode controller. null = off; non-null = on (born under --build).
+    /// When present, actors use in-memory datasources.
     /// </summary>
-    public global::app.module.builder.@this Build { get; }
+    public global::app.module.builder.@this? Build { get; set; }
 
     /// <summary>
     /// Allow creating a new app if none exists. Set via --app={"create":true}. Default false.
@@ -307,9 +309,8 @@ public sealed partial class @this : IAsyncDisposable
         CurrentActor = _user;
 
         Event = new global::app.@event.list.@this();
-        Debug = new Debugging(this);
-        Test = new global::app.test.list.@this(this);
-        Build = new global::app.module.builder.@this(this);
+        // Debug/Test/Build are born on their flag (--debug/--test/--build), not at
+        // startup — null = off. Presence is the enable signal (no IsEnabled).
         Type = new type.catalog.@this(System.Context);
         Code = new AppCode(System.Context);
         Config = new config.@this();
@@ -542,8 +543,10 @@ public sealed partial class @this : IAsyncDisposable
         var context = System.Context;
         CurrentActor = System;
 
-        // Build → PLang builder (runs as User — user is building their code)
-        if (Build.IsEnabled) return await Build.RunAsync();
+        // Build → PLang builder (runs as User — user is building their code).
+        // Presence is the enable signal (staged: one owned check; full dissolve to
+        // entry-action-at-birth is a follow-up branch, plan §6.C).
+        if (Build != null) return await Build.RunAsync();
 
         // Resolve goal file
         var goalFile = await (await context.Variable.Get("goalFile")).Clr<string?>(null);
@@ -608,7 +611,7 @@ public sealed partial class @this : IAsyncDisposable
         // Testing: in-memory db scoped by App.Id so per-test Apps never share state.
         // SQLite's shared-cache merges in-memory dbs with identical DataSource names,
         // so the App.Id scoping is load-bearing.
-        if (Test.IsEnabled)
+        if (Test != null)
             return global::app.module.settings.Sqlite.InMemory($"system-{Id}", System.Context);
 
         // Lift to Path: AuthGate fires inside Sqlite.CreateAsync on Write,

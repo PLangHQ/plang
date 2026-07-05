@@ -3,19 +3,17 @@ namespace app.test.list;
 public sealed partial class @this : ISnapshot
 {
     /// <summary>
-    /// Captures the test-mode bit. Run state (the tests, Coverage, Current) and
-    /// configuration (Timeout, Parallel, Include/Exclude, Verbose, Format) are
-    /// reconstruct-on-build — they're per-run state or CLI input, not in-scope
-    /// state worth carrying across resume.
+    /// Presence bit: the section exists only when a test session is live (app captures
+    /// via Test?.Capture). Run state (the tests, Coverage, Current) and config
+    /// (Timeout, Parallel, Include/Exclude, Verbose, Format) reconstruct on build.
     /// </summary>
-    public void Capture(snapshot.@this s) => s.Write("isEnabled", IsEnabled);
+    public void Capture(snapshot.@this s) { }
 
     /// <summary>
-    /// Restores the test-mode bit on the live App.Test instance.
+    /// Section present → a session was live → born it back (presence IS the enable signal).
     /// </summary>
     public static void Restore(snapshot.@this s, actor.context.@this context)
-        => context.App.Test.IsEnabled = s.Read<bool>("isEnabled");
+        => context.App.Test = new @this(context);
 
-    public static void Read(snapshot.Io io, snapshot.@this section)
-        => section.Write("isEnabled", io.Get<bool>("isEnabled"));
+    public static void Read(snapshot.Io io, snapshot.@this section) { }
 }

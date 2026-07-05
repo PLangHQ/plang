@@ -14,12 +14,7 @@ namespace app.module.debug;
 /// </summary>
 public sealed class @this
 {
-    private readonly app.@this _engine;
-
-    /// <summary>
-    /// Whether debug mode is enabled.
-    /// </summary>
-    public bool IsEnabled { get; set; }
+    private readonly actor.context.@this _context;
 
     /// <summary>
     /// Filter to a specific goal name. Null = all goals.
@@ -69,7 +64,6 @@ public sealed class @this
 
     [System.Text.Json.Serialization.JsonIgnore]
     private Regex? _grepRegex;
-    private bool _applied;
 
     /// <summary>
     /// Path of the file the *current* LLM call's blocks land in. Set by
@@ -87,38 +81,31 @@ public sealed class @this
     [System.Text.Json.Serialization.JsonIgnore]
     private int _llmCallCounter;
 
-    public @this(app.@this engine)
+    public @this(actor.context.@this context)
     {
-        _engine = engine;
+        _context = context;
     }
 
     /// <summary>
-    /// C# diagnostic entrypoint. Writes <paramref name="message"/> to the "debug" channel
-    /// when <see cref="IsEnabled"/> is true, otherwise no-op (zero-cost for production).
-    /// Use this in runtime code instead of Console.WriteLine / System.IO.File.AppendAllText
-    /// — the channel is redirectable (stderr by default; users can re-Register "debug" to
-    /// route to a file or a goal-backed sink).
+    /// C# diagnostic entrypoint. Writes <paramref name="message"/> to the "debug" channel.
+    /// Reached via <c>App.Debug?.Write(...)</c> — the nullable <c>?.</c> IS the gate:
+    /// Debug null in production drops the write; non-null under --debug writes it.
+    /// Use this instead of Console.WriteLine / System.IO.File.AppendAllText — the channel
+    /// is redirectable (stderr by default; users can re-Register "debug" to a file/goal sink).
     /// </summary>
     public Task Write(object? message)
     {
-        if (!IsEnabled) return Task.CompletedTask;
         // Debug surface routes via System actor's "error" channel (stderr equivalent).
         // Stage 6: was app.channels.WriteAsync; now per-actor.
-        var ch = _engine.System.Channel.Resolve(app.channel.list.@this.Debug)
-              ?? _engine.System.Channel.Resolve(app.channel.list.@this.Error);
+        var ch = _context.App.System.Channel.Resolve(app.channel.list.@this.Debug)
+              ?? _context.App.System.Channel.Resolve(app.channel.list.@this.Error);
         if (ch == null) return Task.CompletedTask;
-        var envelope = message is app.data.@this d ? d : _engine.System.Context.Ok(message);
+        var envelope = message is app.data.@this d ? d : _context.App.System.Context.Ok(message);
         return ch.WriteAsync(envelope);
     }
 
     public void Apply(object debugValue)
     {
-        // Idempotent: subscribing twice would double every event handler and
-        // duplicate every diagnostic line. One Apply per Debug instance.
-        if (_applied) return;
-        _applied = true;
-        IsEnabled = true;
-
         if (debugValue is IDictionary<string, object?> dict)
         {
             // String shorthand for variables: ["foo","bar"] → [{name:"foo"},{name:"bar"}].
@@ -142,11 +129,11 @@ public sealed class @this
             // strip it before the generic Populate.
             if (dict.TryGetValue("callstack", out var rawCallstack))
             {
-                _engine.CallStack.Flags = app.callstack.Flags.Parse(rawCallstack);
+                _context.App.CallStack.Flags = app.callstack.Flags.Parse(rawCallstack);
                 dict.Remove("callstack");
             }
 
-            global::app.type.catalog.@this.Populate(this, dict, _engine.System.Context);
+            global::app.type.catalog.@this.Populate(this, dict, _context.App.System.Context);
         }
 
         // Strip % from variable names
@@ -156,12 +143,12 @@ public sealed class @this
                 v.Name = v.Name.Trim('%');
 
             // Create placeholder Data with event handlers for watched variables
-            var vars = _engine.User.Context.Variable;
+            var vars = _context.App.User.Context.Variable;
             foreach (var v in Variables.Where(v => v.Event.HasValue))
             {
                 // Born with context (Uninitialized == a value-less NotFound); the watched
                 // variable's placeholder must carry a context like every other Data.
-                var placeholder = _engine.User.Context.NotFound(v.Name);
+                var placeholder = _context.App.User.Context.NotFound(v.Name);
                 if (v.Event == DebugEvent.OnCreate)
                     placeholder.OnCreate.Add((data) => LogEvent(v.Name, "CREATED", data));
                 if (v.Event == DebugEvent.OnChange)
@@ -182,9 +169,9 @@ public sealed class @this
         // Subscribe to granular LLM tracing — each Llm.* flag emits its own block to stderr or file.
         if (Llm != null && (Llm.System || Llm.User || Llm.Response || Llm.Schema))
         {
-            if (_engine.Code.Get<global::app.module.llm.code.ILlm>().Provider is global::app.module.llm.code.OpenAi oai)
+            if (_context.App.Code.Get<global::app.module.llm.code.ILlm>().Provider is global::app.module.llm.code.OpenAi oai)
             {
-                var context = _engine.User.Context;
+                var context = _context.App.User.Context;
                 var toFile = string.Equals(Llm.Output, "file", StringComparison.OrdinalIgnoreCase);
 
                 oai.OnBeforeRequest += (messages, schema) =>
@@ -226,7 +213,7 @@ public sealed class @this
             catch (ArgumentException) { _grepRegex = new Regex(Regex.Escape(Grep), RegexOptions.IgnoreCase); }
         }
 
-        var events = _engine.CurrentActor.Context.Events;
+        var events = _context.App.CurrentActor.Context.Events;
 
         events.Register(new EventBinding(
             Trigger.BeforeStep,
@@ -270,7 +257,7 @@ public sealed class @this
 
     public void LogMutation(string name, data.@this oldData, data.@this newData)
     {
-        var context = _engine.User.Context;
+        var context = _context.App.User.Context;
         var goalName = context?.Goal?.Name ?? "?";
         var stepIndex = context?.Step?.Index.ToString() ?? "?";
         var stepText = context?.Step?.Text;
@@ -296,7 +283,7 @@ public sealed class @this
 
     public void LogEvent(string name, string eventType, data.@this data)
     {
-        var context = _engine.User.Context;
+        var context = _context.App.User.Context;
         var goalName = context?.Goal?.Name ?? "?";
         var stepIndex = context?.Step?.Index.ToString() ?? "?";
 

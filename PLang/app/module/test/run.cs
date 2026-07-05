@@ -88,7 +88,7 @@ public partial class run : IContext
         await using var childApp = new app.@this(parentApp.AbsolutePath);
         childApp.OsDirectory = parentApp.OsDirectory;
         childApp.Parent = parentApp;
-        childApp.Test.IsEnabled = true;
+        childApp.Test = new global::app.test.list.@this(childApp.System.Context);
 
         test.Start();
         childApp.Test.Current = test;

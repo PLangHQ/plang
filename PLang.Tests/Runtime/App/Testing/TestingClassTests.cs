@@ -23,7 +23,7 @@ public class TestingClassTests
     [Test]
     public async Task NewInstance_IsEnabled_FalseByDefault()
     {
-        await Assert.That(_app.Test.IsEnabled).IsFalse();
+        await Assert.That(_app.Test != null).IsFalse();
     }
 
     // Testing owns a Results collection, initialized, empty on construction.

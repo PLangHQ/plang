@@ -16,18 +16,15 @@ public sealed partial class @this
     private global::app.type.list.@this<global::app.type.text.@this> _include;
     private global::app.type.list.@this<global::app.type.text.@this> _exclude;
     private readonly object _lock = new();
+    private readonly actor.context.@this _context;
 
-    public @this(app.@this app)
+    public @this(actor.context.@this context)
     {
-        App = app;
-        var ctx = app.System.Context;
-        _tests = new global::app.type.list.@this<global::app.test.@this>(ctx);
-        _include = new global::app.type.list.@this<global::app.type.text.@this>(ctx);
-        _exclude = new global::app.type.list.@this<global::app.type.text.@this>(ctx);
+        _context = context;
+        _tests = new global::app.type.list.@this<global::app.test.@this>(context);
+        _include = new global::app.type.list.@this<global::app.type.text.@this>(context);
+        _exclude = new global::app.type.list.@this<global::app.type.text.@this>(context);
     }
-
-    /// <summary>Whether test mode is active. Set by --test, read by subsystems that branch on test mode.</summary>
-    public bool IsEnabled { get; set; }
 
     /// <summary>When the session started.</summary>
     public global::app.type.datetime.@this StartedAt { get; } = new(System.DateTime.UtcNow);
@@ -58,11 +55,12 @@ public sealed partial class @this
     /// <summary>Exclude tag filter (empty = nothing excluded). Applied after include — exclude wins on conflict.</summary>
     public global::app.type.list.@this<global::app.type.text.@this> Exclude => _exclude;
 
-    /// <summary>Back-reference to the App that owns this session. Used by reporters to surface App.Version for drift comparisons.</summary>
-    internal app.@this App { get; }
+    /// <summary>Back-reference to the App that owns this session (derived from the born
+    /// context). Used by reporters to surface App.Version for drift comparisons.</summary>
+    internal app.@this App => _context.App;
 
-    /// <summary>The context this session-owned collection births its result Data from.</summary>
-    private actor.context.@this Context => App.System.Context;
+    /// <summary>The context this session was born with (system-scoped).</summary>
+    private actor.context.@this Context => _context;
 
     // --- The tests (the collection this session owns) ---
 

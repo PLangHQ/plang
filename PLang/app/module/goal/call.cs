@@ -33,8 +33,8 @@ public partial class Call : IContext
             var p = goalCall.Parameters[i];
             if (!string.Equals(p.Peek()?.ToString(), $"%{p.Name}%", System.StringComparison.OrdinalIgnoreCase))
                 continue;
-            await Context.App.Debug.Write(
-                $"build: dropped redundant self-reference '{p.Name}=%{p.Name}%' in call to {goalCall.Name}");
+            await (Context.App.Debug?.Write(
+                $"build: dropped redundant self-reference '{p.Name}=%{p.Name}%' in call to {goalCall.Name}") ?? Task.CompletedTask);
             goalCall.Parameters.RemoveAt(i);
         }
         return Context.Ok();

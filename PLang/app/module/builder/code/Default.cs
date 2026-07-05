@@ -647,7 +647,7 @@ public class Default : IBuilder
         // the builder rebuild; leaving the line in earns its keep next time it drifts.
         var step = action.Step.Peek() as global::app.goal.steps.step.@this;
         var from = action.StepFromLlm.Peek() as global::app.goal.steps.step.@this;
-        _ = action.Context.App.Debug.Write(
+        _ = action.Context.App.Debug?.Write(
             $"builder.merge: step.Index={step?.Index} step.Actions={step?.Actions.Count} " +
             $"from.Index={from?.Index} from.Keep={from?.Keep} from.Actions={from?.Actions.Count}");
 
