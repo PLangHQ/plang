@@ -31,6 +31,8 @@ No flag configures app *construction*. The startup directory is chosen from raw 
 
 The walk is **app-owned**, not a static reaching in. Drop `catalog.@this.Populate(target, dict, context)` (a static that reflects and mutates another object's properties from outside is OBP smell #1). The app applies its own config; each subsystem is born with context and populated through the catalog's convert path.
 
+**Factor the walk as a reusable app-tree write — navigate → convert → public-setter-gate — not welded into argv parsing.** The CLI flag is one front door; a future plang `set %!cache.name% = 'redis'` is another (`%!...%` resolving to the app-property namespace). Both must land on the *same* write path, so the navigation core has to be callable independent of where the raw value came from. Keep it a navigator the CLI calls, not a step buried inside CLI-flag handling — otherwise the plang door has nothing to call later. Nothing to build for plang now; just don't foreclose it.
+
 ## 2. Subsystems become nullable, born with context
 
 `app.Build`, `app.Debug`, `app.Tester` become `public T? { get; set; }`, default **null**. **Presence is the enable signal** — there is no `IsEnabled` field anywhere.
