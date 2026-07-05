@@ -1443,3 +1443,20 @@ plang events (the step/goal ones already are) so the whole thing is event-native
 Context: `.bot/cli-app-property-override/architect/plan.md` §2/§6.B — this branch
 ships startup-only activation (born once, `_applied` removed, no teardown), no
 runtime-toggle claim.
+
+### Broader reframe: debug is a *producer* of diagnostics (from the `cli-app-property-override` design chat, 2026-07-05)
+The runtime toggle above is one facet of a larger shape question: **debug is not a peer of "diagnostics" — it's the loud producer of them.** Pull the concept apart:
+- **The channel** (`diagnostic`) is the redirectable sink — registered at app start *in plang* (`- register 'diagnostic' channel, call WriteOutDebug`); `WriteOutDebug` is a plang goal that decides what to do with the `%!data%` it receives. Everything-is-plang: the app author owns diagnostics routing.
+- **Producers** write to it: the ad-hoc one-liners (`"no pricing entry for model X"`) are the *thin* producer; the debug feature (step/goal/action dumps, watches, llm traces, filters) is the *loud* one. Step-info output is "diagnostic of the step," not debug per se.
+- **The switch** turns the loud producer on and guarantees a sink: `--diagnostic={"debug":true}` / `--diagnostic={"debug":{...}}` — the flag mirrors the app tree (`app.Diagnostic.Debug`), per the CLI branch's flag = tree-path rule. When set but the app registered no diagnostic channel, default the sink to stderr.
+
+Tree it implies:
+```
+app.Diagnostic            node; owns the `diagnostic` channel + the write door (`context.Diagnostic(msg)`)
+    .Debug                the loud mode: goal, step, level, grep, llm, variables, verbose, watches
+```
+On the table: rename `app.Debug → app.Diagnostic` + `.Debug` sub-node; `--debug` → `--diagnostic={"debug":...}` (a CLI break); the plang startup registration + `WriteOutDebug` goal; the `context.Diagnostic` helper replacing the three `App.Debug?.Write` sniff sites.
+
+Hard invariant whatever the mechanism: **production with no switch must not leak diagnostics to stderr** (today the `IsEnabled` bool enforces that; the reframe moves it to "no sink / no-op `WriteOutDebug` unless switched").
+
+The `cli-app-property-override` branch does **none** of this. The earlier plan (§6.A) was going to move the 3 sniffs onto `context.Diagnostic` + a debug-channel gate, but that half-migrates the smell and drags the branch into the channel layer. Instead the branch keeps `App.Debug?.Write` as-is: once `Debug` is nullable, the `?.` is a correct interim gate (drops in prod, writes under `--debug`). The full reframe lands here.

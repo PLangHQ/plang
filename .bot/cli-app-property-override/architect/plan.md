@@ -20,7 +20,9 @@ Every `--flag` names a public-settable property on the app root. The value build
    → Cache (bool)       ← false
 ```
 
-**The flag path is the app-tree path — exactly.** A flag maps to wherever a property actually lives in the app object graph; nothing is remapped, folded, or shorthanded. `app.CallStack.Flags` is reached by `--callstack={"flags":{...}}` (or `%!callstack.flags%`), because `CallStack` is a top-level app node — *not* by folding callstack config under `--debug`. Any "this flag really configures that other node" is a special case, and special cases are what this design removes. One consequence up front: `Debug` stops writing `CallStack.Flags` (it does today) — that cross-node write is exactly the special case; callstack config flows through `--callstack`.
+**The flag path is the app-tree path — exactly.** A flag maps to wherever a property actually lives in the app object graph; nothing is remapped, folded, or shorthanded. `app.CallStack.Setting` is reached by `--callstack={"setting":{...}}` (or `%!callstack.setting%`), because `CallStack` is a top-level app node — *not* by folding callstack config under `--debug`. Any "this flag really configures that other node" is a special case, and special cases are what this design removes. One consequence up front: `Debug` stops writing `CallStack.Setting` (it writes the old `CallStack.Flags` today) — that cross-node write is exactly the special case; callstack config flows through `--callstack`.
+
+**The one sanctioned exception: `--app` names the app root itself** (Q2). `Create`, `Environment`, etc. are public-set on the root, so by flag = property-name they'd be `--create` / `--environment`; instead `--app={"create":true}` addresses the root object and its keys are the root's public-set leaves. This is the *only* remap in the whole design — named explicitly as the carve-out so it doesn't read as a special case that slipped through. Every other flag is an exact tree path.
 
 Two stages, no reordering of bootstrap:
 
@@ -37,7 +39,7 @@ The walk is **app-owned**, not a static reaching in. Drop `catalog.@this.Populat
 
 ## 2. Subsystems become nullable, born with context
 
-`app.Build`, `app.Debug`, `app.Tester` become `public T? { get; set; }`, default **null**. **Presence is the enable signal** — there is no `IsEnabled` field anywhere.
+`app.Build`, `app.Debug`, `app.Test` become `public T? { get; set; }`, default **null**. **Presence is the enable signal** — there is no `IsEnabled` field anywhere.
 
 ```csharp
 public Build? Build { get; set; }   // null = off; non-null = on
@@ -66,7 +68,7 @@ App-root setter audit:
 
 | Property | Today | Set to | Why |
 |---|---|---|---|
-| `Build` / `Debug` / `Tester` | `{ get; }` | **public set** (nullable) | the point — CLI + runtime toggle |
+| `Build` / `Debug` / `Test` | `{ get; }` | **public set** (nullable) | the point — CLI + runtime toggle |
 | `Create` | public set | **public set** | `--app={"create":true}` |
 | `Environment` | public set | **public set** | `--environment=prod`; grows into a rich object later |
 | `Culture` | public set | **internal set** | folds into the future `Environment` object; not its own flag |
@@ -79,7 +81,7 @@ App-root setter audit:
 
 ### The audit is a tree-wide sweep, not a root table
 
-Because the flag path *is* the app-tree path, the walk descends through getter-containers and sets any public-set leaf at any depth (`--build={"files":...}` reaches `Build.Files` *through* the `Build` getter). So "public set = config surface" is only true after **every public setter reachable through the walk is audited and the run-state ones demoted to `internal`**. Run-state keeps leaking as a public setter — `CurrentActor`, `Tester.CurrentTest`, `CallStack.Variables`, `Run.Output` are all public-set for a runtime reason, not config. The sweep is what makes the surface honest; it is a real chunk of the branch's work, not a root-only edit.
+Because the flag path *is* the app-tree path, the walk descends through getter-containers and sets any public-set leaf at any depth (`--build={"files":...}` reaches `Build.Files` *through* the `Build` getter). So "public set = config surface" is only true after **every public setter reachable through the walk is audited and the run-state ones demoted to `internal`**. Run-state keeps leaking as a public setter — `CurrentActor`, `Test.CurrentTest`, `CallStack.Variables`, `Run.Output` are all public-set for a runtime reason, not config. The sweep is what makes the surface honest; it is a real chunk of the branch's work, not a root-only edit.
 
 Leaf findings from the current tree (crawled — the config subsystems + the getter-containers):
 
@@ -88,15 +90,15 @@ Leaf findings from the current tree (crawled — the config subsystems + the get
 | `Build` | `Files`, `Cache` | public set | **public set** | clean config |
 | `Debug` | `Goal`, `Step`, `Variables`, `MaxLength`, `Grep`, `Verbose`, `Llm` | public set | **public set** | debug knobs; `--debug={"goal":"Start","step":3}` maps straight to `Goal`/`Step` (so the `Start:3` scalar shorthand just dies, §4) |
 | `Debug` | `Level`, `Llm.Output` | `string` | **`choice`/enum** | fixed value sets — tighten per §5 |
-| `Tester` | `Verbose` | public set | **public set** | clean |
-| `Tester` | `TimeoutSeconds`, `Parallel`, `Format` | `int`/`int`/`string` | **`uint`/`uint`/enum** | §5 |
-| `Tester` | `Include`, `Exclude` | `HashSet<string> { get; }` | **settable form** | get-only today — the walk can't reach them; need `{ get; set; }` (List/set) so `--tester={"include":["tag"]}` lands |
-| `Tester` | `CurrentTest` | `Run? { get; set; }` | **`internal set`** | run state, not config |
-| `Tester` | `Results`, `Coverage` | `{ get; }` | unchanged | run output — correctly get-only |
-| `CallStack` | `Flags` | public set | **public set** | reached by `--callstack={"flags":...}` (its real tree location), not folded under `--debug` |
+| `Test` | `Verbose` | public set | **public set** | clean |
+| `Test` | `TimeoutSeconds`, `Parallel`, `Format` | `int`/`int`/`string` | **`uint`/`uint`/enum** | §5 |
+| `Test` | `Include`, `Exclude` | `HashSet<string> { get; }` | **settable form** | get-only today — the walk can't reach them; need `{ get; set; }` (List/set) so `--test={"include":["tag"]}` lands |
+| `Test` | `CurrentTest` | `Run? { get; set; }` | **`internal set`** | run state, not config |
+| `Test` | `Results`, `Coverage` | `{ get; }` | unchanged | run output — correctly get-only |
+| `CallStack` | `Setting` | `record struct Flags` (+ `Parse`/`Shorthand`) | **`record class` `setting.@this`, public-set leaves** | reshaped from the immutable `Flags` struct so the walk descends + sets fields (`Timing`, `Diff`, `DeepDiff`, `Tags`, `History`, `MaxFrames`); `--callstack={"setting":{"timing":true}}`; `Flags.Parse`/`Shorthand` die (Q1). `with` on the record class preserves the error-recovery flip (`error/list/this.cs:80,111`) |
 | `CallStack` | `Variables` | public set | **`internal set`** | run state |
 
-`Config`, `Settings`, `Format`, `KeepAlive`, `Event`, `Error`, `Code`, `Statics` all have **no public-set leaves** — the walk reaches them but there's nothing to set. So the sweep is **finite and closed**, not open-ended: the only run-state demotions are `CurrentActor`, `Tester.CurrentTest`, `CallStack.Variables`, `Run.Output`, plus §3's app-root identity setters. No node left un-crawled; no deferred todo.
+`Config`, `Settings`, `Format`, `KeepAlive`, `Event`, `Error`, `Code`, `Statics` all have **no public-set leaves** — the walk reaches them but there's nothing to set. So the sweep is **finite and closed**, not open-ended: the only run-state demotions are `CurrentActor`, `Test.CurrentTest`, `CallStack.Variables`, `Run.Output`, plus §3's app-root identity setters. No node left un-crawled; no deferred todo.
 
 ## 4. No shorthands
 
@@ -104,43 +106,36 @@ Leaf findings from the current tree (crawled — the config subsystems + the get
 
 ## 5. Validation lives on the types, not in an Apply
 
-`Tester.Apply`'s bounds checks dissolve into the property types:
+`Test.Apply`'s bounds checks dissolve into the property types:
 
 - `TimeoutSeconds` → `uint`. Conversion rejects `-5` on its own; `0` means "no timeout" (the runner decides how to treat it). No positive-check.
 - `Parallel` → `uint`. `0` means "auto degree" (the runner picks). No positive-check.
 - `Format` → an enum / `choice<T>`. An unknown value is rejected by the conversion, not a hand-rolled `case`.
 - Include / Exclude tags → `List<string> { get; set; }`. They're `HashSet<string> { get; }` (get-only) today, so the walk can't reach them — give them a public settable form. `Apply`'s `.Clear()`-then-add becomes a plain assign of a fresh list.
 
-`Tester.Apply` dies entirely — it was only loose types plus a missing generic mechanism.
+`Test.Apply` dies entirely — it was only loose types plus a missing generic mechanism.
 
 ## 6. The `!= null` sites — traced and given owners
 
-Rule Ingi set: a scattered `App.Build != null` means the optionality is modeled wrong. Each incumbent site and its disposition. `Build`/`Debug`/`Tester` each bundle an **ambient capability** (always callable) and a **session** (exists only when enabled); every smell is an ambient capability reached through the session.
+Rule Ingi set: a scattered `App.Build != null` means the optionality is modeled wrong. Each incumbent site and its disposition. `Build`/`Debug`/`Test` each bundle an **ambient capability** (always callable) and a **session** (exists only when enabled); every smell is an ambient capability reached through the session.
 
-### A. `Debug.Write` — move the sink off the session
+### A. `Debug.Write` — deferred, not touched this branch
 
-`App.Debug?.Write(msg)` is wrong — it pushes Debug's own gate out to all 3 callers (and every future one). Diagnostics are ambient: they belong to the debug **channel**.
+The three ambient-diagnostic callers (`module/goal/call.cs`, `module/builder/code/Default.cs`, `module/llm/code/OpenAi.cs`) **stay on `App.Debug?.Write(...)`**. The per-caller `?.` reads as a smell (an ambient sink reached through the session), but once `Debug` is nullable (§2) that `?.` is a **correct** gate: `Debug` null in production → the write drops; `Debug` non-null under `--debug` → it writes (through today's error-channel fallback). `Debug.Write` survives — it just loses its now-redundant internal `IsEnabled` check (§2 deletes `IsEnabled`; the call-site `?.` is the gate).
 
-```csharp
-// before — reaches an ambient sink through the session object
-await context.App.Debug.Write($"llm.query: no pricing entry for model {model}");
-// after — always-present owner; the channel is the gate
-await context.Diagnostic($"llm.query: no pricing entry for model {model}");
-```
-
-`context.Diagnostic` writes to the `Debug` channel. Production has no sink wired → the write drops. Under `--debug` the born session wires that channel's sink. Gate owned by the channel layer, not a bool on a nullable object, not a per-caller `?.`. Three callers change: `module/goal/call.cs`, `module/builder/code/Default.cs`, `module/llm/code/OpenAi.cs`. (`Diagnostic` is a placeholder name — one transparent word; yours to settle.)
+Why deferred, not fixed here: the honest fix is diagnostics as a first-class channel — `context.Diagnostic`, `app.Diagnostic.Debug`, a plang-registered `diagnostic` channel + `WriteOutDebug`, the `--diagnostic={"debug":...}` flag. Doing it half-way (move the 3 sniffs onto a `debug` channel we'd then rename) drags this branch into the channel layer and invents a gate the branch doesn't need — and today nothing even registers a `debug` channel (output rides the `error`-channel fallback). Tracked in `Documentation/Runtime2/todos.md` (2026-07-05 "Debugger runtime toggle" → reframe subsection). This branch stays out of the channel layer.
 
 ### B. Debug session activation — on birth
 
-Everything `Debug.Apply` wires runs in `new Debug(context)` + populate: subscribe watchers, hook `OnBeforeRequest`/`OnAfterResponse` for LLM tracing, compile the grep regex, wire the debug channel sink. Null session = none of it wired; subscriber lists are simply empty, so no event site null-checks `app.Debug`. The `_applied` idempotency guard disappears — born once.
+Everything `Debug.Apply` wires runs in `new Debug(context)` + populate: subscribe watchers, hook `OnBeforeRequest`/`OnAfterResponse` for LLM tracing, compile the grep regex. (Watch/LLM output still emits through the existing `Debug.Write` path — no new channel wiring this branch; §6.A.) Null session = none of it wired; subscriber lists are simply empty, so no event site null-checks `app.Debug`. The `_applied` idempotency guard disappears — born once.
 
-Debug does **not** set `CallStack.Flags` — that cross-node write is the special case the tree-mirror rule (§1) removes. Callstack config flows through `--callstack` → `app.CallStack.Flags` on its own, wherever `CallStack` sits in the tree. Drop the `callstack` key handling from the old `Apply` entirely.
+Debug does **not** set `CallStack.Setting` — that cross-node write (today it sets `CallStack.Flags`) is the special case the tree-mirror rule (§1) removes. Callstack config flows through `--callstack` → `app.CallStack.Setting` on its own, wherever `CallStack` sits in the tree. Drop the `callstack` key handling from the old `Apply` entirely.
 
 ### C. App entry dispatch — staged: one owned check now, dissolve later
 
-`if (Builder.IsEnabled) return Builder.RunAsync()` (`app/this.cs:545`), the Start-routing (`:610`, `Executor.cs:104`), and the settings-store selection (`if (Tester.IsEnabled) return Sqlite.InMemory(...)`) all inspect mode. The *target* is to dissolve them — a born `Build`/`Tester` sets the app's entry action + store choice at birth, `Start` just runs the entry, zero `!= null`. But that move touches the run root **and** datasource selection at once — the highest blast radius in the branch, and a regression there spans entry dispatch and persistence, hard to localize.
+`if (Builder.IsEnabled) return Builder.RunAsync()` (`app/this.cs:545`), the Start-routing (`:610`, `Executor.cs:104`), and the settings-store selection (`if (Test.IsEnabled) return Sqlite.InMemory(...)`) all inspect mode. The *target* is to dissolve them — a born `Build`/`Test` sets the app's entry action + store choice at birth, `Start` just runs the entry, zero `!= null`. But that move touches the run root **and** datasource selection at once — the highest blast radius in the branch, and a regression there spans entry dispatch and persistence, hard to localize.
 
-**This branch takes the staged path** (not the full dissolve): swap `IsEnabled` for **one owned `if (Build != null)`** at the run root and one owned `if (Tester != null)` for the store selection — green, mechanical, localizable. The full dissolve to entry-action-set-at-birth lands as its own follow-up branch, verified against Start/Build/test routing on its own. This ships the branch with ~3 *owned, single-site* presence checks (run dispatch, store, + the two deferred D-sniffs), all staged and documented — not scattered, not hidden.
+**This branch takes the staged path** (not the full dissolve): swap `IsEnabled` for **one owned `if (Build != null)`** at the run root and one owned `if (Test != null)` for the store selection — green, mechanical, localizable. The full dissolve to entry-action-set-at-birth lands as its own follow-up branch, verified against Start/Build/test routing on its own. This ships the branch with ~3 *owned, single-site* presence checks (run dispatch, store, + the two deferred D-sniffs), all staged and documented — not scattered, not hidden.
 
 ### D. Foreign-layer sniffing — pre-existing smell, mostly out of scope
 
@@ -162,7 +157,7 @@ The walk's leaf conversion goes through the conversion catalog (`TryConvert` / t
 ## 8. Prerequisite rename + YAGNI
 
 - `app.Builder → app.Build`. Drop the `--builder` alias and the `build`/`builder` normalization in `Configure`. Mechanical: `app.Builder`, `engine.Builder`, the `Builder` type/namespace, tests.
-- **No recursive any-depth walk.** The motivating example (`app.environment.culture.number.decimal`) has no property path on today's app (`Environment` is a `string`). `Populate`'s per-leaf convert already hands a nested subtree to the property's own type conversion — the type constructs itself from its subtree, which is the more-OBP answer. Build recursion when a real nested-config property exists.
+- **The walk descends composite config objects field-by-field; it does not build them via a `dict→record` converter.** The flag names an app node (constructed if null); the walk sets that node's leaves. A **scalar/collection leaf** (`Step: int`, `Files: List<path>`, `Level: enum`) goes through the conversion catalog — where `string→path`, `string→enum`, `→uint` happen. A **composite leaf** (a settable `record class` / class with public-set members — `Debug.Llm`, `CallStack.Setting`) is **descended**, its fields walked one by one, so the `SetMethod.IsPublic` gate (§3) holds at every level and a nested `Llm.Output` enum errors through the same catalog path as a top-level `Level`. Construct a null composite before descending: config records take no context (`new()`), subsystem nodes take context (`new T(context)`). This is bounded by the real tree — **not** speculative any-depth recursion: `app.environment.culture.number.decimal` has no property path today (`Environment` is a `string`), so build no navigation for paths that don't exist.
 - **No `[NoCliOverride]` marker** — access level is the control (§3).
 
 ## 9. Flagged decision — D's interim spelling
@@ -182,25 +177,26 @@ Related: `Executor.cs:99` syncs `Build.Cache` to the `%!build.cache%` user varia
 
 Dies in this branch:
 
-- `IsEnabled` on `Build`/`Tester`/`Debug`, and every read of it — presence replaces it (all 13 sites accounted for in §6 + the two set-sites → `new T(context)` + `test/run.cs:90`).
+- `IsEnabled` on `Build`/`Test`/`Debug`, and every read of it — presence replaces it (all 13 sites accounted for in §6 + the two set-sites → `new T(context)` + `test/run.cs:90`).
 - `Debug.Apply` — activation moves to the ctor (§6.B).
-- `Tester.Apply` — validation moves to the types (§5).
+- `Test.Apply` — validation moves to the types (§5).
 - `_applied` guard.
-- `Debug.Write` on the Debug object — becomes `context.Diagnostic` (§6.A).
+- The `IsEnabled` check *inside* `Debug.Write` — deleted with `IsEnabled` (§2). `Debug.Write` itself **survives**; the reframe to `context.Diagnostic` + a diagnostic channel is deferred (§6.A).
 - `catalog.@this.Populate` (the lift-then-lower static) — replaced by the app-owned convert walk.
-- The four-way flag branch + `build`/`builder` normalization + `--builder` alias in `Configure`.
+- The four-way flag branch + `build`/`builder` normalization + `--builder` **and `--tester`** aliases in `Configure` (Q3: `--test` is canonical).
+- `app.callstack.Flags` (the `record struct` + `Flags.Parse` + `Flags.Shorthand`) — reshaped to `app.callstack.setting.@this` (`record class`, public-set leaves), walked field-by-field (Q1).
 - The `variables` shorthand normalization in `Debug.Apply` (§4).
 - `_app` fields on the three subsystems — reach context instead.
 - The `callstack` key handling in the old `Debug.Apply` (the `CallStack.Flags` cross-node write) — callstack config goes via `--callstack` (§1, §6.B).
-- **Public setters demoted to `internal set`** — the run-state sweep, now a *closed, finite* list (whole tree crawled): `CurrentActor`, `Tester.CurrentTest`, `CallStack.Variables`, `Run.Output`, plus the app-root identity/runtime setters in §3.
-- `Tester.Include`/`Exclude` change from `HashSet<string> { get; }` to a public settable `List<string>` (§5) — get-only can't be walked.
+- **Public setters demoted to `internal set`** — the run-state sweep, now a *closed, finite* list (whole tree crawled): `CurrentActor`, `Test.CurrentTest`, `CallStack.Variables`, `Run.Output`, plus the app-root identity/runtime setters in §3.
+- `Test.Include`/`Exclude` change from `HashSet<string> { get; }` to a public settable `List<string>` (§5) — get-only can't be walked.
 
 Stays (explicit):
 
 - `CommandLineParser` JSON parse/validate + raw tree — the perimeter, type-blind.
 - The conversion catalog / `TryConvert` — what the walk calls.
 - `Build.Files` (`List<path>`), `Build.Cache` — populated via convert now.
-- The Debug channel — now the diagnostic sink.
+- `App.Debug?.Write` at the three sniff sites — untouched (§6.A); the branch stays out of the channel layer, so debug output rides today's `error`-channel fallback under `--debug`.
 - User-variable routing (non-`!` args) — unchanged.
 - The two D sites — swapped to `!= null` with a TODO (§9), *not* inverted here.
 
@@ -209,32 +205,34 @@ Deferred (own follow-up, not this branch):
 - Runtime subsystem toggle (debug on/off mid-run) — startup-only here; suspend-vs-teardown design is its own todo (§2).
 - Full entry-dispatch dissolve to entry-action-at-birth (§6.C) — one owned `!= null` this branch.
 - The D foreign-sniff inversion (file `.pr` decorator, llm cache config) (§6.D).
+- Debug diagnostics reframe — `context.Diagnostic`, `app.Diagnostic.Debug`, a plang-registered `diagnostic` channel + `WriteOutDebug`, the `--diagnostic={"debug":...}` flag. The 3 sniff callers stay on `App.Debug?.Write` here (§6.A). Tracked in the todos (2026-07-05).
 
 ## OBP validation
 
 | Surface | Check | Verdict |
 |---|---|---|
-| `app.Build/Debug/Tester` nullable, born `new T(context)` | born-with-context; presence = state | Correct — no `IsEnabled`, no per-class enable leaf |
+| `app.Build/Debug/Test` nullable, born `new T(context)` | born-with-context; presence = state | Correct — no `IsEnabled`, no per-class enable leaf |
 | Access level = exposure | category named by the language, not a bolt-on marker | Correct — walk filters `SetMethod.IsPublic` |
-| Flag path = app-tree path | no remap/fold/special-case (callstack via `--callstack`, not `--debug`) | Correct — Debug's `CallStack.Flags` write removed |
+| Flag path = app-tree path | no remap/fold/special-case (callstack via `--callstack`, not `--debug`) | Correct — Debug's `CallStack` write removed; `--app` is the one named exception (root alias, Q2) |
+| Walk descends composites field-by-field | access-level gate holds at every level, not delegated to a `dict→record` converter | Correct — composite = settable `record class`, walked; catalog does scalar/collection leaves only (§8, Q1) |
 | Run-state as public setter | `CurrentActor`, `CurrentTest`, `CallStack.Variables`, `Run.Output` | Demote to `internal` — closed finite list (whole tree crawled) |
 | Walk uses the conversion catalog per leaf | type builds itself from raw | Correct — the actual fix |
 | `catalog.Populate` static | applies config to another type from outside (smell #1) | Removed — app-owned walk |
-| `Debug.Write` via nullable session | ambient capability through a session object | Fixed — `context.Diagnostic` → channel |
+| `Debug.Write` via nullable session | ambient capability through a session object | **Deferred** — `App.Debug?.Write` stays; nullable `?.` is a correct interim gate; reframe to `context.Diagnostic`/`app.Diagnostic` is its own todo (§6.A) |
 | Debug activation on birth | behavior on the element, registration not null-check | Correct |
-| Entry dispatch | presence inspected for run/store routing | **Staged** — one owned `if (Build != null)`/`if (Tester != null)` this branch; full dissolve deferred (§6.C) |
+| Entry dispatch | presence inspected for run/store routing | **Staged** — one owned `if (Build != null)`/`if (Test != null)` this branch; full dissolve deferred (§6.C) |
 | Runtime toggle (subsystem on/off mid-run) | debug's persistent events + no teardown path | **Deferred** — startup-only this branch; suspend-vs-teardown design is its own todo (§2) |
 | D foreign sniffs | build mode read by file/llm layers | Known smell — inversion tracked separately (§6.D, §9) |
-| Names | `Build` (verb) property, `Diagnostic` helper | `Build` mirrors `app.Debug` precedent; `Diagnostic` is a placeholder — one word, settle in code |
+| Names | `Build` (verb) property | `Build` mirrors `app.Debug` precedent |
 
 ## Path
 
-1. `app.Builder → app.Build` rename; drop the `--builder` alias + `Configure` normalization.
+1. Two renames: `app.Builder → app.Build` **and** `app.Tester → app.Test` (`app/tester/` → `app/test/`, distinct from the `app.module.test` runner). Drop the `--builder` + `--tester` aliases and the `build`/`builder` `Configure` normalization; `--test` is the canonical test flag (Q3).
 2. Subsystems nullable, `new T(context)`, `_app` → `Context.App`; delete `IsEnabled`. Startup-only activation (born once) — no runtime toggle, no teardown (§2).
 3. The convert walk in `Configure` (app-owned, cohesive per §1), public-setter-only, over `!`-flags; delete the four-way branch and `catalog.Populate`.
-4. Run-state sweep (closed, finite): demote `CurrentActor`, `Tester.CurrentTest`, `CallStack.Variables`, `Run.Output` + §3 app-root setters to `internal`; give `Tester.Include`/`Exclude` a settable `List<string>`.
-5. Validation onto the types (`uint` timeout/parallel, enum/`choice` format); delete `Tester.Apply`.
-6. `Debug.Write` → `context.Diagnostic`; `Debug.Apply` activation → the ctor; delete `_applied`, the shorthand, and the `callstack` cross-node write. Release-note line: `--debug` no longer carries callstack flags — use `--callstack={"flags":...}`.
-7. **Staged** entry dispatch: one owned `if (Build != null)` at the run root + `if (Tester != null)` for the store; full dissolve to entry-action-at-birth deferred to a follow-up branch (§6.C).
+4. Run-state sweep (closed, finite): demote `CurrentActor`, `Test.CurrentTest`, `CallStack.Variables`, `Run.Output` + §3 app-root setters to `internal`; give `Test.Include`/`Exclude` a settable `List<string>`. Reshape `CallStack.Flags` (struct + `Parse`/`Shorthand`) → `CallStack.Setting` (`setting.@this` record class), walked field-by-field (Q1).
+5. Validation onto the types (`uint` timeout/parallel, enum/`choice` format); delete `Test.Apply`.
+6. `Debug.Apply` activation → the ctor; delete `_applied`, the shorthand, and the `callstack` cross-node write. `Debug.Write` stays (loses only its `IsEnabled` check); the `context.Diagnostic` reframe is deferred (§6.A). Release-note line: `--debug` no longer carries callstack flags — use `--callstack={"setting":...}`.
+7. **Staged** entry dispatch: one owned `if (Build != null)` at the run root + `if (Test != null)` for the store; full dissolve to entry-action-at-birth deferred to a follow-up branch (§6.C).
 8. D sites: mechanical `!= null` + TODO (§9); the full inversion is a separate branch.
 9. Regression: `--build={"files":[...]}` builds and runs `Hello.goal` with no startup crash.
