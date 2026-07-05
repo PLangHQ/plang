@@ -103,9 +103,9 @@ var timeout = await action.Timeout.Value();
 | `ModuleView<T>` | `app/config/ModuleView.cs` | http `Default.cs:333,345,357,400` (param type) | **Delete.** Handlers read their own params; cross-cutting policy calls `context.Setting` directly. |
 | `IConfig` (marker) | `app/config/IConfig.cs` | `http.Config`, `signing.Config`, `environment.number.Config` | **Delete.** Defaults move to `[Default]` on action params. |
 | `Config` records | `http/Config.cs`, `signing/Config.cs`, `environment/number/Config.cs` | via `For<T>` above | **Delete each.** Per-property default → `[Default]` on the owning action's param. (See number caveat below.) |
-| `context.ConfigScope` | `actor/context/this.cs:145,362`; alias `GlobalUsings.cs:45` | scope reads/clone | **Rename → `SettingScope`.** Mechanism stays (per-goal overlay, clone-on-child). |
-| `app/config/Scope.cs` | one scope level, keyed `"module.property"` | — | **Keep, rehome + rekey.** Move under the setting namespace; key becomes the full tree path (`"http.request.timeoutinsec"`). |
-| `app.Config` property | `app/this.cs` (`Navigation:` doc `:162`) | the above | **Delete.** No in-memory registry object survives; resolution is context-walk + root overlay. |
+| `context.ConfigScope` | `actor/context/this.cs:145,362`; alias `GlobalUsings.cs:45` | scope reads/clone | **Rename → `context.Setting`** — drop "Scope" (it names the container mechanism, not the concept; OBP smell #1). The in-memory settings that belong to this context, paralleling `app.Setting`. Mechanism stays (per-goal overlay, clone-on-child). Resolving a path walks `context.Setting → Parent.Setting → … → root context.Setting`. |
+| `app/config/Scope.cs` | one scope level, keyed `"module.property"` | — | **Keep as the `setting` collection type, rehome + rekey.** Becomes the type behind `context.Setting`; key is the full tree path (`"http.request.timeoutinsec"`). |
+| `app.Config` property | `app/this.cs` (`Navigation:` doc `:162`) | the above | **Delete.** No in-memory registry object survives. App-level in-memory default *is* the root context's `Setting` (where `--` writes); `app.Setting` stays purely the persistent store. |
 
 ### Validation seam (build time — the builder computing param defaults + validating paths)
 
@@ -148,7 +148,9 @@ The `Config` records hold **raw CLR** today (OBP/leaf-type smell). Moving them t
 Overflow = stepOverflow ?? context.Setting("environment.number.overflow").As<...>() ?? POverflow.Promote
 ```
 
-`MathPolicy` already passes those fallbacks (`view.Resolve("overflow", Promote)`), so the `Config` record deletes with nothing left behind. **Deleting it fixes a live drift:** the record declares `Precision = Double`; `MathPolicy`'s fallback passes `Error` (with a comment arguing Error is correct). Two defaults for one setting, already disagreeing — collapse to `MathPolicy`'s inline `Error`. The step-override params (`stepOverflow`/`stepPrecision`) stay as the action handlers' nullable params (layer 1); `MathPolicy` consults them, then the setting, then the inline default. Honest path is `%!environment.number.overflow%` — the current `number.*` key is the `ResolvePrefix` last-segment **remap** the design kills. This is the model's proof it must cover node-level settings, not only action-param ones ("a setting is a settable property on any node").
+`MathPolicy` already passes those fallbacks (`view.Resolve("overflow", Promote)`), so the `Config` record deletes with nothing left behind. **Deleting it fixes a live drift:** the record declares `Precision = Double`; `MathPolicy`'s fallback passes `Error` (with a comment arguing Error is correct). Two defaults for one setting, already disagreeing — collapse to `MathPolicy`'s inline `Error`. The step-override params (`stepOverflow`/`stepPrecision`) stay as the action handlers' nullable params (layer 1); `MathPolicy` consults them, then the setting, then the inline default. This is the model's proof it must cover node-level settings, not only action-param ones ("a setting is a settable property on any node").
+
+**Path home is a decision (open Q6), and it is NOT `math`.** `math` only *reads* this policy — homing a setting under its consumer is the "this flag configures that other node" special case the design kills. Overflow/precision is `number`'s own behavior. Two honest homes: `%!environment.number.overflow%` (current namespace — the docstring calls it "an app-wide environment knob") or `%!number.overflow%` (move the policy onto `number` itself). I lean `%!number.overflow%` — transparent, single-concept. Either way the current `number.*` key from the `ResolvePrefix` last-segment **remap** dies.
 
 ---
 
@@ -171,7 +173,7 @@ Overflow = stepOverflow ?? context.Setting("environment.number.overflow").As<...
 **Dies — the `IConfig` interface on `http.configure`** (Q1 decides configure's fate).
 
 **Renames:**
-- `context.ConfigScope → SettingScope`; `GlobalUsings.cs:45` alias.
+- `context.ConfigScope → context.Setting` (drop "Scope"); `GlobalUsings.cs:45` alias. `Scope.cs` becomes the `setting` collection type behind it.
 - `app/module/settings/ → app/module/setting/`; `app.Settings → app.Setting`; `%Setting.% → %setting.%`.
 
 **Stays (explicit — do NOT demolish):**
@@ -205,8 +207,8 @@ Overflow = stepOverflow ?? context.Setting("environment.number.overflow").As<...
 
 | Surface | Verb+noun scan | Object-decomposition scan | Verdict |
 |---|---|---|---|
-| `context.Setting(path)` | `Setting` is a noun (the value at a path), not verb+noun — **not** `GetSetting`. Real work (scope walk), so a method is honest. | Takes a `path` string (perimeter — a setting address), returns `Data` **whole**; caller lowers at the leaf (`__s.As<T>()`). No decomposition. | OK — but **consider routing through the existing `%!%` variable resolver** (`variable.Get` already dispatches `!` keys) instead of a new method, since "one concept to the developer" argues for one resolution door. Coder call. |
-| `SettingScope` (rename) | Noun; parallels the incumbent `ConfigScope`. Not verb+noun. | one scope level, holds Data by key | OK |
+| `context.Setting` (the collection) + its path read | `Setting` is a noun — the settings that belong to this context, paralleling `app.Setting`. Not verb+noun. The read door (chain-walk by path) is the coder's to name — indexer `context.Setting["…"]` or a `Resolve`-style method; whatever it is must not be `GetSetting`. | Returns `Data` **whole**; caller lowers at the leaf (`__s.As<T>()`). No decomposition. | OK — but **consider routing the read through the existing `%!%` variable resolver** (`variable.Get` already dispatches `!` keys) instead of a new door, since "one concept to the developer" argues for one resolution path. Coder call (open Q2). |
+| `context.Setting` vs `app.Setting` — same word, two owners | Both nouns; owner names the tier (context = in-memory/scoped, app = persistent). | two collections, different backing | OK — the parallel is the point; `%!%` → `context.Setting`, `%setting.%` → `app.Setting`. |
 | `app.Setting` (rename of `app.Settings`) | Noun. Store facade / collection node. | — | OK — singular per the folder convention. |
 | `[Default]` on action params | existing attribute, no new name | value born from a literal with context (existing `DefaultRaw` path) | OK — unchanged |
 | The collapse removes `Apply`/`Resolve`/`For`/`ModuleView` | these were the verb-heavy surface | — | **Win** — fewer verb+noun names after than before |
@@ -222,3 +224,4 @@ No new interface for the `%!%` door beyond what's needed (honoring the parent's 
 3. **The `!` prefix overload** — `%!buildData%` (a transient build-pass result handle) and `%!build.cache%` (a subsystem mirror) are `!`-prefixed *variables* today. If `%!path%` now navigates the setting tree, does it navigate-then-fallback-to-variable, or do the system-transients move off `!`?
 4. **Staging vs the parent** — pull the parent's Direct walk into this branch (so `%!build.files%` is demonstrable end-to-end here), or keep the subsystem side as a documented dependency?
 5. **Sanity-check the leaf trace** — is `environment.number.Config` really the only cross-action (module-level, non-param) setting, or are there others hiding behind `For<T>` that don't map to a single action's `[Default]`?
+6. **Number-policy home** — `%!number.overflow%` (move policy onto `number`) or `%!environment.number.overflow%` (keep current namespace)? Not `math` (consumer, not owner). Ingi leans `number`; confirm before the coder rehomes.
