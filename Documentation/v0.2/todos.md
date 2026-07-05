@@ -1630,3 +1630,24 @@ plang-type method — still return CLR `bool`. Migrate them in a dedicated
 "plang predicates return @bool" pass. Also revisit: the list backing is a
 three-way polymorphic slot (raw CLR | Data | item); the "list stores items
 intrinsically (drop the Data-row envelope)" redesign is the bigger follow-up.
+
+## 2026-07-05 — EXPLORATORY: app-tree nodes as plang values (:item)
+If app / build / test / debug (and the rest of the app tree) were `item.@this`,
+the config walk (app.Config) would stop being reflection and become the type
+system's OWN navigate + convert + set: `app.Navigate("build").Navigate("files")
+.Set(raw)`. Then `--build={files:[...]}` (CLI) and `%!build.files% = ...` (plang)
+land on the EXACT same path — the app-tree as plang values, CLI and %!% unified.
+That's the door plan §1 described. Big change (each node gets Navigate/Write/
+convert); explore as its own thing. The `Config`-on-`app` method is already
+shaped toward it (a future %!% write calls the same entry).
+
+## 2026-07-05 — Settings / Config / Options unification (branch: settings-config-unification)
+`config`, `setting`, `options` are one domain spread across three surfaces:
+`app.Config` (in-mem scope registry, misnamed "config"), `app.Settings`
+(persistent sqlite store), and the `--test/--debug/--build` born-on-flag
+subsystems. `--http={timeout}` / `--llm={model}` are literally module settings
+(route through `app.Config.Apply<TConfig>`), while `--test/--debug/--build` are
+live subsystems (property walk). Design writeup + open questions for architect:
+`.bot/settings-config-unification/coder/settings-config-unification.md`. Blocks
+the proper fix of the `--build={"files":[...]}` startup crash on
+`cli-app-property-override` (do not tape a 4th mechanism on top).
