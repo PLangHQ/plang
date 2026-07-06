@@ -5,7 +5,7 @@ using PPolicy = global::app.type.number.NumberPolicy;
 namespace PLang.Tests.App.Types;
 
 // plang-types — Stage 4
-// Policy resolves through app.config: step (nullable action param) → context (ConfigScope)
+// Policy resolves through app.config: step (nullable action param) → context (Setting)
 // → parent contexts → App.Config.Defaults → record-default. Goal is NOT a policy carrier.
 // Defaults are lenient (Promote, Double); strict (Throw, Decimal) is one set away.
 
@@ -56,7 +56,7 @@ public class NumberPolicyResolutionTests
     [Test] public async Task Resolve_SubContext_ClimbsParent_InheritsParentSetting()
     {
         // Parent context sets number.overflow=Throw; child context inherits via
-        // the ConfigScope.Resolve walk (this → Parent → App.Config.Defaults).
+        // the context.Setting.Resolve walk (this → Parent → App.Config.Defaults).
         await using var app = NewApp();
         var parent = app.User.Context;
         app.Config.Set("number.overflow", POverflow.Throw, parent);

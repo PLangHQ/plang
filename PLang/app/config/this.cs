@@ -19,22 +19,14 @@ public sealed class @this
     public Scope Defaults { get; } = new();
 
     /// <summary>
-    /// Resolves a setting value by walking the scope chain:
-    /// context.ConfigScope → context.Parent.ConfigScope → ... → Defaults → classDefault.
+    /// Resolves a setting value: the context's Setting door (walks context → Parent → root),
+    /// then the app-level Defaults overlay, then the class default. (Transitional — Defaults
+    /// collapses into the root context's Setting overlay when the config machinery dissolves.)
     /// </summary>
     public T Resolve<T>(string key, actor.context.@this context, T classDefault)
     {
-        // Walk: context.ConfigScope → parent.ConfigScope → ... → Defaults → classDefault
-        var current = context;
-        while (current != null)
-        {
-            if (current.ConfigScope != null)
-            {
-                var value = current.ConfigScope.Get(key);
-                if (value != null) return Cast<T>(value, classDefault);
-            }
-            current = current.Parent;
-        }
+        var value = context.Setting.Resolve(key);
+        if (value != null) return Cast<T>(value, classDefault);
 
         var defaultValue = Defaults.Get(key);
         if (defaultValue != null) return Cast<T>(defaultValue, classDefault);
@@ -113,7 +105,6 @@ public sealed class @this
     {
         if (isDefault) { Defaults.Set(key, value); return; }
 
-        context.ConfigScope ??= new Scope();
-        context.ConfigScope.Set(key, value);
+        context.Setting.Set(key, value);
     }
 }

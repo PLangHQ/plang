@@ -6,8 +6,8 @@ namespace app.module.math;
 
 /// <summary>
 /// Resolves the per-call <see cref="NumberPolicy"/> for a math handler.
-/// Precedence: step (nullable handler param) → context.ConfigScope →
-/// parent.ConfigScope → … → App.Config.Defaults → record default
+/// Precedence: step (nullable handler param) → context.Setting →
+/// parent.Setting → … → App.Config.Defaults → record default
 /// (Promote / Double).
 ///
 /// <para>The handler passes its nullable step overrides; everything else

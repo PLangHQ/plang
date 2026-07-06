@@ -40,9 +40,8 @@ global using httppath = app.type.path.http.@this;
 global using dict = app.type.dict.@this;
 global using Clr = app.type.clr.@this;
 
-// Config subsystem
+// Config subsystem (dissolving into `setting` — see app/setting/)
 global using AppConfig = app.config.@this;
-global using ConfigScope = app.config.Scope;
 
 // Type system
 global using AppTypes = app.type.catalog.@this;

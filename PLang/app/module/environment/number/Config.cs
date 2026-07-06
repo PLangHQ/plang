@@ -4,8 +4,8 @@ namespace app.module.environment.number;
 
 /// <summary>
 /// Arithmetic policy config for <see cref="app.type.number.@this"/>.
-/// Resolution: step (nullable action param) → context.ConfigScope →
-/// parent.ConfigScope → … → App.Config.Defaults → record default.
+/// Resolution: step (nullable action param) → context.Setting →
+/// parent.Setting → … → App.Config.Defaults → record default.
 ///
 /// <para>PLang prose: <c>- set environment.number.overflow = throw</c>.
 /// The keys land under the <c>number</c> prefix (last namespace segment);

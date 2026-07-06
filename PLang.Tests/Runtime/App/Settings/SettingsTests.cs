@@ -143,14 +143,14 @@ public class SettingsTests
     [Test]
     public async Task Resolve_SkipsNullScopeInParentChain()
     {
-        // Grandparent has a setting. Middle parent has no ConfigScope (null).
+        // Grandparent has a setting. Middle parent has no local setting.
         // Child should still resolve grandparent's value.
         var (engine, grandparent) = CreateEngine();
         long classDefault = 100L;
 
         engine.Config.Set("archive.max", 42L, grandparent);
 
-        var parent = grandparent.CreateChild(); // no settings set — ConfigScope stays null
+        var parent = grandparent.CreateChild(); // no settings set — no local setting level
         var child = parent.CreateChild();
 
         var result = engine.Config.Resolve<long>("archive.max", child, classDefault);
@@ -159,33 +159,29 @@ public class SettingsTests
     }
 
     [Test]
-    public async Task GoalRunAsync_ScopesSettingsPerGoal()
+    public async Task ChildScope_ShadowsSetting_ParentUnaffected()
     {
-        // When a goal runs, its settings scope is isolated.
-        // After the goal returns, the previous scope is restored.
+        // A subgoal's context shadows a setting locally; the outer (parent) scope is
+        // unaffected. Isolation is the up-walk (this → parent → root), not a save/null/restore.
         var (engine, context) = CreateEngine();
         long classDefault = 100L;
 
         engine.Config.Set("archive.max", 50L, context);
-        var scopeBefore = context.ConfigScope;
 
-        // Simulate what Goal.RunAsync does: save, null, restore
-        var saved = context.ConfigScope;
-        context.ConfigScope = null;
+        var child = context.CreateChild(); // the subgoal's scope
 
-        // Inside the "goal": no settings visible from outer scope
-        var duringGoal = engine.Config.Resolve<long>("archive.max", context, classDefault);
-        await Assert.That(duringGoal).IsEqualTo(classDefault);
+        // Child sees the parent's setting via the up-walk.
+        var seenFromChild = engine.Config.Resolve<long>("archive.max", child, classDefault);
+        await Assert.That(seenFromChild).IsEqualTo(50L);
 
-        // Set something inside the goal
-        engine.Config.Set("archive.max", 10L, context);
-        var insideGoal = engine.Config.Resolve<long>("archive.max", context, classDefault);
-        await Assert.That(insideGoal).IsEqualTo(10L);
+        // A write in the child shadows locally.
+        engine.Config.Set("archive.max", 10L, child);
+        var insideChild = engine.Config.Resolve<long>("archive.max", child, classDefault);
+        await Assert.That(insideChild).IsEqualTo(10L);
 
-        // Restore — outer scope is back
-        context.ConfigScope = saved;
-        var afterGoal = engine.Config.Resolve<long>("archive.max", context, classDefault);
-        await Assert.That(afterGoal).IsEqualTo(50L);
+        // The parent (outer scope) is untouched.
+        var parentAfter = engine.Config.Resolve<long>("archive.max", context, classDefault);
+        await Assert.That(parentAfter).IsEqualTo(50L);
     }
 
     [Test]
@@ -203,7 +199,7 @@ public class SettingsTests
     }
 
     [Test]
-    public async Task Clone_PreservesConfigScope()
+    public async Task Clone_PreservesSettings()
     {
         // A cloned context should see the same settings as the original.
         var (engine, context) = CreateEngine();
@@ -220,7 +216,7 @@ public class SettingsTests
     [Test]
     public async Task Clone_WritesToClone_DoNotAffectOriginal()
     {
-        // Clone gets an independent copy of ConfigScope.
+        // Clone gets an independent copy of the setting level.
         // Writing to the clone must not pollute the original.
         var (engine, context) = CreateEngine();
         long classDefault = 100L;

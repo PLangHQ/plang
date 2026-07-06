@@ -138,11 +138,12 @@ public sealed class @this : IDisposable
     public Setup? Setup { get; set; }
 
     /// <summary>
-    /// Goal-scoped settings storage. Lazy-initialized when a settings handler writes
-    /// to this context. Keys are "module.property" format (e.g., "archive.max").
-    /// Resolution walks: this.ConfigScope → Parent.ConfigScope → App.Config.Defaults → class default.
+    /// The in-memory settings that belong to this context (the <c>%!%</c> door). Born on first
+    /// access. Keys are the full tree path (e.g., "http.request.timeout"). A read walks
+    /// this → Parent → … → root; a goal-local setting shadows an app-level one.
     /// </summary>
-    public ConfigScope? ConfigScope { get; set; }
+    private app.setting.@this? _setting;
+    public app.setting.@this Setting => _setting ??= new(Parent?.Setting);
 
     public @this(app.@this app, ActorType owner, Variables? variables = null, @this? parent = null, CancellationToken? parentToken = null)
     {
@@ -301,7 +302,7 @@ public sealed class @this : IDisposable
     /// Creates a child context for nested execution.
     /// Test fixture — production creates contexts only via the ctor in Actor.this.cs.
     /// One Context propagates through the entire goal-call tree of an Actor; child
-    /// contexts are unit-test scaffolding for inheritance scenarios (ConfigScope,
+    /// contexts are unit-test scaffolding for inheritance scenarios (Setting,
     /// Variables, Parent linkage).
     /// </summary>
     public @this CreateChild(Variables? variables = null)
@@ -350,7 +351,7 @@ public sealed class @this : IDisposable
     /// <summary>
     /// Clones this context with a new Variables.
     /// Test fixture — see CreateChild. Not used by production code; the property
-    /// propagation here (IsAsync, Setup, ConfigScope, _data) reflects what existing
+    /// propagation here (IsAsync, Setup, Setting, _data) reflects what existing
     /// tests need, not a Clone/Copy contract for the runtime.
     /// </summary>
     public @this Clone(Variables? variables = null)
@@ -359,8 +360,8 @@ public sealed class @this : IDisposable
         {
             IsAsync = IsAsync,
             Setup = Setup,
-            ConfigScope = ConfigScope?.Clone()
         };
+        clone._setting = _setting?.Clone();
 
         foreach (var kvp in _data)
         {
