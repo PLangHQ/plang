@@ -89,14 +89,15 @@ public sealed record @this(
         // setting from the context.Setting up-walk, before falling to the [Default].
         var actionKey = $"{settingModule}.{settingAction}.{ParamName}".ToLowerInvariant();
         var moduleKey = $"{settingModule}.{ParamName}".ToLowerInvariant();
-        var setting = $"context.Setting.Resolve(\"{actionKey}\", \"{moduleKey}\")";
-        var settingBind = $"new global::app.data.@this(\"{ParamName}\", __s, context: context).As<{InnerType}>()";
+        // The setting Get walks context → parents → app root (in-memory cascade); a set setting is
+        // an initialized Data, an unset one is NotFound (IsInitialized == false) → falls to [Default].
+        var settingGet = $"await context.Setting.Get(global::app.setting.Storage.InMemory, \"{actionKey}\", \"{moduleKey}\")";
 
         sb.AppendLine($"        {TypeName} {Local};");
         sb.AppendLine("        {");
         sb.AppendLine($"            var __d = __ResolveData(action, \"{ParamName}\", context);");
         sb.AppendLine($"            if (!await __d.IsEmpty()) {Local} = __d.As<{InnerType}>();");
-        sb.AppendLine($"            else if ({setting} is object __s) {Local} = {settingBind};");
+        sb.AppendLine($"            else if ({settingGet} is {{ IsInitialized: true }} __s) {Local} = __s.As<{InnerType}>();");
         if (IsNullable)
             sb.AppendLine($"            else {Local} = global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\");");
         else if (DefaultValue != null)
