@@ -1,6 +1,5 @@
 using number = global::app.type.number.@this;
 using PKind = global::app.type.number.NumberKind;
-using PPolicy = global::app.type.number.NumberPolicy;
 using POverflow = global::app.type.number.OverflowMode;
 using PPrecision = global::app.type.number.PrecisionMode;
 
@@ -13,40 +12,40 @@ namespace PLang.Tests.App.Types;
 
 public class NumberArithmeticTests
 {
-    private static PPolicy Lenient => PPolicy.Lenient;
-    private static PPolicy Strict => PPolicy.Strict;
+    private static (POverflow o, PPrecision p) Lenient => NumberOps.Lenient;
+    private static (POverflow o, PPrecision p) Strict => NumberOps.Strict;
 
     [Test] public async Task Add_IntInt_ReturnsInt()
     {
-        var r = number.Add(number.From(2), number.From(3), Lenient);
+        var r = NumberOps.Add(number.From(2), number.From(3), Lenient);
         await Assert.That(r.Kind).IsEqualTo(PKind.Int);
     }
 
     [Test] public async Task Add_IntLong_ReturnsLong()
-        => await Assert.That(number.Add(number.From(2), number.From(3L), Lenient).Kind).IsEqualTo(PKind.Long);
+        => await Assert.That(NumberOps.Add(number.From(2), number.From(3L), Lenient).Kind).IsEqualTo(PKind.Long);
 
     [Test] public async Task Add_IntDecimal_ReturnsDecimal()
-        => await Assert.That(number.Add(number.From(2), number.From(3m), Lenient).Kind).IsEqualTo(PKind.Decimal);
+        => await Assert.That(NumberOps.Add(number.From(2), number.From(3m), Lenient).Kind).IsEqualTo(PKind.Decimal);
 
     [Test] public async Task Add_AnythingDouble_ReturnsDouble()
-        => await Assert.That(number.Add(number.From(2), number.From(3.0), Lenient).Kind).IsEqualTo(PKind.Double);
+        => await Assert.That(NumberOps.Add(number.From(2), number.From(3.0), Lenient).Kind).IsEqualTo(PKind.Double);
 
     [Test] public async Task Mul_DecimalDouble_PrecisionEqualsDouble_ReturnsDouble()
         // Way 3: decimal⊕double under the DEFAULT (Lenient) precision errors —
         // the developer must choose. The Double result needs the explicit override.
-        => await Assert.That(number.Multiply(number.From(2m), number.From(3.0),
-            new PPolicy { Overflow = POverflow.Promote, Precision = PPrecision.Double })!.Kind).IsEqualTo(PKind.Double);
+        => await Assert.That(NumberOps.Multiply(number.From(2m), number.From(3.0),
+            (POverflow.Promote, PPrecision.Double))!.Kind).IsEqualTo(PKind.Double);
 
     [Test] public async Task Mul_DecimalDouble_PrecisionEqualsDecimal_ReturnsDecimal()
     {
-        var r = number.Multiply(number.From(2m), number.From(3.0),
-            new PPolicy { Overflow = POverflow.Promote, Precision = PPrecision.Decimal });
+        var r = NumberOps.Multiply(number.From(2m), number.From(3.0),
+            (POverflow.Promote, PPrecision.Decimal));
         await Assert.That(r.Kind).IsEqualTo(PKind.Decimal);
     }
 
     [Test] public async Task Overflow_Promote_IntOverflowWidensToLong()
     {
-        var r = number.Add(number.From(int.MaxValue), number.From(int.MaxValue), Lenient);
+        var r = NumberOps.Add(number.From(int.MaxValue), number.From(int.MaxValue), Lenient);
         await Assert.That(r.Kind).IsEqualTo(PKind.Long);
     }
 
@@ -54,13 +53,13 @@ public class NumberArithmeticTests
     {
         // Way 3: long+long overflow widens along the signed track to Int128
         // (BigInteger carrier → narrow), never wraps. (Was Decimal pre-Way-3.)
-        var r = number.Add(number.From(long.MaxValue), number.From(long.MaxValue), Lenient);
+        var r = NumberOps.Add(number.From(long.MaxValue), number.From(long.MaxValue), Lenient);
         await Assert.That(r.Kind).IsEqualTo(PKind.Int128);
     }
 
     [Test] public async Task Overflow_Throw_IntPlusInt_SurfacesDataFailMathOverflow()
     {
-        var ex = await Assert.That(() => number.Add(number.From(int.MaxValue), number.From(int.MaxValue), Strict)).Throws<global::app.error.AppException>();
+        var ex = await Assert.That(() => NumberOps.Add(number.From(int.MaxValue), number.From(int.MaxValue), Strict)).Throws<global::app.error.AppException>();
         await Assert.That(ex!.Key).IsEqualTo("MathOverflow");
     }
 
@@ -68,13 +67,13 @@ public class NumberArithmeticTests
     {
         await Assert.That(() => { var _ = number.From(decimal.MaxValue) + number.From(decimal.MaxValue); })
             .Throws<System.OverflowException>();
-        var ex = await Assert.That(() => number.Add(number.From(decimal.MaxValue), number.From(decimal.MaxValue), Strict)).Throws<global::app.error.AppException>();
+        var ex = await Assert.That(() => NumberOps.Add(number.From(decimal.MaxValue), number.From(decimal.MaxValue), Strict)).Throws<global::app.error.AppException>();
         await Assert.That(ex!.Key).IsEqualTo("MathOverflow");
     }
 
     [Test] public async Task Sub_IntInt_ReturnsInt()
-        => await Assert.That(number.Subtract(number.From(7), number.From(2), Lenient).Kind).IsEqualTo(PKind.Int);
+        => await Assert.That(NumberOps.Subtract(number.From(7), number.From(2), Lenient).Kind).IsEqualTo(PKind.Int);
 
     [Test] public async Task Mod_IntInt_ReturnsInt()
-        => await Assert.That(number.Modulo(number.From(7), number.From(3), Lenient).Kind).IsEqualTo(PKind.Int);
+        => await Assert.That(NumberOps.Modulo(number.From(7), number.From(3), Lenient).Kind).IsEqualTo(PKind.Int);
 }

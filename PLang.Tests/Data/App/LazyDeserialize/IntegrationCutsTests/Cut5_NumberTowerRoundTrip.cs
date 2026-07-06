@@ -4,7 +4,6 @@ using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using number = global::app.type.number.@this;
 using PKind = global::app.type.number.NumberKind;
-using PPolicy = global::app.type.number.NumberPolicy;
 
 namespace PLang.Tests.App.LazyDeserialize.IntegrationCutsTests;
 
@@ -39,7 +38,7 @@ public class Cut5_NumberTowerRoundTrip
     // long with no silent wrap.
     [Test] public async Task Cut5_PromoteThenNarrow_NoSilentWrap()
     {
-        var r = number.Add(number.From(3000000000u), number.From(2000000000u), PPolicy.Lenient);
+        var r = NumberOps.Add(number.From(3000000000u), number.From(2000000000u), NumberOps.Lenient);
         await Assert.That(r.Kind).IsEqualTo(PKind.Long);
         await Assert.That(r.ToInt64()).IsEqualTo(5000000000L);
     }
@@ -48,7 +47,7 @@ public class Cut5_NumberTowerRoundTrip
     // silently picking one carrier.
     [Test] public async Task Cut5_DoubleDecimal_RaisesExplicitCastError()
     {
-        var ex = await Assert.That(() => number.Add(number.From(1.5d), number.From(0.1m), PPolicy.Lenient)).Throws<global::app.error.AppException>();
+        var ex = await Assert.That(() => NumberOps.Add(number.From(1.5d), number.From(0.1m), NumberOps.Lenient)).Throws<global::app.error.AppException>();
         await Assert.That(ex!.Key).IsEqualTo("PrecisionMixRequiresChoice");
     }
 }

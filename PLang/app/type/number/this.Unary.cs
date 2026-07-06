@@ -17,8 +17,10 @@ public sealed partial class @this
     public static @this Ceiling(@this a) => Wrap(() => DoCeiling(a));
     public static @this Sqrt(@this a) => Wrap(() => DoSqrt(a));
     public static @this Round(@this a, @this decimals) => Wrap(() => DoRound(a, decimals));
-    public static @this Min(@this a, @this b, NumberPolicy policy) => Wrap(() => a.CompareTo(b) <= 0 ? a : b);
-    public static @this Max(@this a, @this b, NumberPolicy policy) => Wrap(() => a.CompareTo(b) >= 0 ? a : b);
+    // Instance min/max — the op on the carrier; the other operand rides whole. No overflow/
+    // precision axis (the winner keeps its exact kind), so no settings needed.
+    public @this Min(@this b) => Wrap(() => this.CompareTo(b) <= 0 ? this : b);
+    public @this Max(@this b) => Wrap(() => this.CompareTo(b) >= 0 ? this : b);
 
     private static @this FromDoubleAsKind(double m, NumberKind k) => k switch
     {

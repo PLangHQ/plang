@@ -14,7 +14,7 @@ namespace app.type.number;
 /// <c>decimal</c> for base-10), then narrows the result to the smallest kind
 /// that fits — so <c>3000000000u + 2000000000u</c> lands as <c>5000000000</c>
 /// (a <c>long</c>) rather than wrapping. <c>double ⊕ decimal</c> requires an
-/// explicit precision choice (see <see cref="NumberPolicy"/>).</para>
+/// explicit precision choice (see <see cref="PrecisionMode"/>).</para>
 ///
 /// <para>Storage is a single boxed CLR numeric (<see cref="BoxedValue"/>);
 /// boxing was already the baseline since <c>Data.Value</c> is <c>object</c>.

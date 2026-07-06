@@ -1,6 +1,5 @@
 using number = global::app.type.number.@this;
 using PKind = global::app.type.number.NumberKind;
-using PPolicy = global::app.type.number.NumberPolicy;
 
 namespace PLang.Tests.App.Types;
 
@@ -94,21 +93,21 @@ public class NumberUnaryTests
 
     [Test] public async Task Min_TwoInts_ReturnsSmallerSameKind()
     {
-        var r = number.Min(number.From(3), number.From(5), PPolicy.Lenient);
+        var r = NumberOps.Min(number.From(3), number.From(5), NumberOps.Lenient);
         await Assert.That(r.Kind).IsEqualTo(PKind.Int);
         await Assert.That(((global::app.type.number.@this)r).Clr<int>()).IsEqualTo(3);
     }
 
     [Test] public async Task Max_IntAndDecimal_PromotesToDecimal()
     {
-        var r = number.Max(number.From(2), number.From(3.5m), PPolicy.Lenient);
+        var r = NumberOps.Max(number.From(2), number.From(3.5m), NumberOps.Lenient);
         await Assert.That(r.Kind).IsEqualTo(PKind.Decimal);
         await Assert.That(((global::app.type.number.@this)r).Clr<decimal>()).IsEqualTo(3.5m);
     }
 
     [Test] public async Task Max_NegativeAndPositive_ReturnsPositive()
     {
-        var r = number.Max(number.From(-10), number.From(5), PPolicy.Lenient);
+        var r = NumberOps.Max(number.From(-10), number.From(5), NumberOps.Lenient);
         await Assert.That(((global::app.type.number.@this)r).Clr<int>()).IsEqualTo(5);
     }
 }

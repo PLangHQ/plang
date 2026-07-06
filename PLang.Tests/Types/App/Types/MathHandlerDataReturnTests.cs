@@ -62,26 +62,21 @@ public class MathHandlerDataReturnTests
     [Test] public async Task MathHandler_Overflow_ReturnsDataFail_NotException()
     {
         // Covered end-to-end by NumberArithmeticTests.Overflow_Throw_HandlerPathReturnsDataError.
-        var ex = await Assert.That(() => number.Add(number.From(decimal.MaxValue), number.From(decimal.MaxValue),
-            global::app.type.number.NumberPolicy.Strict)).Throws<global::app.error.AppException>();
+        var ex = await Assert.That(() => NumberOps.Add(number.From(decimal.MaxValue), number.From(decimal.MaxValue),
+            NumberOps.Strict)).Throws<global::app.error.AppException>();
         await Assert.That(ex!.Key).IsEqualTo("MathOverflow");
     }
 
     [Test] public async Task MathHandler_DivByZero_ReturnsDataFail_NotException()
     {
-        var ex = await Assert.That(() => number.Divide(number.From(7), number.From(0),
-            global::app.type.number.NumberPolicy.Lenient)).Throws<global::app.error.AppException>();
+        var ex = await Assert.That(() => NumberOps.Divide(number.From(7), number.From(0),
+            NumberOps.Lenient)).Throws<global::app.error.AppException>();
         await Assert.That(ex!.Key).IsEqualTo("DivideByZero");
     }
 
-    [Test] public async Task MathHandler_ReadsPolicyViaAppConfigForNumberConfig()
-    {
-        // The Config record lives at app.module.environment.number.Config.
-        var t = typeof(global::app.module.environment.number.Config);
-        await Assert.That(typeof(global::app.config.IConfig).IsAssignableFrom(t)).IsTrue();
-        await Assert.That(t.GetProperty("Overflow")).IsNotNull();
-        await Assert.That(t.GetProperty("Precision")).IsNotNull();
-    }
+    // (Removed MathHandler_ReadsPolicyViaAppConfigForNumberConfig — a class-structure test for the
+    // deleted environment.number.Config record. Overflow/precision are now settings resolved onto
+    // the action's params by the setting cascade; the scope chain is covered by SettingsTests.)
 
     [Test] public async Task MathHandler_StepLevelOverflowParam_IsNullableNotOptionalAttribute()
     {
