@@ -16,22 +16,22 @@ public sealed partial class @this
 {
     /// <summary>
     /// Serializes a snapshot tree to a JSON string. Thin wrapper — the snapshot
-    /// owns its wire shape (<see cref="global::app.snapshot.@this.Serialize"/>);
-    /// this just threads the current actor context for the path converter.
+    /// owns its wire shape (<see cref="global::app.snapshot.@this.Serialize"/>) and
+    /// carries the actor context it was captured under, which the path converter uses.
     /// </summary>
     public System.Threading.Tasks.Task<string> SnapshotToWire(global::app.snapshot.@this s)
-        => s.Serialize(CurrentActor.Context);
+        => s.Serialize(s.Context);
 
     /// <summary>
     /// Parses a JSON string back into a snapshot tree through the value door — the
-    /// json rides as a <c>Data</c> in the current actor context and is asked for
+    /// json rides as a <c>Data</c> in the given actor context and is asked for
     /// <c>snapshot</c>, dispatching to <see cref="global::app.snapshot.@this.Create"/>
     /// (born-with-context). The result is the same in-memory shape <see cref="Snapshot()"/>
     /// produces, so <see cref="Restore"/> consumes it unchanged.
     /// </summary>
-    public async Task<global::app.snapshot.@this> SnapshotFromWire(string json)
+    public async Task<global::app.snapshot.@this> SnapshotFromWire(string json, global::app.actor.context.@this context)
     {
-        var wire = new global::app.data.@this("", json, context: CurrentActor.Context);
+        var wire = new global::app.data.@this("", json, context: context);
         return await wire.Value<global::app.snapshot.@this>()
             ?? throw new System.InvalidOperationException("Snapshot could not be rebuilt from wire JSON");
     }
@@ -44,5 +44,5 @@ public sealed partial class @this
     /// verbs and hands the string here (System.IO stays out of the engine).
     /// </summary>
     public async Task<global::app.data.@this> ResumeFromWire(string json, global::app.actor.context.@this context)
-        => await (await SnapshotFromWire(json)).Resume(context);
+        => await (await SnapshotFromWire(json, context)).Resume(context);
 }

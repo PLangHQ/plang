@@ -58,7 +58,7 @@ public class CallSnapshotTests
         var (src, action) = BuildLiveAction("ResolveGoal");
         await using (var call = src.User.CallStack.Push(action))
         {
-            var snap = src.Snapshot();
+            var snap = src.Snapshot(src.User.Context);
 
             // Build a fresh app with the *same* goal registered.
             var dst = global::PLang.Tests.TestApp.Create("/dst");
@@ -90,7 +90,7 @@ public class CallSnapshotTests
         var (src, action) = BuildLiveAction("DisappearingGoal");
         await using (var call = src.User.CallStack.Push(action))
         {
-            var snap = src.Snapshot();
+            var snap = src.Snapshot(src.User.Context);
             // Restore on a fresh App that never had this goal registered.
             var dst = global::PLang.Tests.TestApp.Create("/dst");
 
@@ -108,7 +108,7 @@ public class CallSnapshotTests
         var (src, action) = BuildLiveAction("HashGoal", "original step text");
         await using (var call = src.User.CallStack.Push(action))
         {
-            var snap = src.Snapshot();
+            var snap = src.Snapshot(src.User.Context);
 
             // Fresh App with the same path but different hash (different step prose).
             var dst = global::PLang.Tests.TestApp.Create("/dst");
@@ -135,7 +135,7 @@ public class CallSnapshotTests
         var (src, action) = BuildLiveAction("PureGoal");
         await using (var call = src.User.CallStack.Push(action))
         {
-            var snap = src.Snapshot();
+            var snap = src.Snapshot(src.User.Context);
 
             var dst = global::PLang.Tests.TestApp.Create("/dst");
             var dstGoal = new Goal { Name = "PureGoal", Path = global::app.type.path.@this.Resolve("/PureGoal.goal", global::PLang.Tests.TestApp.SharedContext) };

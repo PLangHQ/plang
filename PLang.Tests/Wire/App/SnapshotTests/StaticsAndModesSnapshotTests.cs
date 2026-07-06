@@ -11,7 +11,7 @@ public class StaticsAndModesSnapshotTests
         srcBag["hello"] = "world";
         srcBag["lang"] = "en";
 
-        var snap = src.Snapshot();
+        var snap = src.Snapshot(src.User.Context);
         var dst = global::PLang.Tests.TestApp.Create("/dst");
         dst.Restore(snap, dst.User.Context);
 
@@ -27,7 +27,7 @@ public class StaticsAndModesSnapshotTests
         var src = global::PLang.Tests.TestApp.Create("/src");
         src.Build = new global::app.module.builder.@this(src.System.Context);
 
-        var snap = src.Snapshot();
+        var snap = src.Snapshot(src.User.Context);
         var dst = global::PLang.Tests.TestApp.Create("/dst");
         await Assert.That(dst.Build != null).IsFalse(); // pre-restore baseline
         dst.Restore(snap, dst.User.Context);
@@ -42,7 +42,7 @@ public class StaticsAndModesSnapshotTests
         var src = global::PLang.Tests.TestApp.Create("/src");
         src.Test = new global::app.test.list.@this(src.System.Context);
 
-        var snap = src.Snapshot();
+        var snap = src.Snapshot(src.User.Context);
         var dst = global::PLang.Tests.TestApp.Create("/dst");
         await Assert.That(dst.Test != null).IsFalse();
         dst.Restore(snap, dst.User.Context);

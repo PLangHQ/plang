@@ -26,7 +26,7 @@ public class ProvidersSnapshotTests
         src.Code.Register(typeof(global::app.data.code.IGrep), custom);
         src.Code.SetDefault(typeof(global::app.data.code.IGrep), "custom");
 
-        var snap = src.Snapshot();
+        var snap = src.Snapshot(src.User.Context);
         var registrations = snap.Section("Providers")
             .Read<List<global::app.module.code.@this.Registration>>("registrations");
         var overrides = snap.Section("Providers")
@@ -50,7 +50,7 @@ public class ProvidersSnapshotTests
         src.Code.Register(typeof(global::app.data.code.IGrep), custom);
         src.Code.SetDefault(typeof(global::app.data.code.IGrep), "custom");
 
-        var snap = src.Snapshot();
+        var snap = src.Snapshot(src.User.Context);
         var dst = global::PLang.Tests.TestApp.Create("/dst");
         // Pre-grant Execute on the snapshotted DLL source for the System actor —
         // restore reloads the DLL via path.LoadAssemblyAsync, which gates on
@@ -124,7 +124,7 @@ public class ProvidersSnapshotTests
         // RegisterDefaults output is reconstructed on App boot — only post-defaults
         // registrations end up in the captured payload.
         var app = global::PLang.Tests.TestApp.Create("/test");
-        var snap = app.Snapshot();
+        var snap = app.Snapshot(app.User.Context);
         var registrations = snap.Section("Providers")
             .Read<List<global::app.module.code.@this.Registration>>("registrations");
 
@@ -143,7 +143,7 @@ public class ProvidersSnapshotTests
         var custom = new CustomGrep { Source = typeof(CustomGrep).Assembly.Location };
         src.Code.Register(typeof(global::app.data.code.IGrep), custom);
 
-        var snap = src.Snapshot();
+        var snap = src.Snapshot(src.User.Context);
         var registrations = snap.Section("Providers")
             .Read<List<global::app.module.code.@this.Registration>>("registrations");
 

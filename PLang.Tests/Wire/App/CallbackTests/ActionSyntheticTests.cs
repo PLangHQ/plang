@@ -62,7 +62,7 @@ public class ActionSyntheticTests
             "plang-cs3-" + System.Guid.NewGuid().ToString("N")[..8]));
         var synthetic = new ActionEntity { Module = "x", ActionName = "y" };
         await using var call = app.User.CallStack.Push(synthetic);
-        var snap = app.Snapshot();
+        var snap = app.Snapshot(app.User.Context);
         await Assert.That(snap).IsNotNull();
     }
 }

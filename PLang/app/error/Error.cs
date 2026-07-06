@@ -117,7 +117,7 @@ public class Error : global::app.type.item.@this, IError
             if (App == null)
                 throw new InvalidOperationException(
                     "Error.Callback requires App reference; ensure the error went through Errors.Push.");
-            var snap = App.Snapshot(this);
+            var snap = App.Snapshot(this, Context ?? App.User.Context);
             _callback = global::app.data.@this<global::app.snapshot.@this>.Ok(snap);
             _callback.Context = App.User.Context;
             _callback.Snapshot = snap;

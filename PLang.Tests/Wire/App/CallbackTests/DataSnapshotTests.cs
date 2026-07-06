@@ -54,7 +54,7 @@ public class DataSnapshotTests : System.IAsyncDisposable
         var app = NewApp();
         var handler = new ask(app.User.Context);
         var viaHandler = handler.Snapshot();
-        var viaApp = app.Snapshot();
+        var viaApp = app.Snapshot(app.User.Context);
         // Both factories build a fresh full snapshot — same shape (App tree),
         // distinct instances. The contract is "Snapshot() on a handler is the
         // same call as Context.App.Snapshot()" — proved by walking the same

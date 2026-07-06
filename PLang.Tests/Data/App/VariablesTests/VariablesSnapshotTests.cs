@@ -10,7 +10,7 @@ public class VariablesSnapshotTests
         src.User.Context.Variable.Set("x", 1);
         src.User.Context.Variable.Set("obj", new Dictionary<string, object?> { ["a"] = 1 });
 
-        var snap = src.Snapshot();
+        var snap = src.Snapshot(src.User.Context);
         var dst = global::PLang.Tests.TestApp.Create("/dst");
         dst.Restore(snap, dst.User.Context);
 
@@ -38,7 +38,7 @@ public class VariablesSnapshotTests
         vars.Set("user", "alice");        // user var — survives
         vars.Set("!myInfra", "infra");    // !-prefixed — skipped
 
-        var snap = src.Snapshot();
+        var snap = src.Snapshot(src.User.Context);
         var captured = snap.Section("Variables").Read<List<Data>>("variables");
         await Assert.That(captured).IsNotNull();
 

@@ -9,7 +9,7 @@ public class AppSnapshotTests
         // Build/Test are presence-based — a section appears only when the mode is on.
         // TestApp enables Test; turn Build on too so both sections show up.
         app.Build = new global::app.module.builder.@this(app.System.Context);
-        var snap = app.Snapshot();
+        var snap = app.Snapshot(app.User.Context);
 
         await Assert.That(snap.HasSection("Variables")).IsTrue();
         await Assert.That(snap.HasSection("Errors")).IsTrue();
@@ -28,7 +28,7 @@ public class AppSnapshotTests
         src.Build = new global::app.module.builder.@this(src.System.Context);
         src.Test = new global::app.test.list.@this(src.System.Context);
 
-        var snap = src.Snapshot();
+        var snap = src.Snapshot(src.User.Context);
 
         var dst = global::PLang.Tests.TestApp.Create("/dst");
         dst.Restore(snap, dst.User.Context);
@@ -42,7 +42,7 @@ public class AppSnapshotTests
     public async Task App_Snapshot_OmitsReconstructOnBuildSubsystems()
     {
         var app = global::PLang.Tests.TestApp.Create("/test");
-        var snap = app.Snapshot();
+        var snap = app.Snapshot(app.User.Context);
 
         await Assert.That(snap.HasSection("Modules")).IsFalse();
         await Assert.That(snap.HasSection("Goals")).IsFalse();
@@ -60,7 +60,7 @@ public class AppSnapshotTests
     public async Task App_Cache_NotInSnapshot_FreshAppHasEmptyCache()
     {
         var src = global::PLang.Tests.TestApp.Create("/src");
-        var snap = src.Snapshot();
+        var snap = src.Snapshot(src.User.Context);
 
         var dst = global::PLang.Tests.TestApp.Create("/dst");
         dst.Restore(snap, dst.User.Context);

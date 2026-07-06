@@ -1659,12 +1659,15 @@ read-through repointed App → owning Actor; every push/read site reaches it via
 deleted (per-actor/per-flow fact; read via `%!goal%`). Trace-model settled as per-actor
 (actor-model-correct: cross-actor call = separate tree, Erlang-style). Regression-free full-suite diff.
 
-### Spawned follow-ups (not yet done)
-- **De-CurrentActor `App.Snapshot()`.** `Snapshot()` / `Snapshot(error)` still capture
-  `CurrentActor.CallStack` + `CurrentActor.Context.Variable`. This is a *correctness* gap under
-  per-actor stacks: capture reads CurrentActor's stack but frames push onto `context.Actor`'s —
-  if they differ, capture reads an empty stack. All three callers have a context in scope
-  (`error.Context`, `handler.Context`, `action.Context`), so thread a `context` param through
-  `App.Snapshot()` and drop CurrentActor there entirely.
+### Spawned follow-ups
+- **De-CurrentActor `App.Snapshot()`** — DONE. `Snapshot(context)` / `Snapshot(error, context)`
+  now take an explicit context; `SnapshotToWire` uses the snapshot's carried `Context`;
+  `SnapshotFromWire(json, context)` takes one. CurrentActor gone from the snapshot/callstack paths.
+- **Remove `app.CurrentActor` entirely** — NOT done (Ingi to do later). Still load-bearing in 7
+  spots outside snapshot/callstack: `module/builder/this.cs:105` SETS it (the actor-switch itself),
+  `module/Events.cs:30` (event dispatch context), `module/builder/code/Default.cs:290,811`,
+  `module/test/report.cs:39`, `module/llm/code/OpenAi.cs:439,447` (all `CurrentActor.Channel`
+  output writes), plus the `App.Start()` System↔User flips. The "current actor's output channel"
+  pattern and the switch mechanism both depend on it — removing it is its own effort.
 - **`--callstack` for service actors.** Executor walks System + User at startup; service actors
   are spawned later — decide how the run-wide knob reaches them (inherit at spawn?).

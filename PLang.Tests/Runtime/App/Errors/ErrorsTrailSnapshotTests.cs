@@ -14,7 +14,7 @@ public class ErrorsTrailSnapshotTests
         using (src.Error.Push(e1, src.User.Context)) { /* scoped */ }
         using (src.Error.Push(e2, src.User.Context)) { /* scoped */ }
 
-        var snap = src.Snapshot();
+        var snap = src.Snapshot(src.User.Context);
         var dst = TestApp.Create("/dst");
         dst.Restore(snap, dst.User.Context);
 
@@ -30,7 +30,7 @@ public class ErrorsTrailSnapshotTests
         var src = TestApp.Create("/src");
         using (src.Error.Push(new ServiceError("only", "TestErr", 400), src.User.Context)) { /* scoped */ }
 
-        var snap = src.Snapshot();
+        var snap = src.Snapshot(src.User.Context);
         var dst = TestApp.Create("/dst");
         dst.Restore(snap, dst.User.Context);
 

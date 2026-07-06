@@ -9,5 +9,5 @@ namespace app.module;
 public static class IContextSnapshotExtensions
 {
     public static global::app.snapshot.@this Snapshot(this IContext handler)
-        => handler.Context.App.Snapshot();
+        => handler.Context.App.Snapshot(handler.Context);
 }

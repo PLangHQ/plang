@@ -69,7 +69,7 @@ public class SnapshotResumeTests
         // Push the action of step1 so the snapshot captures (stepIdx=1, actionIdx=0).
         await using (var call = context.CallStack.Push(step1.Actions[0], context.Variable))
         {
-            var snap = app.Snapshot();
+            var snap = app.Snapshot(app.User.Context);
             // Pop the call frame before Resume so Restore doesn't conflict.
             await call.DisposeAsync();
 

@@ -77,7 +77,7 @@ public class CallStackSnapshotTests
         await using (var outer = src.User.CallStack.Push(a1))
         await using (var inner = src.User.CallStack.Push(a2))
         {
-            var snap = src.Snapshot();
+            var snap = src.Snapshot(src.User.Context);
 
             // Build dst with matching goals (same Path + Hash via identical step text).
             var (dg1, _, _) = MakeFrame("Outer2");

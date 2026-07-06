@@ -13,16 +13,16 @@ public sealed partial class @this
     /// Adding a new subsystem to the snapshot is just implementing ISnapshot
     /// and adding a one-liner here — no central registry, no ordering coupling.
     /// </summary>
-    public snapshot.@this Snapshot()
+    public snapshot.@this Snapshot(actor.context.@this context)
     {
-        var s = new snapshot.@this(CurrentActor.Context);
-        CurrentActor.Context.Variable.Capture(s.Section("Variables"));
+        var s = new snapshot.@this(context);
+        context.Variable.Capture(s.Section("Variables"));
         Error.Capture(s.Section("Errors"));
         Code.Capture(s.Section("Providers"));
         Statics.Capture(s.Section("Statics"));
         Build?.Capture(s.Section("Build"));
         Test?.Capture(s.Section("Test"));
-        CurrentActor.CallStack.Capture(s.Section("CallStack"));
+        context.CallStack.Capture(s.Section("CallStack"));
         return s;
     }
 
@@ -35,16 +35,16 @@ public sealed partial class @this
     /// Everything else (modes, providers, statics) is unchanged across handling,
     /// so it captures live.
     /// </summary>
-    public snapshot.@this Snapshot(global::app.error.IError error)
+    public snapshot.@this Snapshot(global::app.error.IError error, actor.context.@this context)
     {
-        var s = new snapshot.@this(CurrentActor.Context);
-        CurrentActor.Context.Variable.SnapshotAt(error).Capture(s.Section("Variables"));
+        var s = new snapshot.@this(context);
+        context.Variable.SnapshotAt(error).Capture(s.Section("Variables"));
         Error.Capture(s.Section("Errors"));
         Code.Capture(s.Section("Providers"));
         Statics.Capture(s.Section("Statics"));
         Build?.Capture(s.Section("Build"));
         Test?.Capture(s.Section("Test"));
-        CurrentActor.CallStack.Capture(s.Section("CallStack"), error.CallFrames);
+        context.CallStack.Capture(s.Section("CallStack"), error.CallFrames);
         return s;
     }
 
