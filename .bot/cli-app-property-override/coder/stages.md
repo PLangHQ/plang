@@ -108,15 +108,16 @@ why BaseUrl/DefaultHeaders/MaxResponseSize never resolve — pre-existing, fail 
 - Migrate off `new X + RunAction`: OpenAi, builder, http, signing, path, schema — then the 4 http tests via `Make`/dispatch.
 - **DESIGN DISCUSSION with Ingi before writing code** — he owns the API shape.
 
-## Stage 4 — Run-state sweep (closed, finite) + CallStack.Setting  ☐
-- ☐ Demote to `internal set` (§3 table): app-root `Culture`/`Name`/`Id`/`Created`/`Updated`/`Version`/`OsDirectory`/`Parent`/`CurrentActor`/`Cache`
-  (`this.cs:248` CurrentActor is still `public ... { get; set; }`); `Test.CurrentTest`, `CallStack.Variables`, `Run.Output`.
-  Keep `Create`, `Environment` public.
-- ☐ Reshape `CallStack.Flags` (`callstack/Flags.cs`, `record struct` + `Parse` + `Shorthand` + `Default`) →
-  `CallStack.Setting` (`setting.@this` **record class**, public-set leaves Timing/Diff/DeepDiff/Tags/History/MaxFrames),
-  walked field-by-field (Q1). `Flags.Parse`/`Shorthand` die. Preserve error-recovery flip via `with` (`error/list/this.cs`).
-- ☐ `Test.Include`/`Exclude` already `list<text>` get-only — the convert walk descends element-wise (add), so no settable-List change needed. Confirm the walk can populate them.
-- ☐ Verify `Config`/`Setting`/`Format`/`KeepAlive`/`Event`/`Error`/`Code`/`Statics` have no public-set leaves (sweep closed — §3).
+## Stage 4 — Run-state sweep (closed, finite) + CallStack knobs  ☑ (fb460e53a, dbf44a02f, 822fc03b8, bb9e9d02f)
+- ☑ Demoted to `internal set`: app-root `Culture`/`Name`/`Id`/`Created`/`Updated`/`Version`/`OsDirectory`/`Parent`/`CurrentActor`/`Cache`;
+  `test.list.Current`, `CallStack.Variables`. Kept `Create`, `Environment` public. (`Run.Output` no longer exists as run-state.)
+- ☑ CallStack knobs — reshaped **not** to a `CallStack.Setting` record but to **plain plang-typed props** on CallStack
+  (`Timing`/`Diff`/`DeepDiff`/`Tags`/`History` : `@bool`, `MaxFrames` : `number`), set by the same convert-walk
+  (`--callstack={...}` → `Setting.Set(app.<actor>.CallStack, dict)`). `Flags.cs`/`Parse`/`Shorthand` deleted.
+  Error-recovery flip preserved (`error/list/this.cs`). **Plus:** CallStack moved App→Actor (each actor owns its tree),
+  and `App.Snapshot()` de-CurrentActor'd. See `Documentation/v0.2/conventions.md` "Actor Owns Its CallStack".
+- ☑ `Test.Include`/`Exclude` confirmed `list<text>` get-only — walk descends element-wise.
+- ☑ Verified `Config`/`Setting`/`Format`/`KeepAlive`/`Event`/`Error`/`Code`/`Statics` have no public-set leaves.
 
 ## Stage 5 — Validation onto the types (delete Test.Apply)  ☐
 - ☐ Delete `Test.Apply` (`test/list/this.cs:105`) — replaced by the walk + type-level validation.
