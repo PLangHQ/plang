@@ -33,7 +33,7 @@ public sealed partial class @this
     public Coverage Coverage { get; } = new();
 
     /// <summary>The test currently in flight on this App. null when no test is running. test.run assigns; test.tag reads.</summary>
-    public global::app.test.@this? Current { get; set; }
+    public global::app.test.@this? Current { get; internal set; }
 
     // --- Configuration (plang values) ---
 

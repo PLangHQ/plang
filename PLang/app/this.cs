@@ -33,31 +33,31 @@ public sealed partial class @this : IAsyncDisposable
     /// Unique identifier for this app. Loaded from app.pr, or generated on first run.
     /// </summary>
     [JsonPropertyName("id")]
-    public string Id { get; set; }
+    public string Id { get; internal set; }
 
     /// <summary>
     /// Name of this app.
     /// </summary>
     [JsonPropertyName("name")]
-    public string Name { get; set; }
+    public string Name { get; internal set; }
 
     /// <summary>
     /// When the app was first created.
     /// </summary>
     [JsonPropertyName("created")]
-    public DateTime Created { get; set; }
+    public DateTime Created { get; internal set; }
 
     /// <summary>
     /// When the app was last updated.
     /// </summary>
     [JsonPropertyName("updated")]
-    public DateTime Updated { get; set; }
+    public DateTime Updated { get; internal set; }
 
     /// <summary>
     /// Version of the builder used.
     /// </summary>
     [JsonPropertyName("version")]
-    public string? Version { get; set; }
+    public string? Version { get; internal set; }
 
     /// <summary>
     /// The OS absolute path of the application (e.g. C:\myapp or /home/user/app).
@@ -69,7 +69,7 @@ public sealed partial class @this : IAsyncDisposable
     /// System goals (builder, events, etc.) are resolved from os/system/... here.
     /// Null when no os directory is configured.
     /// </summary>
-    public string? OsDirectory { get; set; }
+    public string? OsDirectory { get; internal set; }
 
     /// <summary>
     /// Parent app, when this app was constructed as a child of another.
@@ -78,7 +78,7 @@ public sealed partial class @this : IAsyncDisposable
     /// subdirectory still treats the parent's <c>AbsolutePath</c> as in-root.
     /// Null for top-level apps.
     /// </summary>
-    public app.@this? Parent { get; set; }
+    public app.@this? Parent { get; internal set; }
 
     /// <summary>
     /// The computed <c>os/</c> folder next to the executable. App-level constant
@@ -101,7 +101,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Application culture for formatting dates, numbers, etc.
     /// Defaults to InvariantCulture.
     /// </summary>
-    public CultureInfo Culture { get; set; } = CultureInfo.InvariantCulture;
+    public CultureInfo Culture { get; internal set; } = CultureInfo.InvariantCulture;
 
     /// <summary>
     /// When the app was started.
@@ -155,7 +155,7 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Pluggable step cache. Default: in-memory. Swap via: - use 'redis.dll' for caching
     /// </summary>
-    public ICache Cache { get; set; } = new global::app.module.cache.Memory();
+    public ICache Cache { get; internal set; } = new global::app.module.cache.Memory();
 
     /// <summary>
     /// App-level persistent key-value store backed by <c>.db/system.sqlite</c>
@@ -239,7 +239,7 @@ public sealed partial class @this : IAsyncDisposable
     /// The currently executing actor. Defaults to User. Changed to System during bootstrap (Start).
     /// app.execute switches temporarily for context-crossing dispatch.
     /// </summary>
-    public actor.@this CurrentActor { get; set; } = null!; // initialized to User in constructor
+    public actor.@this CurrentActor { get; internal set; } = null!; // initialized to User in constructor
 
     /// <summary>
     /// Resolves an actor by name. The actor set is closed and hardcoded

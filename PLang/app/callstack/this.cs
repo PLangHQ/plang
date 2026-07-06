@@ -51,7 +51,7 @@ public sealed partial class @this
     /// per-call <c>variables</c> argument; the active Call subscribes to its <c>OnSet</c>
     /// when <see cref="Diff"/> is on.
     /// </summary>
-    public Variables? Variables { get; set; }
+    public Variables? Variables { get; internal set; }
 
     /// <summary>
     /// The current Call in this async context. Null when no Push has happened on this branch.
