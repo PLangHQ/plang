@@ -104,30 +104,16 @@ public sealed class @this
         return ch.WriteAsync(envelope);
     }
 
-    public void Apply(object debugValue)
+    /// <summary>
+    /// Activates debug tracing: strips % from watched names, wires watcher placeholders,
+    /// subscribes the LLM request/response hooks, compiles the grep regex, and registers the
+    /// step/goal(/action) event bindings. The scalar config is set beforehand by the --debug
+    /// walk (<c>app.Setting.Set(app.Debug, dict)</c>); this does the side-effects only —
+    /// Debug is born, then activated. No config parsing or callstack cross-write lives here
+    /// (callstack config is its own flag, <c>--callstack</c>).
+    /// </summary>
+    public void Activate()
     {
-        if (debugValue is IDictionary<string, object?> dict)
-        {
-            // String shorthand for variables: ["foo","bar"] → [{name:"foo"},{name:"bar"}].
-            // Populate's generic list converter can't bind a bare string to DebugVariable.
-            if (dict.TryGetValue("variables", out var rawVars) && rawVars is System.Collections.IList list)
-            {
-                var normalized = new List<object?>(list.Count);
-                foreach (var item in list)
-                {
-                    if (item is string s)
-                        normalized.Add(new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) { ["name"] = s });
-                    else
-                        normalized.Add(item);
-                }
-                dict["variables"] = normalized;
-            }
-
-            // Callstack knobs are no longer carried on --debug — they're their own flag now
-            // (--callstack={"timing":true}), a walk onto app.CallStack. Release note: use --callstack.
-            _context.App.Setting.Set(this, dict);
-        }
-
         // Strip % from variable names
         if (Variables != null)
         {

@@ -53,11 +53,18 @@ namespace PLang
 				userVars.Set(param.Key, param.Value);
 			}
 
-			// Debug mode — born under --debug (presence = enabled)
+			// Debug mode — born under --debug (presence = enabled). Config (scalars) flows
+			// through the setting walk like every other flag; then the Debug is activated
+			// (watchers, LLM hooks, grep regex, event bindings).
 			if (parameters.TryGetValue("!debug", out var debugValue) && debugValue is not false)
 			{
 				app.Debug = new Debugging(app.System.Context);
-				app.Debug.Apply(debugValue);
+				if (debugValue is IDictionary<string, object?> debugDict)
+				{
+					var debugResult = app.Setting.Set(app.Debug, debugDict);
+					if (!debugResult.Success) return (null, debugResult);
+				}
+				app.Debug.Activate();
 			}
 
 			// Tester mode (--tester or legacy --test)

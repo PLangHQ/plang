@@ -40,12 +40,14 @@ public class DebugSmokeTests
         return reader.ReadToEnd();
     }
 
-    // Debug.Apply with level="action" attaches BeforeAction + AfterAction widened handlers.
-    // Running a goal with one action must fire them without throwing.
+    // Debug config (level="action") set via the walk, then Activate() attaches BeforeAction +
+    // AfterAction widened handlers. Running a goal with one action must fire them without throwing.
     [Test]
     public async Task Debug_LevelAction_AttachesWidenedHandlers_NoThrowOnFire()
     {
-        _app.Debug.Apply(new Dictionary<string, object?> { ["level"] = "action" });
+        _app.Debug = new Debugging(_app.System.Context);
+        _app.Setting.Set(_app.Debug, new Dictionary<string, object?> { ["level"] = "action" });
+        _app.Debug.Activate();
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("Dbg",
             Make.Step("set x",
