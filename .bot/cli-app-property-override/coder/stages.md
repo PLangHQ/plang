@@ -35,19 +35,37 @@ Stage 3 is the spine and the whole point of the branch.
 
 ---
 
-## Stage 3 — The convert walk in Configure (THE bug fix)  ☐  ← START HERE
-Replace the lift-then-lower `catalog.Populate` with an **app-owned** walk; collapse the four-way branch.
-- ☐ `catalog.@this.Populate` still called at **3 sites**: `Executor.cs:80` (`!app`), `Executor.cs:99` (`!builder`),
-  `debug/this.cs:136`. Replace with a walk: navigate → convert-via-`TryConvert` → **public-setter gate** (`prop.SetMethod?.IsPublic == true`, not `CanWrite`).
-- ☐ Leaf conversion via `TryConvert` (`type/catalog/Conversion.cs`), element-wise for collections.
-  `string→path` via `path.Resolve` (born with context).
-- ☐ Composite leaf (settable `record class`/class) → **descend** field-by-field; construct null composite first
-  (`new()` for config records, `new T(context)` for subsystem nodes). Gate holds at every level (§8).
-- ☐ Delete the four-way flag branch in `Executor.cs` (`!debug`:57, `!tester`:64, `!app`:79, `!builder`:87);
-  route all `!`-flags through the one walk. `--app` is the sole remap (root alias, Q2). Non-`!` args route as today.
-- ☐ Unknown `!`-flag / no public-setter match → hard error at startup (locked-typo rule).
-- ☐ Cohesive factoring (navigate/convert/gate as its own step) but **no `IAppTreeNavigator`** (§1 YAGNI).
-- ☐ **Green gate:** the Stage-9 regression (`--build={"files":[...]}`) stops crashing once this lands.
+## Stage 3 — `app.Setting` unification + the CLI walk (THE bug fix)  ☐  ← START HERE
+**Full design: `coder/setting-design.md` (agreed with Ingi 2026-07-06).** The plan's "convert walk in
+Configure" is now one method on a single unified `app.Setting` (type `app.setting.@this`) holding both
+lifetimes (in-memory + persistent) behind a `Storage` switch. Two sub-stages:
+
+### 3a — the unified `app.Setting` type
+- ☐ `app.setting.@this` gains `enum Storage { InMemory, Persistent }`, `_context`, `_store` (root only),
+  `_values` retyped `Dictionary<string, data.@this>` (values are **Data**, not `object?`).
+- ☐ `Resolve` → **`Get(Storage, params keys)`** returning `ValueTask<data.@this>` (InMemory sync-wrapped via
+  `new(...)`, Persistent async sqlite at `Root`). Mirror `Set(Storage, key, Data)`. `Resolve` deleted (Ingi disliked it).
+- ☐ Not-found asymmetry: InMemory → `NotFound` (seam → `[Default]`); Persistent unset → `AskError` (prompt).
+- ☐ `app.Setting` becomes the app-level root instance (holds `_store` + `System.Context`); `context.Setting`
+  chains to it (`parent: app.Setting`). Persistent wrapper `app.module.setting.@this` **folds in / deleted**;
+  public `SettingsStore` name dies → `_store` (internal).
+- ☐ **Seam regen:** generator emits `await context.App.Setting.Get(Storage.InMemory, "module.action.param", "module.param")`
+  (`Emission/Property/Data/this.cs:92`). `set %!x%` → `Set(Storage.InMemory, key, Value)` (whole Data, no `.Value()`);
+  `setting.*` actions + `%setting.%` navigable → `Storage.Persistent`.
+- ☐ `ScopeTests` retire; `SettingsTests` simplify; `config/this.cs` facade routes here or is deleted.
+
+### 3b — the CLI convert-walk (the crash fix) + four-way collapse
+- ☐ `app.Setting.Set(object node, IDictionary settings)` — recursive: public-setter gate
+  (`prop.SetMethod?.IsPublic`, not `CanWrite`) → `catalog.TryConvert` leaf / **descend** composite (born-on-descend).
+- ☐ **Delete `catalog.@this.Populate`** (the lift-lower at `Executor.cs:80`,`:99`, `debug/this.cs:136` — the crash source).
+  `TryConvert` stays (what the walk calls).
+- ☐ **One call from root:** Executor merges all `!`-flags into one dict → `app.Setting.Set(app, merged)`.
+  `--app` spreads at root (Q2 alias); `--build` nests under `build`; subsystems born-on-descend (null composite + present key → construct).
+- ☐ Unknown `!`-flag / no public setter → hard error at startup (locked-typo rule).
+- ☐ **Green gate:** `--build={"files":["Scratch/Hello.goal"]}` stops crashing.
+- ☐ Rename local `engine` → a name that doesn't shadow the `app` namespace in `Executor.cs` (Ingi: name what it is; but `app` local clashes with `app.@this` refs — use `global::app.@this` or agree a name).
+- **Staging:** full four-way collapse needs Debug/Test activation off `Apply` (Stages 6/5); until then `!debug`/`!test`
+  stay born+`Apply`, with `Apply` calling the walk internally so the lift-lower dies everywhere now.
 
 ## Stage 4 — Run-state sweep (closed, finite) + CallStack.Setting  ☐
 - ☐ Demote to `internal set` (§3 table): app-root `Culture`/`Name`/`Id`/`Created`/`Updated`/`Version`/`OsDirectory`/`Parent`/`CurrentActor`/`Cache`
