@@ -6,6 +6,12 @@ every stage** (each is its own commit/push).
 
 Legend: ☐ todo · ◐ in progress · ☑ done
 
+**Baseline at branch start (HEAD `535fadb95`, `dev.sh full`): 141 failing** — Modules 11,
+Types 30, Wire 18, Data 36, Generator 0, Runtime 46. Pre-existing (serialization/path/datetime/
+compare), unrelated to settings. Each stage must add **zero** to the touched slice's count.
+**Machine is slow — do NOT run `dev.sh full` per stage; run `dev.sh test <Class>` + the one
+affected slice, diff failure NAMES vs baseline.** Full only once before final handoff.
+
 ---
 
 ## Stage 1 — Rename the persistent store (`settings → setting`)  ☐
