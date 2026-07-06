@@ -67,7 +67,17 @@ lifetimes (in-memory + persistent) behind a `Storage` switch. Two sub-stages:
 - **Staging:** full four-way collapse needs Debug/Test activation off `Apply` (Stages 6/5); until then `!debug`/`!test`
   stay born+`Apply`, with `Apply` calling the walk internally so the lift-lower dies everywhere now.
 
-## Stage 3c — C# actions dispatch through the seam (`app.RunAction`)  ☐  **Design settled: `coder/action-dispatch-design.md`**
+## Stage 3c — C# actions dispatch through the seam (`app.Run`)  ☑ DONE (mechanism) — **`coder/action-dispatch-design.md`**
+Built + verified + pushed: **seed pass-through** (C# calls run the seam, set params pass through
+untouched, unset fill from setting → `[Default]`; `PreboundHandler` deleted), the **raw-args ctor**
+per action (`new request(context, url:…, method: POST)`; unset optionals → Uninitialized so settings
+win), **`RunAction → Run`** rename, and the http tests migrated (all 35 green). **+18 tests fixed on
+the mechanism, +4 http, zero regressions.** Remaining (optional, ergonomic only): migrate the C#
+callers (OpenAi/builder/signing/path/schema) to the raw-args ctor — the seed already routes them
+through the seam correctly, so this is call-site cleanup + the rare "setting overrides an unset
+`[Default]`" edge. 2 non-http pre-existing (SetTests ValidateBuild, DataSource null-value) unrelated.
+
+### (superseded) original `app.RunAction` framing — **Design settled: `coder/action-dispatch-design.md`**
 Shape: `await app.RunAction(new request(context, url: endpoint, method: HttpMethod.POST, unsigned: true))`.
 Two mechanisms: (1) generated **raw-args ctor** per action (typed named optional args, wrapped with
 `__ctx`; required = non-nullable+no-`[Default]`, optional otherwise; defaults stay in the seam, never
