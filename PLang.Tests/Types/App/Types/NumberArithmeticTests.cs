@@ -1,7 +1,5 @@
 using number = global::app.type.number.@this;
 using PKind = global::app.type.number.NumberKind;
-using POverflow = global::app.type.number.OverflowMode;
-using PPrecision = global::app.type.number.PrecisionMode;
 
 namespace PLang.Tests.App.Types;
 
@@ -12,8 +10,8 @@ namespace PLang.Tests.App.Types;
 
 public class NumberArithmeticTests
 {
-    private static (POverflow o, PPrecision p) Lenient => NumberOps.Lenient;
-    private static (POverflow o, PPrecision p) Strict => NumberOps.Strict;
+    private static (number.Overflow o, number.Precision p) Lenient => NumberOps.Lenient;
+    private static (number.Overflow o, number.Precision p) Strict => NumberOps.Strict;
 
     [Test] public async Task Add_IntInt_ReturnsInt()
     {
@@ -34,12 +32,12 @@ public class NumberArithmeticTests
         // Way 3: decimal⊕double under the DEFAULT (Lenient) precision errors —
         // the developer must choose. The Double result needs the explicit override.
         => await Assert.That(NumberOps.Multiply(number.From(2m), number.From(3.0),
-            (POverflow.Promote, PPrecision.Double))!.Kind).IsEqualTo(PKind.Double);
+            (number.Overflow.Promote, number.Precision.Double))!.Kind).IsEqualTo(PKind.Double);
 
     [Test] public async Task Mul_DecimalDouble_PrecisionEqualsDecimal_ReturnsDecimal()
     {
         var r = NumberOps.Multiply(number.From(2m), number.From(3.0),
-            (POverflow.Promote, PPrecision.Decimal));
+            (number.Overflow.Promote, number.Precision.Decimal));
         await Assert.That(r.Kind).IsEqualTo(PKind.Decimal);
     }
 

@@ -7,7 +7,7 @@ namespace app.type.number;
 /// integers compute on a <c>BigInteger</c> carrier and narrow to the smallest
 /// kind that fits (Promote) or stay strict-width (Throw); binary floats compute
 /// in <c>double</c>; decimals in <c>decimal</c>; the <c>double ⊕ decimal</c> mix
-/// is resolved by <see cref="PrecisionMode"/> (Error by default). Each method
+/// is resolved by <see cref="Precision"/> (Error by default). Each method
 /// returns the <see cref="@this"/> VALUE and THROWS a keyed AppException on error
 /// (no context here to born a Data); the context-ful <c>math.*</c> handler turns the
 /// throw into a native plang Data error.
@@ -18,20 +18,21 @@ public sealed partial class @this
     public const long MaxPowerExponent = 64;
 
     // Instance ops — the op on the carrier (a.Add(b, …)); the other operand + the overflow/
-    // precision settings ride as whole values (OBP: no static Op(a.Value, b.Value, policy)).
-    public @this Add(@this b, OverflowMode overflow, PrecisionMode precision)
+    // precision settings ride as whole plang values (choice). The op unwraps them at the leaf
+    // (the internal DoOp takes the enum; choice → enum is implicit) — no decompose at the call.
+    public @this Add(@this b, global::app.type.choice.@this<Overflow> overflow, global::app.type.choice.@this<Precision> precision)
         => Wrap(() => DoOp(this, b, ArithOp.Add, overflow, precision));
-    public @this Subtract(@this b, OverflowMode overflow, PrecisionMode precision)
+    public @this Subtract(@this b, global::app.type.choice.@this<Overflow> overflow, global::app.type.choice.@this<Precision> precision)
         => Wrap(() => DoOp(this, b, ArithOp.Sub, overflow, precision));
-    public @this Multiply(@this b, OverflowMode overflow, PrecisionMode precision)
+    public @this Multiply(@this b, global::app.type.choice.@this<Overflow> overflow, global::app.type.choice.@this<Precision> precision)
         => Wrap(() => DoOp(this, b, ArithOp.Mul, overflow, precision));
-    public @this Modulo(@this b, OverflowMode overflow, PrecisionMode precision)
+    public @this Modulo(@this b, global::app.type.choice.@this<Overflow> overflow, global::app.type.choice.@this<Precision> precision)
         => Wrap(() => DoOp(this, b, ArithOp.Mod, overflow, precision));
-    public @this Divide(@this b, OverflowMode overflow, PrecisionMode precision)
+    public @this Divide(@this b, global::app.type.choice.@this<Overflow> overflow, global::app.type.choice.@this<Precision> precision)
         => Wrap(() => DoDivide(this, b, precision));
-    public @this IntDivide(@this b, OverflowMode overflow, PrecisionMode precision)
+    public @this IntDivide(@this b, global::app.type.choice.@this<Overflow> overflow, global::app.type.choice.@this<Precision> precision)
         => Wrap(() => DoIntDivide(this, b, overflow));
-    public @this Power(@this exponent, OverflowMode overflow, PrecisionMode precision)
+    public @this Power(@this exponent, global::app.type.choice.@this<Overflow> overflow, global::app.type.choice.@this<Precision> precision)
         => Wrap(() => DoPower(this, exponent, overflow, precision));
 
     // A pure numeric op returns its VALUE and THROWS a keyed AppException on error. It has no
@@ -65,7 +66,7 @@ public sealed partial class @this
 
     internal enum ArithOp { Add, Sub, Mul, Mod }
 
-    private static @this DoOp(@this a, @this b, ArithOp op, OverflowMode overflow, PrecisionMode precision)
+    private static @this DoOp(@this a, @this b, ArithOp op, Overflow overflow, Precision precision)
     {
         Category ca = a.Cat, cb = b.Cat;
 
@@ -74,7 +75,7 @@ public sealed partial class @this
         {
             BigInteger r = BigOp(a.AsBigInteger(), b.AsBigInteger(), op);
             NumberKind floor = WiderInteger(a.Kind, b.Kind);
-            return overflow == OverflowMode.Throw ? NarrowStrict(r, floor) : NarrowInteger(r, floor);
+            return overflow == Overflow.Throw ? NarrowStrict(r, floor) : NarrowInteger(r, floor);
         }
 
         bool aBF = ca == Category.BinaryFloat, bBF = cb == Category.BinaryFloat;
@@ -84,8 +85,8 @@ public sealed partial class @this
         if ((aBF && bDec) || (aDec && bBF))
             return precision switch
             {
-                PrecisionMode.Double => DoubleOp(a.AsDouble(), b.AsDouble(), op),
-                PrecisionMode.Decimal => DecimalOp(a.AsDecimal(), b.AsDecimal(), op),
+                Precision.Double => DoubleOp(a.AsDouble(), b.AsDouble(), op),
+                Precision.Decimal => DecimalOp(a.AsDecimal(), b.AsDecimal(), op),
                 _ => throw new PrecisionMixException(),
             };
 
@@ -123,7 +124,7 @@ public sealed partial class @this
         _ => throw new System.InvalidOperationException(),
     };
 
-    private static @this DoDivide(@this a, @this b, PrecisionMode precision)
+    private static @this DoDivide(@this a, @this b, Precision precision)
     {
         Category ca = a.Cat, cb = b.Cat;
         bool aBF = ca == Category.BinaryFloat, bBF = cb == Category.BinaryFloat;
@@ -132,8 +133,8 @@ public sealed partial class @this
         if ((aBF && bDec) || (aDec && bBF))
             return precision switch
             {
-                PrecisionMode.Double => DivDouble(a, b),
-                PrecisionMode.Decimal => DivDecimal(a, b),
+                Precision.Double => DivDouble(a, b),
+                Precision.Decimal => DivDecimal(a, b),
                 _ => throw new PrecisionMixException(),
             };
 
@@ -153,7 +154,7 @@ public sealed partial class @this
         return From(a.AsDecimal() / bd);
     }
 
-    private static @this DoIntDivide(@this a, @this b, OverflowMode overflow)
+    private static @this DoIntDivide(@this a, @this b, Overflow overflow)
     {
         // Truncating division — explicit C# semantics. Integer operands only;
         // result stays integer (narrowed per policy from the wider operand kind).
@@ -163,10 +164,10 @@ public sealed partial class @this
         if (bb == BigInteger.Zero) throw new System.DivideByZeroException();
         BigInteger r = a.AsBigInteger() / bb;
         NumberKind floor = WiderInteger(a.Kind, b.Kind);
-        return overflow == OverflowMode.Throw ? NarrowStrict(r, floor) : NarrowInteger(r, floor);
+        return overflow == Overflow.Throw ? NarrowStrict(r, floor) : NarrowInteger(r, floor);
     }
 
-    private static @this DoPower(@this a, @this exp, OverflowMode overflow, PrecisionMode precision)
+    private static @this DoPower(@this a, @this exp, Overflow overflow, Precision precision)
     {
         // Fractional exponent ⇒ double IEEE math.
         bool exponentIsFractional =
@@ -179,7 +180,7 @@ public sealed partial class @this
 
         if (expL < 0)
         {
-            if (precision == PrecisionMode.Decimal && a.Cat != Category.BinaryFloat)
+            if (precision == Precision.Decimal && a.Cat != Category.BinaryFloat)
             {
                 EnsureExponentInRange(expL);
                 decimal acc = 1m, baseD = a.AsDecimal();
@@ -195,7 +196,7 @@ public sealed partial class @this
             EnsureExponentInRange(expL);
             BigInteger r = BigInteger.Pow(a.AsBigInteger(), (int)expL);
             NumberKind floor = a.Kind;
-            return overflow == OverflowMode.Throw ? NarrowStrict(r, floor) : NarrowInteger(r, floor);
+            return overflow == Overflow.Throw ? NarrowStrict(r, floor) : NarrowInteger(r, floor);
         }
 
         // Decimal base, non-negative integer exponent — repeated decimal multiply.

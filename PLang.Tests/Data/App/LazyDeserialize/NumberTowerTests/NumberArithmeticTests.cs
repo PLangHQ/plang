@@ -4,8 +4,6 @@ using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using number = global::app.type.number.@this;
 using PKind = global::app.type.number.NumberKind;
-using POverflow = global::app.type.number.OverflowMode;
-using PPrecision = global::app.type.number.PrecisionMode;
 
 namespace PLang.Tests.App.LazyDeserialize.NumberTowerTests;
 
@@ -14,7 +12,7 @@ namespace PLang.Tests.App.LazyDeserialize.NumberTowerTests;
 // double⊕decimal errors by default.
 public class NumberArithmeticTests
 {
-    private static (POverflow o, PPrecision p) Lenient => NumberOps.Lenient;
+    private static (number.Overflow o, number.Precision p) Lenient => NumberOps.Lenient;
 
     [Test] public async Task IntPlusInt_StaysInt()
     {

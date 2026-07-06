@@ -174,7 +174,7 @@ public sealed partial class @this
         return From(v); // BigInteger catch-all
     }
 
-    /// <summary>Strict-width (OverflowMode.Throw): keep the floor kind; overflow throws.</summary>
+    /// <summary>Strict-width (Overflow.Throw): keep the floor kind; overflow throws.</summary>
     private static @this NarrowStrict(BigInteger v, NumberKind floor)
     {
         var r = IntegerLadder[LadderIndex(floor)];

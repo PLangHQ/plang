@@ -10,11 +10,11 @@ namespace app.type.number;
 /// </summary>
 public sealed partial class @this
 {
-    public static @this operator +(@this a, @this b) => DoOp(a, b, ArithOp.Add, OverflowMode.Promote, PrecisionMode.Error);
-    public static @this operator -(@this a, @this b) => DoOp(a, b, ArithOp.Sub, OverflowMode.Promote, PrecisionMode.Error);
-    public static @this operator *(@this a, @this b) => DoOp(a, b, ArithOp.Mul, OverflowMode.Promote, PrecisionMode.Error);
-    public static @this operator /(@this a, @this b) => DoDivide(a, b, PrecisionMode.Error);
-    public static @this operator %(@this a, @this b) => DoOp(a, b, ArithOp.Mod, OverflowMode.Promote, PrecisionMode.Error);
+    public static @this operator +(@this a, @this b) => DoOp(a, b, ArithOp.Add, Overflow.Promote, Precision.Error);
+    public static @this operator -(@this a, @this b) => DoOp(a, b, ArithOp.Sub, Overflow.Promote, Precision.Error);
+    public static @this operator *(@this a, @this b) => DoOp(a, b, ArithOp.Mul, Overflow.Promote, Precision.Error);
+    public static @this operator /(@this a, @this b) => DoDivide(a, b, Precision.Error);
+    public static @this operator %(@this a, @this b) => DoOp(a, b, ArithOp.Mod, Overflow.Promote, Precision.Error);
 
     public static bool operator ==(@this? a, @this? b)
     {
