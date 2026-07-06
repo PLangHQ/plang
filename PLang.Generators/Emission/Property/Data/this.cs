@@ -66,6 +66,55 @@ public sealed record @this(
     /// <summary>Object-initializer fragment binding the resolved local to the init property.</summary>
     public string InitAssignment => $"{Name} = {Local}";
 
+    // ── Raw-args ctor (C# composition): `new request(context, url: …, method: POST)` ──
+
+    /// <summary>camelCase named-arg for the raw-args ctor (Url → url, TimeoutInSec → timeoutInSec).
+    /// A C# keyword (Namespace → namespace) is <c>@</c>-escaped so the signature stays valid.</summary>
+    public string CtorArg
+    {
+        get
+        {
+            var camel = Name.Length > 0 ? char.ToLowerInvariant(Name[0]) + Name.Substring(1) : Name;
+            return Microsoft.CodeAnalysis.CSharp.SyntaxFacts.GetKeywordKind(camel) != Microsoft.CodeAnalysis.CSharp.SyntaxKind.None
+                ? "@" + camel : camel;
+        }
+    }
+
+    /// <summary>Raw CLR type for the ctor signature — typed for the common cases (string/bool/enum),
+    /// <c>object</c> for the rest (the value is boxed → Data → As&lt;T&gt; in the body).</summary>
+    public string CtorClrType
+    {
+        get
+        {
+            if (IsPlainData || IsName) return IsName ? "string" : "object";
+            if (InnerType == "global::app.type.text.@this") return "string";
+            if (InnerType == "global::app.type.@bool.@this") return "bool";
+            const string cp = "global::app.type.choice.@this<";
+            if (InnerType != null && InnerType.StartsWith(cp, System.StringComparison.Ordinal))
+                return InnerType.Substring(cp.Length, InnerType.Length - cp.Length - 1);
+            return "object";
+        }
+    }
+
+    /// <summary>Required = a non-nullable value slot with no [Default] (compiler forces the caller to
+    /// pass it). Optional otherwise — omitted args resolve through the seam (setting → [Default]).</summary>
+    public bool CtorRequired => !IsNullable && !IsPlainData && DefaultValue == null;
+
+    /// <summary>Ctor param fragment: <c>string url</c> (required) or <c>HttpMethod? method = null</c> (optional).</summary>
+    public string CtorSignature => CtorRequired ? $"{CtorClrType} {CtorArg}" : $"{CtorClrType}? {CtorArg} = null";
+
+    /// <summary>Ctor body line: wrap the provided arg into the param's Data with __ctx (born-with-context).</summary>
+    public string CtorAssign
+    {
+        get
+        {
+            var wrap = IsPlainData
+                ? $"new global::app.data.@this(\"{ParamName}\", {CtorArg}, context: __ctx)"
+                : $"new global::app.data.@this(\"{ParamName}\", {CtorArg}, context: __ctx).As<{InnerType}>()";
+            return CtorRequired ? $"{Name} = {wrap};" : $"if ({CtorArg} is not null) {Name} = {wrap};";
+        }
+    }
+
     /// <summary>
     /// Emits this param's resolution inside Resolve(): decode the .pr parameter's
     /// %var%/literal form (async, in this execution's context) into a local. A resolution

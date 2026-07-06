@@ -47,6 +47,7 @@ public static class @this
         EmitMarkers(sb, info);
         EmitInstanceState(sb);
         EmitProperties(sb, info);
+        EmitRawArgsCtor(sb, info);
         EmitDataAndErrorHelpers(sb, info);
         EmitResolve(sb, info);
         EmitAttach(sb, info);
@@ -103,6 +104,29 @@ public static class @this
     {
         foreach (var prop in info.Properties)
             prop.EmitProperty(sb);
+    }
+
+    /// <summary>
+    /// A C#-composition ctor: params as raw, typed, named optional args wrapped with __ctx
+    /// (born-with-context). Required = non-nullable + no [Default] (compiler forces it); the rest
+    /// are optional and resolve through the seam (setting → [Default]) when omitted. Required args
+    /// come first (C# requires non-default params before defaulted). Skipped when there are no
+    /// params (the primary ctor already covers `new X(context)`).
+    /// </summary>
+    private static void EmitRawArgsCtor(StringBuilder sb, ActionClassInfo info)
+    {
+        var props = info.Properties.OfType<DataProperty>().ToList();
+        if (props.Count == 0) return;
+
+        var ordered = props.Where(p => p.CtorRequired).Concat(props.Where(p => !p.CtorRequired)).ToList();
+        var sig = string.Join(", ", ordered.Select(p => p.CtorSignature));
+        sb.AppendLine($"        /// <summary>C#-composition ctor — provide params as named args; omitted ones resolve via the seam.</summary>");
+        sb.AppendLine($"        public {info.ClassName}(global::app.actor.context.@this __ctx, {sig}) : this(__ctx)");
+        sb.AppendLine("        {");
+        foreach (var p in ordered)
+            sb.AppendLine($"            {p.CtorAssign}");
+        sb.AppendLine("        }");
+        sb.AppendLine();
     }
 
     private static void EmitDataAndErrorHelpers(StringBuilder sb, ActionClassInfo info)
