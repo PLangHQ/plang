@@ -62,7 +62,6 @@ public sealed class OpenAi : ILlm
     {
         var app = action.Context.App;
         var context = action.Context;
-        var config = app.Config.For<http.Config>(context);
 
         // --- Config ---
         var settings = await app.SettingsStore;

@@ -12,5 +12,4 @@ public interface IHttp : ICode, IDisposable
     Task<data.@this> SendAsync(request action);
     Task<data.@this> DownloadAsync(download action);
     Task<data.@this> UploadAsync(upload action);
-    data.@this Configure(configure action);
 }

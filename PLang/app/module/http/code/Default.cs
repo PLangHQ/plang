@@ -29,7 +29,7 @@ public sealed class Default : IHttp
     public string? Source { get; set; }
 
     private readonly HttpMessageHandler? _handler;
-    private HttpClient? _client;
+    private readonly Dictionary<(global::app.type.@bool.@this follow, global::app.type.number.@this max), HttpClient> _clients = new();
 
     public Default() { }
 
@@ -75,21 +75,23 @@ public sealed class Default : IHttp
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
         var app = action.Context.App;
-        var config = app.Config.For<Config>(action.Context);
+        // T? convention — plang-null pass converts these !/Clr reads (value-door-plang-null branch)
+        var unsigned = (await action.Unsigned.Value())!.Value;
+        var timeout = (await action.TimeoutInSec.Value())!.ToDouble();
+        var contentType = (await action.ContentType.Value())!.Clr<string>()!;
+        var encoding = (await action.Encoding.Value())!.Clr<string>()!;
+        var followRedirects = (await action.FollowRedirects.Value())!;
+        var maxRedirects = (await action.MaxRedirects.Value())!;
 
-        var unsigned = ((await action.Unsigned.Value())?.Value ?? false) || config.Resolve("Unsigned", false);
-        var timeout = action.TimeoutInSec == null ? config.Resolve("TimeoutInSec", 30)
-            : (await action.TimeoutInSec.Value())?.ToDouble() ?? 0;
-        if (timeout <= 0) timeout = config.Resolve("TimeoutInSec", 30);
-        string contentType = (action.ContentType == null ? null : await action.ContentType.Value()) is { } ctv ? ctv.Clr<string>()! : config.Resolve("ContentType", "application/json");
-        var encoding = (await action.Encoding.Value())?.Clr<string>() ?? config.Resolve("Encoding", "utf-8");
-
-        var urlResult = ResolveUrl((await action.Url.Value())!.Clr<string>()!, config, action.Context);
+        var baseUrl = (await action.BaseUrl.Value())?.Clr<string>();
+        var urlResult = ResolveUrl((await action.Url.Value())!.Clr<string>()!, baseUrl, action.Context);
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = (await urlResult.Value())!.Clr<string>()!;
 
+        var defaultHeaders = action.DefaultHeaders == null ? null
+            : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.DefaultHeaders.Value());
         var headers = MergeHeaders(action.Headers == null ? null
-            : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.Headers.Value()), config);
+            : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.Headers.Value()), defaultHeaders);
 
         // Build body
         HttpContent? httpContent = null;
@@ -139,17 +141,17 @@ public sealed class Default : IHttp
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(action.Context.CancellationToken);
         cts.CancelAfter(TimeSpan.FromSeconds(timeout));
 
-        var response = await SendHttpAsync(requestMessage, completionOption, config, cts.Token);
+        var response = await SendHttpAsync(requestMessage, completionOption, followRedirects, maxRedirects, cts.Token);
 
         if ((action.OnStream == null ? null : await action.OnStream.Value()) != null)
         {
-            var maxSSEBuffer = config.Resolve("MaxSSEBufferSize", 10L * 1024 * 1024);
+            var maxSSEBuffer = (await action.MaxSSEBufferSize.Value())!.ToInt64();
             return await HandleStreamingAsync(
                 response, requestMessage, (await action.OnStream.Value()), (action.StreamAs == null ? null : await action.StreamAs.Value())?.Value,
                 unsigned, app, action.Context, maxSSEBuffer, cts.Token);
         }
 
-        var maxResponseSize = config.Resolve("MaxResponseSize", DefaultMaxResponseSize);
+        var maxResponseSize = (await action.MaxResponseSize.Value())!.ToInt64();
 
         using (response)
         {
@@ -160,25 +162,28 @@ public sealed class Default : IHttp
     public Task<data.@this> DownloadAsync(download action) => ExecuteHttpAsync(action.Context, async () =>
     {
         var app = action.Context.App;
-        var config = app.Config.For<Config>(action.Context);
+        // T? convention — plang-null pass converts these (value-door-plang-null branch)
+        var unsigned = (await action.Unsigned.Value())!.Value;
+        var timeout = (await action.TimeoutInSec.Value())!.ToDouble();
+        var followRedirects = (await action.FollowRedirects.Value())!;
+        var maxRedirects = (await action.MaxRedirects.Value())!;
 
-        var unsigned = ((await action.Unsigned.Value())?.Value ?? false) || config.Resolve("Unsigned", false);
-        var timeout = action.TimeoutInSec == null ? config.Resolve("TimeoutInSec", 30)
-            : (await action.TimeoutInSec.Value())?.ToDouble() ?? 0;
-        if (timeout <= 0) timeout = config.Resolve("TimeoutInSec", 30);
-        var urlResult = ResolveUrl((await action.Url.Value())!.Clr<string>()!, config, action.Context);
+        var baseUrl = (await action.BaseUrl.Value())?.Clr<string>();
+        var urlResult = ResolveUrl((await action.Url.Value())!.Clr<string>()!, baseUrl, action.Context);
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = (await urlResult.Value())!.Clr<string>()!;
 
+        var defaultHeaders = action.DefaultHeaders == null ? null
+            : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.DefaultHeaders.Value());
         var headers = MergeHeaders(action.Headers == null ? null
-            : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.Headers.Value()), config);
+            : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.Headers.Value()), defaultHeaders);
         var requestMessage = new HttpRequestMessage(SysHttpMethod.Get, resolvedUrl);
         ApplyHeaders(requestMessage, headers);
 
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(action.Context.CancellationToken);
         cts.CancelAfter(TimeSpan.FromSeconds(timeout));
 
-        using var response = await SendHttpAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, config, cts.Token);
+        using var response = await SendHttpAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, followRedirects, maxRedirects, cts.Token);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -187,7 +192,7 @@ public sealed class Default : IHttp
         }
 
         var totalBytes = response.Content.Headers.ContentLength;
-        var maxDownloadSize = config.Resolve("MaxDownloadSize", DefaultMaxResponseSize);
+        var maxDownloadSize = (await action.MaxDownloadSize.Value())!.ToInt64();
         using var responseStream = await response.Content.ReadAsStreamAsync(cts.Token);
         using var buffer = new MemoryStream();
 
@@ -201,20 +206,22 @@ public sealed class Default : IHttp
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
         var app = action.Context.App;
-        var config = app.Config.For<Config>(action.Context);
+        // T? convention — plang-null pass converts these (value-door-plang-null branch)
+        var unsigned = (await action.Unsigned.Value())!.Value;
+        var timeout = (await action.TimeoutInSec.Value())!.ToDouble();
+        var encoding = (await action.Encoding.Value())!.Clr<string>()!;
+        var followRedirects = (await action.FollowRedirects.Value())!;
+        var maxRedirects = (await action.MaxRedirects.Value())!;
 
-        var unsigned = ((await action.Unsigned.Value())?.Value ?? false) || config.Resolve("Unsigned", false);
-        var timeout = action.TimeoutInSec == null ? config.Resolve("TimeoutInSec", 30)
-            : (await action.TimeoutInSec.Value())?.ToDouble() ?? 0;
-        if (timeout <= 0) timeout = config.Resolve("TimeoutInSec", 30);
-        var encoding = (await action.Encoding.Value())?.Clr<string>() ?? config.Resolve("Encoding", "utf-8");
-
-        var urlResult = ResolveUrl((await action.Url.Value())!.Clr<string>()!, config, action.Context);
+        var baseUrl = (await action.BaseUrl.Value())?.Clr<string>();
+        var urlResult = ResolveUrl((await action.Url.Value())!.Clr<string>()!, baseUrl, action.Context);
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = (await urlResult.Value())!.Clr<string>()!;
 
+        var defaultHeaders = action.DefaultHeaders == null ? null
+            : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.DefaultHeaders.Value());
         var headers = MergeHeaders(action.Headers == null ? null
-            : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.Headers.Value()), config);
+            : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.Headers.Value()), defaultHeaders);
 
         var (httpContent, contentErr) = await ResolveUploadContentAsync(action, app, encoding);
         if (contentErr != null) return action.Context.Error(contentErr);
@@ -226,23 +233,11 @@ public sealed class Default : IHttp
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(action.Context.CancellationToken);
         cts.CancelAfter(TimeSpan.FromSeconds(timeout));
 
-        using var response = await SendHttpAsync(requestMessage, HttpCompletionOption.ResponseContentRead, config, cts.Token);
+        using var response = await SendHttpAsync(requestMessage, HttpCompletionOption.ResponseContentRead, followRedirects, maxRedirects, cts.Token);
 
-        var maxResponseSize = config.Resolve("MaxResponseSize", DefaultMaxResponseSize);
+        var maxResponseSize = (await action.MaxResponseSize.Value())!.ToInt64();
         return await ParseResponseAsync(response, requestMessage, unsigned, app, action.Context, maxResponseSize, sw.Elapsed);
     });
-
-    public data.@this Configure(configure action)
-    {
-        // Redirect config can't change after first request (SocketsHttpHandler is immutable)
-        if (_client != null && (action.FollowRedirects?.Peek() is { IsNull: false } || action.MaxRedirects?.Peek() is { IsNull: false }))
-            return action.Context.Error(new ServiceError(
-                "Cannot change FollowRedirects/MaxRedirects after first HTTP request",
-                "ConfigLocked", 409));
-
-        action.Context.App.Config.Apply<Config>(action, action.Context, (action.Default.Peek() as global::app.type.@bool.@this)?.Value ?? false);
-        return action.Context.Ok();
-    }
 
     // --- Unified error handling ---
 
@@ -330,38 +325,47 @@ public sealed class Default : IHttp
 
     private Task<HttpResponseMessage> SendHttpAsync(
         HttpRequestMessage request, HttpCompletionOption completionOption,
-        ModuleView<Config> config, CancellationToken ct)
-    {
-        _client ??= CreateClient(config);
-        return _client.SendAsync(request, completionOption, ct);
-    }
+        global::app.type.@bool.@this followRedirects, global::app.type.number.@this maxRedirects, CancellationToken ct)
+        => Client(followRedirects, maxRedirects).SendAsync(request, completionOption, ct);
 
     public void Dispose()
     {
-        _client?.Dispose();
-        _client = null;
+        foreach (var client in _clients.Values) client.Dispose();
+        _clients.Clear();
     }
 
-    private HttpClient CreateClient(ModuleView<Config> config) => _handler != null
-        ? new HttpClient(_handler, disposeHandler: false)
-        : new HttpClient(new SocketsHttpHandler
+    // One HttpClient per distinct (followRedirects, maxRedirects) — the whole plang values are the
+    // key (both value-equal). Redirect policy is baked into the handler at construction, so a client
+    // is reused across requests with the same policy (socket reuse / pooling) while each request
+    // still picks its own. The only lowering to CLR is at the SocketsHttpHandler (BCL) boundary.
+    private HttpClient Client(global::app.type.@bool.@this followRedirects, global::app.type.number.@this maxRedirects)
+    {
+        var key = (followRedirects, maxRedirects);
+        if (!_clients.TryGetValue(key, out var client))
         {
-            PooledConnectionLifetime = TimeSpan.FromMinutes(2),
-            AllowAutoRedirect = config.Resolve("FollowRedirects", true),
-            MaxAutomaticRedirections = config.Resolve("MaxRedirects", 10)
-        });
+            client = _handler != null
+                ? new HttpClient(_handler, disposeHandler: false)
+                : new HttpClient(new SocketsHttpHandler
+                {
+                    PooledConnectionLifetime = TimeSpan.FromMinutes(2),
+                    AllowAutoRedirect = followRedirects.Value,
+                    MaxAutomaticRedirections = maxRedirects.ToInt32()
+                });
+            _clients[key] = client;
+        }
+        return client;
+    }
     // --- Header helpers ---
 
     private static Dictionary<string, string> MergeHeaders(
         Dictionary<string, object>? stepHeaders,
-        ModuleView<Config> config)
+        Dictionary<string, object>? defaultHeaders)
     {
         var merged = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        var defaults = config.Resolve<Dictionary<string, object>?>("DefaultHeaders", null);
-        if (defaults != null)
+        if (defaultHeaders != null)
         {
-            foreach (var kvp in defaults)
+            foreach (var kvp in defaultHeaders)
                 merged[kvp.Key] = kvp.Value?.ToString() ?? "";
         }
 
@@ -397,10 +401,8 @@ public sealed class Default : IHttp
 
     // --- URL resolution ---
 
-    private static data.@this<global::app.type.text.@this> ResolveUrl(string url, ModuleView<Config> config, actor.context.@this context)
+    private static data.@this<global::app.type.text.@this> ResolveUrl(string url, string? baseUrl, actor.context.@this context)
     {
-        var baseUrl = config.Resolve<string?>("BaseUrl", null);
-
         if (url.StartsWith('/'))
         {
             if (string.IsNullOrEmpty(baseUrl))

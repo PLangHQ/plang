@@ -37,52 +37,9 @@ public class DefaultHttpProviderTests
 
     private global::app.actor.context.@this Ctx => _app.System.Context;
 
-    [Test]
-    public async Task Provider_Configure_AcceptsValidConfig()
-    {
-        var provider = new Default();
-        var action = new configure(Ctx) { FollowRedirects = (global::app.type.@bool.@this)true,
-            MaxRedirects = (global::app.type.number.@this)5
-        };
-
-        var result = provider.Configure(action);
-
-        await result.IsSuccess();
-        provider.Dispose();
-    }
-
-    [Test]
-    public async Task Provider_Configure_SetsTimeout()
-    {
-        var provider = new Default();
-        var action = new configure(Ctx) { TimeoutInSec = (global::app.type.number.@this)60
-        };
-
-        var result = provider.Configure(action);
-
-        await result.IsSuccess();
-        // Verify via settings scope
-        var view = _app.Config.For<Config>(Ctx);
-        var timeout = view.Resolve("TimeoutInSec", 30);
-        await Assert.That(timeout).IsEqualTo(60);
-        provider.Dispose();
-    }
-
-    [Test]
-    public async Task Provider_Configure_SetsBaseUrl()
-    {
-        var provider = new Default();
-        var action = new configure(Ctx) { BaseUrl = (global::app.type.text.@this)"https://api.example.com"
-        };
-
-        var result = provider.Configure(action);
-
-        await result.IsSuccess();
-        var view = _app.Config.For<Config>(Ctx);
-        var baseUrl = view.Resolve<string?>("BaseUrl", null);
-        await Assert.That(baseUrl).IsEqualTo("https://api.example.com");
-        provider.Dispose();
-    }
+    // (Removed Provider_Configure_* tests — the `configure` action dissolved; redirect/timeout/
+    // baseurl are now per-request `[Default]` properties resolved by the setting cascade, and the
+    // per-(follow,max) client cache removed the "can't change after first request" guard.)
 
     [Test]
     public async Task Provider_Dispose_DoesNotThrow()

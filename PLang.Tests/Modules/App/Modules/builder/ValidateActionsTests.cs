@@ -244,26 +244,6 @@ public class ValidateActionsTests
         await Assert.That((await leftParam.Value())?.ToString()).IsEqualTo("%flag%");
     }
 
-    [Test]
-    public async Task ValidateActions_ConfigureDefaults_FromIConfigureT()
-    {
-        // http.configure implements IConfigure<Config> — defaults come from Config instance, not [Default]
-        var actions = new StepActions
-        {
-            new Action
-            {
-                Module = "http",
-                ActionName = "configure",
-                Parameters = new List<Data>()
-            }
-        };
-
-        var action = new validate(_app.User.Context) { Actions = actions };
-        var result = await _app.RunAction(action, _app.User.Context);
-
-        await result.IsSuccess();
-        var httpConfigure = actions[0];
-        await Assert.That(httpConfigure.Defaults).IsNotNull();
-        await Assert.That(httpConfigure.Defaults!.Count).IsGreaterThan(0);
-    }
+    // (Removed ValidateActions_ConfigureDefaults_FromIConfigureT — http.configure + IConfigure<Config>
+    // dissolved; http defaults are per-request [Default] props resolved by the setting cascade.)
 }
