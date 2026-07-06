@@ -679,7 +679,7 @@ public class RequestActionTests
             Content = new StringContent(new string('x', 100), Encoding.UTF8, "application/json")
         });
 
-        var action = new request(Ctx) { Url = (global::app.type.text.@this)"https://api.example.com/big", Unsigned = (global::app.type.@bool.@this)true };
+        var action = new request(Ctx, url: "https://api.example.com/big", unsigned: true);
         var result = await _app.RunAction(action, Ctx);
 
         await result.IsFailure();
@@ -700,7 +700,7 @@ public class RequestActionTests
             }
         });
 
-        var action = new request(Ctx) { Url = (global::app.type.text.@this)"https://api.example.com/big-binary", Unsigned = (global::app.type.@bool.@this)true };
+        var action = new request(Ctx, url: "https://api.example.com/big-binary", unsigned: true);
         var result = await _app.RunAction(action, Ctx);
 
         await result.IsFailure();

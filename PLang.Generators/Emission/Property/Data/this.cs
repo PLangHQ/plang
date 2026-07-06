@@ -103,7 +103,9 @@ public sealed record @this(
     /// <summary>Ctor param fragment: <c>string url</c> (required) or <c>HttpMethod? method = null</c> (optional).</summary>
     public string CtorSignature => CtorRequired ? $"{CtorClrType} {CtorArg}" : $"{CtorClrType}? {CtorArg} = null";
 
-    /// <summary>Ctor body line: wrap the provided arg into the param's Data with __ctx (born-with-context).</summary>
+    /// <summary>Ctor body line: wrap the provided arg into the param's Data with __ctx (born-with-context).
+    /// An UNSET optional is set to Uninitialized (not the field-init [Default]) so a Seed lets the
+    /// seam's setting/[Default] win — the field-init default would otherwise mask "the caller didn't set this".</summary>
     public string CtorAssign
     {
         get
@@ -111,7 +113,11 @@ public sealed record @this(
             var wrap = IsPlainData
                 ? $"new global::app.data.@this(\"{ParamName}\", {CtorArg}, context: __ctx)"
                 : $"new global::app.data.@this(\"{ParamName}\", {CtorArg}, context: __ctx).As<{InnerType}>()";
-            return CtorRequired ? $"{Name} = {wrap};" : $"if ({CtorArg} is not null) {Name} = {wrap};";
+            if (CtorRequired) return $"{Name} = {wrap};";
+            var uninit = IsPlainData
+                ? $"global::app.data.@this.Uninitialized(\"{ParamName}\")"
+                : $"global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\")";
+            return $"{Name} = {CtorArg} is not null ? {wrap} : {uninit};";
         }
     }
 
