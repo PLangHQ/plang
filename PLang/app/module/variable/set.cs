@@ -127,6 +127,16 @@ public partial class Set : IContext, IBuildValidatable
                     $"Variable reference '{name.RawValue}' is not a valid name — only a single '!' separates a variable from its Property key, and the suffix may not appear after '.' or '['.",
                     "InvalidVariableReference", 400));
 
+        // %!path% write → a setting on context.Setting (the write side of the setting front door),
+        // not a variable: `set %!http.request.timeout% = 5` lands where the generator seam reads it
+        // (step → %!module.action.param% → %!module.param% → [Default]). The reserved !ask sentinel
+        // (callback resume) stays a variable. (Build-time schema validation of the path is deferred.)
+        if (name.Name.StartsWith('!') && !name.Name.StartsWith("!ask"))
+        {
+            Context.Setting.Set(name.Name[1..], await Value.Value());
+            return Value;
+        }
+
         // %x!cost% target — mutate the named variable's Properties[key]
         // instead of replacing the binding. Same action, two stores:
         // bare-name slots hit Value, !-suffixed slots hit Properties.

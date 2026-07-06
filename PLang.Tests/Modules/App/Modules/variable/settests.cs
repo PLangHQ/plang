@@ -26,6 +26,20 @@ public class SetTests
     }
 
     [Test]
+    public async Task Set_BangPath_WritesSetting_NotVariable()
+    {
+        // `set %!http.request.timeout% = 5` lands on context.Setting (where the generator seam
+        // reads it) — the write side of the setting front door — not on the variable store.
+        var context = _app.User.Context;
+        var action = TestAction.Create("variable", "set", ("name", "%!http.request.timeout%"), ("value", 5));
+        var result = await action.RunAsync(context);
+
+        await result.IsSuccess();
+        await Assert.That(context.Setting.Resolve("http.request.timeout")).IsNotNull();
+        await Assert.That((await context.Variable.GetValue("!http.request.timeout"))).IsNull();
+    }
+
+    [Test]
     public async Task Set_WithType_SetsTypeInfo()
     {
         var context = _app.User.Context;

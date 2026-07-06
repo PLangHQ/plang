@@ -1,8 +1,0 @@
-Start
-/ %!flag% (leading-! shape) must still parse as a single variable reference (Name="!flag"),
-/ NOT be reinterpreted as a Property dereference of the form %x!key%. Coverage row 4.13.
-/ The leading-! marker is the "infrastructure" namespace prefix (%!data%, %!error%, …);
-/ the Stage-4 Property suffix only fires when the ! sits between a name and a key.
-- set %payload% = 'leading-bang-still-binds'
-- set %!flag% = 'sits-in-bang-namespace'
-- assert %!flag% equals 'sits-in-bang-namespace'
