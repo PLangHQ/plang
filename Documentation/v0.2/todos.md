@@ -1652,13 +1652,19 @@ live subsystems (property walk). Design writeup + open questions for architect:
 the proper fix of the `--build={"files":[...]}` startup crash on
 `cli-app-property-override` (do not tape a 4th mechanism on top).
 
-## 2026-07-06 — Move CallStack from App to Actor (per-actor call tree)
-`App.CallStack` is app-level today ("single tree per run"; `context/this.cs:56` read-through).
-Ingi's call: it should live on the **actor** — actor-model-correct (each actor is an independent
-execution unit with its own stack; Erlang/Akka). Unlike per-*context* it does NOT fragment on
-goal calls (a `call goal` stays in the same actor); it separates only at actor boundaries
-(System bootstrap vs User execution vs a service call — distributed-tracing style). Deferred out
-of the `cli-app-property-override` setting work (kept app-level there + wired `App` for the knobs);
-this is its own observability change: move the object to `actor`, update every `App.CallStack`
-user + the `context.CallStack` read-through, decide the trace-model (per-actor vs the current
-single-tree-per-run). Context: the Stage-4 CallStack-knobs-as-settings chat, 2026-07-06.
+## 2026-07-06 — Move CallStack from App to Actor (per-actor call tree) — DONE (822fc03b8)
+Done: `CallStack` now lives on `actor.@this` (`App.CallStack` deleted); `context.CallStack`
+read-through repointed App → owning Actor; every push/read site reaches it via `context.CallStack`.
+`error.list.Push` takes the context (dropped the `_app.CurrentActor` reach). `app.goal.current`
+deleted (per-actor/per-flow fact; read via `%!goal%`). Trace-model settled as per-actor
+(actor-model-correct: cross-actor call = separate tree, Erlang-style). Regression-free full-suite diff.
+
+### Spawned follow-ups (not yet done)
+- **De-CurrentActor `App.Snapshot()`.** `Snapshot()` / `Snapshot(error)` still capture
+  `CurrentActor.CallStack` + `CurrentActor.Context.Variable`. This is a *correctness* gap under
+  per-actor stacks: capture reads CurrentActor's stack but frames push onto `context.Actor`'s —
+  if they differ, capture reads an empty stack. All three callers have a context in scope
+  (`error.Context`, `handler.Context`, `action.Context`), so thread a `context` param through
+  `App.Snapshot()` and drop CurrentActor there entirely.
+- **`--callstack` for service actors.** Executor walks System + User at startup; service actors
+  are spawned later — decide how the run-wide knob reaches them (inherit at spawn?).

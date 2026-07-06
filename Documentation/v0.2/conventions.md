@@ -68,3 +68,13 @@ Goals are loaded on demand. `Goals.GetAsync` only loads a `.pr` file when a goal
 A `.goal` file can define multiple goals (Start + sub-goals). The builder creates a separate `.pr` file per goal, named after the goal (e.g., `start.pr`, `innertest.pr`). If two `.goal` files in the same directory both define a goal named `Start`, their `.pr` files collide. Keep sub-goals in separate `.goal` files to avoid this.
 
 ---
+
+## Actor Owns Its CallStack — Reach It Via Context, Never CurrentActor
+
+The **actor** is the isolation unit: `Variables`, `Events`, `Channels`, and the **`CallStack`** are all per-actor (`actor.@this.CallStack`, born `= new()`). There is no `App.CallStack`. This is actor-model-correct: a cross-actor call starts a **separate** tree — in Erlang, A calling B doesn't graft B's stack under A's; causality across actors rides links, not a shared stack. A `call goal` stays within one actor, so the tree does **not** fragment on ordinary goal calls; it separates only at actor boundaries (System bootstrap vs User execution vs a service call).
+
+**Fork-safety is orthogonal to actor identity.** The `AsyncLocal<Call> Current` on each actor's CallStack isolates **parallel Task branches within that actor's flow** (`Task.WhenAll` on `goal.call`). That is a Task concern — it is not what makes the stack per-actor. Don't conflate "per-flow fork-safety" (AsyncLocal) with "per-actor ownership" (the object lives on the actor).
+
+**Reach the stack through the context.** Every push/read site has a `context` in scope, so use `context.CallStack` (a read-through to `context.Actor.CallStack`). **Never** reach a callstack via `App.CurrentActor` — that global "current" pointer diverges from the actor whose flow actually pushed the frames (a snapshot taken while `CurrentActor` ≠ the pushing actor captures the wrong, empty stack). `error.list.Push(error, context)` takes the context for exactly this reason. There is no `app.goal.current` — "the executing goal" is a per-actor/per-flow fact read via `%!goal%` (`context.Goal`), not an app-level collection property.
+
+---

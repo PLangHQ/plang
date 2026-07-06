@@ -16,6 +16,7 @@ Notes are split across the topic docs below. Each section title maps to its doc 
 
 ## Section → doc
 - Folder Structure & Namespaces → `conventions.md`
+- Actor owns its CallStack — reach via context, never CurrentActor → `conventions.md`
 - Goal Resolution & Relative Paths → `conventions.md`
 - Event Override (skipAction) → `builder-runtime.md`
 - Test Architecture → `test-architecture.md`
