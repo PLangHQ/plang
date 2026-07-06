@@ -119,11 +119,15 @@ why BaseUrl/DefaultHeaders/MaxResponseSize never resolve — pre-existing, fail 
 - ☑ `Test.Include`/`Exclude` confirmed `list<text>` get-only — walk descends element-wise.
 - ☑ Verified `Config`/`Setting`/`Format`/`KeepAlive`/`Event`/`Error`/`Code`/`Statics` have no public-set leaves.
 
-## Stage 5 — Validation onto the types (delete Test.Apply)  ☐
-- ☐ Delete `Test.Apply` (`test/list/this.cs:105`) — replaced by the walk + type-level validation.
-- ☐ `Test.TimeoutSeconds` → `uint` (0 = no timeout), `Parallel` → `uint` (0 = auto). No positive-checks.
-- ☐ `Test.Format` → enum/`choice<T>`; unknown value rejected by conversion. `Debug.Level`, `Debug.Llm.Output` → `choice`/enum.
-- ☐ No shorthands (§4): `[{"name":"foo"}]` only.
+## Stage 5 — Validation onto the types (delete Test.Apply)  ☑ (4035baef7)
+- ☑ Deleted `Test.Apply` + helpers — replaced by the setting walk (`Set(app.Test, dict)`); Executor wires it.
+- ☑ `TimeoutSeconds`/`Parallel` — **kept `number`, NOT `uint`** (Ingi's call: no CLR lowering). No positive-checks;
+  sentinels live at the consumer (`run.cs`: `TimeoutSeconds ≤ 0` → no timeout, `Parallel ≤ 0` → ProcessorCount).
+- ☑ `Test.Format` = `choice<Format>` (already); walk conversion rejects unknown. **Include/Exclude** made settable
+  `list<text>` + **root-fixed** the catalog so a plang `list<T>` builds through its own value-sequence ctor
+  (born-with-context) instead of an STJ deserialize fallback (`catalog/Conversion.cs` `ConvertIntoPlangList`).
+- ☑ No shorthands / no aliases: keys are property names; walk is strict on unknown keys (like every flag).
+- ⏭ **Deferred to Stage 6:** `Debug.Level`, `Debug.Llm.Output` → `choice`/enum (done alongside `Debug.Apply` removal).
 
 ## Stage 6 — Debug activation into the ctor (delete Debug.Apply)  ☐
 - ☐ `Debug.Apply` (`debug/this.cs:107`, calls `Populate` at :136) → `new Debug(context)` ctor + populate:
