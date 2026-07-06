@@ -182,21 +182,7 @@ public class Ed25519ProviderTests
 
     #endregion
 
-    #region Config Defaults
-
-    [Test]
-    public async Task Config_DefaultProvider_IsEd25519()
-    {
-        var config = new global::app.module.signing.Config();
-        await Assert.That(config.Provider).IsEqualTo("ed25519");
-    }
-
-    [Test]
-    public async Task Config_DefaultTimeoutMs_Is300000()
-    {
-        var config = new global::app.module.signing.Config();
-        await Assert.That(config.TimeoutMs).IsEqualTo(300_000L);
-    }
-
-    #endregion
+    // (Removed Config_Default* — signing.Config dissolved. Provider selection is the [Code]
+    // mechanism; the 300000ms freshness default is now verify's [Default(300_000)], resolved by
+    // the setting cascade and exercised by the freshness tests above.)
 }

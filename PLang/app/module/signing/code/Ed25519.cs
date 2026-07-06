@@ -77,10 +77,8 @@ public class Ed25519 : ISigning
         // read context isn't mid-step) — fall back to the wall clock rather than
         // NRE on an unbox of a missing runtime variable.
         var now = await (await action.Context.Variable.Get("NowUtc")).Clr<DateTimeOffset>(DateTimeOffset.UtcNow);
-        var signingSettings = app.Config.For<Config>(action.Context);
-        long effectiveTimeout = action.TimeoutMs == null
-            ? signingSettings.Resolve<long>("TimeoutMs", 300_000)
-            : (await action.TimeoutMs.Value())?.ToInt64() ?? signingSettings.Resolve<long>("TimeoutMs", 300_000);
+        // T? convention — plang-null pass converts this (value-door-plang-null branch)
+        long effectiveTimeout = (await action.TimeoutMs.Value())!.ToInt64();
         var skipFreshness = (action.SkipFreshnessCheck == null ? null : (await action.SkipFreshnessCheck.Value())?.Value) ?? false;
 
         // 1. Wire-freshness check (Created too old). Anti-replay primitive for

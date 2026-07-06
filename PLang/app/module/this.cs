@@ -539,30 +539,7 @@ public sealed class @this : IAsyncDisposable
         var actionType = GetActionType(module, actionName);
         if (actionType == null) return null;
 
-        // IConfigure<TConfig> → instantiate config, read property defaults
-        foreach (var iface in actionType.GetInterfaces())
-        {
-            if (iface.IsGenericType && iface.GetGenericTypeDefinition() == typeof(IConfigure<>))
-            {
-                var configType = iface.GetGenericArguments()[0];
-                object? instance;
-                try { instance = Activator.CreateInstance(configType); }
-                catch (MissingMethodException) { break; } // No parameterless constructor — fall through to [Default] attributes
-                if (instance == null) break;
-
-                var defaults = new List<data.@this>();
-                foreach (var prop in configType.GetProperties())
-                {
-                    if (excludeParams.Contains(prop.Name)) continue;
-                    var value = prop.GetValue(instance);
-                    if (value == null) continue;
-                    defaults.Add(new data.@this(prop.Name.ToLowerInvariant(), value, context: App.System.Context));
-                }
-                return defaults;
-            }
-        }
-
-        // [Default] attributes
+        // Defaults come from [Default] attributes on the action params (the setting cascade's floor).
         var attrDefaults = new List<data.@this>();
         foreach (var prop in actionType.GetProperties())
         {
