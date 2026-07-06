@@ -12,21 +12,21 @@ namespace PLang
 			this.startupDirectory = startupDirectory;
 		}
 
-		public async Task<app.data.@this> Run(string[] args, CancellationToken cancellationToken = default)
+		public async Task<global::app.data.@this> Run(string[] args, CancellationToken cancellationToken = default)
 		{
-			var (engine, configError) = Configure(args);
+			var (app, configError) = Configure(args);
 			if (configError != null) return configError;
-			return await engine!.Start();
+			return await app!.Start();
 		}
 
 		/// <summary>
-		/// Parses argv and prepares an App engine for execution: wires CLI parameters
+		/// Parses argv and prepares an App app for execution: wires CLI parameters
 		/// to user variables, applies --test / --debug / --build / --app config, and
 		/// sets the goalFile variable on System.Context that Start() reads.
-		/// Returns (engine, null) on success, (null, errorData) if --test= config is invalid.
+		/// Returns (app, null) on success, (null, errorData) if --test= config is invalid.
 		/// Separated from Run() so tests can observe configuration without executing Start().
 		/// </summary>
-		internal (app.@this? Engine, app.data.@this? Error) Configure(string[] args)
+		internal (global::app.@this? Engine, global::app.data.@this? Error) Configure(string[] args)
 		{
 			// Normalize: "build" or "--builder" both become the --builder flag.
 			// Legacy `plang build` form preserved as ergonomics; --builder is canonical.
@@ -39,12 +39,12 @@ namespace PLang
 			// ctor's non-interactive auto-wire and bind real stdin explicitly so
 			// `output.ask` prompts read the user's keystrokes. Ad-hoc/test apps
 			// keep the EOF-sink input from auto-wire.
-			var engine = new app.@this(startupDirectory, autoWireConsoleChannels: false);
-			app.@this.WireDefaultConsoleChannels(engine.System);
-			app.@this.WireDefaultConsoleChannels(engine.User);
-			engine.OsDirectory = engine.OsAbsolutePath;
+			var app = new global::app.@this(startupDirectory, autoWireConsoleChannels: false);
+			global::app.@this.WireDefaultConsoleChannels(app.System);
+			global::app.@this.WireDefaultConsoleChannels(app.User);
+			app.OsDirectory = app.OsAbsolutePath;
 
-			var userVars = engine.User.Context.Variable;
+			var userVars = app.User.Context.Variable;
 
 			// Route CLI parameters to user Variables
 			foreach (var param in parameters)
@@ -56,21 +56,21 @@ namespace PLang
 			// Debug mode — born under --debug (presence = enabled)
 			if (parameters.TryGetValue("!debug", out var debugValue) && debugValue is not false)
 			{
-				engine.Debug = new Debugging(engine.System.Context);
-				engine.Debug.Apply(debugValue);
+				app.Debug = new Debugging(app.System.Context);
+				app.Debug.Apply(debugValue);
 			}
 
 			// Tester mode (--tester or legacy --test)
 			if ((parameters.TryGetValue("!tester", out var testValue) && testValue is not false) ||
 			    (parameters.TryGetValue("!test", out testValue) && testValue is not false))
 			{
-				engine.Test = new global::app.test.list.@this(engine.System.Context);
+				app.Test = new global::app.test.list.@this(app.System.Context);
 				if (!parameters.ContainsKey("path"))
 					userVars.Set("path", startupDirectory);
 
 				if (testValue is IDictionary<string, object?> testDict)
 				{
-					var applyResult = engine.Test.Apply(testDict);
+					var applyResult = app.Test.Apply(testDict);
 					if (!applyResult.Success) return (null, applyResult);
 				}
 			}
@@ -79,7 +79,7 @@ namespace PLang
 			// TryConvert), not the lift-then-lower catalog.Populate.
 			if (parameters.TryGetValue("!app", out var appValue) && appValue is IDictionary<string, object?> appDict)
 			{
-				var appResult = engine.Setting.Set(engine, appDict);
+				var appResult = app.Setting.Set(app, appDict);
 				if (!appResult.Success) return (null, appResult);
 			}
 
@@ -92,7 +92,7 @@ namespace PLang
 			parameters.TryGetValue("!build", out var buildValue);
 			if (builderValue is not (null or false) || buildValue is not (null or false))
 			{
-				engine.Build = new global::app.module.builder.@this(engine.System.Context);
+				app.Build = new global::app.module.builder.@this(app.System.Context);
 				if (!parameters.ContainsKey("path"))
 					userVars.Set("path", startupDirectory);
 
@@ -101,28 +101,28 @@ namespace PLang
 				             ?? buildValue as IDictionary<string, object?>;
 				if (buildDict != null)
 				{
-					var buildResult = engine.Setting.Set(engine.Build, buildDict);
+					var buildResult = app.Setting.Set(app.Build, buildDict);
 					if (!buildResult.Success) return (null, buildResult);
 				}
 
 				// Sync cache flag to %!build.cache% for Build.goal
-				userVars.Set("!build.cache", engine.Build.Cache);
+				userVars.Set("!build.cache", app.Build.Cache);
 			}
 
 			// Set the goal file on system context — Start() reads it
 			// Tester mode routes to system test runner instead of Start.goal
-			if (engine.Test != null && goalFile == "Start.goal")
+			if (app.Test != null && goalFile == "Start.goal")
 			{
-				engine.System.Context.Variable.Set("goalFile", "/system/.build/test.pr");
-				return (engine, null);
+				app.System.Context.Variable.Set("goalFile", "/system/.build/test.pr");
+				return (app, null);
 			}
 
 			var prPath = goalFile.Replace(".goal", ".pr", StringComparison.OrdinalIgnoreCase);
 			if (!prPath.StartsWith(".build"))
 				prPath = ".build/" + prPath;
-			engine.System.Context.Variable.Set("goalFile", "/" + prPath.ToLowerInvariant());
+			app.System.Context.Variable.Set("goalFile", "/" + prPath.ToLowerInvariant());
 
-			return (engine, null);
+			return (app, null);
 		}
 	}
 }
