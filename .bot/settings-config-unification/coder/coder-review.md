@@ -153,3 +153,44 @@ The design is right and I want to build it. **Before I start I need one decision
 read door (Q2), the build-validator (Concern B), and the `configure` rewrite (Q1). My
 recommendation is schema-based routing with a separate `context.Setting` door. Concern B
 (build-validation scope) and Concern C (skip `IsPlainData`) are refinements, not blockers.
+
+---
+
+## Follow-up — the two verification checks closed (post architect fold)
+
+Architect's final spec resolves **Blocker A exactly as recommended** (schema routing split by
+direction; separate `context.Setting` door; variable resolver untouched), and adopts Concerns B
+(shared schema) + C (skip `IsPlainData`). Ran the two checks the architect left me:
+
+### CHECK 1 — subgoal propagation is **already the up-walk** (clean)
+Production child contexts are born via `CreateChild` (`actor/context/this.cs:307`):
+`new @this(App, Actor, vars, parent: this)` — sets `Parent`, leaves child `ConfigScope` **null**.
+Reads up-walk `child → Parent → root` (`config/this.cs:31`). The `ConfigScope?.Clone()` at
+`:362` is **test-only** (`:352` doc: *"Not used by production code"*). So the timing-independent
+up-walk the plan wants is already the production path — just port it onto `context.Setting`,
+don't introduce a clone. ✅ no change needed.
+
+### CHECK 2 — transient writes from `.goal` **do exist** (contradicts a plan assumption)
+The plan (§front-door) states *"nothing writes a transient from plang/CLI (they're all C#-set),
+so a `%!%` write is unambiguously a setting."* Grep says otherwise:
+
+```
+set %!ask.answer% = "Alice"    Tests/Callback/{StatelessCrossGoalResumes,AskVarsResumeBindsValue,
+                               StatefulAskMidGoalBindsValue}/Start.test.goal   (seeds the answer)
+set %!flag% = '...'            Tests/Serialization/NegationPrefixStillParses.test.goal
+                               (deliberately writes %!flag% to prove !-prefix parses as a var name)
+```
+
+Under "write → setting only, error on no-match," both break:
+- **`!ask.answer`** — the plan already marks it "retiring"; these three tests are its live
+  writers and must migrate with it (the callback seed needs a replacement path).
+- **`!flag`** — `NegationPrefixStillParses` exists *to test the sigil parse*, not a setting.
+  `set %!flag%` has no schema match → would error. Either the test is rewritten against the new
+  model, or the write-router needs a narrow allowance. **This is the load-bearing counter-example
+  to "a `%!%` write is always a setting"** — the parser test proves `%!name%` is still a legal
+  variable write shape.
+
+**Recommendation:** keep the direction-split, but the write-router's "no-match ⇒ error" needs a
+defined disposition for the *known* transient names that plang legitimately writes today
+(`!ask.answer` until it retires; the `!flag` parse test rewritten). Not a design breaker —
+a scoped list + test migration — but the "unambiguous" claim needs softening in the spec.
