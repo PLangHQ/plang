@@ -41,27 +41,27 @@ public class EdgeCaseTests
 
     private string CapturedOutput() => System.Text.Encoding.UTF8.GetString(_captureStream.ToArray());
 
-    // --test={"timeout":-5} → error returned (not silently clamped). Prevents
-    // zero-or-negative timeouts from causing immediate-cancel pathology.
+    // --test={"timeoutSeconds":-5} → accepted (the type has no positive-bound). The value is
+    // a sentinel, not an error: test.run reads TimeoutSeconds ≤ 0 as "no timeout".
     [Test]
-    public async Task Config_Timeout_Negative_RejectedWithError()
+    public async Task Config_TimeoutSeconds_NonPositive_AcceptedAsSentinel()
     {
-        var result = _app.Test.Apply(new Dictionary<string, object?> { ["timeout"] = -5 });
-        await result.IsFailure();
-        await Assert.That(result.Error!.Message).Contains("timeout");
+        var result = _app.Setting.Set(_app.Test, new Dictionary<string, object?> { ["timeoutSeconds"] = -5 });
+        await result.IsSuccess();
+        await Assert.That(_app.Test.TimeoutSeconds.ToInt32()).IsEqualTo(-5);
     }
 
-    // --test={"parallel":0} or {"parallel":-1} → error. Zero parallel means no
-    // tests run (silently useless); negative is nonsense. Both surfaced as
-    // config errors, not accepted and then silently ignored.
+    // --test={"parallel":0} or {"parallel":-1} → accepted. Zero/negative is the "auto" sentinel:
+    // test.run reads Parallel ≤ 0 as ProcessorCount. Not a config error.
     [Test]
-    public async Task Config_Parallel_ZeroOrNegative_RejectedWithError()
+    public async Task Config_Parallel_ZeroOrNegative_AcceptedAsSentinel()
     {
-        var zero = _app.Test.Apply(new Dictionary<string, object?> { ["parallel"] = 0 });
-        await zero.IsFailure();
+        var zero = _app.Setting.Set(_app.Test, new Dictionary<string, object?> { ["parallel"] = 0 });
+        await zero.IsSuccess();
+        await Assert.That(_app.Test.Parallel.ToInt32()).IsEqualTo(0);
 
-        var neg = _app.Test.Apply(new Dictionary<string, object?> { ["parallel"] = -1 });
-        await neg.IsFailure();
+        var neg = _app.Setting.Set(_app.Test, new Dictionary<string, object?> { ["parallel"] = -1 });
+        await neg.IsSuccess();
     }
 
     // A test whose goal calls test.run itself (nested runner). The inner run's
@@ -137,13 +137,12 @@ public class EdgeCaseTests
     // Retired: nested Data (Data-as-a-value) is not a supported shape — the
     // SetValueDirect courier that produced it is now guarded.
 
-    // --test={"format":"csv"} → error. Only "json" and "junit" are valid values
-    // for the Batch 11 format selector. Robustness on the config surface.
+    // --test={"format":"csv"} → error. Format is a choice<Format>; the walk's conversion
+    // rejects any value outside the closed set (json/junit).
     [Test]
     public async Task Config_Format_InvalidValue_RejectedWithError()
     {
-        var result = _app.Test.Apply(new Dictionary<string, object?> { ["format"] = "csv" });
+        var result = _app.Setting.Set(_app.Test, new Dictionary<string, object?> { ["format"] = "csv" });
         await result.IsFailure();
-        await Assert.That(result.Error!.Message).Contains("format");
     }
 }

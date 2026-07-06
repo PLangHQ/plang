@@ -70,7 +70,7 @@ namespace PLang
 
 				if (testValue is IDictionary<string, object?> testDict)
 				{
-					var applyResult = app.Test.Apply(testDict);
+					var applyResult = app.Setting.Set(app.Test, testDict);
 					if (!applyResult.Success) return (null, applyResult);
 				}
 			}

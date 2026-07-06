@@ -85,21 +85,21 @@ public class TestingClassTests
         await _app.Test.Verbose.IsFalse();
     }
 
-    // --test={"timeout":60,"parallel":4,"include":["fast"],"exclude":["slow"],"verbose":true}
-    // applies all five fields to the Testing instance.
+    // --test={"timeoutSeconds":60,"parallel":4,"include":["fast"],"exclude":["slow"],"verbose":true}
+    // applies all five fields to the Testing instance via the setting walk (keys are property names).
     [Test]
     public async Task Configure_FromJson_AllFieldsApplied()
     {
         var config = new Dictionary<string, object?>
         {
-            ["timeout"] = 60,
+            ["timeoutSeconds"] = 60,
             ["parallel"] = 4,
             ["include"] = new List<object?> { "fast" },
             ["exclude"] = new List<object?> { "slow" },
             ["verbose"] = true
         };
 
-        var result = _app.Test.Apply(config);
+        var result = _app.Setting.Set(_app.Test, config);
 
         await result.IsSuccess();
         await Assert.That(_app.Test.TimeoutSeconds.ToInt32()).IsEqualTo(60);
@@ -109,15 +109,15 @@ public class TestingClassTests
         await _app.Test.Verbose.IsTrue();
     }
 
-    // Applying Include/Exclude is replace-semantics, not merge — a second Apply wipes
-    // the prior contents so repeated --test= calls don't silently accumulate tags.
+    // Include/Exclude are replace-semantics — the walk sets a fresh list<text>, so a second
+    // --test= call wipes the prior contents rather than accumulating tags.
     [Test]
     public async Task Configure_FromJson_IncludeAndExclude_ReplaceExisting()
     {
         _app.Test.Include.Add(new global::app.type.text.@this("oldInclude"));
         _app.Test.Exclude.Add(new global::app.type.text.@this("oldExclude"));
 
-        var result = _app.Test.Apply(new Dictionary<string, object?>
+        var result = _app.Setting.Set(_app.Test, new Dictionary<string, object?>
         {
             ["include"] = new List<object?> { "newInclude" },
             ["exclude"] = new List<object?> { "newExclude" }
@@ -132,18 +132,17 @@ public class TestingClassTests
         await _app.Test.Exclude.Contains("oldExclude").IsFalse();
     }
 
-    // Unknown config keys are silently ignored — forward-compat contract so users can
-    // carry config files written for newer versions without the runner erroring on them.
+    // Unknown config keys are rejected — the setting walk is strict (same as --app/--build/
+    // --callstack): a key with no public-settable property surfaces an UnknownSetting error.
     [Test]
-    public async Task Configure_FromJson_UnknownKey_IgnoredReturnsOk()
+    public async Task Configure_FromJson_UnknownKey_Rejected()
     {
-        var result = _app.Test.Apply(new Dictionary<string, object?>
+        var result = _app.Setting.Set(_app.Test, new Dictionary<string, object?>
         {
-            ["timeout"] = 10,
+            ["timeoutSeconds"] = 10,
             ["futureOption"] = "not a valid key yet"
         });
 
-        await result.IsSuccess();
-        await Assert.That(_app.Test.TimeoutSeconds.ToInt32()).IsEqualTo(10);
+        await result.IsFailure();
     }
 }

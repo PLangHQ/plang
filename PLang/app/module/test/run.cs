@@ -47,7 +47,8 @@ public partial class run : IContext
             : (await Parallel.Value())?.ToInt32() ?? parentApp.Test.Parallel.ToInt32();
         double timeoutSeconds = Timeout == null ? parentApp.Test.TimeoutSeconds.ToDouble()
             : (await Timeout.Value())?.ToDouble() ?? parentApp.Test.TimeoutSeconds.ToDouble();
-        var timeout = TimeSpan.FromSeconds(timeoutSeconds);
+        // Sentinel: ≤ 0 means no timeout (the type enforces no bound; the consumer reads intent).
+        var timeout = timeoutSeconds <= 0 ? System.Threading.Timeout.InfiniteTimeSpan : TimeSpan.FromSeconds(timeoutSeconds);
 
         // The executed tests ARE the result — each carries its own outcome after run.
         // The list holds the test objects the run loop mutates in place.
@@ -55,7 +56,8 @@ public partial class run : IContext
         if (tests.Count == 0)
             return Context.Ok<global::app.type.list.@this<global::app.test.@this>>(executed);
 
-        if (parallel < 1) parallel = 1;
+        // Sentinel: ≤ 0 means auto — fall back to the machine's processor count.
+        if (parallel < 1) parallel = System.Environment.ProcessorCount;
 
         using var semaphore = new SemaphoreSlim(parallel);
         var tasks = tests.Select(async test =>

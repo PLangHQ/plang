@@ -57,7 +57,8 @@ public class ExecutorTests
     public async Task Configure_TestFlagWithConfig_AppliesToTesting()
     {
         var executor = NewExecutor();
-        var (engine, error) = executor.Configure(new[] { "--test={\"timeout\":5,\"parallel\":3}" });
+        // Keys are property names — the setting walk maps them (no "timeout" alias).
+        var (engine, error) = executor.Configure(new[] { "--test={\"timeoutSeconds\":5,\"parallel\":3}" });
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
@@ -67,13 +68,14 @@ public class ExecutorTests
         await using var _ = engine;
     }
 
-    // --test with invalid config (negative timeout) surfaces as an error Data returned
-    // from Configure. Run() propagates it as the final result without calling Start().
+    // --test with invalid config (a value outside a closed type — an unknown format) surfaces
+    // as an error Data from Configure. Run() propagates it as the final result without Start().
+    // (Negative timeout/parallel is NOT invalid any more — it's a sentinel; see EdgeCaseTests.)
     [Test]
     public async Task Configure_TestFlagWithInvalidConfig_ReturnsApplyError()
     {
         var executor = NewExecutor();
-        var (engine, error) = executor.Configure(new[] { "--test={\"timeout\":-1}" });
+        var (engine, error) = executor.Configure(new[] { "--test={\"format\":\"csv\"}" });
 
         await Assert.That(error).IsNotNull();
         await error!.IsFailure();
@@ -180,10 +182,10 @@ public class ExecutorTests
     public async Task Run_InvalidConfig_ReturnsErrorWithoutStarting()
     {
         var executor = NewExecutor();
-        var result = await executor.Run(new[] { "--test={\"timeout\":-1}" });
+        // An unknown format value is rejected by the choice<Format> conversion in the walk.
+        var result = await executor.Run(new[] { "--test={\"format\":\"csv\"}" });
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
-        await Assert.That(result.Error!.Key).IsEqualTo("InvalidTestConfig");
     }
 }

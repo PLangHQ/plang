@@ -90,6 +90,43 @@ public sealed partial class @this
     /// with an unconverted one — that swallow class is what made list&lt;T&gt; lie about its
     /// contents (codeanalyzer F1).
     /// </summary>
+    /// <summary>
+    /// Builds a native <c>app.type.list.@this&lt;T&gt;</c> from a raw sequence: each element
+    /// converts to <c>T</c> (a plang <c>item.@this</c>) through <see cref="TryConvert"/>, then the
+    /// list is constructed through its value-sequence ctor so every row is born with the context.
+    /// The plang-native replacement for STJ-deserializing a collection into a plang list.
+    /// </summary>
+    private static (object? Value, error.Error? Error) ConvertIntoPlangList(
+        System.Type targetListType, System.Collections.IEnumerable elements,
+        System.Type sourceType, actor.context.@this context)
+    {
+        var elementType = targetListType.GetGenericArguments()[0];
+        var values = new List<global::app.type.item.@this>();
+        var errors = new List<error.Error>();
+        int i = 0;
+        foreach (var elem in elements)
+        {
+            var (converted, itemError) = TryConvert(elem, elementType, context);
+            if (itemError != null)
+                errors.Add(new error.Error($"[{i}]: {itemError.Message}", "ElementConversionFailed", 400)
+                    { FixSuggestion = itemError.FixSuggestion });
+            else if (converted is global::app.type.item.@this iv)
+                values.Add(iv);
+            i++;
+        }
+        if (errors.Count > 0)
+        {
+            var err = new error.Error(
+                $"Failed converting {errors.Count} elements from {sourceType.Name} to {targetListType.Name}",
+                "ListConversionFailed", 400) { FixSuggestion = $"Element type: {elementType.Name}" };
+            foreach (var e in errors) err.ErrorChain.Add(e);
+            return (null, err);
+        }
+        var ctor = targetListType.GetConstructor(
+            new[] { typeof(IEnumerable<global::app.type.item.@this>), typeof(actor.context.@this) })!;
+        return (ctor.Invoke(new object[] { values, context }), null);
+    }
+
     private static (object? Value, error.Error? Error) ConvertElementsInto(
         System.Type targetListType, System.Type elementType,
         System.Collections.IEnumerable elements, int count,
@@ -309,6 +346,17 @@ public sealed partial class @this
                 // swallow, no Error that a later .Peek() would drop.
                 throw;
             }
+        }
+
+        // Native plang list<T> — built through its own value-sequence ctor (born-with-context),
+        // element-wise. A plang collection has no parameterless ctor and must NOT round-trip
+        // through STJ (the fallback below would fail to instantiate it): each element converts
+        // to its plang type and the list wraps them as rows carrying the context.
+        if (targetType.IsGenericType
+            && targetType.GetGenericTypeDefinition() == typeof(global::app.type.list.@this<>)
+            && value is System.Collections.IEnumerable plangListSource && value is not string)
+        {
+            return ConvertIntoPlangList(targetType, plangListSource, sourceType, context);
         }
 
         // List-like target: List<T> or types inheriting List<T>
