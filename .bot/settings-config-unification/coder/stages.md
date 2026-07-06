@@ -84,6 +84,33 @@ onto `followRedirects`/`maxRedirects` setters. Multi-set is `set %!http.request%
 
 ---
 
+## NEXT: http conversion (scoped, ready to execute)
+
+Same shape as math, but bigger — do it as its own slice with fresh budget.
+
+**Per-request params** (`request` already has `[Default]`: TimeoutInSec, ContentType, Encoding,
+Unsigned, Method) — the seam already resolves them (step → `%!http.request.x%` → `%!http.x%` →
+`[Default]`). In `http/code/Default.cs` (SendAsync ~78-85, and the 2 sibling read sites ~163, ~204):
+delete the `config.Resolve("X", def)` fallbacks and the `action.X == null ? …` ternaries — just
+`await action.X.Value()`. Behavior-preserving (the seam's module-key `http.timeoutinsec` == the old
+config write key, case-folded).
+
+**Module-level props** (no per-request param: BaseUrl, DefaultHeaders, FollowRedirects, MaxRedirects,
+MaxResponseSize, MaxSSEBufferSize, MaxDownloadSize) — replace `config.Resolve("X", def)` with a direct
+`context.Setting.Resolve("http.x")`-with-inline-default (like math's overflow/precision). Read sites
+incl. `ResolveUrl` (BaseUrl, ~400) and `MergeHeaders` (DefaultHeaders).
+
+**Then delete:** `http/Config.cs`, `For<Config>`/`ModuleView<Config>` params (~333,345,357,400),
+`app.Config.For`/`Apply`/`ModuleView`/`IConfig`. **Dissolve `configure`** (`http/configure.cs` +
+`Configure()` ~235): multi-set → `set %!http.request% = {dict}`; the redirect-lock guard moves onto
+the followRedirects/maxRedirects **setter**. Update `RequestActionTests` (its `Config.Set("http.X",…,
+isDefault:true)` still writes `context.Setting`, so direct reads keep working; remove `IConfig`/`Config`
+type refs).
+
+Then **llm** (`OpenAi.cs:65` `For<http.Config>` model read → the `%!llm.query.model%` cascade) and
+**signing** (`Ed25519.cs:80` `For<Config>`) — smaller, same pattern. Then the `%!%` front door, the
+settable-schema + build validation, the persistent-store rename.
+
 ## Deferred (NOT this branch)
 - `--build={files}` crash fix (parent's Direct walk) · subsystem Direct leaf write · shared schema
   is the coupling point with parent.
