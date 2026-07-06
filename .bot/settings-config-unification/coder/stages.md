@@ -4,13 +4,29 @@ Build spec: `.bot/settings-config-unification/architect/plan.md` (settled).
 Review + verified checks: `coder/coder-review.md`. Ordered for **green build + green tests at
 every stage** (each is its own commit/push).
 
+> **PIVOT (settled with Ingi) — read `coder/action-param-is-a-setting.md` first.**
+> An action param IS the innermost scope of a setting. There is no config/policy/option — one
+> concept, resolved `step → action-key → module-key → [Default]`. So the **generator seam is THE
+> mechanism**; every module (math/http/llm/signing) falls out of it — no per-module resolvers,
+> no `NumberPolicy`/`MathPolicy`/`Config` records. Revised order below: **seam FIRST**, then
+> convert modules to it. (Diverges from the architect's number-caveat — flagged in that doc.)
+>
+> DONE so far: Stage 1 (`context.Setting` door) + app-default-tier collapse (settings live on
+> the one context chain; `isDefault`/`Defaults` gone). Both pushed, zero regressions.
+
 Legend: ☐ todo · ◐ in progress · ☑ done
 
 **Baseline at branch start (HEAD `535fadb95`, `dev.sh full`): 141 failing** — Modules 11,
 Types 30, Wire 18, Data 36, Generator 0, Runtime 46. Pre-existing (serialization/path/datetime/
 compare), unrelated to settings. Each stage must add **zero** to the touched slice's count.
-**Machine is slow — do NOT run `dev.sh full` per stage; run `dev.sh test <Class>` + the one
-affected slice, diff failure NAMES vs baseline.** Full only once before final handoff.
+**Machine is slow — build/test are the productivity killers, not the edits.** Batch a whole
+vertical slice's edits, then **ONE** build + **ONE** targeted test run at the slice boundary.
+NEVER rebuild/test per small edit. No `dev.sh full` per stage — run the one affected slice's
+binary directly, diff failure NAMES vs the FULL baseline (below). Build with
+`-p:UseSharedCompilation=false` (prevents the VBCSCompiler runaway). Full only before final handoff.
+
+**Corrected full baseline** (partial-capture "Modules 11" was wrong — real is 37):
+Modules **37**/987, Types 30/727, Wire 18/494, Data 36/901, Generator 0/198, Runtime 45/786.
 
 ---
 
