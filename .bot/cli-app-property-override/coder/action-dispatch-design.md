@@ -26,17 +26,20 @@ so it can't run in the ctor. And the class is `partial` (one class, no `base`), 
 
 ## The settled shape
 ```csharp
-await app.RunAction(new request(context,
+await app.Run(new request(context,
     url:      endpoint,          // required
     method:   HttpMethod.POST,   // optional (has [Default]) — omit → seam → setting → [Default(GET)]
     unsigned: true));
 //  context appears ONCE (the ctor — where born-with-context needs it)
-//  RunAction reads handler.Context and runs the seam; omitted params fill from setting/[Default]
+//  app.Run reads handler.Context and runs the seam; omitted params fill from setting/[Default]
 ```
-- `app.RunAction` — existing, non-static, **one uniform verb for every action** (a beginner learns
-  one thing: `app.RunAction(new SomeAction(context, …))`).
-- `Run()` stays the **honest, visible logic** — the instance never pretends to be the entry.
-- (Naming: `RunAction` is Verb+Noun — flagged for a later pass, orthogonal to the mechanism.)
+- `app.Run(action)` — **renamed from `RunAction`** (Verb+Noun → bare verb + arg, OBP-clean, like
+  `Variables.Set(name, value)`). Non-static, **one uniform verb for every action** (a beginner learns
+  one thing: `app.Run(new SomeAction(context, …))`). No clash (`app` had only `RunGoalAsync`, which
+  could later become `Run(goal)` for consistency).
+- `Run()` (the action's *own* logic method) stays the **honest, visible logic** — the instance never
+  pretends to be the entry. `app.Run(action)` (app-level dispatch) and `action.Run()` (the logic) are
+  distinct: one is on `app`, one on the handler.
 
 ## Mechanism 1 — generated raw-args ctor (per action)
 The primary ctor is already generated (`partial class request(context __ctx)`). Emit a **second
@@ -61,7 +64,7 @@ values work directly (and covers enums, which implicits can't). (Implicit-on-`Da
 blocked anyway: `Data`'s value is built at construction *with context* — `this.cs:190-210` — so a
 context-less `static` operator can't build a scalar from a raw string.)
 
-## Mechanism 2 — fix `app.RunAction`
+## Mechanism 2 — fix + rename `app.RunAction` → `app.Run`
 - **Run the seam, not the skip:** extract the handler's *set* params (`if X.IsInitialized`) → a
   param bag → build the entity with `Parameters = bag` (NO `PreboundHandler`) → `RunAsync`
   (Push → **Resolve** → Execute → Run). Omitted params fill from setting/`[Default]`.
@@ -69,7 +72,7 @@ context-less `static` operator can't build a scalar from a raw string.)
 
 ## Removed
 - `PreboundHandler` (the property + the skip-`Resolve` branch, `action/this.cs:300-338`).
-- `RunAction`'s `context` parameter (now `handler.Context`).
+- `RunAction`'s `context` parameter (now `handler.Context`); `RunAction` renamed to `Run`.
 - `new data.@this<T>("", …)` wrapping at every C# call site (via the raw-args ctor).
 
 ## Migrate + verify
