@@ -73,6 +73,61 @@ public sealed class @this
     private async ValueTask<data.@this> SetPersistent(string key, data.@this? value)
         => await (await Root._context.App.SettingsStore).Set(Table, key, value ?? _context.Ok());
 
+    /// <summary>
+    /// Applies a raw settings dict onto <paramref name="node"/>'s public-settable properties (the CLI
+    /// <c>--flag={…}</c> convert-walk). Each leaf converts through the plang catalog (<c>TryConvert</c>);
+    /// a nested dict onto an owned composite descends field-by-field, constructing the child if absent.
+    /// Public-setter gate = exposure is the access level. Replaces the lift-then-lower <c>catalog.Populate</c>.
+    /// </summary>
+    public data.@this Set(object node, System.Collections.Generic.IDictionary<string, object?> settings)
+    {
+        foreach (var kvp in settings)
+        {
+            var prop = node.GetType().GetProperty(kvp.Key,
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+            if (prop?.SetMethod?.IsPublic != true)
+                return _context.Error(new global::app.error.Error(
+                    $"Unknown setting '{kvp.Key}' on {node.GetType().Name} — no public-settable property.",
+                    "UnknownSetting", 400));
+
+            if (kvp.Value is System.Collections.Generic.IDictionary<string, object?> sub && IsComposite(prop.PropertyType))
+            {
+                var child = prop.GetValue(node) ?? Construct(prop.PropertyType);
+                var r = Set(child, sub);
+                if (!r.Success) return r;
+                prop.SetValue(node, child);
+            }
+            else
+            {
+                var (val, err) = global::app.type.catalog.@this.TryConvert(kvp.Value, prop.PropertyType, _context, kvp.Key);
+                if (err != null) return _context.Error(err);
+                prop.SetValue(node, val);
+            }
+        }
+        return _context.Ok();
+    }
+
+    /// <summary>Descend into a class with public setters that isn't a plang leaf (string/primitive/enum/collection).</summary>
+    private static bool IsComposite(System.Type t)
+    {
+        var u = System.Nullable.GetUnderlyingType(t) ?? t;
+        if (u.IsPrimitive || u.IsEnum || u == typeof(string) || u == typeof(decimal)) return false;
+        if (typeof(System.Collections.IEnumerable).IsAssignableFrom(u)) return false;
+        if (!u.IsClass) return false;
+        foreach (var p in u.GetProperties())
+            if (p.SetMethod?.IsPublic == true) return true;
+        return false;
+    }
+
+    /// <summary>Construct a null composite: subsystem nodes take a context; config records are parameterless.</summary>
+    private object Construct(System.Type t)
+    {
+        var withContext = t.GetConstructor(new[] { typeof(actor.context.@this) });
+        return withContext != null
+            ? withContext.Invoke(new object[] { _context })
+            : System.Activator.CreateInstance(t)!;
+    }
+
     public bool Contains(string key) => _values.ContainsKey(key);
 
     /// <summary>An independent copy of this level; keeps the same parent link + context.</summary>

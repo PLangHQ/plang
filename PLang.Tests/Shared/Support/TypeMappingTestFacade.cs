@@ -34,7 +34,6 @@ internal static class TypeMapping
 
     public static object? ConvertTo(object? value, System.Type targetType) => global::app.type.catalog.@this.TryConvert(value, targetType, global::PLang.Tests.TestApp.SharedContext).Value;
 
-    public static void Populate(object target, IDictionary<string, object?> values) => global::app.type.catalog.@this.Populate(target, values, global::PLang.Tests.TestApp.SharedContext);
 
     public static (object? Value, global::app.error.Error? Error) TryConvertTo(
         object? value, System.Type targetType, global::app.actor.context.@this? context = null, string? targetName = null)
@@ -49,7 +48,6 @@ internal static class TypeConverter
 {
     public static T? ConvertTo<T>(object? value) => (T?)global::app.type.catalog.@this.TryConvert(value, typeof(T), global::PLang.Tests.TestApp.SharedContext).Value;
     public static object? ConvertTo(object? value, System.Type targetType) => global::app.type.catalog.@this.TryConvert(value, targetType, global::PLang.Tests.TestApp.SharedContext).Value;
-    public static void Populate(object target, IDictionary<string, object?> values) => global::app.type.catalog.@this.Populate(target, values, global::PLang.Tests.TestApp.SharedContext);
     public static (object? Value, global::app.error.Error? Error) TryConvertTo(
         object? value, System.Type targetType, global::app.actor.context.@this? context = null, string? targetName = null)
         => global::app.type.catalog.@this.TryConvert(value, targetType, context, targetName);

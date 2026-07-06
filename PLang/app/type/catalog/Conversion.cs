@@ -79,25 +79,8 @@ public sealed partial class @this
 
 
 
-    /// <summary>
-    /// Populates an object's public writable properties from a dictionary (config loading).
-    /// Each raw value lifts to its plang type and lowers to the property's CLR type — the
-    /// type system creates it, the value lowers itself; no conversion hub.
-    /// </summary>
-    internal static void Populate(object target, IDictionary<string, object?> values,
-        actor.context.@this context)
-    {
-        foreach (var kvp in values)
-        {
-            var prop = target.GetType().GetProperty(kvp.Key,
-                BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-            if (prop?.CanWrite != true || kvp.Value == null) continue;
-            var converted = prop.PropertyType.IsInstanceOfType(kvp.Value)
-                ? kvp.Value
-                : global::app.type.@this.Create(kvp.Value, context).Clr(prop.PropertyType);
-            if (converted != null) prop.SetValue(target, converted);
-        }
-    }
+    // (catalog.Populate — the lift-then-lower config loader — removed. The CLI convert-walk is
+    //  app.setting.@this.Set(node, dict): public-setter gate + per-leaf TryConvert + composite descend.)
 
     /// <summary>
     /// Element-wise list conversion — the SINGLE home for it (JsonElement[], JsonArray,

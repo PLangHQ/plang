@@ -75,9 +75,13 @@ namespace PLang
 				}
 			}
 
-			// App settings (--app={"create":true})
+			// App settings (--app={"create":true}) — the convert-walk (public-setter gate + per-leaf
+			// TryConvert), not the lift-then-lower catalog.Populate.
 			if (parameters.TryGetValue("!app", out var appValue) && appValue is IDictionary<string, object?> appDict)
-				global::app.type.catalog.@this.Populate(engine, appDict, engine.User.Context);
+			{
+				var appResult = engine.Setting.Set(engine, appDict);
+				if (!appResult.Success) return (null, appResult);
+			}
 
 			// Builder mode (--builder or legacy --build). Either flag may be a bare
 			// `true` (e.g. `plang build` normalizes the subcommand to `--builder`) or
@@ -96,7 +100,10 @@ namespace PLang
 				var buildDict = builderValue as IDictionary<string, object?>
 				             ?? buildValue as IDictionary<string, object?>;
 				if (buildDict != null)
-					global::app.type.catalog.@this.Populate(engine.Build, buildDict, engine.User.Context);
+				{
+					var buildResult = engine.Setting.Set(engine.Build, buildDict);
+					if (!buildResult.Success) return (null, buildResult);
+				}
 
 				// Sync cache flag to %!build.cache% for Build.goal
 				userVars.Set("!build.cache", engine.Build.Cache);
