@@ -1,6 +1,6 @@
 using app.variable;
 
-namespace app.module.settings;
+namespace app.module.setting;
 
 /// <summary>
 /// Interface for persistent key-value storage of PLang settings.

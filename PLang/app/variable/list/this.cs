@@ -31,8 +31,8 @@ public partial class @this
     /// and <c>name</c> isn't found in the regular variable scope, the resolver
     /// is called with the full path remainder (e.g. <c>"X"</c> or <c>"X.Y"</c>)
     /// and its result is returned. Used by Settings: each actor's Variables
-    /// registers <c>"Settings"</c> with a resolver that delegates to
-    /// <c>app.Settings.Get(path, this.Context)</c>. Generalises to any future
+    /// registers <c>"setting"</c> with a resolver that delegates to
+    /// <c>app.Setting.Get(path, this.Context)</c>. Generalises to any future
     /// non-Data navigable mount.
     /// </summary>
     public void RegisterNavigable(string name, Func<string, System.Threading.Tasks.ValueTask<data.@this>> resolver)

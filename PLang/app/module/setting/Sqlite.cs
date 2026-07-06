@@ -5,7 +5,7 @@ using app.error;
 using app.variable;
 using app.Utils;
 
-namespace app.module.settings;
+namespace app.module.setting;
 
 /// <summary>
 /// SQLite-backed persistent settings store.

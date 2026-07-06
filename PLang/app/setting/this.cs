@@ -8,7 +8,7 @@ namespace app.setting;
 /// a read walks <c>this → parent → … → root</c>: a goal-local setting shadows an app-level one,
 /// and "applies to all subgoals" falls out of the up-walk (no snapshot taken at spawn).
 ///
-/// Parallels <see cref="app.module.settings.@this"/> — the persistent <c>%setting.%</c> store —
+/// Parallels <see cref="app.module.setting.@this"/> — the persistent <c>%setting.%</c> store —
 /// same word, split by lifetime: this is in-memory/scoped, that is sqlite. The two hold
 /// unrelated values.
 /// </summary>

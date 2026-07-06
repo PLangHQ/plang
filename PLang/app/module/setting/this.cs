@@ -1,12 +1,12 @@
 using app.error;
 
-namespace app.module.settings;
+namespace app.module.setting;
 
 /// <summary>
 /// Shared (one per app) settings collection. Holds Data values keyed by name,
 /// backed by <see cref="app.@this.SettingsStore"/> for persistence. Registered
 /// on every actor's <see cref="Variables.@this"/> via
-/// <see cref="Variables.@this.RegisterNavigable"/> so <c>%Settings.X%</c>
+/// <see cref="Variables.@this.RegisterNavigable"/> so <c>%setting.X%</c>
 /// resolution dispatches into <see cref="Get"/>.
 /// </summary>
 public sealed class @this

@@ -1,6 +1,6 @@
 using app.variable;
 
-namespace app.module.settings;
+namespace app.module.setting;
 
 /// <summary>
 /// Removes a settings value by key from the System actor's DataSource.

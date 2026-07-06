@@ -4,7 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Reflection;
 using app.actor.context;
-using app.module.settings;
+using app.module.setting;
 using app.error;
 using app.variable;
 using app.module;
@@ -170,16 +170,16 @@ public sealed partial class @this : IAsyncDisposable
     /// Created lazily on first access so tests with fictional paths and apps
     /// that never touch settings don't pay for SQLite-file creation at boot.
     /// </summary>
-    public Task<global::app.module.settings.IStore> SettingsStore => _settingsStore.Value;
-    private Lazy<Task<global::app.module.settings.IStore>> _settingsStore = null!;
+    public Task<global::app.module.setting.IStore> SettingsStore => _settingsStore.Value;
+    private Lazy<Task<global::app.module.setting.IStore>> _settingsStore = null!;
 
     /// <summary>
     /// Shared (one per app) settings collection. Holds Data values keyed by
     /// name, backed by <see cref="SettingsStore"/>. Registered on every actor's
     /// Variables via <see cref="Variables.@this.RegisterNavigable"/> so
-    /// <c>%Settings.X%</c> resolution dispatches into <see cref="app.module.settings.@this.Get"/>.
+    /// <c>%setting.X%</c> resolution dispatches into <see cref="app.module.setting.@this.Get"/>.
     /// </summary>
-    public global::app.module.settings.@this Settings { get; }
+    public global::app.module.setting.@this Setting { get; }
 
     /// <summary>
     /// Debug mode controller. null = off; non-null = on (born under --debug).
@@ -314,8 +314,8 @@ public sealed partial class @this : IAsyncDisposable
         Type = new type.catalog.@this(System.Context);
         Code = new AppCode(System.Context);
         Config = new config.@this();
-        _settingsStore = new Lazy<Task<global::app.module.settings.IStore>>(CreateSettingsStoreAsync);
-        Settings = new global::app.module.settings.@this(this);
+        _settingsStore = new Lazy<Task<global::app.module.setting.IStore>>(CreateSettingsStoreAsync);
+        Setting = new global::app.module.setting.@this(this);
         _modules = modules ?? new global::app.module.@this();
         _modules.App = this;
         _goals = new global::app.goal.list.@this { App = this };
@@ -606,19 +606,19 @@ public sealed partial class @this : IAsyncDisposable
         return await goal.RunAsync(context);
     }
 
-    private async Task<global::app.module.settings.IStore> CreateSettingsStoreAsync()
+    private async Task<global::app.module.setting.IStore> CreateSettingsStoreAsync()
     {
         // Testing: in-memory db scoped by App.Id so per-test Apps never share state.
         // SQLite's shared-cache merges in-memory dbs with identical DataSource names,
         // so the App.Id scoping is load-bearing.
         if (Test != null)
-            return global::app.module.settings.Sqlite.InMemory($"system-{Id}", System.Context);
+            return global::app.module.setting.Sqlite.InMemory($"system-{Id}", System.Context);
 
         // Lift to Path: AuthGate fires inside Sqlite.CreateAsync on Write,
         // parent dir creation via path.Mkdir. Async all the way — no sync-wait,
         // so parallel App constructions never starve the threadpool.
         var dbPath = global::app.type.path.@this.Resolve("/.db/system.sqlite", System.Context);
-        return await global::app.module.settings.Sqlite.CreateAsync(dbPath, System.Context);
+        return await global::app.module.setting.Sqlite.CreateAsync(dbPath, System.Context);
     }
 
     public async ValueTask DisposeAsync()

@@ -9,7 +9,7 @@ namespace PLang.Tests.App.TypeKindStrict.TypeValueModelTests;
 // non-public and these sites resolve via App.Type.Clr(name) / .Get(name):
 //   - app.module.file.read    (CLR type for read-back conversion)
 //   - app.module.variable.set (CLR type for value conversion before mint)
-//   - app.module.settings.Sqlite (CLR type for column mapping)
+//   - app.module.setting.Sqlite (CLR type for column mapping)
 // Smoke: after the reroute the registry still hands back the same CLR type
 // the entity used to surface directly.
 public class ClrTypeRerouteTests

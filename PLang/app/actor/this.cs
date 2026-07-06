@@ -1,5 +1,5 @@
 using app;
-using app.module.settings;
+using app.module.setting;
 using app.variable;
 using app.module.identity;
 using app.module.identity.code;
@@ -109,10 +109,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         // produces Context-wired Paths on deserialize without any ambient state.
         _channels = new global::app.channel.list.@this(app, new global::app.channel.serializer.list.@this(Context)) { Actor = this };
 
-        // Register %Settings.X% as a navigable mount on this actor's Variables.
-        // Resolution dispatches to app.Settings.Get(path, this.Context); the
+        // Register %setting.X% as a navigable mount on this actor's Variables.
+        // Resolution dispatches to app.Setting.Get(path, this.Context); the
         // lambda captures *this* actor's Context so per-actor context propagates.
-        Context.Variable.RegisterNavigable("Settings", path => app.Settings.Get(path, Context));
+        Context.Variable.RegisterNavigable("setting", path => app.Setting.Get(path, Context));
 
         // Register %!app% — navigates the App object graph (e.g., %!app.test.IsEnabled%)
         Context.Variable.Set("!app", new data.DynamicData("!app", () => app, Context));

@@ -27,7 +27,7 @@ public class MaskedAttributeTests
 
     [Test] public async Task MaskedAttribute_CanCoexistWithOut_OnSameProperty()
     {
-        var p = typeof(global::app.module.settings.type.setting)
+        var p = typeof(global::app.module.setting.type.setting)
             .GetProperty("value", BindingFlags.Public | BindingFlags.Instance);
         await Assert.That(p).IsNotNull();
         await Assert.That(p!.IsDefined(typeof(global::app.OutAttribute), inherit: true)).IsTrue();
@@ -36,7 +36,7 @@ public class MaskedAttributeTests
 
     [Test] public async Task SettingValue_Has_OutAndMasked()
     {
-        var p = typeof(global::app.module.settings.type.setting)
+        var p = typeof(global::app.module.setting.type.setting)
             .GetProperty("value", BindingFlags.Public | BindingFlags.Instance)!;
         await Assert.That(p.IsDefined(typeof(global::app.OutAttribute), inherit: true)).IsTrue();
         await Assert.That(p.IsDefined(typeof(global::app.MaskedAttribute), inherit: true)).IsTrue();
@@ -44,7 +44,7 @@ public class MaskedAttributeTests
 
     [Test] public async Task SettingKey_HasOut_NotMasked()
     {
-        var p = typeof(global::app.module.settings.type.setting)
+        var p = typeof(global::app.module.setting.type.setting)
             .GetProperty("key", BindingFlags.Public | BindingFlags.Instance)!;
         await Assert.That(p.IsDefined(typeof(global::app.OutAttribute), inherit: true)).IsTrue();
         await Assert.That(p.IsDefined(typeof(global::app.MaskedAttribute), inherit: true)).IsFalse();

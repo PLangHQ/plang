@@ -1,6 +1,6 @@
 using app;
 
-namespace app.module.settings;
+namespace app.module.setting;
 
 public static class type
 {

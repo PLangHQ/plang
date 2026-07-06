@@ -1,7 +1,7 @@
 using app.error;
 using app.variable;
 
-namespace app.module.settings;
+namespace app.module.setting;
 
 /// <summary>
 /// Gets a settings value by key from the System actor's settings store.
@@ -16,7 +16,7 @@ public partial class Get : IContext
     {
         var key = (await Key.Value())!.Clr<string>()!;
         var store = await Context.App.SettingsStore;
-        var result = await store.Get<global::app.type.item.@this>(global::app.module.settings.@this.SettingsTable, key);
+        var result = await store.Get<global::app.type.item.@this>(global::app.module.setting.@this.SettingsTable, key);
 
         if (!result.Success)
             return result;

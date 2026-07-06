@@ -1,6 +1,6 @@
 using app.variable;
 
-namespace app.module.settings;
+namespace app.module.setting;
 
 /// <summary>
 /// Sets a settings value by key in the System actor's settings store.

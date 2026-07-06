@@ -158,11 +158,11 @@ public class OutAttributeInventoryTests
     // 9. setting -------------------------------------------------------------
     [Test] public async Task Setting_Key_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.module.settings.type.setting), "key")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.module.setting.type.setting), "key")).IsTrue();
     }
     [Test] public async Task Setting_Value_HasOut_AndMasked()
     {
-        var t = typeof(global::app.module.settings.type.setting);
+        var t = typeof(global::app.module.setting.type.setting);
         await Assert.That(HasOut(t, "value")).IsTrue();
         await Assert.That(HasMasked(t, "value")).IsTrue();
     }

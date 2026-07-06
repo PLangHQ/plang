@@ -6,7 +6,7 @@ using app.actor.context;
 using app.error;
 using app.goal;
 using app.variable;
-using app.module.settings;
+using app.module.setting;
 using app.type.path;
 using app.module.http;
 using PlangHttpMethod = app.module.http.HttpMethod;
