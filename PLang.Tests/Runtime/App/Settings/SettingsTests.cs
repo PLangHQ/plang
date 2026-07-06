@@ -1,275 +1,77 @@
-using System.IO.Compression;
 using app;
-using app.actor.context;
 using app.variable;
-using app.config;
 using EngineType = global::app.@this;
+using Storage = global::app.setting.Storage;
 
 namespace PLang.Tests.App.Settings;
 
+/// <summary>
+/// The in-memory setting cascade on the unified <c>app.Setting</c> (<c>app.setting.@this</c>):
+/// scope shadowing (context → parent → app root) and clone isolation. Type conversion and the
+/// <c>[Default]</c> fallback moved onto the generator seam (exercised by the action tests), so
+/// these tests assert scope resolution only, in Data terms.
+/// </summary>
 public class SettingsTests
 {
-    private (EngineType engine, global::app.actor.context.@this context) CreateEngine()
+    private global::app.actor.context.@this Ctx()
     {
         var engine = new EngineType("/app");
-        var context = new global::app.actor.context.@this(engine, engine.User, new Variables(engine.User.Context));
-        return (engine, context);
+        return new global::app.actor.context.@this(engine, engine.User, new Variables(engine.User.Context));
     }
 
     [Test]
-    public async Task Resolve_ReturnsClassDefault_WhenNoScopeSet()
+    public async Task Get_Unset_IsNotFound()
     {
-        // No settings have been written to any scope.
-        // Resolve should fall through to the class default.
-        var (engine, context) = CreateEngine();
-        long classDefault = 100 * 1024 * 1024;
-
-        var result = engine.Config.Resolve<long>("archive.max", context, classDefault);
-
-        await Assert.That(result).IsEqualTo(classDefault);
+        var ctx = Ctx();
+        var d = await ctx.Setting.Get(Storage.InMemory, "archive.max");
+        await Assert.That(d.IsInitialized).IsFalse();   // unset → NotFound → the seam falls to [Default]
     }
 
     [Test]
-    public async Task Resolve_ReturnsGoalScopedValue_WhenSet()
+    public async Task Set_ThenGet_ReturnsValue()
     {
-        // A settings handler writes to the context's goal scope.
-        // Resolve should find it.
-        var (engine, context) = CreateEngine();
-        long classDefault = 100 * 1024 * 1024;
-        long goalValue = 20 * 1024 * 1024;
+        var ctx = Ctx();
+        await ctx.Setting.Set(Storage.InMemory, "archive.max", ctx.Ok(42L));
 
-        engine.Config.Set("archive.max", goalValue, context);
-
-        var result = engine.Config.Resolve<long>("archive.max", context, classDefault);
-
-        await Assert.That(result).IsEqualTo(goalValue);
+        var d = await ctx.Setting.Get(Storage.InMemory, "archive.max");
+        await Assert.That(d.IsInitialized).IsTrue();
+        await Assert.That((await d.Value())?.ToString()).IsEqualTo("42");
     }
 
     [Test]
-    public async Task Resolve_InheritsFromParentContext()
+    public async Task Child_InheritsParentSetting()
     {
-        // Parent context has a setting. Child context (no local setting) should inherit it.
-        var (engine, parentContext) = CreateEngine();
-        long classDefault = 100 * 1024 * 1024;
-        long parentValue = 50 * 1024 * 1024;
+        var parent = Ctx();
+        await parent.Setting.Set(Storage.InMemory, "archive.max", parent.Ok(50L));
 
-        engine.Config.Set("archive.max", parentValue, parentContext);
-
-        var childContext = parentContext.CreateChild();
-
-        var result = engine.Config.Resolve<long>("archive.max", childContext, classDefault);
-
-        await Assert.That(result).IsEqualTo(parentValue);
-    }
-
-    [Test]
-    public async Task Resolve_EngineDefaultOverridesClassDefault()
-    {
-        // Engine default is set, no goal scope set.
-        // Should return engine default, not class default.
-        var (engine, context) = CreateEngine();
-        long classDefault = 100 * 1024 * 1024;
-        long engineDefault = 200 * 1024 * 1024;
-
-        engine.Config.Set("archive.max", engineDefault, context, isDefault: true);
-
-        var result = engine.Config.Resolve<long>("archive.max", context, classDefault);
-
-        await Assert.That(result).IsEqualTo(engineDefault);
-    }
-
-    [Test]
-    public async Task Resolve_GoalScopeOverridesEngineDefault()
-    {
-        // Both engine default and goal scope are set.
-        // Goal scope should win.
-        var (engine, context) = CreateEngine();
-        long classDefault = 100 * 1024 * 1024;
-        long engineDefault = 200 * 1024 * 1024;
-        long goalValue = 20 * 1024 * 1024;
-
-        engine.Config.Set("archive.max", engineDefault, context, isDefault: true);
-        engine.Config.Set("archive.max", goalValue, context);
-
-        var result = engine.Config.Resolve<long>("archive.max", context, classDefault);
-
-        await Assert.That(result).IsEqualTo(goalValue);
-    }
-
-    [Test]
-    public async Task Resolve_ChildGoalScope_OverridesParentGoalScope()
-    {
-        // Parent has a goal-scoped value. Child sets its own. Child's value wins.
-        var (engine, parentContext) = CreateEngine();
-        long classDefault = 100 * 1024 * 1024;
-
-        engine.Config.Set("archive.max", 50L * 1024 * 1024, parentContext);
-
-        var childContext = parentContext.CreateChild();
-        engine.Config.Set("archive.max", 10L * 1024 * 1024, childContext);
-
-        var result = engine.Config.Resolve<long>("archive.max", childContext, classDefault);
-
-        await Assert.That(result).IsEqualTo(10L * 1024 * 1024);
-    }
-
-    [Test]
-    public async Task Resolve_WidensIntToLong()
-    {
-        // JSON deserialization often produces int when the value fits.
-        // Resolve<long> must handle int→long widening without crashing.
-        var (engine, context) = CreateEngine();
-
-        engine.Config.Set("archive.max", (int)42, context);
-
-        var result = engine.Config.Resolve<long>("archive.max", context, 0L);
-
-        await Assert.That(result).IsEqualTo(42L);
-    }
-
-    [Test]
-    public async Task Resolve_TypeMismatch_ReturnsClassDefault()
-    {
-        // If the stored value can't be converted to T, fall back to classDefault.
-        var (engine, context) = CreateEngine();
-
-        engine.Config.Set("archive.max", "not-a-number", context);
-
-        var result = engine.Config.Resolve<long>("archive.max", context, 99L);
-
-        await Assert.That(result).IsEqualTo(99L);
-    }
-
-    [Test]
-    public async Task Resolve_SkipsNullScopeInParentChain()
-    {
-        // Grandparent has a setting. Middle parent has no local setting.
-        // Child should still resolve grandparent's value.
-        var (engine, grandparent) = CreateEngine();
-        long classDefault = 100L;
-
-        engine.Config.Set("archive.max", 42L, grandparent);
-
-        var parent = grandparent.CreateChild(); // no settings set — no local setting level
         var child = parent.CreateChild();
-
-        var result = engine.Config.Resolve<long>("archive.max", child, classDefault);
-
-        await Assert.That(result).IsEqualTo(42L);
+        var d = await child.Setting.Get(Storage.InMemory, "archive.max");
+        await Assert.That((await d.Value())?.ToString()).IsEqualTo("50");
     }
 
     [Test]
-    public async Task ChildScope_ShadowsSetting_ParentUnaffected()
+    public async Task Child_Shadows_ParentUnaffected()
     {
-        // A subgoal's context shadows a setting locally; the outer (parent) scope is
-        // unaffected. Isolation is the up-walk (this → parent → root), not a save/null/restore.
-        var (engine, context) = CreateEngine();
-        long classDefault = 100L;
+        var parent = Ctx();
+        await parent.Setting.Set(Storage.InMemory, "archive.max", parent.Ok(50L));
 
-        engine.Config.Set("archive.max", 50L, context);
+        var child = parent.CreateChild();
+        await child.Setting.Set(Storage.InMemory, "archive.max", child.Ok(10L));
 
-        var child = context.CreateChild(); // the subgoal's scope
-
-        // Child sees the parent's setting via the up-walk.
-        var seenFromChild = engine.Config.Resolve<long>("archive.max", child, classDefault);
-        await Assert.That(seenFromChild).IsEqualTo(50L);
-
-        // A write in the child shadows locally.
-        engine.Config.Set("archive.max", 10L, child);
-        var insideChild = engine.Config.Resolve<long>("archive.max", child, classDefault);
-        await Assert.That(insideChild).IsEqualTo(10L);
-
-        // The parent (outer scope) is untouched.
-        var parentAfter = engine.Config.Resolve<long>("archive.max", context, classDefault);
-        await Assert.That(parentAfter).IsEqualTo(50L);
+        await Assert.That((await (await child.Setting.Get(Storage.InMemory, "archive.max")).Value())?.ToString()).IsEqualTo("10");
+        await Assert.That((await (await parent.Setting.Get(Storage.InMemory, "archive.max")).Value())?.ToString()).IsEqualTo("50");
     }
 
     [Test]
-    public async Task Resolve_WidensIntToEnum()
+    public async Task Clone_Isolates_Writes()
     {
-        // JSON deserialization often produces int for enum values.
-        // Resolve<CompressionLevel> must handle int→enum conversion.
-        var (engine, context) = CreateEngine();
+        var ctx = Ctx();
+        await ctx.Setting.Set(Storage.InMemory, "archive.max", ctx.Ok(42L));
 
-        engine.Config.Set("archive.level", (int)CompressionLevel.Fastest, context);
+        var clone = ctx.Setting.Clone();
+        await clone.Set(Storage.InMemory, "archive.max", ctx.Ok(999L));
 
-        var result = engine.Config.Resolve("archive.level", context, CompressionLevel.Optimal);
-
-        await Assert.That(result).IsEqualTo(CompressionLevel.Fastest);
-    }
-
-    [Test]
-    public async Task Clone_PreservesSettings()
-    {
-        // A cloned context should see the same settings as the original.
-        var (engine, context) = CreateEngine();
-        long classDefault = 100L;
-
-        engine.Config.Set("archive.max", 42L, context);
-
-        var clone = context.Clone();
-
-        var result = engine.Config.Resolve<long>("archive.max", clone, classDefault);
-        await Assert.That(result).IsEqualTo(42L);
-    }
-
-    [Test]
-    public async Task Clone_WritesToClone_DoNotAffectOriginal()
-    {
-        // Clone gets an independent copy of the setting level.
-        // Writing to the clone must not pollute the original.
-        var (engine, context) = CreateEngine();
-        long classDefault = 100L;
-
-        engine.Config.Set("archive.max", 42L, context);
-
-        var clone = context.Clone();
-        engine.Config.Set("archive.max", 999L, clone);
-
-        // Clone sees the new value
-        var cloneResult = engine.Config.Resolve<long>("archive.max", clone, classDefault);
-        await Assert.That(cloneResult).IsEqualTo(999L);
-
-        // Original is untouched
-        var originalResult = engine.Config.Resolve<long>("archive.max", context, classDefault);
-        await Assert.That(originalResult).IsEqualTo(42L);
-    }
-
-    [Test]
-    public async Task Resolve_ConvertsStringToEnum()
-    {
-        // Builder may store enum settings as strings (natural language input).
-        // Cast<T> must handle string→enum via Enum.TryParse.
-        var (engine, context) = CreateEngine();
-
-        engine.Config.Set("archive.level", "Fastest", context);
-
-        var result = engine.Config.Resolve("archive.level", context, CompressionLevel.Optimal);
-
-        await Assert.That(result).IsEqualTo(CompressionLevel.Fastest);
-    }
-
-    [Test]
-    public async Task Resolve_ConvertsStringToEnum_CaseInsensitive()
-    {
-        var (engine, context) = CreateEngine();
-
-        engine.Config.Set("archive.level", "fastest", context);
-
-        var result = engine.Config.Resolve("archive.level", context, CompressionLevel.Optimal);
-
-        await Assert.That(result).IsEqualTo(CompressionLevel.Fastest);
-    }
-
-    [Test]
-    public async Task Resolve_InvalidEnumString_ReturnsClassDefault()
-    {
-        var (engine, context) = CreateEngine();
-
-        engine.Config.Set("archive.level", "not-a-level", context);
-
-        var result = engine.Config.Resolve("archive.level", context, CompressionLevel.Optimal);
-
-        await Assert.That(result).IsEqualTo(CompressionLevel.Optimal);
+        await Assert.That((await (await clone.Get(Storage.InMemory, "archive.max")).Value())?.ToString()).IsEqualTo("999");
+        await Assert.That((await (await ctx.Setting.Get(Storage.InMemory, "archive.max")).Value())?.ToString()).IsEqualTo("42");
     }
 }

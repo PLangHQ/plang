@@ -16,7 +16,7 @@ public partial class Get : IContext
     {
         var key = (await Key.Value())!.Clr<string>()!;
         var store = await Context.App.SettingsStore;
-        var result = await store.Get<global::app.type.item.@this>(global::app.module.setting.@this.SettingsTable, key);
+        var result = await store.Get<global::app.type.item.@this>(global::app.setting.@this.Table, key);
 
         if (!result.Success)
             return result;

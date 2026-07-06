@@ -67,6 +67,24 @@ lifetimes (in-memory + persistent) behind a `Storage` switch. Two sub-stages:
 - **Staging:** full four-way collapse needs Debug/Test activation off `Apply` (Stages 6/5); until then `!debug`/`!test`
   stay born+`Apply`, with `Apply` calling the walk internally so the lift-lower dies everywhere now.
 
+## Stage 3c — C# actions dispatch through the seam (`app.Action<T>()`)  ☐  ← DESIGN FIRST (Ingi)
+The setting seam (`ICodeGenerated.Resolve`) only runs on the `.pr` path. C# callers use
+`app.RunAction(new X(ctx){...})`, which sets `PreboundHandler` and **skips `Resolve`**
+(`action/this.cs:332` — "params already set by inline C# composition, so we skip Resolve"). So
+**settings + `[Default]` never apply to C#-invoked actions.** Pervasive: OpenAi (the http request,
+`OpenAi.cs:227`), builder (list/read/save), http (signing.verify ×3), signing (identity/hash),
+path (ask), schema (verify) — and the 4 `RequestActionTests` (they `new request(Ctx){...}`, which is
+why BaseUrl/DefaultHeaders/MaxResponseSize never resolve — pre-existing, fail identically on parent).
+- **Two sanctioned construction doors only** — kill `new X + RunAction` as a way to *run*:
+  **(1)** `.pr` / test `Make` (the real path runs `Resolve`); **(2)** a C# dispatch that routes through `Resolve`.
+- **Proposed API** (Ingi likes `app.Action<T>`, still thinking): `app.Action<request>(context).With(r => r.Url, v).Run()`
+  — builds the action entity → `GetCodeGenerated` → **`Resolve` (seam)** → Execute; unset params filled from settings/defaults.
+  Generic on the ACTION type (`http` is a namespace, not a type; `request` is one, and `ResolveModuleName(typeof(request))`
+  already derives its module). Known params ride a bag so the seam fills the rest. String form
+  `app.Module("http").Action("request", …)` also viable (loses type/param safety).
+- Migrate off `new X + RunAction`: OpenAi, builder, http, signing, path, schema — then the 4 http tests via `Make`/dispatch.
+- **DESIGN DISCUSSION with Ingi before writing code** — he owns the API shape.
+
 ## Stage 4 — Run-state sweep (closed, finite) + CallStack.Setting  ☐
 - ☐ Demote to `internal set` (§3 table): app-root `Culture`/`Name`/`Id`/`Created`/`Updated`/`Version`/`OsDirectory`/`Parent`/`CurrentActor`/`Cache`
   (`this.cs:248` CurrentActor is still `public ... { get; set; }`); `Test.CurrentTest`, `CallStack.Variables`, `Run.Output`.

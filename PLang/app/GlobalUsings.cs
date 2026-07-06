@@ -40,9 +40,6 @@ global using httppath = app.type.path.http.@this;
 global using dict = app.type.dict.@this;
 global using Clr = app.type.clr.@this;
 
-// Config subsystem (dissolving into `setting` — see app/setting/)
-global using AppConfig = app.config.@this;
-
 // Type system
 global using AppTypes = app.type.catalog.@this;
 // The type entity (moved to app.type.@this in Stage 4) was historically reached as `app.type.@this`.

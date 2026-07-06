@@ -133,7 +133,7 @@ public partial class Set : IContext, IBuildValidatable
         // (callback resume) stays a variable. (Build-time schema validation of the path is deferred.)
         if (name.Name.StartsWith('!') && !name.Name.StartsWith("!ask"))
         {
-            Context.Setting.Set(name.Name[1..], await Value.Value());
+            await Context.Setting.Set(global::app.setting.Storage.InMemory, name.Name[1..], Value);
             return Value;
         }
 

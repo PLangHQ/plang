@@ -158,12 +158,6 @@ public sealed partial class @this : IAsyncDisposable
     public ICache Cache { get; set; } = new global::app.module.cache.Memory();
 
     /// <summary>
-    /// Strongly typed, goal-scoped module config.
-    /// Navigation: app.config.For&lt;archive.Config&gt;(context).Max
-    /// </summary>
-    public config.@this Config { get; }
-
-    /// <summary>
     /// App-level persistent key-value store backed by <c>.db/system.sqlite</c>
     /// (or in-memory under Test.IsEnabled). One per app — actors share it.
     /// Modules own their tables (<c>encryption</c>, <c>settings</c>, <c>llm-cache</c>, etc.).
@@ -174,12 +168,12 @@ public sealed partial class @this : IAsyncDisposable
     private Lazy<Task<global::app.module.setting.IStore>> _settingsStore = null!;
 
     /// <summary>
-    /// Shared (one per app) settings collection. Holds Data values keyed by
-    /// name, backed by <see cref="SettingsStore"/>. Registered on every actor's
-    /// Variables via <see cref="Variables.@this.RegisterNavigable"/> so
-    /// <c>%setting.X%</c> resolution dispatches into <see cref="app.module.setting.@this.Get"/>.
+    /// The app-level setting authority (chain root, <c>_parent == null</c>). Holds both lifetimes
+    /// behind <c>Storage</c>: in-memory (this-run cascade, CLI <c>--flags</c>) and persistent
+    /// (sqlite, <c>%setting.X%</c>, via <see cref="SettingsStore"/>). Every context's
+    /// <c>Setting</c> chains up to this one.
     /// </summary>
-    public global::app.module.setting.@this Setting { get; }
+    public global::app.setting.@this Setting { get; }
 
     /// <summary>
     /// Debug mode controller. null = off; non-null = on (born under --debug).
@@ -313,9 +307,8 @@ public sealed partial class @this : IAsyncDisposable
         // startup — null = off. Presence is the enable signal (no IsEnabled).
         Type = new type.catalog.@this(System.Context);
         Code = new AppCode(System.Context);
-        Config = new config.@this();
         _settingsStore = new Lazy<Task<global::app.module.setting.IStore>>(CreateSettingsStoreAsync);
-        Setting = new global::app.module.setting.@this(this);
+        Setting = new global::app.setting.@this(System.Context);
         _modules = modules ?? new global::app.module.@this();
         _modules.App = this;
         _goals = new global::app.goal.list.@this { App = this };

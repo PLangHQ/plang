@@ -110,9 +110,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         _channels = new global::app.channel.list.@this(app, new global::app.channel.serializer.list.@this(Context)) { Actor = this };
 
         // Register %setting.X% as a navigable mount on this actor's Variables.
-        // Resolution dispatches to app.Setting.Get(path, this.Context); the
-        // lambda captures *this* actor's Context so per-actor context propagates.
-        Context.Variable.RegisterNavigable("setting", path => app.Setting.Get(path, Context));
+        // Resolution dispatches to the persistent side of app.Setting (sqlite).
+        Context.Variable.RegisterNavigable("setting", path => app.Setting.Get(global::app.setting.Storage.Persistent, path));
 
         // Register %!app% — navigates the App object graph (e.g., %!app.test.IsEnabled%)
         Context.Variable.Set("!app", new data.DynamicData("!app", () => app, Context));

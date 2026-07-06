@@ -107,8 +107,13 @@ return _context.Ok();
   (null composite prop + present key → `Construct` → new subsystem, "presence = enabled").
 
 ## Consequences / ripples
-- **Seam (generator):** emits `await context.App.Setting.Get(Storage.InMemory, "module.action.param", "module.param")`
-  instead of sync `context.Setting.Resolve(...)`. `Resolve` is gone (Ingi disliked it). One regen.
+- **Seam (generator):** emits `await context.Setting.Get(Storage.InMemory, "module.action.param", "module.param") is { IsInitialized: true } __s`
+  instead of sync `context.Setting.Resolve(...) is object __s`. Reads **`context.Setting`** (scoped, walks up to the
+  app root) — NOT `context.App.Setting` (which would miss goal-scope). `IsInitialized` (not `Success`) is the "set"
+  signal — `NotFound` has `Success == true`. `Resolve` is gone (Ingi disliked it). One regen.
+- **As-built note:** the root reaches sqlite via `Root._context.App.SettingsStore` (kept internal for now — the
+  full `_store`-on-root fold-in + `SettingsStore`-name death is a follow-up); the persistent wrapper
+  `app.module.setting.@this` IS deleted (its Get/Set folded onto `app.setting.@this`), and `app.config.@this` (dead) deleted.
 - `set %!x%` → `context.Setting.Set(Storage.InMemory, key, Value)` (stores the whole Data, no `.Value()` unwrap).
 - `setting.set`/`get` actions → `Storage.Persistent`. `%setting.%` navigable → `Get(Storage.Persistent, path)`.
 - `context.Setting` keeps its parent chain (in-code scope), root parent = `app.Setting`.
