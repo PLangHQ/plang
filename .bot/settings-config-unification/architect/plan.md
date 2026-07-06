@@ -128,7 +128,7 @@ var timeout = await action.Timeout.Value();
 
 Routing, by **direction**:
 
-- **Write** (`set %!path%`, `--path`) → **setting only.** Resolved against the settable-schema. Match ⇒ setting write (scope-backed or Direct); no match ⇒ **error** (typo caught at build time for `set`, at startup for `--`). No variable fallback — nothing writes a transient from plang/CLI (they're all C#-set via `Variable.Set("!…")`), so a `%!%` write is unambiguously a setting.
+- **Write** (`set %!path%`, `--path`) → **setting only.** Resolved against the settable-schema. Match ⇒ setting write (scope-backed or Direct); no match ⇒ **error** (typo caught at build time for `set`, at startup for `--`). No variable fallback — **no production/developer `.goal` writes a transient via `%!%`** (coder verified: the only `set %!transient%` writers in the tree are four `.test.goal` files). So a developer `%!%` write is a setting and a no-match is a typo, caught. The four test writers are a migration cost, not a rule exception — see Verified below.
 - **Read** (`%!path%`) → schema first (⇒ `context.Setting.Resolve`), else the flat `!`-handle store (⇒ `%!data%` etc. keep working).
 
 This closes the typo hole (writes validate), needs zero migration of the transients, and walks toward the "everything is tree-nav" north star as the flat handles retire. Settings stay on their own resolver (`context.Setting`); the variable resolver is untouched.
@@ -279,6 +279,10 @@ No new abstraction for the `%!%` door beyond what's needed — the parent's "no 
 5. **Other cross-action settings?** → **No.** Only `MathPolicy` reads a non-param `Config`; http/llm/signing read their own params. (Coder confirmed against source.)
 6. **Number-policy home** → **`math`.** Sole consumer, real node. `%!math.overflow%` / `%!math.precision%`.
 
-**Remaining verification for the coder (not decisions — checks):**
-- Subgoal propagation is the up-walk, not the clone snapshot (`context/this.cs:362`).
-- No `.goal` in the tree does `- set %!transient%` (confirms "a `%!%` write is always a setting") — grep `set %!` across `.goal` files.
+**Verified (coder ran both checks against source):**
+
+- **Subgoal propagation is already the up-walk — clean.** Production child contexts (`CreateChild`, `context/this.cs:307`) set `Parent` and leave the child scope null; reads walk `child → Parent → root`. The `Clone()` at `:362` is **test-only** (`:352` says so). Port the walk onto `context.Setting`; do not introduce a clone. No change needed.
+- **`%!%` writes are setting-only for developer code — confirmed.** The only `set %!transient%` writers in the whole tree are four `.test.goal` files (`Tests/Callback/…/Start.test.goal` × 3 seeding `!ask.answer`; `Tests/Serialization/NegationPrefixStillParses.test.goal` writing `!flag`). The rule stands; those four migrate:
+  - **`!ask.answer`** (retiring) — the callback tests seed an interactive answer. Migrate the seed to the **input channel** (or a test helper) rather than `set %!ask.answer%` — cleaner regardless, and it removes the transient write. Do it in this branch (or in lockstep with `!ask.answer`'s retirement).
+  - **`!flag`** (`NegationPrefixStillParses`) — this test proves `%!name%` *lexes* as a variable name. That's a **parser-layer** fact; rewrite it to assert the parse output directly, not through a `set %!flag%` step (which now routes to the setting write-validator and correctly errors on the no-match). Parsing and routing are separate layers — the parser still accepts `%!name%`; the router rejects it as an unknown setting.
+  - **No allow-list.** A standing "known transient names the write-router tolerates" surface would outlive its need. Migrating four test files is the honest cost; if `!ask.answer`'s seed can't be cleanly re-homed in-branch, carry a **named, temporary, documented** exception for that one name until it retires — not a general allowance.
