@@ -54,15 +54,18 @@ lifetimes (in-memory + persistent) behind a `Storage` switch. Two sub-stages:
   `setting.*` actions + `%setting.%` navigable → `Storage.Persistent`.
 - ☐ `ScopeTests` retire; `SettingsTests` simplify; `config/this.cs` facade routes here or is deleted.
 
-### 3b — the CLI convert-walk (the crash fix) + four-way collapse
-- ☐ `app.Setting.Set(object node, IDictionary settings)` — recursive: public-setter gate
-  (`prop.SetMethod?.IsPublic`, not `CanWrite`) → `catalog.TryConvert` leaf / **descend** composite (born-on-descend).
-- ☐ **Delete `catalog.@this.Populate`** (the lift-lower at `Executor.cs:80`,`:99`, `debug/this.cs:136` — the crash source).
-  `TryConvert` stays (what the walk calls).
-- ☐ **One call from root:** Executor merges all `!`-flags into one dict → `app.Setting.Set(app, merged)`.
-  `--app` spreads at root (Q2 alias); `--build` nests under `build`; subsystems born-on-descend (null composite + present key → construct).
-- ☐ Unknown `!`-flag / no public setter → hard error at startup (locked-typo rule).
-- ☐ **Green gate:** `--build={"files":["Scratch/Hello.goal"]}` stops crashing.
+### 3b — the CLI convert-walk (the crash fix)  ☑ DONE (3dd452a89)
+- ☑ `app.setting.@this.Set(object node, IDictionary settings)` — recursive: public-setter gate
+  (`prop.SetMethod?.IsPublic`) → `catalog.TryConvert` leaf / **descend** composite (born-on-descend).
+- ☑ **Deleted `catalog.@this.Populate`** (+ its dead test facade). Rewired `Executor.cs:80,99` (`!app`, `!build`)
+  and `debug.Apply` to the walk. `TryConvert` stays.
+- ☑ Unknown flag / no public setter → hard error (`UnknownSetting`).
+- ☑ **Green gate met:** `plang '--build={"files":[...]}'` no longer throws `InvalidCastException: String cannot
+  lower to this` at Configure — the walk converts `{files:[...]}` → `Build.Files` (List<path>). Zero C# regressions (Modules 37).
+- ☐ **Deferred (four-way collapse):** merge all `!`-flags into ONE born-on-descend `Set(app, merged)` call —
+  needs Debug/Test activation off `Apply` (Stages 5/6). Today `!debug`/`!test` still have their own branch;
+  `catalog.Populate` is gone from all three, so the crash + lift-lower are dead now.
+- ☐ Rename local `engine` → `app` in `Executor.cs` (needs `global::app.@this` for the namespace clash) — cosmetic, deferred.
 - ☐ Rename local `engine` → a name that doesn't shadow the `app` namespace in `Executor.cs` (Ingi: name what it is; but `app` local clashes with `app.@this` refs — use `global::app.@this` or agree a name).
 - **Staging:** full four-way collapse needs Debug/Test activation off `Apply` (Stages 6/5); until then `!debug`/`!test`
   stay born+`Apply`, with `Apply` calling the walk internally so the lift-lower dies everywhere now.
