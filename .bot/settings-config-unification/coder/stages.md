@@ -30,12 +30,14 @@ Modules **37**/987, Types 30/727, Wire 18/494, Data 36/901, Generator 0/198, Run
 
 ---
 
-## Stage 1 — Rename the persistent store (`settings → setting`)  ☐
+## Stage 1 — Rename the persistent store (`settings → setting`)  ☑ DONE (8b1be4ceb)
 Isolated mechanical rename, no logic change. Do first: cheapest, frees vocabulary, no deps.
-- `app/module/settings/ → app/module/setting/`; type `app.module.setting.@this`.
-- property `app.Settings → app.Setting`; navigable `%setting.%` (was `%Setting.%`).
-- `SettingsTable`/`IStore`/`Sqlite`/`get`/`set`/`remove` mechanism unchanged.
-- **Green gate:** build + full test suite.
+- `app/module/settings/ → app/module/setting/`; type `app.module.setting.@this`. ✓ (git-tracked rename)
+- property `app.Settings → app.Setting`; navigable key `"Settings" → "setting"` (%setting.%). ✓
+- `SettingsTable="settings"` (sqlite table, data compat) + `app.SettingsStore` + IStore/Sqlite mechanism unchanged. ✓
+- Tests: namespace/type/navigable refs updated; `ResolveTableName` → `"setting"`. Zero new failures (5 SettingsData + 1 DataSource pre-existing, byte-identical to HEAD).
+- `.goal`/`.pr` navigable migration OUT OF SCOPE per Ingi (422 legacy .pr use `%Settings.%`; separate plang-side pass).
+- **Merged** settings-config-unification → cli-app-property-override (clean ff, 26 commits).
 
 ## Stage 2 — `context.Setting` + scope-primary `Resolve`  ☐
 Internal rename + new read entry; `app.config` still alive, delegating.
