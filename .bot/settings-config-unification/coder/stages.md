@@ -84,7 +84,8 @@ onto `followRedirects`/`maxRedirects` setters. Multi-set is `set %!http.request%
 
 ---
 
-## NEXT: http conversion (scoped, ready to execute)
+## http conversion — DONE (commit 60e439b23): all config values are per-request [Default] props;
+## keyed client cache; configure dissolved. NEXT below: llm, signing.
 
 Same shape as math, but bigger — do it as its own slice with fresh budget.
 
