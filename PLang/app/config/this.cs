@@ -13,25 +13,14 @@ namespace app.config;
 public sealed class @this
 {
     /// <summary>
-    /// App-level default scope. Values here persist across goal executions.
-    /// Written when a settings action has Default=true.
-    /// </summary>
-    public Scope Defaults { get; } = new();
-
-    /// <summary>
-    /// Resolves a setting value: the context's Setting door (walks context → Parent → root),
-    /// then the app-level Defaults overlay, then the class default. (Transitional — Defaults
-    /// collapses into the root context's Setting overlay when the config machinery dissolves.)
+    /// Resolves a setting value through the context's Setting door (walks the context chain
+    /// current → Parent → base), then the class default. There is no separate app-default
+    /// store — an app-wide setting lives on the base context of the chain (see <see cref="Set"/>).
     /// </summary>
     public T Resolve<T>(string key, actor.context.@this context, T classDefault)
     {
         var value = context.Setting.Resolve(key);
-        if (value != null) return Cast<T>(value, classDefault);
-
-        var defaultValue = Defaults.Get(key);
-        if (defaultValue != null) return Cast<T>(defaultValue, classDefault);
-
-        return classDefault;
+        return value != null ? Cast<T>(value, classDefault) : classDefault;
     }
 
     private static T Cast<T>(object value, T fallback)
@@ -98,13 +87,20 @@ public sealed class @this
     }
 
     /// <summary>
-    /// Writes a setting value to the appropriate scope.
-    /// If isDefault is true, writes to app Defaults. Otherwise writes to the context's goal scope.
+    /// Writes a setting. A bare (goal) write lands on the current context and shadows via the
+    /// up-walk. An app-wide write (<paramref name="isDefault"/> / "on app") lands on the BASE of
+    /// the current chain — the actor's context; in an async/parallel sub-tree, the context above
+    /// the spawned children — so every context in the chain resolves it.
     /// </summary>
     public void Set(string key, object value, actor.context.@this context, bool isDefault = false)
     {
-        if (isDefault) { Defaults.Set(key, value); return; }
+        var target = isDefault ? Base(context) : context;
+        target.Setting.Set(key, value);
+    }
 
-        context.Setting.Set(key, value);
+    private static actor.context.@this Base(actor.context.@this context)
+    {
+        while (context.Parent != null) context = context.Parent;
+        return context;
     }
 }
