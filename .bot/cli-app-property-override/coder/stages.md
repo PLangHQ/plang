@@ -67,7 +67,17 @@ lifetimes (in-memory + persistent) behind a `Storage` switch. Two sub-stages:
 - **Staging:** full four-way collapse needs Debug/Test activation off `Apply` (Stages 6/5); until then `!debug`/`!test`
   stay born+`Apply`, with `Apply` calling the walk internally so the lift-lower dies everywhere now.
 
-## Stage 3c — C# actions dispatch through the seam (`app.Action<T>()`)  ☐  ← DESIGN FIRST (Ingi)
+## Stage 3c — C# actions dispatch through the seam (`app.RunAction`)  ☐  **Design settled: `coder/action-dispatch-design.md`**
+Shape: `await app.RunAction(new request(context, url: endpoint, method: HttpMethod.POST, unsigned: true))`.
+Two mechanisms: (1) generated **raw-args ctor** per action (typed named optional args, wrapped with
+`__ctx`; required = non-nullable+no-`[Default]`, optional otherwise; defaults stay in the seam, never
+baked); (2) fix **`app.RunAction`** to run the seam (extract set params → Resolve) not the
+`PreboundHandler` skip, and read `handler.Context` (drop the context arg). Removes `PreboundHandler`,
+`RunAction`'s context arg, and all `new data.@this<T>("",…)` wrapping. `Run()` stays the author's
+logic. Migrate OpenAi/builder/http/signing/path/schema; the 4 `RequestActionTests` go green.
+Superseded original proposal below (kept for history):
+
+### (superseded) original `app.Action<T>()` sketch  ← DESIGN FIRST (Ingi)
 The setting seam (`ICodeGenerated.Resolve`) only runs on the `.pr` path. C# callers use
 `app.RunAction(new X(ctx){...})`, which sets `PreboundHandler` and **skips `Resolve`**
 (`action/this.cs:332` — "params already set by inline C# composition, so we skip Resolve"). So
