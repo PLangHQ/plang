@@ -59,7 +59,7 @@ public class CallTests
     [Test]
     public async Task Call_StartedAt_PopulatedWhenTimingFlagOn()
     {
-        var on = new CallStack { Flags = Flags.Default with { Timing = true } };
+        var on = new CallStack { Timing = true };
         var off = new CallStack();
         await using var withTiming = on.Push(MakeAction("A"));
         await using var noTiming = off.Push(MakeAction("A"));

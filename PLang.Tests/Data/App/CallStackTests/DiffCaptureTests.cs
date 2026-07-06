@@ -19,7 +19,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
     [Test]
     public async Task Diff_FlagOn_VariableSetAppendsDiffEntry()
     {
-        var stack = new CallStack { Flags = Flags.Default with { Diff = true } };
+        var stack = new CallStack { Diff = true };
         var vars = new global::app.variable.list.@this(_app.User.Context);
         vars.Set("name", "old");
 
@@ -33,7 +33,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
     [Test]
     public async Task Diff_RecordCarriesNameBeforeAt()
     {
-        var stack = new CallStack { Flags = Flags.Default with { Diff = true } };
+        var stack = new CallStack { Diff = true };
         var vars = new global::app.variable.list.@this(_app.User.Context);
         vars.Set("name", "ingi");
 
@@ -50,7 +50,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
     [Test]
     public async Task Diff_ScalarOnlyByDefault_NonScalarRendersAsSummary()
     {
-        var stack = new CallStack { Flags = Flags.Default with { Diff = true } };
+        var stack = new CallStack { Diff = true };
         var vars = new global::app.variable.list.@this(_app.User.Context);
         var list = new List<int> { 1, 2, 3 };
         vars.Set("items", list);
@@ -69,7 +69,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
     {
         var stack = new CallStack
         {
-            Flags = Flags.Default with { Diff = true, DeepDiff = true }
+            Diff = true, DeepDiff = true
         };
         var vars = new global::app.variable.list.@this(_app.User.Context);
         var list = new List<int> { 1, 2, 3 };
@@ -89,7 +89,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
     [Test]
     public async Task Diff_DisposeUnsubscribesFromVariablesOnSet()
     {
-        var stack = new CallStack { Flags = Flags.Default with { Diff = true } };
+        var stack = new CallStack { Diff = true };
         var vars = new global::app.variable.list.@this(_app.User.Context);
         vars.Set("x", 1);
 
@@ -110,7 +110,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
         // never a clone — so even a large list captures in constant space. Asserting
         // the summary directly is both faster and stronger than a GC-delta heuristic:
         // the summary IS the property that prevents the OOM.
-        var stack = new CallStack { Flags = Flags.Default with { Diff = true } };
+        var stack = new CallStack { Diff = true };
         var vars = new global::app.variable.list.@this(_app.User.Context);
         // Seed with a large list — this is the 'before' the next Set captures.
         var big = new List<int>(Enumerable.Range(0, 100_000));

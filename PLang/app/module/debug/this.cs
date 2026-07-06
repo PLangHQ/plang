@@ -123,16 +123,8 @@ public sealed class @this
                 dict["variables"] = normalized;
             }
 
-            // CallStack flags: {callstack:true} → Shorthand (Timing+Tags on); {callstack:{...}}
-            // → field-by-field. Populate would set a field on `this` — we want to set the
-            // flags on the already-constructed CallStack, so handle this key explicitly and
-            // strip it before the generic Populate.
-            if (dict.TryGetValue("callstack", out var rawCallstack))
-            {
-                _context.App.CallStack.Flags = app.callstack.Flags.Parse(rawCallstack);
-                dict.Remove("callstack");
-            }
-
+            // Callstack knobs are no longer carried on --debug — they're their own flag now
+            // (--callstack={"timing":true}), a walk onto app.CallStack. Release note: use --callstack.
             _context.App.Setting.Set(this, dict);
         }
 

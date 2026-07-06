@@ -59,7 +59,7 @@ public class CallStackTreeTests
     [Test]
     public async Task Pop_RetainsInCallerChildren_WhenHistoryTrue()
     {
-        var stack = new CallStack { Flags = Flags.Default with { History = true } };
+        var stack = new CallStack { History = true };
         await using var outer = stack.Push(MakeAction("A"));
         await using (var inner = stack.Push(MakeAction("B")))
         {
@@ -89,7 +89,7 @@ public class CallStackTreeTests
     {
         var stack = new CallStack
         {
-            Flags = Flags.Default with { History = true, MaxFrames = 2 }
+            History = true, MaxFrames = 2
         };
         await using var outer = stack.Push(MakeAction("Outer"));
 

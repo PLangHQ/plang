@@ -9,7 +9,7 @@ namespace app.callstack.call.child.list;
 /// <see cref="IReadOnlyList{T}"/> for natural iteration; iteration takes a snapshot
 /// to avoid throwing on concurrent Add/Remove.
 ///
-/// FIFO eviction triggers only when <see cref="Flags.History"/> is on; when
+/// FIFO eviction triggers only when <see cref="app.callstack.@this.History"/> is on; when
 /// off, popped Calls are removed at dispose so the list stays bounded by live depth
 /// and the Add path never evicts. Eviction reads the live Flags via the back-reference
 /// — Debug.Apply can flip History mid-run, and Add reflects the current state.
@@ -31,7 +31,7 @@ public sealed class @this : IReadOnlyList<CallEntity>
         lock (_lock)
         {
             _entries.Add(child);
-            if (_stack.Flags.History && _entries.Count > _stack.Flags.MaxFrames)
+            if (_stack.History.Value && _entries.Count > _stack.MaxFrames.ToInt32())
                 _entries.RemoveAt(0);
         }
     }

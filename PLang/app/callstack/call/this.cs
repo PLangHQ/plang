@@ -104,7 +104,6 @@ public sealed partial class @this : IAsyncDisposable
         ActionEntity action,
         @this? caller,
         app.callstack.@this stack,
-        Flags flags,
         @this? previousCurrent,
         Variables? diffSource)
     {
@@ -117,16 +116,16 @@ public sealed partial class @this : IAsyncDisposable
         _diffSource = diffSource;
         Children = new child.list.@this(stack);
 
-        if (flags.Timing)
+        if (stack.Timing.Value)
         {
             StartedAt = DateTimeOffset.UtcNow;
             _stopwatch = Stopwatch.StartNew();
         }
 
-        if (flags.Diff && diffSource != null)
+        if (stack.Diff.Value && diffSource != null)
         {
             Diffs = new diff.@this();
-            var deep = flags.DeepDiff;
+            var deep = stack.DeepDiff.Value;
             _onSetHandler = (name, before, _) =>
             {
                 // OnSet fires synchronously on Variables.Set; parallel Task.WhenAll
@@ -300,7 +299,7 @@ public sealed partial class @this : IAsyncDisposable
             _onCreateHandler = null;
         }
 
-        if (!_stack.Flags.History && Caller != null)
+        if (!_stack.History.Value && Caller != null)
             Caller.Children.Remove(this);
 
         // AsyncLocal restore: only flip back if we're still the Current. If a parallel branch

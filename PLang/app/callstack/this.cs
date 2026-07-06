@@ -1,5 +1,7 @@
 using app.error;
 using ActionEntity = app.goal.steps.step.actions.action.@this;
+using @bool = global::app.type.@bool.@this;
+using number = global::app.type.number.@this;
 
 namespace app.callstack;
 
@@ -9,8 +11,8 @@ namespace app.callstack;
 ///
 /// Structural data (Action, Caller, Errors) is always populated — the cost of the
 /// thin push/pop is ~50ns per action and means errors get a useful trace without any flag.
-/// Richer capture is fine-grained per-flag (<see cref="Flags"/>): timing, diff,
-/// deepDiff, tags, history.
+/// Richer capture is fine-grained per-knob (<see cref="Timing"/>, <see cref="Diff"/>,
+/// <see cref="DeepDiff"/>, <see cref="Tags"/>, <see cref="History"/>).
 ///
 /// AsyncLocal &lt;Call&gt; is the only shared mutable state — fork-safe by construction so
 /// parallel goal.call branches each maintain their own Current without cloning context.
@@ -22,19 +24,21 @@ public sealed partial class @this
     private readonly AsyncLocal<call.@this?> _current = new();
     private call.@this? _root;
 
-    /// <summary>
-    /// Per-property gates for richer Call data capture. See <see cref="Flags"/>.
-    /// Settable so <see cref="app.module.debug.@this.Apply"/> can update it from <c>--debug</c>
-    /// after construction; otherwise stays at <see cref="Flags.Default"/>.
-    ///
-    /// Concurrency note: <see cref="Flags"/> is a multi-field <c>record struct</c>;
-    /// reassigning this property mid-run via Debug.Apply is a non-atomic copy. A reader
-    /// (e.g. Children.Add evaluating <c>History</c> + <c>MaxFrames</c>) executing during the
-    /// reassignment can observe a torn struct. Worst case is one off-by-one FIFO eviction
-    /// decision — no data loss, no exception. Practically rare since debug mode is set at
-    /// startup or pause/resume, not steady-state. Accepted as documented.
-    /// </summary>
-    public Flags Flags { get; set; } = Flags.Default;
+    // --- Capture knobs: plang-typed properties, set by the CLI convert-walk
+    //     (--callstack={"timing":true} → Setting.Set(app.CallStack, dict), same as --build sets
+    //     Build.Files). Defaults inline. Each toggles one tier of Call data capture:
+    //       Timing   — StartedAt/CompletedAt/Duration
+    //       Diff     — Variables.OnSet → Call.Diffs (scalar-only unless DeepDiff)
+    //       DeepDiff — deep-clone non-scalar Before values (only meaningful with Diff)
+    //       Tags     — advisory hint for exporters (Call.Tag() writes always succeed)
+    //       History  — retain popped Calls in Caller.Children (FIFO-capped at MaxFrames)
+    //       MaxFrames— history-on retention cap
+    public @bool  Timing    { get; set; } = @bool.False;
+    public @bool  Diff      { get; set; } = @bool.False;
+    public @bool  DeepDiff  { get; set; } = @bool.False;
+    public @bool  Tags      { get; set; } = @bool.False;
+    public @bool  History   { get; set; } = @bool.False;
+    public number MaxFrames { get; set; } = 1000;
 
     /// <summary>
     /// Run-wide accumulator of every error observed (handled or unhandled). Survives Pop.
@@ -45,7 +49,7 @@ public sealed partial class @this
     /// <summary>
     /// Optional Variables source for diff capture. Set by <see cref="Push"/> via the
     /// per-call <c>variables</c> argument; the active Call subscribes to its <c>OnSet</c>
-    /// when <see cref="Flags.Diff"/> is on.
+    /// when <see cref="Diff"/> is on.
     /// </summary>
     public Variables? Variables { get; set; }
 
@@ -101,7 +105,7 @@ public sealed partial class @this
             && ContainsGoal(goalPath))
             throw new CallStackOverflowException(MaxDepth);
 
-        var call = new call.@this(action, caller, this, Flags, caller, variables ?? Variables);
+        var call = new call.@this(action, caller, this, caller, variables ?? Variables);
 
         // Children owns its own lock + FIFO eviction policy.
         caller?.Children.Add(call);

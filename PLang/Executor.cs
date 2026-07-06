@@ -83,6 +83,13 @@ namespace PLang
 				if (!appResult.Success) return (null, appResult);
 			}
 
+			// Callstack knobs (--callstack={"timing":true}) — the walk onto app.CallStack, same as --build/--app.
+			if (parameters.TryGetValue("!callstack", out var callstackValue) && callstackValue is IDictionary<string, object?> callstackDict)
+			{
+				var callstackResult = app.Setting.Set(app.CallStack, callstackDict);
+				if (!callstackResult.Success) return (null, callstackResult);
+			}
+
 			// Builder mode (--builder or legacy --build). Either flag may be a bare
 			// `true` (e.g. `plang build` normalizes the subcommand to `--builder`) or
 			// carry a JSON config dict (`--build={"files":[...]}`). Both keys must be

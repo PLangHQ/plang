@@ -79,7 +79,6 @@
     <Using Include="app.type.path.http.@this" Alias="httppath" />
     <Using Include="app.module.cache.ICache" Alias="ICache" />
     <Using Include="app.callstack.@this" Alias="CallStack" />
-    <Using Include="app.callstack.Flags" Alias="Flags" />
     <Using Include="app.module.debug.@this" Alias="Debugging" />
     <Using Include="app.test.@this" Alias="Tester" />
     <Using Include="app.snapshot.@this" Alias="Snapshot" />

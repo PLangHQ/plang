@@ -20,7 +20,7 @@ public sealed partial class @this
 
     /// <summary>
     /// Owning App, taken at construction. Used by <see cref="Push"/> to auto-flip
-    /// <c>CallStack.Flags.Diff</c> on for the duration of an error scope so
+    /// <c>CallStack.Diff</c> on for the duration of an error scope so
     /// <see cref="Variables.@this.SnapshotAt"/> can reverse-apply post-throw mutations.
     /// Off everywhere else — pay-per-error cost.
     /// </summary>
@@ -70,17 +70,17 @@ public sealed partial class @this
         // Wire App back-reference so error.Callback can materialise via app.Snapshot().
         if (error is Error e && e.App == null) e.App = _app;
 
-        // Auto-flip Flags.Diff on for the duration of error processing so handler-time
+        // Auto-flip CallStack.Diff on for the duration of error processing so handler-time
         // mutations land on the diff stream — Variables.SnapshotAt(error) reverse-applies
         // them to project back to throw-time state. Also wire a CallStack-level OnSet
         // subscription so the stream actually populates regardless of when live Calls
         // were pushed (per-Call subscription is decided at Push time and can't backfill).
         var stack = _app.CallStack;
-        var priorFlags = stack.Flags;
-        stack.Flags = stack.Flags with { Diff = true };
+        var priorDiff = stack.Diff;
+        stack.Diff = global::app.type.@bool.@this.True;
         stack.EnableDiffStream(_app.CurrentActor.Context.Variable);
 
-        return new Restorer(_current, previous, stack, priorFlags);
+        return new Restorer(_current, previous, stack, priorDiff);
     }
 
     private sealed class Restorer : IDisposable
@@ -88,16 +88,16 @@ public sealed partial class @this
         private readonly AsyncLocal<IError?> _slot;
         private readonly IError? _previous;
         private readonly app.callstack.@this? _stack;
-        private readonly app.callstack.Flags? _priorFlags;
+        private readonly global::app.type.@bool.@this? _priorDiff;
         private bool _disposed;
 
         public Restorer(AsyncLocal<IError?> slot, IError? previous,
-                        app.callstack.@this? stack, app.callstack.Flags? priorFlags)
+                        app.callstack.@this? stack, global::app.type.@bool.@this? priorDiff)
         {
             _slot = slot;
             _previous = previous;
             _stack = stack;
-            _priorFlags = priorFlags;
+            _priorDiff = priorDiff;
         }
 
         public void Dispose()
@@ -108,7 +108,7 @@ public sealed partial class @this
             if (_stack != null)
             {
                 _stack.DisableDiffStream();
-                if (_priorFlags.HasValue) _stack.Flags = _priorFlags.Value;
+                if (_priorDiff != null) _stack.Diff = _priorDiff;
             }
         }
     }
