@@ -83,11 +83,16 @@ namespace PLang
 				if (!appResult.Success) return (null, appResult);
 			}
 
-			// Callstack knobs (--callstack={"timing":true}) — the walk onto app.CallStack, same as --build/--app.
+			// Callstack knobs (--callstack={"timing":true}) — each actor owns its own call
+			// tree, so the run-wide flag applies to both startup actors (System bootstrap +
+			// User code). Walk is the same as --build/--app. (Service actors are spawned
+			// later — carrying the flag to them is a separate concern, TODO.)
 			if (parameters.TryGetValue("!callstack", out var callstackValue) && callstackValue is IDictionary<string, object?> callstackDict)
 			{
-				var callstackResult = app.Setting.Set(app.CallStack, callstackDict);
-				if (!callstackResult.Success) return (null, callstackResult);
+				var systemResult = app.Setting.Set(app.System.CallStack, callstackDict);
+				if (!systemResult.Success) return (null, systemResult);
+				var userResult = app.Setting.Set(app.User.CallStack, callstackDict);
+				if (!userResult.Success) return (null, userResult);
 			}
 
 			// Builder mode (--builder or legacy --build). Either flag may be a bare

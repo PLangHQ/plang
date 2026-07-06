@@ -16,7 +16,7 @@ public partial class @this
     public @this SnapshotAt(IError error)
     {
         var clone = ShallowCloneStore();
-        var stack = _context?.App?.CallStack;
+        var stack = _context?.CallStack;
         if (stack == null) return clone;
 
         // Latest first — undo each mutation by writing its Before value.

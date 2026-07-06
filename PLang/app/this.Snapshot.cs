@@ -22,7 +22,7 @@ public sealed partial class @this
         Statics.Capture(s.Section("Statics"));
         Build?.Capture(s.Section("Build"));
         Test?.Capture(s.Section("Test"));
-        CallStack.Capture(s.Section("CallStack"));
+        CurrentActor.CallStack.Capture(s.Section("CallStack"));
         return s;
     }
 
@@ -44,7 +44,7 @@ public sealed partial class @this
         Statics.Capture(s.Section("Statics"));
         Build?.Capture(s.Section("Build"));
         Test?.Capture(s.Section("Test"));
-        CallStack.Capture(s.Section("CallStack"), error.CallFrames);
+        CurrentActor.CallStack.Capture(s.Section("CallStack"), error.CallFrames);
         return s;
     }
 

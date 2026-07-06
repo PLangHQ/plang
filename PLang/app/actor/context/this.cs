@@ -50,10 +50,11 @@ public sealed class @this : IDisposable
     public Variables Variable { get; }
 
     /// <summary>
-    /// The app's call tree. Read-through to <c>App.CallStack</c> — single tree per run,
-    /// fork-safe via AsyncLocal. PLang <c>%!callStack%</c> still resolves through this getter.
+    /// This context's call tree. Read-through to the owning <c>Actor.CallStack</c> — each
+    /// actor owns its own tree (a cross-actor call is a separate tree, actor-model style),
+    /// fork-safe within the actor's flows via AsyncLocal. PLang <c>%!callStack%</c> resolves here.
     /// </summary>
-    public CallStackType CallStack => App.CallStack;
+    public CallStackType CallStack => Actor.CallStack;
 
     /// <summary>
     /// Whether this is an async execution.

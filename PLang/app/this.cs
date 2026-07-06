@@ -271,14 +271,6 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public keepalive.@this KeepAlive { get; } = new();
 
-    /// <summary>
-    /// App-wide call tree. Structural data (Action / Caller / Errors)
-    /// is always captured; richer capture (timing, tags, history) is gated by
-    /// <see cref="callstack.@this.Flags"/>, populated via Debug.Apply from
-    /// <c>--debug={callstack:{...}}</c>.
-    /// </summary>
-    public callstack.@this CallStack { get; } = new();
-
     public @this(string absolutePath, global::app.module.@this? modules = null,
         string? environment = null,
         bool autoWireConsoleChannels = true)

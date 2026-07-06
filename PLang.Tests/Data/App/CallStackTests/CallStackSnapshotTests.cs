@@ -30,7 +30,7 @@ public class CallStackSnapshotTests
         var (g2, _, a2) = MakeFrame("Inner");
         var app = BuildAppWithGoals(g1, g2);
 
-        var stack = app.CallStack;
+        var stack = app.User.CallStack;
         await using var outer = stack.Push(a1);
         await using var inner = stack.Push(a2);
 
@@ -50,7 +50,7 @@ public class CallStackSnapshotTests
         var (g1, _, a1) = MakeFrame("Parent");
         var (g2, _, a2) = MakeFrame("CompletedChild");
         var app = BuildAppWithGoals(g1, g2);
-        var stack = app.CallStack;
+        var stack = app.User.CallStack;
         // Turn History on so completed children stay in the tree — we'll assert the snapshot
         // still excludes them because they're not on the *active* chain.
         stack.History = true;
@@ -74,8 +74,8 @@ public class CallStackSnapshotTests
         var (g2, _, a2) = MakeFrame("Inner2");
         var src = BuildAppWithGoals(g1, g2);
 
-        await using (var outer = src.CallStack.Push(a1))
-        await using (var inner = src.CallStack.Push(a2))
+        await using (var outer = src.User.CallStack.Push(a1))
+        await using (var inner = src.User.CallStack.Push(a2))
         {
             var snap = src.Snapshot();
 
@@ -86,13 +86,13 @@ public class CallStackSnapshotTests
 
             dst.Restore(snap, dst.User.Context);
 
-            var chain = dst.CallStack.RestoredChain!;
+            var chain = dst.User.CallStack.RestoredChain!;
             await Assert.That(chain.Count).IsEqualTo(2);
             await Assert.That(chain[0].Goal.PrPath).IsEqualTo(g1.PrPath?.ToString());
             await Assert.That(chain[^1].Goal.PrPath).IsEqualTo(g2.PrPath?.ToString());
 
-            await Assert.That(dst.CallStack.BottomFrame).IsNotNull();
-            await Assert.That(dst.CallStack.BottomFrame!.Goal.PrPath).IsEqualTo(g2.PrPath?.ToString());
+            await Assert.That(dst.User.CallStack.BottomFrame).IsNotNull();
+            await Assert.That(dst.User.CallStack.BottomFrame!.Goal.PrPath).IsEqualTo(g2.PrPath?.ToString());
         }
     }
 
@@ -103,7 +103,7 @@ public class CallStackSnapshotTests
         var (g1, _, a1) = MakeFrame("LBOuter");
         var (g2, _, a2) = MakeFrame("LBInner");
         var app = BuildAppWithGoals(g1, g2);
-        var stack = app.CallStack;
+        var stack = app.User.CallStack;
         await using var outer = stack.Push(a1);
         await using var inner = stack.Push(a2);
 

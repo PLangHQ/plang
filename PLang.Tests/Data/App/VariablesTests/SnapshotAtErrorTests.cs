@@ -21,7 +21,7 @@ public class SnapshotAtErrorTests
     public async Task SnapshotAt_ReturnsVariablesProjection_AtThrowTime()
     {
         var (app, action) = BuildLive("SAa");
-        var stack = app.CallStack;
+        var stack = app.User.CallStack;
         var vars = app.User.Context.Variable;
         stack.Variables = vars;
         await using var call = stack.Push(action, vars);
@@ -29,7 +29,7 @@ public class SnapshotAtErrorTests
         // Establish %x%=1 *before* the error fires.
         vars.Set("x", 1);
         var error = new ServiceError("boom", "TestErr", 400);
-        using (app.Error.Push(error))
+        using (app.Error.Push(error, app.User.Context))
         {
             // Handler-time mutation post-throw.
             vars.Set("x", 2);
@@ -44,14 +44,14 @@ public class SnapshotAtErrorTests
     public async Task SnapshotAt_ConsultsCallStackEventsSince_AndReverseApplies()
     {
         var (app, action) = BuildLive("SAb");
-        var stack = app.CallStack;
+        var stack = app.User.CallStack;
         var vars = app.User.Context.Variable;
         stack.Variables = vars;
         await using var call = stack.Push(action, vars);
 
         vars.Set("a", "before");
         var error = new ServiceError("boom", "TestErr", 400);
-        using (app.Error.Push(error))
+        using (app.Error.Push(error, app.User.Context))
         {
             vars.Set("a", "after");
             vars.Set("b", "added");
@@ -65,14 +65,14 @@ public class SnapshotAtErrorTests
     public async Task SnapshotAt_ExcludesPostErrorMutationsByHandler()
     {
         var (app, action) = BuildLive("SAc");
-        var stack = app.CallStack;
+        var stack = app.User.CallStack;
         var vars = app.User.Context.Variable;
         stack.Variables = vars;
         await using var call = stack.Push(action, vars);
 
         vars.Set("x", 1);
         var error = new ServiceError("boom", "TestErr", 400);
-        using (app.Error.Push(error))
+        using (app.Error.Push(error, app.User.Context))
         {
             vars.Set("x", 2); // handler mutation
             var projection = vars.SnapshotAt(error);
@@ -84,14 +84,14 @@ public class SnapshotAtErrorTests
     public async Task SnapshotAt_NoMutations_ReturnsCurrentState()
     {
         var (app, action) = BuildLive("SAd");
-        var stack = app.CallStack;
+        var stack = app.User.CallStack;
         var vars = app.User.Context.Variable;
         stack.Variables = vars;
         await using var call = stack.Push(action, vars);
 
         vars.Set("x", "stable");
         var error = new ServiceError("boom", "TestErr", 400);
-        using (app.Error.Push(error))
+        using (app.Error.Push(error, app.User.Context))
         {
             // No post-throw mutations.
             var projection = vars.SnapshotAt(error);
@@ -103,14 +103,14 @@ public class SnapshotAtErrorTests
     public async Task SnapshotAt_IsPure_SameInputsSameResult()
     {
         var (app, action) = BuildLive("SAe");
-        var stack = app.CallStack;
+        var stack = app.User.CallStack;
         var vars = app.User.Context.Variable;
         stack.Variables = vars;
         await using var call = stack.Push(action, vars);
 
         vars.Set("v", 10);
         var error = new ServiceError("boom", "TestErr", 400);
-        using (app.Error.Push(error))
+        using (app.Error.Push(error, app.User.Context))
         {
             vars.Set("v", 20);
             var p1 = vars.SnapshotAt(error);

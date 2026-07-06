@@ -58,7 +58,7 @@ public class OtherAccessorsTests
     {
         await using var app = TestApp.Create("/test");
         var err = new global::app.error.Error("boom");
-        using (app.Error.Push(err))
+        using (app.Error.Push(err, app.User.Context))
         {
             await Assert.That(app.Error.Error).IsEqualTo(err);
         }
@@ -70,7 +70,7 @@ public class OtherAccessorsTests
         await using var app = TestApp.Create("/test");
         var a = new global::app.error.Error("A");
         var b = new global::app.error.Error("B");
-        using (app.Error.Push(a)) { using (app.Error.Push(b)) { } }
+        using (app.Error.Push(a, app.User.Context)) { using (app.Error.Push(b, app.User.Context)) { } }
         await Assert.That(app.Error.Trail.Count).IsEqualTo(2);
         await Assert.That(app.Error.list.Count()).IsEqualTo(2);
     }

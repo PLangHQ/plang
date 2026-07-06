@@ -311,13 +311,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         // (returns Data, never throws) holds. Once Push succeeds the Call owns its
         // own try/catch via ExecuteAsync.
         global::app.callstack.call.@this call;
-        try { call = app.CallStack.Push(this, context.Variable); }
+        try { call = context.CallStack.Push(this, context.Variable); }
         catch (global::app.error.CallStackOverflowException ex)
         {
-            var caller = app.CallStack.Current;
+            var caller = context.CallStack.Current;
             var chain = caller != null ? caller.SnapshotChain() : Array.Empty<global::app.callstack.call.@this>();
             var overflowErr = new global::app.error.ServiceError(ex.Message, this.Step!, chain, "CallStackOverflow", 500) { Exception = ex };
-            app.CallStack.Audit.Add(overflowErr);
+            context.CallStack.Audit.Add(overflowErr);
             return context.Error(overflowErr);
         }
 

@@ -47,6 +47,16 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public context.@this Context { get; }
 
     /// <summary>
+    /// This actor's call tree. Each actor owns its own — the actor is the isolation
+    /// unit (Variables, Events, Channels are all per-actor), and the call stack is no
+    /// exception: a cross-actor call starts a separate tree, matching the actor model
+    /// (in Erlang, A calling B doesn't graft B's stack under A's). Fork-safe within the
+    /// actor's own flows via the AsyncLocal Current — that isolation is about parallel
+    /// Task branches, orthogonal to actor identity.
+    /// </summary>
+    public global::app.callstack.@this CallStack { get; } = new();
+
+    /// <summary>
     /// Per-actor permission view — signed grants on paths, keyed by verb
     /// + sub-options. <c>Find/Add/Revoke</c>. Routes "y" grants to an
     /// in-memory list (live for the App's lifetime) and "a" grants to

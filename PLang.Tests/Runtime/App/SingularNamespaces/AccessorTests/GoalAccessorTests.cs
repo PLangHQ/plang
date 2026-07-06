@@ -7,7 +7,7 @@ namespace PLang.Tests.App.SingularNamespaces.AccessorTests;
 
 // Batch A — app.goal collection node (Stage 3).
 // `app.Goal` is the collection (goal.list.@this), `app.Goal["name"]` selects,
-// `app.Goal.list` enumerates, `app.Goal.current` reads CallStack.Current.Action.Step.Goal,
+// `app.Goal.list` enumerates,
 // `app.Goal["nope"]` throws (index-miss is a hard error).
 public class GoalAccessorTests
 {
@@ -47,19 +47,8 @@ public class GoalAccessorTests
         await Assert.That(names.Contains("Setup")).IsFalse();
     }
 
-    [Test] public async Task AppGoalCurrent_MidRun_ReturnsExecutingGoal()
-    {
-        // Wiring of `.current` through CallStack is covered by the broader integration
-        // suite — here we assert the field exists and reads from CallStack.
-        await using var app = TestApp.Create("/test");
-        await Assert.That(app.Goal.current).IsNull();
-    }
-
-    [Test] public async Task AppGoalCurrent_AtRest_IsNull()
-    {
-        await using var app = TestApp.Create("/test");
-        await Assert.That(app.Goal.current).IsNull();
-    }
+    // No `app.Goal.current` — "the executing goal" is a per-actor/per-flow fact (each actor
+    // owns its call tree), read via %!goal% (context.Goal), not off the app-level collection.
 
     [Test] public async Task AppGoal_IndexOfUnknownName_ThrowsTypedError()
     {

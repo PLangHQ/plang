@@ -165,7 +165,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
             restored.Add(new call.Position(liveAction, liveGoal, stepIndex, actionIndex, id));
         }
 
-        context.App.CallStack._restoredChain = restored;
+        context.CallStack._restoredChain = restored;
     }
 
     public static void Read(global::app.snapshot.Io io, global::app.snapshot.@this s)

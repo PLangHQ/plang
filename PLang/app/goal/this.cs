@@ -281,7 +281,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
         try
         {
-            await using var goalCall = context.App.CallStack.Push(goalEntryAction);
+            await using var goalCall = context.CallStack.Push(goalEntryAction);
 
             var result = await Steps.RunAsync(context);
 
@@ -305,7 +305,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             // goal frame is on the stack. Convert to ServiceError so Goal.RunAsync's
             // contract (returns Data, never throws) holds — outer Step.RunAsync's broad
             // catch would otherwise produce a ServiceError without goal/step context.
-            var stack = context.App.CallStack;
+            var stack = context.CallStack;
             var caller = stack.Current;
             var chain = caller != null ? caller.SnapshotChain() : Array.Empty<global::app.callstack.call.@this>();
             var serviceErr = new global::app.error.ServiceError(

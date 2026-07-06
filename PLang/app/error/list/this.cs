@@ -62,7 +62,7 @@ public sealed partial class @this
     /// The returned disposable restores the previous AsyncLocal value on Dispose — use
     /// <c>using</c> or <c>using var</c> at the call site.
     /// </summary>
-    public IDisposable Push(IError error)
+    public IDisposable Push(IError error, app.actor.context.@this context)
     {
         var previous = _current.Value;
         _current.Value = error;
@@ -75,10 +75,12 @@ public sealed partial class @this
         // them to project back to throw-time state. Also wire a CallStack-level OnSet
         // subscription so the stream actually populates regardless of when live Calls
         // were pushed (per-Call subscription is decided at Push time and can't backfill).
-        var stack = _app.CallStack;
+        // The scope belongs to the actor whose flow threw — reach its stack via the
+        // context, never a global CurrentActor pointer.
+        var stack = context.CallStack;
         var priorDiff = stack.Diff;
         stack.Diff = global::app.type.@bool.@this.True;
-        stack.EnableDiffStream(_app.CurrentActor.Context.Variable);
+        stack.EnableDiffStream(context.Variable);
 
         return new Restorer(_current, previous, stack, priorDiff);
     }

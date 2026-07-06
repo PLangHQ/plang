@@ -18,7 +18,7 @@ public class ErrorsScopeTests
         await using var app = TestApp.Create("/test");
         var errors = app.Error;
         var err = new Error("Boom");
-        using (errors.Push(err))
+        using (errors.Push(err, app.User.Context))
         {
             await Assert.That(errors.Error).IsEqualTo(err);
         }
@@ -30,7 +30,7 @@ public class ErrorsScopeTests
         await using var app = TestApp.Create("/test");
         var errors = app.Error;
         var err = new Error("Boom");
-        using (errors.Push(err)) { }
+        using (errors.Push(err, app.User.Context)) { }
         await Assert.That(errors.Error).IsNull();
     }
 
@@ -41,10 +41,10 @@ public class ErrorsScopeTests
         var errors = app.Error;
         var a = new Error("A");
         var b = new Error("B");
-        using (errors.Push(a))
+        using (errors.Push(a, app.User.Context))
         {
             await Assert.That(errors.Error).IsEqualTo(a);
-            using (errors.Push(b))
+            using (errors.Push(b, app.User.Context))
             {
                 await Assert.That(errors.Error).IsEqualTo(b);
             }
@@ -60,7 +60,7 @@ public class ErrorsScopeTests
         var errors = app.Error;
         var a = new Error("A");
         var b = new Error("B");
-        using (errors.Push(a)) { using (errors.Push(b)) { } }
+        using (errors.Push(a, app.User.Context)) { using (errors.Push(b, app.User.Context)) { } }
         await Assert.That(errors.Trail.Count).IsEqualTo(2);
         await Assert.That(errors.Trail[0]).IsEqualTo(a);
         await Assert.That(errors.Trail[1]).IsEqualTo(b);
@@ -72,7 +72,7 @@ public class ErrorsScopeTests
         await using var app = TestApp.Create("/test");
         var errors = app.Error;
         var err = new Error("X");
-        using (errors.Push(err))
+        using (errors.Push(err, app.User.Context))
         {
             await Task.Yield();
             await Assert.That(errors.Error).IsEqualTo(err);
@@ -88,8 +88,8 @@ public class ErrorsScopeTests
         var b = new Error("B");
         IError? aSeen = null, bSeen = null;
 
-        async Task BranchA() { using (errors.Push(a)) { await Task.Yield(); aSeen = errors.Error; } }
-        async Task BranchB() { using (errors.Push(b)) { await Task.Yield(); bSeen = errors.Error; } }
+        async Task BranchA() { using (errors.Push(a, app.User.Context)) { await Task.Yield(); aSeen = errors.Error; } }
+        async Task BranchB() { using (errors.Push(b, app.User.Context)) { await Task.Yield(); bSeen = errors.Error; } }
 
         await Task.WhenAll(BranchA(), BranchB());
         // Each branch saw its own pushed error.

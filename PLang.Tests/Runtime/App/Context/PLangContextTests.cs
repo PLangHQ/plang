@@ -64,15 +64,15 @@ public class PLangContextTests
     }
 
     [Test]
-    public async Task CallStack_ReadsThrough_AppDebugCallStack()
+    public async Task CallStack_ReadsThrough_ActorCallStack()
     {
-        // Architectural shift: ownership moved from Context to App.Debug. The Context
-        // exposes a getter that proxies through so PLang %!callStack% still resolves;
-        // there's no per-context allocation.
+        // Each actor owns its call tree. The Context exposes a getter that proxies through
+        // to its owning Actor's CallStack so PLang %!callStack% still resolves; there's no
+        // per-context allocation.
         await using var engine = TestApp.Create("/app");
         using var context = new global::app.actor.context.@this(engine, engine.User);
 
-        await Assert.That(context.CallStack).IsEqualTo(engine.CallStack);
+        await Assert.That(context.CallStack).IsEqualTo(engine.User.CallStack);
     }
 
     [Test]

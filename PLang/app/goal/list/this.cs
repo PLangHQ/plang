@@ -254,11 +254,10 @@ public sealed class @this
     /// </summary>
     public IEnumerable<goal.@this> list => _goals.Values.Where(g => !g.IsSetup);
 
-    /// <summary>
-    /// The goal currently executing — reads CallStack.Current.Action.Step.Goal.
-    /// Null at rest (no execution in flight).
-    /// </summary>
-    public goal.@this? current => App?.CallStack.Current?.Action?.Step?.Goal;
+    // No app-level `current` — "the executing goal" is a per-actor/per-flow fact, not an
+    // app-collection one. Each actor owns its call tree (Actor.CallStack); PLang reads the
+    // executing goal via %!goal% (context.Goal). A single app.goal.current would have to pick
+    // an actor via CurrentActor — ambiguous under per-actor stacks — so it doesn't exist.
 
     /// <summary>
     /// Removes a goal.

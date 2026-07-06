@@ -51,8 +51,8 @@ public class SnapshotWireTests
         var src = global::PLang.Tests.TestApp.Create("/src");
         var e1 = new ServiceError("first", "TestErr", 400);
         var e2 = new ServiceError("second", "TestErr", 500);
-        using (src.Error.Push(e1)) { }
-        using (src.Error.Push(e2)) { }
+        using (src.Error.Push(e1, src.User.Context)) { }
+        using (src.Error.Push(e2, src.User.Context)) { }
 
         var wired = await RoundTrip(src, src.Snapshot());
 
@@ -127,7 +127,7 @@ public class SnapshotWireTests
 
         // Suspend at step1/action0 (what the throw-time snapshot captures).
         string json;
-        await using (var call = context.App.CallStack.Push(step1.Actions[0], context.Variable))
+        await using (var call = context.CallStack.Push(step1.Actions[0], context.Variable))
         {
             json = await app.SnapshotToWire(app.Snapshot());   // <-- to disk (string)
             await call.DisposeAsync();
@@ -160,7 +160,7 @@ public class SnapshotWireTests
         app.Goal.Add(goal);
 
         string json;
-        await using (var call = context.App.CallStack.Push(step1.Actions[0], context.Variable))
+        await using (var call = context.CallStack.Push(step1.Actions[0], context.Variable))
         {
             json = await app.SnapshotToWire(app.Snapshot());
             await call.DisposeAsync();
@@ -220,8 +220,8 @@ public class SnapshotWireTests
 
         // Suspend mid-stack: Start at its call step (1,0), Sub at its throw step (1,0).
         string json;
-        await using (var startFrame = context.App.CallStack.Push(start.Steps[1].Actions[0], context.Variable))
-        await using (var subFrame = context.App.CallStack.Push(sub.Steps[1].Actions[0], context.Variable))
+        await using (var startFrame = context.CallStack.Push(start.Steps[1].Actions[0], context.Variable))
+        await using (var subFrame = context.CallStack.Push(sub.Steps[1].Actions[0], context.Variable))
         {
             json = await app.SnapshotToWire(app.Snapshot());
         }
@@ -264,7 +264,7 @@ public class SnapshotWireTests
 
         context.Variable.Set("x", 1L);
         string json;
-        await using (var call = context.App.CallStack.Push(goal.Steps[1].Actions[0], context.Variable))
+        await using (var call = context.CallStack.Push(goal.Steps[1].Actions[0], context.Variable))
         {
             json = await app.SnapshotToWire(app.Snapshot());
         }
@@ -331,10 +331,10 @@ public class SnapshotWireTests
 
         context.Variable.Set("x", 1L);
         string json;
-        await using (var call = context.App.CallStack.Push(goal.Steps[1].Actions[0], context.Variable))
+        await using (var call = context.CallStack.Push(goal.Steps[1].Actions[0], context.Variable))
         {
             var err = new ServiceError("boom", goal.Steps[1],
-                context.App.CallStack.Current!.SnapshotChain());
+                context.CallStack.Current!.SnapshotChain());
             json = await app.SnapshotToWire(app.Snapshot(err));   // throw-time overload
         }
 
@@ -371,7 +371,7 @@ public class SnapshotWireTests
 
         context.Variable.Set("x", 1L);
         string json;
-        await using (var call = context.App.CallStack.Push(goal.Steps[1].Actions[0], context.Variable))
+        await using (var call = context.CallStack.Push(goal.Steps[1].Actions[0], context.Variable))
             json = await app.SnapshotToWire(app.Snapshot());
 
         // %snap% = string value, but TYPED as snapshot (what an honored `as snapshot` yields).
@@ -406,7 +406,7 @@ public class SnapshotWireTests
         // Suspend at step1 with %x% = 1 captured.
         context.Variable.Set("x", 1L);
         string json;
-        await using (var call = context.App.CallStack.Push(goal.Steps[1].Actions[0], context.Variable))
+        await using (var call = context.CallStack.Push(goal.Steps[1].Actions[0], context.Variable))
         {
             json = await app.SnapshotToWire(app.Snapshot());
         }

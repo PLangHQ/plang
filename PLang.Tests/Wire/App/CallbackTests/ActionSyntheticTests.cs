@@ -33,12 +33,12 @@ public class ActionSyntheticTests
         var synthetic = new ActionEntity { Module = "x", ActionName = "y" };
         var prLoaded = new ActionEntity { Module = "x", ActionName = "y" }; prLoaded.Synthetic = false;
 
-        await using var s1 = app.CallStack.Push(synthetic);
+        await using var s1 = app.User.CallStack.Push(synthetic);
         await Assert.That(s1.Synthetic).IsTrue();
 
         // Pop s1 before pushing s2 to avoid caller chain
         await s1.DisposeAsync();
-        await using var s2 = app.CallStack.Push(prLoaded);
+        await using var s2 = app.User.CallStack.Push(prLoaded);
         await Assert.That(s2.Synthetic).IsFalse();
     }
 
@@ -50,7 +50,7 @@ public class ActionSyntheticTests
         var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cs2-" + System.Guid.NewGuid().ToString("N")[..8]));
         var prLoaded = new ActionEntity { Module = "x", ActionName = "y" }; prLoaded.Synthetic = false;
-        await using var call = app.CallStack.Push(prLoaded);
+        await using var call = app.User.CallStack.Push(prLoaded);
         await Assert.That(call.Synthetic).IsFalse();
     }
 
@@ -61,7 +61,7 @@ public class ActionSyntheticTests
         var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cs3-" + System.Guid.NewGuid().ToString("N")[..8]));
         var synthetic = new ActionEntity { Module = "x", ActionName = "y" };
-        await using var call = app.CallStack.Push(synthetic);
+        await using var call = app.User.CallStack.Push(synthetic);
         var snap = app.Snapshot();
         await Assert.That(snap).IsNotNull();
     }
