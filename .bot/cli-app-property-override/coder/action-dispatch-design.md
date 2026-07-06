@@ -70,6 +70,22 @@ context-less `static` operator can't build a scalar from a raw string.)
   (Push → **Resolve** → Execute → Run). Omitted params fill from setting/`[Default]`.
 - **Drop the `context` arg** — read `handler.Context`.
 
+## ⚠ Implementation hazard found (2026-07-06) — Mechanism 2 needs rethinking
+
+First attempt at Mechanism 2 did: reflect the handler's set `Data` props → `ShallowClone(name)` →
+`action.Parameters` bag → `RunAsync` (which **rebuilds** a fresh handler from the bag via `Resolve`).
+**This regressed `Sign_EmptyContracts`** (signing 14/14 → 13/14) — the seam's per-param `.As<T>()`
+re-conversion is **not lossless** for crypto/complex params. Round-tripping *every* provided param
+through a rebuild is unsafe. Reverted.
+
+**Corrected direction:** the C# path must **fill only the UNSET params in place** on the existing
+handler (keep the set ones untouched — no round-trip), not rebuild from a bag. But the action's
+params are `init`-only (immutable post-construction), so "fill in place" can't just assign them — it
+needs either (a) the generated `Resolve` to seed the fresh instance from the handler's *already-typed*
+values without re-`As<T>()` them (pass-through when already `T`), or (b) a per-param generated
+"fill-if-Uninitialized" that runs during construction. **This is a fresh, careful generator change —
+not the quick RunAction-body edit.** TODO before implementing 3c.
+
 ## Removed
 - `PreboundHandler` (the property + the skip-`Resolve` branch, `action/this.cs:300-338`).
 - `RunAction`'s `context` parameter (now `handler.Context`); `RunAction` renamed to `Run`.
