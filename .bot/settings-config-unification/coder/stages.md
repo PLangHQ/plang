@@ -88,17 +88,17 @@ onto `followRedirects`/`maxRedirects` setters. Multi-set is `set %!http.request%
 
 Same shape as math, but bigger — do it as its own slice with fresh budget.
 
-**Per-request params** (`request` already has `[Default]`: TimeoutInSec, ContentType, Encoding,
-Unsigned, Method) — the seam already resolves them (step → `%!http.request.x%` → `%!http.x%` →
-`[Default]`). In `http/code/Default.cs` (SendAsync ~78-85, and the 2 sibling read sites ~163, ~204):
-delete the `config.Resolve("X", def)` fallbacks and the `action.X == null ? …` ternaries — just
-`await action.X.Value()`. Behavior-preserving (the seam's module-key `http.timeoutinsec` == the old
-config write key, case-folded).
+**UNIFORM model (Ingi): every config value is a property on the action with `[Default]`. No
+"module-level direct read" case — it's all properties.** `request` already has TimeoutInSec,
+ContentType, Encoding, Unsigned, Method as `[Default]` props. Add the rest as props the same way:
+BaseUrl (`text?`, no default — absolute-only when unset), DefaultHeaders (`dict?`), FollowRedirects
+(`@bool` `[Default(true)]`), MaxRedirects (`number` `[Default(10)]`), MaxResponseSize (`number`
+`[Default(100*1024*1024)]`), MaxSSEBufferSize (`number` `[Default(10*1024*1024)]`) — and whatever
+download/sse use (MaxDownloadSize). The seam resolves each `http.request.x → http.x → [Default]`.
 
-**Module-level props** (no per-request param: BaseUrl, DefaultHeaders, FollowRedirects, MaxRedirects,
-MaxResponseSize, MaxSSEBufferSize, MaxDownloadSize) — replace `config.Resolve("X", def)` with a direct
-`context.Setting.Resolve("http.x")`-with-inline-default (like math's overflow/precision). Read sites
-incl. `ResolveUrl` (BaseUrl, ~400) and `MergeHeaders` (DefaultHeaders).
+Then in `http/code/Default.cs` (SendAsync ~78-85 + 2 siblings ~163,~204 + `ResolveUrl`/`MergeHeaders`):
+delete every `config.Resolve("X", …)` and the dead `action.X == null ? …` ternaries — just read
+`action.X`. Delete `config = For<Config>(…)`.
 
 **Then delete:** `http/Config.cs`, `For<Config>`/`ModuleView<Config>` params (~333,345,357,400),
 `app.Config.For`/`Apply`/`ModuleView`/`IConfig`. **Dissolve `configure`** (`http/configure.cs` +

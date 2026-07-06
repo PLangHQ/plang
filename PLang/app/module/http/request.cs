@@ -54,6 +54,28 @@ public partial class request : IContext
     /// <summary>Stream format: Line (NDJSON), SSE (Server-Sent Events), or Bytes (raw chunks).</summary>
     public partial data.@this<global::app.type.choice.@this<StreamFormat>>? StreamAs { get; init; }
 
+    /// <summary>Base URL for resolving relative request URLs. Unset = URLs must be absolute.</summary>
+    public partial data.@this<global::app.type.text.@this>? BaseUrl { get; init; }
+
+    /// <summary>Headers merged into every request; per-request <see cref="Headers"/> win on conflict.</summary>
+    public partial data.@this<global::app.type.dict.@this>? DefaultHeaders { get; init; }
+
+    /// <summary>Whether to follow HTTP redirects. Default: true.</summary>
+    [Default(true)]
+    public partial data.@this<global::app.type.@bool.@this> FollowRedirects { get; init; }
+
+    /// <summary>Maximum redirects to follow. Default: 10.</summary>
+    [Default(10)]
+    public partial data.@this<global::app.type.number.@this> MaxRedirects { get; init; }
+
+    /// <summary>Max response body size in bytes. Default 100MB — guards against OOM from untrusted servers.</summary>
+    [Default(100 * 1024 * 1024)]
+    public partial data.@this<global::app.type.number.@this> MaxResponseSize { get; init; }
+
+    /// <summary>Max SSE message buffer in bytes. Default 10MB.</summary>
+    [Default(10 * 1024 * 1024)]
+    public partial data.@this<global::app.type.number.@this> MaxSSEBufferSize { get; init; }
+
     [Code]
     public partial IHttp Http { get; }
 
