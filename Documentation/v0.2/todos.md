@@ -1651,3 +1651,14 @@ live subsystems (property walk). Design writeup + open questions for architect:
 `.bot/settings-config-unification/coder/settings-config-unification.md`. Blocks
 the proper fix of the `--build={"files":[...]}` startup crash on
 `cli-app-property-override` (do not tape a 4th mechanism on top).
+
+## 2026-07-06 — Move CallStack from App to Actor (per-actor call tree)
+`App.CallStack` is app-level today ("single tree per run"; `context/this.cs:56` read-through).
+Ingi's call: it should live on the **actor** — actor-model-correct (each actor is an independent
+execution unit with its own stack; Erlang/Akka). Unlike per-*context* it does NOT fragment on
+goal calls (a `call goal` stays in the same actor); it separates only at actor boundaries
+(System bootstrap vs User execution vs a service call — distributed-tracing style). Deferred out
+of the `cli-app-property-override` setting work (kept app-level there + wired `App` for the knobs);
+this is its own observability change: move the object to `actor`, update every `App.CallStack`
+user + the `context.CallStack` read-through, decide the trace-model (per-actor vs the current
+single-tree-per-run). Context: the Stage-4 CallStack-knobs-as-settings chat, 2026-07-06.
