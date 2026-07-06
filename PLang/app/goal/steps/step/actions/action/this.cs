@@ -80,7 +80,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// </summary>
     [JsonIgnore]
     /// <summary>
-    /// A C#-composed action carrying provided params (via <c>app.RunAction</c>). Dispatch runs the
+    /// A C#-composed action carrying provided params (via <c>app.Run</c>). Dispatch runs the
     /// normal path; the generated Resolve passes through the seed's *set* params (no round-trip)
     /// while filling the UNSET ones from setting → [Default]. Null on the .pr path.
     /// </summary>
@@ -301,7 +301,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         var app = context.App!;
         // Uniform dispatch: always resolve the shell + run Resolve (the seam). A C#-composed
-        // Seed (app.RunAction) rides on the entity and is read by the generated Resolve as the
+        // Seed (app.Run) rides on the entity and is read by the generated Resolve as the
         // pass-through for its set params — no separate skip-Resolve path.
         var (handler, error) = app.Module.GetCodeGenerated(this, context);
         if (error != null) return context.Error(error);

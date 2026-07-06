@@ -50,7 +50,7 @@ public class SignActionTests
             Expires = expires.HasValue ? (global::app.type.duration.@this)expires.Value : null,
             Headers = headers?.ToDictData()
         };
-        return await _app.RunAction<sign>(action, Ctx);
+        return await _app.Run<sign>(action, Ctx);
     }
 
     // sign now returns a Data whose value IS the signature layer (no Data.Signature).

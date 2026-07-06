@@ -400,7 +400,7 @@ public sealed partial class @this
             {
                 Question = new data.@this<global::app.type.text.@this>("", sb.ToString()),
             };
-            var askResult = await Context.App.RunAction(askAction, Context);
+            var askResult = await Context.App.Run(askAction, Context);
 
             if (askResult.ShouldExit()) return data.@this<global::app.type.path.@this>.From(askResult);
             if (!askResult.Success) return data.@this<global::app.type.path.@this>.From(askResult);

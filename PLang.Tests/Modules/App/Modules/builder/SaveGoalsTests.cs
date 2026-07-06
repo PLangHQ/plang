@@ -50,7 +50,7 @@ public class SaveGoalsTests
         };
 
         var action = new goalsSave(_app.User.Context) { Goal = goal };
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
 
@@ -75,7 +75,7 @@ public class SaveGoalsTests
         };
 
         var action = new goalsSave(_app.User.Context) { Goal = goal };
-        await _app.RunAction(action, _app.User.Context);
+        await _app.Run(action, _app.User.Context);
 
         var prPath = System.IO.Path.Combine(_tempDir, ".build", "test.pr");
         var json = System.IO.File.ReadAllText(prPath);
@@ -103,7 +103,7 @@ public class SaveGoalsTests
         };
 
         var action = new goalsSave(_app.User.Context) { Goal = goal };
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
 
@@ -123,7 +123,7 @@ public class SaveGoalsTests
     {
         var goal = new Goal { Name = "Test" }; // No Path → no PrPath
         var action = new goalsSave(_app.User.Context) { Goal = goal };
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NoPrPath");

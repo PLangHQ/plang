@@ -13,7 +13,7 @@ public class CryptoV1PassThroughTests
     {
         var app = NewApp();
         var input = new byte[] { 1, 2, 3, 4 };
-        var result = await app.RunAction<encrypt>(
+        var result = await app.Run<encrypt>(
             new encrypt(app.User.Context) { Input = global::app.data.@this<global::app.type.binary.@this>.Ok(input) }, app.User.Context);
         await result.IsSuccess();
         await Assert.That(result.GetValue<byte[]>()).IsEquivalentTo(input);
@@ -24,7 +24,7 @@ public class CryptoV1PassThroughTests
     {
         var app = NewApp();
         var input = new byte[] { 9, 8, 7 };
-        var result = await app.RunAction<decrypt>(
+        var result = await app.Run<decrypt>(
             new decrypt(app.User.Context) { Input = global::app.data.@this<global::app.type.binary.@this>.Ok(input) }, app.User.Context);
         await result.IsSuccess();
         await Assert.That(result.GetValue<byte[]>()).IsEquivalentTo(input);
@@ -35,10 +35,10 @@ public class CryptoV1PassThroughTests
     {
         var app = NewApp();
         var input = new byte[] { 11, 22, 33, 44, 55 };
-        var encrypted = await app.RunAction<encrypt>(
+        var encrypted = await app.Run<encrypt>(
             new encrypt(app.User.Context) { Input = global::app.data.@this<global::app.type.binary.@this>.Ok(input) }, app.User.Context);
         var encryptedBytes = encrypted.GetValue<byte[]>()!;
-        var decrypted = await app.RunAction<decrypt>(
+        var decrypted = await app.Run<decrypt>(
             new decrypt(app.User.Context) { Input = global::app.data.@this<global::app.type.binary.@this>.Ok(encryptedBytes) }, app.User.Context);
         await Assert.That(decrypted.GetValue<byte[]>()).IsEquivalentTo(input);
     }

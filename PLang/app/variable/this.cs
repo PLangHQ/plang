@@ -50,7 +50,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public bool IsMalformed { get; init; }
 
     /// <summary>
-    /// Convenience for direct C# composition (tests, App.RunAction):
+    /// Convenience for direct C# composition (tests, App.Run):
     /// <c>new global::app.variable.@this("myList")</c> is equivalent to a bare-name slot.
     /// Records' primary constructor is inherited; this overload chains into it.
     /// </summary>

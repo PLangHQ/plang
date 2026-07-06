@@ -225,7 +225,7 @@ public class PropertiesWireShapeTests
             var back = plang.Deserialize(tampered);
             back.Context = d.Context;
             var app = d.Context!.App;
-            var verify = await app.RunAction<global::app.module.signing.verify>(
+            var verify = await app.Run<global::app.module.signing.verify>(
                 new global::app.module.signing.verify(app.User.Context)
                 {
                     Data = back,

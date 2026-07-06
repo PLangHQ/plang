@@ -38,7 +38,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
 
         var back = plang.Deserialize(tampered);
         back.Context = app.User.Context;
-        var verify = await app.RunAction<global::app.module.signing.verify>(
+        var verify = await app.Run<global::app.module.signing.verify>(
             new global::app.module.signing.verify(app.User.Context)
             {
                 Data = back,

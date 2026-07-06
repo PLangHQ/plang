@@ -301,7 +301,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
         {
             Path = context.Ok<path>(path.Resolve(prPath, context))
         };
-        var result = await app.RunAction(readAction, context);
+        var result = await app.Run(readAction, context);
         if (!result.Success) return result;
 
         // The value door — a source-backed .pr payload parses through its own

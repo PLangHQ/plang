@@ -144,7 +144,7 @@ public class Stage6_ConsumersTests
         var list = new global::app.type.list.@this(ctx);
         list.Add(new Data("", dict, context: ctx));
         await ctx.Variable.Set("items", list);
-        var result = await app.RunAction(new global::app.module.list.IndexOf(ctx) { ListName = new global::app.data.@this<global::app.variable.@this>("", new global::app.variable.@this("items")),
+        var result = await app.Run(new global::app.module.list.IndexOf(ctx) { ListName = new global::app.data.@this<global::app.variable.@this>("", new global::app.variable.@this("items")),
             Value = D(app, 99, "number"),
         }, ctx);
         await result.IsSuccess();
@@ -163,7 +163,7 @@ public class Stage6_ConsumersTests
         list.Add(new Data("", 5, context: ctx));
         list.Add(new Data("", 5, context: ctx));
         await ctx.Variable.Set("items", list);
-        var result = await app.RunAction(new global::app.module.list.Unique(ctx) { ListName = new global::app.data.@this<global::app.variable.@this>("", new global::app.variable.@this("items")),
+        var result = await app.Run(new global::app.module.list.Unique(ctx) { ListName = new global::app.data.@this<global::app.variable.@this>("", new global::app.variable.@this("items")),
         }, ctx);
         await result.IsSuccess();
     }

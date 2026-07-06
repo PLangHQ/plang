@@ -158,7 +158,7 @@ public sealed class @this : ISerializer
             // skipped when no actor (internal serialize) or already a layer.
             if (_context.Actor != null && data.Peek() is not global::app.type.signature.@this)
             {
-                var signResult = await _context.App.RunAction(
+                var signResult = await _context.App.Run(
                     new app.module.signing.sign(_context) { Data = data,
                         // Hash in the view we're serializing in, so the verifier (re-hashing the
                         // wire-reconstructed bag in the same view) gets matching bytes.
@@ -241,7 +241,7 @@ public sealed class @this : ISerializer
                     SkipFreshnessCheck = new global::app.data.@this<global::app.type.@bool.@this>(
                         "", view == global::app.View.Store),
                 };
-                var verifyResult = await _context.App.RunAction(verifyAction, _context);
+                var verifyResult = await _context.App.Run(verifyAction, _context);
                 if (!verifyResult.Success)
                     return _context.Error(verifyResult.Error ?? new error.ServiceError(
                         "Signature verification failed", "SignatureInvalid", 400));

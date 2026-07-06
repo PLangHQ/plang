@@ -5,7 +5,7 @@ using TUnit.Assertions.Extensions;
 namespace PLang.Tests.App.CallbackTests;
 
 /// Stage 2a — Batch 4: action owns its execution. `action.RunAsync(context)` is
-/// the single entry; `App.Run` is deleted (RunAction retained as the inline-
+/// the single entry; `App.Run` is deleted (Run retained as the inline-
 /// C#-composition wrapper that builds an entity and dispatches through the
 /// same path — spec-deferred for later removal once handlers grow their own
 /// RunAsync surface).
@@ -40,13 +40,13 @@ public class ActionRunAsyncTests
 
     [Test] public async Task AppRunAction_SymbolAbsent_FromProductionSource()
     {
-        // Spec-deferred: RunAction retained as the inline-composition entry.
+        // Spec-deferred: Run retained as the inline-composition entry.
         // It builds an Action.@this entity with PreboundHandler set and
         // dispatches through entity.RunAsync — same path as PR-loaded actions,
         // synthetic-stamped. Pin current behavior (will flip when removed).
         var runAction = typeof(global::app.@this).GetMethods(
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-            .FirstOrDefault(m => m.Name == "RunAction" && m.GetGenericArguments().Length == 1);
+            .FirstOrDefault(m => m.Name == "Run" && m.GetGenericArguments().Length == 1);
         await Assert.That(runAction).IsNotNull();
     }
 

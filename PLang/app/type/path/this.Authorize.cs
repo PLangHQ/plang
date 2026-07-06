@@ -51,7 +51,7 @@ public partial class @this
             {
                 Question = new data.@this<global::app.type.text.@this>("", question, context: Context),
             };
-            var askResult = await Context!.App.RunAction(askAction, Context);
+            var askResult = await Context!.App.Run(askAction, Context);
 
             // Stateless suspend bubbles up unchanged. ShouldExit honors the
             // Value-side opt-out so a resolved Data<Ask> (Answer bound) flows

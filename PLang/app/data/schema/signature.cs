@@ -109,7 +109,7 @@ public sealed class signature : ISchemaReader
                     "", ctx.View == global::app.View.Store),
             };
             var verifyResult = context.App
-                .RunAction(verifyAction, context)
+                .Run(verifyAction, context)
                 .GetAwaiter().GetResult();
             if (!verifyResult.Success)
                 return context.Error(verifyResult.Error

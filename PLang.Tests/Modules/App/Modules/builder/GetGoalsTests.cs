@@ -46,7 +46,7 @@ public class GetGoalsTests
             "Start\n- write out 'hello'\n- set %x% = 1");
 
         var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
         var goals = result.GetValue<List<Goal>>();
@@ -72,7 +72,7 @@ public class GetGoalsTests
             "Build\n- build step");
 
         var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
         var goals = result.GetValue<List<Goal>>();
 
         await Assert.That(goals).IsNotNull();
@@ -128,7 +128,7 @@ public class GetGoalsTests
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "start.pr"), prJson);
 
         var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
         var goals = result.GetValue<List<Goal>>();
 
         await Assert.That(goals).IsNotNull();
@@ -154,7 +154,7 @@ public class GetGoalsTests
         _app.Build.Files.Add(new global::app.type.path.file.@this("Start.goal", global::PLang.Tests.TestApp.SharedContext));
 
         var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
         var goals = result.GetValue<List<Goal>>();
@@ -174,7 +174,7 @@ public class GetGoalsTests
         _app.Build.Files.Add(new global::app.type.path.file.@this("mygoal.goal", global::PLang.Tests.TestApp.SharedContext));
 
         var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
         var goals = result.GetValue<List<Goal>>();
@@ -194,7 +194,7 @@ public class GetGoalsTests
         _app.Build.Files.Add(new global::app.type.path.file.@this("NonExistent.goal", global::PLang.Tests.TestApp.SharedContext));
 
         var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
         var goals = result.GetValue<List<Goal>>();
@@ -219,7 +219,7 @@ public class GetGoalsTests
         _app.Build.Files.Add(new global::app.type.path.file.@this("Third.goal", global::PLang.Tests.TestApp.SharedContext));
 
         var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
         var goals = result.GetValue<List<Goal>>();
@@ -233,7 +233,7 @@ public class GetGoalsTests
     public async Task GetGoals_EmptyFolder_ReturnsEmptyList()
     {
         var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
         var goals = result.GetValue<List<Goal>>();
@@ -257,7 +257,7 @@ public class GetGoalsTests
             "{ invalid json {{{}}}");
 
         var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
         var goals = result.GetValue<List<Goal>>();

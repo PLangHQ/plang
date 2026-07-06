@@ -46,7 +46,7 @@ public class ValidateActionsTests
         };
 
         var action = new validate(_app.User.Context) { Actions = actions };
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
         await Assert.That(await result.ToBooleanAsync()).IsTrue();
@@ -61,7 +61,7 @@ public class ValidateActionsTests
         };
 
         var action = new validate(_app.User.Context) { Actions = actions };
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("nonexistent.fake");
@@ -97,7 +97,7 @@ public class ValidateActionsTests
         };
 
         var action = new validate(_app.User.Context) { Actions = actions };
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
         // Verify PrPath was actually resolved
@@ -123,7 +123,7 @@ public class ValidateActionsTests
         };
 
         var action = new validate(_app.User.Context) { Actions = actions };
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
     }
@@ -143,7 +143,7 @@ public class ValidateActionsTests
         };
 
         var action = new validate(_app.User.Context) { Actions = actions };
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
         // Defaults should be filled for missing params
@@ -176,7 +176,7 @@ public class ValidateActionsTests
         };
 
         var action = new validate(_app.User.Context) { Actions = actions };
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
         var rightParam = actions[0].Parameters.First(p => p.Name == "Right");
@@ -207,7 +207,7 @@ public class ValidateActionsTests
         };
 
         var action = new validate(_app.User.Context) { Actions = actions };
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
         var rightParam = actions[0].Parameters.First(p => p.Name == "Right");
@@ -236,7 +236,7 @@ public class ValidateActionsTests
         };
 
         var action = new validate(_app.User.Context) { Actions = actions };
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
         // %flag% should NOT be converted — it's a variable reference

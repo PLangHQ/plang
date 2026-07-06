@@ -448,7 +448,7 @@ public sealed partial class @this : global::app.type.path.@this
             {
                 Data = new data.@this("", canonical, context: Context),
             };
-            var signResult = await Context.App.RunAction<module.signing.sign>(sign, Context);
+            var signResult = await Context.App.Run<module.signing.sign>(sign, Context);
             if (signResult.Success)
             {
                 var json = JsonSerializer.Serialize(signResult);

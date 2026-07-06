@@ -161,7 +161,7 @@ public class Default : IBuilder
             Pattern = new data.@this<global::app.type.text.@this>("", "*.goal", context: context),
             Recursive = new data.@this<global::app.type.@bool.@this>("", true, context: context)
         };
-        var listResult = await app.RunAction(listAction, context);
+        var listResult = await app.Run(listAction, context);
         if (!listResult.Success)
             return listResult;
 
@@ -205,7 +205,7 @@ public class Default : IBuilder
         foreach (var file in files)
         {
             var readAction = new file.Read(context) { Path = context.Ok<path>(file) };
-            var readResult = await app.RunAction(readAction, context);
+            var readResult = await app.Run(readAction, context);
             if (!readResult.Success)
             {
                 allErrors.Add(new Info
@@ -284,7 +284,7 @@ public class Default : IBuilder
             Path = context.Ok<path>(prPath),
             Value = new data.@this("", json, context: context)
         };
-        var saveResult = await app.RunAction(saveAction, context);
+        var saveResult = await app.Run(saveAction, context);
 
         var elapsed = _buildTimer.Elapsed;
         await app.CurrentActor.Channel.WriteTextAsync(global::app.channel.list.@this.Output,
@@ -1059,7 +1059,7 @@ public class Default : IBuilder
         {
             Path = context.Ok<path>(prPath)
         };
-        var readResult = await app.RunAction(readAction, context);
+        var readResult = await app.Run(readAction, context);
         if (!readResult.Success) return errors;
 
         // File provider auto-deserializes .pr files into a single Goal. A .pr left

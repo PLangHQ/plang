@@ -551,7 +551,7 @@ public sealed class Default : IHttp
             Data = data
         };
 
-        var verifyResult = await app.RunAction<signing.verify>(verifyAction, context);
+        var verifyResult = await app.Run<signing.verify>(verifyAction, context);
         if (!verifyResult.Success)
         {
             BuildProperties(verifyResult, request, response);
@@ -581,7 +581,7 @@ public sealed class Default : IHttp
         if (data?.Peek() is global::app.type.signature.@this layer)
         {
             var verifyAction = new signing.verify(context) { Data = data };
-            var verifyResult = await app.RunAction<signing.verify>(verifyAction, context);
+            var verifyResult = await app.Run<signing.verify>(verifyAction, context);
             if (verifyResult.Success)
                 await context.Variable.Set("!ServiceIdentity", layer.Identity.ToString());
         }
@@ -861,7 +861,7 @@ public sealed class Default : IHttp
                 Data = data
             };
 
-            var verifyResult = await app.RunAction<signing.verify>(verifyAction, context);
+            var verifyResult = await app.Run<signing.verify>(verifyAction, context);
             if (!verifyResult.Success)
             {
                 await RunCallbackAsync(onStream, verifyResult, null, "chunk", app, context, ct);

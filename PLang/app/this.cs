@@ -466,7 +466,7 @@ public sealed partial class @this : IAsyncDisposable
     // App.Run collapsed into Action.@this.RunAsync in stage 2a.5
     // (action owns its execution — no shared App-level dispatch).
     //
-    // RunAction retained as the inline-C#-composition entry: callers construct
+    // Run retained as the inline-C#-composition entry: callers construct
     // a handler instance (`new sign { ... }`), this wraps it in an Action.@this
     // entity with Seed set so the generated Resolve passes through the composed
     // action's set params and fills the unset ones from setting → [Default].
@@ -479,7 +479,7 @@ public sealed partial class @this : IAsyncDisposable
     /// actions (providers, tests). Spec-deferred follow-up: this overload may
     /// be removed entirely when handlers grow their own RunAsync surface.
     /// </summary>
-    public Task<data.@this> RunAction<TAction>(TAction handler, actor.context.@this context)
+    public Task<data.@this> Run<TAction>(TAction handler, actor.context.@this context)
         where TAction : module.ICodeGenerated
     {
         var entity = new global::app.goal.steps.step.actions.action.@this
@@ -494,11 +494,11 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Typed variant — same dispatch path, casts the result Value to TResult.
     /// </summary>
-    public async Task<data.@this<TResult>> RunAction<TAction, TResult>(TAction handler, actor.context.@this context)
+    public async Task<data.@this<TResult>> Run<TAction, TResult>(TAction handler, actor.context.@this context)
         where TAction : module.ICodeGenerated
         where TResult : global::app.type.item.@this, global::app.type.item.ICreate<TResult>
     {
-        var result = await RunAction(handler, context);
+        var result = await Run(handler, context);
         if (!result.Success) return context.Error<TResult>(result.Error!);
         return data.@this<TResult>.Ok((TResult)(await result.Value())!);
     }

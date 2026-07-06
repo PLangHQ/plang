@@ -27,12 +27,12 @@ public class Ed25519 : ISigning
         var app = action.Context.App;
 
         // Get identity
-        var identityResult = await app.RunAction<identity.Get>(new identity.Get(action.Context), action.Context);
+        var identityResult = await app.Run<identity.Get>(new identity.Get(action.Context), action.Context);
         if (!identityResult.Success) return identityResult;
         var identity = (Identity)(await identityResult.Value())!;
 
         // Hash the inner data — the digest binds the value into the signed bytes.
-        var hashResult = await app.RunAction<Hash>(new Hash(action.Context) { Data = action.Data, Algorithm = new data.@this<global::app.type.text.@this>("", "keccak256", context: action.Context), StoreView = action.StoreView }, action.Context);
+        var hashResult = await app.Run<Hash>(new Hash(action.Context) { Data = action.Data, Algorithm = new data.@this<global::app.type.text.@this>("", "keccak256", context: action.Context), StoreView = action.StoreView }, action.Context);
         if (!hashResult.Success) return hashResult;
         if (await hashResult.Value() is not global::app.module.crypto.type.hash.@this hash)
             return action.Context.Error(new ActionError("Hashing produced no digest", "DataHashMismatch", 500));
@@ -126,7 +126,7 @@ public class Ed25519 : ISigning
         // (set by the reader / the Store-view caller), so it doubles as the hash view: a stored
         // value is a property-bag carrying every [Store] field; hashing it in Out view (a subset)
         // would diverge from the sign-time Store hash.
-        var rehash = await app.RunAction<Hash>(
+        var rehash = await app.Run<Hash>(
             new Hash(action.Context) { Data = signature.Value, Algorithm = new data.@this<global::app.type.text.@this>("", storedHash.Algorithm, context: action.Context),
                        StoreView = new data.@this<global::app.type.@bool.@this>("", skipFreshness, context: action.Context) }, action.Context);
         if (!rehash.Success) return global::app.data.@this<global::app.type.@bool.@this>.From(rehash);

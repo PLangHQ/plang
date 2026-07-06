@@ -40,7 +40,7 @@ public class GetActionsTests
     public async Task GetActions_ReturnsAllModulesAndActions()
     {
         var action = new GetActions(_app.User.Context);
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
         var actions = (await result.Value()) as StepActions;
@@ -52,7 +52,7 @@ public class GetActionsTests
     public async Task GetActions_ParameterTypes_IncludeNullableMarkers()
     {
         var action = new GetActions(_app.User.Context);
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
         var actions = (StepActions)(await result.Value())!;
 
         // Find an action with nullable parameters (e.g., file.read has optional properties)
@@ -66,7 +66,7 @@ public class GetActionsTests
     public async Task GetActions_VariableNameParams_Marked()
     {
         var action = new GetActions(_app.User.Context);
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
         var actions = (StepActions)(await result.Value())!;
 
         // variable.set has a Name property with Data<Variable> — renders as exactly "%var%"
@@ -83,7 +83,7 @@ public class GetActionsTests
     public async Task GetActions_DefaultValues_Included()
     {
         var action = new GetActions(_app.User.Context);
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
         var actions = (StepActions)(await result.Value())!;
 
         // file.list has Pattern with [Default("*")]
@@ -99,7 +99,7 @@ public class GetActionsTests
     public async Task GetActions_CacheableFlag_FromActionAttribute()
     {
         var action = new GetActions(_app.User.Context);
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
         var actions = (StepActions)(await result.Value())!;
 
         // file.save has [Action("save", Cacheable = false)]
@@ -117,7 +117,7 @@ public class GetActionsTests
     public async Task GetActions_ExcludesProviderProperties()
     {
         var action = new GetActions(_app.User.Context);
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
         var actions = (StepActions)(await result.Value())!;
 
         // No action should expose [Code]-attributed interface properties
@@ -147,7 +147,7 @@ public class GetActionsTests
     {
         var action = new GetActions(_app.User.Context) { Actions = new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(new List<string> { "file.read", "file.save" }, _app.User.Context))
         };
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
         var actions = (await result.Value()) as StepActions;
@@ -164,12 +164,12 @@ public class GetActionsTests
         // `if (filter is { Count: > 0 })`). A regression that flipped this to
         // "filter to nothing" would silently drop every action.
         var unfiltered = new GetActions(_app.User.Context);
-        var fullResult = await _app.RunAction(unfiltered, _app.User.Context);
+        var fullResult = await _app.Run(unfiltered, _app.User.Context);
         var fullCount = ((StepActions)(await fullResult.Value())!).Count;
 
         var action = new GetActions(_app.User.Context) { Actions = new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(new List<string>(), _app.User.Context))
         };
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
         var actions = (await result.Value()) as StepActions;
@@ -182,7 +182,7 @@ public class GetActionsTests
     {
         var action = new GetActions(_app.User.Context) { Actions = new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(new List<string> { "nonexistent.action" }, _app.User.Context))
         };
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
         var actions = (await result.Value()) as StepActions;
@@ -195,7 +195,7 @@ public class GetActionsTests
     {
         var action = new GetActions(_app.User.Context) { Actions = new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(new List<string> { "File.Read", "FILE.SAVE" }, _app.User.Context))
         };
-        var result = await _app.RunAction(action, _app.User.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         var actions = (StepActions)(await result.Value())!;
         await Assert.That(actions.Count).IsEqualTo(2);
