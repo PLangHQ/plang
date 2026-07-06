@@ -100,6 +100,33 @@ Then in `http/code/Default.cs` (SendAsync ~78-85 + 2 siblings ~163,~204 + `Resol
 delete every `config.Resolve("X", …)` and the dead `action.X == null ? …` ternaries — just read
 `action.X`. Delete `config = For<Config>(…)`.
 
+**Redirects — RESOLVED (Ingi): keyed client cache, redirects ARE per-request props (no exception).**
+The single cached `_client` (`:335`) is why redirects looked client-level. Instead: cache one
+HttpClient per distinct `(FollowRedirects, MaxRedirects)` combo, so redirects become ordinary
+per-request properties AND we keep socket-reuse/pooling. Bounded by distinct combos actually used
+(~1-2; `follow=false` normalizes to one key ignoring max).
+- ONE method named **`Client`** (NOT `ClientFor` — `-For` is the verb/preposition smell), logic
+  inlined (no `CreateClient` submethod):
+  ```csharp
+  private readonly Dictionary<(bool follow, int max), HttpClient> _clients = new();
+  private HttpClient Client(bool follow, int max) {
+      var key = follow ? (true, max) : (false, 0);
+      if (!_clients.TryGetValue(key, out var c)) { c = _handler != null ? new(_handler) : new(new HttpClientHandler {
+          AllowAutoRedirect = follow, MaxAutomaticRedirections = max }); _clients[key] = c; }
+      return c;
+  }
+  ```
+- `SendHttpAsync(msg, opt, config, ct)` → `(msg, opt, follow, max, ct)` → `Client(follow, max).SendAsync(...)`.
+- Handlers read `follow=(await action.FollowRedirects.Value())!.Value`, `max=(await action.MaxRedirects.Value())!.ToInt32()`.
+- **`configure` dissolves with NOTHING special** — no shared mutable client → the redirect-guard is
+  gone (each combo has its own client). Delete `configure.cs` + `Configure()`; multi-set → `set %!http.request%={…}`.
+- `ResolveUrl(url, baseUrl:string?, ctx)` (from `action.BaseUrl`); `MergeHeaders(headers, defaultHeaders:dict?)`
+  (from `action.DefaultHeaders`). `_client`/`Dispose` → the `_clients` dict.
+- Add the same config props to `download`/`upload` actions (they share the helpers).
+- Then delete `http/Config.cs`, `For<T>`/`Apply`/`ModuleView`/`IConfig`. Update `RequestActionTests`
+  (`Config.Set("http.X",…)` still writes `context.Setting` so reads keep working; drop `IConfig`/`Config` refs).
+- Reads follow the `T?` convention (`(await …)!` / IsNull) — flag `// T? convention — plang-null pass converts this`.
+
 **Then delete:** `http/Config.cs`, `For<Config>`/`ModuleView<Config>` params (~333,345,357,400),
 `app.Config.For`/`Apply`/`ModuleView`/`IConfig`. **Dissolve `configure`** (`http/configure.cs` +
 `Configure()` ~235): multi-set → `set %!http.request% = {dict}`; the redirect-lock guard moves onto
