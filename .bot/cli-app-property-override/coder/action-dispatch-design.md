@@ -70,7 +70,20 @@ context-less `static` operator can't build a scalar from a raw string.)
   (Push → **Resolve** → Execute → Run). Omitted params fill from setting/`[Default]`.
 - **Drop the `context` arg** — read `handler.Context`.
 
-## ⚠ Implementation hazard found (2026-07-06) — Mechanism 2 needs rethinking
+## ✅ Mechanism 2 landed — the SEED pass-through (2026-07-06)
+
+Solved the round-trip hazard (below). The entity carries a `Seed` (the C#-composed action, from
+`app.RunAction`); dispatch runs the **normal** path (no skip), and the generated `Resolve` **passes
+through the seed's set params untouched** — `if (__seed?.Prop is { IsInitialized: true } __sv) Local = __sv;`
+— filling only the UNSET ones from step → setting → `[Default]`. Required-param validations
+(`[IsNotNull]`, `MissingRequiredParameter`) are seed-aware too. `PreboundHandler` deleted;
+`DispatchAsync` collapsed to one uniform `GetCodeGenerated → ExecuteAsync`.
+**Result: zero regressions across Modules+Runtime, and +18 tests fixed** (17 signing.verify — its
+`[Default(300_000)]` now applies to C# calls — + 1 file-read). The `.pr` path is a no-op for
+`seed == null`, so it's unchanged. Still TODO: the raw-args ctor (Mechanism 1), the `RunAction → Run`
+rename, and caller migration (which fixes the 4 http BaseUrl tests).
+
+## ⚠ (historical) Implementation hazard — the first attempt
 
 First attempt at Mechanism 2 did: reflect the handler's set `Data` props → `ShallowClone(name)` →
 `action.Parameters` bag → `RunAsync` (which **rebuilds** a fresh handler from the bag via `Resolve`).

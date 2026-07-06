@@ -141,6 +141,12 @@ public static class @this
 
             """);
 
+        // Seed = a C#-composed action (app.RunAction). Its SET params pass through Resolve
+        // untouched (no round-trip); UNSET params resolve from bag → setting → [Default].
+        // Declared first so the required-param validations can see seed-provided values.
+        sb.AppendLine($"        var __seed = action?.Seed as {info.ClassName};");
+        sb.AppendLine();
+
         // [IsNotNull] validation
         if (info.HasAnyIsNotNull)
         {
@@ -150,7 +156,8 @@ public static class @this
             {
                 var lower = name.ToLowerInvariant();
                 sb.Append($$"""
-                                if ((action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Peek().IsNull) ?? true)
+                                if (__seed?.{{name}} is not { IsInitialized: true } &&
+                                    ((action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Peek().IsNull) ?? true))
                                     return (null, new global::app.error.ServiceError(
                                         "'{{lower}}' must have a value", __step, __callFrames, "ValueRequired", 400));
 
@@ -172,7 +179,8 @@ public static class @this
             {
                 var lower = prop.Name.ToLowerInvariant();
                 sb.Append($$"""
-                                if (action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Peek() == null)
+                                if (__seed?.{{prop.Name}} is not { IsInitialized: true } &&
+                                    action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Peek() == null)
                                     return (null, new global::app.error.ServiceError(
                                         "Required parameter '{{lower}}' is missing or null", __step, __callFrames, "MissingRequiredParameter", 400));
 

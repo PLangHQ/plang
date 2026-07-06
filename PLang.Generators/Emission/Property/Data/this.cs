@@ -78,8 +78,9 @@ public sealed record @this(
         {
             // Plain Data slot — hand over the Data reference as-is. No eager resolve, and no
             // setting layer: a %var%/template resolves lazily on its own door (await Value()),
-            // so the handler decides (variable.set stores verbatim; a reader renders). Data flows.
-            sb.AppendLine($"        {TypeName} {Local} = __ResolveData(action, \"{ParamName}\", context);");
+            // so the action decides (variable.set stores verbatim; a reader renders). Data flows.
+            // A C#-composed Seed's set value passes through untouched.
+            sb.AppendLine($"        {TypeName} {Local} = (__seed?.{Name} is {{ IsInitialized: true }} __sv{Name}) ? __sv{Name} : __ResolveData(action, \"{ParamName}\", context);");
             sb.AppendLine($"        if (!{Local}.Success) return (null, __PrefixActionContext({Local}.Error!, action));");
             return;
         }
@@ -94,6 +95,10 @@ public sealed record @this(
         var settingGet = $"await context.Setting.Get(global::app.setting.Storage.InMemory, \"{actionKey}\", \"{moduleKey}\")";
 
         sb.AppendLine($"        {TypeName} {Local};");
+        // A C#-composed Seed's SET value passes through untouched (no As<T> round-trip); only an
+        // UNSET slot falls to the step value → setting → [Default] cascade below.
+        sb.AppendLine($"        if (__seed?.{Name} is {{ IsInitialized: true }} __sv{Name}) {Local} = __sv{Name};");
+        sb.AppendLine("        else");
         sb.AppendLine("        {");
         sb.AppendLine($"            var __d = __ResolveData(action, \"{ParamName}\", context);");
         sb.AppendLine($"            if (!await __d.IsEmpty()) {Local} = __d.As<{InnerType}>();");
@@ -104,11 +109,11 @@ public sealed record @this(
             sb.AppendLine($"            else {Local} = new global::app.data.@this(\"{ParamName}\", {DefaultRaw}, context: context).As<{InnerType}>();");
         else
             sb.AppendLine($"            else {Local} = __d.As<{InnerType}>();");
-        sb.AppendLine($"            if (!{Local}.Success) return (null, __PrefixActionContext({Local}.Error!, action));");
+        sb.AppendLine("        }");
+        sb.AppendLine($"        if (!{Local}.Success) return (null, __PrefixActionContext({Local}.Error!, action));");
         // [Default] also fires when the step value resolves to null (`mime: %unsetVar%`).
         if (DefaultValue != null)
-            sb.AppendLine($"            else if ({Local}.Peek() is global::app.type.@null.@this) {Local} = new global::app.data.@this(\"{ParamName}\", {DefaultRaw}, context: context).As<{InnerType}>();");
-        sb.AppendLine("        }");
+            sb.AppendLine($"        else if ({Local}.Peek() is global::app.type.@null.@this) {Local} = new global::app.data.@this(\"{ParamName}\", {DefaultRaw}, context: context).As<{InnerType}>();");
     }
 
     public override void EmitSnapshotEntry(StringBuilder sb)

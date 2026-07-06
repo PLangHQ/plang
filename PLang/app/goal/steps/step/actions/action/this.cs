@@ -79,7 +79,12 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// path resolves a fresh handler per execution).
     /// </summary>
     [JsonIgnore]
-    public module.ICodeGenerated? PreboundHandler { get; init; }
+    /// <summary>
+    /// A C#-composed action carrying provided params (via <c>app.RunAction</c>). Dispatch runs the
+    /// normal path; the generated Resolve passes through the seed's *set* params (no round-trip)
+    /// while filling the UNSET ones from setting → [Default]. Null on the .pr path.
+    /// </summary>
+    public module.ICodeGenerated? Seed { get; init; }
 
     /// <summary>
     /// True for any condition chain action: condition.if, condition.elseif, or condition.else.
@@ -295,18 +300,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     private async Task<global::app.data.@this> DispatchAsync(actor.context.@this context)
     {
         var app = context.App!;
-        module.ICodeGenerated? handler;
-        global::app.error.IError? error;
-        if (PreboundHandler != null)
-        {
-            handler = PreboundHandler;
-            error = null;
-        }
-        else
-        {
-            (handler, error) = app.Module.GetCodeGenerated(this, context);
-            if (error != null) return context.Error(error);
-        }
+        // Uniform dispatch: always resolve the shell + run Resolve (the seam). A C#-composed
+        // Seed (app.RunAction) rides on the entity and is read by the generated Resolve as the
+        // pass-through for its set params — no separate skip-Resolve path.
+        var (handler, error) = app.Module.GetCodeGenerated(this, context);
+        if (error != null) return context.Error(error);
 
         // CallStackOverflowException (depth limit or ContainsGoal cycle) trips at Push,
         // before the call frame is on the stack — catch it here so the contract
@@ -329,14 +327,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         // so the inner `using anchor` disposes first.
         await using var _ = call;
         using var _anchor = context.AnchorScope(this);
-        // PreboundHandler path: params are already set by inline C# composition, so we
-        // skip Resolve and just Attach the runtime markers, then Execute.
-        if (PreboundHandler != null)
-        {
-            var attachErr = await handler!.Attach(this, context);
-            if (attachErr != null) return context.Error(attachErr);
-            return await handler.Execute();
-        }
         return await call.ExecuteAsync(handler!, context);
     }
 

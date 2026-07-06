@@ -468,8 +468,8 @@ public sealed partial class @this : IAsyncDisposable
     //
     // RunAction retained as the inline-C#-composition entry: callers construct
     // a handler instance (`new sign { ... }`), this wraps it in an Action.@this
-    // entity with PreboundHandler set so the entity's DispatchAsync uses the
-    // pre-built handler instead of resolving via Modules.GetCodeGenerated.
+    // entity with Seed set so the generated Resolve passes through the composed
+    // action's set params and fills the unset ones from setting → [Default].
     // The entity is Synthetic=true by default — wire-serialize filters such
     // frames per stage 2a.5 deliverable 4e.
 
@@ -486,7 +486,7 @@ public sealed partial class @this : IAsyncDisposable
         {
             Module = ResolveModuleName(typeof(TAction)),
             ActionName = ResolveActionName(typeof(TAction)),
-            PreboundHandler = handler,
+            Seed = handler,
         };
         return entity.RunAsync(context);
     }
