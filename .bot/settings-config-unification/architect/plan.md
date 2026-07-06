@@ -89,10 +89,10 @@ Two sigils, **same vocabulary**, split by lifetime (the only split the developer
 Every action param already resolves through a fallback chain in the generated `Resolve()`. Today, for a `[Default]` param (`Emission/Property/Data/this.cs:101`): step value, else `[Default]`. The setting is the **cascade layer inserted in the middle** — the generator bakes both keys from what it knows (namespace `app.module.http` + action `request` + param → action-key `"http.request.timeout"`, module-key `"http.timeout"`):
 
 ```csharp
-__local = !await __d.IsEmpty() ? __d.As<number>()                                  // 1. step value
+__local = !await __d.IsEmpty() ? __d.As<duration>()                                // 1. step value
     : context.Setting.Resolve("http.request.timeout", "http.timeout") is { Present: true } __s
-        ? __s.As<number>()                                                         // 2. %!% cascade (scope-primary)
-        : new data.@this("Timeout", "30 sec", context).As<number>();               // 3. [Default]
+        ? __s.As<duration>()                                                       // 2. %!% cascade (scope-primary)
+        : new data.@this("Timeout", 30, context).As<duration>();                   // 3. [Default(30)] — exact literal
 ```
 
 `Resolve(params keys)` (name is yours — must not be `GetSetting`) walks the context chain scope-outer, keys-inner, per the resolution rule above. **Inserted into the three *typed* branches only** — `IsNullable`, `DefaultValue`, `else` — **not** `IsPlainData` (`:86-93`). The plain-`Data` branch hands the ref through un-resolved on purpose (the Data-flows rule for polymorphic forwarders — `goal.call`, `llm.query`'s relay slots); a setting read there would force-resolve a relay value, and a plain `Data` slot has no `[Default]` and no single type anyway.
@@ -189,10 +189,10 @@ The `Config` records hold **raw CLR** today. Moving them to `[Default]` is the m
 
 | Setting | Today (CLR) | Should be (plang) |
 |---|---|---|
-| `http…timeout` | `int TimeoutInSec = 30` | `duration` — `[Default("30 sec")]`, named `Timeout` (drop `InSec`; the type carries the unit) |
+| `http…timeout` | `int TimeoutInSec = 30` | `duration` — `[Default(30)]` (exact literal; seconds = the duration's canonical unit; drop `InSec`, name it `Timeout`) |
 | `http…baseUrl` | `string? BaseUrl` | `path` or `text` — coder call |
 | `http…maxResponseSize` / `maxSSEBufferSize` | `long` | `number` (bytes) — module-level |
-| `signing.timeoutMs` | `long TimeoutMs` | `duration` |
+| `signing.timeoutMs` | `long TimeoutMs = 300000` | `duration` — `[Default(300)]` (the old `300000` ms as the exact canonical-unit number) |
 | `llm.query.model` | already `data<text>?` | already `text` ✓ |
 | `math.overflow` / `math.precision` | CLR enums | stay enums (`OverflowMode`/`PrecisionMode` on `app.type.number`) — module-level |
 
@@ -231,7 +231,7 @@ Overflow = stepOverflow ?? context.Setting.Resolve("math.overflow").As<...>() ??
 **Stays (do NOT demolish):**
 - The **scope mechanism** — `Scope.cs`'s key-value + `Clone` + the context-`Parent` walk. Moves namespace, key deepens to the full path. The walk relocates from `config.Resolve` onto `context.Setting`.
 - The **persistent store** — `Sqlite`, `IStore`, `get`/`set`/`remove`, the `%setting.%` navigable. Renamed folder only.
-- **`[Default]`** attribute + its emission (`Fallback`/`DefaultRaw`). Gains a *sibling* (the cascade layer); does not change. **Verify:** `[Default("30 sec")]` round-trips through `DefaultRaw → new data.@this(…, context)` as a `duration`, i.e. a string literal that builds a non-`text` type.
+- **`[Default]`** attribute + its emission (`Fallback`/`DefaultRaw`). Gains a *sibling* (the cascade layer); does not change. Defaults stay **exact C# literals** — `[Default(30)]`, not `[Default("30 sec")]` — the same numeric path as the existing `[Default(16000)]`, no string-parse. The plang type's canonical unit gives the bare number its meaning; convert unit-specific old values (signing's `300000` ms → `300`).
 - **`CommandLineParser`** (`!`-flag parsing). The `!`-flag → setting write is the new consumer.
 
 **Deferred (NOT this branch):**
@@ -280,6 +280,5 @@ No new abstraction for the `%!%` door beyond what's needed — the parent's "no 
 6. **Number-policy home** → **`math`.** Sole consumer, real node. `%!math.overflow%` / `%!math.precision%`.
 
 **Remaining verification for the coder (not decisions — checks):**
-- `[Default("30 sec")]` builds a `duration` through `DefaultRaw` (string literal → non-`text` type).
 - Subgoal propagation is the up-walk, not the clone snapshot (`context/this.cs:362`).
 - No `.goal` in the tree does `- set %!transient%` (confirms "a `%!%` write is always a setting") — grep `set %!` across `.goal` files.
