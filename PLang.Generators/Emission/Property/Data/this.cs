@@ -72,46 +72,42 @@ public sealed record @this(
     /// failure short-circuits Resolve with the prefixed error. The object initializer
     /// then binds <see cref="InitAssignment"/> onto the fresh instance.
     /// </summary>
-    public override void EmitResolveLocal(StringBuilder sb)
+    public override void EmitResolveLocal(StringBuilder sb, string settingModule, string settingAction)
     {
         if (IsPlainData)
         {
-            // Plain Data slot — hand over the Data reference as-is. No eager resolve: a
-            // %var%/template resolves lazily on its own door (await Value()), so the handler
-            // decides (variable.set stores the ref verbatim; a reader renders it). Data flows.
+            // Plain Data slot — hand over the Data reference as-is. No eager resolve, and no
+            // setting layer: a %var%/template resolves lazily on its own door (await Value()),
+            // so the handler decides (variable.set stores verbatim; a reader renders). Data flows.
             sb.AppendLine($"        {TypeName} {Local} = __ResolveData(action, \"{ParamName}\", context);");
             sb.AppendLine($"        if (!{Local}.Success) return (null, __PrefixActionContext({Local}.Error!, action));");
+            return;
         }
-        else if (IsNullable)
-        {
-            sb.AppendLine($"        {TypeName} {Local};");
-            sb.AppendLine("        {");
-            sb.AppendLine($"            var __d = __ResolveData(action, \"{ParamName}\", context);");
-            sb.AppendLine($"            {Local} = await __d.IsEmpty() ? global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\") : __d.As<{InnerType}>();");
-            sb.AppendLine($"            if (!{Local}.Success) return (null, __PrefixActionContext({Local}.Error!, action));");
-            sb.AppendLine("        }");
-        }
+
+        // An action param IS the innermost scope of a setting. When the step gives no value,
+        // resolve the %!module.action.param% (action key) then %!module.param% (module key)
+        // setting from the context.Setting up-walk, before falling to the [Default].
+        var actionKey = $"{settingModule}.{settingAction}.{ParamName}".ToLowerInvariant();
+        var moduleKey = $"{settingModule}.{ParamName}".ToLowerInvariant();
+        var setting = $"context.Setting.Resolve(\"{actionKey}\", \"{moduleKey}\")";
+        var settingBind = $"new global::app.data.@this(\"{ParamName}\", __s, context: context).As<{InnerType}>()";
+
+        sb.AppendLine($"        {TypeName} {Local};");
+        sb.AppendLine("        {");
+        sb.AppendLine($"            var __d = __ResolveData(action, \"{ParamName}\", context);");
+        sb.AppendLine($"            if (!await __d.IsEmpty()) {Local} = __d.As<{InnerType}>();");
+        sb.AppendLine($"            else if ({setting} is object __s) {Local} = {settingBind};");
+        if (IsNullable)
+            sb.AppendLine($"            else {Local} = global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\");");
         else if (DefaultValue != null)
-        {
-            // [Default] fires on an absent slot AND on a null-resolving value
-            // (`mime: %unsetVar%` lands on the default too).
-            sb.AppendLine($"        {TypeName} {Local};");
-            sb.AppendLine("        {");
-            sb.AppendLine($"            var __d = __ResolveData(action, \"{ParamName}\", context);");
-            sb.AppendLine($"            {Local} = await __d.IsEmpty() ? new global::app.data.@this(\"{ParamName}\", {DefaultRaw}, context: context).As<{InnerType}>() : __d.As<{InnerType}>();");
-            sb.AppendLine($"            if (!{Local}.Success) return (null, __PrefixActionContext({Local}.Error!, action));");
-            sb.AppendLine($"            else if ({Local}.Peek() is global::app.type.@null.@this) {Local} = new global::app.data.@this(\"{ParamName}\", {DefaultRaw}, context: context).As<{InnerType}>();");
-            sb.AppendLine("        }");
-        }
+            sb.AppendLine($"            else {Local} = new global::app.data.@this(\"{ParamName}\", {DefaultRaw}, context: context).As<{InnerType}>();");
         else
-        {
-            sb.AppendLine($"        {TypeName} {Local};");
-            sb.AppendLine("        {");
-            sb.AppendLine($"            var __d = __ResolveData(action, \"{ParamName}\", context);");
-            sb.AppendLine($"            {Local} = __d.As<{InnerType}>();");
-            sb.AppendLine($"            if (!{Local}.Success) return (null, __PrefixActionContext({Local}.Error!, action));");
-            sb.AppendLine("        }");
-        }
+            sb.AppendLine($"            else {Local} = __d.As<{InnerType}>();");
+        sb.AppendLine($"            if (!{Local}.Success) return (null, __PrefixActionContext({Local}.Error!, action));");
+        // [Default] also fires when the step value resolves to null (`mime: %unsetVar%`).
+        if (DefaultValue != null)
+            sb.AppendLine($"            else if ({Local}.Peek() is global::app.type.@null.@this) {Local} = new global::app.data.@this(\"{ParamName}\", {DefaultRaw}, context: context).As<{InnerType}>();");
+        sb.AppendLine("        }");
     }
 
     public override void EmitSnapshotEntry(StringBuilder sb)

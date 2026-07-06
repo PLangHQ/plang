@@ -182,9 +182,16 @@ public static class @this
         }
 
         // Resolve each parameter into a local (decode %var%/literal in this context).
+        // Setting key per param is module.action.param, read off the tree location: module = first
+        // segment after "app.module.", action = the record/class name (== the action name).
+        const string settingModulePrefix = "app.module.";
+        var settingModule = info.Namespace.StartsWith(settingModulePrefix)
+            ? info.Namespace.Substring(settingModulePrefix.Length).Split('.')[0]
+            : info.Namespace;
+        var settingAction = info.ClassName;
         var dataProps = info.Properties.OfType<DataProperty>().ToList();
         foreach (var prop in dataProps)
-            prop.EmitResolveLocal(sb);
+            prop.EmitResolveLocal(sb, settingModule, settingAction);
 
         sb.AppendLine();
 

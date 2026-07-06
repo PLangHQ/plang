@@ -25,7 +25,7 @@ public abstract record @this(string Name, string TypeName)
     /// initializer then binds to the fresh instance's init property. Default: nothing
     /// ([Code]/markers are set post-construction in <c>Attach()</c>).
     /// </summary>
-    public virtual void EmitResolveLocal(StringBuilder sb) { }
+    public virtual void EmitResolveLocal(StringBuilder sb, string settingModule, string settingAction) { }
 
     /// <summary>
     /// Emits this property's post-construction wiring inside <c>Attach()</c> — used by
