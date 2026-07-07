@@ -50,23 +50,30 @@ So `clr` stays `clr` and just becomes **navigable in place**.
 
 ## The design
 
-A per-CLR-type **navigator** registry on `clr` (mirrors the reader registry), default =
-reflection. The navigator gives a `clr` three capabilities, none of which materialize the
-whole object:
+A **navigator** registry on `clr`, keyed by **kind** — exactly how the reader registry keys by
+`(type, kind)`. Here the type is `clr` and the kind names the host shape (`"json"`, `"xml"`, …),
+with `"*"` → reflection default. NOT the .NET `GetType()` — keying by kind keeps this plang-native
+and consistent with the rest of the type system. The navigator gives a `clr` three capabilities,
+none of which materialize the whole object:
 
 ```
-clr(hostObject)                      // a JsonElement, XElement, YamlNode, POCO, …
+clr(hostObject, kind)                // JsonElement/"json", XElement/"xml", POCO/"*" …
   Navigate(key)  → clr(sub-node)     // descend ONE level, lazy/partial
   Enumerate()    → clr(element)…     // walk a container's children, each a clr
   Value()        → self OR plang scalar  (see below)
   Clr<T>()       → the raw host object   (developer: clr.Clr<JsonElement>())
 
-registry:  CLR type → IClrNavigator
-  JsonElement        → json navigator
-  XElement/XDocument → xml navigator      (later)
-  YamlNode           → yaml navigator     (later)
-  (default)          → reflection navigator (walk properties)
+registry:  (clr, kind) → IClrNavigator          // mirror of the (type, kind) reader registry
+  (clr, "json")  → json navigator     // kind "json" ⟹ host is a JsonElement (source stamped both)
+  (clr, "xml")   → xml navigator       (later)
+  (clr, "yaml")  → yaml navigator      (later)
+  (clr, "*")     → reflection navigator (walk properties)  ← default
 ```
+
+**Kind is stamped at the source**, same as everywhere else: a json read / `llm.query` with a
+json schema stamps kind `"json"`; an xml read stamps `"xml"`; a raw POCO handed back from a C#
+action carries no kind (`"*"` → reflection). `clr.Navigate`/`Value` resolves the navigator by
+that stamped kind — no `switch` on the .NET type.
 
 ### The container-vs-scalar rule (the crux)
 
@@ -130,8 +137,14 @@ navigator, no changes to `clr` or the rest of the runtime.
    `(key, item)` pairs (for `foreach … item= key=`)? Should `Navigate` accept an integer index
    (`steps[0]`) uniformly with a string key?
 3. **Where the navigator registry lives** — alongside the type/reader registries
-   (`app.type.clr.navigator` mirroring `app.type.reader`), auto-discovered by namespace like
-   the readers?
+   (`app.type.clr.navigator` mirroring `app.type.reader`), keyed by `(clr, kind)`,
+   auto-discovered by namespace like the readers?
+3b. **The born-boundary stamping (the real work).** For the kind-keyed lookup to resolve, a
+   `clr` must arrive **stamped with its kind**. Today `context.Ok(JsonElement)` lands as an
+   unstamped opaque blob. So the json read paths — `llm.query` (`OpenAi.context.Ok(TryParseJson)`),
+   `file.read` of `.json`, `http` json responses — must produce a `clr` with kind `"json"`.
+   Is the kind derived once from the CLR type at the boundary (`JsonElement ⟹ "json"`), or must
+   each source stamp it explicitly (like the format the read already knows)?
 4. **Write side.** `clr` already writes via `[Out]`/serialize; does a navigator also own
    *writing into* a host object (`set %json.x% = 5` → mutate the JsonElement)? JsonElement is
    immutable — likely out of scope for v1 (read/navigate only); flag it.
