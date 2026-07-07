@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Reflection;
 
 namespace app.type.choice;
@@ -28,11 +27,18 @@ public interface IChoice
 /// the implicit operator) while the language sees a validated choice. The name is the
 /// value's <see cref="object.ToString"/> — uniform across enums and named-set classes.
 /// </summary>
-[System.Text.Json.Serialization.JsonConverter(typeof(JsonFactory))]
 public sealed class @this<T> : global::app.type.item.@this, global::app.type.item.ICreate<@this<T>>,
     IChoice
     where T : notnull
 {
+    // A choice knows how to resolve its OWN option set — computed once per closed type
+    // (static members on a generic are per-T). An enum reads its members directly; a
+    // named-set class exposes a static Choices(context?) + a ctor(string).
+    private static readonly MethodInfo? _choicesMethod = typeof(T).IsEnum ? null
+        : typeof(T).GetMethod("Choices", BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+    private static readonly ConstructorInfo? _nameCtor = typeof(T).IsEnum ? null
+        : typeof(T).GetConstructor(new[] { typeof(string) });
+
     public T Value { get; }
 
     public @this(T value) { Value = value; }
@@ -50,13 +56,40 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
 
     string IChoice.Name => ToString();
 
-    /// <summary>The set of valid option names — the validation surface (LLM [Choices]).</summary>
-    public static System.Collections.Generic.IReadOnlyList<string> ValidValues
-        => ChoiceMeta.Names(typeof(T), null);
+    /// <summary>The set of valid option names — the validation surface (LLM [Choices]).
+    /// The choice reads its OWN options: an enum's member names, or a static Choices(context?).</summary>
+    public static System.Collections.Generic.IReadOnlyList<string> ValidValues => Names(null);
 
-    /// <summary>Resolve a chosen name to a typed choice. Throws if the name isn't a valid option.</summary>
+    private static System.Collections.Generic.IReadOnlyList<string> Names(global::app.actor.context.@this? context)
+    {
+        if (typeof(T).IsEnum) return System.Enum.GetNames(typeof(T));
+        if (_choicesMethod != null)
+        {
+            object?[] args = _choicesMethod.GetParameters().Length == 1
+                ? new object?[] { context } : System.Array.Empty<object?>();
+            return _choicesMethod.Invoke(null, args) switch
+            {
+                string[] arr => arr,
+                System.Collections.Generic.IReadOnlyList<string> list => list,
+                System.Collections.Generic.IEnumerable<string> seq => new System.Collections.Generic.List<string>(seq),
+                _ => System.Array.Empty<string>(),
+            };
+        }
+        throw new System.InvalidOperationException(
+            $"choice<{typeof(T).Name}>: not a named-set type — needs an enum, or a static Choices(context?) method.");
+    }
+
+    /// <summary>Resolve a chosen name to a typed choice — the choice builds ITSELF from its
+    /// option name (an enum member, or the named-set class's ctor(string)). Throws if invalid.</summary>
     public static @this<T> FromName(string name, global::app.actor.context.@this? context)
-        => new((T)ChoiceMeta.FromName(typeof(T), name, context));
+    {
+        object member = typeof(T).IsEnum
+            ? System.Enum.Parse(typeof(T), name, ignoreCase: true)
+            : _nameCtor?.Invoke(new object?[] { name })
+              ?? throw new System.InvalidOperationException(
+                  $"choice<{typeof(T).Name}>: cannot resolve '{name}' — needs an enum or a ctor(string).");
+        return new((T)member);
+    }
 
     /// <summary>OBP: <c>choice&lt;T&gt;</c> builds itself from a chosen option NAME (a
     /// string, or any value's ToString). The CONVERT hook the catalog discovers on the
@@ -107,45 +140,4 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
 
     public override bool Equals(object? obj) => AreEqual(obj);
     public override int GetHashCode() => Value.GetHashCode();
-}
-
-/// <summary>
-/// Reflection adapter that gives any named-set type T its option names and a
-/// name→value factory. Enums use <see cref="System.Enum"/>; a named-set class uses
-/// its static <c>Choices(context?)</c> method and a <c>ctor(string)</c>. Cached per T.
-/// </summary>
-internal static class ChoiceMeta
-{
-    private static readonly ConcurrentDictionary<System.Type, MethodInfo?> _choicesMethod = new();
-    private static readonly ConcurrentDictionary<System.Type, ConstructorInfo?> _nameCtor = new();
-
-    public static System.Collections.Generic.IReadOnlyList<string> Names(System.Type t, global::app.actor.context.@this? context)
-    {
-        if (t.IsEnum) return System.Enum.GetNames(t);
-        MethodInfo? m = _choicesMethod.GetOrAdd(t, static ty =>
-            ty.GetMethod("Choices", BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy));
-        if (m != null)
-        {
-            object?[] args = m.GetParameters().Length == 1 ? new object?[] { context } : System.Array.Empty<object?>();
-            object? result = m.Invoke(null, args);
-            return result switch
-            {
-                string[] arr => arr,
-                System.Collections.Generic.IReadOnlyList<string> list => list,
-                System.Collections.Generic.IEnumerable<string> seq => new System.Collections.Generic.List<string>(seq),
-                _ => System.Array.Empty<string>(),
-            };
-        }
-        throw new System.InvalidOperationException(
-            $"choice<{t.Name}>: not a named-set type — needs an enum, or a static Choices(context?) method.");
-    }
-
-    public static object FromName(System.Type t, string name, global::app.actor.context.@this? context)
-    {
-        if (t.IsEnum) return System.Enum.Parse(t, name, ignoreCase: true);
-        ConstructorInfo? ctor = _nameCtor.GetOrAdd(t, static ty => ty.GetConstructor(new[] { typeof(string) }));
-        if (ctor != null) return ctor.Invoke(new object?[] { name });
-        throw new System.InvalidOperationException(
-            $"choice<{t.Name}>: cannot resolve '{name}' — needs an enum or a ctor(string).");
-    }
 }
