@@ -179,7 +179,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Debug mode controller. null = off; non-null = on (born under --debug).
     /// Presence is the enable signal — there is no IsEnabled.
     /// </summary>
-    public Debugging? Debug { get; set; }
+    public Debug? Debug { get; set; }
 
     /// <summary>
     /// Run-wide error scope. AsyncLocal-flowed current error (PLang <c>%!error%</c>) +

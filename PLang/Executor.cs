@@ -58,7 +58,7 @@ namespace PLang
 			// (watchers, LLM hooks, grep regex, event bindings).
 			if (parameters.TryGetValue("!debug", out var debugValue) && debugValue is not false)
 			{
-				app.Debug = new Debugging(app.System.Context);
+				app.Debug = new Debug(app.System.Context);
 				if (debugValue is IDictionary<string, object?> debugDict)
 				{
 					var debugResult = app.Setting.Set(app.Debug, debugDict);

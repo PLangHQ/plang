@@ -45,7 +45,9 @@ public class DebugSmokeTests
     [Test]
     public async Task Debug_LevelAction_AttachesWidenedHandlers_NoThrowOnFire()
     {
-        _app.Debug = new Debugging(_app.System.Context);
+        // Fully-qualified: the `Debug` global alias is shadowed here by the sibling
+        // PLang.Tests.App.Debug namespace (the App/Debug/ test folder). CLAUDE.md alias-clash trap.
+        _app.Debug = new global::app.module.debug.@this(_app.System.Context);
         _app.Setting.Set(_app.Debug, new Dictionary<string, object?> { ["level"] = "action" });
         _app.Debug.Activate();
 
