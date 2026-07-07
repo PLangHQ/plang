@@ -1697,3 +1697,28 @@ Debug-activation pass, Ingi flagged "what does llm have to do with debug?".
 - **`app.builder.type` consistency.** The build-time type-schema namespace (`Example`/`Action`/`Field` specs
   used by action handlers) stayed `app.builder.type` — a distinct subsystem from the renamed module. Rename to
   `app.build.type` for full consistency if wanted (mechanical sed, ~15 files).
+
+## 2026-07-07 — Deferred own-branch features (from cli-app-property-override plan)
+Decided with Ingi to leave these as their own future branches (not the CLI-override branch):
+- **§6.A — Debug.Write → a real `diagnostic` channel.** Today `Debug.Write` routes via the System actor's
+  error/debug channel fallback. The honest fix: diagnostics as a first-class channel — `context.Diagnostic`,
+  `app.Diagnostic.Debug`, a plang-registered `diagnostic` channel, a `--diagnostic={...}` flag. Medium-large;
+  a new channel subsystem, drags into the channel layer. `Debug.Write` works fine as-is meanwhile.
+- **§2 — Runtime subsystem toggle (suspend vs teardown).** debug/test/build are startup-only (born once,
+  presence = enabled). Toggling debug mid-run needs real design: debug registers persistent EventBindings +
+  C# watch delegates with no unregister path; a long-running app wants SUSPEND (keep the watches) not
+  TEARDOWN (drop them) — one null/non-null switch can't express that. Large; new lifecycle semantics.
+
+(§6.D build-mode-inversion is being looked at separately.)
+
+## 2026-07-07 — build-mode-inversion: Case A DONE, Case B remains
+§6.D split into two. **Case A — llm cache-off — DONE:** llm/query no longer sniffs `app.Build.Cache`; a
+cache-off build flows down as the `llm.cache` in-memory setting (Executor), so `action.Cache` resolves it via
+the seam. Bonus: fixes the old "most builder goals don't thread cache" gap. Subtle behavior change: the sniff
+was authoritative (forced off even over explicit cache=true); the cascade now makes cache-off the *default*
+(explicit cache=true wins) — the correct cascade semantics.
+**Case B — file `.pr` snapshot — REMAINS (own-branch):** file.ReadText still sniffs `Context.App.Build` to
+read/populate the build's in-memory `.pr` snapshot (avoids reading half-overwritten .pr during a self-rebuild).
+This is coordination, not a config flow — invert via a build-born `.pr` read decorator (build owns the
+coordination) instead of the file op branching on App.Build. Markers left in place at
+`type/path/file/this.Operations.cs:65,109`.

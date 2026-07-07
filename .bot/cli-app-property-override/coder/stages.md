@@ -152,7 +152,7 @@ why BaseUrl/DefaultHeaders/MaxResponseSize never resolve — pre-existing, fail 
 - ☑ Adjacent naming-pass win: alias `Debugging` → `Debug` (09a5cf931) to match `app.Debug` (5 files, clean).
   No `Debugger` class existed. (DebugSmokeTests fully-qualifies the ctor — App/Debug/ namespace shadows the alias.)
 
-## Stage 8-verify — D foreign-sniff markers  ☑ (verify only, no change)
+## Stage 8-verify — D foreign-sniff markers  ☑ (+ build-mode-inversion Case A done)
 - ☑ Confirmed `type/path/file/this.Operations.cs:65,109` (`Context.App.Build`) + `llm/code/OpenAi.cs:158`
   (`app.Build`, `build != null && !build.Cache`) read `App.Build != null` and carry the
   `// TODO(build-mode-inversion): … (plan §6.D)` markers. Full inversion = separate branch.

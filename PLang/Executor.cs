@@ -119,6 +119,16 @@ namespace PLang
 
 				// Sync cache flag to %!build.cache% for Build.goal
 				userVars.Set("!build.cache", app.Build.Cache);
+
+				// Build-mode-inversion (§6.D, Case A): a cache-off build flows DOWN to llm.query
+				// as the `llm.cache` in-memory setting, so llm.query reads its own `action.Cache`
+				// (which resolves %!llm.query.cache% → %!llm.cache% → [Default]) instead of sniffing
+				// app.Build. This also fixes the old "most builder goals don't thread cache" gap —
+				// the cache-off default now reaches every llm.query without threading. InMemory Set
+				// completes synchronously (no I/O), so unwrapping here in the sync Configure is safe.
+				if (!app.Build.Cache)
+					app.Setting.Set(global::app.setting.Storage.InMemory, "llm.cache", app.System.Context.Ok(false))
+						.GetAwaiter().GetResult();
 			}
 
 			// Set the goal file on system context — Start() reads it

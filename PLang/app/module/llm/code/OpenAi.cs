@@ -147,21 +147,16 @@ public sealed class OpenAi : ILlm
         OnBeforeRequest?.Invoke(messages, schema);
 
         // --- Cache check ---
-        // A build with caching disabled (--build={"cache":false}) bypasses the LLM
-        // cache for EVERY query, not only the ones that thread cache=%!build.cache%.
-        // The build-wide flag is authoritative; relying on each builder goal to pass
-        // the per-call param is fragile (most don't), so the override lives here.
-        // Gating cacheKey also skips the write below (guarded by cacheKey != null),
-        // so cache:false is a full bypass: no read, no stale entry left behind.
-        // TODO(build-mode-inversion): llm sniffs build mode from a foreign layer — invert
-        // (build-born sets cache-off as config the llm reads via action.Cache) (plan §6.D).
-        var build = app.Build;
-        var buildCacheOff = build != null && !build.Cache;
+        // Cache decision reads only action.Cache — no build-mode sniff. A cache-off build
+        // (--build={"cache":false}) flows in as the `llm.cache` setting (set by Executor), so an
+        // unthreaded action.Cache resolves to false without this layer knowing build mode exists
+        // (build-mode-inversion §6.D, Case A). Gating cacheKey also skips the write below (guarded
+        // by cacheKey != null), so cache:false is a full bypass: no read, no stale entry left behind.
         // The .NET edge: the tool list lowers itself once; reused below.
         List<GoalCall>? goalTools = action.Tools == null ? null
             : global::app.type.item.@this.Lower<List<GoalCall>>(await action.Tools.Value());
         string? cacheKey = null;
-        if (await action.Cache.ToBooleanAsync() && goalTools == null && !buildCacheOff)
+        if (await action.Cache.ToBooleanAsync() && goalTools == null)
         {
             cacheKey = ComputeCacheKey(messages, model, (await action.Temperature.Value())!.ToDouble(), schema, await FormatOf(action));
             var cached = await settings.Get<global::app.type.item.@this>(CacheTable, cacheKey);
