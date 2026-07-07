@@ -8,24 +8,25 @@ using app.Utils;
 using ActionSpec = app.type.spec.Action;
 using ExampleSpec = app.type.spec.Example;
 
-namespace app.builder.type;
+namespace app.type.spec.render;
 
 /// <summary>
-/// Renders an <see cref="Example"/> into the formal-language string the
-/// catalog "e.g. ..." line carries. Type tags ([path], [string], [list&lt;action&gt;])
-/// are derived from reflection on each action class — the author never writes them.
+/// Renders an <see cref="ExampleSpec"/> into the formal-language string the catalog
+/// "e.g. ..." line carries. Type tags ([path], [string], [list&lt;action&gt;]) are derived
+/// from reflection on each action class — the author never writes them.
 ///
-/// Top-level peer actions and modifiers both use " | " as separator (matching the
-/// existing Example convention in <c>system/actions/v2/summary.md</c> and the
-/// goalFormatForLlm template). Nested action values (parameters typed
-/// <c>action</c> / <c>list&lt;action&gt;</c>) emit as JSON action records — same
-/// shape the LLM produces in its response.
-///
-/// Instance methods navigate <c>_modules</c> for type lookups; callers stop
-/// passing modules in (Rule E).
+/// Born with a modules handle for the type lookups, per-render at the call site — it holds
+/// no long-lived state (unlike the old Modules.Schema, which conflated this renderer with
+/// the type-catalog view). Top-level peer actions and modifiers both use " | " as separator;
+/// nested action values (params typed <c>action</c> / <c>list&lt;action&gt;</c>) emit as JSON
+/// action records — the same shape the LLM produces in its response.
 /// </summary>
-public sealed partial class @this
+public sealed class @this
 {
+    private readonly app.module.@this _modules;
+
+    public @this(app.module.@this modules) { _modules = modules; }
+
     public string Render(ExampleSpec spec)
     {
         var sb = new StringBuilder();
@@ -67,10 +68,8 @@ public sealed partial class @this
     }
 
     /// <summary>
-    /// Format a value the way the catalog Example does: %vars% bare, strings
-    /// with spaces or commas quoted, scalars literal, Action(s) as
-    /// nested-action JSON records.
-    /// Mirrors <c>Fluid.FormatFormalValue</c> for the simple cases.
+    /// Format a value the way the catalog Example does: %vars% bare, strings with spaces or
+    /// commas quoted, scalars literal, Action(s) as nested-action JSON records.
     /// </summary>
     private void RenderValueFormal(object? value, StringBuilder sb)
     {
@@ -105,11 +104,8 @@ public sealed partial class @this
             // Other lists fall through to JSON below.
         }
 
-        // InvariantCulture so JSON-shaped numbers ("3.14") format identically
-        // regardless of the user's locale — without this, an it-IT/de-DE user
-        // would write "3,14" to .pr files and TypeConverter.Convert.ChangeType
-        // (which uses InvariantCulture on the parse side) would FormatException
-        // on the comma. Round-trip must be symmetric.
+        // InvariantCulture so JSON-shaped numbers ("3.14") format identically regardless of
+        // the user's locale — the .pr round-trip must be symmetric with the parse side.
         if (value is System.IConvertible conv) { sb.Append(System.Convert.ToString(conv, System.Globalization.CultureInfo.InvariantCulture)); return; }
 
         sb.Append(JsonSerializer.Serialize(value));
@@ -117,8 +113,8 @@ public sealed partial class @this
 
     /// <summary>
     /// Builds the lower-cased JSON-record shape the LLM emits for nested actions:
-    /// <c>{"module","action","parameters":[{"name","value","type"}]}</c>.
-    /// Recurses into modifier and Action-valued parameters.
+    /// <c>{"module","action","parameters":[{"name","value","type"}]}</c>. Recurses into
+    /// modifier and Action-valued parameters.
     /// </summary>
     private Dictionary<string, object?> BuildActionRecord(ActionSpec a)
     {
@@ -184,8 +180,7 @@ public sealed partial class @this
 
     /// <summary>
     /// Catalog parameter types are stored as <c>Data&lt;T&gt;?</c>. The LLM sees the inner
-    /// T's PLang name (e.g. <c>string</c>, <c>path</c>, <c>list&lt;action&gt;</c>), not "data" —
-    /// matches the existing catalog rendering on Modules.@this.Describe().
+    /// T's PLang name (e.g. <c>string</c>, <c>path</c>, <c>list&lt;action&gt;</c>), not "data".
     /// </summary>
     private static System.Type UnwrapDataAndNullable(System.Type t)
     {

@@ -380,8 +380,9 @@ public sealed class @this : IAsyncDisposable
                 {
                     var specs = (app.type.spec.Example[]?)examplesForLlm.Invoke(null, null)
                         ?? System.Array.Empty<app.type.spec.Example>();
+                    var renderer = new app.type.spec.render.@this(this);
                     examples = specs
-                        .Select(s => new data.@this(s.UserIntent, Schema.Render(s), context: App.System.Context))
+                        .Select(s => new data.@this(s.UserIntent, renderer.Render(s), context: App.System.Context))
                         .ToList();
                 }
                 else

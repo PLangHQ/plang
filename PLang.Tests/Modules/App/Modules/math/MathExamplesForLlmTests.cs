@@ -30,7 +30,7 @@ public class MathExamplesForLlmTests
         try { await _app.DisposeAsync(); } catch { /* best effort */ }
     }
 
-    private string Render(ExampleSpec spec) => _app.Module.Schema.Render(spec);
+    private string Render(ExampleSpec spec) => new app.type.spec.render.@this(_app.Module).Render(spec);
 
     // --- Add ---
 
