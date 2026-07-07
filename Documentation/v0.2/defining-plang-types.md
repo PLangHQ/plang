@@ -78,29 +78,49 @@ built value, or `data.Fail(...)` + `null` to decline. Pass-through and facet han
 free from the default implementation; override only if your type has a special construction
 (e.g. re-tagging a `list` into a specialized collection).
 
-### `Convert(object? value, string? kind, context)` — the family hook ⚠️ *transitional, being deprecated*
+### `Convert(object? value, string? kind, context)` — the value-to-type conversion hook
 
-Today the catalog discovers this static by reflection (`Conversions.Of`, reached via
-`type.Convert`) and uses it to build your type from a raw value at runtime (`As<T>` on a
-string/number). **Do not build a new type around it.** Construction is moving to the reader
-(the born path, §3) and the type's own `Create` — `type.Convert` / the `Convert` hook are on
-their way out and will be removed. If a `Convert` still exists on a type, it must be a *thin
-delegate* to the type's own build path, never a second construction implementation:
+Every type owns how it is **built from another value**. This is *distinct* from the reader
+(§3): the reader deserializes from the **wire** (bytes/tokens → value); `Convert` converts an
+**already-in-memory value** — a raw CLR value, or another plang type's wrapper — *into* this
+type. It's what `set %x% = v as <Type>`, `As<T>`, comparisons, file-content coercion, and the
+whole-payload serializer decode all call. Your `number → text` example: `text.Convert(number)`
+— the *target* type knows how to build itself from a number. Nearly every type defines one.
+
+The shape every hook follows (see `bool` / `guid` / `number`):
 
 ```csharp
-// transitional — expect this to be deleted; the reader is the real construction path
 public static data.@this Convert(object? value, string? kind, context)
-    => context.Ok(FromName(value?.ToString() ?? "", context));   // delegates to the type's own build
+{
+    // 1. UNWRAP a plang wrapper to its raw backing, so the parse below sees what it expects
+    //    (the specific wrapper, or the generic item → Clr).
+    if (value is global::app.type.item.@this iv) value = iv.Clr<object>();
+
+    // 2. SWITCH on the actual value — pass a same-type/raw CLR through, PARSE a string,
+    //    ERROR on anything else. Never a blind value.ToString(): it loses the type and
+    //    mis-handles non-strings.
+    return value switch
+    {
+        null            => context.Ok(value),
+        @this self      => context.Ok(self),                       // already this type
+        <rawclr> raw    => context.Ok(new @this(raw)),             // the raw CLR backing
+        string s        => TryParse(s, out var v)                  // a literal — parse it
+                             ? context.Ok(new @this(v))
+                             : context.Error(new Error($"Cannot parse '{s}' as <type>.", "<Type>ParseFailed", 400)),
+        _               => context.Error(new Error($"Cannot convert {value.GetType().Name} to <type>.", "<Type>ConversionFailed", 400)),
+    };
+}
 ```
 
-**Rules that hold regardless:**
-- **No static helper class.** If you catch yourself writing a `MyValueMeta`/`MyValueUtil`
-  static class that the type calls to build itself, stop and move that code *onto* the type
-  (per-`T` static fields cache fine on a closed generic). Static helper classes need explicit
-  sign-off — default to not having one. Worked example: `choice<T>` — its enum-vs-named-set
-  resolution lives on `choice<T>` (`Names`, `FromName`), not a helper.
-- **The type creates itself.** One build path, on the type. `Create`/the reader call it; a
-  `Convert` (while it lasts) only delegates to it.
+Output is always the born-native wrapper (a value built by its type IS a plang value); a
+`.NET` edge unwraps with `.Clr<T>()`. `kind` picks a precision/variant where the type has one
+(`number` uses it to place the value in its numeric tower).
+
+**Rule that holds regardless — no static helper class.** If you catch yourself writing a
+`MyValueMeta`/`MyValueUtil` static class that the type calls to build itself, stop and move
+that code *onto* the type (per-`T` static fields cache fine on a closed generic). Static
+helper classes need explicit sign-off — default to not having one. Worked example: `choice<T>`
+— its enum-vs-named-set resolution lives on `choice<T>` (`Names`, `FromName`), not a helper.
 
 ---
 
@@ -202,9 +222,11 @@ explicitly (`catalog.Register("choice", typeof(choice<>))`). If `type.Build` thr
 - **A static helper class the type calls to build itself** (`FooMeta.Build`, `FooUtil.Parse`).
   The type creates itself; move the code onto the type. Static helper classes need explicit
   sign-off — default to *not* having one.
-- **New construction routed through `type.Convert` / the `Convert` hook.** Transitional and
-  being deprecated — construction belongs on the reader (born) and the type's own `Create`.
-  A `Convert` that still exists must only delegate to the type's own build path.
+- **A reader that routes wire-reading through `Convert`.** The reader (§3) pulls the value
+  off `IReader` and builds it directly — it does *not* deserialize via `Convert`. `Convert`
+  (§2) is for value-to-type conversion, a different concern; keep the two paths separate.
+- **A blind `value.ToString()` inside `Convert`.** You lose the source type and mis-handle
+  non-strings. Unwrap the wrapper, switch on the real type, parse strings, error the rest.
 - **`.Clr` / `value.Clr<object>()` mid-flight.** Lowering to CLR then re-lifting is the
   raw-CLR-era smell. Stay in plang types; `Clr` is only for the final `.NET`/3rd-party edge.
 - **The reader/writer knowing the concrete format.** If `Read`/`Write` names a serializer,
