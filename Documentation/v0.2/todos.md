@@ -1687,3 +1687,13 @@ with Debug just flipping the switch. (2) `LlmDebug.Output` (`"stderr"`/`"file"`)
 re-encoded as a string — "where the blocks go" is a channel selection, not a Debug enum. Left as `string`
 (not converted to `choice`) pending this rework — the channel model supersedes the enum. Context: Stage 6
 Debug-activation pass, Ingi flagged "what does llm have to do with debug?".
+
+## 2026-07-07 — builder→build rename: leftovers
+`app.module.builder` → `app.module.build` is DONE (e210ab23b, C# + teaching folder). Two leftovers:
+- **Rebuild the builder `.goal`/`.pr`.** `os/system/builder/*.goal` + `.build/*.pr` still call `builder.load`
+  /`builder.goals`/`builder.appSave`/… — the action module is now `build.*`, so the builder can't self-build
+  until these are updated to `build.*` and the `.pr` rebuilt (LLM-driven bootstrap, cwd=os/, ordered file list;
+  see building-the-builder.md). Blocked on the born-source regression that already breaks the builder.
+- **`app.builder.type` consistency.** The build-time type-schema namespace (`Example`/`Action`/`Field` specs
+  used by action handlers) stayed `app.builder.type` — a distinct subsystem from the renamed module. Rename to
+  `app.build.type` for full consistency if wanted (mechanical sed, ~15 files).

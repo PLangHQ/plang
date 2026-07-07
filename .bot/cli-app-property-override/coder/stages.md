@@ -145,8 +145,10 @@ why BaseUrl/DefaultHeaders/MaxResponseSize never resolve — pre-existing, fail 
 ## Stage 1b-tail — drop aliases + builder type rename  ☑ (4c2ff004a)
 - ☑ Dropped `--builder`/`--tester` alias reads; Executor reads only `!build` / `!test`. The `plang build`
   subcommand survives (retargeted to normalize to `--build`, not dropped — CLAUDE.md workflow relies on it).
-- ⏭ **Deferred** (§8, low-pri) `app.module.builder.@this` type/namespace rename — 48-file blast radius, balloons
-  scope; folded into the deferred naming pass (todos). `builder.load` / `environment.run` temp names ride along.
+- ☑ (§8) `app.module.builder` → `app.module.build` DONE (e210ab23b) — namespace/folder + teaching folder,
+  compiler-verified, baseline-clean. C# only (Ingi: builder is broken, leave the `.goal`/`.pr`). Leftovers:
+  `app.builder.type` (build-time type-schema) not renamed — distinct subsystem; and the builder `.goal`/`.pr`
+  still call `builder.*` (rebuild when the born-source regression is cleared). `environment.run` temp name still pending.
 - ☑ Adjacent naming-pass win: alias `Debugging` → `Debug` (09a5cf931) to match `app.Debug` (5 files, clean).
   No `Debugger` class existed. (DebugSmokeTests fully-qualifies the ctor — App/Debug/ namespace shadows the alias.)
 
