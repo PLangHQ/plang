@@ -2,14 +2,14 @@ using System.Text.Json.Serialization;
 using app.Attributes;
 using app.Utils;
 
-namespace app.builder.type;
+namespace app.type.catalog.view;
 
 /// <summary>
 /// "What every action looks like, for the LLM." Owned by Modules; describes
 /// the registered actions' types, parameter schemas, and authored Examples.
 ///
 /// Two roles in one type:
-///   - Host (the instance held at <c>app.builder.type</c>) — has <c>_modules</c>
+///   - Host (the instance held at <c>app.type.catalog.view</c>) — has <c>_modules</c>
 ///     and exposes <see cref="Build"/>. Its <see cref="PrimitiveNames"/> /
 ///     <see cref="Types"/> are empty arrays.
 ///   - Built result (returned by <see cref="Build"/>) — same instance shape,
@@ -17,8 +17,8 @@ namespace app.builder.type;
 ///     strongly-typed fields directly; the template owns the rendering.
 ///
 /// OBP: schema is a real object owned by Modules. Reach it via
-/// <c>app.builder.type</c>; build a snapshot via
-/// <c>app.builder.type.Build()</c>. Rendering belongs in the template, not
+/// <c>app.type.catalog.view</c>; build a snapshot via
+/// <c>app.type.catalog.view.Build()</c>. Rendering belongs in the template, not
 /// in pre-rendered string properties.
 /// </summary>
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>

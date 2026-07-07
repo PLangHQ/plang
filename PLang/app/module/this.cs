@@ -20,16 +20,15 @@ public sealed class @this : IAsyncDisposable
     public global::app.@this App { get; internal set; } = null!;
 
     /// <summary>
-    /// "What every action looks like, for the LLM." Describes the registered
-    /// actions' types, parameter schemas, and authored Examples. Built on
-    /// demand via <c>app.builder.type.Build()</c>; <see cref="global::app.builder.type.@this.Render"/>
-    /// works on the host instance directly without a Build call.
+    /// The type-catalog's LLM view — PrimitiveNames / Types / Kinds, "what the type vocabulary
+    /// looks like for the LLM." Built on demand via <c>Schema.Build()</c> (which reads
+    /// <c>App.Type</c>). Example rendering moved out to <c>app.type.spec.render.@this</c>.
     /// </summary>
-    public global::app.builder.type.@this Schema { get; }
+    public global::app.type.catalog.view.@this Schema { get; }
 
     public @this()
     {
-        Schema = new global::app.builder.type.@this(this);
+        Schema = new global::app.type.catalog.view.@this(this);
         Discover(typeof(@this).Assembly, "app.module");
     }
 

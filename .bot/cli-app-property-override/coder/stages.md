@@ -173,16 +173,15 @@ why BaseUrl/DefaultHeaders/MaxResponseSize never resolve — pre-existing, fail 
 - NOTE: "full green" is unreachable while the branch carries the ~149 pre-existing born-source reds (unrelated
   to this work). Scope of this branch = the CLI-override plan, verified regression-free against that baseline.
 
-## Stage 10 — Dissolve `app.builder.type` (split the LLM catalog)  ☐
+## Stage 10 — Dissolve `app.builder.type` (split the LLM catalog)  ☑
 Fell out of the `builder → build` rename: `app.builder.type` (= `Modules.Schema`) is the LLM's view of the
 action+type catalog, misnamed/misplaced. Split it (full plan: this file):
-- ☐ `Example` / `Action` spec records → `app.type.<spec>.*` (NEUTRAL — authored by math/error/…; must not
+- ☑ (10a) `Example`/`Action` → `app.type.spec.*` (NEUTRAL — authored by math/error/…; must not
   depend on `build`). Naming knob: `app.type.spec.Example`/`.Action` (avoid `app.type.action` clash).
-- ☐ Type-catalog LLM view (`PrimitiveNames`/`Types`/`Kinds`) → onto `app.type.catalog` (it already owns
+- ☑ (10c) type-view → `app.type.catalog.view.@this` (derives plang name "view") (it already owns
   `BuildTypeEntries`/`GetBuilderTypeNames` — the catalog describes itself).
-- ☐ `Render` + prompt assembly → `app.module.build.*` (build-only consumer).
-- ☐ Delete `app/builder/type/`; repoint `Modules.Schema` + `build/code/Default.cs`. Compiler-verify + baseline.
-  Builder-prompt render verification is gated on the born-source regression (same as the builder rebuild).
+- ☑ (10b) `Render` → `app.type.spec.render.@this` (corrected: it's a Modules.Describe concern, not build; born per-use with a modules handle)
+- ☑ `app/builder/` deleted; `Modules.Schema` repointed. Types 30 / Modules 37 / Runtime 39 = baseline, zero new.
 - Follow-on (own commits, optional): generalize `build.actions`/`build.types` for dev introspection; expose the
   catalog as **LLM tools** (function-calling) instead of pre-rendering — the high-value bit.
 

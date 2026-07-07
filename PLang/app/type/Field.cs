@@ -2,7 +2,7 @@ namespace app.type;
 
 /// <summary>
 /// A named field on a record-kind <see cref="@this"/>.  Lifted from
-/// <c>app.builder.type.Field</c> in the Stage 4 Entry-dissolve so the type
+/// <c>app.type.spec (moved)</c> in the Stage 4 Entry-dissolve so the type
 /// entity owns its own field-shape vocabulary instead of borrowing from
 /// builder.
 /// </summary>

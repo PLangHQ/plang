@@ -39,7 +39,7 @@ public class Stage2_MechanicalTypings_Part2Tests
     public async Task BuilderTypes_Run_ReturnsTaskDataOfBuilderTypesRecord()
     {
         var ret = RunReturnType<global::app.module.build.types>();
-        var expected = typeof(Task<global::app.data.@this<global::app.builder.type.@this>>);
+        var expected = typeof(Task<global::app.data.@this<global::app.type.catalog.view.@this>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
 
@@ -68,7 +68,7 @@ public class Stage2_MechanicalTypings_Part2Tests
     {
         // builder.Types.@this is the only catalog wrapper; builder.actions and
         // builder.goals return their natural list shapes directly.
-        await Assert.That(typeof(global::app.builder.type.@this).Namespace).IsEqualTo("app.builder.type");
+        await Assert.That(typeof(global::app.type.catalog.view.@this).Namespace).IsEqualTo("app.type.catalog.view");
     }
 
     // test.tag is bare Task<Data> or Task<Data<global::app.type.@bool.@this>>; the meaningful negative

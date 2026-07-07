@@ -77,7 +77,7 @@ public sealed class @this : item.@this
 
     /// <summary>
     /// Catalog teaching for the <c>type</c> entry — the LLM-facing description
-    /// surfaced through <c>app.builder.type.TypeSchemas</c>. The instance
+    /// surfaced through <c>app.type.catalog.view.TypeSchemas</c>. The instance
     /// property pulls from <see cref="Promote"/>'s catalog fold; for the entity
     /// itself there's no catalog row, so the LLM teaching falls into the static
     /// renderer via <see cref="TypeDescription"/> below.

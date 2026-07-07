@@ -43,7 +43,7 @@ public class GetTypeInfoTests
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
-        var info = (await result.Value()) as global::app.builder.type.@this;
+        var info = (await result.Value()) as global::app.type.catalog.view.@this;
         await Assert.That(info).IsNotNull();
         await Assert.That(info!.PrimitiveNames).Contains("text");
         await Assert.That(info.PrimitiveNames).Contains("number");
@@ -57,7 +57,7 @@ public class GetTypeInfoTests
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
-        var info = (await result.Value()) as global::app.builder.type.@this;
+        var info = (await result.Value()) as global::app.type.catalog.view.@this;
         await Assert.That(info).IsNotNull();
         await Assert.That(info!.Types.Any(t => t.Name == "goal.call")).IsTrue();
     }
