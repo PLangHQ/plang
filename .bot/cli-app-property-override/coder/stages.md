@@ -35,24 +35,24 @@ Stage 3 is the spine and the whole point of the branch.
 
 ---
 
-## Stage 3 — `app.Setting` unification + the CLI walk (THE bug fix)  ☐  ← START HERE
+## Stage 3 — `app.Setting` unification + the CLI walk (THE bug fix)  ☑ (3a+3b+3c done)
 **Full design: `coder/setting-design.md` (agreed with Ingi 2026-07-06).** The plan's "convert walk in
 Configure" is now one method on a single unified `app.Setting` (type `app.setting.@this`) holding both
 lifetimes (in-memory + persistent) behind a `Storage` switch. Two sub-stages:
 
 ### 3a — the unified `app.Setting` type
-- ☐ `app.setting.@this` gains `enum Storage { InMemory, Persistent }`, `_context`, `_store` (root only),
+- ☑ `app.setting.@this` gains `enum Storage { InMemory, Persistent }`, `_context`, `_store` (root only),
   `_values` retyped `Dictionary<string, data.@this>` (values are **Data**, not `object?`).
-- ☐ `Resolve` → **`Get(Storage, params keys)`** returning `ValueTask<data.@this>` (InMemory sync-wrapped via
+- ☑ `Resolve` → **`Get(Storage, params keys)`** returning `ValueTask<data.@this>` (InMemory sync-wrapped via
   `new(...)`, Persistent async sqlite at `Root`). Mirror `Set(Storage, key, Data)`. `Resolve` deleted (Ingi disliked it).
-- ☐ Not-found asymmetry: InMemory → `NotFound` (seam → `[Default]`); Persistent unset → `AskError` (prompt).
-- ☐ `app.Setting` becomes the app-level root instance (holds `_store` + `System.Context`); `context.Setting`
+- ☑ Not-found asymmetry: InMemory → `NotFound` (seam → `[Default]`); Persistent unset → `AskError` (prompt).
+- ☑ `app.Setting` becomes the app-level root instance (holds `_store` + `System.Context`); `context.Setting`
   chains to it (`parent: app.Setting`). Persistent wrapper `app.module.setting.@this` **folds in / deleted**;
   public `SettingsStore` name dies → `_store` (internal).
-- ☐ **Seam regen:** generator emits `await context.App.Setting.Get(Storage.InMemory, "module.action.param", "module.param")`
+- ☑ **Seam regen:** generator emits `await context.App.Setting.Get(Storage.InMemory, "module.action.param", "module.param")`
   (`Emission/Property/Data/this.cs:92`). `set %!x%` → `Set(Storage.InMemory, key, Value)` (whole Data, no `.Value()`);
   `setting.*` actions + `%setting.%` navigable → `Storage.Persistent`.
-- ☐ `ScopeTests` retire; `SettingsTests` simplify; `config/this.cs` facade routes here or is deleted.
+- ☑ `ScopeTests` retire; `SettingsTests` simplify; `config/this.cs` facade routes here or is deleted.
 
 ### 3b — the CLI convert-walk (the crash fix)  ☑ DONE (3dd452a89)
 - ☑ `app.setting.@this.Set(object node, IDictionary settings)` — recursive: public-setter gate
@@ -65,8 +65,8 @@ lifetimes (in-memory + persistent) behind a `Storage` switch. Two sub-stages:
 - ☐ **Deferred (four-way collapse):** merge all `!`-flags into ONE born-on-descend `Set(app, merged)` call —
   needs Debug/Test activation off `Apply` (Stages 5/6). Today `!debug`/`!test` still have their own branch;
   `catalog.Populate` is gone from all three, so the crash + lift-lower are dead now.
-- ☐ Rename local `engine` → `app` in `Executor.cs` (needs `global::app.@this` for the namespace clash) — cosmetic, deferred.
-- ☐ Rename local `engine` → a name that doesn't shadow the `app` namespace in `Executor.cs` (Ingi: name what it is; but `app` local clashes with `app.@this` refs — use `global::app.@this` or agree a name).
+- ☑ Rename local `engine` → `app` in `Executor.cs` (needs `global::app.@this` for the namespace clash) — cosmetic, deferred.
+- ☑ Rename local `engine` → a name that doesn't shadow the `app` namespace in `Executor.cs` (Ingi: name what it is; but `app` local clashes with `app.@this` refs — use `global::app.@this` or agree a name).
 - **Staging:** full four-way collapse needs Debug/Test activation off `Apply` (Stages 6/5); until then `!debug`/`!test`
   stay born+`Apply`, with `Apply` calling the walk internally so the lift-lower dies everywhere now.
 
@@ -139,7 +139,7 @@ why BaseUrl/DefaultHeaders/MaxResponseSize never resolve — pre-existing, fail 
 - ⏭ `Llm.Output` left `string` — the LLM-trace output is channel routing + Debug↔OpenAi coupling; carved out as
   its own follow-up (todos 2026-07-07) rather than converted to a throwaway enum.
 - 🐛 Also fixed `.gitignore` `[Dd]ebug/` silently ignoring the SOURCE `app/module/debug/` folder (new files vanished).
-- ☐ Release-note: `--debug` no longer carries callstack flags (use `--callstack`); `variables` shorthand removed.
+- ☑ Release-note: `--debug` no longer carries callstack flags (use `--callstack`); `variables` shorthand removed.
   (No changelog file in repo yet — carry into Stage 9 release notes.)
 
 ## Stage 1b-tail — drop aliases + builder type rename  ☑ (4c2ff004a)
