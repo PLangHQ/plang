@@ -142,14 +142,18 @@ why BaseUrl/DefaultHeaders/MaxResponseSize never resolve — pre-existing, fail 
 - ☐ Release-note: `--debug` no longer carries callstack flags (use `--callstack`); `variables` shorthand removed.
   (No changelog file in repo yet — carry into Stage 9 release notes.)
 
-## Stage 1b-tail — drop aliases + builder type rename  ☐
-- ☐ Drop `--builder` + `--tester` aliases and the `build`/`builder` normalization (`Executor.cs:31-34,63`).
-  `--test`/`--build` canonical (Q3).
-- ☐ (§8, low-pri) `app.module.builder.@this` type/namespace rename to match `app.Build`. Defer if it balloons scope.
+## Stage 1b-tail — drop aliases + builder type rename  ☑ (4c2ff004a)
+- ☑ Dropped `--builder`/`--tester` alias reads; Executor reads only `!build` / `!test`. The `plang build`
+  subcommand survives (retargeted to normalize to `--build`, not dropped — CLAUDE.md workflow relies on it).
+- ⏭ **Deferred** (§8, low-pri) `app.module.builder.@this` type/namespace rename — 48-file blast radius, balloons
+  scope; folded into the deferred naming pass (todos). `builder.load` / `environment.run` temp names ride along.
+- ☑ Adjacent naming-pass win: alias `Debugging` → `Debug` (09a5cf931) to match `app.Debug` (5 files, clean).
+  No `Debugger` class existed. (DebugSmokeTests fully-qualifies the ctor — App/Debug/ namespace shadows the alias.)
 
-## Stage 8-verify — D foreign-sniff markers  ☐
-- ☐ Confirm `type/path/file/this.Operations.cs:65,109` + the llm cache sniff read `App.Build != null`
-  (swap already done) and carry `// TODO(build-mode-inversion): ... (plan §6.D)`. Full inversion = separate branch.
+## Stage 8-verify — D foreign-sniff markers  ☑ (verify only, no change)
+- ☑ Confirmed `type/path/file/this.Operations.cs:65,109` (`Context.App.Build`) + `llm/code/OpenAi.cs:158`
+  (`app.Build`, `build != null && !build.Cache`) read `App.Build != null` and carry the
+  `// TODO(build-mode-inversion): … (plan §6.D)` markers. Full inversion = separate branch.
 
 ## Cleanup — stale IsEnabled comments  ☐
 - ☐ 8 stale `IsEnabled` mentions in comments/docs (`this.cs:168,186,313`, `builder/code/Default.cs:645`,
