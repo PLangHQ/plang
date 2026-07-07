@@ -235,11 +235,6 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public global::app.service.list.@this Services => _services ??= new global::app.service.list.@this(this);
 
-    /// <summary>
-    /// The currently executing actor. Defaults to User. Changed to System during bootstrap (Start).
-    /// app.execute switches temporarily for context-crossing dispatch.
-    /// </summary>
-    public actor.@this CurrentActor { get; internal set; } = null!; // initialized to User in constructor
 
     /// <summary>
     /// Resolves an actor by name. The actor set is closed and hardcoded
@@ -291,8 +286,6 @@ public sealed partial class @this : IAsyncDisposable
         // lambdas) and uses pure-static type seeds, so nothing here needs Type/Code yet.
         _system = new actor.@this("System", this, _shutdownCts.Token);
         _user = new actor.@this("User", this, _system.CancellationToken);
-        // Default actor is User — Start() switches to System for bootstrap
-        CurrentActor = _user;
 
         Event = new global::app.@event.list.@this();
         // Debug/Test/Build are born on their flag (--debug/--test/--build), not at
@@ -524,9 +517,9 @@ public sealed partial class @this : IAsyncDisposable
             if (!invariant.Success) return invariant;
         }
 
-        // Start runs as System (the bootstrap actor) then switches to User for user code.
+        // Bootstrap runs under System's context; user code runs under User's context (below).
+        // Execution flows the actor via its context — there is no global "current actor".
         var context = System.Context;
-        CurrentActor = System;
 
         // Build → PLang builder (runs as User — user is building their code).
         // Presence is the enable signal (staged: one owned check; full dissolve to
@@ -545,8 +538,7 @@ public sealed partial class @this : IAsyncDisposable
 
         var goal = (Goal)(await goalResult.Value())!;
 
-        // Switch to user actor for user code execution
-        CurrentActor = User;
+        // User code executes under the User actor's context.
         return await goal.RunAsync(User.Context);
     }
 

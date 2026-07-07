@@ -19,22 +19,12 @@ public class Events : IContext
     public List<GoalCall> After => Stamp(GetBindings(EventPhase.After), EventPhase.After);
 
     /// <summary>
-    /// Resolves event bindings from the user context (where event.on registers them),
-    /// regardless of which actor is currently executing.
+    /// Resolves event bindings from this owner's context — where <c>event.on</c> registered
+    /// them. One context per actor, so the owner's context IS its actor's context.
     /// </summary>
     private List<GoalCall> GetBindings(EventPhase phase)
     {
         if (Context == null) return [];
-
-        // Events are registered on the current actor's context
-        var actorContext = Context.App?.CurrentActor.Context;
-        if (actorContext != null)
-        {
-            var bindings = actorContext.GetEventBindings(_owner, phase);
-            if (bindings.Count > 0) return bindings;
-        }
-
-        // Fallback to current context (for system-registered events)
         return Context.GetEventBindings(_owner, phase);
     }
 

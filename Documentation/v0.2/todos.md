@@ -1663,14 +1663,20 @@ deleted (per-actor/per-flow fact; read via `%!goal%`). Trace-model settled as pe
 - **De-CurrentActor `App.Snapshot()`** — DONE. `Snapshot(context)` / `Snapshot(error, context)`
   now take an explicit context; `SnapshotToWire` uses the snapshot's carried `Context`;
   `SnapshotFromWire(json, context)` takes one. CurrentActor gone from the snapshot/callstack paths.
-- **Remove `app.CurrentActor` entirely** — NOT done (Ingi to do later). Still load-bearing in 7
-  spots outside snapshot/callstack: `module/builder/this.cs:105` SETS it (the actor-switch itself),
-  `module/Events.cs:30` (event dispatch context), `module/builder/code/Default.cs:290,811`,
-  `module/test/report.cs:39`, `module/llm/code/OpenAi.cs:439,447` (all `CurrentActor.Channel`
-  output writes), plus the `App.Start()` System↔User flips. The "current actor's output channel"
-  pattern and the switch mechanism both depend on it — removing it is its own effort.
+- **Remove `app.CurrentActor` entirely** — DONE. Every reach was context-based already (each
+  site had a `context`/`Context`): channel-output sites → `context.Actor.Channel`; Events →
+  `Context` directly (one context per actor); debug-event registration → `User.Context`
+  (debug watches user execution). The `App.Start()` + builder flips were redundant — execution
+  already flows the right context to `RunGoalAsync`/`RunAsync`. Property + 3 flips deleted.
 - **`--callstack` for service actors.** Executor walks System + User at startup; service actors
-  are spawned later — decide how the run-wide knob reaches them (inherit at spawn?).
+  spawn later → they miss the walk. Ingi not ready to decide (2026-07-07). Coder's suggestion:
+  **separate the capture POLICY (run-wide) from the TREE (per-actor).** Add an app-level policy
+  bundle `{Timing,Diff,DeepDiff,Tags,History,MaxFrames}` set once by `--callstack`; every actor
+  (System/User/late services) is born reading it — no spawn-time wiring. Per-actor *trees* stay
+  independent; only the knobs are shared (a run-wide observability decision, not per-actor).
+  Open sub-choice: **copy-at-birth** (simple; late changes don't propagate) vs **live-read**
+  (knobs are read-throughs to the app policy — single source of truth, mid-run flips reach all
+  actors; coder leans this, matches the error-recovery Diff-flip). Decide when ready.
 
 ## 2026-07-07 — Debug↔LLM tracing coupling (Output-as-channel)
 `Debug.Activate()` reaches into a **concrete** `OpenAi` provider (`Code.Get<ILlm>().Provider is OpenAi oai`)

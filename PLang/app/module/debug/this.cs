@@ -192,7 +192,9 @@ public sealed class @this
             catch (ArgumentException) { _grepRegex = new Regex(Regex.Escape(Grep), RegexOptions.IgnoreCase); }
         }
 
-        var events = _context.App.CurrentActor.Context.Events;
+        // Debug watches user execution, so its step/goal(/action) bindings register on the
+        // User actor's context (where user goals fire) — Debug itself is born with System's context.
+        var events = _context.App.User.Context.Events;
 
         events.Register(new EventBinding(
             Trigger.BeforeStep,

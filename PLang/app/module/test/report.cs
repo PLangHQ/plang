@@ -36,7 +36,7 @@ public partial class report : IContext
             var console = new StringBuilder();
             RenderConsole(console, results, testing);
             RenderCoverageTables(console, testing, Context.App.Module);
-            await Context.App.CurrentActor.Channel.WriteTextAsync(global::app.channel.list.@this.Output, console.ToString());
+            await Context.Actor.Channel.WriteTextAsync(global::app.channel.list.@this.Output, console.ToString());
         }
 
         // Write the file artefact through path verbs (gated). .test/ lives at the app root.

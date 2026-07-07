@@ -30,7 +30,7 @@ public partial class @this : ISnapshot
     }
 
     /// <summary>
-    /// Restores user variables onto the live App's CurrentActor.Variables. System
+    /// Restores user variables onto the given context's actor Variables. System
     /// variables created by the constructor (Now, NowUtc, GUID) are left in place
     /// — the snapshot only carries user-visible state, so adding restored entries
     /// on top is the correct merge.

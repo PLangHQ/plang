@@ -102,7 +102,8 @@ public sealed partial class @this
                     "Build cancelled. Run plang build from your app's root directory.", "BuildCancelled", 400));
         }
 
-        _context.App.CurrentActor = _context.App.User;
+        // The builder runs under the User actor's context (passed to RunGoalAsync) — user
+        // code output/channels resolve through it; no global "current actor" switch needed.
         var buildCall = new GoalCall { Name = "Build", PrPath = global::app.type.path.@this.Resolve("/system/builder/.build/build.pr", _context.App.User.Context) };
         return await _context.App.RunGoalAsync(buildCall, _context.App.User.Context);
     }
