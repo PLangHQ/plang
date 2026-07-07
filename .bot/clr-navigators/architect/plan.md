@@ -83,14 +83,14 @@ Both the fresh (`context.Ok(TryParseJson…)`) and cached (`ParseResultValue`) p
 - `json` → `clr(kind=json)`; `xml` → `clr(kind=xml)`; `yaml` → `clr(kind=yaml)`.
 - `md` / prose → `text` (with `kind=md` where useful) — scalar text, not navigable, no navigator.
 
-### 7. Convert — (fromKind → toKind), behind the existing door
+### 7. Convert — the **outbound** (target) owns it, behind the existing door
 
-Convert is a **content transform between kinds**, module-dev-facing: an action that wants html gets `read file.md` (text, `kind=md`) and just asks "give me html" — the framework finds md→html. `as dict` (json→dict) is one case, not the point.
+Convert is a **content transform**, module-dev-facing: an action that wants audio gets `read file.md` (text, `kind=md`) and just asks "give me audio." **The target owns the conversion, not the source** (Ingi): if `text(md)` owned its outbound conversions it would have to know every possible format (audio, html, pdf, …); but if `audio` owns it, `audio` only needs to know how to make itself **from** text. So the owner is the **outbound (type, kind)** — exactly how the per-type `Convert(value, kind, context)` hook already works (`catalog.Convert` → `OwnerOf(targetType).Convert(value, …)` — the *target* builds itself from the value).
 
-- **The door already has a kind axis.** The per-type `Convert(value, kind, context)` hook and `catalog.Convert` are the conversion door; `text.Convert`'s `kind` param exists today (currently "a hint"). Extend the door to *use* it — read the **source** kind off the value's `Type`, take the **target** kind from the request, and look up a converter.
-- **Converters register per (fromKind → toKind), one file each, discovered like readers** — not "each source kind knows all its targets" (md must not know pdf/docx). md→html is one file, html→pdf another.
-- **Value-facing call:** `await value.Convert("html", context)` — the carrier owns the op and routes to the door (OBP: call the op on the carrier). A param-attribute form (`[Kind("html")]` triggering conversion on bind) is a possible ergonomic layer later.
-- **Chains later.** md→html→pdf via composition is a graph problem; v1 = direct hops only. `log()` when a requested conversion has no registered hop (fail loud, don't silently pass the source through).
+- **Keyed by the target `(type, kind)`, discovered like readers.** `audio` owns "build audio from a source"; `(text, html)` owns "build html-text from a source." The converter may branch on the source's type/kind internally (audio: text→TTS), but it lives with the **outbound**, so adding a new output format = adding one owner, and no existing type has to learn about it.
+- **The door already has the kind axis.** The per-type `Convert(value, kind, context)` hook's `kind` param exists today (currently "a hint"). Make it load-bearing: the door resolves the **target** `(type, kind)` owner and hands it the source value whole.
+- **Value-facing call:** `await Text.Convert("audio")` — no `context` param; everything at an action boundary arrives as `Data`, which already carries its context. So `Data.Convert(toKind)` routes through `Data`'s own context. (See the Convert section in `code-draft.md`.)
+- **Chains later.** md→html→pdf via composition is a graph problem; v1 = direct hops only. `log()` when the target owner can't build from this source (fail loud, don't silently pass the source through).
 
 ### 8. Write-side — read/navigate only for v1
 
@@ -107,12 +107,12 @@ Convert is a **content transform between kinds**, module-dev-facing: an action t
 
 | Incumbent (today) | Does | Disposition under this plan |
 |---|---|---|
-| `clr.Navigate` (`type/clr/this.cs`) | reflects C# properties on the `object` by key | becomes the `*` (reflection) navigator; `clr.Navigate` shrinks to "look up navigator by kind, delegate" |
+| `clr.Navigate` (`type/clr/this.cs`) | reflects C# properties on the `object` by key | v1: gains a registry lookup first (`Navigators.For(...)?.Navigate ?? existing reflection`) — reflection **stays** as the fallback. v2: reflection relocates into the `*` navigator and `clr.Navigate` becomes pure delegation |
 | `data/this.Navigation.cs` — `Index` segment (`ResolveKey` + the `IndexNotSet` diagnostic) | resolves `%[var]%` against the variable store mid-walk (option a) | stays for native/item hops (generic walk); for a kinded-clr tail, resolution moves *into* the navigator (option b) via `context.Variable` |
-| `item/serializer/json.cs` `Parse` | narrows `JsonElement` → native `dict`/`list` | for external structured data, produces `clr(kind=json)` instead (§5); native `dict`/`list` still built where a value is genuinely plang-authored |
+| `object/serializer/json.cs` `Read` (the (item/object, json) reader) | walks `JsonElement` → native `dict`/`list` via `Parse` | wraps in `clr(kind=json)` instead (§5). The `Parse` DOM walker **stays** (authored `dict`/`list` literals use their own readers, untouched) — only the *reader* path pivots |
 | `data/reader/this.cs:79-80` | picks read format by token shape | route by declared type/kind; preserve full-match `%ref%` → `variable` (parent-branch rule) |
 | `catalog/Conversion.cs` (JsonElement→dict/list on `As<T>`) | value-model conversion | stays; becomes the `json→dict` arm of Convert (§7), now reachable via the value-facing `Convert` |
-| per-type `Convert(value, kind, ctx)` hooks | build a value from another, `kind` unused | `kind` becomes load-bearing — the door reads source kind + target kind and dispatches to a (from→to) converter |
+| per-type `Convert(value, kind, ctx)` hooks | build a value from another, `kind` unused | `kind` becomes load-bearing — the door resolves the **target** `(type, kind)` owner (outbound-owns-inbound) and hands it the source value |
 | `OpenAi` result construction (fresh + cached) | `context.Ok(TryParseJson)` → unstamped | stamp kind from `effectiveFormat` (§6) |
 
 ---
@@ -120,12 +120,12 @@ Convert is a **content transform between kinds**, module-dev-facing: an action t
 ## Demolition worklist
 
 **Dies now (v1):**
-- The reflection body inside `clr.Navigate` — moves out to the `*` navigator. `clr.Navigate` must **not** keep a private reflection path once the registry exists (that would be two homes for the same behavior).
 - The token-shape branch at `data/reader/this.cs:79-80` — replaced by declared-type/kind routing.
-- The `JsonElement → dict` narrowing in `item/serializer/json.cs` **for external structured data** — replaced by `clr(kind=json)`.
+- The `JsonElement → dict` walk in `object/serializer/json.cs` `Read` **for external structured data** — replaced by `clr(kind=json)`. (The `Parse` DOM walker stays; only the *reader* path wraps.)
 - OpenAi's unstamped `context.Ok(TryParseJson)` on both fresh and cached paths.
 
 **Dies later (v2, staged — see Scope):**
+- The reflection body inside `clr.Navigate` — relocates into the `*` navigator, and `clr.Navigate` becomes pure delegation. In v1 it **stays** as the fallback (Ingi: reflection already works, just add json).
 - The generic `Index.ResolveKey` walk in `data/this.Navigation.cs`, once native/item navigation is generalized through the registry (the reflection navigator resolving via `context.Variable`). Until then it stays — do not delete it in v1.
 
 **Stays (explicitly not touched):**
@@ -138,13 +138,13 @@ Convert is a **content transform between kinds**, module-dev-facing: an action t
 
 ## Scope — v1 vs the direction
 
-**v1 (unblocks `plang build`):** clr gains `kind`; navigator registry + json navigator; the parser handoff for kinded clr; the `(item,json)` reader pivot + `data/reader:79-80` fix; OpenAi stamping; the container-materializes-to-scalar guard. Deliverable: `%plan%` is a navigable `clr(kind=json)` → `foreach %plan.steps%` works → `IndexNotSet` falls.
+**v1 (unblocks `plang build`) — Ingi: "we already have reflection navigation on the generic clr object, so just add the json navigation to get it working."** So v1 is narrow: clr gains `kind`; the navigator registry + the **json navigator only**; the parser handoff for a kinded clr; the `(item/object, json)` reader pivot + `data/reader:79-80` fix; OpenAi stamping; the container-materializes-to-scalar guard. **The existing clr reflection stays put** — it's the fallback when no registered navigator matches (`clr.Navigate` = `Navigators.For(kind, type)?.Navigate(...) ?? existing reflection`). Deliverable: `%plan%` is a navigable `clr(kind=json)` → `foreach %plan.steps%` works → `IndexNotSet` falls.
 
 **Direction beyond v1 (do not silently pull into v1):**
-- Generalize **all** navigation through the registry — native `dict`/`list` and item types get navigators, the reflection navigator resolves variables (option b) universally, and the generic `Index.ResolveKey` in `data/this.Navigation.cs` retires. This is the end-state Ingi described (`kind=magic`), and it's the bulk of "it's going to be a lot" — stage it deliberately.
-- yaml / xml navigators; the (from→to) Convert graph with composition; the write-side (mutate-in-place or copy-on-write).
+- Relocate the existing clr reflection into a registered `*` navigator (so `clr.Navigate` becomes pure delegation, no fallback branch), and generalize **all** navigation through the registry — native `dict`/`list` and item types get navigators, resolving variables (option b) universally, and the generic `Index.ResolveKey` in `data/this.Navigation.cs` retires. This is the end-state Ingi described (`kind=magic`), and it's the bulk of "it's going to be a lot" — stage it deliberately.
+- yaml / xml navigators; the Convert graph with composition (md→html→pdf); the write-side (mutate-in-place or copy-on-write).
 
-The transitional cost, named: for v1 two navigation regimes coexist (generic walk for native/item, navigator handoff for kinded clr). That is accepted debt, retired when the generalization lands.
+The transitional cost, named: in v1 the reflection default lives on `clr` (fallback branch) while json lives in the registry — two homes for navigation. Accepted debt, retired when reflection relocates into the `*` navigator.
 
 ---
 
@@ -156,22 +156,24 @@ The transitional cost, named: for v1 two navigation regimes coexist (generic wal
 | navigator registry keyed by `kind` | "navigator" agent-noun, matches `reader`/`renderer` — ok (naming pass may revisit vs `convert.@this` style) | registry = selection + lifecycle; behavior on the navigator, not a type-switch in the registry |
 | `Navigate(obj, tail, context)` | all single words — ok | passes the `object` and the context whole; navigator does not receive pre-decomposed segments for its own language |
 | `Enumerate(obj, context)` | one word — ok | yields whole `Data` items, not raw fields |
-| `Convert(value, targetKind, context)` on the value | "Convert" verb-as-noun, matches existing `convert.@this` — ok | called on the carrier; other operands (target kind) passed as-is, value not decomposed |
-| (fromKind→toKind) converter files | the pair is a key, not a type name — ok | one converter per pair, file-per-variant (matches variant-design rule) |
+| `Data.Convert(toKind)` on the value | "Convert" verb-as-noun, matches existing `convert.@this` — ok | called on the carrier; no `context` param (Data carries its own); value not decomposed |
+| target-`(type, kind)` converter files | the target descriptor is the key, not a compound — ok | one converter per outbound owner, file-per-variant (matches variant-design rule) |
 
-Naming still open: is it a "navigator registry" (keyed by kind) or a "mime registry"? I lean `navigator` keyed by `kind` — `kind` is the plang word already on every type; `mime` is what a kind *maps to*, an impl detail. Confirm before coding.
+Naming settled: a "navigator registry" keyed by `kind` (not "mime registry") — `kind` is the plang word already on every type; `mime` is what a kind *maps to*, an impl detail.
 
 ---
 
-## Open questions for Ingi
+## Settled with Ingi (2026-07-07 review comments)
 
-1. **Convert dispatch** — source-kind-owns-outbound vs a (from→to) pair registry. I've written it as pair-registry; confirm.
-2. **Value-facing Convert API** — `await value.Convert("html", ctx)` as the primary, param-attribute as a later layer. Ok?
-3. **Naming** — `navigator` keyed by `kind` (not "mime registry"). Confirm.
-4. **v1 boundary** — do you want the reflection-navigator generalization (native/item through the registry) in v1, or is the json-navigator-only cut the right first deliverable? My plan assumes the latter.
+1. **Convert dispatch** — the **outbound (target) owns it**, not the source. `text(md)→audio`: `audio` owns "make audio from text"; `md` doesn't have to know audio. Keyed by the target `(type, kind)`, which is how the existing per-type `Convert` hook already dispatches (`OwnerOf(target)`). §7 rewritten.
+2. **Value-facing Convert API** — `Data.Convert(toKind)`, **no `context` param** — everything at an action boundary is `Data` and carries its own context (`Data<text> Text` → `await Text.Convert("audio")`). Demonstrated in the Convert section of `code-draft.md`.
+3. **Naming / registration** — `navigator` keyed by `kind`, discovered by namespace exactly like the reader registry. Discovery demonstrated in `code-draft.md` "How registration works today".
+4. **v1 boundary** — json navigator **only**. Reflection navigation already exists on `clr`; keep it as the fallback and just add json (§ Scope). Relocating reflection into a `*` navigator is v2.
+
+No open questions remain — ready for coder.
 
 ---
 
 ## You own this (coder)
 
-Every code shape, signature, file path, and method name above (and in `code-draft.md`) is a **suggestion** to make the design concrete — you own the final form. In particular: the exact navigator interface, where the navigator files live (`app/type/clr/<kind>.cs` vs a dedicated `navigator/` folder), and how the path object exposes its untokenized tail are yours to shape. Verify the parent-branch `%ref%`/reader behavior before touching `data/reader:79-80`. If a shape here fights the code, push back — the design intent (clr stays clr, per-kind navigator owns its language + var resolution, convert is fromKind→toKind behind the existing door) is what must survive, not these specific signatures.
+Every code shape, signature, file path, and method name above (and in `code-draft.md`) is a **suggestion** to make the design concrete — you own the final form. In particular: the exact navigator interface, where the navigator files live (`app/type/clr/<kind>.cs` vs a dedicated `navigator/` folder), and how the path object exposes its untokenized tail are yours to shape. Verify the parent-branch `%ref%`/reader behavior before touching `data/reader:79-80`. If a shape here fights the code, push back — the design intent (clr stays clr, per-kind navigator owns its language + var resolution, convert's **outbound owns it** behind the existing door) is what must survive, not these specific signatures.

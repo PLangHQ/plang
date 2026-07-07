@@ -2,11 +2,11 @@
 
 **Companion to `plan.md`.** These are **suggestions** — coder owns the final shape (see the "You own this" note at the end). Every snippet uses `obj` (not hostObject), `tail` (not rawTail), and the born-with `context` (no separate resolver param). Signatures are sketches; the intent above each block is what must survive.
 
-Section numbers match `plan.md` §1–§9.
+Headers name the `plan.md` section they implement (a couple of plan sections get more than one code block).
 
 ---
 
-## §1 — `clr` carries `(obj, kind)`; navigation delegates
+## plan §1 — `clr` carries `(obj, kind)`; navigation delegates
 
 `clr` stops *doing* navigation (no reflection, no switch) — it resolves the navigator for its kind/obj and delegates. Kind is stamped by the producer; unstamped falls back to the CLR identity.
 
@@ -33,18 +33,24 @@ public sealed class @this : global::app.type.item.@this, global::app.module.ICon
                        ?? Value.GetType().FullName
                        ?? Value.GetType().Name);
 
-    // Behaviour lives on the navigator; clr only selects + delegates. `tail` is the whole
-    // remaining path (a single key is just a one-segment tail — matches the base signature).
+    // v1: a registered navigator (json) wins; otherwise the EXISTING reflection stays as the
+    // fallback (Ingi: "reflection already works, just add json"). `tail` is the whole remaining
+    // path (a single key is just a one-segment tail — matches the base signature).
     public override System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(
         global::app.data.@this parent, string tail)
-        => Nav().Navigate(Value, tail, parent, Context);
+    {
+        var nav = Context.App.Type.Navigators.For(Kind, Value.GetType());   // null in v1 when only json is registered and this isn't json
+        return nav is not null ? nav.Navigate(Value, tail, parent, Context)
+                               : Reflect(parent, tail);                     // ← the current reflection body, unchanged
+    }
 
-    // foreach over a container clr — the navigator walks its obj's children.
+    // foreach over a container clr — a registered navigator enumerates; else reflect over public props.
     public System.Collections.Generic.IEnumerable<global::app.data.@this> Enumerate()
-        => Nav().Enumerate(Value, Context);
+        => Context.App.Type.Navigators.For(Kind, Value.GetType())?.Enumerate(Value, Context)
+           ?? ReflectEnumerate();
 
-    private global::app.type.clr.navigator.INavigator Nav()
-        => Context.App.Type.Navigators.For(Kind, Value.GetType());
+    // Reflect / ReflectEnumerate = today's clr reflection, kept verbatim. v2 relocates them into
+    // the `*` navigator and this method becomes pure delegation (no fallback).
 
     public override object? Peek() => this;                                   // still a closed box
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
@@ -52,11 +58,11 @@ public sealed class @this : global::app.type.item.@this, global::app.module.ICon
 }
 ```
 
-**OBP:** registry selects, navigator behaves — no `is JsonElement` switch survives in `clr`. `Kind` is a stamped noun. The reflection body that lived here moves out to the `*` navigator (§5) — do not leave a private reflection path behind (that would be two homes).
+**OBP (v1 vs v2):** registry selects, navigator behaves — no `is JsonElement` switch in `clr`. The one transitional wrinkle is the `?? Reflect(...)` fallback: reflection lives on `clr` **and** json lives in the registry — two homes. Accepted for v1 (Ingi: don't rebuild what works); v2 relocates reflection into the `*` navigator so `For(...)` always resolves and the fallback disappears. `For` returning null in v1 (only json registered) is the signal — see §2 note.
 
 ---
 
-## §2/§3 — the navigator registry + interface
+## plan §2 + §3 — the navigator registry + interface
 
 Interface first. Note `Handles` is a **method doing real work** (like `Covers`/`HasAccess`), not a verb-named property — the element answers "do I recognize this obj shape?"
 
@@ -91,37 +97,66 @@ public sealed class @this
     public const string Any = "*";
     private readonly System.Collections.Generic.Dictionary<string, INavigator> _byKind = new(System.StringComparer.OrdinalIgnoreCase);
     private readonly System.Collections.Generic.List<INavigator> _all = new();
-    private INavigator _default = null!;   // the "*" reflection navigator
 
     // Discovered like readers (scan app.type.clr.navigator for INavigator impls); a code.load
     // DLL can Register more later — same seam as app.type.reader.Register.
     public @this(System.Collections.Generic.IEnumerable<INavigator> navigators)
     {
-        foreach (var n in navigators)
-        {
-            _all.Add(n);
-            _byKind[n.Kind] = n;
-            if (n.Kind == Any) _default = n;
-        }
+        foreach (var n in navigators) { _all.Add(n); _byKind[n.Kind] = n; }
     }
 
-    // stamped kind (O(1)) → CLR-type match (unstamped JsonElement → json) → reflection default.
-    public INavigator For(string? kind, System.Type clr)
+    // stamped kind (O(1)) → CLR-type match (unstamped JsonElement → json). Returns NULL when
+    // nothing matches — in v1 that means "not json", and clr falls back to its own reflection.
+    // v2 registers a "*" navigator so this never returns null and the fallback disappears.
+    public INavigator? For(string? kind, System.Type clr)
     {
         if (!string.IsNullOrEmpty(kind) && _byKind.TryGetValue(kind!, out var byKind)) return byKind;
         foreach (var n in _all) if (n.Handles(clr)) return n;
-        return _default;
+        return null;
     }
 }
 ```
 
-**OBP:** registry = selection only (`For`). No type-switch — `Handles` is asked of each element. Hung off `App.Type.Navigators`, mirroring `App.Type.Readers` / `App.Type.Conversions`.
+**OBP:** registry = selection only (`For`). No type-switch — `Handles` is asked of each element. Hung off `App.Type.Navigators`, mirroring `App.Type.Readers` / `App.Type.Conversions`. v1 registers only `json`; `For` returns null for anything else and `clr` keeps reflecting.
+
+### How registration works today — and the navigator mirror (comment: "demonstrate this")
+
+Registration is **discovery by namespace**, not a hand-maintained list. The reader registry (`app/type/reader/this.cs`, `IndexAssembly`) scans the App assembly: for every type whose namespace ends in `.serializer`, it takes the folder before `.serializer` as the **type name** and, if the class implements `ITypeReader`, instantiates it and indexes it by the reader's own `Kind`:
+
+```csharp
+// app/type/reader/this.cs  (existing — abridged)
+foreach (var type in assembly.GetTypes())
+{
+    if (!type.Namespace!.EndsWith(".serializer")) continue;           // app.type.<name>.serializer
+    var typeName = /* folder before ".serializer" */;                  // "item", "table", …
+    if (typeof(ITypeReader).IsAssignableFrom(type) && !type.IsAbstract)
+    {
+        var instance = (ITypeReader)ctor.Invoke(null);
+        _generatedTyped[(typeName, instance.Kind)] = instance;        // keyed by (type, kind)
+    }
+}
+```
+
+So a new reader = drop a class in the right folder; no registration code. The **navigator registry does the same**, scanning for `INavigator` under `app.type.clr.navigator`:
+
+```csharp
+// how App builds the navigator registry (mirror of the reader scan)
+var navigators = assembly.GetTypes()
+    .Where(t => t.Namespace == "app.type.clr.navigator"
+                && typeof(INavigator).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
+    .Select(t => (INavigator)System.Activator.CreateInstance(t)!);
+App.Type.Navigators = new global::app.type.clr.navigator.@this(navigators);   // ctor indexes by n.Kind
+```
+
+Adding `app/type/clr/navigator/yaml.cs` (implements `INavigator`, `Kind => "yaml"`) then "just works" — discovered, indexed, resolvable — exactly like adding a reader. Same seam for a `code.load` DLL: a `Register(navigator)` method on the registry (mirroring `app.type.reader.Register`) lets a loaded module add its own.
 
 ---
 
-## §4/§5 — the walk is shared; the *descend* is per-kind
+## plan §3 (the navigators) — the walk is shared; the *descend* is per-kind
 
-json (over `JsonElement`) and reflection (over a POCO) both speak the **plang path language** — same tokenize-and-loop, differing only in one-hop descend, container-test, and the kind they stamp on sub-containers. So the walk (and the option-(b) variable resolution) lives **once** in a shared base; each kind is a thin override. A future jsonpath/css navigator that speaks a *different* language implements `INavigator` directly instead of extending this base.
+**v1 ships the `json` navigator only** — the `reflection` navigator below is the **v2** relocation of `clr`'s existing reflection (shown here so the shared shape is visible; do not build it in v1). Both speak the **plang path language** — same tokenize-and-loop, differing only in one-hop descend, container-test, and the kind they stamp on sub-containers. So the walk (and the option-(b) variable resolution) lives **once** in a shared base; each is a thin override. A future jsonpath/css navigator that speaks a *different* language implements `INavigator` directly instead of extending this base.
+
+> **v1 note:** you only need `path` (base) + `json`. The `reflection : path` block is the v2 target — in v1, `clr`'s own `Reflect(...)` stays and does this job.
 
 ```csharp
 // app/type/clr/navigator/path.cs  — shared walk for kinds that adopt the plang path language
@@ -211,10 +246,10 @@ public sealed class json : path
 }
 ```
 
-reflection navigator — the `*` default; the body relocated out of `clr.Navigate`:
+reflection navigator — **v2 only** (the `*` default; the body relocated out of `clr.Navigate`). In v1, `clr` keeps this logic inline as `Reflect(...)`; this block shows where it lands later:
 
 ```csharp
-// app/type/clr/navigator/reflection.cs
+// app/type/clr/navigator/reflection.cs   [v2]
 namespace app.type.clr.navigator;
 
 public sealed class reflection : path
@@ -248,7 +283,7 @@ public sealed class reflection : path
 
 ---
 
-## §6 — the parser handoff (`data/this.Navigation.cs`)
+## plan §4 — the parser handoff (`data/this.Navigation.cs`)
 
 When the value being navigated is a `clr`, hand the **whole untokenized tail** to it and stop — the navigator walks the rest. Native `dict`/`list` and item types keep the existing per-hop walk (and its rich `IndexNotSet` diagnostic) for now.
 
@@ -257,8 +292,11 @@ public async System.Threading.Tasks.ValueTask<@this> Navigate(global::app.variab
 {
     if (path.IsEmpty) return this;
 
-    // Handoff: a clr owns its whole tail (its navigator speaks its own path language + resolves vars).
-    if (_item is global::app.type.clr.@this)
+    // Handoff: a clr with a registered navigator (v1: json) owns its whole tail — it speaks its
+    // own path language + resolves vars. A clr WITHOUT one (a POCO in v1) is NOT handed off; it
+    // falls through to the per-hop walk, which drives clr.Navigate(key) one key at a time (the
+    // existing reflection). So the multi-segment handoff only reaches navigators that expect it.
+    if (_item is global::app.type.clr.@this c && c.Navigable)
         return await _item.Navigate(this, path.ToString());   // ToString() reconstructs the raw tail
 
     var (head, tail) = path.Split();
@@ -266,11 +304,13 @@ public async System.Threading.Tasks.ValueTask<@this> Navigate(global::app.variab
 }
 ```
 
-**OBP:** one branch, at the top; the clr doesn't get its tail pre-tokenized into the generic segment kinds. `app.variable.path.Parse` stays the single plang tokenizer — the navigator re-parses the *same* language from the raw tail (a jsonpath/css navigator would parse a *different* language). No second plang tokenizer.
+`Navigable` on clr (plan §1): `public bool Navigable => Context.App.Type.Navigators.For(Kind, Value.GetType()) is not null;` — true for json in v1, false for a POCO (which keeps the per-hop reflection).
+
+**OBP:** one branch, at the top; the clr doesn't get its tail pre-tokenized into the generic segment kinds. `app.variable.path.Parse` stays the single plang tokenizer — the navigator re-parses the *same* language from the raw tail (a jsonpath/css navigator would parse a *different* language). No second plang tokenizer. `Navigable` is an adjective (single word), not a verb-noun.
 
 ---
 
-## §7 — the reader pivot (keep external json as clr)
+## plan §5 — the reader pivot (keep external json as clr)
 
 One line. The `(object/item, json)` reader wraps the DOM in a clr instead of walking it to a dict. Authored `dict`/`list` literals use their own readers and are **untouched** (they stay native — `%x% = {a:1}` is still a native dict).
 
@@ -294,7 +334,7 @@ Route the deferred value by declared kind, not token shape:
 
 ---
 
-## §8 — OpenAi stamps the kind
+## plan §6 — OpenAi stamps the kind
 
 The fresh path must not hand a raw `JsonElement` to `context.Ok` (the Data ctor would walk it to a dict). Build the clr — stamped from the requested format — on both fresh and cached paths, so `fresh == cached`.
 
@@ -314,33 +354,52 @@ var result = context.Ok(resultValue);
 
 ---
 
-## §9 — Convert: (fromKind → toKind), behind the existing door
+## plan §7 — Convert: the **outbound (target) owns it**, behind the existing door
 
-The per-type `Convert(value, kind, ctx)` hook already takes `kind` (today "a hint"). Make it load-bearing: the door reads the **source** kind off the value and the **target** kind from the request, and dispatches to a per-pair converter. `as dict` (json→dict) is one arm; `md→html` is another.
+**Ingi's correction:** the target owns the conversion, not the source. `text(md) → audio`: if `md` owned its outbound conversions it would have to know every format (audio, html, pdf, …); but `audio` only needs to know how to make itself **from** text. So the owner is the **outbound `(type, kind)`** — which is how the per-type `Convert(value, kind, ctx)` hook already dispatches: `catalog.Convert` → `OwnerOf(targetType).Convert(value, …)`, the *target* builds itself from the value. Make the `kind` param load-bearing so a target *kind* (html, a kind of text) can own it too.
 
-Value-facing call (the carrier owns the op):
-
-```csharp
-// on Data — routes to the door; source kind read from this.Type, target kind = the request
-public System.Threading.Tasks.ValueTask<@this> Convert(string toKind, global::app.actor.context.@this ctx)
-    => ctx.App.Type.Conversions.To(this, toKind, ctx);      // whole Data in; the door decomposes, not the caller
-```
-
-Per-pair converters, one file each, discovered like readers/navigators:
+Value-facing call — **no `context` param**, because everything at an action boundary is `Data`, which carries its own context (Ingi):
 
 ```csharp
-// app/type/convert/kind/IConvert.cs  — a (from → to) content transform
-public interface IConvert { string From { get; } string To { get; } System.Threading.Tasks.ValueTask<global::app.data.@this> Convert(global::app.data.@this value, global::app.actor.context.@this ctx); }
-
-// app/type/convert/kind/md.html.cs  (illustrative — md → html)
-public sealed class md_html : IConvert { public string From => "md"; public string To => "html"; /* … render markdown → html … */ }
+// on Data — resolve the TARGET (type,kind) owner and hand it this value whole. Data has _context.
+public System.Threading.Tasks.ValueTask<@this> Convert(string toKind)
+    => _context.App.Type.Conversions.To(this, toKind);   // "audio" / "text/html" — parsed like a type name
 ```
 
-**OBP:** one door (extend `Conversions`, don't stand up a parallel path); behavior per (from,to) file (variant-per-file, feedback_obp_variant_design); the value is passed **whole** to `Convert`, not decomposed to `.Value` at the call site. `json→dict` reuses the existing `catalog/Conversion` arm — wire it in as the `(json, dict)` converter rather than duplicating it. Chains (md→html→pdf) are later; a missing hop must fail loud (`log` + error), never silently pass the source through.
+So a handler with a `Data<text> Text` param just writes:
+
+```csharp
+var audio = await Text.Convert("audio");   // audio (the outbound) owns text→audio
+```
+
+The converter is keyed by the **target** `(type, kind)`, discovered like readers/navigators — the outbound owner:
+
+```csharp
+// app/type/convert/IConvert.cs  — "I am the outbound; build me from a source value"
+public interface IConvert
+{
+    string Type { get; }             // the OUTBOUND type it builds ("audio", "text")
+    string Kind { get; }             // the outbound kind ("*" for audio; "html" for text/html)
+    bool From(global::app.data.@this source);   // can I build myself from THIS source? (audio: source is text)
+    System.Threading.Tasks.ValueTask<global::app.data.@this> Build(global::app.data.@this source, global::app.actor.context.@this ctx);
+}
+
+// app/type/audio/convert.cs  — audio owns "make audio from text" (lives WITH audio, the outbound)
+public sealed class convert : IConvert
+{
+    public string Type => "audio";
+    public string Kind => global::app.type.clr.navigator.@this.Any;   // "*"
+    public bool From(global::app.data.@this source) => source.Type?.Name == "text";
+    public System.Threading.Tasks.ValueTask<global::app.data.@this> Build(global::app.data.@this source, global::app.actor.context.@this ctx)
+        => /* text → audio (TTS) */ …;
+}
+```
+
+**OBP:** one door (extend `Conversions.To`, don't stand up a parallel path). The behavior lives **with the outbound** — `audio` owns text→audio, so adding a new output format = adding one owner, and no existing type learns about it (this is exactly why source-owns was wrong). The value is passed **whole** to `Build`, never decomposed to `.Value` at the call site. `json→dict` = `dict` owns "build dict from json" (reuse the existing `catalog/Conversion` arm, wired in as `dict`'s inbound-from-json). Chains (md→html→pdf) later; when no outbound owner can build from this source, fail loud (`log` + error), never silently pass the source through.
 
 ---
 
-## Guards (§ "The throw guards" in plan)
+## plan §9 — Guards
 
 ```csharp
 // source.Value — container must never come back a scalar (the exact round-trip loss that caused this bug)
@@ -354,4 +413,4 @@ if (declaredType.IsContainer && materialized is not (dict or list or clr))
 
 ## You own this (coder)
 
-Every signature, file path, and name here is a **suggestion** to make the design concrete — you own the final form. Highest-value places to exercise judgement: (1) whether the shared `path` base is worth it or the json/reflection navigators are cleaner standalone; (2) the exact reader-pivot seam (`Read` vs `Parse` vs `source.Build`) — trace it before editing, it's the riskiest; (3) the `IConvert` naming/home (I reused `convert`'s namespace; a better word than `From`/`To` pair is welcome — scan for verb+noun). The design intent that must survive: **clr stays clr; the per-kind navigator owns its path language + variable resolution; convert is fromKind→toKind behind the existing door; the reader pivot must not turn a `%ref%` into a clr.** If a shape here fights the code, push back.
+Every signature, file path, and name here is a **suggestion** to make the design concrete — you own the final form. Highest-value places to exercise judgement: (1) for v1 you only need `clr.Kind`/`Navigable` + the registry + the `json` navigator + the reader pivot + OpenAi stamping — leave clr's reflection inline as the fallback; (2) the exact reader-pivot seam (`Read` vs `Parse` vs `source.Build`) — trace it before editing, it's the riskiest; (3) the `IConvert` shape (I put it **with the outbound type**, `app/type/audio/convert.cs`; confirm `Type`/`Kind`/`From`/`Build` reads right, and whether `From` should be a bool probe or the door just tries `Build`). The design intent that must survive: **clr stays clr; the per-kind navigator owns its path language + variable resolution; convert's outbound owns it behind the existing door; the reader pivot must not turn a `%ref%` into a clr.** If a shape here fights the code, push back.
