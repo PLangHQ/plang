@@ -14,6 +14,25 @@ This is the guide for adding a new value type to PLang (a `number`, `path`, `cho
 
 ---
 
+## 0. What is `item` (`: item.@this`)?
+
+`app.type.item.@this` is the abstract base of **every** PLang value — `text`, `number`,
+`path`, `list`, `dict`, `choice`, `image`, your new one. When you write
+`public sealed class @this : global::app.type.item.@this`, you are saying *"this class IS a
+PLang value."* By convention the class is always named `@this` and lives in `this.cs`, so
+consumers alias it (`global::app.type.number.@this` = the `number` value).
+
+`item.@this` is the polymorphic root the whole runtime moves values around as — variable
+memory holds `item`s, `Data` wraps an `item`, couriers pass `item`s without looking inside.
+It defines the small set of virtual members every value answers (materialize, render,
+self-describe, exit-to-CLR — the table in §1). A value type is just: *a class that IS an
+`item`, holds its own backing, and overrides those members to behave like its kind.*
+
+`Data` (`app.data.@this`) is **not** an `item` — it is the envelope that *holds* one (`Data.Item`),
+plus name/type/properties/signature. The value lives on the `item`; `Data` is the binding.
+
+---
+
 ## 1. The type class
 
 Every value type is a `sealed class @this : app.type.item.@this` living at
@@ -59,21 +78,29 @@ built value, or `data.Fail(...)` + `null` to decline. Pass-through and facet han
 free from the default implementation; override only if your type has a special construction
 (e.g. re-tagging a `list` into a specialized collection).
 
-### `Convert(object? value, string? kind, context)` — the family hook
+### `Convert(object? value, string? kind, context)` — the family hook ⚠️ *transitional, being deprecated*
 
-The catalog discovers this static by reflection (`Conversions.Of`) and uses it to build your
-type from a raw value (a string, a number). This is the legitimate plang-type hook — keep
-it. It should delegate to the type's own build logic, not reimplement it:
+Today the catalog discovers this static by reflection (`Conversions.Of`, reached via
+`type.Convert`) and uses it to build your type from a raw value at runtime (`As<T>` on a
+string/number). **Do not build a new type around it.** Construction is moving to the reader
+(the born path, §3) and the type's own `Create` — `type.Convert` / the `Convert` hook are on
+their way out and will be removed. If a `Convert` still exists on a type, it must be a *thin
+delegate* to the type's own build path, never a second construction implementation:
 
 ```csharp
+// transitional — expect this to be deleted; the reader is the real construction path
 public static data.@this Convert(object? value, string? kind, context)
-    => context.Ok(FromRaw(value, context));   // one build path, on the type
+    => context.Ok(FromName(value?.ToString() ?? "", context));   // delegates to the type's own build
 ```
 
-**Rule:** if you find yourself writing a `MyValueMeta` static class that the type calls to
-build itself, stop — move that code onto the type (per-`T` static fields cache fine on a
-closed generic). A worked example is `choice<T>`: its enum-vs-named-set resolution lives on
-`choice<T>` itself (`Names`, `FromName`), not in a helper.
+**Rules that hold regardless:**
+- **No static helper class.** If you catch yourself writing a `MyValueMeta`/`MyValueUtil`
+  static class that the type calls to build itself, stop and move that code *onto* the type
+  (per-`T` static fields cache fine on a closed generic). Static helper classes need explicit
+  sign-off — default to not having one. Worked example: `choice<T>` — its enum-vs-named-set
+  resolution lives on `choice<T>` (`Names`, `FromName`), not a helper.
+- **The type creates itself.** One build path, on the type. `Create`/the reader call it; a
+  `Convert` (while it lasts) only delegates to it.
 
 ---
 
@@ -175,6 +202,9 @@ explicitly (`catalog.Register("choice", typeof(choice<>))`). If `type.Build` thr
 - **A static helper class the type calls to build itself** (`FooMeta.Build`, `FooUtil.Parse`).
   The type creates itself; move the code onto the type. Static helper classes need explicit
   sign-off — default to *not* having one.
+- **New construction routed through `type.Convert` / the `Convert` hook.** Transitional and
+  being deprecated — construction belongs on the reader (born) and the type's own `Create`.
+  A `Convert` that still exists must only delegate to the type's own build path.
 - **`.Clr` / `value.Clr<object>()` mid-flight.** Lowering to CLR then re-lifting is the
   raw-CLR-era smell. Stay in plang types; `Clr` is only for the final `.NET`/3rd-party edge.
 - **The reader/writer knowing the concrete format.** If `Read`/`Write` names a serializer,
