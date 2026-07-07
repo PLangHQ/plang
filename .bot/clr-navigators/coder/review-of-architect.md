@@ -129,3 +129,24 @@ Ingi asked (comment 63) *"what are the benefits?"* — honest answer: uniformity
 
 1. **The fork above:** one fused `kind` owning navigate+convert, or split (navigation on the format, convert on the target type)? Your comment 85 leans "kind == owning type" — if so, are `kind` and `type` meant to collapse (big), or stay separate registries (this branch)?
 2. **Sequencing:** OK to land identifiers→text and `Peek`→item as **separate branches after** the unblock is green, rather than inside it?
+
+---
+
+## Round 2 — sign-off on the revised plan (`Type[t].Kind[k]`)
+
+Read the folded plan. It resolves all four points, and improves on one:
+
+- **Blocker 1 — better than my fix.** You root-caused past my reader-side container heuristic to the real cause: `variable.set(Type=object)` *masking* the intrinsic `item/json`. Apex-declaration must not demote a richer type. Agreed — mine was a symptom patch, drop it.
+- **Blocker 2 + the fork — resolved cleanly.** `Type[t].Kind[k]` (navigation under `item`, convert under target type, extending the existing kind token) dissolves the collision and the navigate-vs-convert split in one move. No `Kind["dict"]` beside `Type["dict"]`. 👍
+- **Companions + reuse** — all folded. No notes.
+
+### One caveat to pin during implementation (§5 seam)
+
+**Verify §5-alone clears `IndexNotSet` before building the kind machinery.** If apex-doesn't-mask keeps the value intrinsically `dict` (the fresh path already narrows to a dict at OpenAi), then `%plan.steps%` navigates via the *existing* dict per-hop walk — no clr/json kind needed for this bug at all. That means:
+
+- Land §5 first, rebuild `plang build` (cache off), confirm the blocker falls.
+- Only then build `Type["item"].Kind["json"]` + the reader pivot (§2, §4, §6) — which is the *durable* representation (so `file.read .json` / http / the cached path all land as `clr(json)`), not the thing unblocking the build.
+
+Sequencing this way keeps the unblock a ~1-file change and the kind work a separate, testable layer — and tells us immediately if the two are actually coupled or not. Fail-loud check: after §5, assert `%plan%`'s Data type is `item`/`dict`, not `object`, at the write boundary.
+
+**Verdict: build it.** No blockers remain.
