@@ -44,7 +44,7 @@ namespace app.Utils
 			bool builder = false;
 			bool runtime = false;
 
-			var build = args.FirstOrDefault(p => p == "build" || p.StartsWith("--builder") || p.StartsWith("--build")) != null;
+			var build = args.FirstOrDefault(p => p == "build" || p.StartsWith("--build")) != null;
 			if (build)
 			{
 				builder = true;

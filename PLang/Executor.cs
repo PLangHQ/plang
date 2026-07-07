@@ -28,10 +28,10 @@ namespace PLang
 		/// </summary>
 		internal (global::app.@this? Engine, global::app.data.@this? Error) Configure(string[] args)
 		{
-			// Normalize: "build" or "--builder" both become the --builder flag.
-			// Legacy `plang build` form preserved as ergonomics; --builder is canonical.
+			// The `plang build` subcommand is an ergonomic alias for the canonical `--build`
+			// flag. (The `--builder` flag spelling is gone — `--build` is the one form.)
 			if (args.Length > 0 && args[0].Equals("build", StringComparison.OrdinalIgnoreCase))
-				args = ["--builder", .. args[1..]];
+				args = ["--build", .. args[1..]];
 
 			var (goalFile, parameters) = CommandLineParser.Parse(args);
 
@@ -67,9 +67,8 @@ namespace PLang
 				app.Debug.Activate();
 			}
 
-			// Tester mode (--tester or legacy --test)
-			if ((parameters.TryGetValue("!tester", out var testValue) && testValue is not false) ||
-			    (parameters.TryGetValue("!test", out testValue) && testValue is not false))
+			// Test mode (--test is canonical; --tester is gone)
+			if (parameters.TryGetValue("!test", out var testValue) && testValue is not false)
 			{
 				app.Test = new global::app.test.list.@this(app.System.Context);
 				if (!parameters.ContainsKey("path"))
@@ -102,23 +101,17 @@ namespace PLang
 				if (!userResult.Success) return (null, userResult);
 			}
 
-			// Builder mode (--builder or legacy --build). Either flag may be a bare
-			// `true` (e.g. `plang build` normalizes the subcommand to `--builder`) or
-			// carry a JSON config dict (`--build={"files":[...]}`). Both keys must be
-			// read into separate variables — folding them into one `||` with a shared
-			// `out` variable lets the short-circuit drop whichever key carries the dict.
-			parameters.TryGetValue("!builder", out var builderValue);
+			// Build mode (--build is canonical; --builder is gone). The flag may be a bare
+			// `true` (`plang build` normalizes the subcommand to `--build`) or carry a JSON
+			// config dict (`--build={"files":[...]}`).
 			parameters.TryGetValue("!build", out var buildValue);
-			if (builderValue is not (null or false) || buildValue is not (null or false))
+			if (buildValue is not (null or false))
 			{
 				app.Build = new global::app.module.builder.@this(app.System.Context);
 				if (!parameters.ContainsKey("path"))
 					userVars.Set("path", startupDirectory);
 
-				// Whichever flag carried the JSON object holds the build config.
-				var buildDict = builderValue as IDictionary<string, object?>
-				             ?? buildValue as IDictionary<string, object?>;
-				if (buildDict != null)
+				if (buildValue is IDictionary<string, object?> buildDict)
 				{
 					var buildResult = app.Setting.Set(app.Build, buildDict);
 					if (!buildResult.Success) return (null, buildResult);
