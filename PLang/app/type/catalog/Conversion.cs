@@ -315,7 +315,17 @@ public sealed partial class @this
         // (Native plang list<T> is converted by its own `Convert` hook, discovered via
         // convert.OwnerOf above — the list owns its construction; no special case here.)
 
-        // List-like target: List<T> or types inheriting List<T>
+        // List-like target: CLR List<T> or types inheriting List<T> (plang list<T> is handled
+        // by its own Convert hook via OwnerOf above). Why not just let the STJ fallback below
+        // own this? STJ deserializes a JSON *array* → List<T>, but it CANNOT:
+        //   1. wrap a single scalar into a one-element list — `5 → List<int> = [5]`,
+        //      `"foo" → List<string> = ["foo"]` (tests TryConvertTo_IntToListOfInt /
+        //      _StringToListOfString) — a bare scalar isn't a JSON array, so STJ throws;
+        //   2. handle a CLR IList / attribute-sourced sequence (test AutoTags, Discover_*,
+        //      the file-list read) without a serialize-roundtrip that mishandles the shape.
+        // Deleting this block and routing CLR List<T> through STJ broke 9 tests (verified
+        // 2026-07-07). It also routes each element through the catalog (custom Convert hooks)
+        // and aggregates per-element errors — not a reinvention of STJ, a superset it needs.
         var listElementType = GetListElementType(targetType);
         if (listElementType != null)
         {
