@@ -40,4 +40,43 @@ public sealed class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
         return global::app.type.@this.Create(value.Clr<object>(), data.Context) is @this lifted
             ? new @this<T>(lifted, data.Context!) : null;
     }
+
+    /// <summary>
+    /// The conversion catalog's owned hook (discovered via <c>convert.OwnerOf</c>, like
+    /// <c>choice&lt;T&gt;</c>/<c>path</c>): build a <c>list&lt;T&gt;</c> from a raw sequence,
+    /// converting each element to <typeparamref name="T"/>. The list owns its own construction
+    /// (born-with-context via the value-sequence ctor); the catalog stays the per-element
+    /// conversion authority (each element recurses through <c>TryConvert</c>, so its type owns
+    /// how it's built). No reflection, no STJ round-trip.
+    /// </summary>
+    public static global::app.data.@this Convert(object? value, string? kind, global::app.actor.context.@this context)
+    {
+        if (value is not System.Collections.IEnumerable elements || value is string)
+            return context.Error(new global::app.error.Error(
+                $"Cannot convert {value?.GetType().Name ?? "null"} to list<{typeof(T).Name}> — expected a sequence.",
+                "ListConversionFailed", 400));
+
+        var values = new System.Collections.Generic.List<global::app.type.item.@this>();
+        var errors = new System.Collections.Generic.List<global::app.error.Error>();
+        int i = 0;
+        foreach (var elem in elements)
+        {
+            var (converted, itemError) = global::app.type.catalog.@this.TryConvert(elem, typeof(T), context);
+            if (itemError != null)
+                errors.Add(new global::app.error.Error($"[{i}]: {itemError.Message}", "ElementConversionFailed", 400)
+                    { FixSuggestion = itemError.FixSuggestion });
+            else if (converted is global::app.type.item.@this iv)
+                values.Add(iv);
+            i++;
+        }
+        if (errors.Count > 0)
+        {
+            var err = new global::app.error.Error(
+                $"Failed converting {errors.Count} elements to list<{typeof(T).Name}>",
+                "ListConversionFailed", 400) { FixSuggestion = $"Element type: {typeof(T).Name}" };
+            foreach (var e in errors) err.ErrorChain.Add(e);
+            return context.Error(err);
+        }
+        return context.Ok(new @this<T>(values, context));
+    }
 }
