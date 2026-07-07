@@ -40,48 +40,51 @@ kind → navigator
   "*"     → reflection   (walk public properties)  ← default
 ```
 
-### 3. Navigator interface — owns the tail language AND variable resolution
+### 3. Navigator interface — owns the path language AND variable resolution
 
-**Decision (Ingi): option (b).** The navigator receives the raw remaining path and resolves variables *itself*, because only the navigator knows its own syntax — for `kind=magic`, `planStep.index` might be magic, not a variable; only the magic navigator can tell. So a navigator is a mini-interpreter for its kind:
+**Decision (Ingi): option (b).** The navigator receives the remaining path and resolves variables *itself*, because only the navigator knows its own syntax — for `kind=magic`, `planStep.index` might be magic, not a variable; only the magic navigator can tell. So a navigator is a mini-interpreter for its kind. It lives at **`app/type/INavigator.cs`** (not under `clr/`) — navigation generalizes to other types over time (Ingi).
 
 ```
-Navigate(obj, tail, context) → Data       // interpret the tail in this kind's language; resolve embedded vars via context
-Enumerate(obj, context) → items                        // for foreach; each element a Data (clr for containers, scalar leaf otherwise)
+Navigate(obj, path, parent, context) → Data   // walk obj by the (already-tokenized) path object; resolve vars via context
+Enumerate(obj, context) → items               // for foreach; each element a Data (clr for containers, scalar leaf otherwise)
 ```
 
-- The navigator resolves a plang variable it finds in the tail (the `%planStep.index%`-in-a-bracket case) through `context.Variable` — the navigator decides *when* to call it. No separate resolver param; the context it's born with is the hook.
+- **Takes the raw `obj`, not an `item`.** The navigator turns a raw host (`JsonElement`, POCO) into plang values — input is raw, output is `Data`. Wrapping the input as `item` would just force an immediate unwrap.
+- **Takes the `path` object, not a string.** `app.variable.path.Parse` already tokenized once; the navigator walks `path.Segments` directly — no re-parse, no `ToString`.
+- The navigator resolves a plang variable it finds in the path (the `%step.Index%`-in-a-bracket case) through `context.Variable` — it decides *when* to call it. No separate resolver param; the context it's born with is the hook.
 - **Container vs scalar:** a container node stays `clr(kind)`; a scalar leaf resolves to its plang scalar (`number`/`text`/`bool`/`null` by `ValueKind`, `number` precision from the token). Navigate/Enumerate never return a `clr` wrapping a scalar.
+- **`Kind`/`Handles` are plumbing → CLR (`string`/`bool`), not plang types.** The value boundary (`Navigate`/`Enumerate` in/out) is plang `Data`; the registry key + predicate stay CLR, matching the existing `type.@this.Kind` (string). Making the type system's kinds plang-`text` is a separate, type-wide change.
 
 ### 4. The parser handoff
 
-`data.Navigate(path)` (`data/this.Navigation.cs`) walks generically until a hop lands on a **kinded-navigable `clr`**, then hands the **untokenized tail** to that clr's navigator, which interprets the rest in one call:
+`data.Navigate(path)` (`data/this.Navigation.cs`) walks generically until a hop lands on a **kinded-navigable `clr`** (`_item is clr c && c.Navigable`), then hands the **`path` object** to that clr's navigator, which walks the rest in one call:
 
 ```
 %plan.steps[step.Index].actions%
-  plan            → generic hop → clr(kind=json)
-  steps[step.Index].actions   → tail → json navigator
-                                 (resolves step.Index via context.Variable, then walks)
+  plan            → generic hop → clr(kind=json)   (Navigable)
+  steps[step.Index].actions   → path object → json navigator
+                                 (resolves step.Index via context.Variable, then walks path.Segments)
 ```
 
 - Native `dict`/`list` and item types (`goal`, …) keep the generic per-hop walk for now — the handoff only fires for a `clr` whose kind has a registered navigator. That's why the bug fix is bounded: `goal` is an item type and already navigates fine; only `%plan%` was broken.
-- **Not a second plang tokenizer.** `app.variable.path.Parse` stays the one tokenizer for *plang* paths (parent-branch rule). The navigator's tail parser is a *different language* (jsonpath / css), which is legitimately the navigator's own concern.
-- The path object must yield its untokenized tail at the handoff. It already keeps `Segment.Raw` and reconstructs via `ToString()`; the tail's raw form is derivable from there (or retain the original string + a cursor).
+- **Not a second plang tokenizer.** `app.variable.path.Parse` stays the one tokenizer for *plang* paths (parent-branch rule); the navigator walks the resulting `path.Segments`. A future jsonpath/css navigator that wants a *different* language reads the raw form off the path itself — its own concern.
+- No `ToString`, no re-parse: pass the `path` object; the navigator walks `path.Segments`.
 
-### 5. The pivot that makes it fall out: what the `(item, json)` reader returns
+### 5. The pivot that makes it fall out: what the `(item/object, json)` reader returns
 
-Today `item/serializer/json.cs` (`Parse`) narrows a `JsonElement` object → native `dict`, array → native `list`. **Change it to produce `clr(JsonElement, kind=json)` for external structured data.** Then:
+Today `object/serializer/json.cs` `Read` narrows a `JsonElement` → native `dict`/`list` (via `item.serializer.json.Parse`). **Change that one line to produce `clr(JsonElement, kind=json)`.** Then:
 
 - `file.read .json`, http json, `llm.query` all uniformly land as `clr(kind=json)`.
 - The wire round-trip that caused the bug fixes itself: the plan crosses as `{type:{item,json}, value:<raw json>}` and read-back runs the `(item,json)` reader → `clr(kind=json)` again.
+- **`item.serializer.json.Parse` is NOT deleted** — it's the universal DOM narrower (`Data` ctor, `type.Create`, the `dict`/`list`/`object` readers, Fluid all call it for raw/authored values). Only the *reader* path (`Read`) stops calling it. Authored `dict`/`list` literals stay native.
 
-Paired with fixing `data/reader/this.cs:79-80` to route by the **declared type/kind**, not token shape. Constraint from the parent branch: a full-match `%ref%` still borns a `variable` and is **never parsed** — only genuine *content* of a structured declared type becomes `clr(kind=json)`.
+Paired with fixing `data/reader/this.cs:79-80` to route by the **declared type/kind**, defaulting to **text** (not `application/plang`) when there's no kind — an undeclared value is safest as text (the type decides); internal-wire values are `@schema`-marked and read by a different branch. Constraint from the parent branch: a full-match `%ref%` still borns a `variable` and is **never parsed** — only genuine *content* of a structured declared type becomes `clr(kind=json)`.
 
 ### 6. OpenAi stamps the kind
 
-Both the fresh (`context.Ok(TryParseJson…)`) and cached (`ParseResultValue`) paths stamp from `effectiveFormat`, so fresh == cached:
+Both the fresh (`context.Ok(TryParseJson…)`) and cached (`ParseResultValue`) paths stamp `kind` from the requested `format` (rename `effectiveFormat` → `format`), so fresh == cached. No switch — one line: `format == "json" && TryParseJson(...) is JsonElement je ? new clr(je, context, kind: format) : extracted`.
 
-- `json` → `clr(kind=json)`; `xml` → `clr(kind=xml)`; `yaml` → `clr(kind=yaml)`.
-- `md` / prose → `text` (with `kind=md` where useful) — scalar text, not navigable, no navigator.
+- v1: `json` → `clr(kind=json)`; everything else → `text` (the string). `xml`/`yaml` become `clr(kind=…)` when their navigators land.
 
 ### 7. Convert — the **outbound** (target) owns it, behind the existing door
 
@@ -108,12 +111,12 @@ Convert is a **content transform**, module-dev-facing: an action that wants audi
 | Incumbent (today) | Does | Disposition under this plan |
 |---|---|---|
 | `clr.Navigate` (`type/clr/this.cs`) | reflects C# properties on the `object` by key | v1: gains a registry lookup first (`Navigators.For(...)?.Navigate ?? existing reflection`) — reflection **stays** as the fallback. v2: reflection relocates into the `*` navigator and `clr.Navigate` becomes pure delegation |
-| `data/this.Navigation.cs` — `Index` segment (`ResolveKey` + the `IndexNotSet` diagnostic) | resolves `%[var]%` against the variable store mid-walk (option a) | stays for native/item hops (generic walk); for a kinded-clr tail, resolution moves *into* the navigator (option b) via `context.Variable` |
+| `data/this.Navigation.cs` — `Index` segment (`ResolveKey` + the `IndexNotSet` diagnostic) | resolves `%[var]%` against the variable store mid-walk (option a) | stays for native/item hops (generic walk); for a kinded-clr path, resolution moves *into* the navigator (option b) via `context.Variable` |
 | `object/serializer/json.cs` `Read` (the (item/object, json) reader) | walks `JsonElement` → native `dict`/`list` via `Parse` | wraps in `clr(kind=json)` instead (§5). The `Parse` DOM walker **stays** (authored `dict`/`list` literals use their own readers, untouched) — only the *reader* path pivots |
 | `data/reader/this.cs:79-80` | picks read format by token shape | route by declared type/kind; preserve full-match `%ref%` → `variable` (parent-branch rule) |
 | `catalog/Conversion.cs` (JsonElement→dict/list on `As<T>`) | value-model conversion | stays; becomes the `json→dict` arm of Convert (§7), now reachable via the value-facing `Convert` |
 | per-type `Convert(value, kind, ctx)` hooks | build a value from another, `kind` unused | `kind` becomes load-bearing — the door resolves the **target** `(type, kind)` owner (outbound-owns-inbound) and hands it the source value |
-| `OpenAi` result construction (fresh + cached) | `context.Ok(TryParseJson)` → unstamped | stamp kind from `effectiveFormat` (§6) |
+| `OpenAi` result construction (fresh + cached) | `context.Ok(TryParseJson)` → unstamped | wrap in `clr(kind=format)` (§6) |
 
 ---
 
@@ -129,7 +132,7 @@ Convert is a **content transform**, module-dev-facing: an action that wants audi
 - The generic `Index.ResolveKey` walk in `data/this.Navigation.cs`, once native/item navigation is generalized through the registry (the reflection navigator resolving via `context.Variable`). Until then it stays — do not delete it in v1.
 
 **Stays (explicitly not touched):**
-- `app.variable.path.Parse` — the one plang-path tokenizer. The navigator's tail parser is a separate language, not a replacement.
+- `app.variable.path.Parse` — the one plang-path tokenizer. The navigator walks the resulting `path.Segments`; a future jsonpath/css navigator reading a separate language does not replace it.
 - Full-match `%ref%` → `variable`, never parsed (parent branch). The reader pivot must preserve this.
 - Native `dict`/`list` construction where a value is plang-authored (`set %x% = {a:1}`) — those stay native, not clr.
 - The double-wrap guard (keeper).
@@ -143,6 +146,7 @@ Convert is a **content transform**, module-dev-facing: an action that wants audi
 **Direction beyond v1 (do not silently pull into v1):**
 - Relocate the existing clr reflection into a registered `*` navigator (so `clr.Navigate` becomes pure delegation, no fallback branch), and generalize **all** navigation through the registry — native `dict`/`list` and item types get navigators, resolving variables (option b) universally, and the generic `Index.ResolveKey` in `data/this.Navigation.cs` retires. This is the end-state Ingi described (`kind=magic`), and it's the bulk of "it's going to be a lot" — stage it deliberately.
 - yaml / xml navigators; the Convert graph with composition (md→html→pdf); the write-side (mutate-in-place or copy-on-write).
+- **A plang action to load a type/navigator pack from a DLL** — `- add type mytype.dll` (Ingi). Wraps the existing `code.load` + a registry sweep for `INavigator`/`ITypeReader`/`IConvert`. The `Register(...)` seam on the navigator registry is built in v1 so the action has something to call; the action surface itself is a follow-on.
 
 The transitional cost, named: in v1 the reflection default lives on `clr` (fallback branch) while json lives in the registry — two homes for navigation. Accepted debt, retired when reflection relocates into the `*` navigator.
 
@@ -154,7 +158,7 @@ The transitional cost, named: in v1 the reflection default lives on `clr` (fallb
 |---|---|---|
 | `clr(object, kind)` | `kind` — one word, ok | carries the `object` whole; does not flatten its fields onto itself |
 | navigator registry keyed by `kind` | "navigator" agent-noun, matches `reader`/`renderer` — ok (naming pass may revisit vs `convert.@this` style) | registry = selection + lifecycle; behavior on the navigator, not a type-switch in the registry |
-| `Navigate(obj, tail, context)` | all single words — ok | passes the `object` and the context whole; navigator does not receive pre-decomposed segments for its own language |
+| `Navigate(obj, path, parent, context)` | all single words — ok | passes the raw `object` + the whole `path` object + context; navigator walks `path.Segments` (no re-parse), returns `Data` |
 | `Enumerate(obj, context)` | one word — ok | yields whole `Data` items, not raw fields |
 | `Data.Convert(toKind)` on the value | "Convert" verb-as-noun, matches existing `convert.@this` — ok | called on the carrier; no `context` param (Data carries its own); value not decomposed |
 | target-`(type, kind)` converter files | the target descriptor is the key, not a compound — ok | one converter per outbound owner, file-per-variant (matches variant-design rule) |
@@ -176,4 +180,4 @@ No open questions remain — ready for coder.
 
 ## You own this (coder)
 
-Every code shape, signature, file path, and method name above (and in `code-draft.md`) is a **suggestion** to make the design concrete — you own the final form. In particular: the exact navigator interface, where the navigator files live (`app/type/clr/<kind>.cs` vs a dedicated `navigator/` folder), and how the path object exposes its untokenized tail are yours to shape. Verify the parent-branch `%ref%`/reader behavior before touching `data/reader:79-80`. If a shape here fights the code, push back — the design intent (clr stays clr, per-kind navigator owns its language + var resolution, convert's **outbound owns it** behind the existing door) is what must survive, not these specific signatures.
+Every code shape, signature, file path, and method name above (and in `code-draft.md`) is a **suggestion** to make the design concrete — you own the final form. In particular: the exact navigator interface, and where the navigator impls live (`app/type/navigator/json.cs` vs with each type), are yours to shape (the interface at `app/type/INavigator.cs` is settled). Verify the parent-branch `%ref%`/reader behavior before touching `data/reader:79-80`. If a shape here fights the code, push back — the design intent (clr stays clr, per-kind navigator owns its language + var resolution, convert's **outbound owns it** behind the existing door) is what must survive, not these specific signatures.
