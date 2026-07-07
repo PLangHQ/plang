@@ -155,14 +155,21 @@ why BaseUrl/DefaultHeaders/MaxResponseSize never resolve — pre-existing, fail 
   (`app.Build`, `build != null && !build.Cache`) read `App.Build != null` and carry the
   `// TODO(build-mode-inversion): … (plan §6.D)` markers. Full inversion = separate branch.
 
-## Cleanup — stale IsEnabled comments  ☐
-- ☐ 8 stale `IsEnabled` mentions in comments/docs (`this.cs:168,186,313`, `builder/code/Default.cs:645`,
-  `test/run.cs:25,27`, `test/list/this.cs:9`, `actor/this.cs:117`) — update wording to presence-based. Cosmetic.
+## Cleanup — stale IsEnabled comments  ☑ (f14163993)
+- ☑ 6 stale `IsEnabled` comment mentions → presence-based wording (`this.cs`, `test/run.cs`,
+  `builder/code/Default.cs`, `test/list/this.cs`, `actor/this.cs`). No code (IsEnabled already gone);
+  the 2 remaining mentions correctly document its absence.
 
-## Stage 9 — Regression + full green  ☐
-- ☐ `plang '--build={"files":["Scratch/Hello.goal"]}'` builds + runs, no startup crash (the original bug).
-- ☐ `plang --test`, `--debug={"goal":"Start","step":3}`, `--callstack={"setting":{"timing":true}}` all work.
-- ☐ Full C# suite green; PLang tests green. Report + push.
+## Stage 9 — Regression + release notes  ◐
+- ☑ Release notes: new `Documentation/v0.2/cli-changes.md` + updated `debug.md`/`build.md` (c8c2b9bec).
+- ☑ Full C# suite final counts (native binary + `< /dev/null`, ~7s/project — NOT `dev.sh full`, which hangs):
+  Runtime 39, Modules 37, Data 36, Types 29, Wire 18 failed, Generator green — **all == pre-existing baseline**.
+  Zero new failures from the cumulative Stage 4-9 work; several pre-existing reds fixed as a bonus.
+- ☐ CLI smoke (`--build`/`--test`/`--callstack`/`--debug`) — the born-source regression on this branch breaks
+  live goal execution, so end-to-end plang runs can't be greenlit here; the original `--build` startup crash
+  (Stage 3b) is fixed. Note for whoever clears the born-source regression.
+- NOTE: "full green" is unreachable while the branch carries the ~149 pre-existing born-source reds (unrelated
+  to this work). Scope of this branch = the CLI-override plan, verified regression-free against that baseline.
 
 ---
 
