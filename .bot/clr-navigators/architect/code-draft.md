@@ -1,89 +1,94 @@
-# clr + kinds — implementation spec
+# clr + kinds under type — implementation spec
 
-A `clr` value carries a foreign `object` (a `JsonElement`, an `XElement`, a POCO). What can be done with it — navigate it, convert it, load it from raw — is owned by its **kind**. A kind is a first-class entity in the type system, reached at `context.App.Type.Kind[k]`. Navigation, conversion, and even "what kind is this object" all resolve through the kind registry. Nothing materializes a structured value into `dict`/`list` up front.
+A `clr` value carries a foreign `object` (a `JsonElement`, an `XElement`, a POCO). What can be done with it — navigate it, load it from raw, build it by conversion — is owned by its **kind**, and a kind lives **under its type**: `context.App.Type[t].Kind[k]`. Navigation, conversion, and kind-derivation all resolve through it. Nothing materializes a structured value into `dict`/`list` up front.
 
-This spec is the build target for the branch. Section order follows `plan.md`. Signatures are the intended shape; genuinely open choices are listed under "Open for the implementer".
+This is the build target for the branch. Section order follows `plan.md`. Signatures are the intended shape; genuinely open choices are listed under "Open for the implementer".
 
 ---
 
 ## Conventions
 
-- **A kind owns the behavior for its values.** `context.App.Type.Kind["json"]` is the json kind; it knows how to navigate a json value, load one from raw text, and (later) build one from a source. Adding a format is adding a kind.
-- **Identifiers are `text`.** A type's name and kind, a kind's key — every identifier is a plang `text`, not a C# `string`. `text` has value `Equals`/`GetHashCode` (it keys a dictionary directly) and an implicit `string` operator (`kind == "json"` works). This is type-system-wide: `type.@this.Name`/`.Kind` are `text` too (a mechanical companion change).
+- **A `(type, kind)` owns the behavior for its values.** `context.App.Type["item"].Kind["json"]` is the json kind under `item`; it navigates a json value, loads one from raw, and (later) is where a target kind builds one from a source. Navigation kinds live under `item` (the apex type, whose kinds are the formats); convert kinds live under their target type (`Type["text"].Kind["html"]`, `Type["audio"].Kind["mp3"]`).
+- **`Type[t].Convert` uses the type's default kind.** `Type["audio"].Convert(md)` picks audio's default kind and converts on it; `Type["audio"].Kind["mp3"].Convert(md)` is explicit.
 - **Values cross as `Data`.** Anything a kind takes or returns as a value is `Data`.
-- **`System.Type` is confined to the CLR bridge.** The one place that maps a live CLR object's type to a kind (`Type.KindOf(clrType)`) is the CLR↔plang bridge — by definition it speaks `System.Type`. No other surface does: kinds and their capabilities are addressed by `text`, never `System.Type`.
-- **`Peek()` returns `item.@this`.** Never `object?`, never C# `null`. Absence is `@null.@this.Instance`.
+- **Reuse the one owner.** One json parse owner (`object/serializer/json.cs:Read`), one bracket-variable resolver (`Segment.Index.ResolveKey`), one CLR→kind map (`KindHooks` + `ResolveName`). Do not add parallels.
+
+Deferred to their own branches after the unblock is green (see v1 scope): identifiers→`text`, `Peek`→`item`, and Convert (ships with the first real converter).
 
 ---
 
-## clr carries `(object, kind?)` — kind is derived, not required (plan §1)
+## clr carries `(object)` — type and kind derived (plan §1)
 
-A `clr` holds its foreign object. Its kind is optional at construction: when not stamped, the clr asks the type system what kind its object's CLR type is (`JsonElement → json`, else `*`). The creator does not need to know the kind — that is the type system's knowledge. `clr` does not navigate itself; it delegates to its kind.
+A `clr` holds its foreign object. Its type and kind are derived from the object, not supplied: `JsonElement → (item, json)`, a POCO → `(item, *)`. A producer may stamp a kind for an ambiguous raw form, but a structured host needs none. `clr` does not navigate itself — it delegates to its `(type, kind)`.
 
 ```csharp
 // app/type/clr/this.cs
 public sealed class @this : global::app.type.item.@this, global::app.module.IContext
 {
     public object Value { get; }
-    public global::app.type.text.@this? Kind { get; }   // optional; derived from Value's CLR type when null
+    public global::app.type.text.@this? StampedKind { get; }   // optional; only for ambiguous raw forms
 
     public @this(object value, global::app.actor.context.@this context, global::app.type.text.@this? kind = null)
     {
         Value = value ?? throw new System.ArgumentNullException(nameof(value));
         Context = context ?? throw new System.ArgumentNullException(nameof(context));
-        Kind = kind;
+        StampedKind = kind;
         if (value is global::app.data.@this)
             throw new System.InvalidOperationException("A Data may not be carried in a clr — nested Data is not a supported shape.");
     }
 
-    // The effective kind: stamped, else asked of the type system by the object's CLR type.
-    private global::app.type.text.@this EffectiveKind => Kind ?? Context.App.Type.KindOf(Value.GetType());
+    // The effective (type, kind): the apex type item, and the kind asked of the type system
+    // by the object's CLR type (reuse KindHooks/ResolveName — no third CLR→kind path).
+    private string EffType => "item";
+    private string EffKind => StampedKind?.Value ?? Context.App.Type.KindOf(Value.GetType());   // JsonElement → "json", else "*"
 
-    // type = item (the lattice apex); kind = the effective kind.
-    protected internal override global::app.type.@this Mint() => new("item", EffectiveKind);
+    protected internal override global::app.type.@this Mint() => new(EffType, EffKind);
 
-    // Peek returns THIS — the clr, a plang value. The foreign object is reachable only via Clr<T>().
-    public override global::app.type.item.@this Peek() => this;
+    public override global::app.type.item.@this Peek() => this;   // the clr is a plang value; the object is reachable only via Clr<T>()
 
-    // A single key (generic per-hop walk) and a whole path (handoff) both go to the kind. A key is a one-segment path.
+    // Both a single key (generic per-hop walk) and a whole path (handoff) go to the kind.
     public override global::System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(
         global::app.data.@this parent, string key)
         => Navigate(parent, global::app.variable.path.@this.Parse(key));
 
     public global::System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(
         global::app.data.@this parent, global::app.variable.path.@this path)
-        => Context.App.Type.Kind[EffectiveKind].Navigate(Value, path, parent, Context);
+        => Context.App.Type[EffType].Kind[EffKind].Navigate(Value, path, parent, Context);
 
     public System.Collections.Generic.IEnumerable<global::app.data.@this> Enumerate()
-        => Context.App.Type.Kind[EffectiveKind].Enumerate(Value, Context);
+        => Context.App.Type[EffType].Kind[EffKind].Enumerate(Value, Context);
 
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     // Output / Write unchanged.
 }
 ```
 
-**Usage.** A producer builds a `clr` and does not have to state the kind for a known shape:
+**Usage.** A producer builds a `clr`; the kind is derived, not passed:
 
 ```csharp
-var value = new global::app.type.clr.@this(jsonElement, context);   // kind derived: json
+var value = new global::app.type.clr.@this(jsonElement, context);   // (item, json)
 ```
 
 ```plang
-- read file.json, write to %doc%          / %doc% is a clr; its kind resolves to json
-- write out %doc.users[0].email%          / the json kind walks users → [0] → email → text
+- read file.json, write to %doc%          / %doc% is a clr (item, json)
+- write out %doc.users[0].email%          / Type["item"].Kind["json"] walks users → [0] → email → text
 ```
 
 ---
 
-## A kind owns navigate / enumerate / load / build (plan §2 + §3)
+## A kind (under its type) owns navigate / enumerate / load / build (plan §2 + §3)
 
-`context.App.Type.Kind` is the kind registry (hung off `App.Type`, beside `Readers`/`Conversions`). `Kind[k]` returns the kind, falling back to the `*` kind when `k` is unknown. A kind is one class per format; the base gives a plang-path navigation and errors for capabilities a kind does not provide.
+`type.@this` already carries a `Kinds` name-vocabulary. It gains a `Kind[k]` **accessor** returning the behavior owner for `(this type, k)`. A kind's behavior is one class per format; the base provides a default plang-path walk and errors for capabilities a kind does not provide.
 
 ```csharp
-// app/type/kind/this.cs — a kind: the behavior for values of one kind
-namespace app.type.kind;
+// on app/type/this.cs — a type's kinds, addressable
+public global::app.type.kind.@this Kind[string name] => Context.App.Type.KindOf(this, name);   // resolves the (this, name) behavior
+```
 
-public abstract class @this
+```csharp
+// app/type/kind/<base> — the behavior of a (type, kind). Reconcile with the existing kind value token
+// (app/type/kind/this.cs) per "Open for the implementer".
+public abstract class behavior
 {
     public abstract global::app.type.text.@this Kind { get; }
 
@@ -95,8 +100,9 @@ public abstract class @this
         object? node = obj;
         foreach (var seg in path.Segments)
         {
-            var key = seg is global::app.variable.path.Segment.Index i ? await Key(i, ctx)
-                                                                       : ((global::app.variable.path.Segment.Member)seg).Name;
+            var key = seg is global::app.variable.path.Segment.Index i
+                ? await i.ResolveKey(ctx.Variable)                        // reuse the one resolver — no second Key(...)
+                : ((global::app.variable.path.Segment.Member)seg).Name;
             var (found, next) = Step(node!, key, ctx);
             if (!found) return ctx.NotFound(seg.Raw);
             node = next;
@@ -111,51 +117,33 @@ public abstract class @this
     public virtual System.Collections.Generic.IEnumerable<global::app.data.@this> Enumerate(object obj, global::app.actor.context.@this ctx)
         => throw new System.NotSupportedException($"kind '{Kind}' is not enumerable");
 
-    // Load a raw payload (string / bytes) into a value OF this kind (json parses to a clr; md → text).
+    // Load a raw payload into a value OF this kind — DELEGATES to the single reader, no second parse.
     public virtual global::System.Threading.Tasks.ValueTask<global::app.data.@this> Load(object raw, global::app.actor.context.@this ctx)
         => throw new System.NotSupportedException($"kind '{Kind}' has no loader");
 
-    // Build (convert) a value OF this kind FROM a source value (audio from text). The outbound owns it.
+    // Build (convert) a value OF this kind FROM a source (audio from text). The outbound owns it.
     public virtual global::System.Threading.Tasks.ValueTask<global::app.data.@this> Build(global::app.data.@this source, global::app.actor.context.@this ctx)
         => throw new System.NotSupportedException($"cannot build '{Kind}' from {source.Type?.Name}");
-
-    // A bracket key that is a plang variable resolves via ctx.Variable (a literal "0" passes through).
-    protected static async global::System.Threading.Tasks.ValueTask<string> Key(
-        global::app.variable.path.Segment.Index i, global::app.actor.context.@this ctx)
-        => i.IsLiteral ? i.Inner.ToString()
-                       : (await ctx.Variable.Get(i.Inner.ToString())).Peek().ToString() ?? i.Inner.ToString();
 }
 ```
-
-Discovery is "is a `kind`" — no namespace filter (a kind declares its own `Kind`, so nothing is inferred from where the file sits):
-
-```csharp
-var kinds = assembly.GetTypes()
-    .Where(t => typeof(global::app.type.kind.@this).IsAssignableFrom(t) && t is { IsAbstract: false })
-    .Select(t => (global::app.type.kind.@this)System.Activator.CreateInstance(t)!);
-App.Type.Kind = new global::app.type.kind.registry(kinds);   // indexes by k.Kind; Kind[unknown] → the "*" kind
-```
-
-`Type.KindOf(clrType)` is the CLR bridge that answers "what kind is a `JsonElement`" — the one place `System.Type` is spoken. Built-ins seed it (`JsonElement → json`, `XElement → xml`, anything else → `*`); a loaded DLL adds its own.
 
 **Usage (runtime extension).** A DLL of extra kinds is loaded and swept by the existing `code.load`, surfaced as a plang action:
 
 ```plang
-- add type mytype.dll     / code.load registers each kind (and reader / converter) the assembly defines
+- add type mytype.dll     / code.load registers each kind (and reader) the assembly defines
 ```
 
 ---
 
-## The json kind and the `*` kind (plan §3)
+## The json kind and the `*` kind, under `item` (plan §3)
 
-Two kinds ship. Both navigate the plang path, so both inherit the base `Navigate` and supply only the per-hop `Step`, the child `Data`, and `Enumerate`. The json kind also supplies `Load` (raw json text → a clr).
+Both navigate the plang path (they inherit the base `Navigate`), supplying only the per-hop `Step`, the child `Data`, and `Enumerate`. The json kind's `Load` delegates to the single json reader.
 
 ```csharp
-// app/type/kind/json.cs
-namespace app.type.kind;
+// app/type/kind/json.cs — the (item, json) behavior
 using System.Text.Json;
 
-public sealed class json : @this
+public sealed class json : behavior
 {
     public override global::app.type.text.@this Kind => "json";
 
@@ -167,7 +155,7 @@ public sealed class json : @this
         return (false, null);
     }
 
-    // container → a clr (its kind derives to json again); scalar → its raw CLR (the Data ctor lifts string→text, long→number)
+    // container → a clr (its (type,kind) derives to (item, json) again); scalar → its raw CLR (the Data ctor lifts string→text, long→number)
     protected override global::app.data.@this Data(string name, object? node, global::app.data.@this? parent, global::app.actor.context.@this ctx)
     {
         var e = (JsonElement)node!;
@@ -183,12 +171,9 @@ public sealed class json : @this
         else if (e.ValueKind == JsonValueKind.Object) foreach (var p in e.EnumerateObject()) yield return Data(p.Name, p.Value, null, ctx);
     }
 
-    // raw json text → a clr(json). The parse is the validation ("is this valid json").
+    // raw json → a clr. Delegates to the single parse owner (object/serializer/json.Read) — no JsonDocument.Parse here.
     public override global::System.Threading.Tasks.ValueTask<global::app.data.@this> Load(object raw, global::app.actor.context.@this ctx)
-    {
-        using var doc = JsonDocument.Parse((string)raw);
-        return new(ctx.Ok(new global::app.type.clr.@this(doc.RootElement.Clone(), ctx)));
-    }
+        => new(ctx.Ok(global::app.type.@object.serializer.json.Read(raw, "json", new global::app.type.reader.ReadContext(ctx))));
 
     private static object? Scalar(JsonElement e) => e.ValueKind switch
     {
@@ -200,10 +185,8 @@ public sealed class json : @this
 ```
 
 ```csharp
-// app/type/kind/reflection.cs — the "*" kind: any object, by reflection
-namespace app.type.kind;
-
-public sealed class reflection : @this
+// app/type/kind/reflection.cs — the (item, *) catch-all: any object, by reflection
+public sealed class reflection : behavior
 {
     public override global::app.type.text.@this Kind => "*";
 
@@ -227,7 +210,7 @@ public sealed class reflection : @this
 }
 ```
 
-**Usage.** Shipping both is the first end-to-end test of the kind registry — `%doc.users[0].email%` exercises `json`, `%result.CustomProperty%` on a POCO exercises `*`. A new format is one file: `app/type/kind/yaml.cs` (`Kind => "yaml"`, its own `Step`/`Data`/`Load`) is discovered and resolvable with no other change.
+**Usage.** Shipping both is the first end-to-end test of `Type[t].Kind[k]` — `%doc.users[0].email%` exercises `Type["item"].Kind["json"]`, `%result.CustomProperty%` on a POCO exercises `Type["item"].Kind["*"]`. A new format is one file: `app/type/kind/yaml.cs` (its own `Step`/`Data`/`Load`) is discovered and resolvable with no other change.
 
 The child factory is named `Data` because it returns the child `Data`. Container → `clr`; scalar → its plang scalar; never a `clr` wrapping a scalar.
 
@@ -235,7 +218,7 @@ The child factory is named `Data` because it returns the child `Data`. Container
 
 ## The parser handoff (plan §4)
 
-When the value being navigated is a `clr`, hand it the `path` and let its kind walk the rest. The `path` handed over is already **the tail relative to the clr** — the variable store resolves the root and calls `GetChild` on the remainder, so a `clr` never sees the root variable name.
+When the value being navigated is a `clr`, hand it the `path` and let its `(type, kind)` walk the rest. The `path` handed over is already **the tail relative to the clr** — the variable store resolves the root and calls `GetChild` on the remainder, so a clr never sees the root variable name.
 
 ```csharp
 // app/data/this.Navigation.cs
@@ -244,137 +227,120 @@ public async global::System.Threading.Tasks.ValueTask<@this> Navigate(global::ap
     if (path.IsEmpty) return this;
 
     if (_item is global::app.type.clr.@this c)
-        return await c.Navigate(this, path);      // the clr's kind walks the whole tail
+        return await c.Navigate(this, path);      // → Type[c.type].Kind[c.kind].Navigate(...)
 
     var (head, tail) = path.Split();
     // … existing Infra / Call / Index / Member per-hop walk for native dict/list and item types …
 }
 ```
 
-**Trace — the navigator gets the tail, not the full reference.** For `%user.address.zip%`, `Variables.Get` splits `rootName = "user"`, resolves the `user` clr, and calls `user.GetChild("address.zip")`. So the json kind receives the path `address.zip`. `app.variable.path.Parse` remains the single tokenizer for plang paths; a kind walks the resulting `path.Segments`.
+**Trace.** For `%user.address.zip%`, `Variables.Get` splits `root = "user"`, resolves the `user` clr, and calls `user.GetChild("address.zip")`. So `Type["item"].Kind[k].Navigate` receives the path `address.zip`. `app.variable.path.Parse` remains the single tokenizer; a kind walks `path.Segments`.
 
 **Usage.** The chain the builder needs:
 
 ```plang
-- llm.query ..., write to %plan%                         / %plan% is a clr, kind json
-- foreach %plan.steps%, call BuildStep planStep=%item%   / the json kind's Enumerate yields each step as a clr
-  / inside BuildStep: %planStep.index% → the json kind → number
+- llm.query ..., write to %plan%                         / %plan% is a clr (item, json)
+- foreach %plan.steps%, call BuildStep planStep=%item%   / Type["item"].Kind["json"].Enumerate yields each step as a clr
+  / inside BuildStep: %planStep.index% → Type["item"].Kind["json"] → number
 ```
 
 ---
 
-## The reader pivot — external json stays a clr (plan §5)
+## Blocker 1 — the apex must not mask a richer type (plan §5)
 
-`object/serializer/json.cs` `Read` currently walks a `JsonElement` into a native `dict`/`list`. It hands the raw off to the json kind's loader instead — which wraps it in a `clr`:
+The `%plan%` slot is `variable.set(Name=%plan%, Value=%!data%, Type=object)` (`plan.pr:652`). `Type=object` stamps the plan's Data as the apex type, dropping its intrinsic `item/json`; the wire then carries `object` and read-back has nothing to reconstruct from.
 
-```csharp
-// app/type/object/serializer/json.cs (Read)
--   return new global::app.type.item.serializer.json(ctx.Context).Parse(parsed);        // walked → dict
-+   return (await ctx.Context.App.Type.Kind["json"].Load(rawJsonText, ctx.Context)).Peek();   // raw → clr(json)
-```
-
-`item.serializer.json.Parse` is **not** removed — it is the universal DOM narrower called by the `Data` constructor, `type.Create`, the `dict`/`list`/`object` readers, and Fluid to turn raw CLR / `JsonNode` values into native values. Only this reader path stops calling it. Authored `dict`/`list` literals (`%x% = {a:1}`) use their own readers and stay native.
-
-The wire read routes a deferred value by its declared kind, defaulting to **text** when there is no kind:
+Fix at the source: **declaring a value's type as `object`/`item` (the apex) must not overwrite the value's intrinsic type** — "this is an object" is always true and carries no information. `variable.set(Type=object)` on an `item/json` value leaves it `item/json`, so the wire carries `item/json` and the existing kind-routing reconstructs the clr on read-back.
 
 ```csharp
-// app/data/reader/this.cs
--   deferredFormat = reader.Peek() == TokenKind.String ? Text.Mime : "application/plang";
-+   deferredFormat = typeRef?.Kind is { } k ? Mime(k)                     // declared kind wins: (item, json) → clr(json)
-+                    : global::app.channel.serializer.Text.Mime;          // no kind → text; the type decides
+// app/module/variable/set.cs — the Type clause
+// When the declared type is the apex (object/item) and the value already has a more specific
+// intrinsic type, keep the value's type — do not re-stamp it to the apex.
+if (declared.IsApex && value.Type is { } intrinsic && intrinsic.MoreSpecificThan(declared))
+    /* keep value.Type */;
+else
+    /* existing mint-to-declared path */;
 ```
 
-Text is the default because an undeclared value is safest as text; internal-wire values carry an `@schema` marker and are read by the schema reader, a different branch. A full-match `%ref%` still borns a `variable` and is never parsed — only genuine *content* of an `item`/`object` json type becomes a `clr`.
+No reader-side container heuristic is needed once the apex stops masking. (Converting a value *to* `System.Object` is already identity in `TryConvert`; the loss is the Data's *advertised* declared type, not the value — so the seam is the `variable.set` Type clause / mint path. Pin the exact line.)
 
-**Usage.** `read file.json` and an `http` json response both land as a `clr` (kind json) and navigate identically to the `llm.query` result — one representation for all external structured data.
+A full-match `%ref%` still borns a `variable` in `type.Build` (`type/this.cs:265`), a different branch — this cannot turn a `%ref%` into a clr.
 
 ---
 
-## Producers hand raw + kind; the kind loads it (plan §6)
+## The producer hands raw + kind; the kind loads it (plan §6)
 
-A producer does not branch per format. It hands the raw payload and the kind it asked for; the kind's loader builds the right value (json parses to a clr; md loads as text).
+A producer does not branch per format. `context.Ok(raw, kind)` routes to the kind's loader — which for json delegates to the single reader (no second parse):
 
 ```csharp
 // app/module/llm/code/OpenAi.cs — result construction (fresh) and ParseResultValue (cached)
-var result = await context.Ok(extracted, kind: format);   // Ok(raw, kind) → Type.Kind[kind].Load(raw)
+var result = await context.Ok(extracted, kind: format);   // Ok(raw, kind) → Type["item"].Kind[kind].Load(raw)
 ```
 
-`context.Ok(raw, kind)` is the door: it routes to `Type.Kind[kind].Load(raw)`. json → a clr; md → text; an unknown kind → text (the `*`/text loader). Nothing downstream guesses the format — the producer named it once.
+`json` → a clr; `md` → text; an unknown kind → text. Nothing downstream guesses the format. (Rename the local `effectiveFormat` → `format`.)
 
-**Usage.** `llm.query ..., format="json"` → a clr(json); `format="md"` → text. `xml`/`yaml` load as their kind once those kinds exist.
+**Usage.** `llm.query ..., format="json"` → a clr (item, json); `format="md"` → text.
 
 ---
 
-## Convert — the outbound kind owns it (plan §7)
+## The reader pivot (plan §5 support)
 
-Converting a value to another form is owned by the **target kind**, not the source: `text(md) → audio` is owned by `audio`, which knows how to build itself from text. The source never enumerates its possible targets. The call is on `Data` (everything at an action boundary is `Data`, which carries its own context), and dispatches through the kind registry:
-
-```csharp
-// app/data/this.cs
-public global::System.Threading.Tasks.ValueTask<@this> Convert(global::app.type.text.@this to)
-    => _context.App.Type.Kind[to].Build(this);      // the target kind builds itself from this source
-```
-
-The target kind's `Build` does the work (or returns an error `Data` when it cannot build from this source):
+`object/serializer/json.cs:Read` decodes+parses json today. It returns a `clr` instead of walking to a `dict`:
 
 ```csharp
-// app/type/kind/audio.cs — audio owns "build audio from text"
-public sealed class audio : @this
-{
-    public override global::app.type.text.@this Kind => "audio";
-    public override global::System.Threading.Tasks.ValueTask<global::app.data.@this> Build(global::app.data.@this source, global::app.actor.context.@this ctx)
-        => /* text → audio (TTS); ctx.Error(...) if source is not text */ default;
-}
+// app/type/object/serializer/json.cs (Read)
+-   return new global::app.type.item.serializer.json(ctx.Context).Parse(parsed);   // walked → dict
++   return new global::app.type.clr.@this(parsed, ctx.Context);                     // wrapped → clr (kind derives json)
 ```
 
-**Usage.** A handler that needs its input in a specific form asks for it; the outbound kind is found and builds it:
+`Read` stays the single json parse owner; `item.serializer.json.Parse` (the universal DOM narrower — Data ctor, `type.Create`, dict/list/object readers, Fluid) is **not** removed. Authored `dict`/`list` literals use their own readers and stay native.
+
+---
+
+## Convert — the outbound `(type, kind)` owns it (plan §7) — deferred, shape only
+
+Convert ships with the first real converter, not the v1 unblock. Shape, so the v1 structure leaves room for it:
 
 ```csharp
-// in an html-to-pdf handler with a Data<text> Md parameter sourced from read file.md:
-var html = await Md.Convert("html");     // Type.Kind["html"].Build(md)
+// app/data/this.cs — the target (type, kind), under its type, builds itself from this source
+public global::System.Threading.Tasks.ValueTask<@this> Convert(global::app.type.text.@this kind)
+    => _context.App.Type[TargetTypeOf(kind)].Kind[kind].Build(this, _context);
 ```
 
-`json → dict` is the `dict` kind's `Build` from a json source (reuse the existing `catalog/Conversion` arm). Chained conversions (md → html → pdf) are out of scope initially; a target with no `Build` for the given source returns an error `Data`, never silently passes the source through.
+```csharp
+var html = await Md.Convert("html");     // Type["text"].Kind["html"].Build(md)
+var mp3  = await Speech.Convert("mp3");   // Type["audio"].Kind["mp3"].Build(text)
+```
+
+`Type[t].Convert(source)` uses the type's default kind; `Type[t].Kind[k].Convert(source)` is explicit. `Build` reuses the existing `type.@this.Convert` / `Conversions` door and returns the built value or an **error `Data`** when it can't build from the source. `json → dict` is `dict`'s build from a json source (reuse the existing `catalog/Conversion` arm).
 
 ---
 
 ## Guards (plan §9)
 
-A container value must never come back a scalar — the round-trip loss behind the original blocker fails loudly at the point of loss instead of surfacing hops later:
-
 ```csharp
-// app/type/item/source.cs (source.Value)
+// app/type/item/source.cs (source.Value) — a container must never come back a scalar (the round-trip loss behind the bug)
 if (declaredType.IsContainer && materialized is not (dict or list or clr))
     throw new … ("a container value materialized to a scalar leaf — round-trip loss at <slot>");
 ```
 
-The `Data` constructor already throws if a bare `Data` is assigned as a value (the double-wrap guard).
+The `Data` constructor already throws if a bare `Data` is assigned as a value (the double-wrap guard, `clr/this.cs:26` / `type/this.cs:445`).
 
 ---
 
 ## v1 scope
 
-v1 unblocks `plang build`: the `kind` base + registry (`context.App.Type.Kind`); the `json` and `*` kinds (navigate + enumerate, plus json `Load`); `clr` with a derived kind and pure delegation to its kind; `Type.KindOf` in the CLR bridge; the parser handoff; the reader pivot + `data/reader` default-text; `context.Ok(raw, kind)`; the guards; and the two companion changes below. Native `dict`/`list` and item types keep their existing per-hop navigation for now — routing them through the kind registry too is later.
+v1 unblocks `plang build`: the apex-doesn't-mask fix (§5) — likely the whole `IndexNotSet` clear on its own; `Type[t].Kind[k]` with the `json` and `*` kinds under `item` (navigate + enumerate, json `Load`); `clr` with a derived `(type, kind)` and pure delegation; the reader pivot + the parser handoff; the container-materializes-to-scalar guard; `context.Ok(raw, kind)`. Native `dict`/`list` and item types keep their existing per-hop navigation for now.
 
-`Build` (convert) is the next capability on the same kind registry — it ships with the first real converter (e.g. `audio`), not in the v1 unblock.
-
----
-
-## Companion change: type identifiers are `text`
-
-Kinds and type names are `text`, not `string` — so `type.@this.Name`/`.Kind` become `text`, and their consumers adjust. The payoff: the type system's own metadata is a first-class plang value like everything else, with one serialization path and inspection/comparison in plang. `text` keys the registry directly (value `Equals`/`GetHashCode`), and its implicit `string` operator keeps `kind == "json"` and interop working. Mechanical breadth (many call sites, shallow change), landed with this work so `clr.Kind` and the kind registry are not lone `string` islands.
-
-## Companion change: `Peek()` returns `item.@this`
-
-Every `Peek()` already returns `this`; tighten the base signature from `object? Peek()` to `item.@this Peek()`. A value is always a plang value, never C# `null` — absence is `@null.@this.Instance`. This removes null-checks at `Peek()` call sites and makes "navigation always yields a plang value" true by type. (`Data.Peek()`, a distinct surface on `Data`, is out of scope.)
+**Deferred to their own branches after green:** `identifiers → text` (deep — wire serializer, primitive tables, `Canonicalise`/`Compare`; `text` keys the registry fine without it), `Peek → item.@this` (a `source` contract change — `source.Peek()` returns raw CLR by design), and **Convert** (ships with the first real converter, on the target `(type, kind)`).
 
 ---
 
 ## Open for the implementer
 
-- **The reader-pivot seam.** Confirm the edit is in `object/serializer/json.cs` `Read` (not `Parse`, which stays). Trace `Read` vs `Parse` vs `source.Value/Build` before editing — the one place a wrong cut regresses every JSON read.
-- **The base `kind` template method.** The base provides plang-path `Navigate` calling abstract `Step`/`Data`; kinds that navigate a *different* language (jsonpath, css) override `Navigate` wholesale. If a base template reads as too much, each kind can implement `Navigate` directly — the shared piece is only the segment loop + variable resolution.
-- **`context.Ok(raw, kind)` vs a direct `Type.Kind[kind].Load(raw)`.** The `Ok(raw, kind)` overload is sugar over the loader; confirm it reads better than callers invoking `Load` directly.
-- **`Build` error contract.** Returning an error `Data` when a source is unsupported (rather than a boolean probe) assumes the caller inspects the result. Confirm against how conversions are consumed.
+- **The kind behavior vs the existing `kind` value token.** `app/type/kind/this.cs` is the kind *value token* (names a kind, maps kind→type via readers). This spec adds navigate/load/build behavior addressed as `Type[t].Kind[k]`. Reconcile: extend that token (unseal + subclass per format), or have it delegate to a registered per-`(type,kind)` behavior — your call; it decides the file layout. Reuse `KindHooks.Of` + `ResolveName` for `KindOf` (don't add a third CLR→kind path; and `KindHooks.Of` is a poor name — rename if it surfaces).
+- **The apex-doesn't-mask seam (§5).** Pin whether it's the `variable.set` Type clause or the mint path that re-stamps to the apex; that is the one edit the whole branch turns on. Verify against `plan.pr:652`.
+- **The base `behavior` template.** It removes the duplicate walk between `json` and `*`. If a base template reads as too much for two kinds, each can implement `Navigate` directly — the shared piece is only the segment loop.
+- **`context.Ok(raw, kind)` vs a direct `Type[t].Kind[k].Load(raw)`.** The `Ok(raw, kind)` overload is sugar over the loader; confirm it reads better than callers invoking `Load`.
 
-The intent that must survive: a `clr` stays a `clr`; a kind owns navigate/load/build for its values; a conversion is owned by the outbound kind; and the reader pivot must never turn a `%ref%` into a `clr`.
+The intent that must survive: a `clr` stays a `clr`; a `(type, kind)` owns navigate/load/build for its values; convert's outbound owns it, reusing `type.Convert`; the apex never masks a richer type; and the reader pivot never turns a `%ref%` into a `clr`.
