@@ -1173,7 +1173,8 @@
                 {
                   "name": "Operator",
                   "type": {
-                    "name": "operator"
+                    "name": "choice",
+                "kind": "operator"
                   },
                   "value": "=="
                 },
@@ -2095,7 +2096,8 @@
                 {
                   "name": "Operator",
                   "type": {
-                    "name": "operator"
+                    "name": "choice",
+                "kind": "operator"
                   },
                   "value": "=="
                 },
@@ -2174,7 +2176,8 @@
                 {
                   "name": "Operator",
                   "type": {
-                    "name": "operator"
+                    "name": "choice",
+                "kind": "operator"
                   },
                   "value": "=="
                 },
@@ -2253,7 +2256,8 @@
                 {
                   "name": "Operator",
                   "type": {
-                    "name": "operator"
+                    "name": "choice",
+                "kind": "operator"
                   },
                   "value": "=="
                 },
@@ -2332,7 +2336,8 @@
                 {
                   "name": "Operator",
                   "type": {
-                    "name": "operator"
+                    "name": "choice",
+                "kind": "operator"
                   },
                   "value": "=="
                 },
@@ -2411,7 +2416,8 @@
                 {
                   "name": "Operator",
                   "type": {
-                    "name": "operator"
+                    "name": "choice",
+                "kind": "operator"
                   },
                   "value": "=="
                 },
@@ -2490,7 +2496,8 @@
                 {
                   "name": "Operator",
                   "type": {
-                    "name": "operator"
+                    "name": "choice",
+                "kind": "operator"
                   },
                   "value": "=="
                 },

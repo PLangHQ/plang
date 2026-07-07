@@ -471,6 +471,11 @@ public sealed partial class @this
     /// </summary>
     public void RegisterModuleChoiceTypes(global::app.module.@this modules)
     {
+        // The choice FAMILY itself — so a wire type {name:"choice", kind:"operator"} resolves
+        // (the kind names the closed set; the choice reader maps it to choice<T>). The enum-name
+        // aliases below stay for the LLM-facing catalog ("operator", "httpmethod", …).
+        Register("choice", typeof(app.type.choice.@this<>));
+
         foreach (var ns in modules.Names)
             foreach (var actionName in modules.GetActions(ns))
             {
