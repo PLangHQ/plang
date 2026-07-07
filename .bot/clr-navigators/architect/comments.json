@@ -1,0 +1,258 @@
+{
+  "plan.md": [
+    {
+      "id": "a490f32edb",
+      "line": 23,
+      "text": "not hostObject - just object or obj.",
+      "anchor": "### 1. `clr` carries `(hostObject, kind)`",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T20:50:36",
+      "drifted": true
+    },
+    {
+      "id": "e41f055f29",
+      "line": 168,
+      "text": "no, outbound should own it. here is an example of why. we have text(md) and we want to convert this to audio, if the source owns it needs to know very possible format to convert into, but if the outbound own it, audio just needs to know how to convert text to audio.",
+      "anchor": "1. **Convert dispatch** \u2014 source-kind-owns-outbound vs a (from\u2192to) pair registry. I've written it as pair-registry; confirm.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T21:07:48",
+      "drifted": true
+    },
+    {
+      "id": "0d17c7cf26",
+      "line": 169,
+      "text": "this is one way, I think at the action level we should have data method because everything comes in as data, so if we have property Data<text> Text, then we could do Text.Convert(\"audio\"), no context needed since data has context",
+      "anchor": "2. **Value-facing Convert API** \u2014 `await value.Convert(\"html\", ctx)` as the primary, param-attribute as a later layer. Ok?",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T21:09:17",
+      "drifted": true
+    },
+    {
+      "id": "91a7909077",
+      "line": 170,
+      "text": "I suppose, not really sure how types are registered today, so if you recomend this. maybe you can demostrate this",
+      "anchor": "3. **Naming** \u2014 `navigator` keyed by `kind` (not \"mime registry\"). Confirm.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T21:10:06",
+      "drifted": true
+    },
+    {
+      "id": "82d3e90193",
+      "line": 171,
+      "text": "yes, we already have reflection navigation on generic clr object, so just add the json navigation so we can get it to work",
+      "anchor": "4. **v1 boundary** \u2014 do you want the reflection-navigator generalization (native/item through the registry) in v1, or is the json-navigator-only cut the right first deliverable? My plan assumes the latter.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T21:10:49",
+      "drifted": true
+    }
+  ],
+  "code-draft.md": [
+    {
+      "id": "f7477d77aa",
+      "line": 9,
+      "text": "you say: \"A plang text/@bool here would force .Value()/.ToBoolean() unwraps at every lookup and buy nothing.\" - but then you assuming that type.@this.Kind should be string? should that be text? think the flow all the way through, we are designing the language, so it's not about this instance, it's about the whole picture. yes we would have to change multiple places, but that is just refactoring, what are the benefits is the question. Having text in dictionary as key is not a problem, it implements gethashcode",
+      "anchor": "- **Values that flow through the runtime \u2192 plang types.** What `Navigate`/`Convert` take and return is `Data` (a value crossing the plang boundary). That stays plang.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T21:42:55",
+      "drifted": false
+    },
+    {
+      "id": "9f309471cf",
+      "line": 13,
+      "text": "what about making Kind text type? should Peek return object? shouldn't it be clr? I think Peek always returns plang type.",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T21:13:36",
+      "drifted": true
+    },
+    {
+      "id": "abfcf8639e",
+      "line": 64,
+      "text": "We should change item.Peek to return item, returning object? is wrong, and no null, but @null probably??",
+      "anchor": "**Comments addressed:** `Peek() => this` returns the clr (a plang type), not `object`/the raw JsonElement \u2014 the `object?` is just the base virtual's return type. `Kind` stays `string` (plumbing rule + parity with `type.@this.Kind`). **OBP:** clr selects + delegates; no `is JsonElement` switch. v1 wrinkle: reflection lives inline (per-hop `Navigate(parent, key)`) while json lives in the registry \u2014 two homes, retired in v2 when reflection relocates into a `*` navigator.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T21:43:45",
+      "drifted": false
+    },
+    {
+      "id": "7daaa1cf9e",
+      "line": 69,
+      "text": "I think app/type/clr/navigator/INavigator.cs can be located in app/type/INavigator.cs, and with time we will extend this to other types, what do you say about that?\n\nalso Kind and Handles to plang types (text and @bool)?\n\nshould Navigate/Enumerate take in object? not item?",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T21:15:49",
+      "drifted": true
+    },
+    {
+      "id": "090894b7d6",
+      "line": 70,
+      "text": "I would like to see example usage of all these code examples, how do you invision it being used, for all of them",
+      "anchor": "The interface lives at **`app/type/INavigator.cs`** (not under `clr/`) \u2014 navigation is not clr-specific; over time other types adopt it (Ingi). `Navigate`/`Enumerate` take the **raw `obj`** (a `JsonElement`, a POCO) because the navigator's job is to turn a raw host into plang values \u2014 its input is raw, its output is `Data`. Passing an `item` would just force an immediate unwrap. It takes the **`path` object** (already tokenized once by `app.variable.path.Parse`) \u2014 no re-parse, no ToString.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T21:46:19",
+      "drifted": false
+    },
+    {
+      "id": "e1d1936155",
+      "line": 91,
+      "text": "kind as text in For?",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T21:16:52",
+      "drifted": true
+    },
+    {
+      "id": "374bd9ecc4",
+      "line": 126,
+      "text": "if (!type.Namespace!.EndsWith(\".serializer\")) continue; - this looks bad, why do we need this?? Anything of ITypeReader should just register, no?",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T21:22:08",
+      "drifted": true
+    },
+    {
+      "id": "0c71b3f08b",
+      "line": 144,
+      "text": "yes, this is just code.load, the code.load will figure out it has ITypeReader, INavigator, IConvert....hmmmm.... you have Reader, Navigator but on Convert, not Converter? Which is correct would you say?",
+      "anchor": "This wraps the existing `code.load` DLL load + a registry sweep (same scan as above, over the loaded assembly). Design note for the plan \u2014 not v1 core, but the seam (`Register`) is built now so the action has something to call.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T21:48:36",
+      "drifted": false
+    },
+    {
+      "id": "7730695a06",
+      "line": 150,
+      "text": "you can create clr navigation class, it's a good first test, see that * works",
+      "anchor": "v1 = **the json navigator only**; clr's existing reflection stays as the per-hop fallback (plan \u00a71). json walks the already-parsed `path.Segments` (no re-tokenize \u2014 `app.variable.path.Parse` ran once), descends the `JsonElement`, and returns a child `Data`: a container as `clr(kind=json)`, a scalar as its plang scalar. The factory that produces that child is named **`Data(...)`** (it gives us `Data` back) \u2014 not `Wrap`.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T21:49:22"
+    },
+    {
+      "id": "83e12b21ad",
+      "line": 151,
+      "text": "we need to add some action in plang for this, user would add in plang code '- add type mytype.dll' or something like that",
+      "anchor": "Adding `app/type/clr/navigator/yaml.cs` (implements `INavigator`, `Kind => \"yaml\"`) then \"just works\" \u2014 discovered, indexed, resolvable \u2014 exactly like adding a reader. Same seam for a `code.load` DLL: a `Register(navigator)` method on the registry (mirroring `app.type.reader.Register`) lets a loaded module add its own.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T21:23:21",
+      "drifted": true
+    },
+    {
+      "id": "7a1c647ea5",
+      "line": 161,
+      "text": "same here regarding plang types, should we change. Also I notice we have class path, then we have tail. Why dont we just call it path (so no longer tail, but path)?\n\nI dont like Wrap, it doesn't tell me what it is, why not just Data(...) since it's suppose to give us data back",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T21:21:23",
+      "drifted": true
+    },
+    {
+      "id": "adf7892df9",
+      "line": 199,
+      "text": "same here, plang types and wrap?",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T21:23:51",
+      "drifted": true
+    },
+    {
+      "id": "b712051d2c",
+      "line": 251,
+      "text": "same here",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T21:24:01",
+      "drifted": true
+    },
+    {
+      "id": "fb3c24060a",
+      "line": 290,
+      "text": "not path.ToString, why not keep it as path?",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T21:24:36",
+      "drifted": true
+    },
+    {
+      "id": "b2e8844852",
+      "line": 317,
+      "text": "can we delete global::app.type.item.serializer.json?",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T21:25:06",
+      "drifted": true
+    },
+    {
+      "id": "dd407b98e7",
+      "line": 325,
+      "text": "should application/plang be default? I feel like text should be default, what do you think?",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T21:26:03",
+      "drifted": true
+    },
+    {
+      "id": "6cf853f6c0",
+      "line": 341,
+      "text": "I dont think we need that switch, just new clr.@this(je, context, kind: effectivFormat) - btw effectiveFormat is horrible, why not just format?",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T21:27:15",
+      "drifted": true
+    },
+    {
+      "id": "bc768c2216",
+      "line": 377,
+      "text": "plang types for Type, Kind, From, etc.??",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T21:28:28",
+      "drifted": true
+    }
+  ]
+}
