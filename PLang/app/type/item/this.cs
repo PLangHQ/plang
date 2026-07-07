@@ -407,11 +407,21 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
 
     /// <summary>
     /// True when this value is a REFERENCE to a named binding (a bare name-slot
-    /// <c>variable</c>, or a full-match <c>%ref%</c> source) rather than content. A
-    /// reference resolves to whatever the binding holds (via <c>AsCanonical</c> / the
-    /// value door); every content value answers false.
+    /// <c>variable</c>, a full-match <c>%ref%</c> source, or a full-match template
+    /// <c>text</c>) rather than content. The instance understands what it is; content
+    /// values answer false. A reference resolves to its binding via <see cref="Get"/>.
     /// </summary>
     public virtual bool IsVariable => false;
+
+    /// <summary>
+    /// The Data instance this reference is bound to — the lazy name-hop: it Gets its own
+    /// name against the variable store (<paramref name="ctx"/>) WITHOUT opening the target's
+    /// value door, so a pending read stays unread. A content value is not a reference and
+    /// answers null (only ever called when <see cref="IsVariable"/>). Each reference carrier
+    /// overrides this with its own name — the name never leaves the instance.
+    /// </summary>
+    public virtual System.Threading.Tasks.ValueTask<global::app.data.@this?> Get(actor.context.@this ctx)
+        => new((global::app.data.@this?)null);
 
     /// <summary>
     /// True only for the null value (the <c>null</c> citizen). Every other value is

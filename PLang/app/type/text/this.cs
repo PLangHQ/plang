@@ -91,6 +91,17 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     }
 
     public override bool IsLeaf => true;
+
+    /// <summary>A stamped template whose WHOLE content is one <c>%ref%</c> IS a reference
+    /// (it resolves to the named binding, not renders). A partial template
+    /// (<c>"hello %name%"</c>) is content — it renders, so it is NOT a variable.</summary>
+    public override bool IsVariable
+        => Template != null && global::app.data.@this.TryFullVarMatch(_value, out _);
+
+    /// <inheritdoc/>
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Get(actor.context.@this ctx)
+        => await ctx.Variable.Get(_value);   // _value is the raw "%name%"; the store strips the %
+
     public override void Write(global::app.channel.serializer.IWriter w) => w.String(_value);
 
     /// <summary>

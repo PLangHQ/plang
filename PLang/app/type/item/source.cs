@@ -33,12 +33,9 @@ public sealed class source : @this, module.IContext
     // When true, _varName holds the bare name to resolve through Variable.Get at .Value().
     public override bool IsVariable { get; }
 
-    /// <summary>The Data instance this reference names — its own <c>Get</c> against the
-    /// variable store (<c>_value</c> is the raw <c>%!data%</c>; the store strips the <c>%</c>).
-    /// The lazy name-hop: the target's value door is NOT opened, so a pending read stays
-    /// unread. Only meaningful when <see cref="IsVariable"/>. The name never leaves the source.</summary>
-    internal System.Threading.Tasks.ValueTask<global::app.data.@this> Get()
-        => Context.Variable.Get((string)_value);
+    /// <inheritdoc/>
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Get(actor.context.@this ctx)
+        => await ctx.Variable.Get((string)_value);   // _value is the raw "%!data%"; the store strips the %
 
     // Born WITH context — a source is minted only by type.Build (the sole birth site),
     // which always has a wired scope; the context-less births (the "Judge" phase) are gone.
@@ -128,11 +125,11 @@ public sealed class source : @this, module.IContext
         // the declared {type,kind} was only the pre-resolution label. IsVariable decided at birth.
         if (IsVariable)
         {
-            var resolved = await Get();
-            // Get never returns null — a miss is a NotFound Data (IsInitialized == false).
-            // A variable set to null IS initialized, so it resolves (to null); only a
+            var resolved = await Get(Context);
+            // Get returns a NotFound Data (IsInitialized == false) on a miss, never null for a
+            // reference. A variable set to null IS initialized, so it resolves (to null); only a
             // genuinely-absent name fails here.
-            if (!resolved.IsInitialized)
+            if (resolved is null || !resolved.IsInitialized)
             {
                 data.Fail(new global::app.error.Error(
                     $"%{_value}% is not set — nothing to answer for it.", "VariableNotFound", 404));

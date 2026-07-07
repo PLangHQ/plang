@@ -156,6 +156,12 @@ public partial class @this
     [JsonIgnore]
     public bool IsVariable => _item?.IsVariable ?? false;
 
+    /// <summary>The Data instance this reference is bound to — the lazy name-hop, delegated
+    /// to the item (the reference carrier resolves its own name). Only meaningful when
+    /// <see cref="IsVariable"/>; content answers null. The value door is never opened.</summary>
+    public System.Threading.Tasks.ValueTask<@this?> Get(actor.context.@this ctx)
+        => _item?.Get(ctx) ?? default;
+
     /// <summary>
     /// True when the value carries any live <c>%variable%</c> reference (the
     /// builder's template stamp). <see cref="IsVariable"/> is "%name%" (the
@@ -279,7 +285,7 @@ public partial class @this
     /// file reading itself through the channel) and the wire writer. Couriers
     /// move the whole Data and never reach here.
     /// </summary>
-    internal global::app.type.item.@this? Instance => _item;
+    internal global::app.type.item.@this? Item => _item;
 
     /// <summary>
     /// Value door with a fallback for when the resolved value is null — absent slot
@@ -845,8 +851,8 @@ public class @this<T> : @this
         // re-run type work on an already-built value. This also carries the
         // sentinel/courier passthrough: an errored or suspended source whose value
         // isn't T rides whole so its own type and exit semantics survive the boundary.
-        if (source.Instance != null)
-            copy.SetValueDirect(source.Instance);
+        if (source.Item != null)
+            copy.SetValueDirect(source.Item);
         copy.Handled = source.Handled;
         copy.Returned = source.Returned;
         copy.ReturnDepth = source.ReturnDepth;

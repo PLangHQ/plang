@@ -101,7 +101,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         if (!read.Success) { data.Fail(read.Error!); return Absent; }
         _ = await read.Value();
         if (!read.Success) { data.Fail(read.Error!); return Absent; }
-        var answer = read.Instance;
+        var answer = read.Item;
         if (answer == null || ReferenceEquals(answer, this)) return this;
         answer.Accumulate(this);
         return answer;

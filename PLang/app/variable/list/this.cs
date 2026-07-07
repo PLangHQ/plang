@@ -110,18 +110,19 @@ public partial class @this
     /// </summary>
     public async System.Threading.Tasks.ValueTask<data.@this> Set(string name, object? value)
     {
-        // A reference value (%x%) binds the referenced Data INSTANCE — not the reference
-        // marker, not its resolved value. Get the instance (lazy stays lazy: the target's
-        // value door is never opened here — no eager read) and alias it under `name`. Storing
-        // the marker as-is would go stale (!data rebinds every action) and a self-assign
-        // (`set %a% = %a%`) would cycle on the value door; instance-binding avoids both. Each
-        // reference type resolves its own name-hop — variable knows its Name, source keeps its
-        // raw name private and Gets itself. A miss flows through as an uninitialized Data.
+        // A reference value (%x%) binds the referenced VALUE, not the reference marker. The
+        // instance Gets itself (lazy name-hop: the target's value door is never opened here — no
+        // eager read), and `name` gets a ShallowClone of it — the documented `set %y% = %x%` rule:
+        // the value INSTANCE is shared (immutable, so safe) so it stays lazy, while the Properties
+        // bag is COPIED so a later `%y%!prop` write never bleeds onto x. Copy semantics: y captures
+        // x's CURRENT value, not its future reassignments. Storing the marker verbatim would go
+        // stale (!data rebinds every action) and a self-assign (`set %a% = %a%`) would cycle on the
+        // value door; the shallow-clone avoids both. Each reference carrier resolves its own name
+        // (variable/source/text) — the courier just asks. A miss flows through as-is.
         if (value is data.@this reference && reference.IsVariable)
         {
-            value = reference.Instance is global::app.variable.@this named
-                ? await Get(named.Name)
-                : await ((global::app.type.item.source)reference.Instance!).Get();
+            var bound = await reference.Get(_context);
+            value = bound is { IsInitialized: true } ? bound.ShallowClone(name) : bound;
         }
 
         // Names arrive clean — the builder normalizes them before the .pr, and runtime C# callers

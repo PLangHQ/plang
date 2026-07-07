@@ -187,8 +187,8 @@ public class Wire : JsonConverter<@this>
             new object?[] { System.Type.Missing, System.Type.Missing, System.Type.Missing, System.Type.Missing },
             null)!;
         typed.Name = body.Name;
-        // The body's instance carries its own type/kind/chain — move it whole.
-        typed.SetValueDirect(body.Instance);
+        // The body's item carries its own type/kind/chain — move it whole.
+        typed.SetValueDirect(body.Item);
         typed.Properties = body.Properties;
         return typed;
     }

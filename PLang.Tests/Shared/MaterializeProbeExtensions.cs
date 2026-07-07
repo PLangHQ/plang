@@ -16,7 +16,7 @@ public static class MaterializeProbeExtensions
         // Parsed values carry their unparsed form in the prior chain (the
         // source / the file the parse rebound away from); authored values have
         // no such prior and never parsed.
-        for (var p = d.Instance?.Prior; p != null; p = p.Prior)
+        for (var p = d.Item?.Prior; p != null; p = p.Prior)
             if (p is global::app.type.item.source
                 or global::app.type.file.@this
                 or global::app.type.url.@this)

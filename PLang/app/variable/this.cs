@@ -245,6 +245,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// binding holds). The instance-bind in Variable.Set reads this to alias the target.</summary>
     public override bool IsVariable => true;
 
+    /// <inheritdoc/>
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Get(actor.context.@this ctx)
+        => await ctx.Variable.Get(Name);
+
     /// <summary>A reference renders itself FRESH every read — like a computed, never
     /// memoized onto the holding Data. The same authored reference (a goal-call param
     /// <c>planStep=%item%</c>) is reused across calls; caching one call's resolved value

@@ -23,7 +23,7 @@ public partial class @this : ISnapshot
             // lives on the computed instance now, so check the instance, not
             // the Data subtype (a store re-wrap loses the subtype).
             if (kvp.Value is data.DynamicData
-                || kvp.Value.Instance is global::app.type.item.computed) continue;
+                || kvp.Value.Item is global::app.type.item.computed) continue;
             captured.Add(kvp.Value.Clone());
         }
         s.Write("variables", captured);
