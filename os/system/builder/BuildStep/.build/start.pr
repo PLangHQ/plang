@@ -90,13 +90,13 @@
       "steps": [
         {
           "index": 0,
-          "text": "builder.validateStepActions step=%step%, actions=%planStep.actions%, write to %planStep.actions%",
+          "text": "build.validateStepActions step=%step%, actions=%planStep.actions%, write to %planStep.actions%",
           "lineNumber": 15,
           "indent": 0,
-          "comment": "Validate planner's action set against runtime catalog + augment with explicit\nmodule.action tokens from step text. Drops hallucinated entries; appends any\nliteral `module.action` mention the planner missed. See building-the-builder.md\n\"preventing self-rebuild corruption\" for the rationale.",
+          "comment": "Validate planner's action set against runtime catalog + augment with explicit\nmodule.action tokens from step text. Drops hallucinated entries; appends any\nliteral `module.action` mention the planner missed. See building-the-build.md\n\"preventing self-rebuild corruption\" for the rationale.",
           "actions": [
             {
-              "module": "builder",
+              "module": "build",
               "action": "validateStepActions",
               "parameters": [
                 {
@@ -153,19 +153,19 @@
             }
           ],
           "intent": null,
-          "formal": "builder.validateStepActions(Step=%step%, Actions=%planStep.actions%) | variable.set(Name=%planStep.actions%, Value=%!data%, type={\"name\":\"list\"})",
+          "formal": "build.validateStepActions(Step=%step%, Actions=%planStep.actions%) | variable.set(Name=%planStep.actions%, Value=%!data%, type={\"name\":\"list\"})",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 1,
-          "text": "builder.actions actions=%planStep.actions%, write to %actions%",
+          "text": "build.actions actions=%planStep.actions%, write to %actions%",
           "lineNumber": 16,
           "indent": 0,
           "comment": null,
           "actions": [
             {
-              "module": "builder",
+              "module": "build",
               "action": "actions",
               "parameters": [
                 {
@@ -182,19 +182,19 @@
             }
           ],
           "intent": null,
-          "formal": "builder.actions(Actions=%planStep.actions%)",
+          "formal": "build.actions(Actions=%planStep.actions%)",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 2,
-          "text": "builder.types actions=%planStep.actions%, write to %typeInfo%",
+          "text": "build.types actions=%planStep.actions%, write to %typeInfo%",
           "lineNumber": 17,
           "indent": 0,
           "comment": null,
           "actions": [
             {
-              "module": "builder",
+              "module": "build",
               "action": "types",
               "parameters": [
                 {
@@ -243,7 +243,7 @@
             }
           ],
           "intent": null,
-          "formal": "builder.types(Actions=%planStep.actions%) | variable.set(Name=%typeInfo%, Value=%!data%, type={\"name\":\"list\"})",
+          "formal": "build.types(Actions=%planStep.actions%) | variable.set(Name=%typeInfo%, Value=%!data%, type={\"name\":\"list\"})",
           "source": null,
           "waitForExecution": true
         },
@@ -880,13 +880,13 @@
         },
         {
           "index": 14,
-          "text": "builder.validate actions=%goal.Steps[step.Index].Actions%, on error call FixValidation, then retry 2 times",
+          "text": "build.validate actions=%goal.Steps[step.Index].Actions%, on error call FixValidation, then retry 2 times",
           "lineNumber": 41,
           "indent": 0,
-          "comment": "Validation retry: FixValidation re-queries the LLM with the validator's complaint as\npreviousConversation context, writes the corrected compileResult, updates goal.Steps.\nThen retry builder.validate against the corrected actions.",
+          "comment": "Validation retry: FixValidation re-queries the LLM with the validator's complaint as\npreviousConversation context, writes the corrected compileResult, updates goal.Steps.\nThen retry build.validate against the corrected actions.",
           "actions": [
             {
-              "module": "builder",
+              "module": "build",
               "action": "validate",
               "parameters": [
                 {
@@ -943,7 +943,7 @@
             }
           ],
           "intent": null,
-          "formal": "builder.validate(Actions=%goal.Steps[step.Index].Actions%) | error.handle(Actions=[goal.call(GoalName={name:\"FixValidation\"})], RetryCount=2)",
+          "formal": "build.validate(Actions=%goal.Steps[step.Index].Actions%) | error.handle(Actions=[goal.call(GoalName={name:\"FixValidation\"})], RetryCount=2)",
           "source": null,
           "waitForExecution": true
         },
@@ -1639,7 +1639,7 @@
           "text": "set %fixMessages% = [{\"Role\":\"user\", \"Content\":\"Your previous response was rejected by the validator: %!error.Message%\\n\\nReturn the corrected response in the same Output Shape (formal, actions, confidence, explanation, errors, warnings) for this step only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) — recovery confidence matters because it tells the dev whether even the correction is a guess.\"}]",
           "lineNumber": 65,
           "indent": 0,
-          "comment": "Validator rejected the compiled actions. Re-prompt the LLM with the validator's\ncomplaint, write corrected compileResult, update goal.Steps so the subsequent retry\nof builder.validate sees the corrected actions.",
+          "comment": "Validator rejected the compiled actions. Re-prompt the LLM with the validator's\ncomplaint, write corrected compileResult, update goal.Steps so the subsequent retry\nof build.validate sees the corrected actions.",
           "actions": [
             {
               "module": "variable",

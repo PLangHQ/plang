@@ -8,9 +8,9 @@ Build
 - set default %!build.summary% = true
 - set channel "builder" call BuilderChannel
 - call EmitBuildEvent kind="build-path", path=%path%
-- builder.load, write to %app%
-- builder.goals path=%path%, write to %goals%
+- build.load, write to %app%
+- build.goals path=%path%, write to %goals%
 - call EmitBuildEvent kind="goals-found", goals=%goals%
 - foreach %goals%, call BuildGoal goal=%item%
 - save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'
-- builder.appSave
+- build.appSave

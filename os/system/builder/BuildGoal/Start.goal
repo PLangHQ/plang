@@ -24,7 +24,7 @@ Start
 
 - save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
 - add %goal.Name% to %traceGoals%
-- builder.goalsSave Goal=%goal%
+- build.goalsSave Goal=%goal%
 
 
 BuildSubGoal

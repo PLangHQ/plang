@@ -5,13 +5,13 @@
   "steps": [
     {
       "index": 0,
-      "text": "builder.actions, write to %actions%",
+      "text": "build.actions, write to %actions%",
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
       "actions": [
         {
-          "module": "builder",
+          "module": "build",
           "action": "actions",
           "parameters": [],
           "defaults": null,
@@ -51,7 +51,7 @@
         }
       ],
       "intent": null,
-      "formal": "builder.actions(Actions=%!data%) | variable.set(Name=%actions%, Value=%!data%, Type=object)",
+      "formal": "build.actions(Actions=%!data%) | variable.set(Name=%actions%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },

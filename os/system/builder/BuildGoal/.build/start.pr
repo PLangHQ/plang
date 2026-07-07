@@ -891,13 +891,13 @@
     },
     {
       "index": 16,
-      "text": "builder.goalsSave Goal=%goal%",
+      "text": "build.goalsSave Goal=%goal%",
       "lineNumber": 28,
       "indent": 0,
       "comment": null,
       "actions": [
         {
-          "module": "builder",
+          "module": "build",
           "action": "goalsSave",
           "parameters": [
             {
@@ -914,7 +914,7 @@
         }
       ],
       "intent": null,
-      "formal": "builder.goalsSave(Goal=%goal%)",
+      "formal": "build.goalsSave(Goal=%goal%)",
       "source": null,
       "waitForExecution": true
     }

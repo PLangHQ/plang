@@ -229,13 +229,13 @@
     },
     {
       "index": 5,
-      "text": "builder.load, write to %app%",
+      "text": "build.load, write to %app%",
       "lineNumber": 12,
       "indent": 0,
       "comment": null,
       "actions": [
         {
-          "module": "builder",
+          "module": "build",
           "action": "load",
           "parameters": [
             {
@@ -284,19 +284,19 @@
         }
       ],
       "intent": null,
-      "formal": "builder.load(Path=%path%) , variable.set(Name=%app%, Value=%!data%)",
+      "formal": "build.load(Path=%path%) , variable.set(Name=%app%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 6,
-      "text": "builder.goals path=%path%, write to %goals%",
+      "text": "build.goals path=%path%, write to %goals%",
       "lineNumber": 13,
       "indent": 0,
       "comment": null,
       "actions": [
         {
-          "module": "builder",
+          "module": "build",
           "action": "goals",
           "parameters": [
             {
@@ -345,7 +345,7 @@
         }
       ],
       "intent": null,
-      "formal": "builder.goals(Path=%path%) , variable.set(Name=%goals%, Value=%!data%)",
+      "formal": "build.goals(Path=%path%) , variable.set(Name=%goals%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -487,13 +487,13 @@
     },
     {
       "index": 10,
-      "text": "builder.appSave",
+      "text": "build.appSave",
       "lineNumber": 17,
       "indent": 0,
       "comment": null,
       "actions": [
         {
-          "module": "builder",
+          "module": "build",
           "action": "appSave",
           "parameters": [],
           "defaults": null,
@@ -501,7 +501,7 @@
         }
       ],
       "intent": null,
-      "formal": "builder.appSave()",
+      "formal": "build.appSave()",
       "source": null,
       "waitForExecution": true
     }
