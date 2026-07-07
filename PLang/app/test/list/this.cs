@@ -6,7 +6,7 @@ namespace app.test.list;
 /// <summary>
 /// The test session — the collection of tests for one run, plus run-wide state:
 /// start time, coverage, config, and the per-status tallies. Reached at
-/// <c>app.Test</c>. When IsEnabled is on, downstream systems observe it
+/// <c>app.Test</c>. When Test is active (present, born under --test), downstream systems observe it
 /// (in-memory DBs, stub identity, etc.) and test.tag / assert handlers use the
 /// state here. Activated by: plang --test. Config/state are plang values.
 /// </summary>

@@ -22,9 +22,9 @@ namespace app.module.test;
 public partial class run : IContext
 {
     // Test hook: fires once per child App after it's constructed and configured
-    // (OsDirectory inherited, Testing.IsEnabled=true, CurrentTest assigned),
+    // (OsDirectory inherited, Test active, Current assigned),
     // before the test's entry goal runs. Tests attach probes here to snapshot
-    // observable child-App state (parallel count, OsDirectory, IsEnabled).
+    // observable child-App state (parallel count, OsDirectory, Test presence).
     // Subscribers must be thread-safe — parallel tests fire this concurrently.
     internal static event Action<app.@this>? ChildAppCreated;
 

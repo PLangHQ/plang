@@ -123,7 +123,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         // Resolution dispatches to the persistent side of app.Setting (sqlite).
         Context.Variable.RegisterNavigable("setting", path => app.Setting.Get(global::app.setting.Storage.Persistent, path));
 
-        // Register %!app% — navigates the App object graph (e.g., %!app.test.IsEnabled%)
+        // Register %!app% — navigates the App object graph (e.g., %!app.test.Verbose%)
         Context.Variable.Set("!app", new data.DynamicData("!app", () => app, Context));
 
         // Register lazy %MyIdentity% — resolves to the System actor's default identity.

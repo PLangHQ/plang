@@ -159,7 +159,7 @@ public sealed partial class @this : IAsyncDisposable
 
     /// <summary>
     /// App-level persistent key-value store backed by <c>.db/system.sqlite</c>
-    /// (or in-memory under Test.IsEnabled). One per app — actors share it.
+    /// (or in-memory when Test is active). One per app — actors share it.
     /// Modules own their tables (<c>encryption</c>, <c>settings</c>, <c>llm-cache</c>, etc.).
     /// Created lazily on first access so tests with fictional paths and apps
     /// that never touch settings don't pay for SQLite-file creation at boot.

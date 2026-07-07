@@ -642,7 +642,7 @@ public class Default : IBuilder
     public data.@this Merge(merge action)
     {
 
-        // Diagnostic — gated by app.Debug.IsEnabled, drops on the floor in production.
+        // Diagnostic — gated by app.Debug presence (null = off), drops on the floor in production.
         // The merge handoff was the spot a Boolean-vs-Step type mismatch surfaced during
         // the builder rebuild; leaving the line in earns its keep next time it drifts.
         var step = action.Step.Peek() as global::app.goal.steps.step.@this;
