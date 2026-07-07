@@ -25,7 +25,7 @@ public class StaticsAndModesSnapshotTests
     {
         // App.Build is a @this with IsEnabled; Capture/Restore round-trips that bool.
         var src = global::PLang.Tests.TestApp.Create("/src");
-        src.Build = new global::app.module.builder.@this(src.System.Context);
+        src.Build = new global::app.module.build.@this(src.System.Context);
 
         var snap = src.Snapshot(src.User.Context);
         var dst = global::PLang.Tests.TestApp.Create("/dst");

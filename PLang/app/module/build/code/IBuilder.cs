@@ -4,7 +4,7 @@ using app.Utils;
 using Goal = app.goal.@this;
 using Actions = app.goal.steps.step.actions.@this;
 
-namespace app.module.builder.code;
+namespace app.module.build.code;
 
 /// <summary>
 /// Builder provider interface. Owns all builder logic — actions are thin delegation.

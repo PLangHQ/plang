@@ -21,7 +21,7 @@ public class MathExamplesForLlmTests
     public void Setup()
     {
         _app = TestApp.Create("/test");
-        _app.Build = new global::app.module.builder.@this(_app.System.Context);
+        _app.Build = new global::app.module.build.@this(_app.System.Context);
     }
 
     [After(Test)]

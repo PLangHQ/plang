@@ -1,4 +1,4 @@
-namespace app.module.builder;
+namespace app.module.build;
 
 /// <summary>
 /// Typed model of the LLM build response. Mirrors the JSON schema sent to the LLM

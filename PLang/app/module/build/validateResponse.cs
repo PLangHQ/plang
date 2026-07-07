@@ -1,6 +1,6 @@
 using Goal = app.goal.@this;
 
-namespace app.module.builder;
+namespace app.module.build;
 
 /// <summary>
 /// Action wrapper: validates the structural integrity of an LLM build response.

@@ -6,7 +6,7 @@ using app.variable;
 using Goal = app.goal.@this;
 using Actions = app.goal.steps.step.actions.@this;
 
-namespace app.module.builder.code;
+namespace app.module.build.code;
 
 public class Default : IBuilder
 {
@@ -934,7 +934,7 @@ public class Default : IBuilder
                 // empty string in place so the conversion error surfaces and
                 // LlmFixer retries.
                 if (face is { } emptyFace && !emptyFace.IsTruthy()
-                    && global::app.module.builder.ValidateResponseHelpers.IsNullableSchemaProp(actionType, p.Name))
+                    && global::app.module.build.ValidateResponseHelpers.IsNullableSchemaProp(actionType, p.Name))
                 {
                     p.SetValue(null);
                     continue;

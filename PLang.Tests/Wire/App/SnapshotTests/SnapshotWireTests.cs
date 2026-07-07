@@ -32,7 +32,7 @@ public class SnapshotWireTests
     public async Task BuildAndTestingBits_SurviveWireRoundTrip()
     {
         var src = global::PLang.Tests.TestApp.Create("/src");
-        src.Build = new global::app.module.builder.@this(src.System.Context);
+        src.Build = new global::app.module.build.@this(src.System.Context);
         src.Test = new global::app.test.list.@this(src.System.Context);
 
         var wired = await RoundTrip(src, src.Snapshot(src.User.Context));

@@ -1,8 +1,8 @@
 using app.variable;
-using app.module.builder.code;
+using app.module.build.code;
 using Goal = app.goal.@this;
 
-namespace app.module.builder;
+namespace app.module.build;
 
 /// <summary>
 /// Build-time only handler. Invoked by os/system/builder/ApplyStep.goal during

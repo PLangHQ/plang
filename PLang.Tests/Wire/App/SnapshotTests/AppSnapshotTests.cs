@@ -8,7 +8,7 @@ public class AppSnapshotTests
         var app = global::PLang.Tests.TestApp.Create("/test");
         // Build/Test are presence-based — a section appears only when the mode is on.
         // TestApp enables Test; turn Build on too so both sections show up.
-        app.Build = new global::app.module.builder.@this(app.System.Context);
+        app.Build = new global::app.module.build.@this(app.System.Context);
         var snap = app.Snapshot(app.User.Context);
 
         await Assert.That(snap.HasSection("Variables")).IsTrue();
@@ -25,7 +25,7 @@ public class AppSnapshotTests
     {
         var src = global::PLang.Tests.TestApp.Create("/src");
         src.User.Context.Variable.Set("x", 1);
-        src.Build = new global::app.module.builder.@this(src.System.Context);
+        src.Build = new global::app.module.build.@this(src.System.Context);
         src.Test = new global::app.test.list.@this(src.System.Context);
 
         var snap = src.Snapshot(src.User.Context);

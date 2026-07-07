@@ -1,6 +1,6 @@
 using Goal = app.goal.@this;
 
-namespace app.module.builder;
+namespace app.module.build;
 
 /// <summary>
 /// Validation behavior for <see cref="BuildResponse"/> — the response owns the

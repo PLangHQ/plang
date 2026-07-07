@@ -1,6 +1,6 @@
 using app.actor.context;
 using app.variable;
-using app.module.builder;
+using app.module.build;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.builder;
@@ -21,7 +21,7 @@ public class GetTypeInfoTests
             "plang_test_builder_typeinfo_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = TestApp.Create(_tempDir);
-        _app.Build = new global::app.module.builder.@this(_app.System.Context);
+        _app.Build = new global::app.module.build.@this(_app.System.Context);
     }
 
     [After(Test)]

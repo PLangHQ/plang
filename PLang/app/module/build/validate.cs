@@ -1,8 +1,8 @@
 using app.variable;
-using app.module.builder.code;
+using app.module.build.code;
 using Actions = app.goal.steps.step.actions.@this;
 
-namespace app.module.builder;
+namespace app.module.build;
 
 [Action("validate")]
 public partial class validate : IContext

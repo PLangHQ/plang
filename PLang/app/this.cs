@@ -197,7 +197,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Build mode controller. null = off; non-null = on (born under --build).
     /// When present, actors use in-memory datasources.
     /// </summary>
-    public global::app.module.builder.@this? Build { get; set; }
+    public global::app.module.build.@this? Build { get; set; }
 
     /// <summary>
     /// Allow creating a new app if none exists. Set via --app={"create":true}. Default false.

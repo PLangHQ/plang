@@ -1,7 +1,7 @@
 using app.variable;
-using app.module.builder.code;
+using app.module.build.code;
 
-namespace app.module.builder;
+namespace app.module.build;
 
 /// <summary>
 /// Pre-compile pass over the planner's action set for one step. Drops any planner

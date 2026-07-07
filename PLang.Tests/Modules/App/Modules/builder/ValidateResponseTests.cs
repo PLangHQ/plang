@@ -1,4 +1,4 @@
-using app.module.builder;
+using app.module.build;
 
 namespace PLang.Tests.App.Modules.builder;
 
