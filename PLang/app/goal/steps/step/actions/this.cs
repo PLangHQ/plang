@@ -20,6 +20,32 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public @this() { }
     public @this(IEnumerable<action.@this> actions) { _items = new List<action.@this>(actions); }
 
+    /// <summary>
+    /// <c>actions</c> IS a list of actions, so it re-tags a plang <c>list</c> into itself —
+    /// the value flows through as its own type, never lowered to CLR (a <c>list.Clr(actions)</c>
+    /// has no projection). Mirrors <c>list&lt;T&gt;.Create</c>. Each row already carries an
+    /// <c>action.@this</c> (the step's own actions, navigated via <c>%goal.Steps[i].Actions%</c>).
+    /// </summary>
+    public static @this? Create(global::app.type.item.@this value, global::app.data.@this data)
+    {
+        if (value is @this self) return self;
+        if (value is global::app.type.list.@this list)
+        {
+            var acts = new @this();
+            foreach (var row in list)
+            {
+                if (row.Peek() is action.@this a) { acts.Add(a); continue; }
+                data.Fail(new global::app.error.Error(
+                    $"%{data.Name}% list element is {row.Peek().Mint().Name}, not an action.", "CreateItemDeclined", 400));
+                return null;
+            }
+            return acts;
+        }
+        data.Fail(new global::app.error.Error(
+            $"%{data.Name}% holds a {value.Mint().Name} — 'actions' cannot be created from it.", "CreateItemDeclined", 400));
+        return null;
+    }
+
     [System.Text.Json.Serialization.JsonIgnore]
     public Step? Step { get; set; }
 
