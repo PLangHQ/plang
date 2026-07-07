@@ -200,6 +200,16 @@ public partial class @this
     {
         Name = CleanName(name);
         _context = context ?? parent?._context!;
+        // A bare Data may not become a value — it would ride a Clr carrier and reflect
+        // recursively on the wire ({name,value,{name,value,…}}). Same rule as SetValueDirect;
+        // this catches the Data<object> double-wrap footgun (the implicit operator @this<object>(T)
+        // routes here, so a Data assigned where an object is expected lands here). The throw flags
+        // the offending caller.
+        if (value is @this)
+            throw new System.InvalidOperationException(
+                "A bare Data may not be stored as a value — it would ride a clr carrier and reflect "
+                + "recursively on the wire. Pass the inner value (data.Item / the resolved value), not "
+                + "the Data wrapper.\n" + System.Environment.StackTrace);
         // The value is born WITH this Data's context — never context-less then
         // stamped. JSON natives-out here; a plain string stays a string for the
         // type to decide.

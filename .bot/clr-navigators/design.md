@@ -1,165 +1,156 @@
-# clr navigators — a CLR object becomes navigable without materializing
+# clr + a kind/mime registry — host data becomes navigable/loadable/convertible without materializing
 
 **Branch:** `clr-navigators` (off `variable-as-value`).
-**Status:** design, for architect review. No code written yet.
+**Status:** design, for architect review. No feature code written yet (a double-wrap throw guard added, see below).
 **Author:** coder (with Ingi, session 2026-07-07).
 
 ---
 
-## The problem (a real, reproduced blocker)
+## Confirmed root cause (architect: this is the thing you were tracking down)
 
-`plang build` now runs the whole builder pipeline (planner → validate → BuildStep) and dies
-at the *original* handoff blocker: `BuildStep/Start.goal:6`
+You suspected the `llm.query` wrapping and asked whether the `JsonElement→dict` narrowing is
+bypassed or must be removed. **Confirmed, with diagnostics — here's exactly what happens:**
 
-```
-- set %step% = %goal.Steps[planStep.index]%   →  IndexNotSet: %planStep.index% is null
-```
+1. **The narrowing is NOT bypassed at OpenAi.** A diagnostic at `OpenAi`'s result construction
+   showed `result.item = dict` — the JSON *does* narrow to a `dict` there. So OpenAi hands back a
+   proper `dict`.
+2. **The opacity is a downstream WIRE ROUND-TRIP.** A diagnostic on `Variable.Set` for `plan`
+   showed `clrItem=source mint=object` — by the time `write to %plan%` runs, the value is a
+   **`source` typed `object`**, not the dict. And a stack diagnostic at the source birth showed
+   it's born in **`data/reader/this.cs` (the wire deferred-value read, via `Wire.Read` inside an
+   STJ collection)** from a **JSON *string***.
+3. **The mis-pick line is `data/reader/this.cs:79-80`** — the SAME line as the variable-as-value
+   fix. It chooses the read format **by token shape**: a `String` token → `text/plain`,
+   *regardless of declared type*. So an `object`-typed value whose wire form is a JSON string is
+   born `source(object, text/plain)`.
+4. **`text/plain` never re-parses the JSON.** `source.Value()` → `Text.Read` → the `object`
+   reader over a scalar `value.Reader` → it reads the JSON as one opaque scalar, not a parsed
+   `dict`. Result: the `{Value:…}` blob, non-navigable → `foreach %plan.steps%` iterates garbage
+   → `%planStep.index%` null → `IndexNotSet` at `BuildStep/Start.goal:6`.
 
-Traced to the source: `%plan%` (the LLM planner result, `llm.query … write to %plan%`) is
-**not navigable**. Debug:
-
-```
-%plan%       = {Value: {description: …, steps: [{index:1, actions:[…], …}]}}
-%plan.Value% = {Value: {description: …, steps: […]}}      ← navigating .Value returns the WHOLE thing
-%plan.steps% = {Value: {description: …, steps: […]}}      ← navigating .steps returns the WHOLE thing
-```
-
-`llm.query` → `OpenAi` does `context.Ok(TryParseJson(extracted))`, and `TryParseJson` returns
-a **`System.Text.Json.JsonElement`**. So the plan is a `JsonElement` sitting inside a `clr`
-carrier, and **navigation no-ops on it** — `.steps`/`.Value` return the whole blob. So the
-`foreach %plan.steps%` iterates garbage, `%item%`/`%planStep%` are bogus, and
-`%planStep.index%` is null.
-
-The narrow bug is "a `JsonElement` result isn't navigable." The design below is the general
-answer.
-
----
-
-## The insight
-
-`clr` **is** a normal plang value — the closed host-object carrier we already decided to keep
-(navigate / write-if-setter / serialize-`[Out]`; `Peek → self`). The fix is NOT to convert a
-`JsonElement` into a `dict`/`list` at birth (materializing a whole tree just to read one field
-is wasteful, and loses laziness). The fix is to make `clr`'s **navigate / value pluggable by
-the CLR object's shape** — a `JsonElement` navigates one way, an `XElement` another, a POCO by
-reflection.
-
-So `clr` stays `clr` and just becomes **navigable in place**.
+Fresh vs cached both reproduce it (cache cleared → still opaque), so it's current, not stale.
+The **cached path** (`OpenAi.ParseResultValue`) re-borns the raw response string as
+`source(object, text/plain)` directly; the **fresh path** narrows to a dict but the round-trip
+(the value crossing the wire) re-stringifies it. Either way the fix is the same layer: **the
+producer must stamp the right kind/format**, not have `data/reader` guess by token shape.
 
 ---
 
-## The design
+## The decision (Ingi): don't convert on load — keep it `clr` with `kind`
 
-A **navigator** registry on `clr`, keyed by **kind** — exactly how the reader registry keys by
-`(type, kind)`. Here the type is `clr` and the kind names the host shape (`"json"`, `"xml"`, …),
-with `"*"` → reflection default. NOT the .NET `GetType()` — keying by kind keeps this plang-native
-and consistent with the rest of the type system. The navigator gives a `clr` three capabilities,
-none of which materialize the whole object:
+We are NOT going to eagerly narrow external structured data into `dict`/`list` on load. Instead
+the value stays **`clr` carrying the raw host object, stamped with a `kind`** (`json`, `yaml`,
+`xml`, …), and it becomes navigable / loadable / convertible **lazily** through a **kind-keyed
+registry**. Rationale:
 
-```
-clr(hostObject, kind)                // JsonElement/"json", XElement/"xml", POCO/"*" …
-  Navigate(key)  → clr(sub-node)     // descend ONE level, lazy/partial
-  Enumerate()    → clr(element)…     // walk a container's children, each a clr
-  Value()        → self OR plang scalar  (see below)
-  Clr<T>()       → the raw host object   (developer: clr.Clr<JsonElement>())
-
-registry:  (clr, kind) → IClrNavigator          // mirror of the (type, kind) reader registry
-  (clr, "json")  → json navigator     // kind "json" ⟹ host is a JsonElement (source stamped both)
-  (clr, "xml")   → xml navigator       (later)
-  (clr, "yaml")  → yaml navigator      (later)
-  (clr, "*")     → reflection navigator (walk properties)  ← default
-```
-
-**Kind is stamped at the source**, same as everywhere else: a json read / `llm.query` with a
-json schema stamps kind `"json"`; an xml read stamps `"xml"`; a raw POCO handed back from a C#
-action carries no kind (`"*"` → reflection). `clr.Navigate`/`Value` resolves the navigator by
-that stamped kind — no `switch` on the .NET type.
-
-### The container-vs-scalar rule (the crux)
-
-A navigator decides per node:
-
-- **A `clr` wrapping a container (json object/array) → stays `clr`.** `.Value()` returns self;
-  it *is* a valid plang value. Navigation (`Navigate`) and iteration (`Enumerate`) work on it
-  directly. In a C# action the developer unwraps with `clr.Clr<JsonElement>()`.
-- **A `clr` wrapping a scalar (json number/string/bool/null) → `.Value()` becomes the plang
-  scalar** (`number`/`text`/`bool`/`null`). A leaf has a natural plang type and nothing left to
-  navigate, so it resolves to its scalar there.
-
-That single rule keeps everything lazy and `clr`-native, yet makes leaves usable as plang
-values exactly where they're needed.
-
-### The builder walkthrough (why it unblocks)
-
-```
-%plan%             = clr(JsonElement object)                 // from llm.query
-%plan.steps%       = Navigate("steps") → clr(JsonElement array)     // partial, no dict build
-foreach %plan.steps%  → Enumerate() → clr(step-object)…      // each item a clr
-%item% / %planStep% = clr(JsonElement step object)
-%planStep.index%   = Navigate("index") → clr(JsonElement number 1)
-%goal.Steps[planStep.index]%  → the index needs a number → clr(1).Value() → number 1   ✓
-```
-
-Nothing materialized a whole `dict`; only the one scalar leaf that got *used* became a plang
-value. `IndexNotSet` falls out.
-
-### Extends for free
-
-`read x.xml` → the value is an `XElement` in a `clr` → the xml navigator handles it.
-`read x.yaml` → a `YamlNode` → yaml navigator. Anything with no registered navigator → the
-reflection navigator (walk public properties, index enumerables). Adding a format = adding one
-navigator, no changes to `clr` or the rest of the runtime.
+- **Lazy.** Reading `plan.steps[0].index` shouldn't build the whole tree into a `dict`; the
+  navigator descends just that path. Materializing a whole object to read one field is wasteful.
+- **Uniform across formats.** json/yaml/xml are all "structured host data": `clr` + `kind=<fmt>`
+  + one navigator each. No special json path, no per-format eager conversion. Ask the LLM for
+  yaml → `clr(kind=yaml)` → the yaml navigator. One mechanism, extends by registering a navigator.
+- **The producer owns the kind (the honest source of truth).** `OpenAi` knows what it asked for,
+  so it stamps the result: json/yaml/xml → `clr(kind=<fmt>)`; **md/prose → `text` with
+  `kind=md`** (scalar text, not a navigable container). It does not parse or convert — the
+  registry does, on demand.
+- **`application/json`, not `application/plang`.** `application/plang` is the *internal* Data wire
+  (`{name,type,value,…}`). The LLM response is plain external JSON — parsing it (when a consumer
+  asks) is the `application/json` reader / the json navigator, never the internal wire.
 
 ---
 
-## OBP notes
+## The design — a kind/mime registry (name TBD)
 
-- **Registry = selection; behavior on the navigator.** `clr` doesn't `switch` on the host
-  type — it looks up the navigator and delegates. Each navigator owns its shape's navigate /
-  enumerate / scalar rules.
-- **Default reflection is not the "generic handler beside per-type handlers" smell.** It's the
-  honest catch-all for "any CLR object we don't have a specialized navigator for" — one path
-  (registry lookup, default if unregistered), not a second execution path competing with the
-  specialized ones.
-- Fits the existing `clr` host-carrier decision (`.bot/compare-redesign/coder/host-carrier-spec.md`):
-  we're making its *navigate/value* pluggable by shape instead of hardwired.
+`clr` carries `(hostObject, kind)`. A registry **keyed by kind** provides, per format, the
+operations a value needs — and `clr` delegates to it. Three operations (the third is Ingi's
+addition, to be worked out with the architect):
+
+```
+clr(hostObject, kind)                       // JsonElement/"json", XElement/"xml", YamlNode/"yaml", POCO/"*"
+  Navigate(key)  → clr(sub-node)            // NAVIGATE: descend one level, lazy/partial
+  Value()        → self OR plang scalar     // (container stays clr; scalar leaf → its plang scalar)
+  Clr<T>()       → raw host object          // developer: clr.Clr<JsonElement>()
+
+registry:  kind → { Navigator, Loader, Converter }     // like the (type,kind) reader registry
+  "json"  → json  {navigate, load, convert}
+  "yaml"  → yaml  {navigate, load, convert}   (later)
+  "xml"   → xml   {navigate, load, convert}   (later)
+  "*"     → reflection {navigate over public properties}   ← default
+```
+
+- **NAVIGATE** — descend a host object one level (`JsonElement.GetProperty`), enumerate a
+  container's children (json array → elements), each still a `clr`. Nothing materialized whole.
+- **LOAD (read)** — this is the existing reader concern (`application/json` reads bytes/tokens →
+  a value). It belongs in the same registry keyed by kind/mime: "how do I read a `json` payload,"
+  "how do I read `yaml`."
+- **CONVERT** — **Ingi is taking this with the architect.** The idea: the same kind/mime entry
+  also knows how to convert the host data into a target plang type on explicit demand
+  (`as dict`, `As<T>`), distinct from the lazy navigate. (Relates to the existing per-type
+  `Convert` hooks — the value-to-type conversion door — and to `catalog/Conversion.cs`, which
+  already converts `JsonElement`→dict/list on `As<T>`.)
+
+**Naming:** should this be a "mime-type registry"? It's keyed by kind (`json`, `xml`) which maps
+to a mime (`application/json`, `application/xml`). One registry, three operations, one lookup per
+kind. Open for the architect.
+
+### Container-vs-scalar rule (unchanged)
+
+- `clr` wrapping a **container** (json object/array) → stays `clr` (navigable/enumerable);
+  `.Value()` = self; C# unwraps with `Clr<JsonElement>()`.
+- `clr` wrapping a **scalar** (json number/string/bool/null) → `.Value()` becomes the plang
+  scalar. So `planStep.index` navigates to `clr(1)`, and using it as an index resolves to `1`.
+
+---
+
+## OpenAi's change (the concrete fix)
+
+In `OpenAi`'s result construction — **both** the fresh (`context.Ok(TryParseJson…)`) and cached
+(`ParseResultValue`) paths — stamp the value from `effectiveFormat`:
+
+- `json` → `clr(kind=json)` holding the raw response (read via `application/json` on demand).
+- `md` → `text` with `kind=md`.
+- `xml` → `clr(kind=xml)` (or `text/kind=xml`, TBD).
+- prose / no format → `text`.
+
+That makes fresh == cached (both stamp the same kind), and `%plan%` becomes a navigable
+`clr(kind=json)` → `plan.steps` works → `IndexNotSet` falls.
+
+---
+
+## The throw guards
+
+1. **Double-wrap guard — ADDED (keeper).** `data/this.cs` ctor now throws if a bare `Data` is
+   assigned as a value (mirrors the existing `SetValueDirect` guard) — catches the `Data<object>`
+   double-wrap footgun. (It did NOT fire for this bug — proving the `{Value:…}` here is the
+   `source(object,text/plain)` opacity above, not a Data-in-Data wrap.)
+2. **Container-materializes-to-scalar guard — PROPOSED.** In `source.Value`: if the declared type
+   is a container (`object`/`dict`/`list`) but it materialized to a non-container leaf, throw. A
+   container must never come back a scalar — this class of round-trip loss then fires loudly and
+   immediately, right at the point.
 
 ---
 
 ## Open questions for the architect
 
-1. **Scalar `.Value()` typing.** Container-stays-`clr` / scalar-`.Value()`-to-plang-scalar is
-   the proposed rule. Is a json scalar's plang type decided purely by `ValueKind`
-   (Number→`number`, String→`text`, True/False→`bool`, Null→`null`), with `number`'s kind (int
-   vs double) derived from the token? Any case where a container *should* eagerly materialize?
-2. **Navigator interface shape.** Minimal is `Navigate(host, key, ctx) → item`,
-   `Enumerate(host, ctx) → IEnumerable<item>`, and scalar handling. Should `Enumerate` yield
-   `(key, item)` pairs (for `foreach … item= key=`)? Should `Navigate` accept an integer index
-   (`steps[0]`) uniformly with a string key?
-3. **Where the navigator registry lives** — alongside the type/reader registries
-   (`app.type.clr.navigator` mirroring `app.type.reader`), keyed by `(clr, kind)`,
-   auto-discovered by namespace like the readers?
-3b. **The born-boundary stamping (the real work).** For the kind-keyed lookup to resolve, a
-   `clr` must arrive **stamped with its kind**. Today `context.Ok(JsonElement)` lands as an
-   unstamped opaque blob. So the json read paths — `llm.query` (`OpenAi.context.Ok(TryParseJson)`),
-   `file.read` of `.json`, `http` json responses — must produce a `clr` with kind `"json"`.
-   Is the kind derived once from the CLR type at the boundary (`JsonElement ⟹ "json"`), or must
-   each source stamp it explicitly (like the format the read already knows)?
-4. **Write side.** `clr` already writes via `[Out]`/serialize; does a navigator also own
-   *writing into* a host object (`set %json.x% = 5` → mutate the JsonElement)? JsonElement is
-   immutable — likely out of scope for v1 (read/navigate only); flag it.
-5. **Boundary with the existing conversion path.** `catalog/Conversion.cs` already converts
-   `JsonElement` → `dict`/`list`/target when an `As<T>`/`as <Type>` genuinely asks for it. That
-   stays (explicit materialization on demand); the navigator is the *lazy in-place* path. Are
-   both wanted, or should the navigator subsume the conversion?
-6. **Scope estimate.** New navigator registry + interface, the `clr` `Navigate`/`Value`
-   dispatch rewrite, the JsonElement navigator, the reflection default, and threading it through
-   the born path (`context.Ok(JsonElement)` must land as a `clr` with the navigator, not the
-   current opaque blob). Ingi's read: "a feeling it's going to be a lot."
+1. **The big decision — does the eager `JsonElement→dict` narrowing (`Data` ctor `json.Parse`) go
+   away for external structured data?** Under "don't convert on load," llm results / `file.read`
+   of `.json` should stay `clr(kind=json)` and NOT hit the eager narrowing (else we're back to
+   eager dict). Coder's lean: go all-in on `clr(kind=…)` + navigators for external structured
+   data. This is the single biggest call in the design.
+2. **CONVERT (Ingi + architect).** Shape of the convert operation in the kind/mime registry, and
+   how it reconciles with the existing per-type `Convert` hooks and `catalog/Conversion.cs`.
+3. **Registry name + shape.** "mime-type registry"? Keyed by kind → `{navigate, load, convert}`?
+   Auto-discovered by namespace like the readers (`app.type.clr.<kind>` or a dedicated registry)?
+4. **Navigator interface.** `Navigate(host, key)` + `Enumerate(host)` (yield `(key, item)` for
+   `foreach … item= key=`?) + scalar handling. Integer index (`steps[0]`) unified with string key?
+5. **Scalar `.Value()` typing.** json scalar → plang type purely by `ValueKind`
+   (Number→number, String→text, True/False→bool, Null→null), number's precision from the token?
+6. **Write side.** JsonElement is immutable — is `set %json.x% = 5` (mutate a host object) in scope
+   for v1, or read/navigate only?
 
 ---
 
 ## First concrete deliverable
 
-The **JsonElement navigator** alone (object→navigable, array→enumerable, scalar→plang scalar)
-unblocks `plang build` at the `IndexNotSet` blocker — a clean, testable first cut before xml/yaml.
+`OpenAi` stamps `kind=json` on json results + the json **navigator** (object→navigable,
+array→enumerable, scalar→plang scalar) → `plang build` clears the `IndexNotSet` blocker. A clean,
+testable first cut before yaml/xml and before CONVERT.
