@@ -27,6 +27,19 @@ public sealed class source : @this, module.IContext
     // leaf borns a live template; the trust is the reader's mode, never the content.
     private readonly string? _template;
 
+    // A full-match %ref% (`%!data%`, `%messages%`) is a REFERENCE, not content — decided ONCE
+    // at birth: the raw form and the authored-template flag are immutable, so reading it back is
+    // a bool check, never a per-read regex (references re-resolve every read — Cacheable=false).
+    // When true, _varName holds the bare name to resolve through Variable.Get at .Value().
+    public override bool IsVariable { get; }
+
+    /// <summary>The Data instance this reference names — its own <c>Get</c> against the
+    /// variable store (<c>_value</c> is the raw <c>%!data%</c>; the store strips the <c>%</c>).
+    /// The lazy name-hop: the target's value door is NOT opened, so a pending read stays
+    /// unread. Only meaningful when <see cref="IsVariable"/>. The name never leaves the source.</summary>
+    internal System.Threading.Tasks.ValueTask<global::app.data.@this> Get()
+        => Context.Variable.Get((string)_value);
+
     // Born WITH context — a source is minted only by type.Build (the sole birth site),
     // which always has a wired scope; the context-less births (the "Judge" phase) are gone.
     [System.Text.Json.Serialization.JsonIgnore]
@@ -48,6 +61,14 @@ public sealed class source : @this, module.IContext
         // the builder stamped; do not re-scan the content. (Minimal fix; the right fix moves
         // resolution into the value's own door — see output-resolution-unification-plan.md.)
         Template = template;
+        // Full-match %ref% on ANY declared type is a reference to a binding — resolved by name at
+        // .Value(), never parsed through the type reader. Trust the builder's template flag, not
+        // the content (a structural string that was not marked stays literal content).
+        if (template != null && value is string reference
+            && global::app.data.@this.TryFullVarMatch(reference, out _))
+        {
+            IsVariable = true;
+        }
     }
 
     /// <summary>The undecoded source form — <c>string</c> or <c>byte[]</c>.</summary>
@@ -101,6 +122,25 @@ public sealed class source : @this, module.IContext
 
     public override async System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this data)
     {
+        // A full-match %ref% names a binding — hand back what it holds through its OWN door,
+        // never parse the name through the declared type's reader (a `list` reader on the string
+        // "%!data%" has nothing to read). Same resolve door as text's full-match / variable.@this;
+        // the declared {type,kind} was only the pre-resolution label. IsVariable decided at birth.
+        if (IsVariable)
+        {
+            var resolved = await Get();
+            // Get never returns null — a miss is a NotFound Data (IsInitialized == false).
+            // A variable set to null IS initialized, so it resolves (to null); only a
+            // genuinely-absent name fails here.
+            if (!resolved.IsInitialized)
+            {
+                data.Fail(new global::app.error.Error(
+                    $"%{_value}% is not set — nothing to answer for it.", "VariableNotFound", 404));
+                return Absent;
+            }
+            return await resolved.Value();
+        }
+
         await System.Threading.Tasks.Task.CompletedTask;
         try
         {

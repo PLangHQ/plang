@@ -149,10 +149,12 @@ public partial class @this
     /// True when the value IS a single live <c>%variable%</c> reference (a
     /// stamped template whose whole text is one ref). Build-time validation
     /// skips such values — they resolve at runtime. Stamp-based: an unstamped
-    /// "%x%" is literal text, not a reference.
+    /// "%x%" is literal text, not a reference. Delegates to the item, so BOTH
+    /// reference forms answer true: a bare name-slot <c>variable</c> AND a
+    /// full-match <c>%ref%</c> source.
     /// </summary>
     [JsonIgnore]
-    public bool IsVariable => _item is global::app.variable.@this;
+    public bool IsVariable => _item?.IsVariable ?? false;
 
     /// <summary>
     /// True when the value carries any live <c>%variable%</c> reference (the

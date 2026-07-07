@@ -241,6 +241,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// </summary>
     public override bool IsLeaf => true;
 
+    /// <summary>A variable NAMES a binding — it IS a reference (resolves to what the
+    /// binding holds). The instance-bind in Variable.Set reads this to alias the target.</summary>
+    public override bool IsVariable => true;
+
     /// <summary>A reference renders itself FRESH every read — like a computed, never
     /// memoized onto the holding Data. The same authored reference (a goal-call param
     /// <c>planStep=%item%</c>) is reused across calls; caching one call's resolved value

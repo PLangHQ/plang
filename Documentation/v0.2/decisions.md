@@ -21,8 +21,8 @@ agreed: variable.set forwards the source Data verbatim (no AsCanonical, no .Valu
 check:  ! grep -q "\.AsCanonical(" PLang/app/module/variable/set.cs
 
 ## variable-ref-binds-instance
-agreed: a %ref% value in the store resolves to the referenced Data instance (Get), bound under the target name — never .Value() on the store path, never the marker stored verbatim.
-check:  grep -q "reference.Peek() is global::app.variable.@this" PLang/app/variable/list/this.cs
+agreed: a %ref% value in the store resolves to the referenced Data instance (Get), bound under the target name — never .Value() on the store path, never the marker stored verbatim. Detection is reference.IsVariable (both carriers: variable name-slot AND full-match %ref% source); each resolves its own name-hop via Get.
+check:  grep -q "reference.IsVariable" PLang/app/variable/list/this.cs
 
 ## steps-enumerator-is-structural
 agreed: the step enumerator yields every step with no execution context (no Disabled filter); execution skips via RunAsync's skipBelowIndent. No context dependency in the enumerator.

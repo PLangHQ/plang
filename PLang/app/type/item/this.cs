@@ -406,6 +406,14 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual bool IsLeaf => false;
 
     /// <summary>
+    /// True when this value is a REFERENCE to a named binding (a bare name-slot
+    /// <c>variable</c>, or a full-match <c>%ref%</c> source) rather than content. A
+    /// reference resolves to whatever the binding holds (via <c>AsCanonical</c> / the
+    /// value door); every content value answers false.
+    /// </summary>
+    public virtual bool IsVariable => false;
+
+    /// <summary>
     /// True only for the null value (the <c>null</c> citizen). Every other value is
     /// present, so the default is false. Consumers test a value's nullness with
     /// <c>value.IsNull</c> instead of a C# <c>!= null</c> reference check — a typed

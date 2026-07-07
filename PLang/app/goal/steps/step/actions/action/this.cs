@@ -255,40 +255,33 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         var beforeResult = await lifecycle.Before.Run(context, app.@event.Trigger.BeforeAction);
         if (!beforeResult.Success) return beforeResult;
 
-        global::app.data.@this result;
+        global::app.data.@this data;
         if (beforeResult.Handled)
         {
             // Override path: the BeforeAction binding supplied this action's result
             // (mock.intercept, event.skipAction). Clear Handled so the outer step
             // loop doesn't misread "dispatch was short-circuited" as "stop the step" —
             // the next action in the chain still needs to run on this result.
-            result = beforeResult;
-            result.Handled = false;
+            data = beforeResult;
+            data.Handled = false;
         }
         else
         {
             Func<Task<global::app.data.@this>> dispatch = () => DispatchAsync(context);
-            result = await Modifiers.RunAsync(dispatch, context);
+            data = await Modifiers.RunAsync(dispatch, context);
         }
 
-        if (result.Success)
-        {
-            // %!data% is the last result. A reference (%var%) or a template result is
-            // resolved to its VALUE first — a SNAPSHOT — never stored as a live reference.
-            // Otherwise %!data% could point back into a structure that itself references
-            // %!data% (e.g. an output template reporting the result), and resolving it loops.
-            // A concrete value result is stored as-is (same object reachable via %!data% and
-            // the producing handler's own name; override path flows through this same write).
-            var snapshot = result.Peek() is global::app.variable.@this || result.HasVariableReference
-                ? new global::app.data.@this("!data", await result.Value(), context: context)
-                : result;
-            await context.Variable.Set("!data", snapshot);
-        }
+        // %!data% is the last action's result, stored AS-IS. A reference stays a
+        // reference and a lazy source stays unread — %!data% never forces a value.
+        // Resolution happens only when a real consumer opens the door; storing the
+        // value here would read a pending file / resolve a %ref% at every action.
+        if (data.Success)
+            await context.Variable.Set("!data", data);
 
-        var afterResult = await lifecycle.After.Run(context, app.@event.Trigger.AfterAction, this, result);
+        var afterResult = await lifecycle.After.Run(context, app.@event.Trigger.AfterAction, this, data);
         if (!afterResult.Success) return afterResult;
 
-        return result;
+        return data;
     }
 
     /// <summary>

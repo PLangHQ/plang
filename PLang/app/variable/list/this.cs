@@ -111,17 +111,17 @@ public partial class @this
     public async System.Threading.Tasks.ValueTask<data.@this> Set(string name, object? value)
     {
         // A reference value (%x%) binds the referenced Data INSTANCE — not the reference
-        // marker, not its resolved value. Get the instance (lazy stays lazy) and alias it
-        // under `name`. Storing the marker as-is would go stale (!data rebinds every action)
-        // and a self-assign (`set %a% = %a%`) would cycle on the value door; instance-binding
-        // avoids both. The value door is never opened here — no eager read.
-        if (value is data.@this reference && reference.Peek() is global::app.variable.@this named)
+        // marker, not its resolved value. Get the instance (lazy stays lazy: the target's
+        // value door is never opened here — no eager read) and alias it under `name`. Storing
+        // the marker as-is would go stale (!data rebinds every action) and a self-assign
+        // (`set %a% = %a%`) would cycle on the value door; instance-binding avoids both. Each
+        // reference type resolves its own name-hop — variable knows its Name, source keeps its
+        // raw name private and Gets itself. A miss flows through as an uninitialized Data.
+        if (value is data.@this reference && reference.IsVariable)
         {
-            data.@this source = await Get(named.Name);
-            if (!source.IsInitialized)
-                return _context.Error(new global::app.error.Error(
-                    $"%{named.Name}% is not set — nothing to assign.", "VariableNotFound", 404));
-            value = source;
+            value = reference.Instance is global::app.variable.@this named
+                ? await Get(named.Name)
+                : await ((global::app.type.item.source)reference.Instance!).Get();
         }
 
         // Names arrive clean — the builder normalizes them before the .pr, and runtime C# callers
