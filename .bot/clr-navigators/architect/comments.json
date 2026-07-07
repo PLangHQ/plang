@@ -66,7 +66,7 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-07-07T21:42:55",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "9f309471cf",
@@ -80,6 +80,17 @@
       "drifted": true
     },
     {
+      "id": "70587f5824",
+      "line": 22,
+      "text": "I see kind is null there, but I think we should actually look up the kind if it's null, lets say object is JsonElement, now the creator needs to know the kind, but why, it the responsiblity of the class according to obp. since we have context, we can access the type system and we can ask it, what kind it typeof(object). \n\nThe since you switch to text on kind, I want to float an idea, what if kind is plang type, the one that actually own the convertion, so when we do item.Convert it is (to : Kind) => context.type[to].Convert(kind); it even reads well :)",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T22:08:53",
+      "drifted": false
+    },
+    {
       "id": "abfcf8639e",
       "line": 64,
       "text": "We should change item.Peek to return item, returning object? is wrong, and no null, but @null probably??",
@@ -88,7 +99,7 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-07-07T21:43:45",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "7daaa1cf9e",
@@ -110,7 +121,7 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-07-07T21:46:19",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "e1d1936155",
@@ -122,6 +133,17 @@
       "parent_id": null,
       "ts": "2026-07-07T21:16:52",
       "drifted": true
+    },
+    {
+      "id": "ca3ee53fbf",
+      "line": 108,
+      "text": "I feel like it should be item.Type not System.Type, the System.Type should then be wrapped into item.type. Same anywhere there is System.Type",
+      "anchor": "`Handles` takes `System.Type` and returns `bool` because it matches C# reflection types \u2014 the CLR-interop surface, not a plang value. `Kind` is a plang identifier, so `text`.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T22:13:11",
+      "drifted": false
     },
     {
       "id": "374bd9ecc4",
@@ -143,7 +165,7 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-07-07T21:48:36",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "7730695a06",
@@ -153,7 +175,8 @@
       "author": "user",
       "status": "resolved",
       "parent_id": null,
-      "ts": "2026-07-07T21:49:22"
+      "ts": "2026-07-07T21:49:22",
+      "drifted": true
     },
     {
       "id": "83e12b21ad",
@@ -178,6 +201,17 @@
       "drifted": true
     },
     {
+      "id": "7cd37ed3af",
+      "line": 165,
+      "text": "I dont like walk name for class, is it not path? just strange, maybe you can suggest some different versions?",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T22:14:24",
+      "drifted": false
+    },
+    {
       "id": "adf7892df9",
       "line": 199,
       "text": "same here, plang types and wrap?",
@@ -200,6 +234,17 @@
       "drifted": true
     },
     {
+      "id": "ca8ec2aebf",
+      "line": 287,
+      "text": "if the code is %user.name% and %user.address.zip% will the c.Navigate get just \"name\" and \"address.zip\" or will he get the full path? I think he only needs the tail, e.g. name and address.zip?",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T22:17:20",
+      "drifted": false
+    },
+    {
       "id": "fb3c24060a",
       "line": 290,
       "text": "not path.ToString, why not keep it as path?",
@@ -219,7 +264,7 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-07-07T21:25:06",
-      "drifted": true
+      "drifted": false
     },
     {
       "id": "dd407b98e7",
@@ -242,6 +287,16 @@
       "parent_id": null,
       "ts": "2026-07-07T21:27:15",
       "drifted": true
+    },
+    {
+      "id": "c2b24c9d6e",
+      "line": 352,
+      "text": "I dont like format == \"json\" && ... it assumes there is only one format, or that we need to add if statement for each format. the clr object hsould know how to handle each format, it should only be 'var resultValue = new global::app.type.clr.@this(extracted, context, kind: format)'",
+      "anchor": "The producer owns the kind because it knows what it asked for \u2014 nothing downstream has to guess. (The local is named `format`.)",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-07-07T22:19:44"
     },
     {
       "id": "bc768c2216",
