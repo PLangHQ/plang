@@ -1730,3 +1730,18 @@ current behavior (path/file/url/serialization), phrased as "no longer…". Reorg
 behavior-domain folders (App/Types/Path, App/Serialization, …), drop CompareRedesign/StageN; delete
 only the pure old-vs-new comparison tests (a few Stage1_Comparison/Stage4_Rank) that have no
 standalone behavior meaning. Not this branch. Ingi flagged 2026-07-07.
+
+## 2026-07-07 — Remove the dead whole-payload read path + relocate the kind→type map
+The reader registry has two read modes; only the token-stream `ITypeReader` (`serializer/Reader.cs`,
+`Typed(...)`) is live — every channel serializer (Text/Json/plang) uses it. The whole-payload path
+(`Readers.Of` → `_generated`/`_runtime` Read delegates → `Default.Read` + kind decoders
+`object/json.cs`, `item/json.cs`, `table/csv.cs`) has **zero live invokers** (`Of` is never called;
+the last user, the JSON path converter, migrated to `path.Resolve`). BUT it's not clean dead code:
+`_generated`'s *keys* feed `reader.TypeOf(kind)` (the `json→object/item`, `csv→table` map that
+`kind.@this.Type` uses). So removal must first **relocate the kind→type map** to a real source
+(the typed registry has `table/csv`; `json→object/item` lives *only* in the dead decoder
+registrations — and is ambiguous, two types claim `"json"`). Then delete: the `Read` delegate +
+`_generated`/`_runtime` + `Of(...)` + `Register(Read)` in `reader/this.cs`, the `Default.Read`
+registration branch, and the `Read` method in every `type/*/serializer/Default.cs` (keep `Write`)
+plus the kind-decoder `<kind>.cs` files. A real (interesting) refactor, entangled with kind
+resolution — not just dead-code deletion.
