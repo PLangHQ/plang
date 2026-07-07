@@ -129,12 +129,18 @@ why BaseUrl/DefaultHeaders/MaxResponseSize never resolve — pre-existing, fail 
 - ☑ No shorthands / no aliases: keys are property names; walk is strict on unknown keys (like every flag).
 - ⏭ **Deferred to Stage 6:** `Debug.Level`, `Debug.Llm.Output` → `choice`/enum (done alongside `Debug.Apply` removal).
 
-## Stage 6 — Debug activation into the ctor (delete Debug.Apply)  ☐
-- ☐ `Debug.Apply` (`debug/this.cs:107`, calls `Populate` at :136) → `new Debug(context)` ctor + populate:
-  subscribe watchers, hook `OnBeforeRequest`/`OnAfterResponse`, compile grep regex.
-- ☐ Delete `Debug.Apply`, the `variables` shorthand, and the **`callstack` cross-node write** (§6.B).
-  Callstack config flows via `--callstack` → `app.CallStack.Setting`. (`_applied` already gone.)
-- ☐ Release-note line: `--debug` no longer carries callstack flags — use `--callstack={"setting":...}`.
+## Stage 6 — Debug activation split (delete Debug.Apply)  ☑ (8340e0da1, 620c878e9)
+- ☑ `Debug.Apply` → born-then-Activate: Executor does `new Debug(context)` → `Set(app.Debug, dict)` (walk,
+  surfaces config errors) → `Activate()` (void side-effects: watchers, LLM `OnBeforeRequest`/`OnAfterResponse`
+  hooks, grep regex, event bindings). Config-parse no longer mixed with side-effects.
+- ☑ Deleted `Debug.Apply`, the `variables` bare-string shorthand ([{name:...}] only), callstack cross-node write
+  (was already gone in Stage 4B). Callstack config flows via `--callstack`.
+- ☑ `Debug.Level` → `choice<Level>` (walk-validated; enum named `Level`, not `DebugLevel`).
+- ⏭ `Llm.Output` left `string` — the LLM-trace output is channel routing + Debug↔OpenAi coupling; carved out as
+  its own follow-up (todos 2026-07-07) rather than converted to a throwaway enum.
+- 🐛 Also fixed `.gitignore` `[Dd]ebug/` silently ignoring the SOURCE `app/module/debug/` folder (new files vanished).
+- ☐ Release-note: `--debug` no longer carries callstack flags (use `--callstack`); `variables` shorthand removed.
+  (No changelog file in repo yet — carry into Stage 9 release notes.)
 
 ## Stage 1b-tail — drop aliases + builder type rename  ☐
 - ☐ Drop `--builder` + `--tester` aliases and the `build`/`builder` normalization (`Executor.cs:31-34,63`).
