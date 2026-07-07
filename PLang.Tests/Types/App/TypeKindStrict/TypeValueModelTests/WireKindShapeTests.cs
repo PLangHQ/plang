@@ -9,16 +9,13 @@ namespace PLang.Tests.App.TypeKindStrict.TypeValueModelTests;
 // `{name, kind?, strict?}`, no flat sibling `kind` key.
 public class WireKindShapeTests
 {
-    private static JsonSerializerOptions Options
+    // A Data writes itself via Data.Output through the serializer's async path (the Out view),
+    // NOT JsonSerializer.Serialize — the Wire converter is read-only and throws on STJ Write.
+    private static string ToJson(global::app.data.@this data)
         => new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext)
-            .GetType()
-            .GetField("_outbound", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
-            .GetValue(new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext))
-            as JsonSerializerOptions
-            ?? throw new System.InvalidOperationException("could not access plang outbound options");
-
-    private static string ToJson(global::app.data.@this data) => JsonSerializer.Serialize(data, Options);
-    private static global::app.data.@this FromJson(string json) => JsonSerializer.Deserialize<global::app.data.@this>(json, Options)!;
+            .Serialize(data).Peek()!.ToString()!;
+    private static global::app.data.@this FromJson(string json)
+        => new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext).Deserialize(json);
 
     [Test] public async Task Wire_Write_EmitsTypeAsStructuredEntity()
     {

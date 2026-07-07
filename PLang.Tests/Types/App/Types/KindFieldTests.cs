@@ -9,19 +9,14 @@ public class KindFieldTests : System.IAsyncDisposable
     private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/kindfield-" + System.Guid.NewGuid().ToString("N")[..6]);
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
-    private static JsonSerializerOptions Options
-        => new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext)
-            .GetType()
-            .GetField("_outbound", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
-            .GetValue(new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext))
-            as JsonSerializerOptions
-            ?? throw new System.InvalidOperationException("could not access plang outbound options");
-
+    // A Data writes itself via Data.Output through the serializer's async path (the Out view),
+    // NOT JsonSerializer.Serialize — the Wire converter is read-only and throws on STJ Write.
     private static string ToJson(global::app.data.@this data)
-        => JsonSerializer.Serialize(data, Options);
+        => new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext)
+            .Serialize(data).Peek()!.ToString()!;
 
     private static global::app.data.@this FromJson(string json)
-        => JsonSerializer.Deserialize<global::app.data.@this>(json, Options)!;
+        => new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext).Deserialize(json);
 
     [Test]
     public async Task PrParameter_OmitsKindWhenAbsent()

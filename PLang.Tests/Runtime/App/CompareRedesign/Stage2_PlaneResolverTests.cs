@@ -111,13 +111,11 @@ public class Stage2_PlaneResolverTests
         var ctx = app.User.Context;
         var d = new Data("myBinding", new Dictionary<string, object?> { ["name"] = "ingi" }, context: ctx);
 
+        // A Data writes itself via Data.Output through the serializer's async path — the Wire
+        // converter is read-only and throws on STJ Write. Out drops the envelope name; Store keeps it.
         var plang = (global::app.channel.serializer.plang.@this)app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var outbound = System.Text.Json.JsonSerializer.Serialize(d,
-            (System.Text.Json.JsonSerializerOptions)typeof(global::app.channel.serializer.plang.@this)
-                .GetField("_outbound", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(plang)!);
-        var store = System.Text.Json.JsonSerializer.Serialize(d,
-            (System.Text.Json.JsonSerializerOptions)typeof(global::app.channel.serializer.plang.@this)
-                .GetField("_store", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(plang)!);
+        var outbound = plang.Serialize(d).Peek()!.ToString()!;
+        var store = plang.Store(d).Peek()!.ToString()!;
 
         await Assert.That(outbound).DoesNotContain("\"myBinding\"");
         await Assert.That(store).Contains("\"myBinding\"");
