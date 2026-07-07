@@ -1722,3 +1722,11 @@ read/populate the build's in-memory `.pr` snapshot (avoids reading half-overwrit
 This is coordination, not a config flow — invert via a build-born `.pr` read decorator (build owns the
 coordination) instead of the file op branching on App.Build. Markers left in place at
 `type/path/file/this.Operations.cs:65,109`.
+
+## 2026-07-07 — De-scaffold the CompareRedesign test tree (own follow-up)
+`PLang.Tests/**/CompareRedesign/StageN_*.cs` (~14 files, ~110 tests) is organized by *redesign stage*,
+not behavior — migration scaffolding from the Data/value-model redesign. Most tests assert real
+current behavior (path/file/url/serialization), phrased as "no longer…". Reorg: relocate + rename to
+behavior-domain folders (App/Types/Path, App/Serialization, …), drop CompareRedesign/StageN; delete
+only the pure old-vs-new comparison tests (a few Stage1_Comparison/Stage4_Rank) that have no
+standalone behavior meaning. Not this branch. Ingi flagged 2026-07-07.

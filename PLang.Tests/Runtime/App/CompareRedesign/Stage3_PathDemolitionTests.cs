@@ -42,15 +42,13 @@ public class Stage3_PathDemolitionTests
 
     private static async Task<string> SerializePlang(global::app.@this app, Data data)
     {
-        // The channel chokepoint runs the Load() pass (ILoadable pre-
-        // materialisation) before the sync STJ wall — mirror that here.
-        await data.Load();
+        // A Data writes itself via Data.Output through the serializer's async path —
+        // NOT JsonSerializer.Serialize (the Wire converter is read-only and throws).
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var options = (JsonSerializerOptions)typeof(global::app.channel.serializer.plang.@this)
-            .GetField("_outbound", BindingFlags.Instance | BindingFlags.NonPublic)!
-            .GetValue(plang)!;
-        return JsonSerializer.Serialize(data, options);
+        using var ms = new System.IO.MemoryStream();
+        await plang.SerializeAsync(ms, data, global::app.View.Out);
+        return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }
 
     [Test]
