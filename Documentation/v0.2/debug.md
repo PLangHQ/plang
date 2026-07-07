@@ -4,7 +4,7 @@ PLang has a built-in debugger that dumps step execution info to stderr. It shows
 
 All debug options are passed as JSON via `--debug={...}`. The JSON properties map directly to `Debug.@this` class properties.
 
-Code: `PLang/app/modules/debug/this.cs`
+Code: `PLang/app/module/debug/this.cs`
 
 ## Usage
 
@@ -31,7 +31,7 @@ plang '--debug={"maxLength":2000}'
 plang '--debug={"grep":"actions"}'
 
 # Combine options
-plang '--debug={"goal":"BuildGoal","step":3,"variables":["%actions%"],"maxLength":2000,"grep":"Module"}'
+plang '--debug={"goal":"BuildGoal","step":3,"variables":[{"name":"%actions%"}],"maxLength":2000,"grep":"Module"}'
 ```
 
 ## Properties
@@ -40,13 +40,14 @@ plang '--debug={"goal":"BuildGoal","step":3,"variables":["%actions%"],"maxLength
 |----------|------|---------|-------------|
 | `goal` | string | null | Filter to a specific goal name. Null = all goals. |
 | `step` | int | null | Filter to a specific step index. Null = all steps. |
-| `variables` | DebugVariable[] | null | Variables to watch. Each entry has `name` and optional `event`. |
+| `variables` | DebugVariable[] | null | Variables to watch. Each entry is an object with `name` and optional `event` (`[{"name":"x"}]` — no bare-string shorthand). |
 | `maxLength` | int | 500 | Max characters per line before truncation. |
 | `grep` | string | null | Regex pattern to filter output lines (case-insensitive). |
-| `level` | string | "step" | Detail level: `"step"` (per step) or `"action"` (per action within steps). |
+| `level` | choice | "step" | Detail level: `"step"` (per step) or `"action"` (per action within steps). Any other value is rejected. |
 | `llm` | object | null | Granular LLM tracing — see [LLM Message Tracing](#llm-message-tracing). |
 | `resolveTrace` | bool | false | Log every `%variable%` resolution with resolved type and depth. |
-| `callstack` | bool or object | (off) | Per-flag callstack capture — see [CallStack Flags](#callstack-flags). |
+
+> Callstack capture is **not** a `--debug` option — it is its own flag, `--callstack={...}`. See [CallStack](#callstack---callstack).
 
 ## Detail Levels
 
@@ -55,7 +56,7 @@ plang '--debug={"goal":"BuildGoal","step":3,"variables":["%actions%"],"maxLength
 **action**: Also shows BEFORE/AFTER for each action within a step. Useful for seeing how `%!data%` flows between actions like `goal.call` → `variable.set`.
 
 ```bash
-plang '--debug={"level":"action","variables":["%!data%"]}'
+plang '--debug={"level":"action","variables":[{"name":"%!data%"}]}'
 ```
 
 ## Output Format
@@ -109,7 +110,7 @@ All debug output goes to **stderr** (not stdout), so it doesn't interfere with p
 
 ```bash
 # Build one file, debug the BuildGoal steps, watch a variable
-plang build '--build={"files":"myfile.goal","cache":false}' '--debug={"goal":"BuildGoal","variables":["%actionSummary%"]}'
+plang build '--build={"files":"myfile.goal","cache":false}' '--debug={"goal":"BuildGoal","variables":[{"name":"%actionSummary%"}]}'
 ```
 
 The `cache:false` option bypasses the LLM cache, forcing a fresh LLM call.
@@ -259,19 +260,17 @@ Picks out only the diagnostic lines you care about, hiding the rest of the per-s
 - ❌ Full payload dumps (use `--debug={"llm":{"response":true}}` for LLM data, or `--debug={"variables":[...]}` for vars)
 - ❌ "I'm here" markers without context
 
-## CallStack Flags
+## CallStack (`--callstack`)
 
-The runtime keeps a per-app call tree at `app.Debug.CallStack`. Structural data
-(Action / Caller / Cause / Errors) is **always on** — every action's push/pop is ~50ns
-and gives error traces a useful chain without any flag. Richer per-property capture
-is gated by `--debug={callstack:...}`. Two forms:
+Each actor keeps its **own** call tree at `Actor.CallStack` (a cross-actor call starts a
+separate tree — actor-model style). Structural data (Action / Caller / Cause / Errors) is
+**always on** — every action's push/pop is ~50ns and gives error traces a useful chain
+without any flag. Richer per-knob capture is its **own flag**, `--callstack={...}` — it is
+no longer carried on `--debug`. The knobs apply to the run's startup actors (System + User):
 
 ```bash
-# Shorthand: timing + tags on, others off (good default for "show me the trace")
-plang '--debug={"callstack":true}'
-
-# Full object: explicit per-property control
-plang '--debug={"callstack":{"timing":true,"diff":true,"tags":true,"history":true,"maxFrames":500}}'
+# Explicit per-knob control — no shorthand; name each knob you want on.
+plang '--callstack={"timing":true,"diff":true,"tags":true,"history":true,"maxFrames":500}'
 ```
 
 | Sub-flag | Default | What it does |
@@ -283,7 +282,7 @@ plang '--debug={"callstack":{"timing":true,"diff":true,"tags":true,"history":tru
 | `history` | false | When on, popped Calls stay in `Caller.Children` instead of being removed on dispose. Combined with `maxFrames` for retention cap (FIFO eviction). Off → live tree only; popped Calls are removed from Children. |
 | `maxFrames` | 1000 | Sibling retention cap when `history:true`. The (N+1)th Push under the same Caller evicts the oldest from Children. Also doubles as the runaway-recursion guard for the Caller chain length — Push throws `CallStackOverflowException` when the chain reaches this depth. |
 
-The shorthand `callstack:true` is equivalent to `{timing:true, tags:true, diff:false, deepDiff:false, history:false, maxFrames:1000}`.
+There is no shorthand — name each knob explicitly. A bare `--callstack` (no object) does nothing.
 
 ### Reading from PLang
 

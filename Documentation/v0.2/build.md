@@ -4,7 +4,7 @@ PLang transforms `.goal` files (natural language) into `.pr` files (JSON) using 
 
 All build options are passed as JSON via `--build={...}`. The JSON properties map directly to `Builder.@this` class properties.
 
-Code: `PLang/app/modules/builder/this.cs`
+Code: `PLang/app/module/builder/this.cs`
 
 > **Rebuilding the builder itself?** Go straight to [building-the-builder.md](building-the-builder.md) — the bootstrap case has specific cwd and file-order requirements that nothing here covers.
 
@@ -51,7 +51,7 @@ The cache key is based on the goal content hash. If you change the `.goal` file,
 
 ```bash
 # Build one file, debug the builder, watch variables
-plang build '--build={"files":"myfile.goal","cache":false}' '--debug={"goal":"BuildGoal","variables":["%actionSummary%","%goalForLlm%"]}'
+plang build '--build={"files":"myfile.goal","cache":false}' '--debug={"goal":"BuildGoal","variables":[{"name":"%actionSummary%"},{"name":"%goalForLlm%"}]}'
 ```
 
 See [debug.md](debug.md) for full debug documentation.
