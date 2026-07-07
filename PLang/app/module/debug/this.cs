@@ -44,9 +44,10 @@ public sealed class @this
     public string? Grep { get; set; }
 
     /// <summary>
-    /// Debug detail level. "step" (default) or "action" (shows state between actions).
+    /// Debug detail level — <see cref="Level.Step"/> (default) or <see cref="Level.Action"/>.
+    /// A <c>choice&lt;Level&gt;</c> so the --debug walk rejects any value outside the set.
     /// </summary>
-    public string Level { get; set; } = "step";
+    public global::app.type.choice.@this<global::app.module.debug.Level> Level { get; set; } = global::app.module.debug.Level.Step;
 
     /// <summary>
     /// When true, errors include a dump of all available variables at the point of failure.
@@ -214,7 +215,7 @@ public sealed class @this
             priority: int.MaxValue,
             stopOnError: false));
 
-        if (string.Equals(Level, "action", StringComparison.OrdinalIgnoreCase))
+        if (Level.Value == global::app.module.debug.Level.Action)
         {
             events.Register(new EventBinding(
                 Trigger.BeforeAction,

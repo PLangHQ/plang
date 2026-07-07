@@ -18,8 +18,11 @@ mono_crash.*
 
 # Build results
 [Dd]ebug/
-!App/Debug/
-!App/modules/debug/
+# Un-ignore the SOURCE debug module — the pattern above targets bin/Debug build output, but
+# it also catches this source folder. Paths are relative to this PLang/.gitignore; the /**
+# re-includes files inside the re-included dir (a new .cs here silently vanishes otherwise).
+!/app/module/debug/
+!/app/module/debug/**
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/

@@ -1671,3 +1671,13 @@ deleted (per-actor/per-flow fact; read via `%!goal%`). Trace-model settled as pe
   pattern and the switch mechanism both depend on it — removing it is its own effort.
 - **`--callstack` for service actors.** Executor walks System + User at startup; service actors
   are spawned later — decide how the run-wide knob reaches them (inherit at spawn?).
+
+## 2026-07-07 — Debug↔LLM tracing coupling (Output-as-channel)
+`Debug.Activate()` reaches into a **concrete** `OpenAi` provider (`Code.Get<ILlm>().Provider is OpenAi oai`)
+and subscribes `oai.OnBeforeRequest`/`OnAfterResponse` to dump the LLM exchange. Two smells:
+(1) Debug type-switches on a specific LLM impl — swap providers and LLM tracing silently dies; the
+"emit my exchange when tracing is on" behavior belongs on the **LLM module** (it owns the messages),
+with Debug just flipping the switch. (2) `LlmDebug.Output` (`"stderr"`/`"file"`) is **channel routing**
+re-encoded as a string — "where the blocks go" is a channel selection, not a Debug enum. Left as `string`
+(not converted to `choice`) pending this rework — the channel model supersedes the enum. Context: Stage 6
+Debug-activation pass, Ingi flagged "what does llm have to do with debug?".
