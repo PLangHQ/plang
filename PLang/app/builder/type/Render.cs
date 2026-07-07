@@ -5,8 +5,8 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using app.Utils;
-using ActionSpec = app.builder.type.Action;
-using ExampleSpec = app.builder.type.Example;
+using ActionSpec = app.type.spec.Action;
+using ExampleSpec = app.type.spec.Example;
 
 namespace app.builder.type;
 

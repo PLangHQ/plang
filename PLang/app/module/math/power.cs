@@ -1,6 +1,6 @@
 using app.variable;
-using ExampleSpec = app.builder.type.Example;
-using ActionSpec = app.builder.type.Action;
+using ExampleSpec = app.type.spec.Example;
+using ActionSpec = app.type.spec.Action;
 using number = global::app.type.number.@this;
 
 

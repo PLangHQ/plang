@@ -376,10 +376,10 @@ public sealed class @this : IAsyncDisposable
                     BindingFlags.Public | BindingFlags.Static, binder: null,
                     types: System.Type.EmptyTypes, modifiers: null);
                 if (examplesForLlm != null
-                    && typeof(app.builder.type.Example[]).IsAssignableFrom(examplesForLlm.ReturnType))
+                    && typeof(app.type.spec.Example[]).IsAssignableFrom(examplesForLlm.ReturnType))
                 {
-                    var specs = (app.builder.type.Example[]?)examplesForLlm.Invoke(null, null)
-                        ?? System.Array.Empty<app.builder.type.Example>();
+                    var specs = (app.type.spec.Example[]?)examplesForLlm.Invoke(null, null)
+                        ?? System.Array.Empty<app.type.spec.Example>();
                     examples = specs
                         .Select(s => new data.@this(s.UserIntent, Schema.Render(s), context: App.System.Context))
                         .ToList();

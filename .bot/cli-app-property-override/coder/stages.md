@@ -175,7 +175,7 @@ why BaseUrl/DefaultHeaders/MaxResponseSize never resolve — pre-existing, fail 
 
 ## Stage 10 — Dissolve `app.builder.type` (split the LLM catalog)  ☐
 Fell out of the `builder → build` rename: `app.builder.type` (= `Modules.Schema`) is the LLM's view of the
-action+type catalog, misnamed/misplaced. Split it (full plan: `Documentation/v0.2/catalog-split.md`):
+action+type catalog, misnamed/misplaced. Split it (full plan: this file):
 - ☐ `Example` / `Action` spec records → `app.type.<spec>.*` (NEUTRAL — authored by math/error/…; must not
   depend on `build`). Naming knob: `app.type.spec.Example`/`.Action` (avoid `app.type.action` clash).
 - ☐ Type-catalog LLM view (`PrimitiveNames`/`Types`/`Kinds`) → onto `app.type.catalog` (it already owns
