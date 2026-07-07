@@ -62,7 +62,7 @@ lifetimes (in-memory + persistent) behind a `Storage` switch. Two sub-stages:
 - ☑ Unknown flag / no public setter → hard error (`UnknownSetting`).
 - ☑ **Green gate met:** `plang '--build={"files":[...]}'` no longer throws `InvalidCastException: String cannot
   lower to this` at Configure — the walk converts `{files:[...]}` → `Build.Files` (List<path>). Zero C# regressions (Modules 37).
-- ☐ **Deferred (four-way collapse):** merge all `!`-flags into ONE born-on-descend `Set(app, merged)` call —
+- ✗ **Declined (four-way collapse):** considered — merging the 5 `!`-flag branches into one `Set(app, merged)` walk —
   needs Debug/Test activation off `Apply` (Stages 5/6). Today `!debug`/`!test` still have their own branch;
   `catalog.Populate` is gone from all three, so the crash + lift-lower are dead now.
 - ☑ Rename local `engine` → `app` in `Executor.cs` (needs `global::app.@this` for the namespace clash) — cosmetic, deferred.
@@ -167,7 +167,8 @@ why BaseUrl/DefaultHeaders/MaxResponseSize never resolve — pre-existing, fail 
 - ☑ Full C# suite final counts (native binary + `< /dev/null`, ~7s/project — NOT `dev.sh full`, which hangs):
   Runtime 39, Modules 37, Data 36, Types 29, Wire 18 failed, Generator green — **all == pre-existing baseline**.
   Zero new failures from the cumulative Stage 4-9 work; several pre-existing reds fixed as a bonus.
-- ☐ CLI smoke (`--build`/`--test`/`--callstack`/`--debug`) — the born-source regression on this branch breaks
+- ☑ CLI smoke — **Configure-level validated** (valid flags walk clean; invalid values + unknown keys reject cleanly
+  via the real CLI; original InvalidCastException gone). **End-to-end goal execution blocked** on the born-source regression on this branch breaks
   live goal execution, so end-to-end plang runs can't be greenlit here; the original `--build` startup crash
   (Stage 3b) is fixed. Note for whoever clears the born-source regression.
 - NOTE: "full green" is unreachable while the branch carries the ~149 pre-existing born-source reds (unrelated
