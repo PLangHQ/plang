@@ -15,9 +15,25 @@ public sealed class @this : global::app.type.item.@this, global::app.module.ICon
     [System.Text.Json.Serialization.JsonIgnore]
     public global::app.actor.context.@this Context { get; set; } = null!;
 
+    /// <summary>
+    /// The kind the carrier navigates AS — born at construction: the stamp from whoever
+    /// wrapped the host and knew its format (the json reader/producer, <c>type.Create</c>
+    /// for a <see cref="System.Text.Json.JsonElement"/>, a json container child), else
+    /// resolved once from the host's CLR type (<c>JsonElement → json</c>, anything the kind
+    /// system doesn't claim → <c>*</c> reflection). Never recomputed — the carrier just
+    /// carries it, and asks it to navigate.
+    /// </summary>
+    /// <remarks>JsonIgnore: navigation metadata, not the carrier's wire shape — the clr
+    /// renders its HOST (via <see cref="Output"/>), not its own kind. Reflecting it would
+    /// pull the generic JSON serializer into the kind token's context-dependent accessors.</remarks>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public global::app.type.kind.@this Kind { get; }
+
     /// <summary>Born WITH context — the carrier navigates/serializes through it (child
-    /// values, type resolution). A clr always wraps a host for a wired scope.</summary>
-    public @this(object value, global::app.actor.context.@this context)
+    /// values, type resolution). A clr always wraps a host for a wired scope. A producer
+    /// may stamp a <paramref name="kind"/> when it knows the host's format; otherwise the
+    /// kind system resolves it from the host's CLR type at birth.</summary>
+    public @this(object value, global::app.actor.context.@this context, global::app.type.kind.@this? kind = null)
     {
         Value = value ?? throw new System.ArgumentNullException(nameof(value));
         Context = context ?? throw new System.ArgumentNullException(nameof(context));
@@ -27,24 +43,24 @@ public sealed class @this : global::app.type.item.@this, global::app.module.ICon
             throw new System.InvalidOperationException(
                 "A Data may not be carried in a clr — nested Data is not a supported shape. "
                 + "Return the inner value via its own factory, never wrap a Data.");
+        // Born kind: an explicit stamp, else a behavior that CLAIMS this CLR form (json),
+        // else the host's plang-type identity (a callstack is kind "callstack"), else its
+        // full class name. Navigation then routes by kind — "json" walks json, anything
+        // unclaimed falls to `*` (reflection).
+        Kind = kind
+            ?? Context.App.Type.Kinds[value.GetType()]
+            ?? (global::app.type.kind.@this)(Context.App.Type.ResolveName(value.GetType())
+                                             ?? value.GetType().FullName ?? "*");
     }
 
     /// <summary>
-    /// A foreign host object is the apex of the value lattice — the un-narrowed <c>item</c>
-    /// (≈ C# <c>object</c>) — so it reports <c>type=item</c> with its C# identity in
-    /// <c>kind</c>: the declared <see cref="app.Attributes.PlangTypeAttribute"/> / registry
-    /// short name when the class is named PLang vocabulary (<c>app</c>, <c>callstack</c>, …),
-    /// else the version-independent <c>FullName</c>. Mirrors <c>number</c>/<c>int</c>: type =
-    /// the lattice position, kind = the specialization.
+    /// A foreign host is the apex of the value lattice — the un-narrowed <c>item</c> (≈ C#
+    /// <c>object</c>) — so it reports <c>type=item</c> with its <see cref="Kind"/> as the
+    /// specialization (<c>json</c> for a JsonElement, <c>*</c> for an unrecognised POCO).
+    /// Mirrors <c>number</c>/<c>int</c>: type = the lattice position, kind = the format.
     /// </summary>
     protected internal override global::app.type.@this Mint()
-    {
-        var clrType = Value.GetType();
-        var kind = Context.App.Type.ResolveName(clrType)
-                   ?? clrType.FullName
-                   ?? clrType.Name;
-        return new global::app.type.@this("item", kind);
-    }
+        => new global::app.type.@this("item", Kind.ToString());   // temp .ToString(): until type.@this.Kind is a kind.@this, then pass Kind whole
 
     /// <summary>In memory now = the carrier itself (a closed box, like every other item whose
     /// <c>Peek</c> answers self). The carried host is reachable ONLY through the explicit
@@ -68,39 +84,17 @@ public sealed class @this : global::app.type.item.@this, global::app.module.ICon
             + "it has no plang type to render itself. Wrap it in a real item type, or fix the producer that parked it in a clr.");
 
     /// <summary>
-    /// The carrier owns navigation into its host (behaviour on the element). A nested Data
-    /// riding the carrier navigates as the real object; otherwise the host's property is
-    /// reflected and re-wrapped. Absent → NotFound. The walk is bottom-up + DeclaredOnly so a
-    /// shadowing derived property wins and GetProperty never throws Ambiguous.
+    /// The carrier navigates its host by asking its own <see cref="Kind"/> — the json kind
+    /// walks a JsonElement, the <c>*</c> kind reflects a POCO. A single key is a one-segment
+    /// path; the kind owns the walk (and the path language).
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(
+    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(
         global::app.data.@this parent, string key)
-    {
-        if (Value is global::app.data.@this innerData)
-            return await innerData.GetChild(key);
+        => Kind.Navigate(Value, global::app.variable.path.@this.Parse(key), parent, Context);
 
-        System.Reflection.PropertyInfo? prop = null;
-        for (var t = Value.GetType(); t != null && prop == null; t = t.BaseType)
-            prop = t.GetProperty(key, System.Reflection.BindingFlags.Public
-                | System.Reflection.BindingFlags.Instance
-                | System.Reflection.BindingFlags.IgnoreCase
-                | System.Reflection.BindingFlags.DeclaredOnly);
-        if (prop == null) return Context.NotFound(key);
-
-        try
-        {
-            var resolved = prop.GetValue(Value);
-            return resolved is global::app.data.@this d
-                ? d
-                : new global::app.data.@this(key, resolved, parent: parent, context: Context);
-        }
-        catch (System.Reflection.TargetInvocationException ex)
-        {
-            return Context.Error(new global::app.error.ServiceError(
-                $"Failed to read '{key}': {(ex.InnerException ?? ex).Message}",
-                "NavigationError", 500) { Exception = ex });
-        }
-    }
+    /// <summary>The children of the host, via its <see cref="Kind"/> — for <c>foreach</c>.</summary>
+    public System.Collections.Generic.IEnumerable<global::app.data.@this> Enumerate()
+        => Kind.Enumerate(Value, Context);
 
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
 

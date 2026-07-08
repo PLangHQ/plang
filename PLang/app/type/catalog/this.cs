@@ -49,6 +49,15 @@ public sealed partial class @this
     public kind.Hooks KindHooks { get; } = new();
 
     /// <summary>
+    /// The singleton store of kind behaviors (navigate / enumerate / load / convert), one
+    /// <see cref="kind.behavior.@this"/> per format. INTERNAL plumbing — reached only
+    /// through the kind token (<c>value.Kind.Navigate(…)</c>), never a flat
+    /// <c>App.Type.&lt;plural&gt;</c>. Distinct from <see cref="KindHooks"/> (build-time
+    /// kind stamping) and <c>type.Kinds</c> (advertised vocabulary).
+    /// </summary>
+    internal kind.behavior.list.@this Kinds { get; } = new();
+
+    /// <summary>
     /// Per-type <c>static Convert(object?, string? kind, context)</c> hooks — the
     /// runtime sibling of <see cref="KindHooks"/>. A type owns how a value becomes
     /// an instance of itself; <c>app.type.@this.Convert</c> routes through here.

@@ -1,40 +1,80 @@
 namespace app.type.kind;
 
 /// <summary>
-/// A kind value — the subtype token ("json", "jpg", "md") that names HOW a raw
-/// form decodes. Content off I/O rests as <c>binary</c> carrying a kind; on
-/// access the kind names the type the bytes narrow to, and that type's reader
-/// does the parse.
+/// A kind value — the subtype token ("json", "md", "int") that names HOW a value of a
+/// type is specialised. It is the single door to a kind's BEHAVIOR: a value asks its own
+/// kind to navigate / enumerate / load / convert it (<c>value.Kind.Navigate(…)</c>), and
+/// the token delegates to the registered <see cref="behavior.@this"/> for its name. So
+/// there is never a "kinds collection" on the type — you already hold the kind.
 ///
-/// <para>The kind owns that mapping: a kind-specific reader names its owner
-/// (<c>json→item</c>, <c>csv→table</c> — the reader registry); otherwise the
-/// format family answers (<c>jpg→image</c>, <c>md→text</c>). Unknown kinds stay
-/// <c>binary</c> (nothing decodes them).</para>
+/// <para>Also the reader-side mapping: <see cref="Type"/> is the type a value of this kind
+/// narrows to (json→item, csv→table, mp3→audio), via the reader / format registry.</para>
 /// </summary>
 public sealed class @this
 {
     public string Name { get; }
-    private readonly actor.context.@this _context;
 
-    public @this(string name, actor.context.@this context)
+    /// <summary>Context is deferred: the <see cref="op_Implicit(string)"/> mints a
+    /// context-less token (<c>Kind = "json"</c>); it is stamped when the token is used in
+    /// a context, and the behavior verbs take the context as a parameter regardless.</summary>
+    internal actor.context.@this? Context { get; set; }
+
+    public @this(string name, actor.context.@this? context = null)
     {
-        Name = name;
-        _context = context ?? throw new System.ArgumentNullException(nameof(context));
+        Name = name ?? throw new System.ArgumentNullException(nameof(name));
+        Context = context;
     }
 
+    /// <summary>A bare kind name IS a kind — eases <c>Kind = "json"</c> across the refactor
+    /// from a string kind. Context lands when the token is used.</summary>
+    public static implicit operator @this(string name) => new(name);
+
     /// <summary>
-    /// The type a value of this kind narrows to once decoded — the reader's
-    /// owner type when a kind-specific reader exists, else the format family,
-    /// else <c>binary</c> (undecodable, stays bytes).
+    /// The type a value of this kind narrows to once decoded — the reader's owner type
+    /// when a kind-specific reader exists, else the format family, else <c>binary</c>.
     /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public global::app.type.@this Type
     {
         get
         {
-            string name = _context.App.Type.Readers.TypeOf(Name)
-                          ?? _context.App.Format.TypeOf(Name)
+            if (Context == null)
+                throw new System.InvalidOperationException(
+                    $"kind '{Name}' has no Context — resolving its Type needs a stamped token.");
+            string name = Context.App.Type.Readers.TypeOf(Name)
+                          ?? Context.App.Format.TypeOf(Name)
                           ?? "binary";
-            return new global::app.type.@this(name, Name) { Context = _context };
+            return new global::app.type.@this(name, Name) { Context = Context };
         }
     }
+
+    // --- Behavior: the kind owns what you can do with its values, delegating by name. ---
+
+    /// <summary>Navigate a value of this kind by <paramref name="path"/>.</summary>
+    public global::System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(
+        object obj, global::app.variable.path.@this path,
+        global::app.data.@this parent, global::app.actor.context.@this ctx)
+        => ctx.App.Type.Kinds[this].Navigate(obj, path, parent, ctx);
+
+    /// <summary>Enumerate the children of a container value of this kind (for foreach).</summary>
+    public System.Collections.Generic.IEnumerable<global::app.data.@this> Enumerate(
+        object obj, global::app.actor.context.@this ctx)
+        => ctx.App.Type.Kinds[this].Enumerate(obj, ctx);
+
+    /// <summary>Convert <paramref name="source"/> INTO a value of this kind — the outbound
+    /// owns it (dict from json, audio from text). An error <c>Data</c> when it can't.</summary>
+    public global::System.Threading.Tasks.ValueTask<global::app.data.@this> Convert(
+        global::app.data.@this source, global::app.actor.context.@this ctx)
+        => ctx.App.Type.Kinds[this].Convert(source, ctx);
+
+    public override string ToString() => Name;
+
+    public override bool Equals(object? obj) => obj switch
+    {
+        @this k => string.Equals(Name, k.Name, System.StringComparison.OrdinalIgnoreCase),
+        string s => string.Equals(Name, s, System.StringComparison.OrdinalIgnoreCase),
+        _ => false,
+    };
+
+    public override int GetHashCode() => System.StringComparer.OrdinalIgnoreCase.GetHashCode(Name);
 }

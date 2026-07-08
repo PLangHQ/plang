@@ -126,6 +126,16 @@ public partial class @this
     }
 
     /// <summary>
+    /// Convert this value into another kind — the OUTBOUND kind owns it (<c>dict</c> builds
+    /// itself from json, <c>audio</c> from text). Value-facing: everything at an action
+    /// boundary is a <c>Data</c>, which carries its own context, so no context param. The
+    /// target kind returns the built value or an error <c>Data</c> when this source can't
+    /// become it.
+    /// </summary>
+    public global::System.Threading.Tasks.ValueTask<@this> Convert(global::app.type.kind.@this to)
+        => to.Convert(this, _context);
+
+    /// <summary>
     /// A signed (@schema:signature) Data read in <see cref="app.type.reader.ReadContext.DeferVerify"/>
     /// mode carries its unverified signature layer here instead of verifying inline inside the
     /// sync `ref`-struct reader. The async deserialize caller verifies it (async, no sync-wait)
