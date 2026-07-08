@@ -119,6 +119,6 @@ public class NumberValueTests
     {
         var types = new global::app.type.catalog.@this();
         await Assert.That(types.ResolveType("number")).IsEqualTo(typeof(number));
-        await Assert.That(types.ResolveName(typeof(number))).IsEqualTo("number");
+        await Assert.That(types[typeof(number)]?.Name).IsEqualTo("number");
     }
 }

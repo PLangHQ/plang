@@ -68,16 +68,6 @@ public sealed partial class @this
     }
 
     /// <summary>
-    /// Returns the canonical PLang name for a domain type, or null if the type
-    /// is not named (no [PlangType], not an @this class, not registered at runtime).
-    /// </summary>
-    public string? ResolveName(Type type)
-    {
-        EnsureInitialized();
-        return _typeToName.TryGetValue(type, out var name) ? name : null;
-    }
-
-    /// <summary>
     /// Returns the CLR type for a PLang name, or null if no type is registered
     /// under that name.
     /// </summary>

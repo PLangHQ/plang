@@ -995,51 +995,27 @@ public sealed class OpenAi : ILlm
     private static data.@this RestoreFromCache(data.@this cached)
     {
         var cachedValue = cached.Peek();
-        object? resultValue = null;
+        object? resultValue = cachedValue;   // non-container fallback; overridden below by RawResponse
         var props = new Dictionary<string, object?>();
 
-        // A json cache entry materializes to the native dict — navigate its
-        // entries directly (Value + the metadata props), no raw copy.
-        if (cachedValue is app.type.dict.@this nativeDict)
+        // The cache entry round-trips as a native dict (in-memory) or a clr(json) (through the
+        // json reader) — both enumerate uniformly. The old per-shape reconstruction
+        // (dict / Clr{JsonElement} / Clr{Dictionary}) existed ONLY because a JsonElement
+        // couldn't survive the cache; a clr(json) round-trips as raw json now.
+        System.Collections.Generic.IEnumerable<data.@this>? entries = cachedValue switch
         {
-            resultValue = nativeDict.Get("Value")?.Peek();
-            foreach (var entry in nativeDict.Entries)
+            global::app.type.dict.@this d => (System.Collections.Generic.IEnumerable<data.@this>)d.Entries,
+            global::app.type.clr.@this c => c.Enumerate(),
+            _ => null
+        };
+        if (entries != null)
+        {
+            resultValue = null;
+            foreach (var entry in entries)
             {
-                if (entry.Name == "Value") continue;
+                if (entry.Name == "Value") { resultValue = entry.Peek(); continue; }
                 props[entry.Name] = entry.Peek();
             }
-        }
-        else if (cachedValue is Clr { Value: JsonElement je } && je.ValueKind == JsonValueKind.Object)
-        {
-            if (je.TryGetProperty("Value", out var valProp))
-                resultValue = valProp.ValueKind == JsonValueKind.Null ? null : valProp.Clone();
-
-            foreach (var prop in je.EnumerateObject())
-            {
-                if (prop.Name == "Value") continue;
-                props[prop.Name] = prop.Value.ValueKind switch
-                {
-                    JsonValueKind.String => prop.Value.GetString(),
-                    JsonValueKind.Number => prop.Value.TryGetInt64(out var l) ? (object)l : prop.Value.GetDouble(),
-                    JsonValueKind.True => true,
-                    JsonValueKind.False => false,
-                    JsonValueKind.Null => null,
-                    _ => prop.Value.GetRawText()
-                };
-            }
-        }
-        else if (cachedValue is Clr { Value: Dictionary<string, object?> dict })
-        {
-            resultValue = dict.GetValueOrDefault("Value");
-            foreach (var kvp in dict)
-            {
-                if (kvp.Key == "Value") continue;
-                props[kvp.Key] = kvp.Value;
-            }
-        }
-        else
-        {
-            resultValue = cachedValue;
         }
 
         // Authoritative reconstruction: re-parse the round-tripped RawResponse

@@ -49,7 +49,7 @@ public sealed class @this : global::app.type.item.@this, global::app.module.ICon
         // unclaimed falls to `*` (reflection).
         Kind = kind
             ?? Context.App.Type.Kinds[value.GetType()]
-            ?? (global::app.type.kind.@this)(Context.App.Type.ResolveName(value.GetType())
+            ?? (global::app.type.kind.@this)(Context.App.Type[value.GetType()]?.Name
                                              ?? value.GetType().FullName ?? "*");
     }
 

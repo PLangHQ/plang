@@ -62,14 +62,14 @@ public class RegistryFoldTests
         })
         {
             await Assert.That(_types.ResolveType(name)).IsEqualTo(clr);
-            await Assert.That(_types.ResolveName(clr)).IsEqualTo(name);
+            await Assert.That(_types[clr]?.Name).IsEqualTo(name);
         }
         // Numerics: many-to-one — every numeric CLR primitive names "number"
         // (the kind carries the precision on the entity).
-        await Assert.That(_types.ResolveName(typeof(int))).IsEqualTo("number");
-        await Assert.That(_types.ResolveName(typeof(long))).IsEqualTo("number");
-        await Assert.That(_types.ResolveName(typeof(decimal))).IsEqualTo("number");
-        await Assert.That(_types.ResolveName(typeof(double))).IsEqualTo("number");
+        await Assert.That(_types[typeof(int)]?.Name).IsEqualTo("number");
+        await Assert.That(_types[typeof(long)]?.Name).IsEqualTo("number");
+        await Assert.That(_types[typeof(decimal)]?.Name).IsEqualTo("number");
+        await Assert.That(_types[typeof(double)]?.Name).IsEqualTo("number");
     }
 
     [Test]

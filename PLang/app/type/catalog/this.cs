@@ -286,6 +286,21 @@ public sealed partial class @this
         }
     }
 
+    /// <summary>
+    /// Index by CLR type — the type entity for a live CLR type's plang identity, or null when
+    /// the CLR type names no plang type (a raw POCO). The navigable mirror of
+    /// <see cref="this[string]"/>; replaces the old <c>ResolveName</c> verb-lookup. Null on miss
+    /// (a CLR type MAY not be plang vocabulary), unlike the name door's throw-on-miss.
+    /// </summary>
+    public app.type.@this? this[System.Type clrType]
+    {
+        get
+        {
+            EnsureInitialized();
+            return _typeToName.TryGetValue(clrType, out var name) ? this[name] : null;
+        }
+    }
+
     /// <summary>Compile-time generic lookup — returns the catalog-built entity for T.</summary>
     public app.type.@this of<T>()
     {
@@ -426,8 +441,8 @@ public sealed partial class @this
         if (listIface != null)
             return $"list<{GetTypeName(listIface.GetGenericArguments()[0])}>";
 
-        var declared = ResolveName(type);
-        if (declared != null) return declared;
+        EnsureInitialized();
+        if (_typeToName.TryGetValue(type, out var declared)) return declared;
 
         if (Choices.Has(type))
             return StripGenericArity(type.Name).ToLowerInvariant();
