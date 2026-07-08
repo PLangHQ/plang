@@ -947,9 +947,8 @@ public sealed class OpenAi : ILlm
         var result = await settings.Get<global::app.type.item.@this>("LlmConfig", settingKey);
         if (result.Success && result.Peek() is { IsNull: false })
         {
-            var val = (await result.Value()) is Clr { Value: data.@this d }
-                ? (await d.Value())?.ToString()
-                : (await result.Value())?.ToString();
+            // A clr never wraps a Data (the ctor forbids it), so read the value directly.
+            var val = (await result.Value())?.ToString();
             if (!string.IsNullOrEmpty(val)) return val;
         }
 
