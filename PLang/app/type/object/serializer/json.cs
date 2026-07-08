@@ -26,10 +26,11 @@ public static class json
         if (raw is not (string or byte[])) return raw;
         string s = new global::app.type.text.@this(raw).ToString();
         if (string.IsNullOrEmpty(s)) return null;
-        // Narrow the JsonElement graph to born-native items via the json entry
-        // parse — leaving JsonElement values would re-serialize as their
-        // reflection shape ({"valueKind":...}) and navigate awkwardly.
-        var parsed = JsonSerializer.Deserialize<object?>(s, _opts);
-        return new global::app.type.item.serializer.json(ctx.Context).Parse(parsed);
+        // Structured json stays a clr(json) — navigated/enumerated/serialized lazily by the
+        // json kind, never materialized into a dict/list up front. A JsonElement clr now
+        // serialises as its raw json (the json kind's Output), so the round-trip is clean;
+        // a consumer that needs a mutable native structure asks for it explicitly (`as dict`).
+        using var doc = JsonDocument.Parse(s);
+        return new global::app.type.clr.@this(doc.RootElement.Clone(), ctx.Context, "json");
     }
 }
