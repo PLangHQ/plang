@@ -51,6 +51,7 @@ Three doors already carry 90% of this. The change is what they accept and whethe
 The chain is forced. Navigation-pull needs `await source.GetChild("module").Value<text>()` per property. `GetChild`/`Value` are async. To await inside `Create`, `Create` must be async. To keep **one** construction door (the target builds itself — ICreate's whole contract), every implementor's signature goes async with it.
 
 - **Cost:** ~40 `ICreate` implementors change signature. Mechanical: a sync leaf returns `new ValueTask<TSelf?>(result)` — **no `async` keyword, no state machine, no allocation**. Only the handful that actually navigate (records) use `async`. `list<T>.Convert` gains `async` because it now awaits per-element navigation.
+- **Lands as its own prep branch first** (settled with Ingi): the sweep is a pure signature change with no behavior change, so it goes on a separate branch and merges *before* the navigation work — the big mechanical diff stays isolated from the design change, easier to review and revert. One extra merge, accepted.
 - **Precedent:** this is exactly the truthiness move. `IBooleanResolvable` made the whole condition pipeline async (`IEvaluator.Evaluate`, `Operator.Evaluate`, `assert.IsTrue/IsFalse`) because one leaf capability (`path` existence) can be I/O. Same rule here: because a target can build itself by navigating (and navigation can resolve a `%ref%` / bracket-index — I/O), construction is async, uniformly, at the seam. The value model already chose this shape once.
 - **Rejected — the interface split** (sync `ICreate` for scalars + a separate async navigate-create for records). Two doors for one concept ("the target builds itself from a source"). Records already flow through the *same* `Create` default today; splitting now regresses uniformity to dodge mechanical churn. Own the churn.
 - **Rejected — pre-navigate in the caller, keep Create sync.** Pre-resolving all children into a bag = materializing the source = the exact round-trip smell we are removing. And whoever navigates must be async anyway (sync-over-async is banned), so the split only moves the boundary out one layer and adds a door.
@@ -75,12 +76,14 @@ So B ("general mechanism", Ingi's call) = the navigation-pull default. A ("per-t
 
 ## Sequencing
 
-Three stages. Stage 1 alone turns the builder green; 2–3 are the payoff.
+A prep branch, then three stages. Stage 1 alone turns the builder green; 2–3 are the payoff.
 
-**Stage 1 — unblock the builder (write path).**
-- `ICreate.Create` + `list<T>.Convert` go async (Decision 1). Mechanical sweep across implementors.
+**Stage 0 — prep branch (async sweep), landed first.**
+- A separate branch: `ICreate.Create` + `list<T>.Convert` go async (Decision 1), pure signature sweep across ~40 implementors, no behavior change. The dispatch at `data/this.cs:512` becomes `await T.Create(…)`. Merge this before `navigation-driven-record-builder` builds on top.
+
+**Stage 1 — unblock the builder (write path).** On top of the merged Stage 0 (async doors).
 - `list<T>.Convert` accepts a **navigable** source: when `value` is a clr/dict/list item, enumerate via the value's own `EnumerateItems`/`Enumerate` (the carrier already delegates to its kind) instead of demanding raw `IEnumerable`.
-- `action` gets a hand-written navigation-pull `Create`: pull `module`/`action` as `text`, build `Parameters` as `List<Data>` **through `app/data/reader`** (the seam), recurse `Modifiers`. `actions.Create` accepts a clr(json)/navigable array (defer to `list<action>`).
+- `action` gets a **hand-written** navigation-pull `Create` (Decision 2 — hand-write first, then generalize): pull `module`/`action` as `text`, build `Parameters` as `List<Data>` **through `app/data/reader`** (the seam), recurse `Modifiers`. `actions.Create` accepts a clr(json)/navigable array (defer to `list<action>`).
 - The write index-arms (`variable/list/this.cs:439,455`) go CONVERT-first, matching the property arm.
 - **Blocker-2 (`goal.getTypes` List-lower)** is the same LOWER-instead-of-CONVERT bug at a native-`List` → `list<dict>` return. `list<dict>.Convert` already takes a native `List` (it is IEnumerable), so this is a convert-first routing fix at that return/read site, not navigation. Verify it falls out of the async convert door; if a distinct call site still lowers, fix it there.
 - **Blocker-1 (`data/reader:79-80`)** — the deferred-read format guess (String→text/plain regardless of declared type) — is my clr-navigators demolition item #5, still open, and it is what makes `%plan%` reliably a clr(json). Route an `object`/`dict`/`list`/json-kind-declared wire value → json → clr(json). **Sensitive line** (the variable-as-value seam): a full-match `%var%` must still born a `variable` in `type.Build` (`type/this.cs:265`), a different branch — verify it is untouched. This is separable from Stage 1's convert work; sequence it first per the coder handoff ("START HERE") since without it the write never receives a clr(json).
@@ -95,21 +98,38 @@ Three stages. Stage 1 alone turns the builder green; 2–3 are the payoff.
 
 ---
 
-## Demolition worklist
+## Code to remove (demolition worklist)
 
-Cross-checked against my `clr-navigators` demolition audit — nothing here contradicts its [stays]/[deferred] lists.
+Named at file:line, tagged like the `clr-navigators` audit: **[dead]** delete, **[replace]** rewrite in place, **[candidate]** collapses — verify during impl, **[stays]** do not touch. Cross-checked against that audit; nothing here contradicts its lists.
 
-**Dies (by stage):**
-- **Stage 1:** the sync signatures of `ICreate.Create` and `list<T>.Convert` (both go async). The `IEnumerable`-only guard in `list<T>.Convert` (`this.Generic.cs:54`) — replaced by "navigable source." The blind LOWER in the write index-arms (`variable/list/this.cs:440,456`).
-- **Stage 2:** `actions`' bespoke `Create` list-only branch, *if* the generic default subsumes it.
-- **Stage 3:** `goal/serializer/Reader.cs` `Deserialize<goal>` (the whole reader). `dict.Clr`'s STJ round-trip (`dict/this.cs:323`) once nothing calls it for record construction — verify no other caller (untyped dict→CLR still needs a lowering; keep that, kill only the record-deserialize use). `build/code/Default.cs` dual-path step readers (my demolition #10).
+### Prep branch (async sweep)
+- **[replace]** `ICreate.Create` sync signature — `item/ICreate.cs:30`, `TSelf? → ValueTask<TSelf?>`. Every implementor's signature follows (~40; sync leaves return `new(result)`, no `async`).
+- **[replace]** `list<T>.Convert` sync signature — `list/this.Generic.cs:52`, `Data → ValueTask<Data>` (gains `async`).
+- **[replace]** the dispatch — `data/this.cs:512`, `T.Create(await Value(), this)` → `await T.Create(await Value(), this)`.
 
-**Stays (trap list):**
-- `app/data/reader/this.cs` — the Data-leaf reader. **Untouched by the mechanism** (Stage 1 fixes its format-routing line per demolition #5; that is a routing correction, not a rewrite). `%ref%`/template/signing stay byte-identical.
-- `GoalReadOptions` / `Wire.ReadOptions` (`catalog/Conversion.cs:55`) — still the converter chain for the Data leaves during the read. Only the record-skeleton half stops using STJ.
-- `dict.Clr` for genuine untyped dict→CLR lowering — keep. Only the record-deserialize call dies.
-- `catalog.TryConvert` per-element authority — `list<T>.Convert` still routes each element through it; the element's own type still owns its build.
-- `type.convert.OfStatic` (the CONVERT-first hook the write arm calls) — stays; it is the correct door. It just needs the async navigation door underneath it to succeed for records.
+### Stage 1 (unblock — write path)
+- **[replace]** `list<T>.Convert`'s `IEnumerable`-only guard — `list/this.Generic.cs:54`. Swap "raw IEnumerable" for "ask the source to enumerate itself" (the carrier delegates to its kind), so a clr(json) array is accepted.
+- **[replace]** blind LOWER in the write index-arms — `variable/list/this.cs:440` and `:456` (`iv.Clr(elementType)` / `iv.Clr(indexer.PropertyType)`). Go CONVERT-first, matching the property arm at `:476`.
+
+### Stage 2 (generalize)
+- **[candidate]** `actions.Create` bespoke list-only body — `goal/steps/step/actions/this.cs:29-47`. Collapses into the generic navigation-pull default — verify no real quirk before deleting.
+
+### Stage 3 (retire the goal-as-type STJ read bridge)
+- **[dead]** `goal/serializer/Reader.cs` — the whole `Deserialize<goal>` typed reader (auto-discovered; deleting the namespace drops it from the scan).
+- **[dead]** `goal/serializer/Default.cs` — the wildcard `*` reader path for goal, same STJ `Deserialize<goal>` (verify it mirrors Reader before cutting).
+- **[dead]** `GoalReadOptions` — `type/catalog/Conversion.cs:55-59`. Its ONLY callers are the two readers above; it orphans when they die. (I earlier mis-listed this as a stay — the Data leaves use `Wire.ReadOptions` directly, not `GoalReadOptions`.)
+- **[dead]** the goal-specific dispatch — `type/catalog/Conversion.cs:282` (`targetType == typeof(goal) ? GoalReadOptions(context)`). Dies with the readers.
+- **[replace]** the record-use of `value.Clr(typeof(TSelf))` — `item/ICreate.cs:61-62`. Replaced by navigation-pull. (The `dict.Clr` STJ method itself STAYS — non-record targets, see Decision 3.)
+- **[candidate]** `build/code/Default.cs` dual-path step readers — `GetString` (`:855-862`) and `SetValue` (`:868-877`), the `step is IDictionary` / `step is JsonElement` forks (clr-navigators demolition #10), called by `PromoteGroups`. The JsonElement branch dies when steps navigate uniformly as Data; verify the dict-branch callers before cutting.
+
+### [stays] — do NOT remove
+- `app/data/reader/this.cs` — the Data-leaf reader. Only its format-routing line (`:79-80`) is *corrected* (blocker-1 / clr-navigators #5) — a routing fix, not a rewrite. `%ref%`/template/signing stay byte-identical.
+- `dict.Clr`'s STJ method — `dict/this.cs:328-335`. Serves typed `Dictionary<string,T>` slots and CLR POCOs (Decision 3). Only its record-use call site dies.
+- `goal.call/Reader.cs` — goal.call still rides STJ through Wire; a separate follow-on, not this branch.
+- `actions/serializer/Reader.cs` — reads Data-leaf actions via Wire, not the goal skeleton; stays.
+- `Wire.ReadOptions` / the converter chain — the Data-leaf half of the read.
+- `catalog.TryConvert` — `list<T>.Convert` still routes each element through it; the element's type still owns its build.
+- `type.convert.OfStatic` — the CONVERT-first hook the write arm calls; it is the correct door, it just needs the async navigation underneath to succeed for records.
 
 ---
 
@@ -137,8 +157,8 @@ No `GetX`/`IsX`/verb+noun surfaces added. The mechanism is two existing single-v
 
 ---
 
-## Open for Ingi before coder starts
+## Decisions (settled with Ingi, 2026-07-08)
 
-1. **Stage 1 scope** — hand-write `action`/`actions` `Create` to unblock now (proves the pull small), or wait for the generic default and do it once? I lean hand-write-then-generalize; it gets the builder green fastest and de-risks the async sweep on two real records before touching all 40.
-2. **The async sweep is the big mechanical cost** — ~40 `ICreate` implementors change signature in one branch. Confirm you want it in this branch and not split into a prep branch ("ICreate goes async") landed first, then the navigation on top. Cleaner history, one more merge.
-3. **`dict.Clr` STJ round-trip** retires only in Stage 3 and only for record construction. Confirm we keep it for untyped dict→CLR lowering (I believe yes — it has non-record callers).
+1. **Stage 1 = hand-write `action`/`actions` `Create` first, then generalize.** Fastest to green; de-risks the async sweep on two real records before the generic default touches all 40.
+2. **The async sweep lands as its own prep branch first.** "`ICreate.Create` + `list<T>.Convert` go async" is a pure mechanical signature sweep (no behavior change) on a separate branch; `navigation-driven-record-builder` then builds the navigation on top. The mechanical diff stays isolated from the design change. One extra merge, accepted.
+3. **`dict.Clr`'s STJ round-trip stays — navigation-pull retires only its RECORD use.** Verified 2026-07-08: non-record targets reach the STJ branch (`dict/this.cs:328`) — typed `Dictionary<string,T>` slots (`variable/list/this.cs:553`), arbitrary CLR property/element writes on the deep-set path (`:440,:456,:477`), and the SettingsStore/Identity typed reads. Navigation-pull only builds plang records, so it removes exactly one call — the record branch at `ICreate.cs:61-62` — and the STJ method keeps serving the rest. Retiring it wholesale is its own scope (build typed maps + CLR POCOs without STJ), out of this branch.
