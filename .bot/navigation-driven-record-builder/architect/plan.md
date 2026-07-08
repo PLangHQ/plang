@@ -37,7 +37,7 @@ Three doors already carry 90% of this. The change is what they accept and whethe
 - The **index arms** (lines 439–440, 455–456) still LOWER blindly (`iv.Clr(elementType)`), no convert-first. Same bug will bite an indexed element write. Fix them to CONVERT-first too.
 
 ### The Data-leaf seam (must stay byte-identical)
-`action.Parameters` is `List<app.data.@this>` — the param values `{name,type,value}` are **Data leaves**, not record fields. They carry `%ref%`-born-as-variable, deferred source, template flag, and signing — all owned by `app/data/reader/this.cs`. When the record walk reaches `Parameters`, each element must be **read as a Data through that reader**, never converted to a value. This half does not change and must not.
+`action.Parameters` is `List<app.data.@this>` — the param values `{name,type,value}` are **Data leaves**, not record fields. They carry a full-match `%var%`-born-as-variable, deferred source, template flag, and signing — all owned by `app/data/reader/this.cs`. When the record walk reaches `Parameters`, each element must be **read as a Data through that reader**, never converted to a value. This half does not change and must not.
 
 ### The async spine (already async everywhere except the two doors)
 `Data.Value<T>()` (this.cs:503), `Data.Value()` (288), `Data.GetChild`/`Navigate` (this.Navigation.cs:17,33), `item.Navigate`, `clr.Navigate`, `kind.Navigate`, `kind.behavior.Navigate` — **all async `ValueTask`**. The dispatch is `T.Create(await Value(), this)` (this.cs:512): the value door is awaited, then Create is called **sync**. `ICreate.Create` and `list<T>.Convert` are the only two sync islands left in the spine.
@@ -52,7 +52,7 @@ The chain is forced. Navigation-pull needs `await source.GetChild("module").Valu
 
 - **Cost:** ~40 `ICreate` implementors change signature. Mechanical: a sync leaf returns `new ValueTask<TSelf?>(result)` — **no `async` keyword, no state machine, no allocation**. Only the handful that actually navigate (records) use `async`. `list<T>.Convert` gains `async` because it now awaits per-element navigation.
 - **Lands as its own prep branch first** (settled with Ingi): the sweep is a pure signature change with no behavior change, so it goes on a separate branch and merges *before* the navigation work — the big mechanical diff stays isolated from the design change, easier to review and revert. One extra merge, accepted.
-- **Precedent:** this is exactly the truthiness move. `IBooleanResolvable` made the whole condition pipeline async (`IEvaluator.Evaluate`, `Operator.Evaluate`, `assert.IsTrue/IsFalse`) because one leaf capability (`path` existence) can be I/O. Same rule here: because a target can build itself by navigating (and navigation can resolve a `%ref%` / bracket-index — I/O), construction is async, uniformly, at the seam. The value model already chose this shape once.
+- **Precedent:** this is exactly the truthiness move. `IBooleanResolvable` made the whole condition pipeline async (`IEvaluator.Evaluate`, `Operator.Evaluate`, `assert.IsTrue/IsFalse`) because one leaf capability (`path` existence) can be I/O. Same rule here: because a target can build itself by navigating (and navigation can resolve a `%var%` / bracket-index — I/O), construction is async, uniformly, at the seam. The value model already chose this shape once.
 - **Rejected — the interface split** (sync `ICreate` for scalars + a separate async navigate-create for records). Two doors for one concept ("the target builds itself from a source"). Records already flow through the *same* `Create` default today; splitting now regresses uniformity to dodge mechanical churn. Own the churn.
 - **Rejected — pre-navigate in the caller, keep Create sync.** Pre-resolving all children into a bag = materializing the source = the exact round-trip smell we are removing. And whoever navigates must be async anyway (sync-over-async is banned), so the split only moves the boundary out one layer and adds a door.
 
@@ -123,7 +123,7 @@ Named at file:line, tagged like the `clr-navigators` audit: **[dead]** delete, *
 - **[candidate]** `build/code/Default.cs` dual-path step readers — `GetString` (`:855-862`) and `SetValue` (`:868-877`), the `step is IDictionary` / `step is JsonElement` forks (clr-navigators demolition #10), called by `PromoteGroups`. The JsonElement branch dies when steps navigate uniformly as Data; verify the dict-branch callers before cutting.
 
 ### [stays] — do NOT remove
-- `app/data/reader/this.cs` — the Data-leaf reader. Only its format-routing line (`:79-80`) is *corrected* (blocker-1 / clr-navigators #5) — a routing fix, not a rewrite. `%ref%`/template/signing stay byte-identical.
+- `app/data/reader/this.cs` — the Data-leaf reader. Only its format-routing line (`:79-80`) is *corrected* (blocker-1 / clr-navigators #5) — a routing fix, not a rewrite. `%var%`/template/signing stay byte-identical.
 - `dict.Clr`'s STJ method — `dict/this.cs:328-335`. Serves typed `Dictionary<string,T>` slots and CLR POCOs (Decision 3). Only its record-use call site dies.
 - `goal.call/Reader.cs` — goal.call still rides STJ through Wire; a separate follow-on, not this branch.
 - `actions/serializer/Reader.cs` — reads Data-leaf actions via Wire, not the goal skeleton; stays.
