@@ -64,6 +64,38 @@ public class RenderTests : IDisposable
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello PLang!");
     }
 
+    // A goal is a clr(host): Fluid's reflection reads the carrier (Value/Context/Kind), not the
+    // host, so {{ goal.Name }} / {% for %} blank — the builder's empty-template root. The
+    // plang-Data Fluid bridge must navigate the host via Data.Navigate.
+    [Test]
+    public async Task Render_ClrHost_NavigatesMemberAndLoop()
+    {
+        var context = _app.User.Context;
+        var goal = new Goal
+        {
+            Name = "MyGoal",
+            Steps = new GoalSteps
+            {
+                new Step { Index = 0, Text = "first" },
+                new Step { Index = 1, Text = "second" },
+            }
+        };
+        // The builder's %goal% is a clr(host) (proven by --debug), not a raw goal — so wrap it
+        // to reproduce: Fluid reflects the carrier, not the host, unless the bridge navigates.
+        var clrGoal = new global::app.type.clr.@this(goal, context);
+        context.Variable.Set(new Data("goal", clrGoal, context: context));
+        var action = new Render(context)
+        {
+            Template = (global::app.type.text.@this)"{{ goal.Name }}|{% for s in goal.Steps %}{{ s.Text }},{% endfor %}",
+            IsFile = (global::app.type.@bool.@this)false
+        };
+
+        var result = await _provider.Render(action);
+
+        await result.IsSuccess();
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("MyGoal|first,second,");
+    }
+
     [Test]
     public async Task Render_MissingFile_ReturnsError()
     {

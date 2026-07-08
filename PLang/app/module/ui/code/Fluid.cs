@@ -119,7 +119,9 @@ public class Fluid : ITemplate
         // the Fluid variable name — Data.Name is advisory and may differ.
         foreach (var kvp in action.Context.Variable.GetAll())
         {
-            fluidContext.SetValue(kvp.Key, FluidValue.Create(await kvp.Value.Value(), options));
+            // Inject the Data HANDLE (lazy) — never resolve here. Member access navigates the
+            // value's own door; .Value() fires only when the template prints a leaf.
+            fluidContext.SetValue(kvp.Key, new PlangDataValue(kvp.Value, kvp.Key));
         }
 
         // Override with explicit parameters
@@ -127,11 +129,14 @@ public class Fluid : ITemplate
         {
             foreach (var param in (await action.Parameters.Value())!.Items)
             {
-                fluidContext.SetValue(param.Name, FluidValue.Create(await param.Value(), options));
+                fluidContext.SetValue(param.Name, new PlangDataValue(param, param.Name));
             }
         }
 
         // Render with HTML encoding for security (XSS prevention)
+        if (action.Context.App?.Debug?.Fluid == true)
+            await action.Context.App.Debug.Write(
+                $"🧩 fluid render: {sourceFile ?? "(inline)"}{Environment.NewLine}");
         try
         {
             var writer = new StringWriter();
@@ -266,6 +271,100 @@ public class Fluid : ITemplate
         public void RemoveAt(int index) => throw new NotSupportedException("template view is read-only");
         public bool Remove(object? item) => throw new NotSupportedException("template view is read-only");
         public void Clear() => throw new NotSupportedException("template view is read-only");
+    }
+
+    /// <summary>
+    /// A lazy Fluid value over a plang <see cref="global::app.data.@this"/>: member access
+    /// navigates the value's OWN door (<c>Data.Navigate</c>), so <c>{{ goal.Name }}</c> reaches
+    /// into a clr(host)/dict/list/scalar uniformly instead of reflecting the carrier. The
+    /// variable is injected as its Data HANDLE (never eagerly resolved); <c>.Value()</c> fires
+    /// only at a leaf (when the template prints), and only the members a template references
+    /// resolve — so feeding the whole variable list costs nothing until used.
+    /// </summary>
+    private sealed class PlangDataValue : FluidValue
+    {
+        private readonly global::app.data.@this data;
+        private readonly string path;
+        public PlangDataValue(global::app.data.@this data, string path = "")
+        {
+            this.data = data;
+            this.path = path;
+        }
+
+        public override FluidValues Type => FluidValues.Object;
+
+        public override async ValueTask<FluidValue> GetValueAsync(string name, TemplateContext context)
+        {
+            var child = await data.Navigate(global::app.variable.path.@this.Parse(name));
+            var childPath = path.Length == 0 ? name : path + "." + name;
+            Trace(childPath, child);
+            return Wrap(child, childPath);
+        }
+
+        public override async ValueTask<FluidValue> GetIndexAsync(FluidValue index, TemplateContext context)
+        {
+            var key = index.ToStringValue();
+            var child = await data.Navigate(global::app.variable.path.@this.Parse("[" + key + "]"));
+            var childPath = path + "[" + key + "]";
+            Trace(childPath, child);
+            return Wrap(child, childPath);
+        }
+
+        private static FluidValue Wrap(global::app.data.@this child, string path)
+            => child.IsInitialized ? new PlangDataValue(child, path) : NilValue.Instance;
+
+        // --debug={"fluid":true}: show each template access + what it resolved to, so a blank
+        // render reads as NOT FOUND (navigation miss) vs EMPTY (present-but-empty) vs a value.
+        private void Trace(string p, global::app.data.@this child)
+        {
+            var dbg = data.Context?.App?.Debug;
+            if (dbg?.Fluid != true) return;
+            string line;
+            if (!child.IsInitialized) line = $"   {p,-30} ⚠ NOT FOUND";
+            else
+            {
+                var peek = child.Peek();
+                var raw = peek is null or app.type.@null.@this ? "" : peek.ToString() ?? "";
+                var shown = raw.Length > 50 ? raw[..50].Replace("\n", " ") + "…" : raw.Replace("\n", " ");
+                var mark = raw.Length == 0 ? "  ⚠ EMPTY" : "";
+                line = $"   {p,-30} = \"{shown}\" ({child.Type?.Name}){mark}";
+            }
+            _ = dbg.Write(line + System.Environment.NewLine);
+        }
+
+        // {% for %} — sync (Fluid's contract). A clr wrapping a foreign IEnumerable (GoalSteps,
+        // a List) yields its ELEMENTS (the reflection kind would yield the collection's
+        // PROPERTIES); a native list/dict/clr(json) yields via its own EnumerateItems.
+        public override IEnumerable<FluidValue> Enumerate(TemplateContext context)
+        {
+            var v = data.Peek();
+            if (v is app.type.clr.@this c && c.Value is System.Collections.IEnumerable en and not string)
+            {
+                foreach (var el in en)
+                    yield return new PlangDataValue(new global::app.data.@this("", el, context: data.Context));
+            }
+            else
+            {
+                foreach (var (_, item) in v.EnumerateItems(data.Context))
+                    yield return new PlangDataValue(item);
+            }
+        }
+
+        // Output — resolve the leaf through its own door (only here does .Value() fire).
+        public override async ValueTask WriteToAsync(System.IO.TextWriter writer,
+            System.Text.Encodings.Web.TextEncoder encoder, System.Globalization.CultureInfo cultureInfo)
+            => writer.Write(encoder.Encode(LeafString(await data.Value())));
+
+        private static string LeafString(object? v)
+            => v is null or app.type.@null.@this ? "" : v.ToString() ?? "";
+
+        public override string ToStringValue() => LeafString(data.Peek());
+        public override object ToObjectValue() => data.Peek();
+        public override bool ToBooleanValue() => data.HasValue;
+        public override decimal ToNumberValue()
+            => decimal.TryParse(ToStringValue(), System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out var d) ? d : 0m;
+        public override bool Equals(FluidValue other) => other is PlangDataValue p && ReferenceEquals(p.data, data);
     }
 
     /// <summary>

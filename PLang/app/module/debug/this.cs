@@ -57,6 +57,14 @@ public sealed class @this
     public bool Verbose { get; set; }
 
     /// <summary>
+    /// Fluid template tracing — dumps every variable path a template touches and what it
+    /// resolved to (value + type), marking NOT-FOUND / EMPTY. Because the plang-Data Fluid
+    /// bridge is the single access chokepoint, this shows exactly which `{{ x.y }}` blanked
+    /// and why (undefined var vs navigation miss vs empty value). Set via: --debug={"fluid":true}
+    /// </summary>
+    public bool Fluid { get; set; }
+
+    /// <summary>
     /// Granular LLM tracing — each sub-flag dumps one part of the API exchange to stderr.
     /// Set via: --debug={"llm":{"system":true,"user":true,"response":true,"schema":true}}
     /// Only the parts you set to true are shown — all-off (or no Llm object) means no tracing.
