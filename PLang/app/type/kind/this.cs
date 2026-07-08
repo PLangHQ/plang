@@ -76,6 +76,13 @@ public sealed class @this
         global::app.data.@this source, global::app.actor.context.@this ctx)
         => ctx.App.Type.Kinds[this].Convert(source, ctx);
 
+    /// <summary>Write a host value of this kind to the wire (json → raw json, <c>*</c> →
+    /// reflect). The carrier delegates its <c>Output</c> here.</summary>
+    public global::System.Threading.Tasks.ValueTask Output(
+        object obj, global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this ctx)
+        => ctx.App.Type.Kinds[this].Output(obj, writer, mode, ctx);
+
     public override string ToString() => Name;
 
     public override bool Equals(object? obj) => obj switch

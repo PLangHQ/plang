@@ -110,12 +110,10 @@ public sealed class @this : global::app.type.item.@this, global::app.module.ICon
         = new() { ["text"] = new format.text() };
 
     /// <summary>
-    /// The carrier writes its HOST to the wire. For a divergent format it uses that format's
-    /// serializer (text → json string). Otherwise (json/plang) a foreign object has no plang
-    /// shape of its own, so it renders as an object of its <c>[Out]</c> fields — each field
-    /// VALUE is raw CLR, lifted to its item via <see cref="global::app.type.@this.Create"/>,
-    /// and THAT item writes itself. So clr owns only the reflection; every field's
-    /// serialization is owned by its own item.
+    /// The carrier writes its HOST to the wire by asking its <see cref="Kind"/> — the json
+    /// kind emits raw json (no <c>valueKind</c> BCL leak), the <c>*</c> kind reflects a POCO's
+    /// <c>[Out]</c> fields. A divergent channel format (text) still uses that format's own
+    /// serializer (a foreign host has no plain-text form — renders as a json string).
     /// </summary>
     public override async System.Threading.Tasks.ValueTask Output(
         global::app.channel.serializer.IWriter writer, global::app.View mode,
@@ -126,24 +124,6 @@ public sealed class @this : global::app.type.item.@this, global::app.module.ICon
             await serializer.Output(this, writer, mode, context);
             return;
         }
-        writer.BeginObject();
-        foreach (var entry in global::app.channel.serializer.filter.Tagged.PropertiesFor(Value.GetType(), mode))
-        {
-            writer.Name(entry.Property.Name.ToLowerInvariant());
-            if (entry.Masked) { writer.String("****"); continue; }
-            object? raw;
-            try { raw = entry.Property.GetValue(Value); }
-            catch (System.Exception ex)
-            {
-                throw new global::app.data.OutputException(
-                    $"Output failed reading {Value.GetType().Name}.{entry.Property.Name}: {ex.Message}",
-                    "OutputGetterThrew", ex);
-            }
-            if (raw is global::app.data.@this nested)
-                await nested.Output(writer, mode, context);
-            else
-                await global::app.type.@this.Create(raw, context).Output(writer, mode, context);
-        }
-        writer.EndObject();
+        await Kind.Output(Value, writer, mode, context ?? Context);
     }
 }

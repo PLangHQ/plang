@@ -57,5 +57,16 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
         await Assert.That((await (await dict.GetChild("a")).Value())?.ToString()).IsEqualTo("1");
     }
 
+    [Test]
+    public async Task ClrJson_SerializesAsRawJson_NoValueKindLeak()
+    {
+        var ctx = _app.User.Context;
+        var d = ctx.Ok(new global::app.type.clr.@this(Json("{\"a\":1,\"b\":[2,3]}"), ctx));
+        var json = new global::app.channel.serializer.plang.@this(ctx).Serialize(d).Peek()!.ToString()!;
+        await Assert.That(json).Contains("\"a\":1");
+        await Assert.That(json).Contains("\"b\":[2,3]");
+        await Assert.That(json.ToLowerInvariant()).DoesNotContain("valuekind");
+    }
+
     private sealed class Poco { public string Label { get; set; } = ""; }
 }

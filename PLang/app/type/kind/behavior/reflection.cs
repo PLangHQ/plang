@@ -37,4 +37,32 @@ public sealed class reflection : @this
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
             yield return new global::app.data.@this(p.Name, p.GetValue(obj), context: ctx);
     }
+
+    // A foreign POCO has no plang shape of its own, so it renders as an object of its
+    // [Out] fields — each field VALUE lifts to its item via type.Create and writes itself.
+    // The `*` kind owns only the reflection; every field's serialization is its own item's.
+    public override async global::System.Threading.Tasks.ValueTask Output(
+        object obj, global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? ctx)
+    {
+        writer.BeginObject();
+        foreach (var entry in global::app.channel.serializer.filter.Tagged.PropertiesFor(obj.GetType(), mode))
+        {
+            writer.Name(entry.Property.Name.ToLowerInvariant());
+            if (entry.Masked) { writer.String("****"); continue; }
+            object? raw;
+            try { raw = entry.Property.GetValue(obj); }
+            catch (System.Exception ex)
+            {
+                throw new global::app.data.OutputException(
+                    $"Output failed reading {obj.GetType().Name}.{entry.Property.Name}: {ex.Message}",
+                    "OutputGetterThrew", ex);
+            }
+            if (raw is global::app.data.@this nested)
+                await nested.Output(writer, mode, ctx);
+            else
+                await global::app.type.@this.Create(raw, ctx).Output(writer, mode, ctx);
+        }
+        writer.EndObject();
+    }
 }

@@ -45,6 +45,17 @@ public sealed class json : @this
             foreach (var p in e.EnumerateObject()) yield return Data(p.Name, p.Value, null, ctx);
     }
 
+    // A json value writes its own raw json inline (json/plang writers emit it structurally via
+    // WriteRawValue; a text writer falls its Raw back to a string) — NEVER reflecting the
+    // JsonElement's BCL properties (no `valueKind` leak).
+    public override global::System.Threading.Tasks.ValueTask Output(
+        object obj, global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? ctx)
+    {
+        writer.Raw(((JsonElement)obj).GetRawText());
+        return default;
+    }
+
     // A json scalar → its raw CLR face; the Data ctor lifts it to the plang scalar.
     private static object? Scalar(JsonElement e) => e.ValueKind switch
     {

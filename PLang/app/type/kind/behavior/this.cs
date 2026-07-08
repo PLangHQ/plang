@@ -77,4 +77,12 @@ public abstract class @this
         global::app.data.@this source, global::app.actor.context.@this ctx)
         => throw new System.NotSupportedException(
             $"cannot convert {source.Type?.Name} into kind '{Kind}'");
+
+    /// <summary>Write a host value OF this kind to the wire — the json kind emits its raw
+    /// json (never reflecting the <c>JsonElement</c>'s BCL props); the <c>*</c> kind reflects
+    /// a POCO's <c>[Out]</c> fields. The carrier delegates its <c>Output</c> here.</summary>
+    public virtual global::System.Threading.Tasks.ValueTask Output(
+        object obj, global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? ctx)
+        => throw new System.NotSupportedException($"kind '{Kind}' cannot write itself");
 }
