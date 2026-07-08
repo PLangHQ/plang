@@ -90,7 +90,15 @@ public sealed class @this : global::app.type.item.@this, global::app.module.ICon
     /// </summary>
     public override System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(
         global::app.data.@this parent, string key)
-        => Kind.Navigate(Value, global::app.variable.path.@this.Parse(key), parent, Context);
+        => Navigate(parent, global::app.variable.path.@this.Parse(key));
+
+    /// <summary>The whole-path handoff — the carrier hands its <see cref="Kind"/> the entire
+    /// tail so the kind walks it in ONE call (and, later, in its OWN path language:
+    /// jsonpath/css). <c>data.Navigate</c> hands the value-plane path here; infra/method
+    /// segments stay on the generic per-hop walk.</summary>
+    public System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(
+        global::app.data.@this parent, global::app.variable.path.@this path)
+        => Kind.Navigate(Value, path, parent, Context);
 
     /// <summary>The children of the host, via its <see cref="Kind"/> — for <c>foreach</c>.</summary>
     public System.Collections.Generic.IEnumerable<global::app.data.@this> Enumerate()
