@@ -139,36 +139,34 @@ static virtual async ValueTask<TSelf?> Create(@this value, data.@this data)
 
 **OBP note:** no `convert.OfStatic`, no `TryConvert`, no `dict.Clr` STJ. The default knows only the two free cases + "records navigate." Everything type-specific is the type's own `Create`.
 
-### A scalar owns its parse — `number.Create` (relocated verbatim from `number.Convert`)
+### The KIND owns construction — `number.Create` dispatches, the precision-kind builds
 
 ```csharp
 // number/this.cs
-public static new ValueTask<@this?> Create(item.@this value, data.@this data)
+// number.Create is a THIN dispatcher — pick the precision kind, hand off. The KIND builds.
+public static new async ValueTask<@this?> Create(item.@this value, data.@this data)
 {
-    if (value is @this self) return new(self);                       // pass-through (every override opens with this)
-    var raw = value.Clr<object>();                                   // the source's backing
-    if (raw is null) return new((@this?)null);
-
-    // precision kind from the TARGET descriptor (data.Type.Kind), else sniff the string / CLR type.
-    // KindFromName / Build (string-sniff) / ClrToKindSafe / CoerceToKind / FromObject / Parse are
-    // number's existing internals — unchanged by the relocation (the DOOR is what moves).
-    NumberKind? k = KindFromName(data.Type?.Kind?.Name)
-                    ?? (raw is string s ? KindFromName(Build(s)) : ClrToKindSafe(raw.GetType()));
-    if (k is null && raw is string bare)                             // no precision → free-form parse
-        return Parse(bare) is { } n ? new(n) : Fail(bare, data);
-    if (k is null) return Fail(raw, data);
-
-    try   { return new(FromObject(CoerceToKind(raw, k.Value))); }    // number's existing coercion
-    catch (Exception ex) when (ex is FormatException or OverflowException or InvalidCastException)
-    { data.Fail(new error.Error($"Cannot read '{raw}' as {k}: {ex.Message}", "NumberConversionFailed", 400));
-      return new((@this?)null); }
-
-    static ValueTask<@this?> Fail(object v, data.@this d)
-    { d.Fail(new error.Error($"'{v}' is not a number.", "NumberConversionFailed", 400)); return new((@this?)null); }
+    if (value is @this self) return new(self);                       // pass-through
+    // precision from the TARGET descriptor, else the DEFAULT `long`. The kind owns the build —
+    // int/long/decimal/half/bigint each live at type[number].kind[<k>]. number holds NO switch.
+    var precision = data.Type?.Kind ?? (global::app.type.kind.@this)"long";
+    return await precision.Build(value, data);                       // "build a value of me from this"
 }
 ```
 
-**OBP note:** the door moves onto `number` (virtual dispatch, no reflective hub) — the Stage-2 win. The numeric internals (`CoerceToKind`, `FromObject`, `KindFromName`, `Build`, `ClrToKindSafe`, `Parse`) move as-is; only the door (`Convert`→`Create`), the kind source (param→`data.Type.Kind`), and the return convention (`context.Ok/Error`→`return`/`data.Fail`) change. `CoerceToKind`'s `switch` over the precision kind is fine — the CLR numeric tower is a closed, fixed set (unlike open-ended formats), so "4 specials + `ChangeType`" is a contained leaf, not misplaced polymorphism. (Its name is a touch opaque — a clearer one wouldn't hurt, but that's cosmetic.) `Create` holds the "is this a number?" decline (null + `data.Fail`). This is "each type owns Create, no hub" — 14 types, this shape.
+```csharp
+// type[number].kind[int]/this.cs — the int kind builds ITSELF. "Find the int parser" is ALWAYS
+// here, one predictable path. long/decimal/half/bigint/… each the same shape — file per kind.
+public override async ValueTask<data.@this> Build(item.@this value, data.@this data)
+{
+    var raw = value.Clr<object>();
+    // parse/convert raw → Int32. On OVERFLOW, the policy is a CONTEXT question: overflow, or
+    // promote to the next kind / default precision? (context answers — coder traces the setting.)
+    ...
+}
+```
+
+**OBP note — the pattern never diverges (Ingi's golden rule).** The KIND owns construction, uniformly: `number.Create` only picks the precision and delegates; every precision builds itself at `type[number].kind[<k>]`. No switch, ever — so "the int parser" is always findable at one predictable path (uniformity = discoverability). `CoerceToKind` does **not** relocate onto `number` — it **dissolves** into the kinds; the "closed numeric tower, switch is fine" defense was the divergence trap (closed today ≠ closed tomorrow, and one exception splits the pattern). Same rule for any type whose construction varies by kind (image formats, …): the kind owns it, the type never switches. **Defaults:** number's default kind = `long`; overflow-vs-promote is a context question.
 
 ### Runtime construction (`Convert(kind)` and `.pr` name→type) — the non-generic face
 
