@@ -149,26 +149,26 @@ public static new ValueTask<@this?> Create(item.@this value, data.@this data)
     var raw = value.Clr<object>();                                   // the source's backing
     if (raw is null) return new((@this?)null);
 
-    // The target precision (int/long/decimal/bigint/half/…) is number's KIND (data.Type.Kind).
-    // Create reads it and asks the KIND to coerce the raw into itself, then wraps.
-    var kind = data.Type?.Kind;
-    // ⚠ number's CURRENT internal is CoerceToKind(value, NumberKind) — a `switch (k)`.
-    //   That is an OBP VIOLATION (Rule #1: type-switch as behavior; flag-enum variants).
-    //   Relocating Convert→Create fixes the DOOR (no hub); it must NOT enshrine this switch.
-    //   Correct shape: the precision kind owns coercion via kind.behavior — the ~11
-    //   ChangeType-able precisions share ONE behavior (parameterized by target CLR type), the 4
-    //   specials (bigint/int128/uint128/half) each own theirs, dispatched by Kinds[kind]. No
-    //   switch. (number-internal reshape — its own small scope; not "move verbatim".)
-    return kind is null
-        ? (Parse(raw) is { } n ? new(n) : Fail(raw, data))          // no precision → free-form parse
-        : /* ask the precision kind to build a number from raw — no NumberKind switch */ ... ;
+    // precision kind from the TARGET descriptor (data.Type.Kind), else sniff the string / CLR type.
+    // KindFromName / Build (string-sniff) / ClrToKindSafe / CoerceToKind / FromObject / Parse are
+    // number's existing internals — unchanged by the relocation (the DOOR is what moves).
+    NumberKind? k = KindFromName(data.Type?.Kind?.Name)
+                    ?? (raw is string s ? KindFromName(Build(s)) : ClrToKindSafe(raw.GetType()));
+    if (k is null && raw is string bare)                             // no precision → free-form parse
+        return Parse(bare) is { } n ? new(n) : Fail(bare, data);
+    if (k is null) return Fail(raw, data);
+
+    try   { return new(FromObject(CoerceToKind(raw, k.Value))); }    // number's existing coercion
+    catch (Exception ex) when (ex is FormatException or OverflowException or InvalidCastException)
+    { data.Fail(new error.Error($"Cannot read '{raw}' as {k}: {ex.Message}", "NumberConversionFailed", 400));
+      return new((@this?)null); }
 
     static ValueTask<@this?> Fail(object v, data.@this d)
     { d.Fail(new error.Error($"'{v}' is not a number.", "NumberConversionFailed", 400)); return new((@this?)null); }
 }
 ```
 
-**OBP note:** the door moves onto `number` (virtual dispatch, no reflective hub) — that's the Stage-2 win. But **the relocation fixes the door, not the innards**: `number.Convert`'s `CoerceToKind` is a `switch` over the precision kind, a pre-existing OBP violation. It must be **pushed onto the kind** (`kind.behavior`, the same principle json/dict use), not carried across verbatim. **Generalises to all 14 relocations** — check each `Convert` body for an internal kind-switch; moving the door is not enough. `Create` still holds the "is this a number?" decline (null + `data.Fail`).
+**OBP note:** the door moves onto `number` (virtual dispatch, no reflective hub) — the Stage-2 win. The numeric internals (`CoerceToKind`, `FromObject`, `KindFromName`, `Build`, `ClrToKindSafe`, `Parse`) move as-is; only the door (`Convert`→`Create`), the kind source (param→`data.Type.Kind`), and the return convention (`context.Ok/Error`→`return`/`data.Fail`) change. `CoerceToKind`'s `switch` over the precision kind is fine — the CLR numeric tower is a closed, fixed set (unlike open-ended formats), so "4 specials + `ChangeType`" is a contained leaf, not misplaced polymorphism. (Its name is a touch opaque — a clearer one wouldn't hurt, but that's cosmetic.) `Create` holds the "is this a number?" decline (null + `data.Fail`). This is "each type owns Create, no hub" — 14 types, this shape.
 
 ### Runtime construction (`Convert(kind)` and `.pr` name→type) — the non-generic face
 
