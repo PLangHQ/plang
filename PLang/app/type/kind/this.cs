@@ -70,6 +70,12 @@ public sealed class @this
         object obj, global::app.actor.context.@this ctx)
         => ctx.App.Type.Kinds[this].Enumerate(obj, ctx);
 
+    /// <summary>Write a child <paramref name="key"/> onto a value of this kind (json
+    /// materializes its object to a mutable dict + sets the key). Returns the new value.</summary>
+    public global::app.type.item.@this Set(
+        object host, string key, object? value, global::app.actor.context.@this ctx)
+        => ctx.App.Type.Kinds[this].Set(host, key, value, ctx);
+
     /// <summary>Convert <paramref name="source"/> INTO a value of this kind — the outbound
     /// owns it (dict from json, audio from text). An error <c>Data</c> when it can't.</summary>
     public global::System.Threading.Tasks.ValueTask<global::app.data.@this> Convert(

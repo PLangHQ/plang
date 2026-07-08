@@ -64,6 +64,15 @@ public abstract class @this
         object obj, global::app.actor.context.@this ctx)
         => throw new System.NotSupportedException($"kind '{Kind}' is not enumerable");
 
+    /// <summary>Write a child <paramref name="key"/> onto a value of this kind — the kind
+    /// owns HOW its content takes a new child. json materializes its immutable object into a
+    /// mutable <c>dict</c> (members staying lazy clr(json)) and sets the key, so a later
+    /// <c>%x.child%</c> still navigates — never reflecting the carrier's C# surface. Returns
+    /// the new value; a kind with no writable content throws.</summary>
+    public virtual global::app.type.item.@this Set(
+        object host, string key, object? value, global::app.actor.context.@this ctx)
+        => throw new System.NotSupportedException($"kind '{Kind}' cannot set a child");
+
     /// <summary>Load a raw payload (string / bytes) into a value OF this kind. The default —
     /// for md and any kind the system doesn't parse — loads it as <c>text</c> (the raw stands
     /// as its own value). The json kind overrides to parse into a clr(json).</summary>

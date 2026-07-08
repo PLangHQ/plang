@@ -160,4 +160,35 @@ public class ForeachTests
         await Assert.That((bool)loopResult!["completed"]!).IsFalse();
         await Assert.That((long)loopResult["itemCount"]!).IsEqualTo(0L);
     }
+
+    // Replicates the builder's `foreach %plan.steps%` — %plan% is a Data holding a
+    // clr(json) plan {description, steps:[...]}. Navigating %plan.steps% must yield the
+    // steps array, and each %planStep% must be a step object (has .index), NOT the plan
+    // or a goal. This is the fast stand-in for the builder's BuildGoal/Start loop.
+    [Test]
+    public async Task Foreach_ClrJsonPlanSteps_BindsStepWithIndex()
+    {
+        var context = _app.User.Context;
+        const string planJson =
+            "{\"description\":\"d\",\"steps\":[{\"index\":0,\"actions\":[\"a\"]},{\"index\":1,\"actions\":[\"b\"]}]}";
+        // Born the way llm.query's producer door does: context.Ok(json, "json") → clr(json).
+        var plan = await context.Ok(planJson, "json");
+        plan.Name = "plan";
+        await context.Variable.Set(plan);
+
+        // The builder writes child keys onto %plan% between llm.query and the foreach
+        // (set %plan.system% = ..., etc.). Replicate one such write onto the clr(json).
+        var setChild = TestAction.Create("variable", "set",
+            ("name", "%plan.system%"), ("value", "sys-prompt"));
+        await (await setChild.RunAsync(context)).IsSuccess();
+
+        var action = TestAction.Create("loop", "foreach",
+            ("collection", "%plan.steps%"), ("itemname", "%planStep%"));
+        var result = await action.RunAsync(context);
+
+        await result.IsSuccess();
+        var planStep = await context.Variable.Get("planStep");   // last step (index 1)
+        var idx = await (await planStep.GetChild("index")).Value();
+        await Assert.That(idx?.ToString()).IsEqualTo("1");
+    }
 }

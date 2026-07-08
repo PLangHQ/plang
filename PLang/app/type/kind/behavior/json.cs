@@ -45,6 +45,22 @@ public sealed class json : @this
             foreach (var p in e.EnumerateObject()) yield return Data(p.Name, p.Value, null, ctx);
     }
 
+    // Writing a child onto an immutable json object: materialize it into a mutable dict whose
+    // members STAY lazy (each a Data over its own child node — container→clr(json), scalar→plang),
+    // then set the new key. The json content becomes the dict's keys (description/steps/…), never
+    // the JsonElement's BCL surface — so `%plan.steps%` still navigates after `set %plan.system%`.
+    public override global::app.type.item.@this Set(
+        object host, string key, object? value, global::app.actor.context.@this ctx)
+    {
+        var e = (JsonElement)host;
+        var dict = new global::app.type.dict.@this(ctx);
+        if (e.ValueKind == JsonValueKind.Object)
+            foreach (var p in e.EnumerateObject())
+                dict.Set(Data(p.Name, p.Value, null, ctx));
+        dict.Set(key, value);
+        return dict;
+    }
+
     // Raw json text/bytes → a clr(json), through the single json parse owner
     // (object/serializer/json.Read). The parse IS the validation ("is this valid json").
     public override global::System.Threading.Tasks.ValueTask<global::app.data.@this> Load(

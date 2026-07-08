@@ -383,6 +383,12 @@ public partial class @this
             return target;
         }
 
+        // A clr(json) is an immutable host — the KIND owns the write (json materializes its
+        // object into a mutable dict + sets the key), so the json CONTENT becomes the keys,
+        // never the carrier's reflected C# surface (Value/Context/Kind/…). Returns a new dict.
+        if (target is app.type.clr.@this clrTarget)
+            return clrTarget.Kind.Set(clrTarget.Value, propertyName, value, _context);
+
         // Dictionary — set key directly (case-insensitive lookup)
         if (target is IDictionary<string, object?> dict)
         {

@@ -1745,3 +1745,11 @@ registrations — and is ambiguous, two types claim `"json"`). Then delete: the 
 registration branch, and the `Read` method in every `type/*/serializer/Default.cs` (keep `Write`)
 plus the kind-decoder `<kind>.cs` files. A real (interesting) refactor, entangled with kind
 resolution — not just dead-code deletion.
+
+## 2026-07-08 — Set-reflection flaw for clr objects without a custom kind
+Writing a child key onto a `clr` whose kind is `*` (reflection, no custom kind) reflects
+the carrier's C# surface (Value/Context/Kind/...) into a junk dict — same shape bug the
+json kind's `Set` method fixes for json. The `*` kind needs its own `Set` (or the write
+path must stop reflecting the clr wrapper). Address AFTER the json-kind `Set` fix lands
+(the `foreach %plan.steps%` / builder blocker). Context: variable/list/this.cs
+`SetValueOnObject` → `ConvertToDictionary` reflection fallback.

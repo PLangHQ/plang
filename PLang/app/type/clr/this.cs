@@ -104,6 +104,25 @@ public sealed class @this : global::app.type.item.@this, global::app.module.ICon
     public System.Collections.Generic.IEnumerable<global::app.data.@this> Enumerate()
         => Kind.Enumerate(Value, Context);
 
+    /// <summary>Iterates as (key, value) pairs — the carrier delegates enumeration to its
+    /// <see cref="Kind"/> (json array elements / object members), pairing each with its key
+    /// (array → index, object → member name). Mirrors list/dict; without it the base yields
+    /// the whole host once, so <c>foreach %plan.steps%</c> would bind the array, not a step.</summary>
+    public override System.Collections.Generic.IEnumerable<(global::app.data.@this key, global::app.data.@this value)>
+        EnumerateItems(global::app.actor.context.@this? context)
+    {
+        var ctx = context ?? Context;
+        int i = 0;
+        foreach (var element in Kind.Enumerate(Value, ctx))
+        {
+            var key = string.IsNullOrEmpty(element.Name)
+                ? new global::app.data.@this("", i, context: ctx)
+                : new global::app.data.@this("", element.Name, context: ctx);
+            i++;
+            yield return (key, element);
+        }
+    }
+
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
 
     public override string ToString() => Value.ToString() ?? "";
