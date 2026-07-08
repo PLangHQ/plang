@@ -107,3 +107,30 @@ pivot never turns a `%ref%` into a `clr`. Report grouped (violation/borderline/c
 ## Commit rhythm
 
 Green (or at-baseline) chunk per stage → commit → push (pipeline reviews origin). Narrate what landed.
+
+---
+
+## Completion (all v1 scope, verified)
+
+Every architect-`code-draft` **v1 scope** item is done or accounted for:
+
+- ✅ `Type[t].Kind[k]` + json/`*` kinds (navigate + enumerate, json `Load`)
+- ✅ `clr` derives its kind, pure delegation
+- ✅ Reader pivot + clr(json) serialization
+- ✅ **Parser handoff** — `data.Navigate` hands a value-plane path to the clr's kind (one call); infra/method segments stay per-hop
+- ✅ **Container-materializes-to-scalar guard** — `source.Value` throws (→ MaterializeFailed) when a declared dict/list comes back a scalar
+- ✅ `context.Ok(raw, kind)` producer door
+- ✅ Convert POC (`Data.Convert` → dict kind) — Ingi pulled this into v1
+- ✅ `type.Kind → kind.@this` flip (landmine-free)
+
+**Apex-doesn't-mask (§5) — verified already present, NOT added.** `variable.set`'s existing
+`keepAsIs` (`Value.Type.Is(declaredApex)` → keep the value's own richer type) IS the
+apex-doesn't-mask behavior. A separate guard would duplicate it. (Confirmed empirically: the
+build navigates `%plan%` declared `object` — it's not demoted.)
+
+**Correctly deferred (architect's own list):** `identifiers → text`, `Peek → item.@this`.
+
+**Aggressive cleanup (Ingi):** `RestoreFromCache` 3-shape collapse; `ResolveName → App.Type[Type]`
+indexer. (`ParseResultValue` kept — it does LLM extraction, not generic parse.)
+
+Full suite at baseline throughout (Modules 35, Types 21, Wire 18, Data 35, Runtime 32, Generator green).
