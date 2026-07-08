@@ -35,7 +35,7 @@ ICreate<T>.Create(value, data)                // the target builds itself       
 | kind (runtime) | `data.Convert(k)` | `k.Type.Create(self)` (kind on `data.Type`) | `text.convert("mp3")`, `"html"` |
 | birth (from a `.pr`) | the read path | `T.Create(source)` over `{name, type, value}` | building `goal` from clr(json) |
 
-**`Convert(kind)` is a thin front over `Create`, not a peer.** A kind knows its type (`kind.Type`: `json→item`, `csv→table`, `mp3→audio`). So `text.convert("mp3")` = resolve `mp3`→type `audio` → `audio.Create(theText)` with kind `mp3` on the target descriptor; `audio` decides whether that text can become mp3. Convert crosses type *because the kind carries its type*. This fills the currently-stub `kind.behavior.Convert` (only `dict` has a real converter today).
+**`Convert(kind)` dispatches to the kind's own converter (`kind.behavior.Convert`) — which the kind owns, and which may delegate to `Create`.** A kind knows its type (`kind.Type`: `json→item`, `csv→table`, `mp3→audio`). A kind that is just "build the type from raw" (`mp3` = build `audio`) delegates to `Type.Create`; a kind that is a real transform of another kind (`html` from `md`) does the render itself, in the html kind's converter ("a converter belonging to the html kind knows md→html"). So Convert crosses type *because the kind carries its type*, and the transform lives on the kind it produces (outbound owns it). This fills the currently-stub `kind.behavior.Convert` (only `dict` has a real converter today). See `code-draft.md` § Stage 2 for the shape.
 
 **The other two directions stay distinct — they are not construction:**
 - **lower** — plang value → CLR — is `item.Clr`. The exit door. Stays.
