@@ -1002,7 +1002,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "llm.query Messages=%messages%, Schema={formal: string, actions: list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>, errors?: list<{key: string, message: string}>}>, confidence: string, explanation?: string, errors?: list<{key: string, message: string}>}, cache=%!build.cache%, on error call HandleStepFailure, write to %compileResult%",
+          "text": "llm.query Messages=%messages%, Schema={formal: string, actions: list<{module: string, action: string, parameters?: list<{name: string, type?: string, value?: object}>, errors?: list<{key: string, message: string}>}>, confidence: string, explanation?: string, errors?: list<{key: string, message: string}>}, cache=%!build.cache%, on error call HandleStepFailure, write to %compileResult%",
           "lineNumber": 47,
           "indent": 0,
           "comment": null,
@@ -1026,7 +1026,7 @@
                   },
                   "value": {
                     "formal": "string",
-                    "actions": "list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>, errors?: list<{key: string, message: string}>}>",
+                    "actions": "list<{module: string, action: string, parameters?: list<{name: string, type?: string, value?: object}>, errors?: list<{key: string, message: string}>}>",
                     "confidence": "string",
                     "explanation": "string",
                     "errors": "list<{key: string, message: string}>"
@@ -1149,7 +1149,7 @@
             }
           ],
           "intent": null,
-          "formal": "llm.query(Messages=%messages%, Schema={formal: string, actions: list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>, errors?: list<{key: string, message: string}>}>, confidence: string, explanation?: string, errors?: list<{key: string, message: string}>}, Cache=true) | error.handle(Actions=[{module: goal, action: call, parameters:[GoalName={name:\"HandleStepFailure\"}]}]) , variable.set(Name=%compileResult%, Value=%!data%, type=\"object\")",
+          "formal": "llm.query(Messages=%messages%, Schema={formal: string, actions: list<{module: string, action: string, parameters?: list<{name: string, type?: string, value?: object}>, errors?: list<{key: string, message: string}>}>, confidence: string, explanation?: string, errors?: list<{key: string, message: string}>}, Cache=true) | error.handle(Actions=[{module: goal, action: call, parameters:[GoalName={name:\"HandleStepFailure\"}]}]) , variable.set(Name=%compileResult%, Value=%!data%, type=\"object\")",
           "source": null,
           "waitForExecution": true
         },
@@ -1690,7 +1690,7 @@
         },
         {
           "index": 1,
-          "text": "llm.query Messages=%fixMessages%, Schema={formal: string, actions: list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>, modifiers?: list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>}>, errors?: list<{key: string, message: string}>}>, confidence: string, explanation?: string, errors?: list<{key: string, message: string}>}, cache=%!build.cache%, previousConversation=%compileResult%, write to %compileResult%",
+          "text": "llm.query Messages=%fixMessages%, Schema={formal: string, actions: list<{module: string, action: string, parameters?: list<{name: string, type?: string, value?: object}>, modifiers?: list<{module: string, action: string, parameters?: list<{name: string, type?: string, value?: object}>}>, errors?: list<{key: string, message: string}>}>, confidence: string, explanation?: string, errors?: list<{key: string, message: string}>}, cache=%!build.cache%, previousConversation=%compileResult%, write to %compileResult%",
           "lineNumber": 66,
           "indent": 0,
           "comment": null,
@@ -1714,7 +1714,7 @@
                   },
                   "value": {
                     "formal": "string",
-                    "actions": "list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>, modifiers?: list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>}>, errors?: list<{key: string, message: string}>}>",
+                    "actions": "list<{module: string, action: string, parameters?: list<{name: string, type?: string, value?: object}>, modifiers?: list<{module: string, action: string, parameters?: list<{name: string, type?: string, value?: object}>}>, errors?: list<{key: string, message: string}>}>",
                     "confidence": "string",
                     "explanation": "string?",
                     "errors": "list<{key: string, message: string}>?"
@@ -1814,7 +1814,7 @@
             }
           ],
           "intent": null,
-          "formal": "llm.query(Messages=%fixMessages%, Schema={formal: string, actions: list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>, modifiers?: list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>}>, errors?: list<{key: string, message: string}>}>, confidence: string, explanation?: string, errors?: list<{key: string, message: string}>}, Cache=%!build.cache%, ContinuePreviousConversation=false, previousConversation=%compileResult%)",
+          "formal": "llm.query(Messages=%fixMessages%, Schema={formal: string, actions: list<{module: string, action: string, parameters?: list<{name: string, type?: string, value?: object}>, modifiers?: list<{module: string, action: string, parameters?: list<{name: string, type?: string, value?: object}>}>, errors?: list<{key: string, message: string}>}>, confidence: string, explanation?: string, errors?: list<{key: string, message: string}>}, Cache=%!build.cache%, ContinuePreviousConversation=false, previousConversation=%compileResult%)",
           "source": null,
           "waitForExecution": true
         },

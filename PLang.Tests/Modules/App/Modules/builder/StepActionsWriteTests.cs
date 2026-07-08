@@ -27,8 +27,12 @@ public class StepActionsWriteTests
         };
         await context.Variable.Set(new global::app.data.@this("goal", goal, context: context));
 
-        // The compile result's actions, exactly as they ride: a clr(json) array.
-        const string actionsJson = "[{\"module\":\"output\",\"action\":\"write\",\"parameters\":[]}]";
+        // The compile result's actions as they ride: a clr(json) array with REAL params, in the
+        // canonical order the compile prompt instructs the LLM to emit — name, type, value (value LAST).
+        const string actionsJson =
+            "[{\"module\":\"variable\",\"action\":\"set\",\"parameters\":[" +
+            "{\"name\":\"Name\",\"type\":{\"name\":\"variable\"},\"value\":\"%total%\"}," +
+            "{\"name\":\"Value\",\"type\":{\"name\":\"number\"},\"value\":0}]}]";
         var acts = await context.Ok(actionsJson, "json");
         acts.Name = "acts";
         await context.Variable.Set(acts);
@@ -39,6 +43,7 @@ public class StepActionsWriteTests
 
         await result.IsSuccess();
         await Assert.That(goal.Steps[0].Actions.Count).IsEqualTo(1);
-        await Assert.That(goal.Steps[0].Actions[0].Module).IsEqualTo("output");
+        await Assert.That(goal.Steps[0].Actions[0].Module).IsEqualTo("variable");
+        await Assert.That(goal.Steps[0].Actions[0].Parameters.Count).IsEqualTo(2);
     }
 }

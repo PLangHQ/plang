@@ -42,7 +42,7 @@ Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `o
 {"formal":"...","actions":[...],"confidence":"VeryHigh|High|Medium|Low|VeryLow","explanation":"...","errors":[],"warnings":[]}
 ```
 
-Each action: `{module, action, parameters:[{name, value, type}], modifiers?:[...]}`. `module` is a single identifier: `ui.render` → `{"module":"ui","action":"render"}`, never `{"module":"ui.render",...}`. Omit `explanation` at High/VeryHigh; otherwise one sentence on the uncertainty. Drop confidence to Low/VeryLow when the verb doesn't really match any action you were given.
+Each action: `{module, action, parameters:[{name, type, value}], modifiers?:[...]}`. `module` is a single identifier: `ui.render` → `{"module":"ui","action":"render"}`, never `{"module":"ui.render",...}`. Omit `explanation` at High/VeryHigh; otherwise one sentence on the uncertainty. Drop confidence to Low/VeryLow when the verb doesn't really match any action you were given.
 
 ## Parameters & types
 

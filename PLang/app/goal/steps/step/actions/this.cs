@@ -42,14 +42,25 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             return acts;
         }
         // STOPGAP (Option A — the FromSource/navigation-driven builder replaces this): the
-        // compile pass produces the actions as a clr(json) array. Materialize it through the
+        // compile pass produces the actions as a clr(json) array. We materialize it through the
         // SAME reader the .pr uses (GoalReadOptions → the Data reader handles %ref% params,
-        // template flags, signing) on the carrier's raw json — no manual property pulling.
+        // template flags, signing). That reader is order-sensitive (canonical name, type, value),
+        // so the compile prompt/schema instruct the LLM to emit `value` LAST. FromSource (Option B)
+        // removes this coupling by pulling each field by name (order-agnostic).
         if (value is global::app.type.clr.@this clr && clr.Value is System.Text.Json.JsonElement je)
         {
-            var text = je.GetRawText();
-            return System.Text.Json.JsonSerializer.Deserialize<@this>(
-                text, global::app.type.catalog.@this.GoalReadOptions(data.Context!));
+            try
+            {
+                return System.Text.Json.JsonSerializer.Deserialize<@this>(
+                    je.GetRawText(), global::app.type.catalog.@this.GoalReadOptions(data.Context!));
+            }
+            catch (System.Exception ex)
+            {
+                data.Fail(new global::app.error.Error(
+                    $"could not build actions from clr(json): {(ex.InnerException ?? ex).Message}",
+                    "ActionsMaterializeFailed", 400) { Exception = ex });
+                return null;
+            }
         }
         data.Fail(new global::app.error.Error(
             $"%{data.Name}% holds a {value.Mint().Name} — 'actions' cannot be created from it.", "CreateItemDeclined", 400));

@@ -20,19 +20,19 @@
 
 **Primitive type names** (use these as the top-level `name` in a parameter `type` field): {% for n in typeInfo.PrimitiveNames %}{{ n }}{% unless forloop.last %}, {% endunless %}{% endfor %}
 
-**Every parameter wrapper has three fields**: `name` (the parameter name), `value` (the actual value), `type` (the value's PLang type as a structured `{name, kind?, strict?}` dict). `type` is ONE field — never split into sibling `type` + `kind` keys.
+**Every parameter wrapper has three fields, in THIS order**: `name` (the parameter name), `type` (the value's PLang type as a structured `{name, kind?, strict?}` dict), `value` (the actual value — ALWAYS emit `value` LAST). `type` is ONE field — never split into sibling `type` + `kind` keys.
 
 Examples of complete wrappers:
 
-- raw value `5` → `{"name":"X","value":5,"type":{"name":"number","kind":"int"}}`
-- raw value `3.14` → `{"name":"X","value":3.14,"type":{"name":"number","kind":"decimal"}}`
-- raw value `"hi"` → `{"name":"X","value":"hi","type":{"name":"text"}}`
-- raw value `"Start"` (a goal name / label — nothing stronger fits) → `{"name":"X","value":"Start","type":{"name":"text"}}`
-- raw value `"2026-01-01"` (an ISO date) → `{"name":"X","value":"2026-01-01","type":{"name":"date"}}`
-- raw value `"1st jan 2026"` (a *written* date — normalize to ISO) → `{"name":"X","value":"2026-01-01","type":{"name":"date"}}`
-- raw value `"PT30S"` (an ISO-8601 duration) → `{"name":"X","value":"PT30S","type":{"name":"duration"}}`
-- raw value `true` → `{"name":"X","value":true,"type":{"name":"bool"}}`
-- raw value `{a:1, b:2}` → `{"name":"X","value":{"a":1,"b":2},"type":{"name":"object"}}`
+- raw value `5` → `{"name":"X","type":{"name":"number","kind":"int"},"value":5}`
+- raw value `3.14` → `{"name":"X","type":{"name":"number","kind":"decimal"},"value":3.14}`
+- raw value `"hi"` → `{"name":"X","type":{"name":"text"},"value":"hi"}`
+- raw value `"Start"` (a goal name / label — nothing stronger fits) → `{"name":"X","type":{"name":"text"},"value":"Start"}`
+- raw value `"2026-01-01"` (an ISO date) → `{"name":"X","type":{"name":"date"},"value":"2026-01-01"}`
+- raw value `"1st jan 2026"` (a *written* date — normalize to ISO) → `{"name":"X","type":{"name":"date"},"value":"2026-01-01"}`
+- raw value `"PT30S"` (an ISO-8601 duration) → `{"name":"X","type":{"name":"duration"},"value":"PT30S"}`
+- raw value `true` → `{"name":"X","type":{"name":"bool"},"value":true}`
+- raw value `{a:1, b:2}` → `{"name":"X","type":{"name":"object"},"value":{"a":1,"b":2}}`
 
 **Judge a literal's type from its form AND the variable's intent — PLang is an intent language.**
 A quoted string is NOT automatically `text`: read what the value plainly *is* and type it that way.
@@ -50,7 +50,7 @@ Promote by form + intent:
 - a JSON-shaped string `"{\"a\":1}"` → `json`; a CSV-shaped string → `text` (kind `csv`)
 
 **Normalize a written temporal value to its canonical ISO form when you promote it.** You understood
-`"1st jan 2026"` means that date, so emit `{"value":"2026-01-01","type":{"name":"date"}}` — NOT the
+`"1st jan 2026"` means that date, so emit `{"type":{"name":"date"},"value":"2026-01-01"}` — NOT the
 written words. Times → `HH:mm:ss`, datetimes → ISO-8601, durations → ISO-8601 (`PT…`). Already-ISO
 values pass through unchanged. The runtime parser is strict ISO; you are the natural-language reader.
 
@@ -67,7 +67,7 @@ values pass through unchanged. The runtime parser is strict ISO; you are the nat
 A parameter whose DECLARED schema type is `type` (e.g. `variable.set.Type`) carries a type entity AS ITS VALUE. The wrapper is:
 
 ```
-{"name":"Type","value":{"name":"text","kind":"md"},"type":{"name":"type"}}
+{"name":"Type","type":{"name":"type"},"value":{"name":"text","kind":"md"}}
 ```
 
 `value` is the type entity `{name, kind?, strict?}`; `type` is the wrapper's own type field, set to `{"name":"type"}`.
