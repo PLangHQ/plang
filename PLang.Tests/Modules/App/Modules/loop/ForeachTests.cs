@@ -26,7 +26,7 @@ public class ForeachTests
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("ForeachRunner",
             Make.Step("foreach %items%, call ProcessItem item=%item%",
                 Make.Action("loop", "foreach",
-                    ("collection", "%items%"), Make.Param("itemname", "%item%", "variable")),
+                    Make.Template("collection", "%items%"), Make.Param("itemname", "%item%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "ProcessItem" })))));
         var step = goal.Steps.First();
@@ -64,7 +64,7 @@ public class ForeachTests
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("SetsItemRunner",
             Make.Step("foreach %items%, call DoNothing item=%myItem%",
                 Make.Action("loop", "foreach",
-                    ("collection", "%items%"), Make.Param("itemname", "%myItem%", "variable")),
+                    Make.Template("collection", "%items%"), Make.Param("itemname", "%myItem%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "DoNothing" })))));
         var step = goal.Steps.First();
@@ -87,7 +87,7 @@ public class ForeachTests
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("DictRunner",
             Make.Step("foreach %dict%, call DictGoal item=%val%",
                 Make.Action("loop", "foreach",
-                    ("collection", "%dict%"), Make.Param("itemname", "%val%", "variable"), Make.Param("keyname", "%key%", "variable")),
+                    Make.Template("collection", "%dict%"), Make.Param("itemname", "%val%", "variable"), Make.Param("keyname", "%key%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "DictGoal" })))));
         var step = goal.Steps.First();
@@ -110,7 +110,7 @@ public class ForeachTests
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("DictKeyRunner",
             Make.Step("foreach %dict%, call Noop",
                 Make.Action("loop", "foreach",
-                    ("collection", "%dict%"), Make.Param("itemname", "%val%", "variable"), Make.Param("keyname", "%key%", "variable")),
+                    Make.Template("collection", "%dict%"), Make.Param("itemname", "%val%", "variable"), Make.Param("keyname", "%key%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "Noop" })))));
         var step = goal.Steps.First();

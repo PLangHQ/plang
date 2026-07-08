@@ -18,7 +18,7 @@ public partial class Group : IContext
         // navigable (you can sort/where inside one). Insertion order preserved.
         var buckets = new Dictionary<string, app.type.list.@this>();
         var order = new List<string>();
-        foreach (var (_, item) in data.EnumerateItems())
+        foreach (var (_, item) in await data.EnumerateItems())
         {
             var keyData = await item.GetChild(key);
             var keyValue = keyData.IsInitialized ? (await keyData.Value())?.ToString() ?? "" : "";

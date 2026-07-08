@@ -60,7 +60,9 @@ public sealed class source : @this, module.IContext
         Template = template;
         // Full-match %ref% on ANY declared type is a reference to a binding — resolved by name at
         // .Value(), never parsed through the type reader. Trust the builder's template flag, not
-        // the content (a structural string that was not marked stays literal content).
+        // the content (a structural string that was not marked stays literal content). The
+        // template flag is a BUILD-TIME security gate: untrusted content that merely looks like
+        // "%x%" must NOT auto-resolve to a variable — only a builder-marked template does.
         if (template != null && value is string reference
             && global::app.data.@this.TryFullVarMatch(reference, out _))
         {

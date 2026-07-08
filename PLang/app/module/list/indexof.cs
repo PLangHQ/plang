@@ -13,7 +13,7 @@ public partial class IndexOf : IContext
         var data = await Context.Variable.Get((await ListName.Value()));
 
         // Membership through THE comparison entry: matches only on Equal, never errors.
-        foreach (var (key, item) in data.EnumerateItems())
+        foreach (var (key, item) in await data.EnumerateItems())
         {
             if (await item.Compare(Value) == global::app.data.Comparison.Equal)
                 return Context.Ok<global::app.type.number.@this>(Convert.ToInt32((await key.Value())));

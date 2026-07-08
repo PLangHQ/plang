@@ -19,7 +19,7 @@ public partial class Count : IContext
 
         // Fallback: enumerate
         int count = 0;
-        foreach (var _ in data.EnumerateItems()) count++;
+        foreach (var _ in await data.EnumerateItems()) count++;
         return Context.Ok<global::app.type.number.@this>(count);
     }
 }

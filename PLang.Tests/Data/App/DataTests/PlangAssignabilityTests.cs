@@ -53,7 +53,7 @@ public class PlangAssignabilityTests
     {
         var source = new Data("text", "hello", context: _app.User.Context);
         var items = new List<global::app.data.@this>();
-        foreach (var (_, item) in source.EnumerateItems()) items.Add(item);
+        foreach (var (_, item) in await source.EnumerateItems()) items.Add(item);
         await Assert.That(items.Count).IsEqualTo(1);
         await Assert.That(items[0].Peek()?.ToString()).IsEqualTo("hello");
     }
@@ -63,7 +63,7 @@ public class PlangAssignabilityTests
     {
         var source = new Data("n", 42, context: _app.User.Context);
         var items = new List<global::app.data.@this>();
-        foreach (var (_, item) in source.EnumerateItems()) items.Add(item);
+        foreach (var (_, item) in await source.EnumerateItems()) items.Add(item);
         await Assert.That(items.Count).IsEqualTo(1);
     }
 }

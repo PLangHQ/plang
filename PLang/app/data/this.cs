@@ -431,8 +431,19 @@ public partial class @this
     /// dictionaries yield (dictKey, dictValue), lists yield (index, element),
     /// single values yield (0, value). All results are Data — callers never see raw objects.
     /// </summary>
-    public IEnumerable<(@this key, @this value)> EnumerateItems()
-        => _item.EnumerateItems(_context);
+    public async System.Threading.Tasks.ValueTask<IEnumerable<(@this key, @this value)>> EnumerateItems()
+    {
+        // A value-slot %var% (IsVariable) NAMES a binding, not content — follow it ONCE to the
+        // stored value and enumerate THAT. Get resolves the name without opening the target's
+        // value door, so a real list/dict is aliased (never materialized). After the hop _item
+        // IS the stored list (IsVariable now false); the value owns its own lazy enumeration.
+        if (_item.IsVariable)
+        {
+            var bound = await _item.Get(_context);
+            if (bound is not null && bound.IsInitialized) _item = bound.Peek();
+        }
+        return _item.EnumerateItems(_context);
+    }
 
     /// <summary>Emptiness — the binding answers for absence (uninitialized,
     /// no value); the INSTANCE answers for its own emptiness (text knows

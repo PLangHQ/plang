@@ -14,7 +14,7 @@ public partial class Contains : IContext
 
         // Membership through THE comparison entry: matches only on Equal, never
         // errors — a mixed list treats NotEqual/Incomparable as "not this one".
-        foreach (var (_, item) in data.EnumerateItems())
+        foreach (var (_, item) in await data.EnumerateItems())
         {
             if (await item.Compare(Value) == global::app.data.Comparison.Equal)
                 return Context.Ok<global::app.type.@bool.@this>(true);

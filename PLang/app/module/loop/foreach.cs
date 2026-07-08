@@ -40,7 +40,7 @@ public partial class Foreach : IContext, IStep
         var bodyActions = GetBodyActions();
 
         // Data owns enumeration: dicts yield (dictKey, value), lists yield (index, element)
-        foreach (var (key, item) in Collection.EnumerateItems())
+        foreach (var (key, item) in await Collection.EnumerateItems())
         {
             if (Context.CancellationToken.IsCancellationRequested)
                 return Context.Ok(Result(Context, count, completed: false));

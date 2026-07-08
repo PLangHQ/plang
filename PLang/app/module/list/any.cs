@@ -24,7 +24,7 @@ public partial class Any : IContext
         var right = rightVal != null ? new data.@this("", rightVal, context: Context) : null;
         var op = (global::app.module.condition.Operator)(await Operator.Value())!;
 
-        foreach (var (_, item) in data.EnumerateItems())
+        foreach (var (_, item) in await data.EnumerateItems())
         {
             var left = await item.GetChild(key);
             if (await op.Evaluate(left, right))

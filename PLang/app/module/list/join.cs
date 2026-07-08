@@ -14,7 +14,7 @@ public partial class Join : IContext
         var data = await Context.Variable.Get(await ListName.Value());
         var strings = new List<string>();
 
-        foreach (var (_, item) in data.EnumerateItems())
+        foreach (var (_, item) in await data.EnumerateItems())
             strings.Add((await item.Value())?.ToString() ?? "");
 
         var result = string.Join((await Separator.Value())!.Clr<string>()!, strings);
