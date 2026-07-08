@@ -272,7 +272,11 @@ public class Default : IBuilder
         // (`build.goalsSave Goal=%goal%, App=%app%`) — the runtime never guesses a plang variable
         // name. Validate resolves the goal's types/valid-values against it; fall back to
         // context.App only when App is absent (isolated tests that save a hand-built goal).
-        var targetApp = (action.App == null ? null : (await action.App.Value())?.Value) ?? app;
+        var targetApp = (action.App == null ? null : (await action.App.Value())?.Value)
+            ?? throw new global::app.error.AppException(
+                "build.goalsSave requires the target App — call it as `build.goalsSave Goal=%goal%, App=%app%`. "
+                + "The self-hosted builder's own context.App is a DIFFERENT app; validating the built goal against it is wrong.",
+                "MissingApp", 500);
         var validation = await BuildResponse.FromGoalState(goal).Validate(goal, targetApp);
         if (!validation.Success) return validation;
 
