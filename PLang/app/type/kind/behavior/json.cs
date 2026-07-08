@@ -45,6 +45,13 @@ public sealed class json : @this
             foreach (var p in e.EnumerateObject()) yield return Data(p.Name, p.Value, null, ctx);
     }
 
+    // Raw json text/bytes → a clr(json), through the single json parse owner
+    // (object/serializer/json.Read). The parse IS the validation ("is this valid json").
+    public override global::System.Threading.Tasks.ValueTask<global::app.data.@this> Load(
+        object raw, global::app.actor.context.@this ctx)
+        => new(ctx.Ok(global::app.type.@object.serializer.json.Read(
+            raw, "json", new global::app.type.reader.ReadContext(ctx))));
+
     // A json value writes its own raw json inline (json/plang writers emit it structurally via
     // WriteRawValue; a text writer falls its Raw back to a string) — NEVER reflecting the
     // JsonElement's BCL properties (no `valueKind` leak).

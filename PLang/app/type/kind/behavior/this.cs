@@ -64,11 +64,12 @@ public abstract class @this
         object obj, global::app.actor.context.@this ctx)
         => throw new System.NotSupportedException($"kind '{Kind}' is not enumerable");
 
-    /// <summary>Load a raw payload (string / bytes) into a value OF this kind — json
-    /// parses to a clr; md loads as text.</summary>
+    /// <summary>Load a raw payload (string / bytes) into a value OF this kind. The default —
+    /// for md and any kind the system doesn't parse — loads it as <c>text</c> (the raw stands
+    /// as its own value). The json kind overrides to parse into a clr(json).</summary>
     public virtual global::System.Threading.Tasks.ValueTask<global::app.data.@this> Load(
         object raw, global::app.actor.context.@this ctx)
-        => throw new System.NotSupportedException($"kind '{Kind}' has no loader");
+        => new(ctx.Ok(new global::app.type.text.@this(raw)));
 
     /// <summary>Convert a source value INTO a value of this kind — the outbound owns it
     /// (dict builds itself from json; audio from text). Returns the built value or an

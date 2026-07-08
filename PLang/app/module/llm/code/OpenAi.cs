@@ -460,8 +460,11 @@ public sealed class OpenAi : ILlm
             OnAfterResponse?.Invoke(rawResponse);
 
             // --- Build result ---
-            object? resultValue = effectiveFormat == "json" ? TryParseJson(extracted) : (object?)extracted;
-            var result = context.Ok(resultValue);
+            // The producer names the kind once; the kind loads the raw (json → clr(json),
+            // md/none → text). No per-format ladder, and fresh == cached (both hand raw+kind).
+            var result = effectiveFormat is { } format
+                ? await context.Ok(extracted, format)
+                : context.Ok(extracted);
 
             // --- Cache store ---
             // Properties are [JsonIgnore] on Data, so store metadata as the value itself
