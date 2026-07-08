@@ -267,7 +267,13 @@ public class Default : IBuilder
         // non-keep steps) that slipped past the in-pipeline validateResponse and
         // ApplyStep stages. Refusing to write the .pr is preferable to saving a half-
         // built artifact that the runtime can't execute.
-        var validation = await BuildResponse.FromGoalState(goal).Validate(goal);
+        // The builder is self-hosted: context.App is the BUILDER's own app, not the app being
+        // built. The goal being saved belongs to the TARGET app, passed in as the App parameter
+        // (`build.goalsSave Goal=%goal%, App=%app%`) — the runtime never guesses a plang variable
+        // name. Validate resolves the goal's types/valid-values against it; fall back to
+        // context.App only when App is absent (isolated tests that save a hand-built goal).
+        var targetApp = (action.App == null ? null : (await action.App.Value())?.Value) ?? app;
+        var validation = await BuildResponse.FromGoalState(goal).Validate(goal, targetApp);
         if (!validation.Success) return validation;
 
         // The goal writes its OWN .pr through Output (the value-owns-serialization path), Store view,

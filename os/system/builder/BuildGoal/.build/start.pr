@@ -907,6 +907,14 @@
                 "template": "plang"
               },
               "value": "%goal%"
+            },
+            {
+              "name": "App",
+              "type": {
+                "name": "object",
+                "template": "plang"
+              },
+              "value": "%app%"
             }
           ],
           "defaults": null,
@@ -914,7 +922,7 @@
         }
       ],
       "intent": null,
-      "formal": "build.goalsSave(Goal=%goal%)",
+      "formal": "build.goalsSave(Goal=%goal%, App=%app%)",
       "source": null,
       "waitForExecution": true
     }

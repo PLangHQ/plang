@@ -8,7 +8,7 @@ namespace app.type.clr;
 /// graduates to its own item subclass only when a generic answer stops being the true
 /// answer for it.
 /// </summary>
-public sealed class @this : global::app.type.item.@this, global::app.module.IContext
+public class @this : global::app.type.item.@this, global::app.module.IContext
 {
     public object Value { get; }
 
