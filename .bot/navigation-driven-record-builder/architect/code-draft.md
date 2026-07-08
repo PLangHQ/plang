@@ -167,22 +167,36 @@ public static new ValueTask<@this?> Create(item.@this value, data.@this data)
 
 The subtle seam. `Value<T>()` names `T` at compile time. A runtime caller holds a `type`/`kind` token (from a `.pr` name or a `data.Convert(kind)`), so it can't name `T`. It dispatches to the resolved type's static `Create` through one cached invoker:
 
-```csharp
-// type/this.cs — the TARGETED runtime face: build THIS type (the entity's own ClrType)
-// from `value`, target preserved. Distinct from the POLYMORPHIC type.Create(raw) at :439,
-// which infers the type from raw and discards the target — wrong for a caller holding a target.
-public ValueTask<item.@this?> Create(item.@this value, data.@this data)
-    => _create(ClrType)(value, data);          // _create: cached Func per ClrType, built via
-                                               // reflection over the static Create — the SAME
-                                               // one-leaf cached reflection `convert.Discover`
-                                               // did for Convert, now finding Create.
+The TARGETED runtime face — build THIS type (the entity's own ClrType) from `value`, target
+preserved. Distinct from the POLYMORPHIC `type.Create(raw)` at `:439`, which infers the type
+from raw and discards the target. **Three layers** — parse on the type, one shared thunk, a
+delegate on the entity (option A: reflective thunk now, generated table = B later):
 
-// the write index-arm (variable/list/this.cs:440) — it holds a runtime System.Type,
-// so it uses the TARGETED entity door, NOT the polymorphic lift and NOT T.Create:
-var built = await ctx.App.type[elementType].Create(value, data);   // target = elementType, preserved
+```csharp
+// (1) THE PARSE — static, one per type, the logic (Decision A). Already drafted above (number).
+//     text.@this.Create(value, data) { ... }
+
+// (2) THE THUNK — ONE generic method, registry plumbing, NOT per type. Logic-free: it wraps a
+//     type's static Create into a delegate; T.Create resolves statically INSIDE it.
+static Func<item.@this, data.@this, ValueTask<item.@this?>> Builder<T>()
+    where T : item.@this, ICreate<T>
+    => (v, d) => T.Create(v, d);
+
+//     built ONCE per discovered type at registration — the single reflective touch (option A):
+//     (the scan holds a System.Type, not a T, so MakeGenericMethod bridges it)
+entity.Create = (Func<item.@this, data.@this, ValueTask<item.@this?>>)
+    typeof(Registry).GetMethod(nameof(Builder))!.MakeGenericMethod(clrType).Invoke(null, null)!;
+
+// (3) WHAT LIVES ON type.@this — its OWN closed builder delegate (behavior on the owner):
+public Func<item.@this, data.@this, ValueTask<item.@this?>> Create { get; internal set; }
+
+// callers — dict lookup + DIRECT delegate call, no per-call reflection:
+await app.type["text"].Create(value, data);              // .pr read (by name)
+await app.type[typeof(text.@this)].Create(value, data);  // same cached entity (by CLR type)
+await app.type[elementType].Create(value, data);         // write index-arm, target preserved
 ```
 
-**OBP note:** the reflection that today finds+invokes `Convert` doesn't vanish — it narrows to "invoke the resolved type's `Create`," one cached invoker at one leaf (like the `OwnerOf` index). Compile-time (`Value<T>`), targeted-runtime (`type[clr].Create`) and polymorphic (`type.Create(raw)`) all land on the same per-type static `Create`. Not a hub, not a type-switch — a per-type cached delegate keyed by the type. **The targeted door is what fixes the builder blocker** (the clr(json)→`Actions.@this` write holds `action.@this` as its target `System.Type`); it must exist before Stage 2 deletes `OfStatic`, which provides CLR-targeted construction today.
+**OBP note — why this is NOT `OfStatic` renamed.** The smell was never "reflection exists" — it was *a free hub doing a per-call reflective type-switch to find behavior that belongs on the type.* Here: the logic is on the type (`text.Create`), the delegate is on the **entity** (`entity.Create`), and reflection is **once at registration** (the thunk), not per call. `Builder<T>` is one shared logic-free method; each entity holds the *closed result* for its own type. Compile-time (`Value<T>`), targeted-runtime (`type[clr].Create`), polymorphic (`type.Create(raw)`) all land on the same static `Create`. **This targeted door fixes the blocker** (the clr(json)→`Actions.@this` write holds `action.@this` as its target) and must exist before Stage 2 deletes `OfStatic`. Contrast the incumbent: `convert.Invoke` does `MethodInfo.Invoke` *every call* from a hub — the thing we're removing.
 
 ### `data.Convert(kind)` — the kind owns the transform
 
