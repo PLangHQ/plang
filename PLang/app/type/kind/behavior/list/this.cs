@@ -15,36 +15,26 @@ namespace app.type.kind.behavior.list;
 /// asks here at birth, never a loose ResolveName.</para>
 ///
 /// <para>Behaviors are app-independent pure logic, so the App-assembly scan runs ONCE per
-/// process (static, born at type load — no per-App reflection). <see cref="Register"/>
-/// adds a DLL's behaviors per App (the <c>code.load</c> runtime seam); those shadow the
-/// discovered set.</para>
+/// process (static, born at type load — no per-App reflection). A per-App runtime-DLL seam
+/// (for a future <c>- add type &lt;dll&gt;</c> action) is added WITH that action, not
+/// speculatively.</para>
 /// </summary>
 public sealed class @this
 {
     private static readonly global::app.type.kind.@this Any = "*";   // the catch-all reflection kind
     private static readonly Discovered _shared = new(typeof(@this).Assembly);
 
-    // Per-App additions from a loaded DLL — shadow the shared discovered set.
-    private readonly Discovered? _runtime;
-
-    public @this() { }
-    private @this(Discovered runtime) => _runtime = runtime;
-
     /// <summary>The behavior for <paramref name="kind"/>, or the <c>*</c> reflection
     /// catch-all when the kind names no registered format.</summary>
     public global::app.type.kind.behavior.@this this[global::app.type.kind.@this kind]
-        => _runtime?.Behavior(kind) ?? _shared.Behavior(kind) ?? _shared.Behavior(Any)!;
+        => _shared.Behavior(kind) ?? _shared.Behavior(Any)!;
 
     /// <summary>The kind a host object of <paramref name="clrType"/> is when a behavior
     /// CLAIMS that CLR form (a <see cref="System.Text.Json.JsonElement"/> → <c>json</c>),
     /// else null — the clr then falls back to the host's plang-type identity. Not <c>*</c>:
     /// an unclaimed host still has a class identity (a callstack is kind "callstack").</summary>
     public global::app.type.kind.@this? this[System.Type clrType]
-        => _runtime?.Kind(clrType) ?? _shared.Kind(clrType);
-
-    /// <summary>Add a DLL's behaviors — the <c>code.load</c> runtime seam. They shadow the
-    /// discovered set for this App.</summary>
-    public @this Register(Assembly assembly) => new(new Discovered(assembly));
+        => _shared.Kind(clrType);
 
     // A scanned set of behaviors + their CLR-form reverse map. Immutable once built.
     private sealed class Discovered
