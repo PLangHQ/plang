@@ -135,7 +135,7 @@ Six stages. Stage 1 is the builder-green milestone; 2–5 complete the collapse.
 - Reader JsonElement-input door (review I3) reusing the `FromRaw` tail. DoD: a round-trip test that a navigation-built param signs identically to a byte-read one (review I7 — sign fires in `Wire.Write`).
 
 **Stage 2 — collapse to one `Create`.** The core of Decision A.
-- Relocate the 14 per-type static `Convert` hooks → async `Create` on each type (`number`, `text`, `datetime`, `date`, `time`, `duration`, `bool`, `binary`, `guid`, `image`, `path`, `dict`, `list`, `GoalCall`).
+- Relocate the 14 per-type static `Convert` hooks → async `Create` on each type (`number`, `text`, `datetime`, `date`, `time`, `duration`, `bool`, `binary`, `guid`, `image`, `path`, `dict`, `list`, `GoalCall`). **Not a verbatim move — the relocation fixes the DOOR (no hub), and each body must be checked for an internal kind-switch that OBP says belongs on the kind.** Known case: `number.CoerceToKind` is a `switch` over the precision kind (Rule #1 / flag-enum variants) — push it onto the kind (`kind.behavior`, like json/dict), do not carry it across. Audit all 14; moving the door is not enough.
 - Delete `convert.OfStatic`/`Of`/`Invoke`/`Discover`; keep `OwnerOf`/`_ownership` as a private index behind `type.Create(raw)`.
 - Collapse `TryConvert`: construction stages fold into `Create`; primitive lowering stays in `item.Clr`; route the 4 callers to `Create`.
 - Delete `type.Convert(value)`; callers → `Create`.

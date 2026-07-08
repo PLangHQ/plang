@@ -145,23 +145,30 @@ static virtual async ValueTask<TSelf?> Create(@this value, data.@this data)
 // number/this.cs
 public static new ValueTask<@this?> Create(item.@this value, data.@this data)
 {
+    if (value is @this self) return new(self);                       // pass-through (every override opens with this)
     var raw = value.Clr<object>();                                   // the source's backing
     if (raw is null) return new((@this?)null);
 
-    // kind (precision) comes off the TARGET descriptor — data.Type — not the source value,
-    // and not a separate param. (Ingi/#4.)
-    var kind = NumberKind.Of(data.Type?.Kind?.Name)
-               ?? (raw is string s ? NumberKind.Sniff(s) : NumberKind.Of(raw.GetType()));
-    if (kind is null) { data.Fail(NotANumber(raw)); return new((@this?)null); }
+    // The target precision (int/long/decimal/bigint/half/…) is number's KIND (data.Type.Kind).
+    // Create reads it and asks the KIND to coerce the raw into itself, then wraps.
+    var kind = data.Type?.Kind;
+    // ⚠ number's CURRENT internal is CoerceToKind(value, NumberKind) — a `switch (k)`.
+    //   That is an OBP VIOLATION (Rule #1: type-switch as behavior; flag-enum variants).
+    //   Relocating Convert→Create fixes the DOOR (no hub); it must NOT enshrine this switch.
+    //   Correct shape: the precision kind owns coercion via kind.behavior — the ~11
+    //   ChangeType-able precisions share ONE behavior (parameterized by target CLR type), the 4
+    //   specials (bigint/int128/uint128/half) each own theirs, dispatched by Kinds[kind]. No
+    //   switch. (number-internal reshape — its own small scope; not "move verbatim".)
+    return kind is null
+        ? (Parse(raw) is { } n ? new(n) : Fail(raw, data))          // no precision → free-form parse
+        : /* ask the precision kind to build a number from raw — no NumberKind switch */ ... ;
 
-    try   { return new(new @this(Coerce(raw, kind.Value))); }        // private ctor takes the CLEAN value
-    catch (Exception ex) when (ex is FormatException or OverflowException)
-    { data.Fail(new error.Error($"Cannot read '{raw}' as {kind}: {ex.Message}", "NumberConversionFailed", 400));
-      return new((@this?)null); }
+    static ValueTask<@this?> Fail(object v, data.@this d)
+    { d.Fail(new error.Error($"'{v}' is not a number.", "NumberConversionFailed", 400)); return new((@this?)null); }
 }
 ```
 
-**OBP note:** the parse (string→precision→coerce) lives ON `number`, reached by virtual dispatch — not a reflectively-discovered `static Convert` a hub invokes. `Create` holds the "is this a number?" decision because it can *decline* (null + `data.Fail`); the ctor only takes a value it can't reject. This is the whole "each type owns Create, no hub" — 14 types, this shape.
+**OBP note:** the door moves onto `number` (virtual dispatch, no reflective hub) — that's the Stage-2 win. But **the relocation fixes the door, not the innards**: `number.Convert`'s `CoerceToKind` is a `switch` over the precision kind, a pre-existing OBP violation. It must be **pushed onto the kind** (`kind.behavior`, the same principle json/dict use), not carried across verbatim. **Generalises to all 14 relocations** — check each `Convert` body for an internal kind-switch; moving the door is not enough. `Create` still holds the "is this a number?" decline (null + `data.Fail`).
 
 ### Runtime construction (`Convert(kind)` and `.pr` name→type) — the non-generic face
 
@@ -176,19 +183,27 @@ delegate on the entity (option A: reflective thunk now, generated table = B late
 // (1) THE PARSE — static, one per type, the logic (Decision A). Already drafted above (number).
 //     text.@this.Create(value, data) { ... }
 
-// (2) THE THUNK — ONE generic method, registry plumbing, NOT per type. Logic-free: it wraps a
-//     type's static Create into a delegate; T.Create resolves statically INSIDE it.
+// (2)+(3) BOTH LIVE ON type.@this (app/type/this.cs) — the entity owns closing its OWN Create.
+//         The collection (list<type>) only holds + indexes entities; it does NOT reach in to
+//         stamp them. All three below are members of type.@this:
+
+// the entity's runtime Create — invokes its OWN builder, closed on first use:
+public ValueTask<item.@this?> Create(item.@this value, data.@this data)
+    => (_builder ??= Bind(ClrType))(value, data);
+
+// LAZY: first use resolves THIS entity's ClrType → Builder<clr> via MakeGenericMethod (the
+// single reflective touch, option A), then cached. Lazy so a .pr-read descriptor
+// {name,kind,strict} never forces ClrType before anyone constructs through it.
+Func<item.@this, data.@this, ValueTask<item.@this?>>? _builder;
+static Func<item.@this, data.@this, ValueTask<item.@this?>> Bind(System.Type clr)
+    => (Func<item.@this, data.@this, ValueTask<item.@this?>>)typeof(@this)
+        .GetMethod(nameof(Builder), BindingFlags.NonPublic | BindingFlags.Static)!
+        .MakeGenericMethod(clr).Invoke(null, null)!;
+
+// the thunk — private static on type.@this, logic-free; T.Create resolves statically INSIDE it:
 static Func<item.@this, data.@this, ValueTask<item.@this?>> Builder<T>()
     where T : item.@this, ICreate<T>
     => (v, d) => T.Create(v, d);
-
-//     built ONCE per discovered type at registration — the single reflective touch (option A):
-//     (the scan holds a System.Type, not a T, so MakeGenericMethod bridges it)
-entity.Create = (Func<item.@this, data.@this, ValueTask<item.@this?>>)
-    typeof(Registry).GetMethod(nameof(Builder))!.MakeGenericMethod(clrType).Invoke(null, null)!;
-
-// (3) WHAT LIVES ON type.@this — its OWN closed builder delegate (behavior on the owner):
-public Func<item.@this, data.@this, ValueTask<item.@this?>> Create { get; internal set; }
 
 // callers — dict lookup + DIRECT delegate call, no per-call reflection:
 await app.type["text"].Create(value, data);              // .pr read (by name)
