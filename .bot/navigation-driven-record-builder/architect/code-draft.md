@@ -143,30 +143,35 @@ static virtual async ValueTask<TSelf?> Create(@this value, data.@this data)
 
 ```csharp
 // number/this.cs
-// number.Create is a THIN dispatcher — pick the precision kind, hand off. The KIND builds.
+// number.Create is a THIN dispatcher — resolve the storage KIND, hand off; the KIND builds.
 public static new async ValueTask<@this?> Create(item.@this value, data.@this data)
 {
     if (value is @this self) return new(self);                       // pass-through
-    // precision from the TARGET descriptor, else the DEFAULT `long`. The kind owns the build —
-    // int/long/decimal/half/bigint each live at type[number].kind[<k>]. number holds NO switch.
-    var precision = data.Type?.Kind ?? (global::app.type.kind.@this)"long";
-    return await precision.Build(value, data);                       // "build a value of me from this"
+
+    // KIND = the STORAGE type (int/long/decimal/double/float/bigint) — HOW the number is held.
+    // Chosen by:  1. explicit declaration   — data.Type.Kind (`as decimal`)
+    //             2. else the source's kind  — a db double / library float keeps its own
+    //             3. else the app default    — long out of the box (a setting; coder wires the key)
+    // NOT decimal-places/rounding — that is an EDGE op (output / explicit `round`), never here.
+    var kind = data.Type?.Kind ?? SourceKind(value) ?? data.Context.DefaultNumberKind;
+
+    return await kind.Build(value, data);          // each kind owns its build at type[number].kind[<k>]
 }
 ```
 
 ```csharp
 // type[number].kind[int]/this.cs — the int kind builds ITSELF. "Find the int parser" is ALWAYS
-// here, one predictable path. long/decimal/half/bigint/… each the same shape — file per kind.
+// here, one predictable path. long/decimal/double/float/bigint each the same shape — file per kind.
 public override async ValueTask<data.@this> Build(item.@this value, data.@this data)
 {
     var raw = value.Clr<object>();
-    // parse/convert raw → Int32. On OVERFLOW, the policy is a CONTEXT question: overflow, or
-    // promote to the next kind / default precision? (context answers — coder traces the setting.)
+    // parse/convert raw → Int32. On OVERFLOW the policy (error vs promote to the next kind) is
+    // the same settings-carried machinery arithmetic uses (Overflow.Promote); reuse it, don't reinvent.
     ...
 }
 ```
 
-**OBP note — the pattern never diverges (Ingi's golden rule).** The KIND owns construction, uniformly: `number.Create` only picks the precision and delegates; every precision builds itself at `type[number].kind[<k>]`. No switch, ever — so "the int parser" is always findable at one predictable path (uniformity = discoverability). `CoerceToKind` does **not** relocate onto `number` — it **dissolves** into the kinds; the "closed numeric tower, switch is fine" defense was the divergence trap (closed today ≠ closed tomorrow, and one exception splits the pattern). Same rule for any type whose construction varies by kind (image formats, …): the kind owns it, the type never switches. **Defaults:** number's default kind = `long`; overflow-vs-promote is a context question.
+**OBP note — the pattern never diverges (Ingi's golden rule).** The KIND owns construction, uniformly: `number.Create` only resolves the storage kind and delegates; every kind builds itself at `type[number].kind[<k>]`. No switch, ever — so "the int parser" is always findable at one predictable path (uniformity = discoverability). The old switch family (`CoerceToKind` + the two serializer switches + `FromDoubleAsKind`) does **not** relocate onto `number` — it **dissolves** into the kinds. **Words kept straight:** *kind* = storage type (declaration → source → default-`long` setting); *precision* = decimal places, an **edge** op (max in every calculation, round only at output / explicit request); the arithmetic `Overflow`/`Precision` policy already exists (settings-carried) and stays. Same rule for any type whose build varies by kind (image formats, …): the kind owns it, the type never switches. **This full number refactor (4 switch sites → per-kind) is its own follow-on scope** — tangential to catalog-removal / the Create door; this branch notes it and moves on.
 
 ### Runtime construction (`Convert(kind)` and `.pr` name→type) — the non-generic face
 
