@@ -72,9 +72,11 @@ app.module.list : list<module>          // the ACTION modules — dispatchable v
 ## `Create`'s contract
 
 ```csharp
-static ValueTask<TSelf?> Create(item value, data data)
+static virtual ValueTask<TSelf?> Create(@this value, data data)   // DIM default; keep `virtual`
 ```
 
+- **Two runtime faces, one static per-type `Create` (coder review #2).** `Value<T>()` names `T` at compile time. A runtime caller holds a token, not a `T`, and there are **two** distinct runtime doors: **targeted** — `type[clrType].Create(value, data)`, keyed by the CLR type the caller already holds (the write index-arms, `.pr` name-resolution, `data.Convert(kind)`); and **polymorphic** — `type.Create(raw)` at `type/this.cs:439`, which *infers* the type from `raw` and discards any target. The write arm needs the **targeted** door — `type.Create(raw)` is the wrong one. Both land on the same per-type static `Create` via a cached invoker (the surviving `OwnerOf`/`_ownership` index, now keyed to find `Create`, not `Convert`). **This targeted door replaces `OfStatic`'s CLR-targeted construction — it must exist before Stage 2 deletes `OfStatic`, or the clr(json)→`Actions.@this` write loses its only target-typed door.**
+- **`static virtual` (DIM default) is retained** — ~50 types declare `ICreate<T>` and inherit it; only the 6 real overrides change signature in Stage 0. Dropping `virtual` breaks the inheritors.
 - **No `kind`/`strict` param — they ride on `data.Type`.** `value` (arg 1) is the *source*; `data` (arg 2) is the Data being built, and `data.Type` is the *target* descriptor `{name, kind, strict}`. `Create` reads `data.Type.Kind` / `data.Type.Strict` — as today's default already does (`convert.OfStatic(…, data.Type?.Kind?.Name, …)`). The kind you want is the target's, never the source value's.
 - **The type parses its own input** (Ingi): `number.Create("42")` parses the string, picks precision, coerces — the body relocated verbatim from today's `number.Convert`. A private ctor takes the clean CLR value; `Create` holds "is this even a number?" because `Create` can decline (null) and a ctor can only throw.
 - **Strict: read uniformly off `data.Type`, enforce by timing.** `Create` owns the eager check (built value's kind vs `data.Type.Kind` when strict); a lazy/byte-backed value (image `strict:jpg`) enforces at its load seam — you can't validate a kind you haven't read. Don't collapse `variable.set`'s three enforcement moments (build / run / materialization) into `Create`.
@@ -122,7 +124,7 @@ Grounded at file:line; each reaches the one operation through a redundant route.
 
 Six stages. Stage 1 is the builder-green milestone; 2–5 complete the collapse. The hub stays alive for scalars until Stage 2, so Stage 1 can unblock without waiting for the full relocation.
 
-**Stage 0 — prep branch (async), landed first.** `ICreate.Create` + `list<T>.Convert` → `ValueTask`; dispatch at `data/this.cs:512` → `await T.Create(…)`. Pure signature sweep, no behavior change, isolated from the design. (The doomed convert hub is *not* made async — it is deleted in Stage 2, so leave it sync; Stage 1's unblock routes records/lists through the async `Create`, scalars still through the sync hub until Stage 2.)
+**Stage 0 — prep branch (async), landed first.** `ICreate.Create` (the `static virtual` default + its **6 overrides**: snapshot, list<T>, permission, actions, clr<T>, variable — *not* ~40; the rest inherit the DIM and are untouched) + `list<T>.Convert` → `ValueTask`; dispatch at `data/this.cs:512` → `await T.Create(…)`. Signature sweep, isolated from the design. (The doomed convert hub is *not* made async — deleted in Stage 2, leave it sync; Stage 1 routes records/lists through the async `Create`, scalars still through the sync hub until Stage 2.) NB (coder review #1): the write-path async — `SetValueOnObject` (`variable/list/this.cs:364`) going async because its arms route through async `Create` — lands in **Stage 1**, not here; its caller `Set` (`:111`) is already async, so mechanical.
 
 **Stage 1 — unblock the builder (write path).** On merged Stage 0. Milestone: builder green.
 - `list<T>` accepts a navigable source (clr/dict/list) via its own `EnumerateItems`/`Enumerate`, not raw `IEnumerable`.
@@ -142,9 +144,9 @@ Six stages. Stage 1 is the builder-green milestone; 2–5 complete the collapse.
 - `SetValueOnObject` reflection arms → the value owns its child-write.
 
 **Stage 3 — delete `catalog`.** Decision B.
-- Type identity → `app.type.list` = `list<type>` + keyed name→entity index on the collection.
+- Type identity → `app.type.list` = `list<type>` + keyed name→entity index on the collection. **Runtime-hot, sequence and test APART from the reparent tail** (coder review #4): `[name]→entity` is the lookup hit on *every `.pr` read* to pick which `Create` to call — Decision A depends on it. This is the Stage-3 item that can regress runtime; the reparents cannot.
 - `Kinds`/`Readers` rehome to `app.type.*` (they were already touched in 1/2/5).
-- Mechanical tail: `Renderers`/`KindHooks`/`Compares`/`Scheme`/`Choices` reparent to `app.type.*` — isolated commits so the rename reviews as noise; splittable to a follow-on if size demands.
+- Mechanical tail (no runtime risk): `Renderers`/`KindHooks`/`Compares`/`Scheme`/`Choices` reparent to `app.type.*` — isolated commits so the rename reviews as noise; the designated release valve, splittable to a follow-on if size demands.
 - Delete `type.catalog.@this`.
 
 **Stage 4 — module discovery → `list<module>`.** Decision C.
@@ -164,7 +166,7 @@ Six stages. Stage 1 is the builder-green milestone; 2–5 complete the collapse.
 Tagged **[dead]** delete / **[replace]** rewrite / **[relocate]** move onto the owning type / **[candidate]** collapses—verify / **[stays]** do not touch. Cross-checked against the clr-navigators audit.
 
 ### Stage 0 (async prep)
-- **[replace]** `ICreate.Create` sig — `item/ICreate.cs:30` → `ValueTask<TSelf?>` (~40 implementors follow; sync leaves `return new(result)`).
+- **[replace]** `ICreate.Create` sig — `item/ICreate.cs:30`, keep `static virtual` → `ValueTask<TSelf?>`. Touches the default + its **6 overrides** (snapshot/list<T>/permission/actions/clr<T>/variable); the ~50 declare-and-inherit types are untouched. Sync leaves `return new(result)`.
 - **[replace]** `list<T>.Convert` sig — `list/this.Generic.cs:52` → `ValueTask<Data>`.
 - **[replace]** dispatch — `data/this.cs:512` → `await T.Create(...)`.
 
@@ -177,7 +179,7 @@ Tagged **[dead]** delete / **[replace]** rewrite / **[relocate]** move onto the 
 ### Stage 2 (collapse to Create)
 - **[relocate]** 14 per-type static `Convert` hooks → each type's async `Create`: `type/*/this.Convert.cs` (number, text, datetime, date, time, duration, bool, binary, guid, image, path, dict, list) + `goal/GoalCall.cs:60`.
 - **[dead]** `convert.OfStatic`, `Of`, `Invoke`, `Discover` — `convert/this.cs`.
-- **[relocate/stays]** `OwnerOf`, `_ownership`, `BuildOwnership`, `OwnedClrTypes` — private index behind `type.Create(raw)`; NOT dead.
+- **[relocate/stays]** `OwnerOf`, `_ownership`, `BuildOwnership`, `OwnedClrTypes` — NOT dead. Becomes the cached invoker behind **both** runtime Create faces: the **targeted** `type[clrType].Create(value, data)` (write arms, `.pr` name-resolution, `data.Convert(kind)`) and the polymorphic `type.Create(raw)`. The targeted face must land before `OfStatic` is deleted (coder review #2) — it's what carries the target type the write arm holds.
 - **[candidate]** `TryConvert` + `ConvertElementsInto` — `catalog/Conversion.cs:128,94`. Construction stages fold into `Create`; keep primitive lowering in `item.Clr`; verify callers `type/this.cs:602`, `setting/this.cs:102`.
 - **[dead]** `type.Convert(value, ctx)` — `type/this.cs:187`. (`type.Convert(string)` `:576` separate — verify FromWire.)
 - **[replace]** `data.Convert(kind)` — `data/this.cs:135` → resolve `kind.Type`, call `Create`; `kind.behavior.Convert` gains real converters.

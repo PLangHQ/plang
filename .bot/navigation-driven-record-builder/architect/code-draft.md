@@ -168,15 +168,21 @@ public static new ValueTask<@this?> Create(item.@this value, data.@this data)
 The subtle seam. `Value<T>()` names `T` at compile time. A runtime caller holds a `type`/`kind` token (from a `.pr` name or a `data.Convert(kind)`), so it can't name `T`. It dispatches to the resolved type's static `Create` through one cached invoker:
 
 ```csharp
-// type/this.cs — the runtime (non-generic) face; lands on the SAME per-type static Create
+// type/this.cs — the TARGETED runtime face: build THIS type (the entity's own ClrType)
+// from `value`, target preserved. Distinct from the POLYMORPHIC type.Create(raw) at :439,
+// which infers the type from raw and discards the target — wrong for a caller holding a target.
 public ValueTask<item.@this?> Create(item.@this value, data.@this data)
     => _create(ClrType)(value, data);          // _create: cached Func per ClrType, built via
                                                // reflection over the static Create — the SAME
                                                // one-leaf cached reflection `convert.Discover`
                                                // did for Convert, now finding Create.
+
+// the write index-arm (variable/list/this.cs:440) — it holds a runtime System.Type,
+// so it uses the TARGETED entity door, NOT the polymorphic lift and NOT T.Create:
+var built = await ctx.App.type[elementType].Create(value, data);   // target = elementType, preserved
 ```
 
-**OBP note:** the reflection that today finds+invokes `Convert` doesn't vanish — it narrows to "invoke the resolved type's `Create`," one cached invoker at one leaf (like the `OwnerOf` index). Compile-time (`Value<T>`) and runtime (`type.Create`) both land on the same per-type static `Create`. Not a hub, not a type-switch — a per-type cached delegate keyed by the type itself.
+**OBP note:** the reflection that today finds+invokes `Convert` doesn't vanish — it narrows to "invoke the resolved type's `Create`," one cached invoker at one leaf (like the `OwnerOf` index). Compile-time (`Value<T>`), targeted-runtime (`type[clr].Create`) and polymorphic (`type.Create(raw)`) all land on the same per-type static `Create`. Not a hub, not a type-switch — a per-type cached delegate keyed by the type. **The targeted door is what fixes the builder blocker** (the clr(json)→`Actions.@this` write holds `action.@this` as its target `System.Type`); it must exist before Stage 2 deletes `OfStatic`, which provides CLR-targeted construction today.
 
 ### `data.Convert(kind)` — the kind owns the transform
 
