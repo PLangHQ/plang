@@ -615,7 +615,8 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "list"
+                    "name": "list",
+                    "template": "plang"
                   },
                   "value": [
                     {
@@ -732,7 +733,7 @@
           "text": "add {goal: %goal.Name%, index: %step.Index%, stepText: %step.Text%, actions: %planStep.actions%, user: %buildStepUserMsg%, response: %compileResult%, usage: {model: %compileResult.Model%, promptTokens: %compileResult.PromptTokens%, cachedTokens: %compileResult.CachedTokens%, completionTokens: %compileResult.CompletionTokens%, totalTokens: %compileResult.TotalTokens%, cost: %compileResult.Cost%, cached: %compileResult.Cached%}} to %trace.stepPasses%",
           "lineNumber": 33,
           "indent": 0,
-          "comment": "system prompt is stashed once at goal level (%trace.compileSystem%) — do not duplicate it here.",
+          "comment": "system prompt is stashed once at goal level (%trace.compileSystem%) \u2014 do not duplicate it here.",
           "actions": [
             {
               "module": "list",
@@ -749,7 +750,8 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "dict"
+                    "name": "dict",
+                    "template": "plang"
                   },
                   "value": {
                     "goal": "%goal.Name%",
@@ -1174,7 +1176,7 @@
                   "name": "Operator",
                   "type": {
                     "name": "choice",
-                "kind": "operator"
+                    "kind": "operator"
                   },
                   "value": "=="
                 },
@@ -1255,7 +1257,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "set %complaint% = \"Compiler returned missing-actions for step %step.Index% (text: '%step.Text%'). Current action set is insufficient: %planStep.actions%. Reason: %!error.Message%. Return a corrected action set for step %step.Index% only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) — recovery confidence matters because it tells the dev whether even the correction is a guess.\", type=string",
+          "text": "set %complaint% = \"Compiler returned missing-actions for step %step.Index% (text: '%step.Text%'). Current action set is insufficient: %planStep.actions%. Reason: %!error.Message%. Return a corrected action set for step %step.Index% only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) \u2014 recovery confidence matters because it tells the dev whether even the correction is a guess.\", type=string",
           "lineNumber": 53,
           "indent": 0,
           "comment": "Planner continuation: hand the LLM the compiler's complaint, get an expanded action set.",
@@ -1278,7 +1280,7 @@
                     "name": "text",
                     "template": "plang"
                   },
-                  "value": "Compiler returned missing-actions for step %step.Index% (text: '%step.Text%'). Current action set is insufficient: %planStep.actions%. Reason: %!error.Message%. Return a corrected action set for step %step.Index% only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) — recovery confidence matters because it tells the dev whether even the correction is a guess."
+                  "value": "Compiler returned missing-actions for step %step.Index% (text: '%step.Text%'). Current action set is insufficient: %planStep.actions%. Reason: %!error.Message%. Return a corrected action set for step %step.Index% only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) \u2014 recovery confidence matters because it tells the dev whether even the correction is a guess."
                 },
                 {
                   "name": "Type",
@@ -1303,7 +1305,7 @@
             }
           ],
           "intent": null,
-          "formal": "variable.set(Name=%complaint%, Value=\"Compiler returned missing-actions for step %step.Index% (text: '%step.Text%'). Current action set is insufficient: %planStep.actions%. Reason: %!error.Message%. Return a corrected action set for step %step.Index% only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) — recovery confidence matters because it tells the dev whether even the correction is a guess.\", Type={\"name\":\"string\"})",
+          "formal": "variable.set(Name=%complaint%, Value=\"Compiler returned missing-actions for step %step.Index% (text: '%step.Text%'). Current action set is insufficient: %planStep.actions%. Reason: %!error.Message%. Return a corrected action set for step %step.Index% only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) \u2014 recovery confidence matters because it tells the dev whether even the correction is a guess.\", Type={\"name\":\"string\"})",
           "source": null,
           "waitForExecution": true
         },
@@ -1329,7 +1331,8 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "list"
+                    "name": "list",
+                    "template": "plang"
                   },
                   "value": [
                     {
@@ -1637,7 +1640,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "set %fixMessages% = [{\"Role\":\"user\", \"Content\":\"Your previous response was rejected by the validator: %!error.Message%\\n\\nReturn the corrected response in the same Output Shape (formal, actions, confidence, explanation, errors, warnings) for this step only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) — recovery confidence matters because it tells the dev whether even the correction is a guess.\"}]",
+          "text": "set %fixMessages% = [{\"Role\":\"user\", \"Content\":\"Your previous response was rejected by the validator: %!error.Message%\\n\\nReturn the corrected response in the same Output Shape (formal, actions, confidence, explanation, errors, warnings) for this step only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) \u2014 recovery confidence matters because it tells the dev whether even the correction is a guess.\"}]",
           "lineNumber": 65,
           "indent": 0,
           "comment": "Validator rejected the compiled actions. Re-prompt the LLM with the validator's\ncomplaint, write corrected compileResult, update goal.Steps so the subsequent retry\nof build.validate sees the corrected actions.",
@@ -1657,12 +1660,13 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "list"
+                    "name": "list",
+                    "template": "plang"
                   },
                   "value": [
                     {
                       "Role": "user",
-                      "Content": "Your previous response was rejected by the validator: %!error.Message%\n\nReturn the corrected response in the same Output Shape (formal, actions, confidence, explanation, errors, warnings) for this step only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) — recovery confidence matters because it tells the dev whether even the correction is a guess."
+                      "Content": "Your previous response was rejected by the validator: %!error.Message%\n\nReturn the corrected response in the same Output Shape (formal, actions, confidence, explanation, errors, warnings) for this step only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) \u2014 recovery confidence matters because it tells the dev whether even the correction is a guess."
                     }
                   ]
                 }
@@ -1680,7 +1684,7 @@
             }
           ],
           "intent": null,
-          "formal": "variable.set(Name=%fixMessages%, Value=[{\"Role\":\"user\",\"Content\":\"Your previous response was rejected by the validator: %!error.Message%\\n\\nReturn the corrected response in the same Output Shape (formal, actions, confidence, explanation, errors, warnings) for this step only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) — recovery confidence matters because it tells the dev whether even the correction is a guess.\"}])",
+          "formal": "variable.set(Name=%fixMessages%, Value=[{\"Role\":\"user\",\"Content\":\"Your previous response was rejected by the validator: %!error.Message%\\n\\nReturn the corrected response in the same Output Shape (formal, actions, confidence, explanation, errors, warnings) for this step only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) \u2014 recovery confidence matters because it tells the dev whether even the correction is a guess.\"}])",
           "source": null,
           "waitForExecution": true
         },
@@ -2079,7 +2083,7 @@
           "text": "if %compileResult.Cached% is true, call /system/builder/EmitBuildEvent kind=\"step-cached\", step=%step%",
           "lineNumber": 81,
           "indent": 0,
-          "comment": "Per-step build summary line, plus a warning line when either the planner or\nthe compiler reported Low / VeryLow confidence (LLM had to settle for a\nfallback action or guess a mapping — the dev should see it at build time).",
+          "comment": "Per-step build summary line, plus a warning line when either the planner or\nthe compiler reported Low / VeryLow confidence (LLM had to settle for a\nfallback action or guess a mapping \u2014 the dev should see it at build time).",
           "actions": [
             {
               "module": "condition",
@@ -2097,7 +2101,7 @@
                   "name": "Operator",
                   "type": {
                     "name": "choice",
-                "kind": "operator"
+                    "kind": "operator"
                   },
                   "value": "=="
                 },
@@ -2177,7 +2181,7 @@
                   "name": "Operator",
                   "type": {
                     "name": "choice",
-                "kind": "operator"
+                    "kind": "operator"
                   },
                   "value": "=="
                 },
@@ -2257,7 +2261,7 @@
                   "name": "Operator",
                   "type": {
                     "name": "choice",
-                "kind": "operator"
+                    "kind": "operator"
                   },
                   "value": "=="
                 },
@@ -2337,7 +2341,7 @@
                   "name": "Operator",
                   "type": {
                     "name": "choice",
-                "kind": "operator"
+                    "kind": "operator"
                   },
                   "value": "=="
                 },
@@ -2417,7 +2421,7 @@
                   "name": "Operator",
                   "type": {
                     "name": "choice",
-                "kind": "operator"
+                    "kind": "operator"
                   },
                   "value": "=="
                 },
@@ -2497,7 +2501,7 @@
                   "name": "Operator",
                   "type": {
                     "name": "choice",
-                "kind": "operator"
+                    "kind": "operator"
                   },
                   "value": "=="
                 },

@@ -94,12 +94,13 @@ public class Stage2_NavigationAsyncTests
     }
 
     [Test]
-    public async Task FluidTemplate_MaterialisesUpFront_AtSetValue_NotMidRender()
+    public async Task FluidTemplate_InjectsLazily_MaterialisesOnLeafUse_NotUpFront()
     {
-        // RenderAsync is async; FluidValue.Create(await kvp.Value.Value(), ...) materialises BEFORE the sync render walk
-        // The render path materialises parameter values (await kvp.Value.Value()) BEFORE the
-        // sync template walk — proven by the source shape: FluidValue.Create over awaited values.
+        // Variables are injected as their Data HANDLE (PlangDataValue) — NOT eagerly resolved
+        // up front. Member access navigates the value's own door; .Value() fires only when the
+        // template prints a leaf. So feeding the whole variable list costs nothing until used.
         var src = await File.ReadAllTextAsync(Path.Combine(FindRepoRoot(), "PLang/app/module/ui/code/Fluid.cs"));
-        await Assert.That(src).Contains("FluidValue.Create(await");
+        await Assert.That(src).Contains("new PlangDataValue(kvp.Value");
+        await Assert.That(src).DoesNotContain("FluidValue.Create(await kvp.Value.Value()");
     }
 }

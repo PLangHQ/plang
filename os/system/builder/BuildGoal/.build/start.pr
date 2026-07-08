@@ -111,7 +111,8 @@
             {
               "name": "Value",
               "type": {
-                "name": "dict"
+                "name": "dict",
+                "template": "plang"
               },
               "value": {
                 "id": "%!trace.id%",
@@ -264,7 +265,7 @@
       "text": "render template \"/system/builder/llm/Compile.llm\", write to %compileSystemPrompt%",
       "lineNumber": 13,
       "indent": 0,
-      "comment": "The compile system prompt is static across every step in every goal — render\nit once at goal level so the trace doesn't duplicate ~14KB per step.",
+      "comment": "The compile system prompt is static across every step in every goal \u2014 render\nit once at goal level so the trace doesn't duplicate ~14KB per step.",
       "actions": [
         {
           "module": "ui",
@@ -1250,7 +1251,8 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "dict"
+                    "name": "dict",
+                    "template": "plang"
                   },
                   "value": {
                     "goal": "%goal%",
@@ -1543,7 +1545,8 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "dict"
+                    "name": "dict",
+                    "template": "plang"
                   },
                   "value": {
                     "key": "%!error.Key%",

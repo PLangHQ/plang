@@ -257,7 +257,8 @@
             {
               "name": "Value",
               "type": {
-                "name": "list"
+                "name": "list",
+                "template": "plang"
               },
               "value": [
                 {
@@ -481,7 +482,8 @@
             {
               "name": "Value",
               "type": {
-                "name": "dict"
+                "name": "dict",
+                "template": "plang"
               },
               "value": {
                 "model": "%plan.Model%",
