@@ -1,166 +1,221 @@
-# One construction door — `Type.Create(source, kind?)`, reached three ways
+# Type creation unification + catalog removal — one construction door, no god-object
 
-**Branch:** `navigation-driven-record-builder` (off the merged `clr-navigators`/`variable-as-value` line). The name is now a subset — record-building is Stage 1 of a larger collapse: unifying the whole conversion system onto one primitive.
-**Companion:** coder's `catalog-removal-and-create-unification.md` (converged independently on this same one-`Create`-door conclusion, and goes further — see note below), coder's seed `from-source-spec.md`, coder's `plan-review.md`, and the conversion-door census (this session).
+**Branch:** `navigation-driven-record-builder`. The name is now a subset — record-building is one stage of a larger collapse: every type builds itself through one door, the `catalog` god-object is deleted, and module discovery becomes a plang collection.
+**Absorbs:** coder's `catalog-removal-and-create-unification.md` (Decisions B/C, converged independently), coder's `from-source-spec.md` (the record-builder that started it) and `plan-review.md`, and the conversion-door census (this session). The six open items the coder raised are resolved inline (§ Resolved items).
 
-**This plan is the construction-primitive spine (the coder's Decision 2).** The coder's companion doc adds two moves in the same effort that this plan does not detail: **Decision 1** — delete the `catalog` god-object (`type.catalog.@this`); the registry of all types *is* `list<type>` (`app.type.list`), the 8 sub-registries rehome to `app.type.*`. **Decision 3** — module discovery becomes `app.module.list : list<module>` (navigable view over reflection), the compile prompt a Fluid render. Those are compatible with and extend this spine; the coder left six open items for the architect on them (answered separately, not folded in here without Ingi).
-
-**You (coder/test-designer) own the final code and test shape.** Every body and signature below pins the mechanism, not the exact lines. If a cleaner shape falls out while implementing, take it — flag it back if it moves a seam.
+**You (coder/test-designer) own the final code and test shape.** Every body, signature, and stage boundary below pins the mechanism and the intent, not the exact lines. If a cleaner shape or a better cut falls out while implementing, take it — flag it back if it moves a seam or a decision.
 
 ---
 
 ## Why
 
-The builder dies writing a clr(json) onto a plang-typed slot (`set %goal.Steps[i].Actions% = %compileResult.actions%`): the clr(json) tries to *lower* to `actions.@this`, hits the terminal LOWER door, throws, and the built goal has no actions. That is the symptom. The disease, found by censusing every conversion path: **there are six different mechanisms that turn a source into a typed value, and none of them is the one true door.** `ICreate.Create`, the reflective `convert.OfStatic`, the 15-stage `TryConvert` pipeline, `type.Convert`, `dict.Clr`'s STJ round-trip, `type.Build`'s lift — all reach the same operation through reflection, STJ serialize-loops, and hand-dispatch instead of through the type. The clr(json) gap exists because not one of them navigates.
+The builder dies writing a clr(json) onto a plang-typed slot (`set %goal.Steps[i].Actions% = %compileResult.actions%`): the clr(json) tries to *lower* to `actions.@this`, hits the terminal LOWER door, throws, and the built goal has no actions. That is the symptom. Censusing every conversion path found the disease: **six mechanisms turn a source into a typed value, and not one is the single door** — `ICreate.Create`, the reflective `convert.OfStatic`, the 15-stage `TryConvert`, `type.Convert`, `dict.Clr`'s STJ round-trip, `type.Build`'s lift. They reach the same operation through reflection, STJ serialize-loops, and hand-dispatch instead of through the type. The clr(json) gap exists because none of them navigates. Two more god-objects sit next to them: `catalog` (`type.catalog.@this`) staples type-identity + LLM-schema-fold + a bag of eight unrelated registries; and module discovery leaks bare strings that `BuildTypeEntries`/`Describe()` re-reflect into a C# schema.
 
-Settled with Ingi (2026-07-08): collapse them. **One construction primitive, owned by each type, reached three ways.** Each type parses its own input and builds itself — no reflective hub, no STJ round-trip. This closes the write gap, retires the goal-as-type STJ bridge, and makes every value round-trip the same plang-native way.
+Settled with Ingi (2026-07-08): collapse all of it into one shape. **One construction primitive each type owns; the registry of all types is just `list<type>`; module discovery is just `list<module>`.** No reflective hub above the types, no STJ round-trip, no invented parent node. Behavior on the owner, reflection only at the leaf that holds the CLR type, everything above it plang values.
 
 ---
 
-## The model (settled with Ingi)
+## The model — three decisions, one shape
 
-**One primitive:** `Type.Create(source, kind?)` — a type builds itself from a source, optionally refined by a kind. Each type owns it; `Create` parses/coerces its own input and declines (returns null) when it can't. No `convert.OfStatic`, no reflective `Discover`/`OwnerOf`, no STJ serialize→deserialize.
+### A. One construction door — `Type.Create(source)`
 
-**Reached three ways — all landing on the same `Create`:**
+Each type builds itself from a source; it parses its own input and declines (returns null) when it can't. No `convert.OfStatic`, no reflective `Discover`, no STJ serialize→deserialize. The one operation that today wears three faces —
+
+```
+convert.OfStatic(clrType, value, kind, ctx)   // reflective, CLR-keyed        ← the OBP violation
+type.@this.Convert(value, ctx)                // entity router → OfStatic
+ICreate<T>.Create(value, data)                // the target builds itself       ← the real one
+```
+
+— collapses to `Create`. "Convert into myself from another" *is* `Create`. Reached three ways, all landing on the same door:
 
 | you ask by | door | lands on | example |
 |---|---|---|---|
 | static type (compile-time) | `Value<T>()` | `T.Create(self)` | a handler declares `Data<number>` |
-| kind (runtime) | `data.Convert(k)` | `k.Type.Create(self, k)` | `text.convert("mp3")`, `text.convert("html")` |
+| kind (runtime) | `data.Convert(k)` | `k.Type.Create(self)` (kind on `data.Type`) | `text.convert("mp3")`, `"html"` |
 | birth (from a `.pr`) | the read path | `T.Create(source)` over `{name, type, value}` | building `goal` from clr(json) |
 
-**`Convert(kind)` is a thin front over `Create`, not a peer.** A kind knows its type — `kind.Type` resolves `json→item`, `csv→table`, `mp3→audio` (reader/format registry). So `text.convert("mp3")` = resolve `mp3`→type `audio` → `audio.Create(theText, kind: mp3)`, and `audio` owns whether that text can become mp3 (a path to load, TTS, or decline). Convert crosses type *because the kind carries its type*. This is why "Create = become type, Convert = become kind" is true at the surface but underneath Convert delegates to Create.
+**`Convert(kind)` is a thin front over `Create`, not a peer.** A kind knows its type (`kind.Type`: `json→item`, `csv→table`, `mp3→audio`). So `text.convert("mp3")` = resolve `mp3`→type `audio` → `audio.Create(theText)` with kind `mp3` on the target descriptor; `audio` decides whether that text can become mp3. Convert crosses type *because the kind carries its type*. This fills the currently-stub `kind.behavior.Convert` (only `dict` has a real converter today).
 
-**The other two directions stay distinct** (they are not construction):
+**The other two directions stay distinct — they are not construction:**
 - **lower** — plang value → CLR — is `item.Clr`. The exit door. Stays.
-- **write a child** — set `%x.y% = v` — the value owns (`kind.Set` shape). `SetValueOnObject`'s reflection dies.
+- **write a child** — `set %x.y% = v` — the value owns (the `kind.Set` shape). `SetValueOnObject`'s reflection dies.
+
+### B. Delete `catalog` — the registry of all types *is* `list<type>`
+
+`App.Type` (`type.catalog.@this`) staples three unrelated jobs: type-identity (`[name]→entity`, `[clr]→entity`), the LLM schema-fold (`BuildTypeEntries`/`ComplexSchemas`), and a bag of eight sub-registries it only *parents* (`Choices`, `Scheme`, `KindHooks`, `Kinds`, `Conversions`, `Compares`, `Renderers`, `Readers`). `type` is an item (`type/this.cs:33`, settled in the value model), so **the list of all types is `list<type>`** — an instance of the native list value, reached as `app.type.list`. No name collision: the registry is an *instance* of the list value type, `list` appearing as one element is data self-reference.
+
+- **type identity** → `app.type.list` = `list<type>` + a **keyed name→entity index on the collection** (open item #2: the index lives *on* the list, not a revived side-registry). This is the only runtime use of the list — a `.pr` read resolves `type:{name:"text"}` → the `text` type to pick which `Create` to call. Enumerate for the LLM; look up one by name on a read.
+- **`Conversions`** → **dissolves into `Create`** (Decision A). Not a move, a deletion.
+- **The other seven** → rehome from `catalog`-parented to `app.type.*`-direct. `Kinds`/`Readers` travel with the stages that transform them; `Renderers`/`KindHooks`/`Compares`/`Scheme`/`Choices` are pure reparenting (open item #3, § Sequencing).
+
+Net: `type.catalog.@this` is deleted. `App.Type` becomes the `type` collection node — select `app.type["number"]`, enumerate `app.type.list`.
+
+### C. Module discovery is `app.module.list : list<module>`
+
+The module registry owns "what modules/actions/properties exist" and hands back plang types, not bare strings. `BuildTypeEntries(modules)` and `Describe()` (C# schema builders that reflect action shapes into `StepActions`/`List<data>`) delete.
+
+```
+app.module.list : list<module>          // the ACTION modules — dispatchable verbs, not C# infra folders
+  module.Actions    : list<action>      // module = namespace, action = class (variable/set.cs)
+    action.Properties : list<type>      // keyed by property name; value = the prop's plang type
+```
+
+- **Views over reflection, one source (coder Decision 3(a)).** `module`/`action` are thin `item` views over the namespace / handler `System.Type` — the clr-navigator idea applied to type metadata. Nothing materialized, no drift. Rejected (b) a stored `ActionDefinition` mirror (two sources).
+- **No `field` type; reflection at the leaf.** A property's type is a `type.@this` with `.Name` already set — `Data<text> Name` → key `name`, value `type{name:"text"}`. Consumers read `type.Name`; they never see a `System.Type` or call `GetTypeName`. The reflection (unwrap `Data<T>`/`[Code]T`, map the CLR property to its plang type) happens *once, inside the `action` view* — the one leaf that holds the class. Above it, plang values all the way up. `GetTypeName(typeof(x))` at a consumer site is the violation and goes; it survives only as the `action` view's internal leaf mechanic.
+- **The only consumer is build-time LLM teaching.** So `list<module>` is a discovery view, not runtime-hot — `BuildTypeEntries`/`Describe()`/`StepActions` collapse to a Fluid render over the collection. The builder does `get all modules → %modules%` (a `list<module>`), `ui.render 'template' → %doc%` (the .md the LLM reads), and drills in with `filter %modules% where action=… → render`. (Runtime *dispatch* — resolve one action by name to execute — is a separate keyed read over the same handler class, not this list.)
+
+**Why one branch:** the three decisions share the same call sites (every `convert`/`type.Convert`/`catalog.X` site) and the same principle (behavior on the owner, reflection at the leaf, one door). Splitting would tangle the same edits across branches.
 
 ---
 
 ## `Create`'s contract
 
 ```csharp
-static ValueTask<TSelf?> Create(item value, data data, kind? kind = null)
+static ValueTask<TSelf?> Create(item value, data data)
 ```
 
-- **Async.** Navigation can be I/O (`%var%` resolution, bracket-index) — same rule as `IBooleanResolvable` making the condition pipeline async because one leaf can be I/O. `Value<T>()` is already async; the dispatch becomes `await T.Create(await Value(), this)`.
-- **The type parses its own input** (Ingi, part 1): `number.Create("42")` parses the string, picks the precision kind, coerces — the body relocated verbatim from today's `number.Convert`. The private ctor takes the clean CLR value; `Create` holds "is this even a number?" because `Create` can decline (null) and a ctor can only throw.
+- **No `kind`/`strict` param — they ride on `data.Type`.** `value` (arg 1) is the *source*; `data` (arg 2) is the Data being built, and `data.Type` is the *target* descriptor `{name, kind, strict}`. `Create` reads `data.Type.Kind` / `data.Type.Strict` — as today's default already does (`convert.OfStatic(…, data.Type?.Kind?.Name, …)`). The kind you want is the target's, never the source value's.
+- **The type parses its own input** (Ingi): `number.Create("42")` parses the string, picks precision, coerces — the body relocated verbatim from today's `number.Convert`. A private ctor takes the clean CLR value; `Create` holds "is this even a number?" because `Create` can decline (null) and a ctor can only throw.
+- **Strict: read uniformly off `data.Type`, enforce by timing.** `Create` owns the eager check (built value's kind vs `data.Type.Kind` when strict); a lazy/byte-backed value (image `strict:jpg`) enforces at its load seam — you can't validate a kind you haven't read. Don't collapse `variable.set`'s three enforcement moments (build / run / materialization) into `Create`.
 - **Declines with null, reason on `data.Fail`** — the existing ICreate contract, unchanged.
 - **Records navigate-pull each declared property**: `module`/`action` as `text`, `Parameters` as `List<Data>` through the Data reader (the seam, below), nested records recurse `Create`, `list<T>` properties route through `list<T>`'s own `Create`. Scalars coerce their raw. Same door, different bodies.
+- **Async.** Navigation can be I/O (`%var%` resolution, bracket-index) — same rule as `IBooleanResolvable` making the condition pipeline async because one leaf can be I/O. `Value<T>()` is already async; the dispatch becomes `await T.Create(await Value(), this)`.
 
 ---
 
-## The incumbent (leaf trace) — the six paths that collapse
+## The incumbent (leaf trace) — what collapses, with disposition
 
-Each reaches `Type.Create(source, kind)` today through a redundant route. Grounded at file:line; disposition stated.
+Grounded at file:line; each reaches the one operation through a redundant route.
 
-1. **`ICreate.Create` default** — `item/ICreate.cs:30`. Today: pass-through → facet → `convert.OfStatic` (reflective) → `type.Create(raw)` → `dict/list.Clr(typeof(TSelf))` (STJ). It funnels into the very doors we're removing. **→ becomes the one primitive.** Keep pass-through + facet (free); the tail (OfStatic, the dict/list STJ) is replaced by "record → navigate-pull; scalar → the type's own `Create` override."
+1. **`ICreate.Create` default** — `item/ICreate.cs:30`. Today funnels: pass-through → facet → `convert.OfStatic` → `type.Create(raw)` → `dict/list.Clr(typeof(TSelf))`. **→ becomes the one primitive.** Keep pass-through + facet; the tail is replaced by "record → navigate-pull; scalar → the type's own `Create`."
+2. **`convert.OfStatic`/`Of`/`Invoke`/`Discover`** — `convert/this.cs`. Reflectively finds+invokes a per-type `static Convert`. **→ dies.** The per-type `Convert` bodies relocate onto each type as its `Create`. `OwnerOf`/`_ownership`/`BuildOwnership`/`OwnedClrTypes` (the raw-CLR→family map) is **NOT dead** — `type.Create(raw)` needs "a `long` → number"; it survives as a private index behind `type.Create(raw)`, not a public door.
+3. **`TryConvert`** — `catalog/Conversion.cs:128-522`, 15 stages, only 4 external callers (`type.Convert` `:225`, type/this.cs:602, `list<T>` this.Generic.cs:64, `setting/this.cs:102`). **→ collapses.** Construction stages fold into `Create`; primitive `ChangeType` lowering survives inside `item.Clr`. Verify the two non-obvious callers route through `Create`.
+4. **`type.@this.Convert(value, ctx)`** — `type/this.cs:187`. **→ dies into `Create`.** (`type.Convert(string raw)` `:576`, the wire/`FromWire` reader, is a *different* method — verify snapshot/crypto callers; likely stays.)
+5. **`dict.Clr(Type)`** — `dict/this.cs:323`. STJ serialize→deserialize to build a record (same round-trip as TryConvert stages 9/14 — three homes for one smell). **→ record-build use dies into `Create`;** the untyped dict→`Dictionary<string,T>`/map lowering STAYS (non-record callers verified).
+6. **`type.@this.Build` / `type.@this.Create(raw)`** — `type/this.cs:249`/`:439`. `Create(raw)` (the polymorphic lift) **folds into the one `Create`.** `Build`'s **deferred-source born rule** (string/bytes → lazy source; full-match `%var%` → variable) is read-time laziness, a separate concern — **stays**.
+7. **`catalog`** — `type/catalog/this.cs`. **→ deleted** (Decision B): identity → `list<type>` + index; `Conversions` → `Create`; the other 7 rehome.
+8. **module discovery** — `module.@this.list:IEnumerable<string>`, `Describe()`, `BuildTypeEntries(modules)`, `StepActions`. **→ deleted** (Decision C): `list<module>` views + a Fluid render.
 
-2. **`convert.OfStatic` / `Of` / `Invoke` / `Discover` / `OwnerOf` / `_ownership`** — `convert/this.cs`. Reflectively discovers a `static Convert(object,kind,ctx)` per type and invokes it, routed by a reflection-built CLR→family table. **→ dies.** The per-type `Convert` bodies are legitimate; they relocate onto each type as its `Create`. The reflective dispatch is the OBP violation and goes.
+**The write site** (`variable/list/this.cs:364` `SetValueOnObject`) — its CLR-property arm already CONVERT-firsts; its index-arms (`:440,:456`) blind-LOWER. **→ all arms route through the slot type's own `Create`;** the seven reflection arms die (the clr(json) `kind.Set` delegation at `:389` is already the right shape).
 
-3. **`TryConvert`** — `catalog/Conversion.cs:128-522`, 15 stages. The god-function: null → assignable → Data-wrap → item.Clr-lower → nullable → **family hook (reflective)** → JsonNode → FromWire → **STJ string→record** → list/element → ctor(string) → enum → primitive ChangeType → **STJ dict→record** → mismatch. Only **4 external callers** (`type.Convert` type/this.cs:225, type/this.cs:602, `list<T>` this.Generic.cs:64, `setting/this.cs:102`). **→ collapses.** The construction stages fold into `Create`; the genuine primitive/ChangeType lowering survives inside `item.Clr`. Verify the two non-obvious callers (type/this.cs:602, setting/this.cs:102) route through `Create` before deleting.
+**The Data-leaf seam (must stay byte-identical).** `action.Parameters` is `List<app.data.@this>` — param values `{name,type,value}` are **Data leaves**, not record fields. They carry a full-match `%var%`-born-as-variable, deferred source, template flag, signing — owned by `app/data/reader/this.cs`. When `Create` reaches a `Data`-typed property it hands the child **to that reader** (via a new JsonElement-input door reusing the byte path's `FromRaw` deferral tail — coder review I3), never converts it to a value. `%var%`/template/signing stay identical.
 
-4. **`type.@this.Convert(value, ctx)`** — `type/this.cs:187`. Value→type coercion: unwrap leaf, dispatch to the reflective hub, fall back to `item.Clr`, then `TryConvert`. Duplicates `Create` + the hub. **→ dies into `Create`.** Callers (`variable/set.cs:302`, `type.Build:306`) route to `Create`. NB `type.Convert(string raw)` (type/this.cs:576, the wire-string/`FromWire` reader) is a *different* method — verify its snapshot/crypto callers before touching; likely stays or folds into the read path, not this cut.
-
-5. **`dict.Clr(Type)`** — `dict/this.cs:323`. STJ serialize→deserialize to build a record. Same STJ round-trip also appears as TryConvert stages 9 and 14 — three homes for one smell. **→ the record-build use dies into `Create` (navigate-pull);** the genuine untyped dict→`Dictionary<string,T>`/CLR-map lowering STAYS (verified non-record callers: `variable/list/this.cs:440,456,477,553`, typed-map slots).
-
-6. **`type.@this.Build` / `type.@this.Create(raw)`** — `type/this.cs:249` / `:439`. `Create(raw)` is the polymorphic lift (raw CLR → plang value) — **folds into the one `Create`.** `Build` also owns the **deferred-source born rule** (a string/bytes value becomes a lazy source; a full-match `%var%` borns a `variable`) — that laziness is read-time, a separate concern from construction, and **stays**.
-
-**The write site** (`variable/list/this.cs:364` `SetValueOnObject`) already does CONVERT-first on its CLR-property arm (`OfStatic` → fall back to `Clr`); its index-arms (`:440,:456`) still blind-LOWER. **→ all arms route to the value's own `Create`/child-write;** the seven reflection arms die (one arm, the clr(json) `kind.Set` delegation at `:389`, is already the correct shape).
-
-**The Data-leaf seam (must stay byte-identical).** `action.Parameters` is `List<app.data.@this>` — param values `{name,type,value}` are **Data leaves**, not record fields. They carry a full-match `%var%`-born-as-variable, deferred source, template flag, signing — owned by `app/data/reader/this.cs`. When `Create` reaches a `Data`-typed property it hands the child **to that reader**, never converts it to a value. This half does not change.
-
-**The async spine** is already async everywhere except the two sync islands (`ICreate.Create`, `list<T>.Convert`). `Data.Value<T>()`/`Value()`/`GetChild`/`Navigate`, `clr.Navigate`, `kind.Navigate`/`Convert`, `data.Convert(kind)` (`data/this.cs:135`, already `=> to.Convert(this, _context)`) — all `ValueTask`.
+**The async spine** is already async everywhere except the two sync islands (`ICreate.Create`, `list<T>.Convert`). `data.Convert(kind)` already exists (`data/this.cs:135`, `=> to.Convert(this, _context)`).
 
 ---
 
-## Decisions (settled with Ingi, 2026-07-08)
+## Resolved design items (the coder's six)
 
-1. **`Create` and the convert front go async. No interface split.** Same seam-goes-async rule as `IBooleanResolvable`. ~40 `ICreate` implementors change signature; a sync leaf returns `new(result)` (no `async`, no state machine). **Lands as its own prep branch first** (Stage 0) — pure signature sweep, isolated from the design change.
-2. **Each type owns its `Create`; no reflective hub.** Scalars override `Create` with the coercion relocated from their `Convert` hook (`number.Create` parses "42", picks precision). Records get a generic navigate-pull default (their declared properties *are* the spec). `convert.OfStatic` dies.
-3. **`Convert(kind)` is a front over `Create`** — resolve `kind.Type`, call `Type.Create(self, kind)`. Not a separate mechanism. Fills the currently-stub `kind.behavior.Convert` (only `dict` has a real converter today).
-4. **`dict.Clr`'s STJ round-trip stays for non-record targets.** Verified: typed `Dictionary<string,T>` slots and CLR-map lowering reach it. Only its record-build use retires into `Create`.
-5. **Reflective navigation-pull first; codegen deferred.** The generic default navigates any record with zero per-type code (better than `dict.Clr` — reflects the property list once, no round-trip). A source-generator `Create` per record is a later perf pass, emitting the record's own body — no new type, no "FromSource" name.
+| # | resolution |
+|---|---|
+| 1 `list<type>` bootstrap | No true cycle. `list<T>` is a re-tag (no element conversion at birth); type entities `Promote()` lazily. Born with System.Context (`app/this.cs:287`, before Type). Populate by assembly reflection (CLR→entity, no name-lookup) → derive the index → lazy promote on read. Must stay lazy + runtime-extendable (module choices + `code.load` register after Type is born) — the current catalog already has this shape. The `list`/`type` self-reference is harmless data self-reference. |
+| 2 index home | On the collection (`app.type.list` owns its name→entity index), not a revived side-registry. Only `list<type>` needs it; `list<module>` doesn't (build-time). |
+| 3 rehoming | Transform-with-stage: `Conversions`→`Create` (Stage 2), identity→`list<type>` (Stage 3), `Kinds` (Stage 2 fills its Convert), `Readers` (Stage 1/5 touch it). Pure reparent: `Renderers`/`KindHooks`/`Compares`/`Scheme`/`Choices` — a detachable mechanical tail; the only thing safe to split to a follow-on if the branch is too big. |
+| 4 kind/strict | On `data.Type`; `Create` reads them, no extra param. Strict-enforce distributed by timing. Callers that "pass a kind" set `data.Type.Kind` instead. |
+| 5 schema-fold | Not a fold — a Fluid render over `list<module>` + types self-describing. `BuildTypeEntries`/`Describe()`/`StepActions` delete. Confirm the render doesn't regress LLM teaching (examples/defaults/return-types currently folded in `Describe()`). |
+| 6 module-tree | Reflection view at the leaf (Decision C). Confirm the `module`/`action` view classes one at a time; `action.Properties`' keyed `(name→type)` navigation reuses dict/clr enumeration, not a new keyed-list type. |
 
 ---
 
 ## Sequencing
 
-**Stage 0 — prep branch (async sweep), landed first.** `ICreate.Create` + `list<T>.Convert` → `ValueTask`, sweep across ~40 implementors, no behavior change. Dispatch at `data/this.cs:512` → `await T.Create(…)`. **Also covers the second async spine** (coder review I1): `list<T>.Convert` is reached through `convert.OfStatic`→`Invoke` (`hook.Invoke(...) as Data`), so `OfStatic`/`Invoke`, `SetValueOnObject`, and `Conversion.cs:216` go async with it. `Invoke` awaits a hook that returns a `ValueTask`, else uses the value directly.
+Six stages. Stage 1 is the builder-green milestone; 2–5 complete the collapse. The hub stays alive for scalars until Stage 2, so Stage 1 can unblock without waiting for the full relocation.
 
-**Stage 1 — unblock the builder (write path).** On top of merged Stage 0.
-- `list<T>` accepts a **navigable** source: when `value` is a clr/dict/list item, enumerate via its own `EnumerateItems`/`Enumerate` (the carrier delegates to its kind) instead of demanding raw `IEnumerable`.
-- **Hand-write `action.Create`** (Decision 5 — hand-write first, then generalize): pull `module`/`action` as `text`, `Parameters` as `List<Data>` through `app/data/reader`, recurse `Modifiers`. `actions.Create` accepts a clr(json)/navigable array (defer to `list<action>`).
-- Write index-arms (`variable/list/this.cs:440,456`) → CONVERT-first, matching the property arm.
-- **Blocker-1** (`data/reader/this.cs:79-80`, clr-navigators demolition #5): route an `object`/`dict`/`list`/json-kind-declared wire value → json → clr(json). Rule (coder review I4): **String token → unchanged (text/plain, incl `%var%`); non-String or json-kind-declared → clr(json).** The String branch is provably out of scope — a full-match `%var%` borns a `variable` in `type.Build` (`type/this.cs:265`), a different branch. Sequence first.
-- **Blocker-2** (`goal.getTypes` List-lower): same LOWER-instead-of-CONVERT bug at a native-`List`→`list<dict>` return. `list<dict>.Convert` already takes a native `List`; confirm it routes through the async convert door.
-- **I3 seam (coder review):** navigation hands a clr(json) child, not bytes. Give `app/data/reader` a `JsonElement`-input door that reuses the byte path's `FromRaw` deferral tail (same format pick, same `%var%`/template/signing) — **not** a re-serialize round-trip. Named Stage-1 deliverable; it makes `%var%` + signing byte-identical on both write and read paths. DoD: a round-trip test that a navigation-built param signs identically to a byte-read one (coder review I7 — sign-if-missing fires in `Wire.Write`).
+**Stage 0 — prep branch (async), landed first.** `ICreate.Create` + `list<T>.Convert` → `ValueTask`; dispatch at `data/this.cs:512` → `await T.Create(…)`. Pure signature sweep, no behavior change, isolated from the design. (The doomed convert hub is *not* made async — it is deleted in Stage 2, so leave it sync; Stage 1's unblock routes records/lists through the async `Create`, scalars still through the sync hub until Stage 2.)
 
-**Stage 2 — the collapse (one `Create`).** The big one.
-- Relocate the 14 per-type static `Convert` hooks → `Create` overrides on each type (`number`, `text`, `datetime`, `date`, `time`, `duration`, `bool`, `binary`, `guid`, `image`, `path`, `dict`, `list`, `GoalCall`). Same bodies, moved from reflectively-discovered statics to the type's own `Create`.
-- Delete `convert.OfStatic`/`Of`/`Invoke`/`Discover`/`OwnerOf`/`_ownership`/`BuildOwnership`.
-- Collapse `TryConvert`: construction stages fold into `Create`; primitive `ChangeType` lowering lives in `item.Clr`. Route its 4 callers to `Create` (verify the two non-obvious ones).
-- Delete `type.Convert(value)`; callers route to `Create`.
-- `data.Convert(kind)` becomes the front: resolve `kind.Type` → `Type.Create(self, kind)`. Fills `kind.behavior.Convert`.
-- The generic record navigate-pull default; `step`/`goal`/every record inherits it. The Stage-1 hand-written `action.Create` collapses in unless it carries a real quirk.
-- `SetValueOnObject`'s reflection arms → the value owns its child-write.
+**Stage 1 — unblock the builder (write path).** On merged Stage 0. Milestone: builder green.
+- `list<T>` accepts a navigable source (clr/dict/list) via its own `EnumerateItems`/`Enumerate`, not raw `IEnumerable`.
+- Hand-write `action.Create`: `module`/`action` as `text`, `Parameters` as `List<Data>` through `app/data/reader`, recurse `Modifiers`. `actions.Create` accepts a navigable array (defer to `list<action>`).
+- Write index-arms (`variable/list/this.cs:440,456`) → route through the slot type's `Create`.
+- Blocker-1 (`data/reader/this.cs:79-80`, clr-navigators demolition #5): route `object`/`dict`/`list`/json-kind-declared → clr(json). Rule (review I4): **String token → unchanged (text/plain, incl `%var%`); non-String or json-kind-declared → clr(json).** The String branch is out of scope — a full-match `%var%` borns a variable in `type.Build` (`type/this.cs:265`). Sequence first.
+- Blocker-2 (`goal.getTypes` List-lower): same bug at a native-`List`→`list<dict>` return; confirm it routes the async convert door.
+- Reader JsonElement-input door (review I3) reusing the `FromRaw` tail. DoD: a round-trip test that a navigation-built param signs identically to a byte-read one (review I7 — sign fires in `Wire.Write`).
 
-**Stage 3 — retire the goal-as-type STJ read bridge.**
+**Stage 2 — collapse to one `Create`.** The core of Decision A.
+- Relocate the 14 per-type static `Convert` hooks → async `Create` on each type (`number`, `text`, `datetime`, `date`, `time`, `duration`, `bool`, `binary`, `guid`, `image`, `path`, `dict`, `list`, `GoalCall`).
+- Delete `convert.OfStatic`/`Of`/`Invoke`/`Discover`; keep `OwnerOf`/`_ownership` as a private index behind `type.Create(raw)`.
+- Collapse `TryConvert`: construction stages fold into `Create`; primitive lowering stays in `item.Clr`; route the 4 callers to `Create`.
+- Delete `type.Convert(value)`; callers → `Create`.
+- `data.Convert(kind)` becomes the front: resolve `kind.Type` → `Create`; fill `kind.behavior.Convert` with real converters.
+- Generic record navigate-pull default; the Stage-1 hand-written `action.Create` collapses in unless it carries a real quirk.
+- `SetValueOnObject` reflection arms → the value owns its child-write.
+
+**Stage 3 — delete `catalog`.** Decision B.
+- Type identity → `app.type.list` = `list<type>` + keyed name→entity index on the collection.
+- `Kinds`/`Readers` rehome to `app.type.*` (they were already touched in 1/2/5).
+- Mechanical tail: `Renderers`/`KindHooks`/`Compares`/`Scheme`/`Choices` reparent to `app.type.*` — isolated commits so the rename reviews as noise; splittable to a follow-on if size demands.
+- Delete `type.catalog.@this`.
+
+**Stage 4 — module discovery → `list<module>`.** Decision C.
+- `app.module.list:list<module>`, `module.Actions:list<action>`, `action.Properties:list<type>` (keyed by name, reflection at the `action` leaf).
+- Delete `BuildTypeEntries(modules)`/`Describe()`/`StepActions`; discovery becomes a projection over `list<module>`, the compile prompt a `Fluid(list<module>)` render + types self-describing.
+
+**Stage 5 — retire the goal-as-type STJ read bridge.**
 - `.pr` load routes through navigate-pull: a `.pr` is a clr(json) that `Create`s itself into `goal`.
-- Delete `goal/serializer/Reader.cs` + `Default.cs` (`Deserialize<goal>`), `GoalReadOptions` (`catalog/Conversion.cs:55`, its only callers are those two), the goal-specific dispatch (`Conversion.cs:282`).
-- Retire `dict.Clr`'s record-build use (`ICreate.cs:61-62`) — the STJ method stays for maps.
+- Delete `goal/serializer/Reader.cs` + `Default.cs`, `GoalReadOptions` (`catalog/Conversion.cs:55`), the goal-specific dispatch (`:282`).
+- Retire `dict.Clr`'s record-build use (`ICreate.cs:61-62`); the STJ method stays for maps.
 - Collapse `build/code/Default.cs` dual-path step readers (`GetString` `:855-862`, `SetValue` `:868-877`) — the `step is JsonElement` fork dies when steps navigate as Data (clr-navigators demolition #10).
 
 ---
 
 ## Code to remove (demolition worklist)
 
-Tagged **[dead]** delete / **[replace]** rewrite in place / **[relocate]** move onto the owning type / **[candidate]** collapses — verify / **[stays]** do not touch. Cross-checked against the clr-navigators audit.
+Tagged **[dead]** delete / **[replace]** rewrite / **[relocate]** move onto the owning type / **[candidate]** collapses—verify / **[stays]** do not touch. Cross-checked against the clr-navigators audit.
 
 ### Stage 0 (async prep)
-- **[replace]** `ICreate.Create` sig — `item/ICreate.cs:30`, `TSelf? → ValueTask<TSelf?>` (~40 implementors follow).
-- **[replace]** `list<T>.Convert` sig — `list/this.Generic.cs:52`, → `ValueTask<Data>`.
-- **[replace]** `convert.Invoke`/`Of`/`OfStatic` — `convert/this.cs:28,43,47`, await a `ValueTask`-returning hook. `SetValueOnObject` (`variable/list/this.cs:364`) and `Conversion.cs:216` go async.
-- **[replace]** dispatch — `data/this.cs:512`, `await T.Create(...)`.
+- **[replace]** `ICreate.Create` sig — `item/ICreate.cs:30` → `ValueTask<TSelf?>` (~40 implementors follow; sync leaves `return new(result)`).
+- **[replace]** `list<T>.Convert` sig — `list/this.Generic.cs:52` → `ValueTask<Data>`.
+- **[replace]** dispatch — `data/this.cs:512` → `await T.Create(...)`.
 
 ### Stage 1 (unblock)
-- **[replace]** `list<T>.Convert` IEnumerable-only guard — `list/this.Generic.cs:54` → "navigable source."
+- **[replace]** `list<T>.Convert` IEnumerable-only guard — `list/this.Generic.cs:54` → navigable source.
 - **[replace]** blind LOWER in write index-arms — `variable/list/this.cs:440,456`.
-- **[replace]** deferred-read format guess — `data/reader/this.cs:79-80` (String→text/plain, else clr(json)).
-- **[new]** `app/data/reader` `JsonElement`-input door reusing the `FromRaw` tail (I3).
+- **[replace]** deferred-read format guess — `data/reader/this.cs:79-80`.
+- **[new]** `app/data/reader` JsonElement-input door reusing the `FromRaw` tail.
 
-### Stage 2 (collapse)
-- **[relocate]** 14 per-type static `Convert` hooks → each type's `Create`: `type/*/this.Convert.cs` (number, text, datetime, date, time, duration, bool, binary, guid, image, path, dict, list) + `goal/GoalCall.cs:60`.
-- **[dead]** `convert.OfStatic`, `Of`, `Invoke`, `Discover` (the Convert-hook finder) — `convert/this.cs`. The CLR-keyed reflective *dispatch to per-type `Convert`* is the violation and goes.
-- **[relocate/stays]** `OwnerOf`, `_ownership`, `BuildOwnership`, `OwnedClrTypes` — the raw-CLR→family map. NOT dead: `type.Create(raw)` (`type/this.cs:439`) needs "a `long` → number." It survives as a **private perf index behind `type.Create(raw)`**, not a public door anyone reaches (coder's correction — I earlier mis-tagged it dead).
-- **[candidate]** `TryConvert` + `ConvertElementsInto` — `catalog/Conversion.cs:128,94`. Construction stages fold into `Create`; verify callers `type/this.cs:602`, `setting/this.cs:102` route through `Create`; keep primitive lowering in `item.Clr`.
-- **[dead]** `type.Convert(value, ctx)` — `type/this.cs:187`. (NB `type.Convert(string)` `:576` is separate — verify FromWire callers.)
+### Stage 2 (collapse to Create)
+- **[relocate]** 14 per-type static `Convert` hooks → each type's async `Create`: `type/*/this.Convert.cs` (number, text, datetime, date, time, duration, bool, binary, guid, image, path, dict, list) + `goal/GoalCall.cs:60`.
+- **[dead]** `convert.OfStatic`, `Of`, `Invoke`, `Discover` — `convert/this.cs`.
+- **[relocate/stays]** `OwnerOf`, `_ownership`, `BuildOwnership`, `OwnedClrTypes` — private index behind `type.Create(raw)`; NOT dead.
+- **[candidate]** `TryConvert` + `ConvertElementsInto` — `catalog/Conversion.cs:128,94`. Construction stages fold into `Create`; keep primitive lowering in `item.Clr`; verify callers `type/this.cs:602`, `setting/this.cs:102`.
+- **[dead]** `type.Convert(value, ctx)` — `type/this.cs:187`. (`type.Convert(string)` `:576` separate — verify FromWire.)
 - **[replace]** `data.Convert(kind)` — `data/this.cs:135` → resolve `kind.Type`, call `Create`; `kind.behavior.Convert` gains real converters.
 - **[dead]** `SetValueOnObject` reflection arms — `variable/list/this.cs` (bracket-index, IList<T>, CLR-property, ConvertToDictionary); value owns child-write.
 
-### Stage 3 (retire read bridge)
-- **[dead]** `goal/serializer/Reader.cs` + `Default.cs` (`Deserialize<goal>`).
-- **[dead]** `GoalReadOptions` — `catalog/Conversion.cs:55-59` (only callers are the two readers).
-- **[dead]** goal-specific dispatch — `catalog/Conversion.cs:282`.
+### Stage 3 (delete catalog)
+- **[replace]** type identity (`[name]→entity`, `[clr]→entity`, `Get`/`Clr`/`GetTypeName`) → `app.type.list` = `list<type>` + keyed index on the collection.
+- **[relocate]** `Kinds`, `Readers`, `Renderers`, `KindHooks`, `Compares`, `Scheme`, `Choices` → `app.type.*`-direct (the last five a mechanical, detachable tail).
+- **[dead]** `type.catalog.@this` — the node, once nothing parents on it.
+
+### Stage 4 (module discovery)
+- **[dead]** `module.@this.list:IEnumerable<string>`, `GetActions`-as-strings, `Describe()`, `StepActions`.
+- **[dead]** `BuildTypeEntries(modules)` — becomes a projection over `list<module>`.
+- **[replace]** the compile prompt → `Fluid(list<module>)` + types self-describing.
+- **[dead]** `GetTypeName(typeof(...))` at consumer/description sites — the `action` view resolves names at its leaf; consumers read `type.Name`.
+
+### Stage 5 (retire read bridge)
+- **[dead]** `goal/serializer/Reader.cs` + `Default.cs` (`Deserialize<goal>`); `GoalReadOptions` (`catalog/Conversion.cs:55-59`); goal dispatch (`:282`).
 - **[dead]** `dict.Clr` record-build use — `item/ICreate.cs:61-62` (the STJ method at `dict/this.cs:323` STAYS for maps).
 - **[candidate]** `build/code/Default.cs` dual-path step readers — `GetString` `:855-862`, `SetValue` `:868-877`.
 
 ### [stays] — do NOT remove
-- `app/data/reader/this.cs` — the Data-leaf reader. Stage 1 only *adds* a JsonElement door + corrects the format-routing line; `%var%`/template/signing stay byte-identical.
-- `item.Clr` / `ClrConvert` — the plang→CLR lower exit. A different direction; stays.
-- `dict.Clr`'s STJ method for untyped dict→map/CLR lowering — stays; only the record use dies.
-- `list.Clr` element-wise lowering — stays.
-- `type.Build`'s deferred-source born rule (`%var%`→variable, string/bytes→lazy source) — read-time laziness, stays.
+- `app/data/reader/this.cs` — Data-leaf reader. Stage 1 *adds* a JsonElement door + corrects the format line; `%var%`/template/signing byte-identical.
+- `item.Clr`/`ClrConvert` — the plang→CLR lower exit. A different direction; stays.
+- `dict.Clr`'s STJ method for untyped dict→map/CLR lowering; `list.Clr` element-wise lowering.
+- `type.Build`'s deferred-source born rule (`%var%`→variable, string/bytes→lazy source).
 - `type.Convert(string)` / `FromWire` — verify snapshot/crypto callers; likely stays (wire reconstruction, not construction).
-- `kind.Navigate`/`Enumerate`/`Set`/`Load`/`Output` — the value-plane behaviors; untouched.
+- `kind.Navigate`/`Enumerate`/`Set`/`Load`/`Output` — value-plane behaviors; untouched.
+- `OwnerOf`/`_ownership` — survives as the `type.Create(raw)` index (see Stage 2).
 
 ---
 
 ## app-model plang-types audit
 
-- `action.Module`/`ActionName` land as `string` (the `.pr`-on-disk perimeter shape); the **pull** is `Value<text>()` (plang `text`). No CLR leaf in the model.
-- `Parameters` lands as `List<Data>` — Data leaves through the Data reader. Correct: a param value is a Data.
-- No new record fields introduced. If Stage 2/3 surfaces a record field typed raw-CLR where a plang type belongs (`DateTime`→`datetime`, `int`→`number`), flag it then.
+- `action.Module`/`ActionName` land as `string` (the `.pr`-on-disk perimeter); the pull is `Value<text>()`. No CLR leaf in the model.
+- `action.Properties` values are `type.@this` with `.Name` set — no `System.Type` above the `action` view leaf.
+- `Parameters` lands as `List<Data>` — Data leaves through the Data reader. Correct.
+- No new record fields introduced. If Stage 2–5 surfaces a record field typed raw-CLR where a plang type belongs (`DateTime`→`datetime`, `int`→`number`), flag it then.
 
 ---
 
@@ -168,20 +223,23 @@ Tagged **[dead]** delete / **[replace]** rewrite in place / **[relocate]** move 
 
 | Surface | Shape check | Verdict |
 |---|---|---|
-| `Type.Create(source, kind?)` | Single verb `Create`. One door per type, owned. No compound. | Clean |
-| per-type `Create` (relocated from `Convert`) | Behavior moves ONTO the type from a reflective static — removes an outside registry doing a type-switch. | Clean — fixes the smell |
-| `data.Convert(kind)` front | Single verb. Resolves kind→type, delegates to `Create`. No parallel mechanism. | Clean |
-| navigate-pull body | Uses `src.GetChild(k).Value<T>()`. No new API, no new name. | Clean |
-| Data-leaf read | Reuses `app/data/reader`; hands the child *to the reader*, does not decompose the Data into scalars (Rule #7/#8). | Clean |
-| write via `Create`/child-write | The value owns its own set (`kind.Set` shape); the seven reflection arms of `SetValueOnObject` go. Removes lower-here/convert-there divergence (Smell #4). | Clean — one write discipline |
-| `item.Clr` kept as lower | A distinct direction (plang→CLR), not construction — correctly NOT folded into `Create`. | Clean |
-| dropped "FromSource" name | Two-word preposition+noun for what is just `Create`. Not introduced. | Avoided |
+| `Type.Create(source)` | Single verb, one door per type, owned. kind/strict off `data.Type`, not decomposed params. | Clean |
+| per-type `Create` (from `Convert`) | Behavior moves ONTO the type from a reflective static — removes the outside registry type-switch. | Clean — fixes the smell |
+| `data.Convert(kind)` front | Single verb; resolves kind→type, delegates to `Create`. No parallel mechanism. | Clean |
+| `app.type.list` = `list<type>` | The registry IS an instance of the native collection; index on the collection (owner holds its own index). | Clean |
+| `list<module>` / `action.Properties:list<type>` | Views over reflection; reflection at the leaf; consumers read `type.Name`, never CLR. Producer-hands-raw (bare strings) smell removed. | Clean |
+| Data-leaf read | Reuses `app/data/reader`; hands the child *to the reader* (no decompose into scalars — Rule #7/#8). | Clean |
+| write via `Create`/child-write | Value owns its set (`kind.Set` shape); `SetValueOnObject`'s seven arms go — removes lower-here/convert-there divergence (Smell #4). | Clean — one write discipline |
+| `item.Clr` kept as lower | A distinct direction (plang→CLR), correctly NOT folded into `Create`. | Clean |
+| dropped `catalog` / "FromSource" names | God-object parent + a two-word preposition-noun for what is `list<type>` / `Create`. Not kept. | Avoided |
 
-No `GetX`/`IsX`/verb+noun surfaces added. The only new *behavior* (a type parsing itself, a source navigating) lands on the value that owns it, never in a caller switch.
+No `GetX`/`IsX`/verb+noun surfaces added. The only new behavior (a type parsing itself, a source navigating, a view reflecting) lands on the owner, never in a caller switch.
 
 ---
 
 ## Open at implementation time (not blocking Stage 0/1)
 - The two non-obvious `TryConvert` callers (`type/this.cs:602`, `setting/this.cs:102`) — confirm they route through `Create` before deleting the pipeline (Stage 2).
 - `type.Convert(string)` / `FromWire` — confirm snapshot/crypto reconstruction stays outside the cut (Stage 2).
-- Stage 2 is large; it can split further if the diff gets unreviewable — coder's call once Stage 1 is green.
+- Item #5 — confirm the Fluid render replaces `Describe()` without regressing LLM teaching (examples, defaults, return types) (Stage 4).
+- Item #6 — confirm the `module`/`action` view classes (coder shows them one at a time) and the keyed `(name→type)` navigation seam (Stage 4).
+- Stages 2–5 are large; each can split further if the diff gets unreviewable — coder's call once Stage 1 is green. The five pure-reparent registries (Stage 3) are the designated release valve.
