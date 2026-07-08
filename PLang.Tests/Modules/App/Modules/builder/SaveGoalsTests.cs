@@ -39,7 +39,7 @@ public class SaveGoalsTests
 
     // goalsSave requires the TARGET app as a strict Data<clr<app>> param — the runtime never
     // falls back to the builder's own context.App. In these isolated tests the target app IS _app.
-    private data.@this<global::app.type.clr.@this<global::app.@this>> AppParam()
+    private global::app.data.@this<global::app.type.clr.@this<global::app.@this>> AppParam()
         => new("", new global::app.type.clr.@this<global::app.@this>(_app, _app.User.Context),
                context: _app.User.Context);
 

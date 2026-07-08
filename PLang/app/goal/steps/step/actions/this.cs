@@ -41,9 +41,37 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             }
             return acts;
         }
+        // STOPGAP (Option A — the FromSource/navigation-driven builder replaces this): the
+        // compile pass produces the actions as a clr(json) array. Materialize it through the
+        // SAME reader the .pr uses (GoalReadOptions → the Data reader handles %ref% params,
+        // template flags, signing) on the carrier's raw json — no manual property pulling.
+        if (value is global::app.type.clr.@this clr && clr.Value is System.Text.Json.JsonElement je)
+        {
+            var text = je.GetRawText();
+            return System.Text.Json.JsonSerializer.Deserialize<@this>(
+                text, global::app.type.catalog.@this.GoalReadOptions(data.Context!));
+        }
         data.Fail(new global::app.error.Error(
             $"%{data.Name}% holds a {value.Mint().Name} — 'actions' cannot be created from it.", "CreateItemDeclined", 400));
         return null;
+    }
+
+    /// <summary>Catalog conversion hook (<c>convert.OfStatic</c>, used by the variable
+    /// write path when the target slot is <c>actions</c>) — delegates to <see cref="Create"/>,
+    /// which owns the clr(json)/list re-tag. Without this hook the write falls to
+    /// <c>.Clr(actions)</c> and throws (a clr(json) has no lower projection).</summary>
+    public static global::app.data.@this Convert(object? value, string? kind, global::app.actor.context.@this context)
+    {
+        if (value is global::app.type.item.@this iv)
+        {
+            var d = context.Ok();
+            var made = Create(iv, d);
+            if (made != null) return context.Ok(made);
+            return d.Success ? context.Error(new global::app.error.Error(
+                $"cannot convert {iv.Mint().Name} to actions", "ActionsConversionFailed", 400)) : d;
+        }
+        return context.Error(new global::app.error.Error(
+            $"cannot convert {value?.GetType().Name ?? "null"} to actions", "ActionsConversionFailed", 400));
     }
 
     [System.Text.Json.Serialization.JsonIgnore]
