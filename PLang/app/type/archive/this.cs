@@ -34,7 +34,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     }
 
     protected internal override global::app.type.@this Mint()
-        => new("archive", typeof(byte[])) { Kind = Algo };
+        => new("archive", typeof(byte[])) { Kind = global::app.type.kind.@this.Of(Algo) };
 
     /// <summary>The CLR exit door — archive hands its own compressed bytes.</summary>
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);

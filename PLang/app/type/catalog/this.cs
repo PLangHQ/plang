@@ -49,6 +49,15 @@ public sealed partial class @this
     public kind.Hooks KindHooks { get; } = new();
 
     /// <summary>
+    /// The singleton store of kind behaviors (navigate / enumerate / load / convert), one
+    /// <see cref="kind.behavior.@this"/> per format. INTERNAL plumbing — reached only
+    /// through the kind token (<c>value.Kind.Navigate(…)</c>), never a flat
+    /// <c>App.Type.&lt;plural&gt;</c>. Distinct from <see cref="KindHooks"/> (build-time
+    /// kind stamping) and <c>type.Kinds</c> (advertised vocabulary).
+    /// </summary>
+    internal kind.behavior.list.@this Kinds { get; } = new();
+
+    /// <summary>
     /// Per-type <c>static Convert(object?, string? kind, context)</c> hooks — the
     /// runtime sibling of <see cref="KindHooks"/>. A type owns how a value becomes
     /// an instance of itself; <c>app.type.@this.Convert</c> routes through here.
@@ -277,6 +286,21 @@ public sealed partial class @this
         }
     }
 
+    /// <summary>
+    /// Index by CLR type — the type entity for a live CLR type's plang identity, or null when
+    /// the CLR type names no plang type (a raw POCO). The navigable mirror of
+    /// <see cref="this[string]"/>; replaces the old <c>ResolveName</c> verb-lookup. Null on miss
+    /// (a CLR type MAY not be plang vocabulary), unlike the name door's throw-on-miss.
+    /// </summary>
+    public app.type.@this? this[System.Type clrType]
+    {
+        get
+        {
+            EnsureInitialized();
+            return _typeToName.TryGetValue(clrType, out var name) ? this[name] : null;
+        }
+    }
+
     /// <summary>Compile-time generic lookup — returns the catalog-built entity for T.</summary>
     public app.type.@this of<T>()
     {
@@ -417,8 +441,8 @@ public sealed partial class @this
         if (listIface != null)
             return $"list<{GetTypeName(listIface.GetGenericArguments()[0])}>";
 
-        var declared = ResolveName(type);
-        if (declared != null) return declared;
+        EnsureInitialized();
+        if (_typeToName.TryGetValue(type, out var declared)) return declared;
 
         if (Choices.Has(type))
             return StripGenericArity(type.Name).ToLowerInvariant();

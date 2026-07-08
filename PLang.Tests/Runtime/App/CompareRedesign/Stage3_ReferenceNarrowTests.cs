@@ -79,7 +79,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     {
         System.IO.File.WriteAllText(TempPath("report.csv"), "name,age\nAda,42\n");
         var data = await Read("report.csv");
-        await Assert.That(data.Type!.Kind).IsEqualTo("csv");
+        await Assert.That(data.Type!.Kind?.Name).IsEqualTo("csv");
         var op = new global::app.module.condition.Operator("is");
         var right = new Data("", "table", context: _app.User.Context);
         var isTable = await op.Evaluate(data, right);
@@ -106,7 +106,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     public async Task ContentKindInference_JsonExtension_NarrowsToDict()
     {
         var data = JsonFile();
-        await Assert.That(data.Type!.Kind).IsEqualTo("json");
+        await Assert.That(data.Type!.Kind?.Name).IsEqualTo("json");
         var child = await data.GetChild("database");
         await Assert.That((await child.Value())?.ToString()).IsEqualTo("plang");
         await Assert.That(data.Type!.Name).IsEqualTo("dict");

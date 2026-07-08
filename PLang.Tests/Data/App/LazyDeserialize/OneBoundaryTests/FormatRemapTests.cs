@@ -19,7 +19,7 @@ public class FormatRemapTests
     {
         var t = new format().TypeFromMime("application/json");
         await Assert.That(t.Name).IsEqualTo("binary");
-        await Assert.That(t.Kind).IsEqualTo("json");
+        await Assert.That(t.Kind?.Name).IsEqualTo("json");
     }
 
     // xml is also binary off the wire → `{binary, xml}`.
@@ -27,14 +27,14 @@ public class FormatRemapTests
     {
         var t = new format().TypeFromMime("application/xml");
         await Assert.That(t.Name).IsEqualTo("binary");
-        await Assert.That(t.Kind).IsEqualTo("xml");
+        await Assert.That(t.Kind?.Name).IsEqualTo("xml");
     }
 
     [Test] public async Task TypeFromExtension_DotJson_ReturnsBinaryJson()
     {
         var t = new format().TypeFromExtension(".json");
         await Assert.That(t.Name).IsEqualTo("binary");
-        await Assert.That(t.Kind).IsEqualTo("json");
+        await Assert.That(t.Kind?.Name).IsEqualTo("json");
     }
 
     // csv and xlsx are binary + the extension as kind; the kind narrows to a
@@ -43,14 +43,14 @@ public class FormatRemapTests
     {
         var t = new format().TypeFromExtension(".csv");
         await Assert.That(t.Name).IsEqualTo("binary");
-        await Assert.That(t.Kind).IsEqualTo("csv");
+        await Assert.That(t.Kind?.Name).IsEqualTo("csv");
     }
 
     [Test] public async Task TypeFromExtension_DotXlsx_ReturnsBinaryXlsx()
     {
         var t = new format().TypeFromExtension(".xlsx");
         await Assert.That(t.Name).IsEqualTo("binary");
-        await Assert.That(t.Kind).IsEqualTo("xlsx");
+        await Assert.That(t.Kind?.Name).IsEqualTo("xlsx");
     }
 
     // png is binary + png kind; it narrows to an image only on Value() access.
@@ -58,7 +58,7 @@ public class FormatRemapTests
     {
         var t = new format().TypeFromExtension(".png");
         await Assert.That(t.Name).IsEqualTo("binary");
-        await Assert.That(t.Kind).IsEqualTo("png");
+        await Assert.That(t.Kind?.Name).IsEqualTo("png");
     }
 
     // octet-stream is genuinely opaque bytes → `{binary, null}`: the binary
@@ -67,7 +67,7 @@ public class FormatRemapTests
     {
         var t = new format().TypeFromMime("application/octet-stream");
         await Assert.That(t.Name).IsEqualTo("binary");
-        await Assert.That(t.Kind).IsNull();
+        await Assert.That(t.Kind?.Name).IsNull();
         await Assert.That(t.Name).IsNotEqualTo("object");
     }
 
@@ -81,7 +81,7 @@ public class FormatRemapTests
         var byExt = f.TypeFromExtension(".json");
         var byMime = f.TypeFromMime("application/json");
         await Assert.That(byExt.Name).IsEqualTo(byMime.Name);
-        await Assert.That(byExt.Kind).IsEqualTo(byMime.Kind);
+        await Assert.That(byExt.Kind?.Name).IsEqualTo(byMime.Kind?.Name);
     }
 
     [Test] public async Task TypeFromExtension_AgreesWith_TypeFromMime_ForDotCsv()
@@ -90,6 +90,6 @@ public class FormatRemapTests
         var byExt = f.TypeFromExtension(".csv");
         var byMime = f.TypeFromMime("text/csv");
         await Assert.That(byExt.Name).IsEqualTo(byMime.Name);
-        await Assert.That(byExt.Kind).IsEqualTo(byMime.Kind);
+        await Assert.That(byExt.Kind?.Name).IsEqualTo(byMime.Kind?.Name);
     }
 }

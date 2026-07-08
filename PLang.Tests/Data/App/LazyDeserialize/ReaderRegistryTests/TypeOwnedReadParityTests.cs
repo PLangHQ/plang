@@ -86,25 +86,20 @@ public class TypeOwnedReadParityTests
         await Assert.That(((global::app.type.item.@this)via!).Clr<System.TimeSpan>()).IsEqualTo(System.Xml.XmlConvert.ToTimeSpan("PT30S"));
     }
 
-    [Test] public async Task ObjectJsonRead_MatchesPriorPlangJsonReaderOutput()
+    [Test] public async Task ObjectJsonRead_ProducesNavigableClrJson()
     {
-        // The existing System.Text.Json plumbing is re-housed, not rewritten
-        // (Decision 1): the (object, json) Read produces the same dictionary the
-        // inline `type.Convert("json")` path produced — verbatim for canonical
-        // { key: value, list: […], nested: {…} }.
+        // The (object, json) Read no longer materializes a dict up front — it produces a
+        // clr(json), navigated lazily by the json kind (the "structured data stays a clr"
+        // pivot). The same values are reachable; nothing builds a parallel tree.
         const string json = "{\"a\":1,\"b\":[1,2],\"c\":{\"d\":true}}";
-        var r = new global::app.type.reader.@this();
-        var ctx = new global::app.type.reader.ReadContext(global::PLang.Tests.TestApp.SharedContext);
-        var via = r.Of("object", "json")!(json, "json", ctx);
-        await Assert.That(via).IsTypeOf<app.type.dict.@this>();
-        var dict = (app.type.dict.@this)via!;
-        await Assert.That(dict.Has("a")).IsTrue();
-        await Assert.That(dict.Has("b")).IsTrue();
-        await Assert.That(dict.Has("c")).IsTrue();
+        var actor = global::PLang.Tests.TestApp.SharedContext;
+        var via = new global::app.type.reader.@this().Of("object", "json")!(
+            json, "json", new global::app.type.reader.ReadContext(actor));
+        await Assert.That(via).IsTypeOf<global::app.type.clr.@this>();
 
-        // Parity against the incumbent inline json read on the type entity.
-        var prior = global::app.type.@this.Create("json", context: global::PLang.Tests.TestApp.SharedContext).Convert(json);
-        await Assert.That(System.Text.Json.JsonSerializer.Serialize(via))
-            .IsEqualTo(System.Text.Json.JsonSerializer.Serialize(prior));
+        var d = actor.Ok((global::app.type.clr.@this)via!);
+        await Assert.That((await (await d.GetChild("a")).Value())?.ToString()).IsEqualTo("1");
+        await Assert.That((await (await d.GetChild("b[1]")).Value())?.ToString()).IsEqualTo("2");
+        await Assert.That((await (await d.GetChild("c.d")).Value())?.ToString()).IsEqualTo("true");
     }
 }

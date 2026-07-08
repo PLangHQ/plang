@@ -59,7 +59,7 @@ public class KindFieldTests : System.IAsyncDisposable
         var json = ToJson(original);
         var read = FromJson(json);
         await Assert.That(read.Type?.Name).IsEqualTo("path");
-        await Assert.That(read.Type?.Kind).IsEqualTo("file");
+        await Assert.That(read.Type?.Kind?.Name).IsEqualTo("file");
         await Assert.That(read.Kind).IsEqualTo("file");
     }
 }

@@ -41,7 +41,7 @@ public sealed class @this : item.@this
     {
         writer.BeginObject();
         writer.Name("name"); writer.String(Name);
-        if (!string.IsNullOrEmpty(Kind)) { writer.Name("kind"); writer.String(Kind!); }
+        if (Kind != null) { writer.Name("kind"); writer.String(Kind.Name); }
         if (Strict) { writer.Name("strict"); writer.Bool(true); }
         if (!string.IsNullOrEmpty(Template)) { writer.Name("template"); writer.String(Template!); }
         writer.EndObject();
@@ -58,7 +58,7 @@ public sealed class @this : item.@this
     /// entity's <c>{name, kind?, strict?}</c> JSON form (see
     /// <see cref="json"/>).
     /// </summary>
-    public string? Kind { get; set; }
+    public global::app.type.kind.@this? Kind { get; set; }
 
     /// <summary>
     /// When true, <see cref="Kind"/> is a requirement (enforced at build for
@@ -113,7 +113,7 @@ public sealed class @this : item.@this
     public @this(string name, string? kind = null, bool strict = false, string? template = null)
     {
         Name = Canonicalise(name);
-        Kind = kind;
+        Kind = global::app.type.kind.@this.Of(kind);
         Strict = strict;
         Template = template;
         StampPrimitive(name);
@@ -132,7 +132,7 @@ public sealed class @this : item.@this
         // and can't answer it. Other families' kinds are formats ({file, json}),
         // never CLR mates.
         if (_clrType == null && Name == "number" && Kind != null)
-            StampPrimitive(Kind);
+            StampPrimitive(Kind.Name);
     }
 
     private void StampPrimitive(string rawName)
@@ -171,7 +171,7 @@ public sealed class @this : item.@this
             // mp3→audio): the Name is just "binary". A native value carries it
             // in the Name (text, archive). Resolve the Kind's family first, fall
             // back to the Name's. Null family → not compressible.
-            var family = (Kind != null ? format.TypeOf(Kind) : null) ?? format.FamilyOf(Name);
+            var family = (Kind != null ? format.TypeOf(Kind.Name) : null) ?? format.FamilyOf(Name);
             return family != null && format.Compressible(family);
         }
     }
@@ -187,7 +187,7 @@ public sealed class @this : item.@this
     public global::app.type.item.@this Convert(object? value, actor.context.@this context)
     {
         Context ??= context;
-        if (value is null) return new global::app.type.@null.@this(Name, Kind);
+        if (value is null) return new global::app.type.@null.@this(Name, Kind?.Name);
 
         // A born-native scalar source (`set %d% = "2026-01-01" as date` makes the literal a
         // text.@this first) — unwrap the leaf wrapper to its raw form so the target family's
@@ -202,7 +202,7 @@ public sealed class @this : item.@this
         // this door is the throw boundary — a bad conversion throws so it rides the
         // same MaterializeFailed path as a bad reader parse (source.Value catches it).
         var familyClass = context.App.Type[Name]?.ClrType;
-        var owned = context.App.Type.Conversions.Of(familyClass, value, Kind, context);
+        var owned = context.App.Type.Conversions.Of(familyClass, value, Kind?.Name, context);
         if (owned != null)
             return owned.Success ? owned.Peek() : throw Failed(owned.Error);
 
@@ -256,7 +256,7 @@ public sealed class @this : item.@this
 
         // Typed absence — no value to lift; the declaration survives (a typed null,
         // a tool-parameter slot). A JSON-null literal lands here too (the null citizen).
-        if (value is null or global::app.type.@null.@this) return new global::app.type.@null.@this(Name, Kind);
+        if (value is null or global::app.type.@null.@this) return new global::app.type.@null.@this(Name, Kind?.Name);
 
         // A raw-name declared type (variable) NAMES a thing — a raw string name is the
         // variable itself, a write-target, not a value to defer. Born as the name object
@@ -274,7 +274,7 @@ public sealed class @this : item.@this
         // it a template (never inferred from content). This is the ONE source-maker (FromRaw
         // delegates here).
         if (value is string or byte[])
-            return new item.source(value, Name, Kind, context, Strict, format ?? RawFormat(value, context), template: Template);
+            return new item.source(value, Name, Kind?.Name, context, Strict, format ?? RawFormat(value, context), template: Template);
 
         // A container / domain value is already its native form (dict, list, path, image, …) — hold it.
         if (value is item.@this { IsLeaf: false } native) return native;
@@ -295,7 +295,7 @@ public sealed class @this : item.@this
             var minted = leaf.Mint();
             if (string.Equals(Name, minted.Name, System.StringComparison.OrdinalIgnoreCase))
             {
-                var refined = Kind != null && minted.Kind == null ? leaf.Kinded(Kind) : leaf;
+                var refined = Kind != null && minted.Kind == null ? leaf.Kinded(Kind.Name) : leaf;
                 if (Template != null && refined is text.@this rt && rt.Template == null)
                     refined = new text.@this(rt.ToString(), Template) { Kind = rt.Kind };
                 return refined;
@@ -567,11 +567,11 @@ public sealed class @this : item.@this
     public override bool Equals(object? obj) =>
         obj is @this other
         && string.Equals(Name, other.Name, System.StringComparison.OrdinalIgnoreCase)
-        && string.Equals(Kind, other.Kind, System.StringComparison.OrdinalIgnoreCase)
+        && string.Equals(Kind?.Name, other.Kind?.Name, System.StringComparison.OrdinalIgnoreCase)
         && Strict == other.Strict;
 
     public override int GetHashCode() => System.HashCode.Combine(
-        Name.ToLowerInvariant(), Kind?.ToLowerInvariant(), Strict);
+        Name.ToLowerInvariant(), Kind?.Name.ToLowerInvariant(), Strict);
 
     public object? Convert(string raw)
     {

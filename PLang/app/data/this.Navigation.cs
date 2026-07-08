@@ -34,6 +34,15 @@ public partial class @this
     {
         if (path.IsEmpty) return this;
 
+        // A clr owns its whole path language — hand it the tail in ONE call (the kind walks
+        // path.Segments; a future jsonpath/css kind reads its own form off the path). Only for a
+        // pure value-plane path — an infra (`!file`) or method (`grep(...)`) segment stays on the
+        // generic per-hop walk below (which owns those planes + the rich IndexNotSet diagnostic).
+        if (_item is global::app.type.clr.@this clr
+            && System.Linq.Enumerable.All(path.Segments,
+                   s => s is global::app.variable.path.Segment.Member or global::app.variable.path.Segment.Index))
+            return await clr.Navigate(this, path);
+
         var (head, tail) = path.Split();
 
         // Infrastructure plane (`!file`, `!data`) reads the binding, not the value;

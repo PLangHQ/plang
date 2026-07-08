@@ -51,7 +51,7 @@ public class StrictRunTests
         await result.IsSuccess();
         var stored = await context.Variable.Get("img");
         await Assert.That(stored!.Type!.Name).IsEqualTo("image");
-        await Assert.That(stored.Type.Kind).IsEqualTo("gif");
+        await Assert.That(stored.Type.Kind?.Name).IsEqualTo("gif");
     }
 
     [Test] public async Task Run_NotStrict_StampsKindFromBuildHook_NoValidation()
@@ -68,6 +68,6 @@ public class StrictRunTests
         await result.IsSuccess();
         var stored = await context.Variable.Get("x");
         await Assert.That(stored!.Type!.Name).IsEqualTo("image");
-        await Assert.That(stored.Type.Kind).IsEqualTo("png");
+        await Assert.That(stored.Type.Kind?.Name).IsEqualTo("png");
     }
 }

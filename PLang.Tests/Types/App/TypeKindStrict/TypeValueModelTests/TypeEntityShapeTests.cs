@@ -25,7 +25,7 @@ public class TypeEntityShapeTests
         var kind = t.GetProperty("Kind", BindingFlags.Public | BindingFlags.Instance);
         var strict = t.GetProperty("Strict", BindingFlags.Public | BindingFlags.Instance);
         await Assert.That(kind).IsNotNull();
-        await Assert.That(kind!.PropertyType).IsEqualTo(typeof(string));
+        await Assert.That(kind!.PropertyType).IsEqualTo(typeof(global::app.type.kind.@this));
         await Assert.That(strict).IsNotNull();
         await Assert.That(strict!.PropertyType).IsEqualTo(typeof(bool));
     }
@@ -46,11 +46,11 @@ public class TypeEntityShapeTests
         // a `type("image/jpeg")` factory splits to {Name:"image", Kind:"jpeg"}
         // — Name carries the family directly; Kind is the subtype.
         var noSubtype = new TypeEntity("image");
-        await Assert.That(noSubtype.Kind).IsNull();
+        await Assert.That(noSubtype.Kind?.Name).IsNull();
 
         var split = TypeEntity.Create("image/jpeg");
         await Assert.That(split.Name).IsEqualTo("image");
-        await Assert.That(split.Kind).IsEqualTo("jpeg");
+        await Assert.That(split.Kind?.Name).IsEqualTo("jpeg");
     }
 
     [Test] public async Task Entity_Kinds_PopulatedForNumber()

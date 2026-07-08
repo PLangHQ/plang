@@ -31,7 +31,7 @@ public class ChannelReadBoundaryTests
         var d = await ch.Read();
         // The flip: content off I/O is binary; the mime subtype is the kind.
         await Assert.That(d.Type.Name).IsEqualTo("binary");
-        await Assert.That(d.Type.Kind).IsEqualTo("json");
+        await Assert.That(d.Type.Kind?.Name).IsEqualTo("json");
     }
 
     [Test] public async Task ChannelRead_ProducesLazyData_RawSetValueNull()
@@ -53,7 +53,7 @@ public class ChannelReadBoundaryTests
         var ch = Input(app, "text/plain", Encoding.UTF8.GetBytes("hello"));
         var d = await ch.Read();
         await Assert.That(d.Type.Name).IsEqualTo("binary");
-        await Assert.That(d.Type.Kind).IsNotNull();
+        await Assert.That(d.Type.Kind?.Name).IsNotNull();
     }
 
     // Independent #15 — an octet-stream Mime stamps `{binary, null}` (no decode
@@ -65,7 +65,7 @@ public class ChannelReadBoundaryTests
         var ch = Input(app, "application/octet-stream", body);
         var d = await ch.Read();
         await Assert.That(d.Type.Name).IsEqualTo("binary");
-        await Assert.That(d.Type.Kind).IsNull();
+        await Assert.That(d.Type.Kind?.Name).IsNull();
         await Assert.That(d.Raw is byte[]).IsTrue();
     }
 
@@ -78,7 +78,7 @@ public class ChannelReadBoundaryTests
         var ch = Input(app, "application/json", Encoding.UTF8.GetBytes(json));
         var d = await ch.Read();
         await Assert.That(d.Type.Name).IsEqualTo("binary");
-        await Assert.That(d.Type.Kind).IsEqualTo("json");
+        await Assert.That(d.Type.Kind?.Name).IsEqualTo("json");
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
         // Content off I/O is raw bytes now — untouched raw is the byte[], not the string.
         await Assert.That(d.Raw is byte[]).IsTrue();
@@ -93,7 +93,7 @@ public class ChannelReadBoundaryTests
         var ch = Input(app, "text/csv", Encoding.UTF8.GetBytes(csv));
         var d = await ch.Read();
         await Assert.That(d.Type.Name).IsEqualTo("binary");
-        await Assert.That(d.Type.Kind).IsEqualTo("csv");
+        await Assert.That(d.Type.Kind?.Name).IsEqualTo("csv");
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
         // Content off I/O is raw bytes now — untouched raw is the byte[], not the string.
         await Assert.That(d.Raw is byte[]).IsTrue();

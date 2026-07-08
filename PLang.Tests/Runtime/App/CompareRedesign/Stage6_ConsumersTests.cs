@@ -183,12 +183,13 @@ public class Stage6_ConsumersTests
     [Test]
     public async Task Pile2_OpenAiCache_NavigatesDict_NoDictionaryCopy()
     {
-        // llm/OpenAi.cs — cache restore reads keys off the native dict (Get/Entries
-        // navigation), not a raw Dictionary copy via ToRaw.
+        // llm/OpenAi.cs — cache restore NAVIGATES the entry uniformly (dict.Entries or
+        // clr(json).Enumerate), not a raw Dictionary copy via ToRaw. The old per-shape
+        // reconstruction is gone — a clr(json) round-trips as raw json now.
         var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "llm", "code", "OpenAi.cs"));
         await Assert.That(src).DoesNotContain("ToRaw");
-        await Assert.That(src).Contains("nativeDict.Get(\"Value\")");
-        await Assert.That(src).Contains("nativeDict.Entries");
+        await Assert.That(src).Contains("d.Entries");
+        await Assert.That(src).Contains("c.Enumerate()");
     }
 
     [Test]

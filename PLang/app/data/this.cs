@@ -126,6 +126,16 @@ public partial class @this
     }
 
     /// <summary>
+    /// Convert this value into another kind — the OUTBOUND kind owns it (<c>dict</c> builds
+    /// itself from json, <c>audio</c> from text). Value-facing: everything at an action
+    /// boundary is a <c>Data</c>, which carries its own context, so no context param. The
+    /// target kind returns the built value or an error <c>Data</c> when this source can't
+    /// become it.
+    /// </summary>
+    public global::System.Threading.Tasks.ValueTask<@this> Convert(global::app.type.kind.@this to)
+        => to.Convert(this, _context);
+
+    /// <summary>
     /// A signed (@schema:signature) Data read in <see cref="app.type.reader.ReadContext.DeferVerify"/>
     /// mode carries its unverified signature layer here instead of verifying inline inside the
     /// sync `ref`-struct reader. The async deserialize caller verifies it (async, no sync-wait)
@@ -200,6 +210,16 @@ public partial class @this
     {
         Name = CleanName(name);
         _context = context ?? parent?._context!;
+        // A bare Data may not become a value — it would ride a Clr carrier and reflect
+        // recursively on the wire ({name,value,{name,value,…}}). Same rule as SetValueDirect;
+        // this catches the Data<object> double-wrap footgun (the implicit operator @this<object>(T)
+        // routes here, so a Data assigned where an object is expected lands here). The throw flags
+        // the offending caller.
+        if (value is @this)
+            throw new System.InvalidOperationException(
+                "A bare Data may not be stored as a value — it would ride a clr carrier and reflect "
+                + "recursively on the wire. Pass the inner value (data.Item / the resolved value), not "
+                + "the Data wrapper.\n" + System.Environment.StackTrace);
         // The value is born WITH this Data's context — never context-less then
         // stamped. JSON natives-out here; a plain string stays a string for the
         // type to decide.
@@ -404,7 +424,7 @@ public partial class @this
     /// owner). Stays null for types without a kind.
     /// </summary>
     [JsonIgnore]
-    public string? Kind => _item?.Mint().Kind;
+    public string? Kind => _item?.Mint().Kind?.Name;
 
     /// <summary>
     /// Enumerates as (key, value) Data pairs. Data owns the knowledge of how to iterate:
@@ -886,7 +906,7 @@ public class DynamicData : @this
         // not through the entry judgement — a computed answers fresh and must
         // stay reachable as the instance. Born WITH context — the computed lifts
         // its factory result through it, no post-construction stamp.
-        : base(name, new global::app.type.item.computed(valueFactory, context, type?.IsNull == false ? type.Name : null, type?.Kind), context: context)
+        : base(name, new global::app.type.item.computed(valueFactory, context, type?.IsNull == false ? type.Name : null, type?.Kind?.Name), context: context)
     {
     }
 }

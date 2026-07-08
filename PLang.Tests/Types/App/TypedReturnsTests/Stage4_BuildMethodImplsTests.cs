@@ -57,7 +57,7 @@ public class Stage4_BuildMethodImplsTests
         // Stage 3: a literal local read hints the file REFERENCE — {file, csv};
         // the content type only appears when runtime examination narrows.
         await Assert.That(AsType(result).Name).IsEqualTo("file");
-        await Assert.That(AsType(result).Kind).IsEqualTo("csv");
+        await Assert.That(AsType(result).Kind?.Name).IsEqualTo("csv");
     }
 
     [Test]
@@ -66,7 +66,7 @@ public class Stage4_BuildMethodImplsTests
         var result = await Build("file", "read", ("Path", "data.json"));
         await result.IsSuccess();
         await Assert.That(AsType(result).Name).IsEqualTo("file");
-        await Assert.That(AsType(result).Kind).IsEqualTo("json");
+        await Assert.That(AsType(result).Kind?.Name).IsEqualTo("json");
     }
 
     [Test]
@@ -108,7 +108,7 @@ public class Stage4_BuildMethodImplsTests
         await result.IsSuccess();
         await Assert.That(AsType(result).Name).IsEqualTo("file")
             .Because("Missing file is non-fatal at build time — the inferred type still surfaces.");
-        await Assert.That(AsType(result).Kind).IsEqualTo("csv");
+        await Assert.That(AsType(result).Kind?.Name).IsEqualTo("csv");
     }
 
     // --- llm.query.Build() ---
@@ -149,7 +149,7 @@ public class Stage4_BuildMethodImplsTests
         await result.IsSuccess();
         // The flip: content off I/O is binary; the extension is the kind.
         await Assert.That(AsType(result).Name).IsEqualTo("binary");
-        await Assert.That(AsType(result).Kind).IsEqualTo("json");
+        await Assert.That(AsType(result).Kind?.Name).IsEqualTo("json");
     }
 
     [Test]
@@ -161,7 +161,7 @@ public class Stage4_BuildMethodImplsTests
         var result = await Build("http", "request", ("Url", "https://x/report.pdf"));
         await result.IsSuccess();
         await Assert.That(AsType(result).Name).IsEqualTo("binary");
-        await Assert.That(AsType(result).Kind).IsEqualTo("pdf");
+        await Assert.That(AsType(result).Kind?.Name).IsEqualTo("pdf");
     }
 
     [Test]

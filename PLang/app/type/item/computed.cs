@@ -32,7 +32,7 @@ public sealed class computed : @this, module.IContext
     /// (%Now% is a datetime); "item" when undeclared — the computation's
     /// answer carries its own truth at each use.</summary>
     protected internal override global::app.type.@this Mint()
-        => new(_declared ?? NamespaceTail(GetType())) { Kind = _declaredKind };
+        => new(_declared ?? NamespaceTail(GetType())) { Kind = global::app.type.kind.@this.Of(_declaredKind) };
 
     public override bool Cacheable => false;
 

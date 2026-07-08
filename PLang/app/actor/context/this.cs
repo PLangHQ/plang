@@ -212,6 +212,13 @@ public sealed class @this : IDisposable
         where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
         => new("", value, type, context: this);
 
+    /// <summary>A success Data whose value is loaded FROM a raw payload BY its
+    /// <paramref name="kind"/> — json parses to a clr(json), md/unknown load as text. The
+    /// producer names the kind once; nothing downstream guesses the format.</summary>
+    public global::System.Threading.Tasks.ValueTask<data.@this> Ok(
+        object raw, global::app.type.kind.@this kind)
+        => App.Type.Kinds[kind].Load(raw, this);
+
     /// <summary>A present-null Data, born with this context.</summary>
     public data.@this Null(string name = "")
         => new(name, global::app.type.@null.@this.Instance, context: this);

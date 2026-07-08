@@ -16,7 +16,7 @@ public class TypeFactoryTests
     {
         var t = TypeEntity.Create("image", "gif", strict: true);
         await Assert.That(t.Name).IsEqualTo("image");
-        await Assert.That(t.Kind).IsEqualTo("gif");
+        await Assert.That(t.Kind?.Name).IsEqualTo("gif");
         await Assert.That(t.Strict).IsTrue();
     }
 
@@ -30,14 +30,14 @@ public class TypeFactoryTests
     {
         var t = TypeEntity.Create("text/markdown");
         await Assert.That(t.Name).IsEqualTo("text");
-        await Assert.That(t.Kind).IsEqualTo("markdown");
+        await Assert.That(t.Kind?.Name).IsEqualTo("markdown");
     }
 
     [Test] public async Task Factory_SingleStringNoSlash_KindIsNull()
     {
         var t = TypeEntity.Create("text");
         await Assert.That(t.Name).IsEqualTo("text");
-        await Assert.That(t.Kind).IsNull();
+        await Assert.That(t.Kind?.Name).IsNull();
     }
 
     [Test] public async Task Factory_MultiSlash_SplitsOnFirst()
@@ -45,7 +45,7 @@ public class TypeFactoryTests
         // First slash splits; the rest is the (free-string) kind, not an error.
         var t = TypeEntity.Create("a/b/c");
         await Assert.That(t.Name).IsEqualTo("a");
-        await Assert.That(t.Kind).IsEqualTo("b/c");
+        await Assert.That(t.Kind?.Name).IsEqualTo("b/c");
     }
 
     [Test] public async Task Factory_StrictDefaultsFalse()
@@ -75,7 +75,7 @@ public class TypeFactoryTests
     [Test] public async Task Factory_NullSentinel_NameKindStrictPreserved()
     {
         await Assert.That(TypeEntity.Null.Name).IsEqualTo("null");
-        await Assert.That(TypeEntity.Null.Kind).IsNull();
+        await Assert.That(TypeEntity.Null.Kind?.Name).IsNull();
         await Assert.That(TypeEntity.Null.Strict).IsFalse();
     }
 
@@ -87,6 +87,6 @@ public class TypeFactoryTests
         var t = TypeEntity.Create("text", "md", strict: true);
         await Assert.That(t.Strict).IsTrue();
         await Assert.That(t.Name).IsEqualTo("text");
-        await Assert.That(t.Kind).IsEqualTo("md");
+        await Assert.That(t.Kind?.Name).IsEqualTo("md");
     }
 }

@@ -30,7 +30,7 @@ public static class TemplateStamp
                 if (global::app.type.text.@this.HasVariable(raw))
                 {
                     var t = p.Type;
-                    p.Declare(new global::app.type.@this(t?.Name ?? "object", t?.Kind, t?.Strict ?? false, "plang"));
+                    p.Declare(new global::app.type.@this(t?.Name ?? "object", t?.Kind?.Name, t?.Strict ?? false, "plang"));
                 }
                 continue;
             }

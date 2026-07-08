@@ -622,7 +622,7 @@ public class EngineTypesTests
         // Add), which the static TypeMapping lacks — proving lazy derivation
         // walks the engine types, not the static map.
         await Assert.That(data.Type!.Name).IsEqualTo("binary");
-        await Assert.That(engine.Format.TypeOf(data.Type!.Kind!)).IsEqualTo("custom-kind");
+        await Assert.That(engine.Format.TypeOf(data.Type!.Kind!.Name)).IsEqualTo("custom-kind");
     }
 
     // --- Engine integration ---

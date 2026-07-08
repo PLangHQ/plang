@@ -43,7 +43,7 @@ public class SetMintCarriesKindTests
         await result.IsSuccess();
         var stored = await context.Variable.Get("doc");
         await Assert.That(stored!.Type!.Name).IsEqualTo("text");
-        await Assert.That(stored.Type.Kind).IsNull();
+        await Assert.That(stored.Type.Kind?.Name).IsNull();
     }
 
     [Test] public async Task Run_SetAsImageNoKind_DerivesKindFromPath()
@@ -59,7 +59,7 @@ public class SetMintCarriesKindTests
         await result.IsSuccess();
         var stored = await context.Variable.Get("pic");
         await Assert.That(stored!.Type!.Name).IsEqualTo("image");
-        await Assert.That(stored.Type.Kind).IsEqualTo("jpg");
+        await Assert.That(stored.Type.Kind?.Name).IsEqualTo("jpg");
     }
 
     [Test] public async Task Run_BareLiteralWithImageExtension_StaysTextNoKind()
@@ -74,7 +74,7 @@ public class SetMintCarriesKindTests
         await result.IsSuccess();
         var stored = await context.Variable.Get("x");
         await Assert.That(stored!.Type!.Name).IsEqualTo("text");
-        await Assert.That(stored.Type.Kind).IsNull();
+        await Assert.That(stored.Type.Kind?.Name).IsNull();
     }
 
     [Test] public async Task Run_SetAsImageGifWithGifBytes_MintTypeIsImageGif()
@@ -88,6 +88,6 @@ public class SetMintCarriesKindTests
         await result.IsSuccess();
         var stored = await context.Variable.Get("img");
         await Assert.That(stored!.Type!.Name).IsEqualTo("image");
-        await Assert.That(stored.Type.Kind).IsEqualTo("gif");
+        await Assert.That(stored.Type.Kind?.Name).IsEqualTo("gif");
     }
 }

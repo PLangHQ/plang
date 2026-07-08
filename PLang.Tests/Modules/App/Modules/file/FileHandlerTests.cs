@@ -394,7 +394,7 @@ public class FileHandlerTests : IDisposable
         // Stage 3: a read is a `file` REFERENCE — name is the headline "file",
         // kind is the extension (md); the content family appears on narrow.
         await Assert.That(result.Type!.Name).IsEqualTo("file");
-        await Assert.That(result.Type!.Kind).IsEqualTo("md");
+        await Assert.That(result.Type!.Kind?.Name).IsEqualTo("md");
     }
 
     [Test]

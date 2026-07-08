@@ -28,8 +28,8 @@ public class CleanupBindingsTests
     {
         // The canonical PLang name for typeof(DateTime) is still "datetime"
         // (for legacy code paths). New bindings target DateTimeOffset.
-        await Assert.That(_types.ResolveName(typeof(System.DateTime))).IsEqualTo("datetime");
-        await Assert.That(_types.ResolveName(typeof(System.DateTimeOffset))).IsEqualTo("datetime");
+        await Assert.That(_types[typeof(System.DateTime)]?.Name).IsEqualTo("datetime");
+        await Assert.That(_types[typeof(System.DateTimeOffset)]?.Name).IsEqualTo("datetime");
     }
 
     [Test] public async Task Date_PlangName_ResolvesToDateOnly()
@@ -112,6 +112,6 @@ public class CleanupBindingsTests
     {
         // duration is the canonical name for typeof(TimeSpan); timespan is
         // a deprecated alias kept for back-compat.
-        await Assert.That(_types.ResolveName(typeof(System.TimeSpan))).IsEqualTo("duration");
+        await Assert.That(_types[typeof(System.TimeSpan)]?.Name).IsEqualTo("duration");
     }
 }

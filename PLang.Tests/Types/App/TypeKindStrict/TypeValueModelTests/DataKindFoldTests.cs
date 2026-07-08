@@ -25,7 +25,7 @@ public class DataKindFoldTests
     {
         var d = new DataT("x", "hello", new TypeEntity("text", "md"), context: global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(d.Kind).IsEqualTo("md");
-        await Assert.That(d.Type.Kind).IsEqualTo("md");
+        await Assert.That(d.Type.Kind?.Name).IsEqualTo("md");
     }
 
     // Kind is instance-owned and stamped at creation — there is no setter on
