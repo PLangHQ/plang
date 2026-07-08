@@ -1,62 +1,68 @@
 # Handoff — variable-as-value: unblock `plang build`
 
 ## THE GOAL (don't lose it again)
-This branch exists to **make `plang build` work** — it couldn't build any goal because a
-full-match `%x%` was coerced to its declared type at `.pr` load → null. Done-state =
-`plang build` runs + `cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test` green.
-NOT "green C# unit slices" (that's a side-effect). Plan: `.bot/variable-as-value/coder/plan.md`.
+This branch exists to **make `plang build` work**. Done-state = `plang build` runs +
+`cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test` green. NOT "green C# unit
+slices" (that's a side-effect). Plan: `.bot/variable-as-value/coder/plan.md`.
 
-## DONE this session (committed + pushed, HEAD = 95ab8771a)
-- **The `%msg%` self-reference blocker is FIXED** (the documented "Root unknown" in
-  output-redesign.md). `render … write to %msg%` → `set %msg% = %!data%` was storing a
-  reference to the reused infra NAME `!data`, so it cycled. Fix: `variable.@this` now
-  reports `IsRef` (a variable value IS a reference to its name), and `set`'s no-type path
-  calls `Value.AsCanonical()` — the NAME-hop resolve (`%!data%` → the current Data instance,
-  value NOT computed; lazy) — so the target binds to the instance, not the rebinding name.
-  Commits: `91b5b225f` (self-ref), `e661dc076` (set errors on unset ref, infra `%!` excepted),
-  `95ab8771a` (nav: unset index → `IndexNotSet`, self-diagnosing).
-- Earlier chain (settings/serializer + nav, all green-and-pushed): `Get<T>` deferred face,
-  Identity.Output, dict entry-key re-stamp, source/file/text.Navigate, interpolation
-  `variable.Value()`, convert JSON-gate. Suite: Modules 124→12, Runtime 49→2, Types 24→2,
-  Wire 14→5, **Data 18→0**. Foreach tests fixed.
+---
 
-## THE NEXT BLOCKER (start here)
-The builder now runs the LLM planner (LLM IS available here — produces a real 4-step plan)
-and reaches BuildStep, then dies:
-```
-BuildGoal/Start.goal:  foreach %plan.steps%, call BuildStep/Start planStep=%item%
-BuildStep/Start.goal:6: set %step% = %goal.Steps[planStep.index]%
-  → IndexNotSet(400): the index %planStep.index% is not set (resolved to null)
-```
-`plan.steps` items are well-formed (`{index:0, actions:[...], confidence}`); foreach +
-goal-call work in unit tests — so **`%planStep%` isn't resolving in BuildStep's scope**.
-Narrowed to ONE of:
-  (a) the goal-call **`planStep=%item%` injection** into the called goal (App.RunGoalAsync
-      param injection — see memory feedback_app_architecture_patterns), or
-  (b) **`planStep.index` navigation** on the injected dict.
-Next: `--debug` watch `planStep`/`item` across the foreach→BuildStep boundary; confirm
-whether `%planStep%` is `(undefined)` in BuildStep (→ injection bug) or set-but-nav-misses
-(→ nav bug). I could NOT get the watched value to print in the BuildStep BEFORE block —
-try `{"level":"action"}` and watch the goal-call action's param resolution.
+## STATUS (updated 2026-07-08 — after merging `clr-navigators`)
 
-## REPRO + DEBUG (use these, not C# dumps)
+### ✅ Done and merged
+- **variable-as-value core** — a full-match `%x%` borns a first-class `variable` (not text),
+  never parsed at load; resolves at `.Value()`. The `%msg%` self-reference blocker fixed.
+- **`clr-navigators` MERGED back into this branch** (merge `936b5fdf9`; branch deleted). The
+  kind machinery: a value navigates/converts/serializes by its **kind** without materializing;
+  a `clr` navigates by its kind (not reflection); `json` stays a navigable `clr(json)` end to
+  end; `type.@this.Kind` is a first-class `kind.@this`. Full C# suite at baseline. Scan +
+  status: `.bot/clr-navigators/coder/{stages,obp-scan,baseline}.md`.
+
+### ⚠️ The builder is NOT green yet — two blockers remain
+Rebuild the console (`dotnet build PlangConsole`) and repro from `Tests/`:
 ```bash
-dotnet build PlangConsole -c Debug         # rebuild the binary (NOT auto-rebuilt)
 cd Tests
-../PlangConsole/bin/Debug/net10.0/plang '--build={"files":["Scratch/Repro.goal"]}' \
-  '--debug={"variables":["planStep","item"],"level":"action","maxLength":400}'  2>&1 | less
+../PlangConsole/bin/Debug/net10.0/plang '--build={"files":["BuilderSanity/BuilderSanity.test.goal","BuilderSanity/AddItem.goal","BuilderSanity/MarkBig.goal","BuilderSanity/Finalize.goal"],"cache":false}'
 ```
-`Tests/Scratch/Repro.goal` is the minimal repro (set + nav). Builder goals:
-`os/system/builder/{Build,BuildGoal/Start,BuildStep/Start}.goal`.
+
+**Blocker 1 (START HERE) — `%plan%` is not RELIABLY a navigable `clr(json)`.**
+`foreach %plan.steps%` still hits `IndexNotSet` (`%planStep% holds list = '[Start'` — the
+plan string is being char-iterated, so `%plan.steps%` isn't the array). It's
+**non-deterministic** (LLM plan varies): the machinery navigates *when* `%plan%` is a
+`clr(json)`, but the wire read of the plan — declared `object` on the `.pr` — still borns
+`source(object, text/plain)` on some paths. The fix is the one piece I deliberately deferred
+during clr-navigators:
+- **`data/reader/this.cs:79-80`** — the deferred-value read picks the format by TOKEN SHAPE
+  (String→text/plain) regardless of declared type. Route an `object`/`dict`/`list`-declared
+  (or json-kind) wire value → json → `clr(json)`. **SENSITIVE:** this is the `variable-as-value`
+  line — must NOT turn a full-match `%var%` into a clr (a `%var%` borns a `variable` in
+  `type.Build`, `type/this.cs:265`, a different branch; verify it stays that way).
+  Architect's demolition audit `[replace]` #5: `.bot/clr-navigators/architect/demolition.md`.
+
+**Blocker 2 (after 1) — `goal.getTypes` List-lower.**
+When `%plan%` DOES navigate (the lucky runs), the build advances to
+`BuildStep/Start.goal:19` (Compile) and dies:
+```
+goal.getTypes: InvalidCastException: List`1 cannot lower to 'this' — the type must own this Clr projection
+```
+`goal.getTypes` returns a typed `Data<list<dict>>`; a native `List` is lowered to the
+`list<dict>` target and `item.Clr` (`type/item/this.cs:364`) rejects it. Not yet root-caused —
+could be the typed-return wrapping, or the demolition audit's #10 (`build/Default.cs` dual-path
+step readers reaching for a raw `JsonElement`/`dict` where steps are `clr(json)` now).
+
+### Deferred (own branches, not builder-blocking)
+`identifiers → text`, `Peek → item.@this` (architect's deferral list). The remaining C# slice
+failures are the `data.Output` write-path tail (output-redesign.md), separate from the builder.
+
+---
 
 ## PROCESS (Ingi's corrections — follow these)
 - On a plang/builder failure: **improve the error message first** (self-diagnosing, keepable)
-  and **use `plang --debug={...}`** — do NOT add `Console.Error` dumps to C#. (memory:
-  feedback_debug_plang_failures). The `IndexNotSet` message this session is an example.
-- Show code before changing C#; commit green chunks and push.
+  and **use `plang --debug={...}`** — NOT `Console.Error` dumps in C#.
+  (memory: feedback_debug_plang_failures).
+- Show the design before changing C# on a sensitive line (the `data/reader` line is one).
+- Commit green chunks; push (pipeline reviews origin).
 
 ## Build/test
-`./dev.sh build` (C#), `./dev.sh full` (all slices), `dotnet build PlangConsole` (the plang exe).
-Remaining slice failures (all pre-existing, NOT regressions): Modules 12 (dict→Step `.pr`
-type-object cluster + Settings-MissingKey AskError), Runtime 2, Types 2, Wire 5 — the
-`data.Output` write-path migration tail (output-redesign.md P4/P7); separate from the builder.
+`./dev.sh full` (all C# slices, at baseline), `dotnet build PlangConsole` (the plang exe),
+then the `--build` repro above.

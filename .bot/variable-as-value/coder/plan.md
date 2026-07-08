@@ -54,6 +54,14 @@ The `Lift(json.Parse(value))` fallback is the raw-CLR-era *"guess the shape"* pa
 
 ---
 
+## STATUS (2026-07-08)
+The `%ref%` born-rule fix (worklist 1–6) is **done** — a full-match `%x%` borns a `variable`,
+never parsed at load. The downstream `clr-navigators` branch (kind machinery: structured data
+navigates by its kind without materializing) is **merged back into this branch** (`936b5fdf9`).
+**The builder is NOT green yet** — two blockers remain; see `handoff.md` "START HERE":
+(1) `%plan%` not reliably a `clr(json)` on the wire → `IndexNotSet` (fix = the sensitive
+`data/reader:79-80` routing), then (2) `goal.getTypes` List-lower.
+
 ## Parked (after the builder is green)
 - Review the codeanalyzer findings Ingi flagged (incoming review) once the builder build is cleared.
 
