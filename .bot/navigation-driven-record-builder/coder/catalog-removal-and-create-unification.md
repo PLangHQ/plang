@@ -58,6 +58,61 @@ I1's fix restated cleanly: the deep-write (`variable/list/this.cs` `SetValueOnOb
 
 ---
 
+## Decision 3 — action discovery is `app.module.list : list<module>`; the LLM prompt is Fluid over it
+
+The catalog's `BuildTypeEntries(modules)` walk and `module.@this.Describe()` both reach into the module registry and reflect action shapes into a C# schema (`StepActions` / `List<data>`). That's behavior on the wrong owner: **the module registry owns "what modules/actions/properties exist."** Today it leaks that as bare strings —
+
+```
+module.@this today:
+  list            : IEnumerable<string>      // bare module NAMES  ← producer-hands-raw smell
+  GetActions(ns)  : IEnumerable<string>      // bare action names
+  GetActionType() : System.Type              // CLR reflection
+  Describe()      : StepActions              // a C# schema-builder reflecting props into List<data>
+```
+
+— forcing catalog + `Describe()` to re-derive the shape. Ingi's call: the registry hands back plang types, and rendering is a template.
+
+```
+app.module.list : list<module>
+  module.Actions    : list<action>       // module = NAMESPACE, action = CLASS (names are mechanical)
+    action.Properties : list<type>       // keyed by property NAME; value = the prop's plang type
+```
+
+**No `field` type.** A property is a plang `type`; the property **name is the entry key** — navigation yields `(key=name, value=type)` pairs, exactly as dict/clr enumerate today. `action.Properties` is a keyed `list<type>`, not a list of `{name,type}` wrappers.
+
+### (a) reuse the current classes — the tree is a navigable VIEW over reflection (NOT a descriptor copy)
+
+Decided: **(a).** The handler class (`variable.set`, `file.read`) *is* the definition; `module`/`action` are thin navigable wrappers over the namespace / `System.Type` — the same idea as `clr` navigating a host object, applied to type metadata. Nothing is materialized or copied, so there is one source of truth and no drift.
+
+```csharp
+// module.@this : item.@this  — backed by a namespace + registry, holds NO copy
+public list<action.@this> Actions =>
+    new(_reg.GetActions(_ns).Select(a => new action.@this(_reg.GetActionType(_ns, a), _ctx)), _ctx);
+
+// action.@this : item.@this  — backed by the LIVE handler System.Type
+public string Name => registry.NameOf(_handler);           // class name
+public list<type.@this> Properties =>                       // keyed by prop name; value = plang type
+    _handler.GetProperties(Public | Instance)
+        .Where(p => p.Name is not "EqualityContract" and not "Context")
+        .ToKeyedList(p => p.Name, p => _ctx.App.Type[Unwrap(p.PropertyType)]);   // Data<T>/[Code]T → plang type
+```
+
+Rejected **(b)** — a stored `ActionDefinition` record mirroring each class: two sources of truth (class + descriptor), drift on every handler edit, extra classes. Single-source kills it.
+
+### Naming is mechanical — no fork
+
+`module` = namespace, `action` = class; both names fall out of reflection. The runtime `action.@this` (`app/goal/steps/step/actions/action/this.cs`, the executing node holding filled param Data) and the module-tree `action` (a view over `System.Type`) are the **same action at two zoom levels** — class vs instance — in different locations. Not a competing name, not a descriptor.
+
+### What deletes
+
+- `module.@this.list : IEnumerable<string>` → `list<module>`; `Describe()` / `StepActions` / `GetDefaults`-as-schema → gone.
+- `BuildTypeEntries(modules)` → **a projection over `list<module>`**: "which types must the prompt teach" = collect `action.Properties`' types across the filtered modules. Discovery-of-referenced-types stops being catalog's job.
+- The compile prompt = `Fluid(list<module>)` (candidate modules) + the referenced types self-describing (Job 2 fold). Two template renders over plang collections; no C# schema builder survives.
+
+This is the concrete form of "schema-fold-as-view" (open item #5 below): the fold was never one thing — **discovery lives on `app.module.list`, per-type shape lives on the `type` element.** Catalog held neither.
+
+---
+
 ## Scope note (Ingi: into this branch)
 
 This grows `navigation-driven-record-builder` past "unblock the builder" into "delete `catalog` + unify construction on `Create`." Accepted deliberately — they are the same door, and splitting would tangle the same call sites across two branches. The async sweep (plan Stage 0) still lands first as prep; catalog-removal + `Create`-unification ride on top, replacing the plan's Stage 2 "generic default" with the stronger "there is only `Create`."
@@ -68,4 +123,5 @@ This grows `navigation-driven-record-builder` past "unblock the builder" into "d
 2. **Keyed-lookup index home** — the name/CLR → entity O(1) index lives *on* `app.type.list` (the collection owns its own index) vs. a thin lookup surface. Confirm it's on the collection, not a revived side-registry.
 3. **Sub-registry rehoming order** — `Conversions` dissolves into `Create`; the other 7 (`Readers`/`Renderers`/`KindHooks`/`Kinds`/`Compares`/`Scheme`/`Choices`) move from `catalog`-parented to `app.type.*`-direct. Which move in this branch vs. get a follow-on? (`Conversions` is mandatory here; the rest may be mechanical rename-only.)
 4. **`type.Convert` callers** — every `App.Type.Conversions.Of(...)` / `convert.OfStatic(...)` / `type.@this.Convert(...)` site becomes `…Create(value)`. Sweep list + the handful that pass a `kind` (does `Create` carry kind, or does the type entity already hold it?).
-5. **Schema-fold-as-view** — `BuildTypeEntries` becoming a view over `list<type>` (each element self-describing) vs. staying a build-time fold; confirm the LLM-teaching path doesn't regress.
+5. **Schema-fold-as-view** — resolved by Decision 3: discovery → `app.module.list`, per-type shape → the `type` element. Remaining check: confirm the Fluid-render path replaces `Describe()`/`StepActions` without regressing LLM teaching (examples, defaults, return types currently folded in `Describe()`).
+6. **Module-tree as reflection view (Decision 3, (a))** — `module`/`action` as `item.@this` views over namespace/`System.Type`. Confirm the confirm-before-converting shapes (I'll show `module` + `action` view classes one at a time), and where `action.Properties`' keyed `(name → type)` navigation lives (the `ToKeyedList` seam — is it dict-backed or a new keyed-list projection?).
