@@ -25,9 +25,18 @@ public sealed class @this
         Context = context;
     }
 
-    /// <summary>A bare kind name IS a kind — eases <c>Kind = "json"</c> across the refactor
-    /// from a string kind. Context lands when the token is used.</summary>
+    /// <summary>A bare non-null kind name IS a kind — eases the literal <c>Kind = "json"</c>.
+    /// A NULLABLE string is never implicitly a kind (a class conversion can't null-lift, and a
+    /// null-returning operator is a landmine): assign such sites explicitly
+    /// (<c>k is null ? null : (kind)k</c>). There is deliberately NO <c>kind → string</c>
+    /// implicit — read a kind's name with <c>.Name</c>/<c>.ToString()</c>, null-safe.</summary>
     public static implicit operator @this(string name) => new(name);
+
+    /// <summary>The kind for a name, or null for a null/absent name — the explicit door for a
+    /// NULLABLE string (the implicit above is non-null only, and an object-initializer
+    /// <c>{ Kind = someString? }</c> would otherwise invoke it on null and throw). Use this
+    /// wherever the source name may be null.</summary>
+    public static @this? Of(string? name) => name is null ? null : new(name);
 
     /// <summary>
     /// The type a value of this kind narrows to once decoded — the reader's owner type

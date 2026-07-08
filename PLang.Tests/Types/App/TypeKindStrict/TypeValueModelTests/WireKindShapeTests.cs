@@ -48,7 +48,7 @@ public class WireKindShapeTests
         var json = ToJson(d);
         var roundTripped = FromJson(json);
         await Assert.That(roundTripped.Type.Name).IsEqualTo("image");
-        await Assert.That(roundTripped.Type.Kind).IsEqualTo("gif");
+        await Assert.That(roundTripped.Type.Kind?.Name).IsEqualTo("gif");
         await Assert.That(roundTripped.Type.Strict).IsFalse();
     }
 
@@ -57,7 +57,7 @@ public class WireKindShapeTests
         var json = "{\"name\":\"x\",\"type\":{\"name\":\"text\",\"kind\":\"md\"},\"value\":\"hi\"}";
         var d = FromJson(json);
         await Assert.That(d.Type.Name).IsEqualTo("text");
-        await Assert.That(d.Type.Kind).IsEqualTo("md");
+        await Assert.That(d.Type.Kind?.Name).IsEqualTo("md");
         await Assert.That(d.Kind).IsEqualTo("md");
     }
 

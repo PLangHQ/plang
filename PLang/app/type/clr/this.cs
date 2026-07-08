@@ -60,7 +60,7 @@ public sealed class @this : global::app.type.item.@this, global::app.module.ICon
     /// Mirrors <c>number</c>/<c>int</c>: type = the lattice position, kind = the format.
     /// </summary>
     protected internal override global::app.type.@this Mint()
-        => new global::app.type.@this("item", Kind.ToString());   // temp .ToString(): until type.@this.Kind is a kind.@this, then pass Kind whole
+        => new global::app.type.@this("item", Kind.Name);
 
     /// <summary>In memory now = the carrier itself (a closed box, like every other item whose
     /// <c>Peek</c> answers self). The carried host is reachable ONLY through the explicit

@@ -80,7 +80,7 @@ public class Stage3_HttpContentTypeDispatchTests
         var resp = await Get("https://x/p", r => r.Content = new StringContent("<p>hi</p>", Encoding.UTF8, "text/html"));
         await Assert.That(resp.Type.Name).IsEqualTo("binary");
         // text/html → kind "htm" (canonicalised to the shortest extension form).
-        await Assert.That(resp.Type.Kind).IsEqualTo("htm");
+        await Assert.That(resp.Type.Kind?.Name).IsEqualTo("htm");
         await Assert.That(resp.Raw is byte[]).IsTrue(); // untouched = raw bytes
         // On access, the kind narrows to a `code` value (html is the code family).
         await Assert.That(await resp.Value()).IsTypeOf<global::app.type.code.@this>();
@@ -117,7 +117,7 @@ public class Stage3_HttpContentTypeDispatchTests
         var resp = await Get("https://x/data", r => r.Content = new StringContent("a,b\n1,2", Encoding.UTF8, "text/csv"));
         // The flip: csv body stamps {binary, csv}; untouched it's the raw bytes.
         await Assert.That(resp.Type.Name).IsEqualTo("binary");
-        await Assert.That(resp.Type.Kind).IsEqualTo("csv");
+        await Assert.That(resp.Type.Kind?.Name).IsEqualTo("csv");
         await Assert.That(resp.Raw is byte[]).IsTrue(); // untouched = raw bytes
     }
 

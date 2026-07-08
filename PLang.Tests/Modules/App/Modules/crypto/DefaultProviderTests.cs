@@ -77,9 +77,9 @@ public class DefaultCryptoProviderTests
 
         // Stage 7: name is "hash"; the algorithm is the value's KIND.
         await Assert.That(keccak.Type!.Name).IsEqualTo("hash");
-        await Assert.That(keccak.Type!.Kind).IsEqualTo("keccak256");
+        await Assert.That(keccak.Type!.Kind?.Name).IsEqualTo("keccak256");
         await Assert.That(sha.Type!.Name).IsEqualTo("hash");
-        await Assert.That(sha.Type!.Kind).IsEqualTo("sha256");
+        await Assert.That(sha.Type!.Kind?.Name).IsEqualTo("sha256");
     }
 
     // --- Verify ---

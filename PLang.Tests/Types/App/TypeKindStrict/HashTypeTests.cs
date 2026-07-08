@@ -56,7 +56,7 @@ public class HashTypeTests
         var result = await action.RunAsync(ctx);
         await result.IsSuccess();
         await Assert.That(result.Type!.Name).IsEqualTo("hash");
-        await Assert.That(result.Type!.Kind).IsEqualTo("sha256");
+        await Assert.That(result.Type!.Kind?.Name).IsEqualTo("sha256");
         // The value is a hash, not bare bytes — so the live serializer renders
         // it and the builder annotates the write-to variable as `(hash)`.
         await Assert.That((await result.Value()) is hash).IsTrue();

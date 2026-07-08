@@ -88,9 +88,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     protected internal override global::app.type.@this Mint()
     {
         var t = Path?.Context?.App.Format.TypeFromMime(Mime);
-        var kind = t is { IsNull: false } ? t.Kind
+        var kind = t is { IsNull: false } ? t.Kind?.Name
             : Mime.IndexOf('/') is var slash and >= 0 ? Mime[(slash + 1)..] : null;
-        return new global::app.type.@this("image") { Kind = kind == "octet-stream" ? null : kind };
+        return new global::app.type.@this("image") { Kind = global::app.type.kind.@this.Of(kind == "octet-stream" ? null : kind) };
     }
 
     /// <summary>

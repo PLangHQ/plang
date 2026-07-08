@@ -283,12 +283,12 @@ public sealed class @this : ISerializer
     public global::app.type.item.@this Read(global::app.type.item.source source, global::app.type.reader.ReadContext ctx)
     {
         var type = source.Mint();
-        var typeReader = ctx.Context.App.Type.Readers.Reader(type.Name, type.Kind, ctx.Context);
+        var typeReader = ctx.Context.App.Type.Readers.Reader(type.Name, type.Kind?.Name, ctx.Context);
         byte[] bytes = source.Raw as byte[] ?? System.Text.Encoding.UTF8.GetBytes(source.Raw.ToString() ?? "");
         var utf8 = new Utf8JsonReader(bytes);
         utf8.Read();
         var reader = new global::app.channel.serializer.json.Reader(utf8);
-        return typeReader.Read(ref reader, type.Kind, ctx);
+        return typeReader.Read(ref reader, type.Kind?.Name, ctx);
     }
 
 }

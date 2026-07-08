@@ -424,7 +424,7 @@ public partial class @this
     /// owner). Stays null for types without a kind.
     /// </summary>
     [JsonIgnore]
-    public string? Kind => _item?.Mint().Kind;
+    public string? Kind => _item?.Mint().Kind?.Name;
 
     /// <summary>
     /// Enumerates as (key, value) Data pairs. Data owns the knowledge of how to iterate:
@@ -906,7 +906,7 @@ public class DynamicData : @this
         // not through the entry judgement — a computed answers fresh and must
         // stay reachable as the instance. Born WITH context — the computed lifts
         // its factory result through it, no post-construction stamp.
-        : base(name, new global::app.type.item.computed(valueFactory, context, type?.IsNull == false ? type.Name : null, type?.Kind), context: context)
+        : base(name, new global::app.type.item.computed(valueFactory, context, type?.IsNull == false ? type.Name : null, type?.Kind?.Name), context: context)
     {
     }
 }

@@ -132,7 +132,7 @@ public class Stage4_TypeHintPrecedenceTests
         // Stage 3: foo.csv infers the file REFERENCE — {file, csv} — stamped on
         // the terminal variable.set; the content shape appears on narrow.
         await Assert.That(((global::app.type.@this)(await typeParam!.Value())!).Name).IsEqualTo("file");
-        await Assert.That(((global::app.type.@this)(await typeParam!.Value())!).Kind).IsEqualTo("csv");
+        await Assert.That(((global::app.type.@this)(await typeParam!.Value())!).Kind?.Name).IsEqualTo("csv");
     }
 
     [Test]

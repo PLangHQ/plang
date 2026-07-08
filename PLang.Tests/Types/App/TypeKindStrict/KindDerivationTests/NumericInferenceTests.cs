@@ -13,21 +13,21 @@ public class NumericInferenceTests : System.IAsyncDisposable
     {
         var d = new global::app.data.@this("x", 42, context: _app.User.Context);
         await Assert.That(d.Type.Name).IsEqualTo("number");
-        await Assert.That(d.Type.Kind).IsEqualTo("int");
+        await Assert.That(d.Type.Kind?.Name).IsEqualTo("int");
     }
 
     [Test] public async Task MintTyped_FromDouble_ProducesNumberDoubleKind()
     {
         var d = new global::app.data.@this("x", 3.14, context: _app.User.Context);
         await Assert.That(d.Type.Name).IsEqualTo("number");
-        await Assert.That(d.Type.Kind).IsEqualTo("double");
+        await Assert.That(d.Type.Kind?.Name).IsEqualTo("double");
     }
 
     [Test] public async Task MintTyped_FromDecimal_ProducesNumberDecimalKind()
     {
         var d = new global::app.data.@this("x", 3.14m, context: _app.User.Context);
         await Assert.That(d.Type.Name).IsEqualTo("number");
-        await Assert.That(d.Type.Kind).IsEqualTo("decimal");
+        await Assert.That(d.Type.Kind?.Name).IsEqualTo("decimal");
     }
 
     [Test] public async Task DataTypeGetter_StringValue_ReturnsText_NotString()
@@ -42,7 +42,7 @@ public class NumericInferenceTests : System.IAsyncDisposable
         var runtime = new global::app.data.@this("x", 5, context: _app.User.Context);
         var buildKind = global::app.type.number.@this.Build("5");
         await Assert.That(runtime.Type.Name).IsEqualTo("number");
-        await Assert.That(runtime.Type.Kind).IsEqualTo("int");
+        await Assert.That(runtime.Type.Kind?.Name).IsEqualTo("int");
         await Assert.That(buildKind).IsEqualTo("int");
     }
 }

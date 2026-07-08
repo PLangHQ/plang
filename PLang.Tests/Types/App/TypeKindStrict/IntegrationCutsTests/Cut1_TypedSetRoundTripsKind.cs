@@ -26,7 +26,7 @@ public class Cut1_TypedSetRoundTripsKind
 
         var stored = await context.Variable.Get("doc");
         await Assert.That(stored!.Type!.Name).IsEqualTo("text");
-        await Assert.That(stored.Type.Kind).IsEqualTo("md");
+        await Assert.That(stored.Type.Kind?.Name).IsEqualTo("md");
         await Assert.That(stored.Kind).IsEqualTo("md");
     }
 

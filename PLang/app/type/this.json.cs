@@ -97,7 +97,7 @@ public sealed class json : JsonConverter<@this?>
         if (value == null) { writer.WriteNullValue(); return; }
         writer.WriteStartObject();
         writer.WriteString("name", value.Name);
-        if (!string.IsNullOrEmpty(value.Kind)) writer.WriteString("kind", value.Kind);
+        if (value.Kind != null) writer.WriteString("kind", value.Kind.Name);
         if (value.Strict) writer.WriteBoolean("strict", true);
         if (!string.IsNullOrEmpty(value.Template)) writer.WriteString("template", value.Template);
         writer.WriteEndObject();

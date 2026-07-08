@@ -913,7 +913,7 @@ public class Default : IBuilder
                             underlying = underlying.GetGenericArguments()[0];
                         var kind = context.App.Type.KindHooks.Of(underlying, p.Peek());
                         if (kind != null)
-                            p.Declare(new app.type.@this(p.Type.Name) { Kind = kind });
+                            p.Declare(new app.type.@this(p.Type.Name) { Kind = global::app.type.kind.@this.Of(kind) });
                     }
                 }
             }
@@ -987,7 +987,7 @@ public class Default : IBuilder
                 var raw = (p.Peek() as global::app.type.item.@this)?.RawText;
                 if (raw == null || !global::app.type.text.@this.HasVariable(raw)) continue;
                 var t = p.Type;
-                p.Declare(new app.type.@this(t?.Name ?? "object", t?.Kind, t?.Strict ?? false, "plang"));
+                p.Declare(new app.type.@this(t?.Name ?? "object", t?.Kind?.Name, t?.Strict ?? false, "plang"));
             }
         }
         return errors;

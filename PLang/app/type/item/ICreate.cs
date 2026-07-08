@@ -50,7 +50,7 @@ public interface ICreate<TSelf> where TSelf : @this, ICreate<TSelf>
             data.Fail(errVal);
             return null;
         }
-        var owned = global::app.type.convert.@this.OfStatic(typeof(TSelf), raw, data.Type?.Kind, data.Context);
+        var owned = global::app.type.convert.@this.OfStatic(typeof(TSelf), raw, data.Type?.Kind?.Name, data.Context);
         // The owning hook ran and failed — surface ITS reason, not a generic decline.
         if (owned is { Success: false } && owned.Error is { } hookErr) { data.Fail(hookErr); return null; }
         var built = owned?.Peek() ?? global::app.type.@this.Create(raw, data.Context);

@@ -40,7 +40,7 @@ public partial class Set : IContext, IBuildValidatable
                 var probe = TryInstantiateValidator(clr, valueBacking);
                 if (probe is global::app.data.IKindValidatable v)
                 {
-                    var (ok, actual) = v.ValidateKind(valueBacking, t.Kind);
+                    var (ok, actual) = v.ValidateKind(valueBacking, t.Kind?.Name);
                     if (!ok)
                         return $"Strict kind mismatch: declared {t.Name}/{t.Kind}"
                             + (actual != null ? $" but content is {actual}." : ".");
@@ -213,7 +213,7 @@ public partial class Set : IContext, IBuildValidatable
             // the .pr round-trip loses the context, so we run it again here.
             if (type.Kind != null)
             {
-                var canon = Context.App.Format.CanonicaliseKind(type.Kind);
+                var canon = Context.App.Format.CanonicaliseKind(type.Kind?.Name);
                 if (canon != null) type.Kind = canon;
             }
             // Stamp the entity's Context so ClrType resolves through the
@@ -256,7 +256,7 @@ public partial class Set : IContext, IBuildValidatable
                 var probe = TryInstantiateValidator(targetType, sourceValue);
                 if (probe is global::app.data.IKindValidatable v)
                 {
-                    var (ok, actual) = v.ValidateKind(sourceValue!, type.Kind);
+                    var (ok, actual) = v.ValidateKind(sourceValue!, type.Kind?.Name);
                     if (!ok)
                         return Context.Error(
                             new global::app.error.ServiceError(
@@ -274,7 +274,7 @@ public partial class Set : IContext, IBuildValidatable
             // would parse it on store and defeat the whole lazy path.
             if (Value.RawUntouched && Value.Type is { } vt
                 && string.Equals(vt.Name, type.Name, StringComparison.OrdinalIgnoreCase)
-                && string.Equals(vt.Kind ?? "", type.Kind ?? "", StringComparison.OrdinalIgnoreCase))
+                && string.Equals(vt.Kind?.Name ?? "", type.Kind?.Name ?? "", StringComparison.OrdinalIgnoreCase))
             {
                 Value.Name = name!;
                 return await Context.Variable.Set(Value);
@@ -321,7 +321,7 @@ public partial class Set : IContext, IBuildValidatable
             if (type.Strict && type.Kind != null
                 && (await typedData.Value()) is global::app.data.IStrictKindEnforcer enforcer)
             {
-                enforcer.RequireStrictKind(type.Kind);
+                enforcer.RequireStrictKind(type.Kind?.Name);
                 if (enforcer.CheckStrictKind() is { ok: false } mismatch)
                     return Context.Error(
                         new global::app.error.ServiceError(
