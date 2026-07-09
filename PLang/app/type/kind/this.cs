@@ -89,6 +89,12 @@ public sealed class @this
         global::app.actor.context.@this ctx)
         => ctx.App.Type.Kinds[this].Output(obj, writer, mode, ctx);
 
+    /// <summary>Materialize a value of this kind INTO the CLR shape <paramref name="target"/>
+    /// asks for (json → build the host via reflection Read). Null when the kind can't build a
+    /// host — the caller falls back to the plain lower.</summary>
+    public object? Clr(object host, System.Type target, global::app.actor.context.@this ctx)
+        => ctx.App.Type.Kinds[this].Clr(host, target, ctx);
+
     public override string ToString() => Name;
 
     public override bool Equals(object? obj) => obj switch

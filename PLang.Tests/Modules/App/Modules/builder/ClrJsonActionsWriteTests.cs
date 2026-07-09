@@ -42,19 +42,24 @@ public class ClrJsonActionsWriteTests : System.IAsyncDisposable
 
         // The compile result: a clr(json) array of action objects — exactly what the LLM
         // compile hands back (`%compileResult.actions%`).
+        // Params ride as full Data wire objects {name, type, value} — the shape the
+        // @schema:data reader materializes (a bare {name,value} has no declared type).
         const string actionsJson = """
         [
           { "module": "variable", "action": "set",
-            "parameters": [ { "name": "Name", "value": "x" }, { "name": "Value", "value": "1" } ] },
+            "parameters": [
+              { "name": "Name",  "type": { "name": "text" }, "value": "x" },
+              { "name": "Value", "type": { "name": "text" }, "value": "1" } ] },
           { "module": "output", "action": "write",
-            "parameters": [ { "name": "content", "value": "%x%" } ] }
+            "parameters": [
+              { "name": "content", "type": { "name": "text" }, "value": "%x%" } ] }
         ]
         """;
-        // A genuine clr(json): the raw is a parsed JSON node (JsonElement-backed), as the
-        // data reader produces for json-kind content — NOT a deferred text string.
-        var jsonNode = System.Text.Json.Nodes.JsonNode.Parse(actionsJson)!;
+        // A genuine clr(json): JsonElement-backed, as the reader produces for json-kind
+        // content (the json kind rides on JsonElement, not JsonNode).
+        var element = System.Text.Json.JsonDocument.Parse(actionsJson).RootElement.Clone();
         var clrJsonActions = global::app.data.@this.FromRaw(
-            jsonNode, Type.Create("object", "json", context: context), context, "actions");
+            element, Type.Create("object", "json", context: context), context, "actions");
 
         // The builder write. Today this throws in ClrConvert; after Stage 1 it builds
         // two action hosts onto the slot.

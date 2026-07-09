@@ -1769,3 +1769,15 @@ forces variable-knowledge INTO snapshot — wrong owner; rejected option: reifyi
 the only touch is Stage 2 rerouting the dying `SetValueOnObject` snapshot arm to
 snapshot's existing `SetVariable` door. Context:
 `.bot/navigation-driven-record-builder/coder/snapshot-host-check.md` + architect plan.
+
+## 2026-07-09 — ClrConvert is a shared-static obpv (kind should own the lower)
+`item.ClrConvert(backing, target)` is a shared static called by ~16 value types via their
+own `.Clr(target)` (text/number/date/bool/guid/binary/duration/choice/list/…). Behavior
+off its owner = obpv. The OBP-correct shape: each value lowers through ITS kind
+(`Kind.Clr`, instance) so the static dissolves into kind behaviors. Done for `clr` already
+(navigation-driven-record-builder Stage 1: clr.Clr → Kind.Clr, json builds / base throws
+terminal, no ClrConvert). The 16 scalars still route through the static. Sub-decision when
+tackled: do scalars get real kind behaviors that own ChangeType, or inline the trivial
+ChangeType at each scalar's `.Clr`? NOTE: the current plan explicitly KEEPS item.Clr as
+"the plang→CLR lower exit" — this obpv cleanup is a separate thread (Ingi: "leave it, I
+know about it for later"). Context: app/type/item/this.cs:345.

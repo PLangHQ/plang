@@ -95,4 +95,13 @@ public abstract class @this
         object obj, global::app.channel.serializer.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? ctx)
         => throw new System.NotSupportedException($"kind '{Kind}' cannot write itself");
+
+    /// <summary>Lower a value OF this kind INTO the CLR shape <paramref name="target"/> asks
+    /// for — the clr carrier delegates its lower here, so the kind owns it. The json kind
+    /// overrides to bridge its content to a reader and drive the <c>*</c> kind's host
+    /// <c>Read</c>. The default is terminal: a host that isn't already the target (identity is
+    /// handled by the carrier) and can't be built genuinely can't lower.</summary>
+    public virtual object? Clr(object host, System.Type target, global::app.actor.context.@this ctx)
+        => throw new System.InvalidCastException(
+            $"a '{Kind}' value cannot lower to {target.Name} — the kind cannot build that shape.");
 }

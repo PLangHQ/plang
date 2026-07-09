@@ -19,6 +19,17 @@ public sealed class @this : global::app.data.schema.ISchemaReader
     // Reads through the IReader abstraction (json.Reader). The reader carries the owned bytes
     // (entry path) so a structured value slices raw off the buffer with no DOM; the goal.call
     // TEMP dips to the inner reader for its STJ JsonConverter — the rest is format-agnostic.
+    // Bytes entry — a caller with the value's own verbatim bytes (a shape-layer host read
+    // handing a param subtree) reads a Data without knowing this reader's format. json (the
+    // format) is owned here, not leaked to the caller. The bytes are this reader's own encoding.
+    public Data Read(byte[] raw, global::app.type.reader.ReadContext ctx)
+    {
+        var utf8 = new System.Text.Json.Utf8JsonReader(raw);
+        utf8.Read();
+        var reader = new global::app.channel.serializer.json.Reader(utf8);
+        return Read(ref reader, ctx);
+    }
+
     public Data Read(ref global::app.channel.serializer.json.Reader reader,
         global::app.type.reader.ReadContext ctx)
     {

@@ -68,6 +68,18 @@ public sealed class json : @this
         => new(ctx.Ok(global::app.type.@object.serializer.json.Read(
             raw, "json", new global::app.type.reader.ReadContext(ctx))));
 
+    // Materialize this json content INTO the CLR host target asks for. json owns the format
+    // bridge — its element becomes a reader (element→reader is json's knowledge) — and the
+    // `*` kind owns the shape (the [Store] host walk driven off that reader). This is the door
+    // a clr(json) delegates to instead of terminal-lowering onto a typed slot.
+    public override object? Clr(object host, System.Type target, global::app.actor.context.@this ctx)
+    {
+        var utf8 = new Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(((JsonElement)host).GetRawText()));
+        utf8.Read();
+        var reader = new global::app.channel.serializer.json.Reader(utf8);
+        return new reflection().Read(ref reader, target, new global::app.type.reader.ReadContext(ctx));
+    }
+
     // A json value writes its own raw json inline (json/plang writers emit it structurally via
     // WriteRawValue; a text writer falls its Raw back to a string) — NEVER reflecting the
     // JsonElement's BCL properties (no `valueKind` leak).

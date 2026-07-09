@@ -123,7 +123,12 @@ public class @this : global::app.type.item.@this, global::app.module.IContext
         }
     }
 
-    internal override object? Clr(System.Type target) => ClrConvert(Value, target);
+    // The kind owns the lower: identity is a no-op here; otherwise the kind builds (json →
+    // reflection Read) or declares it can't (terminal). No shared ClrConvert — clr wraps a
+    // JsonElement or a POCO, neither IConvertible, so there was never a ChangeType to do.
+    internal override object? Clr(System.Type target)
+        => target.IsInstanceOfType(Value) ? Value
+         : Kind.Clr(Value, target, Context);
 
     public override string ToString() => Value.ToString() ?? "";
     public override bool Equals(object? obj) =>

@@ -38,6 +38,110 @@ public sealed class reflection : @this
             yield return new global::app.data.@this(p.Name, p.GetValue(obj), context: ctx);
     }
 
+    // The inverse of Output: build a host CLR object by reflecting its [Store] props and
+    // pulling each off the format-agnostic reader (wire order drives, unknown names skip,
+    // missing names keep the property default). A collection host (StepActions : IList<action>)
+    // reads as an array of its element; List<Data> props (action.Parameters) hand their bytes
+    // to the @schema:data reader (%var%-born / template / signing byte-identical). The `*` kind
+    // owns the SHAPE walk; a format kind (json) owns bridging its content to the reader.
+    public object? Read<TReader>(ref TReader reader, global::System.Type target,
+        global::app.type.reader.ReadContext ctx)
+        where TReader : global::app.channel.serializer.IReader, allows ref struct
+    {
+        if (reader.Null()) return null;
+
+        // Collection host — an array of its element type (StepActions→action, GoalSteps→step).
+        // These are IList<T> (generic only), so add through ICollection<T>.Add by interface.
+        var element = ElementTypeOf(target);
+        if (element != null)
+        {
+            var coll = global::System.Activator.CreateInstance(target)!;
+            var add = typeof(global::System.Collections.Generic.ICollection<>).MakeGenericType(element).GetMethod("Add")!;
+            reader.BeginArray();
+            while (reader.NextElement()) add.Invoke(coll, new[] { ReadValue(ref reader, element, ctx) });
+            reader.EndArray();
+            return coll;
+        }
+
+        // Object host — its [Store] props, matched to wire names (the same selector Output writes).
+        var host = global::System.Activator.CreateInstance(target)!;
+        var byName = new global::System.Collections.Generic.Dictionary<string, global::System.Reflection.PropertyInfo>(
+            global::System.StringComparer.OrdinalIgnoreCase);
+        foreach (var entry in global::app.channel.serializer.filter.Tagged.PropertiesFor(target, global::app.View.Store))
+            byName[entry.WireName] = entry.Property;
+
+        reader.BeginObject();
+        while (reader.NextName(out var name))
+        {
+            if (byName.TryGetValue(name, out var prop) && prop.CanWrite)
+                prop.SetValue(host, ReadValue(ref reader, prop.PropertyType, ctx));
+            else
+                reader.Skip();
+        }
+        reader.EndObject();
+        return host;
+    }
+
+    // Read one value AS its declared CLR type off the reader.
+    private object? ReadValue<TReader>(ref TReader reader, global::System.Type type,
+        global::app.type.reader.ReadContext ctx)
+        where TReader : global::app.channel.serializer.IReader, allows ref struct
+    {
+        var t = global::System.Nullable.GetUnderlyingType(type) ?? type;
+        if (reader.Null()) return null;
+
+        if (t == typeof(string)) return reader.String();
+        if (t == typeof(bool)) return reader.Bool();
+        if (t == typeof(int)) return (int)reader.Long();
+        if (t == typeof(long)) return reader.Long();
+        if (t.IsEnum) return global::System.Enum.Parse(t, reader.String(), ignoreCase: true);
+
+        // List<Data> (Parameters / Defaults) — each element a {name,type,value} through the
+        // @schema:data reader over its own verbatim bytes (sign-identical to the byte path).
+        if (IsListOfData(t)) return ReadDataList(ref reader, t, ctx);
+
+        // A nested object/collection host → recurse the same walk.
+        if (ElementTypeOf(t) != null || t.IsClass) return Read(ref reader, t, ctx);
+
+        // Scalar fallback: raw slot lowered to the target.
+        var raw = new global::app.type.item.serializer.json(ctx.Context).ReadSlot(ref reader, ctx);
+        return raw is global::app.type.item.@this iv ? iv.Clr(t) : raw;
+    }
+
+    private global::System.Collections.IList ReadDataList<TReader>(ref TReader reader,
+        global::System.Type listType, global::app.type.reader.ReadContext ctx)
+        where TReader : global::app.channel.serializer.IReader, allows ref struct
+    {
+        var list = (global::System.Collections.IList)global::System.Activator.CreateInstance(listType)!;
+        var dataReader = new global::app.data.reader.@this();
+        reader.BeginArray();
+        // Each param's own verbatim bytes → the @schema:data reader (it owns its format). The
+        // shape walk stays format-agnostic: RawValue is IReader surface, no json named here.
+        while (reader.NextElement())
+            list.Add(dataReader.Read(reader.RawValue(), ctx));
+        reader.EndArray();
+        return list;
+    }
+
+    // The element type of a collection host (IList<T> / IEnumerable<T>, not string, not List<Data>).
+    private global::System.Type? ElementTypeOf(global::System.Type t)
+    {
+        if (t == typeof(string) || IsListOfData(t)) return null;
+        foreach (var i in t.GetInterfaces())
+            if (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::System.Collections.Generic.IList<>))
+                return i.GetGenericArguments()[0];
+        return null;
+    }
+
+    private bool IsListOfData(global::System.Type t)
+    {
+        foreach (var i in t.GetInterfaces())
+            if (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::System.Collections.Generic.IEnumerable<>)
+                && i.GetGenericArguments()[0] == typeof(global::app.data.@this))
+                return true;
+        return false;
+    }
+
     // A foreign POCO has no plang shape of its own, so it renders as an object of its
     // [Out] fields — each field VALUE lifts to its item via type.Create and writes itself.
     // The `*` kind owns only the reflection; every field's serialization is its own item's.
