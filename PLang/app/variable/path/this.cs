@@ -27,7 +27,25 @@ public sealed class @this
     public (Segment? head, @this tail) Split()
         => IsEmpty
             ? (null, this)
-            : (Segments[0], new @this(new System.ArraySegment<Segment>(ToArray(), 1, Segments.Count - 1)));
+            : (Segments[0], Tail);
+
+    /// <summary>The root variable this path descends from — always a plain member
+    /// (a variable name never comes through as an index or infra hop).</summary>
+    public Segment.Member Root => (Segment.Member)Segments[0];
+
+    /// <summary>The path after the root — <c>goal.Steps[0]</c> → <c>Steps[0]</c>.
+    /// Empty for a bare root (<c>goal</c>).</summary>
+    public @this Tail
+        => IsEmpty ? this : new @this(new System.ArraySegment<Segment>(ToArray(), 1, Segments.Count - 1));
+
+    /// <summary>All but the last segment — the walk to the leaf's parent
+    /// (<c>Steps[0]</c> → <c>Steps</c>). Empty when the path IS the leaf.</summary>
+    public @this Parent
+        => Segments.Count <= 1 ? new @this(System.Array.Empty<Segment>())
+           : new @this(new System.ArraySegment<Segment>(ToArray(), 0, Segments.Count - 1));
+
+    /// <summary>The final segment — the leaf a write lands on.</summary>
+    public Segment Last => Segments[Segments.Count - 1];
 
     private Segment[] ToArray() => Segments as Segment[] ?? System.Linq.Enumerable.ToArray(Segments);
 

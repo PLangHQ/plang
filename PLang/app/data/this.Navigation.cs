@@ -59,7 +59,7 @@ public partial class @this
                 child = InvokeMethod(call.Method, call.Args);
                 break;
             case global::app.variable.path.Segment.Index index:
-                child = await _item.Navigate(this, await index.ResolveKey(_context?.Variable));
+                child = await _item.Navigate(this, await index.Key(_context?.Variable));
                 valuePlane = true;
                 // A non-literal index (`[planStep.index]`) that the container couldn't use:
                 // distinguish the common, confusing cause — the index variable itself is unset

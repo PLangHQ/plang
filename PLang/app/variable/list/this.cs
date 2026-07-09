@@ -890,7 +890,7 @@ public partial class @this
             switch (path.Segments[i])
             {
                 case global::app.variable.path.Segment.Index idx:
-                    sb.Append('[').Append(await idx.ResolveKey(this)).Append(']');
+                    sb.Append('[').Append(await idx.Key(this)).Append(']');
                     break;
                 case global::app.variable.path.Segment.Member m:
                     if (i > 0) sb.Append('.');

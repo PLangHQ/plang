@@ -58,7 +58,7 @@ public abstract class Segment
         /// (Navigate, store = the value's context store) and write (variable.set, store =
         /// the store doing the set) ask here.
         /// </summary>
-        public async System.Threading.Tasks.ValueTask<string> ResolveKey(global::app.variable.list.@this? store)
+        public async System.Threading.Tasks.ValueTask<string> Key(global::app.variable.list.@this? store)
         {
             if (IsLiteral) return ((Member)Inner.Segments[0]).Name;
 

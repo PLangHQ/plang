@@ -77,7 +77,7 @@ public class @this
             // into Descend — the resolved key AND whether it came from an index bracket.
             bool isIndex = seg is global::app.variable.path.Segment.Index;
             string key = seg is global::app.variable.path.Segment.Index i
-                ? await i.ResolveKey(ctx.Variable)                 // the ONE bracket-variable resolver
+                ? await i.Key(ctx.Variable)                        // the ONE bracket-variable resolver
                 : ((global::app.variable.path.Segment.Member)seg).Name;
             var (found, next) = kind.Descend(node, key, isIndex, ctx);
             if (!found) return ctx.NotFound(seg.Raw);
