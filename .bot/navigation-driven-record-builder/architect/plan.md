@@ -80,7 +80,7 @@ Note: `SetValueOnObject` only *shrinks* here (the clr arm covers host writes); f
 ## Stage 3 — `catalog-removal`
 
 - **`app.type.list` = `list<type>`** + keyed name→entity index on the collection. **Runtime-hot** (`[name]→entity` is hit on every `.pr` read) — land and test apart from the reparent tail. Population stays lazy + runtime-extendable (module choice types, `code.load`); the `list`/`type` self-reference is data, harmless.
-- Rehome `Kinds`/`Readers` to `app.type.*`; mechanical tail: `Renderers`/`KindHooks`/`Compares`/`Scheme`/`Choices` reparent (zero logic — the release valve, may trail as its own commits).
+- Rehome `Kinds`/`Readers` to `app.type.*`; mechanical tail: `Renderers`/`KindHooks`/`Choices` reparent (zero logic — the release valve, may trail as its own commits). (`Compares` already died in the Stage-2 compare pass. **`Scheme` reparents location-only** — it's a known smell (a registry that *constructs*: `Scheme.From`/`Register`, the shape the kind redesign killed); its pattern redesign is its own logged piece (`todos.md` 2026-07-09 + `coder/scheme-should-follow-the-kind-pattern.md`) — do NOT polish it in the tail; `path.Create` keeps its one delegating line until that piece lands.)
 - Delete `type.catalog.@this`.
 
 ## Stage 4 — `module-discovery`

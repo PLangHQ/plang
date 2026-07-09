@@ -1816,3 +1816,17 @@ convert.Discover/TryConvert path dies in Stage 2 (Convert→Create relocation);
 verify choice resolution builds the CLOSED `choice<Operator>` there. Also fix:
 NormalizeParameterTypes must skip `%var%` params (SkipsVariableReferences) and
 skip already-correct [Choices] values.
+
+## 2026-07-09 — Path schemes follow the kind pattern (own piece)
+`path` constructs concrete schemes through a registry+factory (`App.Type.Scheme`,
+`Scheme.From(raw, ctx)`, `Scheme.Register(...)`) — the shape the kind redesign killed
+(a factory doing the collection's job; a registry that constructs instead of selects).
+Target (Ingi, spotted during the Stage-2 Convert→Create sweep): mirror the kind ruling —
+a subfolder per scheme (`path/scheme/<name>/this.cs`, each a `path.@this` subclass owning
+its construction/authorization), ONE selection door (a scheme collection: selection +
+lifecycle, born-with-context, never null; plugin schemes register into the collection),
+no `From`, no free `Register`. "The scheme IS the behavior." Decoupled from Stage 2:
+`path.Create` delegates to `Scheme.From` in one line today; that line updates when this
+lands. Note: Stage 3 reparents `Scheme` mechanically (location only) — the pattern
+redesign is THIS piece, not the reparent. Context:
+`.bot/navigation-driven-record-builder/coder/scheme-should-follow-the-kind-pattern.md`.
