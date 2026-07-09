@@ -181,4 +181,4 @@ An LLM reading OBP code traverses the object graph like a map: it knows exactly 
 
 ## The Smells
 
-Violations have names — *naked collection*, *broken seal*, *verb+noun*, *fork*, and the rest. The catalog with worked examples and grep-able tells is [`obp-smells.md`](obp-smells.md); the audit procedure for changed code is [`obp-scan.md`](obp-scan.md).
+Violations have names — *naked collection*, *broken seal*, *verb+noun*, *fork*, *behavior class*, and the rest. The catalog with worked examples and grep-able tells is [`obp-smells.md`](obp-smells.md); the audit procedure for changed code is [`obp-scan.md`](obp-scan.md).

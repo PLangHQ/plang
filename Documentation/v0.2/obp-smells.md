@@ -91,6 +91,18 @@ The tell: you `await X.Value()` an operand only to pass the raw inside to someth
 
 **fork** — two execution paths for one operation. Four shapes: a behavioral `if`/`switch` (choosing *how* to do the same thing — reading distinct fields of a structured object is not a fork); a generic/fallback/"default" path beside per-type handlers; a type-switch inside a registry (`is X.subtype` → behave differently — push it onto the element as a virtual member); an optional-override branch (`is INamedThing ? declared : derived` — two ways to get one thing). Forks are where code diverges over time; the pattern-doc rule behind this is "never diverge."
 
+**behavior class** — a class whose job is "the behavior of X," living beside a hollow X that holds only identity. The object has been split in two — identity without behavior, behavior without identity — with a registry marrying them **by name, on every call**. The tell: X's methods are one-line delegations (`Registry[this].Verb(...)`); a folder or namespace literally named `behavior`/`*Strategy`/`*Handler` paired with a same-concept value class is the flag before reading a line.
+
+```csharp
+// Smelly — the token proxies every verb through a registry to a shadow class
+public ValueTask<data> Navigate(...) => ctx.App.Type.Kinds[this].Navigate(...);   // ×6 verbs
+
+// Self-owning — the object IS the behavior
+public virtual ValueTask<data> Navigate(...) { /* the default walk */ }           // subclasses override
+```
+
+Fix: merge. The base class owns the verb defaults; each variant is a subclass; a plain/unknown case is **a base instance carrying its name** (the "fallback path" becomes ordinary inheritance); the registry shrinks to selection + lifecycle — one door, never null. *Worked example:* `kind.@this` (six proxy verbs) beside `kind.behavior.@this` + json/dict/reflection subclasses and a per-verb registry hop — merged so `kind.@this` owns the verbs, each kind subclasses at `type/<owner>/kind/<k>/this.cs`, and an unknown kind ("md") is a base instance named md. Static factories on the split token (`kind.Of(name)`) die with it — selection is the collection's job.
+
 **verb+noun** — the flashing sign. `BuildTypeEntries`, `GetParameters`, `CoerceToKind`, `ErrorCategory` — any compound name where one half is a verb (only `IsX`/`HasX` booleans are exempt). Never allowed, and always diagnostic of the design underneath: `CoerceToKind` sat on the type object doing kind's job — the name was flagged before a line of the body was read, and poking at it uncovered the misplaced responsibility. `BuildTypeEntries` was a verb proxying a collection the registry should simply BE. Needing to proxy a collection is wrong design; a name not matching the work is wrong design; the compound is how it surfaces in the API.
 
 ---
