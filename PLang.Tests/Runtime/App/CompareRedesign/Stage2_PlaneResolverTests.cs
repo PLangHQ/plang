@@ -16,7 +16,7 @@ public class Stage2_PlaneResolverTests
         // %dict.field% → dict's content via the type's own resolver; no central case-table
         await using var app = NewApp();
         var d = new Data("cfg", new Dictionary<string, object?> { ["field"] = "content" }, context: app.User.Context);
-        var child = await d.GetChild("field");
+        var child = await d.Get("field");
         await Assert.That((await child.Value())?.ToString()).IsEqualTo("content");
     }
 
@@ -26,12 +26,12 @@ public class Stage2_PlaneResolverTests
         // %text!length% — the value's own property, answered in a PLang value
         await using var app = NewApp();
         var t = new Data("s", new global::app.type.text.@this("hello"), context: app.User.Context);
-        var length = await t.GetChild("!length");
+        var length = await t.Get("!length");
         await Assert.That(length.Peek()).IsTypeOf<global::app.type.number.@this>();
         await Assert.That(length.Peek()!.ToString()).IsEqualTo("5");
         // envelope properties resolve on the same plane
         t.Properties["cost"] = 42;
-        var cost = await t.GetChild("!cost");
+        var cost = await t.Get("!cost");
         await Assert.That(cost.Peek()?.ToString()).IsEqualTo("42");
     }
 
@@ -42,7 +42,7 @@ public class Stage2_PlaneResolverTests
         await using var app = NewApp();
         var d = new Data("x", new Dictionary<string, object?> { ["k"] = 1 },
             global::PLang.Tests.TestApp.SharedContext.Type.Create("dict"), context: app.User.Context);
-        var t = await d.GetChild("!type");
+        var t = await d.Get("!type");
         await Assert.That(((await t.Value()) as global::app.type.@this)?.Name).IsEqualTo("dict");
     }
 
@@ -60,8 +60,8 @@ public class Stage2_PlaneResolverTests
                     new global::app.type.path.file.@this(System.IO.Path.Combine(dir, "c.json"), app.User.Context) {}),
             };
             var data = await read.Run();
-            await data.GetChild("a");                       // narrow
-            var chain = await data.GetChild("!type.list");
+            await data.Get("a");                       // narrow
+            var chain = await data.Get("!type.list");
             var list = (global::app.type.list.@this)chain.Peek()!;
             var names = list.Items.Select(d => ((global::app.type.@this)d.Peek()!).Name).ToList();
             await Assert.That(names[0]).IsEqualTo("dict");
@@ -120,7 +120,7 @@ public class Stage2_PlaneResolverTests
         await Assert.That(outbound).DoesNotContain("\"myBinding\"");
         await Assert.That(store).Contains("\"myBinding\"");
         // the content key `name` is free — nothing on the envelope to shadow it
-        var child = await d.GetChild("name");
+        var child = await d.Get("name");
         await Assert.That((await child.Value())?.ToString()).IsEqualTo("ingi");
     }
 
@@ -131,8 +131,8 @@ public class Stage2_PlaneResolverTests
         await using var app = NewApp();
         var d = new Data("dict", new Dictionary<string, object?> { ["size"] = 10 }, context: app.User.Context);
         d.Properties["size"] = 28;
-        var content = await d.GetChild("size");     // `.` — the data plane (content key)
-        var property = await d.GetChild("!size");   // `!` — the property plane (Properties bag)
+        var content = await d.Get("size");     // `.` — the data plane (content key)
+        var property = await d.Get("!size");   // `!` — the property plane (Properties bag)
         await Assert.That((await content.Value())?.ToString()).IsEqualTo("10");
         await Assert.That((await property.Value())?.ToString()).IsEqualTo("28");
     }

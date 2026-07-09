@@ -22,7 +22,7 @@ public sealed partial class @this
         "see Documentation/v0.2/todos.md (2026-07-09 — Snapshot redesign).";
 
     /// <summary>Was: <c>%snap.variables%</c> navigation. Throws — see the class remarks.</summary>
-    public override System.Threading.Tasks.ValueTask<data.@this> Navigate(data.@this parent, string key)
+    public override System.Threading.Tasks.ValueTask<data.@this> Get(data.@this parent, string key)
         => throw new System.NotSupportedException(ReplayDisabled);
 
     /// <summary>

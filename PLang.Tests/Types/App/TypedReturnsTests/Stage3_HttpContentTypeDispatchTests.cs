@@ -68,7 +68,7 @@ public class Stage3_HttpContentTypeDispatchTests
         var resp = await Get("https://x/y", r => r.Content = new StringContent("{\"a\":1}", Encoding.UTF8, "application/json"));
         await Assert.That(resp.Type.Name).IsEqualTo("binary"); // the flip: binary + json kind
         await Assert.That(resp.Raw is byte[]).IsTrue(); // untouched = raw bytes (Peek is the source carrier)
-        await Assert.That((await (await resp.GetChild("a")).Value())?.ToString()).IsEqualTo("1"); // navigate materializes
+        await Assert.That((await (await resp.Get("a")).Value())?.ToString()).IsEqualTo("1"); // navigate materializes
     }
 
     // text/html stamps {binary, html}; untouched it's the raw bytes. (There is no
@@ -138,7 +138,7 @@ public class Stage3_HttpContentTypeDispatchTests
     public async Task Metadata_StatusIsProperty_NotBody()
     {
         var resp = await Get("https://x/j", r => r.Content = new StringContent("{\"k\":\"v\"}", Encoding.UTF8, "application/json"));
-        await Assert.That((await (await resp.GetChild("!StatusCode")).Value())?.ToString()).IsEqualTo("200");
+        await Assert.That((await (await resp.Get("!StatusCode")).Value())?.ToString()).IsEqualTo("200");
         await Assert.That(resp.MaterializeCount()).IsEqualTo(0); // status read did not touch the body
     }
 

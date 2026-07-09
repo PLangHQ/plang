@@ -28,7 +28,7 @@ public class Stage2_NavigationAsyncTests
         await using var app = NewApp(out _);
         var dict = new Dictionary<string, object?> { ["name"] = "alice" };
         var d = new Data("user", dict, context: app.User.Context);
-        var vt = d.GetChild("name");
+        var vt = d.Get("name");
         await Assert.That(vt.IsCompletedSuccessfully).IsTrue();   // in-memory: no async hop
         await Assert.That((await (await vt).Value())?.ToString()).IsEqualTo("alice");
     }
@@ -88,7 +88,7 @@ public class Stage2_NavigationAsyncTests
         await (await p.WriteText("{\"port\":8080}")).IsSuccess();
         var d = await new global::app.channel.type.file.@this(p).Read();
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);       // read step: nothing parsed
-        var port = await (await d.GetChild("port")).Value();      // first navigation parses
+        var port = await (await d.Get("port")).Value();      // first navigation parses
         await Assert.That(d.MaterializeCount()).IsEqualTo(1);
         await Assert.That(port?.ToString()).IsEqualTo("8080");
     }

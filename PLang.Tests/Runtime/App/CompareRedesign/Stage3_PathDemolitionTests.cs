@@ -106,7 +106,7 @@ public class Stage3_PathDemolitionTests
         var json = await SerializePlang(app, data);
         await Assert.That(json).DoesNotContain(dir);
         // the projection itself is still derivable on the property plane
-        var abs = await data.GetChild("!absolute");
+        var abs = await data.Get("!absolute");
         await Assert.That(abs.Peek()?.ToString()).Contains("note.txt");
     }
 
@@ -119,7 +119,7 @@ public class Stage3_PathDemolitionTests
         await using var __ = app;
         var p = global::app.type.path.@this.Resolve("docs/readme.md", context);
         var data = new Data("p", p, context: context);
-        var ext = await data.GetChild("!extension");
+        var ext = await data.Get("!extension");
         await Assert.That(ext.Peek()?.ToString()).IsEqualTo("md");
         var json = await SerializePlang(app, data);
         await Assert.That(json).Contains(".md");
@@ -194,9 +194,9 @@ public class Stage3_PathDemolitionTests
         var result = await Read(context, new HttpPath("http://example.com/data.json", context));
         var reference = (global::app.type.url.@this)result.Peek()!;
 
-        var host = await result.GetChild("!host");
+        var host = await result.Get("!host");
         await Assert.That(host.Peek()?.ToString()).IsEqualTo("example.com");
-        var pathChild = await result.GetChild("!path");
+        var pathChild = await result.Get("!path");
         await Assert.That(pathChild.Peek()).IsNotNull();
         await Assert.That(reference.IsLoaded).IsFalse();
     }
@@ -224,7 +224,7 @@ public class Stage3_PathDemolitionTests
         File.WriteAllText(Path.Combine(dir, "config.json"), "{\"port\":8080}");
 
         var result = await Read(context, new PLangFilePath(Path.Combine(dir, "config.json"), context) {});
-        await result.GetChild("port");                  // examination → narrow
+        await result.Get("port");                  // examination → narrow
         await Assert.That(result.Type!.Name).IsEqualTo("dict");
         var json = await SerializePlang(app, result);
         await Assert.That(json).Contains("8080");
@@ -258,7 +258,7 @@ public class Stage3_PathDemolitionTests
 
         var bound = await context.Variable.Get("config");
         await Assert.That(bound!.Type!.Is("dict")).IsTrue();
-        var y = await bound.GetChild("y");
+        var y = await bound.Get("y");
         await Assert.That((await y.Value())?.ToString()).IsEqualTo("1");
         var json = await SerializePlang(app, bound!);
         await Assert.That(json).Contains("8080");

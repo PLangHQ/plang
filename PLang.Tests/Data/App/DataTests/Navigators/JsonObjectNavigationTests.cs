@@ -33,7 +33,7 @@ public class JsonObjectNavigationTests : System.IAsyncDisposable
     public async Task GetChild_TopLevelKey_ReturnsValue()
     {
         var d = MakeData(new JsonObject { ["id"] = "abc123" });
-        var result = await d.GetChild("id");
+        var result = await d.Get("id");
         await Assert.That(result.IsInitialized).IsTrue();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("abc123");
     }
@@ -45,7 +45,7 @@ public class JsonObjectNavigationTests : System.IAsyncDisposable
         //   set %trace% = {..., "goal": %goal%, ...}, type=json
         //   save %trace% to file '/.build/traces/%!trace.id%/%trace.goal.name%.json'
         var d = MakeData(new JsonObject { ["goal"] = new JsonObject { ["name"] = "Hello" } });
-        var result = await d.GetChild("goal.name");
+        var result = await d.Get("goal.name");
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello");
     }
 
@@ -53,7 +53,7 @@ public class JsonObjectNavigationTests : System.IAsyncDisposable
     public async Task GetChild_CaseInsensitiveKey()
     {
         var d = MakeData(new JsonObject { ["Name"] = "Hello" });
-        var result = await d.GetChild("name");
+        var result = await d.Get("name");
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello");
     }
 
@@ -61,7 +61,7 @@ public class JsonObjectNavigationTests : System.IAsyncDisposable
     public async Task GetChild_MissingKey_ReturnsNotFound()
     {
         var d = MakeData(new JsonObject { ["goal"] = "Hello" });
-        var result = await d.GetChild("nonexistent");
+        var result = await d.Get("nonexistent");
         await Assert.That(result.IsInitialized).IsFalse();
     }
 
@@ -69,7 +69,7 @@ public class JsonObjectNavigationTests : System.IAsyncDisposable
     public async Task GetChild_Count_ReturnsItemCount()
     {
         var d = MakeData(new JsonObject { ["a"] = 1, ["b"] = 2, ["c"] = 3 });
-        var result = await d.GetChild("count");
+        var result = await d.Get("count");
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("3");
     }
 
@@ -80,10 +80,10 @@ public class JsonObjectNavigationTests : System.IAsyncDisposable
         // IDictionary (Hashtable) shapes also narrow at the boundary and navigate.
         var d1 = new Data("", context: _app.User.Context);
         d1.SetValue(new Dictionary<string, object?> { ["k"] = "v" });
-        await Assert.That((await (await d1.GetChild("k")).Value())?.ToString()).IsEqualTo("v");
+        await Assert.That((await (await d1.Get("k")).Value())?.ToString()).IsEqualTo("v");
 
         var d2 = new Data("", context: _app.User.Context);
         d2.SetValue(new System.Collections.Hashtable { ["k"] = "v" });
-        await Assert.That((await (await d2.GetChild("k")).Value())?.ToString()).IsEqualTo("v");
+        await Assert.That((await (await d2.Get("k")).Value())?.ToString()).IsEqualTo("v");
     }
 }

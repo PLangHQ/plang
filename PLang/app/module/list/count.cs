@@ -10,7 +10,7 @@ public partial class Count : IContext
     public async Task<data.@this<global::app.type.number.@this>> Run()
     {
         var data = await Context.Variable.Get((await ListName.Value()));
-        var countData = await data.GetChild("Count");
+        var countData = await data.Get("Count");
 
         // The typed surface answers in a `number` (raw int covers IList infra).
         var counted = countData.IsInitialized ? await countData.Value() : null;

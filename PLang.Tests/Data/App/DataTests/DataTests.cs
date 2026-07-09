@@ -212,7 +212,7 @@ public class DataTests : System.IAsyncDisposable
     {
         var ov = _app.Data("test", "value");
 
-        var child = await ov.GetChild("");
+        var child = await ov.Get("");
 
         await Assert.That(child).IsEqualTo(ov);
     }
@@ -222,7 +222,7 @@ public class DataTests : System.IAsyncDisposable
     {
         var ov = _app.Data("test", "value");
 
-        var child = await ov.GetChild(null!);
+        var child = await ov.Get((string)null!);
 
         await Assert.That(child).IsEqualTo(ov);
     }
@@ -236,7 +236,7 @@ public class DataTests : System.IAsyncDisposable
         };
         var ov = _app.Data("data", data);
 
-        var child = await ov.GetChild("user.name");
+        var child = await ov.Get("user.name");
 
         await Assert.That(child).IsNotNull();
         await Assert.That((await child!.Value())?.ToString()).IsEqualTo("John");
@@ -248,7 +248,7 @@ public class DataTests : System.IAsyncDisposable
         var data = new List<object> { "first", "second", "third" };
         var ov = _app.Data("items", data);
 
-        var child = await ov.GetChild("[1]");
+        var child = await ov.Get("[1]");
 
         await Assert.That(child).IsNotNull();
         await Assert.That((await child!.Value())?.ToString()).IsEqualTo("second");
@@ -268,7 +268,7 @@ public class DataTests : System.IAsyncDisposable
         };
         var ov = _app.Data("data", data);
 
-        var child = await ov.GetChild("users[1].name");
+        var child = await ov.Get("users[1].name");
 
         await Assert.That(child).IsNotNull();
         await Assert.That((await child!.Value())?.ToString()).IsEqualTo("Bob");
@@ -280,7 +280,7 @@ public class DataTests : System.IAsyncDisposable
         var data = new Dictionary<string, object?> { { "name", "test" } };
         var ov = _app.Data("data", data);
 
-        var child = await ov.GetChild("nonexistent");
+        var child = await ov.Get("nonexistent");
 
         await Assert.That(child.IsInitialized).IsFalse();
     }
@@ -291,7 +291,7 @@ public class DataTests : System.IAsyncDisposable
         var data = new List<int> { 1, 2, 3 };
         var ov = _app.Data("items", data);
 
-        var child = await ov.GetChild("[10]");
+        var child = await ov.Get("[10]");
 
         await Assert.That(child.IsInitialized).IsFalse();
     }
@@ -302,7 +302,7 @@ public class DataTests : System.IAsyncDisposable
         var data = new List<int> { 1, 2, 3 };
         var ov = _app.Data("items", data);
 
-        var child = await ov.GetChild("[-1]");
+        var child = await ov.Get("[-1]");
 
         await Assert.That(child.IsInitialized).IsFalse();
     }
@@ -314,8 +314,8 @@ public class DataTests : System.IAsyncDisposable
         var data = new { Name = "Test", Value = 42 };
         var ov = _app.Data("obj", data);
 
-        var nameChild = await ov.GetChild("Name");
-        var valueChild = await ov.GetChild("Value");
+        var nameChild = await ov.Get("Name");
+        var valueChild = await ov.Get("Value");
 
         await Assert.That((await nameChild!.Value())?.ToString()).IsEqualTo("Test");
         await Assert.That((await valueChild!.Value())?.ToString()).IsEqualTo("42");
@@ -328,7 +328,7 @@ public class DataTests : System.IAsyncDisposable
         var data = new { Name = "Test" };
         var ov = _app.Data("obj", data);
 
-        var child = await ov.GetChild("name");
+        var child = await ov.Get("name");
 
         await Assert.That(child).IsNotNull();
         await Assert.That((await child!.Value())?.ToString()).IsEqualTo("Test");
@@ -339,7 +339,7 @@ public class DataTests : System.IAsyncDisposable
     {
         var ov = new Data("test", context: global::PLang.Tests.TestApp.SharedContext);
 
-        var child = await ov.GetChild("anything");
+        var child = await ov.Get("anything");
 
         await Assert.That(child.IsInitialized).IsFalse();
     }
@@ -578,7 +578,7 @@ public class DataTests : System.IAsyncDisposable
         var data = new Dictionary<string, object?> { { "name", "test" } };
         var ov = new Data("data", data, context: context);
 
-        var child = await ov.GetChild("name");
+        var child = await ov.Get("name");
 
         await Assert.That(child.IsInitialized).IsTrue();
         await Assert.That(child.Context).IsEqualTo(context);

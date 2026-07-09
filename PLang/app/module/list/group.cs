@@ -20,7 +20,7 @@ public partial class Group : IContext
         var order = new List<string>();
         foreach (var (_, item) in await data.EnumerateItems())
         {
-            var keyData = await item.GetChild(key);
+            var keyData = await item.Get(key);
             var keyValue = keyData.IsInitialized ? (await keyData.Value())?.ToString() ?? "" : "";
             if (!buckets.TryGetValue(keyValue, out var bucket))
             {

@@ -56,7 +56,7 @@ public sealed class @this
         if (value is null || await value.IsEmpty())                        // unset → ASK (prompt user), not [Default]
             return _context.Error(new error.AskError($"Setting '{key}' is not set.", Table, key));
 
-        return string.IsNullOrEmpty(remaining) ? result : await result.GetChild(remaining);
+        return string.IsNullOrEmpty(remaining) ? result : await result.Get(remaining);
     }
 
     /// <summary>The one writer — mirror of <see cref="Get"/>. Stores the whole Data (keeps its type/props).</summary>

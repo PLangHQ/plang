@@ -111,7 +111,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// here means the author navigated a string. Method calls (<c>%x.grep("..")%</c>)
     /// go through InvokeMethod, not here, so they are unaffected.
     /// </summary>
-    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(
+    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key)
     {
         var who = string.IsNullOrEmpty(parent.Name) ? "value" : $"%{parent.Name}%";

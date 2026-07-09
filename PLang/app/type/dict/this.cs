@@ -284,7 +284,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// (a literal <c>{count: "x"}</c> reads "x", not the length). Absent → NotFound,
     /// so the caller falls through.
     /// </summary>
-    public override System.Threading.Tasks.ValueTask<Data> Navigate(Data parent, string key)
+    public override System.Threading.Tasks.ValueTask<Data> Get(Data parent, string key)
     {
         var entry = Get(key);
         if (entry != null) return new(entry);

@@ -113,12 +113,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// back onto <paramref name="parent"/> (the file Data BECOMES a dict in place, read-once),
     /// then navigates the parsed value. A read/parse failure surfaces the parent's error.
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key)
     {
         var materialized = await parent.Value();
         if (!parent.Success) return parent;
-        return await materialized.Navigate(parent, key);
+        return await materialized.Get(parent, key);
     }
 
 

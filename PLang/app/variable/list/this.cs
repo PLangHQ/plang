@@ -296,7 +296,7 @@ public partial class @this
 
         if (lastDot >= 0)
         {
-            parent = await root.GetChild(remaining[..lastDot]);
+            parent = await root.Get(remaining[..lastDot]);
             propertyName = remaining[(lastDot + 1)..];
         }
         else
@@ -625,7 +625,7 @@ public partial class @this
         if (string.IsNullOrEmpty(remaining))
             return root;
 
-        var child = await root.GetChild(remaining);
+        var child = await root.Get(remaining);
         return child;
     }
 

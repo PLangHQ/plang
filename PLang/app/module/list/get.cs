@@ -11,7 +11,7 @@ public partial class Get : IContext
     public async Task<data.@this> Run()
     {
         var data = await Context.Variable.Get((await ListName.Value()));
-        var item = await data.GetChild($"[{(await Index.Value())}]");
+        var item = await data.Get($"[{(await Index.Value())}]");
 
         if (!item.IsInitialized)
             return Context.Error(

@@ -20,7 +20,7 @@ public class PropertyAccessTests : System.IAsyncDisposable
         var ctx = _app.User.Context;
         var d = data.FromRaw("{\"big\":\"body\"}", type.Create("object", "json", context: ctx), ctx, "cfg");
         d.Properties["status"] = 200;
-        var status = await d.GetChild("!status");
+        var status = await d.Get("!status");
         await Assert.That((await status.Value())?.ToString()).IsEqualTo("200");
     }
 
@@ -29,7 +29,7 @@ public class PropertyAccessTests : System.IAsyncDisposable
         var ctx = _app.User.Context;
         var d = data.FromRaw("{\"big\":\"body\"}", type.Create("object", "json", context: ctx), ctx, "cfg");
         d.Properties["status"] = 200;
-        _ = (await (await d.GetChild("!status")).Value());       // read the property
+        _ = (await (await d.Get("!status")).Value());       // read the property
         await Assert.That(d.MaterializeCount()).IsEqualTo(0); // body untouched
     }
 }

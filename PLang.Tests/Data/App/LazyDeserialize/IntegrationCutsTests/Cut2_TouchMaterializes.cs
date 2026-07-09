@@ -37,7 +37,7 @@ public class Cut2_TouchMaterializes
         var d = await new filechannel(p).Read();
         await Assert.That(d.Raw is byte[]).IsTrue(); // untouched = raw bytes (the flip; Peek is the source carrier)
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
-        await Assert.That((await (await d.GetChild("port")).Value())?.ToString()).IsEqualTo("8080"); // navigate materializes
+        await Assert.That((await (await d.Get("port")).Value())?.ToString()).IsEqualTo("8080"); // navigate materializes
         await Assert.That(d.MaterializeCount()).IsEqualTo(1);
     }
 
@@ -50,7 +50,7 @@ public class Cut2_TouchMaterializes
         var d = await new filechannel(p).Read();
         await Assert.That(d.Raw is byte[]).IsTrue(); // untouched = raw bytes (the flip; Peek is the source carrier)
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
-        await Assert.That((await (await (await (await d.GetChild("rows")).GetChild("0")).GetChild("name")).Value())?.ToString()).IsEqualTo("Ada");
+        await Assert.That((await (await (await (await d.Get("rows")).Get("0")).Get("name")).Value())?.ToString()).IsEqualTo("Ada");
     }
 
     [Test] public async Task Cut2_BigIntegerString_ReadsLossless_OnArithmetic()

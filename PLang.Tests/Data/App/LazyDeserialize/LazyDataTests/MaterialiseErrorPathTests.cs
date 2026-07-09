@@ -59,7 +59,7 @@ public class MaterialiseErrorPathTests
     {
         await using var app = NewApp();
         var d = MalformedJson(app.User.Context, "cfg");
-        var child = await d.GetChild("host");
+        var child = await d.Get("host");
         await Assert.That(child.Error).IsNotNull();
         await Assert.That(child.Error!.Key).IsEqualTo("MaterializeFailed");
         await Assert.That(child.Error!.Message.Contains("cfg")).IsTrue();

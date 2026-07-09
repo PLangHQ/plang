@@ -55,7 +55,7 @@ public sealed class @this : global::app.type.item.@this
     /// Count, indexing and cell access fall out of normal list/dict navigation
     /// (<c>%t.rows[0]["amount"]%</c>, <c>%t.rows.count%</c>, <c>%t.headers.count%</c>).
     /// </summary>
-    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(
+    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key)
         => System.Threading.Tasks.ValueTask.FromResult(key.ToLowerInvariant() switch
         {

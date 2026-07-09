@@ -58,7 +58,7 @@ public class IdentityDataTests
     {
         var identity = CreateTestIdentity();
         var data = new Data("test", identity, context: _app.System.Context);
-        var child = await data.GetChild("PublicKey");
+        var child = await data.Get("PublicKey");
         await Assert.That(child).IsNotNull();
         await Assert.That((await child!.Value())?.ToString()).IsEqualTo("dGVzdHB1YmxpY2tleQ==");
     }
@@ -75,7 +75,7 @@ public class IdentityDataTests
     {
         var identity = CreateTestIdentity();
         var data = new Data("test", identity, context: _app.System.Context);
-        var child = await data.GetChild("IsArchived");
+        var child = await data.Get("IsArchived");
         await Assert.That(child).IsNotNull();
         await Assert.That((await child!.Value())?.ToString()).IsEqualTo("false");
     }
@@ -85,7 +85,7 @@ public class IdentityDataTests
     {
         var identity = CreateTestIdentity();
         var data = new Data("test", identity, context: _app.System.Context);
-        var child = await data.GetChild("IsDefault");
+        var child = await data.Get("IsDefault");
         await Assert.That(child).IsNotNull();
         await Assert.That((await child!.Value())?.ToString()).IsEqualTo("true");
     }
@@ -96,7 +96,7 @@ public class IdentityDataTests
         // [Sensitive] is serialization only, not access control — dot navigation works
         var identity = CreateTestIdentity();
         var data = new Data("test", identity, context: _app.System.Context);
-        var child = await data.GetChild("PrivateKey");
+        var child = await data.Get("PrivateKey");
         await Assert.That(child).IsNotNull();
         await Assert.That((await child!.Value())?.ToString()).IsEqualTo("dGVzdHByaXZhdGVrZXk=");
     }

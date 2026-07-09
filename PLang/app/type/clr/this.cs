@@ -84,17 +84,17 @@ public class @this : global::app.type.item.@this, global::app.module.IContext
     /// walks a JsonElement, the <c>*</c> kind reflects a POCO. A single key is a one-segment
     /// path; the kind owns the walk (and the path language).
     /// </summary>
-    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(
+    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key)
-        => Navigate(parent, global::app.variable.path.@this.Parse(key));
+        => Get(parent, global::app.variable.path.@this.Parse(key));
 
     /// <summary>The whole-path handoff — the carrier hands its <see cref="Kind"/> the entire
     /// tail so the kind walks it in ONE call (and, later, in its OWN path language:
-    /// jsonpath/css). <c>data.Navigate</c> hands the value-plane path here; infra/method
+    /// jsonpath/css). <c>data.Get</c> hands the value-plane path here; infra/method
     /// segments stay on the generic per-hop walk.</summary>
-    public System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(
+    public System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, global::app.variable.path.@this path)
-        => Kind.Navigate(Value, path, parent, Context);
+        => Kind.Get(Value, path, parent, Context);
 
     /// <summary>The children of the host, via its <see cref="Kind"/> — for <c>foreach</c>.</summary>
     public System.Collections.Generic.IEnumerable<global::app.data.@this> Enumerate()

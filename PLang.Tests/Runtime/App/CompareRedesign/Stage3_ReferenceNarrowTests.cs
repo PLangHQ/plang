@@ -107,7 +107,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     {
         var data = JsonFile();
         await Assert.That(data.Type!.Kind?.Name).IsEqualTo("json");
-        var child = await data.GetChild("database");
+        var child = await data.Get("database");
         await Assert.That((await child.Value())?.ToString()).IsEqualTo("plang");
         await Assert.That(data.Type!.Name).IsEqualTo("dict");
     }
@@ -116,9 +116,9 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     public async Task BangFileBangPath_ResolvesWithoutReading_MaterializeCountZero()
     {
         var data = JsonFile("untouched.json");
-        var facet = await data.GetChild("!file");
+        var facet = await data.Get("!file");
         await Assert.That(facet.IsInitialized).IsTrue();
-        var pathChild = await facet.GetChild("!path");
+        var pathChild = await facet.Get("!path");
         await Assert.That(pathChild.Peek()).IsNotNull();
         // the property plane never read content: the reference is still unloaded
         // and the Data never narrowed
@@ -134,7 +134,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
         var reference = (global::app.type.file.@this)data.Peek()!;
         await Assert.That(reference.IsLoaded).IsFalse();
 
-        var child = await data.GetChild("port");
+        var child = await data.Get("port");
         await Assert.That((await child.Value())?.ToString()).IsEqualTo("8080");
         // narrowed: the parsed dict replaced the reference (single storage)
         await Assert.That(data.Type!.Name).IsEqualTo("dict");
@@ -149,7 +149,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     public async Task AfterNarrow_IsFile_AndIsDict_BothTrue_SameInstance()
     {
         var data = JsonFile("accum.json");
-        await data.GetChild("database");
+        await data.Get("database");
         await Assert.That(data.Type!.Is("dict")).IsTrue();
         await Assert.That(data.Type.Is("file")).IsTrue();
         await Assert.That(data.Type.Is("item")).IsTrue();
@@ -160,7 +160,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     {
         var data = JsonFile("inplace.json");
         var before = data;
-        await data.GetChild("database");
+        await data.Get("database");
         await Assert.That(ReferenceEquals(before, data)).IsTrue();
         await Assert.That(before.Type!.Name).IsEqualTo("dict");
     }
@@ -169,7 +169,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     public async Task BangType_PostNarrow_HeadlineIsDict_TypeListIsChain()
     {
         var data = JsonFile("chain.json");
-        await data.GetChild("database");
+        await data.Get("database");
         var headline = data.Type!;
         await Assert.That(headline.Name).IsEqualTo("dict");
         // %config!type.list% — the chain, newest at index 0
@@ -195,12 +195,12 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     {
         // un-narrowed branch
         var a = JsonFile("brancha.json");
-        var facetA = await a.GetChild("!file");
+        var facetA = await a.Get("!file");
         await Assert.That(facetA.IsInitialized).IsTrue();
         // narrowed branch — the stashed reference serves the facet
         var b = JsonFile("branchb.json");
-        await b.GetChild("database");
-        var facetB = await b.GetChild("!file");
+        await b.Get("database");
+        var facetB = await b.Get("!file");
         await Assert.That(facetB.IsInitialized).IsTrue();
         await Assert.That(facetB.Peek()).IsTypeOf<global::app.type.file.@this>();
     }
@@ -210,7 +210,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     {
         var data = JsonFile("race.json");
         var tasks = Enumerable.Range(0, 8)
-            .Select(_ => Task.Run(async () => await data.GetChild("port")))
+            .Select(_ => Task.Run(async () => await data.Get("port")))
             .ToArray();
         await Task.WhenAll(tasks);
         await Assert.That(data.Type!.Name).IsEqualTo("dict");
@@ -223,7 +223,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     {
         var original = JsonFile("clone.json");
         var copy = original.Clone();
-        await copy.GetChild("database");
+        await copy.Get("database");
         await Assert.That(copy.Type!.Name).IsEqualTo("dict");
         // the original never examined its content — still the reference
         await Assert.That(original.Type!.Name).IsEqualTo("file");

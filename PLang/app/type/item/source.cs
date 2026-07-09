@@ -202,12 +202,12 @@ public sealed class source : @this, module.IContext
     /// <c>MaterializeFailed</c> (the declared <c>{type, kind}</c> could not be built from
     /// the raw form); surface that, not a misleading NotFound.
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key)
     {
         var materialized = await parent.Value();
         if (!parent.Success) return parent;
-        return await materialized.Navigate(parent, key);
+        return await materialized.Get(parent, key);
     }
 
     public override bool IsTruthy() => _value switch

@@ -10,7 +10,7 @@ public partial class Last : IContext
     public async Task<data.@this> Run()
     {
         var data = await Context.Variable.Get((await ListName.Value()));
-        var countData = await data.GetChild("Count");
+        var countData = await data.Get("Count");
 
         // The typed surface answers in a `number`; raw int covers IList infra.
         int count = (countData.IsInitialized ? await countData.Value() : null) switch
@@ -20,7 +20,7 @@ public partial class Last : IContext
         };
         if (count > 0)
         {
-            var last = await data.GetChild($"[{count - 1}]");
+            var last = await data.Get($"[{count - 1}]");
             if (last.IsInitialized) return Context.Ok((await last.Value()));
         }
 

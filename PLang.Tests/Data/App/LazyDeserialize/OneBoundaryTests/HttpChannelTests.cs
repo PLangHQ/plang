@@ -86,7 +86,7 @@ public class HttpChannelTests
     {
         await using var app = NewApp(out var handler);
         var r = await Get(app, handler, "application/json", "{\"a\":1}");
-        await Assert.That((await (await r.GetChild("!StatusCode")).Value())?.ToString()).IsEqualTo("200");
+        await Assert.That((await (await r.Get("!StatusCode")).Value())?.ToString()).IsEqualTo("200");
         await Assert.That(r.MaterializeCount()).IsEqualTo(0); // body untouched
     }
 }

@@ -386,7 +386,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         var keys = new Dictionary<Data, (Data key, object? value)>(ReferenceEqualityComparer.Instance);
         foreach (var d in flat)
         {
-            var key = await d.GetChild(field);
+            var key = await d.Get(field);
             keys[d] = (key, await key.Value());
         }
         SortGuarded(flat, (a, b) =>
@@ -475,7 +475,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// (<c>%addresses.street%</c> → <c>%addresses[0].street%</c>). Elements are
     /// already Data, so they return directly. Out-of-range / empty → NotFound.
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask<Data> Navigate(Data parent, string key)
+    public override async System.Threading.Tasks.ValueTask<Data> Get(Data parent, string key)
     {
         if (string.Equals(key, "count", System.StringComparison.OrdinalIgnoreCase)
             || string.Equals(key, "length", System.StringComparison.OrdinalIgnoreCase))
@@ -494,7 +494,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             return At(index) ?? Data.NotFound(key);
 
         // Implicit first: %list.street% → %list[0].street%.
-        return await First!.GetChild(key);
+        return await First!.Get(key);
     }
 
     /// <summary>

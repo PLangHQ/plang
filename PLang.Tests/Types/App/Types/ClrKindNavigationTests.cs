@@ -26,7 +26,7 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
     {
         var ctx = _app.User.Context;
         var d = ctx.Ok(new global::app.type.clr.@this(Json("{\"steps\":[{\"index\":3}]}"), ctx));
-        var idx = await d.GetChild("steps[0].index");
+        var idx = await d.Get("steps[0].index");
         await Assert.That((await idx.Value())?.ToString()).IsEqualTo("3");
     }
 
@@ -35,7 +35,7 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
     {
         var ctx = _app.User.Context;
         var d = ctx.Ok(new global::app.type.clr.@this(Json("{\"a\":1}"), ctx));
-        var r = await d.GetChild("nope");
+        var r = await d.Get("nope");
         await Assert.That(r.IsInitialized).IsFalse();
     }
 
@@ -44,7 +44,7 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
     {
         var ctx = _app.User.Context;
         var d = ctx.Ok(new global::app.type.clr.@this(new Poco { Label = "hi" }, ctx));
-        await Assert.That((await (await d.GetChild("Label")).Value())?.ToString()).IsEqualTo("hi");
+        await Assert.That((await (await d.Get("Label")).Value())?.ToString()).IsEqualTo("hi");
     }
 
     [Test]
@@ -54,7 +54,7 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
         var d = ctx.Ok(new global::app.type.clr.@this(Json("{\"a\":1}"), ctx));
         var dict = await d.Convert(ctx.App.Type.Kind["dict"]);
         await Assert.That(dict.Success).IsTrue();
-        await Assert.That((await (await dict.GetChild("a")).Value())?.ToString()).IsEqualTo("1");
+        await Assert.That((await (await dict.Get("a")).Value())?.ToString()).IsEqualTo("1");
     }
 
     [Test]

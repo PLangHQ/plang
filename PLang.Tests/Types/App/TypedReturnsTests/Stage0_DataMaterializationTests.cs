@@ -37,7 +37,7 @@ public class Stage0_DataMaterializationTests
     {
         var src = new Data("x", "{\"a\":1}", new global::app.type.@this("json"), context: _app.User.Context);
 
-        var aValue = await src.GetChild("a");
+        var aValue = await src.Get("a");
 
         await Assert.That(aValue.IsInitialized).IsTrue();
         await Assert.That((await aValue.Value())?.ToString()).IsEqualTo("1");
@@ -50,9 +50,9 @@ public class Stage0_DataMaterializationTests
     {
         var src = new Data("x", "{\"a\":1}", new global::app.type.@this("json"), context: _app.User.Context);
 
-        _ = await src.GetChild("a");
+        _ = await src.Get("a");
         var firstMaterialized = await src.Value();
-        _ = await src.GetChild("a");
+        _ = await src.Get("a");
         var secondMaterialized = await src.Value();
 
         await Assert.That(ReferenceEquals(firstMaterialized, secondMaterialized)).IsTrue()

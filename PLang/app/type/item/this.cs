@@ -99,9 +99,9 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// navigates the result; <c>null</c>/<c>text</c> can't be walked by key. No
     /// <c>IsLeaf</c> branching, no generic <c>.Value()</c> in the base — the TYPE decides.
     /// </summary>
-    public virtual System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(
+    public virtual System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key)
-        => new global::app.type.clr.@this(this, parent.Context).Navigate(parent, key);
+        => new global::app.type.clr.@this(this, parent.Context).Get(parent, key);
 
     /// <summary>
     /// Iteration as <c>(key, value)</c> pairs — the value owns how it iterates,

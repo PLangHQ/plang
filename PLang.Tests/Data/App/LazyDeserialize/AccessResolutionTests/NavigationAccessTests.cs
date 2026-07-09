@@ -20,7 +20,7 @@ public class NavigationAccessTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         var d = data.FromRaw("{\"port\":8080}", type.Create("object", "json", context: ctx), ctx, "cfg");
-        await Assert.That((await (await d.GetChild("port")).Value())?.ToString()).IsEqualTo("8080");
+        await Assert.That((await (await d.Get("port")).Value())?.ToString()).IsEqualTo("8080");
         await Assert.That(d.MaterializeCount()).IsEqualTo(1); // navigation materialized via the reader
     }
 
@@ -31,7 +31,7 @@ public class NavigationAccessTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         var d = data.FromRaw("{\"host\":\"localhost\"}", type.Create("object", "json", context: ctx), ctx, "cfg");
-        await Assert.That((await (await d.GetChild("host")).Value())?.ToString()).IsEqualTo("localhost");
+        await Assert.That((await (await d.Get("host")).Value())?.ToString()).IsEqualTo("localhost");
     }
 
     // `table` navigates by row/column — `%t.rows[0].name%` — not flat key lookup.
@@ -40,7 +40,7 @@ public class NavigationAccessTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         var d = data.FromRaw("name,age\nAda,36\n", type.Create("table", "csv", context: ctx), ctx, "t");
-        var cell = (await (await (await d.GetChild("rows")).GetChild("0")).GetChild("name"));
+        var cell = (await (await (await d.Get("rows")).Get("0")).Get("name"));
         await Assert.That((await cell.Value())?.ToString()).IsEqualTo("Ada");
     }
 
@@ -51,7 +51,7 @@ public class NavigationAccessTests
     {
         await using var app = NewApp();
         var d = app.Ok("hello");          // genuinely text (authored)
-        var r = await d.GetChild("port");
+        var r = await d.Get("port");
         await Assert.That(r.Success).IsFalse();
         await Assert.That(r.Error!.Key).IsEqualTo("CantNavigateText");
     }
@@ -63,7 +63,7 @@ public class NavigationAccessTests
         await using var app = NewApp();
         var dict = new System.Collections.Generic.Dictionary<string, object?> { ["port"] = 8080L };
         var d = app.Ok(dict);
-        await Assert.That((await (await d.GetChild("port")).Value())?.ToString()).IsEqualTo("8080");
+        await Assert.That((await (await d.Get("port")).Value())?.ToString()).IsEqualTo("8080");
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
 }

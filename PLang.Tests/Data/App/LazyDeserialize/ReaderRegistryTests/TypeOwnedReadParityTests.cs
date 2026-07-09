@@ -98,8 +98,8 @@ public class TypeOwnedReadParityTests
         await Assert.That(via).IsTypeOf<global::app.type.clr.@this>();
 
         var d = actor.Ok((global::app.type.clr.@this)via!);
-        await Assert.That((await (await d.GetChild("a")).Value())?.ToString()).IsEqualTo("1");
-        await Assert.That((await (await d.GetChild("b[1]")).Value())?.ToString()).IsEqualTo("2");
-        await Assert.That((await (await d.GetChild("c.d")).Value())?.ToString()).IsEqualTo("true");
+        await Assert.That((await (await d.Get("a")).Value())?.ToString()).IsEqualTo("1");
+        await Assert.That((await (await d.Get("b[1]")).Value())?.ToString()).IsEqualTo("2");
+        await Assert.That((await (await d.Get("c.d")).Value())?.ToString()).IsEqualTo("true");
     }
 }

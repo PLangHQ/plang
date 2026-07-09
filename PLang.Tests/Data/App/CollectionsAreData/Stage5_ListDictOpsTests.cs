@@ -40,7 +40,7 @@ public class Stage5_ListDictOpsTests
         await result.IsSuccess();
         var filtered = (ListV)(await result.Value())!;
         await Assert.That(filtered.Count).IsEqualTo(2);
-        await Assert.That(((global::app.type.number.@this)(await (await filtered.At(0)!.GetChild("age")).Value())!).Clr<long>()).IsEqualTo(25L);
+        await Assert.That(((global::app.type.number.@this)(await (await filtered.At(0)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(25L);
     }
 
     [Test]
@@ -81,8 +81,8 @@ public class Stage5_ListDictOpsTests
         var action = new Sort(ctx) { ListName = new app.variable.@this("people"), By = new global::app.data.@this<global::app.type.text.@this>("", "age", context: ctx) };
         await (await action.Run()).IsSuccess();
         var sorted = (ListV)(await (await vars.Get("people")).Value())!;
-        await Assert.That(((global::app.type.number.@this)(await (await sorted.At(0)!.GetChild("age")).Value())!).Clr<long>()).IsEqualTo(10L);
-        await Assert.That(((global::app.type.number.@this)(await (await sorted.At(2)!.GetChild("age")).Value())!).Clr<long>()).IsEqualTo(30L);
+        await Assert.That(((global::app.type.number.@this)(await (await sorted.At(0)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(10L);
+        await Assert.That(((global::app.type.number.@this)(await (await sorted.At(2)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(30L);
     }
 
     [Test]

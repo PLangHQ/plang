@@ -188,7 +188,7 @@ public class ForeachTests
 
         await result.IsSuccess();
         var planStep = await context.Variable.Get("planStep");   // last step (index 1)
-        var idx = await (await planStep.GetChild("index")).Value();
+        var idx = await (await planStep.Get("index")).Value();
         await Assert.That(idx?.ToString()).IsEqualTo("1");
     }
 }

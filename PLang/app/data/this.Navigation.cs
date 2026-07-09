@@ -14,14 +14,14 @@ public partial class @this
     /// Gets a child value by path (dot notation, index, or method call).
     /// Never returns null — returns Data.NotFound(key) when the path doesn't resolve.
     /// </summary>
-    public virtual async System.Threading.Tasks.ValueTask<@this> GetChild(string path)
+    public virtual async System.Threading.Tasks.ValueTask<@this> Get(string path)
     {
         if (string.IsNullOrEmpty(path))
             return this;
 
         // The path owns its tokenization (app.variable.path) — parse once into
         // typed segments, then walk. No free-function re-tokenizer per hop.
-        return await Navigate(global::app.variable.path.@this.Parse(path));
+        return await Get(global::app.variable.path.@this.Parse(path));
     }
 
     /// <summary>
@@ -30,7 +30,7 @@ public partial class @this
     /// owns what its key IS — a member name, a resolved bracket index, an infrastructure
     /// plane hop, or a method call.
     /// </summary>
-    public async System.Threading.Tasks.ValueTask<@this> Navigate(global::app.variable.path.@this path)
+    public async System.Threading.Tasks.ValueTask<@this> Get(global::app.variable.path.@this path)
     {
         if (path.IsEmpty) return this;
 
@@ -41,7 +41,7 @@ public partial class @this
         if (_item is global::app.type.clr.@this clr
             && System.Linq.Enumerable.All(path.Segments,
                    s => s is global::app.variable.path.Segment.Member or global::app.variable.path.Segment.Index))
-            return await clr.Navigate(this, path);
+            return await clr.Get(this, path);
 
         var (head, tail) = path.Split();
 
@@ -59,7 +59,7 @@ public partial class @this
                 child = InvokeMethod(call.Method, call.Args);
                 break;
             case global::app.variable.path.Segment.Index index:
-                child = await _item.Navigate(this, await index.Key(_context?.Variable));
+                child = await _item.Get(this, await index.Key(_context?.Variable));
                 valuePlane = true;
                 // A non-literal index (`[planStep.index]`) that the container couldn't use:
                 // distinguish the common, confusing cause — the index variable itself is unset
@@ -87,7 +87,7 @@ public partial class @this
                 }
                 break;
             default: // Member (plain or quoted) — the VALUE owns navigation by key
-                child = await _item.Navigate(this, ((global::app.variable.path.Segment.Member)head!).Name);
+                child = await _item.Get(this, ((global::app.variable.path.Segment.Member)head!).Name);
                 valuePlane = true;
                 break;
         }
@@ -106,7 +106,7 @@ public partial class @this
                 contextual.Context = _context;
         }
 
-        return tail.IsEmpty ? child : await child.Navigate(tail);
+        return tail.IsEmpty ? child : await child.Get(tail);
     }
 
 

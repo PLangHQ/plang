@@ -4,7 +4,7 @@ namespace app.type.kind;
 /// A kind — the subtype token ("json", "md", "int", "*") that names HOW a value of a type is
 /// specialised, AND the behavior for that specialisation. The kind IS the behavior: a value
 /// asks its own kind to navigate / enumerate / load / convert / lower it
-/// (<c>value.Kind.Navigate(…)</c>) — a direct virtual call, no registry hop.
+/// (<c>value.Kind.Get(…)</c>) — a direct virtual call, no registry hop.
 ///
 /// <para>This base owns the verb DEFAULTS (a plang-path walk that re-derives the node's kind
 /// each hop; the rest throw "not X"). Each real kind subclasses it under the type it
@@ -62,7 +62,7 @@ public class @this
     /// list by the list kind, …). The final node's kind builds the child <c>Data</c>. A kind
     /// whose path language is NOT plang (a future jsonpath) overrides this wholesale.
     /// </summary>
-    public virtual async global::System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(
+    public virtual async global::System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         object obj, global::app.variable.path.@this path,
         global::app.data.@this parent, global::app.actor.context.@this ctx)
     {
