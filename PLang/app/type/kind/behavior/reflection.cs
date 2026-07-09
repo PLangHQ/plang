@@ -94,7 +94,16 @@ public sealed class reflection : @this
         if (t == typeof(bool)) return reader.Bool();
         if (t == typeof(int)) return (int)reader.Long();
         if (t == typeof(long)) return reader.Long();
-        if (t.IsEnum) return global::System.Enum.Parse(t, reader.String(), ignoreCase: true);
+        if (t.IsEnum)
+            return reader.Peek() == global::app.channel.serializer.TokenKind.Number
+                ? global::System.Enum.ToObject(t, reader.Long())
+                : global::System.Enum.Parse(t, reader.String(), ignoreCase: true);
+
+        // A path rides as its string form — the perimeter crossing (path.Resolve once).
+        // TEMP: generalizes to "any plang value type reads through its own reader" once the
+        // pr-graph hosts drop item.@this and the item-subclass signal cleanly means "value".
+        if (t == typeof(global::app.type.path.@this))
+            return global::app.type.path.@this.Resolve(reader.String(), ctx.Context);
 
         // List<Data> (Parameters / Defaults) — each element a {name,type,value} through the
         // @schema:data reader over its own verbatim bytes (sign-identical to the byte path).
