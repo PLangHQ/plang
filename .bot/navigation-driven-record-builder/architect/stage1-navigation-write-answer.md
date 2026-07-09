@@ -24,7 +24,14 @@ public async ValueTask<@this> Set(path.@this path, object? value)
 }
 ```
 
-Kind-level `Navigate` (the per-hop walker) keeps its name — internal machinery, its caller is the door.
+**ADDENDUM (Ingi, same day — supersedes the line that stood here):** kind-level `Navigate` renames to **`Get`** too. The earlier "internal machinery keeps its mechanism name" was a carve-out, and carve-outs rot. The read verb is `Get` at every layer, exactly as the write verb is already `Set` at every layer:
+
+```
+read:   data.Get → item.Get / clr.Get → kind.Get → per-hop Descend
+write:  data.Set → item.Set / clr.Set → kind.Set
+```
+
+`Navigate` dies as a name everywhere (data, item, clr, kind; the json kind's whole-path walk becomes its `Get` override). `Descend` stays — a different operation (one hop, not at-a-path).
 
 ### Find #1 — ONE leaf door: `item.Set(leaf, value)`
 
