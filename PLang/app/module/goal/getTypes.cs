@@ -29,6 +29,7 @@ namespace app.module.goal;
 /// cleanly without needing a key-type coercion.
 /// </summary>
 [Action("getTypes")]
+[System.Obsolete("A string-typed shadow of the type system — type/element/return-type discovery moves to the type entities and module views; do not add new callers.")]
 public partial class getTypes : IContext
 {
     public partial data.@this<global::app.goal.@this> Goal { get; init; }

@@ -361,6 +361,7 @@ public partial class @this
     /// Otherwise converts to a case-insensitive dictionary and sets there.
     /// Returns the (possibly replaced) target.
     /// </summary>
+    [System.Obsolete("Superseded by the target value's own kind Set (Kind.Set) — do not add new callers.")]
     private object SetValueOnObject(object target, string propertyName, object? value)
     {
         // Snapshot — editing a captured variable routes to the snapshot's own

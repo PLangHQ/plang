@@ -21,6 +21,7 @@ namespace app.type.catalog.view;
 /// <c>app.type.catalog.view.Build()</c>. Rendering belongs in the template, not
 /// in pre-rendered string properties.
 /// </summary>
+[System.Obsolete("Superseded by a Fluid render over list<module>/list<type> — do not add new callers.")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     private readonly app.module.@this _modules;

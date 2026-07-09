@@ -16,6 +16,7 @@ namespace app.type.catalog;
 /// compressibility) live separately on <see cref="app.format.list.@this"/> at
 /// <c>app.Format</c>.
 /// </summary>
+[System.Obsolete("The type registry moves to app.type.list (list<type>) + a keyed name index; the other sub-registries reparent to app.type.* — do not add new callers.")]
 public sealed partial class @this
 {
     /// <summary>
@@ -626,6 +627,7 @@ public sealed partial class @this
     ///   - Record                → TypeEntry with Fields built from [LlmBuilder] props.
     ///   - Opaque (no markers)   → not surfaced.
     /// </summary>
+    [System.Obsolete("Type/module discovery moves to list<type>/list<module> + a Fluid render — do not add new callers.")]
     public List<app.type.@this> BuildTypeEntries(app.module.@this? modules)
     {
         var entries = new List<app.type.@this>();

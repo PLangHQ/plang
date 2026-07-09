@@ -52,6 +52,7 @@ public sealed partial class @this
     /// and runtime data, never being a goal, is never read through here, so a forged
     /// <c>%secret%</c> in a message stays literal.
     /// </summary>
+    [System.Obsolete("The goal .pr read moves to the format-agnostic reflection reader — do not add new callers.")]
     internal static JsonSerializerOptions GoalReadOptions(actor.context.@this context)
         // A goal's nested Data step-params are reconstruction — skip verify (covered by the
         // goal's own signature when it has one); they have no actor of their own.
@@ -91,6 +92,7 @@ public sealed partial class @this
     /// contents (codeanalyzer F1).
     /// </summary>
 
+    [System.Obsolete("Superseded by Type.Create (list<T> builds its own elements) — do not add new callers.")]
     private static (object? Value, error.Error? Error) ConvertElementsInto(
         System.Type targetListType, System.Type elementType,
         System.Collections.IEnumerable elements, int count,
@@ -125,6 +127,7 @@ public sealed partial class @this
     /// Returns the converted value and null error on success,
     /// or null value and an Error describing what went wrong.
     /// </summary>
+    [System.Obsolete("Construction stages superseded by Type.Create; primitive lowering lives in item.Clr — do not add new callers.")]
     internal static (object? Value, error.Error? Error) TryConvert(object? value, System.Type targetType,
         actor.context.@this context, string? targetName = null)
     {

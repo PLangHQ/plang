@@ -12,6 +12,7 @@ namespace app.goal.serializer;
 /// <c>clr</c>, this reader and the goal-as-type machinery go. See
 /// <c>.bot/read-path-unification/architect/v1/stage-final-cleanup.md</c>.</para>
 /// </summary>
+[System.Obsolete("goal rides as clr(goal); the .pr read moves to the format-agnostic reflection reader — do not add new callers.")]
 public sealed class Reader : global::app.type.reader.ITypeReader
 {
     public string Kind => global::app.type.reader.@this.AnyKind;

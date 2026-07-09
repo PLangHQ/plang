@@ -184,6 +184,7 @@ public sealed class @this : item.@this
     /// type. <c>Convert.ChangeType</c> survives only as a leaf inside the general
     /// converter for genuine primitive coercions.
     /// </summary>
+    [System.Obsolete("Superseded by Type.Create (the type builds itself) — do not add new callers.")]
     public global::app.type.item.@this Convert(object? value, actor.context.@this context)
     {
         Context ??= context;
@@ -246,6 +247,7 @@ public sealed class @this : item.@this
     /// <see cref="Create(string, string?, bool, actor.context.@this?)"/> already owns
     /// that name for making a type ENTITY from a name. (A string is an object, so an
     /// instance <c>Create(object)</c> would be ambiguous with it.)</remarks>
+    [System.Obsolete("The defer rule moves to the entity Type.Create's first branch (FromRaw → Create) — do not add new callers.")]
     public item.@this Build(object? value, actor.context.@this context, string? format = null)
     {
         // context-never-null: a value is born WITH context. A null here is a construction site

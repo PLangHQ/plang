@@ -467,6 +467,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// sequence as an array. The general-object wire form; leaves and special shapes
     /// (dict/list/clr/…) override <see cref="Output"/> directly. Replaces <c>NormalizeObject</c>.
     /// </summary>
+    [System.Obsolete("Superseded by the reflection (*) kind's Output — do not add new callers.")]
     protected async System.Threading.Tasks.ValueTask OutputTagged(
         global::app.channel.serializer.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)

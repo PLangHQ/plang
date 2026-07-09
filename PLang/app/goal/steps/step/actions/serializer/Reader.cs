@@ -9,6 +9,7 @@ namespace app.goal.steps.step.actions.serializer;
 /// authored templates (the recovery chain is developer code, so its <c>%ref%</c> holes are live).
 /// Replaces the old <c>actions</c> Convert hook + <c>action.FromWire</c> + <c>FromWireShape</c>.
 /// </summary>
+[System.Obsolete("actions ride as list<clr<action>>; the .pr read moves to the format-agnostic reflection reader — do not add new callers.")]
 public sealed class Reader : global::app.type.reader.ITypeReader
 {
     public string Kind => global::app.type.reader.@this.AnyKind;

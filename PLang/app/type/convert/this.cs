@@ -25,6 +25,7 @@ public sealed class @this
     /// the type's result — which may itself be an Error Data — or <c>null</c> when the
     /// family defines no <c>Convert</c> hook (the caller then falls back).
     /// </summary>
+    [System.Obsolete("Superseded by Type.Create (the type builds itself) — do not add new callers.")]
     public global::app.data.@this? Of(System.Type? familyClass, object? value, string? kind,
         actor.context.@this context)
         => Invoke(_cache, familyClass, value, kind, context);
@@ -40,6 +41,7 @@ public sealed class @this
     /// (the Text serializer's <c>Deserialize&lt;T&gt;(string)</c>) route here; families
     /// that genuinely need a context decline gracefully on the null they receive.
     /// </summary>
+    [System.Obsolete("Superseded by Type.Create (the type builds itself) — do not add new callers.")]
     public static global::app.data.@this? OfStatic(System.Type? familyClass, object? value, string? kind,
         actor.context.@this? context)
         => Invoke(_staticCache, familyClass, value, kind, context);

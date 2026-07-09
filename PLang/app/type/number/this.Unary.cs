@@ -22,6 +22,7 @@ public sealed partial class @this
     public @this Min(@this b) => Wrap(() => this.CompareTo(b) <= 0 ? this : b);
     public @this Max(@this b) => Wrap(() => this.CompareTo(b) >= 0 ? this : b);
 
+    [System.Obsolete("Number kind construction moves onto each number kind (type[number].kind[<k>]) — do not add new callers.")]
     private static @this FromDoubleAsKind(double m, NumberKind k) => k switch
     {
         NumberKind.Half => From((Half)m),

@@ -293,6 +293,7 @@ public sealed class @this : IAsyncDisposable
         return orphans;
     }
 
+    [System.Obsolete("Module discovery moves to app.module.list (list<module>) + a Fluid render — do not add new callers.")]
     public async Task<StepActions> Describe()
     {
         var result = new StepActions();

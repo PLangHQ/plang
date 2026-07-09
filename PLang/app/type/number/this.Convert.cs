@@ -59,6 +59,7 @@ public sealed partial class @this
     }
 
     /// <summary>Produce the exact CLR numeric of <paramref name="k"/> from a string or numeric source.</summary>
+    [System.Obsolete("Number kind construction moves onto each number kind (type[number].kind[<k>]) — do not add new callers.")]
     private static object CoerceToKind(object value, NumberKind k)
     {
         // Int128 / UInt128 / BigInteger / Half — System.Convert.ChangeType can't reach these.
