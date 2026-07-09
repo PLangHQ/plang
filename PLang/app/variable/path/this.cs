@@ -29,9 +29,10 @@ public sealed class @this
             ? (null, this)
             : (Segments[0], Tail);
 
-    /// <summary>The root variable this path descends from — always a plain member
-    /// (a variable name never comes through as an index or infra hop).</summary>
-    public Segment.Member Root => (Segment.Member)Segments[0];
+    /// <summary>The root variable this path descends from — the store key it roots at, the first
+    /// segment's source token. A plain member is its name; an infra root keeps its marker
+    /// (<c>!app.goal</c> → <c>!app</c>, the key it lives under). Empty for an empty path.</summary>
+    public string Root => IsEmpty ? "" : Segments[0].Raw;
 
     /// <summary>The path after the root — <c>goal.Steps[0]</c> → <c>Steps[0]</c>.
     /// Empty for a bare root (<c>goal</c>).</summary>

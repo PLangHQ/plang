@@ -51,8 +51,8 @@ public sealed class @this : global::app.type.kind.@this
     // Writing a child onto an immutable json object: materialize it into a mutable dict whose
     // members STAY lazy (each a Data over its own child node), then set the new key. The json
     // content becomes the dict's keys, never the JsonElement's BCL surface.
-    public override global::app.type.item.@this Set(
-        object host, string key, object? value, global::app.actor.context.@this ctx)
+    public override global::System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(
+        object host, string key, bool isIndex, object? value, global::app.actor.context.@this ctx)
     {
         var e = (JsonElement)host;
         var dict = new global::app.type.dict.@this(ctx);
@@ -60,7 +60,7 @@ public sealed class @this : global::app.type.kind.@this
             foreach (var p in e.EnumerateObject())
                 dict.Set(Data(p.Name, p.Value, null, ctx));
         dict.Set(key, value);
-        return dict;
+        return new(dict);
     }
 
     // Raw json text/bytes → a clr(json), through the single json parse owner.

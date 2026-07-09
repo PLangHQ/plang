@@ -96,6 +96,17 @@ public class @this : global::app.type.item.@this, global::app.module.IContext
         global::app.data.@this parent, global::app.variable.path.@this path)
         => Kind.Get(Value, path, parent, Context);
 
+    /// <summary>The child-write door — the carrier routes to its <see cref="Kind"/> (the * kind
+    /// reflects a settable property, the list kind writes an index). The kind returns the value
+    /// carried back as an item; a host mutates in place, so identity holds.</summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex, object? value)
+    {
+        // A clr host takes a CONCRETE child (a typed property / element), never a lazy Data — so a
+        // Data value opens its own door to its value here. (dict/list hold Data lazily; a host can't.)
+        if (value is global::app.data.@this dv) value = await dv.Value();
+        return await Kind.Set(Value, key, isIndex, value, Context);
+    }
+
     /// <summary>The children of the host, via its <see cref="Kind"/> — for <c>foreach</c>.</summary>
     public System.Collections.Generic.IEnumerable<global::app.data.@this> Enumerate()
         => Kind.Enumerate(Value, Context);

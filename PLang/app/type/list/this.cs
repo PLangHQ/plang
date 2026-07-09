@@ -454,19 +454,18 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         else if (index == Count) _items.Add(value);
     }
 
-    /// <summary>A list owns its child write — replace the element at the index
-    /// (bare <c>1</c> or bracket <c>[1]</c>). An out-of-range index is not owned.</summary>
-    public override bool Write(string key, object? value)
+    /// <summary>A list owns its child write — replace the element at the index. The key is already
+    /// the resolved literal (data.Set resolved any <c>[%i%]</c> to its value); an out-of-range or
+    /// non-numeric key is an authoring error on a list, thrown loud (never silently reshaped to a dict).</summary>
+    public override System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex, object? value)
     {
-        var idxKey = key;
-        if (idxKey.Length >= 2 && idxKey[0] == '[' && idxKey[^1] == ']')
-            idxKey = idxKey[1..^1];
-        if (int.TryParse(idxKey, out var idx) && idx >= 0 && idx < CountRaw)
+        if (int.TryParse(key, out var idx) && idx >= 0 && idx < CountRaw)
         {
             SetAt(idx, value as Data ?? new Data(key, value));
-            return true;
+            return new(this);
         }
-        return false;
+        throw new System.NotSupportedException(
+            $"cannot set '[{key}]' on a list of {CountRaw} — index out of range or not numeric");
     }
 
     /// <summary>

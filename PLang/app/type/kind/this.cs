@@ -108,10 +108,11 @@ public class @this
         object obj, global::app.actor.context.@this ctx)
         => throw new System.NotSupportedException($"kind '{Name}' is not enumerable");
 
-    /// <summary>Write a child <paramref name="key"/> onto a value of this kind — the kind owns
-    /// HOW its content takes a new child. Returns the new value; a kind with no writable content throws.</summary>
-    public virtual global::app.type.item.@this Set(
-        object host, string key, object? value, global::app.actor.context.@this ctx)
+    /// <summary>Write a child <paramref name="key"/> onto a host of this kind — the kind owns HOW
+    /// its content takes a new child (<paramref name="isIndex"/> tells positional from named).
+    /// Returns the value carried as an item; a kind with no writable content throws.</summary>
+    public virtual global::System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(
+        object host, string key, bool isIndex, object? value, global::app.actor.context.@this ctx)
         => throw new System.NotSupportedException($"kind '{Name}' cannot set a child");
 
     /// <summary>Load a raw payload (string / bytes) into a value OF this kind. The default —

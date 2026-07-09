@@ -59,15 +59,16 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual object? Peek() => this;
 
     /// <summary>
-    /// Set a child slot by key — the write counterpart of read-navigation. The
-    /// value owns how it stores a child: a <c>dict</c> writes its key, a
-    /// <c>list</c> its index. Returns <c>true</c> when this value handled the
-    /// write (mutated in place), <c>false</c> when it has no settable child for
-    /// <paramref name="key"/> so the caller can fall back. Default: not settable.
-    /// (Distinct from <see cref="Write(global::app.channel.serializer.IWriter)"/>,
-    /// which serializes the value to a wire writer.)
+    /// The child-write door — the write counterpart of <see cref="Get(global::app.data.@this, string)"/>.
+    /// The value owns HOW it takes a child: a <c>dict</c> writes its key, a <c>list</c> its index
+    /// (<paramref name="isIndex"/> tells positional from named, the grammar's Index-vs-Member fact),
+    /// a <c>clr</c> host routes to its kind. Returns the (possibly REPLACED) value — a kind may
+    /// materialize an immutable host into a new one; the caller rebinds when the instance differs.
+    /// A leaf that can't take a child throws. (Distinct from
+    /// <see cref="Write(global::app.channel.serializer.IWriter)"/>, which serializes to a wire writer.)
     /// </summary>
-    public virtual bool Write(string key, object? value) => false;
+    public virtual System.Threading.Tasks.ValueTask<@this> Set(string key, bool isIndex, object? value)
+        => throw new System.NotSupportedException($"%…% ({Mint().Name}) cannot take a child '{key}'");
 
     /// <summary>
     /// Read counterpart of <see cref="Write(string, object?)"/>: the value

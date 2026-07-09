@@ -27,8 +27,15 @@ public sealed partial class @this
 
     /// <summary>
     /// Was: in-place set of a captured variable (<c>set %snap.variables.x% = 2</c>).
-    /// Throws — see the class remarks.
+    /// The child-write door for a snapshot — routes to <see cref="SetVariable"/>, which throws
+    /// (disabled). Snapshot owns this rather than the write path type-switching on snapshot.
     /// </summary>
+    public override System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex, object? value)
+    {
+        SetVariable(key, value);   // throws ReplayDisabled — see the class remarks
+        return new(this);
+    }
+
     public void SetVariable(string name, object? value)
         => throw new System.NotSupportedException(ReplayDisabled);
 }

@@ -111,6 +111,43 @@ public partial class @this
 
 
     /// <summary>
+    /// Write-at-path — the READ walk (<see cref="Get(global::app.variable.path.@this)"/>) for all
+    /// but the last segment, then ONE <c>Set</c> at the leaf. The value owns the write exactly as
+    /// it owns the read: navigate to the parent, hand its item the leaf key + the grammar's
+    /// index-vs-member fact, rebind the parent when the item comes back replaced (a json host
+    /// materialises into a dict; a clr host mutates in place, so identity holds).
+    /// </summary>
+    public async System.Threading.Tasks.ValueTask<@this> Set(global::app.variable.path.@this path, object? value)
+    {
+        if (path.IsEmpty) return this;                     // no leaf to write — nothing to do
+
+        var parent = await Get(path.Parent);
+        if (!parent.IsInitialized) return parent;          // parent absent → surface it, don't invent
+
+        // Materialise a source-backed parent (a `%cfg%` still raw json) so the write lands on the
+        // parsed value, not the raw form — the door parses + rebinds, idempotent for a live value.
+        _ = await parent.Value();
+        if (parent.Error?.Key == "MaterializeFailed") return _context?.Error(parent.Error) ?? parent;
+
+        // Resolve the leaf key here (the walk owns key resolution, mirroring the read side) — a
+        // bracket index resolves against the store; a member is its own name.
+        var leaf = path.Last;
+        string key;
+        bool isIndex = leaf is global::app.variable.path.Segment.Index;
+        if (leaf is global::app.variable.path.Segment.Index idx)
+            key = await idx.Key(_context?.Variable);
+        else
+            key = ((global::app.variable.path.Segment.Member)leaf).Name;
+
+        if (parent.Peek() is not global::app.type.item.@this target)
+            return _context?.NotFound(key) ?? parent;
+
+        var written = await target.Set(key, isIndex, value);
+        if (!ReferenceEquals(written, target)) parent.SetValue(written);
+        return parent;
+    }
+
+    /// <summary>
     /// Invokes a method-like navigation on Data. Chainable — returns Data.
     /// Override in subclasses to add domain-specific methods.
     /// </summary>

@@ -128,17 +128,13 @@ public partial class @this
         // Names arrive clean — the builder normalizes them before the .pr, and runtime C# callers
         // construct clean names; the store does not re-process at runtime.
 
-        // A write navigates to the parent then sets the leaf via CLR reflection,
-        // which needs literal indices (a list element, a record field). Resolve any
-        // variable index to its literal form first — through the path/segment engine
-        // (no regex), against this store.
-        if (name.Contains('['))
-            name = await ResolveBracketIndices(name);
-
-        var rootName = GetRootName(name);
+        // The path owns tokenization + per-hop index resolution (no regex pre-pass). A bare root
+        // (no dot/bracket) is a direct rebind of the variable; a deep path is write-at-path on the
+        // root's own value — the READ walk to the parent, then one Set at the leaf (data.Set).
+        var path = global::app.variable.path.@this.Parse(name);
 
         // Simple case: no dot/bracket path — set the root variable directly
-        if (rootName == name)
+        if (path.Tail.IsEmpty)
         {
             // If a Calls overlay is active (we're inside a forked flow — channel fire,
             // parallel foreach iteration, etc.), route the write into the overlay so
@@ -275,284 +271,19 @@ public partial class @this
             }
         }
 
-        // Dot/bracket path: navigate to the parent object, set the property with raw value
-        if (!_variables.TryGetValue(rootName, out var root))
+        // Deep path: write-at-path on the root's own value. Create the root as a native dict when
+        // absent (so `set %x.a% = 1` on a fresh %x% works), then hand data.Set the tail — the read
+        // walk to the leaf's parent + one Set door. The value owns its own child write; there is no
+        // reflection fallback and no dict-conversion — an unsettable target throws, loud.
+        if (!_variables.TryGetValue(path.Root, out var root))
         {
-            // Root doesn't exist — create it as a native dict so dot-path properties
-            // work and the value owns its own write.
-            root = new data.@this(rootName, new global::app.type.dict.@this(_context), context: _context);
-            _variables[rootName] = root;
+            root = new data.@this(path.Root, new global::app.type.dict.@this(_context), context: _context);
+            _variables[path.Root] = root;
         }
 
-        var remaining = name.Length > rootName.Length && name[rootName.Length] == '.'
-            ? name[(rootName.Length + 1)..]
-            : name[rootName.Length..];
-
-        // Split remaining into parent path + final property name. Indices are
-        // already literal (resolved above), so the last '.' splits parent from leaf.
-        var lastDot = remaining.LastIndexOf('.');
-        data.@this parent;
-        string propertyName;
-
-        if (lastDot >= 0)
-        {
-            parent = await root.Get(remaining[..lastDot]);
-            propertyName = remaining[(lastDot + 1)..];
-        }
-        else
-        {
-            parent = root;
-            propertyName = remaining;
-        }
-
-        if (!parent.IsInitialized && parent.Peek().IsNull)
-        {
-            // A parse failure on a raw-backed parent stamps MaterializeFailed —
-            // surface it rather than masking the real cause with NotFound.
-            if (parent.Error?.Key == "MaterializeFailed")
-                return _context.Error(parent.Error);
-            return _context.NotFound(name);
-        }
-
-        // A dotted write is an EXAMINATION — the value door parses an
-        // un-narrowed reference (file/url) or source form through the
-        // instance's own Ready() and rebinds, so the write lands on the
-        // content dict, not on a reflection bag of the reference object.
-        _ = await parent.Value();
-
-        var target = parent.Peek();
-        if (target == null)
-        {
-            if (parent.Error?.Key == "MaterializeFailed")
-                return _context.Error(parent.Error);
-            return _context.NotFound(name);
-        }
-
-        // Resolve the value to what the SLOT can hold — the write boundary decides:
-        //  - a container slot (dict/list) holds the value lazily, AS-IS (its in-memory
-        //    form), so `set %trace.plan% = %plan%` stores the %plan% binding without
-        //    rendering it (rendering re-resolves every %ref%; a self-referential entry
-        //    like %plan.usage% = {model:%plan.Model%} would loop forever);
-        //  - a CLR property (step.Formal : string) cannot hold a lazy reference — it needs
-        //    the concrete value, so resolve through the door HERE, where it's needed.
-        object? rawValue = value is data.@this dv2
-            ? (target is app.type.dict.@this or app.type.list.@this ? dv2.Peek() : await dv2.Value())
-            : value;
-
-        // The value type owns its own write — symmetric to how Navigate owns the
-        // read. Ask the registered navigator first (a dict writes its key, a list
-        // its index); fall back to the reflection path only when the navigator
-        // doesn't own writes for this value (foreign CLR objects, read-only props).
-        // The value owns its own child write — a dict writes its key, a list its
-        // index. Ask the value directly; fall back to the reflection path only when
-        // the value has no settable child (foreign CLR objects, read-only props).
-        if (target.Write(propertyName, rawValue))
-            return root;
-
-        var result = SetValueOnObject(target, propertyName, rawValue);
-        if (!ReferenceEquals(result, target))
-            parent.SetValue(result);
-        return root;
+        return await root.Set(path.Tail, value);
     }
 
-    /// <summary>
-    /// Sets a property on a target object. If the target is a dictionary, sets the key.
-    /// If CLR object with writable property, sets via reflection.
-    /// Otherwise converts to a case-insensitive dictionary and sets there.
-    /// Returns the (possibly replaced) target.
-    /// </summary>
-    [System.Obsolete("Superseded by the target value's own kind Set (Kind.Set) — do not add new callers.")]
-    private object SetValueOnObject(object target, string propertyName, object? value)
-    {
-        // Snapshot — editing a captured variable routes to the snapshot's own
-        // SetVariable (the owner), so `set %snap.variables.x% = 2` lands on the
-        // list Restore reads. Behavior on the owner, not reached-into here.
-        if (target is global::app.snapshot.@this snap)
-        {
-            snap.SetVariable(propertyName, value);
-            return target;
-        }
-
-        // Native dict — set the key directly. Without this the dict matches no
-        // arm below and falls into ConvertToDictionary, which reflects its C#
-        // surface (Context/Count/Keys/Entries) into a junk dictionary — losing
-        // every real key AND dragging Context (→ App → Culture) into the value,
-        // which then cycles when the value is snapshot-cloned.
-        if (target is app.type.dict.@this nativeDict)
-        {
-            nativeDict.Set(propertyName, value);
-            return target;
-        }
-
-        // A clr(json) is an immutable host — the KIND owns the write (json materializes its
-        // object into a mutable dict + sets the key), so the json CONTENT becomes the keys,
-        // never the carrier's reflected C# surface (Value/Context/Kind/…). Returns a new dict.
-        if (target is app.type.clr.@this clrTarget)
-            return clrTarget.Kind.Set(clrTarget.Value, propertyName, value, _context);
-
-        // Dictionary — set key directly (case-insensitive lookup)
-        if (target is IDictionary<string, object?> dict)
-        {
-            var key = dict.Keys.FirstOrDefault(k =>
-                string.Equals(k, propertyName, StringComparison.OrdinalIgnoreCase)) ?? propertyName;
-            dict[key] = value;
-            return target;
-        }
-
-        // Generic IDictionary<string, T> for arbitrary T (JsonObject is the load-bearing
-        // case: T = JsonNode?). Without this arm, `set %trace.pass1% = %x%` on a
-        // type=json `%trace%` falls through to ConvertToDictionary which replaces the
-        // JsonObject with a CLR-reflection dict {Count, Options, Parent, Root} — losing
-        // every JSON key. Use reflection on the runtime indexer to write the value;
-        // for JsonNode-typed slots, serialize CLR objects through JsonSerializer (which
-        // honors [JsonIgnore] etc., so cyclic types like Goal↔Step↔Action don't recurse).
-        var stringDictIface = GetStringKeyedDictInterface(target);
-        if (stringDictIface != null)
-        {
-            var valueType = stringDictIface.GetGenericArguments()[1];
-            value = ConvertForDictSlot(value, valueType);
-            var indexer = stringDictIface.GetProperty("Item");
-            if (indexer != null)
-            {
-                indexer.SetValue(target, value, new object?[] { propertyName });
-                return target;
-            }
-        }
-
-        // Handle bracket indexing: "Steps[0]" → property "Steps", index 0
-        var bracketIdx = propertyName.IndexOf('[');
-        if (bracketIdx > 0)
-        {
-            var baseProp = propertyName[..bracketIdx];
-            var indexStr = propertyName[(bracketIdx + 1)..].TrimEnd(']');
-            var prop = target.GetType().GetProperty(baseProp,
-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-            if (prop != null)
-            {
-                var collection = prop.GetValue(target);
-                if (collection is System.Collections.IList list && int.TryParse(indexStr, out var idx) && idx >= 0 && idx < list.Count)
-                {
-                    if (value != null)
-                    {
-                        var elementType = list.GetType().IsGenericType
-                            ? list.GetType().GetGenericArguments()[0]
-                            : typeof(object);
-                        if (!elementType.IsAssignableFrom(value.GetType()) && value is global::app.type.item.@this iv)
-                            value = iv.Clr(elementType);   // the value lowers itself to the slot
-                    }
-                    list[idx] = value;
-                    return target;
-                }
-                // Generic IList<T> (e.g., Steps.@this, Actions.@this) — use indexer via reflection
-                else if (collection != null && int.TryParse(indexStr, out var gIdx) && gIdx >= 0)
-                {
-                    var indexer = collection.GetType().GetProperty("Item");
-                    var countProp = collection.GetType().GetProperty("Count");
-                    if (indexer != null && countProp != null)
-                    {
-                        var count = (int)countProp.GetValue(collection)!;
-                        if (gIdx < count)
-                        {
-                            if (value is global::app.type.item.@this iv && !indexer.PropertyType.IsAssignableFrom(value.GetType()))
-                                value = iv.Clr(indexer.PropertyType);   // the value lowers itself to the slot
-                            indexer.SetValue(collection, value, new object[] { gIdx });
-                            return target;
-                        }
-                    }
-                }
-            }
-        }
-
-        // CLR object — try writable property first
-        var clrProp = target.GetType().GetProperty(propertyName,
-            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-        if (clrProp != null && clrProp.CanWrite)
-        {
-            if (value is global::app.type.item.@this iv && !clrProp.PropertyType.IsAssignableFrom(value.GetType()))
-            {
-                // LIFT to the property's type via its own Convert hook — the target type
-                // builds itself from the value (a list<dict> → actions.@this via
-                // actions.Convert). Only a CLR-primitive target with no hook (string/int)
-                // falls back to the value lowering itself.
-                var built = global::app.type.convert.@this.OfStatic(clrProp.PropertyType, value, null, _context);
-                value = built is { Success: true } && built.Peek() is { } typed ? typed : iv.Clr(clrProp.PropertyType);
-            }
-            clrProp.SetValue(target, value);
-            return target;
-        }
-
-        // Property is read-only or doesn't exist — convert to dictionary
-        var converted = ConvertToDictionary(target);
-        var dictKey = converted.Keys.FirstOrDefault(k =>
-            string.Equals(k, propertyName, StringComparison.OrdinalIgnoreCase)) ?? propertyName;
-        converted[dictKey] = value;
-        return converted;
-    }
-
-    private static Dictionary<string, object?> ConvertToDictionary(object obj)
-    {
-
-        var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-        var props = obj.GetType().GetProperties(
-            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-        foreach (var prop in props)
-        {
-            if (prop.GetIndexParameters().Length > 0) continue; // skip indexers
-            dict[prop.Name] = prop.GetValue(obj);
-        }
-        // Primitive/value type with no navigable properties — preserve original value
-        if (dict.Count == 0)
-            dict["value"] = obj;
-        return dict;
-    }
-
-    /// <summary>
-    /// Returns the implemented <c>IDictionary&lt;string, T&gt;</c> interface type if
-    /// <paramref name="target"/> has one (for any <c>T</c>), else null. Used so the
-    /// dot-path set can write through the runtime indexer of foreign string-keyed
-    /// dictionaries (notably <see cref="System.Text.Json.Nodes.JsonObject"/>) without
-    /// falling through to <see cref="ConvertToDictionary"/> — which would replace the
-    /// live JsonObject with a CLR-reflection snapshot and discard its content.
-    /// </summary>
-    private static System.Type? GetStringKeyedDictInterface(object target)
-    {
-        foreach (var iface in target.GetType().GetInterfaces())
-        {
-            if (!iface.IsGenericType) continue;
-            if (iface.GetGenericTypeDefinition() != typeof(IDictionary<,>)) continue;
-            if (iface.GetGenericArguments()[0] == typeof(string)) return iface;
-        }
-        return null;
-    }
-
-    /// <summary>
-    /// Coerces <paramref name="value"/> to fit a dictionary slot typed as <paramref name="slotType"/>.
-    /// Already-assignable values pass through. <see cref="System.Text.Json.Nodes.JsonNode"/> slots
-    /// (the JsonObject case) get a SerializeToNode round-trip — that's what the rest of the JSON
-    /// pipeline expects in the value position, and it honors <c>[JsonIgnore]</c> so cyclic runtime
-    /// types like Goal↔Step↔Action don't deadlock the serializer. Other slot types fall back to
-    /// TypeMapping; if conversion fails, return the original value and let the caller's indexer
-    /// raise the precise error.
-    /// </summary>
-    private static object? ConvertForDictSlot(object? value, System.Type slotType)
-    {
-        if (value == null) return null;
-        if (slotType.IsAssignableFrom(value.GetType())) return value;
-
-        if (typeof(System.Text.Json.Nodes.JsonNode).IsAssignableFrom(slotType))
-        {
-            try
-            {
-                return System.Text.Json.JsonSerializer.SerializeToNode(value, value.GetType(), _snapshotClone);
-            }
-            catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException)
-            {
-                return value;
-            }
-        }
-
-        return value is global::app.type.item.@this iv ? iv.Clr(slotType) ?? value : value;
-    }
 
     /// <summary>
     /// Gets a variable by name (supports dot notation path).
@@ -572,7 +303,7 @@ public partial class @this
     {
         if (string.IsNullOrEmpty(name)) return null;
         name = CleanName(name);
-        var rootName = GetRootName(name);
+        var rootName = global::app.variable.path.@this.Parse(name).Root;
         if (Calls.Current is { } frame && frame.TryGet(rootName, out var framed)) return framed;
         return _variables.TryGetValue(rootName, out var v) ? v : null;
     }
@@ -591,10 +322,10 @@ public partial class @this
         name = CleanName(name);
 
         // Bracket indices (`[planStep.index]`) resolve inside the walk now
-        // (Segment.Index.ResolveKey) — no pre-pass string rewrite.
+        // (Segment.Index.Key) — no pre-pass string rewrite.
 
         // Handle paths like "user.name" or "items[0].value"
-        var rootName = GetRootName(name);
+        var rootName = global::app.variable.path.@this.Parse(name).Root;
         string? remaining;
         if (name.Length > rootName.Length)
         {
@@ -660,7 +391,7 @@ public partial class @this
     public bool Contains(string name)
     {
         name = CleanName(name);
-        var rootName = GetRootName(name);
+        var rootName = global::app.variable.path.@this.Parse(name).Root;
         if (Calls.Current is { } frame && frame.TryGet(rootName, out _))
             return true;
         return _variables.ContainsKey(rootName);
@@ -874,58 +605,11 @@ public partial class @this
         return dict;
     }
 
-    /// <summary>
-    /// Rewrites variable indices in a write target to their literal form
-    /// (<c>people[idx].Name</c> → <c>people[0].Name</c>) so the reflection-based leaf
-    /// write sees a literal index. Parses through the navigation path (no regex) and
-    /// resolves each <c>Index</c> segment against THIS store — the write side resolves
-    /// where the set happens, independent of any value's context.
-    /// </summary>
-    private async System.Threading.Tasks.ValueTask<string> ResolveBracketIndices(string name)
-    {
-        var path = global::app.variable.path.@this.Parse(name);
-        var sb = new System.Text.StringBuilder();
-        for (int i = 0; i < path.Segments.Count; i++)
-        {
-            switch (path.Segments[i])
-            {
-                case global::app.variable.path.Segment.Index idx:
-                    sb.Append('[').Append(await idx.Key(this)).Append(']');
-                    break;
-                case global::app.variable.path.Segment.Member m:
-                    if (i > 0) sb.Append('.');
-                    sb.Append(m.Raw);
-                    break;
-                default: // Infra (!x), Call — carry their own delimiter
-                    sb.Append(path.Segments[i].Raw);
-                    break;
-            }
-        }
-        return sb.ToString();
-    }
-
     private static string CleanName(string name)
     {
         if (string.IsNullOrEmpty(name))
             return name;
         return name.Trim().TrimStart('%').TrimEnd('%');
-    }
-
-    private static string GetRootName(string path)
-    {
-        var dotIndex = path.IndexOf('.');
-        var bracketIndex = path.IndexOf('[');
-        var bangIndex = path.IndexOf('!');
-        // ! at position 0 is part of the variable name (!app), not a separator
-        if (bangIndex == 0) bangIndex = path.IndexOf('!', 1);
-
-        // Find the earliest separator
-        int min = int.MaxValue;
-        if (dotIndex >= 0) min = Math.Min(min, dotIndex);
-        if (bracketIndex >= 0) min = Math.Min(min, bracketIndex);
-        if (bangIndex > 0) min = Math.Min(min, bangIndex);
-
-        return min == int.MaxValue ? path : path[..min];
     }
 }
 

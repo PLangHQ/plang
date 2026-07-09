@@ -297,7 +297,10 @@ public class VariablesTests : System.IAsyncDisposable
     [Test]
     public async Task Set_DotPath_WithVariableIndex()
     {
-        var stack = new Variables(_app.User.Context);
+        // A variable index in a WRITE path (`people[idx]`) resolves against the store the value
+        // lives in — its context.Variable. Use the real store (not a detached `new Variables`,
+        // whose context.Variable points elsewhere) so idx and people share one scope, as in production.
+        var stack = _app.User.Context.Variable;
         var alice = new global::app.type.dict.@this(_app.User.Context); alice.Set("Name", "Alice");
         var bob = new global::app.type.dict.@this(_app.User.Context); bob.Set("Name", "Bob");
         var people = new global::app.type.list.@this(_app.User.Context);
@@ -954,12 +957,14 @@ public sealed class PersonItem : global::app.type.item.@this
     public string? Name { get; set; }
     public long Age { get; set; }
 
-    public override bool Write(string key, object? value)
+    public override System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex, object? value)
     {
         if (string.Equals(key, "Name", System.StringComparison.OrdinalIgnoreCase))
-        { Name = value?.ToString(); return true; }
-        if (string.Equals(key, "Age", System.StringComparison.OrdinalIgnoreCase))
-        { Age = System.Convert.ToInt64(value); return true; }
-        return false;
+            Name = value?.ToString();
+        else if (string.Equals(key, "Age", System.StringComparison.OrdinalIgnoreCase))
+            Age = System.Convert.ToInt64(value);
+        else
+            throw new System.NotSupportedException($"PersonItem has no child '{key}'");
+        return new(this);
     }
 }

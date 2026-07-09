@@ -36,8 +36,8 @@ public sealed class @this : global::app.type.kind.@this
     // Write a child onto a host by reflection — the mirror of Descend: find the property, let the
     // value lower itself to the property's type (value.Clr(PropertyType) — a clr(json) builds the
     // host shape there), set it in place. Returns the host carried as a clr.
-    public override global::app.type.item.@this Set(
-        object host, string key, object? value, global::app.actor.context.@this ctx)
+    public override global::System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(
+        object host, string key, bool isIndex, object? value, global::app.actor.context.@this ctx)
     {
         var prop = host.GetType().GetProperty(key, System.Reflection.BindingFlags.Public
             | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
@@ -47,7 +47,7 @@ public sealed class @this : global::app.type.kind.@this
         if (value is global::app.type.item.@this iv && !prop.PropertyType.IsInstanceOfType(value))
             value = iv.Clr(prop.PropertyType);
         prop.SetValue(host, value);
-        return new global::app.type.clr.@this(host, ctx);
+        return new(new global::app.type.clr.@this(host, ctx));
     }
 
     // The inverse of Output: build a host CLR object by reflecting its [Store] props and pulling
