@@ -18,9 +18,56 @@ Your three questions, answered by the boundary:
 
 The `NumberKind` enum dies with the switches, but the Ladder's rungs are labeled with it (`Rung(NumberKind, Min, Max, …)`). The rungs **relabel to the kind tokens** the rest of the system uses (kind `"int"`, kind `"long"`). Same ladder, same climb rule, new labels. Find-replace of the key type, not of behavior.
 
-## A rename that rides along (Ingi: "tower doesn't tell me much")
+## Renames + one shape fix that ride the re-key (settled with Ingi, code below)
 
-"Tower" is CS jargon (the "numeric tower") and says nothing. The honest word is already in the file: **Ladder** (`IntegerLadder`, `Rung`). Rename `this.Tower.cs` → `this.Ladder.cs`; any `Tower`-flavored member names align to Ladder vocabulary while you're in there.
+- **`this.Tower.cs` → `this.Ladder.cs`** — "tower" is CS jargon (the "numeric tower") and says nothing; the honest word is already in the file.
+- **`Rung` → `Level`** — "rung" is ordinary English (a ladder's bar) but low-frequency: it fails the transparent-to-a-non-native rule. `Level` is the word Ingi reached for unprompted ("the next level in the ladder"). `Step` is banned — the domain collision we renamed `Descend` away from.
+- **`Fits` moves ONTO the Level** — the name is right (one verb, caller's intent), the placement is the stray-helper smell at its smallest: `Fits(in Rung r, v)` reaches into the rung; the level owns its own question: `level.Fits(v)`.
+- **The climb stays signed-biased — affirmed, don't "fix" it.** Unsigned kinds exist for *source fidelity* (a lib/db hands you `uint` — kept) and *explicit declaration* (`as uint` — the developer asked for the can't-be-negative constraint). The climb never *enters* unsigned uninvited: an overflow result landing in `uint` sets a trap for the next subtraction (`3 - 5` → wrap/throw the user never caused) — the no-magic rule applied to arithmetic. `uint + uint` that fits its floor stays `uint` (inputs' kind honored); only the climb refuses the unsigned track.
+
+## The Ladder, target shape (today's logic, new names, kind-token keys)
+
+```csharp
+// number/this.Ladder.cs — a LEVEL owns its range and answers its own question:
+private readonly record struct Level(kind.@this Kind, BigInteger Min, BigInteger Max, bool Unbounded)
+{
+    public bool Fits(BigInteger v) => Unbounded || (v >= Min && v <= Max);
+}
+
+private static readonly Level[] IntegerLadder =
+{
+    new(/* sbyte */ ..., sbyte.MinValue, sbyte.MaxValue, false),
+    ...
+    new(/* int   */ ..., int.MinValue,   int.MaxValue,   false),
+    new(/* long  */ ..., long.MinValue,  long.MaxValue,  false),
+    ...
+    new(/* bigint*/ ..., 0, 0, true),                     // the unbounded top
+};
+
+// the climb — compute wide, then find the smallest level that holds the result.
+// NO exceptions anywhere: math runs in BigInteger (cannot overflow), placement is comparison.
+private static @this NarrowInteger(BigInteger v, kind.@this floor)
+{
+    var floorLevel = IntegerLadder[LadderIndex(floor)];
+    if (floorLevel.Fits(v)) return FromBigIntegerAs(v, floor);   // fits where it started → stays
+
+    foreach (var k in SignedClimb)                               // int → long → Int128 → BigInteger
+    {
+        if (MaxMagnitude(k) <= floorMag) continue;               // must be strictly wider
+        if (IntegerLadder[LadderIndex(k)].Fits(v)) return FromBigIntegerAs(v, k);
+    }
+    return From(v);                                              // BigInteger catch-all
+}
+```
+
+```
+trace:  2000000000 (int) + 2000000000 (int)
+        compute in BigInteger  →  4000000000          (unbounded — no overflow possible)
+        floorLevel(int).Fits?  →  no
+        climb: level(long).Fits? → yes  →  long(4000000000)
+```
+
+Only the labels and the two names change — the logic, the signed bias, and the level values are byte-for-byte today's behavior. Acceptance stands: arithmetic suite untouched-green.
 
 ## So: no interim, no deferral
 
