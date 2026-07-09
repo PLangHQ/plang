@@ -151,9 +151,9 @@ public sealed class reflection : @this
         return false;
     }
 
-    // A foreign POCO has no plang shape of its own, so it renders as an object of its
-    // [Out] fields — each field VALUE lifts to its item via type.Create and writes itself.
-    // The `*` kind owns only the reflection; every field's serialization is its own item's.
+    // The inverse of Read: reflect the object's tagged props and write each under its WIRE
+    // name (the [JsonPropertyName]/camelCase form Read matches on and STJ round-trips), nulls
+    // omitted. Serves hosts (goal/step/action) and foreign POCOs alike — the one Output path.
     public override async global::System.Threading.Tasks.ValueTask Output(
         object obj, global::app.channel.serializer.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? ctx)
@@ -161,21 +161,39 @@ public sealed class reflection : @this
         writer.BeginObject();
         foreach (var entry in global::app.channel.serializer.filter.Tagged.PropertiesFor(obj.GetType(), mode))
         {
-            writer.Name(entry.Property.Name.ToLowerInvariant());
-            if (entry.Masked) { writer.String("****"); continue; }
-            object? raw;
-            try { raw = entry.Property.GetValue(obj); }
+            if (entry.Masked) { writer.Name(entry.WireName); writer.String("****"); continue; }
+            object? value;
+            try { value = entry.Property.GetValue(obj); }
             catch (System.Exception ex)
             {
                 throw new global::app.data.OutputException(
                     $"Output failed reading {obj.GetType().Name}.{entry.Property.Name}: {ex.Message}",
                     "OutputGetterThrew", ex);
             }
-            if (raw is global::app.data.@this nested)
-                await nested.Output(writer, mode, ctx);
-            else
-                await global::app.type.@this.Create(raw, ctx).Output(writer, mode, ctx);
+            if (value == null) continue;   // nulls omitted (WhenWritingNull)
+            writer.Name(entry.WireName);
+            await WriteReflected(writer, value, mode, ctx);
         }
         writer.EndObject();
+    }
+
+    // A value reflected off a property writes itself: a plang value / a Data via its own
+    // Output, a sequence as an array of self-writes, a raw C# scalar through the writer (C#
+    // primitives can't write themselves). The reflection→wire boundary.
+    private async global::System.Threading.Tasks.ValueTask WriteReflected(
+        global::app.channel.serializer.IWriter writer, object value, global::app.View mode,
+        global::app.actor.context.@this? ctx)
+    {
+        switch (value)
+        {
+            case global::app.type.item.@this item: await item.Output(writer, mode, ctx); break;
+            case global::app.data.@this d: await d.Output(writer, mode, ctx); break;
+            case System.Collections.IEnumerable seq when value is not (string or byte[]):
+                writer.BeginArray(-1);
+                foreach (var el in seq) if (el != null) await WriteReflected(writer, el, mode, ctx);
+                writer.EndArray();
+                break;
+            default: writer.Value(value); break;
+        }
     }
 }
