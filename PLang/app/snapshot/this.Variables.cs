@@ -1,57 +1,34 @@
 namespace app.snapshot;
 
 /// <summary>
-/// Snapshot — captured-variable access. The snapshot owns its variables (its
-/// "Variables" section), so reading/editing one is behavior here, on the owner —
-/// not a wrapper reaching in. Editing a captured variable before <c>Resume</c> is
-/// the durable-execution fix-and-replay loop: <c>set %snapshot.variables.x% = 2</c>
-/// then resume. The edit lands on the same list <c>Restore</c> reads, so it flows
-/// into resumed execution.
+/// Snapshot — captured-variable navigate/get/set.
 ///
-/// <para>Interim home: under the agreed App-as-snapshot reframe these collapse
-/// into <c>app.Variables</c> access (a snapshot is the App frozen at a step) —
-/// see <c>Documentation/v0.2/app-as-snapshot-proposal.md</c>.</para>
+/// <para>DISABLED (2026-07-09) — these doors throw. They existed only for the
+/// <c>%snap.variables.x%</c> fix-and-replay developer feature (edit a captured
+/// variable, then resume) and have no production plang consumer — only snapshot unit
+/// tests exercise them, which are expected to fail while this is disabled. They embed
+/// variable-domain knowledge INTO snapshot, the wrong owner. The real model is
+/// <c>ISnapshot</c> — each app property snapshots/restores itself, snapshot becomes a
+/// dumb serializable container. That redesign is its own branch; see
+/// <c>Documentation/v0.2/todos.md</c> (2026-07-09 — Snapshot redesign).</para>
+///
+/// <para>Kept as throwing stubs (not deleted) so the doors stay named and any caller
+/// fails LOUD with this pointer rather than degrading to a silent <c>NotFound</c>.</para>
 /// </summary>
 public sealed partial class @this
 {
-    private List<data.@this>? VariableList()
-        => HasSection("Variables") ? Section("Variables").Read<List<data.@this>>("variables") : null;
+    private const string ReplayDisabled =
+        "snapshot captured-variable navigate/replay is disabled pending the ISnapshot redesign — " +
+        "see Documentation/v0.2/todos.md (2026-07-09 — Snapshot redesign).";
 
-    /// <summary>The captured variable named <paramref name="name"/>, or null when absent.</summary>
-    public data.@this? GetVariable(string name)
-        => VariableList()?.FirstOrDefault(v =>
-            string.Equals(v.Name, name, StringComparison.OrdinalIgnoreCase));
+    /// <summary>Was: <c>%snap.variables%</c> navigation. Throws — see the class remarks.</summary>
+    public override System.Threading.Tasks.ValueTask<data.@this> Navigate(data.@this parent, string key)
+        => throw new System.NotSupportedException(ReplayDisabled);
 
     /// <summary>
-    /// A snapshot owns its child read. <c>%snap.variables%</c> is the variable
-    /// namespace — it passes through so the next segment names a variable; any
-    /// other key resolves that captured variable's value. (The write side,
-    /// <c>set %snap.variables.x% = 2</c>, routes to <see cref="SetVariable"/>.)
+    /// Was: in-place set of a captured variable (<c>set %snap.variables.x% = 2</c>).
+    /// Throws — see the class remarks.
     /// </summary>
-    public override System.Threading.Tasks.ValueTask<data.@this> Navigate(data.@this parent, string key)
-    {
-        if (string.Equals(key, "variables", StringComparison.OrdinalIgnoreCase))
-            return new(new data.@this(key, this, parent: parent));
-
-        var v = GetVariable(key);
-        return new(v != null
-            ? new data.@this(key, v.Peek(), parent: parent)
-            : parent.Context.NotFound(key));
-    }
-
-    /// <summary>Sets a captured variable's value in place (or appends one).</summary>
     public void SetVariable(string name, object? value)
-    {
-        var section = Section("Variables");
-        var list = section.Read<List<data.@this>>("variables");
-        if (list == null)
-        {
-            list = new List<data.@this>();
-            section.Write("variables", list);
-        }
-        var existing = list.FirstOrDefault(v =>
-            string.Equals(v.Name, name, StringComparison.OrdinalIgnoreCase));
-        if (existing != null) existing.SetValue(value);
-        else list.Add(new data.@this(name, value, context: Context));
-    }
+        => throw new System.NotSupportedException(ReplayDisabled);
 }
