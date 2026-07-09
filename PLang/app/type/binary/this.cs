@@ -22,6 +22,33 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     public @this(byte[] value) { Value = value ?? System.Array.Empty<byte>(); }
 
+    /// <summary>THE PURE CORE — a <c>binary</c> passes through; a raw <c>byte[]</c> passes; a base64
+    /// string decodes; anything else (or non-base64) declines (<c>null</c>). Shared by the ICreate
+    /// courier and comparison coercion.</summary>
+    public static @this? Create(global::app.type.item.@this value)
+    {
+        if (value is @this self) return self;
+        switch (value.Clr<object>())
+        {
+            case byte[] b: return (@this)b;
+            case string s:
+                try { return (@this)System.Convert.FromBase64String(s); }
+                catch (System.FormatException) { return null; }
+            default: return null;
+        }
+    }
+
+    /// <summary>The ICreate courier face — delegates to the pure core; on decline lands the reason
+    /// on <paramref name="data"/> (a non-base64 string vs a wrong type).</summary>
+    public static @this? Create(global::app.type.item.@this value, global::app.data.@this data)
+    {
+        if (Create(value) is { } built) return built;
+        data.Fail(value.Clr<object>() is string
+            ? new global::app.error.Error("Cannot parse string as binary — expected base64.", "BinaryParseFailed", 400)
+            : new global::app.error.Error($"Cannot convert {value.Mint().Name} to binary.", "BinaryConversionFailed", 400));
+        return null;
+    }
+
     /// <summary>A re-kinded copy — same bytes, the declared kind stamped.</summary>
     public override global::app.type.item.@this Kinded(string? kind) => new @this(Value) { Kind = kind };
 

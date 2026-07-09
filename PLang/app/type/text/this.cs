@@ -56,6 +56,42 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     protected internal override global::app.type.@this Mint()
         => new("text", typeof(string)) { Kind = Kind is { } k ? new global::app.type.kind.@this(k) : null, Template = Template };
 
+    /// <summary>
+    /// THE PURE CORE — "text, make yourself from this value, or decline." A <c>text</c> passes
+    /// through; a structured item (dict/list/json DOM) renders its canonical JSON TEXT (that is what
+    /// <c>text/json</c> means); a scalar stringifies invariantly. An opaque domain object has no
+    /// honest textual form → <c>null</c> (decline). Shared by the ICreate courier and comparison.
+    /// </summary>
+    public static @this? Create(global::app.type.item.@this value)
+    {
+        if (value is @this self) return self;
+        // Native dict/list value types aren't IDictionary/IEnumerable, but their [JsonConverter]
+        // renders the canonical {}/[] textual form.
+        if (value is global::app.type.dict.@this or global::app.type.list.@this)
+            return (@this)System.Text.Json.JsonSerializer.Serialize(value);
+        var raw = value.Clr<object>();
+        return raw switch
+        {
+            string s => (@this)s,
+            System.Text.Json.JsonElement or System.Text.Json.Nodes.JsonNode
+                or System.Collections.IDictionary => (@this)System.Text.Json.JsonSerializer.Serialize(raw),
+            System.Collections.IEnumerable and not byte[] => (@this)System.Text.Json.JsonSerializer.Serialize(raw),
+            System.IConvertible c => (@this)(System.Convert.ToString(c, System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty),
+            _ => null,
+        };
+    }
+
+    /// <summary>The ICreate courier face — delegates to the pure core; a value with no textual form
+    /// declines with the reason on <paramref name="data"/>. text's kind is a hint (extension), not a
+    /// construction switch, so the core needs no kind.</summary>
+    public static @this? Create(global::app.type.item.@this value, global::app.data.@this data)
+    {
+        if (Create(value) is { } built) return built;
+        data.Fail(new global::app.error.Error(
+            $"Cannot bind a {value.Mint().Name} to text — it has no textual form.", "TypeConversionFailed", 400));
+        return null;
+    }
+
     /// <summary>A stamped template's answer depends on outside state (%refs%
     /// can change between uses) — never kept. Plain text caches as always.</summary>
     public override bool Cacheable => Template == null;

@@ -29,6 +29,32 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     public @this(System.Guid value) { Value = value; }
 
+    /// <summary>THE PURE CORE — a <c>guid</c> passes through; a CLR <see cref="System.Guid"/> or a
+    /// guid string (canonical/braced/hyphenless) parses; anything else declines (<c>null</c>). A
+    /// text-wrapped literal unwraps through <c>Clr&lt;object&gt;()</c>. Context-free (the parse is
+    /// <c>Guid.TryParse</c>). Shared by the ICreate courier and comparison coercion.</summary>
+    public static @this? Create(global::app.type.item.@this value)
+    {
+        if (value is @this self) return self;
+        return value.Clr<object>() switch
+        {
+            System.Guid raw => new @this(raw),
+            string s when System.Guid.TryParse(s.Trim(), out var v) => new @this(v),
+            _ => null,
+        };
+    }
+
+    /// <summary>The ICreate courier face — delegates to the pure core; on decline lands the reason
+    /// on <paramref name="data"/> (a string that didn't parse vs a wrong type).</summary>
+    public static @this? Create(global::app.type.item.@this value, global::app.data.@this data)
+    {
+        if (Create(value) is { } built) return built;
+        data.Fail(value.Clr<object>() is string s
+            ? new global::app.error.Error($"Cannot parse '{s}' as guid — expected a 36-char guid (e.g. 550e8400-e29b-41d4-a716-446655440000).", "GuidParseFailed", 400)
+            : new global::app.error.Error($"Cannot convert {value.Mint().Name} to guid.", "GuidConversionFailed", 400));
+        return null;
+    }
+
     // Both directions are lossless; the wrapper owns its conversions. Guid is a
     // value type so `g == null` is unambiguous (matches only @this==@this).
     public static implicit operator System.Guid(@this g) => g.Value;
