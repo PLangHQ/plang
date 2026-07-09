@@ -35,7 +35,7 @@ The broken `plang build` was the trigger (it exposed the duplication), and its f
 
 - Run the C# suite, **record the red count** (the baseline every later stage is measured against — no surprises, no rebuild-from-base to find out).
 - Write the **unit test pinning the build error** (the clr(json)→`Actions` write throw) — red now, green after Stage 1.
-- Mark the full removal list `[Obsolete]` (`convert.OfStatic`/`Of`/`Invoke`/`Discover`, `TryConvert`, `type.Convert(value)`, `type.Build`, `SetValueOnObject`, the goal/actions ITypeReaders, `GoalReadOptions`, `Describe()`/`StepActions`/`BuildTypeEntries`, `type.catalog.@this`, `item.OutputTagged`, number's switch family). If a project treats warnings as errors, coder picks the suppression story.
+- Mark the full removal list `[Obsolete]` (`convert.OfStatic`/`Of`/`Invoke`/`Discover`, `TryConvert`, `type.Convert(value)`, `type.Build`, `SetValueOnObject`, the goal/actions ITypeReaders, `GoalReadOptions`, `Describe()`/`StepActions`/`BuildTypeEntries`, `goal.getTypes`, `type.catalog.@this`, `item.OutputTagged`, number's switch family). If a project treats warnings as errors, coder picks the suppression story.
 
 ## Stage 1 — `pr-graph-hosts`
 
@@ -64,7 +64,7 @@ Note: `SetValueOnObject` only *shrinks* here (the clr arm covers host writes); f
 - **Entity `Create` delegate** on `type.@this` (model #6). `OwnerOf`/`_ownership` survives as the private index behind `type.Create(raw)` and the delegate bind — not a public door.
 - **Delete:** `convert.OfStatic`/`Of`/`Invoke`/`Discover`; `type.Convert(value)` (`type/this.cs:187`); `TryConvert`'s construction stages (`catalog/Conversion.cs:128-522` — primitive `ChangeType` lowering stays in `item.Clr`; verify callers `type/this.cs:602`, `setting/this.cs:102` route through `Create` first); **`SetValueOnObject`, the whole method** — every write navigates to the target and calls its kind's `Set`.
 - **`data.Convert(kind)` becomes real:** `kind.behavior.Convert` gains converters; a kind whose transform is "build my type" delegates to the entity `Create`.
-- **`goal.getTypes` List-lower — same throw as the blocker, DIFFERENT door for the fix** (coder review v3 #5, verified): the error text is verbatim the `ClrConvert` terminal throw (`item/this.cs:364`), but the target is `'this'` — a plang **wrapper** (`list.@this`), i.e. this caller asked LOWER to CONVERT into an *item*. The blocker's fix (`Kind.Clr`, CLR targets) does NOT cover it. Fix here: find the call site that routes "native `List` → `list<dict>`" through `Clr` and reroute it through `Create`. Own line, own test.
+- **`goal.getTypes` is `[Obsolete]` — it goes away** (settled with Ingi; corrects my earlier "own line, own test" fold of coder review v3 #5). It's a string-typed shadow of the type system: `dict<string,string>` of type *names*, a regex parsing `"list<goal>"` for the element type, `GetTypeNameStatic` over reflected `Run()` returns — every piece now has a model owner (`app.type["name"]` entities, the entity answering its element, the Stage-4 action view answering return types). Its List-lower crash *is* the same `ClrConvert` terminal throw as the blocker (verified, but the target is a plang wrapper — a convert-via-LOWER mis-route); **keep-alive only**: the Create rerouting this stage does incidentally un-crashes it so the builder can proceed. No dedicated investment. Dies at Stage 4, where the compile prompt gets per-step scope types from the views/type entities (the replacement is shaped there — type *entities*, never name strings).
 
 ## Stage 3 — `catalog-removal`
 
