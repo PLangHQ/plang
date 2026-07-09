@@ -1780,3 +1780,26 @@ tackled: do scalars get real kind behaviors that own ChangeType, or inline the t
 ChangeType at each scalar's `.Clr`? NOTE: the current plan explicitly KEEPS item.Clr as
 "the plang→CLR lower exit" — this obpv cleanup is a separate thread (Ingi: "leave it, I
 know about it for later"). Context: app/type/item/this.cs:345.
+
+## 2026-07-09 — Kind-redesign / drop follow-ups (marked in code, collapse after green)
+The item→host drop + kind redesign (behavior merged into kind.@this, one Kind[name|clrType]
+door, kinds under type/<owner>/kind/<k>) landed structurally; these OBP cleanups were carried
+marked to keep the restructure compiling and should be collapsed once the suite is green:
+
+1. **WriteReflected is obpv** (`app/type/kind/this.cs`) — verb+noun name AND a type-switch fork
+   standing in for a value's own self-write. Collapse: a reflected value writes itself via
+   `new Data(name, value, ctx).Output(...)` — Data.Output already emits bare vs {name,type,value}
+   envelope by the writer's format (EmitsSchema), not by value type, so the switch should dissolve.
+
+2. **variable.set canonicalise → fold into the door** (`app/module/variable/set.cs` ~213) —
+   `CanonicaliseKind(type.Kind?.Name)` then re-set is a *late stamp* (kind born non-canonical on a
+   .pr read, fixed after). Move canonicalisation INTO `App.Type.Kind[name]` (the one selection
+   point) so kinds are born canonical everywhere and this block disappears.
+
+3. **Format.TypeFromMime** (Ingi flagged 2026-07-09) — review after the variable.set fix; likely a
+   parallel mime→type late-stamp / resolution worth cleaning through the same owner.
+
+4. **IsTagAware is obpv** (`app/channel/serializer/filter/Tagged.cs`) — `IsX` is fine but "TagAware"
+   isn't a clean boolean question, and the four `IsDefined(Out/Store/Sensitive/Masked)` checks are
+   DUPLICATED (this method + `Tagged.Compute`). Bring the attribute checks together — a `HasAttribute`
+   helper, or the tag set owning its own "is this type tagged" answer. The duplication is the tell.
