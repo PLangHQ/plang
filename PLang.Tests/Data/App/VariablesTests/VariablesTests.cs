@@ -910,9 +910,10 @@ public class VariablesAccessorTests : System.IAsyncDisposable
         var newStep = new global::app.goal.steps.step.@this { Index = 0, Text = "updated" };
         stack.Set("goal.Steps[0]", newStep);
 
-        // Goal should still be a Goal, not a dictionary
+        // Goal should still be a Goal, not a dictionary — it rides as its clr carrier
+        // (Peek→self), the goal reachable through the carrier's own door.
         var retrieved = await stack.Get("goal");
-        await Assert.That((await retrieved.Value())).IsTypeOf<global::app.goal.@this>();
+        await Assert.That((await retrieved.Value())).IsTypeOf<global::app.type.clr.@this>();
 
         // Sub-goal names should survive
         var subName = await stack.Get("goal.Goals[0].Name");
@@ -925,18 +926,19 @@ public class VariablesAccessorTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task Set_GoalAsDataSubclass_StoredDirectly()
+    public async Task Set_GoalRidesAsClrCarrier_PreservingIdentity()
     {
         var stack = new Variables(_app.User.Context);
         var goal = new global::app.goal.@this { Name = "MyGoal" };
         stack.Set("goal", goal);
 
-        // Should get a Data wrapping the Goal back
+        // A goal is a host, so it rides as a clr carrier (Peek→self): the Data holds the carrier.
         var retrieved = await stack.Get("goal");
         await Assert.That(retrieved).IsNotNull();
 
-        // The retrieved Data's Value should BE the Goal (same object)
-        await Assert.That(object.ReferenceEquals((retrieved!.Peek()), goal)).IsTrue();
+        // The carrier's inner value IS the same goal object — identity is preserved.
+        var carrier = (global::app.type.clr.@this)retrieved!.Peek()!;
+        await Assert.That(object.ReferenceEquals(carrier.Value, goal)).IsTrue();
     }
 
     // ResolveDeep was deleted in v4 (resolution lives in data.Value<T>() per call).

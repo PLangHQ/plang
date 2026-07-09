@@ -16,7 +16,9 @@ public sealed class @this : global::app.type.kind.@this
 
     public override System.Type? ClrForm => typeof(System.Collections.IDictionary);
 
-    public override (bool, object?) Descend(object obj, string key, global::app.actor.context.@this ctx)
+    // A dict keys by name whether the segment was `[k]` or `.k` — a dict key can be numeric,
+    // so isIndex carries no extra meaning here.
+    public override (bool, object?) Descend(object obj, string key, bool isIndex, global::app.actor.context.@this ctx)
     {
         var dict = (System.Collections.IDictionary)obj;
         return dict.Contains(key) ? (true, dict[key]) : (false, null);

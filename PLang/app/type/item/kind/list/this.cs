@@ -16,10 +16,14 @@ public sealed class @this : global::app.type.kind.@this
     // door prefers more-derived claims, so IDictionary → dict wins over IEnumerable → list.
     public override System.Type? ClrForm => typeof(System.Collections.IEnumerable);
 
-    // Index-descend is only defined on an IList (a bare sequence has no positional access).
-    public override (bool, object?) Descend(object obj, string key, global::app.actor.context.@this ctx)
-        => obj is System.Collections.IList l && int.TryParse(key, out var i) && i >= 0 && i < l.Count
-            ? (true, l[i]) : (false, null);
+    // Index (`[0]`) → the element at that position (an IList has positional access; a bare
+    // sequence does not). A member (`.Count`, `.Length`) → a real property on the host's class,
+    // which the * kind reflects — the host declares it, the grammar said "named, not positional".
+    public override (bool, object?) Descend(object obj, string key, bool isIndex, global::app.actor.context.@this ctx)
+        => isIndex
+            ? obj is System.Collections.IList l && int.TryParse(key, out var i) && i >= 0 && i < l.Count
+                ? (true, l[i]) : (false, null)
+            : ctx.App.Type.Kind["*"].Descend(obj, key, isIndex, ctx);
 
     public override System.Collections.Generic.IEnumerable<global::app.data.@this> Enumerate(
         object obj, global::app.actor.context.@this ctx)

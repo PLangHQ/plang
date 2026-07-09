@@ -14,7 +14,7 @@ public sealed class @this : global::app.type.kind.@this
     // Descend one property. Bottom-up + DeclaredOnly + IgnoreCase so a shadowing derived
     // property wins and GetProperty never throws Ambiguous. List index / dict key are NOT here —
     // the list/dict kinds own those; navigation re-derives to them per hop.
-    public override (bool, object?) Descend(object obj, string key, global::app.actor.context.@this ctx)
+    public override (bool, object?) Descend(object obj, string key, bool isIndex, global::app.actor.context.@this ctx)
     {
         System.Reflection.PropertyInfo? prop = null;
         for (var t = obj.GetType(); t != null && prop == null; t = t.BaseType)

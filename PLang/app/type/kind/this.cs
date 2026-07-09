@@ -71,10 +71,15 @@ public class @this
         foreach (var seg in path.Segments)
         {
             if (node is null) return ctx.NotFound(seg.Raw);        // can't descend into null
+            // The grammar carries the ask: an Index segment (`[0]`, `[%i%]`) wants a positional
+            // answer; a Member segment (`.Count`, `.Name`) wants a named one. A kind that owns
+            // both faces (a sequence host: element vs .Count) needs the distinction, so it rides
+            // into Descend — the resolved key AND whether it came from an index bracket.
+            bool isIndex = seg is global::app.variable.path.Segment.Index;
             string key = seg is global::app.variable.path.Segment.Index i
                 ? await i.ResolveKey(ctx.Variable)                 // the ONE bracket-variable resolver
                 : ((global::app.variable.path.Segment.Member)seg).Name;
-            var (found, next) = kind.Descend(node, key, ctx);
+            var (found, next) = kind.Descend(node, key, isIndex, ctx);
             if (!found) return ctx.NotFound(seg.Raw);
             node = next;
             if (node is not null) kind = ctx.App.Type.Kind[node.GetType()];   // re-derive for the next hop
@@ -83,9 +88,11 @@ public class @this
     }
 
     /// <summary>Descend one level: the value at <paramref name="key"/> on <paramref name="obj"/>,
-    /// or <c>(false, null)</c> when absent. The list kind indexes, the dict kind keys, the
-    /// <c>*</c> kind reflects a property — each owns its own descend.</summary>
-    public virtual (bool found, object? node) Descend(object obj, string key, global::app.actor.context.@this ctx)
+    /// or <c>(false, null)</c> when absent. <paramref name="isIndex"/> is true when the key came
+    /// from an index bracket (`[0]`) rather than a member dot (`.Count`) — a sequence host answers
+    /// positional vs named differently. The list kind indexes, the dict kind keys, the <c>*</c>
+    /// kind reflects a property — each owns its own descend.</summary>
+    public virtual (bool found, object? node) Descend(object obj, string key, bool isIndex, global::app.actor.context.@this ctx)
         => throw new System.NotSupportedException($"kind '{Name}' is not navigable");
 
     /// <summary>Build the child <c>Data</c> for a landed node. Default: a node that already IS

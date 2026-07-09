@@ -376,7 +376,10 @@ public sealed class @this
             }
             Add(primary);
 
-            return readResult.Context.Ok(primary);
+            // Answer the clr<goal> shape the read produced — callers unwrap `as clr<goal>`
+            // (goal rides as its carrier). readResult already holds it materialized; the wiring
+            // above mutated `primary`, which IS its inner object, so the changes are visible.
+            return readResult;
         }
         catch (Exception ex)
         {

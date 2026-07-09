@@ -58,28 +58,32 @@ public sealed partial class @this
     {
         if (await AuthGate(Verb.Read) is { } early) return early;
 
+        // The declared {type, kind} the extension's mime stamps ({goal} for .pr,
+        // {object, json} for .json, {text} for .txt) — the SAME derivation build-time
+        // file.read.Build() uses, so build and runtime agree. Only the type is stamped
+        // here; materialization is deferred (see below).
+        var mime = Context.App.Format.Mime(Extension);
+        var type = Context.App.Format.TypeFromMime(mime);
+        type.Context = Context;
 
-        // During build: use snapshotted .pr content to avoid reading overwritten files.
-        // TODO(build-mode-inversion): build mode sniffed from a foreign layer (the file
-        // op shouldn't know build mode exists) — invert to a build-born .pr read decorator (plan §6.D).
+        // The serializer whose encoding these bytes are in — a registered mime reads
+        // structured via its own reader; an unregistered one (a .pr, an image) reads
+        // through the value reader (the text serializer). The SAME selection the channel
+        // boundary makes in Channel.StampValue, so file and channel reads agree on one reader.
+        var serializers = Context.Actor?.Channel.Serializers;
+        var serializer = serializers?.GetByType(mime) ?? serializers?.Text;
+        var format = serializer?.Type ?? "application/plang";
+
+        // During build: a .pr may be mid-rewrite on disk — read the snapshotted bytes.
+        // Still deferred: the source holds the raw form under {goal}; .Value() runs the reader.
+        // TODO(build-mode-inversion): build mode sniffed from a foreign layer (the file op
+        // shouldn't know build mode exists) — invert to a build-born .pr read decorator (plan §6.D).
         var build = Context.App.Build;
         if (build != null && Extension == ".pr")
         {
             var snapshot = build.GetPrSnapshot(Absolute);
             if (snapshot != null)
-            {
-                var mime = Context.App.Format.Mime(Extension);
-                var snapshotType = Context.App.Format.TypeFromMime(mime);
-                snapshotType.Context = Context;
-                var snapshotClr = global::app.type.catalog.@this.ClrFromMime(mime);
-                if (snapshotClr != null && snapshotClr != typeof(string))
-                {
-                    var converted = Context.App.Type.Convert(snapshot, snapshotClr, Context).Peek();
-                    if (converted != null)
-                        return new data.@this(Raw, converted, snapshotType, context: Context);
-                }
-                return new data.@this(Raw, snapshot, snapshotType, context: Context);
-            }
+                return global::app.data.@this.FromRaw(snapshot, type, Context, Raw, format);
         }
 
         if (!System.IO.File.Exists(Absolute))
@@ -87,44 +91,18 @@ public sealed partial class @this
 
         try
         {
-            var mime = Context.App.Format.Mime(Extension);
-            // Structured {name, kind} stamp — the SAME derivation the build-time
-            // file.read.Build() calls, so build and runtime agree. The name is
-            // the high-level type (text/object/image/...); binary-vs-text is a
-            // separate decision keyed off the materialized CLR, below.
-            var type = Context.App.Format.TypeFromMime(mime);
-            type.Context = Context;
-            var materialized = global::app.type.catalog.@this.ClrFromMime(mime);
-            object content;
+            var bytes = await System.IO.File.ReadAllBytesAsync(Absolute);
 
-            if (materialized == typeof(byte[]))
-            {
-                content = await System.IO.File.ReadAllBytesAsync(Absolute);
-            }
-            else
-            {
-                var text = await System.IO.File.ReadAllTextAsync(Absolute);
+            // Record the .pr in the build snapshot cache so a later read this build sees
+            // the pre-overwrite content. Perimeter decode — a string only appears here.
+            // TODO(build-mode-inversion): foreign-layer build sniff — invert (plan §6.D).
+            if (build != null && Extension == ".pr")
+                build.SnapshotPrFile(Absolute, System.Text.Encoding.UTF8.GetString(bytes));
 
-                // TODO(build-mode-inversion): foreign-layer build sniff — invert (plan §6.D).
-                var buildSnap = Context.App.Build;
-                if (buildSnap != null && Extension == ".pr")
-                    buildSnap.SnapshotPrFile(Absolute, text);
-
-                if (materialized != null && materialized != typeof(string))
-                {
-                    // Pass Context so the per-call options bag uses a Context-
-                    // bound PathJsonConverter — Path fields inside the result
-                    // (Goal.Path, GoalCall.PrPath, ...) land fully wired.
-                    var converted = Context.App.Type.Convert(text, materialized, Context).Peek();
-                    content = (object?)converted ?? text;
-                }
-                else
-                {
-                    content = text;
-                }
-            }
-
-            return new data.@this(Raw, content, type, context: Context);
+            // Deferred: the source holds the raw bytes under their declared {type, kind};
+            // the parse runs through the ONE reader on first touch (.Value()) — a .pr → the
+            // goal reader → clr<goal>, a .json → the json reader → clr(json). No eager convert.
+            return global::app.data.@this.FromRaw(bytes, type, Context, Raw, format);
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {

@@ -16,7 +16,9 @@ public sealed class @this : global::app.type.kind.@this
 
     public override System.Type? ClrForm => typeof(JsonElement);
 
-    public override (bool, object?) Descend(object obj, string key, global::app.actor.context.@this ctx)
+    // json self-dispatches on the element's ValueKind (object → property, array → index), so the
+    // grammar's isIndex adds nothing here.
+    public override (bool, object?) Descend(object obj, string key, bool isIndex, global::app.actor.context.@this ctx)
     {
         var e = (JsonElement)obj;
         if (e.ValueKind == JsonValueKind.Object && e.TryGetProperty(key, out var byName))
