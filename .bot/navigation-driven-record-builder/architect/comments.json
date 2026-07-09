@@ -6,7 +6,7 @@
       "text": "we dont need this, so yes, the builder was failing and it´s the reason why we started this branch, but the main reason for this branch is because we are doing the same thing in 2,3,4 different ways. the error we had with the build should be gone after this branch, doing ' cd Tests && plang --test' will never work as all those things need to rebuild and more. so builder-green is wrong thing. The main goal of this branch is to remove those 4 different ways of doing things with the type",
       "anchor": "## Stage 1 — `builder-green`",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-07-09T11:09:25",
       "drifted": true
@@ -17,7 +17,7 @@
       "text": "Settled (discussed): goal restated — 'we do the same thing 2–4 ways; make it one way'; builder fix is a consequence. builder-green stage dropped; its fixes distributed (data/reader routing + *-kind Set/Read → Stage 1 hosts; getTypes → Stage 2). Verification = C# suite vs a RECORDED baseline (coder's first step: run the suite, write the number down), a unit test pinning the build error, the Sanity plang build progressing past it (next error expected, not failure). Your [Obsolete] mechanic added: removal list marked at Stage 0 — remaining callers show as live compiler warnings; Stage 5 = the sweep (scan, delete, survivors stay marked = known findable debt).",
       "anchor": "## Stage 0 — baseline + `[Obsolete]` marking",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "47c2d2264b",
       "ts": "2026-07-09T12:45:00",
       "drifted": false
@@ -28,7 +28,7 @@
       "text": "it´s all good we are deleting Decribe() and such, but what replaces it? the fluid templates, how and where should they be defined?",
       "anchor": "- `app.module.list : list<module>`; `module.Actions : list<action>` (the module-tree view — same action, class-level zoom); `action.Properties : list<type>` keyed by property name. **Views over the handler classes** — reflection once, at the `action` view leaf (unwrap `Data<T>`/`[Code]T` → plang type); consumers read `type.Name`, never a `System.Type`, never `GetTypeName` at a call site.",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-07-09T11:10:29",
       "drifted": false
@@ -39,7 +39,7 @@
       "text": "Settled (agreed): Fluid .md templates under os/system/builder/templates/ (e.g. modules.md) — part of the builder app, user-editable. Rendered by the builder's own goals: get all modules → %modules%, ui.render 'templates/modules.md' → %doc%. Structure from the list<module> views; prose from the existing os/system/modules/<module>/*.{description,notes,examples}.md — the template weaves both. Now in Stage 4.",
       "anchor": "## Stage 4 — `module-discovery`",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "06adff25e0",
       "ts": "2026-07-09T12:45:00",
       "drifted": false
@@ -50,7 +50,7 @@
       "text": "not a seperate branch, we dont want any 2 different ways of doing things read feedback_obp_never_diverge.md from your memory.",
       "anchor": "Number's precision switch family (`CoerceToKind` + serializer read/write switches + `FromDoubleAsKind`) dissolves into `type[number].kind[<k>]`, each precision owning its build. **Kind = storage type** (declaration → source → default `long`, a setting). **Precision = decimal places, edge-only** (max in every calculation; round only at output or explicit request). Overflow/mix policy (`Overflow.Promote`/`Precision.Error`) already settings-carried — stays. Full model: memory \"The number model\".",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-07-09T11:11:04",
       "drifted": false
@@ -61,7 +61,7 @@
       "text": "Folded: number's kinds dissolve INSIDE Stage 2 (create-unification), in the same move as the Convert→Create relocation — never a carried-over switch, no follow-on branch. My 'defer it' was the exact divergence trap my own memory rule names; corrected in plan + draft.",
       "anchor": "## Stage 2 — `create-unification` (items only)",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "60300190db",
       "ts": "2026-07-09T12:45:00",
       "drifted": false
@@ -72,7 +72,7 @@
       "text": "type.Build is an example I believe of doing the same thing in two ways, arent we only having .Create now?",
       "anchor": "- `app/data/reader/this.cs` — only the `:79-80` routing line changes (Stage 1). `%var%`/template/signing byte-identical throughout.",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-07-09T11:11:36",
       "drifted": false
@@ -83,7 +83,7 @@
       "text": "Settled (discussed, your call): type.Build dies entirely — the flow becomes FromRaw → type.Create, with the defer rule as the entity door's FIRST branch: wire-raw (string/bytes) → lazy source (parse on first touch; laziness/verbatim passthrough intact); already-a-value → the type's Create; a variable name → the variable type's own Create (Resolve). One construction door. In Stage 2 + the code-draft entity-door snippet.",
       "anchor": "## Stage 2 — `create-unification` (items only)",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "85355b5dd7",
       "ts": "2026-07-09T12:45:00",
       "drifted": false
@@ -96,7 +96,7 @@
       "text": "What is Take there? if you are going to make up a method, I want to see it",
       "anchor": "```csharp",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-07-09T11:12:13",
       "drifted": false
@@ -107,7 +107,7 @@
       "text": "Fixed — Take replaced with Fit, shown in full in the draft: already-fits → pass through; clr(json) → the *-kind Read (json → host graph); a plang value → lowers ITSELF (iv.Clr(slot)); raw CLR → let SetValue throw honestly. Name and shape are yours to veto — it is a new method.",
       "anchor": "static object? Fit(object? value, System.Type slot, context ctx)",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "70ef1c3e93",
       "ts": "2026-07-09T12:45:00",
       "drifted": false
@@ -118,7 +118,7 @@
       "text": "Vetoed and settled (discussed): the extraction itself was the mistake, not the name — a method holds its own logic, extract only when shared (rule saved to memory). Fit deleted; Set is one line: value.Clr(prop.PropertyType) — the value lowers itself. The `value is clr { Value: JsonElement }` branch was Rule #7 (courier opening the carrier); dispatch moved inside: clr.Clr(target) → Kind.Clr (new kind verb) — the json kind materializes its content into the CLR shape. Per the original blocker's own error text: 'the type must own this Clr projection' — it now does.",
       "anchor": "prop.SetValue(host, value is item.@this iv ? iv.Clr(prop.PropertyType) : value);",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "70ef1c3e93",
       "ts": "2026-07-09T13:10:00",
       "drifted": false
@@ -129,7 +129,7 @@
       "text": "KindFromName obpv (noun+verb) something is not right here, I can feel it, also KindFromName(Build(s)) is a bit something wrong",
       "anchor": "```csharp",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-07-09T11:21:04",
       "drifted": false
@@ -140,7 +140,7 @@
       "text": "Your feel was right, and deeper than the name: that snippet showed number's OLD body — the switch family we ourselves settled dissolves in Stage 2. Snippet replaced with the thin dispatcher: resolve storage kind (declared → source's own / literal sniff → default long from a setting) → kind.Build. KindFromName, Build(s), the NumberKind enum, CoerceToKind, both serializer switches, FromDoubleAsKind — all die with the family.",
       "anchor": "// number/this.cs — Stage 2 lands number ALREADY kind-owned",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "9c355edd3c",
       "ts": "2026-07-09T12:45:00",
       "drifted": false
@@ -151,7 +151,7 @@
       "text": "maybe mark this as some todo/temp thingy, it's mostly just proof of concept, we never want to see something like this source.Type?.Kind?.Name is \"md\" in the production code, but we will allow it now since it's just proof of concept",
       "anchor": "```csharp",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-07-09T11:26:04",
       "drifted": false
@@ -162,7 +162,7 @@
       "text": "Marked: ⚠ PROOF-OF-CONCEPT ONLY header on the html converter — the Kind?.Name string-compare must not reach production; the real dispatch shape is designed when kind converters land (TODO on that stage).",
       "anchor": "// ⚠ PROOF-OF-CONCEPT ONLY",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "88e76387f5",
       "ts": "2026-07-09T12:45:00",
       "drifted": false

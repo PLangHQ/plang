@@ -89,7 +89,7 @@ Note: `SetValueOnObject` only *shrinks* here (the clr arm covers host writes); f
 - `app/data/reader/this.cs` — only the `:79-80` routing line changes (Stage 1). `%var%`/template/signing byte-identical throughout.
 - `item.Clr`/`ClrConvert` — the plang→CLR lower exit (a different direction). `dict.Clr`'s STJ for genuine map lowering; `list.Clr`.
 - The **deferral rule** (wire-raw → lazy source; variable name → variable) — survives as the *first branch of the entity `type.Create`* (Stage 2). `type.Build` the method dies.
-- `type.Convert(string)`/`FromWire` — wire reconstruction (snapshot/crypto); verify callers in Stage 3, likely stays.
+- `type.Convert(string)`/`FromWire` — wire reconstruction (snapshot/crypto); verify callers in Stage 2, likely stays.
 - `kind.Navigate`/`Enumerate`/`Load`/`Output` — untouched (Set/Read are additions).
 - `Value<T>()` and the `ICreate` signature — **unchanged; `Create` stays sync.**
 - `variable.set`'s three strict-enforcement moments (build / run / materialization).
