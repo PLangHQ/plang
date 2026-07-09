@@ -11,8 +11,8 @@ Notes are split across the topic docs below. Each section title maps to its doc 
 - [`type-system.md`](type-system.md) — Type System Notes
 - [`bans.md`](bans.md) — Production Guardrails — Bans & Limits
 - [`code-modules.md`](code-modules.md) — app.module.code — Pluggable Implementations
-- [`obp-smells.md`](obp-smells.md) — OBP naming, shape smells (worked examples), variant design
-- [`object_pattern_formal.md`](object_pattern_formal.md) — the OBP law (philosophy + 9 rules)
+- [`obp-smells.md`](obp-smells.md) — OBP named smell catalog (worked examples), naming tells, variant design
+- [`object_pattern_formal.md`](object_pattern_formal.md) — the OBP pattern (philosophy + the 3 laws + the rules)
 
 ## Section → doc
 - Folder Structure & Namespaces → `conventions.md`

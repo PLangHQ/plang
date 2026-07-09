@@ -51,7 +51,7 @@ THE SNAPSHOT SYSTEM — where everything lives
 ## The one asymmetry worth knowing
 
 **Write is format-agnostic** (renderers / `IWriter`, the OBP leaf-serializer of
-Rule #9). **Read is still JSON-coupled** (`Io` parses JSON nodes). Making read
+the "data rides sealed" rule). **Read is still JSON-coupled** (`Io` parses JSON nodes). Making read
 format-agnostic too — go through the channel's reader into a generic tree, then
 rebuild — is the remaining half of the `Io` rework, tracked in `todos.md`.
 

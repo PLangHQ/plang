@@ -36,7 +36,7 @@ Higher-level PLang values (`number`, `image`, `code`, `path`, `datetime`, `durat
 
 **Runtime DLL loading extends the catalog.** `code.load` scans the loaded assembly for `[PlangType]` classes and `ITypeRenderer` implementations as well as `ICode`. Runtime registrations outrank generator-emitted ones at resolution + rendering, but cannot rewrite what the source generator already baked into compiled handler slots and shipped `.pr` stamps. Five names are **sealed** against shadowing (`identity`, `signature`, `signedoperation`, `callback`, `channel`) because their bodies are signing- or transport-load-bearing — attempting to register one fails with `TypeLoadCollision`. `Loader.SealedNames` enforces this at every register site.
 
-**Couriers never read `.Value`.** Variable memory, callstack, channel routing, signing, the wire envelope all key on `Data.Type` (and `Data.Kind` when relevant). Only **leaf actions** (handlers declaring `Data<T>` parameters) and **leaf serializers** (the per-(type, format) renderer files) get to dereference `Data.Value`. This is [OBP Rule #9](object_pattern_formal.md#9-only-leaves-touch-datavalue) — and the seventh entry in `/CLAUDE.md`'s OBP Smell Checklist.
+**Couriers never read `.Value`.** Variable memory, callstack, channel routing, signing, the wire envelope all key on `Data.Type` (and `Data.Kind` when relevant). Only **leaf actions** (handlers declaring `Data<T>` parameters) and **leaf serializers** (the per-(type, format) renderer files) get to dereference `Data.Value`. This is the OBP ["data rides sealed" rule](object_pattern_formal.md) — the *broken seal* smell in `/CLAUDE.md`'s OBP list.
 
 Full design (movie, build-vs-runtime trace, dispatch mechanism): the architect plan on the `plang-types` branch — `.bot/plang-types/architect/plan.md` and the seven stage files alongside.
 
@@ -152,7 +152,7 @@ the action registry; the property surface is `app.Module` (PascalCase).
 `app.Module.Schema.Build()` produces the LLM action catalog snapshot.
 
 The full token map for the rename (plural → singular) lives in
-`app-tree.md`; the canonical OBP rule (Rule #1 — Public mutable
+`app-tree.md`; the canonical OBP smell (*naked collection* — public mutable
 collection with rules enforced from outside) is what was being fixed.
 
 ## Producer-stamping invariant — `Data.Type` propagation
@@ -283,8 +283,7 @@ a clean `EvaluationError` rather than an unhandled exception.
 **Don't add type-specific cases to `Compare` itself.** A new value type
 that has a natural order implements `IOrderableValue`; the mediator
 dispatches automatically. Adding an `is MyNewType` arm to `Compare` is
-the smell — it violates OBP Rule #9 (behavior belongs on the value, not
-a dispatcher).
+the smell — a *fork* in a dispatcher; behavior belongs on the value.
 
 ## List chunk/row model and `IListLeaf`
 

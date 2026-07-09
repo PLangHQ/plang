@@ -26,20 +26,31 @@
 
 ## OBP Shape Smells (audit before writing or reviewing C#)
 
-When reading or writing C#, run this checklist. Each item is a yes/no question; any "yes" means the shape is wrong and the fix is structural, not a line edit.
+When reading or writing C#, check the diff against the named smells. A hit means the shape is wrong and the fix is structural, not a line edit. Names are canonical — cite findings by name; worked examples and grep tells live in `Documentation/v0.2/obp-smells.md`.
 
-1. **Public mutable collection with rules enforced from outside.** A type exposes `public List<T>` / `Dictionary<K,V>` / `HashSet<T>` and the `Add` / `Remove` / locking / eviction lives in another file. The collection should become its own `@this` type with private lock and `Add(...)` / `IReadOnlyList<T>` surface.
-2. **Cross-file lock target.** `lock (other.X)` taken from outside `other`'s class — the type that owns the data isn't the type that owns the discipline.
-3. **Same logical thing stored twice across types** (overlapping semantics, similar names, same element type, same role).
-4. **Allocate-here / mutate-there / clean-up-elsewhere.** One collection's lifecycle split across three files.
-5. **Producer hands back raw; consumers transform identically.** A property is exposed in one shape and most callers immediately apply the same operation to make it usable — `obj.Path + "/"`, `obj.Path.TrimStart('/')`, `obj.Name.ToLowerInvariant()`, `Path.GetDirectoryName(obj.Path)`, `obj.Url.Trim().TrimEnd('/')`. Every fix to that transform now has N call sites; one consumer forgetting it produces a subtle divergence bug. The discipline (separator, case, trimming, parent-derivation, whatever it is) belongs on the owner: rename the existing property or add a sibling that returns the form callers actually use (`Goal.RelativePath` instead of every site calling `.Path.TrimStart('/')`; `File.DirectoryName` instead of every site doing `LastIndexOfAny`). Grep for the literal transform on the property name — `\.{PropertyName}\.(TrimStart|TrimEnd|ToLower|ToUpper|Replace|GetDirectoryName|Substring|Split)` — three or more hits means the property is shaped wrong. Trivial single-char appends (`+ "/"`) count too.
-6. **Holds a reference AND a flat copy of properties reachable through it.** A class declares `Foo Foo { get; }` (or `Foo? Foo`) and *also* scalar fields whose values are all reachable as `Foo.X`, `Foo.Y`, `Foo.Z`. The flat copy costs more memory than the 8-byte reference and creates two views of the same data that can silently drift: when the underlying `Foo` is rebuilt or mutated, the flat fields stale because no one updates them. Construction sites also double-pay — every place that builds the outer class has to remember to populate both the reference and every flat field, and forgetting one is a subtle bug that compiles. Detection: read every scalar property on a class that has a reference field, and ask *"is this `Foo.X`?"* If yes for three or more fields, the flat fields are the smell. Fix by deleting the flat fields and routing consumers through the reference (`file.Goal?.Path` instead of `file.Path`). When the outer class needs to survive `Foo` being null (the .pr is missing, the discovery failed) keep a *single* "summary" field that captures only what's needed for the failure path — never a parallel mirror of everything `Foo` exposes.
-7. **Courier reaches into `Data.Value`.** A relay layer (a handler that forwards Data, variable memory, callstack, channel routing, signing, the wire envelope) does `data.Value as X` or `if (data.Value is X)` to branch on the contained value. The code is opening a package that should stay closed mid-flight. Only leaf actions (handlers declaring a typed `Data<T>` parameter) and leaf serializers (the value's own per-(type, format) renderer file) get to read `.Value`. Detection: grep for `\.Value (is|as|switch)` outside files that declare `Data<T>` parameters. Full rule: `Documentation/v0.2/object_pattern_formal.md` Rule #9 — "Only leaves touch `Data.Value`".
-8. **Decompose a value at the call site (even at a leaf).** A handler is allowed to read its own typed value — but it must not chop it into primitives to operate on it. `number.Round(await Value.Value(), await Decimals.Value())` and `Resize((await A.Value()).Bytes, w, h)` extract operands and hand raw fields to a static/free helper. The value owns its operations: call the op on the carrier and pass other operands as **whole carriers** — `await Value.Round(Decimals)`, `await A.Add(B)`, `await A.Resize(Width, Height)` — never `Op(a.Value, b.Value)`. The tell: you `await X.Value()` an operand only to pass the raw inside to something else. If you opened the box to pass what was inside, pass the box. This is Rule #2 (don't decompose into parameters) + Rule #4 (keep the reference) at the value layer; full rule: `Documentation/v0.2/object_pattern_formal.md` Rule #9.
+**Shape:**
+- **naked collection** — bare `List<T>`/`Dictionary`/`HashSet` as public state; its add/lock/evict discipline lives in other files. Fix: its own `X.list` type (private backing, own `Add`, `IReadOnlyList<T>` surface), exposed as a **singular** property naming the concept (`callStack.Error`).
+- **middleman** — a parent proxying what it owns (`AddError(...)` wrapping `Error.Add(...)`). Expose the node; domain operations belong on the collection type, never on the parent.
+- **cross-file lock** — `lock (other.X)` taken from outside `other`'s class; the type that owns the data isn't the type that owns the discipline.
+- **stored twice** — the same logical thing held in two types with overlapping meaning (similar names, same element type, same role). One `X.list` under the concept; never a domain word for the container (`trail`, `ErrorLog`).
+- **split lifecycle** — allocate-here / mutate-there / clean-up-elsewhere; one collection's life across three files.
+- **flat copy** — holds a reference AND scalar mirrors of properties reachable through it (`Foo Foo` + `Path`/`Name` copies of `Foo.X`); the mirrors drift and every construction site double-pays. Route through the reference; keep at most one summary field for the null-reference failure path.
+- **raw hand-off** — producer returns raw, every consumer applies the same transform (`.TrimStart('/')`, `.ToLowerInvariant()` at 3+ sites). The discipline belongs on the owner (`Goal.RelativePath`). Grep: `\.{PropertyName}\.(TrimStart|TrimEnd|ToLower|ToUpper|Replace|GetDirectoryName|Substring|Split)`.
+- **stray helper** — `Helper.X(thing)` that should be `thing.X()`; a method that missed its type. Every private static helper in a class is a suspect.
+
+**Value layer:**
+- **broken seal** — a courier (a handler forwarding Data, variable memory, callstack, channel routing, signing, the wire envelope) reads `data.Value as/is X` mid-flight. Only leaves open the package: handlers declaring a typed `Data<T>` slot, and the value's own per-format serializer. Grep: `\.Value (is|as|switch)` outside files declaring `Data<T>` parameters.
+- **opened box** — a leaf cracks carriers into primitives for a helper (`number.Round(await Value.Value(), await Decimals.Value())`). The value owns its operations; operands ride whole: `await Value.Round(Decimals)`, `await A.Resize(Width, Height)`. If you opened the box to pass what was inside, pass the box.
+- **clr leak** — `.Clr` lowering anywhere but a real .NET/3rd-party/storage boundary; high `.Clr` density means a CLR-centric design.
+- **late stamp** — construct-then-stamp (`new X(...) { Context = ... }`, `Context ??=`); context is a private non-nullable field set at construction.
+
+**Design alarms:**
+- **fork** — two execution paths for one operation: behavioral `if`/`switch`, generic fallback beside per-type handlers, type-switch in a registry (push onto the element as a virtual member), optional-override branch.
+- **verb+noun** — any compound name where one half is a verb (`BuildTypeEntries`, `CoerceToKind`, `GetParameters`); only boolean `IsX`/`HasX` are exempt. Never allowed — always diagnostic of an object doing another object's job or proxying what should own itself.
 
 If removing one line of choreography requires editing three files, those three files are one missing type.
 
-Full checklist and worked example: `Documentation/v0.2/good_to_know.md` "OBP Smell Checklist".
+Full catalog with worked examples: `Documentation/v0.2/obp-smells.md`. The pattern (3 laws + rules): `Documentation/v0.2/object_pattern_formal.md`. Audit procedure: `Documentation/v0.2/obp-scan.md`.
 
 ## Source Generator
 - PLang.Generators: netstandard2.0, IIncrementalGenerator
@@ -63,7 +74,7 @@ Full checklist and worked example: `Documentation/v0.2/good_to_know.md` "OBP Sme
 - PLang/Runtime2/Engine/Utility/GoalMapper.cs — maps Building.Model → Runtime2
 - PLang/Runtime2/GlobalUsings.cs — global type aliases for @this classes
 - PLang.Generators/this.cs — source generator entry point (`Discovery/`, `Emission/Action/`, `Emission/Property/{Data,Code}/` underneath)
-- For full OBP details: `Documentation/Runtime2/plang_object_based_pattern.md`
+- For full OBP details: `Documentation/v0.2/object_pattern_formal.md` (3 laws + rules), `Documentation/v0.2/obp-smells.md` (named smell catalog)
 
 ## Build
 - Always run `plang build` without specifying a goal name — it builds everything

@@ -175,3 +175,29 @@ Delete in the cleanup pass unless a near-term consumer is known.
     (no foreign CLR leaf reaches `Normalize` un-born) or a curated allow/deny of reflectable
     types — an architect-level call. Flagged by codeanalyzer v1 (F4, MEDIUM); pre-existing,
     not introduced on `template-stamping-at-read`.
+
+---
+
+## Container names `trail` / `audit` — and a possible *stored twice* across the error collections
+
+**Location:** `PLang/app/error/trail/this.cs` (`error.trail.@this`), `PLang/app/callstack/audit/` (`callstack.audit.@this`), `PLang/app/error/list/this.cs` (`error.list.@this.All`).
+
+**Found-in:** OBP doc-set review with Ingi (2026-07-09), while settling the collection rule.
+
+**Status:** open — audit first, then rename/fold in its own branch.
+
+**The smell:** the settled rule is that a collection type is named `list` under its concept — the concept carries the domain meaning, never the container (`error.list`, not `trail`/`ErrorLog`/`Tracker`). `trail` and `audit` are domain words for containers. Their XML docs claim distinct roles (trail = errors flowing through `error.handle.Wrap`, surviving Pop; audit = errors observed at Call frames), so this may be two views of one concept (*stored twice*) or two genuine concepts with container-word names — the audit decides which.
+
+**The OBP-clean target:** one `error.list` shape per genuine concept, each owning its discipline (the trail's private lock + `IReadOnlyList` surface is already the right shape — only the name and the possible overlap are in question). If trail/audit/All are one run-wide concept, fold to one; if distinct, each becomes a `list` under a concept folder whose *name* carries the distinction.
+
+---
+
+## `Covers` → `Allows` — caller-intent verb rename in permission
+
+**Location:** `PLang/app/type/path/permission/` (`permission/this.cs`, `permission/verb/{Read,Write,Delete,Execute}.cs`).
+
+**Found-in:** OBP doc-set review with Ingi (2026-07-09), naming ruling: a method verb names the caller's intent, not the mechanism (`cache.Get`, not `cache.Resolve`); `Covers` doesn't tell the caller what they get.
+
+**Status:** open — mechanical rename, safe to do inline on any branch already touching permission.
+
+**The OBP-clean target:** `Read.Allows(other)`, `verb.Allows(requested)`, `permission.Allows(path, verb)` — the grant answers "does this allow the request?". `HasAccess` stays (sanctioned `HasX` boolean compound). `Documentation/v0.2/obp-smells.md` variant-design section already documents the target name.

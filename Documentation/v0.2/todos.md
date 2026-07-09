@@ -1035,8 +1035,7 @@ onto the value types (`dict.@this`, `list.@this`, …), then DELETE the whole ex
 navigator subsystem:
 - `INavigator` + `app/variable/navigator/{Dictionary,List,Object}.cs` (per-type logic
   that belongs on the type)
-- `ValueNavigators` (static duplicate of the registry — OBP smell #3, "same set stored
-  twice")
+- `ValueNavigators` (static duplicate of the registry — the OBP *stored twice* smell)
 - `app.Navigator` (`navigator/list/@this`) the instance registry
 The reflection `Object` navigator is the clr fallback — it dies with clr removal (only
 `:item` types exist). Read dispatch (`data/this.Navigation.cs` `GetChildValue`) then
@@ -1517,7 +1516,7 @@ across text/data/item.json/Build/Judge/llm). After Stage 4, revisit:
 **embedded in the signature** (`layer.Identity`) — integrity, not authenticity. A local-write
 adversary can tamper stored data, re-sign with their OWN keypair, and pass. Fix: verify navigates
 its own `Context.Actor.Identity` and asserts `layer.Identity ==` it (no decomposed param — OBP
-Rule #2), reachable now that the read holds `context.Actor`. The bootstrap (loading the root key)
+navigate-don't-pass), reachable now that the read holds `context.Actor`. The bootstrap (loading the root key)
 carries `verify.Root = true` (request state): normal checks run, the actor-identity match is
 skipped; keypair self-consistency (`PublicKey` re-derives from `PrivateKey`) lives in the identity
 provider. Decided on context-never-null, deferred per Ingi (2026-06-30). NOTE: the `%MyIdentity%`

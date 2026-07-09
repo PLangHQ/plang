@@ -360,7 +360,7 @@ A `Read` that fails (malformed json, wrong shape) stamps an `Error` on the Data 
 | uninitialized-parent guard | `app/variable/list/this.cs:275` (`SetValueOnObjectByPath`) | after `parent.ForceMaterialize()` — same check |
 | `target == null` guard | `app/variable/list/this.cs:309` (`SetValueOnObjectByPath`) | set-path on raw-backed parent — same check |
 
-Regression pinned in `PLang.Tests/App/LazyDeserialize/LazyDataTests/MaterialiseErrorPathTests.cs`: `Navigation_OnMalformedJson_SurfacesMaterializeFailed_NotNotFound` — `GetChild("host")` on malformed JSON returns `Error.Key == "MaterializeFailed"` naming the source, not `NotFound`. The companion tests pin the read-time→touch-time deferral and the OBP Rule #9 "courier doesn't see throws" contract.
+Regression pinned in `PLang.Tests/App/LazyDeserialize/LazyDataTests/MaterialiseErrorPathTests.cs`: `Navigation_OnMalformedJson_SurfacesMaterializeFailed_NotNotFound` — `GetChild("host")` on malformed JSON returns `Error.Key == "MaterializeFailed"` naming the source, not `NotFound`. The companion tests pin the read-time→touch-time deferral and the OBP "data rides sealed" contract (couriers don't see throws).
 
 **Behavior change to watch.** Parse errors move from read-time to touch-time. A malformed json file no longer errors at `file.read` — it errors at first navigation (`%cfg.host%`) or `As<T>`. The touch-time error names the source ("failed to read %cfg% as json"). Acceptable, but it relocates *where* a developer sees the failure.
 

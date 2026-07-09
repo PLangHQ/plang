@@ -1,118 +1,103 @@
-# OBP Smells & Worked Examples — the audit reference
+# OBP Smells — the named catalog
 
-The **operational** OBP doc: the worked right/wrong examples and naming tells you check your own diff against. Part of a three-tier set, each with one job:
+The **operational** OBP doc: every violation has a name, and the name is the finding — "this is a *raw hand-off*" is a complete review comment, no lookup needed. Part of a three-doc set, each with one job:
 
-- **Quick checklist** — project `CLAUDE.md` `## OBP Shape Smells`. The terse numbered list, loaded into every bot's context. Run it yes/no on any diff.
-- **This doc** — the examples behind that list: what each smell *looks* like, the naming tells, variant design. On demand.
-- **The law** — `object_pattern_formal.md`. The philosophy + the 9 rules + why. On demand.
+- **Quick list** — project `CLAUDE.md` `## OBP Shape Smells`: the names with one line each, loaded into every bot's context.
+- **This doc** — owns the names and the worked examples: what each smell looks like, the tells, the fix.
+- **The pattern** — [`object_pattern_formal.md`](object_pattern_formal.md): the 3 laws + the rules + why.
 
-If the terse list and this doc ever disagree on wording, the CLAUDE.md list is the canonical statement; this doc owns the examples.
+Smells are named, never numbered. Names carry the diagnosis and can't desync across docs; refer to them in italics by name.
 
 ---
 
 ## Naming — the name is the contract
 
-In OBP **the name IS the contract**. Each property tells you what the object *is*, not what it *does*; you navigate the tree by name and the object takes care of itself. (The rule itself is `object_pattern_formal.md` Rule #3 — this section is the operational tells.)
+The rule itself is in the pattern doc ("The name is the contract"); these are the operational tells.
 
-- **Good names describe the thing:** `app.Goal`, `app.Channel`, `app.FileSystem`, `app.Channel.Serializers` — each says what it manages; you navigate there and call methods. (Property access on `app.@this` stays PascalCase and singular; the *types* are lowercase singular.)
-- **Bad names describe a verb or are too broad:** `IO` is a verb disguised as a noun — it says what it vaguely *does*, not what it *is* (a channel manager). Broad names breed confusion ("filesystem is I/O too, shouldn't it live here?"). Fix: name it what it is and the responsibilities become obvious.
-- **Structures ARE things.** A `Lifecycle` with `.Before`/`.After` IS a lifecycle; `Bindings` with `.Add()`/`.Run()` IS a collection of bindings. Don't rename to `Manager`/`Dispatcher`/`Handler` — those describe behavior, not identity.
-- **Properties are nouns, methods are verbs.** Never put a verb in a property name. `lifecycle.Before` (the before-bindings, a thing), not `lifecycle.Load` (an action). If it needs loading, that's `Phase.Load()`.
+- **Properties and types: one honest noun.** `app.Goal`, `app.Channel`, `app.Cache` — each says what it IS; you navigate there and call methods. Property-shaped knowledge is a property: `Count`, never `GetCount()`.
+- **Methods: one verb naming the caller's intent** — `Open`, `Read`, `Write`, `Close`, `Get`. Never the mechanism: `cache.Get(key)`, not `cache.Resolve(key)` — the caller just wants the thing and doesn't care how it's made.
+- **Boolean questions: `IsX` / `HasX`** — the only sanctioned compound.
+- **Structures ARE things.** A `Lifecycle` with `.Before`/`.After` IS a lifecycle. Don't rename to `Manager`/`Dispatcher`/`Handler` — those describe behavior, not identity.
 
-### The naming tell — verb+noun method names
-
-A method named as a **verb+noun compound** — `BuildTypeEntries`, `GetValidValues`, `GetBuilderTypeNames` — is almost always a smell. Two failure modes:
-
-- **The noun restates the class → you're proxying a collection.** `BuildTypeEntries` on the type list (`app.type.list.@this`) — which already *is* the list of type entries — is a verb handing back a collection the registry should simply *be*. OBP: "Collections are the API; expose the collection, don't proxy it with `Build`/`Get`/`Add`."
-
-  ```csharp
-  // WRONG — verb proxies a collection; "TypeEntries" restates the class
-  public List<type.@this> BuildTypeEntries(module.@this? modules) { ... }
-  var all = app.Type.BuildTypeEntries(null);
-  ```
-
-  The right shape: **the list owns its entries and returns itself; a derived view is its own named member that owns its shaping** — `app.type.entry.list.catalog`, a `catalog` property that knows what to give for "catalog"; an old module-scoped projection becomes *another* named view, not a parameter. A property returns exactly what its name says and does only that work — `Entries` returns entries, `Catalog` returns the catalog. **Name matches work.**
-
-  > Cautionary note: a first-draft "fix" — `Entries => _catalog.Value` — is *also* wrong: it names the property for the raw collection while doing catalog-assembly behind it (work over modules/schemas that aren't the list's own). The smell isn't just the verb; it's the name not matching the work.
-
-- **A `Get`-prefixed twin beside a noun** (`ValidValues` + `GetValidValues`, `BuilderNames` + `GetBuilderTypeNames`) is the same thing exposed twice — smell #4 below. Keep the noun, drop the `Get`-double.
-
-**Rule of thumb: if you can't name it in one clean word, the shape is probably wrong.** Reaching for a verb+noun is the signal to stop and ask — does this behavior belong on the owner? Should the collection be the API? Am I building a middleman?
-
-**Verbs are fine when they do real work.** `HasAccess`, `Covers`, `Resolve`, `Open`, `Read` — all valid; that's how English describes work and the names read like prose. The smell is `GetX`/`IsX` *property-shaped questions* dressed as methods, not verbs in general.
+Everything else compound is the *verb+noun* smell — see the catalog.
 
 ---
 
-## The shape smells — with worked examples
+## The catalog
 
-Run this on any folder that owns state (it's the example-bearing version of CLAUDE.md's list). A "yes" on any item means an OBP type is missing and the fix is structural, not a line edit.
+### Shape — objects & collections
 
-**1. Primitive collection exposed publicly while its mutation discipline lives elsewhere.** `public List<T>`/`Dictionary<K,V>`/`HashSet<T>` whose lock/eviction/snapshot-iteration discipline is enforced from another file.
+**naked collection** — a bare `List<T>`/`Dictionary<K,V>`/`HashSet<T>` exposed as public state while its discipline (add rules, locking, eviction) is enforced from other files.
 
 ```csharp
-public List<IError> Audit { get; } = new();   // on type A
+public List<IError> Audit { get; } = new();     // on type A
 // ...elsewhere on type B...
-lock (something) { stack.Audit.Add(error); }   // discipline lives outside the owner
+lock (something) { stack.Audit.Add(error); }     // discipline lives outside the owner
 ```
 
-Fix: the collection becomes its own type with the lock private and `Add(...)` as a method. The PLang surface (`%log.Count%`, `%log[0].Module%`) keeps working when the type implements `IReadOnlyList<T>`.
+Fix: the collection becomes its own type under the concept — `error/list/this.cs`, type `error.list.@this` — with the backing list and lock private and `Add(...)` as a method. The owner exposes it as a **singular** property (`callStack.Error`); implementing `IReadOnlyList<T>` keeps the PLang surface (`%log.Count%`, `%log[0].Module%`) working. Bare collections are fine as transient locals, private backing fields, and DTO fields at serialization boundaries.
 
-**2. `internal readonly object XLock` exposed only so a sibling can take the lock from outside.** `lock (caller.ChildrenLock)` followed by `caller.Children.Add(call)` is two halves of one responsibility split across files. Fix: lock goes private inside the X type; `Children.Add(call)` encapsulates it.
+**middleman** — a parent proxying what it owns: `callStack.AddError(e)` / `GetErrors()` / `ClearErrors()` wrapping a collection the callers should talk to directly. Expose the node (`callStack.Error.Add(e)`); domain operations belong on the collection type, never on the parent.
 
-**3. Cross-file mutation choreography.** File A allocates, B does `.Add`, C does `.Remove` under A's lock. If you read three files to understand one collection's mutation, the collection wants to be a type.
+**cross-file lock** — `lock (other.X)` taken from outside `other`'s class, including an `internal readonly object XLock` exposed only so a sibling can take it. The type that owns the data isn't the type that owns the discipline. Fix: lock goes private inside the owning type; the mutating method encapsulates it.
 
-**4. Two collections with overlapping semantics in different parents.** If `stack.Audit` and `app.Errors.All` are both "run-wide IError log", they're one concept in two places. Each gets its own *domain-named* type (avoid `ErrorLog`/`Tracker`/`Manager` — structural names, not domain identities; the folder name is the type name, pick a domain word).
+**stored twice** — the same logical thing held in two types with overlapping semantics (similar names, same element type, same role). If `stack.Audit` and `app.Error.List` are both "run-wide error log," they're one concept in two places. Fix: one `X.list` type under the concept — the concept carries the domain meaning, the collection is `list`; never invent a domain word for the container (`trail`, `ErrorLog`, `Tracker`).
 
-**5. Helper that takes a domain object and returns a derived answer.** `ComputeAbsolute(path)`, `CheckPermission(absolute, verb)`, `RenderName(user)` — the domain object owns its own questions. `Helper.X(thing)` almost always wants to be `thing.X()`. The helper is the missing method on the type.
+**split lifecycle** — allocate-here / mutate-there / clean-up-elsewhere: file A allocates, B does `.Add`, C does `.Remove` under A's lock. If you read three files to understand one collection's mutation, the collection wants to be a type.
 
-*Worked example — the leaf that decomposes its own operands.* A leaf action may read its own typed value, but it must not chop the value (or its operands) into primitives for a static helper. `math.round` did exactly that:
+**flat copy** — a class declares `Foo Foo { get; }` *and* scalar fields whose values are all reachable as `Foo.X`, `Foo.Y`, `Foo.Z`. The mirrors cost memory, and they silently drift when `Foo` is rebuilt; every construction site must remember to fill both.
 
-```csharp
-// WRONG — cracks both carriers open, hands raw values to a static op
-public async Task<data.@this<number>> Run() {
-    var n = number.FromObject(await Value.Value());          // re-lift (the slot should be Data<number>)
-    if (n == null) return ...ValidationError("requires a number");  // re-validate what the typed slot guarantees
-    return number.Round(n, (await Decimals.Value())!);       // static Round(value, decimals); operand decomposed
-}
+*Worked example:* `app.tester.Test.@this` declared `Goal? Goal` *plus* `Path`, `PrPath`, `EntryGoalName`, `GoalHash`, `BuilderVersion` — every one reachable through `Goal`. Fix: delete the flat fields, route through `file.Goal?.Path`. Keep one *summary* field (e.g. `StatusReason`) only for the `Goal == null` case — a state the reference can't describe. A serialization DTO or deliberate thread-safe snapshot holding flat copies is fine — document the intent so the roles don't merge.
 
-// RIGHT — type the operand; the number rounds itself; the other operand rides whole
-public async Task<data.@this<number>> Run() => await Value.Round(Decimals);
-```
+**raw hand-off** — the producer hands back raw; consumers transform identically. `obj.Path.TrimStart('/')`, `obj.Name.ToLowerInvariant()`, `obj.Url.Trim().TrimEnd('/')` at three or more call sites: every fix to the transform now has N sites, and one forgetful consumer is a divergence bug. The discipline (separator, case, trimming, parent-derivation) belongs on the owner.
 
-The whole `math/*` module had this shape (`number.Add(await A.Value(), await B.Value(), policy)` etc.) — every action decomposed both operand carriers and called a static `number.Op(a, b)`. The fix is `await A.Add(B, …)`: the value owns the verb, operands pass as whole `Data` carriers. The tell: you `await X.Value()` an operand only to feed the raw inside to something else. If you opened the box to pass what was inside, pass the box. (This is the value-layer face of `object_pattern_formal.md` Rule #9 and CLAUDE.md smell #8.)
+*Worked example:* `step.Goal?.Path?.ToString().TrimStart('/')` paired with `test.Path.TrimStart('/')` across `modules/test/run.cs` and `modules/cache/wrap.cs`. The leading slash comes from `.pr` deserialization; fix it once at the producer (`Goal.RelativePath`) and both sites collapse. Grep: `\.{PropertyName}\.(TrimStart|TrimEnd|ToLower|ToUpper|Replace|GetDirectoryName|Substring|Split)` — three or more hits means the property is shaped wrong. When the raw form IS the point, keep both (`Goal.Path` raw + `Goal.RelativePath` trimmed) — no transform repeats at call sites.
 
-**6. Producer hands back raw; consumers transform identically.** Same property, same suffix/prefix/case-fold/slice at three or more call sites — the discipline belongs on the owner.
-
-*Worked example:* `step.Goal?.Path?.ToString().TrimStart('/')` paired with `test.Path.TrimStart('/')` across `modules/test/run.cs`, `modules/cache/wrap.cs`. The leading slash comes from `.pr` deserialization; fix it once at the producer (`Goal.RelativePath` returning the trimmed form) and both sites collapse. Grep `\.Path\.TrimStart\(`.
-
-*When the raw form IS the point:* keep both — `Goal.Path` (raw, source of truth) + `Goal.RelativePath` (trimmed). No transform repeats at call sites.
-
-**7. Holds a reference AND a flat copy of properties reachable through it.** A class with `Foo Foo` plus N scalar fields all reachable as `Foo.X` pays double — memory + drift risk.
-
-*Worked example:* `app.tester.Test.@this` declared `Goal? Goal` *plus* `Path`, `PrPath`, `EntryGoalName`, `GoalHash`, `BuilderVersion` — every one reachable through `Goal`. Fix: delete the flat fields, route through `file.Goal?.Path`. Keep one *summary* field (e.g. `StatusReason`) only for the `Goal == null` case (.pr missing/corrupt) — a state the reference can't describe.
-
-*When the class IS a value-snapshot on purpose:* a serialization DTO or thread-safe snapshot holding flat copies is fine — document the intent in XML doc so the two roles don't merge.
-
-### Helper-soup vs. self-owning methods
+**stray helper** — a helper that takes a domain object and returns a derived answer: `ComputeAbsolute(path)`, `CheckPermission(absolute, verb)`, `RenderName(user)`. The domain object owns its own questions; `Helper.X(thing)` almost always wants to be `thing.X()`. The helper is the missing method on the type.
 
 ```csharp
 // Smelly — transaction script dressed as OBP: body wires helper outputs into helper inputs
-public async Task<Data<string>> ReadText(Path path) {
-    var absolute = ResolveAbsolute(path);
-    var check = CheckOrRequest(absolute, Verb.Read);
-    if (check is { } request) return request;
-    return Data.Ok(await File.ReadAllTextAsync(absolute));
-}
+var absolute = ResolveAbsolute(path);
+var check = CheckOrRequest(absolute, Verb.Read);
 
-// Self-owning — Path owns its own questions; the method does only what only it can
-public async Task<Data<string>> ReadText(Path path) {
-    var check = path.CheckPermission(Verb.Read);
-    if (!check.Success) return check;
-    return Data.Ok(await File.ReadAllTextAsync(path.Absolute));
-}
+// Self-owning — the path owns its own questions
+var check = path.CheckPermission(Verb.Read);
 ```
 
-Litmus: count private static helpers in the calling class. Each one is suspicious — a method that didn't make it onto the right type.
+Litmus: count private static helpers in the calling class. Each one is a suspect — a method that didn't make it onto the right type. (Note the boundary with "a method holds its own logic": inlining beats extracting when there's no second caller; when there IS shared logic, it goes onto the owning type, not into a static helper.)
+
+### Value layer
+
+**broken seal** — a courier reads `Data.Value` mid-flight. A relay layer (a handler that forwards Data, variable memory, callstack, channel routing, signing, the wire envelope) does `data.Value as X` or `if (data.Value is X)` to branch on the contained value — opening a package that should stay closed in transit. Only leaves open it: handlers that declared the typed slot (`Data<image> A`), and the value's own per-format serializer. Grep: `\.Value (is|as|switch)` outside files that declare `Data<T>` parameters.
+
+**opened box** — a leaf cracks carriers into primitives to feed a helper. A leaf may read its own typed value; it must not chop it (or its operands) into raw fields for a static op.
+
+```csharp
+// WRONG — cracks both carriers open, hands raw values to a static op
+var n = number.FromObject(await Value.Value());
+return number.Round(n, (await Decimals.Value())!);
+
+// RIGHT — the number rounds itself; the other operand rides whole
+return await Value.Round(Decimals);
+```
+
+The tell: you `await X.Value()` an operand only to pass the raw inside to something else. If you opened the box to pass what was inside, pass the box.
+
+**clr leak** — lowering to CLR (`.Clr`) anywhere except a real boundary (.NET/3rd-party API, sqlite, STJ). Work in plang types end to end; high `.Clr` density means the design is CLR-centric and wrong at the root.
+
+**late stamp** — construct-then-stamp: `new X(...) { Context = ... }` or `Context ??=` instead of born-with-context. A context-less instance exists for a window, and in that window it mis-types, can't navigate, and forces null checks on everyone downstream. Context is a private non-nullable field set at construction.
+
+### Design alarms
+
+**fork** — two execution paths for one operation. Four shapes: a behavioral `if`/`switch` (choosing *how* to do the same thing — reading distinct fields of a structured object is not a fork); a generic/fallback/"default" path beside per-type handlers; a type-switch inside a registry (`is X.subtype` → behave differently — push it onto the element as a virtual member); an optional-override branch (`is INamedThing ? declared : derived` — two ways to get one thing). Forks are where code diverges over time; the pattern-doc rule behind this is "never diverge."
+
+**verb+noun** — the flashing sign. `BuildTypeEntries`, `GetParameters`, `CoerceToKind`, `ErrorCategory` — any compound name where one half is a verb (only `IsX`/`HasX` booleans are exempt). Never allowed, and always diagnostic of the design underneath: `CoerceToKind` sat on the type object doing kind's job — the name was flagged before a line of the body was read, and poking at it uncovered the misplaced responsibility. `BuildTypeEntries` was a verb proxying a collection the registry should simply BE. Needing to proxy a collection is wrong design; a name not matching the work is wrong design; the compound is how it surfaces in the API.
+
+---
+
+## The meta-test
+
+**If removing one line of choreography requires editing three files, those three files are one missing type.** And coincidental duplication that vanishes when the shape is right — don't extract it; fix the shape first.
 
 ---
 
@@ -123,19 +108,19 @@ When one concept takes several mutually-distinct shapes, each carrying its own c
 ```csharp
 // ANTI-PATTERN
 [Flags] public enum Verb { None=0, Read=1, Write=2, Delete=4 }
-public record Permission(string Subject, string Resource, Verb Verbs,
+public record Permission(string AppId, string Path, Verb Verbs,
     VerbRead? Read, VerbWrite? Write, VerbDelete? Delete);
 ```
 
 Three things wrong: the variants have **no owner of their own**; the enum and payloads can **disagree** (`Read|Write` with `Write == null` is representable nonsense); serialization is **two-pass** (an LLM sees `"Verbs": 3` and has nothing to chew on).
 
-**Correct shape: a folder per concept (singular), a file per variant, always-present records with sub-option booleans defaulting to true, each owner doing its own coverage check.**
+**Correct shape: a folder per concept (singular), a file per variant, always-present records with sub-option booleans defaulting to true, each owner answering its own coverage question.**
 
 ```
-Permission/
+permission/
   this.cs              -- @this manager + the Permission record
-  Verb/
-    this.cs            -- Verb @this: composes Read/Write/Delete coverage
+  verb/
+    this.cs            -- Verb @this: composes Read/Write/Delete
     Read.cs            -- record Read(bool Recursive = true, bool Metadata = true)
     Write.cs           -- record Write(bool Create = true, bool Overwrite = true, ...)
     Delete.cs          -- record Delete(bool Recursive = true, bool Permanent = true)
@@ -147,32 +132,29 @@ public class @this   // Verb
     public Read   Read   { get; init; } = new Read();
     public Write  Write  { get; init; } = new Write();
     public Delete Delete { get; init; } = new Delete();
-    public bool Covers(@this r) => Read.Covers(r.Read) && Write.Covers(r.Write) && Delete.Covers(r.Delete);
+    public bool Allows(@this r) => Read.Allows(r.Read) && Write.Allows(r.Write) && Delete.Allows(r.Delete);
 }
 
 public record Read(bool Recursive = true, bool Metadata = true)
 {
-    public bool Covers(Read r) => (!r.Recursive || Recursive) && (!r.Metadata || Metadata);
+    public bool Allows(Read r) => (!r.Recursive || Recursive) && (!r.Metadata || Metadata);
 }
 ```
 
-The coverage rule reads as *"if the request needs feature X, the grant must have X."* The manager **composes** (`record.HasAccess(...)`, `variant.Covers(...)`); it never reaches into a record to apply matching from outside.
+The rule reads as *"if the request needs feature X, the grant must have X."* The manager **composes** (`permission.HasAccess(...)`, `variant.Allows(...)`); it never reaches into a record to apply matching from outside.
 
 **The rules, tightly:**
 
-1. **Folders are singular** — `Permission/`, not `Permissions/`.
-2. **A concept with N configurable variants is one folder.** Each variant is one file owning its record (sensible defaults) *and* its own `Covers(other)`.
+1. **Folders are singular** — `permission/`, not `permissions/`.
+2. **A concept with N configurable variants is one folder.** Each variant is one file owning its record (sensible defaults) *and* its own `Allows(other)`.
 3. **Variants are always-present, non-nullable properties on the parent `@this`.** Narrowing is a record copy with explicit `false`; never a flag enum with parallel option records, never nullable variants as granted/not-granted signaling.
 4. **Managers compose, they don't implement.**
-5. **Methods take whole domain objects, not pre-decomposed primitives** — `HasAccess(Path, …)` not `HasAccess(string absolutePath, …)`. The receiver decides which field it needs; pre-decomposing leaks its preference into the call site.
-6. **Verb-named methods are fine when they do real work** — `HasAccess`, `Covers`, `Resolve`, `Open`. The `GetX`/`IsX` smell is property-shaped questions dressed as methods.
+5. **Methods take whole domain objects, not pre-decomposed primitives** — `HasAccess(Path, …)` not `HasAccess(string absolutePath, …)`. The receiver decides which field it needs.
 
-> **Current home:** this pattern is live at **`app.type.path.permission`** — `permission/this.cs` plus `permission/verb/{Read,Write,Delete,Execute}.cs` (note: a fourth verb, `Execute`, alongside the three shown). The folder shape above matches; the namespace root in the older `App.FileSystem.Permission` examples is pre-`filesystem→path`-merge and should read `app.type.path.permission`. The sub-option booleans shown (`Recursive`/`Metadata`/…) are illustrative of the shape, not the exact current fields.
+> **Current home:** this pattern is live at **`app.type.path.permission`** — `permission/this.cs` plus `permission/verb/{Read,Write,Delete,Execute}.cs` (a fourth verb, `Execute`, alongside the three shown). The sub-option booleans shown are illustrative of the shape, not the exact current fields, and the coverage methods in code still carry the earlier name `Covers` — the rename to `Allows` (caller-intent verb) is on the cleanup backlog.
 
 ---
 
-## When shape #1 is the right answer
+## Drift tells
 
-A bare `List<T>`/`Dictionary<K,V>` is fine when it's a **transient local**, a **DTO at a serialization boundary**, or a **value-snapshot** explicitly detached from the live graph (documented as such). The smells above are about *owned, long-lived state with discipline* — not every collection is a missing type.
-
-**Tells you're drifting back into shape #1:** you reach for a `*Helper`/`*Manager`/`*Service` class; you write `lock (other.X)` from outside `other`; you copy a property and apply the same transform at several call sites; you decompose a domain object into primitive parameters at the call site. Any of these → stop and re-anchor: behavior lives on the owner, the collection is the API, names are single and honest.
+You're drifting out of the pattern when: you reach for a `*Helper`/`*Manager`/`*Service` class; you write `lock (other.X)` from outside `other`; you copy a property and apply the same transform at several call sites; you decompose a domain object into primitive parameters at the call site. Any of these → stop and re-anchor: behavior lives on the owner, the collection is the API, names are single and honest.
