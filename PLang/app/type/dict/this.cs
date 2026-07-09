@@ -53,6 +53,21 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public @this(actor.context.@this context)
         : this(new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase), context) { }
 
+    /// <summary>THE PURE CORE — a container coerces INTO nothing (highest rank), so the core only
+    /// passes a <c>dict</c> through; any other value declines (<c>null</c>). Real construction
+    /// (empty-string → empty, native re-tag) needs a context and lives in the courier below.</summary>
+    public static @this? Create(global::app.type.item.@this value) => value as @this;
+
+    /// <summary>The ICreate courier face — a <c>dict</c> passes through; a blank string is an empty
+    /// dict (the LLM emits <c>""</c> for <c>{}</c>); a native container re-tags through its own
+    /// <c>Clr</c>. Uses <c>data.Context</c> for the born-with-context construction.</summary>
+    public static @this? Create(global::app.type.item.@this value, global::app.data.@this data)
+    {
+        if (value is @this self) return self;
+        if (value.Clr<object>() is string s && string.IsNullOrWhiteSpace(s)) return new @this(data.Context);
+        return value.Clr(typeof(@this)) as @this;
+    }
+
     /// <summary>Aliases a foreign CLR dictionary as the backing — true O(1), no walk,
     /// no copy. The handoff contract: the source becomes the backing (its slots are
     /// raw values, type-on-read). A pure read keeps it pristine, so <see cref="Clr"/>
