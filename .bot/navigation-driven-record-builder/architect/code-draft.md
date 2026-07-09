@@ -1,347 +1,145 @@
-# Code draft — how the shapes should look (OBP)
+# Code draft — the settled shapes (companion to plan.md)
 
-Companion to `plan.md`. Representative code per stage-that-needs-code, annotated with *why* it's OBP-correct. Real signatures/conventions (`@this`, `global::` aliases, `ValueTask`, `data.@this`), but:
-
-> **You own this.** These are the intended *shapes*, not the final lines. Names, helper placement, and micro-structure are the coder's call — the load-bearing part is the OBP shape (behavior on the owner, no decompose, reflection at the leaf, one door). Where a seam is genuinely subtle I say so rather than pretend it's settled.
-
-Two refinements to `plan.md` fell out of writing this — flagged inline as **▶ refines plan**.
+Representative shapes per stage, OBP-annotated. **You own the final code** — these pin intent, not lines. This supersedes the earlier draft (which still carried the navigate-pull record builder, async `Create`, and an invented `Shape` helper — all dropped).
 
 ---
 
-## Stage 0 — `Create` goes async (signature only)
+## Stage 1 — the `*` (reflection) kind gains `Set` and a minimal `Read`
 
 ```csharp
-// item/ICreate.cs
-public interface ICreate<TSelf> where TSelf : @this, ICreate<TSelf>
+// kind/behavior/reflection.cs — Set: the mirror of Navigate. The HOST'S CLASS declares the
+// type (PropertyType); the kind reflects it at the leaf and converts the incoming value to it.
+public override item.@this Set(object host, string key, object? value, context ctx)
 {
-    static virtual ValueTask<TSelf?> Create(@this value, global::app.data.@this data) { /* Stage 2 body */ }
+    var prop = host.GetType().GetProperty(key, Public | Instance | IgnoreCase)
+        ?? throw new OutputException($"{host.GetType().Name} has no property '{key}'.");
+
+    // incoming clr(json) → construct the property's type through the READ machinery below
+    // (e.g. List<action> from the LLM result). A plang value lowers itself; a host passes through.
+    prop.SetValue(host, Take(value, prop.PropertyType, ctx));
+    return /* the host, unchanged reference */;
 }
 
-// a sync leaf implementor — NO async keyword, NO state machine, NO allocation churn:
-// wrap the ready value in a completed ValueTask.
-public static new ValueTask<@this<T>?> Create(item.@this value, data.@this data)
+// Read (minimal in Stage 1, full .pr graph in Stage 2): construct a host of `target` from a
+// format-agnostic reader — the mirror of Output's [Store] reflection.
+public object Read(System.Type target, ref json.Reader reader, ReadContext ctx)
 {
-    if (value is @this<T> already) return new(already);
-    if (value is @this list)       return new(new @this<T>(list, data.Context!));
-    return new((@this<T>?)null);
+    // per [Store] property: List<T>  → BeginArray, Read(elementType) per element
+    //                       List<Data> (action.Parameters) → the DATA READER's @schema:data path
+    //                            (%var%-born / template / signing — byte-identical, untouched)
+    //                       scalar/plang value → the type's own serializer reader
+    //                       nested host → recurse Read
 }
-
-// dispatch — data/this.cs:512
-public async ValueTask<T?> Value<T>() where T : item.@this, ICreate<T>
-    => await T.Create(await Value(), this);
 ```
 
-**OBP note:** nothing structural — a signature sweep. Only types that actually await (records) grow the `async` keyword; leaves stay allocation-free.
+**OBP:** type knowledge lives in ONE place — the host's C# class declaration — reflected at the leaf, exactly like `Output` already does (`Tagged.PropertiesFor`). Read/Set/Output/Navigate become symmetric on the `*` kind. No STJ, no `GoalReadOptions`.
 
 ---
 
-## Stage 1 — a record pulls itself from a navigable source
-
-### `action.Create` — the navigate-pull, hand-written (the shape every record follows)
+## Stage 3 — sync `Create` per type; the default shrinks; the entity delegate
 
 ```csharp
-// goal/steps/step/actions/action/this.cs
-public static async ValueTask<@this?> Create(item.@this value, data.@this data)
+// item/ICreate.cs — the END-STATE default: pass-through, facet, decline. Nothing else.
+static virtual TSelf? Create(@this value, data.@this data)
 {
-    if (value is @this already) return already;                      // pass-through
-
-    // The source is anything navigable — a clr(json) object, a dict, a clr(POCO).
-    // Wrap it as a Data so we can ASK it for children by name. One path for every source.
-    var src = value as data.@this ?? new data.@this("", value, context: data.Context);
-
-    // init-only record → pull first, construct last (can't await inside an initializer).
-    var module     = await src.Value<text>("module");
-    var actionName = await src.Value<text>("action");
-    var modifiers  = await src.Value<modifiers.@this>("modifiers");
-    var parameters = await Parameters(src, data.Context);
-
-    return new @this
-    {
-        Module     = module?.ToString()     ?? "",
-        ActionName = actionName?.ToString() ?? "",
-        Modifiers  = modifiers              ?? new(),
-        Parameters = parameters,
-        Synthetic  = false,                                          // materialized from source
-    };
-}
-
-// The Data-leaf seam. `parameters` is an array of {name,type,value} — these are Data
-// LEAVES, not record fields. Each child is READ AS A DATA through the reader (the
-// JsonElement door), NEVER converted to a value: %var%/template/signing stay byte-identical.
-static async ValueTask<List<data.@this>> Parameters(data.@this src, context ctx)
-{
-    var node = await src.GetChild("parameters");
-    var list = new List<data.@this>();
-    foreach (var (_, child) in await node.EnumerateItems())
-        list.Add(app.data.reader.@this.Read(child, ctx));            // hands the leaf to the reader
-    return list;
-}
-```
-
-**▶ refines plan:** `src.Value<text>("module")` is a small combinator = `GetChild(path).Value<T>()`. Cleaner than the two nested awaits the plan sketched. Propose adding `data.Value<T>(string path)` alongside `Value<T>()`. (Name check: it's the same verb `Value`, an overload — no verb+noun smell.)
-
-**OBP notes:**
-- **Behavior on the owner.** `action` builds `action`. No outside converter reaches in and assembles it.
-- **No decompose (Rule #7/#8).** `Parameters` are handed to the reader *as Data* — the courier never opens `{name,type,value}` into scalars. The one place they'd be read as values is a leaf action that declares `Data<parameters>`, not here.
-- **One path.** `src` is `Data`-over-anything; the pull is identical whether the source is clr(json), dict, or POCO.
-
-### `list<T>.Create` — a navigable source enumerates itself
-
-```csharp
-// list/this.Generic.cs
-public static new async ValueTask<@this<T>?> Create(item.@this value, data.@this data)
-{
-    if (value is @this<T> already) return already;
-    if (value is @this list)       return new @this<T>(list, data.Context!);   // O(1) re-tag
-
-    // A navigable carrier (clr(json) array, dict) ENUMERATES ITSELF via its kind — ask it,
-    // don't demand a raw IEnumerable. Each element builds itself as T through T.Create.
-    if (value is clr.@this or dict.@this)
-    {
-        var rows = new List<item.@this>();
-        foreach (var (_, element) in value.EnumerateItems(data.Context))
-            if (await element.Value<T>() is { } row) rows.Add(row);
-        return new @this<T>(rows, data.Context!);
-    }
-    return null;
-}
-```
-
-**OBP note:** the old `list<T>.Convert` demanded `value is IEnumerable` (a type-switch on the source's C# shape). Now it asks the value to enumerate itself (`EnumerateItems`, which the carrier delegates to its kind). Behavior moved from a caller switch onto the value. `list<T>.Convert` folds away — this is the door.
-
----
-
-## Stage 2 — collapse to one `Create`
-
-### The default `ICreate.Create` — pass-through, facet, record-navigate, else decline. No hub.
-
-```csharp
-// item/ICreate.cs
-static virtual async ValueTask<TSelf?> Create(@this value, data.@this data)
-{
-    if (value is TSelf self)               return self;              // already it
-    if (value.Facet<TSelf>() is { } facet) return facet;            // evolved from it (chain)
-
-    // A SCALAR/leaf type OVERRIDES Create with its own parse (number below) — it never
-    // reaches this default. A RECORD builds itself by pulling its declared properties from
-    // the navigable source (the reflective fallback; codegen emits a typed body later).
-    if (Shape.Record(typeof(TSelf)) is { } record)
-        return (TSelf?)await record.Pull(value, data);
-
+    if (value is TSelf self) return self;
+    if (value.Facet<TSelf>() is { } facet) return facet;
     data.Fail(new error.Error(
-        $"%{data.Name}% holds a {value.Mint().Name} — '{@this.NameOf(typeof(TSelf))}' cannot be created from it.",
+        $"%{data.Name}% holds a {value.Mint().Name} — '{NameOf(typeof(TSelf))}' cannot be created from it.",
         "CreateItemDeclined", 400));
     return null;
 }
-```
-
-`Shape.Record` is the reflection-at-a-leaf: it reads `TSelf`'s declared properties + wire names **once, cached**, and `Pull` runs the same navigate-pull `action.Create` does by hand, generically. (This is exactly `action.Create` generalized; the Stage-1 hand body collapses into it unless it carries a real quirk.)
-
-**OBP note:** no `convert.OfStatic`, no `TryConvert`, no `dict.Clr` STJ. The default knows only the two free cases + "records navigate." Everything type-specific is the type's own `Create`.
-
-### The KIND owns construction — `number.Create` dispatches, the precision-kind builds
-
-```csharp
-// number/this.cs
-// number.Create is a THIN dispatcher — resolve the storage KIND, hand off; the KIND builds.
-public static new async ValueTask<@this?> Create(item.@this value, data.@this data)
-{
-    if (value is @this self) return new(self);                       // pass-through
-
-    // KIND = the STORAGE type (int/long/decimal/double/float/bigint) — HOW the number is held.
-    // Chosen by:  1. explicit declaration   — data.Type.Kind (`as decimal`)
-    //             2. else the source's kind  — a db double / library float keeps its own
-    //             3. else the app default    — long out of the box (a setting; coder wires the key)
-    // NOT decimal-places/rounding — that is an EDGE op (output / explicit `round`), never here.
-    var kind = data.Type?.Kind ?? SourceKind(value) ?? data.Context.DefaultNumberKind;
-
-    return await kind.Build(value, data);          // each kind owns its build at type[number].kind[<k>]
-}
+// SYNC — dispatch stays `T.Create(await Value(), this)`: the await is in FRONT of the door;
+// Create receives a materialized item. Signature unchanged from today.
 ```
 
 ```csharp
-// type[number].kind[int]/this.cs — the int kind builds ITSELF. "Find the int parser" is ALWAYS
-// here, one predictable path. long/decimal/double/float/bigint each the same shape — file per kind.
-public override async ValueTask<data.@this> Build(item.@this value, data.@this data)
+// number/this.cs — the relocated hook (body moves as-is from number.Convert; door + kind-source
+// + return convention change). Precision-kind dissolution into type[number].kind[<k>] is the
+// separate follow-on branch — not here.
+public static new @this? Create(item.@this value, data.@this data)
 {
+    if (value is @this self) return self;
     var raw = value.Clr<object>();
-    // parse/convert raw → Int32. On OVERFLOW the policy (error vs promote to the next kind) is
-    // the same settings-carried machinery arithmetic uses (Overflow.Promote); reuse it, don't reinvent.
-    ...
+    if (raw is null) return null;
+    NumberKind? k = KindFromName(data.Type?.Kind?.Name)          // kind from the TARGET descriptor
+                    ?? (raw is string s ? KindFromName(Build(s)) : ClrToKindSafe(raw.GetType()));
+    ...                                                           // existing internals, unchanged
 }
 ```
 
-**OBP note — the pattern never diverges (Ingi's golden rule).** The KIND owns construction, uniformly: `number.Create` only resolves the storage kind and delegates; every kind builds itself at `type[number].kind[<k>]`. No switch, ever — so "the int parser" is always findable at one predictable path (uniformity = discoverability). The old switch family (`CoerceToKind` + the two serializer switches + `FromDoubleAsKind`) does **not** relocate onto `number` — it **dissolves** into the kinds. **Words kept straight:** *kind* = storage type (declaration → source → default-`long` setting); *precision* = decimal places, an **edge** op (max in every calculation, round only at output / explicit request); the arithmetic `Overflow`/`Precision` policy already exists (settings-carried) and stays. Same rule for any type whose build varies by kind (image formats, …): the kind owns it, the type never switches. **This full number refactor (4 switch sites → per-kind) is its own follow-on scope** — tangential to catalog-removal / the Create door; this branch notes it and moves on.
-
-### Runtime construction (`Convert(kind)` and `.pr` name→type) — the non-generic face
-
-The subtle seam. `Value<T>()` names `T` at compile time. A runtime caller holds a `type`/`kind` token (from a `.pr` name or a `data.Convert(kind)`), so it can't name `T`. It dispatches to the resolved type's static `Create` through one cached invoker:
-
-The TARGETED runtime face — build THIS type (the entity's own ClrType) from `value`, target
-preserved. Distinct from the POLYMORPHIC `type.Create(raw)` at `:439`, which infers the type
-from raw and discards the target. **Three layers** — parse on the type, one shared thunk, a
-delegate on the entity (option A: reflective thunk now, generated table = B later):
+```csharp
+// dict/this.cs — a container builds from a navigable source by asking it to ENUMERATE ITSELF
+// (absorbs kind.behavior.dict.Convert — dict is a TYPE, its build belongs on dict.Create):
+public static new @this? Create(item.@this value, data.@this data)
+{
+    if (value is @this self) return self;
+    if (value.Clr<object>() is string s && string.IsNullOrWhiteSpace(s))
+        return new @this(data.Context);                           // {} from blank (the .pr shape)
+    if (value is clr.@this or @this)                              // clr(json) object / another dict
+    {
+        var d = new @this(data.Context);
+        foreach (var (key, child) in value.EnumerateItems(data.Context))
+            d.Set(key.ToString(), child);                         // children stay lazy Data — sync
+        return d;
+    }
+    data.Fail(...); return null;
+}
+```
 
 ```csharp
-// (1) THE PARSE — static, one per type, the logic (Decision A). Already drafted above (number).
-//     text.@this.Create(value, data) { ... }
-
-// (2)+(3) BOTH LIVE ON type.@this (app/type/this.cs) — the entity owns closing its OWN Create.
-//         The collection (list<type>) only holds + indexes entities; it does NOT reach in to
-//         stamp them. All three below are members of type.@this:
-
-// the entity's runtime Create — invokes its OWN builder, closed on first use:
-public ValueTask<item.@this?> Create(item.@this value, data.@this data)
+// type/this.cs — the runtime door: the ENTITY owns closing its own builder. One shared
+// logic-free thunk; lazy bind = the single reflective touch. No static helper class.
+public item.@this? Create(item.@this value, data.@this data)
     => (_builder ??= Bind(ClrType))(value, data);
 
-// LAZY: first use resolves THIS entity's ClrType → Builder<clr> via MakeGenericMethod (the
-// single reflective touch, option A), then cached. Lazy so a .pr-read descriptor
-// {name,kind,strict} never forces ClrType before anyone constructs through it.
-Func<item.@this, data.@this, ValueTask<item.@this?>>? _builder;
-static Func<item.@this, data.@this, ValueTask<item.@this?>> Bind(System.Type clr)
-    => (Func<item.@this, data.@this, ValueTask<item.@this?>>)typeof(@this)
-        .GetMethod(nameof(Builder), BindingFlags.NonPublic | BindingFlags.Static)!
-        .MakeGenericMethod(clr).Invoke(null, null)!;
+Func<item.@this, data.@this, item.@this?>? _builder;
+static Func<item.@this, data.@this, item.@this?> Bind(System.Type clr)
+    => (Func<item.@this, data.@this, item.@this?>)typeof(@this)
+        .GetMethod(nameof(Builder), NonPublic | Static)!.MakeGenericMethod(clr).Invoke(null, null)!;
 
-// the thunk — private static on type.@this, logic-free; T.Create resolves statically INSIDE it:
-static Func<item.@this, data.@this, ValueTask<item.@this?>> Builder<T>()
-    where T : item.@this, ICreate<T>
+static Func<item.@this, data.@this, item.@this?> Builder<T>() where T : item.@this, ICreate<T>
     => (v, d) => T.Create(v, d);
-
-// callers — dict lookup + DIRECT delegate call, no per-call reflection:
-await app.type["text"].Create(value, data);              // .pr read (by name)
-await app.type[typeof(text.@this)].Create(value, data);  // same cached entity (by CLR type)
-await app.type[elementType].Create(value, data);         // write index-arm, target preserved
+// users: `as <type>` clause, kind→Create delegation, settings binding.
+// Deleted: convert.OfStatic/Of/Invoke/Discover (per-call MethodInfo.Invoke from a hub).
 ```
 
-**OBP note — why this is NOT `OfStatic` renamed.** The smell was never "reflection exists" — it was *a free hub doing a per-call reflective type-switch to find behavior that belongs on the type.* Here: the logic is on the type (`text.Create`), the delegate is on the **entity** (`entity.Create`), and reflection is **once at registration** (the thunk), not per call. `Builder<T>` is one shared logic-free method; each entity holds the *closed result* for its own type. Compile-time (`Value<T>`), targeted-runtime (`type[clr].Create`), polymorphic (`type.Create(raw)`) all land on the same static `Create`. **This targeted door fixes the blocker** (the clr(json)→`Actions.@this` write holds `action.@this` as its target) and must exist before Stage 2 deletes `OfStatic`. Contrast the incumbent: `convert.Invoke` does `MethodInfo.Invoke` *every call* from a hub — the thing we're removing.
-
-### `data.Convert(kind)` — the kind owns the transform
-
 ```csharp
-// data/this.cs
-public ValueTask<item.@this?> Convert(kind.@this to)
-    => to.Convert(this, _context);             // the KIND owns its converter (already the shape today)
-
-// kind/behavior/html.cs — a real converter (md → html); the html kind knows how
-public sealed class html : @this
+// kind/behavior/html.cs — a REAL kind converter (cross-kind transform; async lives HERE):
+public override async ValueTask<data.@this> Convert(data.@this source, context ctx)
 {
-    public override kind.@this Kind => "html";
-    public override async ValueTask<data.@this> Convert(data.@this source, context ctx)
-    {
-        // md → html: same TYPE (text), the KIND changes. A source kind it can't render → decline.
-        if (source.Type?.Kind?.Name is "md" or "markdown" && await source.Value<text>() is { } md)
-            return ctx.Ok(new text.@this(Markdown.ToHtml(md.ToString())) { Kind = "html" });
-        return ctx.Error(new error.Error($"cannot render {source.Type?.Kind?.Name} as html", "KindConvertDeclined", 400));
-    }
+    if (source.Type?.Kind?.Name is "md" && await source.Value<text>() is { } md)
+        return ctx.Ok(new text.@this(Markdown.ToHtml(md.ToString())) { Kind = "html" });
+    return ctx.Error(...);                                        // decline what it can't render
 }
 ```
 
-**▶ refines plan:** the plan calls `Convert(kind)` "a thin front over `Create`." More precisely: **`Convert(kind)` dispatches to the *kind's own converter* (`kind.behavior.Convert`), which the kind owns.** A kind that's just "build the type from raw" (mp3 = build audio) *delegates* to `Type.Create`; a kind that's a real transform of another kind (html from md) does the render itself. So Convert(kind) → the kind's converter (which may call Create), not always Create directly. This matches your "a converter belonging to the html kind knows md→html." I'll correct the plan's wording.
+---
 
-**OBP note:** the converter lives on the kind it produces (html owns md→html) — outbound owns it. `data.Convert` is a one-line courier to the kind; no conversion logic on Data.
-
-### The write path — the value owns its child-write
+## Stage 5 — module/action views (reflection at the leaf)
 
 ```csharp
-// variable/list/this.cs — SetValueOnObject collapses; the value sets its own child
-// (the clr(json) arm at :389 is ALREADY this shape — the other arms join it)
-var slot = await target.GetChild(propertyName);          // navigate to the slot
-await slot.Set(rawValue);                                 // the slot's own type takes the value
-```
+// module view — backed by a namespace, holds NO copy:
+public list<action.@this> Actions =>
+    new(_reg.Names(_ns).Select(a => new action.@this(_reg.Type(_ns, a), _ctx)), _ctx);
 
-**OBP note:** the seven reflection arms (bracket-index, `IList<T>`, CLR-property, `ConvertToDictionary`) die. The value at the slot owns "take this child" — a dict sets its key, a list its index, a clr(json) materializes via `kind.Set`. One write discipline; the lower-here/convert-there divergence (Smell #4) is gone.
+// action view — backed by the live handler System.Type; the ONE place reflection happens:
+public list<type.@this> Properties =>                             // keyed by property name
+    _handler.GetProperties(Public | Instance)
+        .Where(p => p.Name is not "EqualityContract" and not "Context")
+        .Keyed(p => p.Name, p => _ctx.App.type[Unwrap(p.PropertyType)]);   // Data<T>/[Code]T → plang type
+// consumers read type.Name — never a System.Type, never GetTypeName at a call site.
+```
 
 ---
 
-## Stage 3 — `list<type>` is the registry; the index lives on the collection
+## OBP self-audit
 
-```csharp
-// app.type — the collection node (was type.catalog.@this); the registry IS list<type>
-public list<type.@this> list { get; }                    // enumerate for the LLM
-
-// select by name — the keyed index is ON the collection (it owns its own index),
-// not a revived side-registry. O(1) lookup; the list is the single home.
-public type.@this this[string name] => list.ByName(name)
-    ?? throw new KeyNotFoundException($"No PLang type registered under '{name}'.");
-```
-
-**OBP notes:**
-- **Registry = the collection.** No god-object stapling identity + fold + eight sub-registries. `app.type.list` is an instance of the native `list` value; `list` appearing as an element is data self-reference (harmless).
-- **Index on the owner (Smell #1).** The name→entity map isn't a public side-registry with lookup rules enforced elsewhere — it's `ByName` on the collection that owns the elements.
-- **Bootstrap** (item #1): born with `System.Context`, lazily populated (assembly reflection → entities, no name-lookup), runtime-extendable (`code.load`, module choices register after). Same lazy+extendable shape the catalog has today, re-homed onto the list.
-
----
-
-## Stage 4 — `module`/`action`/`type` are views over reflection; reflection at the leaf
-
-```csharp
-// module/list/this.cs — app.module.list : list<module>, the ACTION modules
-// (dispatchable verbs, not C# infra folders)
-
-// module/this.cs — a VIEW over a namespace; holds NO copy
-public sealed class @this : item.@this
-{
-    public list<action.@this> Actions =>                 // module = namespace
-        new(_reg.Names(_ns).Select(a => new action.@this(_reg.Type(_ns, a), _ctx)), _ctx);
-}
-
-// action/this.cs — a VIEW over the live handler System.Type; reflection lives HERE, the leaf
-public sealed class @this : item.@this
-{
-    public string Name => _reg.NameOf(_handler);         // class name
-
-    // properties as list<type>, KEYED BY NAME. Data<text> Name → key "name", value type{name:"text"}.
-    // The reflection (unwrap Data<T>/[Code]T → plang type) happens ONCE, here, the one place
-    // that holds the System.Type. Consumers read type.Name — never a CLR type, never GetTypeName.
-    public list<type.@this> Properties =>
-        _handler.GetProperties(Public | Instance)
-            .Where(p => p.Name is not "EqualityContract" and not "Context")
-            .Keyed(p => p.Name, p => _ctx.App.type[Unwrap(p.PropertyType)]);
-}
-```
-
-The compile prompt is then a render over these plang collections, not a C# schema builder:
-
-```csharp
-// no BuildTypeEntries / Describe() / StepActions — discovery is a projection, the prompt a template
-var doc = await ui.Render("modulesAndActions.template", modules);   // Fluid over list<module>
-```
-
-**OBP notes:**
-- **One source (no drift).** The handler class IS the definition; `module`/`action` are navigable views (the clr-navigator idea on type metadata). No `ActionDefinition` mirror.
-- **Reflection at the leaf.** `System.Type` appears only inside the `action` view. `GetTypeName(typeof(x))` at any consumer site is deleted — consumers hold a `type` and read `.Name`.
-- **Producer-hands-raw smell (Rule #5) removed.** The registry used to hand bare strings that catalog + `Describe()` re-reflected. Now it hands `list<module>` with types resolved.
-
-**Name check (#6):** `Keyed(selector, valueSelector)` reuses dict/clr `(key→value)` enumeration — not a new keyed-list type; `action.Properties` navigates like a dict. Confirm the seam is dict-backed, not a fresh collection.
-
----
-
-## Stage 5 — the `.pr` reads via navigate-pull (goal builds itself)
-
-Same shape as `action.Create` — `goal` pulls `name`/`steps`, `step` pulls `actions`, `action` pulls its fields; Data-leaf param values ride the reader untouched. So the STJ `Deserialize<goal>` retires with no new machinery — it's the record navigate-pull already built in Stage 1/2, applied to the top of the tree.
-
-```csharp
-// goal reads through the one door — a .pr is a clr(json) that Creates itself.
-var goal = await clrJson.Value<goal.@this>();            // was: JsonSerializer.Deserialize<goal>(text, GoalReadOptions)
-```
-
-**OBP note:** the record skeleton (goal→steps→actions) navigates; the Data leaves (param values) still go through `app/data/reader`. The boundary that was split between STJ-reflection and the Data reader becomes navigate-pull + the same Data reader — one direction changes, the leaf seam doesn't.
-
----
-
-## OBP self-audit of this draft
-
-| new surface | check | verdict |
+| surface | check | verdict |
 |---|---|---|
-| `data.Value<T>(string path)` | overload of `Value`; same verb | clean |
-| `Parameters(src, ctx)` (in action) | private local; noun naming the property it builds | acceptable (not a public surface) |
-| `reader.Read(child, ctx)` | single verb `Read`, existing name | clean |
-| `Shape.Record` / `.Pull` | `Record` = the shape; `Pull` = one verb doing real work (navigate+construct) | acceptable — flag if a single word fits better |
-| `type.Create(value, data)` runtime face | single verb `Create`; same door as `Value<T>` | clean |
-| `NumberKind.Of/Sniff/Coerce` | number-internal; relocated from `number.Convert` | clean |
-| `list.ByName` | verb+noun? — it's "the element named X," a lookup on the collection | borderline; alt `list["name"]` indexer — **coder's call** |
-| `action.Properties` / `module.Actions` | plural noun properties (collections) | clean |
-| `Keyed(sel, sel)` | one verb; reuses dict enumeration | clean — confirm seam (#6) |
-
-No verb+noun compounds slipped into a load-bearing name. Two borderlines (`list.ByName`, `Shape.Pull`) flagged for the coder rather than defended.
+| `*`-kind `Set`/`Read` | mirrors of existing `Navigate`/`Output`; class declaration = the one type source | clean |
+| `ICreate` default | 3 lines: pass-through/facet/decline; every type owns its own `Create` | clean |
+| sync `Create` | await in front of the door; no signature change | clean |
+| entity `Builder<T>` | on `type.@this` (owner closes its own builder); no static helper class; lazy, one reflective touch | clean |
+| `dict.Create` | asks the source to enumerate itself; never reaches into `clr.Value` | clean (Rule #7) |
+| kind converter | transform on the kind it produces (html owns md→html); async where I/O lives | clean |
