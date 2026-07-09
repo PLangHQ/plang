@@ -35,10 +35,12 @@ public class Default : IBuilder
             foreach (var a in catalog)
                 if (wanted.Contains($"{a.Module}.{a.ActionName}"))
                     subset.Add(a);
-            return action.Context.Ok(subset);
+            return action.Context.Ok(new global::app.type.clr.@this<StepActions>(subset, action.Context));
         }
 
-        return action.Context.Ok(catalog);
+        // StepActions is a host — it rides as clr<StepActions> (the Run signature carries that),
+        // so the consumer unwraps one shape, matching the goal/step/action graph.
+        return action.Context.Ok(new global::app.type.clr.@this<StepActions>(catalog, action.Context));
     }
 
     // --- Types ---
