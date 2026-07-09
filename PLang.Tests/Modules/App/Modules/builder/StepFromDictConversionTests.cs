@@ -130,10 +130,10 @@ public class StepFromDictConversionTests
         var dictValue = await stepData.Value(); // UnwrapJsonElement runs in ctor
 
         // Then As<Step>() to mirror merge.cs: __ResolveData("stepfromllm").Value<Step>()
-        var dataStep = stepData.ShallowClone<Step>(await stepData.Value<Step>());
+        var dataStep = stepData.ShallowClone<global::app.type.clr.@this<Step>>(await stepData.Value<global::app.type.clr.@this<Step>>());
 
         await Assert.That(dataStep.Error).IsNull();
         await Assert.That((await dataStep.Value())).IsNotNull();
-        await Assert.That((await dataStep.Value())!.Actions.Count).IsEqualTo(2);
+        await Assert.That((await dataStep.Value())!.Value.Actions.Count).IsEqualTo(2);
     }
 }

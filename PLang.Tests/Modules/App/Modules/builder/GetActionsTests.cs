@@ -43,7 +43,7 @@ public class GetActionsTests
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
-        var actions = (await result.Value()) as StepActions;
+        var actions = ((await result.Value()) as global::app.type.clr.@this<StepActions>)?.Value;
         await Assert.That(actions).IsNotNull();
         await Assert.That(actions!.Count).IsGreaterThan(0);
     }
@@ -53,7 +53,7 @@ public class GetActionsTests
     {
         var action = new GetActions(_app.User.Context);
         var result = await _app.Run(action, _app.User.Context);
-        var actions = (StepActions)(await result.Value())!;
+        var actions = ((await result.Value()) as global::app.type.clr.@this<StepActions>)!.Value;
 
         // Find an action with nullable parameters (e.g., file.read has optional properties)
         var fileRead = actions.FirstOrDefault(a => a.Module == "file" && a.ActionName == "read");
@@ -67,7 +67,7 @@ public class GetActionsTests
     {
         var action = new GetActions(_app.User.Context);
         var result = await _app.Run(action, _app.User.Context);
-        var actions = (StepActions)(await result.Value())!;
+        var actions = ((await result.Value()) as global::app.type.clr.@this<StepActions>)!.Value;
 
         // variable.set has a Name property with Data<Variable> — renders as exactly "%var%"
         // (no trailing type token; the marker alone tells the LLM this slot names a variable).
@@ -84,7 +84,7 @@ public class GetActionsTests
     {
         var action = new GetActions(_app.User.Context);
         var result = await _app.Run(action, _app.User.Context);
-        var actions = (StepActions)(await result.Value())!;
+        var actions = ((await result.Value()) as global::app.type.clr.@this<StepActions>)!.Value;
 
         // file.list has Pattern with [Default("*")]
         var fileList = actions.FirstOrDefault(a => a.Module == "file" && a.ActionName == "list");
@@ -100,7 +100,7 @@ public class GetActionsTests
     {
         var action = new GetActions(_app.User.Context);
         var result = await _app.Run(action, _app.User.Context);
-        var actions = (StepActions)(await result.Value())!;
+        var actions = ((await result.Value()) as global::app.type.clr.@this<StepActions>)!.Value;
 
         // file.save has [Action("save", Cacheable = false)]
         var fileSave = actions.FirstOrDefault(a => a.Module == "file" && a.ActionName == "save");
@@ -118,7 +118,7 @@ public class GetActionsTests
     {
         var action = new GetActions(_app.User.Context);
         var result = await _app.Run(action, _app.User.Context);
-        var actions = (StepActions)(await result.Value())!;
+        var actions = ((await result.Value()) as global::app.type.clr.@this<StepActions>)!.Value;
 
         // No action should expose [Code]-attributed interface properties
         // (e.g., IBuilder, IFile, ILlm)
@@ -150,7 +150,7 @@ public class GetActionsTests
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
-        var actions = (await result.Value()) as StepActions;
+        var actions = ((await result.Value()) as global::app.type.clr.@this<StepActions>)?.Value;
         await Assert.That(actions).IsNotNull();
         await Assert.That(actions!.Count).IsEqualTo(2);
         await Assert.That(actions.Any(a => a.Module == "file" && a.ActionName == "read")).IsTrue();
@@ -165,14 +165,14 @@ public class GetActionsTests
         // "filter to nothing" would silently drop every action.
         var unfiltered = new GetActions(_app.User.Context);
         var fullResult = await _app.Run(unfiltered, _app.User.Context);
-        var fullCount = ((StepActions)(await fullResult.Value())!).Count;
+        var fullCount = (((await fullResult.Value()) as global::app.type.clr.@this<StepActions>)!.Value).Count;
 
         var action = new GetActions(_app.User.Context) { Actions = new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(new List<string>(), _app.User.Context))
         };
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
-        var actions = (await result.Value()) as StepActions;
+        var actions = ((await result.Value()) as global::app.type.clr.@this<StepActions>)?.Value;
         await Assert.That(actions).IsNotNull();
         await Assert.That(actions!.Count).IsEqualTo(fullCount);
     }
@@ -185,7 +185,7 @@ public class GetActionsTests
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
-        var actions = (await result.Value()) as StepActions;
+        var actions = ((await result.Value()) as global::app.type.clr.@this<StepActions>)?.Value;
         await Assert.That(actions).IsNotNull();
         await Assert.That(actions!.Count).IsEqualTo(0);
     }
@@ -197,7 +197,7 @@ public class GetActionsTests
         };
         var result = await _app.Run(action, _app.User.Context);
 
-        var actions = (StepActions)(await result.Value())!;
+        var actions = ((await result.Value()) as global::app.type.clr.@this<StepActions>)!.Value;
         await Assert.That(actions.Count).IsEqualTo(2);
         await Assert.That(actions.Any(a => a.Module == "file" && a.ActionName == "read")).IsTrue();
         await Assert.That(actions.Any(a => a.Module == "file" && a.ActionName == "save")).IsTrue();

@@ -214,23 +214,27 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
         if (PrPath != null)
             return await LoadFromFile(PrPath.ToString(), resolvedName, app, context);
 
+        // A goal answered from memory rides back as clr<goal>, same as the .pr-load path — the
+        // dispatcher (RunGoalAsync) unwraps one shape, not two.
+        data.@this Found(@this g) => context.Ok(new global::app.type.clr.@this<@this>(g, context));
+
         // 1. Check via the action's step's goal chain (action → step → goal → walk up)
         var currentGoal = Action?.Step?.Goal;
         while (currentGoal != null)
         {
             if (string.Equals(currentGoal.Name, resolvedName, StringComparison.OrdinalIgnoreCase))
-                return context.Ok(currentGoal);
+                return Found(currentGoal);
 
             var subGoal = currentGoal.Goals.FirstOrDefault(g =>
                 string.Equals(g.Name, resolvedName, StringComparison.OrdinalIgnoreCase));
-            if (subGoal != null) return context.Ok(subGoal);
+            if (subGoal != null) return Found(subGoal);
 
             currentGoal = currentGoal.Parent;
         }
 
         // 2. Check app's loaded goals
         var loaded = app.Goal.Get(resolvedName);
-        if (loaded != null) return context.Ok(loaded);
+        if (loaded != null) return Found(loaded);
 
         // 3. Derive the .pr path from Name and file.read.
         var name = resolvedName.Replace('\\', '/');
@@ -306,7 +310,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
 
         // The value door — a source-backed .pr payload parses through its own
         // Ready() here (the goal reader), answering the Goal instance.
-        if (await result.Value() is not @this goal)
+        if (((await result.Value()) as global::app.type.clr.@this<global::app.goal.@this>)?.Value is not { } goal)
             // Surface the underlying parse failure (source.Value keys it
             // MaterializeFailed with the slot name + reason) — a generic "not a Goal"
             // hides WHERE the .pr is malformed.

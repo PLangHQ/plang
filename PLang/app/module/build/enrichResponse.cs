@@ -18,7 +18,7 @@ public partial class enrichResponse : IContext
     public partial data.@this<BuildResponse> StepResults { get; init; }
 
     [IsNotNull]
-    public partial data.@this<Goal> Goal { get; init; }
+    public partial data.@this<global::app.type.clr.@this<Goal>> Goal { get; init; }
 
     [Code]
     public partial IBuilder Builder { get; }

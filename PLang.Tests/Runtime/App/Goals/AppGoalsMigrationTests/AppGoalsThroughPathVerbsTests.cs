@@ -55,7 +55,7 @@ public class AppGoalsThroughPathVerbsTests
         System.IO.File.WriteAllText(prAbs, "{\"name\":\"Start\",\"path\":\"/Start.goal\"}");
         var result = await app.Goal.LoadFromFileAsync(app, global::app.type.path.@this.Resolve("/.build/start.pr", app.System.Context!));
         await result.IsSuccess();
-        var goal = (await result.Value()) as Goal;
+        var goal = ((await result.Value()) as global::app.type.clr.@this<Goal>)?.Value;
         await Assert.That(goal!.Name).IsEqualTo("Start");
     }
 

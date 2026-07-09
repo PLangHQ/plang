@@ -43,6 +43,21 @@ public static class Tagged
     public static IReadOnlyList<Entry> PropertiesFor(System.Type type, global::app.View mode)
         => _cache.GetOrAdd((type, mode), key => Compute(key.Type, key.Mode));
 
+    // True when the type carries any Out/Store/Sensitive/Masked tag — a deliberate host whose
+    // reflected shape is a wire contract (cycles are [JsonIgnore]-guarded). A type WITHOUT any
+    // tag is opaque: reflecting it whole risks pulling in cyclic/infra graph, so it is written
+    // by value, not reflected.
+    public static bool IsTagAware(System.Type type)
+    {
+        foreach (var p in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            if (p.IsDefined(typeof(OutAttribute), inherit: false)
+                || p.IsDefined(typeof(StoreAttribute), inherit: false)
+                || p.IsDefined(typeof(SensitiveAttribute), inherit: false)
+                || p.IsDefined(typeof(MaskedAttribute), inherit: false))
+                return true;
+        return false;
+    }
+
     private static IReadOnlyList<Entry> Compute(System.Type type, global::app.View mode)
     {
         var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);

@@ -10,13 +10,9 @@ namespace app.goal.steps.step;
 /// <summary>
 /// Represents a step within a goal for App.
 /// </summary>
-public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, module.IDataWrappable
+public sealed partial class @this
 {
-    /// <summary>Self-write: a step is a structural item — its tagged fields (View selects the set).</summary>
-    public override System.Threading.Tasks.ValueTask Output(
-        global::app.channel.serializer.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
-        => OutputTagged(writer, mode, context);
+    // A step is a plain C# host — carried as clr<step>, reflected off its [Store] props.
 
 
     private module.Events? _events;
@@ -145,19 +141,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return result;
     }
 
-    /// <summary>
-    /// OBP: Step is responsible for its own Data representation.
-    /// Returns a cached per-execution Data&lt;Step&gt; wrapper from the context.
-    /// </summary>
-    public data.@this AsData(actor.context.@this context)
-    {
-        return context.GetOrCreate(this, () =>
-        {
-            var data = new data.@this<@this>("", this);
-            data.Context = context;
-            return data;
-        });
-    }
 
     public @this Clone()
     {

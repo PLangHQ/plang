@@ -2,49 +2,14 @@ using System.Collections;
 
 namespace app.goal.steps.step.actions;
 
-public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IList<action.@this>
+public sealed partial class @this : IList<action.@this>
 {
+    // A plain C# collection host (list of action) — carried as clr<actions>, reflected as an
+    // array of action hosts (the * kind's Output/Read). No item.@this base.
     private readonly List<action.@this> _items = new();
-
-    /// <summary>Self-write: a list of actions — an array of each action's own Output.</summary>
-    public override async System.Threading.Tasks.ValueTask Output(
-        global::app.channel.serializer.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
-    {
-        writer.BeginArray(_items.Count);
-        foreach (var action in _items)
-            await action.Output(writer, mode, context);
-        writer.EndArray();
-    }
 
     public @this() { }
     public @this(IEnumerable<action.@this> actions) { _items = new List<action.@this>(actions); }
-
-    /// <summary>
-    /// <c>actions</c> IS a list of actions, so it re-tags a plang <c>list</c> into itself —
-    /// the value flows through as its own type, never lowered to CLR (a <c>list.Clr(actions)</c>
-    /// has no projection). Mirrors <c>list&lt;T&gt;.Create</c>. Each row already carries an
-    /// <c>action.@this</c> (the step's own actions, navigated via <c>%goal.Steps[i].Actions%</c>).
-    /// </summary>
-    public static @this? Create(global::app.type.item.@this value, global::app.data.@this data)
-    {
-        if (value is @this self) return self;
-        if (value is global::app.type.list.@this list)
-        {
-            var acts = new @this();
-            foreach (var row in list)
-            {
-                if (row.Peek() is action.@this a) { acts.Add(a); continue; }
-                data.Fail(new global::app.error.Error(
-                    $"%{data.Name}% list element is {row.Peek().Mint().Name}, not an action.", "CreateItemDeclined", 400));
-                return null;
-            }
-            return acts;
-        }
-        data.Fail(new global::app.error.Error(
-            $"%{data.Name}% holds a {value.Mint().Name} — 'actions' cannot be created from it.", "CreateItemDeclined", 400));
-        return null;
-    }
 
     [System.Text.Json.Serialization.JsonIgnore]
     public Step? Step { get; set; }

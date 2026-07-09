@@ -25,7 +25,11 @@ public sealed partial class @this
     /// </summary>
     internal actor.context.@this Context { get; }
 
-    public @this(actor.context.@this context) : this() => Context = context;
+    public @this(actor.context.@this context) : this()
+    {
+        Context = context;
+        Kind = new kind.list.@this(context);   // per-App, born with context → its kinds are stamped
+    }
 
     /// <summary>[Choices] vocabulary registry — reachable as <c>app.type.choices</c>.</summary>
     public choice.list.@this Choices { get; } = new();
@@ -56,7 +60,7 @@ public sealed partial class @this
     /// <c>App.Type.&lt;plural&gt;</c>. Distinct from <see cref="KindHooks"/> (build-time
     /// kind stamping) and <c>type.Kinds</c> (advertised vocabulary).
     /// </summary>
-    internal kind.behavior.list.@this Kinds { get; } = new();
+    internal kind.list.@this Kind { get; private set; } = new(null);
 
     /// <summary>
     /// Per-type <c>static Convert(object?, string? kind, context)</c> hooks — the

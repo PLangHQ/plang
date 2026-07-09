@@ -17,12 +17,12 @@ public partial class validateResponse : IContext
 
     /// <summary>The goal being built — used to verify step count and prior actions.</summary>
     [IsNotNull]
-    public partial data.@this<Goal> Goal { get; init; }
+    public partial data.@this<global::app.type.clr.@this<Goal>> Goal { get; init; }
 
     public async Task<app.data.@this> Run()
     {
         var response = (await StepResults.Value()) as BuildResponse;
-        var goal = (await Goal.Value()) as Goal;
+        var goal = Goal.Clr<Goal>();
 
         // Identify which parameter is null and dump enough state for LlmFixer +
         // logs to see *why*. "StepResults or Goal is null" was actively misleading —

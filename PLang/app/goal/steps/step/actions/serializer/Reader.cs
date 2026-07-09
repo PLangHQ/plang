@@ -18,11 +18,12 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
-        // The nested params read through the Wire (ReadOptions carries ctx.Template), so their
-        // %ref% holes ride as live templates already — no manual stamping.
-        var options = global::app.data.Wire.ReadOptions(ctx with { Verify = false });
-        return System.Text.Json.JsonSerializer
-            .Deserialize<global::app.goal.steps.step.actions.@this>(reader.RawValue(), options)
-            ?? new global::app.goal.steps.step.actions.@this();
+        // actions is a collection host — reflect it (an array of action hosts, params via the
+        // @schema:data reader) and carry as clr<actions>. No STJ.
+        var actions = new global::app.type.item.kind.reflection.@this()
+            .Read(ref reader, typeof(global::app.goal.steps.step.actions.@this), ctx)
+            as global::app.goal.steps.step.actions.@this;
+        return new global::app.type.clr.@this<global::app.goal.steps.step.actions.@this>(
+            actions ?? new global::app.goal.steps.step.actions.@this(), ctx.Context);
     }
 }

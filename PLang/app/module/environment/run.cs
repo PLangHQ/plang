@@ -11,8 +11,8 @@ namespace app.module.environment;
 public partial class run : IContext
 {
     public partial data.@this<GoalCall>? GoalName { get; init; }
-    public partial data.@this<Step>? Step { get; init; }
-    public partial data.@this<global::app.goal.steps.step.actions.action.@this>? Action { get; init; }
+    public partial data.@this<global::app.type.clr.@this<Step>>? Step { get; init; }
+    public partial data.@this<global::app.type.clr.@this<global::app.goal.steps.step.actions.action.@this>>? Action { get; init; }
     public partial data.@this<actor.@this>? Actor { get; init; }
 
     public async Task<data.@this> Run()
@@ -22,11 +22,11 @@ public partial class run : IContext
         if (goalName != null)
             return await Context.App.RunGoalAsync(goalName, Context);
 
-        var step = Step == null ? null : await Step.Value();
+        var step = Step?.Clr<Step>();
         if (step != null)
             return await step.RunAsync(Context);
 
-        var action = Action == null ? null : await Action.Value();
+        var action = Action?.Clr<global::app.goal.steps.step.actions.action.@this>();
         if (action != null)
             return await action.RunAsync(Context);
 

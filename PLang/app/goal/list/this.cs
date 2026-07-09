@@ -185,7 +185,7 @@ public sealed class @this
             var result = await LoadFromFileAsync(App, rootCandidate, cancellationToken: ct);
             if (result.Success)
             {
-                var goal = await result.Value() as goal.@this;
+                var goal = ((await result.Value()) as global::app.type.clr.@this<global::app.goal.@this>)?.Value;
                 if (goal is { IsSetup: true }) return null;
                 // LoadFromFileAsync → Add() already indexed _byName[goal.Name].
                 // Writing _byName[name] again under a user-provided alias (e.g.
@@ -211,7 +211,7 @@ public sealed class @this
                 var result = await LoadFromFileAsync(App, sysCandidate, cancellationToken: ct);
                 if (result.Success)
                 {
-                    var goal = await result.Value() as goal.@this;
+                    var goal = ((await result.Value()) as global::app.type.clr.@this<global::app.goal.@this>)?.Value;
                     if (goal is { IsSetup: true }) return null;
                     // Same reason as above: Add() did the canonical _byName write.
                     return goal;
@@ -345,7 +345,7 @@ public sealed class @this
         if (!loadResult.Success)
             return null;
 
-        var loaded = await loadResult.Value() as goal.@this;
+        var loaded = ((await loadResult.Value()) as global::app.type.clr.@this<global::app.goal.@this>)?.Value;
         if (loaded is { IsSetup: true }) return null;
         if (loaded != null)
             _byPath[key] = loaded;
@@ -365,7 +365,7 @@ public sealed class @this
             var readResult = await prPath.ReadText();
             if (!readResult.Success || readResult.Peek().IsNull)
                 return app.System.Context.Error(readResult.Error ?? new Error($"Failed to read goal file: {prPath}"));
-            if (await readResult.Value() is not goal.@this primary)
+            if (((await readResult.Value()) as global::app.type.clr.@this<global::app.goal.@this>)?.Value is not { } primary)
                 return app.System.Context.Error(new Error($"Failed to parse goal file: {prPath}"));
 
             foreach (var step in primary.Steps)

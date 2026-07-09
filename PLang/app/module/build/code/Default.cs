@@ -241,7 +241,7 @@ public class Default : IBuilder
 
         var app = action.Context.App;
         var context = action.Context;
-        var goal = (await action.Goal.Value())!;
+        var goal = action.Goal.Clr<Goal>()!;
 
         // Apply LLM-generated description if available in Variables
         var stepResults = await context.Variable.Get("stepResults");
@@ -286,7 +286,7 @@ public class Default : IBuilder
         var serializer = (global::app.channel.serializer.plang.@this)
             context.Actor.Channel.Serializers.GetOrDefault("application/plang");
         using var ms = new System.IO.MemoryStream();
-        await serializer.SerializeItemAsync(ms, goal, global::app.View.Store);
+        await serializer.SerializeItemAsync(ms, new global::app.type.clr.@this<Goal>(goal, context), global::app.View.Store);
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
 
         var saveAction = new file.Save(context)
@@ -308,7 +308,7 @@ public class Default : IBuilder
 
     public async System.Threading.Tasks.Task<data.@this> ValidateStepActions(validateStepActions action)
     {
-        var step = await action.Step.Value() as global::app.goal.steps.step.@this;
+        var step = action.Step.Clr<global::app.goal.steps.step.@this>();
         if (step == null)
         {
             // Dump what the planner actually returned so the user can see the
@@ -405,7 +405,7 @@ public class Default : IBuilder
         if ((action.Actions == null ? null : await action.Actions.Value()) == null)
             return context.Ok(true);
 
-        var actions = (await action.Actions.Value())!;
+        var actions = action.Actions.Clr<global::app.goal.steps.step.actions.@this>()!;
         var notFound = new List<string>();
         foreach (var a in actions)
         {
@@ -655,13 +655,13 @@ public class Default : IBuilder
         // Diagnostic — gated by app.Debug presence (null = off), drops on the floor in production.
         // The merge handoff was the spot a Boolean-vs-Step type mismatch surfaced during
         // the builder rebuild; leaving the line in earns its keep next time it drifts.
-        var step = action.Step.Peek() as global::app.goal.steps.step.@this;
-        var from = action.StepFromLlm.Peek() as global::app.goal.steps.step.@this;
+        var step = action.Step.Clr<global::app.goal.steps.step.@this>();
+        var from = action.StepFromLlm.Clr<global::app.goal.steps.step.@this>();
         _ = action.Context.App.Debug?.Write(
             $"builder.merge: step.Index={step?.Index} step.Actions={step?.Actions.Count} " +
             $"from.Index={from?.Index} from.Keep={from?.Keep} from.Actions={from?.Actions.Count}");
 
-        (action.Step.Peek() as global::app.goal.steps.step.@this)!.Merge((action.StepFromLlm.Peek() as global::app.goal.steps.step.@this)!);
+        action.Step.Clr<global::app.goal.steps.step.@this>()!.Merge(action.StepFromLlm.Clr<global::app.goal.steps.step.@this>()!);
         return action.Context.Ok(action.Step.Peek());
     }
 
@@ -671,7 +671,7 @@ public class Default : IBuilder
     {
 
         var response = action.StepResults.Peek() as BuildResponse;
-        var goal = action.Goal.Peek() as Goal;
+        var goal = action.Goal.Clr<Goal>();
         if (response == null || goal == null)
             return action.Context.Ok(response);
 
@@ -923,7 +923,7 @@ public class Default : IBuilder
                             underlying = underlying.GetGenericArguments()[0];
                         var kind = context.App.Type.KindHooks.Of(underlying, p.Peek());
                         if (kind != null)
-                            p.Declare(new app.type.@this(p.Type.Name) { Kind = global::app.type.kind.@this.Of(kind) });
+                            p.Declare(new app.type.@this(p.Type.Name) { Kind = kind is { } k ? new global::app.type.kind.@this(k) : null });
                     }
                 }
             }
@@ -1080,7 +1080,7 @@ public class Default : IBuilder
         Goal? prGoal;
         try
         {
-            prGoal = (await readResult.Value()) as Goal;
+            prGoal = ((await readResult.Value()) as global::app.type.clr.@this<Goal>)?.Value;
         }
         catch (System.Exception ex) when (ex is not (System.OperationCanceledException
             or System.OutOfMemoryException or System.StackOverflowException))
@@ -1155,7 +1155,7 @@ public class Default : IBuilder
             // downstream checks (or runtime) will surface a NotFound for it.
             goalCall.Action ??= action;
             var resolved = await goalCall.GetGoalAsync(app, context);
-            if (resolved.Success && (await resolved.Value()) is Goal g && g.PrPath != null)
+            if (resolved.Success && ((await resolved.Value()) as global::app.type.clr.@this<Goal>)?.Value is { } g && g.PrPath != null)
             {
                 // Pre-resolve the .pr path. A slash-qualified Name keeps its
                 // folder prefix in the saved .pr — LoadFromFile leaf-matches it

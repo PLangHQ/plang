@@ -93,7 +93,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         => new(Value, Algorithm, Nonce, Created, Identity, Hash, signature, Expires, Contracts);
 
     protected internal override global::app.type.@this Mint()
-        => new("signature", typeof(global::app.data.@this)) { Kind = Algorithm.ToString() };
+        => new("signature", typeof(global::app.data.@this)) { Kind = new global::app.type.kind.@this(Algorithm.ToString()) };
 
     /// <summary>Structural — the inner value is a nested record, not a leaf.</summary>
     public override bool IsLeaf => false;

@@ -71,7 +71,7 @@ public partial class Handle : IContext, IModifier
     /// wrapping it in a goal. Actions execute in order; %!data% flows between
     /// them just like the main step chain.
     /// </summary>
-    public partial global::app.data.@this<global::app.goal.steps.step.actions.@this>? Actions { get; init; }
+    public partial global::app.data.@this<global::app.type.clr.@this<global::app.goal.steps.step.actions.@this>>? Actions { get; init; }
     public partial global::app.data.@this<global::app.type.number.@this>? RetryCount { get; init; }
     public partial global::app.data.@this<global::app.type.number.@this>? RetryOverMs { get; init; }
     public partial global::app.data.@this<global::app.type.choice.@this<ErrorOrder>>? Order { get; init; }
@@ -97,7 +97,7 @@ public partial class Handle : IContext, IModifier
                 : null;
 
             var order = (Order == null ? null : await Order.Value()) ?? ErrorOrder.RetryFirst;
-            var actions = Actions == null ? null : await Actions.Value();
+            var actions = Actions?.Clr<global::app.goal.steps.step.actions.@this>();
             bool hasRecovery = actions != null && actions.Count > 0;
 
             if (order == ErrorOrder.GoalFirst)

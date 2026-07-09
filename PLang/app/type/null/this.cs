@@ -48,7 +48,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     protected internal override global::app.type.@this Mint()
         => _typeName == null
             ? base.Mint()
-            : new global::app.type.@this(_typeName) { Kind = global::app.type.kind.@this.Of(_kind) };
+            : new global::app.type.@this(_typeName) { Kind = _kind is { } k ? new global::app.type.kind.@this(k) : null };
 
     /// <summary>
     /// Is this raw value "null" in PLang's sense — a C# null reference OR the born-native

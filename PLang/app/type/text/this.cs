@@ -54,7 +54,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public string? Kind { get; init; }
 
     protected internal override global::app.type.@this Mint()
-        => new("text", typeof(string)) { Kind = global::app.type.kind.@this.Of(Kind), Template = Template };
+        => new("text", typeof(string)) { Kind = Kind is { } k ? new global::app.type.kind.@this(k) : null, Template = Template };
 
     /// <summary>A stamped template's answer depends on outside state (%refs%
     /// can change between uses) — never kept. Plain text caches as always.</summary>

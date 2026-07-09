@@ -1,21 +1,22 @@
 using System.Text.Json;
 
-namespace app.type.kind.behavior;
+namespace app.type.item.kind.json;
 
 /// <summary>
-/// The json kind — navigates a <see cref="JsonElement"/> by the plang path. A container
-/// hop stays a <see cref="JsonElement"/>; the landed node builds its child: an object /
-/// array becomes a <c>clr</c> (its kind derives to json again), a scalar becomes its
-/// plang scalar (string→text, long/double→number, true/false→bool, null→the null citizen).
-/// Its CLR form is <see cref="JsonElement"/> — the one place that fact lives, so a
-/// <c>clr(JsonElement)</c> resolves to this kind and navigates here, not by reflection.
+/// The json kind — navigates a <see cref="JsonElement"/> by the plang path. A container hop
+/// stays a <see cref="JsonElement"/>; the landed node builds its child: an object / array
+/// becomes a <c>clr</c> (its kind derives to json again), a scalar becomes its plang scalar
+/// (string→text, long/double→number, true/false→bool, null→the null citizen). Its CLR form is
+/// <see cref="JsonElement"/> — the one place that fact lives, so a <c>clr(JsonElement)</c>
+/// resolves to this kind and navigates here, not by reflection.
 /// </summary>
-public sealed class json : @this
+public sealed class @this : global::app.type.kind.@this
 {
-    public override global::app.type.kind.@this Kind => "json";
+    public @this(global::app.actor.context.@this? context = null) : base("json", context) { }
+
     public override System.Type? ClrForm => typeof(JsonElement);
 
-    protected override (bool, object?) Step(object obj, string key, global::app.actor.context.@this ctx)
+    public override (bool, object?) Descend(object obj, string key, global::app.actor.context.@this ctx)
     {
         var e = (JsonElement)obj;
         if (e.ValueKind == JsonValueKind.Object && e.TryGetProperty(key, out var byName))
@@ -26,12 +27,12 @@ public sealed class json : @this
         return (false, null);
     }
 
-    protected override global::app.data.@this Data(string name, object? node,
+    public override global::app.data.@this Data(string name, object? node,
         global::app.data.@this? parent, global::app.actor.context.@this ctx)
     {
         var e = (JsonElement)node!;
         return e.ValueKind is JsonValueKind.Object or JsonValueKind.Array
-            ? new global::app.data.@this(name, new global::app.type.clr.@this(e, ctx, "json"), parent: parent, context: ctx)
+            ? new global::app.data.@this(name, new global::app.type.clr.@this(e, ctx, this), parent: parent, context: ctx)
             : new global::app.data.@this(name, Scalar(e), parent: parent, context: ctx);
     }
 
@@ -46,9 +47,8 @@ public sealed class json : @this
     }
 
     // Writing a child onto an immutable json object: materialize it into a mutable dict whose
-    // members STAY lazy (each a Data over its own child node — container→clr(json), scalar→plang),
-    // then set the new key. The json content becomes the dict's keys (description/steps/…), never
-    // the JsonElement's BCL surface — so `%plan.steps%` still navigates after `set %plan.system%`.
+    // members STAY lazy (each a Data over its own child node), then set the new key. The json
+    // content becomes the dict's keys, never the JsonElement's BCL surface.
     public override global::app.type.item.@this Set(
         object host, string key, object? value, global::app.actor.context.@this ctx)
     {
@@ -61,28 +61,24 @@ public sealed class json : @this
         return dict;
     }
 
-    // Raw json text/bytes → a clr(json), through the single json parse owner
-    // (object/serializer/json.Read). The parse IS the validation ("is this valid json").
+    // Raw json text/bytes → a clr(json), through the single json parse owner.
     public override global::System.Threading.Tasks.ValueTask<global::app.data.@this> Load(
         object raw, global::app.actor.context.@this ctx)
         => new(ctx.Ok(global::app.type.@object.serializer.json.Read(
             raw, "json", new global::app.type.reader.ReadContext(ctx))));
 
     // Materialize this json content INTO the CLR host target asks for. json owns the format
-    // bridge — its element becomes a reader (element→reader is json's knowledge) — and the
-    // `*` kind owns the shape (the [Store] host walk driven off that reader). This is the door
-    // a clr(json) delegates to instead of terminal-lowering onto a typed slot.
+    // bridge — its element becomes a reader — and the `*` kind owns the shape (the [Store] host
+    // walk driven off that reader). The door a clr(json) delegates to instead of terminal-lowering.
     public override object? Clr(object host, System.Type target, global::app.actor.context.@this ctx)
     {
         var utf8 = new Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(((JsonElement)host).GetRawText()));
         utf8.Read();
         var reader = new global::app.channel.serializer.json.Reader(utf8);
-        return new reflection().Read(ref reader, target, new global::app.type.reader.ReadContext(ctx));
+        return new global::app.type.item.kind.reflection.@this().Read(ref reader, target, new global::app.type.reader.ReadContext(ctx));
     }
 
-    // A json value writes its own raw json inline (json/plang writers emit it structurally via
-    // WriteRawValue; a text writer falls its Raw back to a string) — NEVER reflecting the
-    // JsonElement's BCL properties (no `valueKind` leak).
+    // A json value writes its own raw json inline — NEVER reflecting the JsonElement's BCL props.
     public override global::System.Threading.Tasks.ValueTask Output(
         object obj, global::app.channel.serializer.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? ctx)

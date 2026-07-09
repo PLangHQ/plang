@@ -19,14 +19,10 @@ public enum Visibility
 /// <summary>
 /// Represents a goal (a .goal file or sub-goal) for App.
 /// </summary>
-public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, module.IDataWrappable
+public sealed partial class @this
 {
-    /// <summary>Self-write: a goal is a structural item — its tagged fields, the View selecting
-    /// which set ([Store] for the .pr, [Out] for the wire). Replaces STJ + PrWrite.</summary>
-    public override System.Threading.Tasks.ValueTask Output(
-        global::app.channel.serializer.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
-        => OutputTagged(writer, mode, context);
+    // A goal is a plain C# host — carried by plang as clr<goal>, navigated/written/read by
+    // reflection off its [Store]/[Out] props (the * kind's Output/Read). No item.@this base.
 
     private module.Events? _events;
     [JsonIgnore]
@@ -317,20 +313,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         {
             context.Goal = previousGoal;
         }
-    }
-
-    /// <summary>
-    /// OBP: Goal is responsible for its own Data representation.
-    /// Returns a cached per-execution Data&lt;Goal&gt; wrapper from the context.
-    /// </summary>
-    public data.@this AsData(actor.context.@this context)
-    {
-        return context.GetOrCreate(this, () =>
-        {
-            var data = new data.@this<@this>("", this);
-            data.Context = context;
-            return data;
-        });
     }
 
     /// <summary>

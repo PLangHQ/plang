@@ -39,7 +39,7 @@ public class SaveGoalsTests
 
     // goalsSave requires the TARGET app as a strict Data<clr<app>> param — the runtime never
     // falls back to the builder's own context.App. In these isolated tests the target app IS _app.
-    private data.@this<global::app.type.clr.@this<global::app.@this>> AppParam()
+    private global::app.data.@this<global::app.type.clr.@this<global::app.@this>> AppParam()
         => new("", new global::app.type.clr.@this<global::app.@this>(_app, _app.User.Context),
                context: _app.User.Context);
 
@@ -55,7 +55,7 @@ public class SaveGoalsTests
             Steps = new GoalSteps { step }
         };
 
-        var action = new goalsSave(_app.User.Context) { Goal = goal, App = AppParam() };
+        var action = new goalsSave(_app.User.Context) { Goal = new("", new global::app.type.clr.@this<Goal>(goal, _app.User.Context)), App = AppParam() };
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -80,7 +80,7 @@ public class SaveGoalsTests
             Description = null
         };
 
-        var action = new goalsSave(_app.User.Context) { Goal = goal, App = AppParam() };
+        var action = new goalsSave(_app.User.Context) { Goal = new("", new global::app.type.clr.@this<Goal>(goal, _app.User.Context)), App = AppParam() };
         await _app.Run(action, _app.User.Context);
 
         var prPath = System.IO.Path.Combine(_tempDir, ".build", "test.pr");
@@ -108,7 +108,7 @@ public class SaveGoalsTests
             }
         };
 
-        var action = new goalsSave(_app.User.Context) { Goal = goal, App = AppParam() };
+        var action = new goalsSave(_app.User.Context) { Goal = new("", new global::app.type.clr.@this<Goal>(goal, _app.User.Context)), App = AppParam() };
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -128,7 +128,7 @@ public class SaveGoalsTests
     public async Task SaveGoal_NoPrPath_ReturnsError()
     {
         var goal = new Goal { Name = "Test" }; // No Path → no PrPath
-        var action = new goalsSave(_app.User.Context) { Goal = goal, App = AppParam() };
+        var action = new goalsSave(_app.User.Context) { Goal = new("", new global::app.type.clr.@this<Goal>(goal, _app.User.Context)), App = AppParam() };
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsFailure();

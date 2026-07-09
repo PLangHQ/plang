@@ -172,7 +172,7 @@ public class ForeachTests
         const string planJson =
             "{\"description\":\"d\",\"steps\":[{\"index\":0,\"actions\":[\"a\"]},{\"index\":1,\"actions\":[\"b\"]}]}";
         // Born the way llm.query's producer door does: context.Ok(json, "json") → clr(json).
-        var plan = await context.Ok(planJson, "json");
+        var plan = await context.Ok(planJson, context.App.Type.Kind["json"]);
         plan.Name = "plan";
         await context.Variable.Set(plan);
 

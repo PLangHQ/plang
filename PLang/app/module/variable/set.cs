@@ -214,7 +214,7 @@ public partial class Set : IContext, IBuildValidatable
             if (type.Kind != null)
             {
                 var canon = Context.App.Format.CanonicaliseKind(type.Kind?.Name);
-                if (canon != null) type.Kind = canon;
+                if (canon != null) type.Kind = Context.App.Type.Kind[canon];
             }
             // Stamp the entity's Context so ClrType resolves through the
             // registry when the entity wasn't minted with a CLR mate.
@@ -236,7 +236,7 @@ public partial class Set : IContext, IBuildValidatable
                                   ?? (Context.App.Type[typeName] is { ClrType: { } familyClr }
                                       ? Context.App.Type.KindHooks.Of(familyClr, sourceValue)
                                       : null);
-                if (derivedKind != null) type.Kind = derivedKind;
+                if (derivedKind != null) type.Kind = Context.App.Type.Kind[derivedKind];
             }
             if (targetType == null)
             {

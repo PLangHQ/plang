@@ -21,9 +21,19 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
-        string text = System.Text.Encoding.UTF8.GetString(reader.RawValue());
-        if (string.IsNullOrEmpty(text)) return new global::app.type.@null.@this("goal", kind);
-        return System.Text.Json.JsonSerializer.Deserialize<global::app.goal.@this>(
-            text, global::app.type.catalog.@this.GoalReadOptions(ctx.Context))!;
+        // goal is a host — build it by reflecting its [Store] props off the reader, carry as
+        // clr<goal> (an item). No STJ; the * kind's Read is the one .pr materializer. The .pr
+        // payload is JSON, so open a json reader over the raw bytes (the scalar value.Reader the
+        // channel hands us carries them as one token) and drive the structured walk off that.
+        var raw = reader.RawValue();
+        if (raw.Length == 0) return new global::app.type.@null.@this("goal", kind);
+        var utf8 = new System.Text.Json.Utf8JsonReader(raw);
+        utf8.Read();
+        var jsonReader = new global::app.channel.serializer.json.Reader(utf8);
+        var goal = new global::app.type.item.kind.reflection.@this()
+            .Read(ref jsonReader, typeof(global::app.goal.@this), ctx) as global::app.goal.@this;
+        return goal is null
+            ? new global::app.type.@null.@this("goal", kind)
+            : new global::app.type.clr.@this<global::app.goal.@this>(goal, ctx.Context);
     }
 }

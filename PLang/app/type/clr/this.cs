@@ -43,14 +43,10 @@ public class @this : global::app.type.item.@this, global::app.module.IContext
             throw new System.InvalidOperationException(
                 "A Data may not be carried in a clr — nested Data is not a supported shape. "
                 + "Return the inner value via its own factory, never wrap a Data.");
-        // Born kind: an explicit stamp, else a behavior that CLAIMS this CLR form (json),
-        // else the host's plang-type identity (a callstack is kind "callstack"), else its
-        // full class name. Navigation then routes by kind — "json" walks json, anything
-        // unclaimed falls to `*` (reflection).
-        Kind = kind
-            ?? Context.App.Type.Kinds[value.GetType()]
-            ?? (global::app.type.kind.@this)(Context.App.Type[value.GetType()]?.Name
-                                             ?? value.GetType().FullName ?? "*");
+        // Born kind: an explicit stamp, else the kind that CLAIMS this CLR form (json → its
+        // JsonElement, a list → IList, …), else the `*` reflection kind. The one door answers
+        // all three (exact → assignable → catch-all) and never null.
+        Kind = kind ?? Context.App.Type.Kind[value.GetType()];
     }
 
     /// <summary>

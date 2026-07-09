@@ -52,7 +52,7 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
     {
         var ctx = _app.User.Context;
         var d = ctx.Ok(new global::app.type.clr.@this(Json("{\"a\":1}"), ctx));
-        var dict = await d.Convert("dict");
+        var dict = await d.Convert(ctx.App.Type.Kind["dict"]);
         await Assert.That(dict.Success).IsTrue();
         await Assert.That((await (await dict.GetChild("a")).Value())?.ToString()).IsEqualTo("1");
     }

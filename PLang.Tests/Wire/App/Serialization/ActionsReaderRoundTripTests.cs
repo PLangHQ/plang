@@ -21,7 +21,7 @@ public class ActionsReaderRoundTripTests
             // Exactly what the data reader builds for a deferred `actions` value slot.
             var data = global::app.data.@this.FromRaw(raw, type, ctx, format: "application/plang");
 
-            var actions = (await data.Value()) as global::app.goal.steps.step.actions.@this;
+            var actions = ((await data.Value()) as global::app.type.clr.@this<global::app.goal.steps.step.actions.@this>)?.Value;
             await Assert.That(actions).IsNotNull();
             await Assert.That(actions!.Count).IsEqualTo(1);
             await Assert.That(actions[0].Module).IsEqualTo("goal");

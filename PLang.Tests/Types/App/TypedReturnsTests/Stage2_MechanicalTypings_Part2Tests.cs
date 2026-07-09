@@ -51,7 +51,7 @@ public class Stage2_MechanicalTypings_Part2Tests
     public async Task BuilderActions_Run_ReturnsTaskDataOfBuilderActionsRecord()
     {
         var ret = RunReturnType<global::app.module.build.GetActions>();
-        var expected = typeof(Task<global::app.data.@this<global::app.goal.steps.step.actions.@this>>);
+        var expected = typeof(Task<global::app.data.@this<global::app.type.clr.@this<global::app.goal.steps.step.actions.@this>>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
 
@@ -59,7 +59,7 @@ public class Stage2_MechanicalTypings_Part2Tests
     public async Task BuilderGoals_Run_ReturnsTaskDataOfBuilderGoalsRecord()
     {
         var ret = RunReturnType<global::app.module.build.goals>();
-        var expected = typeof(Task<global::app.data.@this<global::app.type.list.@this<global::app.goal.@this>>>);
+        var expected = typeof(Task<global::app.data.@this<global::app.type.list.@this<global::app.type.clr.@this<global::app.goal.@this>>>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
 

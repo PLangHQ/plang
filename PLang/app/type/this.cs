@@ -113,7 +113,7 @@ public sealed class @this : item.@this
     public @this(string name, string? kind = null, bool strict = false, string? template = null)
     {
         Name = Canonicalise(name);
-        Kind = global::app.type.kind.@this.Of(kind);
+        Kind = kind is null ? null : new global::app.type.kind.@this(kind);
         Strict = strict;
         Template = template;
         StampPrimitive(name);
@@ -125,7 +125,7 @@ public sealed class @this : item.@this
         {
             var lower = name.ToLowerInvariant();
             if (lower is "int" or "integer" or "long" or "float" or "double" or "decimal")
-                Kind = lower == "integer" ? "int" : lower;
+                Kind = new global::app.type.kind.@this(lower == "integer" ? "int" : lower);
         }
         // The mirror direction, numbers only: a precision kind stamps the exact
         // CLR mate ({number, int} → Int32) — the name alone collapses the tower
@@ -320,7 +320,7 @@ public sealed class @this : item.@this
     /// </summary>
     private string RawFormat(object raw, actor.context.@this context)
         => raw is byte[]
-            ? context.App.Format.Mime("." + (Kind ?? "")) ?? "application/octet-stream"
+            ? context.App.Format.Mime("." + (Kind?.Name ?? "")) ?? "application/octet-stream"
             : string.Equals(Name, "dict", System.StringComparison.OrdinalIgnoreCase)
               || string.Equals(Name, "list", System.StringComparison.OrdinalIgnoreCase)
                 ? "application/plang"
@@ -418,10 +418,10 @@ public sealed class @this : item.@this
     // helpers carry their kind so callers don't have to re-stamp it: Int/Long/
     // Decimal/Double all surface as `number` with a precision kind.
     public static @this String => new("text", typeof(string));
-    public static @this Int => new("number", typeof(int)) { Kind = "int" };
-    public static @this Long => new("number", typeof(long)) { Kind = "long" };
-    public static @this Decimal => new("number", typeof(decimal)) { Kind = "decimal" };
-    public static @this Double => new("number", typeof(double)) { Kind = "double" };
+    public static @this Int => new("number", typeof(int)) { Kind = new kind.@this("int") };
+    public static @this Long => new("number", typeof(long)) { Kind = new kind.@this("long") };
+    public static @this Decimal => new("number", typeof(decimal)) { Kind = new kind.@this("decimal") };
+    public static @this Double => new("number", typeof(double)) { Kind = new kind.@this("double") };
     public static @this Bool => new("bool", typeof(bool));
     public static @this DateTime => new("datetime", typeof(System.DateTimeOffset));
     public static @this Object => new("object", typeof(object));

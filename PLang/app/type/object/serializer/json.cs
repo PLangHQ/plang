@@ -31,6 +31,7 @@ public static class json
         // serialises as its raw json (the json kind's Output), so the round-trip is clean;
         // a consumer that needs a mutable native structure asks for it explicitly (`as dict`).
         using var doc = JsonDocument.Parse(s);
-        return new global::app.type.clr.@this(doc.RootElement.Clone(), ctx.Context, "json");
+        // JsonElement → the clr resolves the json kind via the Kind[clrType] door (exact ClrForm).
+        return new global::app.type.clr.@this(doc.RootElement.Clone(), ctx.Context);
     }
 }

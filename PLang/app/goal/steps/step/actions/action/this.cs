@@ -6,27 +6,9 @@ namespace app.goal.steps.step.actions.action;
 /// A single action within a step — the LLM-mapped unit of execution.
 /// Identifies the module and handler to invoke, with typed parameters, return mappings, and defaults.
 /// </summary>
-public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, module.IDataWrappable
+public sealed partial class @this
 {
-    /// <summary>Self-write: an action is a structural item — its tagged fields (View selects the set).</summary>
-    public override System.Threading.Tasks.ValueTask Output(
-        global::app.channel.serializer.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
-        => OutputTagged(writer, mode, context);
-
-    /// <summary>
-    /// OBP: Action is responsible for its own Data representation.
-    /// Returns a cached per-execution Data&lt;Action&gt; wrapper from the context.
-    /// </summary>
-    public global::app.data.@this AsData(actor.context.@this context)
-    {
-        return context.GetOrCreate(this, () =>
-        {
-            var data = new global::app.data.@this<@this>("", this);
-            data.Context = context;
-            return data;
-        });
-    }
+    // An action is a plain C# host — carried as clr<action>, reflected off its [Store] props.
 
     [JsonIgnore]
     public System.Type? ParameterSchema { get; init; }

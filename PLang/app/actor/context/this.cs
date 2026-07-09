@@ -217,7 +217,7 @@ public sealed class @this : IDisposable
     /// producer names the kind once; nothing downstream guesses the format.</summary>
     public global::System.Threading.Tasks.ValueTask<data.@this> Ok(
         object raw, global::app.type.kind.@this kind)
-        => App.Type.Kinds[kind].Load(raw, this);
+        => kind.Load(raw, this);
 
     /// <summary>A present-null Data, born with this context.</summary>
     public data.@this Null(string name = "")

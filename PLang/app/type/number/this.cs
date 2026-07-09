@@ -43,7 +43,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>A number's entity: the exact boxed CLR numeric as the mate,
     /// the precision as kind — the full scalar tower, no collapse.</summary>
     protected internal override global::app.type.@this Mint()
-        => new("number", _value.GetType()) { Kind = global::app.type.kind.@this.Of(KindLabel) };
+        => new("number", _value.GetType()) { Kind = KindLabel is { } k ? new global::app.type.kind.@this(k) : null };
 
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
     public static string Example => "3.14";
