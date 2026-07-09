@@ -24,6 +24,34 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     public @this(System.DateOnly value) { Value = value; }
 
+    /// <summary>THE PURE CORE — a <c>date</c> passes through; a DateOnly/DateTime/DateTimeOffset or
+    /// an ISO <c>yyyy-MM-dd</c> string parses; anything else declines (<c>null</c>). Shared by the
+    /// ICreate courier and comparison coercion.</summary>
+    public static @this? Create(global::app.type.item.@this value)
+    {
+        if (value is @this self) return self;
+        return value.Clr<object>() switch
+        {
+            System.DateOnly d0 => new @this(d0),
+            System.DateTime dt => new @this(System.DateOnly.FromDateTime(dt)),
+            System.DateTimeOffset dto => new @this(System.DateOnly.FromDateTime(dto.DateTime)),
+            string s when System.DateOnly.TryParse(s, System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out var d) => new @this(d),
+            _ => null,
+        };
+    }
+
+    /// <summary>The ICreate courier face — delegates to the pure core; on decline lands the reason
+    /// on <paramref name="data"/> (a bad ISO string vs a wrong type).</summary>
+    public static @this? Create(global::app.type.item.@this value, global::app.data.@this data)
+    {
+        if (Create(value) is { } built) return built;
+        data.Fail(value.Clr<object>() is string s
+            ? new global::app.error.Error($"Cannot parse '{s}' as date — expected ISO yyyy-MM-dd.", "DateParseFailed", 400)
+            : new global::app.error.Error($"Cannot convert {value.Mint().Name} to date.", "DateConversionFailed", 400));
+        return null;
+    }
+
     public int Year => Value.Year;
     public int Month => Value.Month;
     public int Day => Value.Day;

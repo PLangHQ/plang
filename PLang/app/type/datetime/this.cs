@@ -26,6 +26,33 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     protected internal override global::app.type.@this Mint() => new("datetime", typeof(System.DateTimeOffset));
 
     public @this(System.DateTimeOffset value) { Value = value; }
+
+    /// <summary>THE PURE CORE — a <c>datetime</c> passes through; a DateTimeOffset/DateTime or an
+    /// ISO-8601 string parses (via <see cref="Resolve"/>, whose context is unused); anything else
+    /// declines (<c>null</c>). Shared by the ICreate courier and comparison coercion.</summary>
+    public static @this? Create(global::app.type.item.@this value)
+    {
+        if (value is @this self) return self;
+        return value.Clr<object>() switch
+        {
+            System.DateTimeOffset dto => new @this(dto),
+            System.DateTime dt => new @this(new System.DateTimeOffset(dt)),
+            string s => Resolve(s, null!),
+            _ => null,
+        };
+    }
+
+    /// <summary>The ICreate courier face — delegates to the pure core; on decline lands the reason
+    /// on <paramref name="data"/> (a bad ISO string vs a wrong type).</summary>
+    public static @this? Create(global::app.type.item.@this value, global::app.data.@this data)
+    {
+        if (Create(value) is { } built) return built;
+        data.Fail(value.Clr<object>() is string s
+            ? new global::app.error.Error($"Cannot parse '{s}' as datetime — expected ISO-8601 (e.g. 2024-03-15T10:30:00+00:00).", "DateTimeParseFailed", 400)
+            : new global::app.error.Error($"Cannot convert {value.Mint().Name} to datetime.", "DateTimeConversionFailed", 400));
+        return null;
+    }
+
     /// <summary>Accepts a CLR <see cref="System.DateTime"/> — stored as an offset.</summary>
     public @this(System.DateTime value) { Value = new System.DateTimeOffset(value); }
 

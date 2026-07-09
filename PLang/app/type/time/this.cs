@@ -23,6 +23,34 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     public @this(System.TimeOnly value) { Value = value; }
 
+    /// <summary>THE PURE CORE — a <c>time</c> passes through; a TimeOnly/DateTime/DateTimeOffset or
+    /// an ISO <c>HH:mm:ss</c> string parses; anything else declines (<c>null</c>). Shared by the
+    /// ICreate courier and comparison coercion.</summary>
+    public static @this? Create(global::app.type.item.@this value)
+    {
+        if (value is @this self) return self;
+        return value.Clr<object>() switch
+        {
+            System.TimeOnly t0 => new @this(t0),
+            System.DateTime dt => new @this(System.TimeOnly.FromDateTime(dt)),
+            System.DateTimeOffset dto => new @this(System.TimeOnly.FromDateTime(dto.DateTime)),
+            string s when System.TimeOnly.TryParse(s, System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out var t) => new @this(t),
+            _ => null,
+        };
+    }
+
+    /// <summary>The ICreate courier face — delegates to the pure core; on decline lands the reason
+    /// on <paramref name="data"/> (a bad ISO string vs a wrong type).</summary>
+    public static @this? Create(global::app.type.item.@this value, global::app.data.@this data)
+    {
+        if (Create(value) is { } built) return built;
+        data.Fail(value.Clr<object>() is string s
+            ? new global::app.error.Error($"Cannot parse '{s}' as time — expected ISO HH:mm:ss.", "TimeParseFailed", 400)
+            : new global::app.error.Error($"Cannot convert {value.Mint().Name} to time.", "TimeConversionFailed", 400));
+        return null;
+    }
+
     public int Hour => Value.Hour;
     public int Minute => Value.Minute;
     public int Second => Value.Second;
