@@ -35,7 +35,7 @@ The broken `plang build` was the trigger (it exposed the duplication), and its f
 
 - Run the C# suite, **record the red count** (the baseline every later stage is measured against — no surprises, no rebuild-from-base to find out).
 - Write the **unit test pinning the build error** (the clr(json)→`Actions` write throw) — red now, green after Stage 1.
-- Mark the full removal list `[Obsolete]` (`convert.OfStatic`/`Of`/`Invoke`/`Discover`, `TryConvert`, `type.Convert(value)`, `type.Build`, `SetValueOnObject`, the goal/actions ITypeReaders, `GoalReadOptions`, `Describe()`/`StepActions`/`BuildTypeEntries`, `goal.getTypes`, `type.catalog.@this`, `item.OutputTagged`, number's switch family). If a project treats warnings as errors, coder picks the suppression story.
+- Mark the full removal list `[Obsolete]` (`convert.OfStatic`/`Of`/`Invoke`/`Discover`, `TryConvert`, `type.Convert(value)`, `type.Build`, `SetValueOnObject`, the goal/actions ITypeReaders, `GoalReadOptions`, `Describe()`/`StepActions`/`BuildTypeEntries`, `goal.getTypes`, `type.catalog.@this`, `catalog/view`, `item.OutputTagged`, number's switch family). If a project treats warnings as errors, coder picks the suppression story.
 
 ## Stage 1 — `pr-graph-hosts`
 
@@ -49,7 +49,11 @@ The broken `plang build` was the trigger (it exposed the duplication), and its f
 - **Delete:** the goal/actions ITypeReaders (`goal/serializer/Reader.cs` + `Default.cs`, `actions/serializer/Reader.cs`), `Deserialize<goal>`, `GoalReadOptions` (`catalog/Conversion.cs:55-59`) + the goal dispatch (`:282`), the `.pr → goal-plang-type` MIME mapping.
 - **Output consolidates:** hosts write through the reflection kind's `Output` (verified: identical `Tagged.PropertiesFor` loop to `item.OutputTagged`); dedupe `item.OutputTagged` (its only users are these hosts + test).
 - `Data<goal>` → `Data<clr<goal>>` (`goal/getTypes.cs:34`), `Data<action>` → `Data<clr<action>>` (`environment/run.cs:15`); `action.AsData` wraps `clr<action>`. Precedent: `clr<app>` (goalsSave).
-- **Bridge-item audit — resolve BEFORE closing Stage 1** (coder review v3 #3): `snapshot`, `GoalCall`, `catalog/view`, `app` also declare item+ICreate — decide each by the rule: value or host. The outcome **edits the Stage-2 worklist** (GoalCall-as-host makes its `Convert`-relocation line moot; GoalCall-as-item keeps it) — a gate, not optional cleanup.
+- **Bridge-item audit — RESOLVED (settled with Ingi 2026-07-09), apply in this stage:**
+  - **`GoalCall` = plang value.** It's in the `.pr` (`type:{name:"goal.call"}`; the data reader eager-reads it). Keeps `ICreate`; its `Convert` hook relocates to `GoalCall.Create` in Stage 2 (that worklist line stays).
+  - **`snapshot` = host.** Not a `.pr` type — captured runtime state with its own custom wire format; its `Create` was only wire deserialization. Drops item+ICreate here; keeps its bespoke section reader as its loader (which deserializer a host uses is the host's business). `set %snap.variables.x%` works through the uniform walk (`clr.Kind.Navigate` → the Variables collection → its own `Set`); coder check: the captured-variables collection answers a **by-name** Set (Restore must see the edit) — the bespoke `SetVariable` arm dies with `SetValueOnObject`.
+  - **`app` = host.** The live singleton; `clr<app>` (goalsSave) is already the precedent. Drops item+ICreate here.
+  - **`catalog/view` = obsolete.** The schema view over the catalog — Stage 4's Fluid render replaces its job; dies with catalog. Add to the Stage-0 `[Obsolete]` list.
 
 Note: `SetValueOnObject` only *shrinks* here (the clr arm covers host writes); full deletion is Stage 2.
 
