@@ -69,6 +69,22 @@ app.module.list : list<module>          // the ACTION modules — dispatchable v
 
 ---
 
+## Correction — the `.pr` graph is clr hosts, not items (item ⟺ ICreate)
+
+**Rule (Ingi, 2026-07-08):** a type is a plang value **iff** it implements `ICreate`. Present → item, builds itself via `Create`. Absent → a **clr host**, built by deserialization, navigated/written by its kind (reflection). This makes item-ness explicit and enforced by a contract, not ad-hoc.
+
+**goal / step / action / actions (the whole `.pr` graph) are hosts.** They currently declare `: item.@this, ICreate<@this>` — the *bridge* (`goal/serializer/Reader.cs`: *"goal is really a host CLR object, not a plang value type… rides as clr, this machinery goes"*). They drop `item.@this` + `ICreate` → plain C# classes carried as `clr(goal)`, navigated by the reflection (`*`) kind. This reframes several stages:
+
+- **Read — Stage 5 FLIPS.** `Deserialize<goal>` (the `.pr`→C# builder, gated on the `.pr` extension at `path/file/this.Operations.cs:66`) **STAYS** — it is the legitimate host builder, not a smell. What retires is only the goal-as-plang-**type** façade: the `goal`/`actions` ITypeReaders that dress them as `Data` values + the `item.@this`/`ICreate` declarations. The Data-leaf params (`action.Parameters : List<Data>`) still ride the Wire converter in `GoalReadOptions` — unchanged.
+- **The blocker collapses.** `set %goal.Steps[i].Actions% = %compileResult.actions%` — goal is a host; the write reflects to the C# `Actions` property, and clr(json) → `List<action>` is **STJ-deserialize into the host property**. No navigate-pull, no `list<action>.Create`, no targeted `Create` for this. **Stage 1's `list<action>`/`action.Create` navigate-pull work evaporates.**
+- **`Data<goal>`/`Data<action>` → `Data<clr<goal>>`.** Two sites (`goal/getTypes.cs:34`, `environment/run.cs:15`); `clr<app>` (goalsSave) is the precedent.
+- **⚠ The load-bearing consequence is the WRITE side, not the read.** The `.pr` is *written* by `goal.Output(View.Store)` — item behavior: `OutputTagged`/`Tagged.PropertiesFor` selects `[Store]` fields, View-selective (`build/this.cs:37`, `build/code/Default.cs:289`). As a host, goal loses `Output`, so the **reflection (`*`) kind's `Output` must reproduce the View-selective `[Store]`-tagged write** (today it reflects only `[Out]`). This is the real work of "goal is a host" — the read simplifies (STJ stays), the write does not.
+- **Audit the other bridge-items** with the rule: `snapshot`, `GoalCall`, `catalog/view` (and check `app`) also declare `item.@this` + `ICreate` but may be hosts — decide each: value or host?
+
+**Net:** the navigate-pull record builder (the from-source-spec that named this branch) was aimed mostly at the `.pr` graph, which isn't items — it **largely evaporates**. What survives: **Create-unification** (one door, `convert.OfStatic` dissolves) for *real* value items (number/text/dict/list/permission/…), **catalog removal**, **module discovery**. The branch trims.
+
+---
+
 ## `Create`'s contract
 
 ```csharp
@@ -156,11 +172,12 @@ Six stages. Stage 1 is the builder-green milestone; 2–5 complete the collapse.
 - `app.module.list:list<module>`, `module.Actions:list<action>`, `action.Properties:list<type>` (keyed by name, reflection at the `action` leaf).
 - Delete `BuildTypeEntries(modules)`/`Describe()`/`StepActions`; discovery becomes a projection over `list<module>`, the compile prompt a `Fluid(list<module>)` render + types self-describing.
 
-**Stage 5 — retire the goal-as-type STJ read bridge.**
-- `.pr` load routes through navigate-pull: a `.pr` is a clr(json) that `Create`s itself into `goal`.
-- Delete `goal/serializer/Reader.cs` + `Default.cs`, `GoalReadOptions` (`catalog/Conversion.cs:55`), the goal-specific dispatch (`:282`).
-- Retire `dict.Clr`'s record-build use (`ICreate.cs:61-62`); the STJ method stays for maps.
-- Collapse `build/code/Default.cs` dual-path step readers (`GetString` `:855-862`, `SetValue` `:868-877`) — the `step is JsonElement` fork dies when steps navigate as Data (clr-navigators demolition #10).
+**Stage 5 — retire the goal-as-plang-TYPE façade (NOT the STJ builder — see the item⟺ICreate correction).**
+- `Deserialize<goal>` **STAYS** — goal is a clr host, STJ is its legitimate builder. Delete only the goal-as-**type** façade: the `goal`/`actions` ITypeReaders (`goal/serializer/Reader.cs` + `Default.cs`) that dress the host as a `Data` value, and `item.@this`/`ICreate` on goal/step/action/actions.
+- `GoalReadOptions` (`catalog/Conversion.cs:55`) **stays** — STJ still needs the Wire converter chain to read the Data-leaf params (`action.Parameters`).
+- The `.pr` **write** side: `goal.Output(View.Store)` is item behavior — move the View-selective `[Store]`-tagged serialization onto the reflection (`*`) kind's `Output` (the load-bearing piece of "goal is a host").
+- `dict.Clr`'s record-build use (`ICreate.cs:61-62`) retires with the Create-collapse (Stage 2) for real items; the STJ method stays for maps.
+- Collapse `build/code/Default.cs` dual-path step readers (`GetString` `:855-862`, `SetValue` `:868-877`) — `step is JsonElement` vs `IDictionary` unify once steps are navigated uniformly as a clr host.
 
 ---
 
@@ -186,7 +203,8 @@ Tagged **[dead]** delete / **[replace]** rewrite / **[relocate]** move onto the 
 - **[candidate]** `TryConvert` + `ConvertElementsInto` — `catalog/Conversion.cs:128,94`. Construction stages fold into `Create`; keep primitive lowering in `item.Clr`; verify callers `type/this.cs:602`, `setting/this.cs:102`.
 - **[dead]** `type.Convert(value, ctx)` — `type/this.cs:187`. (`type.Convert(string)` `:576` separate — verify FromWire.)
 - **[replace]** `data.Convert(kind)` — `data/this.cs:135` → resolve `kind.Type`, call `Create`; `kind.behavior.Convert` gains real converters.
-- **[dead]** `SetValueOnObject` reflection arms — `variable/list/this.cs` (bracket-index, IList<T>, CLR-property, ConvertToDictionary); value owns child-write.
+- **[dead]** `SetValueOnObject` — `variable/list/this.cs`, the whole method (8 arms type-switching on the target's C# shape). It is the write-side **obpv**: arm 3 (`clr → clrTarget.Kind.Set`, `:389`) is already the right shape; the other 7 do the same operation from *outside* the value. A write becomes: navigate to the target, call `target.Kind.Set(key, value)` — symmetric with read (`Kind.Navigate`), enumerate (`Kind.Enumerate`), output (`Kind.Output`).
+- **[new]** the reflection (`*`) kind gains a `Set` — `kind/behavior/reflection.cs` (today only `json` overrides `Set`; base throws). Mirror of its `Navigate`: reflect the property, convert the incoming value to its type, set it. This is what lets a clr host (goal/step/action) be written through `clr.Kind.Set`, so `SetValueOnObject` dies **including for hosts**.
 
 ### Stage 3 (delete catalog)
 - **[replace]** type identity (`[name]→entity`, `[clr]→entity`, `Get`/`Clr`/`GetTypeName`) → `app.type.list` = `list<type>` + keyed index on the collection.
