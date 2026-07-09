@@ -85,6 +85,36 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
         Context = context;
     }
 
+    /// <summary>THE PURE CORE — a <c>path</c> passes through; construction from a string needs the
+    /// scheme registry (a context), so it lives in the courier below. Any non-path value declines
+    /// (<c>null</c>) here. path isn't rank-compared, so the core is never a coercion door.</summary>
+    public static @this? Create(global::app.type.item.@this value) => value as @this;
+
+    /// <summary>The ICreate courier face — a <c>path</c> passes through; a string builds a scheme
+    /// path via <c>Scheme.From</c> (uses <c>data.Context</c>); a wrong type or an unregistered
+    /// scheme declines with the reason on <paramref name="data"/>.</summary>
+    public static @this? Create(global::app.type.item.@this value, global::app.data.@this data)
+    {
+        if (value is @this self) return self;
+        if (value.Clr<object>() is not string raw)
+        {
+            data.Fail(new global::app.error.Error($"Cannot convert {value.Mint().Name} to path.", "PathConversionFailed", 400));
+            return null;
+        }
+        try { return data.Context.App.Type.Scheme.From(raw, data.Context); }
+        catch (scheme.SchemeNotRegistered snr)
+        {
+            data.Fail(new global::app.error.Error(snr.Message, "SchemeNotRegistered", 400)
+                { FixSuggestion = $"Register a factory for scheme '{snr.Scheme}' via app.Type.Scheme.Register, or use a bare/file:// path." });
+            return null;
+        }
+        catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
+        {
+            data.Fail(new global::app.error.Error(ex.Message, "PathConstructionFailed", 400));
+            return null;
+        }
+    }
+
     /// <summary>Caching follows the location text: a template location depends on
     /// outside %vars% so it must re-resolve each use (text answers not-cacheable);
     /// a literal location is stable. path defers to text — it owns that judgement.</summary>
