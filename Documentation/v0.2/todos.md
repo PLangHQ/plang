@@ -1753,3 +1753,19 @@ json kind's `Set` method fixes for json. The `*` kind needs its own `Set` (or th
 path must stop reflecting the clr wrapper). Address AFTER the json-kind `Set` fix lands
 (the `foreach %plan.steps%` / builder blocker). Context: variable/list/this.cs
 `SetValueOnObject` → `ConvertToDictionary` reflection fallback.
+
+## 2026-07-09 — Snapshot redesign: ISnapshot per app property (own branch)
+Snapshot today is a pre-model implementation — a Section bag with bespoke
+navigate/get/set (`Navigate` override + `GetVariable`/`SetVariable` digging into
+`Section("Variables")`), so the snapshot type itself holds domain knowledge about
+variables. The settled target (Ingi, navigation-driven-record-builder audit): snapshot
+= the app's state, composed by its OWNERS — walk the app's properties, each property
+implementing `ISnapshot` produces its own snapshot and restores itself (`Restore`);
+the snapshot type becomes a dumb serializable container with no knowledge of
+variables/providers/callstack. Consequence for the unification branch: snapshot is
+DEFERRED from the item⟺ICreate host conversion (converting it before this redesign
+forces variable-knowledge INTO snapshot — wrong owner; rejected option: reifying a
+`snapshot/variables` collection). It stays item-with-override as a marked exception;
+the only touch is Stage 2 rerouting the dying `SetValueOnObject` snapshot arm to
+snapshot's existing `SetVariable` door. Context:
+`.bot/navigation-driven-record-builder/coder/snapshot-host-check.md` + architect plan.
