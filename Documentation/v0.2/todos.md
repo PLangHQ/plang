@@ -1803,3 +1803,16 @@ marked to keep the restructure compiling and should be collapsed once the suite 
    isn't a clean boolean question, and the four `IsDefined(Out/Store/Sensitive/Masked)` checks are
    DUPLICATED (this method + `Tagged.Compute`). Bring the attribute checks together — a `HasAttribute`
    helper, or the tag set owning its own "is this type tagged" answer. The duplication is the tell.
+
+## 2026-07-09 — Stage 2: choice<> reaches convert.Discover (open generic)
+`convert.Discover` throws `ContainsGenericParameters` when reached with an OPEN
+`choice<>` (unbound T) — `choice<T>.Convert` is a static hook on an open generic
+type. Surfaces as `build.validate: Late bound operations...` crashing
+ValidateActions/SaveGoal/Handle clusters. Root cause: an open `choice<>`
+targetType reaches `OwnerOf`/`Discover` (via `NormalizeParameterTypes` →
+`Type.Get(p.Type.Name)` → `App.Type.Convert`). Do NOT band-aid Discover with a
+`ContainsGenericParameters` guard (obpv — Ingi flagged, reverted). The whole
+convert.Discover/TryConvert path dies in Stage 2 (Convert→Create relocation);
+verify choice resolution builds the CLOSED `choice<Operator>` there. Also fix:
+NormalizeParameterTypes must skip `%var%` params (SkipsVariableReferences) and
+skip already-correct [Choices] values.
