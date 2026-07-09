@@ -113,6 +113,17 @@
       "drifted": false
     },
     {
+      "id": "18d5fb7408",
+      "line": 9,
+      "text": "Vetoed and settled (discussed): the extraction itself was the mistake, not the name — a method holds its own logic, extract only when shared (rule saved to memory). Fit deleted; Set is one line: value.Clr(prop.PropertyType) — the value lowers itself. The `value is clr { Value: JsonElement }` branch was Rule #7 (courier opening the carrier); dispatch moved inside: clr.Clr(target) → Kind.Clr (new kind verb) — the json kind materializes its content into the CLR shape. Per the original blocker's own error text: 'the type must own this Clr projection' — it now does.",
+      "anchor": "prop.SetValue(host, value is item.@this iv ? iv.Clr(prop.PropertyType) : value);",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "70ef1c3e93",
+      "ts": "2026-07-09T13:10:00",
+      "drifted": false
+    },
+    {
       "id": "9c355edd3c",
       "line": 56,
       "text": "KindFromName obpv (noun+verb) something is not right here, I can feel it, also KindFromName(Build(s)) is a bit something wrong",

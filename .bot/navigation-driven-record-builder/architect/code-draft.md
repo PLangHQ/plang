@@ -14,19 +14,23 @@ public override item.@this Set(object host, string key, object? value, context c
     var prop = host.GetType().GetProperty(key, Public | Instance | IgnoreCase)
         ?? throw new OutputException($"{host.GetType().Name} has no property '{key}'.");
 
-    prop.SetValue(host, Fit(value, prop.PropertyType, ctx));
+    // the value lowers ITSELF to the slot's type — one line, all dispatch inside Clr.
+    // (Rule: a method holds its own logic; extract only when shared. And no carrier-opening —
+    // the old `value is clr { Value: JsonElement }` branch was Rule #7, the courier peeking inside.)
+    prop.SetValue(host, value is item.@this iv ? iv.Clr(prop.PropertyType) : value);
     return /* the host — same live reference, caller keeps its clr carrier */;
 }
+```
 
-// Fit — the incoming value fitted to the slot's declared type. Shown in full (no hidden methods):
-static object? Fit(object? value, System.Type slot, context ctx)
-{
-    if (value is null || slot.IsInstanceOfType(value)) return value;      // already fits
-    if (value is clr.@this { Value: JsonElement je })
-        return Read(slot, je, ctx);                                       // json → host graph (the Read above)
-    if (value is item.@this iv) return iv.Clr(slot);                      // a plang value LOWERS ITSELF
-    return value;                                                         // raw CLR — let SetValue throw honestly
-}
+```csharp
+// type/clr/this.cs — the missing piece, and the fix for the ORIGINAL blocker. Its own error
+// message named the design: "JsonElement cannot lower to actions — the type must own this
+// Clr projection." It now does — by asking ITS KIND:
+internal override object? Clr(System.Type target)
+    => target.IsInstanceOfType(Value) ? Value
+     : Kind.Clr(Value, target, Context);   // new kind verb: materialize my content into the CLR shape
+                                           // json kind → reader over content → host [Store] construction
+                                           // (the Read machinery above); a kind that can't → the honest throw
 
 // Read (minimal in Stage 1, full .pr graph in Stage 2): construct a host of `target` from a
 // format-agnostic reader — the mirror of Output's [Store] reflection.
