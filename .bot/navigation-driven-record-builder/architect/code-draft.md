@@ -14,10 +14,18 @@ public override item.@this Set(object host, string key, object? value, context c
     var prop = host.GetType().GetProperty(key, Public | Instance | IgnoreCase)
         ?? throw new OutputException($"{host.GetType().Name} has no property '{key}'.");
 
-    // incoming clr(json) → construct the property's type through the READ machinery below
-    // (e.g. List<action> from the LLM result). A plang value lowers itself; a host passes through.
-    prop.SetValue(host, Take(value, prop.PropertyType, ctx));
-    return /* the host, unchanged reference */;
+    prop.SetValue(host, Fit(value, prop.PropertyType, ctx));
+    return /* the host — same live reference, caller keeps its clr carrier */;
+}
+
+// Fit — the incoming value fitted to the slot's declared type. Shown in full (no hidden methods):
+static object? Fit(object? value, System.Type slot, context ctx)
+{
+    if (value is null || slot.IsInstanceOfType(value)) return value;      // already fits
+    if (value is clr.@this { Value: JsonElement je })
+        return Read(slot, je, ctx);                                       // json → host graph (the Read above)
+    if (value is item.@this iv) return iv.Clr(slot);                      // a plang value LOWERS ITSELF
+    return value;                                                         // raw CLR — let SetValue throw honestly
 }
 
 // Read (minimal in Stage 1, full .pr graph in Stage 2): construct a host of `target` from a
@@ -54,18 +62,20 @@ static virtual TSelf? Create(@this value, data.@this data)
 ```
 
 ```csharp
-// number/this.cs — the relocated hook (body moves as-is from number.Convert; door + kind-source
-// + return convention change). Precision-kind dissolution into type[number].kind[<k>] is the
-// separate follow-on branch — not here.
+// number/this.cs — Stage 2 lands number ALREADY kind-owned (same move as the relocation;
+// golden rule, no interim switch). number.Create only RESOLVES the storage kind and delegates:
 public static new @this? Create(item.@this value, data.@this data)
 {
     if (value is @this self) return self;
-    var raw = value.Clr<object>();
-    if (raw is null) return null;
-    NumberKind? k = KindFromName(data.Type?.Kind?.Name)          // kind from the TARGET descriptor
-                    ?? (raw is string s ? KindFromName(Build(s)) : ClrToKindSafe(raw.GetType()));
-    ...                                                           // existing internals, unchanged
+    // storage kind:  declared (data.Type.Kind — already a kind token)
+    //             →  else the source's own (a number keeps its kind; a literal sniffs its shape —
+    //                today's string-sniff, relocated to where the kinds live)
+    //             →  else the app default: long (a SETTING, not hardcoded)
+    var kind = data.Type?.Kind ?? ...;
+    return kind.Build(value, data);      // each precision owns its build at type[number].kind[<k>]
 }
+// Dies with the switch family: NumberKind enum, KindFromName (the obpv name goes with it),
+// CoerceToKind, the two serializer switches, FromDoubleAsKind.
 ```
 
 ```csharp
@@ -90,8 +100,14 @@ public static new @this? Create(item.@this value, data.@this data)
 ```csharp
 // type/this.cs — the runtime door: the ENTITY owns closing its own builder. One shared
 // logic-free thunk; lazy bind = the single reflective touch. No static helper class.
-public item.@this? Create(item.@this value, data.@this data)
-    => (_builder ??= Bind(ClrType))(value, data);
+// type.Build DIES — FromRaw lands here; the defer rule is the FIRST branch:
+public item.@this? Create(object? raw, data.@this data)
+{
+    if (raw is null)             return @null.Instance;
+    if (raw is string or byte[]) return new source(raw, this);   // wire-raw → DEFER, parse on first touch
+    var value = raw as item.@this ?? /* lift raw CLR */;
+    return (_builder ??= Bind(ClrType))(value, data);            // already a value → T.Create, build now
+}
 
 Func<item.@this, data.@this, item.@this?>? _builder;
 static Func<item.@this, data.@this, item.@this?> Bind(System.Type clr)
@@ -105,7 +121,9 @@ static Func<item.@this, data.@this, item.@this?> Builder<T>() where T : item.@th
 ```
 
 ```csharp
-// kind/behavior/html.cs — a REAL kind converter (cross-kind transform; async lives HERE):
+// kind/behavior/html.cs — a REAL kind converter (cross-kind transform; async lives HERE).
+// ⚠ PROOF-OF-CONCEPT ONLY — the `Kind?.Name is "md"` string-compare must NOT reach production;
+//   the real dispatch shape is designed when kind converters land (TODO, that stage's work).
 public override async ValueTask<data.@this> Convert(data.@this source, context ctx)
 {
     if (source.Type?.Kind?.Name is "md" && await source.Value<text>() is { } md)
