@@ -1,7 +1,7 @@
 namespace PLang.Tests.App.Types.ConversionGapTests;
 
 using Data = global::app.data.@this;
-using Catalog = global::app.type.catalog.@this;
+using Catalog = global::app.type.list.@this;
 using LlmMessage = global::app.module.llm.LlmMessage;
 
 /// <summary>

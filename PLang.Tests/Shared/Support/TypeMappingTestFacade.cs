@@ -26,31 +26,31 @@ internal static class TypeMapping
     public static List<global::app.type.@this> BuildTypeEntries(global::app.module.@this? modules)
         => _app.Type.BuildTypeEntries(modules);
 
-    public static bool IsScalarPlangType(System.Type type) => global::app.type.catalog.@this.IsScalarPlangType(type);
+    public static bool IsScalarPlangType(System.Type type) => global::app.type.list.@this.IsScalarPlangType(type);
 
-    public static bool IsPrimitive(System.Type type) => global::app.type.catalog.@this.IsPrimitive(type);
+    public static bool IsPrimitive(System.Type type) => global::app.type.list.@this.IsPrimitive(type);
 
-    public static T? ConvertTo<T>(object? value) => (T?)global::app.type.catalog.@this.TryConvert(value, typeof(T), global::PLang.Tests.TestApp.SharedContext).Value;
+    public static T? ConvertTo<T>(object? value) => (T?)global::app.type.list.@this.TryConvert(value, typeof(T), global::PLang.Tests.TestApp.SharedContext).Value;
 
-    public static object? ConvertTo(object? value, System.Type targetType) => global::app.type.catalog.@this.TryConvert(value, targetType, global::PLang.Tests.TestApp.SharedContext).Value;
+    public static object? ConvertTo(object? value, System.Type targetType) => global::app.type.list.@this.TryConvert(value, targetType, global::PLang.Tests.TestApp.SharedContext).Value;
 
 
     public static (object? Value, global::app.error.Error? Error) TryConvertTo(
         object? value, System.Type targetType, global::app.actor.context.@this? context = null, string? targetName = null)
-        => global::app.type.catalog.@this.TryConvert(value, targetType, context, targetName);
+        => global::app.type.list.@this.TryConvert(value, targetType, context, targetName);
 }
 
 /// <summary>
 /// Test-only facade for the former <c>App.Utils.TypeConverter</c> static class.
-/// Stage 27 absorbed it into <see cref="global::app.type.catalog.@this"/>; this facade routes back.
+/// Stage 27 absorbed it into <see cref="global::app.type.list.@this"/>; this facade routes back.
 /// </summary>
 internal static class TypeConverter
 {
-    public static T? ConvertTo<T>(object? value) => (T?)global::app.type.catalog.@this.TryConvert(value, typeof(T), global::PLang.Tests.TestApp.SharedContext).Value;
-    public static object? ConvertTo(object? value, System.Type targetType) => global::app.type.catalog.@this.TryConvert(value, targetType, global::PLang.Tests.TestApp.SharedContext).Value;
+    public static T? ConvertTo<T>(object? value) => (T?)global::app.type.list.@this.TryConvert(value, typeof(T), global::PLang.Tests.TestApp.SharedContext).Value;
+    public static object? ConvertTo(object? value, System.Type targetType) => global::app.type.list.@this.TryConvert(value, targetType, global::PLang.Tests.TestApp.SharedContext).Value;
     public static (object? Value, global::app.error.Error? Error) TryConvertTo(
         object? value, System.Type targetType, global::app.actor.context.@this? context = null, string? targetName = null)
-        => global::app.type.catalog.@this.TryConvert(value, targetType, context, targetName);
+        => global::app.type.list.@this.TryConvert(value, targetType, context, targetName);
 }
 
 /// <summary>
@@ -64,7 +64,7 @@ internal static class Json
     // App.Types.@this). Keeps the test surface pinned to one production source so a
     // converter added in Conversion.cs is exercised by tests automatically. The
     // http/code/Default bag is independent and not covered here — by design.
-    public static System.Text.Json.JsonSerializerOptions CaseInsensitiveRead => global::app.type.catalog.@this.CaseInsensitiveRead;
+    public static System.Text.Json.JsonSerializerOptions CaseInsensitiveRead => global::app.type.list.@this.CaseInsensitiveRead;
 
     public static System.Text.Json.JsonSerializerOptions CamelCaseIndented => global::app.@this.CamelCaseIndented;
     public static System.Text.Json.JsonSerializerOptions DiagnosticOutput => global::app.Diagnostics.Format.Options;

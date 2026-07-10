@@ -3,7 +3,7 @@ using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using PLangPath = global::app.type.item.path.@this;
 using FilePath = global::app.type.item.path.file.@this;
-using Conversion = global::app.type.catalog.@this;
+using Conversion = global::app.type.list.@this;
 
 namespace PLang.Tests.App.Types.PathTests;
 

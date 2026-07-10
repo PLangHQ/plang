@@ -70,7 +70,7 @@ public class NonNullInvariantTests
         // proves the read went through Context.App.Type.Clr — not the static
         // fallback (which would return null).
         await using var app = new PLangEngine("/test");
-        var staticAnswer = global::app.type.catalog.@this.GetPrimitiveOrMime("path");
+        var staticAnswer = global::app.type.list.@this.GetPrimitiveOrMime("path");
         await Assert.That(staticAnswer).IsNull()
             .Because("guard: if the static path ever learns about 'path', this test no longer proves what its name claims.");
 
@@ -86,7 +86,7 @@ public class NonNullInvariantTests
     [Test] public async Task GetPrimitiveOrMime_ExternalFallbackCallSites_AllRemoved()
     {
         // The `Context?.X ?? GetPrimitiveOrMime(...)` chain at consumer sites is gone.
-        // Static GetPrimitiveOrMime stays on type.catalog.@this as the no-context surface,
+        // Static GetPrimitiveOrMime stays on type.list.@this as the no-context surface,
         // and type.@this still uses it as its OWN entity-level fallback for primitives;
         // what's removed is consumer sites chaining it as `?? fallback` after a context
         // lookup of their own.
@@ -103,7 +103,7 @@ public class NonNullInvariantTests
             await Assert.That(System.IO.File.Exists(path)).IsTrue()
                 .Because($"guard file {rel} not found at {path} — relative-walk from BaseDirectory broke.");
             var text = await System.IO.File.ReadAllTextAsync(path);
-            await Assert.That(text.Contains("?? AppTypes.GetPrimitiveOrMime") || text.Contains("?? global::app.type.catalog.@this.GetPrimitiveOrMime"))
+            await Assert.That(text.Contains("?? AppTypes.GetPrimitiveOrMime") || text.Contains("?? global::app.type.list.@this.GetPrimitiveOrMime"))
                 .IsFalse().Because($"{rel} still has a `?? GetPrimitiveOrMime` fallback chain");
         }
     }
@@ -115,7 +115,7 @@ public class NonNullInvariantTests
         // module/this.cs is the legitimate fixture-supporting fallback. The static
         // method stays as the documented no-App surface; the assertion here is
         // that the static surface still returns the right answer.
-        var t = global::app.type.catalog.@this.GetTypeNameStatic(typeof(int));
+        var t = global::app.type.list.@this.GetTypeNameStatic(typeof(int));
         // Post-Stage-2: typeof(int) canonicalises to "number".
         await Assert.That(t).IsEqualTo("number");
     }

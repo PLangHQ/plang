@@ -23,7 +23,7 @@ public class ClrTypeRerouteTests
         await Assert.That(app.Type.Clr("string")).IsEqualTo(typeof(string));
         await Assert.That(app.Type.Clr("bytes")).IsEqualTo(typeof(byte[]));
         // MIME path that file.read uses on image/* extension reads:
-        await Assert.That(global::app.type.catalog.@this.GetPrimitiveOrMime("image/jpeg")).IsEqualTo(typeof(byte[]));
+        await Assert.That(global::app.type.list.@this.GetPrimitiveOrMime("image/jpeg")).IsEqualTo(typeof(byte[]));
     }
 
     [Test] public async Task VariableSet_StillResolves_ClrTypeViaRegistry()

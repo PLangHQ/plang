@@ -24,11 +24,11 @@ public sealed class @this : IAsyncDisposable
     /// looks like for the LLM." Built on demand via <c>Schema.Build()</c> (which reads
     /// <c>App.Type</c>). Example rendering moved out to <c>app.type.spec.render.@this</c>.
     /// </summary>
-    public global::app.type.catalog.view.@this Schema { get; }
+    public global::app.type.list.view.@this Schema { get; }
 
     public @this()
     {
-        Schema = new global::app.type.catalog.view.@this(this);
+        Schema = new global::app.type.list.view.@this(this);
         Discover(typeof(@this).Assembly, "app.module");
     }
 
@@ -325,7 +325,7 @@ public sealed class @this : IAsyncDisposable
                     if (capabilityProps.Contains(prop.Name)) continue;
                     if (prop.GetCustomAttribute<CodeAttribute>() != null) continue;
 
-                    var typeName = ((App?.Type?.GetTypeName(prop.PropertyType) ?? global::app.type.catalog.@this.GetTypeNameStatic(prop.PropertyType)));
+                    var typeName = ((App?.Type?.GetTypeName(prop.PropertyType) ?? global::app.type.list.@this.GetTypeNameStatic(prop.PropertyType)));
 
                     bool isNullable = Nullable.GetUnderlyingType(prop.PropertyType) != null;
                     if (!isNullable && !prop.PropertyType.IsValueType)
@@ -491,7 +491,7 @@ public sealed class @this : IAsyncDisposable
         {
             var t = returnType.GetGenericArguments()[0];
             if (t == typeof(object)) return "data";
-            return (App?.Type?.GetTypeName(t) ?? global::app.type.catalog.@this.GetTypeNameStatic(t));
+            return (App?.Type?.GetTypeName(t) ?? global::app.type.list.@this.GetTypeNameStatic(t));
         }
 
         // Something else — not a Data variant; surface nothing.
@@ -524,7 +524,7 @@ public sealed class @this : IAsyncDisposable
         foreach (var prop in returnType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
             if (baseProps.Contains(prop.Name)) continue;
-            var typeName = ((App?.Type?.GetTypeName(prop.PropertyType) ?? global::app.type.catalog.@this.GetTypeNameStatic(prop.PropertyType)));
+            var typeName = ((App?.Type?.GetTypeName(prop.PropertyType) ?? global::app.type.list.@this.GetTypeNameStatic(prop.PropertyType)));
             properties.Add(new data.@this(prop.Name, typeName, context: App.System.Context));
         }
 

@@ -7,7 +7,7 @@ namespace PLang.Tests.App.SingularNamespaces.TypeEntityTests;
 
 // Batch F — Stage 4: the type entity at its new home and with folded Entry knowledge.
 // plang-types already shipped data.Type as an entity (app.type.@this). Stage 4 *moves* it to type.@this,
-// *demotes* the registry to type.catalog.@this, and *folds* builder.Types.Entry onto the entity.
+// *demotes* the registry to type.list.@this, and *folds* builder.Types.Entry onto the entity.
 //
 // THIS STAGE WAS NOT EXECUTED IN coder v1 — see report.md. Tests stay at Assert.Fail
 // with explicit Stage 4 deferral notes.

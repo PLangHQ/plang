@@ -76,7 +76,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
                 try
                 {
                     return context.Ok(System.Text.Json.JsonSerializer.Deserialize<GoalCall>(
-                        je.GetRawText(), global::app.type.catalog.@this.CaseInsensitiveRead));
+                        je.GetRawText(), global::app.type.list.@this.CaseInsensitiveRead));
                 }
                 catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
                 {

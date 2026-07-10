@@ -2,14 +2,14 @@ using System.Text.Json.Serialization;
 using app.Attributes;
 using app.Utils;
 
-namespace app.type.catalog.view;
+namespace app.type.list.view;
 
 /// <summary>
 /// "What every action looks like, for the LLM." Owned by Modules; describes
 /// the registered actions' types, parameter schemas, and authored Examples.
 ///
 /// Two roles in one type:
-///   - Host (the instance held at <c>app.type.catalog.view</c>) — has <c>_modules</c>
+///   - Host (the instance held at <c>app.type.list.view</c>) — has <c>_modules</c>
 ///     and exposes <see cref="Build"/>. Its <see cref="PrimitiveNames"/> /
 ///     <see cref="Types"/> are empty arrays.
 ///   - Built result (returned by <see cref="Build"/>) — same instance shape,
@@ -17,8 +17,8 @@ namespace app.type.catalog.view;
 ///     strongly-typed fields directly; the template owns the rendering.
 ///
 /// OBP: schema is a real object owned by Modules. Reach it via
-/// <c>app.type.catalog.view</c>; build a snapshot via
-/// <c>app.type.catalog.view.Build()</c>. Rendering belongs in the template, not
+/// <c>app.type.list.view</c>; build a snapshot via
+/// <c>app.type.list.view.Build()</c>. Rendering belongs in the template, not
 /// in pre-rendered string properties.
 /// </summary>
 [System.Obsolete("Superseded by a Fluid render over list<module>/list<type> — do not add new callers.")]

@@ -36,12 +36,12 @@ global using httppath = app.type.item.path.http.@this;
 // Native collection value types — collections hold Data end to end.
 // Lowercase aliases match the PLang concept names. Inside `namespace app.type`
 // the bare names are ambiguous with the child namespaces; those files qualify
-// with `global::app.type.item.dict.@this` / `global::app.type.catalog.@this`.
+// with `global::app.type.item.dict.@this` / `global::app.type.list.@this`.
 global using dict = app.type.item.dict.@this;
 global using Clr = app.type.clr.@this;
 
 // Type system
-global using AppTypes = app.type.catalog.@this;
+global using AppTypes = app.type.list.@this;
 // The type entity (moved to app.type.@this in Stage 4) was historically reached as `app.type.@this`.
 // Callers that wrote `app.type.@this.X` keep working via this alias. Stage 3b/5 may sweep the call
 // sites to bare `type` (collides with the contextual keyword sites, so opting for the qualified form).

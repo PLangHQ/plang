@@ -43,7 +43,7 @@ public class CodeValueTests
 
     [Test] public async Task Code_PlangTypeAttribute_Registered()
     {
-        var types = new global::app.type.catalog.@this();
+        var types = new global::app.type.list.@this();
         await Assert.That(types.ResolveType("code")).IsEqualTo(typeof(code));
     }
 }

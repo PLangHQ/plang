@@ -20,7 +20,7 @@ namespace app.type;
 ///
 /// <para>Both doors — <c>data.Type</c> and <c>app.Type[name]</c> — return the
 /// same entity shape; <c>app.Type</c> resolves names through the registry and
-/// stamps <c>Context</c>, while <c>type.catalog.@this.BuildTypeEntries</c> walks
+/// stamps <c>Context</c>, while <c>type.list.@this.BuildTypeEntries</c> walks
 /// the action catalog and populates the catalog properties at construction.
 /// Entities minted outside <c>BuildTypeEntries</c> lazily resolve the catalog
 /// properties on first read via <see cref="Promote"/>.</para>
@@ -77,7 +77,7 @@ public sealed class @this : item.@this
 
     /// <summary>
     /// Catalog teaching for the <c>type</c> entry — the LLM-facing description
-    /// surfaced through <c>app.type.catalog.view.TypeSchemas</c>. The instance
+    /// surfaced through <c>app.type.list.view.TypeSchemas</c>. The instance
     /// property pulls from <see cref="Promote"/>'s catalog fold; for the entity
     /// itself there's no catalog row, so the LLM teaching falls into the static
     /// renderer via <see cref="TypeDescription"/> below.
@@ -223,7 +223,7 @@ public sealed class @this : item.@this
 
         // A raw CLR input (a wire string → record, a primitive) — the raw→CLR deserialize
         // leaf, the last TryConvert use here; folds into the wire serializer next.
-        var (c, err) = global::app.type.catalog.@this.TryConvert(value, target, context);
+        var (c, err) = global::app.type.list.@this.TryConvert(value, target, context);
         if (err != null) throw Failed(err);
         return Create(c, context);
 

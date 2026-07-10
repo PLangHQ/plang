@@ -1,5 +1,5 @@
 using app.type;
-using app.type.catalog;
+using app.type.list;
 using Verb = global::app.type.item.permission.Verb;
 
 namespace app.type.item.path;

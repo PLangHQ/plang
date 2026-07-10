@@ -86,11 +86,11 @@ public class Stage0_PlangTypeRemovalTests
     }
 
     // @this classes use the last namespace segment, not the literal "this".
-    // app.type.catalog.view.@this → "view" by derivation alone (no override).
+    // app.type.list.view.@this → "view" by derivation alone (no override).
     [Test]
     public async Task PlangTypeDerivation_OBPSingleNameFolders_UseFolderNameNotThisLiteral()
     {
-        var name = _app.Type.Name(typeof(global::app.type.catalog.view.@this));
+        var name = _app.Type.Name(typeof(global::app.type.list.view.@this));
         await Assert.That(name).IsNotEqualTo("this");
         await Assert.That(name).IsEqualTo("view")
             .Because("The @this in folder 'view/' derives cleanly to 'view' — no [PlangType] override needed.");

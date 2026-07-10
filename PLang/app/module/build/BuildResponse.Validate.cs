@@ -150,7 +150,7 @@ public sealed partial class BuildResponse
                     // Scalar PlangTypes (path, tstring, ...) accept the raw primitive at
                     // build time — runtime wraps via Resolve. Already covered by the
                     // shape check above.
-                    if (global::app.type.catalog.@this.IsScalarPlangType(targetType)) continue;
+                    if (global::app.type.list.@this.IsScalarPlangType(targetType)) continue;
 
                     // [Choices]-bearing types: vocabulary check, not type construction.
                     // Stateful runtime types (Actor) cannot honestly be constructed from

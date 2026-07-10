@@ -3,7 +3,7 @@ using System.Text.Json.Nodes;
 namespace app.type.primitive;
 
 /// <summary>
-/// The CLR-primitive entries seeded into <c>app.type.catalog.@this</c>'s registry
+/// The CLR-primitive entries seeded into <c>app.type.list.@this</c>'s registry
 /// at App init — the "no folder, no Resolve, no Build" types that still need
 /// a PLang name (<c>string</c>, <c>int</c>, <c>decimal</c>, …) plus their
 /// aliases (<c>text</c>, <c>integer</c>, <c>boolean</c>, …).
@@ -12,11 +12,11 @@ namespace app.type.primitive;
 ///   <see cref="Aliases"/> — every name (including aliases) → CLR type.
 ///   <see cref="Canonical"/> — CLR type → canonical short PLang name.
 ///   <see cref="MimeMap"/>  — MIME content-type → CLR type (read by
-///     <c>app.type.catalog.@this.ClrFromMime</c>, kept here so the seeded data
+///     <c>app.type.list.@this.ClrFromMime</c>, kept here so the seeded data
 ///     stays in one place).
 ///
 /// Pure data, no per-App divergence — exposed as static so the no-context
-/// fallback helpers on <c>app.type.catalog.@this</c> can read it without an
+/// fallback helpers on <c>app.type.list.@this</c> can read it without an
 /// instance.
 /// </summary>
 public static class @this

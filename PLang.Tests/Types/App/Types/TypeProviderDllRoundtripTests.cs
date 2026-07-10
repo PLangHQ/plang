@@ -17,8 +17,8 @@ public class TypeProviderDllRoundtripTests
     [Test] public async Task LoadDll_Money_RegistersTypeAndRenderer_ProducesExpectedWireString()
     {
         var asm = LoadFixture();
-        var types = new global::app.type.catalog.@this();
-        var result = global::app.type.catalog.Loader.Register(asm, types);
+        var types = new global::app.type.list.@this();
+        var result = global::app.type.list.Loader.Register(asm, types);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.RegisteredTypes).Contains("money");
@@ -40,7 +40,7 @@ public class TypeProviderDllRoundtripTests
     [Test] public async Task LoadDll_CustomInt_OverridesBuiltInName_RuntimeRendererWins()
     {
         var asm = LoadFixture();
-        var types = new global::app.type.catalog.@this();
+        var types = new global::app.type.list.@this();
 
         // Capture baseline for "int" before the override — int is bootstrap-seeded
         // and may or may not have a generator-emitted renderer; what matters is
@@ -48,7 +48,7 @@ public class TypeProviderDllRoundtripTests
         var beforeType = types.ResolveType("int");
         await Assert.That(beforeType).IsEqualTo(typeof(int));
 
-        var result = global::app.type.catalog.Loader.Register(asm, types);
+        var result = global::app.type.list.Loader.Register(asm, types);
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.RegisteredTypes).Contains("int");
 

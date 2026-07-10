@@ -99,7 +99,7 @@ public sealed class @this
             }
             else
             {
-                var (val, err) = global::app.type.catalog.@this.TryConvert(kvp.Value, prop.PropertyType, _context, kvp.Key);
+                var (val, err) = global::app.type.list.@this.TryConvert(kvp.Value, prop.PropertyType, _context, kvp.Key);
                 if (err != null) return _context.Error(err);
                 prop.SetValue(node, val);
             }

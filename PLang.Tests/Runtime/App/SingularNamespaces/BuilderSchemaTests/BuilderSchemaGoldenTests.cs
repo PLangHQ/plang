@@ -29,7 +29,7 @@ public class BuilderSchemaGoldenTests
     {
         // builder.type.@this.Types is now IReadOnlyList<app.type.@this> (the entity),
         // not IReadOnlyList<Entry>.
-        var schemaType = typeof(global::app.type.catalog.view.@this);
+        var schemaType = typeof(global::app.type.list.view.@this);
         var typesProp = schemaType.GetProperty("Types");
         await Assert.That(typesProp).IsNotNull();
         var elementType = typesProp!.PropertyType.GetGenericArguments()[0];

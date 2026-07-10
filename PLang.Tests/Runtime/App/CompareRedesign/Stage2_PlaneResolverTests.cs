@@ -75,12 +75,12 @@ public class Stage2_PlaneResolverTests
     {
         // the runtime registration check rejects a shadower; every built-in
         // value family is clean (statics like the lattice `Type` are exempt)
-        await Assert.That(global::app.type.catalog.Loader.ReservedShadow(typeof(ReservedShadower)))
+        await Assert.That(global::app.type.list.Loader.ReservedShadow(typeof(ReservedShadower)))
             .IsEqualTo("Error");
-        await Assert.That(global::app.type.catalog.Loader.ReservedShadow(typeof(global::app.type.item.text.@this))).IsNull();
-        await Assert.That(global::app.type.catalog.Loader.ReservedShadow(typeof(global::app.type.item.dict.@this))).IsNull();
-        await Assert.That(global::app.type.catalog.Loader.ReservedShadow(typeof(global::app.type.item.image.@this))).IsNull();
-        await Assert.That(global::app.type.catalog.Loader.ReservedShadow(typeof(global::app.type.item.path.file.@this))).IsNull();
+        await Assert.That(global::app.type.list.Loader.ReservedShadow(typeof(global::app.type.item.text.@this))).IsNull();
+        await Assert.That(global::app.type.list.Loader.ReservedShadow(typeof(global::app.type.item.dict.@this))).IsNull();
+        await Assert.That(global::app.type.list.Loader.ReservedShadow(typeof(global::app.type.item.image.@this))).IsNull();
+        await Assert.That(global::app.type.list.Loader.ReservedShadow(typeof(global::app.type.item.path.file.@this))).IsNull();
     }
 
     private sealed class ReservedShadower : global::app.type.item.@this

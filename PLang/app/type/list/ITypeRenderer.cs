@@ -1,4 +1,4 @@
-namespace app.type.catalog;
+namespace app.type.list;
 
 /// <summary>
 /// Type-system analogue of <see cref="app.module.code.ICode"/> for

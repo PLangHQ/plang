@@ -13,7 +13,7 @@ public class DispatcherRenameTests
 {
     [Test] public async Task AppType_HasKindHooks_NotKinds()
     {
-        var t = typeof(global::app.type.catalog.@this);
+        var t = typeof(global::app.type.list.@this);
         await Assert.That(t.GetProperty("KindHooks", BindingFlags.Public | BindingFlags.Instance)).IsNotNull();
         await Assert.That(t.GetProperty("Kinds", BindingFlags.Public | BindingFlags.Instance)).IsNull();
     }

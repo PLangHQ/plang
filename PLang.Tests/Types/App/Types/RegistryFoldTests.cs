@@ -8,14 +8,14 @@ namespace PLang.Tests.App.Types;
 
 public class RegistryFoldTests
 {
-    private global::app.type.catalog.@this _types = null!;
+    private global::app.type.list.@this _types = null!;
     private global::app.@this _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
         _app = global::PLang.Tests.TestApp.Create("/tmp/regfold-" + System.Guid.NewGuid().ToString("N")[..6]);
-        _types = new global::app.type.catalog.@this();
+        _types = new global::app.type.list.@this();
     }
 
     [After(Test)]
@@ -38,14 +38,14 @@ public class RegistryFoldTests
     [Test]
     public async Task IsPrimitive_AllPriorTrueAnswers_StillTrue()
     {
-        await Assert.That(global::app.type.catalog.@this.IsPrimitive(typeof(string))).IsTrue();
-        await Assert.That(global::app.type.catalog.@this.IsPrimitive(typeof(int))).IsTrue();
-        await Assert.That(global::app.type.catalog.@this.IsPrimitive(typeof(long))).IsTrue();
-        await Assert.That(global::app.type.catalog.@this.IsPrimitive(typeof(double))).IsTrue();
-        await Assert.That(global::app.type.catalog.@this.IsPrimitive(typeof(decimal))).IsTrue();
-        await Assert.That(global::app.type.catalog.@this.IsPrimitive(typeof(bool))).IsTrue();
-        await Assert.That(global::app.type.catalog.@this.IsPrimitive(typeof(System.DateTime))).IsTrue();
-        await Assert.That(global::app.type.catalog.@this.IsPrimitive(typeof(System.Guid))).IsTrue();
+        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(string))).IsTrue();
+        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(int))).IsTrue();
+        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(long))).IsTrue();
+        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(double))).IsTrue();
+        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(decimal))).IsTrue();
+        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(bool))).IsTrue();
+        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(System.DateTime))).IsTrue();
+        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(System.Guid))).IsTrue();
     }
 
     [Test]
@@ -87,7 +87,7 @@ public class RegistryFoldTests
     [Test]
     public async Task Conversion_TryConvertTo_RoutesThroughRegistry_NotPrimitivesDict()
     {
-        var (value, error) = global::app.type.catalog.@this.TryConvert("42", typeof(int), _app.User.Context);
+        var (value, error) = global::app.type.list.@this.TryConvert("42", typeof(int), _app.User.Context);
         await Assert.That(error).IsNull();
         await Assert.That(value).IsEqualTo(42);
     }

@@ -213,6 +213,6 @@ public partial class getTypes : IContext
         // Bare Data — no static type info; downstream gets "object".
         if (returnType == typeof(global::app.data.@this)) return "object";
 
-        return global::app.type.catalog.@this.GetTypeNameStatic(returnType);
+        return global::app.type.list.@this.GetTypeNameStatic(returnType);
     }
 }

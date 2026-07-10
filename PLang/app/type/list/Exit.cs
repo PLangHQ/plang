@@ -1,4 +1,4 @@
-namespace app.type.catalog;
+namespace app.type.list;
 
 /// <summary>
 /// Pure-verb predicate. The only engine-side discriminator for "this Data

@@ -208,7 +208,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Centralized type identity: PLang names ↔ CLR types. File-format
     /// characteristics live on <see cref="Format"/>.
     /// </summary>
-    public type.catalog.@this Type { get; }
+    public type.list.@this Type { get; }
 
     /// <summary>
     /// File-format characteristics: extension → Kind, extension → MIME,
@@ -290,7 +290,7 @@ public sealed partial class @this : IAsyncDisposable
         Event = new global::app.@event.list.@this();
         // Debug/Test/Build are born on their flag (--debug/--test/--build), not at
         // startup — null = off. Presence is the enable signal (no IsEnabled).
-        Type = new type.catalog.@this(System.Context);
+        Type = new type.list.@this(System.Context);
         Code = new AppCode(System.Context);
         _settingsStore = new Lazy<Task<global::app.module.setting.IStore>>(CreateSettingsStoreAsync);
         Setting = new global::app.setting.@this(System.Context);

@@ -4,7 +4,7 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using app.data;
 
-namespace app.type.catalog;
+namespace app.type.list;
 
 /// <summary>
 /// Conversion partial of <see cref="@this"/>. The public surface is the infra dispatch

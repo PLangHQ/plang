@@ -61,7 +61,7 @@ public sealed class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
         int i = 0;
         foreach (var elem in elements)
         {
-            var (converted, itemError) = global::app.type.catalog.@this.TryConvert(elem, typeof(T), context);
+            var (converted, itemError) = global::app.type.list.@this.TryConvert(elem, typeof(T), context);
             if (itemError != null)
                 errors.Add(new global::app.error.Error($"[{i}]: {itemError.Message}", "ElementConversionFailed", 400)
                     { FixSuggestion = itemError.FixSuggestion });
