@@ -202,10 +202,13 @@ public sealed class @this : item.@this
         // ("if text", "if number") knowledge. The hub still answers Data (Ok/Error);
         // this door is the throw boundary — a bad conversion throws so it rides the
         // same MaterializeFailed path as a bad reader parse (source.Value catches it).
-        var familyClass = context.App.Type[Name]?.ClrType;
-        var owned = context.App.Type.Conversions.Of(familyClass, value, Kind?.Name, context);
-        if (owned != null)
-            return owned.Success ? owned.Peek() : throw Failed(owned.Error);
+        // The type builds itself from the value via its own kind-aware courier — a carrier whose
+        // declared Type is THIS (a typed @null carries Name+Kind, no value-build) so the courier
+        // reads the declared kind. Replaces the reflective Conversions.Of hub. A non-ICreate entity
+        // leaves the carrier clean (fall to the tail); an ICreate that declines lands data.Fail (throw).
+        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(Name, Kind?.Name), context: context);
+        if (Create(value, carrier) is { } made) return made;
+        if (carrier.Error != null) throw Failed(carrier.Error);
 
         var target = ClrType
             ?? throw new System.InvalidOperationException($"Unknown type '{Name}'");
@@ -408,6 +411,36 @@ public sealed class @this : item.@this
     private static System.Func<object?, global::app.actor.context.@this?, item.@this?> Create<T>()
         where T : item.@this, global::app.type.item.ICreate<T>
         => (raw, ctx) => T.Create(raw, ctx);
+
+    // The courier door — the kind-aware build: THIS type makes itself from a value, reading the
+    // declared kind off the carrier's Type and landing a decline on data.Fail (the retype path that
+    // Convert owned). Same thunk mechanism as the pure door, over the ICreate courier overload.
+    private System.Func<object?, global::app.data.@this, item.@this?>? _courier;
+
+    public item.@this? Create(object? raw, global::app.data.@this data)
+    {
+        if (_courier == null)
+        {
+            if (ClrType is not { } clr
+                || !typeof(item.@this).IsAssignableFrom(clr)
+                || !System.Array.Exists(clr.GetInterfaces(),
+                       i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.ICreate<>)))
+                _courier = static (_, _) => null;
+            else
+                _courier = (System.Func<object?, global::app.data.@this, item.@this?>)
+                    _courierOpen.MakeGenericMethod(clr).Invoke(null, null)!;
+        }
+        return _courier(raw, data);
+    }
+
+    private static readonly System.Reflection.MethodInfo _courierOpen =
+        typeof(@this).GetMethod(nameof(Courier), 1,
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static,
+            binder: null, System.Type.EmptyTypes, modifiers: null)!;
+
+    private static System.Func<object?, global::app.data.@this, item.@this?> Courier<T>()
+        where T : item.@this, global::app.type.item.ICreate<T>
+        => (raw, data) => T.Create(raw, data);
 
     private static readonly System.Reflection.MethodInfo _createOpen =
         typeof(@this).GetMethod(nameof(Create), 1,
