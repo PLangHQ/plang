@@ -750,7 +750,7 @@ public sealed partial class @this
             var values = GetValidValues(type);
             if (values != null)
             {
-                entries.Add(new app.type.@this(typeName, type)
+                entries.Add(new app.type.@this(typeName, ResolveType(typeName) is { IsAbstract: true } baseClr && baseClr.IsAssignableFrom(type) ? baseClr : type)
                 {
                     Values = values,
                     Description = staticDescription,
@@ -805,7 +805,7 @@ public sealed partial class @this
 
             if (isScalar)
             {
-                entries.Add(new app.type.@this(typeName, type)
+                entries.Add(new app.type.@this(typeName, ResolveType(typeName) is { IsAbstract: true } baseClr && baseClr.IsAssignableFrom(type) ? baseClr : type)
                 {
                     Shape = derivedShape ?? staticShape ?? "string",
                     ConstructorSignature = constructorSignature,
@@ -819,7 +819,7 @@ public sealed partial class @this
 
             if (llmProps.Count > 0)
             {
-                entries.Add(new app.type.@this(typeName, type)
+                entries.Add(new app.type.@this(typeName, ResolveType(typeName) is { IsAbstract: true } baseClr && baseClr.IsAssignableFrom(type) ? baseClr : type)
                 {
                     Fields = llmProps,
                     Description = staticDescription,
