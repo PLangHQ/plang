@@ -33,8 +33,8 @@ The `NumberKind` enum dies with the switches, but the Ladder's rungs are labeled
 
 ```csharp
 // number/this.Ladder.cs — a LEVEL owns its range and answers its own question.
-// Levels carry the kind by NAME (static universal data can't hold per-App kind instances):
-private readonly record struct Level(string Kind, BigInteger Min, BigInteger Max, bool Unbounded)
+// Levels hold the kind INSTANCES (context-free singletons — settled in the context-free answer):
+private readonly record struct Level(kind Kind, BigInteger Min, BigInteger Max, bool Unbounded)
 {
     public bool Fits(BigInteger v) => Unbounded || (v >= Min && v <= Max);
 }
@@ -53,7 +53,7 @@ private static readonly Level[] Ladder =
 // the climb — compute wide, then find the smallest level that holds the result.
 // NO exceptions anywhere: math runs in BigInteger (cannot overflow), placement is comparison.
 // A private FACTORY (constructs the result number — no `this` exists yet): the sanctioned static.
-private static @this Narrow(BigInteger v, string floor)
+private static @this Narrow(BigInteger v, kind floor)
 {
     var floorLevel = Ladder[LadderIndex(floor)];
     if (floorLevel.Fits(v)) return FromBigIntegerAs(v, floor);   // fits where it started → stays

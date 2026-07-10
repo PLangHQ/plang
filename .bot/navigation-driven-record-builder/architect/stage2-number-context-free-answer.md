@@ -8,6 +8,6 @@
 
 3. **No registry — the value carries its kind instance.** Whoever mints a number knows its kind (`Create`, the climb, the perimeter), so the number is born holding the kind object. `Write` is `Kind.Write(this, writer)`; arithmetic rebuilds via the kind it picked — **zero lookups at the ctx-less sites.** The only two lookups that remain — declared kind name inside `number.Create`, CLR type at the perimeter — use a **private immutable map of the 15 singletons inside number** (the sanctioned data-table clause, same category as the primitive tables). No public door, no `Discover`, no keyed registry — your proposed `Kind[name]`/`Kind[clrType]` registry is rejected as the `OfStatic` shape reborn.
 
-4. **Ladder and levels: unchanged** — exactly as already ruled (name-keyed levels, integer climb, fractionals via the mix policy). This finding never touched them.
+4. **Levels hold the kind INSTANCES** (corrected — the earlier "name-keyed levels" ruling was justified only by the per-App premise this document disproves; keeping it would contradict point 3: a name-keyed climb forces a name→instance lookup inside ctx-less `Narrow`). The climb hands the kind instance straight to the minted number — zero lookups, truly. Everything else about the Ladder is unchanged (integer climb, fractionals via the mix policy).
 
 Proceed: 15 one-line ctor edits, `Build`→`Create` on the base, wire the three switches to the kinds, fold the `From*` statics.
