@@ -5,68 +5,13 @@ using app.actor.context;
 namespace app.type.convert;
 
 /// <summary>
-/// Owns the per-type <c>static data.@this Convert(object?, string? kind, context)</c>
-/// hook — "the type knows how to make a value of itself, kind-aware." Discovers
-/// the hook by reflection on the family class (text.@this, number.@this, …),
-/// caches the <see cref="MethodInfo"/>, and invokes it via <see cref="Of"/>.
-///
-/// Sibling of <c>app.type.kind.Hooks</c> (the build-time <c>Build</c> hook):
-/// same discover-cache-invoke shape, different verb. Kept a separate noun because
-/// the dispatch + cache is real state with its own invariants (one entry per CLR
-/// type, lazy, never invalidated within an App).
+/// Owns the CLR → owning-family routing (<see cref="OwnerOf"/>), composed from each family's
+/// static <c>OwnedClrTypes</c> declaration. The per-type <c>Convert</c> hook dispatch it once
+/// carried is gone — a type builds itself through its own <c>Create</c> (the entity courier);
+/// this stays only as the clr-target routing table the residual conversion plumbing consults.
 /// </summary>
 public sealed class @this
 {
-    private readonly ConcurrentDictionary<System.Type, MethodInfo?> _cache = new();
-
-    /// <summary>
-    /// Asks <paramref name="familyClass"/>'s <c>Convert</c> hook to make a value of
-    /// that type from <paramref name="value"/> (with <paramref name="kind"/>). Returns
-    /// the type's result — which may itself be an Error Data — or <c>null</c> when the
-    /// family defines no <c>Convert</c> hook (the caller then falls back).
-    /// </summary>
-    [System.Obsolete("Superseded by Type.Create (the type builds itself) — do not add new callers.")]
-    public global::app.data.@this? Of(System.Type? familyClass, object? value, string? kind,
-        actor.context.@this context)
-        => Invoke(_cache, familyClass, value, kind, context);
-
-    // Static cache for the context-free entry point — same discover-once-per-type shape
-    // as the instance _cache, but reachable when no App is in scope.
-    private static readonly ConcurrentDictionary<System.Type, MethodInfo?> _staticCache = new();
-
-    /// <summary>
-    /// Context-free family Convert dispatch — the hook is a <c>static</c> method, so the
-    /// scalar families (text/number/bool/datetime/binary/duration) parse a string into
-    /// their born-native wrapper without an App in scope. Context-less callers
-    /// (the Text serializer's <c>Deserialize&lt;T&gt;(string)</c>) route here; families
-    /// that genuinely need a context decline gracefully on the null they receive.
-    /// </summary>
-    [System.Obsolete("Superseded by Type.Create (the type builds itself) — do not add new callers.")]
-    public static global::app.data.@this? OfStatic(System.Type? familyClass, object? value, string? kind,
-        actor.context.@this? context)
-        => Invoke(_staticCache, familyClass, value, kind, context);
-
-    private static global::app.data.@this? Invoke(ConcurrentDictionary<System.Type, MethodInfo?> cache,
-        System.Type? familyClass, object? value, string? kind, actor.context.@this? context)
-    {
-        if (familyClass == null) return null;
-        var hook = cache.GetOrAdd(familyClass, Discover);
-        if (hook == null) return null;
-        try
-        {
-            return hook.Invoke(null, new object?[] { value, kind, context }) as global::app.data.@this;
-        }
-        catch (TargetInvocationException ex)
-        {
-            // Infra dispatch door: context is legitimately null for context-free callers
-            // (the Text serializer's Deserialize<T>), so the error Data is born from the
-            // context only when one is in hand.
-            var error = new global::app.error.Error(
-                (ex.InnerException ?? ex).Message, "TypeConversionFailed", 400);
-            return context != null ? context.Error(error) : global::app.data.@this.FromError(error);
-        }
-    }
-
     /// <summary>
     /// Routing table: which family owns construction of <paramref name="clrTarget"/>,
     /// plus the number-precision kind when the target pins one. Pure plumbing — it holds

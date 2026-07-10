@@ -214,21 +214,23 @@ public sealed partial class @this
                 // With an App in scope use the instance dispatch; context-free (the Text
                 // serializer's string deserialize) the scalar families' static Convert hook
                 // still parses into the born-native wrapper.
-                var owned = context != null
-                    ? context.App.Type.Conversions.Of(family, value, kind, context)
-                    : global::app.type.convert.@this.OfStatic(family, value, kind, null);
-                if (owned != null)
+                // The owning type builds itself via its kind-aware courier — a carrier declaring the
+                // target family+kind (a typed @null carries Name+Kind, no value-build). Replaces the
+                // reflective convert hub. Born-with-context: no context → no family build (fall through).
+                var entity = context?.App.Type[family];
+                if (entity != null)
                 {
-                    if (owned.Success)
+                    var carrier = new global::app.data.@this("",
+                        new global::app.type.item.@null.@this(entity.Name, kind), context: context);
+                    var built = entity.Create(value, carrier);
+                    if (built != null)
                     {
-                        var built = owned.Peek();
-                        // The hook builds the PLang value; the door's postcondition is
-                        // assignability to the asked-for target. A CLR target (TimeSpan,
-                        // double, string) lowers through the wrapper's own Clr exit —
-                        // the value converts itself, erroring honestly on loss.
-                        if (built is global::app.type.item.@this wrapper && !targetType.IsInstanceOfType(built))
+                        // The courier builds the PLang value; the door's postcondition is assignability
+                        // to the asked-for target. A CLR target (TimeSpan, double, string) lowers through
+                        // the wrapper's own Clr exit — the value converts itself, erroring on loss.
+                        if (!targetType.IsInstanceOfType(built))
                         {
-                            try { return (wrapper.Clr(targetType), null); }
+                            try { return (built.Clr(targetType), null); }
                             catch (System.Exception ex) when (ex is System.InvalidCastException or System.NotSupportedException or System.FormatException or System.OverflowException)
                             {
                                 return (null, WithSlot(new error.Error(ex.Message, "TypeConversionFailed", 400) { Exception = ex }, targetName));
@@ -236,9 +238,9 @@ public sealed partial class @this
                         }
                         return (built, null);
                     }
-                    var hookErr = owned.Error as error.Error
-                        ?? new error.Error(owned.Error!.Message, "TypeConversionFailed", 400);
-                    return (null, WithSlot(hookErr, targetName));
+                    if (carrier.Error != null)
+                        return (null, WithSlot(carrier.Error as error.Error
+                            ?? new error.Error(carrier.Error.Message, "TypeConversionFailed", 400), targetName));
                 }
             }
         }

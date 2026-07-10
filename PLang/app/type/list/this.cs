@@ -67,13 +67,6 @@ public sealed partial class @this
     internal kind.list.@this Kind { get; private set; } = new(null);
 
     /// <summary>
-    /// Per-type <c>static Convert(object?, string? kind, context)</c> hooks — the
-    /// runtime sibling of <see cref="KindHooks"/>. A type owns how a value becomes
-    /// an instance of itself; <c>app.type.@this.Convert</c> routes through here.
-    /// </summary>
-    public convert.@this Conversions { get; } = new();
-
-    /// <summary>
     /// Per-(type, format) renderer table. Vestigial now that a value renders
     /// itself via <c>item.Write</c> — only its membership check feeds Normalize's
     /// "renders-itself, don't reflect" signal. Discovers
