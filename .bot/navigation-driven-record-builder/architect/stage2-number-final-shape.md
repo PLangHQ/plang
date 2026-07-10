@@ -85,7 +85,6 @@ public sealed partial class @this : item.@this, ICreate<@this>
 public abstract class @this          // context-free, stateless, ctor takes NOTHING
 {
     public abstract string Name { get; }
-    public abstract System.Type ClrForm { get; }
 
     // plang in, plang out. NON-nullable, NO default body (the FromObject default is DELETED),
     // NO catch — a value that can't be this kind throws loud via its own lower door;
@@ -107,7 +106,6 @@ public abstract class @this          // context-free, stateless, ctor takes NOTH
 public sealed class @this : number.kind.@this
 {
     public override string Name => "int";
-    public override System.Type ClrForm => typeof(int);
     public override number.@this Create(item.@this value) => value.Clr<int>();   // value lowers ITSELF; throws precise
     public override void Write(number.@this v, IWriter w) => w.Int(v.ToInt32());
     public override item.@this Read<TReader>(ref TReader r) => (number.@this)r.Int();
@@ -169,7 +167,7 @@ private static @this Narrow(BigInteger v, string floor)
 
 ## Deletions this replaces
 
-`NumberKind` enum · `CoerceToKind` · `KindFromName` · `ClrToKind`/`KindToClrType` · `From`/`FromObject`/`FromBigIntegerAs`/`FromDoubleAsKind` · the `Build(s)` literal-sniff (Parse owns it, one pass) · both 15-arm serializer switches · the clr→kind map (never needed) · the 15 typed `Create(int…Half)` wrappers (never born — the operators are the lift).
+`NumberKind` enum · `CoerceToKind` · `KindFromName` · `ClrToKind`/`KindToClrType` · `From`/`FromObject`/`FromBigIntegerAs`/`FromDoubleAsKind` · the `Build(s)` literal-sniff (Parse owns it, one pass) · both 15-arm serializer switches · the clr→kind map (never needed) · `ClrForm` on number kinds (Ingi: zero readers once the base default and the clr→kind map died — it serves the ITEM kinds' collection door, which number kinds don't ride) · the 15 typed `Create(int…Half)` wrappers (never born — the operators are the lift).
 
 ## Acceptance
 
