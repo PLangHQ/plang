@@ -117,19 +117,20 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// declared <c>as image</c> becomes the image its magic bytes name (the declaration is the ask).
     /// A string source needs the scheme registry (a context) and lives in the courier below; anything
     /// else declines (<c>null</c>).</summary>
-    public static @this? Create(global::app.type.item.@this value)
+    public static @this? Create(object? raw)
     {
-        if (value is @this self) return self;
-        return value.Clr<object>() is byte[] bytes ? FromBytes(bytes) : null;
+        if (raw is @this self) return self;
+        object? value = raw is global::app.type.item.@this rit ? rit.Clr<object>() : raw;
+        return value is byte[] bytes ? FromBytes(bytes) : null;
     }
 
     /// <summary>The ICreate courier face — pass-through / byte[] via the core; a string builds a
     /// scheme-path image via <c>Scheme.From</c> (uses <c>data.Context</c>). A non-string source
     /// declines silently; an unregistered/failed scheme lands the reason on <paramref name="data"/>.</summary>
-    public static @this? Create(global::app.type.item.@this value, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.data.@this data)
     {
         if (Create(value) is { } built) return built;
-        if (value.Clr<object>() is not string raw) return null;
+        if (((value as global::app.type.item.@this)?.Clr<object>() ?? value) is not string raw) return null;
         try { return new @this(data.Context.App.Type.Scheme.From(raw, data.Context)); }
         catch (global::app.type.path.scheme.SchemeNotRegistered snr)
         {

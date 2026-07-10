@@ -62,20 +62,21 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <c>text/json</c> means); a scalar stringifies invariantly. An opaque domain object has no
     /// honest textual form → <c>null</c> (decline). Shared by the ICreate courier and comparison.
     /// </summary>
-    public static @this? Create(global::app.type.item.@this value)
+    public static @this? Create(object? raw)
     {
-        if (value is @this self) return self;
-        // Native dict/list value types aren't IDictionary/IEnumerable, but their [JsonConverter]
-        // renders the canonical {}/[] textual form.
-        if (value is global::app.type.dict.@this or global::app.type.list.@this)
-            return (@this)System.Text.Json.JsonSerializer.Serialize(value);
-        var raw = value.Clr<object>();
-        return raw switch
+        if (raw is @this self) return self;
+        // Native dict/list ITEMS aren't IDictionary/IEnumerable, but they render their
+        // canonical {}/[] textual form (text/json means json TEXT) — checked on the item.
+        if (raw is global::app.type.dict.@this or global::app.type.list.@this)
+            return (@this)System.Text.Json.JsonSerializer.Serialize(raw);
+        // An item of another type unwraps to its clr (a read); a raw CLR value is already its clr.
+        object? clr = raw is global::app.type.item.@this it ? it.Clr<object>() : raw;
+        return clr switch
         {
             string s => (@this)s,
             System.Text.Json.JsonElement or System.Text.Json.Nodes.JsonNode
-                or System.Collections.IDictionary => (@this)System.Text.Json.JsonSerializer.Serialize(raw),
-            System.Collections.IEnumerable and not byte[] => (@this)System.Text.Json.JsonSerializer.Serialize(raw),
+                or System.Collections.IDictionary => (@this)System.Text.Json.JsonSerializer.Serialize(clr),
+            System.Collections.IEnumerable and not byte[] => (@this)System.Text.Json.JsonSerializer.Serialize(clr),
             System.IConvertible c => (@this)(System.Convert.ToString(c, System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty),
             _ => null,
         };
@@ -84,11 +85,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The ICreate courier face — delegates to the pure core; a value with no textual form
     /// declines with the reason on <paramref name="data"/>. text's kind is a hint (extension), not a
     /// construction switch, so the core needs no kind.</summary>
-    public static @this? Create(global::app.type.item.@this value, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.data.@this data)
     {
         if (Create(value) is { } built) return built;
         data.Fail(new global::app.error.Error(
-            $"Cannot bind a {value.Mint().Name} to text — it has no textual form.", "TypeConversionFailed", 400));
+            $"Cannot bind a {((value as global::app.type.item.@this)?.Mint().Name ?? value?.GetType().Name)} to text — it has no textual form.", "TypeConversionFailed", 400));
         return null;
     }
 

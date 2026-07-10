@@ -71,7 +71,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public static @this? Create(global::app.type.item.@this value, Data data)
     {
         if (value is @this self) return self;
-        if (value.Clr<object>() is string s && string.IsNullOrWhiteSpace(s)) return new @this(data.Context);
+        if ((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s) && string.IsNullOrWhiteSpace(s)) return new @this(data.Context);
         return value.Clr(typeof(@this)) as @this;
     }
 

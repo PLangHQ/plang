@@ -25,10 +25,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>THE PURE CORE — a <c>binary</c> passes through; a raw <c>byte[]</c> passes; a base64
     /// string decodes; anything else (or non-base64) declines (<c>null</c>). Shared by the ICreate
     /// courier and comparison coercion.</summary>
-    public static @this? Create(global::app.type.item.@this value)
+    public static @this? Create(object? raw)
     {
-        if (value is @this self) return self;
-        switch (value.Clr<object>())
+        if (raw is @this self) return self;
+        object? value = raw is global::app.type.item.@this rit ? rit.Clr<object>() : raw;
+        switch (value)
         {
             case byte[] b: return (@this)b;
             case string s:
@@ -40,12 +41,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>The ICreate courier face — delegates to the pure core; on decline lands the reason
     /// on <paramref name="data"/> (a non-base64 string vs a wrong type).</summary>
-    public static @this? Create(global::app.type.item.@this value, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.data.@this data)
     {
         if (Create(value) is { } built) return built;
-        data.Fail(value.Clr<object>() is string
+        object? clr = (value as global::app.type.item.@this)?.Clr<object>() ?? value;
+        data.Fail(clr is string
             ? new global::app.error.Error("Cannot parse string as binary — expected base64.", "BinaryParseFailed", 400)
-            : new global::app.error.Error($"Cannot convert {value.Mint().Name} to binary.", "BinaryConversionFailed", 400));
+            : new global::app.error.Error($"Cannot convert {(value as global::app.type.item.@this)?.Mint().Name ?? value?.GetType().Name} to binary.", "BinaryConversionFailed", 400));
         return null;
     }
 

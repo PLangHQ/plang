@@ -27,22 +27,42 @@ namespace app.type.item;
 /// </summary>
 public interface ICreate<TSelf> where TSelf : @this, ICreate<TSelf>
 {
-    static virtual TSelf? Create(@this value, global::app.data.@this data)
-    {
-        // Pass-through (already TSelf) and the chain facet (a Data<file> slot
-        // satisfied after the file parsed to dict) — free for every type, and
-        // the same instance rides out: no new value, no new binding.
-        if (value is TSelf self) return self;
-        if (value.Facet<TSelf>() is { } facet) return facet;
+    /// <summary>
+    /// The pure core — the ONE runtime boundary: born-native <paramref name="raw"/> into a
+    /// <typeparamref name="TSelf"/>, or decline (null). <c>object</c> because this method IS the
+    /// crossing — a raw CLR value and an item of another type flow through the SAME switch
+    /// (<c>int i => …</c> beside <c>text t => …</c>); no <c>Clr</c> shuttle wrapping a scalar just
+    /// to open it a frame later. CONTEXT-FREE — the caller most often is coercion (`text → number`
+    /// in compare) or a scalar lift, neither of which resolves against an actor. No Fail — an
+    /// un-liftable value is not a failure (unowned falls to the caller's <c>Clr</c>). The base
+    /// answers pass-through; each owning type overrides with its arms.
+    /// </summary>
+    static virtual TSelf? Create(object? raw)
+        => raw as TSelf;
 
-        // The TARGET builds itself: a scalar via its own Convert hook (number/text/
-        // date/choice/…), a container via the lift (raw dict/list → dict/list). No
-        // central switch — the type owns its construction. (list<T> overrides with a
-        // re-tag; record/typed-list creation is the owner's, not a hub's.)
-        object? raw = value.Clr<object>();
-        // An error value isn't a convertible payload — keep it primary, demote the
-        // conversion failure onto its chain.
-        if (raw is global::app.error.Error errVal)
+    /// <summary>
+    /// The context-carrying lift — the entity-door/thunk entry, driven with the born-with context.
+    /// The base delegates to the context-free core; only a type that RESOLVES against an actor
+    /// (a reference fundamental — <c>path</c>/<c>file</c>/<c>image</c>/<c>url</c>) overrides to use
+    /// <paramref name="ctx"/>. Context lives on the minority that needs it, not the scalar majority.
+    /// </summary>
+    static virtual TSelf? Create(object? raw, global::app.actor.context.@this? ctx)
+        => TSelf.Create(raw);
+
+    /// <summary>
+    /// The courier — the typed ask (<c>Data.Value&lt;T&gt;()</c>): a decline lands its reason on
+    /// <c>data.Fail</c> (the error belonged to the binding the caller already holds). A type with a
+    /// kind override (number's <c>as decimal</c>) overrides this; the default runs the pure core,
+    /// then the container deserialize, then fails typed.
+    /// </summary>
+    static virtual TSelf? Create(object? raw, global::app.data.@this data)
+    {
+        // Pass-through / chain facet — free for every type, same instance rides out.
+        if (raw is TSelf self) return self;
+        if (raw is @this fv && fv.Facet<TSelf>() is { } facet) return facet;
+
+        // An error value isn't a convertible payload — keep it primary, demote the failure.
+        if (raw is @this ev && ev.Clr<object>() is global::app.error.Error errVal)
         {
             errVal.ErrorChain.Add(new global::app.error.Error(
                 $"%{data.Name}% holds an error — '{@this.NameOf(typeof(TSelf))}' cannot be created from it.",
@@ -50,19 +70,17 @@ public interface ICreate<TSelf> where TSelf : @this, ICreate<TSelf>
             data.Fail(errVal);
             return null;
         }
-        var owned = global::app.type.convert.@this.OfStatic(typeof(TSelf), raw, data.Type?.Kind?.Name, data.Context);
-        // The owning hook ran and failed — surface ITS reason, not a generic decline.
-        if (owned is { Success: false } && owned.Error is { } hookErr) { data.Fail(hookErr); return null; }
-        var built = owned?.Peek() ?? global::app.type.@this.Create(raw, data.Context);
-        if (built is TSelf made) return made;
+
+        // The pure core builds it — the type owns its own arms (CLR/item coercions in one switch).
+        if (TSelf.Create(raw, data.Context) is { } made) return made;
 
         // A dict/list deserializes ITSELF to a record / domain item (step, …). Only a
         // container reaches this — a genuine deserialize failure surfaces (it throws).
-        if (value is global::app.type.dict.@this or global::app.type.list.@this
-            && value.Clr(typeof(TSelf)) is TSelf rec) return rec;
+        if (raw is global::app.type.dict.@this or global::app.type.list.@this
+            && ((@this)raw).Clr(typeof(TSelf)) is TSelf rec) return rec;
 
         data.Fail(new global::app.error.Error(
-            $"%{data.Name}% holds a {value.Mint().Name} — '{@this.NameOf(typeof(TSelf))}' cannot be created from it.",
+            $"%{data.Name}% holds a {(raw as @this)?.Mint().Name ?? raw?.GetType().Name} — '{@this.NameOf(typeof(TSelf))}' cannot be created from it.",
             "CreateItemDeclined", 400));
         return null;
     }

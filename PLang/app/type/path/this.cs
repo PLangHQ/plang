@@ -93,12 +93,12 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// <summary>The ICreate courier face — a <c>path</c> passes through; a string builds a scheme
     /// path via <c>Scheme.From</c> (uses <c>data.Context</c>); a wrong type or an unregistered
     /// scheme declines with the reason on <paramref name="data"/>.</summary>
-    public static @this? Create(global::app.type.item.@this value, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.data.@this data)
     {
         if (value is @this self) return self;
-        if (value.Clr<object>() is not string raw)
+        if (((value as global::app.type.item.@this)?.Clr<object>() ?? value) is not string raw)
         {
-            data.Fail(new global::app.error.Error($"Cannot convert {value.Mint().Name} to path.", "PathConversionFailed", 400));
+            data.Fail(new global::app.error.Error($"Cannot convert {((value as global::app.type.item.@this)?.Mint().Name ?? value?.GetType().Name)} to path.", "PathConversionFailed", 400));
             return null;
         }
         try { return data.Context.App.Type.Scheme.From(raw, data.Context); }

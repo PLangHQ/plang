@@ -22,7 +22,7 @@ public sealed class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
     /// never re-created: a live host like the app is a singleton, so a copy would lose its
     /// wiring. A source that is not a T host declines (null).
     /// </summary>
-    public static @this<T>? Create(global::app.type.item.@this value, global::app.data.@this data)
+    public static @this<T>? Create(object? value, global::app.data.@this data)
     {
         if (value is @this<T> already) return already;
         if (value is @this c && c.Value is T typed) return new @this<T>(typed, data.Context!, c.Kind);

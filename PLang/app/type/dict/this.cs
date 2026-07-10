@@ -61,11 +61,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The ICreate courier face — a <c>dict</c> passes through; a blank string is an empty
     /// dict (the LLM emits <c>""</c> for <c>{}</c>); a native container re-tags through its own
     /// <c>Clr</c>. Uses <c>data.Context</c> for the born-with-context construction.</summary>
-    public static @this? Create(global::app.type.item.@this value, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.data.@this data)
     {
         if (value is @this self) return self;
-        if (value.Clr<object>() is string s && string.IsNullOrWhiteSpace(s)) return new @this(data.Context);
-        return value.Clr(typeof(@this)) as @this;
+        if ((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s) && string.IsNullOrWhiteSpace(s)) return new @this(data.Context);
+        return (value as global::app.type.item.@this)?.Clr(typeof(@this)) as @this;
     }
 
     /// <summary>Aliases a foreign CLR dictionary as the backing — true O(1), no walk,

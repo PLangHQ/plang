@@ -54,10 +54,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// or a raw CLR bool). <c>null</c> = decline (not this shape) — no Data, no error side-channel.
     /// Shared by the ICreate courier and (after the compare pass) comparison coercion.
     /// </summary>
-    public static @this? Create(global::app.type.item.@this value)
+    public static @this? Create(object? raw)
     {
-        if (value is @this self) return self;
-        return value.Clr<object>() switch
+        if (raw is @this self) return self;
+        object? value = raw is global::app.type.item.@this rit ? rit.Clr<object>() : raw;
+        return value switch
         {
             bool b => (@this)b,
             string s when bool.TryParse(s, out var parsed) => (@this)parsed,
@@ -69,12 +70,12 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// on a decline it lands the reason on <paramref name="data"/> (a text that didn't parse vs a
     /// wrong type). A type with a kind (number precision, image format) reads it off
     /// <c>data.Type.Kind</c> here — bool has none, so the core's default construction stands.</summary>
-    public static @this? Create(global::app.type.item.@this value, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.data.@this data)
     {
         if (Create(value) is { } built) return built;
-        data.Fail(value.Clr<object>() is string s
+        data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
             ? new global::app.error.Error($"Cannot parse '{s}' as bool — expected true or false.", "BoolParseFailed", 400)
-            : new global::app.error.Error($"Cannot convert {value.Mint().Name} to bool.", "BoolConversionFailed", 400));
+            : new global::app.error.Error($"Cannot convert {((value as global::app.type.item.@this)?.Mint().Name ?? value?.GetType().Name)} to bool.", "BoolConversionFailed", 400));
         return null;
     }
 

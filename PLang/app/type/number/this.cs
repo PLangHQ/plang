@@ -100,10 +100,14 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // ── THE PURE CORE — identical shape to bool/text/all 12. No exceptions on this path (the compare
     //    pass calls it: `"abc" == 5` → not-a-number → decline, never throw). Raw CLR keeps its kind
     //    (source fidelity via the lifts); a string's literal shape decides via Parse. ──
-    public static @this? Create(global::app.type.item.@this value)
+    // The pure core (the runtime boundary): a raw CLR numeric, a raw string, or an item of
+    // another type flow through the SAME switch. An item unwraps to its own clr (a read, not a
+    // Clr wrap); a raw CLR value is already its clr — a raw int hits `int v => v` with no shuttle.
+    public static @this? Create(object? raw)
     {
-        if (value is @this self) return self;
-        return value.Clr<object>() switch
+        if (raw is @this self) return self;
+        object? clr = raw is global::app.type.item.@this it ? it.Clr<object>() : raw;
+        return clr switch
         {
             string s => Parse(s),
             sbyte v => v, byte v => v, short v => v, ushort v => v,
@@ -115,28 +119,30 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     }
 
     // ── THE COURIER — the declared kind lives here. With no declared kind it is the pure core; with
-    //    one, the kind builds it and the courier owns the error channel (a thrown reason → data.Fail,
-    //    PRESERVED, never swallowed). ──
-    public static @this? Create(global::app.type.item.@this value, global::app.data.@this data)
+    //    one, the kind builds it (from the typed ask's item) and the courier owns the error channel
+    //    (a thrown reason → data.Fail, PRESERVED, never swallowed). ──
+    public static @this? Create(object? raw, global::app.data.@this data)
     {
         var declared = data.Type?.Kind?.Name;
-        if (declared is null)
+        if (declared is not null && raw is global::app.type.item.@this value)
         {
-            if (Create(value) is { } n) return n;
-            data.Fail(new global::app.error.Error($"Cannot convert {value.Mint().Name} to number.", "NumberConversionFailed", 400));
-            return null;
+            if (!Kinds.TryGetValue(declared, out var kind))
+            {
+                data.Fail(new global::app.error.Error($"Unknown number kind '{declared}'.", "UnknownKind", 400));
+                return null;
+            }
+            try { return kind.Create(value); }
+            catch (System.Exception e) when (e is System.InvalidCastException or System.FormatException or System.OverflowException)
+            {
+                data.Fail(new global::app.error.Error(e.Message, "NumberConversionFailed", 400) { Exception = e });
+                return null;
+            }
         }
-        if (!Kinds.TryGetValue(declared, out var kind))
-        {
-            data.Fail(new global::app.error.Error($"Unknown number kind '{declared}'.", "UnknownKind", 400));
-            return null;
-        }
-        try { return kind.Create(value); }
-        catch (System.Exception e) when (e is System.InvalidCastException or System.FormatException or System.OverflowException)
-        {
-            data.Fail(new global::app.error.Error(e.Message, "NumberConversionFailed", 400) { Exception = e });
-            return null;
-        }
+        if (Create(raw) is { } n) return n;
+        data.Fail(new global::app.error.Error(
+            $"Cannot convert {(raw as global::app.type.item.@this)?.Mint().Name ?? raw?.GetType().Name} to number.",
+            "NumberConversionFailed", 400));
+        return null;
     }
 
     /// <summary>The CLR exit door — number hands its own boxed backing; the
