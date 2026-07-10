@@ -63,8 +63,13 @@ public sealed class @this
             if (!family.Name.Equals("this", System.StringComparison.Ordinal)) continue;
             if (family.Namespace is null || !family.Namespace.StartsWith("app.type.", System.StringComparison.Ordinal)) continue;
 
+            // DeclaredOnly, not FlattenHierarchy: a subclass (path.file/path.http) must NOT inherit
+            // its abstract base's Assignable declaration — that duplicated the ownership entry under
+            // three families (path.@this/file/http) and OwnerOf returned the first by scan order (a race,
+            // so the "path" entity's ClrType flickered between the concrete subclasses). Only the
+            // declaring family (path.@this) owns.
             var prop = family.GetProperty("OwnedClrTypes",
-                BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+                BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly);
             if (prop?.GetValue(null) is not System.Collections.Generic.IEnumerable<OwnedClr> decls) continue;
 
             foreach (var decl in decls)

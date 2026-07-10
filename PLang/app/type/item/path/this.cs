@@ -88,7 +88,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// <summary>THE PURE CORE — a <c>path</c> passes through; construction from a string needs the
     /// scheme registry (a context), so it lives in the courier below. Any non-path value declines
     /// (<c>null</c>) here. path isn't rank-compared, so the core is never a coercion door.</summary>
-    public static @this? Create(global::app.type.item.@this value) => value as @this;
+    public static @this? Create(object? value) => value as @this;
 
     /// <summary>The ICreate courier face — a <c>path</c> passes through; a string builds a scheme
     /// path via <c>Scheme.From</c> (uses <c>data.Context</c>); a wrong type or an unregistered
