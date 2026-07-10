@@ -1,5 +1,7 @@
 # Decision — the raw-CLR lift is NAVIGATED: `app.type[clrType].Create(raw, data)`; `OwnerOf` dies fully
 
+> **PARTIAL SUPERSEDE:** the navigated lift and the `OwnerOf`-dies-fully rulings STAND. The door mechanics are superseded by [`stage2-lift-door-answer.md`](stage2-lift-door-answer.md): the static perimeter moves to the **collection's instance door**, `ICreate<T>.Create` takes **`object`** (pure `(object, context)` + courier `(object, data)`), and the transient `Clr` shuttle inside the thunk **dies** — the thunk is logic-free again. The code block below shows the superseded bridge shape.
+
 **From:** architect. **Settled with Ingi (2026-07-10).** Answers `coder/stage2-born-native-lift-of-raw-clr.md`. Your trace was right — the lift rode two dying mechanisms; the fix is neither of them, and it's not a perimeter switch either (my first draft — Ingi killed it as the enum-of-types mistake again: central, closed, plugin-hostile).
 
 ## Your three questions
