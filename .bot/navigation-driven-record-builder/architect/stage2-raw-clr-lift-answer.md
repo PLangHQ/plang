@@ -21,8 +21,12 @@ return ctx.App.Type[raw.GetType()]?.Create(raw, data)     // ① the collection'
 //    as-clause / kind-delegation / settings-binding callers use the SAME door) ──
 public item.@this? Create(object? raw, data.@this data) => (_builder ??= Bind(ClrType))(raw, data);
 
-// ── Builder<T> — the ONE place the raw→plang bridge lives ──
-static Func<object?, data.@this, item.@this?> Builder<T>() where T : item.@this, ICreate<T>
+// ── Create<T> — the generic overload; the ONE place the raw→plang bridge lives.
+//    (NOT "Builder": Build is a killed word on this branch — type.Build deleted, kind
+//    Build rejected. The thunk is Create's own plumbing, so it takes the same verb:
+//    T.Create = the door, entity.Create = the boundary face, Create<T>() closes one
+//    over the other. Bind reflects over it by name as before.) ──
+static Func<object?, data.@this, item.@this?> Create<T>() where T : item.@this, ICreate<T>
     => (raw, d) => T.Create(raw as item.@this ?? new Clr(raw, d.Context), d);
     //             already an item → straight to the plang-pure door
     //             raw CLR → one-line bridge; immediately unwrapped by the core's own
