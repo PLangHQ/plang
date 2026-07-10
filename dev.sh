@@ -49,6 +49,9 @@ run_bin() { # $1 = project, rest = args
 # exit code).
 run_all_suites() { # rest = extra args passed to each suite
   local p fail=0
+  # Each suite's FULL output is written to a per-suite log — read those for the truth
+  # (the live stdout below is only the one-line summary and can be truncated under a pipe).
+  echo "→ full per-suite output: /tmp/devsh_<Suite>.log  (Suite ∈ ${PROJECTS[*]})"
   for p in "${PROJECTS[@]}"; do
     run_bin "$p" "$@" > "/tmp/devsh_$p.log" 2>&1 || true
     local n
@@ -72,8 +75,9 @@ case "${1:-build}" in
       hits=$(grep -rl "class ${2}" PLang.Tests/*/ --include=*.cs 2>/dev/null | grep -v /obj/ | sed 's|PLang.Tests/||;s|/.*||' | sort -u)
       [ -z "$hits" ] && hits="${PROJECTS[*]}"
       for p in $hits; do
-        echo "=== $p ==="
-        run_bin "$p" --treenode-filter "/*/*/*${2}*/*" || true
+        echo "=== $p ===  (full output: /tmp/devsh_$p.log)"
+        run_bin "$p" --treenode-filter "/*/*/*${2}*/*" > "/tmp/devsh_$p.log" 2>&1 || true
+        grep -aiE '^failed |^  (total|failed):' "/tmp/devsh_$p.log" || echo "  (no failures — full output in the log)"
       done
     else
       run_all_suites
@@ -85,6 +89,9 @@ case "${1:-build}" in
     (cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test)
     ;;
   full)
+    echo "→ 'full' runs ALL suites + plang tests (slow, pre-commit gate)."
+    echo "  For a faster loop: ./dev.sh test <ClassName>  (one suite/class, ~seconds)."
+    echo "  Per-suite full output is written to /tmp/devsh_<Suite>.log — read those, not this stdout."
     # Pre-commit gate: analyzers ON. Slower, and invalidates the analyzers-off
     # incremental state once — run when handing off, not per edit.
     dotnet msbuild PLang.Tests/All.proj -t:Build -p:Configuration=Debug -v:q -nologo
