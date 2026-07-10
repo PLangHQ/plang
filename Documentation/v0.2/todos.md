@@ -1848,3 +1848,10 @@ the json writer's own `case item v: v.Write(this)` dispatch, signature's field w
 so deleting it is an IWriter-contract change, not a leaf collapse. Scoped OUT of the
 Load()-removal (stage2-load-removal-answer.md); this is the follow-up: one async
 Output door end-to-end, the sync Write callers migrated, the middleman wrapper gone.
+
+## 2026-07-10 — binary has no wire serializer (application/octet-stream)
+`byte[]`→source materialization fails (`Stage4_PerType.BinaryEquality`): no serializer
+registered for `application/octet-stream`, so a binary value cannot rebuild from its
+source. Pre-existing, surfaced by the compare acceptance pass on
+navigation-driven-record-builder. Ingi: fix in one of the coming stages — does not
+have to be that branch.
