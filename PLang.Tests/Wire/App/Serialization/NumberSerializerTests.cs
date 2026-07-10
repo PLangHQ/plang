@@ -43,7 +43,7 @@ public class NumberSerializerTests
     [Test] public async Task Number_KindInt_Default_EmitsWriterInt()
     {
         var w = new CaptureWriter("json");
-        global::app.type.item.number.serializer.Default.Write(number.From(7), w);
+        global::app.type.item.number.serializer.Default.Write(((number)(7)), w);
         await Assert.That(w.LastMethod).IsEqualTo("Int");
         await Assert.That(w.Last).IsEqualTo(7);
     }
@@ -51,7 +51,7 @@ public class NumberSerializerTests
     [Test] public async Task Number_KindLong_Default_EmitsWriterLong()
     {
         var w = new CaptureWriter("json");
-        global::app.type.item.number.serializer.Default.Write(number.From(7L), w);
+        global::app.type.item.number.serializer.Default.Write(((number)(7L)), w);
         await Assert.That(w.LastMethod).IsEqualTo("Long");
         await Assert.That(w.Last).IsEqualTo(7L);
     }
@@ -59,7 +59,7 @@ public class NumberSerializerTests
     [Test] public async Task Number_KindDecimal_Default_EmitsWriterDecimal()
     {
         var w = new CaptureWriter("json");
-        global::app.type.item.number.serializer.Default.Write(number.From(3.14m), w);
+        global::app.type.item.number.serializer.Default.Write(((number)(3.14m)), w);
         await Assert.That(w.LastMethod).IsEqualTo("Decimal");
         await Assert.That(w.Last).IsEqualTo(3.14m);
     }
@@ -67,7 +67,7 @@ public class NumberSerializerTests
     [Test] public async Task Number_KindDouble_Default_EmitsWriterDouble()
     {
         var w = new CaptureWriter("json");
-        global::app.type.item.number.serializer.Default.Write(number.From(2.5), w);
+        global::app.type.item.number.serializer.Default.Write(((number)(2.5)), w);
         await Assert.That(w.LastMethod).IsEqualTo("Double");
         await Assert.That(w.Last).IsEqualTo(2.5);
     }
@@ -75,7 +75,7 @@ public class NumberSerializerTests
     [Test] public async Task Number_KindFloat_Default_EmitsWriterFloat()
     {
         var w = new CaptureWriter("json");
-        global::app.type.item.number.serializer.Default.Write(number.From(2.5f), w);
+        global::app.type.item.number.serializer.Default.Write(((number)(2.5f)), w);
         await Assert.That(w.LastMethod).IsEqualTo("Float");
         await Assert.That(w.Last).IsEqualTo(2.5f);
     }
@@ -89,7 +89,7 @@ public class NumberSerializerTests
         {
             var w = new global::app.channel.serializer.json.Writer(utf, options: null,
                 view: global::app.View.Out, renderers: renderers);
-            w.Value(number.From(42));
+            w.Value(((number)(42)));
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         await Assert.That(json).IsEqualTo("42");
@@ -103,7 +103,7 @@ public class NumberSerializerTests
         var write = renderers.Of("number", "text");
         await Assert.That(write).IsNotNull();
         var w = new CaptureWriter("text");
-        write!(number.From(7), w);
+        write!(((number)(7)), w);
         await Assert.That(w.LastMethod).IsEqualTo("Int");
     }
 
@@ -116,7 +116,7 @@ public class NumberSerializerTests
         {
             var w = new global::app.channel.serializer.json.Writer(utf, options: null,
                 view: global::app.View.Out, renderers: renderers);
-            w.Value(number.From(0.1m));
+            w.Value(((number)(0.1m)));
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         await Assert.That(json).IsEqualTo("0.1");

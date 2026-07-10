@@ -98,7 +98,7 @@ public class Stage0_NamedChannelsTests
         var raw = global::app.type.item.@this.Lower<Dictionary<string, object?>>(w1)!;
         await Assert.That((string)raw["action"]!).IsEqualTo("file.read");
         await Assert.That((string)raw["message"]!).IsEqualTo("duplicate");
-        await Assert.That(w1.AreEqual(w2)).IsTrue()
+        await Assert.That(await w1.AreEqual(w2)).IsTrue()
             .Because("Structural dict equality lets consumers de-dup identical warnings.");
     }
 

@@ -12,7 +12,7 @@ public class Stage6_DiffRenameTests
         // Data.Diff(other) is the golden-diff; Data.Compare(other) is the Comparison entry.
         var diff = typeof(Data).GetMethod("Diff", new[] { typeof(Data) });
         await Assert.That(diff).IsNotNull();
-        await Assert.That(diff!.ReturnType).IsEqualTo(typeof(Data));
+        await Assert.That(diff!.ReturnType).IsEqualTo(typeof(System.Threading.Tasks.ValueTask<global::app.data.@this>));
         var compare = typeof(Data).GetMethod("Compare", new[] { typeof(Data) });
         await Assert.That(compare).IsNotNull();
         await Assert.That(compare!.ReturnType).IsEqualTo(typeof(System.Threading.Tasks.ValueTask<global::app.data.Comparison>));
@@ -24,12 +24,12 @@ public class Stage6_DiffRenameTests
         // pick a representative case from the v1 DataCompareTests and assert Diff produces the same shape
         var a = new Data("a", "hello", context: global::PLang.Tests.TestApp.SharedContext);
         var b = new Data("b", "hello", context: global::PLang.Tests.TestApp.SharedContext);
-        var result = a.Diff(b);
+        var result = await a.Diff(b);
         var tree = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
         await Assert.That(tree).IsNotNull();
         await Assert.That(tree!["match"]).IsEqualTo(true);
         var c = new Data("c", "different", context: global::PLang.Tests.TestApp.SharedContext);
-        var tree2 = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await a.Diff(c).Value());
+        var tree2 = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await (await a.Diff(c)).Value());
         await Assert.That(tree2!["match"]).IsEqualTo(false);
     }
 }

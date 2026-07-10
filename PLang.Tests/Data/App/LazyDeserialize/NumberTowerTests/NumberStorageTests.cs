@@ -36,22 +36,22 @@ public class NumberStorageTests
         await Assert.That((T)n.BoxedValue).IsEqualTo(expected);
     }
 
-    [Test] public async Task Number_ExactClrValue_StoredVerbatim_Int() => await StoredAs(number.From(5), 5);
-    [Test] public async Task Number_ExactClrValue_StoredVerbatim_UInt() => await StoredAs(number.From(5u), 5u);
-    [Test] public async Task Number_ExactClrValue_StoredVerbatim_ULong() => await StoredAs(number.From(5ul), 5ul);
-    [Test] public async Task Number_ExactClrValue_StoredVerbatim_Int128() => await StoredAs(number.From((Int128)5), (Int128)5);
-    [Test] public async Task Number_ExactClrValue_StoredVerbatim_UInt128() => await StoredAs(number.From((UInt128)5), (UInt128)5);
-    [Test] public async Task Number_ExactClrValue_StoredVerbatim_Half() => await StoredAs(number.From((Half)1.5), (Half)1.5);
+    [Test] public async Task Number_ExactClrValue_StoredVerbatim_Int() => await StoredAs(((number)(5)), 5);
+    [Test] public async Task Number_ExactClrValue_StoredVerbatim_UInt() => await StoredAs(((number)(5u)), 5u);
+    [Test] public async Task Number_ExactClrValue_StoredVerbatim_ULong() => await StoredAs(((number)(5ul)), 5ul);
+    [Test] public async Task Number_ExactClrValue_StoredVerbatim_Int128() => await StoredAs(((number)((Int128)5)), (Int128)5);
+    [Test] public async Task Number_ExactClrValue_StoredVerbatim_UInt128() => await StoredAs(((number)((UInt128)5)), (UInt128)5);
+    [Test] public async Task Number_ExactClrValue_StoredVerbatim_Half() => await StoredAs(((number)((Half)1.5)), (Half)1.5);
     // Marquee: no float→double collapse.
-    [Test] public async Task Number_ExactClrValue_StoredVerbatim_Float() => await StoredAs(number.From(1.5f), 1.5f);
-    [Test] public async Task Number_ExactClrValue_StoredVerbatim_Decimal() => await StoredAs(number.From(1.5m), 1.5m);
-    [Test] public async Task Number_ExactClrValue_StoredVerbatim_BigInteger() => await StoredAs(number.From((BigInteger)123), (BigInteger)123);
+    [Test] public async Task Number_ExactClrValue_StoredVerbatim_Float() => await StoredAs(((number)(1.5f)), 1.5f);
+    [Test] public async Task Number_ExactClrValue_StoredVerbatim_Decimal() => await StoredAs(((number)(1.5m)), 1.5m);
+    [Test] public async Task Number_ExactClrValue_StoredVerbatim_BigInteger() => await StoredAs(((number)((BigInteger)123)), (BigInteger)123);
 
     [Test] public async Task Number_ExactClrValue_StoredVerbatim_Sbyte_Byte_Short_Ushort()
     {
-        await StoredAs(number.From((sbyte)1), (sbyte)1);
-        await StoredAs(number.From((byte)2), (byte)2);
-        await StoredAs(number.From((short)3), (short)3);
-        await StoredAs(number.From((ushort)4), (ushort)4);
+        await StoredAs(((number)((sbyte)1)), (sbyte)1);
+        await StoredAs(((number)((byte)2)), (byte)2);
+        await StoredAs(((number)((short)3)), (short)3);
+        await StoredAs(((number)((ushort)4)), (ushort)4);
     }
 }

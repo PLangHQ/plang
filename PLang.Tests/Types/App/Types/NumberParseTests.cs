@@ -14,27 +14,27 @@ public class NumberParseTests
     {
         var n = number.Parse("5");
         await Assert.That(n).IsNotNull();
-        await Assert.That(n!.Kind).IsEqualTo(PKind.Int);
+        await Assert.That(n!.Kind.Name).IsEqualTo("int");
         await Assert.That((int)n).IsEqualTo(5);
     }
 
     [Test] public async Task Parse_TooBigForInt_PromotesToLong()
     {
         var n = number.Parse("3000000000");
-        await Assert.That(n!.Kind).IsEqualTo(PKind.Long);
+        await Assert.That(n!.Kind.Name).IsEqualTo("long");
         await Assert.That((long)n).IsEqualTo(3000000000L);
     }
 
     [Test] public async Task Parse_DecimalPoint_IsDecimal()
     {
         var n = number.Parse("5.0");
-        await Assert.That(n!.Kind).IsEqualTo(PKind.Decimal);
+        await Assert.That(n!.Kind.Name).IsEqualTo("decimal");
     }
 
     [Test] public async Task Parse_ScientificNotation_IsDouble()
     {
         var n = number.Parse("5e0");
-        await Assert.That(n!.Kind).IsEqualTo(PKind.Double);
+        await Assert.That(n!.Kind.Name).IsEqualTo("double");
     }
 
     [Test] public async Task Parse_Negative_PreservesSign()

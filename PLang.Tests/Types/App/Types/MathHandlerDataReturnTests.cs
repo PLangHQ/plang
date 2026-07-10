@@ -62,14 +62,14 @@ public class MathHandlerDataReturnTests
     [Test] public async Task MathHandler_Overflow_ReturnsDataFail_NotException()
     {
         // Covered end-to-end by NumberArithmeticTests.Overflow_Throw_HandlerPathReturnsDataError.
-        var ex = await Assert.That(() => NumberOps.Add(number.From(decimal.MaxValue), number.From(decimal.MaxValue),
+        var ex = await Assert.That(() => NumberOps.Add(((number)(decimal.MaxValue)), ((number)(decimal.MaxValue)),
             NumberOps.Strict)).Throws<global::app.error.AppException>();
         await Assert.That(ex!.Key).IsEqualTo("MathOverflow");
     }
 
     [Test] public async Task MathHandler_DivByZero_ReturnsDataFail_NotException()
     {
-        var ex = await Assert.That(() => NumberOps.Divide(number.From(7), number.From(0),
+        var ex = await Assert.That(() => NumberOps.Divide(((number)(7)), ((number)(0)),
             NumberOps.Lenient)).Throws<global::app.error.AppException>();
         await Assert.That(ex!.Key).IsEqualTo("DivideByZero");
     }

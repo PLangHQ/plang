@@ -2,9 +2,9 @@ namespace PLang.Tests.App.Fixtures;
 
 /// <summary>
 /// Sign adapters over the unified comparison for wrapper-level tests: the old
-/// per-type Order/AreEqual members are gone; these route raw wrapper values
-/// through Data.CompareValues (the sync core) and map to the legacy sign/bool
-/// shapes the assertions read.
+/// per-type Order/AreEqual members are gone; these route values through
+/// Data.Compare (the value's own async reconcile) and map to the legacy
+/// sign/bool shapes the assertions read.
 /// </summary>
 public static class CompareTestOps
 {
@@ -12,7 +12,7 @@ public static class CompareTestOps
     {
         var da = new Data("", a, context: global::PLang.Tests.TestApp.SharedContext);
         var db = new Data("", b, context: global::PLang.Tests.TestApp.SharedContext);
-        return Map(da.CompareValues(db, a, b));
+        return Map(da.Compare(db).GetAwaiter().GetResult());
     }
 
     /// <summary>Data-level order with the sort policy: nulls last.</summary>
@@ -23,13 +23,15 @@ public static class CompareTestOps
         if (va == null && vb == null) return 0;
         if (va == null) return 1;
         if (vb == null) return -1;
-        return Map(a.CompareValues(b, va, vb));
+        return Map(a.Compare(b).GetAwaiter().GetResult());
     }
 
     public static bool Eq(object? a, object? b)
     {
         if (a == null || b == null) return a == null && b == null;
-        return new Data("", a, context: global::PLang.Tests.TestApp.SharedContext).CompareValues(new Data("", b, context: global::PLang.Tests.TestApp.SharedContext), a, b) == global::app.data.Comparison.Equal;
+        var da = new Data("", a, context: global::PLang.Tests.TestApp.SharedContext);
+        var db = new Data("", b, context: global::PLang.Tests.TestApp.SharedContext);
+        return da.Compare(db).GetAwaiter().GetResult() == global::app.data.Comparison.Equal;
     }
 
     private static int Map(global::app.data.Comparison c) => c switch

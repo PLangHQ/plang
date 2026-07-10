@@ -12,29 +12,28 @@ namespace PLang.Tests.App.LazyDeserialize.NumberTowerTests;
 public class NumberKindDerivationTests
 {
     [Test] public async Task Kind_DerivesFromValueClrType_Int_ProducesIntKind()
-        => await Assert.That(number.From(5).Kind).IsEqualTo(PKind.Int);
+        => await Assert.That(((number)(5)).Kind.Name).IsEqualTo("int");
 
     [Test] public async Task Kind_DerivesFromValueClrType_UInt_ProducesUIntKind()
-        => await Assert.That(number.From(5u).Kind).IsEqualTo(PKind.UInt);
+        => await Assert.That(((number)(5u)).Kind.Name).IsEqualTo("uint");
 
     // Independent #8 — float is not double.
     [Test] public async Task Kind_DerivesFromValueClrType_Float_ProducesFloatKind_NotDouble()
     {
-        await Assert.That(number.From(1.5f).Kind).IsEqualTo(PKind.Float);
-        await Assert.That(number.From(1.5f).KindLabel).IsEqualTo("float");
-        await Assert.That(number.From(1.5d).Kind).IsEqualTo(PKind.Double);
+        await Assert.That(((number)(1.5f)).Kind.Name).IsEqualTo("float");
+        await Assert.That(((number)(1.5d)).Kind.Name).IsEqualTo("double");
     }
 
     [Test] public async Task Kind_DerivesFromValueClrType_BigInteger_ProducesBigIntegerKind()
-        => await Assert.That(number.From((BigInteger)1).Kind).IsEqualTo(PKind.BigInteger);
+        => await Assert.That(((number)((BigInteger)1)).Kind.Name).IsEqualTo("biginteger");
 
     [Test] public async Task Kind_ForAllTowerEntries_RoundTripsThroughKindsList()
     {
-        foreach (var name in number.Kinds)
+        foreach (var name in number.Kinds.Keys)
         {
-            var k = number.KindFromName(name);
+            var k = number.Kinds[name];
             await Assert.That(k).IsNotNull();
-            await Assert.That(number.LabelOf(k!.Value)).IsEqualTo(name);
+            await Assert.That(k.Name).IsEqualTo(name);
         }
     }
 
@@ -46,13 +45,14 @@ public class NumberKindDerivationTests
             "int128", "uint128", "half", "float", "double", "decimal", "biginteger",
         };
         foreach (var name in expected)
-            await Assert.That(number.Kinds.Contains(name)).IsTrue();
+            await Assert.That(number.Kinds.ContainsKey(name)).IsTrue();
     }
 
-    [Test] public async Task KindToClr_CoversFullTower()
+    [Test] public async Task EveryKind_CreatesANumber_CoversFullTower()
     {
-        foreach (var name in number.Kinds)
-            await Assert.That(number.KindToClrType(number.KindFromName(name))).IsNotNull();
+        // the kind IS its behavior — each kind Creates a number of its storage size from a plang value
+        foreach (var name in number.Kinds.Keys)
+            await Assert.That(number.Kinds[name].Create((number)1)).IsNotNull();
     }
 
     // app/data/this.cs:242 no longer collapses float→double at stamp time.

@@ -6,12 +6,13 @@ using image = global::app.type.item.image.@this;
 
 namespace PLang.Tests.App.TypeKindStrict.ReferenceFundamentalTests;
 
-// The load seam: a path-backed image is lazy through set + navigation, but a
-// SYNC consumer (the serializer renderers, below the STJ converter wall) sees
-// only empty bytes until something pulls the content into memory. Data.Load()
-// is that async pull, run at the serialize chokepoint. These tests drive the
-// real consumer-facing flow the goal tests punt on — without Load() the output
-// is empty and strict never throws.
+// The materialize seam: a path-backed image is lazy through set + navigation, but
+// a SYNC consumer (the serializer renderers) sees only empty bytes until the
+// content is pulled into memory. That pull is `data.Value()` — the uniform async
+// materialization every reference fundamental answers; the serializer runs it
+// per-leaf at output time (no separate Load pass). A load/strict failure rides
+// ONTO the data binding (data.Fail), it does not throw. These tests drive the
+// real consumer-facing flow the goal tests punt on.
 public class LoadSeamTests
 {
     private global::app.@this _app = null!;
@@ -45,48 +46,55 @@ public class LoadSeamTests
             System.IO.Path.Combine(_app.AbsolutePath, name), _app.User.Context));
     }
 
-    [Test] public async Task Load_MaterializesPathBackedImage_SyncBytesThenReal()
+    [Test] public async Task Value_MaterializesPathBackedImage_SyncBytesThenReal()
     {
         var img = PathBackedPng("a.png");
         await Assert.That(img.Bytes.Length).IsEqualTo(0); // lazy — nothing read yet
 
-        var error = await Data.Ok(img).Load();
+        var data = Data.Ok(img);
+        await data.Value();                 // the async pull
 
-        await Assert.That(error).IsNull();
+        await data.IsSuccess();
         await Assert.That(img.Bytes).IsEquivalentTo(Png1x1); // sync view now real
     }
 
-    [Test] public async Task Load_WalksNestedImage_InsideDictionary()
+    [Test] public async Task Serialize_WalksNestedImage_InsideDictionary()
     {
+        // materialization is per-leaf at output time — serializing a dict emits the
+        // nested image's real bytes (base64), proving the walk reaches nested leaves.
         var img = PathBackedPng("nested.png");
         var dict = new System.Collections.Generic.Dictionary<string, object?> { ["avatar"] = img };
+        using var ms = new System.IO.MemoryStream();
 
-        var error = await _app.User.Context.Ok(dict).Load();
+        var result = await new global::app.channel.serializer.plang.@this(global::PLang.Tests.TestApp.SharedContext).SerializeAsync(ms, _app.User.Context.Ok(dict));
+        await result.IsSuccess();
 
-        await Assert.That(error).IsNull();
-        await Assert.That(img.Bytes).IsEquivalentTo(Png1x1);
+        var json = Encoding.UTF8.GetString(ms.ToArray());
+        await Assert.That(json).Contains("iVBOR"); // nested png base64 emitted
     }
 
-    [Test] public async Task Load_StrictMismatch_ReturnsDedicatedError_NoThrow()
+    [Test] public async Task Value_StrictMismatch_FailsOntoBinding_NoThrow()
     {
         var img = PathBackedPng("shot.png");
         img.RequireStrictKind("gif"); // png content behind strict gif
 
-        var error = await Data.Ok(img).Load();
+        var data = Data.Ok(img);
+        await data.Value();             // fails onto the binding, does not throw
 
-        await Assert.That(error).IsNotNull();
-        await Assert.That(error!.Error).IsNotNull();
-        await Assert.That(error.Error!.Key).IsEqualTo("StrictKindMismatch");
+        await data.IsFailure();
+        await Assert.That(data.Error!.Key).IsEqualTo("StrictKindMismatch");
     }
 
-    [Test] public async Task Load_NoLazyContent_IsNoOp()
+    [Test] public async Task Value_NoLazyContent_IsNoOp()
     {
-        // A bytes-backed image and a scalar graph carry nothing lazy.
-        var bytesBacked = new image(Png1x1, "image/png");
-        await Assert.That((await Data.Ok(bytesBacked).Load())).IsNull();
+        // A bytes-backed image and a scalar graph carry nothing lazy — materializing succeeds.
+        var bytesBacked = Data.Ok(new image(Png1x1, "image/png"));
+        await bytesBacked.Value();
+        await bytesBacked.IsSuccess();
 
-        var scalar = new System.Collections.Generic.Dictionary<string, object?> { ["n"] = 42L, ["s"] = "x" };
-        await Assert.That((await _app.User.Context.Ok(scalar).Load())).IsNull();
+        var scalar = _app.User.Context.Ok(new System.Collections.Generic.Dictionary<string, object?> { ["n"] = 42L, ["s"] = "x" });
+        await scalar.Value();
+        await scalar.IsSuccess();
     }
 
     [Test] public async Task Serialize_PathBackedImage_EmitsRealBytes_NotEmpty()

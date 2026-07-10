@@ -2,10 +2,11 @@ using Comparison = global::app.data.Comparison;
 
 namespace PLang.Tests.App.CompareRedesign;
 
-// Stage 4 — static rank lives on the type. Data never compares ranks itself;
-// it asks `this.Type.Rank(other)` (the whole other operand, never `other.Type`)
-// and receives the driving type. Specificity ordering: number > text,
-// date-family > text, text is the floor. Ranking never forces a value read.
+// Stage 4 — rank is an int precedence declared on the value (item.Rank); higher
+// drives. The reconcile (item.Compare) picks the higher-ranked side to Order and
+// the lower operand coerces into it. Specificity: number(300) > text(100),
+// date(500) > text, text is the floor. Async reconcile: both operands are
+// materialized (Value parsed) before ranking — rank reads the item, not the type.
 public class Stage4_RankTests
 {
     private static global::app.@this NewApp() => new(System.IO.Path.Combine(
@@ -17,48 +18,44 @@ public class Stage4_RankTests
     [Test]
     public async Task Rank_NumberOverText_DateOverText_TextIsFloor()
     {
-        // static specificity: number.Rank vs text → number; date.Rank vs text → date; text.Rank vs text → text
+        // precedence via the int rank on the value: number > text, date > text, text == text
         await using var app = NewApp();
         var num = D(app, 5, "number"); var txt = D(app, "5", "text");
         var date = D(app, new System.DateOnly(2024,1,1), "date");
-        await Assert.That(num.Type.Rank(txt).Name).IsEqualTo("number");
-        await Assert.That(txt.Type.Rank(num).Name).IsEqualTo("number");   // same driver both ways
-        await Assert.That(date.Type.Rank(txt).Name).IsEqualTo("date");
-        await Assert.That(txt.Type.Rank(D(app, "a", "text")).Name).IsEqualTo("text");
+        await Assert.That(num.Peek().Rank > txt.Peek().Rank).IsTrue();    // number drives text
+        await Assert.That(date.Peek().Rank > txt.Peek().Rank).IsTrue();   // date drives text
+        await Assert.That(txt.Peek().Rank).IsEqualTo(D(app, "a", "text").Peek().Rank);   // text is the floor
     }
 
     [Test]
-    public async Task Rank_TakesWholeOtherData_NotOtherType()
+    public async Task Rank_IsIntPrecedenceOnTheValue()
     {
-        // signature: `Type Rank(Data other)`, not `Rank(Type other)` — the whole operand crosses the boundary
-        var m = typeof(global::app.type.@this).GetMethod("Rank");
-        await Assert.That(m).IsNotNull();
-        var p = m!.GetParameters();
-        await Assert.That(p.Length).IsEqualTo(1);
-        await Assert.That(p[0].ParameterType).IsEqualTo(typeof(Data));   // the whole operand crosses
+        // rank lives on the value as an int property (item.Rank) — not a method on the type taking Data
+        var p = typeof(global::app.type.item.@this).GetProperty("Rank");
+        await Assert.That(p).IsNotNull();
+        await Assert.That(p!.PropertyType).IsEqualTo(typeof(int));
     }
 
     [Test]
-    public async Task Rank_NeverForcesValueRead()
+    public async Task Compare_MaterializesBothOperands()
     {
-        // rank decided from types alone — calling rank on a pending source leaves MaterializeCount=0
+        // async reconcile orders the real values, so comparing forces both operands to be read
         await using var app = NewApp();
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-rank-" + System.Guid.NewGuid().ToString("N")[..8]);
         await using var app2 = new global::app.@this(root);
         var p = new global::app.type.item.path.file.@this(System.IO.Path.Combine(root, "cfg.json"), app2.User.Context);
-        await (await p.WriteText("{\"port\":8080}")).IsSuccess();
+        await (await p.WriteText("5")).IsSuccess();
         var pending = await new global::app.channel.type.file.@this(p).Read();   // raw-backed, unparsed
         var other = D(app2, 5, "number");
-        _ = pending.Type.Rank(other);
-        await Assert.That(pending.MaterializeCount()).IsEqualTo(0);   // rank reads types, never values
+        _ = await pending.Compare(other);
+        await Assert.That(pending.MaterializeCount()).IsGreaterThanOrEqualTo(1);   // compare reads the value
     }
 
     [Test]
-    public async Task ItemBase_DoesNotImplementIComparableValue()
+    public async Task ItemBase_DoesNotImplementStaticCompare()
     {
-        // item/this.cs:23-25 — ordering opt-in per concrete type; dict : item does not inherit an order
-        // ordering is opt-in per concrete type: the item base declares NO comparison hooks,
-        // so dict : item never inherits an order it can't honor.
+        // ordering is opt-in per concrete type via the instance Compare/Order; the item base
+        // declares NO static two-operand comparison and NO static rank.
         var t = typeof(global::app.type.item.@this);
         await Assert.That(t.GetMethod("Compare", new[] { typeof(object), typeof(object) })).IsNull();
         await Assert.That(t.GetProperty("CompareRank",

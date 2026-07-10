@@ -51,7 +51,7 @@ public class ConvertBuiltValueTests
         // least not corrupt it).
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var built = global::app.type.item.number.@this.From(5L);
+        var built = ((global::app.type.item.number.@this)(5L));
         var result = type.Create("number", null, context: ctx).Convert(built, ctx);
         await Assert.That(((global::app.type.item.number.@this)result).Clr<long>()).IsEqualTo(5L);
     }

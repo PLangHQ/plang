@@ -113,9 +113,9 @@ public class Stage4_PerTypeCompareTests
             foreach (var i in items) l.Add(new Data("", i, context: c));
             return l;
         }
-        await Assert.That(global::app.type.item.list.@this.Compare(L(ctx,1,2), L(ctx,1,3))).IsEqualTo(Comparison.Less);
-        await Assert.That(global::app.type.item.list.@this.Compare(L(ctx,1,2), L(ctx,1,2,3))).IsEqualTo(Comparison.Less); // prefix first
-        await Assert.That(global::app.type.item.list.@this.Compare(L(ctx,2), L(ctx,1,9))).IsEqualTo(Comparison.Greater);
+        await Assert.That(await L(ctx,1,2).Compare(L(ctx,1,3))).IsEqualTo(Comparison.Less);
+        await Assert.That(await L(ctx,1,2).Compare(L(ctx,1,2,3))).IsEqualTo(Comparison.Less); // prefix first
+        await Assert.That(await L(ctx,2).Compare(L(ctx,1,9))).IsEqualTo(Comparison.Greater);
     }
 
     [Test]
@@ -137,9 +137,9 @@ public class Stage4_PerTypeCompareTests
     public async Task ChoiceEquality_SameChoice_Equal() { var a = new global::app.type.item.choice.@this<global::app.goal.steps.step.ErrorOrder>(global::app.goal.steps.step.ErrorOrder.RetryFirst);
         var b = new global::app.type.item.choice.@this<global::app.goal.steps.step.ErrorOrder>(global::app.goal.steps.step.ErrorOrder.RetryFirst);
         var c = new global::app.type.item.choice.@this<global::app.goal.steps.step.ErrorOrder>(global::app.goal.steps.step.ErrorOrder.GoalFirst);
-        await Assert.That(global::app.type.item.choice.@this<global::app.goal.steps.step.ErrorOrder>.Compare(a, b)).IsEqualTo(Comparison.Equal);
-        await Assert.That(global::app.type.item.choice.@this<global::app.goal.steps.step.ErrorOrder>.Compare(a, c)).IsEqualTo(Comparison.NotEqual);
-        await Assert.That(global::app.type.item.choice.@this<global::app.goal.steps.step.ErrorOrder>.Compare(a, "RetryFirst")).IsEqualTo(Comparison.Equal); // by name
+        await Assert.That(await a.Compare(b)).IsEqualTo(Comparison.Equal);
+        await Assert.That(await a.Compare(c)).IsEqualTo(Comparison.NotEqual);
+        await Assert.That(await a.Compare(new global::app.type.item.text.@this("RetryFirst"))).IsEqualTo(Comparison.Equal); // by name
     }
 
     [Test]

@@ -44,15 +44,16 @@ public class Stage5_DataCompareEntryTests
     }
 
     [Test]
-    public async Task DataCompare_RankingNeverForcesValueRead()
+    public async Task DataCompare_MaterializesBeforeRanking()
     {
-        // rank decided from types; values awaited only AFTER the driver is picked — pending stays pending until compare proper
+        // async reconcile: Compare awaits Value() on both operands, then ranks the real items —
+        // the pending source is read (rank is an int on the value, not on the type)
         await using var app = NewApp(out var root);
         var p = new global::app.type.item.path.file.@this(System.IO.Path.Combine(root, "n.json"), app.User.Context);
         await (await p.WriteText("42")).IsSuccess();
         var pending = await new global::app.channel.type.file.@this(p).Read();
-        _ = pending.Type.Rank(D(app, 5, "number"));                 // the rank step alone
-        await Assert.That(pending.MaterializeCount()).IsEqualTo(0);   // pending stays pending
+        _ = await pending.Compare(D(app, 5, "number"));       // the compare reads both values
+        await Assert.That(pending.MaterializeCount()).IsGreaterThanOrEqualTo(1);   // pending is read
     }
 
     [Test]
@@ -64,8 +65,10 @@ public class Stage5_DataCompareEntryTests
         var dir = System.AppContext.BaseDirectory;
         while (dir != null && !Directory.Exists(Path.Combine(dir, "PLang", "app")))
             dir = Directory.GetParent(dir)?.FullName;
-        var compareSrc = await File.ReadAllTextAsync(Path.Combine(dir!, "PLang", "app", "type", "compare", "this.cs"));
-        await Assert.That(compareSrc).DoesNotContain("Name == \"");
+        // compare dispatch lives on the value now (item.Compare/Order, rank-driven) — no type-name switch
+        var itemSrc = await File.ReadAllTextAsync(Path.Combine(dir!, "PLang", "app", "type", "item", "this.cs"));
+        var orderIdx = itemSrc.IndexOf("ValueTask<global::app.data.Comparison> Compare", System.StringComparison.Ordinal);
+        await Assert.That(itemSrc.Substring(orderIdx, 900)).DoesNotContain("Name == \"");
         var dataSrc = await File.ReadAllTextAsync(Path.Combine(dir!, "PLang", "app", "data", "this.cs"));
         var compareIdx = dataSrc.IndexOf("public async ValueTask<Comparison> Compare", System.StringComparison.Ordinal);
         var body = dataSrc.Substring(compareIdx, 900);

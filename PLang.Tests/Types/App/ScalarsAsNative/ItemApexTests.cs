@@ -47,7 +47,7 @@ public class ItemApexTests
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.DeclaredOnly,
             null, new[] { typeof(object), typeof(object) }, null)).IsNull();
         // dict declares its OWN hook — equality-only (NotEqual for unequal, no order).
-        await Assert.That(Dict.Compare(new Dict(global::PLang.Tests.TestApp.SharedContext), new Dict(global::PLang.Tests.TestApp.SharedContext))).IsEqualTo(global::app.data.Comparison.Equal);
+        await Assert.That(await new Dict(global::PLang.Tests.TestApp.SharedContext).Compare(new Dict(global::PLang.Tests.TestApp.SharedContext))).IsEqualTo(global::app.data.Comparison.Equal);
     }
 
     [Test]
@@ -70,7 +70,7 @@ public class ItemApexTests
         // truthiness through the base — the universal contract `item` *does* carry.
         Item emptyDict = new Dict(global::PLang.Tests.TestApp.SharedContext);
         Item emptyList = new PList(global::PLang.Tests.TestApp.SharedContext);
-        Item five = Number.From(5);
+        Item five = ((Number)(5));
         var fullDict = new Dict(global::PLang.Tests.TestApp.SharedContext);
         fullDict.Set(new Data("k", "v", context: global::PLang.Tests.TestApp.SharedContext));
         Item nonEmptyDict = fullDict;
@@ -92,7 +92,7 @@ public class ItemApexTests
         // item-kind-json blob rides on Data, not on item.@this — storage-free apex.)
         Item dict = new Dict(global::PLang.Tests.TestApp.SharedContext);
         Item list = new PList(global::PLang.Tests.TestApp.SharedContext);
-        Item num = Number.From(1);
+        Item num = ((Number)(1));
         await Assert.That(ReferenceEquals(dict.Narrow(), dict)).IsTrue();
         await Assert.That(ReferenceEquals(list.Narrow(), list)).IsTrue();
         await Assert.That(ReferenceEquals(num.Narrow(), num)).IsTrue();

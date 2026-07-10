@@ -308,8 +308,11 @@ public sealed class @this : item.@this
             return Convert(leaf, context);
         }
 
-        // A raw CLR scalar handed straight from C# (rare) → convert via the hook.
-        return Convert(value, context);
+        // A raw CLR scalar handed straight from C# (rare) → born it to its native plang
+        // value via the born-native lift (int → number, DateOnly → date, …), then refine
+        // to THIS declared type/kind. The lift owns raw→native; the family Convert hooks
+        // speak native values, so raw never reaches them un-lifted.
+        return Build(global::app.type.@this.Create(value, context), context, format);
     }
 
     /// <summary>
@@ -376,21 +379,14 @@ public sealed class @this : item.@this
     /// </summary>
     public static item.@this Create(object? raw, global::app.actor.context.@this? context = null)
     {
-        // The null VALUE is a typed citizen — the instance member is never
-        // C# null, so no consumer ever null-checks the value slot.
+        // The context-free fast paths (null citizen, already-native pass-through) answer without
+        // the registry — a null-context caller with a null/item value still works.
         if (raw is null) return global::app.type.item.@null.@this.Instance;
         if (raw is global::app.type.item.@this already) return already;
-        if (raw is global::app.data.@this)
-            throw new System.InvalidOperationException(
-                "A bare Data may not be stored as a value — nested Data always rides inside an owning wrapper type. "
-                + "This is the implicit-operator double-wrap accident: return the inner value via its own factory, never `return innerDataInstance;`."
-                + System.Environment.StackTrace);
 
-        // A value cannot be born without a context. There is no context-less value
-        // in the codebase — period. A null context here is a caller that constructed
-        // a value (or a Data) without one, or used construct-then-stamp ({ Context = …}
-        // runs after the ctor builds the value). Born-with-context: pass the context at
-        // construction. The throw flags the offending caller via the stack trace.
+        // Everything else is the collection's born-native lift (selection + fallback = the registry's
+        // job): the owned-type navigate, container narrowing, Clr rung 2. It needs the registry, so a
+        // context is required — a null here is a caller that built a value without one.
         if (context == null)
             throw new System.InvalidOperationException(
                 $"A {raw.GetType().Name} value cannot be born without a context. "
@@ -398,48 +394,7 @@ public sealed class @this : item.@this
                 + "({ Context = … } sets the wrapper after the value is already built). Fix the caller that passed null.\n"
                 + System.Environment.StackTrace);
 
-        // A sequence of Data builds a native list DIRECTLY, preserving the actual
-        // Data instances — their names, types and signatures.
-        if (raw is System.Collections.Generic.IEnumerable<global::app.data.@this> dataSeq)
-            return new global::app.type.item.list.@this(dataSeq, context!);
-
-        // A sequence of native plang VALUES (item.@this) narrows to a native list
-        // that owns the wrapping (no JSON round-trip that would degrade strong values).
-        if (raw is System.Collections.Generic.IEnumerable<global::app.type.item.@this> itemSeq)
-            return new global::app.type.item.list.@this(itemSeq, context!);
-
-        // Foreign C# containers narrow to their native plang type. The common handoff
-        // shapes alias their backing BY REFERENCE — O(1), no walk, no JSON (a
-        // million-row List<object?> costs one pointer copy); other shapes narrow off
-        // the wire. byte[] is excluded — bytes are the binary leaf, not a list.
-        if (raw is System.Collections.Generic.List<object?> objList)
-            return new global::app.type.item.list.@this(objList, context!);
-        if (raw is System.Collections.Generic.Dictionary<string, object?> objDict)
-            return new global::app.type.item.dict.@this(objDict, context!);
-        if (raw is System.Collections.IDictionary
-            || (raw is System.Collections.IList && raw is not byte[]))
-            return new global::app.type.item.serializer.json(context).Parse(
-                       System.Text.Json.JsonSerializer.SerializeToElement(raw))
-                   as global::app.type.item.@this
-               ?? throw new System.InvalidOperationException(
-                   $"A raw C# container ({raw.GetType().Name}) could not be narrowed to a native plang list/dict.");
-
-        var (family, _) = global::app.type.convert.@this.OwnerOf(raw.GetType());
-        if (family != null && typeof(global::app.type.item.@this).IsAssignableFrom(family))
-        {
-            var lifted = global::app.type.convert.@this.OfStatic(family, raw, kind: null, context: context);
-            if (lifted is { Success: true } && lifted.Peek() is global::app.type.item.@this wrapper)
-                return wrapper;
-        }
-        // A CLR enum IS plang's choice (a closed named set) — build choice<T> for the enum.
-        if (raw is System.Enum)
-        {
-            var choiceType = typeof(global::app.type.item.choice.@this<>).MakeGenericType(raw.GetType());
-            return (global::app.type.item.@this)System.Activator.CreateInstance(choiceType, raw)!;
-        }
-        // Unowned — rung 2: a strongly-typed C# object rides as item with kind naming
-        // the class; the carrier's Peek answers the real instance.
-        return new Clr(raw, context);
+        return context.App.Type.Create(raw, context);
     }
 
     /// <summary>

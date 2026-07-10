@@ -12,19 +12,19 @@ namespace PLang.Tests.App.Types;
 public class NumberValueTests
 {
     [Test] public async Task From_Int_StoresKindInt()
-        => await Assert.That(number.From(5).Kind).IsEqualTo(PKind.Int);
+        => await Assert.That(((number)(5)).Kind.Name).IsEqualTo("int");
 
     [Test] public async Task From_Long_StoresKindLong()
-        => await Assert.That(number.From(5L).Kind).IsEqualTo(PKind.Long);
+        => await Assert.That(((number)(5L)).Kind.Name).IsEqualTo("long");
 
     [Test] public async Task From_Decimal_StoresKindDecimal()
-        => await Assert.That(number.From(5m).Kind).IsEqualTo(PKind.Decimal);
+        => await Assert.That(((number)(5m)).Kind.Name).IsEqualTo("decimal");
 
     [Test] public async Task From_Float_StoresKindFloat()
-        => await Assert.That(number.From(5f).Kind).IsEqualTo(PKind.Float);
+        => await Assert.That(((number)(5f)).Kind.Name).IsEqualTo("float");
 
     [Test] public async Task From_Double_StoresKindDouble()
-        => await Assert.That(number.From(5d).Kind).IsEqualTo(PKind.Double);
+        => await Assert.That(((number)(5d)).Kind.Name).IsEqualTo("double");
 
     [Test]
     public async Task Implicit_InFromConcrete_AllFiveKinds_Compiles()
@@ -34,33 +34,33 @@ public class NumberValueTests
         number c = 5m;
         number d = 5f;
         number e = 5d;
-        await Assert.That(a.Kind).IsEqualTo(PKind.Int);
-        await Assert.That(b.Kind).IsEqualTo(PKind.Long);
-        await Assert.That(c.Kind).IsEqualTo(PKind.Decimal);
-        await Assert.That(d.Kind).IsEqualTo(PKind.Float);
-        await Assert.That(e.Kind).IsEqualTo(PKind.Double);
+        await Assert.That(a.Kind.Name).IsEqualTo("int");
+        await Assert.That(b.Kind.Name).IsEqualTo("long");
+        await Assert.That(c.Kind.Name).IsEqualTo("decimal");
+        await Assert.That(d.Kind.Name).IsEqualTo("float");
+        await Assert.That(e.Kind.Name).IsEqualTo("double");
     }
 
     [Test]
     public async Task Explicit_OutToConcrete_LossyNarrowing_Throws()
     {
-        var big = number.From(long.MaxValue);
+        var big = ((number)(long.MaxValue));
         await Assert.That(() => (int)big).Throws<System.OverflowException>();
     }
 
     [Test]
     public async Task Explicit_OutToConcrete_InRange_RoundTrips()
     {
-        await Assert.That((int)number.From(42)).IsEqualTo(42);
-        await Assert.That((long)number.From(42L)).IsEqualTo(42L);
-        await Assert.That((decimal)number.From(42m)).IsEqualTo(42m);
-        await Assert.That((double)number.From(42d)).IsEqualTo(42d);
+        await Assert.That((int)((number)(42))).IsEqualTo(42);
+        await Assert.That((long)((number)(42L))).IsEqualTo(42L);
+        await Assert.That((decimal)((number)(42m))).IsEqualTo(42m);
+        await Assert.That((double)((number)(42d))).IsEqualTo(42d);
     }
 
     [Test]
     public async Task Explicit_IntCast_OnNaN_Throws()
     {
-        var nan = number.From(double.NaN);
+        var nan = ((number)(double.NaN));
         await Assert.That(() => (int)nan).Throws<System.ArithmeticException>();
     }
 
@@ -86,22 +86,22 @@ public class NumberValueTests
     [Test]
     public async Task IBooleanResolvable_Zero_IsFalsy()
     {
-        await Assert.That(await number.From(0).AsBooleanAsync()).IsFalse();
-        await Assert.That(await number.From(0m).AsBooleanAsync()).IsFalse();
-        await Assert.That(await number.From(0d).AsBooleanAsync()).IsFalse();
+        await Assert.That(await ((number)(0)).AsBooleanAsync()).IsFalse();
+        await Assert.That(await ((number)(0m)).AsBooleanAsync()).IsFalse();
+        await Assert.That(await ((number)(0d)).AsBooleanAsync()).IsFalse();
     }
 
     [Test]
     public async Task IBooleanResolvable_NonZero_IsTruthy()
     {
-        await Assert.That(await number.From(1).AsBooleanAsync()).IsTrue();
-        await Assert.That(await number.From(-1).AsBooleanAsync()).IsTrue();
-        await Assert.That(await number.From(0.1m).AsBooleanAsync()).IsTrue();
+        await Assert.That(await ((number)(1)).AsBooleanAsync()).IsTrue();
+        await Assert.That(await ((number)(-1)).AsBooleanAsync()).IsTrue();
+        await Assert.That(await ((number)(0.1m)).AsBooleanAsync()).IsTrue();
     }
 
     [Test]
     public async Task IBooleanResolvable_NaN_IsFalsy()
-        => await Assert.That(await number.From(double.NaN).AsBooleanAsync()).IsFalse();
+        => await Assert.That(await ((number)(double.NaN)).AsBooleanAsync()).IsFalse();
 
     [Test]
     public async Task NumberDoesNotImplementOrStore_IContextOrContextReference()

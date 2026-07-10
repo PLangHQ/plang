@@ -73,10 +73,10 @@
     <Using Include="app.data.Properties" Alias="Properties" />
     <Using Include="app.data.DynamicData" Alias="DynamicData" />
     <Using Include="app.variable.list.@this" Alias="Variables" />
-    <Using Include="app.type.path" Alias="FileSystem" />
-    <Using Include="app.type.path.@this" Alias="path" />
-    <Using Include="app.type.path.file.@this" Alias="filepath" />
-    <Using Include="app.type.path.http.@this" Alias="httppath" />
+    <Using Include="app.type.item.path" Alias="FileSystem" />
+    <Using Include="app.type.item.path.@this" Alias="path" />
+    <Using Include="app.type.item.path.file.@this" Alias="filepath" />
+    <Using Include="app.type.item.path.http.@this" Alias="httppath" />
     <Using Include="app.module.cache.ICache" Alias="ICache" />
     <Using Include="app.callstack.@this" Alias="CallStack" />
     <Using Include="app.module.debug.@this" Alias="Debug" />

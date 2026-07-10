@@ -51,7 +51,7 @@ public class NullWrapperTests
     {
         // Data.Null() carries the singleton; Compare's null policy coalesces it to
         // a C# null and sorts it last (the policy lives on Compare, not the wrapper).
-        var present = new Data("", global::app.type.item.number.@this.From(5L));
+        var present = new Data("", ((global::app.type.item.number.@this)(5L)));
         var nul = Data.Null();
         await Assert.That(CompareTestOps.OrdD(present, nul)).IsLessThan(0);
         await Assert.That(CompareTestOps.OrdD(nul, present)).IsGreaterThan(0);

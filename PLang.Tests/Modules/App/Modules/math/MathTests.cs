@@ -28,7 +28,7 @@ public class MathTests
         await Assert.That((await result.Value())).IsEqualTo(7);
         // plang-types Stage 4: math.* returns Data<number>; the underlying kind
         // is Int (not the CLR `int`).
-        await Assert.That((await result.Value())!.Kind).IsEqualTo(global::app.type.item.number.NumberKind.Int);
+        await Assert.That((await result.Value())!.Kind.Name).IsEqualTo("int");
     }
 
     [Test]
@@ -41,7 +41,7 @@ public class MathTests
         var result = await action.Run();
 
         await Assert.That((await result.Value())).IsEqualTo(7.5);
-        await Assert.That((await result.Value())!.Kind).IsEqualTo(global::app.type.item.number.NumberKind.Double);
+        await Assert.That((await result.Value())!.Kind.Name).IsEqualTo("double");
     }
 
     // --- Subtract ---
