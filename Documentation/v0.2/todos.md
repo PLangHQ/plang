@@ -1839,3 +1839,12 @@ data.Wire (JsonConverter) nesting json.Writer to build the {name,type,value,...}
 envelope. Same pattern removed everywhere else; the future cleanup is the plang
 channel driving its writer directly (the envelope becomes the writer's framing, Wire's
 logic relocates out of a JsonConverter). Own piece — not this branch.
+
+## 2026-07-10 — Collapse sync Write(IWriter) into async Output (own pass)
+The base item.Output wrapping sync Write for the 21 mode-free leaves is a middleman
+(Ingi). But Write is also a sync value-emission primitive with ~15 direct callers —
+the json writer's own `case item v: v.Write(this)` dispatch, signature's field writes
+(Algorithm/Nonce/Created/Identity), the path/permission/directory type serializers —
+so deleting it is an IWriter-contract change, not a leaf collapse. Scoped OUT of the
+Load()-removal (stage2-load-removal-answer.md); this is the follow-up: one async
+Output door end-to-end, the sync Write callers migrated, the middleman wrapper gone.
