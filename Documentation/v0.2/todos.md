@@ -1830,3 +1830,12 @@ no `From`, no free `Register`. "The scheme IS the behavior." Decoupled from Stag
 lands. Note: Stage 3 reparents `Scheme` mechanically (location only) — the pattern
 redesign is THIS piece, not the reparent. Context:
 `.bot/navigation-driven-record-builder/coder/scheme-should-follow-the-kind-pattern.md`.
+
+## 2026-07-10 — The plang channel still drives through STJ + the Wire converter
+After the json channel went writer-driven (stage2-json-channel-write-answer.md: the
+channel builds json.Writer, data.Write(IWriter) — no STJ in the value path), the
+application/plang channel remains the last converter-driven serializer: STJ +
+data.Wire (JsonConverter) nesting json.Writer to build the {name,type,value,...}
+envelope. Same pattern removed everywhere else; the future cleanup is the plang
+channel driving its writer directly (the envelope becomes the writer's framing, Wire's
+logic relocates out of a JsonConverter). Own piece — not this branch.
