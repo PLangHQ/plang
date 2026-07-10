@@ -1,4 +1,4 @@
-using app.type.path;
+using app.type.item.path;
 using app.variable;
 using app.actor.context;
 using app.Attributes;
@@ -41,7 +41,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
     public List<data.@this>? Parameters { get; set; }
     /// <summary>Pre-resolved .pr file path. Null when the goal name contains %variables%.</summary>
     [Store, Out]
-    public global::app.type.path.@this? PrPath { get; set; }
+    public global::app.type.item.path.@this? PrPath { get; set; }
 
     /// <summary>The action this GoalCall originated from. Set during parameter resolution.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
@@ -87,7 +87,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
             // Born-native collections hand the wire shape as a native dict — navigate
             // its entries directly (no raw copy); the legacy CLR dictionary reads by key.
             // Both collapse to the same slot accessor feeding the one assembly body.
-            case app.type.dict.@this nativeDict:
+            case app.type.item.dict.@this nativeDict:
                 return FromSlots(key => nativeDict.Get(key)?.Peek(), context);
             case IDictionary<string, object?> dict:
                 return FromSlots(key => dict.TryGetValue(key, out var v) ? v : null, context);
@@ -128,7 +128,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
         {
             null => null,
             path builtPath => builtPath,
-            global::app.type.dict.@this nd => ResolveRelative(nd.Get("relative")?.Peek()?.ToString(), context),
+            global::app.type.item.dict.@this nd => ResolveRelative(nd.Get("relative")?.Peek()?.ToString(), context),
             IDictionary<string, object?> d2 => ResolveRelative(
                 d2.TryGetValue("relative", out var rel) ? rel?.ToString() : null, context),
             _ => ResolveRelative(prRaw.ToString(), context),
@@ -182,7 +182,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
             var entry = element is data.@this d ? d.Peek() : element;
             switch (entry)
             {
-                case app.type.dict.@this nd:
+                case app.type.item.dict.@this nd:
                     yield return (nd.Get("name")?.Peek()?.ToString() ?? "", nd.Get("value")?.Peek());
                     break;
                 case IDictionary<string, object?> id:
@@ -340,7 +340,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
         // so file.read with a relative path resolves against the goal's actual
         // on-disk directory (works in child Apps where Path was set under a
         // different root and would otherwise mis-resolve).
-        var prPathResolved = global::app.type.path.@this.Resolve(prPath, context);
+        var prPathResolved = global::app.type.item.path.@this.Resolve(prPath, context);
         goal.LoadedFromPrPath = prPathResolved;
         foreach (var subGoal in goal.Goals)
             subGoal.LoadedFromPrPath = prPathResolved;

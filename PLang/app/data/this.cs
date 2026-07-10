@@ -143,7 +143,7 @@ public partial class @this
     /// </summary>
     [JsonIgnore]
     [LlmIgnore]
-    internal global::app.type.signature.@this? PendingVerification { get; set; }
+    internal global::app.type.item.signature.@this? PendingVerification { get; set; }
 
     [JsonIgnore]
     public string Path { get; }

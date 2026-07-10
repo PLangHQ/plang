@@ -57,18 +57,18 @@ public class ProviderModuleTests
     {
         // Use the exact resolved path so the grant's Path key matches the
         // canonical-form path that AuthGate compares against.
-        var resolved = global::app.type.path.@this.Resolve("/" + dllPath, Ctx);
-        var verbs = new HashSet<global::app.type.permission.Verb>
+        var resolved = global::app.type.item.path.@this.Resolve("/" + dllPath, Ctx);
+        var verbs = new HashSet<global::app.type.item.permission.Verb>
         {
-            global::app.type.permission.Verb.Read,
-            global::app.type.permission.Verb.Execute,
+            global::app.type.item.permission.Verb.Read,
+            global::app.type.item.permission.Verb.Execute,
         };
-        var permission = new global::app.type.permission.@this(
+        var permission = new global::app.type.item.permission.@this(
             Actor: _app.System.Name,
             Path: resolved.Absolute,
             Verbs: verbs,
-            Match: global::app.type.permission.Match.Exact);
-        var data = new global::app.data.@this<global::app.type.permission.@this>("", permission) { Context = Ctx };
+            Match: global::app.type.item.permission.Match.Exact);
+        var data = new global::app.data.@this<global::app.type.item.permission.@this>("", permission) { Context = Ctx };
         await _app.System.Permission.Add(data, persist: true);
     }
 
@@ -99,7 +99,7 @@ public class ProviderModuleTests
     [Test]
     public async Task Load_NonExistentDll_ReturnsLoadError()
     {
-        var action = new global::app.module.code.load(Ctx) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve("/nonexistent/path/fake.dll", Ctx))
+        var action = new global::app.module.code.load(Ctx) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve("/nonexistent/path/fake.dll", Ctx))
         };
         var result = await action.Run();
 
@@ -129,7 +129,7 @@ public class ProviderModuleTests
             return;
         }
 
-        var action = new global::app.module.code.load(Ctx) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve("/" + dllPath, Ctx)),
+        var action = new global::app.module.code.load(Ctx) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve("/" + dllPath, Ctx)),
         };
         var result = await action.Run();
 
@@ -150,7 +150,7 @@ public class ProviderModuleTests
             return;
         }
 
-        var action = new global::app.module.code.load(Ctx) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve("/" + dllPath, Ctx)),
+        var action = new global::app.module.code.load(Ctx) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve("/" + dllPath, Ctx)),
         };
         var result = await action.Run();
 
@@ -169,7 +169,7 @@ public class ProviderModuleTests
             return;
         }
 
-        var action = new global::app.module.code.load(Ctx) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve("/" + dllPath, Ctx)),
+        var action = new global::app.module.code.load(Ctx) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve("/" + dllPath, Ctx)),
         };
         var result = await action.Run();
 
@@ -361,8 +361,8 @@ public class ProviderModuleTests
         public MockSigningProvider(string name) { Name = name; }
 
         public (KeyPair? keys, global::app.error.IError? error) GenerateKeyPair() => (new KeyPair("mockPub", "mockPriv"), null);
-        public global::app.type.binary.@this Sign(global::app.type.signature.@this unsigned, global::app.type.item.text.@this privateKey) => new global::app.type.binary.@this(new byte[64]);
-        public global::app.type.item.@bool.@this Verify(global::app.type.signature.@this signature) => new global::app.type.item.@bool.@this(true);
+        public global::app.type.item.binary.@this Sign(global::app.type.item.signature.@this unsigned, global::app.type.item.text.@this privateKey) => new global::app.type.item.binary.@this(new byte[64]);
+        public global::app.type.item.@bool.@this Verify(global::app.type.item.signature.@this signature) => new global::app.type.item.@bool.@this(true);
         public Task<global::app.data.@this> SignAsync(sign action) => Task.FromResult(global::app.data.@this.Ok());
         public Task<global::app.data.@this<global::app.type.item.@bool.@this>> VerifyAsync(verify action) => Task.FromResult(global::app.data.@this<global::app.type.item.@bool.@this>.Ok(true));
     }

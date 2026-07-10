@@ -29,21 +29,21 @@ public class NamespaceMoveTests
         // with System.IO.Path across the codebase. The path type is reachable
         // by its fully-qualified name; per-file `using Path = ...` aliases are
         // used where the short name is wanted.
-        var pathType = AppAssembly.GetType("app.type.path.this");
+        var pathType = AppAssembly.GetType("app.type.item.path.this");
         await Assert.That(pathType).IsNotNull();
         await Assert.That(pathType!.IsAbstract).IsTrue();
     }
 
     [Test] public async Task PathType_LivesIn_AppTypesPathNamespace()
     {
-        var pathType = AppAssembly.GetType("app.type.path.this");
+        var pathType = AppAssembly.GetType("app.type.item.path.this");
         await Assert.That(pathType).IsNotNull();
-        await Assert.That(pathType!.Namespace).IsEqualTo("app.type.path");
+        await Assert.That(pathType!.Namespace).IsEqualTo("app.type.item.path");
     }
 
     [Test] public async Task PathClass_FollowsThisConvention_NamedThis()
     {
-        var pathType = AppAssembly.GetType("app.type.path.this");
+        var pathType = AppAssembly.GetType("app.type.item.path.this");
         await Assert.That(pathType).IsNotNull();
         await Assert.That(pathType!.Name).IsEqualTo("this");
     }
@@ -52,17 +52,17 @@ public class NamespaceMoveTests
     {
         // Permission is a fundamental type, not a path thing — it references a
         // resource but is an authorization in its own right.
-        await Assert.That(AppAssembly.GetType("app.type.permission.this")).IsNotNull();
-        await Assert.That(AppAssembly.GetType("app.type.path.permission.this")).IsNull();
+        await Assert.That(AppAssembly.GetType("app.type.item.permission.this")).IsNotNull();
+        await Assert.That(AppAssembly.GetType("app.type.item.path.permission.this")).IsNull();
     }
 
     [Test] public async Task Verb_IsAnEnum_NotSubRecords()
     {
         // The verb model collapsed to a single Verb enum; the grant holds a set.
-        var verb = AppAssembly.GetType("app.type.permission.Verb");
+        var verb = AppAssembly.GetType("app.type.item.permission.Verb");
         await Assert.That(verb).IsNotNull();
         await Assert.That(verb!.IsEnum).IsTrue();
-        await Assert.That(AppAssembly.GetType("app.type.path.permission.verb.this")).IsNull();
+        await Assert.That(AppAssembly.GetType("app.type.item.path.permission.verb.this")).IsNull();
     }
 
     [Test] public async Task ExistingSuite_StaysGreen_AfterRename()

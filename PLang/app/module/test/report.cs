@@ -42,17 +42,17 @@ public partial class report : IContext
         // Write the file artefact through path verbs (gated). .test/ lives at the app root.
         var context = Context;
         string content;
-        global::app.type.path.@this writeTarget;
+        global::app.type.item.path.@this writeTarget;
         if (format == global::app.test.Format.JUnit)
         {
             content = new global::app.test.junit.@this(results).ToString();
-            writeTarget = global::app.type.path.@this.Resolve("/.test/junit.xml", context);
+            writeTarget = global::app.type.item.path.@this.Resolve("/.test/junit.xml", context);
         }
         else
         {
             // The json artefact IS the tests' wire form — each test writes its [Out] fields.
             content = await Wire(results);
-            writeTarget = global::app.type.path.@this.Resolve("/.test/results.json", context);
+            writeTarget = global::app.type.item.path.@this.Resolve("/.test/results.json", context);
         }
         // WriteText creates parent dirs via EnsureParentDir; AuthGate(Write) gates it.
         var written = await writeTarget.WriteText(content);

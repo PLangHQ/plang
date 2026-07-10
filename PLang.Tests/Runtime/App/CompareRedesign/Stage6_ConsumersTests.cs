@@ -34,7 +34,7 @@ public class Stage6_ConsumersTests
         var eq = new Operator("==");
         await Assert.That(await eq.Evaluate(D(app, "5", "text"), D(app, 5, "number"))).IsTrue();      // Equal
         await Assert.That(await eq.Evaluate(D(app, true, "bool"), D(app, false, "bool"))).IsFalse();  // NotEqual
-        var dict = global::app.type.dict.@this.FromRaw(new Dictionary<string, object?> { ["a"] = 1 }, app.User.Context);
+        var dict = global::app.type.item.dict.@this.FromRaw(new Dictionary<string, object?> { ["a"] = 1 }, app.User.Context);
         await Assert.That(async () => await eq.Evaluate(D(app, dict, "dict"), D(app, 5, "number")))
             .Throws<global::app.data.IncomparableException>();                                        // Incomparable
     }
@@ -48,7 +48,7 @@ public class Stage6_ConsumersTests
         await Assert.That(await lt.Evaluate(D(app, 4, "number"), D(app, 5, "number"))).IsTrue();      // Less
         await Assert.That(async () => await lt.Evaluate(D(app, true, "bool"), D(app, false, "bool")))
             .Throws<global::app.data.IncomparableException>();                                        // NotEqual -> error
-        var dict = global::app.type.dict.@this.FromRaw(new Dictionary<string, object?> { ["a"] = 1 }, app.User.Context);
+        var dict = global::app.type.item.dict.@this.FromRaw(new Dictionary<string, object?> { ["a"] = 1 }, app.User.Context);
         await Assert.That(async () => await lt.Evaluate(D(app, dict, "dict"), D(app, 5, "number")))
             .Throws<global::app.data.IncomparableException>();                                        // Incomparable -> error
     }
@@ -96,7 +96,7 @@ public class Stage6_ConsumersTests
 
             var files = new global::app.type.list.@this(ctx);
             foreach (var name in new[] { "big.txt", "tiny.txt", "mid.txt" })
-                files.Add(new Data(name, new global::app.type.path.file.@this(System.IO.Path.Combine(dir, name), context: ctx), context: ctx));
+                files.Add(new Data(name, new global::app.type.item.path.file.@this(System.IO.Path.Combine(dir, name), context: ctx), context: ctx));
 
             await files.SortByField("size", descending: false);
 
@@ -126,7 +126,7 @@ public class Stage6_ConsumersTests
         // [%dict%] contains %number% → false, no error (Incomparable element treated as no-match)
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var dict = global::app.type.dict.@this.FromRaw(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
+        var dict = global::app.type.item.dict.@this.FromRaw(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
         var list = new global::app.type.list.@this(ctx);
         list.Add(new Data("", dict, context: ctx));
         var holder = new Data("l", list, context: ctx);
@@ -140,7 +140,7 @@ public class Stage6_ConsumersTests
     {
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var dict = global::app.type.dict.@this.FromRaw(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
+        var dict = global::app.type.item.dict.@this.FromRaw(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
         var list = new global::app.type.list.@this(ctx);
         list.Add(new Data("", dict, context: ctx));
         await ctx.Variable.Set("items", list);
@@ -157,7 +157,7 @@ public class Stage6_ConsumersTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         // a mixed list (dict + number) dedups without error — Incomparable pairs never match
-        var dict = global::app.type.dict.@this.FromRaw(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
+        var dict = global::app.type.item.dict.@this.FromRaw(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
         var list = new global::app.type.list.@this(ctx);
         list.Add(new Data("", dict, context: ctx));
         list.Add(new Data("", 5, context: ctx));

@@ -33,7 +33,7 @@ public class DataSourceTests
 
     private async System.Threading.Tasks.Task<global::app.module.setting.Sqlite> CreateDataSource()
     {
-        var dbPath = global::app.type.path.@this.Resolve("/.db/test.sqlite", _app.System.Context!);
+        var dbPath = global::app.type.item.path.@this.Resolve("/.db/test.sqlite", _app.System.Context!);
         return await global::app.module.setting.Sqlite.CreateAsync(dbPath, _app.System.Context!);
     }
 

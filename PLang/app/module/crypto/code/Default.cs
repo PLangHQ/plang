@@ -28,7 +28,7 @@ public class Default : ICrypto
         if (value is null || await value.IsEmpty())
             return action.Context.Error<global::app.module.crypto.type.hash.@this>(new ActionError(
                 "Hash requires a value to hash", "ValueRequired", 400));
-        if (value is global::app.type.binary.@this bin)
+        if (value is global::app.type.item.binary.@this bin)
         {
             bytes = bin.Value;
         }

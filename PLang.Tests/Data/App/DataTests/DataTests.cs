@@ -182,7 +182,7 @@ public class DataTests : System.IAsyncDisposable
         var ov = _app.Data("test", 42);
 
         // The .NET edge: the door opens, the number lowers ITSELF.
-        var value = (await ov.Value() as global::app.type.number.@this)!.ToDouble();
+        var value = (await ov.Value() as global::app.type.item.number.@this)!.ToDouble();
 
         await Assert.That(value).IsEqualTo(42.0);
     }
@@ -625,7 +625,7 @@ public class DataTests : System.IAsyncDisposable
 
         // Flat shape — the compressed bytes ride as an `archive` item.
         await Assert.That(compressed.Type!.Name).IsEqualTo("archive");
-        await Assert.That(await compressed.Value()).IsTypeOf<global::app.type.archive.@this>();
+        await Assert.That(await compressed.Value()).IsTypeOf<global::app.type.item.archive.@this>();
     }
 
     [Test]
@@ -751,7 +751,7 @@ public class DataTests : System.IAsyncDisposable
     public async Task Decompress_NullBytes_ReturnsError()
     {
         // archive with empty bytes — nothing decompressable
-        var archived = new Data("", new global::app.type.archive.@this(System.Array.Empty<byte>()), context: _app.User.Context);
+        var archived = new Data("", new global::app.type.item.archive.@this(System.Array.Empty<byte>()), context: _app.User.Context);
 
         var result = archived.Decompress();
 
@@ -765,7 +765,7 @@ public class DataTests : System.IAsyncDisposable
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
         // Random bytes — not valid GZip
-        var archived = new Data("", new global::app.type.archive.@this(new byte[] { 0xFF, 0xFE, 0x00, 0x42 }), context: context);
+        var archived = new Data("", new global::app.type.item.archive.@this(new byte[] { 0xFF, 0xFE, 0x00, 0x42 }), context: context);
 
         var result = archived.Decompress();
 
@@ -791,7 +791,7 @@ public class DataTests : System.IAsyncDisposable
 
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
-        var archived = new Data("", new global::app.type.archive.@this(gzipped), context: context);
+        var archived = new Data("", new global::app.type.item.archive.@this(gzipped), context: context);
 
         var result = archived.Decompress();
 
@@ -848,15 +848,15 @@ public class DataTests : System.IAsyncDisposable
         // convention); decimal is opt-in via `as number/decimal`.
         var json = "{\"price\":19.99}";
         using var doc = System.Text.Json.JsonDocument.Parse(json);
-        var result = new global::app.type.item.serializer.json(global::PLang.Tests.TestApp.SharedContext).Parse(doc.RootElement) as app.type.dict.@this;
+        var result = new global::app.type.item.serializer.json(global::PLang.Tests.TestApp.SharedContext).Parse(doc.RootElement) as app.type.item.dict.@this;
 
         await Assert.That(result).IsNotNull();
         result!.Context = _app.User.Context;
         // Born-native: a JSON number is a number.@this wrapper; its backing
         // (via ToRaw) is double for a bare decimal-point literal.
         var price = await result!.Get("price")!.Value();
-        await Assert.That(price).IsTypeOf<app.type.number.@this>();
-        await Assert.That(((app.type.number.@this)price!).Clr<object>()).IsEqualTo(19.99d);
+        await Assert.That(price).IsTypeOf<app.type.item.number.@this>();
+        await Assert.That(((app.type.item.number.@this)price!).Clr<object>()).IsEqualTo(19.99d);
     }
 
     [Test]
@@ -864,14 +864,14 @@ public class DataTests : System.IAsyncDisposable
     {
         var json = "{\"count\":42}";
         using var doc = System.Text.Json.JsonDocument.Parse(json);
-        var result = new global::app.type.item.serializer.json(global::PLang.Tests.TestApp.SharedContext).Parse(doc.RootElement) as app.type.dict.@this;
+        var result = new global::app.type.item.serializer.json(global::PLang.Tests.TestApp.SharedContext).Parse(doc.RootElement) as app.type.item.dict.@this;
 
         await Assert.That(result).IsNotNull();
         result!.Context = _app.User.Context;
         // Born-native: a whole JSON number is a number.@this wrapper backed by long.
         var count = await result!.Get("count")!.Value();
-        await Assert.That(count).IsTypeOf<app.type.number.@this>();
-        await Assert.That(((app.type.number.@this)count!).Clr<object>()).IsEqualTo(42L);
+        await Assert.That(count).IsTypeOf<app.type.item.number.@this>();
+        await Assert.That(((app.type.item.number.@this)count!).Clr<object>()).IsEqualTo(42L);
     }
 
     // --- v5: Zip bomb test ---
@@ -897,7 +897,7 @@ public class DataTests : System.IAsyncDisposable
         // Stage 3: archived.Value is the gzip byte[] directly (no inner gzip Data).
         await using var engine = global::PLang.Tests.TestApp.Create("/test");
         var context = new global::app.actor.context.@this(engine, engine.User);
-        var archived = new Data("", new global::app.type.archive.@this(compressed), context: context);
+        var archived = new Data("", new global::app.type.item.archive.@this(compressed), context: context);
 
         var result = archived.Decompress();
 
@@ -912,7 +912,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Decompress_NullBytes_ReturnsStatusCode500()
     {
-        var archived = new Data("", new global::app.type.archive.@this(System.Array.Empty<byte>()), context: _app.User.Context);
+        var archived = new Data("", new global::app.type.item.archive.@this(System.Array.Empty<byte>()), context: _app.User.Context);
 
         var result = archived.Decompress();
 
@@ -922,7 +922,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Decompress_CorruptData_ReturnsStatusCode500()
     {
-        var archived = new Data("", new global::app.type.archive.@this(new byte[] { 0xFF, 0xFE, 0x00, 0x42 }), context: _app.User.Context);
+        var archived = new Data("", new global::app.type.item.archive.@this(new byte[] { 0xFF, 0xFE, 0x00, 0x42 }), context: _app.User.Context);
 
         var result = archived.Decompress();
 
@@ -943,7 +943,7 @@ public class DataTests : System.IAsyncDisposable
             gzipped = vars.ToArray();
         }
 
-        var archived = new Data("", new global::app.type.archive.@this(gzipped), context: _app.User.Context);
+        var archived = new Data("", new global::app.type.item.archive.@this(gzipped), context: _app.User.Context);
 
         var result = archived.Decompress();
 

@@ -18,8 +18,8 @@ public static class MaterializeProbeExtensions
         // no such prior and never parsed.
         for (var p = d.Item?.Prior; p != null; p = p.Prior)
             if (p is global::app.type.item.source
-                or global::app.type.file.@this
-                or global::app.type.url.@this)
+                or global::app.type.item.file.@this
+                or global::app.type.item.url.@this)
                 return 1;
         return 0;
     }

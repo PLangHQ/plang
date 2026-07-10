@@ -214,7 +214,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// Mints this value's own type entity — each type answers ITS way (number
     /// stamps its precision as kind, text its extension, a source its declared
     /// judgement). The default derives the name from the class's namespace
-    /// tail (<c>app.type.file.@this</c> → <c>file</c>; the repo convention that
+    /// tail (<c>app.type.item.file.@this</c> → <c>file</c>; the repo convention that
     /// a type's folder IS its name) and the CLR mate from the value's backing.
     /// </summary>
     protected internal virtual global::app.type.@this Mint()

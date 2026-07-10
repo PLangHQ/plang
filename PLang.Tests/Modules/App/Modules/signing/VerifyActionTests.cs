@@ -47,7 +47,7 @@ public class VerifyActionTests
     {
         var action = new sign(Ctx) { Data = new Data("", data, context: Ctx),
             Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(contracts, Ctx), context: Ctx),
-            Expires = expires.HasValue ? (global::app.type.duration.@this)expires.Value : null,
+            Expires = expires.HasValue ? (global::app.type.item.duration.@this)expires.Value : null,
             Headers = headers?.ToDictData()
         };
         return await _app.Run<sign>(action, Ctx);
@@ -59,7 +59,7 @@ public class VerifyActionTests
         var action = new verify(Ctx) { Data = signedData,
             Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(contracts, Ctx), context: Ctx),
             Headers = headers?.ToDictData(),
-            TimeoutMs = timeoutMs.HasValue ? (global::app.type.number.@this)timeoutMs.Value : null
+            TimeoutMs = timeoutMs.HasValue ? (global::app.type.item.number.@this)timeoutMs.Value : null
         };
         return await _app.Run<verify>(action, Ctx);
     }
@@ -68,18 +68,18 @@ public class VerifyActionTests
     // "tamper", rebuild the layer with one field changed but the ORIGINAL
     // signature bytes — verify then fails because the sig no longer covers the
     // changed metadata (or the changed field trips its own check first).
-    private static global::app.type.signature.@this Layer(Data signed)
-        => (global::app.type.signature.@this)signed.Peek();
+    private static global::app.type.item.signature.@this Layer(Data signed)
+        => (global::app.type.item.signature.@this)signed.Peek();
 
     private static Data Tampered(Data signed,
         global::app.type.item.text.@this? algorithm = null,
-        global::app.type.datetime.@this? created = null,
+        global::app.type.item.datetime.@this? created = null,
         global::app.module.crypto.type.hash.@this? hash = null,
-        global::app.type.binary.@this? signature = null,
+        global::app.type.item.binary.@this? signature = null,
         bool contractsNull = false)
     {
         var l = Layer(signed);
-        var rebuilt = new global::app.type.signature.@this(
+        var rebuilt = new global::app.type.item.signature.@this(
             l.Value, algorithm ?? l.Algorithm, l.Nonce, created ?? l.Created,
             l.Identity, hash ?? l.Hash, signature ?? l.Signature, l.Expires,
             contractsNull ? null : l.Contracts);
@@ -138,7 +138,7 @@ public class VerifyActionTests
     public async Task Verify_TimedOut_Error()
     {
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
-        var tampered = Tampered(signed, created: new global::app.type.datetime.@this(DateTimeOffset.UtcNow.AddHours(-1)));
+        var tampered = Tampered(signed, created: new global::app.type.item.datetime.@this(DateTimeOffset.UtcNow.AddHours(-1)));
 
         var result = await VerifyHelper(tampered, contracts: new List<string> { "C0" }, timeoutMs: 1000);
         await result.IsFailure();
@@ -186,7 +186,7 @@ public class VerifyActionTests
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
         var sigBytes = (byte[])Layer(signed).Signature.Value.Clone();
         sigBytes[0] ^= 0xFF;
-        var tampered = Tampered(signed, signature: new global::app.type.binary.@this(sigBytes));
+        var tampered = Tampered(signed, signature: new global::app.type.item.binary.@this(sigBytes));
 
         var result = await VerifyHelper(tampered, contracts: new List<string> { "C0" });
         await result.IsFailure();
@@ -339,7 +339,7 @@ public class VerifyActionTests
     public async Task Verify_TimedOutAndContractMismatch_ReturnsTimedOutNotContractMismatch()
     {
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
-        var tampered = Tampered(signed, created: new global::app.type.datetime.@this(DateTimeOffset.UtcNow.AddHours(-1)));
+        var tampered = Tampered(signed, created: new global::app.type.item.datetime.@this(DateTimeOffset.UtcNow.AddHours(-1)));
 
         var result = await VerifyHelper(tampered, contracts: new List<string> { "C1" }, timeoutMs: 1000);
         await result.IsFailure();

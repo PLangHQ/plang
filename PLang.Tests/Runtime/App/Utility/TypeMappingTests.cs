@@ -165,7 +165,7 @@ public class TypeMappingTests
     {
         var type = TypeMapping.GetType("dictionary");
 
-        await Assert.That(type).IsEqualTo(typeof(app.type.dict.@this));
+        await Assert.That(type).IsEqualTo(typeof(app.type.item.dict.@this));
     }
 
     [Test]
@@ -173,7 +173,7 @@ public class TypeMappingTests
     {
         var type = TypeMapping.GetType("dict");
 
-        await Assert.That(type).IsEqualTo(typeof(app.type.dict.@this));
+        await Assert.That(type).IsEqualTo(typeof(app.type.item.dict.@this));
     }
 
     [Test]
@@ -181,7 +181,7 @@ public class TypeMappingTests
     {
         var type = TypeMapping.GetType("map");
 
-        await Assert.That(type).IsEqualTo(typeof(app.type.dict.@this));
+        await Assert.That(type).IsEqualTo(typeof(app.type.item.dict.@this));
     }
 
     [Test]
@@ -674,7 +674,7 @@ public class TypeMappingTests
     [Test]
     public async Task GetTypeName_DataOfPath_ReturnsPath()
     {
-        var name = TypeMapping.GetTypeName(typeof(global::app.data.@this<global::app.type.path.@this>));
+        var name = TypeMapping.GetTypeName(typeof(global::app.data.@this<global::app.type.item.path.@this>));
 
         await Assert.That(name).IsEqualTo("path");
     }

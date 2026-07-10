@@ -32,8 +32,8 @@ public class DiscoverDenialPathTests
         var app = NewApp(out _);
         app.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = "//etc";
-        var action = new global::app.module.test.discover(app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(
-                global::app.type.path.@this.Resolve(outOfRoot, app.User.Context)),
+        var action = new global::app.module.test.discover(app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
+                global::app.type.item.path.@this.Resolve(outOfRoot, app.User.Context)),
             Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<global::app.type.item.@bool.@this>("Recursive", false)
         };
@@ -46,8 +46,8 @@ public class DiscoverDenialPathTests
     {
         var app = NewApp(out _);
         app.User.Channel.Register(new CannedChannel("n"));
-        var action = new global::app.module.test.discover(app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(
-                global::app.type.path.@this.Resolve("//../../../etc", app.User.Context)),
+        var action = new global::app.module.test.discover(app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
+                global::app.type.item.path.@this.Resolve("//../../../etc", app.User.Context)),
             Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<global::app.type.item.@bool.@this>("Recursive", false)
         };

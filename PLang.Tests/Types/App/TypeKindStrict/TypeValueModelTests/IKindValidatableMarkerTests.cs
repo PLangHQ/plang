@@ -32,7 +32,7 @@ public class IKindValidatableMarkerTests
 
     [Test] public async Task Image_ImplementsIKindValidatable()
     {
-        var image = typeof(global::app.type.image.@this);
+        var image = typeof(global::app.type.item.image.@this);
         await Assert.That(typeof(global::app.data.IKindValidatable).IsAssignableFrom(image)).IsTrue();
     }
 
@@ -52,7 +52,7 @@ public class IKindValidatableMarkerTests
 
     [Test] public async Task Number_DoesNotImplementIKindValidatable()
     {
-        var number = typeof(global::app.type.number.@this);
+        var number = typeof(global::app.type.item.number.@this);
         await Assert.That(typeof(global::app.data.IKindValidatable).IsAssignableFrom(number)).IsFalse();
     }
 }

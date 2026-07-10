@@ -277,7 +277,7 @@ public partial class @this
         // reflection fallback and no dict-conversion — an unsettable target throws, loud.
         if (!_variables.TryGetValue(path.Root, out var root))
         {
-            root = new data.@this(path.Root, new global::app.type.dict.@this(_context), context: _context);
+            root = new data.@this(path.Root, new global::app.type.item.dict.@this(_context), context: _context);
             _variables[path.Root] = root;
         }
 
@@ -466,12 +466,12 @@ public partial class @this
                 throw new global::app.error.VariableNotFoundException(varName);
             }
             string? s;
-            if (dataVar?.Peek() is global::app.type.file.@this or global::app.type.url.@this)
+            if (dataVar?.Peek() is global::app.type.item.file.@this or global::app.type.item.url.@this)
             {
                 // Interpolation is SCALAR use — a reference renders its content
                 // (the bare-scalar contract), never the location string.
                 var content = await dataVar.Value();
-                s = content is global::app.type.binary.@this bin
+                s = content is global::app.type.item.binary.@this bin
                     ? System.Convert.ToBase64String(bin.Value) : content?.ToString();
             }
             // A stored variable reference resolves to its value (variable.Value() =>

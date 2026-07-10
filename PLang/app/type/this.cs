@@ -415,7 +415,7 @@ public sealed class @this : item.@this
         if (raw is System.Collections.Generic.List<object?> objList)
             return new global::app.type.list.@this(objList, context!);
         if (raw is System.Collections.Generic.Dictionary<string, object?> objDict)
-            return new global::app.type.dict.@this(objDict, context!);
+            return new global::app.type.item.dict.@this(objDict, context!);
         if (raw is System.Collections.IDictionary
             || (raw is System.Collections.IList && raw is not byte[]))
             return new global::app.type.item.serializer.json(context).Parse(
@@ -725,7 +725,7 @@ public sealed class @this : item.@this
 
     /// <summary>Path-scheme registry for the path entity. Null when this type is not path.</summary>
     [JsonIgnore]
-    public global::app.type.path.scheme.@this? Scheme
+    public global::app.type.item.path.scheme.@this? Scheme
         => Name == "path" ? Context?.App.Type.Scheme : null;
 
     // Construct with a stamped ClrType (used by BuildTypeEntries and by the

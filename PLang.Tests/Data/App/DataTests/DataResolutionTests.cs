@@ -81,7 +81,7 @@ public class DataResolutionTests
         _app.User.Context.Variable.Set("count", 42);
         var data = new Data("c", "%count%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
-        var result = data.ShallowClone<global::app.type.number.@this>(await data.Value<global::app.type.number.@this>());
+        var result = data.ShallowClone<global::app.type.item.number.@this>(await data.Value<global::app.type.item.number.@this>());
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("42");
     }
 

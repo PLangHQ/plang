@@ -11,7 +11,7 @@ namespace PLang.Tests.App.Types.PathTests.Contract;
 /// </summary>
 public class CrossSchemeTests
 {
-    private static void Authorize(global::app.type.path.@this p)
+    private static void Authorize(global::app.type.item.path.@this p)
         => p.Context!.Actor!.Channel.Register(new CannedAnswerChannel("a"));
 
     [Test] public async Task CopyTo_FilePath_To_HttpPath_UsesBaseDefault_RoundTrips()

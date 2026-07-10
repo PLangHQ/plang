@@ -3,7 +3,7 @@ using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using System;
 using System.Threading.Tasks;
-using Path = global::app.type.path.@this;
+using Path = global::app.type.item.path.@this;
 
 namespace PLang.Tests.App.Types.PathTests.Contract;
 

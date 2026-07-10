@@ -1,4 +1,4 @@
-using Duration = global::app.type.duration.@this;
+using Duration = global::app.type.item.duration.@this;
 using Item = global::app.type.item.@this;
 
 using PLang.Tests.App.Fixtures;

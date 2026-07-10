@@ -117,7 +117,7 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
     {
         var serializer = new global::app.channel.serializer.Text(global::PLang.Tests.TestApp.SharedContext);
 
-        var result = (await serializer.Deserialize<global::app.type.number.@this>("42").Value())!;
+        var result = (await serializer.Deserialize<global::app.type.item.number.@this>("42").Value())!;
 
         await Assert.That((result)?.ToString()).IsEqualTo("42");
     }
@@ -127,7 +127,7 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
     {
         var serializer = new global::app.channel.serializer.Text(global::PLang.Tests.TestApp.SharedContext);
 
-        var result = serializer.Deserialize<global::app.type.number.@this>("42").GetValue<int>();
+        var result = serializer.Deserialize<global::app.type.item.number.@this>("42").GetValue<int>();
 
         await Assert.That((result).ToString()).IsEqualTo("42");
     }
@@ -137,7 +137,7 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
     {
         var serializer = new global::app.channel.serializer.Text(global::PLang.Tests.TestApp.SharedContext);
 
-        var result = (await serializer.Deserialize<global::app.type.number.@this>("9999999999").Value())!;
+        var result = (await serializer.Deserialize<global::app.type.item.number.@this>("9999999999").Value())!;
 
         await Assert.That((result)?.ToString()).IsEqualTo("9999999999");
     }
@@ -148,7 +148,7 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
         var serializer = new global::app.channel.serializer.Text(global::PLang.Tests.TestApp.SharedContext);
         // Use culture-appropriate decimal separator
         var separator = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
-        var result = (await serializer.Deserialize<global::app.type.number.@this>($"3{separator}14").Value())!;
+        var result = (await serializer.Deserialize<global::app.type.item.number.@this>($"3{separator}14").Value())!;
 
         await Assert.That((result)?.ToString()).IsEqualTo("3.14");
     }
@@ -159,7 +159,7 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
         var serializer = new global::app.channel.serializer.Text(global::PLang.Tests.TestApp.SharedContext);
         // Use culture-appropriate decimal separator
         var separator = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
-        var result = (await serializer.Deserialize<global::app.type.number.@this>($"123{separator}45").Value())!;
+        var result = (await serializer.Deserialize<global::app.type.item.number.@this>($"123{separator}45").Value())!;
 
         await Assert.That((result)?.ToString()).IsEqualTo("123.45");
     }
@@ -184,7 +184,7 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
         var serializer = new global::app.channel.serializer.Text(global::PLang.Tests.TestApp.SharedContext);
 
         // Born-native datetime is tz-aware end to end — parse requires an ISO-8601 offset.
-        var result = (await serializer.Deserialize<global::app.type.datetime.@this>("2024-01-15T00:00:00+00:00").Value())!;
+        var result = (await serializer.Deserialize<global::app.type.item.datetime.@this>("2024-01-15T00:00:00+00:00").Value())!;
 
         await Assert.That(result.Value.Year).IsEqualTo(2024);
         await Assert.That(result.Value.Month).IsEqualTo(1);
@@ -211,7 +211,7 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
         // Born-native: byte payloads are the `binary` value type, whose text form is base64.
         var expected = Encoding.UTF8.GetBytes("hello");
         var base64 = System.Convert.ToBase64String(expected);
-        var result = (await serializer.Deserialize<global::app.type.binary.@this>(base64).Value())!;
+        var result = (await serializer.Deserialize<global::app.type.item.binary.@this>(base64).Value())!;
 
         await Assert.That(result).IsNotNull();
         await Assert.That(result.Value.SequenceEqual(expected)).IsTrue();
@@ -222,7 +222,7 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
     {
         var serializer = new global::app.channel.serializer.Text(global::PLang.Tests.TestApp.SharedContext);
 
-        var result = (await serializer.Deserialize<global::app.type.number.@this>("not a number").Value());
+        var result = (await serializer.Deserialize<global::app.type.item.number.@this>("not a number").Value());
 
         await Assert.That(result).IsNull();
     }
@@ -233,7 +233,7 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
         var serializer = new global::app.channel.serializer.Text(global::PLang.Tests.TestApp.SharedContext);
 
         // Born-native: number is a reference wrapper — an empty payload yields its default (null).
-        var result = (await serializer.Deserialize<global::app.type.number.@this>("").Value());
+        var result = (await serializer.Deserialize<global::app.type.item.number.@this>("").Value());
 
         await Assert.That(result).IsNull();
     }
@@ -253,7 +253,7 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
     {
         var serializer = new global::app.channel.serializer.Text(global::PLang.Tests.TestApp.SharedContext);
 
-        var result = (await serializer.Deserialize<global::app.type.number.@this>("42").Value())!;
+        var result = (await serializer.Deserialize<global::app.type.item.number.@this>("42").Value())!;
 
         await Assert.That((result)?.ToString()).IsEqualTo("42");
     }
@@ -313,7 +313,7 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
         var serializer = new global::app.channel.serializer.Text(global::PLang.Tests.TestApp.SharedContext);
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("42"));
 
-        var result = (await serializer.DeserializeAsync<global::app.type.number.@this>(stream)).GetValue<int>();
+        var result = (await serializer.DeserializeAsync<global::app.type.item.number.@this>(stream)).GetValue<int>();
 
         await Assert.That((result).ToString()).IsEqualTo("42");
     }
@@ -324,7 +324,7 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
         var serializer = new global::app.channel.serializer.Text(global::PLang.Tests.TestApp.SharedContext);
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("hello"));
 
-        var result = (await serializer.DeserializeAsync<global::app.type.number.@this>(stream)).GetValue<int>();
+        var result = (await serializer.DeserializeAsync<global::app.type.item.number.@this>(stream)).GetValue<int>();
 
         await Assert.That((result).ToString()).IsEqualTo("0");
     }

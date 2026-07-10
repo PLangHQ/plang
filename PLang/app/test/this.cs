@@ -44,7 +44,7 @@ public sealed class @this : global::app.type.item.@this
     // --- Execution (stamped by test.run; empty until the test runs) ---
 
     /// <summary>Wall-clock from <see cref="Start"/> to <see cref="Complete(Status, IError?)"/>. Zero until the test runs.</summary>
-    [Out] public global::app.type.duration.@this Duration { get; private set; } = System.TimeSpan.Zero;
+    [Out] public global::app.type.item.duration.@this Duration { get; private set; } = System.TimeSpan.Zero;
 
     /// <summary>Error captured on fail/error. Carries AssertionError.Variables on assertion failures.</summary>
     [Out] public IError? Error { get; private set; }

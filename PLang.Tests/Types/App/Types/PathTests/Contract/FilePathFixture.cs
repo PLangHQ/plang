@@ -1,5 +1,5 @@
-using Path = global::app.type.path.@this;
-using FilePath = global::app.type.path.file.@this;
+using Path = global::app.type.item.path.@this;
+using FilePath = global::app.type.item.path.file.@this;
 using System;
 using System.Threading.Tasks;
 

@@ -45,7 +45,7 @@ public class GetGoalsTests
             System.IO.Path.Combine(_tempDir, "Start.goal"),
             "Start\n- write out 'hello'\n- set %x% = 1");
 
-        var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
+        var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -71,7 +71,7 @@ public class GetGoalsTests
             System.IO.Path.Combine(systemDir, "Build.goal"),
             "Build\n- build step");
 
-        var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
+        var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
         var goals = result.GetValue<List<Goal>>();
 
@@ -100,7 +100,7 @@ public class GetGoalsTests
         var prGoal = new Goal
         {
             Name = "Start",
-            Path = global::app.type.path.@this.Resolve("/Start.goal", global::PLang.Tests.TestApp.SharedContext),
+            Path = global::app.type.item.path.@this.Resolve("/Start.goal", global::PLang.Tests.TestApp.SharedContext),
             Steps = new GoalSteps
             {
                 new Step
@@ -127,7 +127,7 @@ public class GetGoalsTests
         var prJson = System.Text.Encoding.UTF8.GetString(prMs.ToArray());
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "start.pr"), prJson);
 
-        var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
+        var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
         var goals = result.GetValue<List<Goal>>();
 
@@ -151,9 +151,9 @@ public class GetGoalsTests
             "Other\n- write out 'other'");
 
         // Set files filter to only build Start.goal
-        _app.Build.Files.Add(new global::app.type.path.file.@this("Start.goal", global::PLang.Tests.TestApp.SharedContext));
+        _app.Build.Files.Add(new global::app.type.item.path.file.@this("Start.goal", global::PLang.Tests.TestApp.SharedContext));
 
-        var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
+        var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -171,9 +171,9 @@ public class GetGoalsTests
             "MyGoal\n- step one");
 
         // Filter with different casing
-        _app.Build.Files.Add(new global::app.type.path.file.@this("mygoal.goal", global::PLang.Tests.TestApp.SharedContext));
+        _app.Build.Files.Add(new global::app.type.item.path.file.@this("mygoal.goal", global::PLang.Tests.TestApp.SharedContext));
 
-        var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
+        var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -191,9 +191,9 @@ public class GetGoalsTests
             "Start\n- write out 'hello'");
 
         // Filter for a file that doesn't exist
-        _app.Build.Files.Add(new global::app.type.path.file.@this("NonExistent.goal", global::PLang.Tests.TestApp.SharedContext));
+        _app.Build.Files.Add(new global::app.type.item.path.file.@this("NonExistent.goal", global::PLang.Tests.TestApp.SharedContext));
 
-        var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
+        var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -215,10 +215,10 @@ public class GetGoalsTests
             System.IO.Path.Combine(_tempDir, "Third.goal"),
             "Third\n- step three");
 
-        _app.Build.Files.Add(new global::app.type.path.file.@this("First.goal", global::PLang.Tests.TestApp.SharedContext));
-        _app.Build.Files.Add(new global::app.type.path.file.@this("Third.goal", global::PLang.Tests.TestApp.SharedContext));
+        _app.Build.Files.Add(new global::app.type.item.path.file.@this("First.goal", global::PLang.Tests.TestApp.SharedContext));
+        _app.Build.Files.Add(new global::app.type.item.path.file.@this("Third.goal", global::PLang.Tests.TestApp.SharedContext));
 
-        var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
+        var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -232,7 +232,7 @@ public class GetGoalsTests
     [Test]
     public async Task GetGoals_EmptyFolder_ReturnsEmptyList()
     {
-        var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
+        var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -256,7 +256,7 @@ public class GetGoalsTests
             System.IO.Path.Combine(buildDir, "start.pr"),
             "{ invalid json {{{}}}");
 
-        var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
+        var action = new goals(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();

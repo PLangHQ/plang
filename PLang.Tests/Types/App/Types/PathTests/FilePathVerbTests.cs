@@ -1,8 +1,8 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using FilePath = global::app.type.path.file.@this;
-using StatInfo = global::app.type.path.@this.StatInfo;
+using FilePath = global::app.type.item.path.file.@this;
+using StatInfo = global::app.type.item.path.@this.StatInfo;
 
 namespace PLang.Tests.App.Types.PathTests;
 
@@ -40,7 +40,7 @@ public class FilePathVerbTests
         await p.WriteBytes(bytes);
         var r = await p.ReadBytes();
         await r.IsSuccess();
-        await Assert.That(((global::app.type.binary.@this)(await r.Value())!).Value).IsEquivalentTo(bytes);
+        await Assert.That(((global::app.type.item.binary.@this)(await r.Value())!).Value).IsEquivalentTo(bytes);
     }
 
     [Test] public async Task Exists_FalseBeforeWrite_TrueAfterWrite()

@@ -1,5 +1,5 @@
-using DateT = global::app.type.date.@this;
-using DateTimeT = global::app.type.datetime.@this;
+using DateT = global::app.type.item.date.@this;
+using DateTimeT = global::app.type.item.datetime.@this;
 
 using PLang.Tests.App.Fixtures;
 

@@ -1,14 +1,14 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using global::app.type.path.scheme;
-using PLangPath = global::app.type.path.@this;
-using FilePath = global::app.type.path.file.@this;
+using global::app.type.item.path.scheme;
+using PLangPath = global::app.type.item.path.@this;
+using FilePath = global::app.type.item.path.file.@this;
 
 namespace PLang.Tests.App.Types.PathTests;
 
 /// <summary>
-/// The per-App scheme registry (<c>app.type.path.scheme.@this</c>), reachable as
+/// The per-App scheme registry (<c>app.type.item.path.scheme.@this</c>), reachable as
 /// <c>app.Type.Scheme</c>.
 /// </summary>
 public class SchemeRegistryTests

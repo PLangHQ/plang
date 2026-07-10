@@ -1,5 +1,5 @@
-using number = global::app.type.number.@this;
-using PKind = global::app.type.number.NumberKind;
+using number = global::app.type.item.number.@this;
+using PKind = global::app.type.item.number.NumberKind;
 
 namespace PLang.Tests.App.Types;
 
@@ -15,7 +15,7 @@ public class NumberDivideTests
     [Test] public async Task Divide_SevenByTwo_ReturnsThreeAndHalf_NotThree()
     {
         var r = NumberOps.Divide(number.From(7), number.From(2), P);
-        await Assert.That(((global::app.type.number.@this)r).Clr<decimal>()).IsEqualTo(3.5m);
+        await Assert.That(((global::app.type.item.number.@this)r).Clr<decimal>()).IsEqualTo(3.5m);
     }
 
     [Test] public async Task Divide_IntByInt_LeavesIntegerTrack_KindDecimal()
@@ -27,19 +27,19 @@ public class NumberDivideTests
     [Test] public async Task Divide_OneByMillion_FullPrecision_NotSilentZero()
     {
         var r = NumberOps.Divide(number.From(1), number.From(1000000), P);
-        await Assert.That(((global::app.type.number.@this)r).Clr<decimal>()).IsEqualTo(0.000001m);
+        await Assert.That(((global::app.type.item.number.@this)r).Clr<decimal>()).IsEqualTo(0.000001m);
     }
 
     [Test] public async Task IntDiv_SevenByTwo_ReturnsThree()
     {
         var r = NumberOps.IntDivide(number.From(7), number.From(2), P);
-        await Assert.That(((global::app.type.number.@this)r).Clr<int>()).IsEqualTo(3);
+        await Assert.That(((global::app.type.item.number.@this)r).Clr<int>()).IsEqualTo(3);
     }
 
     [Test] public async Task IntDiv_NegativeNumerator_TruncatesTowardZero()
     {
         var r = NumberOps.IntDivide(number.From(-7), number.From(2), P);
-        await Assert.That(((global::app.type.number.@this)r).Clr<int>()).IsEqualTo(-3);
+        await Assert.That(((global::app.type.item.number.@this)r).Clr<int>()).IsEqualTo(-3);
     }
 
     [Test] public async Task Divide_ByZero_Integer_DataFailDivideByZero()

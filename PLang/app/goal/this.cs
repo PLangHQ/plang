@@ -73,7 +73,7 @@ public sealed partial class @this
     }
 
     [Store, Debug]
-    public global::app.type.path.@this? Path { get; set; }
+    public global::app.type.item.path.@this? Path { get; set; }
 
     /// <summary>
     /// On-disk .pr path the goal was loaded from. Set by GoalCall.LoadFromFile.
@@ -82,7 +82,7 @@ public sealed partial class @this
     /// identity, parent-perspective for goals run inside a child App).
     /// </summary>
     [JsonIgnore, LlmIgnore]
-    public global::app.type.path.@this? LoadedFromPrPath { get; set; }
+    public global::app.type.item.path.@this? LoadedFromPrPath { get; set; }
 
     /// <summary>
     /// Returns the on-disk directory that contains this goal's source
@@ -91,7 +91,7 @@ public sealed partial class @this
     /// Apps where Path was baked from a different root. Returns null when the
     /// goal wasn't loaded from a file (in-memory goals built by tests / fixtures).
     /// </summary>
-    public global::app.type.path.@this? GetRuntimeDirectory()
+    public global::app.type.item.path.@this? GetRuntimeDirectory()
     {
         var pr = LoadedFromPrPath;
         if (pr == null) return null;
@@ -104,7 +104,7 @@ public sealed partial class @this
     }
 
     [Store, Debug]
-    public global::app.type.path.@this? PrPath
+    public global::app.type.item.path.@this? PrPath
     {
         get
         {
@@ -164,7 +164,7 @@ public sealed partial class @this
     /// </summary>
     [JsonIgnore]
     [LlmIgnore]
-    public global::app.type.path.@this? FolderPath
+    public global::app.type.item.path.@this? FolderPath
     {
         get => Path?.Parent;
     }
@@ -351,7 +351,7 @@ public sealed partial class @this
     /// All goals share the same Path. First goal is Public, rest are Private.
     /// Inverse of ToText().
     /// </summary>
-    public static @this? Parse(string text, global::app.type.path.@this? path)
+    public static @this? Parse(string text, global::app.type.item.path.@this? path)
     {
         if (string.IsNullOrWhiteSpace(text))
             return null;

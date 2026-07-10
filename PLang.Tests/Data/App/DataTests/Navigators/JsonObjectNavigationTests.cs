@@ -26,7 +26,7 @@ public class JsonObjectNavigationTests : System.IAsyncDisposable
     public async Task SetValue_JsonObject_BecomesNativeDict_NotRaw()
     {
         var d = MakeData(new JsonObject { ["id"] = "abc123" });
-        await Assert.That(d.Peek()).IsTypeOf<global::app.type.dict.@this>();
+        await Assert.That(d.Peek()).IsTypeOf<global::app.type.item.dict.@this>();
     }
 
     [Test]

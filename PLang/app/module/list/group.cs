@@ -34,7 +34,7 @@ public partial class Group : IContext
         var result = new app.type.list.@this(Context);
         foreach (var k in order)
         {
-            var bucketDict = new app.type.dict.@this(Context);
+            var bucketDict = new app.type.item.dict.@this(Context);
             bucketDict.Set(new global::app.data.@this("key", k, context: Context));
             bucketDict.Set(new global::app.data.@this("items", buckets[k], context: Context));
             result.Add(new global::app.data.@this("", bucketDict, context: Context));

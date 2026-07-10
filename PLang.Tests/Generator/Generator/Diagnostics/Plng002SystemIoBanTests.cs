@@ -135,7 +135,7 @@ public class Plng002SystemIoBanTests
         // ONLY from PathHelper, not under path-types. The path-types carve-out
         // covers File/Directory/FileInfo/Stream, not name math.
         var source = """
-            namespace app.type.path.test {
+            namespace app.type.item.path.test {
                 public class Impl {
                     public string Join() => System.IO.Path.Combine("a", "b");
                 }
@@ -149,7 +149,7 @@ public class Plng002SystemIoBanTests
     {
         // File.* under path-types stays exempt — the verb surface owns IO.
         var source = """
-            namespace app.type.path.test {
+            namespace app.type.item.path.test {
                 public class FsImpl {
                     public string Read() => System.IO.File.ReadAllText("x.txt");
                 }
@@ -194,11 +194,11 @@ public class Plng002SystemIoBanTests
     {
         // Data<some-non-string> is the correct shape — must not trip PLNG002.
         var source = Stubs + """
-            namespace app.type.path { public class @this {} }
+            namespace app.type.item.path { public class @this {} }
             namespace app.module.foo {
                 [app.module.Action]
                 public partial class Handler {
-                    public partial app.data.@this<app.type.path.@this> Path { get; init; }
+                    public partial app.data.@this<app.type.item.path.@this> Path { get; init; }
                 }
             }
             """;

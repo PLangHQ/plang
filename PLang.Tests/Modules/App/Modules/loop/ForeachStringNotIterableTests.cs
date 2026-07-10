@@ -30,7 +30,7 @@ public class ForeachStringNotIterableTests
         context.Variable.Set("s", "hello");
 
         // Body goal runs once per iteration.
-        _app.Goal.Add(new Goal { Name = "DoNothing", Path = global::app.type.path.@this.Resolve("/DoNothing.goal", global::PLang.Tests.TestApp.SharedContext), Steps = new GoalSteps() });
+        _app.Goal.Add(new Goal { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", global::PLang.Tests.TestApp.SharedContext), Steps = new GoalSteps() });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("StringRunner",
             Make.Step("foreach %s%, call DoNothing",
@@ -54,7 +54,7 @@ public class ForeachStringNotIterableTests
         var context = _app.User.Context;
         context.Variable.Set("s", "hello");
 
-        _app.Goal.Add(new Goal { Name = "DoNothing", Path = global::app.type.path.@this.Resolve("/DoNothing.goal", global::PLang.Tests.TestApp.SharedContext), Steps = new GoalSteps() });
+        _app.Goal.Add(new Goal { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", global::PLang.Tests.TestApp.SharedContext), Steps = new GoalSteps() });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("WholeStringRunner",
             Make.Step("foreach %s%, call DoNothing",
@@ -76,7 +76,7 @@ public class ForeachStringNotIterableTests
         var context = _app.User.Context;
         context.Variable.Set("n", 42);
 
-        _app.Goal.Add(new Goal { Name = "DoNothing", Path = global::app.type.path.@this.Resolve("/DoNothing.goal", global::PLang.Tests.TestApp.SharedContext), Steps = new GoalSteps() });
+        _app.Goal.Add(new Goal { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", global::PLang.Tests.TestApp.SharedContext), Steps = new GoalSteps() });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("NumberRunner",
             Make.Step("foreach %n%, call DoNothing",

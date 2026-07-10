@@ -1,5 +1,5 @@
 using Microsoft.Data.Sqlite;
-using app.type.path;
+using app.type.item.path;
 using app.channel.serializer;
 using app.error;
 using app.variable;
@@ -47,10 +47,10 @@ public sealed class Sqlite : IStore
     /// Async all the way: no <c>GetAwaiter().GetResult()</c>, so parallel store
     /// construction never starves the threadpool.
     /// </summary>
-    public static async Task<Sqlite> CreateAsync(global::app.type.path.@this dbPath, actor.context.@this context)
+    public static async Task<Sqlite> CreateAsync(global::app.type.item.path.@this dbPath, actor.context.@this context)
     {
         // Take-over API: authorize before passing .Absolute.
-        var auth = await dbPath.Authorize(global::app.type.permission.Verb.Write);
+        var auth = await dbPath.Authorize(global::app.type.item.permission.Verb.Write);
         if (!auth.Success)
             throw new InvalidOperationException(
                 $"Sqlite path '{dbPath}' is not authorized for write: {auth.Error?.Message}");

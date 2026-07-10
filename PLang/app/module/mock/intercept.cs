@@ -12,7 +12,7 @@ public partial class intercept : IContext
     public partial data.@this<global::app.type.item.text.@this> Pattern { get; init; }
     public partial data.@this? Return { get; init; }
     public partial data.@this<GoalCall>? Call { get; init; }
-    public partial data.@this<global::app.type.dict.@this>? Parameters { get; init; }
+    public partial data.@this<global::app.type.item.dict.@this>? Parameters { get; init; }
 
     public async Task<data.@this<global::app.mock.@this>> Run()
     {

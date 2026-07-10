@@ -31,8 +31,8 @@ public class TemporalReaderTests
         var ctx = app.User.Context;
         var d = data.FromRaw("2026-01-01", type.Create("date", null, context: ctx), ctx, "d");
         var item = await d.Value();
-        await Assert.That(item).IsTypeOf<global::app.type.date.@this>();
-        await Assert.That(((global::app.type.date.@this)item!).Clr<System.DateOnly>())
+        await Assert.That(item).IsTypeOf<global::app.type.item.date.@this>();
+        await Assert.That(((global::app.type.item.date.@this)item!).Clr<System.DateOnly>())
             .IsEqualTo(new System.DateOnly(2026, 1, 1));
     }
 
@@ -42,8 +42,8 @@ public class TemporalReaderTests
         var ctx = app.User.Context;
         var d = data.FromRaw("2026-01-01T12:30:00+00:00", type.Create("datetime", null, context: ctx), ctx, "dt");
         var item = await d.Value();
-        await Assert.That(item).IsTypeOf<global::app.type.datetime.@this>();
-        await Assert.That(((global::app.type.datetime.@this)item!).Clr<System.DateTimeOffset>())
+        await Assert.That(item).IsTypeOf<global::app.type.item.datetime.@this>();
+        await Assert.That(((global::app.type.item.datetime.@this)item!).Clr<System.DateTimeOffset>())
             .IsEqualTo(System.DateTimeOffset.Parse("2026-01-01T12:30:00+00:00",
                 System.Globalization.CultureInfo.InvariantCulture));
     }
@@ -54,8 +54,8 @@ public class TemporalReaderTests
         var ctx = app.User.Context;
         var d = data.FromRaw("12:30:00", type.Create("time", null, context: ctx), ctx, "t");
         var item = await d.Value();
-        await Assert.That(item).IsTypeOf<global::app.type.time.@this>();
-        await Assert.That(((global::app.type.time.@this)item!).Clr<System.TimeOnly>())
+        await Assert.That(item).IsTypeOf<global::app.type.item.time.@this>();
+        await Assert.That(((global::app.type.item.time.@this)item!).Clr<System.TimeOnly>())
             .IsEqualTo(new System.TimeOnly(12, 30, 0));
     }
 

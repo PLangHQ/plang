@@ -99,7 +99,7 @@ public partial class @this
             // Inject context on IContext values during traversal. A reference
             // (file/url) injects via Peek — opening the door here would read its
             // content on a property-plane hop (`%x!file!path%` must stay read-free).
-            var injectTarget = child.Peek() is (global::app.type.file.@this or global::app.type.url.@this) and { } reference
+            var injectTarget = child.Peek() is (global::app.type.item.file.@this or global::app.type.item.url.@this) and { } reference
                 ? reference
                 : await child.Value();
             if (injectTarget is app.module.IContext contextual)

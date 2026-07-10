@@ -46,7 +46,7 @@ public class TestMetadataTests
         var goal = new Goal
         {
             Name = name,
-            Path = global::app.type.path.@this.Resolve($"/Tests/{name}.test.goal", global::PLang.Tests.TestApp.SharedContext),
+            Path = global::app.type.item.path.@this.Resolve($"/Tests/{name}.test.goal", global::PLang.Tests.TestApp.SharedContext),
             Hash = goalHash,
             BuilderVersion = builderVersion
         };

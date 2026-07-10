@@ -1,5 +1,5 @@
 using ListV = global::app.type.list.@this;
-using DictV = global::app.type.dict.@this;
+using DictV = global::app.type.item.dict.@this;
 
 namespace PLang.Tests.App.CollectionsAreData;
 

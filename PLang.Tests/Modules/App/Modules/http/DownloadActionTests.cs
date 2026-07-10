@@ -76,7 +76,7 @@ public class DownloadActionTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        var bytes = ((await result.Value()) as global::app.type.binary.@this)?.Value;
+        var bytes = ((await result.Value()) as global::app.type.item.binary.@this)?.Value;
         await Assert.That(bytes).IsNotNull();
         await Assert.That(Encoding.UTF8.GetString(bytes!)).IsEqualTo("downloaded data");
     }

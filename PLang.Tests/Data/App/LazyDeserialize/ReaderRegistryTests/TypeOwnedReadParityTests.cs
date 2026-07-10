@@ -24,8 +24,8 @@ public class TypeOwnedReadParityTests
 
         foreach (var raw in new[] { "/srv/app/r.json", "https://example.com/x" })
         {
-            var viaRead = r.Of("path", null)!(raw, null, rc) as global::app.type.path.@this;
-            var prior = global::app.type.path.@this.Resolve(raw, ctx);
+            var viaRead = r.Of("path", null)!(raw, null, rc) as global::app.type.item.path.@this;
+            var prior = global::app.type.item.path.@this.Resolve(raw, ctx);
             await Assert.That(viaRead).IsNotNull();
             await Assert.That(viaRead!.GetType()).IsEqualTo(prior.GetType());
             await Assert.That(viaRead.Relative).IsEqualTo(prior.Relative);

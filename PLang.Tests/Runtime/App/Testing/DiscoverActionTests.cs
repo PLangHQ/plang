@@ -119,8 +119,8 @@ public class DiscoverActionTests
 
     private async Task<List<global::app.test.@this>> Discover(string path = ".", bool recursive = true)
     {
-        var action = new global::app.module.test.discover(_app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(
-                global::app.type.path.@this.Resolve(path, _app.User.Context)),
+        var action = new global::app.module.test.discover(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
+                global::app.type.item.path.@this.Resolve(path, _app.User.Context)),
             Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<global::app.type.item.@bool.@this>("Recursive", recursive)
         };
@@ -224,7 +224,7 @@ public class DiscoverActionTests
         var helper = new Goal
         {
             Name = "Helper",
-            Path = global::app.type.path.@this.Resolve("/Helper.goal", global::PLang.Tests.TestApp.SharedContext),
+            Path = global::app.type.item.path.@this.Resolve("/Helper.goal", global::PLang.Tests.TestApp.SharedContext),
             Steps = new GoalSteps
             {
                 new Step

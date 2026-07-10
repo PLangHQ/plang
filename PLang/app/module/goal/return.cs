@@ -13,7 +13,7 @@ public partial class Return : IContext
 
     [Description("Number of goal levels to exit. 1 = current goal, 2 = current + caller.")]
     [Default(1)]
-    public partial data.@this<global::app.type.number.@this> Depth { get; init; }
+    public partial data.@this<global::app.type.item.number.@this> Depth { get; init; }
 
     public Task<data.@this> Run()
     {
@@ -21,7 +21,7 @@ public partial class Return : IContext
         result.Returned = true;
         // Sync seam — Peek (the .pr literal is in memory); the number lowers
         // itself at the engine's int return-depth slot.
-        int depth = (Depth.Peek() as global::app.type.number.@this)?.ToInt32() ?? 0;
+        int depth = (Depth.Peek() as global::app.type.item.number.@this)?.ToInt32() ?? 0;
         result.ReturnDepth = depth > 0 ? depth : 1;
         return Task.FromResult(result);
     }

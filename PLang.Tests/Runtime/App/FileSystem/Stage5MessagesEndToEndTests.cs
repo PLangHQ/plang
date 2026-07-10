@@ -1,10 +1,10 @@
-using Path = global::app.type.path.file.@this;
+using Path = global::app.type.item.path.file.@this;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using PermissionRecord = global::app.type.permission.@this;
-using Verb = global::app.type.permission.Verb;
-using MatchMode = global::app.type.permission.Match;
+using PermissionRecord = global::app.type.item.permission.@this;
+using Verb = global::app.type.item.permission.Verb;
+using MatchMode = global::app.type.item.permission.Match;
 
 namespace PLang.Tests.App.FileSystem;
 
@@ -77,7 +77,7 @@ public class Stage5MessagesEndToEndTests
         var result = await path.ReadText();
         await result.IsSuccess();
         // Grant landed and is signed (persisted).
-        var found = await app.User.Permission.Find(path, global::app.type.permission.Verb.Read);
+        var found = await app.User.Permission.Find(path, global::app.type.item.permission.Verb.Read);
         await Assert.That(found).IsNotNull();
     }
 
@@ -186,7 +186,7 @@ public class Stage5MessagesEndToEndTests
         var asksBeforeRevoke = ch.AskCount;
 
         // Revoke the persisted grant.
-        var permission = new PermissionRecord(app.User.Name, path.Absolute, global::app.type.permission.@this.AllVerbs, MatchMode.Exact);
+        var permission = new PermissionRecord(app.User.Name, path.Absolute, global::app.type.item.permission.@this.AllVerbs, MatchMode.Exact);
         await app.User.Permission.Revoke(permission);
 
         await path.ReadText();              // fresh prompt fires
@@ -198,7 +198,7 @@ public class Stage5MessagesEndToEndTests
         var (app, foreignFile) = Setup("a");
         // Pre-seed a narrowed grant — Read only. It does NOT cover a Write
         // request (verb-set containment: {Write} is not a subset of {Read}).
-        var narrowedVerbs = new System.Collections.Generic.HashSet<global::app.type.permission.Verb> { global::app.type.permission.Verb.Read };
+        var narrowedVerbs = new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.Read };
         var narrowGrant = new global::app.data.@this<PermissionRecord>("",
             new PermissionRecord(app.User.Name, foreignFile, narrowedVerbs, MatchMode.Exact))
         { Context = app.User.Context };

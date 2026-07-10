@@ -42,7 +42,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     public async Task GoalGetTypes_Run_ReturnsTaskDataOfStronglyTypedRecord()
     {
         var ret = RunReturnType<global::app.module.goal.getTypes>();
-        var expected = typeof(Task<global::app.data.@this<global::app.type.list.@this<global::app.type.dict.@this>>>);
+        var expected = typeof(Task<global::app.data.@this<global::app.type.list.@this<global::app.type.item.dict.@this>>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
 

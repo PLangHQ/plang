@@ -129,7 +129,7 @@ public class QueryCallbackTests
     public async Task Query_OnValidateResponse_Passes_ReturnsNormally()
     {
         // When OnValidateResponse goal doesn't exist, RunGoalAsync returns error
-        // which triggers retry. With MaxValidationRetries = (global::app.type.number.@this)0, it returns error immediately.
+        // which triggers retry. With MaxValidationRetries = (global::app.type.item.number.@this)0, it returns error immediately.
         // To test "passes" scenario, we need the validation goal to actually exist.
         // For unit test: no OnValidateResponse set → result returns normally
         _handler.Handler = _ => Task.FromResult(
@@ -161,7 +161,7 @@ public class QueryCallbackTests
                 new LlmMessage { Role = "user", Content = "validate me" }
             }.ToListData<LlmMessage>(),
             OnValidateResponse = new GoalCall { Name = "NonExistentValidator" },
-            MaxValidationRetries = (global::app.type.number.@this)2
+            MaxValidationRetries = (global::app.type.item.number.@this)2
         };
 
         await action.Attach(null, Ctx);
@@ -187,7 +187,7 @@ public class QueryCallbackTests
                 new LlmMessage { Role = "user", Content = "validate" }
             }.ToListData<LlmMessage>(),
             OnValidateResponse = new GoalCall { Name = "AlwaysFails" },
-            MaxValidationRetries = (global::app.type.number.@this)3
+            MaxValidationRetries = (global::app.type.item.number.@this)3
         };
 
         await action.Attach(null, Ctx);
@@ -222,12 +222,12 @@ public class QueryCallbackTests
                 new GoalCall { Name = "TestTool" }
             }.ToListData<GoalCall>(),
             OnValidateResponse = new GoalCall { Name = "Validator" },
-            MaxValidationRetries = (global::app.type.number.@this)1
+            MaxValidationRetries = (global::app.type.item.number.@this)1
         };
 
         // Tool round should not trigger validation
         // Final content round will trigger validation (which fails since goal doesn't exist)
-        // But with MaxValidationRetries = (global::app.type.number.@this)1, we get one retry then error
+        // But with MaxValidationRetries = (global::app.type.item.number.@this)1, we get one retry then error
         await action.Attach(null, Ctx);
         var result = await action.Run();
         // The key thing: it should have made it past the tool round to the validation phase

@@ -76,7 +76,7 @@ public interface ICreate<TSelf> where TSelf : @this, ICreate<TSelf>
 
         // A dict/list deserializes ITSELF to a record / domain item (step, …). Only a
         // container reaches this — a genuine deserialize failure surfaces (it throws).
-        if (raw is global::app.type.dict.@this or global::app.type.list.@this
+        if (raw is global::app.type.item.dict.@this or global::app.type.list.@this
             && ((@this)raw).Clr(typeof(TSelf)) is TSelf rec) return rec;
 
         data.Fail(new global::app.error.Error(

@@ -2,7 +2,7 @@ using app.module.code;
 
 namespace app.module.math.code;
 
-using number = global::app.type.number.@this;
+using number = global::app.type.item.number.@this;
 
 /// <summary>
 /// Provider that owns the math operations. Default: <see cref="Default"/> (policy-aware

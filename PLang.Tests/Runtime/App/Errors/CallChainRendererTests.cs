@@ -7,7 +7,7 @@ public class CallChainRendererTests
 {
     private static ActionEntity Make(string goalName, string module = "test", int stepIndex = 0, int line = 1)
     {
-        var goal = new Goal { Name = goalName, Path = global::app.type.path.@this.Resolve($"/{goalName}.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = goalName, Path = global::app.type.item.path.@this.Resolve($"/{goalName}.goal", global::PLang.Tests.TestApp.SharedContext) };
         var step = new Step { Index = stepIndex, LineNumber = line, Text = "step", Goal = goal };
         var action = new ActionEntity { Module = module, ActionName = "act" };
         action.Step = step;

@@ -1,4 +1,4 @@
-using Number = global::app.type.number.@this;
+using Number = global::app.type.item.number.@this;
 
 using PLang.Tests.App.Fixtures;
 

@@ -82,12 +82,12 @@ public class QueryEdgeCaseTests
                 new GoalCall { Name = "ToolB" },
                 new GoalCall { Name = "ToolC" }
             }.ToListData<GoalCall>(),
-            MaxToolCalls = (global::app.type.number.@this)5
+            MaxToolCalls = (global::app.type.item.number.@this)5
         };
         await action.Attach(null, Ctx);
         var result = await action.Run();
 
-        // MaxToolCalls = (global::app.type.number.@this)5, 3 tools/round (with batch-slice fix):
+        // MaxToolCalls = (global::app.type.item.number.@this)5, 3 tools/round (with batch-slice fix):
         // Round 1 (HTTP #1): remaining=5, all 3 tools execute, toolCallCount=3, continue
         // Round 2 (HTTP #2): remaining=2, sliced to 2 tools, toolCallCount=5, continue
         // Round 3 (HTTP #3): toolCallCount >= MaxToolCalls → break

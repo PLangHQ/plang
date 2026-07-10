@@ -155,7 +155,7 @@ public class Default : IBuilder
         else
             // Lift to path verbs — Resolve handles normalization, no
             // System.IO.Path arithmetic needed.
-            rootRelative = global::app.type.path.@this.Resolve(searchPath, context).Absolute;
+            rootRelative = global::app.type.item.path.@this.Resolve(searchPath, context).Absolute;
 
         var listAction = new file.List(context)
         {

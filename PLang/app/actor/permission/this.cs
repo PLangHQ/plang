@@ -1,6 +1,6 @@
-using Grant = global::app.type.permission.@this;
-using Verb = global::app.type.permission.Verb;
-using MatchMode = global::app.type.permission.Match;
+using Grant = global::app.type.item.permission.@this;
+using Verb = global::app.type.item.permission.Verb;
+using MatchMode = global::app.type.item.permission.Match;
 
 namespace app.actor.permission;
 

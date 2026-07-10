@@ -1,8 +1,8 @@
-using Path = global::app.type.path.file.@this;
+using Path = global::app.type.item.path.file.@this;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using Verb = global::app.type.permission.Verb;
+using Verb = global::app.type.item.permission.Verb;
 
 namespace PLang.Tests.App.FileSystem.SurfaceTests;
 
@@ -45,7 +45,7 @@ public class FileSystemPermissionFlowTests
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
     }
 
-    // Typed verbs (Data<global::app.type.item.@bool.@this>, Data<global::app.type.binary.@this>, Data<path>, …) widen to base Data
+    // Typed verbs (Data<global::app.type.item.@bool.@this>, Data<global::app.type.item.binary.@this>, Data<path>, …) widen to base Data
     // through an explicit await/cast so the test can stay shape-agnostic.
     private static async Task<global::app.data.@this> Dispatch(string method, Path path) => method switch
     {
@@ -127,9 +127,9 @@ public class FileSystemPermissionFlowTests
 
         var verb = method switch
         {
-            "WriteText" or "WriteBytes" or "Append" or "Mkdir" => global::app.type.permission.Verb.Write,
-            "Delete" => global::app.type.permission.Verb.Delete,
-            _ => global::app.type.permission.Verb.Read,
+            "WriteText" or "WriteBytes" or "Append" or "Mkdir" => global::app.type.item.permission.Verb.Write,
+            "Delete" => global::app.type.item.permission.Verb.Delete,
+            _ => global::app.type.item.permission.Verb.Read,
         };
         await Assert.That(await app.User.Permission.Find(path, verb)).IsNotNull();
     }

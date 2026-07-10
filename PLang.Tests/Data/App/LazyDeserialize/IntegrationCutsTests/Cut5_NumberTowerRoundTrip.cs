@@ -2,8 +2,8 @@ using System.Numerics;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using number = global::app.type.number.@this;
-using PKind = global::app.type.number.NumberKind;
+using number = global::app.type.item.number.@this;
+using PKind = global::app.type.item.number.NumberKind;
 
 namespace PLang.Tests.App.LazyDeserialize.IntegrationCutsTests;
 
@@ -19,7 +19,7 @@ public class Cut5_NumberTowerRoundTrip
     private static async Task RoundTrips(number n, System.Type expectedClr)
     {
         var r = number.Convert(n.ToString(), n.KindLabel, null!);
-        await Assert.That(((global::app.type.number.@this)(await r.Value())!).BoxedValue.GetType()).IsEqualTo(expectedClr);
+        await Assert.That(((global::app.type.item.number.@this)(await r.Value())!).BoxedValue.GetType()).IsEqualTo(expectedClr);
     }
 
     [Test] public async Task Cut5_RoundTrip_PreservesExactKind_AcrossTower()

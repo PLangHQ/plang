@@ -10,7 +10,7 @@ namespace app.channel.serializer.json;
 /// records with plang types wired. ONE factory so the file read and a dict's own
 /// record reconstruction (<c>dict.Clr</c>) share the exact same converter set —
 /// not two copies that can drift. Context-less yields stub Paths; with a Context
-/// every <see cref="global::app.type.path.@this"/> field lands scheme-correct.
+/// every <see cref="global::app.type.item.path.@this"/> field lands scheme-correct.
 /// </summary>
 public static class Options
 {

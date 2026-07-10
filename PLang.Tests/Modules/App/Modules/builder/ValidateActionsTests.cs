@@ -75,7 +75,7 @@ public class ValidateActionsTests
         System.IO.Directory.CreateDirectory(buildDir);
         var prJson = System.Text.Json.JsonSerializer.Serialize(new List<Goal>
         {
-            new Goal { Name = "DoSomething", Path = global::app.type.path.@this.Resolve("/DoSomething.goal", _app.User.Context) }
+            new Goal { Name = "DoSomething", Path = global::app.type.item.path.@this.Resolve("/DoSomething.goal", _app.User.Context) }
         }, new System.Text.Json.JsonSerializerOptions
         {
             PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
@@ -214,7 +214,7 @@ public class ValidateActionsTests
         // The kind="int" carries the precision intent; the value either gets
         // coerced to a number primitive at validate-time OR stays as a string
         // for the runtime to coerce. Either is acceptable post-Stage-2.
-        await Assert.That((await rightParam.Value()) is global::app.type.number.@this or global::app.type.item.text.@this).IsTrue();
+        await Assert.That((await rightParam.Value()) is global::app.type.item.number.@this or global::app.type.item.text.@this).IsTrue();
     }
 
     [Test]

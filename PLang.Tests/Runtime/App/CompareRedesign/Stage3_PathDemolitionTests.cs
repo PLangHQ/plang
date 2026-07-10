@@ -2,8 +2,8 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using PLang.Tests.App.Types.PathTests.Http;
-using HttpPath = global::app.type.path.http.@this;
-using PLangFilePath = global::app.type.path.file.@this;
+using HttpPath = global::app.type.item.path.http.@this;
+using PLangFilePath = global::app.type.item.path.file.@this;
 
 namespace PLang.Tests.App.CompareRedesign;
 
@@ -24,16 +24,16 @@ public class Stage3_PathDemolitionTests
 
     private static async Task Grant(global::app.actor.context.@this context, string url)
     {
-        var perm = new global::app.type.permission.@this(
+        var perm = new global::app.type.item.permission.@this(
             "User", new HttpPath(url, context).Absolute,
-            global::app.type.permission.@this.AllVerbs,
-            global::app.type.permission.Match.Exact);
-        await context.Actor!.Permission.Add(new global::app.data.@this<global::app.type.permission.@this>("", perm, context: context), persist: true);
+            global::app.type.item.permission.@this.AllVerbs,
+            global::app.type.item.permission.Match.Exact);
+        await context.Actor!.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", perm, context: context), persist: true);
     }
 
-    private static async Task<Data> Read(global::app.actor.context.@this context, global::app.type.path.@this p)
+    private static async Task<Data> Read(global::app.actor.context.@this context, global::app.type.item.path.@this p)
     {
-        var action = new global::app.module.file.Read(context) { Path = new global::app.data.@this<global::app.type.path.@this>("", p),
+        var action = new global::app.module.file.Read(context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", p),
         };
         var result = await action.Run();
         await result.IsSuccess();
@@ -55,7 +55,7 @@ public class Stage3_PathDemolitionTests
     public async Task Path_NoLongerCarriesContent_NoSourceField()
     {
         // path.@this has no Content, no Source — content moved to file
-        var t = typeof(global::app.type.path.@this);
+        var t = typeof(global::app.type.item.path.@this);
         await Assert.That(t.GetProperty("Content")).IsNull();
         await Assert.That(t.GetProperty("Source")).IsNull();
     }
@@ -66,7 +66,7 @@ public class Stage3_PathDemolitionTests
         // path.Write(IWriter) emits the as-typed location string verbatim
         foreach (var loc in new[] { "//file.txt", "/file.txt", "test/try.txt", "c:/my/path.txt" })
         {
-            var p = new global::app.type.path.file.@this(loc, global::PLang.Tests.TestApp.SharedContext) { Raw = loc };
+            var p = new global::app.type.item.path.file.@this(loc, global::PLang.Tests.TestApp.SharedContext) { Raw = loc };
             using var ms = new MemoryStream();
             using var jw = new Utf8JsonWriter(ms);
             p.Write(new global::app.channel.serializer.json.Writer(jw));
@@ -79,7 +79,7 @@ public class Stage3_PathDemolitionTests
     public async Task PathToString_LocationOnly_NeverContentFirst()
     {
         // ToString returns the location string only; Content is gone entirely
-        var p = new global::app.type.path.file.@this("/some/file.json", global::PLang.Tests.TestApp.SharedContext) { Raw = "/some/file.json" };
+        var p = new global::app.type.item.path.file.@this("/some/file.json", global::PLang.Tests.TestApp.SharedContext) { Raw = "/some/file.json" };
         await Assert.That(p.ToString()).IsEqualTo("/some/file.json");
     }
 
@@ -87,7 +87,7 @@ public class Stage3_PathDemolitionTests
     public async Task PathBacking_RenamedToLocation_Private()
     {
         // `_absolutePath` no longer exists on path.@this; `_location` is private
-        var t = typeof(global::app.type.path.@this);
+        var t = typeof(global::app.type.item.path.@this);
         var all = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
         await Assert.That(t.GetField("_absolutePath", all)).IsNull();
         var loc = t.GetField("_location", all);
@@ -101,7 +101,7 @@ public class Stage3_PathDemolitionTests
         // the resolved absolute stays OFF the wire — it leaks the install root
         var (app, context, dir) = MakeApp();
         await using var _ = app;
-        var p = global::app.type.path.@this.Resolve("note.txt", context);
+        var p = global::app.type.item.path.@this.Resolve("note.txt", context);
         var data = new Data("p", p, context: context);
         var json = await SerializePlang(app, data);
         await Assert.That(json).DoesNotContain(dir);
@@ -117,7 +117,7 @@ public class Stage3_PathDemolitionTests
         // location string) carries it
         var (app, context, _) = MakeApp();
         await using var __ = app;
-        var p = global::app.type.path.@this.Resolve("docs/readme.md", context);
+        var p = global::app.type.item.path.@this.Resolve("docs/readme.md", context);
         var data = new Data("p", p, context: context);
         var ext = await data.Get("!extension");
         await Assert.That(ext.Peek()?.ToString()).IsEqualTo("md");
@@ -145,12 +145,12 @@ public class Stage3_PathDemolitionTests
         File.WriteAllText(Path.Combine(dir, "docs", "b.txt"), "beta");
 
         var result = await Read(context, new PLangFilePath(Path.Combine(dir, "docs"), context) {});
-        var directory = (global::app.type.directory.@this)result.Peek()!;
+        var directory = (global::app.type.item.directory.@this)result.Peek()!;
         var listing = await directory.List();
-        await Assert.That(listing).IsTypeOf<global::app.type.list.@this<global::app.type.path.@this>>();
+        await Assert.That(listing).IsTypeOf<global::app.type.list.@this<global::app.type.item.path.@this>>();
         await Assert.That(listing.Count).IsEqualTo(2);
         foreach (var entry in listing.Items)
-            await Assert.That(entry.Peek()).IsAssignableTo<global::app.type.path.@this>();
+            await Assert.That(entry.Peek()).IsAssignableTo<global::app.type.item.path.@this>();
     }
 
     [Test]
@@ -182,7 +182,7 @@ public class Stage3_PathDemolitionTests
         // scalar use fetches through the HttpPath (the scheme owns the I/O);
         // no extension on the resource → raw bytes
         var content = await result.Value();
-        var text = content is global::app.type.binary.@this b ? Encoding.UTF8.GetString(b.Value) : content?.ToString();
+        var text = content is global::app.type.item.binary.@this b ? Encoding.UTF8.GetString(b.Value) : content?.ToString();
         await Assert.That(text).Contains("remote body");
     }
 
@@ -192,7 +192,7 @@ public class Stage3_PathDemolitionTests
         var (app, context, _) = MakeApp();
         await using var __ = app;
         var result = await Read(context, new HttpPath("http://example.com/data.json", context));
-        var reference = (global::app.type.url.@this)result.Peek()!;
+        var reference = (global::app.type.item.url.@this)result.Peek()!;
 
         var host = await result.Get("!host");
         await Assert.That(host.Peek()?.ToString()).IsEqualTo("example.com");
@@ -235,10 +235,10 @@ public class Stage3_PathDemolitionTests
     public async Task PathWriteOut_LocationOnly_NotContent()
     {
         // a `path` value has one face — the renderer entry emits the location string
-        var p = new global::app.type.path.file.@this("docs/readme.md", global::PLang.Tests.TestApp.SharedContext) { Raw = "docs/readme.md" };
+        var p = new global::app.type.item.path.file.@this("docs/readme.md", global::PLang.Tests.TestApp.SharedContext) { Raw = "docs/readme.md" };
         using var ms = new MemoryStream();
         using var jw = new Utf8JsonWriter(ms);
-        global::app.type.path.serializer.Default.Write(p, new global::app.channel.serializer.json.Writer(jw));
+        global::app.type.item.path.serializer.Default.Write(p, new global::app.channel.serializer.json.Writer(jw));
         jw.Flush();
         await Assert.That(Encoding.UTF8.GetString(ms.ToArray())).IsEqualTo("\"docs/readme.md\"");
     }

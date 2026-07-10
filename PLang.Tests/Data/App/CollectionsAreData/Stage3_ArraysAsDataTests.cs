@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Text.Json;
 using ListV = global::app.type.list.@this;
-using DictV = global::app.type.dict.@this;
+using DictV = global::app.type.item.dict.@this;
 using type = global::app.type.@this;
 
 namespace PLang.Tests.App.CollectionsAreData;
@@ -83,7 +83,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
         await Assert.That(ReferenceEquals(await data.Get("0"), element)).IsTrue();
         await Assert.That((await (await data.Get("last")).Value())?.ToString()).IsEqualTo("second");
         // the count intrinsic answers in the PLang `number`
-        await Assert.That(((global::app.type.number.@this)(await (await data.Get("count")).Value())!).ToInt32()).IsEqualTo(2);
+        await Assert.That(((global::app.type.item.number.@this)(await (await data.Get("count")).Value())!).ToInt32()).IsEqualTo(2);
 
         // Implicit-first through a list of dicts.
         var people = new ListV(app.User.Context);
@@ -114,7 +114,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
         list.Add(app.Data("", 2L));
         list.Add(app.Data("", 3L));
         var d = app.Data("nums", list);
-        var res = d.ShallowClone<global::app.type.list.@this<global::app.type.number.@this>>(await d.Value<global::app.type.list.@this<global::app.type.number.@this>>());
+        var res = d.ShallowClone<global::app.type.list.@this<global::app.type.item.number.@this>>(await d.Value<global::app.type.list.@this<global::app.type.item.number.@this>>());
         await res.IsSuccess();
         await Assert.That(res.GetValue<List<long>>()!).IsEquivalentTo(new List<long> { 1, 2, 3 });
     }

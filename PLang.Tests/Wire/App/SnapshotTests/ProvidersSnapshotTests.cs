@@ -58,17 +58,17 @@ public class ProvidersSnapshotTests
         // snapshot doesn't (yet) carry actor permissions, so replay it here.
         var dllSrc = typeof(CustomGrep).Assembly.Location;
         var grantPath = dllSrc.StartsWith("/") ? "/" + dllSrc : dllSrc;
-        var resolved = global::app.type.path.@this.Resolve(grantPath, dst.User.Context!);
-        var verbs = new HashSet<global::app.type.permission.Verb>
+        var resolved = global::app.type.item.path.@this.Resolve(grantPath, dst.User.Context!);
+        var verbs = new HashSet<global::app.type.item.permission.Verb>
         {
-            global::app.type.permission.Verb.Read,
-            global::app.type.permission.Verb.Execute,
+            global::app.type.item.permission.Verb.Read,
+            global::app.type.item.permission.Verb.Execute,
         };
-        var permission = new global::app.type.permission.@this(
+        var permission = new global::app.type.item.permission.@this(
             Actor: dst.User.Name, Path: resolved.Absolute, Verbs: verbs,
-            Match: global::app.type.permission.Match.Exact);
+            Match: global::app.type.item.permission.Match.Exact);
         await dst.User.Permission.Add(
-            new global::app.data.@this<global::app.type.permission.@this>("", permission, context: dst.User.Context), persist: false);
+            new global::app.data.@this<global::app.type.item.permission.@this>("", permission, context: dst.User.Context), persist: false);
         dst.Restore(snap, dst.User.Context);
 
         var defaultGrep = dst.Code.Get<global::app.data.code.IGrep>();

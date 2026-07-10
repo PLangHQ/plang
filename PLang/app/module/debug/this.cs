@@ -72,7 +72,7 @@ public sealed class @this
     /// LLM calls are sync so a single field suffices — no queue needed.
     /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
-    internal global::app.type.path.@this? _currentLlmFilePath;
+    internal global::app.type.item.path.@this? _currentLlmFilePath;
 
     /// <summary>
     /// Per-process counter for disambiguating LLM call retries. Increments on every
@@ -397,7 +397,7 @@ public sealed class @this
     /// - <c>_llmCallCounter</c> appended when the same (goal, step) fires more than once
     ///   in this process (LlmFixer retries reuse the same key).
     /// </summary>
-    internal global::app.type.path.@this ResolveLlmFilePath(actor.context.@this context)
+    internal global::app.type.item.path.@this ResolveLlmFilePath(actor.context.@this context)
     {
         _llmCallCounter++;
 
@@ -427,7 +427,7 @@ public sealed class @this
         var safeGoal = SanitizeFilenamePart(goalName);
         // Derive directory via path verbs. Mkdir routes through AuthGate(Write);
         // .build/ is in-root so it fast-passes.
-        var traceDir = global::app.type.path.@this.Resolve("/.build/traces", context)
+        var traceDir = global::app.type.item.path.@this.Resolve("/.build/traces", context)
             .Combine(traceId).Combine("llm");
         traceDir.Mkdir().GetAwaiter().GetResult();
 

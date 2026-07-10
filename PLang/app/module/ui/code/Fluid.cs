@@ -4,9 +4,9 @@ using Fluid.Ast;
 using Fluid.Values;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Primitives;
-using app.type.path;
+using app.type.item.path;
 using app.error;
-using app.type.path;
+using app.type.item.path;
 using app.goal;
 using app.variable;
 
@@ -180,13 +180,13 @@ public class Fluid : ITemplate
     /// </summary>
     private static object? NativeCollectionConverter(object value, global::app.actor.context.@this context) => value switch
     {
-        app.type.dict.@this d => new NativeDictView(d),
+        app.type.item.dict.@this d => new NativeDictView(d),
         app.type.list.@this l => new NativeListView(l),
         // JsonNode isn't Fluid-readable either; parse it to natives (the parse is
         // structural, JSON-DOM sized) and the natives then ride the views above.
         System.Text.Json.Nodes.JsonNode jn => new app.type.item.serializer.json(context).Parse(jn) switch
         {
-            app.type.dict.@this d => new NativeDictView(d),
+            app.type.item.dict.@this d => new NativeDictView(d),
             app.type.list.@this l => new NativeListView(l),
             var scalar => scalar, // a bare JSON scalar — Fluid maps it directly
         },
@@ -200,7 +200,7 @@ public class Fluid : ITemplate
     /// (never copies the dict). Read-only: writes throw. Entry values stay raw so
     /// nested natives re-convert lazily on access.
     /// </summary>
-    private sealed class NativeDictView(app.type.dict.@this d) : IDictionary<string, object?>
+    private sealed class NativeDictView(app.type.item.dict.@this d) : IDictionary<string, object?>
     {
         public object? this[string key]
         {
@@ -316,7 +316,7 @@ public class Fluid : ITemplate
     /// Gets the base directory for template file resolution (includes).
     /// Resolves from the calling goal's directory, or app root as fallback.
     /// </summary>
-    private static global::app.type.path.@this GetTemplateBaseDir(Render action)
+    private static global::app.type.item.path.@this GetTemplateBaseDir(Render action)
     {
         var context = action.Context;
         var goalPath = context.Goal?.Path;
@@ -325,7 +325,7 @@ public class Fluid : ITemplate
             var goalDir = goalPath.Parent;
             if (goalDir != null) return goalDir;
         }
-        return global::app.type.path.@this.Resolve("/", context);
+        return global::app.type.item.path.@this.Resolve("/", context);
     }
 
     /// <summary>
@@ -377,10 +377,10 @@ public class Fluid : ITemplate
     private sealed class PlangFileProvider : IFileProvider
     {
         private readonly global::app.@this _app;
-        private readonly global::app.type.path.@this _basePath;
+        private readonly global::app.type.item.path.@this _basePath;
         private readonly global::app.actor.context.@this _context;
 
-        public PlangFileProvider(global::app.@this app, global::app.type.path.@this basePath, global::app.actor.context.@this context)
+        public PlangFileProvider(global::app.@this app, global::app.type.item.path.@this basePath, global::app.actor.context.@this context)
         {
             _app = app;
             _basePath = basePath;
@@ -406,7 +406,7 @@ public class Fluid : ITemplate
             return new NotFoundFileInfo(subpath);
         }
 
-        private global::app.type.path.@this? TryResolvePath(string candidate)
+        private global::app.type.item.path.@this? TryResolvePath(string candidate)
         {
             try
             {
@@ -435,9 +435,9 @@ public class Fluid : ITemplate
 
     private sealed class PlangFileInfo : IFileInfo
     {
-        private readonly global::app.type.path.@this _path;
+        private readonly global::app.type.item.path.@this _path;
 
-        public PlangFileInfo(global::app.type.path.@this path, string name)
+        public PlangFileInfo(global::app.type.item.path.@this path, string name)
         {
             _path = path;
             Name = name;
@@ -449,7 +449,7 @@ public class Fluid : ITemplate
             get
             {
                 var stat = _path.Stat().GetAwaiter().GetResult();
-                return stat.Success && (stat.Peek() as global::app.type.path.@this.StatInfo)?.Length is long n ? n : 0;
+                return stat.Success && (stat.Peek() as global::app.type.item.path.@this.StatInfo)?.Length is long n ? n : 0;
             }
         }
         public string? PhysicalPath => _path.Absolute;
@@ -465,7 +465,7 @@ public class Fluid : ITemplate
             // raw bytes; UTF-8 decode them. String-valued reads pass through.
             var read = _path.ReadText().GetAwaiter().GetResult();
             string content;
-            if (read.Peek() is global::app.type.binary.@this bin)
+            if (read.Peek() is global::app.type.item.binary.@this bin)
                 content = System.Text.Encoding.UTF8.GetString(bin.Value);
             else
                 content = read.Peek()?.ToString() ?? "";

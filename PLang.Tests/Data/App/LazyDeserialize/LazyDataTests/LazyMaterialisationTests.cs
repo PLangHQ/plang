@@ -52,7 +52,7 @@ public class LazyMaterialisationTests
         var d = data.FromRaw("5", type.Create("number", "int", context: ctx), ctx, "n");
         await Assert.That(d.HasRaw).IsTrue();   // untouched — source-backed
         var v = await d.Value();                // parse rebinds
-        await Assert.That(v is global::app.type.number.@this).IsTrue();
+        await Assert.That(v is global::app.type.item.number.@this).IsTrue();
         await Assert.That(d.HasRaw).IsFalse();  // single storage — raw moved
     }
 
@@ -66,8 +66,8 @@ public class LazyMaterialisationTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         var d = data.FromRaw("{\"port\":8080}", type.Create("object", "json", context: ctx), ctx, "cfg");
-        await Assert.That((await d.Value())).IsTypeOf<app.type.dict.@this>();
-        var dict = (app.type.dict.@this)(await d.Value())!;
+        await Assert.That((await d.Value())).IsTypeOf<app.type.item.dict.@this>();
+        var dict = (app.type.item.dict.@this)(await d.Value())!;
         await Assert.That(dict.Has("port")).IsTrue();
     }
 

@@ -15,7 +15,7 @@ public partial class Last : IContext
         // The typed surface answers in a `number`; raw int covers IList infra.
         int count = (countData.IsInitialized ? await countData.Value() : null) switch
         {
-            global::app.type.number.@this n => n.ToInt32(),
+            global::app.type.item.number.@this n => n.ToInt32(),
             _ => 0,
         };
         if (count > 0)

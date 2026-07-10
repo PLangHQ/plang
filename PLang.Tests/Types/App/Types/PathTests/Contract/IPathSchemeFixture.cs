@@ -1,8 +1,8 @@
-using Path = global::app.type.path.@this;
+using Path = global::app.type.item.path.@this;
 using System.Threading.Tasks;
 // Path alias points at the CURRENT type so this file compiles before stage 1.
-// Stage 1's `app.filesystem` → `app.type.path` rename sweep repoints it to
-// `app.type.path.@this` (the abstract base) — same treatment as the existing
+// Stage 1's `app.filesystem` → `app.type.item.path` rename sweep repoints it to
+// `app.type.item.path.@this` (the abstract base) — same treatment as the existing
 // PathAuthorizeTests / FileHandlerTests aliases.
 
 namespace PLang.Tests.App.Types.PathTests.Contract;

@@ -1,6 +1,6 @@
 using app;
 using app.goal;
-using app.type.path;
+using app.type.item.path;
 
 namespace PLang.Tests.App.Core;
 
@@ -18,7 +18,7 @@ public class GoalsTests
     public async Task Add_AddsGoal()
     {
         var goals = new global::app.goal.list.@this();
-        var goal = new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
 
         goals.Add(goal);
 
@@ -29,7 +29,7 @@ public class GoalsTests
     public async Task Add_RegistersByName()
     {
         var goals = new global::app.goal.list.@this();
-        var goal = new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
 
         goals.Add(goal);
 
@@ -40,7 +40,7 @@ public class GoalsTests
     public async Task Add_RegistersByPath()
     {
         var goals = new global::app.goal.list.@this();
-        var goal = new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("/goals/test.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/goals/test.goal", global::PLang.Tests.TestApp.SharedContext) };
 
         goals.Add(goal);
 
@@ -51,7 +51,7 @@ public class GoalsTests
     public async Task Get_ByName_ReturnsGoal()
     {
         var goals = new global::app.goal.list.@this();
-        var goal = new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
         goals.Add(goal);
 
         var result = goals.Get("TestGoal");
@@ -63,7 +63,7 @@ public class GoalsTests
     public async Task Get_CaseInsensitive()
     {
         var goals = new global::app.goal.list.@this();
-        var goal = new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
         goals.Add(goal);
 
         await Assert.That(goals.Get("testgoal")).IsEqualTo(goal);
@@ -93,7 +93,7 @@ public class GoalsTests
     public async Task Get_TriesVariations_WithGoalExtension()
     {
         var goals = new global::app.goal.list.@this();
-        var goal = new Goal { Name = "TestGoal.goal", Path = global::app.type.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = "TestGoal.goal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
         goals.Add(goal);
 
         var result = goals.Get("TestGoal");
@@ -105,7 +105,7 @@ public class GoalsTests
     public async Task Get_TriesVariations_WithLeadingSlash()
     {
         var goals = new global::app.goal.list.@this();
-        var goal = new Goal { Name = "/goals/test", Path = global::app.type.path.@this.Resolve("/goals/test", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = "/goals/test", Path = global::app.type.item.path.@this.Resolve("/goals/test", global::PLang.Tests.TestApp.SharedContext) };
         goals.Add(goal);
 
         var result = goals.Get("/goals/test");
@@ -117,7 +117,7 @@ public class GoalsTests
     public async Task Get_TriesVariations_SlashConversion()
     {
         var goals = new global::app.goal.list.@this();
-        var goal = new Goal { Name = "goals/test", Path = global::app.type.path.@this.Resolve("/goals/test.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = "goals/test", Path = global::app.type.item.path.@this.Resolve("/goals/test.goal", global::PLang.Tests.TestApp.SharedContext) };
         goals.Add(goal);
 
         var result = goals.Get("goals\\test");
@@ -129,7 +129,7 @@ public class GoalsTests
     public async Task Indexer_ReturnsGoal()
     {
         var goals = new global::app.goal.list.@this();
-        var goal = new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
         goals.Add(goal);
 
         var result = goals["TestGoal"];
@@ -150,7 +150,7 @@ public class GoalsTests
     public async Task Contains_ExistingGoal_ReturnsTrue()
     {
         var goals = new global::app.goal.list.@this();
-        goals.Add(new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
+        goals.Add(new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
 
         await Assert.That(goals.Contains("TestGoal")).IsTrue();
     }
@@ -167,7 +167,7 @@ public class GoalsTests
     public async Task Remove_RemovesGoal()
     {
         var goals = new global::app.goal.list.@this();
-        goals.Add(new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
+        goals.Add(new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
 
         var removed = goals.Remove("TestGoal");
 
@@ -179,7 +179,7 @@ public class GoalsTests
     public async Task Remove_RemovesPathLookups()
     {
         var goals = new global::app.goal.list.@this();
-        goals.Add(new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
+        goals.Add(new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
 
         goals.Remove("TestGoal");
 
@@ -200,8 +200,8 @@ public class GoalsTests
     public async Task Clear_RemovesAllGoals()
     {
         var goals = new global::app.goal.list.@this();
-        goals.Add(new Goal { Name = "Goal1", Path = global::app.type.path.@this.Resolve("/Goal1.goal", global::PLang.Tests.TestApp.SharedContext) });
-        goals.Add(new Goal { Name = "Goal2", Path = global::app.type.path.@this.Resolve("/Goal2.goal", global::PLang.Tests.TestApp.SharedContext) });
+        goals.Add(new Goal { Name = "Goal1", Path = global::app.type.item.path.@this.Resolve("/Goal1.goal", global::PLang.Tests.TestApp.SharedContext) });
+        goals.Add(new Goal { Name = "Goal2", Path = global::app.type.item.path.@this.Resolve("/Goal2.goal", global::PLang.Tests.TestApp.SharedContext) });
 
         goals.Clear();
 
@@ -212,8 +212,8 @@ public class GoalsTests
     public async Task Names_ReturnsAllNames()
     {
         var goals = new global::app.goal.list.@this();
-        goals.Add(new Goal { Name = "Goal1", Path = global::app.type.path.@this.Resolve("/Goal1.goal", global::PLang.Tests.TestApp.SharedContext) });
-        goals.Add(new Goal { Name = "Goal2", Path = global::app.type.path.@this.Resolve("/Goal2.goal", global::PLang.Tests.TestApp.SharedContext) });
+        goals.Add(new Goal { Name = "Goal1", Path = global::app.type.item.path.@this.Resolve("/Goal1.goal", global::PLang.Tests.TestApp.SharedContext) });
+        goals.Add(new Goal { Name = "Goal2", Path = global::app.type.item.path.@this.Resolve("/Goal2.goal", global::PLang.Tests.TestApp.SharedContext) });
 
         var names = goals.Names.ToList();
 
@@ -225,8 +225,8 @@ public class GoalsTests
     public async Task All_ReturnsAllGoals()
     {
         var goals = new global::app.goal.list.@this();
-        var goal1 = new Goal { Name = "Goal1", Path = global::app.type.path.@this.Resolve("/Goal1.goal", global::PLang.Tests.TestApp.SharedContext) };
-        var goal2 = new Goal { Name = "Goal2", Path = global::app.type.path.@this.Resolve("/Goal2.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal1 = new Goal { Name = "Goal1", Path = global::app.type.item.path.@this.Resolve("/Goal1.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal2 = new Goal { Name = "Goal2", Path = global::app.type.item.path.@this.Resolve("/Goal2.goal", global::PLang.Tests.TestApp.SharedContext) };
         goals.Add(goal1);
         goals.Add(goal2);
 
@@ -240,8 +240,8 @@ public class GoalsTests
     public async Task Public_ReturnsOnlyPublicGoals()
     {
         var goals = new global::app.goal.list.@this();
-        goals.Add(new Goal { Name = "PublicGoal", Path = global::app.type.path.@this.Resolve("/PublicGoal.goal", global::PLang.Tests.TestApp.SharedContext), Visibility = Visibility.Public });
-        goals.Add(new Goal { Name = "PrivateGoal", Path = global::app.type.path.@this.Resolve("/PrivateGoal.goal", global::PLang.Tests.TestApp.SharedContext), Visibility = Visibility.Private });
+        goals.Add(new Goal { Name = "PublicGoal", Path = global::app.type.item.path.@this.Resolve("/PublicGoal.goal", global::PLang.Tests.TestApp.SharedContext), Visibility = Visibility.Public });
+        goals.Add(new Goal { Name = "PrivateGoal", Path = global::app.type.item.path.@this.Resolve("/PrivateGoal.goal", global::PLang.Tests.TestApp.SharedContext), Visibility = Visibility.Private });
 
         var publicGoals = goals.Public.ToList();
 
@@ -253,8 +253,8 @@ public class GoalsTests
     public async Task Setup_ReturnsOnlySetupGoals()
     {
         var goals = new global::app.goal.list.@this();
-        goals.Add(new Goal { Name = "SetupGoal", Path = global::app.type.path.@this.Resolve("/SetupGoal.goal", global::PLang.Tests.TestApp.SharedContext), IsSetup = true });
-        goals.Add(new Goal { Name = "NormalGoal", Path = global::app.type.path.@this.Resolve("/NormalGoal.goal", global::PLang.Tests.TestApp.SharedContext), IsSetup = false });
+        goals.Add(new Goal { Name = "SetupGoal", Path = global::app.type.item.path.@this.Resolve("/SetupGoal.goal", global::PLang.Tests.TestApp.SharedContext), IsSetup = true });
+        goals.Add(new Goal { Name = "NormalGoal", Path = global::app.type.item.path.@this.Resolve("/NormalGoal.goal", global::PLang.Tests.TestApp.SharedContext), IsSetup = false });
 
         var setupGoals = goals.Setup.Goals.ToList();
 
@@ -266,8 +266,8 @@ public class GoalsTests
     public async Task Events_ReturnsOnlyEventGoals()
     {
         var goals = new global::app.goal.list.@this();
-        goals.Add(new Goal { Name = "EventGoal", Path = global::app.type.path.@this.Resolve("/EventGoal.goal", global::PLang.Tests.TestApp.SharedContext), IsEvent = true });
-        goals.Add(new Goal { Name = "NormalGoal", Path = global::app.type.path.@this.Resolve("/NormalGoal.goal", global::PLang.Tests.TestApp.SharedContext), IsEvent = false });
+        goals.Add(new Goal { Name = "EventGoal", Path = global::app.type.item.path.@this.Resolve("/EventGoal.goal", global::PLang.Tests.TestApp.SharedContext), IsEvent = true });
+        goals.Add(new Goal { Name = "NormalGoal", Path = global::app.type.item.path.@this.Resolve("/NormalGoal.goal", global::PLang.Tests.TestApp.SharedContext), IsEvent = false });
 
         var eventGoals = goals.Events.ToList();
 
@@ -279,8 +279,8 @@ public class GoalsTests
     public async Task Add_SamePathTwice_ReplacesGoal()
     {
         var goals = new global::app.goal.list.@this();
-        var goal1 = new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext), Description = "First" };
-        var goal2 = new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext), Description = "Second" };
+        var goal1 = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext), Description = "First" };
+        var goal2 = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext), Description = "Second" };
         goals.Add(goal1);
 
         goals.Add(goal2);
@@ -293,9 +293,9 @@ public class GoalsTests
     public async Task Count_ReturnsCorrectCount()
     {
         var goals = new global::app.goal.list.@this();
-        goals.Add(new Goal { Name = "Goal1", Path = global::app.type.path.@this.Resolve("/Goal1.goal", global::PLang.Tests.TestApp.SharedContext) });
-        goals.Add(new Goal { Name = "Goal2", Path = global::app.type.path.@this.Resolve("/Goal2.goal", global::PLang.Tests.TestApp.SharedContext) });
-        goals.Add(new Goal { Name = "Goal3", Path = global::app.type.path.@this.Resolve("/Goal3.goal", global::PLang.Tests.TestApp.SharedContext) });
+        goals.Add(new Goal { Name = "Goal1", Path = global::app.type.item.path.@this.Resolve("/Goal1.goal", global::PLang.Tests.TestApp.SharedContext) });
+        goals.Add(new Goal { Name = "Goal2", Path = global::app.type.item.path.@this.Resolve("/Goal2.goal", global::PLang.Tests.TestApp.SharedContext) });
+        goals.Add(new Goal { Name = "Goal3", Path = global::app.type.item.path.@this.Resolve("/Goal3.goal", global::PLang.Tests.TestApp.SharedContext) });
 
         await Assert.That(goals.Count).IsEqualTo(3);
     }
@@ -304,8 +304,8 @@ public class GoalsTests
     public async Task Get_ExcludesSetupGoals()
     {
         var goals = new global::app.goal.list.@this();
-        goals.Add(new Goal { Name = "SetupDb", Path = global::app.type.path.@this.Resolve("/SetupDb.goal", global::PLang.Tests.TestApp.SharedContext), IsSetup = true });
-        goals.Add(new Goal { Name = "NormalGoal", Path = global::app.type.path.@this.Resolve("/NormalGoal.goal", global::PLang.Tests.TestApp.SharedContext), IsSetup = false });
+        goals.Add(new Goal { Name = "SetupDb", Path = global::app.type.item.path.@this.Resolve("/SetupDb.goal", global::PLang.Tests.TestApp.SharedContext), IsSetup = true });
+        goals.Add(new Goal { Name = "NormalGoal", Path = global::app.type.item.path.@this.Resolve("/NormalGoal.goal", global::PLang.Tests.TestApp.SharedContext), IsSetup = false });
 
         await Assert.That(goals.Get("SetupDb")).IsNull();
         await Assert.That(goals.Get("NormalGoal")).IsNotNull();
@@ -394,7 +394,7 @@ public class GoalsTests
     public async Task GetByPrPathAsync_ReturnsNull_ForCachedSetupGoal()
     {
         var goals = new global::app.goal.list.@this();
-        var setupGoal = new Goal { Name = "SetupDb", IsSetup = true, Path = global::app.type.path.@this.Resolve("/SetupDb.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var setupGoal = new Goal { Name = "SetupDb", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/SetupDb.goal", global::PLang.Tests.TestApp.SharedContext) };
         goals.Add(setupGoal);
 
         var result = await goals.GetByPrPathAsync("/.build/setupdb.pr");
@@ -409,8 +409,8 @@ public class GoalsTests
     public async Task Add_KeysByPrPath_PreventsSameNameCollision()
     {
         var goals = new global::app.goal.list.@this();
-        var goal1 = new Goal { Name = "Setup", IsSetup = true, Path = global::app.type.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext) };
-        var goal2 = new Goal { Name = "Setup", IsSetup = true, Path = global::app.type.path.@this.Resolve("/Setup/Setup.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal1 = new Goal { Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal2 = new Goal { Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup/Setup.goal", global::PLang.Tests.TestApp.SharedContext) };
 
         goals.Add(goal1);
         goals.Add(goal2);
@@ -423,7 +423,7 @@ public class GoalsTests
     public async Task Get_FindsGoalKeyedByPrPath()
     {
         var goals = new global::app.goal.list.@this();
-        var goal = new Goal { Name = "Start", Path = global::app.type.path.@this.Resolve("/Start.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/Start.goal", global::PLang.Tests.TestApp.SharedContext) };
         goals.Add(goal);
 
         var found = goals.Get("Start");
@@ -436,8 +436,8 @@ public class GoalsTests
     public async Task Get_FindsCorrectGoal_WhenMultipleSameNameDifferentPrPath()
     {
         var goals = new global::app.goal.list.@this();
-        var goal1 = new Goal { Name = "Helper", Path = global::app.type.path.@this.Resolve("/a/Helper.goal", global::PLang.Tests.TestApp.SharedContext) };
-        var goal2 = new Goal { Name = "Helper", Path = global::app.type.path.@this.Resolve("/b/Helper.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal1 = new Goal { Name = "Helper", Path = global::app.type.item.path.@this.Resolve("/a/Helper.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal2 = new Goal { Name = "Helper", Path = global::app.type.item.path.@this.Resolve("/b/Helper.goal", global::PLang.Tests.TestApp.SharedContext) };
         goals.Add(goal1);
         goals.Add(goal2);
 
@@ -451,7 +451,7 @@ public class GoalsTests
     public async Task Remove_ByName_WorksWhenKeyedByPrPath()
     {
         var goals = new global::app.goal.list.@this();
-        var goal = new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
         goals.Add(goal);
 
         var removed = goals.Remove("TestGoal");
@@ -465,7 +465,7 @@ public class GoalsTests
     public async Task Remove_ByName_ClearsPathIndex()
     {
         var goals = new global::app.goal.list.@this();
-        var goal = new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
         goals.Add(goal);
 
         goals.Remove("TestGoal");
@@ -477,8 +477,8 @@ public class GoalsTests
     public async Task Add_SamePrPath_ReplacesGoal()
     {
         var goals = new global::app.goal.list.@this();
-        var goal1 = new Goal { Name = "Start", Path = global::app.type.path.@this.Resolve("/Start.goal", global::PLang.Tests.TestApp.SharedContext), Description = "First" };
-        var goal2 = new Goal { Name = "Start", Path = global::app.type.path.@this.Resolve("/Start.goal", global::PLang.Tests.TestApp.SharedContext), Description = "Second" };
+        var goal1 = new Goal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/Start.goal", global::PLang.Tests.TestApp.SharedContext), Description = "First" };
+        var goal2 = new Goal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/Start.goal", global::PLang.Tests.TestApp.SharedContext), Description = "Second" };
 
         goals.Add(goal1);
         goals.Add(goal2);
@@ -500,7 +500,7 @@ public class GoalsTests
     public async Task Add_ThrowsWhenPathIsEmptyString()
     {
         var goals = new global::app.goal.list.@this();
-        var goal = new Goal { Name = "TestGoal", Path = global::app.type.path.@this.Resolve("", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("", global::PLang.Tests.TestApp.SharedContext) };
 
         await Assert.That(() => goals.Add(goal)).ThrowsException();
     }
@@ -509,8 +509,8 @@ public class GoalsTests
     public async Task Names_ExcludesSetupGoals()
     {
         var goals = new global::app.goal.list.@this();
-        goals.Add(new Goal { Name = "SetupDb", IsSetup = true, Path = global::app.type.path.@this.Resolve("/SetupDb.goal", global::PLang.Tests.TestApp.SharedContext) });
-        goals.Add(new Goal { Name = "NormalGoal", IsSetup = false, Path = global::app.type.path.@this.Resolve("/NormalGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
+        goals.Add(new Goal { Name = "SetupDb", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/SetupDb.goal", global::PLang.Tests.TestApp.SharedContext) });
+        goals.Add(new Goal { Name = "NormalGoal", IsSetup = false, Path = global::app.type.item.path.@this.Resolve("/NormalGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
 
         var names = goals.Names.ToList();
 

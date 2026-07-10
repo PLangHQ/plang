@@ -1,6 +1,6 @@
 using app.variable;
 
-using number = global::app.type.number.@this;
+using number = global::app.type.item.number.@this;
 
 namespace app.module.math;
 

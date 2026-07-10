@@ -72,7 +72,7 @@ public sealed partial class @this
     /// </summary>
     public async Task<data.@this> RunAsync()
     {
-        var appPrPath = global::app.type.path.@this.Resolve("/.build/app.pr", _context.App.System.Context!);
+        var appPrPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", _context.App.System.Context!);
         var appPrExists = await appPrPath.ExistsAsync();
         // No app marker on disk → confirm creation (or error when headless).
         // Was inverted (fired when the marker DID exist) — that forced every
@@ -104,7 +104,7 @@ public sealed partial class @this
 
         // The builder runs under the User actor's context (passed to RunGoalAsync) — user
         // code output/channels resolve through it; no global "current actor" switch needed.
-        var buildCall = new GoalCall { Name = "Build", PrPath = global::app.type.path.@this.Resolve("/system/builder/.build/build.pr", _context.App.User.Context) };
+        var buildCall = new GoalCall { Name = "Build", PrPath = global::app.type.item.path.@this.Resolve("/system/builder/.build/build.pr", _context.App.User.Context) };
         return await _context.App.RunGoalAsync(buildCall, _context.App.User.Context);
     }
 }

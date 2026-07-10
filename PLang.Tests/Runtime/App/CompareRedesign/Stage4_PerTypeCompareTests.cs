@@ -148,9 +148,9 @@ public class Stage4_PerTypeCompareTests
         // dict is equality-only; same shape → Equal, different → NotEqual; ordering → NotEqual (errors at boundary)
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var d1 = global::app.type.dict.@this.FromRaw(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
-        var d2 = global::app.type.dict.@this.FromRaw(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
-        var d3 = global::app.type.dict.@this.FromRaw(new Dictionary<string, object?> { ["a"] = 2 }, ctx);
+        var d1 = global::app.type.item.dict.@this.FromRaw(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
+        var d2 = global::app.type.item.dict.@this.FromRaw(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
+        var d3 = global::app.type.item.dict.@this.FromRaw(new Dictionary<string, object?> { ["a"] = 2 }, ctx);
         await Assert.That(await Cmp(app, d1, d2, "dict", "dict")).IsEqualTo(Comparison.Equal);
         await Assert.That(await Cmp(app, d1, d3, "dict", "dict")).IsEqualTo(Comparison.NotEqual);
     }
@@ -163,7 +163,7 @@ public class Stage4_PerTypeCompareTests
         await Assert.That(await Cmp(app, null, null)).IsEqualTo(Comparison.Equal);
         await Assert.That(await Cmp(app, 5, null, "number", null)).IsEqualTo(Comparison.NotEqual);
         var ctx = app.User.Context;
-        var d = global::app.type.dict.@this.FromRaw(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
+        var d = global::app.type.item.dict.@this.FromRaw(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
         await Assert.That(await Cmp(app, d, null, "dict", null)).IsEqualTo(Comparison.NotEqual);  // even dict vs null
     }
 
@@ -189,7 +189,7 @@ public class Stage4_PerTypeCompareTests
         // driver can't coerce → Incomparable; symmetric (same in both directions)
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var d = global::app.type.dict.@this.FromRaw(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
+        var d = global::app.type.item.dict.@this.FromRaw(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
         await Assert.That(await Cmp(app, d, 5, "dict", "number")).IsEqualTo(Comparison.Incomparable);
         await Assert.That(await Cmp(app, 5, d, "number", "dict")).IsEqualTo(Comparison.Incomparable); // symmetric
     }
@@ -199,7 +199,7 @@ public class Stage4_PerTypeCompareTests
     {
         // per-type Compare runs no I/O — sync over already-materialised values
         // the per-type hook is sync by signature: static Comparison Compare(object?, object?)
-        var hook = typeof(global::app.type.number.@this).GetMethod("Compare",
+        var hook = typeof(global::app.type.item.number.@this).GetMethod("Compare",
             new[] { typeof(object), typeof(object) });
         await Assert.That(hook).IsNotNull();
         await Assert.That(hook!.ReturnType).IsEqualTo(typeof(Comparison));   // no Task/ValueTask

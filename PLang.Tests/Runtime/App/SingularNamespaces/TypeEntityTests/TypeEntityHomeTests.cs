@@ -18,7 +18,7 @@ public class TypeEntityHomeTests
         // plang-types ALREADY shipped this — the regression pin still passes today
         // even though the entity lives at app.type.@this (Stage 4 moves it).
         await using var app = TestApp.Create("/test");
-        var d = new global::app.data.@this<global::app.type.number.@this>("", 42, context: app.User.Context);
+        var d = new global::app.data.@this<global::app.type.item.number.@this>("", 42, context: app.User.Context);
         await Assert.That(d.Type).IsNotNull();
         await Assert.That(d.Type!.ClrType).IsEqualTo(typeof(int));
     }
@@ -50,7 +50,7 @@ public class TypeEntityHomeTests
     {
         // Both doors return values of the SAME entity type (app.type.@this).
         await using var app = TestApp.Create("/test");
-        var d = new global::app.data.@this<global::app.type.number.@this>("", 42, context: app.User.Context);
+        var d = new global::app.data.@this<global::app.type.item.number.@this>("", 42, context: app.User.Context);
         var typeFromData = d.Type;
         var entityFromRegistry = app.Type["int"];
         entityFromRegistry.Context = app.User.Context;

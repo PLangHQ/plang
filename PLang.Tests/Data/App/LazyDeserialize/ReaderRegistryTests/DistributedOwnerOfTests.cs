@@ -22,16 +22,16 @@ public class DistributedOwnerOfTests
     [Test] public async Task OwnerOf_CentralSwitch_NoLongerExists()
     {
         var (family, kind) = global::app.type.convert.@this.OwnerOf(typeof(int));
-        await Assert.That(family).IsEqualTo(typeof(global::app.type.number.@this));
+        await Assert.That(family).IsEqualTo(typeof(global::app.type.item.number.@this));
         await Assert.That(kind).IsEqualTo("int");
         // and the source of that answer is number's own declaration:
-        var intDecl = global::app.type.number.@this.OwnedClrTypes.Single(o => o.Clr == typeof(int));
+        var intDecl = global::app.type.item.number.@this.OwnedClrTypes.Single(o => o.Clr == typeof(int));
         await Assert.That(intDecl.Kind).IsEqualTo("int");
     }
 
     [Test] public async Task Number_DeclaresIntLongDecimalDoubleFloat()
     {
-        var clrs = Clrs(global::app.type.number.@this.OwnedClrTypes);
+        var clrs = Clrs(global::app.type.item.number.@this.OwnedClrTypes);
         await Assert.That(clrs).Contains(typeof(int));
         await Assert.That(clrs).Contains(typeof(long));
         await Assert.That(clrs).Contains(typeof(decimal));
@@ -48,10 +48,10 @@ public class DistributedOwnerOfTests
     {
         // path declares its base type Assignable — every scheme subclass routes
         // to path. Pin the declaration and that a concrete subclass resolves.
-        var pathDecl = global::app.type.path.@this.OwnedClrTypes;
-        await Assert.That(pathDecl.Any(o => o.Assignable && o.Clr == typeof(global::app.type.path.@this))).IsTrue();
-        var (family, _) = global::app.type.convert.@this.OwnerOf(typeof(global::app.type.path.file.@this));
-        await Assert.That(family).IsEqualTo(typeof(global::app.type.path.@this));
+        var pathDecl = global::app.type.item.path.@this.OwnedClrTypes;
+        await Assert.That(pathDecl.Any(o => o.Assignable && o.Clr == typeof(global::app.type.item.path.@this))).IsTrue();
+        var (family, _) = global::app.type.convert.@this.OwnerOf(typeof(global::app.type.item.path.file.@this));
+        await Assert.That(family).IsEqualTo(typeof(global::app.type.item.path.@this));
     }
 
     // Flipped from the original `Image_DeclaresByteArrayForPngGifJpeg`
@@ -62,10 +62,10 @@ public class DistributedOwnerOfTests
     // routing the byte[] CLR target to image.
     [Test] public async Task Image_DeclaresOwnWrapperType_NotByteArrayTarget()
     {
-        await Assert.That(Clrs(global::app.type.image.@this.OwnedClrTypes))
-            .Contains(typeof(global::app.type.image.@this));
+        await Assert.That(Clrs(global::app.type.item.image.@this.OwnedClrTypes))
+            .Contains(typeof(global::app.type.item.image.@this));
         var (family, _) = global::app.type.convert.@this.OwnerOf(typeof(byte[]));
-        await Assert.That(family).IsNotEqualTo(typeof(global::app.type.image.@this));
+        await Assert.That(family).IsNotEqualTo(typeof(global::app.type.item.image.@this));
     }
 
     // Probe — ask which family owns a CLR type; assert the answer is the family
@@ -75,8 +75,8 @@ public class DistributedOwnerOfTests
     [Test] public async Task OwnerOf_RoutingComposes_FromFamilyDeclarations()
     {
         var (family, kind) = global::app.type.convert.@this.OwnerOf(typeof(long));
-        await Assert.That(family).IsEqualTo(typeof(global::app.type.number.@this));
+        await Assert.That(family).IsEqualTo(typeof(global::app.type.item.number.@this));
         await Assert.That(kind).IsEqualTo("long");
-        await Assert.That(Clrs(global::app.type.number.@this.OwnedClrTypes)).Contains(typeof(long));
+        await Assert.That(Clrs(global::app.type.item.number.@this.OwnedClrTypes)).Contains(typeof(long));
     }
 }

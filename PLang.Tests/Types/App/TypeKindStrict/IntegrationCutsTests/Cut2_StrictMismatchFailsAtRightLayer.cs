@@ -97,7 +97,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
     [Test] public async Task ReadLiftImagePngAsImageGifStrict_FailsAtSet()
     {
         var context = _app.User.Context;
-        var pngImage = new global::app.type.image.@this(PngBytes, "image/png");
+        var pngImage = new global::app.type.item.image.@this(PngBytes, "image/png");
         var action = TestAction.Create("variable", "set",
             ("name", "%img%"),
             ("value", pngImage),
@@ -110,7 +110,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
     [Test] public async Task ReadLiftImageGifAsImageGifStrict_Succeeds()
     {
         var context = _app.User.Context;
-        var gifImage = new global::app.type.image.@this(GifBytes, "image/gif");
+        var gifImage = new global::app.type.item.image.@this(GifBytes, "image/gif");
         var action = TestAction.Create("variable", "set",
             ("name", "%img%"),
             ("value", gifImage),

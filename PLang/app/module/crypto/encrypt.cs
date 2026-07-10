@@ -11,8 +11,8 @@ public partial class encrypt : IContext
 {
     /// <summary>The bytes to encrypt.</summary>
     [IsNotNull]
-    public partial data.@this<global::app.type.binary.@this> Input { get; init; }
+    public partial data.@this<global::app.type.item.binary.@this> Input { get; init; }
 
-    public async Task<data.@this<global::app.type.binary.@this>> Run() =>
-        Context.Ok<global::app.type.binary.@this>(await Input.Value());
+    public async Task<data.@this<global::app.type.item.binary.@this>> Run() =>
+        Context.Ok<global::app.type.item.binary.@this>(await Input.Value());
 }

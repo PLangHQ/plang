@@ -19,11 +19,11 @@ public partial class download : IContext
     public partial data.@this<global::app.type.item.text.@this> Url { get; init; }
 
     /// <summary>Per-request headers. Merged with Config.DefaultHeaders.</summary>
-    public partial data.@this<global::app.type.dict.@this>? Headers { get; init; }
+    public partial data.@this<global::app.type.item.dict.@this>? Headers { get; init; }
 
     /// <summary>Download timeout in seconds. Default: 30.</summary>
     [Default(30)]
-    public partial data.@this<global::app.type.number.@this> TimeoutInSec { get; init; }
+    public partial data.@this<global::app.type.item.number.@this> TimeoutInSec { get; init; }
 
     /// <summary>When true, skips request signing. Default: false.</summary>
     [Default(false)]
@@ -40,7 +40,7 @@ public partial class download : IContext
     public partial data.@this<global::app.type.item.text.@this>? BaseUrl { get; init; }
 
     /// <summary>Headers merged into every request; per-request <see cref="Headers"/> win on conflict.</summary>
-    public partial data.@this<global::app.type.dict.@this>? DefaultHeaders { get; init; }
+    public partial data.@this<global::app.type.item.dict.@this>? DefaultHeaders { get; init; }
 
     /// <summary>Whether to follow HTTP redirects. Default: true.</summary>
     [Default(true)]
@@ -48,11 +48,11 @@ public partial class download : IContext
 
     /// <summary>Maximum redirects to follow. Default: 10.</summary>
     [Default(10)]
-    public partial data.@this<global::app.type.number.@this> MaxRedirects { get; init; }
+    public partial data.@this<global::app.type.item.number.@this> MaxRedirects { get; init; }
 
     /// <summary>Max download size in bytes. Default 100MB.</summary>
     [Default(100 * 1024 * 1024)]
-    public partial data.@this<global::app.type.number.@this> MaxDownloadSize { get; init; }
+    public partial data.@this<global::app.type.item.number.@this> MaxDownloadSize { get; init; }
 
     [Code]
     public partial IHttp Http { get; }

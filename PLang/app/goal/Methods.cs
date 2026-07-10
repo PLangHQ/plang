@@ -10,7 +10,7 @@ public sealed partial class @this
 		if (context?.App == null)
 			return FormatForLlmFallback();
 
-		var templatePath = global::app.type.path.@this.Resolve(
+		var templatePath = global::app.type.item.path.@this.Resolve(
 			"/system/builder/templates/goalFormatForLlm.template", context);
 		var exists = await templatePath.ExistsAsync();
 		if (!exists.Success || (await exists.Value())?.Value != true)

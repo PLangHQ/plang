@@ -22,23 +22,23 @@ public sealed class TestSigning : global::app.module.signing.code.ISigning
 
     public Task<global::app.data.@this> SignAsync(global::app.module.signing.sign action)
     {
-        var unsigned = new global::app.type.signature.@this(
+        var unsigned = new global::app.type.item.signature.@this(
             value: action.Data!,
             algorithm: new global::app.type.item.text.@this(Name),
             nonce: new global::app.type.item.text.@this("test-nonce"),
-            created: new global::app.type.datetime.@this(System.DateTimeOffset.FromUnixTimeSeconds(0)),
+            created: new global::app.type.item.datetime.@this(System.DateTimeOffset.FromUnixTimeSeconds(0)),
             identity: new global::app.type.item.text.@this("test-public-key"),
             hash: new global::app.module.crypto.type.hash.@this(System.Array.Empty<byte>(), "test"),
-            signature: new global::app.type.binary.@this(System.Array.Empty<byte>()));
+            signature: new global::app.type.item.binary.@this(System.Array.Empty<byte>()));
         return Task.FromResult(action.Context.Ok((object?)unsigned));
     }
 
     public Task<global::app.data.@this<global::app.type.item.@bool.@this>> VerifyAsync(global::app.module.signing.verify action)
         => Task.FromResult(action.Context.Ok<global::app.type.item.@bool.@this>(new global::app.type.item.@bool.@this(true)));
 
-    public global::app.type.binary.@this Sign(global::app.type.signature.@this unsigned, global::app.type.item.text.@this privateKey)
-        => new global::app.type.binary.@this(System.Array.Empty<byte>());
+    public global::app.type.item.binary.@this Sign(global::app.type.item.signature.@this unsigned, global::app.type.item.text.@this privateKey)
+        => new global::app.type.item.binary.@this(System.Array.Empty<byte>());
 
-    public global::app.type.item.@bool.@this Verify(global::app.type.signature.@this signature)
+    public global::app.type.item.@bool.@this Verify(global::app.type.item.signature.@this signature)
         => new global::app.type.item.@bool.@this(true);
 }

@@ -37,7 +37,7 @@ public class VariablesCloneTests : System.IAsyncDisposable
         var clone = vars.Clone();
         clone.Set("config", new Dictionary<string, object?> { ["key1"] = "val1", ["key2"] = "val2" });
 
-        var originalDict = (await vars.GetValue("config")) as global::app.type.dict.@this;
+        var originalDict = (await vars.GetValue("config")) as global::app.type.item.dict.@this;
         await Assert.That(originalDict!.Has("key2")).IsFalse();
     }
 
@@ -56,7 +56,7 @@ public class VariablesCloneTests : System.IAsyncDisposable
             ["tags"] = new List<string> { "alpha", "beta", "gamma" }
         });
 
-        var originalDict = (await vars.GetValue("record")) as global::app.type.dict.@this;
+        var originalDict = (await vars.GetValue("record")) as global::app.type.item.dict.@this;
         var originalTags = originalDict!.Get("tags")!.Peek() as global::app.type.list.@this;
         await Assert.That(originalTags!.Items.Count).IsEqualTo(2);
     }

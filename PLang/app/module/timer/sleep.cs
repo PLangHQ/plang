@@ -8,7 +8,7 @@ namespace app.module.timer;
 public partial class Sleep : IContext
 {
     [IsNotNull]
-    public partial data.@this<global::app.type.number.@this> Ms { get; init; }
+    public partial data.@this<global::app.type.item.number.@this> Ms { get; init; }
 
     public async Task<global::app.data.@this> Run()
     {

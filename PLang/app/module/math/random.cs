@@ -6,11 +6,11 @@ namespace app.module.math;
 public partial class Random : IContext
 {
     [Default(0)]
-    public partial data.@this<global::app.type.number.@this> Min { get; init; }
+    public partial data.@this<global::app.type.item.number.@this> Min { get; init; }
     [Default(100)]
-    public partial data.@this<global::app.type.number.@this> Max { get; init; }
+    public partial data.@this<global::app.type.item.number.@this> Max { get; init; }
 
-    public async Task<data.@this<global::app.type.number.@this>> Run()
+    public async Task<data.@this<global::app.type.item.number.@this>> Run()
     {
         // Typed read; the number converts ITSELF at the .NET boundary — the
         // widest overload Random offers (NextInt64), so long ranges fit.
@@ -18,6 +18,6 @@ public partial class Random : IContext
         var max = (await Max.Value())!;
         var rng = System.Random.Shared;
         long result = rng.NextInt64(min.ToInt64(), max.ToInt64() + 1);
-        return Context.Ok<global::app.type.number.@this>(result);
+        return Context.Ok<global::app.type.item.number.@this>(result);
     }
 }

@@ -36,7 +36,7 @@ public sealed partial class @this
 
     /// <summary>
     /// Context-bound read options — <see cref="_caseInsensitiveRead"/> with the
-    /// Context-wired path adapter, so every <see cref="app.type.path.@this"/>
+    /// Context-wired path adapter, so every <see cref="app.type.item.path.@this"/>
     /// field in the deserialized graph lands fully Context-wired. Same factory the
     /// dict's own record reconstruction uses — one converter set, no drift.
     /// </summary>

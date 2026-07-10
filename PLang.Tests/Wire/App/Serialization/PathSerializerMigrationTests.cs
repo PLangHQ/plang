@@ -22,7 +22,7 @@ public class PathSerializerMigrationTests
     {
         await using var app = NewApp();
         var context = app.User.Context;
-        var p = global::app.type.path.@this.Resolve("/some/file.json", context);
+        var p = global::app.type.item.path.@this.Resolve("/some/file.json", context);
         var data = new global::app.data.@this("x", p, context: context);
 
         var plang = (global::app.channel.serializer.plang.@this)
@@ -43,7 +43,7 @@ public class PathSerializerMigrationTests
     {
         await using var app = NewApp();
         var context = app.User.Context;
-        var p = global::app.type.path.@this.Resolve("https://example.test/a/b", context);
+        var p = global::app.type.item.path.@this.Resolve("https://example.test/a/b", context);
         var data = new global::app.data.@this("x", p, context: context);
 
         var plang = (global::app.channel.serializer.plang.@this)
@@ -58,22 +58,22 @@ public class PathSerializerMigrationTests
     [Test]
     public async Task PathBuild_HttpsScheme_ReturnsHttpKind()
     {
-        await Assert.That(global::app.type.path.@this.Build("https://example.test/a")).IsEqualTo("http");
+        await Assert.That(global::app.type.item.path.@this.Build("https://example.test/a")).IsEqualTo("http");
     }
 
     [Test]
     public async Task PathBuild_FileScheme_ReturnsFileKind()
     {
-        await Assert.That(global::app.type.path.@this.Build("/srv/myapp/a.txt")).IsEqualTo("file");
+        await Assert.That(global::app.type.item.path.@this.Build("/srv/myapp/a.txt")).IsEqualTo("file");
     }
 
     [Test]
     public async Task PathBuild_Unknown_ReturnsNull_NoThrow()
     {
-        await Assert.That(global::app.type.path.@this.Build(null)).IsNull();
-        await Assert.That(global::app.type.path.@this.Build("")).IsNull();
-        await Assert.That(global::app.type.path.@this.Build(42)).IsNull();
-        await Assert.That(global::app.type.path.@this.Build("%var%")).IsNull();
+        await Assert.That(global::app.type.item.path.@this.Build(null)).IsNull();
+        await Assert.That(global::app.type.item.path.@this.Build("")).IsNull();
+        await Assert.That(global::app.type.item.path.@this.Build(42)).IsNull();
+        await Assert.That(global::app.type.item.path.@this.Build("%var%")).IsNull();
     }
 
     // Placeholder removed; converter deletion is tracked in
@@ -89,7 +89,7 @@ public class PathSerializerMigrationTests
         // paths and compare the produced JSON string.
         await using var app = NewApp();
         var context = app.User.Context;
-        var p = global::app.type.path.@this.Resolve("/srv/myapp/r.json", context);
+        var p = global::app.type.item.path.@this.Resolve("/srv/myapp/r.json", context);
 
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
@@ -107,7 +107,7 @@ public class PathSerializerMigrationTests
         {
             Converters = { new global::app.channel.serializer.json.Converter(context) }
         };
-        var fromConverter = JsonSerializer.Serialize<global::app.type.path.@this>(p, opts);
+        var fromConverter = JsonSerializer.Serialize<global::app.type.item.path.@this>(p, opts);
 
         await Assert.That(fromRenderer).IsEqualTo(fromConverter);
     }

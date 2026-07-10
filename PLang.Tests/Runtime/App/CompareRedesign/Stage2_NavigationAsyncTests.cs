@@ -84,7 +84,7 @@ public class Stage2_NavigationAsyncTests
         // `read file.txt` step completes with MaterializeCount=0; the read fires on the FIRST navigation
         // (so `%file!file!path%` stays at 0, `%file.field%` increments)
         await using var app = NewApp(out var root);
-        var p = new global::app.type.path.file.@this(System.IO.Path.Combine(root, "cfg.json"), app.User.Context);
+        var p = new global::app.type.item.path.file.@this(System.IO.Path.Combine(root, "cfg.json"), app.User.Context);
         await (await p.WriteText("{\"port\":8080}")).IsSuccess();
         var d = await new global::app.channel.type.file.@this(p).Read();
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);       // read step: nothing parsed

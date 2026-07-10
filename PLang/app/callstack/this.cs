@@ -1,7 +1,7 @@
 using app.error;
 using ActionEntity = app.goal.steps.step.actions.action.@this;
 using @bool = global::app.type.item.@bool.@this;
-using number = global::app.type.number.@this;
+using number = global::app.type.item.number.@this;
 
 namespace app.callstack;
 
@@ -134,7 +134,7 @@ public sealed partial class @this
     /// goal Name alone can collide across an app's goal tree. Used by Push to enforce
     /// indirect goal-cycle detection.
     /// </summary>
-    public bool ContainsGoal(global::app.type.path.@this prPath)
+    public bool ContainsGoal(global::app.type.item.path.@this prPath)
     {
         var node = _current.Value;
         while (node != null)

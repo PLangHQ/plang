@@ -53,7 +53,7 @@ public class AppGoalsThroughPathVerbsTests
         System.IO.Directory.CreateDirectory(buildDir);
         var prAbs = System.IO.Path.Combine(buildDir, "start.pr");
         System.IO.File.WriteAllText(prAbs, "{\"name\":\"Start\",\"path\":\"/Start.goal\"}");
-        var result = await app.Goal.LoadFromFileAsync(app, global::app.type.path.@this.Resolve("/.build/start.pr", app.System.Context!));
+        var result = await app.Goal.LoadFromFileAsync(app, global::app.type.item.path.@this.Resolve("/.build/start.pr", app.System.Context!));
         await result.IsSuccess();
         var goal = ((await result.Value()) as global::app.type.clr.@this<Goal>)?.Value;
         await Assert.That(goal!.Name).IsEqualTo("Start");
@@ -79,7 +79,7 @@ public class AppGoalsThroughPathVerbsTests
         var goal = new Goal
         {
             Name = "ProcessData",
-            Path = global::app.type.path.@this.Resolve("/processdata.goal", app.User.Context)
+            Path = global::app.type.item.path.@this.Resolve("/processdata.goal", app.User.Context)
         };
         app.Goal.Add(goal);
         // Fuzzy by-name lookup: case-insensitive, picks up the goal.

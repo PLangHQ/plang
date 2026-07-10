@@ -26,7 +26,7 @@ public partial class request : IContext
     public partial data.@this? Body { get; init; }
 
     /// <summary>Per-request headers. Merged with Config.DefaultHeaders (step-level wins on conflict).</summary>
-    public partial data.@this<global::app.type.dict.@this>? Headers { get; init; }
+    public partial data.@this<global::app.type.item.dict.@this>? Headers { get; init; }
 
     /// <summary>Content-Type for the request body. Default: "application/json".</summary>
     [Default("application/json")]
@@ -38,7 +38,7 @@ public partial class request : IContext
 
     /// <summary>Request timeout in seconds. Default: 30. Overrides Config.TimeoutInSec.</summary>
     [Default(30)]
-    public partial data.@this<global::app.type.number.@this> TimeoutInSec { get; init; }
+    public partial data.@this<global::app.type.item.number.@this> TimeoutInSec { get; init; }
 
     /// <summary>When true, skips request signing. Default: false (requests are signed).</summary>
     [Default(false)]
@@ -58,7 +58,7 @@ public partial class request : IContext
     public partial data.@this<global::app.type.item.text.@this>? BaseUrl { get; init; }
 
     /// <summary>Headers merged into every request; per-request <see cref="Headers"/> win on conflict.</summary>
-    public partial data.@this<global::app.type.dict.@this>? DefaultHeaders { get; init; }
+    public partial data.@this<global::app.type.item.dict.@this>? DefaultHeaders { get; init; }
 
     /// <summary>Whether to follow HTTP redirects. Default: true.</summary>
     [Default(true)]
@@ -66,15 +66,15 @@ public partial class request : IContext
 
     /// <summary>Maximum redirects to follow. Default: 10.</summary>
     [Default(10)]
-    public partial data.@this<global::app.type.number.@this> MaxRedirects { get; init; }
+    public partial data.@this<global::app.type.item.number.@this> MaxRedirects { get; init; }
 
     /// <summary>Max response body size in bytes. Default 100MB — guards against OOM from untrusted servers.</summary>
     [Default(100 * 1024 * 1024)]
-    public partial data.@this<global::app.type.number.@this> MaxResponseSize { get; init; }
+    public partial data.@this<global::app.type.item.number.@this> MaxResponseSize { get; init; }
 
     /// <summary>Max SSE message buffer in bytes. Default 10MB.</summary>
     [Default(10 * 1024 * 1024)]
-    public partial data.@this<global::app.type.number.@this> MaxSSEBufferSize { get; init; }
+    public partial data.@this<global::app.type.item.number.@this> MaxSSEBufferSize { get; init; }
 
     [Code]
     public partial IHttp Http { get; }

@@ -23,12 +23,12 @@ public class ItemConstraintTests
         // Every value type that rides a Data<T> slot is : item.
         System.Type[] wrappers =
         {
-            typeof(global::app.type.number.@this), typeof(global::app.type.item.text.@this),
-            typeof(global::app.type.datetime.@this), typeof(global::app.type.date.@this),
-            typeof(global::app.type.time.@this), typeof(global::app.type.duration.@this),
+            typeof(global::app.type.item.number.@this), typeof(global::app.type.item.text.@this),
+            typeof(global::app.type.item.datetime.@this), typeof(global::app.type.item.date.@this),
+            typeof(global::app.type.item.time.@this), typeof(global::app.type.item.duration.@this),
             typeof(global::app.type.item.@bool.@this), typeof(global::app.type.item.@null.@this),
-            typeof(global::app.type.dict.@this), typeof(global::app.type.list.@this),
-            typeof(global::app.type.path.@this), typeof(global::app.type.image.@this),
+            typeof(global::app.type.item.dict.@this), typeof(global::app.type.list.@this),
+            typeof(global::app.type.item.path.@this), typeof(global::app.type.item.image.@this),
             typeof(global::app.type.code.@this), typeof(global::app.variable.@this),
             typeof(global::app.module.output.Ask), typeof(global::app.snapshot.@this),
         };
@@ -39,7 +39,7 @@ public class ItemConstraintTests
     [Test]
     public async Task Constraint_DataOfRawClrInt_DoesNotSatisfyTheConstraint()
     {
-        // A raw CLR scalar is not an item — Data<global::app.type.number.@this> can't satisfy `where T : item`.
+        // A raw CLR scalar is not an item — Data<global::app.type.item.number.@this> can't satisfy `where T : item`.
         await Assert.That(IsItem(typeof(int))).IsFalse();
         await Assert.That(IsItem(typeof(string))).IsFalse();
         await Assert.That(IsItem(typeof(bool))).IsFalse();
@@ -71,6 +71,6 @@ public class ItemConstraintTests
         // all : item — they honor no ordering/equality contract they can't keep.
         await Assert.That(IsItem(typeof(global::app.module.output.Ask))).IsTrue();
         await Assert.That(IsItem(typeof(global::app.snapshot.@this))).IsTrue();
-        await Assert.That(IsItem(typeof(global::app.type.path.@this))).IsTrue();
+        await Assert.That(IsItem(typeof(global::app.type.item.path.@this))).IsTrue();
     }
 }

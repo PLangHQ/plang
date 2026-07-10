@@ -150,7 +150,7 @@ public sealed class Writer : IWriter
                 Value(nested.Peek());
                 EndRecord(nested);
                 return;
-            case app.type.dict.@this dict:
+            case app.type.item.dict.@this dict:
                 // The native object shape. Normalize hands the writer a `dict`
                 // for every object form — a json-object value, a raw infra dict,
                 // and a reflected C# domain record all converge here. Emit as a

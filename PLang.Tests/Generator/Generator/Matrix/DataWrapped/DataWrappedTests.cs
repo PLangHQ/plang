@@ -79,7 +79,7 @@ public class DataWrappedDictTests
         var result = await MatrixRunner.RunAsync<DataWrappedDict>(app,
             parameters: new[] { ("headers", (object?)raw) },
             variables: new Dictionary<string, object?> { ["x"] = "substituted" });
-        var typed = result.Data as global::app.data.@this<global::app.type.dict.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.dict.@this>;
         // Resolve the dict through its door, then read each value through ITS door.
         var d = (await typed!.Value())!;
         await Assert.That((await d.Get("inner")!.Value()).ToString()).IsEqualTo("substituted");
@@ -189,7 +189,7 @@ public class DataWrappedStringUsesCycleTests
             variables: new Dictionary<string, object?> { ["greeting"] = "hello" });
 
         await result.Data.IsSuccess();
-        // Run() returns Data.Ok(int) — base Data with boxed int, not Data<global::app.type.number.@this>.
+        // Run() returns Data.Ok(int) — base Data with boxed int, not Data<global::app.type.item.number.@this>.
         await Assert.That((await result.Data.Value())?.ToString()).IsEqualTo("5");
     }
 }

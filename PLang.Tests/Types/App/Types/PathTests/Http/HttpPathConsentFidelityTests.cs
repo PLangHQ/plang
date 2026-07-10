@@ -1,4 +1,4 @@
-using HttpPath = global::app.type.path.http.@this;
+using HttpPath = global::app.type.item.path.http.@this;
 using AppEngine = global::app.@this;
 using Ctx = global::app.actor.context.@this;
 using PLang.Tests.App.Types.PathTests.Contract;

@@ -2,8 +2,8 @@ using System.Text.Json;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using FilePath = global::app.type.path.file.@this;
-using Verb = global::app.type.permission.Verb;
+using FilePath = global::app.type.item.path.file.@this;
+using Verb = global::app.type.item.permission.Verb;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.FileSystem.PermissionTests.ExecuteVerbTests;
@@ -45,17 +45,17 @@ public class ExecuteVerbTests
 
     [Test] public async Task ExecuteVerb_ExistsInVerbTaxonomy()
     {
-        await Assert.That(System.Enum.IsDefined(global::app.type.permission.Verb.Execute)).IsTrue();
+        await Assert.That(System.Enum.IsDefined(global::app.type.item.permission.Verb.Execute)).IsTrue();
     }
 
     [Test] public async Task ExecuteVerb_JsonRoundTrip_PreservesShape()
     {
-        var verb = global::app.type.permission.Verb.Execute;
+        var verb = global::app.type.item.permission.Verb.Execute;
         var opts = new JsonSerializerOptions { Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() } };
         var json = JsonSerializer.Serialize(verb, opts);
         await Assert.That(json).Contains("Execute");
         var loaded = JsonSerializer.Deserialize<Verb>(json, opts);
-        await Assert.That(loaded).IsEqualTo(global::app.type.permission.Verb.Execute);
+        await Assert.That(loaded).IsEqualTo(global::app.type.item.permission.Verb.Execute);
     }
 
     [Test] public async Task ExecuteVerb_PromptCopy_DistinguishesFromRead()
@@ -80,15 +80,15 @@ public class ExecuteVerbTests
         var p = new FilePath(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "lib.dll"), app.User.Context);
         // Grant Read only.
-        var permission = new global::app.type.permission.@this(
+        var permission = new global::app.type.item.permission.@this(
             Actor: app.User.Name,
             Path: p.Absolute,
-            Verbs: new System.Collections.Generic.HashSet<global::app.type.permission.Verb> { global::app.type.permission.Verb.Read },
-            Match: global::app.type.permission.Match.Exact);
-        var grantData = new global::app.data.@this<global::app.type.permission.@this>("", permission, context: app.User.Context);
+            Verbs: new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.Read },
+            Match: global::app.type.item.permission.Match.Exact);
+        var grantData = new global::app.data.@this<global::app.type.item.permission.@this>("", permission, context: app.User.Context);
         await app.User.Permission.Add(grantData, persist: true);
         // Execute should NOT be covered.
-        var executeMatch = await app.User.Permission.Find(p, global::app.type.permission.Verb.Execute);
+        var executeMatch = await app.User.Permission.Find(p, global::app.type.item.permission.Verb.Execute);
         await Assert.That(executeMatch).IsNull();
     }
 

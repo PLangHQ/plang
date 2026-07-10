@@ -57,8 +57,8 @@ public class LlmIntegrationTests
         };
 
         var result = await RunWithSnapshot("SimpleCalculation", messages, new query(Ctx) { Messages = messages.ToListData<LlmMessage>(),
-            Temperature = (global::app.type.number.@this)0.0,
-            MaxTokens = (global::app.type.number.@this)50,
+            Temperature = (global::app.type.item.number.@this)0.0,
+            MaxTokens = (global::app.type.item.number.@this)50,
             Cache = (global::app.type.item.@bool.@this)false
         });
         if (result == null) return; // skipped, no API key
@@ -81,8 +81,8 @@ public class LlmIntegrationTests
 
         var result = await RunWithSnapshot("JsonSchema", messages, new query(Ctx) { Messages = messages.ToListData<LlmMessage>(),
             Schema = Ctx.Ok("{\"sentiment\": \"string\", \"score\": \"number\"}"),
-            Temperature = (global::app.type.number.@this)0.0,
-            MaxTokens = (global::app.type.number.@this)100,
+            Temperature = (global::app.type.item.number.@this)0.0,
+            MaxTokens = (global::app.type.item.number.@this)100,
             Cache = (global::app.type.item.@bool.@this)false
         });
         if (result == null) return;
@@ -91,7 +91,7 @@ public class LlmIntegrationTests
         // Value should be parsed JSON (JsonElement)
         await Assert.That((await result.Value())).IsNotNull();
         var __low = global::app.type.item.@this.Lower<object>(await result.Value());
-        var json = __low is JsonElement je ? je : JsonSerializer.SerializeToElement<object?>(__low is global::app.type.dict.@this _nd ? _nd.Clr<object>() : (await result.Value()));
+        var json = __low is JsonElement je ? je : JsonSerializer.SerializeToElement<object?>(__low is global::app.type.item.dict.@this _nd ? _nd.Clr<object>() : (await result.Value()));
         await Assert.That(json.TryGetProperty("sentiment", out _)).IsTrue();
         await Assert.That((await result.Properties.Value("Format"))?.ToString()).IsEqualTo("json");
     }
@@ -109,8 +109,8 @@ public class LlmIntegrationTests
 
         var result = await RunWithSnapshot("PythonFormat", messages, new query(Ctx) { Messages = messages.ToListData<LlmMessage>(),
             Format = (global::app.type.item.text.@this)"python",
-            Temperature = (global::app.type.number.@this)0.0,
-            MaxTokens = (global::app.type.number.@this)200,
+            Temperature = (global::app.type.item.number.@this)0.0,
+            MaxTokens = (global::app.type.item.number.@this)200,
             Cache = (global::app.type.item.@bool.@this)false
         });
         if (result == null) return;
@@ -135,8 +135,8 @@ public class LlmIntegrationTests
         };
 
         var result1 = await RunWithSnapshot("ConvPart1", messages1, new query(Ctx) { Messages = messages1.ToListData<LlmMessage>(),
-            Temperature = (global::app.type.number.@this)0.0,
-            MaxTokens = (global::app.type.number.@this)50,
+            Temperature = (global::app.type.item.number.@this)0.0,
+            MaxTokens = (global::app.type.item.number.@this)50,
             Cache = (global::app.type.item.@bool.@this)false
         });
         if (result1 == null) return;
@@ -150,8 +150,8 @@ public class LlmIntegrationTests
 
         var result2 = await RunWithSnapshot("ConvPart2", messages2, new query(Ctx) { Messages = messages2.ToListData<LlmMessage>(),
             ContinuePreviousConversation = (global::app.type.item.@bool.@this)true,
-            Temperature = (global::app.type.number.@this)0.0,
-            MaxTokens = (global::app.type.number.@this)50,
+            Temperature = (global::app.type.item.number.@this)0.0,
+            MaxTokens = (global::app.type.item.number.@this)50,
             Cache = (global::app.type.item.@bool.@this)false
         });
         if (result2 == null) return;
@@ -263,8 +263,8 @@ public class LlmIntegrationTests
 
         var action = new query(Ctx) { Messages = messages.ToListData<LlmMessage>(),
             Tools = tools.ToListData<GoalCall>(),
-            Temperature = (global::app.type.number.@this)0.0,
-            MaxTokens = (global::app.type.number.@this)200,
+            Temperature = (global::app.type.item.number.@this)0.0,
+            MaxTokens = (global::app.type.item.number.@this)200,
             Cache = (global::app.type.item.@bool.@this)false
         };
 

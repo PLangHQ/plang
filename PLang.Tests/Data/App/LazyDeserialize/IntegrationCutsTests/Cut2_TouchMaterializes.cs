@@ -59,8 +59,8 @@ public class Cut2_TouchMaterializes
         var ctx = app.User.Context;
         const string big = "9999999999999999999999";
         var d = data.FromRaw(big, type.Create("number", "biginteger", context: ctx), ctx, "n");
-        await Assert.That(((global::app.type.number.@this)(await d.Value())!).BoxedValue).IsTypeOf<BigInteger>();
-        await Assert.That(((global::app.type.number.@this)(await d.Value())!).Clr<BigInteger>()).IsEqualTo(BigInteger.Parse(big)); // lossless
+        await Assert.That(((global::app.type.item.number.@this)(await d.Value())!).BoxedValue).IsTypeOf<BigInteger>();
+        await Assert.That(((global::app.type.item.number.@this)(await d.Value())!).Clr<BigInteger>()).IsEqualTo(BigInteger.Parse(big)); // lossless
     }
 
     // The image materialises only when its value is touched (e.g. width), not
@@ -75,7 +75,7 @@ public class Cut2_TouchMaterializes
         await Assert.That(d.Raw is byte[]).IsTrue();   // scalar = raw bytes, no decode (Peek is the source carrier)
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
 
-        await Assert.That((await d.Value())).IsTypeOf<global::app.type.image.@this>(); // touch materializes
+        await Assert.That((await d.Value())).IsTypeOf<global::app.type.item.image.@this>(); // touch materializes
         await Assert.That(d.MaterializeCount()).IsEqualTo(1);
     }
 }

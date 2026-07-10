@@ -1,7 +1,7 @@
 using app;
 using app.actor.context;
 using app.variable;
-using app.type.path;
+using app.type.item.path;
 
 namespace PLang.Tests.App.Modules.condition;
 

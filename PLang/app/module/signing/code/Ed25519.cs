@@ -44,15 +44,15 @@ public class Ed25519 : ISigning
 
         // Build the unsigned signature wrapping the data, compute its signing bytes,
         // sign with the identity's private key, stamp the signature in.
-        var unsigned = new global::app.type.signature.@this(
+        var unsigned = new global::app.type.item.signature.@this(
             value: action.Data!,
             algorithm: new global::app.type.item.text.@this(Name),
             nonce: new global::app.type.item.text.@this(nonce),
-            created: new global::app.type.datetime.@this(now),
+            created: new global::app.type.item.datetime.@this(now),
             identity: new global::app.type.item.text.@this(identity.PublicKey),
             hash: hash,
-            signature: new global::app.type.binary.@this(Array.Empty<byte>()),
-            expires: expires is { } e ? new global::app.type.datetime.@this(e) : null,
+            signature: new global::app.type.item.binary.@this(Array.Empty<byte>()),
+            expires: expires is { } e ? new global::app.type.item.datetime.@this(e) : null,
             contracts: contracts);
 
         try
@@ -68,7 +68,7 @@ public class Ed25519 : ISigning
 
     public virtual async Task<data.@this<global::app.type.item.@bool.@this>> VerifyAsync(verify action)
     {
-        if (action.Data?.Peek() is not global::app.type.signature.@this signature)
+        if (action.Data?.Peek() is not global::app.type.item.signature.@this signature)
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Data has no signature", "NoSignature", 400));
 
         var app = action.Context.App;
@@ -190,16 +190,16 @@ public class Ed25519 : ISigning
     // VerifyAsync, which hold action.Context) borns the data.error. Same shape as number ops.
     // They speak plang types; CLR appears only at the NSec call (the 3rd-party perimeter), where
     // the signature is decomposed into its signing bytes / identity / signature bytes.
-    public global::app.type.binary.@this Sign(global::app.type.signature.@this unsigned, global::app.type.item.text.@this privateKey)
+    public global::app.type.item.binary.@this Sign(global::app.type.item.signature.@this unsigned, global::app.type.item.text.@this privateKey)
     {
         var algorithm = SignatureAlgorithm.Ed25519;
         var privateKeyBytes = Convert.FromBase64String(privateKey.ToString());
         using var key = Key.Import(algorithm, privateKeyBytes, KeyBlobFormat.RawPrivateKey,
             new KeyCreationParameters { ExportPolicy = KeyExportPolicies.AllowPlaintextExport });
-        return new global::app.type.binary.@this(algorithm.Sign(key, unsigned.ToSigningBytes()));
+        return new global::app.type.item.binary.@this(algorithm.Sign(key, unsigned.ToSigningBytes()));
     }
 
-    public global::app.type.item.@bool.@this Verify(global::app.type.signature.@this signature)
+    public global::app.type.item.@bool.@this Verify(global::app.type.item.signature.@this signature)
     {
         var algorithm = SignatureAlgorithm.Ed25519;
         var publicKeyBytes = Convert.FromBase64String(signature.Identity.ToString());

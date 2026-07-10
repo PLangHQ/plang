@@ -38,9 +38,9 @@ public sealed partial class @this
     /// Per-App scheme registry for <see cref="path.@this"/>. Populated at App
     /// construction with built-in factories (<c>"file"</c>; later <c>"http"</c>
     /// and <c>"https"</c>). External DLLs loaded via <c>code.load</c> add their
-    /// own schemes via <see cref="path.scheme.@this.Register"/>.
+    /// own schemes via <see cref="global::app.type.item.path.scheme.@this.Register"/>.
     /// </summary>
-    public path.scheme.@this Scheme { get; } = new();
+    public global::app.type.item.path.scheme.@this Scheme { get; } = new();
 
     /// <summary>
     /// Per-App build-time kind dispatcher — discovers and invokes each

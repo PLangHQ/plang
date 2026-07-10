@@ -47,7 +47,7 @@ public class FluidIncludeDenialTests
         var goal = new Goal
         {
             Name = "Host",
-            Path = global::app.type.path.@this.Resolve("/host.goal", app.User.Context)
+            Path = global::app.type.item.path.@this.Resolve("/host.goal", app.User.Context)
         };
         app.User.Context.Goal = goal;
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
@@ -80,7 +80,7 @@ public class FluidIncludeDenialTests
         var goal = new Goal
         {
             Name = "Host",
-            Path = global::app.type.path.@this.Resolve("/host.goal", app.User.Context)
+            Path = global::app.type.item.path.@this.Resolve("/host.goal", app.User.Context)
         };
         app.User.Context.Goal = goal;
 

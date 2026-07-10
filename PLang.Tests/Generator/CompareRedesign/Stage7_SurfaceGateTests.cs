@@ -95,7 +95,7 @@ public class Stage7_SurfaceGateTests
     {
         // the standing exemption is structural: path.Absolute is INTERNAL (the
         // type's gated interop edge), so the public-only gate never sees it
-        var prop = typeof(global::app.type.path.@this).GetProperty("Absolute",
+        var prop = typeof(global::app.type.item.path.@this).GetProperty("Absolute",
             BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
         await Assert.That(prop).IsNotNull();
         await Assert.That(prop!.GetMethod!.IsAssembly).IsTrue();
@@ -106,7 +106,7 @@ public class Stage7_SurfaceGateTests
     {
         // the public projection is `!absolute` on the property plane; the raw
         // string lives at internal .Absolute (no public string member)
-        var pub = typeof(global::app.type.path.@this).GetProperty("Absolute",
+        var pub = typeof(global::app.type.item.path.@this).GetProperty("Absolute",
             BindingFlags.Public | BindingFlags.Instance);
         await Assert.That(pub).IsNull();
     }
@@ -116,14 +116,14 @@ public class Stage7_SurfaceGateTests
     {
         var t = new global::app.type.item.text.@this("héllo");
         object length = t.Length;
-        await Assert.That(length).IsTypeOf<global::app.type.number.@this>();
+        await Assert.That(length).IsTypeOf<global::app.type.item.number.@this>();
         await Assert.That(length.ToString()).IsEqualTo("5");
     }
 
     [Test]
     public async Task DictKeys_ReturnsListOfText_NotIEnumerableString()
     {
-        var d = new global::app.type.dict.@this(global::PLang.Tests.TestApp.SharedContext);
+        var d = new global::app.type.item.dict.@this(global::PLang.Tests.TestApp.SharedContext);
         d.Set(new Data("name", "a", context: global::PLang.Tests.TestApp.SharedContext));
         d.Set(new Data("age", 30L, context: global::PLang.Tests.TestApp.SharedContext));
         object keys = d.Keys;
@@ -140,10 +140,10 @@ public class Stage7_SurfaceGateTests
         l.Add(new Data("", 1, context: global::PLang.Tests.TestApp.SharedContext));
         l.Add(new Data("", 2, context: global::PLang.Tests.TestApp.SharedContext));
         object count = l.Count;
-        await Assert.That(count).IsTypeOf<global::app.type.number.@this>();
+        await Assert.That(count).IsTypeOf<global::app.type.item.number.@this>();
         await Assert.That(count.ToString()).IsEqualTo("2");
-        object dictCount = new global::app.type.dict.@this(global::PLang.Tests.TestApp.SharedContext).Count;
-        await Assert.That(dictCount).IsTypeOf<global::app.type.number.@this>();
+        object dictCount = new global::app.type.item.dict.@this(global::PLang.Tests.TestApp.SharedContext).Count;
+        await Assert.That(dictCount).IsTypeOf<global::app.type.item.number.@this>();
     }
 
     [Test]
@@ -153,12 +153,12 @@ public class Stage7_SurfaceGateTests
         File.WriteAllText(tmp, "12345");
         try
         {
-            var fp = new global::app.type.path.file.@this(tmp, global::PLang.Tests.TestApp.SharedContext);
+            var fp = new global::app.type.item.path.file.@this(tmp, global::PLang.Tests.TestApp.SharedContext);
             object size = fp.Size;
-            await Assert.That(size).IsTypeOf<global::app.type.number.@this>();
+            await Assert.That(size).IsTypeOf<global::app.type.item.number.@this>();
             await Assert.That(size.ToString()).IsEqualTo("5");
-            object fileSize = new global::app.type.file.@this(fp).Size;
-            await Assert.That(fileSize).IsTypeOf<global::app.type.number.@this>();
+            object fileSize = new global::app.type.item.file.@this(fp).Size;
+            await Assert.That(fileSize).IsTypeOf<global::app.type.item.number.@this>();
         }
         finally { File.Delete(tmp); }
     }

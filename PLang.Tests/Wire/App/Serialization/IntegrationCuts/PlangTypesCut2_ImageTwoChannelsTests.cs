@@ -1,5 +1,5 @@
 using System.Text.Json;
-using image = global::app.type.image.@this;
+using image = global::app.type.item.image.@this;
 
 namespace PLang.Tests.App.Serialization.IntegrationCuts;
 
@@ -46,7 +46,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
     {
         await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut2t-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var p = global::app.type.path.@this.Resolve("/srv/photo.png", app.User.Context);
+        var p = global::app.type.item.path.@this.Resolve("/srv/photo.png", app.User.Context);
         var img = new image(PngBytes, "image/png", p);
 
         var write = app.Type.Renderers.Of("image", "text");
@@ -78,7 +78,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
     {
         await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut2s-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var p = global::app.type.path.@this.Resolve("/srv/x.png", app.User.Context);
+        var p = global::app.type.item.path.@this.Resolve("/srv/x.png", app.User.Context);
         var img = new image(PngBytes, "image/png", p);
         var beforeBytes = img.Bytes;
 

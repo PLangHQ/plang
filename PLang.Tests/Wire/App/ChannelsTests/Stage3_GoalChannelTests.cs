@@ -17,7 +17,7 @@ public class Stage3_GoalChannelTests
     public async Task GoalChannel_WriteCore_InvokesGoalWithDataBound()
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/g1");
-        var goal = new EngineGoal { Name = "Probe", Path = global::app.type.path.@this.Resolve("Probe.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.path.@this.Resolve("/Probe.pr", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new EngineGoal { Name = "Probe", Path = global::app.type.item.path.@this.Resolve("Probe.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/Probe.pr", global::PLang.Tests.TestApp.SharedContext) };
         var ch = new GoalChannel("logger", goal, app.User);
         var dataIn = app.Ok("payload-A");
         var result = await ch.Write(dataIn);
@@ -31,7 +31,7 @@ public class Stage3_GoalChannelTests
     public async Task GoalChannel_WriteCore_ReturnsGoalsResultData()
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/g2");
-        var goal = new EngineGoal { Name = "ReturnsOk", Path = global::app.type.path.@this.Resolve("Returns.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.path.@this.Resolve("/R.pr", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new EngineGoal { Name = "ReturnsOk", Path = global::app.type.item.path.@this.Resolve("Returns.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/R.pr", global::PLang.Tests.TestApp.SharedContext) };
         var ch = new GoalChannel("c", goal, app.User);
         var result = await ch.Write(app.Ok("x"));
         await result.IsSuccess();
@@ -41,7 +41,7 @@ public class Stage3_GoalChannelTests
     public async Task GoalChannel_IsExecuting_IsFalseBeforeAndAfterWrite()
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/g_exec");
-        var goal = new EngineGoal { Name = "G", Path = global::app.type.path.@this.Resolve("G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new EngineGoal { Name = "G", Path = global::app.type.item.path.@this.Resolve("G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         var ch = new GoalChannel("x", goal, app.User);
         await Assert.That(ch.IsExecuting).IsFalse();
         await ch.Write(app.Ok("x"));
@@ -55,7 +55,7 @@ public class Stage3_GoalChannelTests
         // running, the registry treats that name as not-found, so a body that
         // writes to its own name can't loop back into itself.
         var app = global::PLang.Tests.TestApp.Create("/tmp/g_recurse");
-        var goal = new EngineGoal { Name = "G", Path = global::app.type.path.@this.Resolve("G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new EngineGoal { Name = "G", Path = global::app.type.item.path.@this.Resolve("G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         var ch = new GoalChannel("logger", goal, app.User);
         app.User.Channel.Register(ch);
 
@@ -86,7 +86,7 @@ public class Stage3_GoalChannelTests
         // With the old foundational-snapshot approach, late-registered names
         // were invisible there. With per-channel IsExecuting, they aren't.
         var app = global::PLang.Tests.TestApp.Create("/tmp/g_late");
-        var sinkGoal = new EngineGoal { Name = "Sink", Path = global::app.type.path.@this.Resolve("S.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.path.@this.Resolve("/S.pr", global::PLang.Tests.TestApp.SharedContext) };
+        var sinkGoal = new EngineGoal { Name = "Sink", Path = global::app.type.item.path.@this.Resolve("S.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/S.pr", global::PLang.Tests.TestApp.SharedContext) };
         var sink = new GoalChannel("sink", sinkGoal, app.User);
         app.User.Channel.Register(sink);
 
@@ -113,7 +113,7 @@ public class Stage3_GoalChannelTests
     public async Task GoalChannel_Ask_InvokesGoal_ReturnsAnswer()
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/g8");
-        var goal = new EngineGoal { Name = "Asker", Path = global::app.type.path.@this.Resolve("Asker.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.path.@this.Resolve("/A.pr", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new EngineGoal { Name = "Asker", Path = global::app.type.item.path.@this.Resolve("Asker.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/A.pr", global::PLang.Tests.TestApp.SharedContext) };
         var ch = new GoalChannel("input", goal, app.User);
         var result = await ch.Ask(new global::app.module.output.ask(app.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "q?") });
         await result.IsSuccess();
@@ -123,7 +123,7 @@ public class Stage3_GoalChannelTests
     public async Task GoalChannel_Dispose_DoesNotDisposeUnderlyingGoal()
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/g9");
-        var goal = new EngineGoal { Name = "G", Path = global::app.type.path.@this.Resolve("G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new EngineGoal { Name = "G", Path = global::app.type.item.path.@this.Resolve("G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         var ch = new GoalChannel("c", goal, app.User);
         await ch.DisposeAsync();
         // Goal still usable — re-register as a different channel.

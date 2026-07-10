@@ -5,13 +5,13 @@ using app.test;
 using app.Utils;
 using app.variable;
 using Goal = app.goal.@this;
-using FilePath = app.type.path.file.@this;
+using FilePath = app.type.item.path.file.@this;
 
 namespace app.module.test;
 
 /// <summary>
 /// Walks a directory tree for *.test.goal files (via <c>rootPath.List</c>, which
-/// routes through <see cref="app.type.path.file.@this.AuthGate"/>), loads each
+/// routes through <see cref="app.type.item.path.file.@this.AuthGate"/>), loads each
 /// file's .pr through path verbs, checks freshness against the current .goal
 /// text (SHA-256 of Name + concat(Step.Text)), extracts user tags (via
 /// test.tag actions) and auto-tags (via [RequiresCapability] on the action
@@ -30,7 +30,7 @@ public partial class discover : IContext
 {
     /// <summary>Directory to walk. AuthGate(Read) enforces in-root vs prompt-or-deny.</summary>
     [Default(".")]
-    public partial data.@this<global::app.type.path.@this> Path { get; init; }
+    public partial data.@this<global::app.type.item.path.@this> Path { get; init; }
 
     /// <summary>Filename pattern. Default matches PLang test convention.</summary>
     [Default("*.test.goal")]
@@ -64,7 +64,7 @@ public partial class discover : IContext
         {
             // .test.goal files only resolve under the file scheme; foreign schemes
             // skip silently. The List call already returned filesystem paths.
-            if (await row.Value<global::app.type.path.@this>() is not FilePath fileMatch) continue;
+            if (await row.Value<global::app.type.item.path.@this>() is not FilePath fileMatch) continue;
             files.Add(new data.@this("", await DiscoverOne(fileMatch, app, include, exclude), context: Context));
         }
         return Context.Ok<global::app.type.list.@this<global::app.test.@this>>(
@@ -288,7 +288,7 @@ public partial class discover : IContext
                 when je.ValueKind == System.Text.Json.JsonValueKind.Object
                 && je.TryGetProperty("Name", out var np) => np.GetString(),
             // A goal.call param read back from the .pr is the native dict value type.
-            app.type.dict.@this nd when nd.Get("Name") is { } nameData => nameData.Peek()?.ToString(),
+            app.type.item.dict.@this nd when nd.Get("Name") is { } nameData => nameData.Peek()?.ToString(),
             Clr { Value: System.Collections.Generic.IDictionary<string, object?> dict }
                 when dict.TryGetValue("Name", out var nm) => nm?.ToString(),
             _ => null

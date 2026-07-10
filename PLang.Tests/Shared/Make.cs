@@ -136,7 +136,7 @@ public static class Make
         var goal = new global::app.goal.@this
         {
             Name = name,
-            Path = global::app.type.path.@this.Resolve(path, global::PLang.Tests.TestApp.SharedContext),
+            Path = global::app.type.item.path.@this.Resolve(path, global::PLang.Tests.TestApp.SharedContext),
             // Steps need a context so the disabled-step probe (and any enumeration,
             // e.g. PrWrite serialization in RealGoalLoad.ViaChannel) doesn't deref a
             // null context. Transient like the param births — the real actor context

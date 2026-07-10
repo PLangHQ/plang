@@ -31,8 +31,8 @@ public partial class run : IContext
     [IsNotNull]
     public partial data.@this<global::app.type.list.@this<global::app.test.@this>> Tests { get; init; }
 
-    public partial data.@this<global::app.type.number.@this>? Parallel { get; init; }
-    public partial data.@this<global::app.type.number.@this>? Timeout { get; init; }
+    public partial data.@this<global::app.type.item.number.@this>? Parallel { get; init; }
+    public partial data.@this<global::app.type.item.number.@this>? Timeout { get; init; }
 
     public async Task<data.@this<global::app.type.list.@this<global::app.test.@this>>> Run()
     {

@@ -53,7 +53,7 @@ public class TypeTests
     {
         var type = global::PLang.Tests.TestApp.SharedContext.Type.Create("dict");
 
-        await Assert.That(type.ClrType).IsEqualTo(typeof(app.type.dict.@this));
+        await Assert.That(type.ClrType).IsEqualTo(typeof(app.type.item.dict.@this));
     }
 
     [Test]

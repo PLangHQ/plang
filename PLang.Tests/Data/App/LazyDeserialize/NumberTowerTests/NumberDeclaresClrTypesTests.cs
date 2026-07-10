@@ -3,7 +3,7 @@ using System.Numerics;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using number = global::app.type.number.@this;
+using number = global::app.type.item.number.@this;
 using convert = global::app.type.convert.@this;
 
 namespace PLang.Tests.App.LazyDeserialize.NumberTowerTests;

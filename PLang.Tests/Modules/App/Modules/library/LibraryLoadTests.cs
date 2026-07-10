@@ -26,7 +26,7 @@ public class ModuleAddTests
         await using var app = TestApp.Create("/app");
         var context = app.User.Context;
 
-        var add = new Add(context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve("nonexistent_mylib.dll", context)),
+        var add = new Add(context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve("nonexistent_mylib.dll", context)),
             Namespace = null
         };
 
@@ -42,7 +42,7 @@ public class ModuleAddTests
         var (context, app, assemblyPath) = CreateContextWithAssembly();
         await using (app)
         {
-            var add = new Add(context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
+            var add = new Add(context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(assemblyPath, context)),
                 Namespace = (global::app.type.item.text.@this)"app.module"
             };
 
@@ -61,7 +61,7 @@ public class ModuleAddTests
         var (context, app, assemblyPath) = CreateContextWithAssembly();
         await using (app)
         {
-            var add = new Add(context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
+            var add = new Add(context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(assemblyPath, context)),
                 Namespace = (global::app.type.item.text.@this)"app.module"
             };
 
@@ -79,7 +79,7 @@ public class ModuleAddTests
         var (context, app, assemblyPath) = CreateContextWithAssembly();
         await using (app)
         {
-            var add = new Add(context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
+            var add = new Add(context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(assemblyPath, context)),
                 Namespace = (global::app.type.item.text.@this)"Some.Completely.Wrong.Namespace"
             };
 
@@ -97,7 +97,7 @@ public class ModuleAddTests
         var (context, app, assemblyPath) = CreateContextWithAssembly();
         await using (app)
         {
-            var add = new Add(context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
+            var add = new Add(context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(assemblyPath, context)),
                 Namespace = (global::app.type.item.text.@this)"app.module"
             };
 
@@ -114,7 +114,7 @@ public class ModuleAddTests
         var (context, app, assemblyPath) = CreateContextWithAssembly();
         await using (app)
         {
-            var add = new Add(context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
+            var add = new Add(context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(assemblyPath, context)),
                 Namespace = null
             };
 
@@ -132,7 +132,7 @@ public class ModuleAddTests
         var (context, app, assemblyPath) = CreateContextWithAssembly();
         await using (app)
         {
-            var add = new Add(context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
+            var add = new Add(context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(assemblyPath, context)),
                 Namespace = (global::app.type.item.text.@this)"app.module"
             };
 

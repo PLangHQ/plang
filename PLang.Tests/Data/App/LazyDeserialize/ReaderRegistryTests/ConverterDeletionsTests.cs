@@ -18,15 +18,15 @@ public class ConverterDeletionsTests
         => global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-conv-del-" + System.Guid.NewGuid().ToString("N")[..8]));
 
-    public sealed class InnerFixture { public global::app.type.path.@this? File { get; set; } }
+    public sealed class InnerFixture { public global::app.type.item.path.@this? File { get; set; } }
     public sealed class MidFixture { public InnerFixture? Inner { get; set; } }
     public sealed class OuterFixture { public MidFixture? Mid { get; set; } }
 
     [Test] public async Task PathJsonConverter_TypeIsGone()
     {
         // app/type/path/this.JsonConverter.cs — type name `JsonConverter`
-        // in the `app.type.path` namespace. Deleted; decode moved to path.Read.
-        await Assert.That(PLangAssembly.GetType("app.type.path.JsonConverter")).IsNull();
+        // in the `app.type.item.path` namespace. Deleted; decode moved to path.Read.
+        await Assert.That(PLangAssembly.GetType("app.type.item.path.JsonConverter")).IsNull();
     }
 
     [Test] public async Task TypeJson_StillExists_ReadsTypeDescriptor()
@@ -82,11 +82,11 @@ public class ConverterDeletionsTests
 
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var p = global::app.type.path.@this.Resolve("/srv/app/cfg.json", ctx);
+        var p = global::app.type.item.path.@this.Resolve("/srv/app/cfg.json", ctx);
         var opts = new System.Text.Json.JsonSerializerOptions
         { Converters = { new global::app.channel.serializer.json.Converter(ctx) } };
-        var json = System.Text.Json.JsonSerializer.Serialize<global::app.type.path.@this>(p, opts);
-        var back = System.Text.Json.JsonSerializer.Deserialize<global::app.type.path.@this>(json, opts);
+        var json = System.Text.Json.JsonSerializer.Serialize<global::app.type.item.path.@this>(p, opts);
+        var back = System.Text.Json.JsonSerializer.Deserialize<global::app.type.item.path.@this>(json, opts);
         await Assert.That(back).IsNotNull();
         await Assert.That(back!.Relative).IsEqualTo(p.Relative);
     }

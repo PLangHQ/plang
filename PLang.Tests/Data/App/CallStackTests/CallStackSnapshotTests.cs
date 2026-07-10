@@ -7,7 +7,7 @@ public class CallStackSnapshotTests
     private static (Goal goal, Step step, ActionEntity action) MakeFrame(
         string goalName, string stepText = "step", string module = "test", string actionName = "test")
     {
-        var goal = new Goal { Name = goalName, Path = global::app.type.path.@this.Resolve($"/{goalName}.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = goalName, Path = global::app.type.item.path.@this.Resolve($"/{goalName}.goal", global::PLang.Tests.TestApp.SharedContext) };
         var step = new Step { Index = 0, Text = stepText, Goal = goal };
         var action = new ActionEntity { Module = module, ActionName = actionName };
         action.Step = step;

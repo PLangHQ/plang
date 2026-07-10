@@ -89,7 +89,7 @@ public static class Plng002
     /// like everyone else.
     /// </summary>
     private static bool IsPathTypeSurface(string normalizedPath)
-        => normalizedPath.Contains("/PLang/app/type/path/");
+        => normalizedPath.Contains("/PLang/app/type/item/path/");
 
     /// <summary>
     /// True for the single <c>PathHelper.cs</c> forwarder. PathHelper IS the

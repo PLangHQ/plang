@@ -26,7 +26,7 @@ public class TagActionTests
     private static global::app.test.@this NewTest() =>
         new(global::PLang.Tests.TestApp.SharedContext)
         {
-            Goal = new Goal { Name = "T", Path = global::app.type.path.@this.Resolve("/Tests/T.test.goal", global::PLang.Tests.TestApp.SharedContext) }
+            Goal = new Goal { Name = "T", Path = global::app.type.item.path.@this.Resolve("/Tests/T.test.goal", global::PLang.Tests.TestApp.SharedContext) }
         };
 
     private static IEnumerable<string> TagStrings(global::app.test.@this test) =>

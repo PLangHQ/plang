@@ -1,7 +1,7 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using FilePath = global::app.type.path.file.@this;
+using FilePath = global::app.type.item.path.file.@this;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.Settings;

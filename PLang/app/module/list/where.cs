@@ -42,7 +42,7 @@ public partial class Where : IContext
             return Context.Ok(kept, Context.Type.Create("list"));
         }
 
-        if (subjectVal is app.type.dict.@this)
+        if (subjectVal is app.type.item.dict.@this)
         {
             // dict.where is the leaf — subject is the dict itself, kept or dropped.
             bool keep = await Keep(subject, field, op);

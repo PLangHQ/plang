@@ -28,7 +28,7 @@ public class MathTests
         await Assert.That((await result.Value())).IsEqualTo(7);
         // plang-types Stage 4: math.* returns Data<number>; the underlying kind
         // is Int (not the CLR `int`).
-        await Assert.That((await result.Value())!.Kind).IsEqualTo(global::app.type.number.NumberKind.Int);
+        await Assert.That((await result.Value())!.Kind).IsEqualTo(global::app.type.item.number.NumberKind.Int);
     }
 
     [Test]
@@ -41,7 +41,7 @@ public class MathTests
         var result = await action.Run();
 
         await Assert.That((await result.Value())).IsEqualTo(7.5);
-        await Assert.That((await result.Value())!.Kind).IsEqualTo(global::app.type.number.NumberKind.Double);
+        await Assert.That((await result.Value())!.Kind).IsEqualTo(global::app.type.item.number.NumberKind.Double);
     }
 
     // --- Subtract ---
@@ -178,7 +178,7 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Round(context) { Value = new global::app.data.@this("", 3.14159, context: context), Decimals = (global::app.type.number.@this)2 };
+        var action = new Round(context) { Value = new global::app.data.@this("", 3.14159, context: context), Decimals = (global::app.type.item.number.@this)2 };
         await action.Attach(null, context);
         var result = await action.Run();
 
@@ -244,7 +244,7 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new global::app.module.math.Random(context) { Min = (global::app.type.number.@this)1, Max = (global::app.type.number.@this)10 };
+        var action = new global::app.module.math.Random(context) { Min = (global::app.type.item.number.@this)1, Max = (global::app.type.item.number.@this)10 };
         await action.Attach(null, context);
         var result = await action.Run();
 

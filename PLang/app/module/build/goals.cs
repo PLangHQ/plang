@@ -7,7 +7,7 @@ namespace app.module.build;
 [Action("goals")]
 public partial class goals : IContext
 {
-    public partial data.@this<global::app.type.path.@this> Path { get; init; }
+    public partial data.@this<global::app.type.item.path.@this> Path { get; init; }
 
     [Code]
     public partial IBuilder Builder { get; }

@@ -28,7 +28,7 @@ public sealed class Default : IHttp
     public string? Source { get; set; }
 
     private readonly HttpMessageHandler? _handler;
-    private readonly Dictionary<(global::app.type.item.@bool.@this follow, global::app.type.number.@this max), HttpClient> _clients = new();
+    private readonly Dictionary<(global::app.type.item.@bool.@this follow, global::app.type.item.number.@this max), HttpClient> _clients = new();
 
     public Default() { }
 
@@ -271,7 +271,7 @@ public sealed class Default : IHttp
     /// Returns Data so the size/throughput failures carry their own keys instead
     /// of being laundered through the outer catch.
     /// </summary>
-    private static async Task<data.@this<global::app.type.binary.@this>> ReadLimitedBytesAsync(
+    private static async Task<data.@this<global::app.type.item.binary.@this>> ReadLimitedBytesAsync(
         HttpContent content, long maxBytes, actor.context.@this context, CancellationToken ct = default)
     {
         using var stream = await content.ReadAsStreamAsync(ct);
@@ -286,7 +286,7 @@ public sealed class Default : IHttp
         {
             totalRead += bytesRead;
             if (totalRead > maxBytes)
-                return context.Error<global::app.type.binary.@this>(new ServiceError(
+                return context.Error<global::app.type.item.binary.@this>(new ServiceError(
                     $"Response body exceeds maximum size of {FormatBytes(maxBytes)}",
                     "ResponseTooLarge", 413));
             limited.Write(buffer, 0, bytesRead);
@@ -296,7 +296,7 @@ public sealed class Default : IHttp
             if (elapsed >= 30)
             {
                 if (throughputBytes / elapsed < 1024)
-                    return context.Error<global::app.type.binary.@this>(new ServiceError(
+                    return context.Error<global::app.type.item.binary.@this>(new ServiceError(
                         "Response too slow — possible slow-loris attack",
                         "SlowResponse", 408));
                 throughputStart = DateTimeOffset.UtcNow;
@@ -304,7 +304,7 @@ public sealed class Default : IHttp
             }
         }
 
-        return context.Ok<global::app.type.binary.@this>(limited.ToArray());
+        return context.Ok<global::app.type.item.binary.@this>(limited.ToArray());
     }
 
     /// <summary>
@@ -324,7 +324,7 @@ public sealed class Default : IHttp
 
     private Task<HttpResponseMessage> SendHttpAsync(
         HttpRequestMessage request, HttpCompletionOption completionOption,
-        global::app.type.item.@bool.@this followRedirects, global::app.type.number.@this maxRedirects, CancellationToken ct)
+        global::app.type.item.@bool.@this followRedirects, global::app.type.item.number.@this maxRedirects, CancellationToken ct)
         => Client(followRedirects, maxRedirects).SendAsync(request, completionOption, ct);
 
     public void Dispose()
@@ -337,7 +337,7 @@ public sealed class Default : IHttp
     // key (both value-equal). Redirect policy is baked into the handler at construction, so a client
     // is reused across requests with the same policy (socket reuse / pooling) while each request
     // still picks its own. The only lowering to CLR is at the SocketsHttpHandler (BCL) boundary.
-    private HttpClient Client(global::app.type.item.@bool.@this followRedirects, global::app.type.number.@this maxRedirects)
+    private HttpClient Client(global::app.type.item.@bool.@this followRedirects, global::app.type.item.number.@this maxRedirects)
     {
         var key = (followRedirects, maxRedirects);
         if (!_clients.TryGetValue(key, out var client))
@@ -557,7 +557,7 @@ public sealed class Default : IHttp
             return verifyResult;
         }
 
-        await context.Variable.Set("!ServiceIdentity", (data?.Peek() as global::app.type.signature.@this)?.Identity?.ToString());
+        await context.Variable.Set("!ServiceIdentity", (data?.Peek() as global::app.type.item.signature.@this)?.Identity?.ToString());
 
         BuildProperties(data, request, response);
         return data;
@@ -577,7 +577,7 @@ public sealed class Default : IHttp
 
         // A signed response body reads back as a `signature` layer wrapping the
         // inner data (the read boundary auto-verifies; verify peels it).
-        if (data?.Peek() is global::app.type.signature.@this layer)
+        if (data?.Peek() is global::app.type.item.signature.@this layer)
         {
             var verifyAction = new signing.verify(context) { Data = data };
             var verifyResult = await app.Run<signing.verify>(verifyAction, context);
@@ -867,7 +867,7 @@ public sealed class Default : IHttp
                 continue;
             }
 
-            await context.Variable.Set("!ServiceIdentity", (data?.Peek() as global::app.type.signature.@this)?.Identity?.ToString());
+            await context.Variable.Set("!ServiceIdentity", (data?.Peek() as global::app.type.item.signature.@this)?.Identity?.ToString());
             await RunCallbackAsync(onStream, data, null, "chunk", app, context, ct);
         }
     }
@@ -959,7 +959,7 @@ public sealed class Default : IHttp
         }
 
         // Auto-detect
-        if (content is global::app.type.dict.@this
+        if (content is global::app.type.item.dict.@this
             || content is Clr { Value: Dictionary<string, object> or JsonElement { ValueKind: JsonValueKind.Object } })
         {
             return await CreateFormContentAsync(app, context, content);
@@ -972,7 +972,7 @@ public sealed class Default : IHttp
             // Out-of-root probes prompt or deny; in-root fast-passes. Any failure
             // (including denial) falls through to "treat as a string body" —
             // matches the prior "if not a file, send as string" shape.
-            var p = global::app.type.path.@this.Resolve(str, context);
+            var p = global::app.type.item.path.@this.Resolve(str, context);
             var exists = await p.ExistsAsync();
             if (exists.Success && await exists.ToBooleanAsync())
                 return await CreateFileContentAsync(app, context, str);
@@ -996,7 +996,7 @@ public sealed class Default : IHttp
     {
         // Gated read via path verb. AuthGate(Read) fires inside ReadBytes;
         // out-of-root paths the actor hasn't granted bubble up as Fail.
-        var resolved = global::app.type.path.@this.Resolve(path, context);
+        var resolved = global::app.type.item.path.@this.Resolve(path, context);
         var read = await resolved.ReadBytes();
         if (!read.Success || await read.Value() == null)
             return (null, read.Error
@@ -1040,7 +1040,7 @@ public sealed class Default : IHttp
                 // Gated read via path verb. AuthGate(Read) fires; out-of-root
                 // form fields the actor hasn't authorized get denied at the
                 // gate, not silently exfiltrated.
-                var fp = global::app.type.path.@this.Resolve(value[1..], context);
+                var fp = global::app.type.item.path.@this.Resolve(value[1..], context);
                 var read = await fp.ReadBytes();
                 if (!read.Success || await read.Value() == null)
                     return (null, read.Error

@@ -17,7 +17,7 @@ public class TypedPropertyCatalogTests
         public static string Shape => "string";
         public static string? Build(object? value) => "jpg";
         [global::app.LlmBuilder]
-        public global::app.type.path.@this? Path { get; init; }
+        public global::app.type.item.path.@this? Path { get; init; }
     }
 
     [global::app.Attributes.PlangType("kind-fixture-number")]

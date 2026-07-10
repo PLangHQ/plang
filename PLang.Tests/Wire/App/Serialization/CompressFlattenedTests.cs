@@ -23,7 +23,7 @@ public class CompressFlattenedTests
         var d = NewCompressibleData(app, "the quick brown fox jumps over the lazy dog");
         var archived = d.Compress();
         await Assert.That(archived.Type?.Name).IsEqualTo("archive");
-        await Assert.That(await archived.Value()).IsTypeOf<global::app.type.archive.@this>();
+        await Assert.That(await archived.Value()).IsTypeOf<global::app.type.item.archive.@this>();
     }
 
     [Test] public async Task Compress_OnSimpleData_ValueIsRawByteArray_NotWrappedInData()
@@ -33,7 +33,7 @@ public class CompressFlattenedTests
         var archived = d.Compress();
         // The smell this stage fixes — no nested Data around the gzip payload.
         await Assert.That((await archived.Value()) is global::app.data.@this).IsFalse();
-        await Assert.That((await archived.Value()) is global::app.type.archive.@this).IsTrue();
+        await Assert.That((await archived.Value()) is global::app.type.item.archive.@this).IsTrue();
     }
 
     [Skip("Serializing within an actor now signs the inner payload, so compressed/hashed bytes are a signature LAYER. The archived wire shape and compress/hash-over-signature round-trip need the archive-as-layer design (deferred). NOTE: Decompress currently loses the inner value through this path - see todos.md.")]
@@ -67,7 +67,7 @@ public class CompressFlattenedTests
         await using var app = NewApp();
         var d = NewCompressibleData(app, "needs a signature");
         var archived = d.Compress();
-        var bytes = ((global::app.type.archive.@this)(await archived.Value())!).Value;
+        var bytes = ((global::app.type.item.archive.@this)(await archived.Value())!).Value;
 
         // Gunzip and parse — must be a valid application/plang doc with a signature.
         using var gz = new System.IO.Compression.GZipStream(new MemoryStream(bytes),

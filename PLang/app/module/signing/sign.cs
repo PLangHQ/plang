@@ -17,11 +17,11 @@ public partial class sign : global::app.type.item.@this, global::app.type.item.I
     public partial data.@this<global::app.type.list.@this>? Contracts { get; init; }
 
     /// <summary>Optional headers to include in the signature object.</summary>
-    public partial data.@this<global::app.type.dict.@this>? Headers { get; init; }
+    public partial data.@this<global::app.type.item.dict.@this>? Headers { get; init; }
 
     /// <summary>Optional TTL. If set, signature.Expires = Created + this duration.
     /// Wire form is ISO 8601 (e.g. <c>"PT5M"</c>) via the global TimeSpan converter.</summary>
-    public partial data.@this<global::app.type.duration.@this>? Expires { get; init; }
+    public partial data.@this<global::app.type.item.duration.@this>? Expires { get; init; }
 
     /// <summary>
     /// Whether the data is being signed for the Store view (true) or transport/Out (false).

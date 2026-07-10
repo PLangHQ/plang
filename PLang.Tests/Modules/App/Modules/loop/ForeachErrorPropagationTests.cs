@@ -94,7 +94,7 @@ public class ForeachErrorPropagationTests
         var innerGoal = new Goal
         {
             Name = "Inner",
-            Path = global::app.type.path.@this.Resolve("/Inner.goal", global::PLang.Tests.TestApp.SharedContext),
+            Path = global::app.type.item.path.@this.Resolve("/Inner.goal", global::PLang.Tests.TestApp.SharedContext),
             Steps = new GoalSteps { innerStep }
         };
         innerStep.Goal = innerGoal;
@@ -130,7 +130,7 @@ public class ForeachErrorPropagationTests
         var context = _app.User.Context;
         context.Variable.Set("items", new List<object?> { "a", "b", "c" });
 
-        _app.Goal.Add(new Goal { Name = "Noop", Path = global::app.type.path.@this.Resolve("/Noop.goal", global::PLang.Tests.TestApp.SharedContext), Steps = new GoalSteps() });
+        _app.Goal.Add(new Goal { Name = "Noop", Path = global::app.type.item.path.@this.Resolve("/Noop.goal", global::PLang.Tests.TestApp.SharedContext), Steps = new GoalSteps() });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("NoopRunner",
             Make.Step("foreach %items%, call Noop item=%item%",

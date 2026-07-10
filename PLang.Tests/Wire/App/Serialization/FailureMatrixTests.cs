@@ -74,7 +74,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
         // a clean DecompressError rather than an unhandled exception. (A Data that
         // is not an archive at all is a no-op passthrough, not an error.)
         var d = new global::app.data.@this("x",
-            new global::app.type.archive.@this(new byte[] { 1, 2, 3, 4 }, "gzip"));
+            new global::app.type.item.archive.@this(new byte[] { 1, 2, 3, 4 }, "gzip"));
         var result = d.Decompress();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("DecompressError");

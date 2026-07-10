@@ -162,7 +162,7 @@ public class DeepResolutionDictTests
             parameters: new[] { ("dict", (object?)raw) },
             variables: new Dictionary<string, object?> { ["x"] = "substituted" });
 
-        var typed = result.Data as global::app.data.@this<global::app.type.dict.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.dict.@this>;
         // Lazy + stamped (Template="plang" → non-cacheable): resolve the dict through its
         // door, then read each value through ITS door — the real per-item read path.
         var d = (await typed!.Value())!;
@@ -183,7 +183,7 @@ public class DeepResolutionDictTests
             parameters: new[] { ("dict", (object?)raw) },
             variables: new Dictionary<string, object?> { ["a"] = "alpha", ["b"] = "beta" });
 
-        var typed = result.Data as global::app.data.@this<global::app.type.dict.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.dict.@this>;
         var d = (await typed!.Value())!;
         var inner = new List<string?>();
         foreach (var row in (global::app.type.list.@this)(await d.Get("items")!.Value()))

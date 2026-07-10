@@ -15,7 +15,7 @@ public class GoalCallTests
         _app.Goal.Add(new global::app.goal.@this
         {
             Name = "TestGoal",
-            Path = global::app.type.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext)
+            Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext)
         });
     }
 

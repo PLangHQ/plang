@@ -27,17 +27,17 @@ global using DeserializeOptions = app.channel.serializer.list.DeserializeOptions
 // Path types (formerly FileSystem)
 // Lowercase aliases — match the PLang concept names, and (unlike PascalCase
 // `Path`) do not collide with System.IO.Path. Inside `namespace app.type`
-// the bare name `path` is ambiguous with the child namespace `app.type.path`;
-// those few files qualify with `global::app.type.path.@this`.
-global using path = app.type.path.@this;
-global using filepath = app.type.path.file.@this;
-global using httppath = app.type.path.http.@this;
+// the bare name `path` is ambiguous with the child namespace `app.type.item.path`;
+// those few files qualify with `global::app.type.item.path.@this`.
+global using path = app.type.item.path.@this;
+global using filepath = app.type.item.path.file.@this;
+global using httppath = app.type.item.path.http.@this;
 
 // Native collection value types — collections hold Data end to end.
 // Lowercase aliases match the PLang concept names. Inside `namespace app.type`
 // the bare names are ambiguous with the child namespaces; those files qualify
-// with `global::app.type.dict.@this` / `global::app.type.catalog.@this`.
-global using dict = app.type.dict.@this;
+// with `global::app.type.item.dict.@this` / `global::app.type.catalog.@this`.
+global using dict = app.type.item.dict.@this;
 global using Clr = app.type.clr.@this;
 
 // Type system

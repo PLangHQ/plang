@@ -93,8 +93,8 @@ public class QueryBasicTests
             {
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
-            Temperature = (global::app.type.number.@this)0.7,
-            MaxTokens = (global::app.type.number.@this)2000
+            Temperature = (global::app.type.item.number.@this)0.7,
+            MaxTokens = (global::app.type.item.number.@this)2000
         };
         await action.Attach(null, Ctx);
         var result = await action.Run();

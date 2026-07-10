@@ -1,11 +1,11 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using PLangPath = global::app.type.path.@this;
-using Image = global::app.type.image.@this;
-using Number = global::app.type.number.@this;
-using Datetime = global::app.type.datetime.@this;
-using Duration = global::app.type.duration.@this;
+using PLangPath = global::app.type.item.path.@this;
+using Image = global::app.type.item.image.@this;
+using Number = global::app.type.item.number.@this;
+using Datetime = global::app.type.item.datetime.@this;
+using Duration = global::app.type.item.duration.@this;
 
 namespace PLang.Tests.App.Types;
 
@@ -42,10 +42,10 @@ public class ValueConversionHookTests
                 System.Globalization.CultureInfo.GetCultureInfo("de-DE");
 
             var serializer = new global::app.channel.serializer.Text(global::PLang.Tests.TestApp.SharedContext);
-            var dec = (await serializer.Deserialize<global::app.type.number.@this>("3.14").Value());
+            var dec = (await serializer.Deserialize<global::app.type.item.number.@this>("3.14").Value());
             await Assert.That(dec).IsEqualTo(3.14m);
 
-            var dbl = (await serializer.Deserialize<global::app.type.number.@this>("3.14").Value());
+            var dbl = (await serializer.Deserialize<global::app.type.item.number.@this>("3.14").Value());
             await Assert.That(dbl).IsEqualTo(3.14d);
         }
         finally

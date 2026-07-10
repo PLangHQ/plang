@@ -19,8 +19,8 @@ public partial class Set : IContext
     public partial data.@this<global::app.type.item.text.@this> Name { get; init; }
     public partial data.@this<GoalCall> Goal { get; init; }
     public partial data.@this<global::app.actor.@this>? Actor { get; init; }
-    public partial data.@this<global::app.type.number.@this>? Buffer { get; init; }
-    public partial data.@this<global::app.type.duration.@this>? Timeout { get; init; }
+    public partial data.@this<global::app.type.item.number.@this>? Buffer { get; init; }
+    public partial data.@this<global::app.type.item.duration.@this>? Timeout { get; init; }
     public partial data.@this<global::app.type.item.text.@this>? Mime { get; init; }
     public partial data.@this<global::app.type.item.text.@this>? Encoding { get; init; }
     /// <summary>"input", "output", or "bidirectional". Default: bidirectional unless

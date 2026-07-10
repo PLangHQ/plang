@@ -59,7 +59,7 @@ public class IntPlainTests
         await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<IntPlain>(app,
             parameters: new[] { ("count", (object?)"42") });
-        var typed = result.Data as global::app.data.@this<global::app.type.number.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.number.@this>;
         await Assert.That((await typed!.Value())).IsEqualTo(42);
     }
 
@@ -69,7 +69,7 @@ public class IntPlainTests
         await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<IntPlain>(app,
             parameters: new[] { ("count", (object?)42) });
-        var typed = result.Data as global::app.data.@this<global::app.type.number.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.number.@this>;
         await Assert.That((await typed!.Value())).IsEqualTo(42);
     }
 
@@ -81,7 +81,7 @@ public class IntPlainTests
             parameters: new[] { ("count", (object?)"not-a-number") });
         // Lazy: the conversion runs at the typed value door, so the failure surfaces
         // when the value is materialised (Data<number>.Value()) — not at dispatch.
-        var typed = result.Data as global::app.data.@this<global::app.type.number.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.number.@this>;
         await typed!.Value();
         await result.Data.IsFailure();
     }
@@ -118,19 +118,19 @@ public class PathPlainTests
         await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<PathPlain>(app,
             parameters: new[] { ("file", (object?)"data/x.txt") });
-        var typed = result.Data as global::app.data.@this<global::app.type.path.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.path.@this>;
         await Assert.That((await typed!.Value())).IsNotNull();
-        await Assert.That((await typed.Value()) is global::app.type.path.@this).IsTrue();
+        await Assert.That((await typed.Value()) is global::app.type.item.path.@this).IsTrue();
     }
 
     [Test]
     public async Task PathPlain_PathValue_FastPath()
     {
         await using var app = TestApp.Create("/app");
-        var path = new global::app.type.path.file.@this("/already-a-path.txt", global::PLang.Tests.TestApp.SharedContext);
+        var path = new global::app.type.item.path.file.@this("/already-a-path.txt", global::PLang.Tests.TestApp.SharedContext);
         var result = await MatrixRunner.RunAsync<PathPlain>(app,
             parameters: new[] { ("file", (object?)path) });
-        var typed = result.Data as global::app.data.@this<global::app.type.path.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.path.@this>;
         await Assert.That(ReferenceEquals((await typed!.Value()), path)).IsTrue();
     }
 }

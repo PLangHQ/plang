@@ -1,7 +1,7 @@
 using app.variable;
 using ExampleSpec = app.type.spec.Example;
 using ActionSpec = app.type.spec.Action;
-using number = global::app.type.number.@this;
+using number = global::app.type.item.number.@this;
 
 
 namespace app.module.math;

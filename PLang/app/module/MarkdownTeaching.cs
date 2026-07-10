@@ -88,13 +88,13 @@ public static class MarkdownTeaching
         var list = await listResult.Value();
         foreach (var row in list!)
         {
-            var file = await row.Value<global::app.type.path.@this>();
+            var file = await row.Value<global::app.type.item.path.@this>();
             if (file == null) continue;
             var moduleDir = file.Parent;
             if (moduleDir == null) continue;
             var grand = moduleDir.Parent;
             if (grand == null) continue;
-            if (!string.Equals(grand.Absolute, rootAbs, global::app.type.path.@this.RootComparison)) continue;
+            if (!string.Equals(grand.Absolute, rootAbs, global::app.type.item.path.@this.RootComparison)) continue;
 
             var fileName = file.FileName;
             if (!IsTeachingFile(fileName, out var stem)) continue;

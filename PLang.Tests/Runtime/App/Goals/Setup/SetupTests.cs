@@ -30,10 +30,10 @@ public class SetupTests
     [Test]
     public async Task Setup_Goals_OrdersSetupFirst_ThenAlphabetical()
     {
-        _app.Goal.Add(new Goal { Name = "Zebra", IsSetup = true, Path = global::app.type.path.@this.Resolve("/Zebra.goal", global::PLang.Tests.TestApp.SharedContext) });
-        _app.Goal.Add(new Goal { Name = "Setup", IsSetup = true, Path = global::app.type.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext) });
-        _app.Goal.Add(new Goal { Name = "Alpha", IsSetup = true, Path = global::app.type.path.@this.Resolve("/Alpha.goal", global::PLang.Tests.TestApp.SharedContext) });
-        _app.Goal.Add(new Goal { Name = "NormalGoal", IsSetup = false, Path = global::app.type.path.@this.Resolve("/NormalGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
+        _app.Goal.Add(new Goal { Name = "Zebra", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Zebra.goal", global::PLang.Tests.TestApp.SharedContext) });
+        _app.Goal.Add(new Goal { Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext) });
+        _app.Goal.Add(new Goal { Name = "Alpha", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Alpha.goal", global::PLang.Tests.TestApp.SharedContext) });
+        _app.Goal.Add(new Goal { Name = "NormalGoal", IsSetup = false, Path = global::app.type.item.path.@this.Resolve("/NormalGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
 
         var setupGoals = _app.Goal.Setup.Goals.ToList();
 
@@ -46,8 +46,8 @@ public class SetupTests
     [Test]
     public async Task Setup_ExcludesSetupGoalsFromRegularLookup()
     {
-        _app.Goal.Add(new Goal { Name = "SetupGoal", IsSetup = true, Path = global::app.type.path.@this.Resolve("/SetupGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
-        _app.Goal.Add(new Goal { Name = "NormalGoal", IsSetup = false, Path = global::app.type.path.@this.Resolve("/NormalGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
+        _app.Goal.Add(new Goal { Name = "SetupGoal", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/SetupGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
+        _app.Goal.Add(new Goal { Name = "NormalGoal", IsSetup = false, Path = global::app.type.item.path.@this.Resolve("/NormalGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
 
         var found = _app.Goal.Get("SetupGoal");
         var normal = _app.Goal.Get("NormalGoal");
@@ -95,7 +95,7 @@ public class SetupTests
             Actions = CreateNoOpActions() };
         var goal = new Goal
         {
-            Name = "Setup", IsSetup = true, Path = global::app.type.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
+            Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
             Steps = new global::app.goal.steps.@this(new[] { step1, step2 })
         };
         step1.Goal = goal;
@@ -130,7 +130,7 @@ public class SetupTests
             Actions = CreateNoOpActions() };
         var goal = new Goal
         {
-            Name = "Setup", IsSetup = true, Path = global::app.type.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
+            Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
             Steps = new global::app.goal.steps.@this(new[] { step })
         };
         step.Goal = goal;
@@ -154,7 +154,7 @@ public class SetupTests
     {
         var goal = new Goal
         {
-            Name = "Setup", IsSetup = true, Path = global::app.type.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
+            Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
             Steps = new global::app.goal.steps.@this()
         };
         _app.Goal.Add(goal);
@@ -191,7 +191,7 @@ public class SetupTests
         };
         var goal = new Goal
         {
-            Name = "Setup", IsSetup = true, Path = global::app.type.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
+            Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
             Steps = new global::app.goal.steps.@this(new[] { step })
         };
         step.Goal = goal;
@@ -214,7 +214,7 @@ public class SetupTests
             Actions = CreateNoOpActions() };
         var goal = new Goal
         {
-            Name = "Setup", IsSetup = true, Path = global::app.type.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
+            Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
             Steps = new global::app.goal.steps.@this(new[] { step1, step2 })
         };
         step1.Goal = goal;

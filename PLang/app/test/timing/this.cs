@@ -11,7 +11,7 @@ namespace app.test.timing;
 public sealed class @this : global::app.type.item.@this
 {
     [Out] public required global::app.goal.steps.step.@this Step { get; init; }
-    [Out] public required global::app.type.duration.@this Elapsed { get; init; }
+    [Out] public required global::app.type.item.duration.@this Elapsed { get; init; }
 
     /// <summary>Self-write: a structural item — its tagged [Out] fields ride the wire.</summary>
     public override System.Threading.Tasks.ValueTask Output(

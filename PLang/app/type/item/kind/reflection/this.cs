@@ -111,8 +111,8 @@ public sealed class @this : global::app.type.kind.@this
                 : global::System.Enum.Parse(t, reader.String(), ignoreCase: true);
 
         // A path rides as its string form — the perimeter crossing (path.Resolve once).
-        if (t == typeof(global::app.type.path.@this))
-            return global::app.type.path.@this.Resolve(reader.String(), ctx.Context);
+        if (t == typeof(global::app.type.item.path.@this))
+            return global::app.type.item.path.@this.Resolve(reader.String(), ctx.Context);
 
         // List<Data> (Parameters / Defaults) — each element a {name,type,value} through the
         // @schema:data reader over its own verbatim bytes (sign-identical to the byte path).

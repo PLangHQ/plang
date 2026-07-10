@@ -50,7 +50,7 @@ public class IntNullableTests
         await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<IntNullable>(app,
             parameters: new[] { ("maybe", (object?)42) });
-        var typed = result.Data as global::app.data.@this<global::app.type.number.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.number.@this>;
         await Assert.That((await typed!.Value())).IsEqualTo(42);
     }
 }

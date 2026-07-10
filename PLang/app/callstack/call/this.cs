@@ -351,7 +351,7 @@ public sealed partial class @this : IAsyncDisposable
         // into user-facing debug output.
         if (value is global::app.type.list.@this list)
             return $"<list @ {list.CountRaw} items>";
-        if (value is global::app.type.dict.@this dict)
+        if (value is global::app.type.item.dict.@this dict)
             return $"<dict @ {dict.CountRaw} items>";
         var t = value.GetType();
         if (value is System.Collections.ICollection col)

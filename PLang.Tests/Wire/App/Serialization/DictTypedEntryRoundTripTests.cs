@@ -24,8 +24,8 @@ public class DictTypedEntryRoundTripTests
 
         // value = dict { description: text, steps: list[ dict{index:number} ] }
         var steps = new global::app.type.list.@this(context)
-            .Add(new global::app.data.@this("", new global::app.type.dict.@this(context).Set("index", 0L), context: context));
-        var value = new global::app.type.dict.@this(context)
+            .Add(new global::app.data.@this("", new global::app.type.item.dict.@this(context).Set("index", 0L), context: context));
+        var value = new global::app.type.item.dict.@this(context)
             .Set("description", "a plan")
             .Set("steps", steps);
         // Born WITH context — never constructed then stamped.
@@ -42,7 +42,7 @@ public class DictTypedEntryRoundTripTests
 
         await Assert.That(back.Success).IsTrue();
         // Materialize through the async Value door — Peek returns the deferred source.
-        var dict = (await back.Value()) as global::app.type.dict.@this;
+        var dict = (await back.Value()) as global::app.type.item.dict.@this;
         await Assert.That(dict).IsNotNull();
         await Assert.That(dict!.Get("steps")!.Type?.Name).IsEqualTo("list");
         await Assert.That(dict.Get("description")!.Type?.Name).IsEqualTo("text");

@@ -1,6 +1,6 @@
 using Item = global::app.type.item.@this;
-using Number = global::app.type.number.@this;
-using Dict = global::app.type.dict.@this;
+using Number = global::app.type.item.number.@this;
+using Dict = global::app.type.item.dict.@this;
 using PList = global::app.type.list.@this;
 
 using PLang.Tests.App.Fixtures;
@@ -26,10 +26,10 @@ public class ItemApexTests
         {
             typeof(Number), typeof(Dict), typeof(PList),
             typeof(global::app.type.item.text.@this),
-            typeof(global::app.type.datetime.@this),
-            typeof(global::app.type.date.@this),
-            typeof(global::app.type.time.@this),
-            typeof(global::app.type.duration.@this),
+            typeof(global::app.type.item.datetime.@this),
+            typeof(global::app.type.item.date.@this),
+            typeof(global::app.type.item.time.@this),
+            typeof(global::app.type.item.duration.@this),
             typeof(global::app.type.item.@bool.@this),
             typeof(global::app.type.item.@null.@this),
         };

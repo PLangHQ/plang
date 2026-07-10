@@ -11,7 +11,7 @@ namespace app.module.timeout;
 public partial class After : IContext, IModifier
 {
     [IsNotNull]
-    public partial global::app.data.@this<global::app.type.number.@this> Ms { get; init; }
+    public partial global::app.data.@this<global::app.type.item.number.@this> Ms { get; init; }
 
     public Task<global::app.data.@this> Run() => Task.FromResult(Context.Ok());
 
@@ -19,7 +19,7 @@ public partial class After : IContext, IModifier
     {
         // Sync wrap seam — Peek (the .pr literal is in memory); the number
         // lowers itself at the CancelAfter .NET edge.
-        int ms = (Ms.Peek() as global::app.type.number.@this)?.ToInt32() ?? 0;
+        int ms = (Ms.Peek() as global::app.type.item.number.@this)?.ToInt32() ?? 0;
         return async () =>
         {
             // Capture parent token BEFORE pushing — after the push, context.CancellationToken

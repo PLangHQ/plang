@@ -117,7 +117,7 @@ public class RuntimeTypeLoadingTests
         await Assert.That(dataGeneric.IsGenericType).IsTrue();
         await Assert.That(dataGeneric.GetGenericTypeDefinition()).IsEqualTo(typeof(global::app.data.@this<>));
         var slotBefore = dataGeneric.GetGenericArguments()[0];
-        await Assert.That(slotBefore).IsEqualTo(typeof(global::app.type.number.@this));
+        await Assert.That(slotBefore).IsEqualTo(typeof(global::app.type.item.number.@this));
 
         var types = new global::app.type.catalog.@this();
         types.Register("number", typeof(System.Uri));
@@ -125,7 +125,7 @@ public class RuntimeTypeLoadingTests
 
         var slotAfter = typeof(global::app.module.math.Add).GetMethod("Run")!
             .ReturnType.GetGenericArguments()[0].GetGenericArguments()[0];
-        await Assert.That(slotAfter).IsEqualTo(typeof(global::app.type.number.@this));
+        await Assert.That(slotAfter).IsEqualTo(typeof(global::app.type.item.number.@this));
     }
 
     private static string FixtureDll(string name) => System.IO.Path.GetFullPath(

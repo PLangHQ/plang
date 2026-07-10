@@ -1,4 +1,4 @@
-using number = global::app.type.number.@this;
+using number = global::app.type.item.number.@this;
 
 namespace PLang.Tests.App.Types;
 

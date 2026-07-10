@@ -56,7 +56,7 @@ public class RunActionTests
         var goal = new Goal
         {
             Name = goalName,
-            Path = global::app.type.path.@this.Resolve("/" + relativePath, global::PLang.Tests.TestApp.SharedContext),
+            Path = global::app.type.item.path.@this.Resolve("/" + relativePath, global::PLang.Tests.TestApp.SharedContext),
             Steps = new GoalSteps()
         };
         for (int i = 0; i < actions.Length; i++)
@@ -88,8 +88,8 @@ public class RunActionTests
     private async Task<IReadOnlyList<global::app.test.@this>> RunTests(List<global::app.test.@this> tests, int? parallel = null, int? timeoutSec = null)
     {
         var action = new global::app.module.test.run(_app.User.Context) { Tests = tests.ToListData<global::app.test.@this>(),
-            Parallel = parallel.HasValue ? new global::app.data.@this<global::app.type.number.@this>("Parallel", parallel.Value, context: _app.User.Context) : null,
-            Timeout = timeoutSec.HasValue ? new global::app.data.@this<global::app.type.number.@this>("Timeout", timeoutSec.Value, context: _app.User.Context) : null
+            Parallel = parallel.HasValue ? new global::app.data.@this<global::app.type.item.number.@this>("Parallel", parallel.Value, context: _app.User.Context) : null,
+            Timeout = timeoutSec.HasValue ? new global::app.data.@this<global::app.type.item.number.@this>("Timeout", timeoutSec.Value, context: _app.User.Context) : null
         };
         var result = await action.Run();
         // run returns list<test>; materialize the executed tests (each row's value is a test).
@@ -128,7 +128,7 @@ public class RunActionTests
         await Assert.That(runs.All(r => r.Status == global::app.test.Status.Pass)).IsTrue();
     }
 
-    // With Config.Parallel = (global::app.type.number.@this)2 and 4 tests, at most 2 tests run concurrently.
+    // With Config.Parallel = (global::app.type.item.number.@this)2 and 4 tests, at most 2 tests run concurrently.
     // Each fixture's BeforeAction delays asynchronously for long enough that another
     // fixture can enter the same window. The observed max concurrent depth equals the
     // semaphore size — parallel=2 → max 2; parallel=1 would observe max 1.
@@ -342,10 +342,10 @@ public class RunActionTests
                 ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("x"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) })
             });
             var stale = new global::app.test.@this(global::PLang.Tests.TestApp.SharedContext) {
-                Goal = new Goal { Name = "Stale", Path = global::app.type.path.@this.Resolve("/Stale.test.goal", global::PLang.Tests.TestApp.SharedContext) },
+                Goal = new Goal { Name = "Stale", Path = global::app.type.item.path.@this.Resolve("/Stale.test.goal", global::PLang.Tests.TestApp.SharedContext) },
                 Status = global::app.test.Status.Stale, StatusReason = "no .pr" };
             var skipped = new global::app.test.@this(global::PLang.Tests.TestApp.SharedContext) {
-                Goal = new Goal { Name = "Skip", Path = global::app.type.path.@this.Resolve("/Skip.test.goal", global::PLang.Tests.TestApp.SharedContext) },
+                Goal = new Goal { Name = "Skip", Path = global::app.type.item.path.@this.Resolve("/Skip.test.goal", global::PLang.Tests.TestApp.SharedContext) },
                 Status = global::app.test.Status.Skipped, StatusReason = "excluded by tag" };
 
             var results = await RunTests(new List<global::app.test.@this> { ready, stale, skipped });
@@ -525,7 +525,7 @@ public class RunActionTests
         var helperGoal = new Goal
         {
             Name = "Helper",
-            Path = global::app.type.path.@this.Resolve("/Helper.goal", global::PLang.Tests.TestApp.SharedContext),
+            Path = global::app.type.item.path.@this.Resolve("/Helper.goal", global::PLang.Tests.TestApp.SharedContext),
             Steps = new GoalSteps
             {
                 new Step { Index = 0, Text = "h0", Actions = new StepActions

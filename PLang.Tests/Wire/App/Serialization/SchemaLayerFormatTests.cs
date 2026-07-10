@@ -28,14 +28,14 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
     [Test] public async Task SignatureLayer_RendersFlat_SchemaSignature_WrappingInnerData()
     {
         var inner = new global::app.data.@this("user", "Ingi", global::PLang.Tests.TestApp.SharedContext.Type.Create("text"), context: app.User.Context);
-        var sig = new global::app.type.signature.@this(
+        var sig = new global::app.type.item.signature.@this(
             value: inner,
             algorithm: new global::app.type.item.text.@this("ed25519"),
             nonce: new global::app.type.item.text.@this("9f"),
-            created: new global::app.type.datetime.@this(new System.DateTimeOffset(2026, 6, 15, 10, 0, 0, System.TimeSpan.Zero)),
+            created: new global::app.type.item.datetime.@this(new System.DateTimeOffset(2026, 6, 15, 10, 0, 0, System.TimeSpan.Zero)),
             identity: new global::app.type.item.text.@this("alice"),
             hash: new global::app.module.crypto.type.hash.@this(System.Convert.FromBase64String("ZGlnZXN0"), "keccak256"),
-            signature: new global::app.type.binary.@this(System.Convert.FromBase64String("c2ln")));
+            signature: new global::app.type.item.binary.@this(System.Convert.FromBase64String("c2ln")));
 
         var json = Render(sig);
         using var doc = JsonDocument.Parse(json);
@@ -66,14 +66,14 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
     [Test] public async Task SignatureLayer_OmitsExpiresAndContracts_WhenAbsent()
     {
         var inner = new global::app.data.@this("x", "y", global::PLang.Tests.TestApp.SharedContext.Type.Create("text"), context: app.User.Context);
-        var sig = new global::app.type.signature.@this(
+        var sig = new global::app.type.item.signature.@this(
             value: inner,
             algorithm: new global::app.type.item.text.@this("ed25519"),
             nonce: new global::app.type.item.text.@this("n"),
-            created: new global::app.type.datetime.@this(System.DateTimeOffset.UnixEpoch),
+            created: new global::app.type.item.datetime.@this(System.DateTimeOffset.UnixEpoch),
             identity: new global::app.type.item.text.@this("id"),
             hash: new global::app.module.crypto.type.hash.@this(new byte[] { 0x68 }, "keccak256"),
-            signature: new global::app.type.binary.@this(new byte[] { 0x01 }));
+            signature: new global::app.type.item.binary.@this(new byte[] { 0x01 }));
 
         using var doc = JsonDocument.Parse(Render(sig));
         await Assert.That(doc.RootElement.TryGetProperty("expires", out _)).IsFalse();

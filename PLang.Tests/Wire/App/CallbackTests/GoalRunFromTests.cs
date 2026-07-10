@@ -29,7 +29,7 @@ public class GoalRunFromTests
 
     private static Goal Build(string name, params Step[] steps)
     {
-        var goal = new Goal { Name = name, Path = global::app.type.path.@this.Resolve($"/{name}.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", global::PLang.Tests.TestApp.SharedContext) };
         foreach (var s in steps) { s.Goal = goal; goal.Steps.Add(s); }
         return goal;
     }

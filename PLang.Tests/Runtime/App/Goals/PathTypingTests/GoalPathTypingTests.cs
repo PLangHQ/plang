@@ -22,7 +22,7 @@ public class GoalPathTypingTests
     {
         var prop = typeof(Goal).GetProperty("Path");
         await Assert.That(prop).IsNotNull();
-        await Assert.That(prop!.PropertyType).IsEqualTo(typeof(global::app.type.path.@this));
+        await Assert.That(prop!.PropertyType).IsEqualTo(typeof(global::app.type.item.path.@this));
     }
 
     [Test] public async Task GoalPrPath_IsDerivedFromPath_ViaInBuildFolder()
@@ -32,7 +32,7 @@ public class GoalPathTypingTests
         var goal = new Goal
         {
             Name = "Test",
-            Path = global::app.type.path.@this.Resolve("/Cache/Start.goal", context)
+            Path = global::app.type.item.path.@this.Resolve("/Cache/Start.goal", context)
         };
         await Assert.That(goal.PrPath).IsNotNull();
         var rel = goal.PrPath!.Relative.Replace('\\', '/');
@@ -48,8 +48,8 @@ public class GoalPathTypingTests
         var goal = new Goal
         {
             Name = "Test",
-            Path = global::app.type.path.@this.Resolve("/Start.goal", context),
-            PrPath = global::app.type.path.@this.Resolve("/SomeOther/junk.pr", context)
+            Path = global::app.type.item.path.@this.Resolve("/Start.goal", context),
+            PrPath = global::app.type.item.path.@this.Resolve("/SomeOther/junk.pr", context)
         };
         var rel = goal.PrPath!.Relative.Replace('\\', '/');
         // Init was a no-op — derived from Path, not the explicitly-passed PrPath.
@@ -61,7 +61,7 @@ public class GoalPathTypingTests
         var (app, root) = MakeApp();
         var context = app.User.Context;
         var goal = new Goal { Name = "Test" };
-        goal.LoadedFromPrPath = global::app.type.path.@this.Resolve("/Cache/.build/test.pr", context);
+        goal.LoadedFromPrPath = global::app.type.item.path.@this.Resolve("/Cache/.build/test.pr", context);
         goal.App = app;
         var dir = goal.GetRuntimeDirectory();
         await Assert.That(dir).IsNotNull();
@@ -76,7 +76,7 @@ public class GoalPathTypingTests
         var goal = new Goal
         {
             Name = "Test",
-            Path = global::app.type.path.@this.Resolve("/Cache/Start.goal", context)
+            Path = global::app.type.item.path.@this.Resolve("/Cache/Start.goal", context)
         };
         var options = new JsonSerializerOptions
         {
@@ -95,7 +95,7 @@ public class GoalPathTypingTests
         var goal = new Goal
         {
             Name = "Test",
-            Path = global::app.type.path.@this.Resolve("/Start.goal", ctx1)
+            Path = global::app.type.item.path.@this.Resolve("/Start.goal", ctx1)
         };
         var opts1 = new JsonSerializerOptions
         {
@@ -124,7 +124,7 @@ public class GoalPathTypingTests
         var goal = new Goal
         {
             Name = "Test",
-            Path = global::app.type.path.@this.Resolve("/Start.goal", context)
+            Path = global::app.type.item.path.@this.Resolve("/Start.goal", context)
         };
         var opts = new JsonSerializerOptions
         {
@@ -144,7 +144,7 @@ public class GoalPathTypingTests
         var gc = new GoalCall
         {
             Name = "Foo",
-            PrPath = global::app.type.path.@this.Resolve("/Cache/.build/foo.pr", context)
+            PrPath = global::app.type.item.path.@this.Resolve("/Cache/.build/foo.pr", context)
         };
         var opts = new JsonSerializerOptions
         {

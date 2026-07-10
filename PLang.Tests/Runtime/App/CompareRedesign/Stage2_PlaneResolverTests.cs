@@ -27,7 +27,7 @@ public class Stage2_PlaneResolverTests
         await using var app = NewApp();
         var t = new Data("s", new global::app.type.item.text.@this("hello"), context: app.User.Context);
         var length = await t.Get("!length");
-        await Assert.That(length.Peek()).IsTypeOf<global::app.type.number.@this>();
+        await Assert.That(length.Peek()).IsTypeOf<global::app.type.item.number.@this>();
         await Assert.That(length.Peek()!.ToString()).IsEqualTo("5");
         // envelope properties resolve on the same plane
         t.Properties["cost"] = 42;
@@ -56,8 +56,8 @@ public class Stage2_PlaneResolverTests
         try
         {
             File.WriteAllText(System.IO.Path.Combine(dir, "c.json"), "{\"a\":1}");
-            var read = new global::app.module.file.Read(app.User.Context) { Path = new global::app.data.@this<global::app.type.path.@this>("",
-                    new global::app.type.path.file.@this(System.IO.Path.Combine(dir, "c.json"), app.User.Context) {}),
+            var read = new global::app.module.file.Read(app.User.Context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("",
+                    new global::app.type.item.path.file.@this(System.IO.Path.Combine(dir, "c.json"), app.User.Context) {}),
             };
             var data = await read.Run();
             await data.Get("a");                       // narrow
@@ -78,9 +78,9 @@ public class Stage2_PlaneResolverTests
         await Assert.That(global::app.type.catalog.Loader.ReservedShadow(typeof(ReservedShadower)))
             .IsEqualTo("Error");
         await Assert.That(global::app.type.catalog.Loader.ReservedShadow(typeof(global::app.type.item.text.@this))).IsNull();
-        await Assert.That(global::app.type.catalog.Loader.ReservedShadow(typeof(global::app.type.dict.@this))).IsNull();
-        await Assert.That(global::app.type.catalog.Loader.ReservedShadow(typeof(global::app.type.image.@this))).IsNull();
-        await Assert.That(global::app.type.catalog.Loader.ReservedShadow(typeof(global::app.type.path.file.@this))).IsNull();
+        await Assert.That(global::app.type.catalog.Loader.ReservedShadow(typeof(global::app.type.item.dict.@this))).IsNull();
+        await Assert.That(global::app.type.catalog.Loader.ReservedShadow(typeof(global::app.type.item.image.@this))).IsNull();
+        await Assert.That(global::app.type.catalog.Loader.ReservedShadow(typeof(global::app.type.item.path.file.@this))).IsNull();
     }
 
     private sealed class ReservedShadower : global::app.type.item.@this
@@ -92,7 +92,7 @@ public class Stage2_PlaneResolverTests
     public async Task AtSchemaBlocked_AsDictKey_WireMarkerOnly()
     {
         // @schema is the wire marker — the dict write seam rejects it as a key
-        var d = new global::app.type.dict.@this(global::PLang.Tests.TestApp.SharedContext);
+        var d = new global::app.type.item.dict.@this(global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(() => d.Set("@schema", "data")).Throws<ArgumentException>();
         await Assert.That(() => d.Set(new Data("@schema", "data"))).Throws<ArgumentException>();
         // ordinary keys unaffected; envelope recognition reads the marker off

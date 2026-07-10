@@ -68,12 +68,12 @@ public class IncrementalCacheTests
         var propsA = new PropertyBase[]
         {
             new DataProperty("First", "global::app.data.@this<global::app.type.item.text.@this>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false, IsName: false),
-            new DataProperty("Second", "global::app.data.@this<global::app.type.number.@this>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false, IsName: false),
+            new DataProperty("Second", "global::app.data.@this<global::app.type.item.number.@this>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false, IsName: false),
         };
         var propsB = new PropertyBase[]
         {
             new DataProperty("First", "global::app.data.@this<global::app.type.item.text.@this>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false, IsName: false),
-            new DataProperty("Second", "global::app.data.@this<global::app.type.number.@this>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false, IsName: false),
+            new DataProperty("Second", "global::app.data.@this<global::app.type.item.number.@this>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false, IsName: false),
         };
 
         var a = MakeInfo("X", propsA);
@@ -87,7 +87,7 @@ public class IncrementalCacheTests
     public async Task ActionClassInfo_DifferentPropertyOrder_AreNotEqual()
     {
         var p1 = new DataProperty("A", "global::app.data.@this<global::app.type.item.text.@this>", false, false, "string", null, false, false);
-        var p2 = new DataProperty("B", "global::app.data.@this<global::app.type.number.@this>", false, false, "int", null, false, false);
+        var p2 = new DataProperty("B", "global::app.data.@this<global::app.type.item.number.@this>", false, false, "int", null, false, false);
 
         var a = MakeInfo("X", p1, p2);
         var b = MakeInfo("X", p2, p1);
@@ -351,7 +351,7 @@ public class IncrementalCacheTests
         // Replace TestHandler's property type so ActionClassInfo's Properties array changes.
         var modifiedSource = MinimalSource.Replace(
             "public partial app.data.@this<global::app.type.item.text.@this> Foo { get; init; }",
-            "public partial app.data.@this<global::app.type.number.@this> Foo { get; init; }");
+            "public partial app.data.@this<global::app.type.item.number.@this> Foo { get; init; }");
         var compilation2 = CreateCompilation(modifiedSource);
         driver = driver.RunGenerators(compilation2);
 

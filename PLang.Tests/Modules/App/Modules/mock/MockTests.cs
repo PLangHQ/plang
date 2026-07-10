@@ -92,7 +92,7 @@ public class MockTests
         handle.RecordCall(new Dictionary<string, object?> { ["path"] = "other.txt" });
 
         var verify = new Verify(context) { Mock = handle,
-            ExpectedCount = (global::app.type.number.@this)2
+            ExpectedCount = (global::app.type.item.number.@this)2
         };
 
         var result = await verify.Run();
@@ -111,7 +111,7 @@ public class MockTests
         handle.RecordCall(new Dictionary<string, object?> { ["path"] = "test.txt" });
 
         var verify = new Verify(context) { Mock = handle,
-            ExpectedCount = (global::app.type.number.@this)3
+            ExpectedCount = (global::app.type.item.number.@this)3
         };
 
         var result = await verify.Run();
@@ -130,7 +130,7 @@ public class MockTests
         };
 
         var verify = new Verify(context) { Mock = handle,
-            ExpectedCount = (global::app.type.number.@this)1,
+            ExpectedCount = (global::app.type.item.number.@this)1,
             Message = (global::app.type.item.text.@this)"file.read should be called once"
         };
 

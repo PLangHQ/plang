@@ -81,9 +81,9 @@ public class NowVariableTests
         var timeOfDay = (await vars.Get("Now.TimeOfDay")).Peek();
         var offset = (await vars.Get("Now.Offset")).Peek();
 
-        await Assert.That(date).IsTypeOf<global::app.type.date.@this>();
-        await Assert.That(timeOfDay).IsTypeOf<global::app.type.time.@this>();
-        await Assert.That(offset).IsTypeOf<global::app.type.duration.@this>();
+        await Assert.That(date).IsTypeOf<global::app.type.item.date.@this>();
+        await Assert.That(timeOfDay).IsTypeOf<global::app.type.item.time.@this>();
+        await Assert.That(offset).IsTypeOf<global::app.type.item.duration.@this>();
     }
 
     // The plang-typed parts navigate further: %Now.Date.Year%, %Now.TimeOfDay.Hour%.

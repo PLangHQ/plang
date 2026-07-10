@@ -2,8 +2,8 @@ using app.actor.context;
 using app;
 using app.variable;
 using app.module.file;
-using PLangPath = global::app.type.path.@this;
-using PLangFilePath = global::app.type.path.file.@this;
+using PLangPath = global::app.type.item.path.@this;
+using PLangFilePath = global::app.type.item.path.file.@this;
 
 namespace PLang.Tests.App.actions.file;
 

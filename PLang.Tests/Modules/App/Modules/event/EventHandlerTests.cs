@@ -28,7 +28,7 @@ public class EventHandlerTests
             StepPattern = (global::app.type.item.text.@this)stepPattern,
             ActionPattern = (global::app.type.item.text.@this)actionPattern,
             IsRegex = (global::app.type.item.@bool.@this)isRegex,
-            Priority = (global::app.type.number.@this)priority
+            Priority = (global::app.type.item.number.@this)priority
         };
 
     [Test]
@@ -170,10 +170,10 @@ public class EventHandlerTests
         var context = _app.User.Context;
 
         // Register the callback goal (empty — just needs to be found)
-        _app.Goal.Add(new Goal { Name = "OnBeforeCallback", Path = global::app.type.path.@this.Resolve("/OnBeforeCallback.goal", global::PLang.Tests.TestApp.SharedContext) });
+        _app.Goal.Add(new Goal { Name = "OnBeforeCallback", Path = global::app.type.item.path.@this.Resolve("/OnBeforeCallback.goal", global::PLang.Tests.TestApp.SharedContext) });
 
         // Register the target goal to run
-        _app.Goal.Add(new Goal { Name = "TargetGoal", Path = global::app.type.path.@this.Resolve("/TargetGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
+        _app.Goal.Add(new Goal { Name = "TargetGoal", Path = global::app.type.item.path.@this.Resolve("/TargetGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
 
         // Set a marker so we can detect the callback ran
         // The event handler passes GoalToCall with parameters — RunGoalAsync injects them
@@ -206,8 +206,8 @@ public class EventHandlerTests
 
         // The callback goal — when it runs, RunGoalAsync injects its parameters
         // We give it a parameter so we can verify it was called
-        _app.Goal.Add(new Goal { Name = "AfterCallback", Path = global::app.type.path.@this.Resolve("/AfterCallback.goal", global::PLang.Tests.TestApp.SharedContext) });
-        _app.Goal.Add(new Goal { Name = "MainGoal", Path = global::app.type.path.@this.Resolve("/MainGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
+        _app.Goal.Add(new Goal { Name = "AfterCallback", Path = global::app.type.item.path.@this.Resolve("/AfterCallback.goal", global::PLang.Tests.TestApp.SharedContext) });
+        _app.Goal.Add(new Goal { Name = "MainGoal", Path = global::app.type.item.path.@this.Resolve("/MainGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
 
         // Register AfterGoal event with a GoalCall that has a parameter
         var goalToCall = new GoalCall

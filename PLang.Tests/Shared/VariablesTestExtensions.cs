@@ -18,7 +18,7 @@ public static class VariablesTestExtensions
     {
         // The door, not Materialize — a reference (file/url) yields its raw content.
         var v = await (await vars.Get(name)).Value();
-        if (v is global::app.type.dict.@this or global::app.type.list.@this) return v;
+        if (v is global::app.type.item.dict.@this or global::app.type.list.@this) return v;
         return v is global::app.type.item.@this iv ? iv.Clr<object>() : v;
     }
 }

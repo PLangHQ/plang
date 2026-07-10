@@ -19,7 +19,7 @@ public class Stage2_ValueDoorTests : System.IAsyncDisposable
     // A raw-backed Data (source form pending) straight off the file channel.
     private static async Task<Data> RawBackedJson(global::app.@this app, string root)
     {
-        var p = new global::app.type.path.file.@this(System.IO.Path.Combine(root, "cfg.json"), app.User.Context);
+        var p = new global::app.type.item.path.file.@this(System.IO.Path.Combine(root, "cfg.json"), app.User.Context);
         await (await p.WriteText("{\"port\":8080}")).IsSuccess();
         return await new global::app.channel.type.file.@this(p).Read();
     }
@@ -30,8 +30,8 @@ public class Stage2_ValueDoorTests : System.IAsyncDisposable
         // set %x% = 5 → await data.Value() returns a `number` (item subtype), not boxed int 5
         var d = new Data("x", 5, context: _app.User.Context);
         var v = await d.Value();
-        await Assert.That(v is global::app.type.number.@this).IsTrue();
-        await Assert.That(((global::app.type.number.@this)v!).Clr<object>()).IsEqualTo(5);
+        await Assert.That(v is global::app.type.item.number.@this).IsTrue();
+        await Assert.That(((global::app.type.item.number.@this)v!).Clr<object>()).IsEqualTo(5);
     }
 
     [Test]
@@ -139,7 +139,7 @@ public class Stage2_ValueDoorTests : System.IAsyncDisposable
         await using var app = NewApp(out var root);
         var d = await RawBackedJson(app, root);
         var v = await d.Value();
-        await Assert.That(v is global::app.type.dict.@this).IsTrue();
+        await Assert.That(v is global::app.type.item.dict.@this).IsTrue();
     }
 
     [Test]

@@ -19,8 +19,8 @@ public class DataAsTResolutionTests
     public async Task AsT_ValueAlreadyT_FastPathWrap()
     {
         var data = new Data("count", 42, context: _app.User.Context);
-        var result = data.ShallowClone<global::app.type.number.@this>(await data.Value<global::app.type.number.@this>());
-        await Assert.That(result).IsTypeOf<global::app.data.@this<global::app.type.number.@this>>();
+        var result = data.ShallowClone<global::app.type.item.number.@this>(await data.Value<global::app.type.item.number.@this>());
+        await Assert.That(result).IsTypeOf<global::app.data.@this<global::app.type.item.number.@this>>();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("42");
     }
 
@@ -86,7 +86,7 @@ public class DataAsTResolutionTests
         var raw = new Dictionary<string, object?> { ["role"] = "system", ["content"] = "%prompt%" };
         var data = TemplateStamp.Container("dict", raw, _app.User.Context);
 
-        var result = data.ShallowClone<global::app.type.dict.@this>(await data.Value<global::app.type.dict.@this>());
+        var result = data.ShallowClone<global::app.type.item.dict.@this>(await data.Value<global::app.type.item.dict.@this>());
 
         await Assert.That((await result.Value())).IsNotNull();
         var dict = result.GetValue<Dictionary<string, object?>>()!;
@@ -99,11 +99,11 @@ public class DataAsTResolutionTests
     {
         var data = new Data("file", "subdir/file.txt", context: _app.User.Context);
 
-        var result = data.ShallowClone<global::app.type.path.@this>(await data.Value<global::app.type.path.@this>());
+        var result = data.ShallowClone<global::app.type.item.path.@this>(await data.Value<global::app.type.item.path.@this>());
 
         // FileSystem.path.Resolve returned a Path instance — Value should be one.
         await Assert.That((await result.Value())).IsNotNull();
-        await Assert.That((await result.Value()) is global::app.type.path.@this).IsTrue();
+        await Assert.That((await result.Value()) is global::app.type.item.path.@this).IsTrue();
     }
 
     // TypeMapping conversion failure → Data.FromError with structured error.
@@ -112,7 +112,7 @@ public class DataAsTResolutionTests
     {
         var data = new Data("count", "not-a-number", context: _app.User.Context);
 
-        var result = data.ShallowClone<global::app.type.number.@this>(await data.Value<global::app.type.number.@this>());
+        var result = data.ShallowClone<global::app.type.item.number.@this>(await data.Value<global::app.type.item.number.@this>());
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
@@ -267,7 +267,7 @@ public class DataAsTResolutionTests
         context.Variable.Set(new global::app.data.@this<global::app.type.list.@this<global::app.type.item.@this>>("messages", new global::app.type.list.@this<global::app.type.item.@this>(System.Linq.Enumerable.Select(stored, d => _app.Data("", d)), context), context: context));
 
         var paramData = new Data("Messages", "%messages%", new global::app.type.@this("text", null, false, "plang"), context: context);
-        var result = paramData.ShallowClone<global::app.type.list.@this<global::app.type.dict.@this>>(await paramData.Value<global::app.type.list.@this<global::app.type.dict.@this>>());
+        var result = paramData.ShallowClone<global::app.type.list.@this<global::app.type.item.dict.@this>>(await paramData.Value<global::app.type.list.@this<global::app.type.item.dict.@this>>());
 
         await result.IsSuccess();
         var content = (string)result.GetValue<List<Dictionary<string, object?>>>()![0]["Content"]!;

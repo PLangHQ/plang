@@ -1,6 +1,6 @@
 using app.module.file;
-using PLangPath = global::app.type.path.@this;
-using PLangFilePath = global::app.type.path.file.@this;
+using PLangPath = global::app.type.item.path.@this;
+using PLangFilePath = global::app.type.item.path.file.@this;
 
 namespace PLang.Tests.App.CompareRedesign;
 
@@ -53,7 +53,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
         System.IO.File.WriteAllText(TempPath("file.txt"), "hello");
         var result = await Read("file.txt");
         await Assert.That(result.Type!.Name).IsEqualTo("file");
-        await Assert.That(result.Peek()).IsTypeOf<global::app.type.file.@this>();
+        await Assert.That(result.Peek()).IsTypeOf<global::app.type.item.file.@this>();
         // .Is() chain — file is-a path is-a item; content untouched
         await Assert.That(result.Type.Is("file")).IsTrue();
         await Assert.That(result.Type.Is("path")).IsTrue();
@@ -64,12 +64,12 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     public async Task ReadHttpUrl_ReturnsUrlType_NotFile()
     {
         // remote scheme routes to `url` with NO fetch — pure construction
-        var http = new global::app.type.path.http.@this("http://example.com/data.json", _app.User.Context) {};
+        var http = new global::app.type.item.path.http.@this("http://example.com/data.json", _app.User.Context) {};
         var action = new Read(_app.User.Context) { Path = new global::app.data.@this<PLangPath>("", http) };
         var result = await action.Run();
         await result.IsSuccess();
         await Assert.That(result.Type!.Name).IsEqualTo("url");
-        var reference = (global::app.type.url.@this)result.Peek()!;
+        var reference = (global::app.type.item.url.@this)result.Peek()!;
         await Assert.That(reference.IsLoaded).IsFalse();
         await Assert.That(reference.Host).IsEqualTo("example.com");
     }
@@ -95,11 +95,11 @@ public class Stage3_ReferenceNarrowTests : IDisposable
         System.IO.File.WriteAllBytes(TempPath("blob.zzz"), new byte[] { 1, 2, 3 });
         var result = await Read("blob.zzz");
         await Assert.That(result.Type!.Name).IsEqualTo("file");
-        await Assert.That(result.Peek()).IsTypeOf<global::app.type.file.@this>();
+        await Assert.That(result.Peek()).IsTypeOf<global::app.type.item.file.@this>();
         // unknown extension: content is a binary value (raw bytes, no text decode)
         var content = await result.Value();
-        await Assert.That(content).IsTypeOf<global::app.type.binary.@this>();
-        await Assert.That(((global::app.type.binary.@this)content!).Value).IsEquivalentTo(new byte[] { 1, 2, 3 });
+        await Assert.That(content).IsTypeOf<global::app.type.item.binary.@this>();
+        await Assert.That(((global::app.type.item.binary.@this)content!).Value).IsEquivalentTo(new byte[] { 1, 2, 3 });
     }
 
     [Test]
@@ -122,7 +122,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
         await Assert.That(pathChild.Peek()).IsNotNull();
         // the property plane never read content: the reference is still unloaded
         // and the Data never narrowed
-        var reference = (global::app.type.file.@this)data.Peek()!;
+        var reference = (global::app.type.item.file.@this)data.Peek()!;
         await Assert.That(reference.IsLoaded).IsFalse();
         await Assert.That(data.Type!.Name).IsEqualTo("file");
     }
@@ -131,14 +131,14 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     public async Task DotField_OnFile_ReadsAndParsesAndNarrows_MaterializeCountOne()
     {
         var data = JsonFile("narrow1.json");
-        var reference = (global::app.type.file.@this)data.Peek()!;
+        var reference = (global::app.type.item.file.@this)data.Peek()!;
         await Assert.That(reference.IsLoaded).IsFalse();
 
         var child = await data.Get("port");
         await Assert.That((await child.Value())?.ToString()).IsEqualTo("8080");
         // narrowed: the parsed dict replaced the reference (single storage)
         await Assert.That(data.Type!.Name).IsEqualTo("dict");
-        await Assert.That(data.Peek()).IsTypeOf<global::app.type.dict.@this>();
+        await Assert.That(data.Peek()).IsTypeOf<global::app.type.item.dict.@this>();
         // the sample stays on the reference — aliases and cached bindings that
         // did not rebind serve their next use from memory (one read per value
         // per program run)
@@ -202,7 +202,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
         await b.Get("database");
         var facetB = await b.Get("!file");
         await Assert.That(facetB.IsInitialized).IsTrue();
-        await Assert.That(facetB.Peek()).IsTypeOf<global::app.type.file.@this>();
+        await Assert.That(facetB.Peek()).IsTypeOf<global::app.type.item.file.@this>();
     }
 
     [Test]
@@ -227,7 +227,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
         await Assert.That(copy.Type!.Name).IsEqualTo("dict");
         // the original never examined its content — still the reference
         await Assert.That(original.Type!.Name).IsEqualTo("file");
-        await Assert.That(original.Peek()).IsTypeOf<global::app.type.file.@this>();
+        await Assert.That(original.Peek()).IsTypeOf<global::app.type.item.file.@this>();
     }
 
     [Test]
@@ -238,7 +238,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
         System.IO.File.WriteAllText(TempPath("sub/a.txt"), "a");
         var dir = await Read("sub");
         await Assert.That(dir.Type!.Name).IsEqualTo("directory");
-        await Assert.That(dir.Peek()).IsTypeOf<global::app.type.directory.@this>();
+        await Assert.That(dir.Peek()).IsTypeOf<global::app.type.item.directory.@this>();
         // image: eager specialisation, headline image (1x1 px PNG)
         byte[] png = Convert.FromBase64String(
             "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==");
@@ -247,6 +247,6 @@ public class Stage3_ReferenceNarrowTests : IDisposable
         // Content off I/O is binary/lazy — the value parses (narrows) only on access.
         await img.Value();
         await Assert.That(img.Type!.Name).IsEqualTo("image");
-        await Assert.That(img.Peek()).IsTypeOf<global::app.type.image.@this>();
+        await Assert.That(img.Peek()).IsTypeOf<global::app.type.item.image.@this>();
     }
 }

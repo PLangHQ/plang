@@ -37,8 +37,8 @@ public partial class Read : IContext
 
         // Remote scheme → a url reference. No fetch — consent and I/O land at
         // first examination through the door.
-        if (path is global::app.type.path.http.@this)
-            return new data.@this("url", new global::app.type.url.@this(path!),
+        if (path is global::app.type.item.path.http.@this)
+            return new data.@this("url", new global::app.type.item.url.@this(path!),
                 global::app.type.@this.Create("url", path!.Extension is { Length: > 0 } ue ? ue.TrimStart('.') : null, context: Context),
                 context: Context);
 
@@ -52,7 +52,7 @@ public partial class Read : IContext
                 $"Not found: {path}", "NotFound", 404));
 
         if (info.IsFile == false)
-            return new data.@this("directory", new global::app.type.directory.@this(path),
+            return new data.@this("directory", new global::app.type.item.directory.@this(path),
                 global::app.type.@this.Create("directory", null, context: Context), context: Context);
 
         // The plang container (.pr) IS structured Data — a Goal, not content to
@@ -74,7 +74,7 @@ public partial class Read : IContext
             if (!read.Success || read.Type?.ClrType.Exit() == true) return read;
             if (read.Raw is byte[] imageBytes)
                 return new data.@this(read.Name,
-                    new global::app.type.image.@this(imageBytes, path), read.Type, context: Context);
+                    new global::app.type.item.image.@this(imageBytes, path), read.Type, context: Context);
             return read;
         }
 
@@ -97,7 +97,7 @@ public partial class Read : IContext
         // The reference: the extension rides as the kind (the content-kind
         // inference input — `.json` narrows to dict, `.csv` to table/list).
         var kind = path.Extension is { Length: > 0 } ext ? ext.TrimStart('.') : null;
-        return new data.@this(path.FileName, new global::app.type.file.@this(path),
+        return new data.@this(path.FileName, new global::app.type.item.file.@this(path),
             global::app.type.@this.Create("file", kind, context: Context), context: Context);
     }
 
@@ -147,7 +147,7 @@ public partial class Read : IContext
                 // `action` is the source attribution (the handler reduces to its
                 // own identity; a live handler has no wire form).
                 string source = __action == null ? "" : $"{__action.Module}.{__action.ActionName}";
-                var warning = new global::app.type.dict.@this(Context)
+                var warning = new global::app.type.item.dict.@this(Context)
                     .Set("action", source)
                     .Set("message", $"file.read: literal path '{raw}' does not exist on disk");
                 await Context.Actor.Channel.Channel("builder").WriteAsync(Context.Ok(warning));

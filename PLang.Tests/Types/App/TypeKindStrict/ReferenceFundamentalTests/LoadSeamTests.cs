@@ -2,7 +2,7 @@ using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using System.Text;
-using image = global::app.type.image.@this;
+using image = global::app.type.item.image.@this;
 
 namespace PLang.Tests.App.TypeKindStrict.ReferenceFundamentalTests;
 
@@ -41,7 +41,7 @@ public class LoadSeamTests
     private image PathBackedPng(string name)
     {
         System.IO.File.WriteAllBytes(System.IO.Path.Combine(_app.AbsolutePath, name), Png1x1);
-        return new image(global::app.type.path.@this.Resolve(
+        return new image(global::app.type.item.path.@this.Resolve(
             System.IO.Path.Combine(_app.AbsolutePath, name), _app.User.Context));
     }
 

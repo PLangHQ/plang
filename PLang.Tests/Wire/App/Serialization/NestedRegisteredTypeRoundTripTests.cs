@@ -21,8 +21,8 @@ public class NestedRegisteredTypeRoundTripTests
         // whose Value is a list containing two path-typed Datas.
         await using var app = NewApp();
         var context = app.User.Context;
-        var p1 = global::app.type.path.@this.Resolve("/srv/a.txt", context);
-        var p2 = global::app.type.path.@this.Resolve("/srv/b.txt", context);
+        var p1 = global::app.type.item.path.@this.Resolve("/srv/a.txt", context);
+        var p2 = global::app.type.item.path.@this.Resolve("/srv/b.txt", context);
         var outer = new global::app.data.@this("outer", new[] {
             new global::app.data.@this("p1", p1, context: context),
             new global::app.data.@this("p2", p2, context: context),

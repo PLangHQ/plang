@@ -255,14 +255,14 @@ public sealed class @this : IAsyncDisposable
     /// Context) so every downstream read goes through <c>AuthGate</c>, even
     /// when the override points outside the app root.
     /// </summary>
-    public global::app.type.path.@this? ResolveMarkdownTeachingRoot()
+    public global::app.type.item.path.@this? ResolveMarkdownTeachingRoot()
     {
         if (App?.System?.Context == null) return null;
         if (!string.IsNullOrEmpty(MarkdownTeachingRoot))
-            return global::app.type.path.@this.Resolve(MarkdownTeachingRoot!, App.System.Context);
+            return global::app.type.item.path.@this.Resolve(MarkdownTeachingRoot!, App.System.Context);
         // FilePath's ValidatePath redirects /system/* to <OsDirectory>/system/*
         // when the path isn't present under the App root.
-        return global::app.type.path.@this.Resolve("/system/modules", App.System.Context);
+        return global::app.type.item.path.@this.Resolve("/system/modules", App.System.Context);
     }
 
     /// <summary>

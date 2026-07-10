@@ -9,15 +9,15 @@ namespace app.channel.type.file;
 /// produces lazy Data, exactly like every other channel kind.
 ///
 /// <para>The channel does no <c>System.IO</c> of its own — it reads bytes through
-/// <see cref="global::app.type.path.@this.ReadBytes"/>, which carries the
+/// <see cref="global::app.type.item.path.@this.ReadBytes"/>, which carries the
 /// <c>AuthGate</c> (the actor permission model). So the file boundary inherits the
 /// same gate the rest of the path surface enforces; PLNG002 stays clean.</para>
 /// </summary>
 public sealed class @this : global::app.channel.@this
 {
-    private readonly global::app.type.path.@this _path;
+    private readonly global::app.type.item.path.@this _path;
 
-    public @this(global::app.type.path.@this path)
+    public @this(global::app.type.item.path.@this path)
     {
         _path = path;
         Name = path.Raw;

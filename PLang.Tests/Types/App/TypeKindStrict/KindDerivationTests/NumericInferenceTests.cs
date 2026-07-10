@@ -40,7 +40,7 @@ public class NumericInferenceTests : System.IAsyncDisposable
     {
         // Both paths converge on {number, int} for an int literal.
         var runtime = new global::app.data.@this("x", 5, context: _app.User.Context);
-        var buildKind = global::app.type.number.@this.Build("5");
+        var buildKind = global::app.type.item.number.@this.Build("5");
         await Assert.That(runtime.Type.Name).IsEqualTo("number");
         await Assert.That(runtime.Type.Kind?.Name).IsEqualTo("int");
         await Assert.That(buildKind).IsEqualTo("int");

@@ -8,7 +8,7 @@ public partial class IndexOf : IContext
     public partial data.@this<app.variable.@this> ListName { get; init; }
     public partial data.@this Value { get; init; }
 
-    public async Task<data.@this<global::app.type.number.@this>> Run()
+    public async Task<data.@this<global::app.type.item.number.@this>> Run()
     {
         var data = await Context.Variable.Get((await ListName.Value()));
 
@@ -16,9 +16,9 @@ public partial class IndexOf : IContext
         foreach (var (key, item) in await data.EnumerateItems())
         {
             if (await item.Compare(Value) == global::app.data.Comparison.Equal)
-                return Context.Ok<global::app.type.number.@this>(Convert.ToInt32((await key.Value())));
+                return Context.Ok<global::app.type.item.number.@this>(Convert.ToInt32((await key.Value())));
         }
 
-        return Context.Ok<global::app.type.number.@this>(-1);
+        return Context.Ok<global::app.type.item.number.@this>(-1);
     }
 }

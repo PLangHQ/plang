@@ -16,11 +16,11 @@ public partial class verify : IContext
     public partial data.@this<global::app.type.list.@this>? Contracts { get; init; }
 
     /// <summary>Expected headers to match against signed headers.</summary>
-    public partial data.@this<global::app.type.dict.@this>? Headers { get; init; }
+    public partial data.@this<global::app.type.item.dict.@this>? Headers { get; init; }
 
     /// <summary>Freshness timeout in milliseconds. Default: 300000 (5 min).</summary>
     [Default(300_000)]
-    public partial data.@this<global::app.type.number.@this> TimeoutMs { get; init; }
+    public partial data.@this<global::app.type.item.number.@this> TimeoutMs { get; init; }
 
     /// <summary>
     /// When true, skip the Created-age wire-freshness check (step 2) and the

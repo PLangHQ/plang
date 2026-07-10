@@ -7,10 +7,10 @@ using app.error;
 using app.goal;
 using app.variable;
 using app.module.setting;
-using app.type.path;
+using app.type.item.path;
 using app.module.http;
 using PlangHttpMethod = app.module.http.HttpMethod;
-using number = global::app.type.number.@this;
+using number = global::app.type.item.number.@this;
 using text = global::app.type.item.text.@this;
 using item = global::app.type.item.@this;
 
@@ -224,9 +224,9 @@ public sealed class OpenAi : ILlm
                 Url = new data.@this<global::app.type.item.text.@this>("", endpoint),
                 Method = new data.@this<global::app.type.item.choice.@this<PlangHttpMethod>>("", PlangHttpMethod.POST),
                 Body = new data.@this("", body, context: context),
-                Headers = new data.@this<global::app.type.dict.@this>("", global::app.type.dict.@this.FromRaw(headers, context)),
+                Headers = new data.@this<global::app.type.item.dict.@this>("", global::app.type.item.dict.@this.FromRaw(headers, context)),
                 Unsigned = new data.@this<global::app.type.item.@bool.@this>("", true),
-                TimeoutInSec = new data.@this<global::app.type.number.@this>("", 120),
+                TimeoutInSec = new data.@this<global::app.type.item.number.@this>("", 120),
                 OnStream = action.OnStream,
                 StreamAs = (action.OnStream == null ? null : await action.OnStream.Value()) != null ? new data.@this<global::app.type.item.choice.@this<StreamFormat>>("", StreamFormat.SSE) : default
             };
@@ -747,7 +747,7 @@ public sealed class OpenAi : ILlm
         // formatting is sync and the bytes-then-encode pipeline is cheap.
         try
         {
-            var imgPath = global::app.type.path.@this.Resolve(image, context);
+            var imgPath = global::app.type.item.path.@this.Resolve(image, context);
             var dataUri = imgPath.ReadAsDataUri().GetAwaiter().GetResult();
             if (dataUri.Success && !string.IsNullOrEmpty(dataUri.Peek()?.ToString()))
             {
@@ -1003,7 +1003,7 @@ public sealed class OpenAi : ILlm
         // couldn't survive the cache; a clr(json) round-trips as raw json now.
         System.Collections.Generic.IEnumerable<data.@this>? entries = cachedValue switch
         {
-            global::app.type.dict.@this d => (System.Collections.Generic.IEnumerable<data.@this>)d.Entries,
+            global::app.type.item.dict.@this d => (System.Collections.Generic.IEnumerable<data.@this>)d.Entries,
             global::app.type.clr.@this c => c.Enumerate(),
             _ => null
         };

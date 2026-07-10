@@ -71,7 +71,7 @@ public partial class @this
         // (a clr reflects as a transparent property bag at the wire, dragging
         // its Context back-reference into the signed graph; an item renders
         // itself) but is not the final layered design.
-        var outer = new @this("", new global::app.type.archive.@this(compressed, "gzip"));
+        var outer = new @this("", new global::app.type.item.archive.@this(compressed, "gzip"));
         outer.Context = _context;
         return outer;
     }
@@ -122,7 +122,7 @@ public partial class @this
     /// </summary>
     public async Task<@this> DecompressAsync(CancellationToken ct = default)
     {
-        if (Peek() is not global::app.type.archive.@this archive)
+        if (Peek() is not global::app.type.item.archive.@this archive)
             return this;
 
         // The archive item carries its own bytes + algorithm — no string label,

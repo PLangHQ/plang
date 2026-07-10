@@ -15,8 +15,8 @@ public sealed class @this
     // Path-keyed dicts. Path's own Equals/GetHashCode uses RootComparison
     // (OrdinalIgnoreCase on Windows, Ordinal on Linux) — no separate
     // StringComparer needed; the canonical-form keying lives on Path itself.
-    private readonly ConcurrentDictionary<global::app.type.path.@this, goal.@this> _goals = new();
-    private readonly ConcurrentDictionary<global::app.type.path.@this, goal.@this> _byPath = new();
+    private readonly ConcurrentDictionary<global::app.type.item.path.@this, goal.@this> _goals = new();
+    private readonly ConcurrentDictionary<global::app.type.item.path.@this, goal.@this> _byPath = new();
     // Separate by-name index for fuzzy `Get("Name")` — name lookups are
     // a different question from Path equality and want OrdinalIgnoreCase
     // semantics regardless of OS.
@@ -176,7 +176,7 @@ public sealed class @this
 
         // 1. Try user's root via path verbs (gated). Anchor at "/" (App root),
         // append dir, then .build/<file>.pr. ExistsAsync fast-passes in-root.
-        var rootCandidate = global::app.type.path.@this.Resolve("/", context);
+        var rootCandidate = global::app.type.item.path.@this.Resolve("/", context);
         if (!string.IsNullOrEmpty(dir)) rootCandidate = rootCandidate.Combine(dir);
         rootCandidate = rootCandidate.Combine(".build").Combine(prFile);
         var rootExists = await rootCandidate.ExistsAsync();
@@ -203,7 +203,7 @@ public sealed class @this
         if (normalized.StartsWith("system/", StringComparison.OrdinalIgnoreCase)
             || normalized.Equals("system", StringComparison.OrdinalIgnoreCase))
         {
-            var sysCandidate = global::app.type.path.@this.Resolve(
+            var sysCandidate = global::app.type.item.path.@this.Resolve(
                 "/" + normalized + "/.build/" + prFile, context);
             var sysExists = await sysCandidate.ExistsAsync();
             if (sysExists.Success && await sysExists.ToBooleanAsync())
@@ -239,7 +239,7 @@ public sealed class @this
     /// <summary>
     /// Index by path instance. Same hard-miss semantics.
     /// </summary>
-    public goal.@this this[global::app.type.path.@this path]
+    public goal.@this this[global::app.type.item.path.@this path]
     {
         get
         {
@@ -328,15 +328,15 @@ public sealed class @this
 
         // Resolve the raw string through the scheme registry so dict lookups key on
         // the canonical Path (born with the System context — always available).
-        global::app.type.path.@this key =
-            global::app.type.path.@this.Resolve(prPath, App.System.Context);
+        global::app.type.item.path.@this key =
+            global::app.type.item.path.@this.Resolve(prPath, App.System.Context);
         if (_goals.TryGetValue(key, out var cached))
             return cached.IsSetup ? null : cached;
         if (_byPath.TryGetValue(key, out cached))
             return cached.IsSetup ? null : cached;
 
         if (App == null) return null;
-        var resolved = global::app.type.path.@this.Resolve(prPath, App.System.Context!);
+        var resolved = global::app.type.item.path.@this.Resolve(prPath, App.System.Context!);
         var exists = await resolved.ExistsAsync();
         if (!exists.Success || (await exists.Value())?.Value != true)
             return null;
@@ -355,7 +355,7 @@ public sealed class @this
     /// <summary>
     /// Loads a goal from a .pr file, deserializes and adds to this collection.
     /// </summary>
-    public async Task<data.@this> LoadFromFileAsync(app.@this app, global::app.type.path.@this prPath, CancellationToken cancellationToken = default)
+    public async Task<data.@this> LoadFromFileAsync(app.@this app, global::app.type.item.path.@this prPath, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -396,7 +396,7 @@ public sealed class @this
         {
             // Lift to path.List — gated through AuthGate(Read). In-root walks
             // fast-pass; out-of-root would prompt or deny.
-            var dirPath = global::app.type.path.@this.Resolve(directory, context);
+            var dirPath = global::app.type.item.path.@this.Resolve(directory, context);
             var listed = await dirPath.List(pattern, recursive: true);
             if (!listed.Success || listed.Peek().IsNull)
                 return context.Ok(0);
@@ -405,7 +405,7 @@ public sealed class @this
             var list = await listed.Value();
             foreach (var row in list!)
             {
-                var file = await row.Value<global::app.type.path.@this>();
+                var file = await row.Value<global::app.type.item.path.@this>();
                 if (file == null) continue;
                 var result = await LoadFromFileAsync(app, file, cancellationToken);
                 if (result) loadedCount++;

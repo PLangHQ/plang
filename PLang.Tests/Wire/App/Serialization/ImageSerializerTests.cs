@@ -1,5 +1,5 @@
 using System.Text.Json;
-using image = global::app.type.image.@this;
+using image = global::app.type.item.image.@this;
 
 namespace PLang.Tests.App.Serialization;
 
@@ -47,10 +47,10 @@ public class ImageSerializerTests
     {
         await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-imgs-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var p = global::app.type.path.@this.Resolve("/some/photo.png", app.User.Context);
+        var p = global::app.type.item.path.@this.Resolve("/some/photo.png", app.User.Context);
         var img = new image(PngBytes, "image/png", p);
         var w = new CaptureWriter("text");
-        global::app.type.image.serializer.text.Write(img, w);
+        global::app.type.item.image.serializer.text.Write(img, w);
         await Assert.That(w.LastMethod).IsEqualTo("String");
         await Assert.That(((string)w.Last!).Contains("photo.png") || ((string)w.Last!).Contains("image:")).IsTrue();
     }
@@ -60,7 +60,7 @@ public class ImageSerializerTests
         // No Path → text writer falls back to the bare label.
         var img = new image(PngBytes, "image/png");
         var w = new CaptureWriter("text");
-        global::app.type.image.serializer.text.Write(img, w);
+        global::app.type.item.image.serializer.text.Write(img, w);
         await Assert.That(((string)w.Last!).Contains("[image:")).IsTrue();
     }
 
@@ -68,7 +68,7 @@ public class ImageSerializerTests
     {
         var img = new image(PngBytes, "image/png");
         var w = new CaptureWriter("json");
-        global::app.type.image.serializer.Default.Write(img, w);
+        global::app.type.item.image.serializer.Default.Write(img, w);
         await Assert.That(w.LastMethod).IsEqualTo("String");
         await Assert.That(w.Last).IsEqualTo(System.Convert.ToBase64String(PngBytes));
     }

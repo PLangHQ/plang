@@ -53,7 +53,7 @@ public class RuntimeDoubleWrapTests
         var context = _app.User.Context;
         context.Variable.Set("xs", new List<object?> { "a", "b", "c" });
 
-        var action = new Get(context) { ListName = new @this("xs"), Index = (global::app.type.number.@this)1 };
+        var action = new Get(context) { ListName = new @this("xs"), Index = (global::app.type.item.number.@this)1 };
         await action.Attach(null, context);
         var result = await action.Run();
 
@@ -142,8 +142,8 @@ public class RuntimeDoubleWrapTests
         var app = TestApp.Create("/app");
         var context = app.User.Context;
         var users = new global::app.type.list.@this(context);
-        var u1 = new global::app.type.dict.@this(context); u1.Set(new global::app.data.@this("age", 25L, context: context)); users.Add(new global::app.data.@this("", u1));
-        var u2 = new global::app.type.dict.@this(context); u2.Set(new global::app.data.@this("age", 15L, context: context)); users.Add(new global::app.data.@this("", u2));
+        var u1 = new global::app.type.item.dict.@this(context); u1.Set(new global::app.data.@this("age", 25L, context: context)); users.Add(new global::app.data.@this("", u1));
+        var u2 = new global::app.type.item.dict.@this(context); u2.Set(new global::app.data.@this("age", 15L, context: context)); users.Add(new global::app.data.@this("", u2));
         context.Variable.Set("users", users);
 
         var action = new global::app.module.list.Where(context) { ListName = new @this("users"),

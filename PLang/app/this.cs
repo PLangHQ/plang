@@ -306,9 +306,9 @@ public sealed partial class @this : IAsyncDisposable
         // surface through handler params — register them so the runtime catalog
         // resolves them by name (the cached map is built module-less).
         Type.RegisterModuleChoiceTypes(_modules);
-        Type.Scheme.Register("file", (raw, context) => global::app.type.path.file.@this.Resolve(raw, context));
-        Type.Scheme.Register("http", (raw, context) => global::app.type.path.http.@this.Resolve(raw, context));
-        Type.Scheme.Register("https", (raw, context) => global::app.type.path.http.@this.Resolve(raw, context));
+        Type.Scheme.Register("file", (raw, context) => global::app.type.item.path.file.@this.Resolve(raw, context));
+        Type.Scheme.Register("http", (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context));
+        Type.Scheme.Register("https", (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context));
 
         // Auto-wire console channels for ad-hoc App constructions (sub-process
         // test fixtures, embedded scenarios, C# tests, the `plang --test` child
@@ -382,7 +382,7 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public async Task Load()
     {
-        var prPath = global::app.type.path.@this.Resolve("/.build/app.pr", System.Context!);
+        var prPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", System.Context!);
         var exists = await prPath.ExistsAsync();
         if (!exists.Success || (await exists.Value())?.Value != true) return;
         var readResult = await prPath.ReadText();
@@ -437,7 +437,7 @@ public sealed partial class @this : IAsyncDisposable
         var json = JsonSerializer.Serialize(
             new { id = Id, name = Name, created = Created, updated = Updated, version = Version },
             CamelCaseIndented);
-        var prPath = global::app.type.path.@this.Resolve("/.build/app.pr", System.Context!);
+        var prPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", System.Context!);
         var written = await prPath.WriteText(json);
         if (!written.Success) return written;
         return System.Context!.Ok(this);
@@ -532,7 +532,7 @@ public sealed partial class @this : IAsyncDisposable
             return context.Error(new global::app.error.ServiceError(
                 "No goal file specified. Use: plang <goalfile>", "NoGoalFile", 400));
 
-        var goalCall = new GoalCall { PrPath = global::app.type.path.@this.Resolve(goalFile, context) };
+        var goalCall = new GoalCall { PrPath = global::app.type.item.path.@this.Resolve(goalFile, context) };
         var goalResult = await goalCall.GetGoalAsync(this, context);
         if (!goalResult.Success) return goalResult;
 
@@ -594,7 +594,7 @@ public sealed partial class @this : IAsyncDisposable
         // Lift to Path: AuthGate fires inside Sqlite.CreateAsync on Write,
         // parent dir creation via path.Mkdir. Async all the way — no sync-wait,
         // so parallel App constructions never starve the threadpool.
-        var dbPath = global::app.type.path.@this.Resolve("/.db/system.sqlite", System.Context);
+        var dbPath = global::app.type.item.path.@this.Resolve("/.db/system.sqlite", System.Context);
         return await global::app.module.setting.Sqlite.CreateAsync(dbPath, System.Context);
     }
 

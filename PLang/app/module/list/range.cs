@@ -5,10 +5,10 @@ namespace app.module.list;
 [Action("range")]
 public partial class Range : IContext
 {
-    public partial data.@this<global::app.type.number.@this> Start { get; init; }
-    public partial data.@this<global::app.type.number.@this> End { get; init; }
+    public partial data.@this<global::app.type.item.number.@this> Start { get; init; }
+    public partial data.@this<global::app.type.item.number.@this> End { get; init; }
     [Default(1)]
-    public partial data.@this<global::app.type.number.@this> Step { get; init; }
+    public partial data.@this<global::app.type.item.number.@this> Step { get; init; }
 
     public async Task<data.@this<type.list>> Run()
     {

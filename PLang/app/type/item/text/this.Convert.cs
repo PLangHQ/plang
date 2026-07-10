@@ -26,7 +26,7 @@ public sealed partial class @this
         // Native dict/list value types are not IDictionary/IEnumerable, but their
         // [JsonConverter] renders the canonical {}/[] textual form — text/json means
         // json TEXT, so route them through serialization like any other structured value.
-        if (value is app.type.dict.@this
+        if (value is app.type.item.dict.@this
             || value is app.type.list.@this
             || value is System.Collections.IDictionary
             || value is JsonElement

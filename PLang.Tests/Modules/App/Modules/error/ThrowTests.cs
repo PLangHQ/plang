@@ -20,7 +20,7 @@ public class ThrowTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Throw(context) { Message = (Text)"Something went wrong", StatusCode = (global::app.type.number.@this)500 };
+        var action = new Throw(context) { Message = (Text)"Something went wrong", StatusCode = (global::app.type.item.number.@this)500 };
         var result = await action.Run();
 
         await result.IsFailure();
@@ -33,7 +33,7 @@ public class ThrowTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Throw(context) { Message = (Text)"Not found", StatusCode = (global::app.type.number.@this)404, Key = (Text)"NotFound" };
+        var action = new Throw(context) { Message = (Text)"Not found", StatusCode = (global::app.type.item.number.@this)404, Key = (Text)"NotFound" };
         var result = await action.Run();
 
         await result.IsFailure();

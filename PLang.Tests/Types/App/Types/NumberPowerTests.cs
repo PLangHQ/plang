@@ -1,5 +1,5 @@
-using number = global::app.type.number.@this;
-using PKind = global::app.type.number.NumberKind;
+using number = global::app.type.item.number.@this;
+using PKind = global::app.type.item.number.NumberKind;
 
 namespace PLang.Tests.App.Types;
 
@@ -13,7 +13,7 @@ public class NumberPowerTests
     {
         var r = NumberOps.Power(number.From(2), number.From(10), NumberOps.Lenient);
         await Assert.That(r.Kind).IsEqualTo(PKind.Int);
-        await Assert.That(((global::app.type.number.@this)r).Clr<int>()).IsEqualTo(1024);
+        await Assert.That(((global::app.type.item.number.@this)r).Clr<int>()).IsEqualTo(1024);
     }
 
     [Test] public async Task Power_TwoPowNegOne_ReturnsHalf_NotZero()
@@ -21,7 +21,7 @@ public class NumberPowerTests
         var r = NumberOps.Power(number.From(2), number.From(-1), NumberOps.Lenient);
         // Leaves integer track — returns 0.5 (as double under lenient).
         await Assert.That(r.Kind == PKind.Double || r.Kind == PKind.Decimal).IsTrue();
-        await Assert.That(((global::app.type.number.@this)r).Clr<double>()).IsEqualTo(0.5);
+        await Assert.That(((global::app.type.item.number.@this)r).Clr<double>()).IsEqualTo(0.5);
     }
 
     [Test] public async Task Power_TwoPowHalf_PromotesToDouble()

@@ -24,7 +24,7 @@ public partial class DeepResolutionList : global::app.module.IContext
 [global::app.module.Action("deepresolutiondict")]
 public partial class DeepResolutionDict : global::app.module.IContext
 {
-    public partial global::app.data.@this<global::app.type.dict.@this> Dict { get; init; }
+    public partial global::app.data.@this<global::app.type.item.dict.@this> Dict { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Dict);
 }
 

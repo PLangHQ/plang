@@ -1,6 +1,6 @@
 using System.Text.Json;
 using TextV = global::app.type.item.text.@this;
-using NumberV = global::app.type.number.@this;
+using NumberV = global::app.type.item.number.@this;
 using BoolV = global::app.type.item.@bool.@this;
 using NullV = global::app.type.item.@null.@this;
 
@@ -67,7 +67,7 @@ public class ConstructionBornNativeTests
         // bare C# null and NOT a fresh allocation. Probed inside a dict so the
         // wrapping is the real one consumers see.
         object? leaf = Unwrap("{\"z\": null}");
-        var dict = (global::app.type.dict.@this)leaf!;
+        var dict = (global::app.type.item.dict.@this)leaf!;
         var z = dict.Get("z");
         await Assert.That(z).IsNotNull();
         await Assert.That(ReferenceEquals((z!.Peek()), NullV.Instance)).IsTrue();
@@ -80,7 +80,7 @@ public class ConstructionBornNativeTests
         // Round-trip a json document with every scalar kind and confirm no leaf
         // value is a raw CLR scalar — only wrappers and collections holding Data.
         object? root = Unwrap("{\"s\":\"a\",\"n\":1,\"f\":2.5,\"b\":true,\"z\":null,\"arr\":[1,\"x\",false]}");
-        var dict = (global::app.type.dict.@this)root!;
+        var dict = (global::app.type.item.dict.@this)root!;
         foreach (var key in new[] { "s", "n", "f", "b", "z" })
         {
             object? leaf = (await (dict.Get(key))!.Value());

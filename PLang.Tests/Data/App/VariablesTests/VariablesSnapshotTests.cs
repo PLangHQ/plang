@@ -22,7 +22,7 @@ public class VariablesSnapshotTests
         // not by casting to a raw CLR IDictionary.
         var obj = await dst.User.Context.Variable.Get("obj");
         await Assert.That(obj).IsNotNull();
-        var dict = (await obj!.Value()) as global::app.type.dict.@this;
+        var dict = (await obj!.Value()) as global::app.type.item.dict.@this;
         await Assert.That(dict).IsNotNull();
         await Assert.That(dict!.Get("a")?.Peek()?.ToString()).IsEqualTo("1");
     }

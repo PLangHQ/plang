@@ -6,7 +6,7 @@ namespace app.type.list;
 /// The native PLang list/array value type. Holds an ordered <c>List&lt;data&gt;</c> —
 /// collections hold Data end to end, so an element keeps its own type-tag and
 /// signature instead of being decomposed to a raw CLR value. Peer of
-/// <c>app.type.dict.@this</c>: <c>dict</c> owns key-lookup and serialize-as-<c>{}</c>;
+/// <c>app.type.item.dict.@this</c>: <c>dict</c> owns key-lookup and serialize-as-<c>{}</c>;
 /// <c>list</c> owns index/accessor navigation and serialize-as-<c>[]</c>.
 ///
 /// <para>The <c>[JsonConverter]</c> governs the RAW-STJ projection only (plain
@@ -168,7 +168,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// (a list row contributes its own count; a scalar/dict row contributes 1). Walked
     /// on demand: a row may alias a list mutated elsewhere, so a stored counter would
     /// stale.</summary>
-    public global::app.type.number.@this Count => CountRaw;
+    public global::app.type.item.number.@this Count => CountRaw;
 
     /// <summary>The interior raw count — index math and loop bounds.</summary>
     internal int CountRaw
@@ -329,10 +329,10 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     //     the type, at its own index-math boundary. The int forms stay for
     //     engine-interior loops. ---
 
-    public @this Insert(global::app.type.number.@this index, Data item) => Insert(index.ToInt32(), item);
-    public void RemoveAt(global::app.type.number.@this index) => RemoveAt(index.ToInt32());
-    public void SetAt(global::app.type.number.@this index, Data value) => SetAt(index.ToInt32(), value);
-    public Data? At(global::app.type.number.@this index) => At(index.ToInt32());
+    public @this Insert(global::app.type.item.number.@this index, Data item) => Insert(index.ToInt32(), item);
+    public void RemoveAt(global::app.type.item.number.@this index) => RemoveAt(index.ToInt32());
+    public void SetAt(global::app.type.item.number.@this index, Data value) => SetAt(index.ToInt32(), value);
+    public Data? At(global::app.type.item.number.@this index) => At(index.ToInt32());
 
     /// <summary>Removes the leaf at the flattened <paramref name="index"/> (no-op when out of range).</summary>
     internal void RemoveAt(int index)

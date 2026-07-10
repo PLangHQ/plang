@@ -54,9 +54,9 @@ public static class @this
             // hold Data). The raw Dictionary<string,object> entry that used to
             // back these is retired; typed dictionaries still surface as the
             // generic `dict<k,v>` shape via GetTypeName, separate from this.
-            ["dictionary"] = typeof(app.type.dict.@this),
-            ["dict"] = typeof(app.type.dict.@this),
-            ["map"] = typeof(app.type.dict.@this),
+            ["dictionary"] = typeof(app.type.item.dict.@this),
+            ["dict"] = typeof(app.type.item.dict.@this),
+            ["map"] = typeof(app.type.item.dict.@this),
             // `object` resolves for back-compat (a Data<object> slot, a CLR object
             // value), but is NOT taught to the LLM — see InlineFundamentals. Data<object>
             // is deprecated; new actions carry a concrete type or a clr-wrapped item.
@@ -107,7 +107,7 @@ public static class @this
             [typeof(object)] = "object",
             // Native object value type → "dict" (keeps the no-context Data.Type
             // derivation from collapsing to the @this class name "this").
-            [typeof(app.type.dict.@this)] = "dict",
+            [typeof(app.type.item.dict.@this)] = "dict",
             // Native list value type → "list" (same no-context derivation reason).
             [typeof(app.type.list.@this)] = "list",
         };

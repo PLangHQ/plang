@@ -30,7 +30,7 @@ public sealed class Converter : JsonConverterFactory
     // path.JsonConverter covered — concrete-subclass-typed slots fall through to
     // STJ default as they did before (no behavior change).
     public override bool CanConvert(System.Type typeToConvert)
-        => typeToConvert == typeof(global::app.type.path.@this);
+        => typeToConvert == typeof(global::app.type.item.path.@this);
 
     public override JsonConverter? CreateConverter(System.Type typeToConvert, JsonSerializerOptions options)
         => new PathConverter(_context);
@@ -41,12 +41,12 @@ public sealed class Converter : JsonConverterFactory
     /// the payload-level path would; Write emits the portable wire string (identical to the
     /// deleted <c>path.JsonConverter.Write</c>).
     /// </summary>
-    private sealed class PathConverter : JsonConverter<global::app.type.path.@this>
+    private sealed class PathConverter : JsonConverter<global::app.type.item.path.@this>
     {
         private readonly global::app.actor.context.@this? _context;
         public PathConverter(global::app.actor.context.@this? context) { _context = context; }
 
-        public override global::app.type.path.@this? Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
+        public override global::app.type.item.path.@this? Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
         {
             if (reader.TokenType == JsonTokenType.Null) return null;
             string? raw;
@@ -75,10 +75,10 @@ public sealed class Converter : JsonConverterFactory
             // path/serializer/Default.Read did via the Readers.Of delegate; no reflection hop).
             // Born-with-context: the converter carries the actor scope (the Json serializer
             // always wires it), so the path resolves through the scheme registry with it.
-            return global::app.type.path.@this.Resolve(raw!, _context!);
+            return global::app.type.item.path.@this.Resolve(raw!, _context!);
         }
 
-        public override void Write(Utf8JsonWriter writer, global::app.type.path.@this value, JsonSerializerOptions options)
+        public override void Write(Utf8JsonWriter writer, global::app.type.item.path.@this value, JsonSerializerOptions options)
         {
             string? wire = null;
             if (value.Context != null)

@@ -1,7 +1,7 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using ImageType = global::app.type.image.@this;
+using ImageType = global::app.type.item.image.@this;
 
 namespace PLang.Tests.App.TypeKindStrict.KindDerivationTests;
 

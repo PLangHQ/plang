@@ -8,7 +8,7 @@ public partial class Remove : IContext
     public partial data.@this<app.variable.@this> ListName { get; init; }
     public partial data.@this Value { get; init; }
     [Default(-1)]
-    public partial data.@this<global::app.type.number.@this> AtIndex { get; init; }
+    public partial data.@this<global::app.type.item.number.@this> AtIndex { get; init; }
 
     public async Task<data.@this<type.list>> Run()
     {

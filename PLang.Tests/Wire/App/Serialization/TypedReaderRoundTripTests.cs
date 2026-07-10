@@ -31,14 +31,14 @@ public class TypedReaderRoundTripTests
     [Test] public async Task Guid_Isolated()
     {
         var g = Guid.NewGuid();
-        var item = ReadScalar(new global::app.type.guid.serializer.Reader(), $"\"{g}\"", null);
+        var item = ReadScalar(new global::app.type.item.guid.serializer.Reader(), $"\"{g}\"", null);
         await Assert.That(item.Clr<Guid>()).IsEqualTo(g);
     }
 
     [Test] public async Task Duration_Isolated()
     {
         var d = TimeSpan.FromSeconds(90);
-        var item = ReadScalar(new global::app.type.duration.serializer.Reader(), $"\"{d:c}\"", null);
+        var item = ReadScalar(new global::app.type.item.duration.serializer.Reader(), $"\"{d:c}\"", null);
         await Assert.That(item.Clr<TimeSpan>()).IsEqualTo(d);
     }
 
@@ -55,8 +55,8 @@ public class TypedReaderRoundTripTests
 
     [Test] public async Task Path_Isolated()
     {
-        var item = ReadScalar(new global::app.type.path.serializer.Reader(), "\"/foo/bar.txt\"", null);
-        await Assert.That(item).IsAssignableTo<global::app.type.path.@this>();
+        var item = ReadScalar(new global::app.type.item.path.serializer.Reader(), "\"/foo/bar.txt\"", null);
+        await Assert.That(item).IsAssignableTo<global::app.type.item.path.@this>();
         await Assert.That(item.ToString()).Contains("foo/bar.txt");
     }
 
@@ -64,15 +64,15 @@ public class TypedReaderRoundTripTests
     {
         var bytes = new byte[] { 1, 2, 3, 4 };
         var b64 = System.Convert.ToBase64String(bytes);
-        var item = ReadScalar(new global::app.type.image.serializer.Reader(), $"\"{b64}\"", "png");
-        await Assert.That(item).IsTypeOf<global::app.type.image.@this>();
-        await Assert.That(((global::app.type.image.@this)item).Bytes).IsEquivalentTo(bytes);
+        var item = ReadScalar(new global::app.type.item.image.serializer.Reader(), $"\"{b64}\"", "png");
+        await Assert.That(item).IsTypeOf<global::app.type.item.image.@this>();
+        await Assert.That(((global::app.type.item.image.@this)item).Bytes).IsEquivalentTo(bytes);
     }
 
     [Test] public async Task Object_Isolated()
     {
         var item = ReadScalar(new global::app.type.@object.serializer.Reader(), "{\"a\":1}", null);
-        await Assert.That(item).IsAssignableTo<global::app.type.dict.@this>();
+        await Assert.That(item).IsAssignableTo<global::app.type.item.dict.@this>();
     }
 
     [Test] public async Task Item_Isolated()
@@ -89,23 +89,23 @@ public class TypedReaderRoundTripTests
     }
 
     [Test] public async Task Number_Int_Isolated()
-        => await Assert.That(ReadScalar(new global::app.type.number.serializer.Reader(), "42", "int").Clr<int>())
+        => await Assert.That(ReadScalar(new global::app.type.item.number.serializer.Reader(), "42", "int").Clr<int>())
             .IsEqualTo(42);
 
     [Test] public async Task Number_Long_Isolated()
-        => await Assert.That(ReadScalar(new global::app.type.number.serializer.Reader(), "9999999999", "long").Clr<long>())
+        => await Assert.That(ReadScalar(new global::app.type.item.number.serializer.Reader(), "9999999999", "long").Clr<long>())
             .IsEqualTo(9_999_999_999L);
 
     [Test] public async Task Number_Double_Isolated()
-        => await Assert.That(ReadScalar(new global::app.type.number.serializer.Reader(), "3.14", "double").Clr<double>())
+        => await Assert.That(ReadScalar(new global::app.type.item.number.serializer.Reader(), "3.14", "double").Clr<double>())
             .IsEqualTo(3.14d);
 
     [Test] public async Task Number_Decimal_Isolated()
-        => await Assert.That(ReadScalar(new global::app.type.number.serializer.Reader(), "1.5", "decimal").Clr<decimal>())
+        => await Assert.That(ReadScalar(new global::app.type.item.number.serializer.Reader(), "1.5", "decimal").Clr<decimal>())
             .IsEqualTo(1.5m);
 
     [Test] public async Task Number_BigInteger_Isolated()
-        => await Assert.That(ReadScalar(new global::app.type.number.serializer.Reader(),
+        => await Assert.That(ReadScalar(new global::app.type.item.number.serializer.Reader(),
                 "\"170141183460469231731687303715884105728\"", "biginteger").ToString())
             .IsEqualTo("170141183460469231731687303715884105728");
 
@@ -127,8 +127,8 @@ public class TypedReaderRoundTripTests
 
     [Test] public async Task Dict_StreamsRawSlots_Isolated()
     {
-        var item = ReadScalar(new global::app.type.dict.serializer.Reader(), "{\"a\":1,\"b\":2}", null);
-        var dict = (global::app.type.dict.@this)item;
+        var item = ReadScalar(new global::app.type.item.dict.serializer.Reader(), "{\"a\":1,\"b\":2}", null);
+        var dict = (global::app.type.item.dict.@this)item;
         await Assert.That(dict.Entries.Count).IsEqualTo(2);
     }
 

@@ -94,8 +94,8 @@ public class EdgeCaseTests
     [Test]
     public async Task Discover_PathTraversal_OutsideProjectRoot_Rejected()
     {
-        var action = new global::app.module.test.discover(_app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(
-                global::app.type.path.@this.Resolve("../../../etc", _app.User.Context)),
+        var action = new global::app.module.test.discover(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
+                global::app.type.item.path.@this.Resolve("../../../etc", _app.User.Context)),
             Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<global::app.type.item.@bool.@this>("Recursive", true)
         };
@@ -119,7 +119,7 @@ public class EdgeCaseTests
     [Test]
     public async Task Report_ConsoleCapture_AnsiEscapeSequences_Stripped()
     {
-        var run = new global::app.test.@this(global::PLang.Tests.TestApp.SharedContext) { Goal = new Goal { Name = "X", Path = global::app.type.path.@this.Resolve("/Tests/X.test.goal", global::PLang.Tests.TestApp.SharedContext) } };
+        var run = new global::app.test.@this(global::PLang.Tests.TestApp.SharedContext) { Goal = new Goal { Name = "X", Path = global::app.type.item.path.@this.Resolve("/Tests/X.test.goal", global::PLang.Tests.TestApp.SharedContext) } };
         run.Stdout = "\x1B[32mFAKE OK\x1B[0m\x1B[2JCLEARED";
         run.Complete(global::app.test.Status.Fail, new global::app.error.AssertionError(1, 2));
         _app.Test.Add(run);

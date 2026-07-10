@@ -14,21 +14,21 @@ public class GoalPrPathTests
     [Test]
     public async Task PrPath_DerivedFromPath_Correctly()
     {
-        var goal = new Goal { Name = "Test", Path = global::app.type.path.@this.Resolve("\\Test.goal".AdjustPathToOs(), global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = "Test", Path = global::app.type.item.path.@this.Resolve("\\Test.goal".AdjustPathToOs(), global::PLang.Tests.TestApp.SharedContext) };
         await Assert.That(goal.PrPath).IsEqualTo("\\.build\\test.pr".AdjustPathToOs());
     }
 
     [Test]
     public async Task PrPath_SubDirectory_DerivedCorrectly()
     {
-        var goal = new Goal { Name = "Inner", Path = global::app.type.path.@this.Resolve("\\SubDir\\Inner.goal".AdjustPathToOs(), global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = "Inner", Path = global::app.type.item.path.@this.Resolve("\\SubDir\\Inner.goal".AdjustPathToOs(), global::PLang.Tests.TestApp.SharedContext) };
         await Assert.That(goal.PrPath).IsEqualTo("\\SubDir\\.build\\inner.pr".AdjustPathToOs());
     }
 
     [Test]
     public async Task PrPath_ForwardSlashPath_DerivedCorrectly()
     {
-        var goal = new Goal { Name = "Test", Path = global::app.type.path.@this.Resolve("/Test.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = "Test", Path = global::app.type.item.path.@this.Resolve("/Test.goal", global::PLang.Tests.TestApp.SharedContext) };
         await Assert.That(goal.PrPath).IsEqualTo("/.build/test.pr");
     }
 
@@ -42,10 +42,10 @@ public class GoalPrPathTests
     [Test]
     public async Task PrPath_UpdatesWhenPathChanges()
     {
-        var goal = new Goal { Name = "Test", Path = global::app.type.path.@this.Resolve("\\Test.goal".AdjustPathToOs(), global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = "Test", Path = global::app.type.item.path.@this.Resolve("\\Test.goal".AdjustPathToOs(), global::PLang.Tests.TestApp.SharedContext) };
         await Assert.That(goal.PrPath).IsEqualTo("\\.build\\test.pr".AdjustPathToOs());
 
-        goal.Path = global::app.type.path.@this.Resolve("\\Other\\Test.goal".AdjustPathToOs(), global::PLang.Tests.TestApp.SharedContext);
+        goal.Path = global::app.type.item.path.@this.Resolve("\\Other\\Test.goal".AdjustPathToOs(), global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(goal.PrPath).IsEqualTo("\\Other\\.build\\test.pr".AdjustPathToOs());
     }
 }

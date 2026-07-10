@@ -178,7 +178,7 @@ public class ConditionIfBranchIndexTests
             {
                 new("Left", "hello", context: _app.User.Context),
                 new("Operator", ">", context: _app.User.Context),
-                new("Right", new app.type.dict.@this(_app.User.Context), context: _app.User.Context) // not orderable
+                new("Right", new app.type.item.dict.@this(_app.User.Context), context: _app.User.Context) // not orderable
             }
         };
 

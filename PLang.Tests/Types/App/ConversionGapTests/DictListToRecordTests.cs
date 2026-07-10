@@ -11,9 +11,9 @@ using LlmMessage = global::app.module.llm.LlmMessage;
 /// </summary>
 public class DictListToRecordTests
 {
-    private static global::app.type.dict.@this Dict(string role, string content)
+    private static global::app.type.item.dict.@this Dict(string role, string content)
     {
-        var d = new global::app.type.dict.@this(global::PLang.Tests.TestApp.SharedContext);
+        var d = new global::app.type.item.dict.@this(global::PLang.Tests.TestApp.SharedContext);
         d.Set("Role", role);
         d.Set("Content", content);
         return d;

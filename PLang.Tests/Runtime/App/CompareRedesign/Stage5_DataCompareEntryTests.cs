@@ -34,7 +34,7 @@ public class Stage5_DataCompareEntryTests
     {
         // exactly two awaits (this.Value(), other.Value()); per-type Compare is sync
         await using var app = NewApp(out var root);
-        var p = new global::app.type.path.file.@this(System.IO.Path.Combine(root, "n.json"), app.User.Context);
+        var p = new global::app.type.item.path.file.@this(System.IO.Path.Combine(root, "n.json"), app.User.Context);
         await (await p.WriteText("42")).IsSuccess();
         var pending = await new global::app.channel.type.file.@this(p).Read();   // raw-backed
         await Assert.That(pending.MaterializeCount()).IsEqualTo(0);
@@ -48,7 +48,7 @@ public class Stage5_DataCompareEntryTests
     {
         // rank decided from types; values awaited only AFTER the driver is picked — pending stays pending until compare proper
         await using var app = NewApp(out var root);
-        var p = new global::app.type.path.file.@this(System.IO.Path.Combine(root, "n.json"), app.User.Context);
+        var p = new global::app.type.item.path.file.@this(System.IO.Path.Combine(root, "n.json"), app.User.Context);
         await (await p.WriteText("42")).IsSuccess();
         var pending = await new global::app.channel.type.file.@this(p).Read();
         _ = pending.Type.Rank(D(app, 5, "number"));                 // the rank step alone

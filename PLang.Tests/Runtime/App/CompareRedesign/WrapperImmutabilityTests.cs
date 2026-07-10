@@ -20,12 +20,12 @@ public class WrapperImmutabilityTests
     {
         typeof(global::app.type.item.text.@this),
         typeof(global::app.type.item.@bool.@this),
-        typeof(global::app.type.number.@this),
-        typeof(global::app.type.binary.@this),
-        typeof(global::app.type.date.@this),
-        typeof(global::app.type.datetime.@this),
-        typeof(global::app.type.time.@this),
-        typeof(global::app.type.duration.@this),
+        typeof(global::app.type.item.number.@this),
+        typeof(global::app.type.item.binary.@this),
+        typeof(global::app.type.item.date.@this),
+        typeof(global::app.type.item.datetime.@this),
+        typeof(global::app.type.item.time.@this),
+        typeof(global::app.type.item.duration.@this),
         typeof(global::app.type.item.@null.@this),
     };
 

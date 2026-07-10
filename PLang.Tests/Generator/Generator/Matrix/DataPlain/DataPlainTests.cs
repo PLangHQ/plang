@@ -45,7 +45,7 @@ public class DataPlainTests
         var result = await MatrixRunner.RunAsync<global::app.module.matrix.dataplain.DataPlain>(app,
             parameters: new[] { ("payload", (object?)raw) });
         // A dict value rides as the native dict type now.
-        await Assert.That((await result.Data.Value())).IsTypeOf<global::app.type.dict.@this>();
+        await Assert.That((await result.Data.Value())).IsTypeOf<global::app.type.item.dict.@this>();
     }
 
     [Test]

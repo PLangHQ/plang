@@ -101,7 +101,7 @@ public class NamePropagationTests
     public async Task Name_FullMatch_StoredVarRef_PropagatesImmediateName_NoChain()
     {
         var context = _app.User.Context;
-        context.Variable.Set(new global::app.data.@this<global::app.type.number.@this>("b", 42, context: context));
+        context.Variable.Set(new global::app.data.@this<global::app.type.item.number.@this>("b", 42, context: context));
         context.Variable.Set(new global::app.data.@this<global::app.type.item.text.@this>("a", "%b%", context: context));
 
         var paramData = new Data("Slot", "%a%", new global::app.type.@this("text", null, false, "plang"), context: context);

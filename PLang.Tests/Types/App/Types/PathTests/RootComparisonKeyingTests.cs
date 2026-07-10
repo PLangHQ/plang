@@ -1,7 +1,7 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using FilePath = global::app.type.path.file.@this;
+using FilePath = global::app.type.item.path.file.@this;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Types.PathTests;
@@ -40,9 +40,9 @@ public class RootComparisonKeyingTests
     [Test] public async Task DictionaryKeyedByPath_RoundTripsBuiltAndResolvedPath()
     {
         var app = NewApp(out _);
-        var dict = new System.Collections.Generic.Dictionary<global::app.type.path.@this, string>();
-        var built = global::app.type.path.@this.Resolve("/Cache/Start.goal", app.User.Context);
-        var resolved = global::app.type.path.@this.Resolve("/Cache/Start.goal", app.User.Context);
+        var dict = new System.Collections.Generic.Dictionary<global::app.type.item.path.@this, string>();
+        var built = global::app.type.item.path.@this.Resolve("/Cache/Start.goal", app.User.Context);
+        var resolved = global::app.type.item.path.@this.Resolve("/Cache/Start.goal", app.User.Context);
         dict[built] = "value";
         await Assert.That(dict.ContainsKey(resolved)).IsTrue();
     }
@@ -51,8 +51,8 @@ public class RootComparisonKeyingTests
     {
         var app = NewApp(out _);
         var context = app.User.Context;
-        var a = global::app.type.path.@this.Resolve("/Cache/Foo.goal", context);
-        var b = global::app.type.path.@this.Resolve("/Cache/Foo.goal", context);
+        var a = global::app.type.item.path.@this.Resolve("/Cache/Foo.goal", context);
+        var b = global::app.type.item.path.@this.Resolve("/Cache/Foo.goal", context);
         // Same absolute path → Path equality returns true → cycle detection
         // would correctly identify these as the same goal.
         await Assert.That(a.Equals(b)).IsTrue();

@@ -23,7 +23,7 @@ public class DispatcherRenameTests
         await using var app = new PLangEngine("/test");
         // number's Build hook is the canonical example: typeof(number.@this) +
         // a CLR int → "int". Of(...) hands back the string the hook produced.
-        var kind = app.Type.KindHooks.Of(typeof(global::app.type.number.@this), 5);
+        var kind = app.Type.KindHooks.Of(typeof(global::app.type.item.number.@this), 5);
         await Assert.That(kind).IsEqualTo("int");
 
         // No hook on a bare CLR primitive → null (the type doesn't define Build).

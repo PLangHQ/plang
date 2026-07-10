@@ -2,8 +2,8 @@ using System.Numerics;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using number = global::app.type.number.@this;
-using PKind = global::app.type.number.NumberKind;
+using number = global::app.type.item.number.@this;
+using PKind = global::app.type.item.number.NumberKind;
 
 namespace PLang.Tests.App.LazyDeserialize.NumberTowerTests;
 

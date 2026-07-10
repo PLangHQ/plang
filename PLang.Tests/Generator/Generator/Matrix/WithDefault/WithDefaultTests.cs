@@ -32,7 +32,7 @@ public class IntWithDefaultTests
     {
         await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<IntWithDefault>(app);
-        var typed = result.Data as global::app.data.@this<global::app.type.number.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.number.@this>;
         await Assert.That((await typed!.Value())).IsEqualTo(42);
     }
 
@@ -42,7 +42,7 @@ public class IntWithDefaultTests
         await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<IntWithDefault>(app,
             parameters: new[] { ("count", (object?)"7") });
-        var typed = result.Data as global::app.data.@this<global::app.type.number.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.number.@this>;
         await Assert.That((await typed!.Value())).IsEqualTo(7);
     }
 }

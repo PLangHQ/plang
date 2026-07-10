@@ -62,7 +62,7 @@ public partial class Handle : IContext, IModifier
             }),
     };
 
-    public partial global::app.data.@this<global::app.type.number.@this>? StatusCode { get; init; }
+    public partial global::app.data.@this<global::app.type.item.number.@this>? StatusCode { get; init; }
     public partial global::app.data.@this<global::app.type.item.text.@this>? Key { get; init; }
     public partial global::app.data.@this<global::app.type.item.text.@this>? Message { get; init; }
     /// <summary>
@@ -72,8 +72,8 @@ public partial class Handle : IContext, IModifier
     /// them just like the main step chain.
     /// </summary>
     public partial global::app.data.@this<global::app.type.clr.@this<global::app.goal.steps.step.actions.@this>>? Actions { get; init; }
-    public partial global::app.data.@this<global::app.type.number.@this>? RetryCount { get; init; }
-    public partial global::app.data.@this<global::app.type.number.@this>? RetryOverMs { get; init; }
+    public partial global::app.data.@this<global::app.type.item.number.@this>? RetryCount { get; init; }
+    public partial global::app.data.@this<global::app.type.item.number.@this>? RetryOverMs { get; init; }
     public partial global::app.data.@this<global::app.type.item.choice.@this<ErrorOrder>>? Order { get; init; }
     [Default(false)]
     public partial global::app.data.@this<global::app.type.item.@bool.@this> IgnoreError { get; init; }
@@ -193,12 +193,12 @@ public partial class Handle : IContext, IModifier
         bool hasKey = key is { IsNull: false };
         bool hasMsg = msg is { IsNull: false };
 
-        if (sc is not global::app.type.number.@this && !hasKey && !hasMsg) return true;
+        if (sc is not global::app.type.item.number.@this && !hasKey && !hasMsg) return true;
         if (error == null) return false;
 
         // The matcher's int boundary is IError.StatusCode — the number lowers
         // itself there (Peek: sync predicate, value already in memory).
-        if (sc is global::app.type.number.@this scNum && error.StatusCode != scNum.ToInt32()) return false;
+        if (sc is global::app.type.item.number.@this scNum && error.StatusCode != scNum.ToInt32()) return false;
         if (hasKey && !string.Equals(error.Key, key!.ToString(), StringComparison.OrdinalIgnoreCase)) return false;
         if (hasMsg && !error.Message.Contains(msg!.ToString()!, StringComparison.OrdinalIgnoreCase)) return false;
 

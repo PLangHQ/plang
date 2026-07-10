@@ -164,7 +164,7 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
         var app = TestApp.Create(root);
         var file = System.IO.Path.Combine(root, "present.txt");
         System.IO.File.WriteAllText(file, "x");
-        var fp = new global::app.type.path.file.@this(file, app.User.Context);
+        var fp = new global::app.type.item.path.file.@this(file, app.User.Context);
         await Assert.That(IsTrue(await EvalIf(fp, "==", true))).IsTrue();
         System.IO.Directory.Delete(root, true);
     }
@@ -175,7 +175,7 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
         System.IO.Directory.CreateDirectory(root);
         var app = TestApp.Create(root);
         var missing = System.IO.Path.Combine(root, "not-here.txt");
-        var fp = new global::app.type.path.file.@this(missing, app.User.Context);
+        var fp = new global::app.type.item.path.file.@this(missing, app.User.Context);
         await Assert.That(IsFalse(await EvalIf(fp, "==", true))).IsTrue();
         System.IO.Directory.Delete(root, true);
     }

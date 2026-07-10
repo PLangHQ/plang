@@ -11,7 +11,7 @@ namespace app.variable.path;
 /// value to navigate it (<c>app.type.item.@this.Navigate</c>), recursing on the
 /// tail. Reads and writes share that walk; only the last segment differs.
 ///
-/// Distinct from <c>app.type.path.@this</c> (a filesystem path): this is the path
+/// Distinct from <c>app.type.item.path.@this</c> (a filesystem path): this is the path
 /// THROUGH a value graph, not a path on disk.
 /// </summary>
 public sealed class @this

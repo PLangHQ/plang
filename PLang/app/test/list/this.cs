@@ -25,7 +25,7 @@ public sealed partial class @this
     }
 
     /// <summary>When the session started.</summary>
-    public global::app.type.datetime.@this StartedAt { get; } = new(System.DateTime.UtcNow);
+    public global::app.type.item.datetime.@this StartedAt { get; } = new(System.DateTime.UtcNow);
 
     /// <summary>Run-wide coverage tracker. Per-test child Apps populate their own, then Merge into the parent here.</summary>
     public Coverage Coverage { get; } = new();
@@ -36,10 +36,10 @@ public sealed partial class @this
     // --- Configuration (plang values) ---
 
     /// <summary>Per-test wall-clock timeout in seconds. Default 30.</summary>
-    public global::app.type.number.@this TimeoutSeconds { get; set; } = 30;
+    public global::app.type.item.number.@this TimeoutSeconds { get; set; } = 30;
 
     /// <summary>Parallelism bound for test.run's semaphore. Default Environment.ProcessorCount.</summary>
-    public global::app.type.number.@this Parallel { get; set; } = System.Environment.ProcessorCount;
+    public global::app.type.item.number.@this Parallel { get; set; } = System.Environment.ProcessorCount;
 
     /// <summary>When true, per-test output.write streams live to stdout. When false, captured and rendered only on failure.</summary>
     public global::app.type.item.@bool.@this Verbose { get; set; } = false;

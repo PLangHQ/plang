@@ -29,7 +29,7 @@ public partial class On : IContext
     public partial data.@this<global::app.type.item.@bool.@this> IsRegex { get; init; }
     /// <summary>Execution priority — higher values run first. Default is 0.</summary>
     [Default(0)]
-    public partial data.@this<global::app.type.number.@this> Priority { get; init; }
+    public partial data.@this<global::app.type.item.number.@this> Priority { get; init; }
 
     /// <summary>Actor to bind the event to. If null, uses current actor.</summary>
     public partial data.@this<actor.@this>? Actor { get; init; }

@@ -13,7 +13,7 @@ namespace app.Utils;
 /// on the gated <c>path.@this</c> verb surface.</para>
 ///
 /// <para>Anything that touches the filesystem (<c>File.*</c>, <c>Directory.*</c>,
-/// <c>FileInfo</c>, <c>FileStream</c>, …) belongs on <c>app.type.path.@this</c>
+/// <c>FileInfo</c>, <c>FileStream</c>, …) belongs on <c>app.type.item.path.@this</c>
 /// verbs (gated by <c>AuthGate</c>) — not here.</para>
 /// </summary>
 internal static class PathHelper

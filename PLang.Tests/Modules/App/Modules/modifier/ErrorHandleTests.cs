@@ -294,7 +294,7 @@ public class ErrorHandleTests
         };
         var step = new Step { Text = $"test step for {name}" };
         step.Actions.Add(prAction);
-        var goal = new Goal { Name = name, Path = global::app.type.path.@this.Resolve($"/{name}.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", global::PLang.Tests.TestApp.SharedContext) };
         goal.Steps.Add(step);
         _app.Goal.Add(goal);
         return goal;

@@ -102,13 +102,13 @@ public class HandlerShapeTests
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-hs-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
         var app = TestApp.Create(root);
-        var fp = global::app.type.path.file.@this.Resolve("doc.txt", app.User.Context);
+        var fp = global::app.type.item.path.file.@this.Resolve("doc.txt", app.User.Context);
         await fp.WriteText("delegated body");
 
-        var handler = new global::app.module.file.Read(app.User.Context) { Path = new global::app.data.@this<global::app.type.path.@this>("", fp),
+        var handler = new global::app.module.file.Read(app.User.Context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", fp),
         };
         var viaHandler = await handler.Run();
-        var viaPath = await global::app.type.path.file.@this.Resolve("doc.txt", app.User.Context).ReadText();
+        var viaPath = await global::app.type.item.path.file.@this.Resolve("doc.txt", app.User.Context).ReadText();
 
         await Assert.That(viaHandler.Success).IsEqualTo(viaPath.Success);
         await Assert.That((await viaHandler.Value())?.ToString()).IsEqualTo((await viaPath.Value())?.ToString());
@@ -126,8 +126,8 @@ public class HandlerShapeTests
         var target = System.IO.Path.Combine(outOfRoot, "secret.txt");
         System.IO.File.WriteAllText(target, "secret");
 
-        var fp = new global::app.type.path.file.@this(target, app.User.Context);
-        var handler = new global::app.module.file.Read(app.User.Context) { Path = new global::app.data.@this<global::app.type.path.@this>("", fp),
+        var fp = new global::app.type.item.path.file.@this(target, app.User.Context);
+        var handler = new global::app.module.file.Read(app.User.Context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", fp),
         };
         var result = await handler.Run();
         await result.IsFailure();
@@ -148,7 +148,7 @@ public class HandlerShapeTests
         var target = System.IO.Path.Combine(outOfRoot, "exists.txt");
         System.IO.File.WriteAllText(target, "i exist");
 
-        var fp = new global::app.type.path.file.@this(target, app.User.Context);
+        var fp = new global::app.type.item.path.file.@this(target, app.User.Context);
         // The file is really on disk — but permission is denied, so truthiness
         // is false. If the gate were skipped this would be true.
         await Assert.That(await fp.AsBooleanAsync()).IsFalse();

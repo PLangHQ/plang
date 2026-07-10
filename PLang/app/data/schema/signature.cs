@@ -15,7 +15,7 @@ using Data = global::app.data.@this;
 /// </summary>
 public sealed class signature : ISchemaReader
 {
-    public string Schema => global::app.type.signature.@this.WireSchemaSignature;
+    public string Schema => global::app.type.item.signature.@this.WireSchemaSignature;
 
     public Data Read(ref global::app.channel.serializer.json.Reader reader,
         global::app.type.reader.ReadContext ctx)
@@ -30,7 +30,7 @@ public sealed class signature : ISchemaReader
         System.DateTimeOffset? expires = null;
         string hashAlgo = "keccak256";
         byte[] hashValue = System.Array.Empty<byte>();
-        global::app.type.binary.@this sig = new(System.Array.Empty<byte>());
+        global::app.type.item.binary.@this sig = new(System.Array.Empty<byte>());
         global::app.type.list.@this? contracts = null;
         Data inner = Data.Ok((object?)null);
 
@@ -61,23 +61,23 @@ public sealed class signature : ISchemaReader
                     while (reader.NextName(out var hk))
                     {
                         if (hk == "type") hashAlgo = reader.String();
-                        else if (hk == "value") hashValue = global::app.type.signature.@this.SafeBase64(reader.String());
+                        else if (hk == "value") hashValue = global::app.type.item.signature.@this.SafeBase64(reader.String());
                         else reader.Skip();
                     }
                     reader.EndObject();
                     break;
                 }
-                case "signature": sig = new(global::app.type.signature.@this.SafeBase64(reader.String())); break;
+                case "signature": sig = new(global::app.type.item.signature.@this.SafeBase64(reader.String())); break;
                 case "value": inner = new global::app.data.reader.@this().Read(ref reader, ctx); break;
                 default: reader.Skip(); break;
             }
         }
         reader.EndObject();
 
-        var layer = new global::app.type.signature.@this(
-            inner, algorithm, nonce, new global::app.type.datetime.@this(created), identity,
+        var layer = new global::app.type.item.signature.@this(
+            inner, algorithm, nonce, new global::app.type.item.datetime.@this(created), identity,
             new global::app.module.crypto.type.hash.@this(hashValue, hashAlgo), sig,
-            expires is { } ex ? new global::app.type.datetime.@this(ex) : null, contracts);
+            expires is { } ex ? new global::app.type.item.datetime.@this(ex) : null, contracts);
 
         // The inner data is re-hashed during verify (canonicalized through the wire), so it
         // needs the actor context the same way the outer does.

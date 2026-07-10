@@ -35,8 +35,8 @@ public class VariablesTests : System.IAsyncDisposable
         var value2 = await nowObj.Value();
 
         // Born typed: the computed value answers as the datetime item.
-        await Assert.That(value1).IsTypeOf<global::app.type.datetime.@this>();
-        await Assert.That(value2).IsTypeOf<global::app.type.datetime.@this>();
+        await Assert.That(value1).IsTypeOf<global::app.type.item.datetime.@this>();
+        await Assert.That(value2).IsTypeOf<global::app.type.item.datetime.@this>();
     }
 
     [Test]
@@ -52,8 +52,8 @@ public class VariablesTests : System.IAsyncDisposable
         var guid2 = await guidObj.Value();
 
         // GUID is a typed guid.@this value now, not a raw System.Guid.
-        await Assert.That(guid1).IsTypeOf<global::app.type.guid.@this>();
-        await Assert.That(guid2).IsTypeOf<global::app.type.guid.@this>();
+        await Assert.That(guid1).IsTypeOf<global::app.type.item.guid.@this>();
+        await Assert.That(guid2).IsTypeOf<global::app.type.item.guid.@this>();
         await Assert.That(guid1!.ToString()).IsNotEqualTo(guid2!.ToString());
     }
 
@@ -151,7 +151,7 @@ public class VariablesTests : System.IAsyncDisposable
         await using var app = global::PLang.Tests.TestApp.Create("/test");
         var stack = app.User.Context.Variable;
 
-        var person = new global::app.type.dict.@this(_app.User.Context);
+        var person = new global::app.type.item.dict.@this(_app.User.Context);
         person.Set("Name", "John");
         person.Set("Age", 30L);
         await stack.Set("person", person);
@@ -184,10 +184,10 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Set_DotPath_SetsNestedProperty()
     {
         var stack = new Variables(_app.User.Context);
-        var address = new global::app.type.dict.@this(_app.User.Context);
+        var address = new global::app.type.item.dict.@this(_app.User.Context);
         address.Set("Street", "Main St");
         address.Set("City", "Springfield");
-        var person = new global::app.type.dict.@this(_app.User.Context);
+        var person = new global::app.type.item.dict.@this(_app.User.Context);
         person.Set("Name", "John");
         person.Set("Address", address);
         await stack.Set("person", person);
@@ -202,7 +202,7 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Set_DotPath_CaseInsensitive()
     {
         var stack = new Variables(_app.User.Context);
-        var person = new global::app.type.dict.@this(_app.User.Context);
+        var person = new global::app.type.item.dict.@this(_app.User.Context);
         person.Set("Name", "John");
         await stack.Set("person", person);
 
@@ -217,7 +217,7 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Set_DotPath_DictionaryValue()
     {
         var stack = new Variables(_app.User.Context);
-        var user = new global::app.type.dict.@this(_app.User.Context);
+        var user = new global::app.type.item.dict.@this(_app.User.Context);
         user.Set("name", "John");
         user.Set("age", 30L);
         await stack.Set("user", user);
@@ -238,7 +238,7 @@ public class VariablesTests : System.IAsyncDisposable
 
         var root = await stack.Get("nonexistent");
         await Assert.That(root).IsNotNull();
-        await Assert.That((await root!.Value())).IsTypeOf<global::app.type.dict.@this>();
+        await Assert.That((await root!.Value())).IsTypeOf<global::app.type.item.dict.@this>();
 
         var prop = await stack.Get("nonexistent.prop");
         await Assert.That((await prop!.Value())?.ToString()).IsEqualTo("value");
@@ -248,7 +248,7 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Set_DotPath_NewProperty_AddsKey()
     {
         var stack = new Variables(_app.User.Context);
-        var person = new global::app.type.dict.@this(_app.User.Context);
+        var person = new global::app.type.item.dict.@this(_app.User.Context);
         person.Set("Name", "John");
         await stack.Set("person", person);
 
@@ -266,7 +266,7 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Set_DotPath_NewProperty_CaseInsensitive()
     {
         var stack = new Variables(_app.User.Context);
-        var person = new global::app.type.dict.@this(_app.User.Context);
+        var person = new global::app.type.item.dict.@this(_app.User.Context);
         person.Set("Name", "John");
         await stack.Set("person", person);
 
@@ -281,8 +281,8 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Set_DotPath_WithBracketIndex()
     {
         var stack = new Variables(_app.User.Context);
-        var alice = new global::app.type.dict.@this(_app.User.Context); alice.Set("Name", "Alice");
-        var bob = new global::app.type.dict.@this(_app.User.Context); bob.Set("Name", "Bob");
+        var alice = new global::app.type.item.dict.@this(_app.User.Context); alice.Set("Name", "Alice");
+        var bob = new global::app.type.item.dict.@this(_app.User.Context); bob.Set("Name", "Bob");
         var people = new global::app.type.list.@this(_app.User.Context);
         people.Add(_app.Data("", alice));
         people.Add(_app.Data("", bob));
@@ -301,8 +301,8 @@ public class VariablesTests : System.IAsyncDisposable
         // lives in — its context.Variable. Use the real store (not a detached `new Variables`,
         // whose context.Variable points elsewhere) so idx and people share one scope, as in production.
         var stack = _app.User.Context.Variable;
-        var alice = new global::app.type.dict.@this(_app.User.Context); alice.Set("Name", "Alice");
-        var bob = new global::app.type.dict.@this(_app.User.Context); bob.Set("Name", "Bob");
+        var alice = new global::app.type.item.dict.@this(_app.User.Context); alice.Set("Name", "Alice");
+        var bob = new global::app.type.item.dict.@this(_app.User.Context); bob.Set("Name", "Bob");
         var people = new global::app.type.list.@this(_app.User.Context);
         people.Add(_app.Data("", alice));
         people.Add(_app.Data("", bob));
@@ -487,7 +487,7 @@ public class VariablesTests : System.IAsyncDisposable
         var stack = new Variables(_app.User.Context);
         stack.Set("count", 42);
 
-        var value = await stack.Get<global::app.type.number.@this>("count");
+        var value = await stack.Get<global::app.type.item.number.@this>("count");
 
         await Assert.That((await value.Value()).Clr<long>()).IsEqualTo(42L);
     }
@@ -497,7 +497,7 @@ public class VariablesTests : System.IAsyncDisposable
     {
         var stack = new Variables(_app.User.Context);
 
-        var value = await stack.Get<global::app.type.number.@this>("nonexistent");
+        var value = await stack.Get<global::app.type.item.number.@this>("nonexistent");
 
         await Assert.That(value.IsInitialized).IsFalse();
     }

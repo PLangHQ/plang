@@ -2,9 +2,9 @@ using System.Text.Json;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using Permission = global::app.type.permission.@this;
-using Match = global::app.type.permission.Match;
-using Verb = global::app.type.permission.Verb;
+using Permission = global::app.type.item.permission.@this;
+using Match = global::app.type.item.permission.Match;
+using Verb = global::app.type.item.permission.Verb;
 
 namespace PLang.Tests.App.FileSystem.PermissionTests;
 
@@ -65,15 +65,15 @@ public class PermissionCoversTests
 
     [Test] public async Task PathMatches_ButVerbDoesNot_DoesNotCover()
     {
-        var grantVerb = global::app.type.permission.Verb.Write;
+        var grantVerb = global::app.type.item.permission.Verb.Write;
         var g = Grant("/p", Match.Exact, grantVerb);
         await Assert.That(g.Covers(Request("/p"))).IsFalse();
     }
 
     [Test] public async Task SameRecordShape_GrantRoleAndRequestRole_BothLegible()
     {
-        var grant = new Permission("user", "/apps/*/file.txt", global::app.type.permission.@this.AllVerbs, Match.Glob);
-        var request = new Permission("user", "/apps/Email/file.txt", global::app.type.permission.@this.AllVerbs, Match.Exact);
+        var grant = new Permission("user", "/apps/*/file.txt", global::app.type.item.permission.@this.AllVerbs, Match.Glob);
+        var request = new Permission("user", "/apps/Email/file.txt", global::app.type.item.permission.@this.AllVerbs, Match.Exact);
         await Assert.That(grant.Covers(request)).IsTrue();
     }
 
@@ -83,7 +83,7 @@ public class PermissionCoversTests
         // serializer's persistence path), not raw STJ — the grant owns its wire form.
         await using var app = global::PLang.Tests.TestApp.Plain("/test");
         var ctx = app.User.Context;
-        var original = new Permission("user", "/p", global::app.type.permission.@this.AllVerbs, Match.Glob);
+        var original = new Permission("user", "/p", global::app.type.item.permission.@this.AllVerbs, Match.Glob);
         var data = new global::app.data.@this<Permission>("", original, context: ctx);
         var serializer = new global::app.channel.serializer.plang.@this(ctx);
         var stored = serializer.Store(data);

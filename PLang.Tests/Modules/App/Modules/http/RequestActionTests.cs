@@ -41,7 +41,7 @@ public class RequestActionTests
 
         // Register stub goals for streaming callbacks — GoalCall needs to find them
         foreach (var name in new[] { "HandleLine", "HandleSSE", "HandleBytes", "HandleChunk", "ProcessChunk" })
-            _app.Goal.Add(new global::app.goal.@this { Name = name, Path = global::app.type.path.@this.Resolve($"/{name}.goal", global::PLang.Tests.TestApp.SharedContext) });
+            _app.Goal.Add(new global::app.goal.@this { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", global::PLang.Tests.TestApp.SharedContext) });
     }
 
     [After(Test)]
@@ -318,7 +318,7 @@ public class RequestActionTests
         };
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/slow",
-            TimeoutInSec = (global::app.type.number.@this)1,
+            TimeoutInSec = (global::app.type.item.number.@this)1,
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await _app.Run(action, Ctx);
@@ -421,8 +421,8 @@ public class RequestActionTests
         // An image/png body narrows to the plang `image` type (kind=png) on the
         // value door (never a bare CLR byte[]); the bytes lower out of it.
         var value = await result.Value();
-        await Assert.That(value).IsTypeOf<global::app.type.image.@this>();
-        await Assert.That(((global::app.type.image.@this)value!).Bytes).IsEquivalentTo(bytes);
+        await Assert.That(value).IsTypeOf<global::app.type.item.image.@this>();
+        await Assert.That(((global::app.type.item.image.@this)value!).Bytes).IsEquivalentTo(bytes);
     }
 
     #endregion
@@ -558,8 +558,8 @@ public class RequestActionTests
         var lastData = await Ctx.Variable.Get("chunk");
         await Assert.That(lastData).IsNotNull();
         // Verify byte content was delivered (last chunk contains the input bytes)
-        await Assert.That(await lastData!.Value()).IsTypeOf<global::app.type.binary.@this>();
-        var chunk = ((global::app.type.binary.@this)(await lastData.Value())!).Value;
+        await Assert.That(await lastData!.Value()).IsTypeOf<global::app.type.item.binary.@this>();
+        var chunk = ((global::app.type.item.binary.@this)(await lastData.Value())!).Value;
         await Assert.That(chunk.Length).IsGreaterThan(0);
     }
 

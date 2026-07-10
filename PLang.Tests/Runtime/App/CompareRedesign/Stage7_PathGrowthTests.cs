@@ -22,9 +22,9 @@ public class Stage7_PathGrowthTests
     {
         var (app, context, _) = MakeApp();
         await using var __ = app;
-        var root = global::app.type.path.@this.Resolve("/docs", context);
-        var inside = global::app.type.path.@this.Resolve("/docs/readme.md", context);
-        var outside = global::app.type.path.@this.Resolve("/other/readme.md", context);
+        var root = global::app.type.item.path.@this.Resolve("/docs", context);
+        var inside = global::app.type.item.path.@this.Resolve("/docs/readme.md", context);
+        var outside = global::app.type.item.path.@this.Resolve("/other/readme.md", context);
         await Assert.That(inside.IsUnder(root).Value).IsTrue();
         await Assert.That(outside.IsUnder(root).Value).IsFalse();
         // the builder filter site routes through the type
@@ -38,7 +38,7 @@ public class Stage7_PathGrowthTests
     {
         var (app, context, _) = MakeApp();
         await using var __ = app;
-        var p = global::app.type.path.@this.Resolve("/data/config.json", context);
+        var p = global::app.type.item.path.@this.Resolve("/data/config.json", context);
         var kind = p.Kind;
         await Assert.That(kind.IsNull).IsFalse();
         // the file.read Build hint routes through the type
@@ -50,7 +50,7 @@ public class Stage7_PathGrowthTests
     [Test]
     public async Task PathRelative_NowInternal_NotOnPublicSurface()
     {
-        var prop = typeof(global::app.type.path.@this).GetProperty("Relative",
+        var prop = typeof(global::app.type.item.path.@this).GetProperty("Relative",
             BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
         await Assert.That(prop).IsNotNull();
         await Assert.That(prop!.GetMethod!.IsPublic).IsFalse();
@@ -60,14 +60,14 @@ public class Stage7_PathGrowthTests
     [Test]
     public async Task PathExtension_NowInternal_PublicViaBangExtension()
     {
-        var prop = typeof(global::app.type.path.@this).GetProperty("Extension",
+        var prop = typeof(global::app.type.item.path.@this).GetProperty("Extension",
             BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
         await Assert.That(prop).IsNotNull();
         await Assert.That(prop!.GetMethod!.IsAssembly).IsTrue();
         // the `!extension` projection still answers on the property plane
         var (app, context, _) = MakeApp();
         await using var __ = app;
-        var p = global::app.type.path.@this.Resolve("docs/readme.md", context);
+        var p = global::app.type.item.path.@this.Resolve("docs/readme.md", context);
         var data = new Data("p", p, context: context);
         var ext = await data.Get("!extension");
         await Assert.That(ext.Peek()?.ToString()).IsEqualTo("md");

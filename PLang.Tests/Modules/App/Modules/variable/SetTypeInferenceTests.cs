@@ -143,7 +143,7 @@ public class SetTypeInferenceTests
         lst.SetAt(2, new Data("", 9L, context: context));
 
         await Assert.That(ReferenceEquals(lst.Clr<List<object?>>(), src)).IsFalse();
-        await Assert.That((await lst.At(2)!.Value())).IsTypeOf<global::app.type.number.@this>();
+        await Assert.That((await lst.At(2)!.Value())).IsTypeOf<global::app.type.item.number.@this>();
     }
 
     // A Dictionary<string,object?> is aliased the same way — the CLR exit door
@@ -157,7 +157,7 @@ public class SetTypeInferenceTests
         var result = await action.RunAsync(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("d");
-        var d = (await stored.Value()) as global::app.type.dict.@this;
+        var d = (await stored.Value()) as global::app.type.item.dict.@this;
         await Assert.That(d).IsNotNull();
         // A read of a key must not knock the dict off the same-ref fast path.
         await Assert.That((await d!.Get("k")!.Value())?.ToString()).IsEqualTo("v");

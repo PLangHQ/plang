@@ -1,4 +1,4 @@
-using permission = global::app.type.permission.@this;
+using permission = global::app.type.item.permission.@this;
 
 namespace app.error;
 

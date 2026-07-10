@@ -34,7 +34,7 @@ public partial class getTypes : IContext
 {
     public partial data.@this<global::app.type.clr.@this<global::app.goal.@this>> Goal { get; init; }
 
-    public async Task<data.@this<global::app.type.list.@this<global::app.type.dict.@this>>> Run()
+    public async Task<data.@this<global::app.type.list.@this<global::app.type.item.dict.@this>>> Run()
     {
         var goal = Goal.Clr<global::app.goal.@this>()!;
         var modules = Context.App.Module;
@@ -64,12 +64,12 @@ public partial class getTypes : IContext
         // Each step's type-map becomes a native dict; the per-step list is list<dict>.
         var rows = perStep.Select(d =>
         {
-            var nd = new global::app.type.dict.@this(Context);
+            var nd = new global::app.type.item.dict.@this(Context);
             foreach (var kv in d) nd.Set(kv.Key, kv.Value);
             return new data.@this("", nd, context: Context);
         });
-        return Context.Ok<global::app.type.list.@this<global::app.type.dict.@this>>(
-            new global::app.type.list.@this<global::app.type.dict.@this>(rows, Context));
+        return Context.Ok<global::app.type.list.@this<global::app.type.item.dict.@this>>(
+            new global::app.type.list.@this<global::app.type.item.dict.@this>(rows, Context));
     }
 
     private static void ProcessAction(
@@ -166,7 +166,7 @@ public partial class getTypes : IContext
     {
         null => null,
         global::app.type.@this te => te.IsNull ? null : te.Name,
-        global::app.type.dict.@this nd => nd.Get("name")?.Peek()?.ToString(),
+        global::app.type.item.dict.@this nd => nd.Get("name")?.Peek()?.ToString(),
         System.Collections.Generic.IDictionary<string, object?> d
             => d.TryGetValue("name", out var n) ? n?.ToString() : null,
         string s => string.IsNullOrEmpty(s) ? null : s,

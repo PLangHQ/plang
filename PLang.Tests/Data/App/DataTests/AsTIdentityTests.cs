@@ -25,7 +25,7 @@ public class AsTIdentityTests
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
 
-    // Rule 1 — same-type fast path. As<int>() on Data<global::app.type.number.@this> returns the source
+    // Rule 1 — same-type fast path. As<int>() on Data<global::app.type.item.number.@this> returns the source
     // instance. ReferenceEquals is the only check that proves zero allocation
     // and full identity (Properties, event lists, Name, Type, everything is
     // trivially shared because it's the same object).
@@ -34,8 +34,8 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_SameType_ReturnsSourceInstance()
     {
-        var source = new global::app.data.@this<global::app.type.number.@this>("count", 42, context: _app.User.Context);
-        var result = await source.Value<global::app.type.number.@this>();
+        var source = new global::app.data.@this<global::app.type.item.number.@this>("count", 42, context: _app.User.Context);
+        var result = await source.Value<global::app.type.item.number.@this>();
         await Assert.That(ReferenceEquals(source.Peek(), result)).IsTrue();
     }
 
@@ -46,9 +46,9 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_SameType_PreservesProperties()
     {
-        var source = new global::app.data.@this<global::app.type.number.@this>("count", 42, context: _app.User.Context);
+        var source = new global::app.data.@this<global::app.type.item.number.@this>("count", 42, context: _app.User.Context);
         source.Properties.Set("meta", "abc");
-        var result = source.ShallowClone<global::app.type.number.@this>(await source.Value<global::app.type.number.@this>());
+        var result = source.ShallowClone<global::app.type.item.number.@this>(await source.Value<global::app.type.item.number.@this>());
         await Assert.That(ReferenceEquals(source.Properties, result.Properties)).IsTrue();
         await Assert.That(((await result.Properties.Value("meta")))?.ToString()).IsEqualTo("abc");
     }
@@ -61,8 +61,8 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_Variance_ScalarToItem_ValueRefShared()
     {
-        var inner = (global::app.type.number.@this)42;
-        var source = new global::app.data.@this<global::app.type.number.@this>("n", inner, context: _app.User.Context);
+        var inner = (global::app.type.item.number.@this)42;
+        var source = new global::app.data.@this<global::app.type.item.number.@this>("n", inner, context: _app.User.Context);
         var wrapped = source.ShallowClone<global::app.type.item.@this>(await source.Value<global::app.type.item.@this>());
         await Assert.That(ReferenceEquals(source, wrapped)).IsFalse();
         await Assert.That(ReferenceEquals((await wrapped.Value()), inner)).IsTrue();
@@ -74,8 +74,8 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_Variance_PropertiesAliased()
     {
-        var inner = new global::app.type.list.@this<global::app.type.number.@this>(new[] { _app.Data("", 1), _app.Data("", 2) }, _app.User.Context);
-        var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", inner, context: _app.User.Context);
+        var inner = new global::app.type.list.@this<global::app.type.item.number.@this>(new[] { _app.Data("", 1), _app.Data("", 2) }, _app.User.Context);
+        var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.item.number.@this>>("nums", inner, context: _app.User.Context);
         var wrapped = source.ShallowClone<global::app.type.list.@this>(await source.Value<global::app.type.list.@this>());
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();
         source.Properties.Set("annot", "via-source");
@@ -87,8 +87,8 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_Variance_OnChangeAliased_FireOnSourceVisibleThroughWrapped()
     {
-        var inner = new global::app.type.list.@this<global::app.type.number.@this>(new[] { _app.Data("", 1) }, _app.User.Context);
-        var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", inner, context: _app.User.Context);
+        var inner = new global::app.type.list.@this<global::app.type.item.number.@this>(new[] { _app.Data("", 1) }, _app.User.Context);
+        var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.item.number.@this>>("nums", inner, context: _app.User.Context);
         var wrapped = source.ShallowClone<global::app.type.list.@this>(await source.Value<global::app.type.list.@this>());
         await Assert.That(ReferenceEquals(source.OnChange, wrapped.OnChange)).IsTrue();
         var seen = 0;
@@ -104,22 +104,22 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_Variance_PostWrapSubscribe_VisibleThroughBothRefs()
     {
-        var inner = new global::app.type.list.@this<global::app.type.number.@this>(new[] { _app.Data("", 1) }, _app.User.Context);
-        var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", inner, context: _app.User.Context);
+        var inner = new global::app.type.list.@this<global::app.type.item.number.@this>(new[] { _app.Data("", 1) }, _app.User.Context);
+        var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.item.number.@this>>("nums", inner, context: _app.User.Context);
         var wrapped = source.ShallowClone<global::app.type.list.@this>(await source.Value<global::app.type.list.@this>());
         Action<Data, Data> handler = (_, _) => { };
         wrapped.OnChange.Add(handler);
         await Assert.That(source.OnChange).Contains(handler);
     }
 
-    // Rule 3 — cross-type with conversion. Data<global::app.type.number.@this>(42).Value<global::app.type.item.text.@this>() produces
+    // Rule 3 — cross-type with conversion. Data<global::app.type.item.number.@this>(42).Value<global::app.type.item.text.@this>() produces
     // a NEW Data<global::app.type.item.text.@this> with converted .Value ("42"), but Properties + event
     // lists alias from source. The .Value is a fresh converted object —
     // ref-DISTINCT from source.Value (42 boxed) — but the metadata bag is shared.
     [Test]
     public async Task AsT_CrossType_ConversionWraps_PropertiesAliased()
     {
-        var source = new global::app.data.@this<global::app.type.number.@this>("count", 42, context: _app.User.Context);
+        var source = new global::app.data.@this<global::app.type.item.number.@this>("count", 42, context: _app.User.Context);
         source.Properties.Set("note", "hello");
         var wrapped = source.ShallowClone<global::app.type.item.text.@this>(await source.Value<global::app.type.item.text.@this>());
         await Assert.That(ReferenceEquals(source, wrapped)).IsFalse();
@@ -136,7 +136,7 @@ public class AsTIdentityTests
     public async Task AsT_CrossType_ConversionFailure_DeclinesOnSource()
     {
         var source = new global::app.data.@this<global::app.type.item.text.@this>("messy", "not-a-number", context: _app.User.Context);
-        var result = await source.Value<global::app.type.number.@this>();
+        var result = await source.Value<global::app.type.item.number.@this>();
         await Assert.That(result).IsNull();
         await source.IsFailure();
     }
@@ -230,9 +230,9 @@ public class AsTIdentityTests
 
         // Read the way a real consumer does: enumerate the list, resolve each row, read
         // its field through the door — not a whole-list Lower into raw CLR dictionaries.
-        var rows = new List<global::app.type.dict.@this>();
+        var rows = new List<global::app.type.item.dict.@this>();
         foreach (var r in (global::app.type.list.@this)(await canonical.Value()))
-            rows.Add((global::app.type.dict.@this)(await r.Value()));
+            rows.Add((global::app.type.item.dict.@this)(await r.Value()));
         await Assert.That((await rows[0].Get("Content")!.Value()).ToString()).IsEqualTo("You are a compiler");
         await Assert.That((await rows[1].Get("Content")!.Value()).ToString()).IsEqualTo("build this goal");
     }

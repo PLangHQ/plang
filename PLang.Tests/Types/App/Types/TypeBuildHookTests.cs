@@ -18,9 +18,9 @@ public class TypeBuildHookTests
         // path.@this declares `public static string? Build(object? value)` in
         // this.Build.cs. The dispatcher finds it by reflection (same shape as
         // Resolve discovery) and invokes it.
-        await Assert.That(_kinds.Of(typeof(global::app.type.path.@this), "/srv/a.jpg")).IsEqualTo("file");
-        await Assert.That(_kinds.Of(typeof(global::app.type.path.@this), "https://x")).IsEqualTo("http");
-        await Assert.That(_kinds.Of(typeof(global::app.type.path.@this), "http://x")).IsEqualTo("http");
+        await Assert.That(_kinds.Of(typeof(global::app.type.item.path.@this), "/srv/a.jpg")).IsEqualTo("file");
+        await Assert.That(_kinds.Of(typeof(global::app.type.item.path.@this), "https://x")).IsEqualTo("http");
+        await Assert.That(_kinds.Of(typeof(global::app.type.item.path.@this), "http://x")).IsEqualTo("http");
     }
 
     [Test]
@@ -40,10 +40,10 @@ public class TypeBuildHookTests
     {
         // Hook returning null is normal (path.Build returns null for non-strings,
         // empty strings, %var% refs). Dispatcher passes the null through.
-        await Assert.That(_kinds.Of(typeof(global::app.type.path.@this), null)).IsNull();
-        await Assert.That(_kinds.Of(typeof(global::app.type.path.@this), "")).IsNull();
-        await Assert.That(_kinds.Of(typeof(global::app.type.path.@this), 42)).IsNull();
-        await Assert.That(_kinds.Of(typeof(global::app.type.path.@this), "%photo%")).IsNull();
+        await Assert.That(_kinds.Of(typeof(global::app.type.item.path.@this), null)).IsNull();
+        await Assert.That(_kinds.Of(typeof(global::app.type.item.path.@this), "")).IsNull();
+        await Assert.That(_kinds.Of(typeof(global::app.type.item.path.@this), 42)).IsNull();
+        await Assert.That(_kinds.Of(typeof(global::app.type.item.path.@this), "%photo%")).IsNull();
     }
 
     [Test]

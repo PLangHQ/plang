@@ -13,7 +13,7 @@ namespace app.module.code;
 public partial class load : IContext
 {
     /// <summary>Path to the DLL to load (relative to app root or absolute).</summary>
-    public partial data.@this<global::app.type.path.@this>? Path { get; init; }
+    public partial data.@this<global::app.type.item.path.@this>? Path { get; init; }
 
     /// <summary>Optional display name for the provider (not currently used — provider supplies its own Name).</summary>
     public partial data.@this<global::app.type.item.text.@this>? Name { get; init; }

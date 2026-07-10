@@ -1,7 +1,7 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using HttpPath = global::app.type.path.http.@this;
+using HttpPath = global::app.type.item.path.http.@this;
 
 namespace PLang.Tests.App.Types.PathTests.Http;
 
@@ -22,11 +22,11 @@ public class HttpPathTests
     /// <summary>Pre-authorize an http URL so the verb under test isn't blocked by the gate.</summary>
     private static async Task Grant(global::app.@this app, global::app.actor.context.@this context, string url)
     {
-        var perm = new global::app.type.permission.@this(
+        var perm = new global::app.type.item.permission.@this(
             "User", new HttpPath(url, context).Absolute,
-            global::app.type.permission.@this.AllVerbs,
-            global::app.type.permission.Match.Exact);
-        await context.Actor!.Permission.Add(new global::app.data.@this<global::app.type.permission.@this>("", perm) { Context = context }, persist: true);
+            global::app.type.item.permission.@this.AllVerbs,
+            global::app.type.item.permission.Match.Exact);
+        await context.Actor!.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", perm) { Context = context }, persist: true);
     }
 
     [Test] public async Task Get_200_ReadText_ReturnsBody()
@@ -108,7 +108,7 @@ public class HttpPathTests
 
         var stat = await new HttpPath(url, context).Stat();
         await stat.IsSuccess();
-        var info = (global::app.type.path.@this.StatInfo)(await stat.Value())!;
+        var info = (global::app.type.item.path.@this.StatInfo)(await stat.Value())!;
         await Assert.That(info.Exists).IsTrue();
         await Assert.That(info.Length).IsEqualTo(5L);
         await Assert.That(info.Modified).IsNotNull();

@@ -17,7 +17,7 @@ public partial class DataWrappedList : global::app.module.IContext
 [global::app.module.Action("datawrappeddict")]
 public partial class DataWrappedDict : global::app.module.IContext
 {
-    public partial global::app.data.@this<global::app.type.dict.@this> Headers { get; init; }
+    public partial global::app.data.@this<global::app.type.item.dict.@this> Headers { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Headers);
 }
 

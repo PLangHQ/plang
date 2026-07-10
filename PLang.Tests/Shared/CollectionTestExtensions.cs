@@ -23,12 +23,12 @@ public static class CollectionTestExtensions
         return new("", l, context: context);
     }
 
-    public static global::app.data.@this<global::app.type.dict.@this> ToDictData(this System.Collections.IDictionary raw, global::app.actor.context.@this? context = null)
+    public static global::app.data.@this<global::app.type.item.dict.@this> ToDictData(this System.Collections.IDictionary raw, global::app.actor.context.@this? context = null)
     {
         context ??= global::PLang.Tests.TestApp.SharedContext;
         // Born WITH context — dict.Context propagates to every entry, so lazy Slot
         // materialization borns its entry values with a wired scope.
-        var d = new global::app.type.dict.@this(context);
+        var d = new global::app.type.item.dict.@this(context);
         foreach (System.Collections.DictionaryEntry e in raw)
             d.Set(e.Key.ToString()!, e.Value);
         return new("", d, context: context);

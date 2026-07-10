@@ -76,8 +76,8 @@ public partial class Foreach : IContext, IStep
     /// items ran) and <c>completed</c> (false when cancelled or returned early).
     /// A plain-data result, so it rides as a dict, not a dedicated type.
     /// </summary>
-    private static global::app.type.dict.@this Result(actor.context.@this context, int itemCount, bool completed)
-        => new global::app.type.dict.@this(context)
+    private static global::app.type.item.dict.@this Result(actor.context.@this context, int itemCount, bool completed)
+        => new global::app.type.item.dict.@this(context)
             .Set("itemCount", (long)itemCount)
             .Set("completed", completed);
 

@@ -152,7 +152,7 @@ public sealed class source : @this, module.IContext
             // named to the binding. (The apex object/item is excluded — a scalar CAN be
             // declared object; only genuine containers must stay containers.)
             if (_type.ToLowerInvariant() is "dict" or "list"
-                && item is not (global::app.type.dict.@this or global::app.type.list.@this or global::app.type.clr.@this))
+                && item is not (global::app.type.item.dict.@this or global::app.type.list.@this or global::app.type.clr.@this))
                 throw new System.InvalidOperationException(
                     $"a '{_type}' value materialized to a non-container ({item.GetType().Name}) — round-trip loss");
             item.Accumulate(this);

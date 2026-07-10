@@ -77,10 +77,10 @@ public class NonNullInvariantTests
         var d = new global::app.data.@this("", "any/raw/value",
             new global::app.type.@this("path"), context: app.User.Context);
         await Assert.That(d.Type.ClrType).IsNotNull()
-            .Because("registry knows 'path' → typeof(global::app.type.path.@this); static fallback returns null.");
+            .Because("registry knows 'path' → typeof(global::app.type.item.path.@this); static fallback returns null.");
         await Assert.That(d.Type.ClrType!.Name).IsEqualTo("this")
-            .Because("the registered CLR type for 'path' is app.type.path.@this — Type.Name strips the @-escape.");
-        await Assert.That(d.Type.ClrType!.Namespace).IsEqualTo("app.type.path");
+            .Because("the registered CLR type for 'path' is app.type.item.path.@this — Type.Name strips the @-escape.");
+        await Assert.That(d.Type.ClrType!.Namespace).IsEqualTo("app.type.item.path");
     }
 
     [Test] public async Task GetPrimitiveOrMime_ExternalFallbackCallSites_AllRemoved()

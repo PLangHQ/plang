@@ -1,4 +1,4 @@
-using Dict = global::app.type.dict.@this;
+using Dict = global::app.type.item.dict.@this;
 
 namespace PLang.Tests.App.CollectionsAreData;
 

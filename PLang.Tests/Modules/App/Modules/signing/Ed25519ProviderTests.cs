@@ -79,25 +79,25 @@ public class Ed25519ProviderTests
     // The low-level Sign/Verify now take the signature whole (no decomposition at the call
     // site) and speak plang types. They return the VALUE and THROW on bad crypto input — the
     // [Code] boundary (SignAsync/VerifyAsync) maps throws → SignatureInvalid/SigningError.
-    private static global::app.type.signature.@this Unsigned(string identityPublicKey, string nonce = "nonce-1")
+    private static global::app.type.item.signature.@this Unsigned(string identityPublicKey, string nonce = "nonce-1")
         => new(
             value: TestApp.SharedContext.Ok(new global::app.type.item.text.@this("payload")),
             algorithm: new global::app.type.item.text.@this("ed25519"),
             nonce: new global::app.type.item.text.@this(nonce),
-            created: new global::app.type.datetime.@this(DateTimeOffset.UnixEpoch),
+            created: new global::app.type.item.datetime.@this(DateTimeOffset.UnixEpoch),
             identity: new global::app.type.item.text.@this(identityPublicKey),
             hash: new global::app.module.crypto.type.hash.@this(Array.Empty<byte>(), "keccak256"),
-            signature: new global::app.type.binary.@this(Array.Empty<byte>()));
+            signature: new global::app.type.item.binary.@this(Array.Empty<byte>()));
 
     // A copy of a signed signature with one field swapped — for the mismatch tests.
-    private static global::app.type.signature.@this Rebuilt(global::app.type.signature.@this s,
-        string? nonce = null, string? identity = null, global::app.type.binary.@this? signature = null)
+    private static global::app.type.item.signature.@this Rebuilt(global::app.type.item.signature.@this s,
+        string? nonce = null, string? identity = null, global::app.type.item.binary.@this? signature = null)
         => new(s.Value, s.Algorithm,
             nonce == null ? s.Nonce : new global::app.type.item.text.@this(nonce), s.Created,
             identity == null ? s.Identity : new global::app.type.item.text.@this(identity),
             s.Hash, signature ?? s.Signature, s.Expires, s.Contracts);
 
-    private global::app.type.signature.@this Signed(KeyPair kp, string nonce = "nonce-1")
+    private global::app.type.item.signature.@this Signed(KeyPair kp, string nonce = "nonce-1")
     {
         var unsigned = Unsigned(kp.PublicKey, nonce);
         return unsigned.Signed(_provider.Sign(unsigned, new global::app.type.item.text.@this(kp.PrivateKey)));
@@ -169,14 +169,14 @@ public class Ed25519ProviderTests
         var signed = Signed(kp);
         var bytes = (byte[])signed.Signature.Value.Clone();
         bytes[0] ^= 0xFF;
-        var tampered = Rebuilt(signed, signature: new global::app.type.binary.@this(bytes));
+        var tampered = Rebuilt(signed, signature: new global::app.type.item.binary.@this(bytes));
         await Assert.That(_provider.Verify(tampered).Value).IsFalse();
     }
 
     [Test]
     public async Task Verify_InvalidBase64PublicKey_Throws()
     {
-        var signed = Unsigned("not-valid-base64!!!").Signed(new global::app.type.binary.@this(new byte[64]));
+        var signed = Unsigned("not-valid-base64!!!").Signed(new global::app.type.item.binary.@this(new byte[64]));
         await Assert.That(() => _provider.Verify(signed)).Throws<FormatException>();
     }
 

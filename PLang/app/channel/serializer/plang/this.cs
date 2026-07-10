@@ -153,7 +153,7 @@ public sealed class @this : ISerializer
             // Sign-if-missing at the I/O boundary — a clean await. A Data crossing
             // application/plang in a real actor scope is wrapped in ONE signature layer;
             // skipped when no actor (internal serialize) or already a layer.
-            if (_context.Actor != null && data.Peek() is not global::app.type.signature.@this)
+            if (_context.Actor != null && data.Peek() is not global::app.type.item.signature.@this)
             {
                 var signResult = await _context.App.Run(
                     new app.module.signing.sign(_context) { Data = data,
@@ -170,7 +170,7 @@ public sealed class @this : ISerializer
             // A layer (signature) writes its OWN @schema:<kind> envelope; a plain Data
             // writes the @schema:data layer. The layer-vs-data choice lives here, at the
             // serializer boundary — data.Output stays clean (@schema:data only).
-            if (data.Peek() is global::app.type.signature.@this sig)
+            if (data.Peek() is global::app.type.item.signature.@this sig)
                 await sig.Output(writer, view, _context);
             else
                 await data.Output(writer, view, _context, layer: true);

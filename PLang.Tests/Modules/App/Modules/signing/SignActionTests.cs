@@ -47,15 +47,15 @@ public class SignActionTests
     {
         var action = new sign(Ctx) { Data = new Data("", data, context: Ctx),
             Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(contracts, Ctx), context: Ctx),
-            Expires = expires.HasValue ? (global::app.type.duration.@this)expires.Value : null,
+            Expires = expires.HasValue ? (global::app.type.item.duration.@this)expires.Value : null,
             Headers = headers?.ToDictData()
         };
         return await _app.Run<sign>(action, Ctx);
     }
 
     // sign now returns a Data whose value IS the signature layer (no Data.Signature).
-    private static global::app.type.signature.@this Layer(Data result)
-        => (global::app.type.signature.@this)result.Peek();
+    private static global::app.type.item.signature.@this Layer(Data result)
+        => (global::app.type.item.signature.@this)result.Peek();
 
     #region Happy Path & Field Population
 
@@ -215,7 +215,7 @@ public class SignActionTests
 
         var result = await SignData("test");
         await result.IsSuccess();
-        await Assert.That(result.Peek() is global::app.type.signature.@this).IsTrue();
+        await Assert.That(result.Peek() is global::app.type.item.signature.@this).IsTrue();
         await Assert.That(mock.SignCalled).IsTrue();
     }
 
@@ -284,8 +284,8 @@ public class SignActionTests
         public MockSigningProvider(string name) { Name = name; }
 
         public (KeyPair? keys, global::app.error.IError? error) GenerateKeyPair() => _inner.GenerateKeyPair();
-        public global::app.type.binary.@this Sign(global::app.type.signature.@this unsigned, global::app.type.item.text.@this privateKey) => _inner.Sign(unsigned, privateKey);
-        public global::app.type.item.@bool.@this Verify(global::app.type.signature.@this signature) => _inner.Verify(signature);
+        public global::app.type.item.binary.@this Sign(global::app.type.item.signature.@this unsigned, global::app.type.item.text.@this privateKey) => _inner.Sign(unsigned, privateKey);
+        public global::app.type.item.@bool.@this Verify(global::app.type.item.signature.@this signature) => _inner.Verify(signature);
         public async Task<global::app.data.@this> SignAsync(sign action) { SignCalled = true; return await _inner.SignAsync(action); }
         public Task<global::app.data.@this<global::app.type.item.@bool.@this>> VerifyAsync(verify action) => _inner.VerifyAsync(action);
     }
@@ -299,8 +299,8 @@ public class SignActionTests
 
         public string? Source { get; set; }
         public (KeyPair? keys, global::app.error.IError? error) GenerateKeyPair() => (null, new ActionError("Key generation failed", "KeyGenerationError", 500));
-        public global::app.type.binary.@this Sign(global::app.type.signature.@this unsigned, global::app.type.item.text.@this privateKey) => throw new global::app.error.AppException("Sign failed", "SigningError", 500);
-        public global::app.type.item.@bool.@this Verify(global::app.type.signature.@this signature) => throw new global::app.error.AppException("Verify failed", "SignatureInvalid", 400);
+        public global::app.type.item.binary.@this Sign(global::app.type.item.signature.@this unsigned, global::app.type.item.text.@this privateKey) => throw new global::app.error.AppException("Sign failed", "SigningError", 500);
+        public global::app.type.item.@bool.@this Verify(global::app.type.item.signature.@this signature) => throw new global::app.error.AppException("Verify failed", "SignatureInvalid", 400);
         public Task<global::app.data.@this> SignAsync(sign action) => Task.FromResult(global::app.data.@this.FromError(new ActionError("Sign failed", "SigningError", 500)));
         public Task<global::app.data.@this<global::app.type.item.@bool.@this>> VerifyAsync(verify action) => Task.FromResult(global::app.data.@this<global::app.type.item.@bool.@this>.FromError(new ActionError("Verify failed", "SignatureInvalid", 400)));
     }

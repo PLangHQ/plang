@@ -95,7 +95,7 @@ public sealed class Operator
         var typeName = right?.Peek()?.ToString();
         if (left == null || string.IsNullOrWhiteSpace(typeName)) return false;
         if (left.Type.Is(typeName)) return true;
-        if (left.Peek() is global::app.type.file.@this or global::app.type.url.@this
+        if (left.Peek() is global::app.type.item.file.@this or global::app.type.item.url.@this
             || left.RawUntouched)
         {
             // `is <type>` IS an examination — the door parses + narrows, then

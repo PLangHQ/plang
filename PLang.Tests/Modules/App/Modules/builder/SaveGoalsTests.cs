@@ -51,7 +51,7 @@ public class SaveGoalsTests
         var goal = new Goal
         {
             Name = "Start",
-            Path = global::app.type.path.@this.Resolve("/Start.goal", _app.User.Context),
+            Path = global::app.type.item.path.@this.Resolve("/Start.goal", _app.User.Context),
             Steps = new GoalSteps { step }
         };
 
@@ -76,7 +76,7 @@ public class SaveGoalsTests
         var goal = new Goal
         {
             Name = "Test",
-            Path = global::app.type.path.@this.Resolve("/Test.goal", _app.User.Context),
+            Path = global::app.type.item.path.@this.Resolve("/Test.goal", _app.User.Context),
             Description = null
         };
 
@@ -101,7 +101,7 @@ public class SaveGoalsTests
         var goal = new Goal
         {
             Name = "Public",
-            Path = global::app.type.path.@this.Resolve("/Multi.goal", _app.User.Context),
+            Path = global::app.type.item.path.@this.Resolve("/Multi.goal", _app.User.Context),
             Goals = new List<Goal>
             {
                 new Goal { Name = "Private" }

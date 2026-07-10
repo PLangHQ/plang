@@ -195,14 +195,14 @@ public partial class Set : IContext, IBuildValidatable
             // opening the door would read content on store, and the reference IS
             // the declared value (the lazy contract).
             object? sourceValue = Value.RawUntouched ? null
-                : Value.Peek() is (global::app.type.file.@this or global::app.type.url.@this) and { } reference ? reference
+                : Value.Peek() is (global::app.type.item.file.@this or global::app.type.item.url.@this) and { } reference ? reference
                 : await Value.Value();
             // The kind hooks and the strict probe below reason over the raw CLR
             // face (ctor matching, magic-byte/extension sniffing) — a born-typed
             // text/binary leaf presents its backing here. Minting re-lifts, so
             // the stored value stays born-typed either way.
             if (sourceValue is global::app.type.item.text.@this st) sourceValue = st.Clr<string>();
-            else if (sourceValue is global::app.type.binary.@this sb) sourceValue = sb.Value;
+            else if (sourceValue is global::app.type.item.binary.@this sb) sourceValue = sb.Value;
             // The Type value reads through the `type` reader, so it materializes as the type
             // entity itself ({name, kind?, strict?} → type.@this). A bare type-name (raw string)
             // still names a type by name. No dict rebuild — that was the pre-reader path.

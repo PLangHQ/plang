@@ -41,7 +41,7 @@ public class PlangAssignabilityTests
         var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic
             | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Instance;
         await Assert.That(typeof(global::app.type.item.@this).GetMethod("ToRaw", flags)).IsNull();
-        await Assert.That(typeof(global::app.type.dict.@this).GetMethod("ToRaw", flags)).IsNull();
+        await Assert.That(typeof(global::app.type.item.dict.@this).GetMethod("ToRaw", flags)).IsNull();
         await Assert.That(typeof(global::app.type.list.@this).GetMethod("ToRaw", flags)).IsNull();
         await Assert.That(typeof(global::app.type.item.text.@this).GetMethod("ToRaw", flags)).IsNull();
     }

@@ -129,7 +129,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     {
         var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
 
-        var result = (await serializer.Deserialize<global::app.type.number.@this>("42").Value())!;
+        var result = (await serializer.Deserialize<global::app.type.item.number.@this>("42").Value())!;
 
         await Assert.That(result).IsEqualTo(42);
     }
