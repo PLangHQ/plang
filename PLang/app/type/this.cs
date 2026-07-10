@@ -397,7 +397,9 @@ public sealed class @this : item.@this
             if (ClrType is not { } clr
                 || !typeof(item.@this).IsAssignableFrom(clr)
                 || !System.Array.Exists(clr.GetInterfaces(),
-                       i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.ICreate<>)))
+                       i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.ICreate<>)
+                            && i.GenericTypeArguments[0] == clr))   // ICreate<clr> specifically — a subtype
+                                                                    // implementing ICreate<base> can't close Create<subtype>
                 _create = static (_, _) => null;
             else
                 _create = (System.Func<object?, global::app.actor.context.@this?, item.@this?>)
@@ -424,7 +426,9 @@ public sealed class @this : item.@this
             if (ClrType is not { } clr
                 || !typeof(item.@this).IsAssignableFrom(clr)
                 || !System.Array.Exists(clr.GetInterfaces(),
-                       i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.ICreate<>)))
+                       i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.ICreate<>)
+                            && i.GenericTypeArguments[0] == clr))   // ICreate<clr> specifically — a subtype
+                                                                    // implementing ICreate<base> can't close Create<subtype>
                 _courier = static (_, _) => null;
             else
                 _courier = (System.Func<object?, global::app.data.@this, item.@this?>)
