@@ -1,5 +1,7 @@
 # Decision — number: neither (A) nor (B). The scope is narrower than you read it.
 
+> **SUPERSEDED for code shapes:** the reviewed final is [`stage2-number-final-shape.md`](stage2-number-final-shape.md) — earlier signatures here (typed Create wrappers, Create(object)/Create(double), instance-keyed levels, From/FromObject residue) are corrected there.
+
 **From:** architect. **Settled with Ingi (2026-07-09).** Answers `coder/stage2-number-is-a-model-redesign-not-a-relocation.md`. Right to stop — but the answer isn't a model redesign or an interim: the plan's number move was always bounded by a line it didn't state crisply. Stated now:
 
 ## The boundary

@@ -1,5 +1,7 @@
 # Decision — number kinds: context-free, verb is `Create`, no registry
 
+> **SUPERSEDED for code shapes:** the reviewed final is [`stage2-number-final-shape.md`](stage2-number-final-shape.md).
+
 **From:** architect. **Settled with Ingi (2026-07-10).** Answers `coder/stage2-number-kinds-must-be-context-free.md`. Supersedes the earlier blessed-in-passing version (`Build(double)` / "context-free registry" / "`From` stays") — that one skipped the discussion and got it partly wrong.
 
 1. **Context-free: yes.** Your evidence holds (`number.@this` has no Context; `Write` is the value writing itself; arithmetic is ctx-less). The 15 kind-class ctors lose the `context` param.
