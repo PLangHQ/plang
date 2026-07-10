@@ -91,23 +91,6 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
         return new((T)member);
     }
 
-    /// <summary>OBP: <c>choice&lt;T&gt;</c> builds itself from a chosen option NAME (a
-    /// string, or any value's ToString). The CONVERT hook the catalog discovers on the
-    /// closed type — replaces the special choice arm in TryConvert.</summary>
-    public static global::app.data.@this Convert(object? value, string? kind,
-        global::app.actor.context.@this context)
-    {
-        var chosen = value as string ?? value?.ToString() ?? "";
-        try { return context.Ok(FromName(chosen, context)); }
-        catch (System.Exception ex)
-        {
-            var inner = (ex as System.Reflection.TargetInvocationException)?.InnerException ?? ex;
-            return context.Error(new global::app.error.Error(
-                $"'{chosen}' is not a valid {typeof(T).Name} option: {inner.Message}",
-                "TypeConversionFailed", 400));
-        }
-    }
-
     // ---- Comparison (the unified hook — see app.type.compare; statics on the
     // generic exist per closed type, so discovery via the catalog's closed
     // choice<T> finds them) ----

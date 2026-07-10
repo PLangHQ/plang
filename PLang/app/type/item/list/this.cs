@@ -63,16 +63,16 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>THE PURE CORE — a container coerces INTO nothing (highest rank), so the core only
     /// passes a <c>list</c> through; any other value declines (<c>null</c>). Real construction
     /// (empty-string → empty, raw sequence → list) needs a context and lives in the courier below.</summary>
-    public static @this? Create(global::app.type.item.@this value) => value as @this;
+    public static @this? Create(object? value) => value as @this;
 
     /// <summary>The ICreate courier face — a <c>list</c> passes through; a blank string is an empty
     /// list (the LLM emits <c>""</c> for <c>[]</c>); a native sequence re-tags through its own
     /// <c>Clr</c>. Uses <c>data.Context</c> for the born-with-context construction.</summary>
-    public static @this? Create(global::app.type.item.@this value, Data data)
+    public static @this? Create(object? value, Data data)
     {
         if (value is @this self) return self;
         if ((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s) && string.IsNullOrWhiteSpace(s)) return new @this(data.Context);
-        return value.Clr(typeof(@this)) as @this;
+        return (value as global::app.type.item.@this)?.Clr(typeof(@this)) as @this;
     }
 
     /// <summary>Builds from a sequence of native plang VALUES — each wrapped in its

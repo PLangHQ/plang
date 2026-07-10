@@ -12,5 +12,6 @@ namespace app.type.item.dict.serializer;
 public static class Default
 {
     public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
-        => global::app.type.item.dict.@this.Convert(raw, kind, ctx.Context)?.Peek();
+        => global::app.type.item.dict.@this.Create(raw,
+            new global::app.data.@this("", new global::app.type.item.@null.@this("dict", kind), context: ctx.Context));
 }
