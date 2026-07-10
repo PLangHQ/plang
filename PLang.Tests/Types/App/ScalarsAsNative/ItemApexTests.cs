@@ -1,7 +1,7 @@
 using Item = global::app.type.item.@this;
 using Number = global::app.type.item.number.@this;
 using Dict = global::app.type.item.dict.@this;
-using PList = global::app.type.list.@this;
+using PList = global::app.type.item.list.@this;
 
 using PLang.Tests.App.Fixtures;
 

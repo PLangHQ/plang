@@ -9,7 +9,7 @@ public partial class Unique : IContext
 
     public async Task<data.@this<type.list>> Run()
     {
-        var nl = app.type.list.@this.FromRaw((await (await Context.Variable.Get((await ListName.Value()))).Value()), Context);
+        var nl = app.type.item.list.@this.FromRaw((await (await Context.Variable.Get((await ListName.Value()))).Value()), Context);
         if (nl == null)
             return Context.Error<type.list>(
                 new app.error.ValidationError($"Variable '{(await ListName.Value())}' is not a list"));
@@ -26,7 +26,7 @@ public partial class Unique : IContext
                 if (await item.Compare(k) == global::app.data.Comparison.Equal) { dup = true; break; }
             if (!dup) kept.Add(item);
         }
-        var deduped = new app.type.list.@this(kept, Context);
+        var deduped = new app.type.item.list.@this(kept, Context);
         return Context.Ok<type.list>(
             new type.list { count = deduped.CountRaw, value = deduped }, Context.Type.Create("list"));
     }

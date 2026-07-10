@@ -45,7 +45,7 @@ public class TypeTests
     {
         var type = global::PLang.Tests.TestApp.SharedContext.Type.Create("list");
 
-        await Assert.That(type.ClrType).IsEqualTo(typeof(app.type.list.@this));
+        await Assert.That(type.ClrType).IsEqualTo(typeof(app.type.item.list.@this));
     }
 
     [Test]

@@ -13,7 +13,7 @@ public partial class Remove : IContext
     public async Task<data.@this<type.list>> Run()
     {
         var listName = (await ListName.Value());
-        var nl = app.type.list.@this.FromRaw((await (await Context.Variable.Get(listName)).Value()), Context);
+        var nl = app.type.item.list.@this.FromRaw((await (await Context.Variable.Get(listName)).Value()), Context);
         if (nl == null)
             return Context.Error<type.list>(
                 new app.error.ValidationError($"Variable '{listName}' is not a list"));

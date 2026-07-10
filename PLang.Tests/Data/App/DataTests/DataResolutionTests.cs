@@ -96,11 +96,11 @@ public class DataResolutionTests
         var data = TemplateStamp.Container("messages", raw, _app.User.Context);
 
         _app.User.Context.Variable.Set("comment", "value1");
-        var first = data.ShallowClone<global::app.type.list.@this<global::app.module.llm.LlmMessage>>(await data.Value<global::app.type.list.@this<global::app.module.llm.LlmMessage>>());
+        var first = data.ShallowClone<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>>(await data.Value<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>>());
         await Assert.That(first.GetValue<List<global::app.module.llm.LlmMessage>>()![0].Content).IsEqualTo("value1");
 
         _app.User.Context.Variable.Set("comment", "value2");
-        var second = data.ShallowClone<global::app.type.list.@this<global::app.module.llm.LlmMessage>>(await data.Value<global::app.type.list.@this<global::app.module.llm.LlmMessage>>());
+        var second = data.ShallowClone<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>>(await data.Value<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>>());
         await Assert.That(second.GetValue<List<global::app.module.llm.LlmMessage>>()![0].Content).IsEqualTo("value2");
     }
 

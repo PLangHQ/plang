@@ -19,8 +19,8 @@ public sealed class @this : global::app.type.item.@this
 
     public @this(actor.context.@this context)
     {
-        Tags = new global::app.type.list.@this<global::app.type.item.text.@this>(context);
-        Timings = new global::app.type.list.@this<global::app.test.timing.@this>(context);
+        Tags = new global::app.type.item.list.@this<global::app.type.item.text.@this>(context);
+        Timings = new global::app.type.item.list.@this<global::app.test.timing.@this>(context);
     }
 
     // --- Discovery (populated by test.discover) ---
@@ -39,7 +39,7 @@ public sealed class @this : global::app.type.item.@this
 
     /// <summary>Tags (case-insensitive): user-declared (test.tag) ∪ auto (handler
     /// [RequiresCapability]), discovery-seeded and run-appended into one set.</summary>
-    [Out] public global::app.type.list.@this<global::app.type.item.text.@this> Tags { get; }
+    [Out] public global::app.type.item.list.@this<global::app.type.item.text.@this> Tags { get; }
 
     // --- Execution (stamped by test.run; empty until the test runs) ---
 
@@ -54,7 +54,7 @@ public sealed class @this : global::app.type.item.@this
     [Out] public global::app.type.item.text.@this? Stdout { get; set; }
 
     /// <summary>Per-step wall-clock for the entry goal's top-level steps, in source order.</summary>
-    [Out] public global::app.type.list.@this<global::app.test.timing.@this> Timings { get; }
+    [Out] public global::app.type.item.list.@this<global::app.test.timing.@this> Timings { get; }
 
     /// <summary>Self-write: a test is a structural item — its tagged [Out] fields ride the
     /// wire (the report serializes it), no hand-mapped shape.</summary>

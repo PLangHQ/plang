@@ -18,12 +18,12 @@ public class Stage6_ItemApexTests : System.IAsyncDisposable
         await Assert.That(app.Data("", "x").Type.Is("item")).IsTrue();
         await Assert.That(app.Data("", true).Type.Is("item")).IsTrue();
         await Assert.That(app.Data("", new global::app.type.item.dict.@this(app.User.Context)).Type.Is("item")).IsTrue();
-        await Assert.That(app.Data("", new global::app.type.list.@this(app.User.Context)).Type.Is("item")).IsTrue();
+        await Assert.That(app.Data("", new global::app.type.item.list.@this(app.User.Context)).Type.Is("item")).IsTrue();
 
         // The is-query reaches down the lattice from item to the concrete type:
         // `is dict` is true for a dict, false for a list; `is number` for a literal.
         await Assert.That(app.Data("", new global::app.type.item.dict.@this(app.User.Context)).Type.Is("dict")).IsTrue();
-        await Assert.That(app.Data("", new global::app.type.list.@this(app.User.Context)).Type.Is("dict")).IsFalse();
+        await Assert.That(app.Data("", new global::app.type.item.list.@this(app.User.Context)).Type.Is("dict")).IsFalse();
         await Assert.That(app.Data("", 1L).Type.Is("number")).IsTrue();
     }
 }

@@ -70,7 +70,7 @@ public class DataAsTResolutionTests
         var raw = new List<object?> { "%greeting%", "world" };
         var data = TemplateStamp.Container("list", raw, _app.User.Context);
 
-        var result = data.ShallowClone<global::app.type.list.@this<global::app.type.item.text.@this>>(await data.Value<global::app.type.list.@this<global::app.type.item.text.@this>>());
+        var result = data.ShallowClone<global::app.type.item.list.@this<global::app.type.item.text.@this>>(await data.Value<global::app.type.item.list.@this<global::app.type.item.text.@this>>());
 
         await Assert.That((await result.Value())).IsNotNull();
         var items = result.GetValue<List<string>>()!;
@@ -264,10 +264,10 @@ public class DataAsTResolutionTests
                 ["Content"] = "literal text with %x% and %y% inside"
             }
         };
-        context.Variable.Set(new global::app.data.@this<global::app.type.list.@this<global::app.type.item.@this>>("messages", new global::app.type.list.@this<global::app.type.item.@this>(System.Linq.Enumerable.Select(stored, d => _app.Data("", d)), context), context: context));
+        context.Variable.Set(new global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.@this>>("messages", new global::app.type.item.list.@this<global::app.type.item.@this>(System.Linq.Enumerable.Select(stored, d => _app.Data("", d)), context), context: context));
 
         var paramData = new Data("Messages", "%messages%", new global::app.type.@this("text", null, false, "plang"), context: context);
-        var result = paramData.ShallowClone<global::app.type.list.@this<global::app.type.item.dict.@this>>(await paramData.Value<global::app.type.list.@this<global::app.type.item.dict.@this>>());
+        var result = paramData.ShallowClone<global::app.type.item.list.@this<global::app.type.item.dict.@this>>(await paramData.Value<global::app.type.item.list.@this<global::app.type.item.dict.@this>>());
 
         await result.IsSuccess();
         var content = (string)result.GetValue<List<Dictionary<string, object?>>>()![0]["Content"]!;
@@ -277,7 +277,7 @@ public class DataAsTResolutionTests
         await Assert.That(content).DoesNotContain("BUILDER-Y");
     }
 
-    // Closer LlmFixer reproducer: stored as Data<global::app.type.list.@this<object?>> (the actual minted type from
+    // Closer LlmFixer reproducer: stored as Data<global::app.type.item.list.@this<object?>> (the actual minted type from
     // variable.set's MintTyped path), read as List<LlmMessage> (the actual llm.query slot).
     // The conversion goes List<object?> → List<LlmMessage> per element via JSON roundtrip —
     // which should preserve literal %var%, but the actual builder run shows substitution
@@ -299,11 +299,11 @@ public class DataAsTResolutionTests
                 ["Content"] = "literal text with %goal.Name% and %buildStart% inside"
             }
         };
-        context.Variable.Set(new global::app.data.@this<global::app.type.list.@this<global::app.type.item.@this>>("fixerMessages", new global::app.type.list.@this<global::app.type.item.@this>(System.Linq.Enumerable.Select(stored, d => _app.Data("", d)), context), context: context));
+        context.Variable.Set(new global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.@this>>("fixerMessages", new global::app.type.item.list.@this<global::app.type.item.@this>(System.Linq.Enumerable.Select(stored, d => _app.Data("", d)), context), context: context));
 
         // Mirrors how llm.query reads %fixerMessages% — typed slot is List<LlmMessage>.
         var paramData = new Data("Messages", "%fixerMessages%", new global::app.type.@this("text", null, false, "plang"), context: context);
-        var result = paramData.ShallowClone<global::app.type.list.@this<global::app.module.llm.LlmMessage>>(await paramData.Value<global::app.type.list.@this<global::app.module.llm.LlmMessage>>());
+        var result = paramData.ShallowClone<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>>(await paramData.Value<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>>());
 
         await result.IsSuccess();
         var content = result.GetValue<List<global::app.module.llm.LlmMessage>>()![0].Content!;

@@ -166,7 +166,7 @@ public sealed class Writer : IWriter
                 }
                 _writer.WriteEndObject();
                 return;
-            case app.type.list.@this nativeList:
+            case app.type.item.list.@this nativeList:
                 // The native list shape. On the wire each element self-describes —
                 // Value(item) routes an element Data through the record arm, so a
                 // signed element carries its envelope. Disambiguated by wrapper

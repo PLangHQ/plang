@@ -145,7 +145,7 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_ActionsFilter_RestrictsToNamed()
     {
-        var action = new GetActions(_app.User.Context) { Actions = new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(new List<string> { "file.read", "file.save" }, _app.User.Context))
+        var action = new GetActions(_app.User.Context) { Actions = new global::app.data.@this<global::app.type.item.list.@this>("", global::app.type.item.list.@this.FromRaw(new List<string> { "file.read", "file.save" }, _app.User.Context))
         };
         var result = await _app.Run(action, _app.User.Context);
 
@@ -167,7 +167,7 @@ public class GetActionsTests
         var fullResult = await _app.Run(unfiltered, _app.User.Context);
         var fullCount = (((await fullResult.Value()) as global::app.type.clr.@this<StepActions>)!.Value).Count;
 
-        var action = new GetActions(_app.User.Context) { Actions = new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(new List<string>(), _app.User.Context))
+        var action = new GetActions(_app.User.Context) { Actions = new global::app.data.@this<global::app.type.item.list.@this>("", global::app.type.item.list.@this.FromRaw(new List<string>(), _app.User.Context))
         };
         var result = await _app.Run(action, _app.User.Context);
 
@@ -180,7 +180,7 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_ActionsFilter_UnknownName_ReturnsEmptyNoError()
     {
-        var action = new GetActions(_app.User.Context) { Actions = new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(new List<string> { "nonexistent.action" }, _app.User.Context))
+        var action = new GetActions(_app.User.Context) { Actions = new global::app.data.@this<global::app.type.item.list.@this>("", global::app.type.item.list.@this.FromRaw(new List<string> { "nonexistent.action" }, _app.User.Context))
         };
         var result = await _app.Run(action, _app.User.Context);
 
@@ -193,7 +193,7 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_ActionsFilter_IsCaseInsensitive()
     {
-        var action = new GetActions(_app.User.Context) { Actions = new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(new List<string> { "File.Read", "FILE.SAVE" }, _app.User.Context))
+        var action = new GetActions(_app.User.Context) { Actions = new global::app.data.@this<global::app.type.item.list.@this>("", global::app.type.item.list.@this.FromRaw(new List<string> { "File.Read", "FILE.SAVE" }, _app.User.Context))
         };
         var result = await _app.Run(action, _app.User.Context);
 

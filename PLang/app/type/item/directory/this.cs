@@ -20,7 +20,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     [global::app.LlmBuilder, global::app.Out, global::app.Store]
     public global::app.type.item.path.@this Path { get; }
 
-    private global::app.type.list.@this<global::app.type.item.path.@this>? _list;
+    private global::app.type.item.list.@this<global::app.type.item.path.@this>? _list;
 
     [System.Text.Json.Serialization.JsonIgnore]
     public actor.context.@this Context
@@ -38,7 +38,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// The children's locations as a native <c>list</c> of <c>path</c> values,
     /// listed through the path's auth gate on first access and cached.
     /// </summary>
-    public async System.Threading.Tasks.Task<global::app.type.list.@this<global::app.type.item.path.@this>> List()
+    public async System.Threading.Tasks.Task<global::app.type.item.list.@this<global::app.type.item.path.@this>> List()
     {
         if (_list != null) return _list;
         var listed = await Path.List();
@@ -49,7 +49,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>The already-materialised listing, or null when nothing listed yet —
     /// the sync view the renderer reads below the serializer's converter wall.</summary>
-    public global::app.type.list.@this<global::app.type.item.path.@this>? Listed => _list;
+    public global::app.type.item.list.@this<global::app.type.item.path.@this>? Listed => _list;
 
 
     /// <summary>

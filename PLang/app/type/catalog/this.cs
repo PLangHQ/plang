@@ -16,7 +16,7 @@ namespace app.type.catalog;
 /// compressibility) live separately on <see cref="app.format.list.@this"/> at
 /// <c>app.Format</c>.
 /// </summary>
-[System.Obsolete("The type registry moves to app.type.list (list<type>) + a keyed name index; the other sub-registries reparent to app.type.* — do not add new callers.")]
+[System.Obsolete("The type registry moves to app.type.item.list (list<type>) + a keyed name index; the other sub-registries reparent to app.type.* — do not add new callers.")]
 public sealed partial class @this
 {
     /// <summary>
@@ -148,7 +148,7 @@ public sealed partial class @this
             if (generic == typeof(app.type.item.choice.@this<>))
                 return GetTypeNameStatic(type.GetGenericArguments()[0]);
             // Native typed list — list<T> carries its element type intrinsically.
-            if (generic == typeof(app.type.list.@this<>))
+            if (generic == typeof(app.type.item.list.@this<>))
                 return $"list<{GetTypeNameStatic(type.GetGenericArguments()[0])}>";
             if (generic == typeof(List<>) || generic == typeof(IList<>)
                 || generic == typeof(IEnumerable<>) || generic == typeof(ICollection<>)
@@ -395,7 +395,7 @@ public sealed partial class @this
             if (generic == typeof(app.type.item.choice.@this<>))
                 return GetTypeName(type.GetGenericArguments()[0]);
             // Native typed list — list<T> carries its element type intrinsically.
-            if (generic == typeof(app.type.list.@this<>))
+            if (generic == typeof(app.type.item.list.@this<>))
                 return $"list<{GetTypeName(type.GetGenericArguments()[0])}>";
             if (generic == typeof(List<>) || generic == typeof(IList<>)
                 || generic == typeof(IEnumerable<>) || generic == typeof(ICollection<>)
@@ -655,7 +655,7 @@ public sealed partial class @this
                         // A native typed list<T> carries its element type intrinsically;
                         // walk it so the builder gets T's schema (e.g. list<LlmMessage>).
                         if (unwrapped is { IsGenericType: true } u
-                            && u.GetGenericTypeDefinition() == typeof(app.type.list.@this<>))
+                            && u.GetGenericTypeDefinition() == typeof(app.type.item.list.@this<>))
                             Enqueue(u.GetGenericArguments()[0]);
                         // choice<T> carries its closed named-set on T (enum / [Choices]); walk it
                         // so the option vocabulary surfaces under T's name (operator, httpmethod, …).

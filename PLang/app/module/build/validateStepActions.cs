@@ -24,7 +24,7 @@ namespace app.module.build;
 public partial class validateStepActions : IContext
 {
     public partial data.@this<global::app.type.clr.@this<global::app.goal.steps.step.@this>> Step { get; init; }
-    public partial data.@this<global::app.type.list.@this> Actions { get; init; }
+    public partial data.@this<global::app.type.item.list.@this> Actions { get; init; }
 
     [Code]
     public partial IBuilder Builder { get; }

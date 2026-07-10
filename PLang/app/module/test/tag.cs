@@ -12,7 +12,7 @@ namespace app.module.test;
 [Action("tag")]
 public partial class Tag : IContext
 {
-    public partial data.@this<global::app.type.list.@this> Tags { get; init; }
+    public partial data.@this<global::app.type.item.list.@this> Tags { get; init; }
 
     public async Task<data.@this> Run()
     {
@@ -25,6 +25,6 @@ public partial class Tag : IContext
         // Return the current tag set (empty outside test mode) so plang tests can
         // inspect accumulated tags via %!data%.
         return Context.Ok(currentTest?.Tags
-            ?? new global::app.type.list.@this<global::app.type.item.text.@this>(Context));
+            ?? new global::app.type.item.list.@this<global::app.type.item.text.@this>(Context));
     }
 }

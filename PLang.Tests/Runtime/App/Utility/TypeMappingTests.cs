@@ -149,7 +149,7 @@ public class TypeMappingTests
     {
         var type = TypeMapping.GetType("list");
 
-        await Assert.That(type).IsEqualTo(typeof(app.type.list.@this));
+        await Assert.That(type).IsEqualTo(typeof(app.type.item.list.@this));
     }
 
     [Test]
@@ -157,7 +157,7 @@ public class TypeMappingTests
     {
         var type = TypeMapping.GetType("array");
 
-        await Assert.That(type).IsEqualTo(typeof(app.type.list.@this));
+        await Assert.That(type).IsEqualTo(typeof(app.type.item.list.@this));
     }
 
     [Test]
@@ -690,7 +690,7 @@ public class TypeMappingTests
     [Test]
     public async Task GetTypeName_DataOfListString_ReturnsListString()
     {
-        var name = TypeMapping.GetTypeName(typeof(global::app.data.@this<global::app.type.list.@this<global::app.type.item.text.@this>>));
+        var name = TypeMapping.GetTypeName(typeof(global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.text.@this>>));
 
         await Assert.That(name).IsEqualTo("list<text>");
     }

@@ -52,7 +52,7 @@ public class Error : global::app.type.item.@this, IError
     /// <see cref="Message"/> (the human line) and <see cref="Details"/> (provider
     /// diagnostic context).
     /// </summary>
-    public global::app.data.@this<global::app.type.list.@this>? Data { get; init; }
+    public global::app.data.@this<global::app.type.item.list.@this>? Data { get; init; }
 
     public List<IError> ErrorChain { get; } = new();
 

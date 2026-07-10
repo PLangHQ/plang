@@ -7,17 +7,17 @@ namespace PLang.Tests;
 /// </summary>
 public static class CollectionTestExtensions
 {
-    public static global::app.data.@this<global::app.type.list.@this> ToListData(this System.Collections.IEnumerable raw, global::app.actor.context.@this? context = null)
+    public static global::app.data.@this<global::app.type.item.list.@this> ToListData(this System.Collections.IEnumerable raw, global::app.actor.context.@this? context = null)
     {
         context ??= global::PLang.Tests.TestApp.SharedContext;
-        return new("", global::app.type.list.@this.FromRaw(raw, context)!, context: context);
+        return new("", global::app.type.item.list.@this.FromRaw(raw, context)!, context: context);
     }
 
-    public static global::app.data.@this<global::app.type.list.@this<T>> ToListData<T>(this System.Collections.IEnumerable raw, global::app.actor.context.@this? context = null)
+    public static global::app.data.@this<global::app.type.item.list.@this<T>> ToListData<T>(this System.Collections.IEnumerable raw, global::app.actor.context.@this? context = null)
         where T : global::app.type.item.@this
     {
         context ??= global::PLang.Tests.TestApp.SharedContext;
-        var l = new global::app.type.list.@this<T>(context);
+        var l = new global::app.type.item.list.@this<T>(context);
         foreach (var i in raw)
             l.Add(i is global::app.data.@this d ? d : new global::app.data.@this("", i, context: context));
         return new("", l, context: context);

@@ -19,7 +19,7 @@ public partial class Range : IContext
             return Context.Error<type.list>(
                 new app.error.ValidationError("Step cannot be zero", "InvalidStep"));
 
-        var list = new app.type.list.@this(Context);
+        var list = new app.type.item.list.@this(Context);
         int start = (await Start.Value())!.ToInt32(), end = (await End.Value())!.ToInt32(), step = stepN.ToInt32();
         if (step > 0)
         {

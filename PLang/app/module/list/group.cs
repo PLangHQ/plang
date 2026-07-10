@@ -16,7 +16,7 @@ public partial class Group : IContext
 
         // Buckets are native lists of the element Data — each bucket is itself
         // navigable (you can sort/where inside one). Insertion order preserved.
-        var buckets = new Dictionary<string, app.type.list.@this>();
+        var buckets = new Dictionary<string, app.type.item.list.@this>();
         var order = new List<string>();
         foreach (var (_, item) in await data.EnumerateItems())
         {
@@ -24,14 +24,14 @@ public partial class Group : IContext
             var keyValue = keyData.IsInitialized ? (await keyData.Value())?.ToString() ?? "" : "";
             if (!buckets.TryGetValue(keyValue, out var bucket))
             {
-                bucket = new app.type.list.@this(Context);
+                bucket = new app.type.item.list.@this(Context);
                 buckets[keyValue] = bucket;
                 order.Add(keyValue);
             }
             bucket.Add(item);
         }
 
-        var result = new app.type.list.@this(Context);
+        var result = new app.type.item.list.@this(Context);
         foreach (var k in order)
         {
             var bucketDict = new app.type.item.dict.@this(Context);

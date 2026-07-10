@@ -18,7 +18,7 @@ namespace app.module.test;
 [Action("report", Cacheable = false)]
 public partial class report : IContext
 {
-    public partial data.@this<global::app.type.list.@this<global::app.test.@this>>? Results { get; init; }
+    public partial data.@this<global::app.type.item.list.@this<global::app.test.@this>>? Results { get; init; }
     public partial data.@this<global::app.type.item.text.@this>? Format { get; init; }
 
     public async Task<data.@this> Run()
@@ -64,8 +64,8 @@ public partial class report : IContext
         int variableSnapshotCount = results.Count(t => t.Error is AssertionError { Variables: { Count: > 0 } });
 
         // Return the tests so a parent runner can propagate them via `write to %results%`.
-        var result = Context.Ok<global::app.type.list.@this<global::app.test.@this>>(
-            new global::app.type.list.@this<global::app.test.@this>(results, Context));
+        var result = Context.Ok<global::app.type.item.list.@this<global::app.test.@this>>(
+            new global::app.type.item.list.@this<global::app.test.@this>(results, Context));
         result.Properties.Set("format", format.ToString());
         result.Properties.Set("reportPath", writeTarget.Absolute);
         result.Properties.Set("content", content);
@@ -102,7 +102,7 @@ public partial class report : IContext
     // [Out] fields become the artefact. No hand-built shape.
     private async Task<string> Wire(IReadOnlyList<global::app.test.@this> results)
     {
-        var list = new global::app.type.list.@this<global::app.test.@this>(results, Context);
+        var list = new global::app.type.item.list.@this<global::app.test.@this>(results, Context);
         var serializer = new global::app.channel.serializer.plang.@this(Context);
         using var ms = new System.IO.MemoryStream();
         await serializer.SerializeItemAsync(ms, list, global::app.View.Out);

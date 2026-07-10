@@ -93,7 +93,7 @@ public class RunActionTests
         };
         var result = await action.Run();
         // run returns list<test>; materialize the executed tests (each row's value is a test).
-        var list = (global::app.type.list.@this)(await result.Value())!;
+        var list = (global::app.type.item.list.@this)(await result.Value())!;
         return list.Select(r => (global::app.test.@this)r.Peek()).ToList();
     }
 

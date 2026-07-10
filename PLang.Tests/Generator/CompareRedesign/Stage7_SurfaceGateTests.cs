@@ -127,8 +127,8 @@ public class Stage7_SurfaceGateTests
         d.Set(new Data("name", "a", context: global::PLang.Tests.TestApp.SharedContext));
         d.Set(new Data("age", 30L, context: global::PLang.Tests.TestApp.SharedContext));
         object keys = d.Keys;
-        await Assert.That(keys).IsTypeOf<global::app.type.list.@this<global::app.type.item.text.@this>>();
-        var names = ((global::app.type.list.@this<global::app.type.item.text.@this>)keys)
+        await Assert.That(keys).IsTypeOf<global::app.type.item.list.@this<global::app.type.item.text.@this>>();
+        var names = ((global::app.type.item.list.@this<global::app.type.item.text.@this>)keys)
             .Items.Select(k => k.Peek()).ToList();
         await Assert.That(names.All(v => v is global::app.type.item.text.@this)).IsTrue();
     }
@@ -136,7 +136,7 @@ public class Stage7_SurfaceGateTests
     [Test]
     public async Task ListCount_ReturnsNumber_NotInt()
     {
-        var l = new global::app.type.list.@this(global::PLang.Tests.TestApp.SharedContext);
+        var l = new global::app.type.item.list.@this(global::PLang.Tests.TestApp.SharedContext);
         l.Add(new Data("", 1, context: global::PLang.Tests.TestApp.SharedContext));
         l.Add(new Data("", 2, context: global::PLang.Tests.TestApp.SharedContext));
         object count = l.Count;

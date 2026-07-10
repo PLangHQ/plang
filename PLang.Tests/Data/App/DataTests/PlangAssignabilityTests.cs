@@ -42,7 +42,7 @@ public class PlangAssignabilityTests
             | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Instance;
         await Assert.That(typeof(global::app.type.item.@this).GetMethod("ToRaw", flags)).IsNull();
         await Assert.That(typeof(global::app.type.item.dict.@this).GetMethod("ToRaw", flags)).IsNull();
-        await Assert.That(typeof(global::app.type.list.@this).GetMethod("ToRaw", flags)).IsNull();
+        await Assert.That(typeof(global::app.type.item.list.@this).GetMethod("ToRaw", flags)).IsNull();
         await Assert.That(typeof(global::app.type.item.text.@this).GetMethod("ToRaw", flags)).IsNull();
     }
 

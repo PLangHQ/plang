@@ -30,10 +30,10 @@ public class NamePropagationTests
     public async Task Name_FullVarMatch_PropagatesLiveVariableName()
     {
         var context = _app.User.Context;
-        context.Variable.Set(new global::app.data.@this("products", global::app.type.list.@this.FromRaw(new List<object?> { "a" }, context), context: context));
+        context.Variable.Set(new global::app.data.@this("products", global::app.type.item.list.@this.FromRaw(new List<object?> { "a" }, context), context: context));
 
         var paramData = new Data("List", "%products%", new global::app.type.@this("text", null, false, "plang"), context: context);
-        var result = paramData.ShallowClone<global::app.type.list.@this>(await paramData.Value<global::app.type.list.@this>());
+        var result = paramData.ShallowClone<global::app.type.item.list.@this>(await paramData.Value<global::app.type.item.list.@this>());
 
         await Assert.That(result.Name).IsEqualTo("products");
     }
@@ -88,7 +88,7 @@ public class NamePropagationTests
         context.Variable.Set(new global::app.data.@this<global::app.type.item.text.@this>("b", "expanded", context: context));
 
         var paramData = TemplateStamp.Container("Items", new List<object?> { "a", "%b%", "c" }, context);
-        var result = paramData.ShallowClone<global::app.type.list.@this>(await paramData.Value<global::app.type.list.@this>());
+        var result = paramData.ShallowClone<global::app.type.item.list.@this>(await paramData.Value<global::app.type.item.list.@this>());
         await Assert.That(result.Name).IsEqualTo("Items");
     }
 

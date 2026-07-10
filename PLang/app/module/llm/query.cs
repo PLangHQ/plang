@@ -29,7 +29,7 @@ public partial class query : IContext, IBuildValidatable
             || (value is global::app.type.item.text.@this st && !st.IsTruthy()))
             return "Parameter 'Messages' is empty. Must be a list of {Role: string, Content: string} objects. Map system= to {\"Role\": \"system\", \"Content\": \"...\"} and user= to {\"Role\": \"user\", \"Content\": \"...\"}";
 
-        if (value is not global::app.type.list.@this
+        if (value is not global::app.type.item.list.@this
             && value is not Clr { Value: System.Collections.IList }
             && value is not global::app.type.item.text.@this) // text already handled above
             return $"Parameter 'Messages' must be a list of {{Role, Content}} objects, got {value!.Mint().Name}";
@@ -39,10 +39,10 @@ public partial class query : IContext, IBuildValidatable
 
     /// <summary>Conversation messages (system, user, assistant).</summary>
     [IsNotNull]
-    public partial data.@this<global::app.type.list.@this<LlmMessage>> Messages { get; init; }
+    public partial data.@this<global::app.type.item.list.@this<LlmMessage>> Messages { get; init; }
 
     /// <summary>Goals available as tools for the LLM to call.</summary>
-    public partial data.@this<global::app.type.list.@this<GoalCall>>? Tools { get; init; }
+    public partial data.@this<global::app.type.item.list.@this<GoalCall>>? Tools { get; init; }
 
     /// <summary>Callback fired before/after each tool execution. Receives: name, arguments, status, result.</summary>
     [GoalCallback("toolCallInfo")]

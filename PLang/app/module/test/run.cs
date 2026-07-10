@@ -29,12 +29,12 @@ public partial class run : IContext
     internal static event Action<app.@this>? ChildAppCreated;
 
     [IsNotNull]
-    public partial data.@this<global::app.type.list.@this<global::app.test.@this>> Tests { get; init; }
+    public partial data.@this<global::app.type.item.list.@this<global::app.test.@this>> Tests { get; init; }
 
     public partial data.@this<global::app.type.item.number.@this>? Parallel { get; init; }
     public partial data.@this<global::app.type.item.number.@this>? Timeout { get; init; }
 
-    public async Task<data.@this<global::app.type.list.@this<global::app.test.@this>>> Run()
+    public async Task<data.@this<global::app.type.item.list.@this<global::app.test.@this>>> Run()
     {
         var tests = new List<global::app.test.@this>();
         var list = await Tests.Value();
@@ -52,9 +52,9 @@ public partial class run : IContext
 
         // The executed tests ARE the result — each carries its own outcome after run.
         // The list holds the test objects the run loop mutates in place.
-        var executed = new global::app.type.list.@this<global::app.test.@this>(tests, Context);
+        var executed = new global::app.type.item.list.@this<global::app.test.@this>(tests, Context);
         if (tests.Count == 0)
-            return Context.Ok<global::app.type.list.@this<global::app.test.@this>>(executed);
+            return Context.Ok<global::app.type.item.list.@this<global::app.test.@this>>(executed);
 
         // Sentinel: ≤ 0 means auto — fall back to the machine's processor count.
         if (parallel < 1) parallel = System.Environment.ProcessorCount;
@@ -68,7 +68,7 @@ public partial class run : IContext
         });
 
         await Task.WhenAll(tasks);
-        return Context.Ok<global::app.type.list.@this<global::app.test.@this>>(executed);
+        return Context.Ok<global::app.type.item.list.@this<global::app.test.@this>>(executed);
     }
 
     private async Task RunSingleAsync(global::app.test.@this test, TimeSpan timeout, app.@this parentApp)

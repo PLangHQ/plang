@@ -27,7 +27,7 @@ public class ItemConstraintTests
             typeof(global::app.type.item.datetime.@this), typeof(global::app.type.item.date.@this),
             typeof(global::app.type.item.time.@this), typeof(global::app.type.item.duration.@this),
             typeof(global::app.type.item.@bool.@this), typeof(global::app.type.item.@null.@this),
-            typeof(global::app.type.item.dict.@this), typeof(global::app.type.list.@this),
+            typeof(global::app.type.item.dict.@this), typeof(global::app.type.item.list.@this),
             typeof(global::app.type.item.path.@this), typeof(global::app.type.item.image.@this),
             typeof(global::app.type.code.@this), typeof(global::app.variable.@this),
             typeof(global::app.module.output.Ask), typeof(global::app.snapshot.@this),

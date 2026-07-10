@@ -13,7 +13,7 @@ public class NestedTypedRoundTripTests
     {
         var app = global::PLang.Tests.TestApp.Create("/nest");
         var ctx = app.User.Context;
-        var steps = new global::app.type.list.@this(ctx)
+        var steps = new global::app.type.item.list.@this(ctx)
             .Add(new global::app.data.@this("", new global::app.type.item.dict.@this(ctx).Set("index", 1L), context: ctx));
         var plan = new global::app.type.item.dict.@this(ctx)
             .Set("description", "a plan")
@@ -33,6 +33,6 @@ public class NestedTypedRoundTripTests
         await Assert.That(dict.Get("description")!.Type?.Name).IsEqualTo("text");
         // The nested list materializes as a real list.
         var stepsVal = await dict.Get("steps")!.Value();
-        await Assert.That(stepsVal is global::app.type.list.@this).IsTrue();
+        await Assert.That(stepsVal is global::app.type.item.list.@this).IsTrue();
     }
 }

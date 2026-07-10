@@ -12,7 +12,7 @@ public partial class types : IContext
     /// that those actions reference (parameter types + return type). The
     /// <c>PrimitiveNames</c> list is unchanged. Null/empty → full catalog.
     /// </summary>
-    public partial data.@this<global::app.type.list.@this>? Actions { get; init; }
+    public partial data.@this<global::app.type.item.list.@this>? Actions { get; init; }
 
     [Code]
     public partial IBuilder Builder { get; }

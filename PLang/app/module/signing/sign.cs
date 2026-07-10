@@ -14,7 +14,7 @@ public partial class sign : global::app.type.item.@this, global::app.type.item.I
     public partial data.@this? Data { get; init; }
 
     /// <summary>Contracts for this signature. Default: ["C0"].</summary>
-    public partial data.@this<global::app.type.list.@this>? Contracts { get; init; }
+    public partial data.@this<global::app.type.item.list.@this>? Contracts { get; init; }
 
     /// <summary>Optional headers to include in the signature object.</summary>
     public partial data.@this<global::app.type.item.dict.@this>? Headers { get; init; }

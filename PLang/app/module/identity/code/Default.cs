@@ -173,14 +173,14 @@ public sealed class Default : IIdentity
         return action.Context.Ok<Identity>(identity);
     }
 
-    public async Task<data.@this<global::app.type.list.@this<Identity>>> ListAsync(list action)
+    public async Task<data.@this<global::app.type.item.list.@this<Identity>>> ListAsync(list action)
     {
         var (items, err) = await LoadAll(action);
-        if (err != null) return action.Context.Error<global::app.type.list.@this<Identity>>(err);
+        if (err != null) return action.Context.Error<global::app.type.item.list.@this<Identity>>(err);
         var active = items!.Where(i => !i.IsArchived)
             .Select(i => new data.@this("", i, context: action.Context)).ToList();
-        return action.Context.Ok<global::app.type.list.@this<Identity>>(
-            new global::app.type.list.@this<Identity>(active, action.Context));
+        return action.Context.Ok<global::app.type.item.list.@this<Identity>>(
+            new global::app.type.item.list.@this<Identity>(active, action.Context));
     }
 
     public async Task<data.@this<Identity>> ExportAsync(Export action)
@@ -227,7 +227,7 @@ public sealed class Default : IIdentity
         if (!result.Success) return (null, result.Error);
 
         var identities = new List<Identity>();
-        var list = await result.Value<global::app.type.list.@this>();
+        var list = await result.Value<global::app.type.item.list.@this>();
         if (list != null)
             foreach (var row in list)
                 if (await row.Value<Identity>() is { } identity) identities.Add(identity);

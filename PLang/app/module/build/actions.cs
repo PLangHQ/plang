@@ -12,7 +12,7 @@ public partial class GetActions : IContext
     /// passes the planner's action set here so the prompt carries only the
     /// relevant rows.
     /// </summary>
-    public partial data.@this<global::app.type.list.@this>? Actions { get; init; }
+    public partial data.@this<global::app.type.item.list.@this>? Actions { get; init; }
 
     [Code]
     public partial IBuilder Builder { get; }

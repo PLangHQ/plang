@@ -167,7 +167,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
         {
             switch (p)
             {
-                case app.type.list.@this nativeList:
+                case app.type.item.list.@this nativeList:
                     foreach (var item in nativeList.Items) yield return item;
                     break;
                 case System.Collections.IEnumerable seq when p is not string:

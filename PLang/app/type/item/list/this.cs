@@ -1,6 +1,6 @@
 using Data = global::app.data.@this;
 
-namespace app.type.list;
+namespace app.type.item.list;
 
 /// <summary>
 /// The native PLang list/array value type. Holds an ordered <c>List&lt;data&gt;</c> —

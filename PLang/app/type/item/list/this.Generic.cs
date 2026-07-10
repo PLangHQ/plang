@@ -1,4 +1,4 @@
-namespace app.type.list;
+namespace app.type.item.list;
 
 /// <summary>
 /// Typed view of a native list — <c>list&lt;T&gt;</c>, where <c>T : item</c> is the element
@@ -9,7 +9,7 @@ namespace app.type.list;
 ///
 /// Runtime instances are produced by the conversion catalog (As&lt;list&lt;T&gt;&gt;), which builds
 /// a <c>list&lt;T&gt;</c> from raw and converts each element to T. Everything else — serializer,
-/// navigators, comparison, <c>is app.type.list.@this</c> checks — sees the non-generic base.
+/// navigators, comparison, <c>is app.type.item.list.@this</c> checks — sees the non-generic base.
 /// </summary>
 public sealed class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
     where T : global::app.type.item.@this
@@ -20,7 +20,7 @@ public sealed class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
 
     /// <summary>Render/clone preserve the element-type tag — a list&lt;T&gt; stays
     /// a list&lt;T&gt; instead of degrading to the non-generic base.</summary>
-    protected override global::app.type.list.@this Empty() => new @this<T>(Context);
+    protected override global::app.type.item.list.@this Empty() => new @this<T>(Context);
 
     /// <summary>Value-membership typed to the element — because the parameter is
     /// <typeparamref name="T"/>, a caller can pass what converts to T (e.g. a bare

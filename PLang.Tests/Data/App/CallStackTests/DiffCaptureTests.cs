@@ -81,8 +81,8 @@ public class DiffCaptureTests : System.IAsyncDisposable
         var diff = call.Diffs![0];
         // DeepDiff captures a clone of the native value — a distinct list instance,
         // same contents (the pre-mutation [1,2,3]).
-        await Assert.That(diff.Before is global::app.type.list.@this).IsTrue();
-        var captured = (global::app.type.list.@this)diff.Before!;
+        await Assert.That(diff.Before is global::app.type.item.list.@this).IsTrue();
+        var captured = (global::app.type.item.list.@this)diff.Before!;
         await Assert.That(captured.CountRaw).IsEqualTo(3);
     }
 

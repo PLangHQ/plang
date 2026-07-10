@@ -117,7 +117,7 @@ public abstract partial class @this
     public abstract Task<data.@this<@this>> Delete(bool recursive, bool ignoreIfNotFound);
 
     /// <summary>List entries with a glob pattern. Non-FS schemes ignore both options.</summary>
-    public abstract Task<data.@this<global::app.type.list.@this<@this>>> List(string pattern, bool recursive);
+    public abstract Task<data.@this<global::app.type.item.list.@this<@this>>> List(string pattern, bool recursive);
 
     /// <summary>Write <paramref name="value"/> to this path; returns the Path wrapped in Data.</summary>
     public abstract Task<data.@this<@this>> Save(data.@this? value);
@@ -126,7 +126,7 @@ public abstract partial class @this
     public Task<data.@this<@this>> Delete() => Delete(recursive: false, ignoreIfNotFound: false);
 
     /// <summary>Parameterless convenience — all entries, shallow.</summary>
-    public Task<data.@this<global::app.type.list.@this<@this>>> List() => List(pattern: "*", recursive: false);
+    public Task<data.@this<global::app.type.item.list.@this<@this>>> List() => List(pattern: "*", recursive: false);
 
     // --- Cross-scheme defaults — virtual; subclasses override for fast paths ---
 

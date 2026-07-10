@@ -107,15 +107,15 @@ public class Stage4_PerTypeCompareTests
         // list ordering by element, lexicographic
         await using var app = NewApp();
         var ctx = app.User.Context;
-        static global::app.type.list.@this L(global::app.actor.context.@this c, params object[] items)
+        static global::app.type.item.list.@this L(global::app.actor.context.@this c, params object[] items)
         {
-            var l = new global::app.type.list.@this(c);
+            var l = new global::app.type.item.list.@this(c);
             foreach (var i in items) l.Add(new Data("", i, context: c));
             return l;
         }
-        await Assert.That(global::app.type.list.@this.Compare(L(ctx,1,2), L(ctx,1,3))).IsEqualTo(Comparison.Less);
-        await Assert.That(global::app.type.list.@this.Compare(L(ctx,1,2), L(ctx,1,2,3))).IsEqualTo(Comparison.Less); // prefix first
-        await Assert.That(global::app.type.list.@this.Compare(L(ctx,2), L(ctx,1,9))).IsEqualTo(Comparison.Greater);
+        await Assert.That(global::app.type.item.list.@this.Compare(L(ctx,1,2), L(ctx,1,3))).IsEqualTo(Comparison.Less);
+        await Assert.That(global::app.type.item.list.@this.Compare(L(ctx,1,2), L(ctx,1,2,3))).IsEqualTo(Comparison.Less); // prefix first
+        await Assert.That(global::app.type.item.list.@this.Compare(L(ctx,2), L(ctx,1,9))).IsEqualTo(Comparison.Greater);
     }
 
     [Test]
@@ -173,7 +173,7 @@ public class Stage4_PerTypeCompareTests
         // sort places null entries last
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var list = new global::app.type.list.@this(ctx);
+        var list = new global::app.type.item.list.@this(ctx);
         list.Add(new Data("", 3, context: ctx));
         list.Add(new Data("", null, context: ctx));
         list.Add(new Data("", 1, context: ctx));

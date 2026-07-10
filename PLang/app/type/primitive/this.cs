@@ -48,8 +48,8 @@ public static class @this
             // list/array → the native list value type (collections hold Data).
             // The raw List<object> entry that used to back "list" is retired;
             // typed lists still surface as the generic `list<t>` shape via GetTypeName.
-            ["list"] = typeof(app.type.list.@this),
-            ["array"] = typeof(app.type.list.@this),
+            ["list"] = typeof(app.type.item.list.@this),
+            ["array"] = typeof(app.type.item.list.@this),
             // dict/dictionary/map → the native object value type (collections
             // hold Data). The raw Dictionary<string,object> entry that used to
             // back these is retired; typed dictionaries still surface as the
@@ -109,7 +109,7 @@ public static class @this
             // derivation from collapsing to the @this class name "this").
             [typeof(app.type.item.dict.@this)] = "dict",
             // Native list value type → "list" (same no-context derivation reason).
-            [typeof(app.type.list.@this)] = "list",
+            [typeof(app.type.item.list.@this)] = "list",
         };
 
     /// <summary>

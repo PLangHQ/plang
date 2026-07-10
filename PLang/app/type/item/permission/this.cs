@@ -179,7 +179,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             ? m : Match.Exact;
 
         var verbs = new HashSet<Verb>();
-        if (dict.Get("verbs")?.Peek() is global::app.type.list.@this list)
+        if (dict.Get("verbs")?.Peek() is global::app.type.item.list.@this list)
             foreach (var entry in list.Items)
                 if (entry.Peek() is Text t && System.Enum.TryParse<Verb>(t.ToString(), ignoreCase: true, out var v))
                     verbs.Add(v);

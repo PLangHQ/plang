@@ -320,7 +320,7 @@ public class ProviderModuleTests
 
         await result.IsSuccess();
         // Providers are plumbing — the action returns their names (list<text>), not the CLR instances.
-        var names = (global::app.type.list.@this)(await result.Value())!;
+        var names = (global::app.type.item.list.@this)(await result.Value())!;
         await Assert.That(names.Items.Count).IsGreaterThanOrEqualTo(2);
     }
 

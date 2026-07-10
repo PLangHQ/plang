@@ -148,23 +148,23 @@ public sealed partial class @this
     /// List directory entries matching <paramref name="pattern"/>. Returns an
     /// array of FilePaths (Data&lt;Path[]&gt;), each Context-wired.
     /// </summary>
-    public override async Task<data.@this<global::app.type.list.@this<global::app.type.item.path.@this>>> List(string pattern, bool recursive)
+    public override async Task<data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>> List(string pattern, bool recursive)
     {
-        if (await AuthGate(Verb.Read) is { } early) return data.@this<global::app.type.list.@this<global::app.type.item.path.@this>>.From(early);
+        if (await AuthGate(Verb.Read) is { } early) return data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>.From(early);
         if (!System.IO.Directory.Exists(Absolute))
-            return Context.Error<global::app.type.list.@this<global::app.type.item.path.@this>>(new global::app.error.ServiceError($"Directory not found: {Raw}", "NotFound", 404));
+            return Context.Error<global::app.type.item.list.@this<global::app.type.item.path.@this>>(new global::app.error.ServiceError($"Directory not found: {Raw}", "NotFound", 404));
         try
         {
             var option = recursive ? System.IO.SearchOption.AllDirectories : System.IO.SearchOption.TopDirectoryOnly;
             var files = System.IO.Directory.GetFiles(Absolute, pattern, option)
                 .Select(f => new data.@this("", (global::app.type.item.path.@this)new @this(f, Context), context: Context))
                 .ToList();
-            return Context.Ok<global::app.type.list.@this<global::app.type.item.path.@this>>(
-                new global::app.type.list.@this<global::app.type.item.path.@this>(files, Context));
+            return Context.Ok<global::app.type.item.list.@this<global::app.type.item.path.@this>>(
+                new global::app.type.item.list.@this<global::app.type.item.path.@this>(files, Context));
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {
-            return Context.Error<global::app.type.list.@this<global::app.type.item.path.@this>>(new global::app.error.ServiceError(ex.Message, "IOError", 500));
+            return Context.Error<global::app.type.item.list.@this<global::app.type.item.path.@this>>(new global::app.error.ServiceError(ex.Message, "IOError", 500));
         }
     }
 

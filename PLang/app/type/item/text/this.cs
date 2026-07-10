@@ -67,7 +67,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (raw is @this self) return self;
         // Native dict/list ITEMS aren't IDictionary/IEnumerable, but they render their
         // canonical {}/[] textual form (text/json means json TEXT) — checked on the item.
-        if (raw is global::app.type.item.dict.@this or global::app.type.list.@this)
+        if (raw is global::app.type.item.dict.@this or global::app.type.item.list.@this)
             return (@this)System.Text.Json.JsonSerializer.Serialize(raw);
         // An item of another type unwraps to its clr (a read); a raw CLR value is already its clr.
         object? clr = raw is global::app.type.item.@this it ? it.Clr<object>() : raw;

@@ -181,13 +181,13 @@ public class Fluid : ITemplate
     private static object? NativeCollectionConverter(object value, global::app.actor.context.@this context) => value switch
     {
         app.type.item.dict.@this d => new NativeDictView(d),
-        app.type.list.@this l => new NativeListView(l),
+        app.type.item.list.@this l => new NativeListView(l),
         // JsonNode isn't Fluid-readable either; parse it to natives (the parse is
         // structural, JSON-DOM sized) and the natives then ride the views above.
         System.Text.Json.Nodes.JsonNode jn => new app.type.item.serializer.json(context).Parse(jn) switch
         {
             app.type.item.dict.@this d => new NativeDictView(d),
-            app.type.list.@this l => new NativeListView(l),
+            app.type.item.list.@this l => new NativeListView(l),
             var scalar => scalar, // a bare JSON scalar — Fluid maps it directly
         },
         _ => null,
@@ -243,7 +243,7 @@ public class Fluid : ITemplate
     /// once with no extra copy. Read-only: writes throw. Element values stay raw
     /// so nested natives re-convert lazily.
     /// </summary>
-    private sealed class NativeListView(app.type.list.@this l) : IList<object?>
+    private sealed class NativeListView(app.type.item.list.@this l) : IList<object?>
     {
         public object? this[int index]
         {

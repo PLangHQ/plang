@@ -283,7 +283,7 @@ public class VariablesTests : System.IAsyncDisposable
         var stack = new Variables(_app.User.Context);
         var alice = new global::app.type.item.dict.@this(_app.User.Context); alice.Set("Name", "Alice");
         var bob = new global::app.type.item.dict.@this(_app.User.Context); bob.Set("Name", "Bob");
-        var people = new global::app.type.list.@this(_app.User.Context);
+        var people = new global::app.type.item.list.@this(_app.User.Context);
         people.Add(_app.Data("", alice));
         people.Add(_app.Data("", bob));
         await stack.Set("people", people);
@@ -303,7 +303,7 @@ public class VariablesTests : System.IAsyncDisposable
         var stack = _app.User.Context.Variable;
         var alice = new global::app.type.item.dict.@this(_app.User.Context); alice.Set("Name", "Alice");
         var bob = new global::app.type.item.dict.@this(_app.User.Context); bob.Set("Name", "Bob");
-        var people = new global::app.type.list.@this(_app.User.Context);
+        var people = new global::app.type.item.list.@this(_app.User.Context);
         people.Add(_app.Data("", alice));
         people.Add(_app.Data("", bob));
         await stack.Set("people", people);
@@ -383,7 +383,7 @@ public class VariablesTests : System.IAsyncDisposable
         // Verify the list itself is stored and accessible
         var itemsObj = await stack.Get("items");
         await Assert.That(itemsObj).IsNotNull();
-        await Assert.That((await itemsObj!.Value())).IsTypeOf<global::app.type.list.@this>();
+        await Assert.That((await itemsObj!.Value())).IsTypeOf<global::app.type.item.list.@this>();
 
         // Access the list directly
         var list = global::app.type.item.@this.Lower<List<object>>(await itemsObj.Value())!;

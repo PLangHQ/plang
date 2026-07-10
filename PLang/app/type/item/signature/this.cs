@@ -55,7 +55,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public text Identity { get; }
 
     /// <summary>Contracts asserted by this signature (e.g. <c>["C0"]</c>).</summary>
-    public global::app.type.list.@this? Contracts { get; }
+    public global::app.type.item.list.@this? Contracts { get; }
 
     /// <summary>The digest the signature covers — the typed crypto hash (it owns
     /// its algorithm and bytes, so the module reads them off without a cast).</summary>
@@ -73,7 +73,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         hash hash,
         binary signature,
         datetime? expires = null,
-        global::app.type.list.@this? contracts = null)
+        global::app.type.item.list.@this? contracts = null)
     {
         Value = value;
         Algorithm = algorithm ?? new text("ed25519");

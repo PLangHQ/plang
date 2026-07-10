@@ -34,7 +34,7 @@ public partial class getTypes : IContext
 {
     public partial data.@this<global::app.type.clr.@this<global::app.goal.@this>> Goal { get; init; }
 
-    public async Task<data.@this<global::app.type.list.@this<global::app.type.item.dict.@this>>> Run()
+    public async Task<data.@this<global::app.type.item.list.@this<global::app.type.item.dict.@this>>> Run()
     {
         var goal = Goal.Clr<global::app.goal.@this>()!;
         var modules = Context.App.Module;
@@ -68,8 +68,8 @@ public partial class getTypes : IContext
             foreach (var kv in d) nd.Set(kv.Key, kv.Value);
             return new data.@this("", nd, context: Context);
         });
-        return Context.Ok<global::app.type.list.@this<global::app.type.item.dict.@this>>(
-            new global::app.type.list.@this<global::app.type.item.dict.@this>(rows, Context));
+        return Context.Ok<global::app.type.item.list.@this<global::app.type.item.dict.@this>>(
+            new global::app.type.item.list.@this<global::app.type.item.dict.@this>(rows, Context));
     }
 
     private static void ProcessAction(

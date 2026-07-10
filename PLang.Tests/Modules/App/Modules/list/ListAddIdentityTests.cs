@@ -34,7 +34,7 @@ public class ListAddIdentityTests
     public async Task ListAdd_PlainDataList_MutatesLiveVariableValueDirectly()
     {
         var (context, vars) = Ctx();
-        var existing = new global::app.type.list.@this(global::PLang.Tests.TestApp.SharedContext);
+        var existing = new global::app.type.item.list.@this(global::PLang.Tests.TestApp.SharedContext);
         existing.Add(new Data("", "a", context: context));
         existing.Add(new Data("", "b", context: context));
         vars.Set("products", existing);
@@ -46,7 +46,7 @@ public class ListAddIdentityTests
 
         await result.IsSuccess();
         // Same list.@this reference — direct mutation, not a fresh object stored.
-        var live = (await (await vars.Get("products")).Value()) as global::app.type.list.@this;
+        var live = (await (await vars.Get("products")).Value()) as global::app.type.item.list.@this;
         await Assert.That(live).IsNotNull();
         await Assert.That(ReferenceEquals(live, existing)).IsTrue();
         await Assert.That(live!.Count).IsEqualTo(3);
@@ -60,7 +60,7 @@ public class ListAddIdentityTests
     public async Task ListAdd_ReturnsLiveVariableData_NotNewData()
     {
         var (context, vars) = Ctx();
-        var live = new global::app.type.list.@this(global::PLang.Tests.TestApp.SharedContext);
+        var live = new global::app.type.item.list.@this(global::PLang.Tests.TestApp.SharedContext);
         live.Add(new Data("", 1, context: context));
         live.Add(new Data("", 2, context: context));
         vars.Set("products", live);
@@ -85,7 +85,7 @@ public class ListAddIdentityTests
     public async Task ListAdd_ItemAsLiveVarRef_AppendsCurrentValue()
     {
         var (context, vars) = Ctx();
-        vars.Set("products", new global::app.type.list.@this(global::PLang.Tests.TestApp.SharedContext));
+        vars.Set("products", new global::app.type.item.list.@this(global::PLang.Tests.TestApp.SharedContext));
 
         // C# direct-composition path bypasses the .pr resolver, so we wrap "hello"
         // explicitly the same way Data emit would after AsCanonical resolves %item%.
@@ -98,7 +98,7 @@ public class ListAddIdentityTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        var live = (await (await vars.Get("products")).Value()) as global::app.type.list.@this;
+        var live = (await (await vars.Get("products")).Value()) as global::app.type.item.list.@this;
         await Assert.That(live!.Count).IsEqualTo(1);
         // list.add stores the element Data by reference now (Stage 2 rebind makes it safe).
         await Assert.That((await live!.At(0)!.Value())?.ToString()).IsEqualTo("hello");
@@ -112,12 +112,12 @@ public class ListAddIdentityTests
     public async Task ListAdd_AfterReplacement_HandlerSeesNewValue()
     {
         var (context, vars) = Ctx();
-        var orphan = new global::app.type.list.@this(global::PLang.Tests.TestApp.SharedContext);
+        var orphan = new global::app.type.item.list.@this(global::PLang.Tests.TestApp.SharedContext);
         orphan.Add(new Data("", "x", context: context));
         vars.Set("products", orphan);
 
         // Replace under the same name — variable.set's Variables.Set replaces the binding.
-        var fresh = new global::app.type.list.@this(global::PLang.Tests.TestApp.SharedContext);
+        var fresh = new global::app.type.item.list.@this(global::PLang.Tests.TestApp.SharedContext);
         fresh.Add(new Data("", "y", context: context));
         vars.Set("products", fresh);
 

@@ -21,7 +21,7 @@ public interface IStore : IDisposable
     /// Gets all key-value pairs in a table, each forced to its plang item type
     /// <typeparamref name="T"/>. Returns Data with a list of <c>Data&lt;T&gt;</c>.
     /// </summary>
-    Task<data.@this<global::app.type.list.@this>> GetAll<T>(string table) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>;
+    Task<data.@this<global::app.type.item.list.@this>> GetAll<T>(string table) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>;
 
     /// <summary>
     /// Sets a Data value by table and key. Creates the table if it doesn't exist.
@@ -45,7 +45,7 @@ public interface IStore : IDisposable
     /// Lists all tables in this store.
     /// Returns Data with List&lt;string&gt; value.
     /// </summary>
-    Task<data.@this<global::app.type.list.@this>> Tables();
+    Task<data.@this<global::app.type.item.list.@this>> Tables();
 
     /// <summary>
     /// Resolves the table name from a System.Type.

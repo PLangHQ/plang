@@ -10,7 +10,7 @@ public partial class DataWrappedString : global::app.module.IContext
 [global::app.module.Action("datawrappedlist")]
 public partial class DataWrappedList : global::app.module.IContext
 {
-    public partial global::app.data.@this<global::app.type.list.@this<global::app.module.llm.LlmMessage>> Messages { get; init; }
+    public partial global::app.data.@this<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>> Messages { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Messages);
 }
 
@@ -26,7 +26,7 @@ public partial class DataWrappedActionList : global::app.module.IContext
 {
     // Verifies that As<T> does NOT walk into Action.@this — sub-actions retain raw %var%
     // for nested resolution at their own dispatch time.
-    public partial global::app.data.@this<global::app.type.list.@this<global::app.type.clr.@this<global::app.goal.steps.step.actions.action.@this>>> Actions { get; init; }
+    public partial global::app.data.@this<global::app.type.item.list.@this<global::app.type.clr.@this<global::app.goal.steps.step.actions.action.@this>>> Actions { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Actions);
 }
 

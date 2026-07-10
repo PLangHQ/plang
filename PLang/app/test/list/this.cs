@@ -12,16 +12,16 @@ namespace app.test.list;
 /// </summary>
 public sealed partial class @this
 {
-    private readonly global::app.type.list.@this<global::app.test.@this> _tests;
+    private readonly global::app.type.item.list.@this<global::app.test.@this> _tests;
     private readonly object _lock = new();
     private readonly actor.context.@this _context;
 
     public @this(actor.context.@this context)
     {
         _context = context;
-        _tests = new global::app.type.list.@this<global::app.test.@this>(context);
-        Include = new global::app.type.list.@this<global::app.type.item.text.@this>(context);
-        Exclude = new global::app.type.list.@this<global::app.type.item.text.@this>(context);
+        _tests = new global::app.type.item.list.@this<global::app.test.@this>(context);
+        Include = new global::app.type.item.list.@this<global::app.type.item.text.@this>(context);
+        Exclude = new global::app.type.item.list.@this<global::app.type.item.text.@this>(context);
     }
 
     /// <summary>When the session started.</summary>
@@ -49,10 +49,10 @@ public sealed partial class @this
 
     /// <summary>Include tag filter (empty = all tests match). Case-insensitive. Set by the
     /// <c>--test</c> walk (<c>["a","b"]</c> → <c>list&lt;text&gt;</c> via the catalog).</summary>
-    public global::app.type.list.@this<global::app.type.item.text.@this> Include { get; set; }
+    public global::app.type.item.list.@this<global::app.type.item.text.@this> Include { get; set; }
 
     /// <summary>Exclude tag filter (empty = nothing excluded). Applied after include — exclude wins on conflict.</summary>
-    public global::app.type.list.@this<global::app.type.item.text.@this> Exclude { get; set; }
+    public global::app.type.item.list.@this<global::app.type.item.text.@this> Exclude { get; set; }
 
     /// <summary>Back-reference to the App that owns this session (derived from the born
     /// context). Used by reporters to surface App.Version for drift comparisons.</summary>
@@ -80,7 +80,7 @@ public sealed partial class @this
     }
 
     /// <summary>The tests as a plang <c>list&lt;test&gt;</c> (the wire/return shape).</summary>
-    public global::app.type.list.@this<global::app.test.@this> TestList { get { lock (_lock) return _tests; } }
+    public global::app.type.item.list.@this<global::app.test.@this> TestList { get { lock (_lock) return _tests; } }
 
     /// <summary>Per-status counts across all recorded tests. Every status key is present, even with count 0.</summary>
     public Dictionary<Status, int> Summary() => Summary(Tests);

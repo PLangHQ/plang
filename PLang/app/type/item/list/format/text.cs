@@ -1,10 +1,10 @@
-namespace app.type.list.format;
+namespace app.type.item.list.format;
 
 /// <summary>
 /// A list's text form. A list has no plain scalar form, so on the <c>text</c> channel it
 /// renders as its json — the value writes ITSELF through the json writer (no STJ, no
 /// converter), captured as one bare string. An instance, held directly by
-/// <see cref="app.type.list.@this"/>'s own format map — no registry, no reflection.
+/// <see cref="app.type.item.list.@this"/>'s own format map — no registry, no reflection.
 /// </summary>
 public sealed class text : global::app.channel.serializer.IOutput
 {

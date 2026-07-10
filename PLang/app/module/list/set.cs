@@ -11,7 +11,7 @@ public partial class Set : IContext
 
     public async Task<data.@this<type.list>> Run()
     {
-        var nl = app.type.list.@this.FromRaw((await (await Context.Variable.Get((await ListName.Value()))).Value()), Context);
+        var nl = app.type.item.list.@this.FromRaw((await (await Context.Variable.Get((await ListName.Value()))).Value()), Context);
         if (nl == null)
             return Context.Error<type.list>(
                 new app.error.ValidationError($"Variable '{(await ListName.Value())}' is not a list"));

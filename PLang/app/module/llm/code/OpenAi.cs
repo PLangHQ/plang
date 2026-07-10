@@ -323,7 +323,7 @@ public sealed class OpenAi : ILlm
             }
 
             // --- Tool calls? ---  just more of the dict.
-            var toolCallsValue = dict.Get<global::app.type.list.@this>("choices[0].message.tool_calls");
+            var toolCallsValue = dict.Get<global::app.type.item.list.@this>("choices[0].message.tool_calls");
             if (toolCallsValue != null && toolCallsValue.Count.ToInt32() > 0)
             {
                 if (toolCallCount >= (await action.MaxToolCalls.Value())!.ToInt64())
@@ -968,7 +968,7 @@ public sealed class OpenAi : ILlm
     private static List<ToolCall> ParseToolCalls(dict response)
     {
         var result = new List<ToolCall>();
-        var arr = response.Get<global::app.type.list.@this>("choices[0].message.tool_calls");
+        var arr = response.Get<global::app.type.item.list.@this>("choices[0].message.tool_calls");
         if (arr == null) return result;
 
         int count = arr.Count.ToInt32();

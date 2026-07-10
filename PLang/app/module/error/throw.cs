@@ -1,6 +1,6 @@
 using app.error;
 using app.variable;
-using List = global::app.type.list.@this;
+using List = global::app.type.item.list.@this;
 
 namespace app.module.error;
 

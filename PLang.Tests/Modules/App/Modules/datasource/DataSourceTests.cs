@@ -117,7 +117,7 @@ public class DataSourceTests
 
         var result = await ds.GetAll<global::app.type.item.@this>("settings");
         await result.IsSuccess();
-        var items = (await result.Value<global::app.type.list.@this>())!.ToList();
+        var items = (await result.Value<global::app.type.item.list.@this>())!.ToList();
         await Assert.That(items.Count).IsEqualTo(2);
     }
 
@@ -294,7 +294,7 @@ public class DataSourceTests
         // GetAll
         await ds.Set("items", "key2", new Data("key2", "value2", context: _app.System.Context!));
         var allResult = await ds.GetAll<global::app.type.item.@this>("items");
-        var items = (await allResult.Value<global::app.type.list.@this>())!.ToList();
+        var items = (await allResult.Value<global::app.type.item.list.@this>())!.ToList();
         await Assert.That(items.Count).IsEqualTo(2);
 
         // Remove

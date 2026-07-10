@@ -74,9 +74,9 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_Variance_PropertiesAliased()
     {
-        var inner = new global::app.type.list.@this<global::app.type.item.number.@this>(new[] { _app.Data("", 1), _app.Data("", 2) }, _app.User.Context);
-        var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.item.number.@this>>("nums", inner, context: _app.User.Context);
-        var wrapped = source.ShallowClone<global::app.type.list.@this>(await source.Value<global::app.type.list.@this>());
+        var inner = new global::app.type.item.list.@this<global::app.type.item.number.@this>(new[] { _app.Data("", 1), _app.Data("", 2) }, _app.User.Context);
+        var source = new global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.number.@this>>("nums", inner, context: _app.User.Context);
+        var wrapped = source.ShallowClone<global::app.type.item.list.@this>(await source.Value<global::app.type.item.list.@this>());
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();
         source.Properties.Set("annot", "via-source");
         await Assert.That(((await wrapped.Properties.Value("annot")))?.ToString()).IsEqualTo("via-source");
@@ -87,13 +87,13 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_Variance_OnChangeAliased_FireOnSourceVisibleThroughWrapped()
     {
-        var inner = new global::app.type.list.@this<global::app.type.item.number.@this>(new[] { _app.Data("", 1) }, _app.User.Context);
-        var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.item.number.@this>>("nums", inner, context: _app.User.Context);
-        var wrapped = source.ShallowClone<global::app.type.list.@this>(await source.Value<global::app.type.list.@this>());
+        var inner = new global::app.type.item.list.@this<global::app.type.item.number.@this>(new[] { _app.Data("", 1) }, _app.User.Context);
+        var source = new global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.number.@this>>("nums", inner, context: _app.User.Context);
+        var wrapped = source.ShallowClone<global::app.type.item.list.@this>(await source.Value<global::app.type.item.list.@this>());
         await Assert.That(ReferenceEquals(source.OnChange, wrapped.OnChange)).IsTrue();
         var seen = 0;
         wrapped.OnChange.Add((_, _) => seen++);
-        source.FireOnChange(new global::app.data.@this("nums", new global::app.type.list.@this(_app.User.Context)));
+        source.FireOnChange(new global::app.data.@this("nums", new global::app.type.item.list.@this(_app.User.Context)));
         await Assert.That(seen).IsEqualTo(1);
     }
 
@@ -104,9 +104,9 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_Variance_PostWrapSubscribe_VisibleThroughBothRefs()
     {
-        var inner = new global::app.type.list.@this<global::app.type.item.number.@this>(new[] { _app.Data("", 1) }, _app.User.Context);
-        var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.item.number.@this>>("nums", inner, context: _app.User.Context);
-        var wrapped = source.ShallowClone<global::app.type.list.@this>(await source.Value<global::app.type.list.@this>());
+        var inner = new global::app.type.item.list.@this<global::app.type.item.number.@this>(new[] { _app.Data("", 1) }, _app.User.Context);
+        var source = new global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.number.@this>>("nums", inner, context: _app.User.Context);
+        var wrapped = source.ShallowClone<global::app.type.item.list.@this>(await source.Value<global::app.type.item.list.@this>());
         Action<Data, Data> handler = (_, _) => { };
         wrapped.OnChange.Add(handler);
         await Assert.That(source.OnChange).Contains(handler);
@@ -159,7 +159,7 @@ public class AsTIdentityTests
     public async Task AsT_PlainDataTarget_VarReference_ReturnsLiveVariableData()
     {
         var context = _app.User.Context;
-        var live = new global::app.data.@this("products", global::app.type.list.@this.FromRaw(new List<object?> { "a", "b" }, context), context: context);
+        var live = new global::app.data.@this("products", global::app.type.item.list.@this.FromRaw(new List<object?> { "a", "b" }, context), context: context);
         context.Variable.Set(live);
 
         var paramData = new Data("Slot", "%products%", new global::app.type.@this("text", null, false, "plang"), context: context);
@@ -167,8 +167,8 @@ public class AsTIdentityTests
 
         await Assert.That(ReferenceEquals(canonical, live)).IsTrue();
         // Mutation propagates: appending via live's value is visible through Variables.Get.
-        ((global::app.type.list.@this)(await canonical.Value())!).Add(_app.Data("", "c"));
-        var stored = (global::app.type.list.@this)(await (await context.Variable.Get("products")).Value())!;
+        ((global::app.type.item.list.@this)(await canonical.Value())!).Add(_app.Data("", "c"));
+        var stored = (global::app.type.item.list.@this)(await (await context.Variable.Get("products")).Value())!;
         await Assert.That(stored.Count).IsEqualTo(3);
     }
 
@@ -231,7 +231,7 @@ public class AsTIdentityTests
         // Read the way a real consumer does: enumerate the list, resolve each row, read
         // its field through the door — not a whole-list Lower into raw CLR dictionaries.
         var rows = new List<global::app.type.item.dict.@this>();
-        foreach (var r in (global::app.type.list.@this)(await canonical.Value()))
+        foreach (var r in (global::app.type.item.list.@this)(await canonical.Value()))
             rows.Add((global::app.type.item.dict.@this)(await r.Value()));
         await Assert.That((await rows[0].Get("Content")!.Value()).ToString()).IsEqualTo("You are a compiler");
         await Assert.That((await rows[1].Get("Content")!.Value()).ToString()).IsEqualTo("build this goal");

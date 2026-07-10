@@ -144,7 +144,7 @@ public sealed class Sqlite : IStore
         }
     }
 
-    public async Task<data.@this<global::app.type.list.@this>> GetAll<T>(string table) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+    public async Task<data.@this<global::app.type.item.list.@this>> GetAll<T>(string table) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
         try
         {
@@ -160,17 +160,17 @@ public sealed class Sqlite : IStore
             using (var reader = cmd.ExecuteReader())
                 while (reader.Read())
                     if (!reader.IsDBNull(1)) raws.Add(reader.GetString(1));
-            var list = new global::app.type.list.@this(Context);
+            var list = new global::app.type.item.list.@this(Context);
             foreach (var raw in raws)
             {
                 var loaded = await Hydrate<T>(raw);
                 if (loaded.Success && !loaded.Peek().IsNull) list.Add(loaded);
             }
-            return Context.Ok<global::app.type.list.@this>(list);
+            return Context.Ok<global::app.type.item.list.@this>(list);
         }
         catch (Exception ex)
         {
-            return Context.Error<global::app.type.list.@this>(
+            return Context.Error<global::app.type.item.list.@this>(
                 SettingsError.FromException(ex, table));
         }
     }
@@ -247,7 +247,7 @@ public sealed class Sqlite : IStore
         }
     }
 
-    public Task<data.@this<global::app.type.list.@this>> Tables()
+    public Task<data.@this<global::app.type.item.list.@this>> Tables()
     {
         try
         {
@@ -256,16 +256,16 @@ public sealed class Sqlite : IStore
             using var cmd = connection.CreateCommand();
             cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;";
 
-            var tables = new global::app.type.list.@this(Context);
+            var tables = new global::app.type.item.list.@this(Context);
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
                 tables.Add(new data.@this("", reader.GetString(0), context: Context));
 
-            return Task.FromResult(Context.Ok<global::app.type.list.@this>(tables));
+            return Task.FromResult(Context.Ok<global::app.type.item.list.@this>(tables));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(Context.Error<global::app.type.list.@this>(
+            return Task.FromResult(Context.Error<global::app.type.item.list.@this>(
                 SettingsError.FromException(ex)));
         }
     }

@@ -1,6 +1,6 @@
 using System.Reflection;
 using System.Text.Json;
-using ListV = global::app.type.list.@this;
+using ListV = global::app.type.item.list.@this;
 using DictV = global::app.type.item.dict.@this;
 using type = global::app.type.@this;
 
@@ -114,7 +114,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
         list.Add(app.Data("", 2L));
         list.Add(app.Data("", 3L));
         var d = app.Data("nums", list);
-        var res = d.ShallowClone<global::app.type.list.@this<global::app.type.item.number.@this>>(await d.Value<global::app.type.list.@this<global::app.type.item.number.@this>>());
+        var res = d.ShallowClone<global::app.type.item.list.@this<global::app.type.item.number.@this>>(await d.Value<global::app.type.item.list.@this<global::app.type.item.number.@this>>());
         await res.IsSuccess();
         await Assert.That(res.GetValue<List<long>>()!).IsEquivalentTo(new List<long> { 1, 2, 3 });
     }

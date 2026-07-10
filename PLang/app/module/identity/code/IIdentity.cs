@@ -32,7 +32,7 @@ public interface IIdentity : ICode
     Task<data.@this<Identity>> RenameAsync(Rename action);
 
     /// <summary>Lists all non-archived identities.</summary>
-    Task<data.@this<global::app.type.list.@this<Identity>>> ListAsync(list action);
+    Task<data.@this<global::app.type.item.list.@this<Identity>>> ListAsync(list action);
 
     /// <summary>Exports the full identity including sensitive fields.</summary>
     Task<data.@this<Identity>> ExportAsync(Export action);

@@ -78,7 +78,7 @@ public class TypedReaderRoundTripTests
     [Test] public async Task Item_Isolated()
     {
         var item = ReadScalar(new global::app.type.item.serializer.Reader(), "[1,2,3]", null);
-        await Assert.That(item).IsAssignableTo<global::app.type.list.@this>();
+        await Assert.That(item).IsAssignableTo<global::app.type.item.list.@this>();
     }
 
     [Test] public async Task Table_Csv_Isolated()
@@ -111,8 +111,8 @@ public class TypedReaderRoundTripTests
 
     [Test] public async Task List_StreamsRawSlots_Isolated()
     {
-        var item = ReadScalar(new global::app.type.list.serializer.Reader(), "[1,2,\"name\"]", null);
-        var list = (global::app.type.list.@this)item;
+        var item = ReadScalar(new global::app.type.item.list.serializer.Reader(), "[1,2,\"name\"]", null);
+        var list = (global::app.type.item.list.@this)item;
         await Assert.That(list.Items.Count).IsEqualTo(3);
     }
 
@@ -120,8 +120,8 @@ public class TypedReaderRoundTripTests
     {
         // Items flattens leaves, so two nested pairs surface as four leaves —
         // proving both nested lists and their elements were read off the pass.
-        var item = ReadScalar(new global::app.type.list.serializer.Reader(), "[[1,2],[3,4]]", null);
-        var list = (global::app.type.list.@this)item;
+        var item = ReadScalar(new global::app.type.item.list.serializer.Reader(), "[[1,2],[3,4]]", null);
+        var list = (global::app.type.item.list.@this)item;
         await Assert.That(list.Items.Count).IsEqualTo(4);
     }
 

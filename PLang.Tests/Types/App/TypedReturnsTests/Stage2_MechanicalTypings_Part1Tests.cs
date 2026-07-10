@@ -22,7 +22,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     public async Task TestDiscover_Run_ReturnsTaskDataListOfTest()
     {
         var ret = RunReturnType<global::app.module.test.discover>();
-        var expected = typeof(Task<global::app.data.@this<global::app.type.list.@this<global::app.test.@this>>>);
+        var expected = typeof(Task<global::app.data.@this<global::app.type.item.list.@this<global::app.test.@this>>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
 
@@ -30,7 +30,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     public async Task TestRun_Run_ReturnsTaskDataListOfTest()
     {
         var ret = RunReturnType<global::app.module.test.run>();
-        var expected = typeof(Task<global::app.data.@this<global::app.type.list.@this<global::app.test.@this>>>);
+        var expected = typeof(Task<global::app.data.@this<global::app.type.item.list.@this<global::app.test.@this>>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
 
@@ -42,7 +42,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     public async Task GoalGetTypes_Run_ReturnsTaskDataOfStronglyTypedRecord()
     {
         var ret = RunReturnType<global::app.module.goal.getTypes>();
-        var expected = typeof(Task<global::app.data.@this<global::app.type.list.@this<global::app.type.item.dict.@this>>>);
+        var expected = typeof(Task<global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.dict.@this>>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
 

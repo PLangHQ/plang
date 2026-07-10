@@ -31,7 +31,7 @@ public sealed class signature : ISchemaReader
         string hashAlgo = "keccak256";
         byte[] hashValue = System.Array.Empty<byte>();
         global::app.type.item.binary.@this sig = new(System.Array.Empty<byte>());
-        global::app.type.list.@this? contracts = null;
+        global::app.type.item.list.@this? contracts = null;
         Data inner = Data.Ok((object?)null);
 
         reader.BeginObject();
@@ -52,7 +52,7 @@ public sealed class signature : ISchemaReader
                     while (reader.NextElement())
                         items.Add(Data.Ok(new global::app.type.item.text.@this(reader.String())));
                     reader.EndArray();
-                    contracts = new global::app.type.list.@this(items, context);
+                    contracts = new global::app.type.item.list.@this(items, context);
                     break;
                 }
                 case "hash":

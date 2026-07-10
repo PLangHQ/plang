@@ -32,8 +32,8 @@ public class TagActionTests
     private static IEnumerable<string> TagStrings(global::app.test.@this test) =>
         test.Tags.Select(r => r.Peek().Clr<string>() ?? "");
 
-    private global::app.data.@this<global::app.type.list.@this> Tags(params string[] tags) =>
-        new("Tags", global::app.type.list.@this.FromRaw(tags, _app.User.Context));
+    private global::app.data.@this<global::app.type.item.list.@this> Tags(params string[] tags) =>
+        new("Tags", global::app.type.item.list.@this.FromRaw(tags, _app.User.Context));
 
     // When Test.Current is set (test in flight), test.tag with Tags=["http","fast"]
     // moves both tags into Current.Tags.

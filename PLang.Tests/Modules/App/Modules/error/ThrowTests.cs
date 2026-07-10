@@ -3,7 +3,7 @@ using app;
 using app.variable;
 using app.module.error;
 using Text = global::app.type.item.text.@this;
-using ListType = global::app.type.list.@this;
+using ListType = global::app.type.item.list.@this;
 
 namespace PLang.Tests.App.actions.error;
 

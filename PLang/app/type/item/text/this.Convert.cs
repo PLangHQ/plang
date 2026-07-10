@@ -27,7 +27,7 @@ public sealed partial class @this
         // [JsonConverter] renders the canonical {}/[] textual form — text/json means
         // json TEXT, so route them through serialization like any other structured value.
         if (value is app.type.item.dict.@this
-            || value is app.type.list.@this
+            || value is app.type.item.list.@this
             || value is System.Collections.IDictionary
             || value is JsonElement
             || value is System.Text.Json.Nodes.JsonNode

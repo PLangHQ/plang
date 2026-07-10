@@ -40,17 +40,17 @@ public partial class discover : IContext
     [Default(true)]
     public partial data.@this<global::app.type.item.@bool.@this> Recursive { get; init; }
 
-    public async Task<data.@this<global::app.type.list.@this<global::app.test.@this>>> Run()
+    public async Task<data.@this<global::app.type.item.list.@this<global::app.test.@this>>> Run()
     {
         var app = Context.App;
-        var empty = data.@this<global::app.type.list.@this<global::app.test.@this>>.Ok(new global::app.type.list.@this<global::app.test.@this>(Context));
+        var empty = data.@this<global::app.type.item.list.@this<global::app.test.@this>>.Ok(new global::app.type.item.list.@this<global::app.test.@this>(Context));
 
         var root = await Path.Value();
         if (root == null) return empty;
 
         // List routes through AuthGate(Read). Out-of-root: prompt or denial.
         var listed = await root.List((await Pattern.Value())!.Clr<string>()!, (await Recursive.Value())!.Value);
-        if (!listed.Success) return Context.Error<global::app.type.list.@this<global::app.test.@this>>(listed.Error!);
+        if (!listed.Success) return Context.Error<global::app.type.item.list.@this<global::app.test.@this>>(listed.Error!);
         if (await listed.Value() == null) return empty;
 
         // text is a case-insensitive value (Equals/GetHashCode are OrdinalIgnoreCase),
@@ -67,8 +67,8 @@ public partial class discover : IContext
             if (await row.Value<global::app.type.item.path.@this>() is not FilePath fileMatch) continue;
             files.Add(new data.@this("", await DiscoverOne(fileMatch, app, include, exclude), context: Context));
         }
-        return Context.Ok<global::app.type.list.@this<global::app.test.@this>>(
-            new global::app.type.list.@this<global::app.test.@this>(files, Context));
+        return Context.Ok<global::app.type.item.list.@this<global::app.test.@this>>(
+            new global::app.type.item.list.@this<global::app.test.@this>(files, Context));
     }
 
     /// <summary>Discovers metadata for a single .test.goal file (FilePath form).</summary>
@@ -235,7 +235,7 @@ public partial class discover : IContext
             switch (tagsParam?.Peek())
             {
                 // The Tags param IS a list<text> — move its text rows straight in.
-                case app.type.list.@this nativeList:
+                case app.type.item.list.@this nativeList:
                     file.Tags.Add(nativeList);
                     break;
                 case global::app.type.item.text.@this single when single.IsTruthy():

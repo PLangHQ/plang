@@ -25,13 +25,13 @@ public class TemplateStampOnReadTests
     [Test] public async Task HolelessText_NeverStamps_EvenAuthored()
         => await Assert.That(ReadText("\"hello\"", "plang").Template).IsNull();
 
-    private static global::app.type.list.@this ReadList(string json, string? mode)
+    private static global::app.type.item.list.@this ReadList(string json, string? mode)
     {
         var bytes = System.Text.Encoding.UTF8.GetBytes(json);
         var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
         utf8.Read();
         var jr = new global::app.channel.serializer.json.Reader(utf8);
-        return (global::app.type.list.@this)new global::app.type.list.serializer.Reader()
+        return (global::app.type.item.list.@this)new global::app.type.item.list.serializer.Reader()
             .Read(ref jr, null, new global::app.type.reader.ReadContext(global::PLang.Tests.TestApp.SharedContext, mode));
     }
 

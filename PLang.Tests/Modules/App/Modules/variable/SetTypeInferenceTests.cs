@@ -110,7 +110,7 @@ public class SetTypeInferenceTests
         var result = await action.RunAsync(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("list");
-        var lst = (await stored.Value()) as global::app.type.list.@this;
+        var lst = (await stored.Value()) as global::app.type.item.list.@this;
         await Assert.That(lst).IsNotNull();
         // The CLR exit door returns the aliased backing itself — same ref, O(1).
         await Assert.That(ReferenceEquals(lst!.Clr<List<object?>>(), src)).IsTrue();
@@ -125,7 +125,7 @@ public class SetTypeInferenceTests
         var src = new List<object?> { "a", "b" };
         await (await TestAction.Create("variable", "set", ("name", "%list%"), ("value", src)).RunAsync(context)).IsSuccess();
         src.Add("c");
-        var lst = (await (await context.Variable.Get("list")).Value()) as global::app.type.list.@this;
+        var lst = (await (await context.Variable.Get("list")).Value()) as global::app.type.item.list.@this;
         await Assert.That(lst!.CountRaw).IsEqualTo(3);
     }
 
@@ -138,7 +138,7 @@ public class SetTypeInferenceTests
     {
         var context = _app.User.Context;
         var src = new List<object?> { "a", "b", "c" };
-        var lst = new global::app.type.list.@this(src, context);
+        var lst = new global::app.type.item.list.@this(src, context);
 
         lst.SetAt(2, new Data("", 9L, context: context));
 
@@ -216,7 +216,7 @@ public class SetTypeInferenceTests
     public async Task Set_ListAlias_InPlaceAddVisibleThroughBothNames()
     {
         var context = _app.User.Context;
-        var x = new global::app.type.list.@this(context);
+        var x = new global::app.type.item.list.@this(context);
         x.Add(new Data("", 1L, context: context)); x.Add(new Data("", 2L, context: context));
         context.Variable.Set("x", x);
 
@@ -227,7 +227,7 @@ public class SetTypeInferenceTests
         await (await add.RunAsync(context)).IsSuccess();
 
         var y = await context.Variable.Get("y");
-        var yList = (await y.Value()) as global::app.type.list.@this;
+        var yList = (await y.Value()) as global::app.type.item.list.@this;
         await Assert.That(yList).IsNotNull();
         await Assert.That(yList!.CountRaw).IsEqualTo(3);
         await Assert.That((await yList.At(2)!.Value())?.ToString()).IsEqualTo("3");

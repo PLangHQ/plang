@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Data = global::app.data.@this;
 
-namespace app.type.list;
+namespace app.type.item.list;
 
 /// <summary>
 /// Plain-JSON view of a <see cref="@this"/> — the "value as JSON" projection used

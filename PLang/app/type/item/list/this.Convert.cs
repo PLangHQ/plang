@@ -1,4 +1,4 @@
-namespace app.type.list;
+namespace app.type.item.list;
 
 public partial class @this
 {

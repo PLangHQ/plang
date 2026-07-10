@@ -51,7 +51,7 @@ public class DataWrappedListTests
         var result = await MatrixRunner.RunAsync<DataWrappedList>(app,
             parameters: new[] { ("messages", (object?)raw) },
             variables: new Dictionary<string, object?> { ["comment"] = "you are a compiler" });
-        var typed = result.Data as global::app.data.@this<global::app.type.list.@this<global::app.module.llm.LlmMessage>>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>>;
         // Read the way a real handler does: enumerate, resolve + convert each row through its door.
         var items = new List<global::app.module.llm.LlmMessage>();
         foreach (var row in (await typed!.Value())!) items.Add((await row.Value()).Clr<global::app.module.llm.LlmMessage>()!);
@@ -64,7 +64,7 @@ public class DataWrappedListTests
         await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<DataWrappedList>(app,
             parameters: new[] { ("messages", (object?)new List<object?>()) });
-        var typed = result.Data as global::app.data.@this<global::app.type.list.@this<global::app.module.llm.LlmMessage>>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>>;
         await Assert.That((await typed!.Value())!.Count).IsEqualTo(0);
     }
 }
@@ -107,7 +107,7 @@ public class DataWrappedActionListTests
             parameters: new[] { ("actions", (object?)raw) },
             variables: new Dictionary<string, object?> { ["comment"] = "should-not-resolve" });
 
-        var typed = result.Data as global::app.data.@this<global::app.type.list.@this<global::app.type.clr.@this<PrAction>>>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.type.clr.@this<PrAction>>>;
         await Assert.That((await typed!.Value())).IsNotNull();
         // The sub-action's parameter Value is still raw "%comment%" — not resolved.
         var subParam = ((((await typed.Value())!.Items[0].Peek()!) as global::app.type.clr.@this<PrAction>)!.Value).Parameters?.FirstOrDefault(p => p.Name == "v");
@@ -133,7 +133,7 @@ public class DataWrappedActionListTests
             parameters: new[] { ("actions", (object?)raw) },
             variables: new Dictionary<string, object?> { ["x"] = "premature-resolution-would-be-bad" });
 
-        var typed = result.Data as global::app.data.@this<global::app.type.list.@this<global::app.type.clr.@this<PrAction>>>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.type.clr.@this<PrAction>>>;
         var subParam = ((((await typed!.Value())!.Items[0].Peek()!) as global::app.type.clr.@this<PrAction>)!.Value).Parameters?.FirstOrDefault(p => p.Name == "a");
         await Assert.That((await subParam!.Value())?.ToString()).IsEqualTo("%x%");
     }

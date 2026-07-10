@@ -349,7 +349,7 @@ public sealed partial class @this : IAsyncDisposable
         // A native plang collection summarises by its plang type name and item
         // count — never the C# class name ("this"), which leaks the internal type
         // into user-facing debug output.
-        if (value is global::app.type.list.@this list)
+        if (value is global::app.type.item.list.@this list)
             return $"<list @ {list.CountRaw} items>";
         if (value is global::app.type.item.dict.@this dict)
             return $"<dict @ {dict.CountRaw} items>";

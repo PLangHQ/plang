@@ -147,7 +147,7 @@ public class Stage3_PathDemolitionTests
         var result = await Read(context, new PLangFilePath(Path.Combine(dir, "docs"), context) {});
         var directory = (global::app.type.item.directory.@this)result.Peek()!;
         var listing = await directory.List();
-        await Assert.That(listing).IsTypeOf<global::app.type.list.@this<global::app.type.item.path.@this>>();
+        await Assert.That(listing).IsTypeOf<global::app.type.item.list.@this<global::app.type.item.path.@this>>();
         await Assert.That(listing.Count).IsEqualTo(2);
         foreach (var entry in listing.Items)
             await Assert.That(entry.Peek()).IsAssignableTo<global::app.type.item.path.@this>();
