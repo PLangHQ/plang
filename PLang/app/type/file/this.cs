@@ -12,7 +12,7 @@ namespace app.type.file;
 /// The scheme know-how stays on the composed <see cref="Path"/>
 /// (<c>FilePath</c>/<c>HttpPath</c>); this type owns content laziness.</para>
 /// </summary>
-public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, global::app.data.ILoadable, module.IContext
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, module.IContext
 {
     public static string Example => "/some/config.json";
     public static string Shape => "string";
@@ -54,31 +54,15 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     }
 
     /// <summary>
-    /// The raw content bytes, read through the path's auth gate on first access
-    /// and cached. Idempotent — a loaded file returns its cache with no I/O.
-    /// A read failure (missing, denied) surfaces here, at first content access.
-    /// </summary>
-    public async System.Threading.Tasks.Task<byte[]> BytesAsync()
-    {
-        if (_bytes != null) return _bytes;
-        var read = await Path.ReadBytes();
-        if (!read.Success)
-            throw new System.IO.IOException(read.Error!.Message);
-        var bin = await read.Value();
-        return _bytes = bin?.Value ?? System.Array.Empty<byte>();
-    }
-
-    /// <summary>Write-out pre-materialisation (the serialize chokepoint) — pulls
-    /// the raw content into memory so the sync renderer can emit it.</summary>
-    public System.Threading.Tasks.Task LoadAsync() => BytesAsync();
-
-    /// <summary>
     /// The value door — read + parse through the file channel (mime stamps the
     /// content's {type, kind}; the auth gate rides on <c>Path.ReadBytes</c>) and
     /// answer with the CONTENT's own instance (a json file answers as
     /// <c>dict</c>), this file stamped as its prior. Single storage: the parsed
     /// value is the one copy. FILE authors its own failures — an IO/parse
     /// failure lands on the data binding, answer absent.
+    /// <para>Owns the raw byte read (idempotent via <c>_bytes</c>) — <c>.Value()</c>
+    /// is the one materialize door; the sync <c>Bytes</c> getter serves the cached
+    /// bytes the leaf write emits.</para>
     /// </summary>
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
@@ -86,15 +70,15 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         // narrow (another alias, a cached binding) serves from memory, never
         // from a re-read. The channel stamps + parses FROM the sample.
         byte[] bytes;
-        try
+        if (_bytes != null) bytes = _bytes;
+        else
         {
-            bytes = await BytesAsync();
-        }
-        catch (System.IO.IOException ex)
-        {
-            data.Fail(new global::app.error.Error(
-                $"could not read '{Path}': {ex.Message}", "FileReadFailed", 400) { Exception = ex });
-            return Absent;
+            var readBytes = await Path.ReadBytes();
+            // The path's read error rides through WHOLE — its key, message and inner
+            // exception — instead of being flattened into a bare-string IOException.
+            if (!readBytes.Success) { data.Fail(readBytes.Error!); return Absent; }
+            var bin = await readBytes.Value();
+            bytes = _bytes = bin?.Value ?? System.Array.Empty<byte>();
         }
         var channel = new global::app.channel.type.file.@this(Path);
         var read = await channel.Read(bytes);

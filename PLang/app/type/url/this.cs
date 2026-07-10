@@ -8,7 +8,7 @@ namespace app.type.url;
 /// The scheme know-how (consent gate, redirects, signing) stays on the
 /// composed <c>HttpPath</c>.
 /// </summary>
-public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, global::app.data.ILoadable, module.IContext
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, module.IContext
 {
     public static string Example => "https://example.com/data.json";
     public static string Shape => "string";
@@ -51,27 +51,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     }
 
     /// <summary>
-    /// The fetched content bytes — one GET through the path's consent gate on
-    /// first access, cached after. A fetch failure surfaces here.
-    /// </summary>
-    public async System.Threading.Tasks.Task<byte[]> BytesAsync()
-    {
-        if (_bytes != null) return _bytes;
-        var read = await Path.ReadBytes();
-        if (!read.Success)
-            throw new System.Net.Http.HttpRequestException(read.Error!.Message);
-        _contentType = await read.Properties.Get<string>("contentType");
-        var bin = await read.Value();
-        return _bytes = bin?.Value ?? System.Array.Empty<byte>();
-    }
-
-    public System.Threading.Tasks.Task LoadAsync() => BytesAsync();
-
-    /// <summary>
     /// The value door — fetch + parse through the file channel (mime stamps the
     /// content's {type, kind}; the consent gate rides on <c>Path.ReadBytes</c>)
     /// and answer with the CONTENT's own instance, this url stamped as its
     /// prior. Single storage: the fetched bytes are released after the parse.
+    /// <para>Owns the one consent-gated GET (idempotent via <c>_bytes</c>) —
+    /// <c>.Value()</c> is the one materialize door; the sync <c>Bytes</c> getter
+    /// serves the cached bytes.</para>
     /// </summary>
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
@@ -79,15 +65,16 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         // channel stamps + parses FROM the sample, never a second GET.
         // URL authors its own failures (fetch stories) onto the data binding.
         byte[] bytes;
-        try
+        if (_bytes != null) bytes = _bytes;
+        else
         {
-            bytes = await BytesAsync();
-        }
-        catch (System.Net.Http.HttpRequestException ex)
-        {
-            data.Fail(new global::app.error.Error(
-                $"could not fetch '{Path}': {ex.Message}", "UrlFetchFailed", 400) { Exception = ex });
-            return Absent;
+            var readBytes = await Path.ReadBytes();
+            // The fetch error rides through WHOLE — its key, message and inner exception —
+            // instead of being flattened into a bare-string HttpRequestException.
+            if (!readBytes.Success) { data.Fail(readBytes.Error!); return Absent; }
+            _contentType = await readBytes.Properties.Get<string>("contentType");
+            var bin = await readBytes.Value();
+            bytes = _bytes = bin?.Value ?? System.Array.Empty<byte>();
         }
         // Stamp the content's type by precedence: the response Content-Type rules;
         // else the URL extension is the hint (.json → dict); else a typeless web

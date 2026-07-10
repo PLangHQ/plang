@@ -150,9 +150,6 @@ public sealed class @this : ISerializer
     {
         try
         {
-            // Materialize lazy reference fundamentals (image bytes) before the walk.
-            var loadError = await data.Load();
-            if (loadError != null) return loadError;
             // Sign-if-missing at the I/O boundary — a clean await. A Data crossing
             // application/plang in a real actor scope is wrapped in ONE signature layer;
             // skipped when no actor (internal serialize) or already a layer.

@@ -15,7 +15,7 @@ namespace app.type.image;
 /// Routing key / serializer always stays <c>image</c>: no <c>path|image</c>
 /// union. See plan/build-vs-runtime.md "composition, not union".</para>
 /// </summary>
-public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, global::app.data.IKindValidatable, global::app.data.IStrictKindEnforcer, global::app.data.ILoadable
+public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, global::app.data.IKindValidatable, global::app.data.IStrictKindEnforcer
 {
     public static string Example => "/some/photo.jpg";
     public static string Shape => "string";
@@ -174,38 +174,48 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
     }
 
-    /// <summary>
-    /// The image bytes, loaded through the path's auth gate on first access and
-    /// cached. A bytes-backed image returns its in-memory bytes with no I/O; a
-    /// path-backed image reads <see cref="Path"/> exactly once (subsequent calls
-    /// return the cache). Async because the read goes through
-    /// <c>FilePath.AuthGate</c> — never a blocking read in a sync getter. A read
-    /// failure (missing file, denied) surfaces here, at first content access.
-    /// </summary>
-    public async System.Threading.Tasks.Task<byte[]> BytesAsync()
-    {
-        if (_bytes != null) return _bytes;
-        if (Path == null) return _bytes = System.Array.Empty<byte>();
-        var read = await Path.ReadBytes();
-        if (!read.Success)
-            throw new System.IO.IOException(read.Error?.Message ?? $"Could not read image from '{Path}'.");
-        _bytes = (await read.Value())?.Value ?? System.Array.Empty<byte>();
-        // Strict kind fires here, at byte-materialization — the set stayed lazy.
-        if (CheckStrictKind() is { ok: false } mismatch)
-            throw new global::app.data.StrictKindMismatchException(_requiredKind!, mismatch.actualKind);
-        return _bytes;
-    }
-
     /// <summary>Imprint the strict kind this image's content must match (from `as image/<kind> strict`).</summary>
     public void RequireStrictKind(string kind) => _requiredKind = kind;
 
     /// <summary>
-    /// <see cref="global::app.data.ILoadable"/> seam: pull a path-backed image's
-    /// bytes into memory (and run the strict check) so the sync renderers that
-    /// run below the serializer's STJ wall read real content. A bytes-backed
-    /// image is already loaded — <see cref="BytesAsync"/> returns on its fast path.
+    /// Materialize door — load the path-backed image's bytes into memory through the
+    /// path's auth gate (once, cached in <c>_bytes</c>) and run the strict-kind check.
+    /// A bytes-backed image is already loaded. <c>.Value()</c> is the uniform
+    /// materialization for every reference fundamental, which is why the serializer
+    /// needs no separate load pass; the sync <c>Bytes</c> getter then serves the cached
+    /// bytes the leaf write emits. Failures (IO, strict mismatch) land on the data
+    /// binding, answer absent.
     /// </summary>
-    public async System.Threading.Tasks.Task LoadAsync() => await BytesAsync();
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
+    {
+        if (_bytes == null && Path != null)
+        {
+            var read = await Path.ReadBytes();
+            // The path's read error rides through WHOLE — its key, message and inner
+            // exception — instead of being flattened into a bare-string IOException.
+            if (!read.Success)
+            {
+                data.Fail(read.Error ?? new global::app.error.Error(
+                    $"could not read image from '{Path}'.", "ImageReadFailed", 400));
+                return Absent;
+            }
+            _bytes = (await read.Value())?.Value ?? System.Array.Empty<byte>();
+            // Strict kind fires here, at byte-materialization — the set stayed lazy.
+            if (CheckStrictKind() is { ok: false } mismatch)
+            {
+                data.Fail(new global::app.error.Error(
+                    $"Strict kind mismatch: declared kind '{_requiredKind}'"
+                    + (mismatch.actualKind != null ? $" but content is '{mismatch.actualKind}'." : "."),
+                    "StrictKindMismatch", 400));
+                return Absent;
+            }
+        }
+        else if (_bytes == null)
+        {
+            _bytes = System.Array.Empty<byte>();
+        }
+        return this;
+    }
 
     /// <summary>
     /// Sniff the loaded bytes against the imprinted kind. Null when no strict

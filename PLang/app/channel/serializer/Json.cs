@@ -84,12 +84,6 @@ public sealed class Json : ISerializer
     {
         try
         {
-            // Materialize lazy reference fundamentals (image bytes) before the write —
-            // the value writes itself below and each node resolves lazily, but the
-            // top-level fundamental (image bytes) still loads here.
-            var loadError = await data.Load();
-            if (loadError != null) return loadError;
-
             // JSON is the "value as JSON view" — the channel drives the writer and the value
             // writes ITSELF (its own Output → Write(IWriter)); no STJ in the value path, no
             // per-type converters. Bare: emitsSchema:false skips the {name,type,…} envelope,

@@ -99,9 +99,17 @@ public partial class @this
             writer.Name("value");
         }
 
-        // The value writes itself — the type owns its per-format serialization (it holds
-        // its own format map and picks by writer.Format, or writes its default form).
-        await _item.Output(writer, mode, context);
+        // Materialize-and-emit — the ONE door (Load() died here). A RawUntouched
+        // byte-passthrough (`read file.json → %json% → write out %json%`) emits its
+        // bytes VERBATIM, never parsed — the value is not opened. Store preserves refs
+        // and reference-fundamental source-forms verbatim (no %var% render, no byte
+        // load). Out renders %var%/templates and loads reference-fundamental bytes at
+        // the leaf via the value door, then the materialized item writes itself (the
+        // sync leaf reads the now-loaded bytes).
+        if (mode == View.Store || RawUntouched)
+            await _item.Output(writer, mode, context);
+        else
+            await (await Value()).Output(writer, mode, context);
 
         if (writer.EmitsSchema)
         {

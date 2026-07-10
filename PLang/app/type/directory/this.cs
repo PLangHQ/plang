@@ -7,7 +7,7 @@ namespace app.type.directory;
 /// files — <c>read</c> a child to get content, and a write-out of a directory
 /// is a flat listing, never a content dump.
 /// </summary>
-public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, global::app.data.ILoadable, module.IContext
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, module.IContext
 {
     public static string Example => "/docs";
     public static string Shape => "string";
@@ -51,9 +51,25 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// the sync view the renderer reads below the serializer's converter wall.</summary>
     public global::app.type.list.@this<global::app.type.path.@this>? Listed => _list;
 
-    /// <summary>Write-out pre-materialisation — pulls the listing into memory so
-    /// the sync renderer emits the flat listing of locations.</summary>
-    public async System.Threading.Tasks.Task LoadAsync() => await List();
+
+    /// <summary>
+    /// Materialize door — pull the listing into memory so the sync leaf write emits
+    /// the flat listing of child locations. An unlisted directory falls back to its
+    /// location (the reference face). Parallel to file/url/image's <c>Value</c>:
+    /// <c>.Value()</c> is the uniform materialization for every reference fundamental,
+    /// so the serializer needs no separate load pass.
+    /// </summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
+    {
+        try { await List(); }
+        catch (System.IO.IOException ex)
+        {
+            data.Fail(new global::app.error.Error(
+                $"could not list '{Path}': {ex.Message}", "DirectoryListFailed", 400) { Exception = ex });
+            return Absent;
+        }
+        return this;
+    }
 
     /// <summary>The item membership hook — routes to the listing rule below.</summary>
     public override async System.Threading.Tasks.ValueTask<bool> Contains(global::app.data.@this needle)
