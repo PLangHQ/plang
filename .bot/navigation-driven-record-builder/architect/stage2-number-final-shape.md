@@ -16,18 +16,20 @@ public sealed partial class @this : item.@this, ICreate<@this>
 
     private @this(object value, kind.@this kind) { _value = value; Kind = kind; }
 
-    // ── the 15 kind singletons — private immutable data (the sanctioned clause) ──
-    private static readonly kind.@this KInt  = new kind.@int.@this();
-    private static readonly kind.@this KLong = new kind.@long.@this();
+    // ── the 15 kind singletons — private immutable data (the sanctioned clause).
+    //    Verbatim-lowercase names (@int, @long, …) = the kind tokens; PascalCase would shadow
+    //    the CLR type names (Int128.MinValue, BigInteger.Pow) used across number/Ladder. ──
+    private static readonly kind.@this @int  = new kind.@int.@this();
+    private static readonly kind.@this @long = new kind.@long.@this();
     /* … all 15 … */
     internal static readonly IReadOnlyDictionary<string, kind.@this> Kinds =   // name → singleton
-        new Dictionary<string, kind.@this>(OrdinalIgnoreCase) { [KInt.Name] = KInt, /* … */ };
+        new Dictionary<string, kind.@this>(OrdinalIgnoreCase) { [@int.Name] = @int, /* … */ };
     // NO clr→kind map — never needed: every birth site knows its kind (operators, Parse, climb, courier).
 
     // ── the CLR lifts — implicit operators, ALL 15 kinds (adds the missing Half/Int128/UInt128/BigInteger) ──
-    public static implicit operator @this(int i)    => new(i, KInt);
-    public static implicit operator @this(long l)   => new(l, KLong);
-    public static implicit operator @this(double d) => new(d, KDouble);
+    public static implicit operator @this(int i)    => new(i, @int);
+    public static implicit operator @this(long l)   => new(l, @long);
+    public static implicit operator @this(double d) => new(d, @double);
     /* … all 15 — each operator names its own singleton: no lookup at birth …
        These ARE the typed lift (bool has (@this)b, text has its string operator) —
        there are NO Create(int)/Create(Half) wrapper methods. */
