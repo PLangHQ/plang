@@ -581,41 +581,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     protected virtual @this Empty() => new(_context);
 
     /// <summary>A container is never final — an element may be non-final (a template,
-    /// a nested container), so a read must go through the door. Value() short-circuits
-    /// to <c>this</c> when every element turns out final, so the conservative answer
-    /// costs nothing for an all-literal list.</summary>
+    /// a nested container), so a read must go through the element's OWN door. The list
+    /// itself is already its real shape: <c>Value()</c> returns <c>this</c> (the base),
+    /// never a deep pre-render — elements render lazily where they're touched (the output
+    /// loop, the compare walk, navigation).</summary>
     internal override bool IsFinal => false;
-
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
-    {
-        // Render each element through its OWN door — a %ref% variable resolves, a stamped
-        // text renders, a nested container deep-renders. Allocate only when the first
-        // door-owning element appears (copy the raw prefix); a list with none returns
-        // itself unchanged. The element's own door does the work (door recursion).
-        @this? rendered = null;
-        for (int i = 0; i < _items.Count; i++)
-        {
-            var slot = _items[i];
-            if (Inner(slot) is global::app.type.item.@this e && !e.IsFinal)
-            {
-                if (rendered == null)
-                {
-                    // Preserve the concrete list type — a list<path> must render to a
-                    // list<path>, not a bare list.@this, or the element-type tag is
-                    // lost and Data.Value<list<path>>() can no longer recognise it.
-                    rendered = Empty();
-                    for (int j = 0; j < i; j++) rendered.AddRaw(_items[j]);
-                }
-                var name = slot is Data sd ? sd.Name : "";
-                var probe = new Data(name, e, context: _context);
-                var answer = await probe.Value();
-                if (probe.HasUnobservedError) rendered.AddRaw(slot);
-                else rendered.Add(new Data(name, answer, context: _context));
-            }
-            else rendered?.AddRaw(slot);
-        }
-        return rendered ?? this;
-    }
 
     /// <summary>The item membership hook — element equality through THE
     /// comparison entry; NotEqual/Incomparable mean "not this one", so a

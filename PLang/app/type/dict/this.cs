@@ -368,56 +368,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// rule for partially-bound structures.
     /// </summary>
     /// <summary>A container is never final — an entry may be non-final (a template,
-    /// a nested container), so a read must go through the door. Value() short-circuits
-    /// to <c>this</c> when every entry turns out final.</summary>
+    /// a nested container), so a read must go through the entry's OWN door. The dict
+    /// itself is already its real shape: <c>Value()</c> returns <c>this</c> (the base),
+    /// never a deep pre-render — entries render lazily where they're touched (the output
+    /// loop, the compare walk, navigation). The render-recursion guard died with the
+    /// pre-render: a self-referential entry (`%plan.usage% = {model:%plan.Model%}`) can
+    /// no longer loop, because nothing renders the whole container at once.</summary>
     internal override bool IsFinal => false;
-
-    // Render-recursion guard. A dict that holds a %ref% pointing back into itself (or a
-    // sibling that resolves through it) makes rendering re-enter forever — e.g.
-    // `%plan.usage% = {model:%plan.Model%, …}` renders `%plan%` → `usage` → resolve
-    // `%plan.Model%` → render `%plan%`. Fail LOUD with the offending keys instead of a
-    // silent StackOverflow. Async-safe (AsyncLocal flows down the await chain).
-    private const int MaxRenderDepth = 64;
-    private static readonly System.Threading.AsyncLocal<int> _renderDepth = new();
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
-    {
-        var depth = _renderDepth.Value + 1;
-        _renderDepth.Value = depth;
-        try {
-        if (depth > MaxRenderDepth)
-            throw new global::app.error.AppException(
-                $"dict render recursion exceeded {MaxRenderDepth} — a %ref% loops back into its own container "
-                + $"(dict '{data?.Name}', keys [{string.Join(",", _value.Keys)}]).",
-                "DictRenderCycle", 500);
-        // Render each entry through its OWN door — a %ref% variable resolves, a stamped
-        // text renders, a nested container deep-renders. Allocate only when the first
-        // door-owning entry appears (copy the raw prefix); a dict with none returns itself.
-        @this? rendered = null;
-        foreach (var key in _value.Keys)
-        {
-            var slot = _value[key];
-            var inner = slot as global::app.type.item.@this ?? (slot as Data)?.Peek();
-            if (inner is global::app.type.item.@this e && !e.IsFinal)
-            {
-                if (rendered == null)
-                {
-                    rendered = new @this(_context);
-                    foreach (var prior in _value.Keys)
-                    {
-                        if (prior == key) break;
-                        rendered.Set(prior, _value[prior]);
-                    }
-                }
-                var probe = new Data(key, e, context: _context);
-                var answer = await probe.Value();
-                if (probe.HasUnobservedError) rendered.Set(key, slot);
-                else rendered.Set(new Data(key, answer, context: _context));
-            }
-            else rendered?.Set(key, slot);
-        }
-        return rendered ?? this;
-        } finally { _renderDepth.Value = depth - 1; }
-    }
 
     /// <summary>The item membership hook — key membership (a dict "contains"
     /// a name when it has that key; values answer through navigation).</summary>
