@@ -38,28 +38,15 @@ If lazy-rank (decide the driver from the declared type without reading the value
 is still a requirement, that's a design change — `Rank` would need to be reachable
 from `Data.Type` without an item. Flagging so you can veto.
 
-## Blocker for a green suite — the `.pr` reader (Stage 1, not mine)
+## The `.pr`-fixture failures are OUT OF SCOPE (not a blocker)
 
-~250 failures across **all** suites collapse to one systemic error:
-
-```
-invalid .pr schema: value slot 'Name' has no declared type. Value was: %path%
-  at app.data.reader.this.Read (data/reader/this.cs:79)
-```
-
-`data/reader/this.cs:75-82` requires **every** value slot to carry a declared
-type; a slot whose value is a bare `%var%` (e.g. `Name = %path%`) with no type
-throws. The on-disk `.build/*.pr` files (tracked, not rebuilt) predate that
-requirement. I did **not** touch the reader or the `.pr` format — this is the
-Stage-1 navigation/read-path work.
-
-Two ways I can see it resolving (your call):
-1. The reader tolerates a typeless-`%var%` slot (born as a name/variable, like
-   `type.Build`'s raw-name branch does at construction), or
-2. the `.build/*.pr` fixtures get rebuilt to the schema the reader now demands.
-
-Everything downstream of goal-load is red only because of this — it's the one
-thing gating a green suite.
+~250 failures across all suites share one cause — the `.pr` reader
+(`data/reader/this.cs`) now demands a declared type on every value slot, but the
+tracked on-disk `.build/*.pr` fixtures predate it (a slot `Name = %path%` with no
+type → `MaterializeFailed`). **Ingi's ruling: these are the fixture/plang-test
+category and are NOT fixed in this plan — we focus only on the C# unit tests that
+don't depend on rebuilt `.pr` fixtures.** So this is not a gate on the collapse;
+it is measured out, not chased.
 
 ## Also pre-existing (small)
 - **Binary compare**: `application/octet-stream` has no registered serializer, so
