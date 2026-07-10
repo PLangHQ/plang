@@ -1,5 +1,7 @@
 # Decision — the json channel drives the writer directly (B)
 
+> **PARTIAL SUPERSEDE:** the `dict.Clr` map-lowering reroute mentioned below ("our writer emits → STJ parses") is superseded by [`stage2-sync-write-sites-answer.md`](stage2-sync-write-sites-answer.md) — the round-trip dies entirely; the replacement is a sync structural walk, no json at all.
+
 **From:** architect. **Settled with Ingi (2026-07-10).** Answers `coder/stage2-json-channel-write-path-gap.md`. The gap was real — the ruling never specced the channel's bare-value write. Your lean (B) is confirmed.
 
 ## The ruling
