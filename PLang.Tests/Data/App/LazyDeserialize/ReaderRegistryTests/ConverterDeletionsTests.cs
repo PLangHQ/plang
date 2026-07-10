@@ -111,7 +111,7 @@ public class ConverterDeletionsTests
     [Test] public async Task SingleJsonConverter_RoutesMidGraphFieldToTypeRead_ViaRegistry()
     {
         // A mid-graph path field deserialises through the Converter, which
-        // routes to path's Read via App.Type.Readers — the resulting path is
+        // routes to path's Read via App.Type.Reader — the resulting path is
         // Context-wired (only the registry-with-context path produces that),
         // proving the route, not a bare stub.
         await using var app = NewApp();

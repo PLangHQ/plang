@@ -36,7 +36,7 @@ public sealed partial class @this
     }
 
     /// <summary>[Choices] vocabulary registry — reachable as <c>app.type.choices</c>.</summary>
-    public global::app.type.item.choice.list.@this Choices { get; } = new();
+    public global::app.type.item.choice.list.@this Choice { get; } = new();
 
     /// <summary>
     /// Per-App scheme registry for <see cref="path.@this"/>. Populated at App
@@ -81,7 +81,7 @@ public sealed partial class @this
     /// reflection over <see cref="renderer.@this.Assemblies"/> and exposes a
     /// runtime-registration seam for DLLs loaded at runtime.
     /// </summary>
-    public renderer.@this Renderers { get; } = new();
+    public renderer.@this Renderer { get; } = new();
 
     /// <summary>
     /// Per-(type, kind) reader dispatch — the read-side mirror of
@@ -90,7 +90,7 @@ public sealed partial class @this
     /// exposes the same runtime-registration seam. The single json
     /// <c>Converter</c> routes mid-graph typed fields through here.
     /// </summary>
-    public reader.@this Readers { get; } = new();
+    public reader.@this Reader { get; } = new();
 
     // --- Primitive lookup tables ---
     // Aliases / canonical-name data lives on app.type.primitive.@this — one
@@ -494,7 +494,7 @@ public sealed partial class @this
         EnsureInitialized();
         if (_typeToName.TryGetValue(type, out var declared)) return declared;
 
-        if (Choices.Has(type))
+        if (Choice.Has(type))
             return StripGenericArity(type.Name).ToLowerInvariant();
 
         return StripGenericArity(type.Name).ToLowerInvariant();
@@ -596,7 +596,7 @@ public sealed partial class @this
         if (type.IsEnum)
             return Enum.GetNames(type);
 
-        return Choices.Get(type, context);
+        return Choice.Get(type, context);
     }
 
     /// <summary>Alias for <see cref="GetValidValues"/> — preserves existing <c>app.type.ValidValues</c> caller habit.</summary>

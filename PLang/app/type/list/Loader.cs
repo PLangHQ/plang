@@ -156,7 +156,7 @@ public static class Loader
                 return new Result(false, "TypeLoadCollision",
                     $"ITypeRenderer for '{instance.TypeName}' rejected — '{instance.TypeName}' is on the sealed built-in list and its rendering may not be replaced by a runtime-loaded DLL.",
                     types, renderersList);
-            registry.Renderers.Register(instance.TypeName, instance.Format,
+            registry.Renderer.Register(instance.TypeName, instance.Format,
                 (value, writer) => instance.Write(value, writer));
             renderersList.Add((instance.TypeName, instance.Format));
         }
@@ -166,7 +166,7 @@ public static class Loader
         // table from earlier loads / built-ins).
         foreach (var typeName in types)
         {
-            if (!registry.Renderers.Has(typeName))
+            if (!registry.Renderer.Has(typeName))
             {
                 return new Result(false, "TypeLoadCoverage",
                     $"[PlangType] '{typeName}' loaded with no covering renderer (need a Default ITypeRenderer or per-format coverage).",

@@ -974,7 +974,7 @@ public class Default : IBuilder
                 // (App.GetActor, ctor registry, ...). Eagerly constructing here would
                 // either fail (Actor has no usable string ctor) or produce a stateful
                 // object that doesn't round-trip cleanly. Same shape as the scalar carve-out.
-                if (context.App.Type.Choices.Has(targetType)) continue;
+                if (context.App.Type.Choice.Has(targetType)) continue;
 
                 // Already correctly typed? Skip (e.g. value is bool, target is bool).
                 if (targetType.IsInstanceOfType(p.Peek())) continue;

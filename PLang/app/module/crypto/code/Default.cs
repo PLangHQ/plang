@@ -70,7 +70,7 @@ public class Default : ICrypto
             {
                 var writer = new global::app.channel.serializer.json.Writer(
                     utf8, options, view,
-                    action.Context?.App?.Type?.Renderers, emitsSchema: true);
+                    action.Context?.App?.Type?.Renderer, emitsSchema: true);
                 await data.Output(writer, view, action.Context, layer: true);
             }
             bytes = hashStream.ToArray();

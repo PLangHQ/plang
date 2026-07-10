@@ -29,7 +29,7 @@ public class TypeProviderDllRoundtripTests
 
         var money = System.Activator.CreateInstance(moneyType, 10m, "USD")!;
 
-        var write = types.Renderers.Of("money", "json");
+        var write = types.Renderer.Of("money", "json");
         await Assert.That(write).IsNotNull();
 
         var captured = new CapturingWriter("json");
@@ -58,7 +58,7 @@ public class TypeProviderDllRoundtripTests
         await Assert.That(afterType!.FullName).IsEqualTo("TypeProvider.CustomInt");
 
         // Renderer — runtime renderer fires regardless of which value it gets.
-        var write = types.Renderers.Of("int", "json");
+        var write = types.Renderer.Of("int", "json");
         await Assert.That(write).IsNotNull();
 
         var captured = new CapturingWriter("json");

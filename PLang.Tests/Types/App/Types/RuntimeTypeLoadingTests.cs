@@ -59,8 +59,8 @@ public class RuntimeTypeLoadingTests
     {
         var types = new global::app.type.list.@this();
         var result = global::app.type.list.Loader.Register(TestAssembly, types);
-        await Assert.That(types.Renderers.Has("runtime-fixture-only")).IsTrue();
-        await Assert.That(types.Renderers.Of("runtime-fixture-only", "json")).IsNotNull();
+        await Assert.That(types.Renderer.Has("runtime-fixture-only")).IsTrue();
+        await Assert.That(types.Renderer.Of("runtime-fixture-only", "json")).IsNotNull();
     }
 
     [Test] public async Task LoadDll_ExistingName_RuntimeWinsAtResolveType()
@@ -79,14 +79,14 @@ public class RuntimeTypeLoadingTests
         // outputs so a regression that resolved generated first would fail.
         var types = new global::app.type.list.@this();
         var generatedWriter = new FakeWriter("json");
-        var baseline = types.Renderers.Of("path", "json");
+        var baseline = types.Renderer.Of("path", "json");
         await Assert.That(baseline).IsNotNull();
 
         string fired = "none";
-        types.Renderers.Register("path", "json",
+        types.Renderer.Register("path", "json",
             (v, w) => fired = "runtime");
 
-        var after = types.Renderers.Of("path", "json");
+        var after = types.Renderer.Of("path", "json");
         await Assert.That(after).IsNotNull();
         await Assert.That(System.Object.ReferenceEquals(after, baseline)).IsFalse();
 

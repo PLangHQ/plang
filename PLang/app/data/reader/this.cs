@@ -59,7 +59,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                             + $"\"{reader.String()}\" (value slot '{(string.IsNullOrEmpty(name) ? "(unnamed)" : name)}').");
                     typeRef = reader.Null()
                         ? null
-                        : ctx.Context.App.Type.Readers.Reader("type", null, ctx.Context)
+                        : ctx.Context.App.Type.Reader.Reader("type", null, ctx.Context)
                               .Read(ref reader, null, ctx)
                           as global::app.type.@this;
                     break;
@@ -69,7 +69,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                     // for the nested Data params, so the data reader stays options-free.
                     if (typeRef is { IsNull: false } && typeRef.Name == "goal.call")
                     {
-                        born = ctx.Context.App.Type.Readers.Reader("goal.call", null, ctx.Context)
+                        born = ctx.Context.App.Type.Reader.Reader("goal.call", null, ctx.Context)
                             .Read(ref reader, null, ctx);
                     }
                     else if (typeRef is not { IsNull: false })

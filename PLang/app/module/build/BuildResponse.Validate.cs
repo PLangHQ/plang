@@ -158,7 +158,7 @@ public sealed partial class BuildResponse
                     // in the Choices list is the build-time contract; runtime materializes
                     // the chosen name however the type prefers (App.GetActor for Actor,
                     // ctor registry for Operator, ...).
-                    var choices = (goal.App ?? app)?.Type.Choices.Get(targetType);
+                    var choices = (goal.App ?? app)?.Type.Choice.Get(targetType);
                     if (choices != null)
                     {
                         var sval = resolved as global::app.type.item.text.@this;

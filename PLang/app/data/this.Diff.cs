@@ -40,7 +40,7 @@ public partial class @this
         await using (var utf8 = new Utf8JsonWriter(buffer, new JsonWriterOptions { Indented = true }))
         {
             var writer = new global::app.channel.serializer.json.Writer(
-                utf8, view: global::app.View.Out, renderers: data.Context?.App.Type.Renderers, emitsSchema: false);
+                utf8, view: global::app.View.Out, renderers: data.Context?.App.Type.Renderer, emitsSchema: false);
             await data.Output(writer, global::app.View.Out, data.Context);
         }
         return System.Text.Encoding.UTF8.GetString(buffer.ToArray());

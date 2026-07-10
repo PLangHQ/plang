@@ -7,7 +7,7 @@ namespace app.channel.serializer.json;
 /// The single STJ↔plang adapter. STJ consults it for any plang-typed value it
 /// meets mid-graph (a <c>path</c> field nested deep in a CLR object that the
 /// payload-level reader registry can't reach), and it routes that field to the
-/// owning type's <c>Read</c> via <c>App.Type.Readers</c> / the renderer for
+/// owning type's <c>Read</c> via <c>App.Type.Reader</c> / the renderer for
 /// <c>Write</c>. The read-side mirror of the single write-side <c>Wire</c>
 /// converter.
 ///

@@ -166,7 +166,7 @@ public sealed class @this : ISerializer
             var options = view == global::app.View.Store ? _store : _outbound;
             await using var utf8 = new Utf8JsonWriter(stream);
             var writer = new global::app.channel.serializer.json.Writer(
-                utf8, options, view, _context.App.Type.Renderers, emitsSchema: true);
+                utf8, options, view, _context.App.Type.Renderer, emitsSchema: true);
             // A layer (signature) writes its OWN @schema:<kind> envelope; a plain Data
             // writes the @schema:data layer. The layer-vs-data choice lives here, at the
             // serializer boundary — data.Output stays clean (@schema:data only).
@@ -195,7 +195,7 @@ public sealed class @this : ISerializer
         var options = view == global::app.View.Store ? _store : _outbound;
         await using var utf8 = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true });
         var writer = new global::app.channel.serializer.json.Writer(
-            utf8, options, view, _context.App.Type.Renderers, emitsSchema: true);
+            utf8, options, view, _context.App.Type.Renderer, emitsSchema: true);
         await item.Output(writer, view, _context);
         await utf8.FlushAsync(cancellationToken);
     }
@@ -280,7 +280,7 @@ public sealed class @this : ISerializer
     public global::app.type.item.@this Read(global::app.type.item.source source, global::app.type.reader.ReadContext ctx)
     {
         var type = source.Mint();
-        var typeReader = ctx.Context.App.Type.Readers.Reader(type.Name, type.Kind?.Name, ctx.Context);
+        var typeReader = ctx.Context.App.Type.Reader.Reader(type.Name, type.Kind?.Name, ctx.Context);
         byte[] bytes = source.Raw as byte[] ?? System.Text.Encoding.UTF8.GetBytes(source.Raw.ToString() ?? "");
         var utf8 = new Utf8JsonReader(bytes);
         utf8.Read();

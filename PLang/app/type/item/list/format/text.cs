@@ -16,7 +16,7 @@ public sealed class text : global::app.channel.serializer.IOutput
         await using (var utf8 = new System.Text.Json.Utf8JsonWriter(buffer))
         {
             var json = new global::app.channel.serializer.json.Writer(
-                utf8, view: mode, renderers: context?.App.Type.Renderers, emitsSchema: false);
+                utf8, view: mode, renderers: context?.App.Type.Renderer, emitsSchema: false);
             await value.Output(json, mode, context);
         }
         writer.String(System.Text.Encoding.UTF8.GetString(buffer.ToArray()));

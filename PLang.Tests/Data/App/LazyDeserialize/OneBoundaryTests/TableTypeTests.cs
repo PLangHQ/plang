@@ -46,7 +46,7 @@ public class TableTypeTests
     {
         await using var app = NewApp();
         var ctx = app.User.Context;
-        await Assert.That(ctx.App.Type.Readers.Of("table", "xlsx")).IsNull();
+        await Assert.That(ctx.App.Type.Reader.Of("table", "xlsx")).IsNull();
 
         byte[] bytes = { 0x50, 0x4B, 0x03, 0x04 }; // PK.. zip header (xlsx is a zip)
         var d = data.FromRaw(bytes, type.Create("table", "xlsx", context: ctx), ctx, "sheet");

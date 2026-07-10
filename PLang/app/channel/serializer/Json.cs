@@ -91,7 +91,7 @@ public sealed class Json : ISerializer
             View effectiveView = _boundView != global::app.View.Out ? _boundView : view;
             await using var utf8 = new Utf8JsonWriter(stream);
             var writer = new global::app.channel.serializer.json.Writer(
-                utf8, _options, effectiveView, _context.App.Type.Renderers, emitsSchema: false);
+                utf8, _options, effectiveView, _context.App.Type.Renderer, emitsSchema: false);
             await data.Output(writer, effectiveView, _context);
             await utf8.FlushAsync(cancellationToken);
             return data.Context.Ok();
@@ -142,7 +142,7 @@ public sealed class Json : ISerializer
     public global::app.type.item.@this Read(global::app.type.item.source source, global::app.type.reader.ReadContext ctx)
     {
         var type = source.Mint();
-        var typeReader = ctx.Context.App.Type.Readers.Reader(type.Name, type.Kind?.Name, ctx.Context);
+        var typeReader = ctx.Context.App.Type.Reader.Reader(type.Name, type.Kind?.Name, ctx.Context);
         byte[] bytes = source.Raw as byte[] ?? Encoding.UTF8.GetBytes(source.Raw.ToString() ?? "");
         var utf8 = new Utf8JsonReader(bytes);
         utf8.Read();
