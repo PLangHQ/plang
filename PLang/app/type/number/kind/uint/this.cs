@@ -1,12 +1,10 @@
 namespace app.type.number.kind.@uint;
 
-/// <summary>The <c>uint</c> storage kind — 32-bit unsigned integer. ChangeType build; Long token.</summary>
+/// <summary>The <c>uint</c> storage kind — 32-bit unsigned integer.</summary>
 public sealed class @this : global::app.type.number.kind.@this
 {
-    public @this(global::app.actor.context.@this? context) : base("uint", context) { }
-    public override System.Type? ClrForm => typeof(uint);
-    public override void Write(global::app.type.number.@this value, global::app.channel.serializer.IWriter writer)
-        => writer.Long(value.ToInt64());
-    public override global::app.type.item.@this Read<TReader>(ref TReader reader)
-        => global::app.type.number.@this.From((uint)reader.Long());
+    public override string Name => "uint";
+    public override global::app.type.number.@this Create(global::app.type.item.@this value) => value.Clr<uint>();
+    public override void Write(global::app.type.number.@this v, global::app.channel.serializer.IWriter w) => w.Long(v.ToInt64());
+    public override global::app.type.item.@this Read<TReader>(ref TReader r) => (global::app.type.number.@this)(uint)r.Long();
 }

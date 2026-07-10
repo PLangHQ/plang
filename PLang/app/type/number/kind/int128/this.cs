@@ -1,21 +1,21 @@
 namespace app.type.number.kind.int128;
 
-/// <summary>The <c>int128</c> storage kind — 128-bit signed integer. Beyond ChangeType and the
-/// writer's numeric vocabulary, so it builds from a string parse or the value's BigInteger and
-/// rides the wire as its lossless invariant string.</summary>
+/// <summary>The <c>int128</c> storage kind — 128-bit signed integer. CLR's generic converter can't
+/// reach Int128, so it owns its arms (throws precise); rides the wire as its invariant string.</summary>
 public sealed class @this : global::app.type.number.kind.@this
 {
-    public @this(global::app.actor.context.@this? context) : base("int128", context) { }
-    public override System.Type? ClrForm => typeof(System.Int128);
+    public override string Name => "int128";
 
-    public override object Build(object value)
-        => value is string s
-            ? System.Int128.Parse(s, System.Globalization.CultureInfo.InvariantCulture)
-            : (System.Int128)global::app.type.number.@this.FromObject(value)!.AsBigInteger();
+    public override global::app.type.number.@this Create(global::app.type.item.@this value)
+        => value.Clr<object>() switch
+        {
+            System.Int128 v => v,
+            string s => System.Int128.Parse(s, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture),
+            _ when value is global::app.type.number.@this n => (System.Int128)n.AsBigInteger(),
+            var o => throw new System.FormatException($"'{o}' cannot be int128."),
+        };
 
-    public override void Write(global::app.type.number.@this value, global::app.channel.serializer.IWriter writer)
-        => writer.String(value.ToString());
-
-    public override global::app.type.item.@this Read<TReader>(ref TReader reader)
-        => global::app.type.number.@this.From(System.Int128.Parse(reader.String(), System.Globalization.CultureInfo.InvariantCulture));
+    public override void Write(global::app.type.number.@this v, global::app.channel.serializer.IWriter w) => w.String(v.ToString());
+    public override global::app.type.item.@this Read<TReader>(ref TReader r)
+        => (global::app.type.number.@this)System.Int128.Parse(r.String(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture);
 }

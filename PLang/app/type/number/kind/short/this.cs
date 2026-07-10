@@ -1,12 +1,10 @@
 namespace app.type.number.kind.@short;
 
-/// <summary>The <c>short</c> storage kind — 16-bit signed integer. ChangeType build; Int token.</summary>
+/// <summary>The <c>short</c> storage kind — 16-bit signed integer.</summary>
 public sealed class @this : global::app.type.number.kind.@this
 {
-    public @this(global::app.actor.context.@this? context) : base("short", context) { }
-    public override System.Type? ClrForm => typeof(short);
-    public override void Write(global::app.type.number.@this value, global::app.channel.serializer.IWriter writer)
-        => writer.Int(value.ToInt32());
-    public override global::app.type.item.@this Read<TReader>(ref TReader reader)
-        => global::app.type.number.@this.From((short)reader.Int());
+    public override string Name => "short";
+    public override global::app.type.number.@this Create(global::app.type.item.@this value) => value.Clr<short>();
+    public override void Write(global::app.type.number.@this v, global::app.channel.serializer.IWriter w) => w.Int(v.ToInt32());
+    public override global::app.type.item.@this Read<TReader>(ref TReader r) => (global::app.type.number.@this)(short)r.Int();
 }

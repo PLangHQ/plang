@@ -73,9 +73,9 @@ public sealed partial class @this
         // integer ⊕ integer — BigInteger carrier, narrow per overflow setting.
         if (ca == Category.Integer && cb == Category.Integer)
         {
-            BigInteger r = BigOp(a.AsBigInteger(), b.AsBigInteger(), op);
-            NumberKind floor = WiderInteger(a.Kind, b.Kind);
-            return overflow == Overflow.Throw ? NarrowStrict(r, floor) : NarrowInteger(r, floor);
+            BigInteger r = BigOp(a, b, op);
+            string floor = WiderInteger(a.Kind.Name, b.Kind.Name);
+            return overflow == Overflow.Throw ? NarrowStrict(r, floor) : Narrow(r, floor);
         }
 
         bool aBF = ca == Category.BinaryFloat, bBF = cb == Category.BinaryFloat;
@@ -85,42 +85,44 @@ public sealed partial class @this
         if ((aBF && bDec) || (aDec && bBF))
             return precision switch
             {
-                Precision.Double => DoubleOp(a.AsDouble(), b.AsDouble(), op),
-                Precision.Decimal => DecimalOp(a.AsDecimal(), b.AsDecimal(), op),
+                Precision.Double => DoubleOp(a, b, op),
+                Precision.Decimal => DecimalOp(a, b, op),
                 _ => throw new PrecisionMixException(),
             };
 
         // any binary float (with integer or another binary float) → double.
-        if (aBF || bBF) return DoubleOp(a.AsDouble(), b.AsDouble(), op);
+        if (aBF || bBF) return DoubleOp(a, b, op);
 
         // remaining: decimal with integer/decimal → decimal.
-        return DecimalOp(a.AsDecimal(), b.AsDecimal(), op);
+        return DecimalOp(a, b, op);
     }
 
-    private static BigInteger BigOp(BigInteger a, BigInteger b, ArithOp op) => op switch
+    // Item-typed interfaces — the operands ride as numbers; CLR appears only AT the +/*/% .NET op
+    // (the one genuine boundary), never on the signature.
+    private static BigInteger BigOp(@this a, @this b, ArithOp op) => op switch
     {
-        ArithOp.Add => a + b,
-        ArithOp.Sub => a - b,
-        ArithOp.Mul => a * b,
-        ArithOp.Mod => b == BigInteger.Zero ? throw new System.DivideByZeroException() : a % b,
+        ArithOp.Add => a.AsBigInteger() + b.AsBigInteger(),
+        ArithOp.Sub => a.AsBigInteger() - b.AsBigInteger(),
+        ArithOp.Mul => a.AsBigInteger() * b.AsBigInteger(),
+        ArithOp.Mod => b.AsBigInteger() == BigInteger.Zero ? throw new System.DivideByZeroException() : a.AsBigInteger() % b.AsBigInteger(),
         _ => throw new System.InvalidOperationException(),
     };
 
-    private static @this DecimalOp(decimal a, decimal b, ArithOp op) => op switch
+    private static @this DecimalOp(@this a, @this b, ArithOp op) => op switch
     {
-        ArithOp.Add => From(a + b),
-        ArithOp.Sub => From(a - b),
-        ArithOp.Mul => From(a * b),
-        ArithOp.Mod => b == 0m ? throw new System.DivideByZeroException() : From(a % b),
+        ArithOp.Add => (@this)(a.AsDecimal() + b.AsDecimal()),
+        ArithOp.Sub => (@this)(a.AsDecimal() - b.AsDecimal()),
+        ArithOp.Mul => (@this)(a.AsDecimal() * b.AsDecimal()),
+        ArithOp.Mod => b.AsDecimal() == 0m ? throw new System.DivideByZeroException() : (@this)(a.AsDecimal() % b.AsDecimal()),
         _ => throw new System.InvalidOperationException(),
     };
 
-    private static @this DoubleOp(double a, double b, ArithOp op) => op switch
+    private static @this DoubleOp(@this a, @this b, ArithOp op) => op switch
     {
-        ArithOp.Add => From(a + b),
-        ArithOp.Sub => From(a - b),
-        ArithOp.Mul => From(a * b),
-        ArithOp.Mod => From(a % b),
+        ArithOp.Add => (@this)(a.AsDouble() + b.AsDouble()),
+        ArithOp.Sub => (@this)(a.AsDouble() - b.AsDouble()),
+        ArithOp.Mul => (@this)(a.AsDouble() * b.AsDouble()),
+        ArithOp.Mod => (@this)(a.AsDouble() % b.AsDouble()),
         _ => throw new System.InvalidOperationException(),
     };
 
@@ -145,13 +147,13 @@ public sealed partial class @this
         return DivDecimal(a, b);
     }
 
-    private static @this DivDouble(@this a, @this b) => From(a.AsDouble() / b.AsDouble());
+    private static @this DivDouble(@this a, @this b) => (@this)(a.AsDouble() / b.AsDouble());
 
     private static @this DivDecimal(@this a, @this b)
     {
         decimal bd = b.AsDecimal();
         if (bd == 0m) throw new System.DivideByZeroException();
-        return From(a.AsDecimal() / bd);
+        return (@this)(a.AsDecimal() / bd);
     }
 
     private static @this DoIntDivide(@this a, @this b, Overflow overflow)
@@ -163,8 +165,8 @@ public sealed partial class @this
         BigInteger bb = b.AsBigInteger();
         if (bb == BigInteger.Zero) throw new System.DivideByZeroException();
         BigInteger r = a.AsBigInteger() / bb;
-        NumberKind floor = WiderInteger(a.Kind, b.Kind);
-        return overflow == Overflow.Throw ? NarrowStrict(r, floor) : NarrowInteger(r, floor);
+        string floor = WiderInteger(a.Kind.Name, b.Kind.Name);
+        return overflow == Overflow.Throw ? NarrowStrict(r, floor) : Narrow(r, floor);
     }
 
     private static @this DoPower(@this a, @this exp, Overflow overflow, Precision precision)
@@ -174,7 +176,7 @@ public sealed partial class @this
             (exp.Cat == Category.Decimal && exp.AsDecimal() != System.Math.Truncate(exp.AsDecimal()))
             || (exp.Cat == Category.BinaryFloat && exp.AsDouble() != System.Math.Truncate(exp.AsDouble()));
         if (exponentIsFractional)
-            return From(System.Math.Pow(a.AsDouble(), exp.AsDouble()));
+            return (@this)(System.Math.Pow(a.AsDouble(), exp.AsDouble()));
 
         long expL = exp.ToInt64();
 
@@ -185,9 +187,9 @@ public sealed partial class @this
                 EnsureExponentInRange(expL);
                 decimal acc = 1m, baseD = a.AsDecimal();
                 for (long i = 0; i < -expL; i++) acc /= baseD;
-                return From(acc);
+                return (@this)(acc);
             }
-            return From(System.Math.Pow(a.AsDouble(), expL));
+            return (@this)(System.Math.Pow(a.AsDouble(), expL));
         }
 
         // Non-negative integer exponent on an integer base — BigInteger carrier, narrow per the overflow setting.
@@ -195,8 +197,8 @@ public sealed partial class @this
         {
             EnsureExponentInRange(expL);
             BigInteger r = BigInteger.Pow(a.AsBigInteger(), (int)expL);
-            NumberKind floor = a.Kind;
-            return overflow == Overflow.Throw ? NarrowStrict(r, floor) : NarrowInteger(r, floor);
+            string floor = a.Kind.Name;
+            return overflow == Overflow.Throw ? NarrowStrict(r, floor) : Narrow(r, floor);
         }
 
         // Decimal base, non-negative integer exponent — repeated decimal multiply.
@@ -205,11 +207,11 @@ public sealed partial class @this
             EnsureExponentInRange(expL);
             decimal acc = 1m, baseD = a.AsDecimal();
             for (long i = 0; i < expL; i++) acc *= baseD;
-            return From(acc);
+            return (@this)(acc);
         }
 
         // Binary-float base — Math.Pow is constant-time.
-        return From(System.Math.Pow(a.AsDouble(), expL));
+        return (@this)(System.Math.Pow(a.AsDouble(), expL));
     }
 
     private static void EnsureExponentInRange(long expL)

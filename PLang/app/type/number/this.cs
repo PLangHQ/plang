@@ -24,26 +24,24 @@ namespace app.type.number;
 [System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, System.IEquatable<@this>, System.IComparable<@this>, System.IComparable, System.IConvertible
 {
-    // The exact boxed CLR numeric — the single source of truth. Kind derives from its type.
+    // The exact boxed CLR numeric — the single source of truth.
     private readonly object _value;
 
-    private @this(object value) { _value = value; }
+    /// <summary>The storage kind — CARRIED, set at birth by whoever mints (an implicit operator,
+    /// <see cref="Parse"/>, the climb, the courier); never derived. Context-free stateless behavior;
+    /// the value owns its kind, so <c>Write</c>/arithmetic never look it up.</summary>
+    public kind.@this Kind { get; }
+
+    private @this(object value, kind.@this kind) { _value = value; Kind = kind; }
 
     /// <summary>The exact boxed CLR numeric value (int, uint, BigInteger, Half, decimal, …).</summary>
     public object BoxedValue => _value;
     public override bool IsLeaf => true;
-    public override void Write(global::app.channel.serializer.IWriter w) => global::app.type.number.serializer.Default.Write(this, w);
+    public override void Write(global::app.channel.serializer.IWriter w) => Kind.Write(this, w);
 
-    /// <summary>The kind — derived from the boxed value's CLR type, never stored separately.</summary>
-    public NumberKind Kind => ClrToKind(_value.GetType());
-
-    /// <summary>The PLang kind name ("int", "uint", "biginteger", "half", …).</summary>
-    public string KindLabel => LabelOf(Kind);
-
-    /// <summary>A number's entity: the exact boxed CLR numeric as the mate,
-    /// the precision as kind — the full scalar tower, no collapse.</summary>
+    /// <summary>A number's entity: the exact boxed CLR numeric as the mate, the kind name as kind.</summary>
     protected internal override global::app.type.@this Mint()
-        => new("number", _value.GetType()) { Kind = KindLabel is { } k ? new global::app.type.kind.@this(k) : null };
+        => new("number", _value.GetType()) { Kind = new global::app.type.kind.@this(Kind.Name) };
 
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
     public static string Example => "3.14";
@@ -51,82 +49,95 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>Catalog shape — number's wire form is a string-shaped scalar.</summary>
     public static string Shape => "string";
 
-    /// <summary>
-    /// The advertised kind vocabulary — the full C# scalar tower. Distinct from
-    /// <see cref="Kind"/> (the per-value derived kind).
-    /// </summary>
-    public static System.Collections.Generic.IReadOnlyList<string> Kinds { get; }
-        = new[]
+    // ── the 15 kind singletons — private immutable data (the sanctioned clause). Verbatim-lowercase
+    //    names (@int, @long, …) = the kind tokens; PascalCase would shadow the CLR type names
+    //    (Int128.MinValue, BigInteger.Pow) used across number/Ladder. ──
+    private static readonly kind.@this @sbyte = new kind.@sbyte.@this();
+    private static readonly kind.@this @byte = new kind.@byte.@this();
+    private static readonly kind.@this @short = new kind.@short.@this();
+    private static readonly kind.@this @ushort = new kind.@ushort.@this();
+    private static readonly kind.@this @int = new kind.@int.@this();
+    private static readonly kind.@this @uint = new kind.@uint.@this();
+    private static readonly kind.@this @long = new kind.@long.@this();
+    private static readonly kind.@this @ulong = new kind.@ulong.@this();
+    private static readonly kind.@this int128 = new kind.int128.@this();
+    private static readonly kind.@this uint128 = new kind.uint128.@this();
+    private static readonly kind.@this half = new kind.half.@this();
+    private static readonly kind.@this @float = new kind.@float.@this();
+    private static readonly kind.@this @double = new kind.@double.@this();
+    private static readonly kind.@this @decimal = new kind.@decimal.@this();
+    private static readonly kind.@this biginteger = new kind.biginteger.@this();
+
+    /// <summary>The 15 kind singletons by name — the declared-kind lookup (a sanctioned private data
+    /// table); also the advertised vocabulary via <c>Kinds.Keys</c>.</summary>
+    internal static readonly System.Collections.Generic.IReadOnlyDictionary<string, kind.@this> Kinds =
+        new System.Collections.Generic.Dictionary<string, kind.@this>(System.StringComparer.OrdinalIgnoreCase)
         {
-            "sbyte", "byte", "short", "ushort", "int", "uint", "long", "ulong",
-            "int128", "uint128", "half", "float", "double", "decimal", "biginteger",
+            [@sbyte.Name] = @sbyte, [@byte.Name] = @byte, [@short.Name] = @short, [@ushort.Name] = @ushort,
+            [@int.Name] = @int, [@uint.Name] = @uint, [@long.Name] = @long, [@ulong.Name] = @ulong,
+            [int128.Name] = int128, [uint128.Name] = uint128, [half.Name] = half,
+            [@float.Name] = @float, [@double.Name] = @double, [@decimal.Name] = @decimal, [biginteger.Name] = biginteger,
         };
 
-    // ---- Construction — one factory per CLR type ----
+    // ── the CLR lifts — implicit operators, ALL 15 kinds; each names its own singleton (the typed
+    //    lift, like bool's (@this)b / text's string operator). No From, no lookup at birth. ──
+    public static implicit operator @this(sbyte v)   => new(v, @sbyte);
+    public static implicit operator @this(byte v)    => new(v, @byte);
+    public static implicit operator @this(short v)   => new(v, @short);
+    public static implicit operator @this(ushort v)  => new(v, @ushort);
+    public static implicit operator @this(int v)     => new(v, @int);
+    public static implicit operator @this(uint v)    => new(v, @uint);
+    public static implicit operator @this(long v)    => new(v, @long);
+    public static implicit operator @this(ulong v)   => new(v, @ulong);
+    public static implicit operator @this(Int128 v)  => new(v, int128);
+    public static implicit operator @this(UInt128 v) => new(v, uint128);
+    public static implicit operator @this(BigInteger v) => new(v, biginteger);
+    public static implicit operator @this(Half v)    => new(v, half);
+    public static implicit operator @this(float v)   => new(v, @float);
+    public static implicit operator @this(double v)  => new(v, @double);
+    public static implicit operator @this(decimal v) => new(v, @decimal);
 
-    public static @this From(sbyte v) => new(v);
-    public static @this From(byte v) => new(v);
-    public static @this From(short v) => new(v);
-    public static @this From(ushort v) => new(v);
-    public static @this From(int v) => new(v);
-    public static @this From(uint v) => new(v);
-    public static @this From(long v) => new(v);
-    public static @this From(ulong v) => new(v);
-    public static @this From(Int128 v) => new(v);
-    public static @this From(UInt128 v) => new(v);
-    public static @this From(BigInteger v) => new(v);
-    public static @this From(Half v) => new(v);
-    public static @this From(float v) => new(v);
-    public static @this From(double v) => new(v);
-    public static @this From(decimal v) => new(v);
-
-    /// <summary>
-    /// Polymorphic coercion — accepts any CLR numeric (boxed verbatim, exact
-    /// kind preserved), a string (routed through <see cref="Parse"/>), or an
-    /// existing <see cref="@this"/>. Throws <see cref="System.FormatException"/>
-    /// for non-numbers; null returns null.
-    /// </summary>
-    public static @this? FromObject(object? value)
+    // ── THE PURE CORE — identical shape to bool/text/all 12. No exceptions on this path (the compare
+    //    pass calls it: `"abc" == 5` → not-a-number → decline, never throw). Raw CLR keeps its kind
+    //    (source fidelity via the lifts); a string's literal shape decides via Parse. ──
+    public static @this? Create(global::app.type.item.@this value)
     {
-        switch (value)
+        if (value is @this self) return self;
+        return value.Clr<object>() switch
         {
-            case null: return null;
-            case @this n: return n;
-            case global::app.type.text.@this t:
-                return Parse(t.Clr<string>()!)
-                    ?? throw new System.FormatException($"number.FromObject: '{t}' is not a valid number");
-            case sbyte v: return From(v);
-            case byte v: return From(v);
-            case short v: return From(v);
-            case ushort v: return From(v);
-            case int v: return From(v);
-            case uint v: return From(v);
-            case long v: return From(v);
-            case ulong v: return From(v);
-            case Int128 v: return From(v);
-            case UInt128 v: return From(v);
-            case BigInteger v: return From(v);
-            case Half v: return From(v);
-            case float v: return From(v);
-            case double v: return From(v);
-            case decimal v: return From(v);
-            case string s:
-                var parsed = Parse(s);
-                if (parsed == null) throw new System.FormatException($"number.FromObject: '{s}' is not a valid number");
-                return parsed;
-            case bool: throw new System.FormatException("number.FromObject: bool is not a number");
-            default:
-                throw new System.FormatException(
-                    $"number.FromObject: cannot coerce {value.GetType().Name} to number");
-        }
+            string s => Parse(s),
+            sbyte v => v, byte v => v, short v => v, ushort v => v,
+            int v => v, uint v => v, long v => v, ulong v => v,
+            Int128 v => v, UInt128 v => v, BigInteger v => v,
+            Half v => v, float v => v, double v => v, decimal v => v,
+            _ => null,
+        };
     }
 
-    // Implicit IN — handlers can write `Data<number>.Ok(5)` without ceremony.
-    public static implicit operator @this(int v) => From(v);
-    public static implicit operator @this(long v) => From(v);
-    public static implicit operator @this(decimal v) => From(v);
-    public static implicit operator @this(float v) => From(v);
-    public static implicit operator @this(double v) => From(v);
+    // ── THE COURIER — the declared kind lives here. With no declared kind it is the pure core; with
+    //    one, the kind builds it and the courier owns the error channel (a thrown reason → data.Fail,
+    //    PRESERVED, never swallowed). ──
+    public static @this? Create(global::app.type.item.@this value, global::app.data.@this data)
+    {
+        var declared = data.Type?.Kind?.Name;
+        if (declared is null)
+        {
+            if (Create(value) is { } n) return n;
+            data.Fail(new global::app.error.Error($"Cannot convert {value.Mint().Name} to number.", "NumberConversionFailed", 400));
+            return null;
+        }
+        if (!Kinds.TryGetValue(declared, out var kind))
+        {
+            data.Fail(new global::app.error.Error($"Unknown number kind '{declared}'.", "UnknownKind", 400));
+            return null;
+        }
+        try { return kind.Create(value); }
+        catch (System.Exception e) when (e is System.InvalidCastException or System.FormatException or System.OverflowException)
+        {
+            data.Fail(new global::app.error.Error(e.Message, "NumberConversionFailed", 400) { Exception = e });
+            return null;
+        }
+    }
 
     /// <summary>The CLR exit door — number hands its own boxed backing; the
     /// tower's loss policy applies first: a fractional value narrowing to an
@@ -161,7 +172,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         int v => v, uint v => v, long v => v, ulong v => v,
         Int128 v => (BigInteger)v, UInt128 v => (BigInteger)v, BigInteger v => v,
         decimal d when d == System.Math.Truncate(d) => (BigInteger)d,
-        _ => throw new System.InvalidOperationException($"number kind '{KindLabel}' is not an exact integer."),
+        _ => throw new System.InvalidOperationException($"number kind '{Kind.Name}' is not an exact integer."),
     };
 
     internal decimal AsDecimal() => _value switch

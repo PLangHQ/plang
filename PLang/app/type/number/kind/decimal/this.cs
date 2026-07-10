@@ -1,12 +1,10 @@
 namespace app.type.number.kind.@decimal;
 
-/// <summary>The <c>decimal</c> storage kind — 128-bit base-10 float. ChangeType build; Decimal token.</summary>
+/// <summary>The <c>decimal</c> storage kind — 128-bit base-10 float.</summary>
 public sealed class @this : global::app.type.number.kind.@this
 {
-    public @this(global::app.actor.context.@this? context) : base("decimal", context) { }
-    public override System.Type? ClrForm => typeof(decimal);
-    public override void Write(global::app.type.number.@this value, global::app.channel.serializer.IWriter writer)
-        => writer.Decimal(value.ToDecimal());
-    public override global::app.type.item.@this Read<TReader>(ref TReader reader)
-        => global::app.type.number.@this.From(reader.Decimal());
+    public override string Name => "decimal";
+    public override global::app.type.number.@this Create(global::app.type.item.@this value) => value.Clr<decimal>();
+    public override void Write(global::app.type.number.@this v, global::app.channel.serializer.IWriter w) => w.Decimal(v.ToDecimal());
+    public override global::app.type.item.@this Read<TReader>(ref TReader r) => (global::app.type.number.@this)r.Decimal();
 }

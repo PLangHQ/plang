@@ -9,13 +9,13 @@ namespace app.type.number;
 /// </summary>
 public sealed partial class @this
 {
-    public System.TypeCode GetTypeCode() => Kind switch
+    public System.TypeCode GetTypeCode() => Kind.Name switch
     {
-        NumberKind.Int => System.TypeCode.Int32,
-        NumberKind.Long => System.TypeCode.Int64,
-        NumberKind.Decimal => System.TypeCode.Decimal,
-        NumberKind.Double => System.TypeCode.Double,
-        NumberKind.Float => System.TypeCode.Single,
+        "int" => System.TypeCode.Int32,
+        "long" => System.TypeCode.Int64,
+        "decimal" => System.TypeCode.Decimal,
+        "double" => System.TypeCode.Double,
+        "float" => System.TypeCode.Single,
         _ => System.TypeCode.Object,
     };
 

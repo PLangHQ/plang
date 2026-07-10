@@ -189,9 +189,9 @@ public partial class json
 
     private static object NumberLeaf(System.Text.Json.JsonElement element)
     {
-        if (element.TryGetInt64(out var l)) return number.@this.From(l);
+        if (element.TryGetInt64(out var l)) return (number.@this)l;
         // Bare decimal-point literal → double by default (decimal is opt-in
         // via `as number/decimal`), matching universal language convention.
-        return number.@this.From(element.GetDouble());
+        return (number.@this)element.GetDouble();
     }
 }

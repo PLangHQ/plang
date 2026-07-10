@@ -151,7 +151,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>Stat byte-size — the file's `!size` (<c>number</c>); never reads content.</summary>
     public global::app.type.number.@this Size =>
-        Path is global::app.type.path.file.@this fp ? fp.Size : global::app.type.number.@this.From(0);
+        Path is global::app.type.path.file.@this fp ? fp.Size : (global::app.type.number.@this)0;
 
     /// <summary>Drop the in-memory content — the narrow's single-storage step
     /// (the parsed value is the one copy; this becomes location-only again).</summary>

@@ -29,13 +29,13 @@ public sealed partial class @this
                 System.Globalization.CultureInfo.InvariantCulture, out var l))
             {
                 if (l >= int.MinValue && l <= int.MaxValue)
-                    return From((int)l);
-                return From(l);
+                    return (@this)((int)l);
+                return (@this)(l);
             }
             // Past long — try decimal for very large integers.
             if (decimal.TryParse(s, System.Globalization.NumberStyles.Integer,
                 System.Globalization.CultureInfo.InvariantCulture, out var bigDec))
-                return From(bigDec);
+                return (@this)(bigDec);
             return null;
         }
 
@@ -43,13 +43,13 @@ public sealed partial class @this
         {
             if (decimal.TryParse(s, System.Globalization.NumberStyles.Number,
                 System.Globalization.CultureInfo.InvariantCulture, out var dec))
-                return From(dec);
+                return (@this)(dec);
             // Fall through to double on decimal range overflow.
         }
 
         if (double.TryParse(s, System.Globalization.NumberStyles.Float,
             System.Globalization.CultureInfo.InvariantCulture, out var d))
-            return From(d);
+            return (@this)(d);
 
         return null;
     }

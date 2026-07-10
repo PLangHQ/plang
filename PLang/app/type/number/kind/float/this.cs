@@ -1,14 +1,10 @@
 namespace app.type.number.kind.@float;
 
-/// <summary>The <c>float</c> storage kind — 32-bit binary float. ChangeType build; Float token;
-/// build-from-double narrows to float.</summary>
+/// <summary>The <c>float</c> storage kind — 32-bit binary float.</summary>
 public sealed class @this : global::app.type.number.kind.@this
 {
-    public @this(global::app.actor.context.@this? context) : base("float", context) { }
-    public override System.Type? ClrForm => typeof(float);
-    public override global::app.type.number.@this FromDouble(double m) => global::app.type.number.@this.From((float)m);
-    public override void Write(global::app.type.number.@this value, global::app.channel.serializer.IWriter writer)
-        => writer.Float(value.ToSingle());
-    public override global::app.type.item.@this Read<TReader>(ref TReader reader)
-        => global::app.type.number.@this.From(reader.Float());
+    public override string Name => "float";
+    public override global::app.type.number.@this Create(global::app.type.item.@this value) => value.Clr<float>();
+    public override void Write(global::app.type.number.@this v, global::app.channel.serializer.IWriter w) => w.Float(v.ToSingle());
+    public override global::app.type.item.@this Read<TReader>(ref TReader r) => (global::app.type.number.@this)r.Float();
 }

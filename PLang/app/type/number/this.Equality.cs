@@ -24,9 +24,10 @@ public sealed partial class @this
     /// </summary>
     public static global::app.data.Comparison Compare(object? a, object? b)
     {
-        @this? na, nb;
-        try { na = FromObject(a); nb = FromObject(b); }
-        catch (System.FormatException) { return global::app.data.Comparison.Incomparable; }
+        // The other side coerces into a number through the pure core (text "10" → 10); a value that
+        // can't become a number → Incomparable. Operands ride as items (born-native); no exception.
+        @this? na = a as @this ?? (a as global::app.type.item.@this is { } ia ? Create(ia) : null);
+        @this? nb = b as @this ?? (b as global::app.type.item.@this is { } ib ? Create(ib) : null);
         if (na == null || nb == null) return global::app.data.Comparison.Incomparable;
         var c = na.CompareTo(nb);
         return c < 0 ? global::app.data.Comparison.Less
@@ -54,9 +55,7 @@ public sealed partial class @this
     public override bool Equals(object? obj) => obj switch
     {
         @this n => Equals(n),
-        sbyte or byte or short or ushort or int or uint or long or ulong
-            or Int128 or UInt128 or BigInteger or Half or float or double or decimal
-            => Equals(FromObject(obj)),
+        global::app.type.item.@this it => Create(it) is { } m && Equals(m),
         _ => false,
     };
 
@@ -77,9 +76,7 @@ public sealed partial class @this
     {
         null => 1,
         @this n => CompareTo(n),
-        sbyte or byte or short or ushort or int or uint or long or ulong
-            or Int128 or UInt128 or BigInteger or Half or float or double or decimal
-            => CompareTo(FromObject(obj)),
+        global::app.type.item.@this it when Create(it) is { } m => CompareTo(m),
         _ => throw new System.ArgumentException($"Cannot compare number to {obj.GetType()}"),
     };
 

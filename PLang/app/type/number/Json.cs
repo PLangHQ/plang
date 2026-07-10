@@ -41,9 +41,9 @@ public sealed class Json : JsonConverter<@this>
         if (reader.TokenType == JsonTokenType.String)
         {
             var s = reader.GetString() ?? "0";
-            return @this.From(System.Numerics.BigInteger.Parse(s, System.Globalization.CultureInfo.InvariantCulture));
+            return (@this)(System.Numerics.BigInteger.Parse(s, System.Globalization.CultureInfo.InvariantCulture));
         }
-        if (reader.TryGetInt64(out var l)) return @this.From(l);
-        return @this.From(reader.GetDouble());
+        if (reader.TryGetInt64(out var l)) return (@this)(l);
+        return (@this)(reader.GetDouble());
     }
 }
