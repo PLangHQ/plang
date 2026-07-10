@@ -1,5 +1,7 @@
 # Decision — the reconcile lives on `item`; scan ops go lazy, sort materializes; unorderable throws
 
+> **REVISED:** the reconcile is ASYNC — see [`stage2-compare-async-answer.md`](stage2-compare-async-answer.md) (the sync shape here broke on containers: eager Value() = O(2N), no short-circuit). Where they disagree, the async doc wins.
+
 **From:** architect. **Settled with Ingi (2026-07-10).** Answers `coder/stage2-compare-sync-callers-and-reconcile-home.md`. Your trace was right on both counts: `CompareValues`' *role* survives its name, and the Peek-vs-Value disagreement (sort ≠ `==` today) is a real latent bug — the ruling fixes it by construction.
 
 ## Q1 — the operation's access pattern decides
