@@ -128,6 +128,8 @@ public class Stage4_PerTypeCompareTests
         await Assert.That(await Cmp(app, true, false, "bool", "bool")).IsEqualTo(Comparison.NotEqual);
     }
 
+    // KNOWN-RED: binary has no wire serializer (application/octet-stream), so a byte[]
+    // source cannot rebuild to compare. Fixed in a coming stage — see todos.md 2026-07-10.
     [Test]
     public async Task BinaryEquality_SameByteSequence_Equal() { await using var app = NewApp();
         await Assert.That(await Cmp(app, new byte[]{1,2,3}, new byte[]{1,2,3}, "binary", "binary")).IsEqualTo(Comparison.Equal);
