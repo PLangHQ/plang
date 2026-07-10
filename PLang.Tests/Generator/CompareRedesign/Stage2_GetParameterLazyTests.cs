@@ -39,7 +39,7 @@ public class Stage2_GetParameterLazyTests
             variables: new Dictionary<string, object?> { ["path"] = "/tmp/x.txt" });
 
         await result.Data.IsSuccess();
-        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.text.@this>;
         await Assert.That((await typed!.Value())?.Clr<string>()).IsEqualTo("/tmp/x.txt");
     }
 

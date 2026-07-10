@@ -8,8 +8,8 @@ namespace app.module.matrix.snapshot;
 public partial class SensitiveSnapshot : global::app.module.IContext
 {
     [global::app.SensitiveAttribute]
-    public partial global::app.data.@this<global::app.type.text.@this> ApiKey { get; init; }
-    public partial global::app.data.@this<global::app.type.text.@this> Endpoint { get; init; }
+    public partial global::app.data.@this<global::app.type.item.text.@this> ApiKey { get; init; }
+    public partial global::app.data.@this<global::app.type.item.text.@this> Endpoint { get; init; }
 
     public Task<global::app.data.@this> Run()
     {

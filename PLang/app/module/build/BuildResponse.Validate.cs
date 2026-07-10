@@ -136,7 +136,7 @@ public sealed partial class BuildResponse
                     // ValidValues, can't parse to int, etc.). For non-nullable slots we
                     // *want* the convertibility error to surface — leave it for the
                     // TryConvert path below.
-                    if (resolved is global::app.type.text.@this emptyT && !emptyT.IsTruthy())
+                    if (resolved is global::app.type.item.text.@this emptyT && !emptyT.IsTruthy())
                     {
                         if (ValidateResponseHelpers.IsNullableSchemaProp(actionType, p.Name))
                         {
@@ -161,7 +161,7 @@ public sealed partial class BuildResponse
                     var choices = (goal.App ?? app)?.Type.Choices.Get(targetType);
                     if (choices != null)
                     {
-                        var sval = resolved as global::app.type.text.@this;
+                        var sval = resolved as global::app.type.item.text.@this;
                         if (sval != null && choices.Any(c => sval.AreEqual(c)))
                             continue;
                         errors.Add(

@@ -15,7 +15,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.@null.@this("binary", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this("binary", kind);
         return new global::app.type.binary.@this(reader.Bytes()) { Kind = kind };
     }
 }

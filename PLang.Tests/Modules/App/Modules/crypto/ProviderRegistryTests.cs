@@ -117,5 +117,5 @@ public class ProviderRegistryTests
 
         public NamedCryptoProvider(string name) { Name = name; }
 
-        public System.Threading.Tasks.Task<global::app.data.@this<global::app.module.crypto.type.hash.@this>> Hash(Hash action) => System.Threading.Tasks.Task.FromResult(global::app.data.@this<global::app.module.crypto.type.hash.@this>.Ok(new global::app.module.crypto.type.hash.@this(new byte[32], "keccak256"), global::app.type.@this.Create("hash", kind: "keccak256")));         public System.Threading.Tasks.Task<global::app.data.@this<global::app.type.@bool.@this>> Verify(Verify action) => System.Threading.Tasks.Task.FromResult(global::app.data.@this<global::app.type.@bool.@this>.Ok(true));     }
+        public System.Threading.Tasks.Task<global::app.data.@this<global::app.module.crypto.type.hash.@this>> Hash(Hash action) => System.Threading.Tasks.Task.FromResult(global::app.data.@this<global::app.module.crypto.type.hash.@this>.Ok(new global::app.module.crypto.type.hash.@this(new byte[32], "keccak256"), global::app.type.@this.Create("hash", kind: "keccak256")));         public System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.@bool.@this>> Verify(Verify action) => System.Threading.Tasks.Task.FromResult(global::app.data.@this<global::app.type.item.@bool.@this>.Ok(true));     }
 }

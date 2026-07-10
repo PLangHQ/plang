@@ -31,7 +31,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("path", "/tmp/x.txt");
         var data = new Data("p", "%path%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
-        var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
+        var result = data.ShallowClone<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("/tmp/x.txt");
@@ -43,7 +43,7 @@ public class DataAsTResolutionTests
     {
         var data = new Data("p", "%missing%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
-        var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
+        var result = data.ShallowClone<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
         // Either Data.FromError (Success=false) or empty value — both are valid contract responses.
         await Assert.That(result).IsNotNull();
@@ -57,7 +57,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("name", "world");
         var data = new Data("greeting", "Hello %name%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
-        var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
+        var result = data.ShallowClone<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello world");
     }
@@ -70,7 +70,7 @@ public class DataAsTResolutionTests
         var raw = new List<object?> { "%greeting%", "world" };
         var data = TemplateStamp.Container("list", raw, _app.User.Context);
 
-        var result = data.ShallowClone<global::app.type.list.@this<global::app.type.text.@this>>(await data.Value<global::app.type.list.@this<global::app.type.text.@this>>());
+        var result = data.ShallowClone<global::app.type.list.@this<global::app.type.item.text.@this>>(await data.Value<global::app.type.list.@this<global::app.type.item.text.@this>>());
 
         await Assert.That((await result.Value())).IsNotNull();
         var items = result.GetValue<List<string>>()!;
@@ -125,11 +125,11 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("x", "first");
         var data = new Data("v", "%x%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
-        var first = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
+        var first = data.ShallowClone<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
         await Assert.That((await first.Value())?.ToString()).IsEqualTo("first");
 
         _app.User.Context.Variable.Set("x", "second");
-        var second = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
+        var second = data.ShallowClone<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
         await Assert.That((await second.Value())?.ToString()).IsEqualTo("second");
 
         // Two distinct instances — neither is a cache.
@@ -143,7 +143,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("x", "resolved");
         var data = new Data("v", "%x%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
-        var resolved = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
+        var resolved = data.ShallowClone<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
         await Assert.That((await resolved.Value())?.ToString()).IsEqualTo("resolved");
 
         // The original is not mutated — the source form is intact (Peek never
@@ -162,7 +162,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("b", "%a%");
         var data = new Data("ref", "%a%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
-        var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
+        var result = data.ShallowClone<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("%b%");
@@ -178,7 +178,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("x", "%x%");
         var data = new Data("ref", "%x%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
-        var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
+        var result = data.ShallowClone<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("%x%");
@@ -194,7 +194,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("x", "%x%");
         var data = new Data("greeting", "hello %x%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
-        var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
+        var result = data.ShallowClone<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("hello %x%");
@@ -212,7 +212,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("b", "Y-%a%");
         var data = new Data("ref", "%a%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
-        var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
+        var result = data.ShallowClone<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("X-%b%");
@@ -232,7 +232,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("e", "leaf-value");
         var data = new Data("chain", "%a%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
-        var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
+        var result = data.ShallowClone<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("%b%");

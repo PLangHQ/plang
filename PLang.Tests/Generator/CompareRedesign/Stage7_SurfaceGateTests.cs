@@ -16,7 +16,7 @@ public class Stage7_SurfaceGateTests
     // Synthetic-compilation probe — same harness as Plng002SystemIoBanTests.
     private const string ItemStub = """
         namespace app.type.item { public class @this {} }
-        namespace app.type.@bool { public class @this : app.type.item.@this {} }
+        namespace app.type.item.@bool { public class @this : app.type.item.@this {} }
         """;
 
     private static System.Collections.Immutable.ImmutableArray<Diagnostic> Run(string source)
@@ -70,7 +70,7 @@ public class Stage7_SurfaceGateTests
         // a predicate returning the PLang @bool passes; raw bool fires
         var diags = Run("""
             namespace app.type.probe { public class @this : app.type.item.@this {
-                public app.type.@bool.@this IsTruthyTyped() => new();
+                public app.type.item.@bool.@this IsTruthyTyped() => new();
             } }
             """);
         await Assert.That(diags.Any(d => d.Id == "PLNG003")).IsFalse();
@@ -114,7 +114,7 @@ public class Stage7_SurfaceGateTests
     [Test]
     public async Task TextLength_ReturnsNumber_NotInt()
     {
-        var t = new global::app.type.text.@this("héllo");
+        var t = new global::app.type.item.text.@this("héllo");
         object length = t.Length;
         await Assert.That(length).IsTypeOf<global::app.type.number.@this>();
         await Assert.That(length.ToString()).IsEqualTo("5");
@@ -127,10 +127,10 @@ public class Stage7_SurfaceGateTests
         d.Set(new Data("name", "a", context: global::PLang.Tests.TestApp.SharedContext));
         d.Set(new Data("age", 30L, context: global::PLang.Tests.TestApp.SharedContext));
         object keys = d.Keys;
-        await Assert.That(keys).IsTypeOf<global::app.type.list.@this<global::app.type.text.@this>>();
-        var names = ((global::app.type.list.@this<global::app.type.text.@this>)keys)
+        await Assert.That(keys).IsTypeOf<global::app.type.list.@this<global::app.type.item.text.@this>>();
+        var names = ((global::app.type.list.@this<global::app.type.item.text.@this>)keys)
             .Items.Select(k => k.Peek()).ToList();
-        await Assert.That(names.All(v => v is global::app.type.text.@this)).IsTrue();
+        await Assert.That(names.All(v => v is global::app.type.item.text.@this)).IsTrue();
     }
 
     [Test]

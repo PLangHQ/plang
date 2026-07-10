@@ -8,7 +8,7 @@ public partial class Contains : IContext
     public partial data.@this<app.variable.@this> ListName { get; init; }
     public partial data.@this Value { get; init; }
 
-    public async Task<data.@this<global::app.type.@bool.@this>> Run()
+    public async Task<data.@this<global::app.type.item.@bool.@this>> Run()
     {
         var data = await Context.Variable.Get(await ListName.Value());
 
@@ -17,9 +17,9 @@ public partial class Contains : IContext
         foreach (var (_, item) in await data.EnumerateItems())
         {
             if (await item.Compare(Value) == global::app.data.Comparison.Equal)
-                return Context.Ok<global::app.type.@bool.@this>(true);
+                return Context.Ok<global::app.type.item.@bool.@this>(true);
         }
 
-        return Context.Ok<global::app.type.@bool.@this>(false);
+        return Context.Ok<global::app.type.item.@bool.@this>(false);
     }
 }

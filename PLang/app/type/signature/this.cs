@@ -1,7 +1,7 @@
 namespace app.type.signature;
 
 using IWriter = global::app.channel.serializer.IWriter;
-using text = global::app.type.text.@this;
+using text = global::app.type.item.text.@this;
 using datetime = global::app.type.datetime.@this;
 using binary = global::app.type.binary.@this;
 using hash = global::app.module.crypto.type.hash.@this;

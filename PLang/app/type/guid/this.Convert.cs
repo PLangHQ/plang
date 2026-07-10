@@ -13,7 +13,7 @@ public sealed partial class @this
     {
         // Born-native: a guid literal arrives as text — unwrap so the string
         // parse below sees the guid text instead of the wrapper.
-        if (value is global::app.type.text.@this txt) value = txt.Clr<string>();
+        if (value is global::app.type.item.text.@this txt) value = txt.Clr<string>();
         // Always born-native: guid builds a `guid` value. A .NET edge unwraps with .Clr<Guid>().
         global::app.data.@this G(System.Guid g) => context.Ok(new @this(g));
         switch (value)

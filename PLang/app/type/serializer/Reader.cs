@@ -18,7 +18,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
         var entity = System.Text.Json.JsonSerializer.Deserialize<global::app.type.@this>(reader.RawValue());
-        if (entity == null) return new global::app.type.@null.@this("type", kind);
+        if (entity == null) return new global::app.type.item.@null.@this("type", kind);
         entity.Context = ctx.Context;
         return entity;
     }

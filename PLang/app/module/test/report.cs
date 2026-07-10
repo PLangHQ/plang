@@ -19,7 +19,7 @@ namespace app.module.test;
 public partial class report : IContext
 {
     public partial data.@this<global::app.type.list.@this<global::app.test.@this>>? Results { get; init; }
-    public partial data.@this<global::app.type.text.@this>? Format { get; init; }
+    public partial data.@this<global::app.type.item.text.@this>? Format { get; init; }
 
     public async Task<data.@this> Run()
     {

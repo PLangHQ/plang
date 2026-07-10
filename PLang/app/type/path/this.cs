@@ -43,7 +43,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     // accessors below lower it through Clr<string>() for their path math; by the
     // time any accessor runs the navigation has already called Value(), which
     // resolved the template (see Value / Cacheable below).
-    private global::app.type.text.@this _location;
+    private global::app.type.item.text.@this _location;
 
     // Cached string-derived properties. _absolute is primed at construction by
     // schemes that resolve eagerly (file anchors relatives to the goal folder
@@ -78,7 +78,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
         // whether the location actually carries a %var%. Mode is "plang" here: a
         // path location is template-capable (mode-gating path by the reader is a
         // later step; this preserves the prior behavior).
-        _location = new global::app.type.text.@this(path, "plang");
+        _location = new global::app.type.item.text.@this(path, "plang");
         // A template location has no resolved host form yet — leave _absolute
         // unprimed until Value renders it. A literal location is resolved as-is.
         _absolute = _location.Template == null ? path : null;
@@ -167,7 +167,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// string the user wrote) makes the verbatim form the value's identity while
     /// the resolved form stays a cached derivation.
     /// </summary>
-    public string Raw { get => _location.Clr<string>() ?? ""; init { if (!string.IsNullOrEmpty(value)) _location = new global::app.type.text.@this(value, "plang"); } }
+    public string Raw { get => _location.Clr<string>() ?? ""; init { if (!string.IsNullOrEmpty(value)) _location = new global::app.type.item.text.@this(value, "plang"); } }
 
     // The resolved host form — INTERNAL: the raw string is the interop inch
     // (sqlite, Assembly.LoadFrom, HttpClient), reached through the type's own
@@ -228,7 +228,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// typed query that replaces consumer-side <c>Relative.StartsWith</c>
     /// string math. Same root-comparison rule the permission gate uses.
     /// </summary>
-    public global::app.type.@bool.@this IsUnder(@this root)
+    public global::app.type.item.@bool.@this IsUnder(@this root)
     {
         var rootAbs = root.Absolute;
         if (string.IsNullOrEmpty(rootAbs)) return false;
@@ -245,7 +245,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// with it; a bare name matches by filename. Case-insensitive — filters
     /// are user-typed.
     /// </summary>
-    public global::app.type.@bool.@this Matches(@this other)
+    public global::app.type.item.@bool.@this Matches(@this other)
     {
         var rel = other.Relative;
         var pathQualified = rel.Contains('/') || rel.Contains('\\');

@@ -183,7 +183,7 @@ public sealed class @this
             var lastDot = head.LastIndexOf('.');
             if (lastDot < 0) continue;
             // Strip a leading @ — a type whose folder/namespace is a C# keyword
-            // (app.type.@bool) is named without it everywhere else ("bool"), so the
+            // (app.type.item.@bool) is named without it everywhere else ("bool"), so the
             // reader must register under the bare name to be found by Readers.Of.
             var typeName = head[(lastDot + 1)..].TrimStart('@');
 

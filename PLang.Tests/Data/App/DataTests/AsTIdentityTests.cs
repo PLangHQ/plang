@@ -112,8 +112,8 @@ public class AsTIdentityTests
         await Assert.That(source.OnChange).Contains(handler);
     }
 
-    // Rule 3 — cross-type with conversion. Data<global::app.type.number.@this>(42).Value<global::app.type.text.@this>() produces
-    // a NEW Data<global::app.type.text.@this> with converted .Value ("42"), but Properties + event
+    // Rule 3 — cross-type with conversion. Data<global::app.type.number.@this>(42).Value<global::app.type.item.text.@this>() produces
+    // a NEW Data<global::app.type.item.text.@this> with converted .Value ("42"), but Properties + event
     // lists alias from source. The .Value is a fresh converted object —
     // ref-DISTINCT from source.Value (42 boxed) — but the metadata bag is shared.
     [Test]
@@ -121,7 +121,7 @@ public class AsTIdentityTests
     {
         var source = new global::app.data.@this<global::app.type.number.@this>("count", 42, context: _app.User.Context);
         source.Properties.Set("note", "hello");
-        var wrapped = source.ShallowClone<global::app.type.text.@this>(await source.Value<global::app.type.text.@this>());
+        var wrapped = source.ShallowClone<global::app.type.item.text.@this>(await source.Value<global::app.type.item.text.@this>());
         await Assert.That(ReferenceEquals(source, wrapped)).IsFalse();
         await Assert.That((await wrapped.Value())?.ToString()).IsEqualTo("42");
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();
@@ -135,7 +135,7 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_CrossType_ConversionFailure_DeclinesOnSource()
     {
-        var source = new global::app.data.@this<global::app.type.text.@this>("messy", "not-a-number", context: _app.User.Context);
+        var source = new global::app.data.@this<global::app.type.item.text.@this>("messy", "not-a-number", context: _app.User.Context);
         var result = await source.Value<global::app.type.number.@this>();
         await Assert.That(result).IsNull();
         await source.IsFailure();

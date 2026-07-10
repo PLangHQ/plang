@@ -92,7 +92,7 @@ public class AssertTests
     public async Task Equals_CustomMessage_IncludedInError()
     {
         var (context, _) = CreateContext();
-        var action = new AssertEquals(context) { Expected = D(context, 1), Actual = D(context, 2), Message = (global::app.type.text.@this)"Sum check" };
+        var action = new AssertEquals(context) { Expected = D(context, 1), Actual = D(context, 2), Message = (global::app.type.item.text.@this)"Sum check" };
         await action.Attach(null, context);
         var result = await action.Run();
         await result.IsFailure();

@@ -23,8 +23,8 @@ public class Stage5_ListDictOpsTests
     private DictV Person(string field, object? val) { var d = new DictV(_app.User.Context); d.Set(_app.Data(field, val)); return d; }
 
     private Where WhereAction(global::app.actor.context.@this ctx, string var, string field, string op, object? value)
-        => new(ctx) {  ListName = new app.variable.@this(var), Field = new global::app.data.@this<global::app.type.text.@this>("", field, context: ctx),
-                   Operator = new global::app.data.@this<global::app.type.choice.@this<Op>>("", new Op(op), context: ctx), Value = D(value) };
+        => new(ctx) {  ListName = new app.variable.@this(var), Field = new global::app.data.@this<global::app.type.item.text.@this>("", field, context: ctx),
+                   Operator = new global::app.data.@this<global::app.type.item.choice.@this<Op>>("", new Op(op), context: ctx), Value = D(value) };
 
     [Test]
     public async Task WhereOnList_FiltersByPredicate()
@@ -78,7 +78,7 @@ public class Stage5_ListDictOpsTests
         people.Add(_app.Data("", Person("age", 20L)));
         vars.Set("people", people);
 
-        var action = new Sort(ctx) { ListName = new app.variable.@this("people"), By = new global::app.data.@this<global::app.type.text.@this>("", "age", context: ctx) };
+        var action = new Sort(ctx) { ListName = new app.variable.@this("people"), By = new global::app.data.@this<global::app.type.item.text.@this>("", "age", context: ctx) };
         await (await action.Run()).IsSuccess();
         var sorted = (ListV)(await (await vars.Get("people")).Value())!;
         await Assert.That(((global::app.type.number.@this)(await (await sorted.At(0)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(10L);
@@ -127,7 +127,7 @@ public class Stage5_ListDictOpsTests
         people.Add(_app.Data("", Person("city", "Oslo")));
         people.Add(_app.Data("", Person("city", "Reyk")));
         vars.Set("people", people);
-        var action = new Group(ctx) { ListName = new app.variable.@this("people"), Key = new global::app.data.@this<global::app.type.text.@this>("", "city", context: ctx) };
+        var action = new Group(ctx) { ListName = new app.variable.@this("people"), Key = new global::app.data.@this<global::app.type.item.text.@this>("", "city", context: ctx) };
         var result = await action.Run();
         await result.IsSuccess();
         var groups = (ListV)(await result.Value())!.value!;

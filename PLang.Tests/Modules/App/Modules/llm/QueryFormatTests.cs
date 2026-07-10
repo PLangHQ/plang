@@ -172,7 +172,7 @@ public class QueryFormatTests
             {
                 new LlmMessage { Role = "user", Content = "write hello world" }
             }.ToListData<LlmMessage>(),
-            Format = (global::app.type.text.@this)"python"
+            Format = (global::app.type.item.text.@this)"python"
         };
         await action.Attach(null, Ctx);
         var result = await action.Run();
@@ -192,7 +192,7 @@ public class QueryFormatTests
             {
                 new LlmMessage { Role = "user", Content = "write markdown" }
             }.ToListData<LlmMessage>(),
-            Format = (global::app.type.text.@this)"md"
+            Format = (global::app.type.item.text.@this)"md"
         };
         await action.Attach(null, Ctx);
         var result = await action.Run();
@@ -211,7 +211,7 @@ public class QueryFormatTests
             {
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
-            Format = (global::app.type.text.@this)"python"
+            Format = (global::app.type.item.text.@this)"python"
         };
         await action.Attach(null, Ctx);
         var result = await action.Run();

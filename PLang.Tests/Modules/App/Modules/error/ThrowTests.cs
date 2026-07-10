@@ -2,7 +2,7 @@ using app.actor.context;
 using app;
 using app.variable;
 using app.module.error;
-using Text = global::app.type.text.@this;
+using Text = global::app.type.item.text.@this;
 using ListType = global::app.type.list.@this;
 
 namespace PLang.Tests.App.actions.error;

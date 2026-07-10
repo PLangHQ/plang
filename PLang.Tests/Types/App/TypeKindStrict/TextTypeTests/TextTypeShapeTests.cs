@@ -2,11 +2,11 @@ using System.Reflection;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using TextType = global::app.type.text.@this;
+using TextType = global::app.type.item.text.@this;
 
 namespace PLang.Tests.App.TypeKindStrict.TextTypeTests;
 
-// `app.type.text.@this` shape. No static Kinds (open kind, extension-derived).
+// `app.type.item.text.@this` shape. No static Kinds (open kind, extension-derived).
 // Shape="string". Description teaches kind-from-extension.
 public class TextTypeShapeTests
 {

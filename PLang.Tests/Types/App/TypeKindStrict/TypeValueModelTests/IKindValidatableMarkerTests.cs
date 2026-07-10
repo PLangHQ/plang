@@ -38,13 +38,13 @@ public class IKindValidatableMarkerTests
 
     [Test] public async Task Text_DoesNotImplementIKindValidatable()
     {
-        // Pinned: no app.type.text.@this exists yet (Stage 2 lands it).
-        // The negative shape is: no CLR type under `app.type.text` implements
+        // Pinned: no app.type.item.text.@this exists yet (Stage 2 lands it).
+        // The negative shape is: no CLR type under `app.type.item.text` implements
         // the marker. Verify by walking the PLang assembly for any
-        // `app.type.text.*` types and asserting none implement IKindValidatable.
+        // `app.type.item.text.*` types and asserting none implement IKindValidatable.
         var asm = typeof(global::app.type.@this).Assembly;
         var textImpls = asm.GetTypes()
-            .Where(t => t.Namespace != null && t.Namespace.StartsWith("app.type.text", System.StringComparison.Ordinal))
+            .Where(t => t.Namespace != null && t.Namespace.StartsWith("app.type.item.text", System.StringComparison.Ordinal))
             .Where(t => typeof(global::app.data.IKindValidatable).IsAssignableFrom(t))
             .ToList();
         await Assert.That(textImpls.Count).IsEqualTo(0);

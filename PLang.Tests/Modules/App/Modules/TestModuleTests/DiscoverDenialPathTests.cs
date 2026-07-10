@@ -34,8 +34,8 @@ public class DiscoverDenialPathTests
         var outOfRoot = "//etc";
         var action = new global::app.module.test.discover(app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(
                 global::app.type.path.@this.Resolve(outOfRoot, app.User.Context)),
-            Pattern = new global::app.data.@this<global::app.type.text.@this>("Pattern", "*.test.goal"),
-            Recursive = new global::app.data.@this<global::app.type.@bool.@this>("Recursive", false)
+            Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
+            Recursive = new global::app.data.@this<global::app.type.item.@bool.@this>("Recursive", false)
         };
         var result = await action.Run();
         // Denial surfaces as Fail, not as an empty list of tests.
@@ -48,8 +48,8 @@ public class DiscoverDenialPathTests
         app.User.Channel.Register(new CannedChannel("n"));
         var action = new global::app.module.test.discover(app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(
                 global::app.type.path.@this.Resolve("//../../../etc", app.User.Context)),
-            Pattern = new global::app.data.@this<global::app.type.text.@this>("Pattern", "*.test.goal"),
-            Recursive = new global::app.data.@this<global::app.type.@bool.@this>("Recursive", false)
+            Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
+            Recursive = new global::app.data.@this<global::app.type.item.@bool.@this>("Recursive", false)
         };
         var result = await action.Run();
         // Either denial → Fail, or the resolved path lands under root → empty.

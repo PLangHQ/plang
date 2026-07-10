@@ -95,7 +95,7 @@ public class Default : ICrypto
             global::app.type.@this.Create("hash", kind: algorithm));
     }
 
-    public async Task<data.@this<global::app.type.@bool.@this>> Verify(Verify action)
+    public async Task<data.@this<global::app.type.item.@bool.@this>> Verify(Verify action)
     {
         // The expected hash and its algorithm. The digest's own kind is
         // authoritative — a sha256 hash can only be verified by recomputing
@@ -106,7 +106,7 @@ public class Default : ICrypto
         // expected-hash string — a null payload is a missing input, not a bad hash.
         var toVerify = action.Data.Peek();
         if (toVerify is null || await toVerify.IsEmpty())
-            return action.Context.Error<global::app.type.@bool.@this>(new ActionError(
+            return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError(
                 "Verify requires a value to verify", "ValueRequired", 400));
 
         global::app.module.crypto.type.hash.@this expected;
@@ -123,7 +123,7 @@ public class Default : ICrypto
             // The hash type owns base64↔byte parsing (OBP) — Verify doesn't
             // reach for Convert.FromBase64String / SequenceEqual itself.
             try { expected = global::app.module.crypto.type.hash.@this.FromBase64((await action.Hash.Value())?.ToString() ?? "", algorithm); }
-            catch (FormatException) { return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Hash string is not valid base64", "InvalidHash", 400)); }
+            catch (FormatException) { return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Hash string is not valid base64", "InvalidHash", 400)); }
         }
 
         // Recompute through crypto.hash so the algorithm switch stays in one
@@ -131,10 +131,10 @@ public class Default : ICrypto
         var hashResult = await Hash(new Hash(action.Context)
         {
             Data = action.Data,
-            Algorithm = new global::app.data.@this<global::app.type.text.@this>("Algorithm", algorithm, context: action.Context),
+            Algorithm = new global::app.data.@this<global::app.type.item.text.@this>("Algorithm", algorithm, context: action.Context),
         });
-        if (!hashResult.Success) return action.Context.Error<global::app.type.@bool.@this>(hashResult.Error!);
+        if (!hashResult.Success) return action.Context.Error<global::app.type.item.@bool.@this>(hashResult.Error!);
 
-        return action.Context.Ok<global::app.type.@bool.@this>(((global::app.module.crypto.type.hash.@this)(await hashResult.Value())!).DigestEquals(expected));
+        return action.Context.Ok<global::app.type.item.@bool.@this>(((global::app.module.crypto.type.hash.@this)(await hashResult.Value())!).DigestEquals(expected));
     }
 }

@@ -134,12 +134,12 @@ public class Stage4_PerTypeCompareTests
         await Assert.That(await Cmp(app, new byte[]{1,2,3}, new byte[]{1,2,4}, "binary", "binary")).IsEqualTo(Comparison.NotEqual); }
 
     [Test]
-    public async Task ChoiceEquality_SameChoice_Equal() { var a = new global::app.type.choice.@this<global::app.goal.steps.step.ErrorOrder>(global::app.goal.steps.step.ErrorOrder.RetryFirst);
-        var b = new global::app.type.choice.@this<global::app.goal.steps.step.ErrorOrder>(global::app.goal.steps.step.ErrorOrder.RetryFirst);
-        var c = new global::app.type.choice.@this<global::app.goal.steps.step.ErrorOrder>(global::app.goal.steps.step.ErrorOrder.GoalFirst);
-        await Assert.That(global::app.type.choice.@this<global::app.goal.steps.step.ErrorOrder>.Compare(a, b)).IsEqualTo(Comparison.Equal);
-        await Assert.That(global::app.type.choice.@this<global::app.goal.steps.step.ErrorOrder>.Compare(a, c)).IsEqualTo(Comparison.NotEqual);
-        await Assert.That(global::app.type.choice.@this<global::app.goal.steps.step.ErrorOrder>.Compare(a, "RetryFirst")).IsEqualTo(Comparison.Equal); // by name
+    public async Task ChoiceEquality_SameChoice_Equal() { var a = new global::app.type.item.choice.@this<global::app.goal.steps.step.ErrorOrder>(global::app.goal.steps.step.ErrorOrder.RetryFirst);
+        var b = new global::app.type.item.choice.@this<global::app.goal.steps.step.ErrorOrder>(global::app.goal.steps.step.ErrorOrder.RetryFirst);
+        var c = new global::app.type.item.choice.@this<global::app.goal.steps.step.ErrorOrder>(global::app.goal.steps.step.ErrorOrder.GoalFirst);
+        await Assert.That(global::app.type.item.choice.@this<global::app.goal.steps.step.ErrorOrder>.Compare(a, b)).IsEqualTo(Comparison.Equal);
+        await Assert.That(global::app.type.item.choice.@this<global::app.goal.steps.step.ErrorOrder>.Compare(a, c)).IsEqualTo(Comparison.NotEqual);
+        await Assert.That(global::app.type.item.choice.@this<global::app.goal.steps.step.ErrorOrder>.Compare(a, "RetryFirst")).IsEqualTo(Comparison.Equal); // by name
     }
 
     [Test]

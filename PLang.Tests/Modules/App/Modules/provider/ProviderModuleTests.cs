@@ -187,8 +187,8 @@ public class ProviderModuleTests
         _app.Code.Register<ISigning>(new MockSigningProvider("first"));
         _app.Code.Register<ISigning>(new MockSigningProvider("second"));
 
-        var action = new global::app.module.code.remove(Ctx) { Name = (global::app.type.text.@this)"second",
-            Type = (global::app.type.text.@this)"signing"
+        var action = new global::app.module.code.remove(Ctx) { Name = (global::app.type.item.text.@this)"second",
+            Type = (global::app.type.item.text.@this)"signing"
         };
         var result = await action.Run();
 
@@ -200,8 +200,8 @@ public class ProviderModuleTests
     public async Task Remove_Default_ReturnsError()
     {
         // ed25519 is registered as default at engine startup
-        var action = new global::app.module.code.remove(Ctx) { Name = (global::app.type.text.@this)"ed25519",
-            Type = (global::app.type.text.@this)"signing"
+        var action = new global::app.module.code.remove(Ctx) { Name = (global::app.type.item.text.@this)"ed25519",
+            Type = (global::app.type.item.text.@this)"signing"
         };
         var result = await action.Run();
 
@@ -212,8 +212,8 @@ public class ProviderModuleTests
     [Test]
     public async Task Remove_NonExistent_ReturnsError()
     {
-        var action = new global::app.module.code.remove(Ctx) { Name = (global::app.type.text.@this)"unknown",
-            Type = (global::app.type.text.@this)"signing"
+        var action = new global::app.module.code.remove(Ctx) { Name = (global::app.type.item.text.@this)"unknown",
+            Type = (global::app.type.item.text.@this)"signing"
         };
         var result = await action.Run();
 
@@ -224,8 +224,8 @@ public class ProviderModuleTests
     [Test]
     public async Task Remove_UnknownType_ReturnsError()
     {
-        var action = new global::app.module.code.remove(Ctx) { Name = (global::app.type.text.@this)"anything",
-            Type = (global::app.type.text.@this)"invalid"
+        var action = new global::app.module.code.remove(Ctx) { Name = (global::app.type.item.text.@this)"anything",
+            Type = (global::app.type.item.text.@this)"invalid"
         };
         var result = await action.Run();
 
@@ -245,8 +245,8 @@ public class ProviderModuleTests
         _app.Code.Register<ISigning>(first);
         _app.Code.Register<ISigning>(second);
 
-        var action = new global::app.module.code.setDefault(Ctx) { Name = (global::app.type.text.@this)"second",
-            Type = (global::app.type.text.@this)"signing"
+        var action = new global::app.module.code.setDefault(Ctx) { Name = (global::app.type.item.text.@this)"second",
+            Type = (global::app.type.item.text.@this)"signing"
         };
         var result = await action.Run();
 
@@ -260,8 +260,8 @@ public class ProviderModuleTests
     {
         _app.Code.Register<ISigning>(new MockSigningProvider("first"));
 
-        var action = new global::app.module.code.setDefault(Ctx) { Name = (global::app.type.text.@this)"unknown",
-            Type = (global::app.type.text.@this)"signing"
+        var action = new global::app.module.code.setDefault(Ctx) { Name = (global::app.type.item.text.@this)"unknown",
+            Type = (global::app.type.item.text.@this)"signing"
         };
         var result = await action.Run();
 
@@ -272,8 +272,8 @@ public class ProviderModuleTests
     [Test]
     public async Task SetDefault_UnknownType_ReturnsError()
     {
-        var action = new global::app.module.code.setDefault(Ctx) { Name = (global::app.type.text.@this)"anything",
-            Type = (global::app.type.text.@this)"invalid"
+        var action = new global::app.module.code.setDefault(Ctx) { Name = (global::app.type.item.text.@this)"anything",
+            Type = (global::app.type.item.text.@this)"invalid"
         };
         var result = await action.Run();
 
@@ -329,7 +329,7 @@ public class ProviderModuleTests
     {
         _app.Code.Register<ISigning>(new MockSigningProvider("extra"));
 
-        var action = new global::app.module.code.list(Ctx) { Type = (global::app.type.text.@this)"signing"
+        var action = new global::app.module.code.list(Ctx) { Type = (global::app.type.item.text.@this)"signing"
         };
         var result = await action.Run();
 
@@ -339,7 +339,7 @@ public class ProviderModuleTests
     [Test]
     public async Task ListAction_UnknownType_ReturnsError()
     {
-        var action = new global::app.module.code.list(Ctx) { Type = (global::app.type.text.@this)"quantum"
+        var action = new global::app.module.code.list(Ctx) { Type = (global::app.type.item.text.@this)"quantum"
         };
         var result = await action.Run();
 
@@ -361,9 +361,9 @@ public class ProviderModuleTests
         public MockSigningProvider(string name) { Name = name; }
 
         public (KeyPair? keys, global::app.error.IError? error) GenerateKeyPair() => (new KeyPair("mockPub", "mockPriv"), null);
-        public global::app.type.binary.@this Sign(global::app.type.signature.@this unsigned, global::app.type.text.@this privateKey) => new global::app.type.binary.@this(new byte[64]);
-        public global::app.type.@bool.@this Verify(global::app.type.signature.@this signature) => new global::app.type.@bool.@this(true);
+        public global::app.type.binary.@this Sign(global::app.type.signature.@this unsigned, global::app.type.item.text.@this privateKey) => new global::app.type.binary.@this(new byte[64]);
+        public global::app.type.item.@bool.@this Verify(global::app.type.signature.@this signature) => new global::app.type.item.@bool.@this(true);
         public Task<global::app.data.@this> SignAsync(sign action) => Task.FromResult(global::app.data.@this.Ok());
-        public Task<global::app.data.@this<global::app.type.@bool.@this>> VerifyAsync(verify action) => Task.FromResult(global::app.data.@this<global::app.type.@bool.@this>.Ok(true));
+        public Task<global::app.data.@this<global::app.type.item.@bool.@this>> VerifyAsync(verify action) => Task.FromResult(global::app.data.@this<global::app.type.item.@bool.@this>.Ok(true));
     }
 }

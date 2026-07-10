@@ -16,14 +16,14 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.@null.@this("number", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this("number", kind);
         // A number always stamps its kind on the wire; a bare token with no declared kind reads at its
         // natural precision (double), a string parses through the family.
         if (kind is not null && num.Kinds.TryGetValue(kind, out var k))
             return k.Read(ref reader);
         return reader.Peek() == global::app.channel.serializer.TokenKind.String
-            ? (num.Create(new global::app.type.text.@this(reader.String())) ?? (global::app.type.item.@this)
-                new global::app.type.@null.@this("number", kind))
+            ? (num.Create(new global::app.type.item.text.@this(reader.String())) ?? (global::app.type.item.@this)
+                new global::app.type.item.@null.@this("number", kind))
             : (num)reader.Double();
     }
 }

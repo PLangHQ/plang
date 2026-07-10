@@ -9,7 +9,7 @@ namespace app.module.mock;
 [Action("intercept", Cacheable = false)]
 public partial class intercept : IContext
 {
-    public partial data.@this<global::app.type.text.@this> Pattern { get; init; }
+    public partial data.@this<global::app.type.item.text.@this> Pattern { get; init; }
     public partial data.@this? Return { get; init; }
     public partial data.@this<GoalCall>? Call { get; init; }
     public partial data.@this<global::app.type.dict.@this>? Parameters { get; init; }
@@ -125,7 +125,7 @@ public partial class intercept : IContext
     private static object? ResolveParamValue(data.@this param, global::app.variable.list.@this variables)
     {
         // A live ref is a stamped template — the stamp gates resolution.
-        if (param.Peek() is global::app.type.text.@this { Template: not null } st)
+        if (param.Peek() is global::app.type.item.text.@this { Template: not null } st)
             return variables.Resolve(st.Clr<string>()!);
 
         return param.Peek();

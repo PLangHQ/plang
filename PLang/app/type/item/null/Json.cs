@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace app.type.@null;
+namespace app.type.item.@null;
 
 /// <summary>Plain-JSON view — bare <c>null</c>; reads back the singleton. See text/Json.cs.</summary>
 public sealed class Json : JsonConverter<@this>

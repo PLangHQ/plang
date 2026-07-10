@@ -54,7 +54,7 @@ public class Stage3_HttpContentTypeDispatchTests
             shape(resp);
             return resp;
         };
-        var action = new request(_app.User.Context) { Url = (global::app.type.text.@this)url, Unsigned = (global::app.type.@bool.@this)true };
+        var action = new request(_app.User.Context) { Url = (global::app.type.item.text.@this)url, Unsigned = (global::app.type.item.@bool.@this)true };
         var result = await action.Run();
         await result.IsSuccess();
         return result;

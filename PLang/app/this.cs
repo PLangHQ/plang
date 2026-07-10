@@ -387,7 +387,7 @@ public sealed partial class @this : IAsyncDisposable
         if (!exists.Success || (await exists.Value())?.Value != true) return;
         var readResult = await prPath.ReadText();
         if (!readResult.Success) return;
-        var json = (await readResult.Value() as global::app.type.text.@this)?.Clr<string>();
+        var json = (await readResult.Value() as global::app.type.item.text.@this)?.Clr<string>();
         // .pr deserialized to Goal via FilePath.ReadText's MIME path — fall back
         // to the raw text by reading directly through ReadBytes when .pr's MIME
         // converted the JSON to a typed object. For app.pr we only need the

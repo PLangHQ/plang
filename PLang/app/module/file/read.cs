@@ -19,7 +19,7 @@ public partial class Read : IContext
     public partial data.@this<path> Path { get; init; }
 
     [Default(false)]
-    public partial data.@this<global::app.type.@bool.@this> ResolveVariables { get; init; }
+    public partial data.@this<global::app.type.item.@bool.@this> ResolveVariables { get; init; }
 
     // `read X` yields a REFERENCE — a `file` (local), `url` (remote), or
     // `directory` — with NOTHING read: existence is verified by a stat (so a
@@ -86,7 +86,7 @@ public partial class Read : IContext
             var read = await channel.Read();
             if (!read.Success) return read;
             var content = await read.Value();
-            if (content is global::app.type.text.@this)
+            if (content is global::app.type.item.text.@this)
             {
                 var resolved = await Context.Variable.Resolve(content.ToString()!, skipInfrastructure: true);
                 return new data.@this(read.Name, resolved, read.Type, context: Context);

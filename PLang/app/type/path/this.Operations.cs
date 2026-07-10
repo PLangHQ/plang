@@ -59,7 +59,7 @@ public abstract partial class @this
     // other verbs have a single fixed shape — typed.
     public abstract Task<data.@this> ReadText();
     public abstract Task<data.@this<global::app.type.binary.@this>> ReadBytes();
-    public abstract Task<data.@this<global::app.type.@bool.@this>> ExistsAsync();
+    public abstract Task<data.@this<global::app.type.item.@bool.@this>> ExistsAsync();
     public abstract Task<data.@this<StatInfo>> Stat();
 
     // Writes return the path itself wrapped — caller can chain or read .Exists.
@@ -91,12 +91,12 @@ public abstract partial class @this
     /// OpenAI image attachments, sealing binary payloads into JSON-only
     /// transports. Auth is bundled (single Read prompt).
     /// </summary>
-    public virtual async Task<data.@this<global::app.type.text.@this>> ReadAsBase64()
+    public virtual async Task<data.@this<global::app.type.item.text.@this>> ReadAsBase64()
     {
         var bytes = await ReadBytes();
         if (!bytes.Success || bytes.Peek().IsNull)
-            return data.@this<global::app.type.text.@this>.From(bytes);
-        return Context!.Ok<global::app.type.text.@this>(System.Convert.ToBase64String((await bytes.Value())!.Value));
+            return data.@this<global::app.type.item.text.@this>.From(bytes);
+        return Context!.Ok<global::app.type.item.text.@this>(System.Convert.ToBase64String((await bytes.Value())!.Value));
     }
 
     /// <summary>
@@ -104,13 +104,13 @@ public abstract partial class @this
     /// <c>data:&lt;mime&gt;;base64,</c>. Use sites: embedded image tags, mail
     /// attachments, any wire payload that wants self-contained binary.
     /// </summary>
-    public virtual async Task<data.@this<global::app.type.text.@this>> ReadAsDataUri()
+    public virtual async Task<data.@this<global::app.type.item.text.@this>> ReadAsDataUri()
     {
         var bytes = await ReadBytes();
         if (!bytes.Success || bytes.Peek().IsNull)
-            return data.@this<global::app.type.text.@this>.From(bytes);
+            return data.@this<global::app.type.item.text.@this>.From(bytes);
         var mime = string.IsNullOrEmpty(MimeType) ? "application/octet-stream" : MimeType;
-        return Context!.Ok<global::app.type.text.@this>($"data:{mime};base64,{System.Convert.ToBase64String((await bytes.Value())!.Value)}");
+        return Context!.Ok<global::app.type.item.text.@this>($"data:{mime};base64,{System.Convert.ToBase64String((await bytes.Value())!.Value)}");
     }
 
     /// <summary>Delete with file-action options. Non-FS schemes ignore both.</summary>

@@ -12,7 +12,7 @@ public class DataGenericTests : System.IAsyncDisposable
     [Test]
     public async Task Ok_StoresTypedValue()
     {
-        var data = global::app.data.@this<global::app.type.text.@this>.Ok("hello");
+        var data = global::app.data.@this<global::app.type.item.text.@this>.Ok("hello");
 
         await Assert.That((await data.Value())!.Clr<string>()!).IsEqualTo("hello");
         await data.IsSuccess();
@@ -31,7 +31,7 @@ public class DataGenericTests : System.IAsyncDisposable
     [Test]
     public async Task Value_ReturnsTypedValue()
     {
-        var data = global::app.data.@this<global::app.type.text.@this>.Ok("world");
+        var data = global::app.data.@this<global::app.type.item.text.@this>.Ok("world");
 
         string? typed = (await data.Value())?.Clr<string>();
 
@@ -54,7 +54,7 @@ public class DataGenericTests : System.IAsyncDisposable
     public async Task Fail_CreatesErrorResult()
     {
         var error = new ServiceError("something failed", "TestError", 500);
-        var data = global::app.data.@this<global::app.type.text.@this>.FromError(error);
+        var data = global::app.data.@this<global::app.type.item.text.@this>.FromError(error);
 
         await data.IsFailure();
         await Assert.That(data.Error).IsNotNull();
@@ -64,7 +64,7 @@ public class DataGenericTests : System.IAsyncDisposable
     [Test]
     public async Task IsAssignableToData()
     {
-        global::app.data.@this<global::app.type.text.@this> typed = global::app.data.@this<global::app.type.text.@this>.Ok("test");
+        global::app.data.@this<global::app.type.item.text.@this> typed = global::app.data.@this<global::app.type.item.text.@this>.Ok("test");
         Data untyped = typed;
 
         await untyped.IsSuccess();

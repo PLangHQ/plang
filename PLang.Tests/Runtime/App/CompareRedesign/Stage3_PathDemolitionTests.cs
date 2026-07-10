@@ -129,7 +129,7 @@ public class Stage3_PathDemolitionTests
     public async Task TextType_HasNoPath_Property()
     {
         // text stays pure content — no Path member; path lives on file/url
-        var t = typeof(global::app.type.text.@this);
+        var t = typeof(global::app.type.item.text.@this);
         await Assert.That(t.GetProperty("Path")).IsNull();
         await Assert.That(t.GetField("Path")).IsNull();
     }

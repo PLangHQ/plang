@@ -21,7 +21,7 @@ public class MockTests
     public async Task Action_SimpleReturn_CreatesHandle()
     {
         var (context, _, _) = CreateContext();
-        var action = new intercept(context) { Pattern = (global::app.type.text.@this)"file.read",
+        var action = new intercept(context) { Pattern = (global::app.type.item.text.@this)"file.read",
             Return = new global::app.data.@this("", "test content", context: context)        };
 
         var result = await action.Run();
@@ -39,7 +39,7 @@ public class MockTests
     public async Task Action_Spy_CreatesSpyHandle()
     {
         var (context, _, _) = CreateContext();
-        var action = new intercept(context) { Pattern = (global::app.type.text.@this)"output.write"
+        var action = new intercept(context) { Pattern = (global::app.type.item.text.@this)"output.write"
         };
 
         var result = await action.Run();
@@ -53,7 +53,7 @@ public class MockTests
     public async Task Action_RegistersBeforeActionEvent()
     {
         var (context, _, _) = CreateContext();
-        var action = new intercept(context) { Pattern = (global::app.type.text.@this)"file.read",
+        var action = new intercept(context) { Pattern = (global::app.type.item.text.@this)"file.read",
             Return = new global::app.data.@this("", "mocked", context: context)        };
 
         var beforeCount = context.Events.Count;
@@ -67,7 +67,7 @@ public class MockTests
     public async Task Action_EventBindingId_IsPopulated()
     {
         var (context, _, _) = CreateContext();
-        var action = new intercept(context) { Pattern = (global::app.type.text.@this)"file.read",
+        var action = new intercept(context) { Pattern = (global::app.type.item.text.@this)"file.read",
             Return = new global::app.data.@this("", "mocked", context: context)        };
 
         var result = await action.Run();
@@ -131,7 +131,7 @@ public class MockTests
 
         var verify = new Verify(context) { Mock = handle,
             ExpectedCount = (global::app.type.number.@this)1,
-            Message = (global::app.type.text.@this)"file.read should be called once"
+            Message = (global::app.type.item.text.@this)"file.read should be called once"
         };
 
         var result = await verify.Run();
@@ -149,7 +149,7 @@ public class MockTests
         var (context, _, _) = CreateContext();
 
         // Register a mock
-        var mockAction = new intercept(context) { Pattern = (global::app.type.text.@this)"file.read",
+        var mockAction = new intercept(context) { Pattern = (global::app.type.item.text.@this)"file.read",
             Return = new global::app.data.@this("", "mocked", context: context)        };
         var mockResult = await mockAction.Run();
         var handle = (global::app.mock.@this)(await mockResult.Value())!;
@@ -170,11 +170,11 @@ public class MockTests
         var (context, _, _) = CreateContext();
 
         // Register two mocks
-        var mock1 = new intercept(context) { Pattern = (global::app.type.text.@this)"file.read",
+        var mock1 = new intercept(context) { Pattern = (global::app.type.item.text.@this)"file.read",
             Return = new global::app.data.@this("", "mocked1", context: context)        };
         await mock1.Run();
 
-        var mock2 = new intercept(context) { Pattern = (global::app.type.text.@this)"output.write",
+        var mock2 = new intercept(context) { Pattern = (global::app.type.item.text.@this)"output.write",
             Return = new global::app.data.@this("", "mocked2", context: context)        };
         await mock2.Run();
 

@@ -26,7 +26,7 @@ public partial class Tag : IContext
     /// <summary>
     /// Bare-string label form. Sets <c>Tags[Label] = "true"</c>.
     /// </summary>
-    public partial global::app.data.@this<global::app.type.text.@this>? Label { get; init; }
+    public partial global::app.data.@this<global::app.type.item.text.@this>? Label { get; init; }
 
     public async Task<global::app.data.@this> Run()
     {
@@ -46,7 +46,7 @@ public partial class Tag : IContext
         }
         else if (Label != null && (await Label.Value()) is { } label && label.IsTruthy())
         {
-            target.Tag(label, Context.Ok(new global::app.type.@bool.@this(true)));
+            target.Tag(label, Context.Ok(new global::app.type.item.@bool.@this(true)));
         }
 
         return Context.Ok();

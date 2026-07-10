@@ -28,7 +28,7 @@ public partial class sign : global::app.type.item.@this, global::app.type.item.I
     /// The hash is taken in this view so it matches the wire bytes the verifier re-hashes —
     /// the serializer sets it from the view sign-if-missing fires in. Default false (Out).
     /// </summary>
-    public partial data.@this<global::app.type.@bool.@this>? StoreView { get; init; }
+    public partial data.@this<global::app.type.item.@bool.@this>? StoreView { get; init; }
 
     [Code]
     public partial ISigning Signer { get; }

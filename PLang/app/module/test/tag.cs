@@ -25,6 +25,6 @@ public partial class Tag : IContext
         // Return the current tag set (empty outside test mode) so plang tests can
         // inspect accumulated tags via %!data%.
         return Context.Ok(currentTest?.Tags
-            ?? new global::app.type.list.@this<global::app.type.text.@this>(Context));
+            ?? new global::app.type.list.@this<global::app.type.item.text.@this>(Context));
     }
 }

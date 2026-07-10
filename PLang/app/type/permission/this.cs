@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 using IWriter = global::app.channel.serializer.IWriter;
-using Text = global::app.type.text.@this;
+using Text = global::app.type.item.text.@this;
 
 namespace app.type.permission;
 

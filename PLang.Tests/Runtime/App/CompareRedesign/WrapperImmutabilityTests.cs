@@ -18,15 +18,15 @@ public class WrapperImmutabilityTests
 {
     private static readonly System.Type[] Wrappers =
     {
-        typeof(global::app.type.text.@this),
-        typeof(global::app.type.@bool.@this),
+        typeof(global::app.type.item.text.@this),
+        typeof(global::app.type.item.@bool.@this),
         typeof(global::app.type.number.@this),
         typeof(global::app.type.binary.@this),
         typeof(global::app.type.date.@this),
         typeof(global::app.type.datetime.@this),
         typeof(global::app.type.time.@this),
         typeof(global::app.type.duration.@this),
-        typeof(global::app.type.@null.@this),
+        typeof(global::app.type.item.@null.@this),
     };
 
     private static IEnumerable<(System.Type Owner, FieldInfo Field)> InstanceFields(System.Type wrapper)

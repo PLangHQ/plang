@@ -65,12 +65,12 @@ public class ModulesDescribeReturnTypeTests
         await Assert.That(row.ReturnTypeName).IsEqualTo("data");
     }
 
-    // Data<global::app.type.@bool.@this>
+    // Data<global::app.type.item.@bool.@this>
     [Test]
     public async Task ReturnTypeName_DataOfBool_IsBool()
     {
         // file.exists.Run() returns Task<Data<path>> — the path is the value;
-        // condition.compare returns Data<global::app.type.@bool.@this>. Use compare to pin "bool".
+        // condition.compare returns Data<global::app.type.item.@bool.@this>. Use compare to pin "bool".
         var row = await Find("condition", "compare");
         await Assert.That(row.ReturnTypeName).IsEqualTo("bool");
     }

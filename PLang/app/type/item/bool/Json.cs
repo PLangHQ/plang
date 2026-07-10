@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace app.type.@bool;
+namespace app.type.item.@bool;
 
 /// <summary>Plain-JSON view — bare <c>true</c>/<c>false</c>. See text/Json.cs.</summary>
 public sealed class Json : JsonConverter<@this>

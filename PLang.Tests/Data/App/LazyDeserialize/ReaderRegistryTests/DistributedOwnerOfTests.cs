@@ -41,7 +41,7 @@ public class DistributedOwnerOfTests
 
     [Test] public async Task Text_DeclaresString()
     {
-        await Assert.That(Clrs(global::app.type.text.@this.OwnedClrTypes)).Contains(typeof(string));
+        await Assert.That(Clrs(global::app.type.item.text.@this.OwnedClrTypes)).Contains(typeof(string));
     }
 
     [Test] public async Task Path_DeclaresPathSubclasses()

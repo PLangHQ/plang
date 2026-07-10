@@ -26,12 +26,12 @@ public partial class query : IContext, IBuildValidatable
         // Build-time is a sync surface — the binding answers presence, the
         // text instance its own (sync) emptiness notion via truthiness.
         if (!messages.HasValue
-            || (value is global::app.type.text.@this st && !st.IsTruthy()))
+            || (value is global::app.type.item.text.@this st && !st.IsTruthy()))
             return "Parameter 'Messages' is empty. Must be a list of {Role: string, Content: string} objects. Map system= to {\"Role\": \"system\", \"Content\": \"...\"} and user= to {\"Role\": \"user\", \"Content\": \"...\"}";
 
         if (value is not global::app.type.list.@this
             && value is not Clr { Value: System.Collections.IList }
-            && value is not global::app.type.text.@this) // text already handled above
+            && value is not global::app.type.item.text.@this) // text already handled above
             return $"Parameter 'Messages' must be a list of {{Role, Content}} objects, got {value!.Mint().Name}";
 
         return null;
@@ -68,14 +68,14 @@ public partial class query : IContext, IBuildValidatable
     public partial data.@this? Schema { get; init; }
 
     /// <summary>Response format: "json", "python", "md", etc. Non-json formats extract from code blocks.</summary>
-    public partial data.@this<global::app.type.text.@this>? Format { get; init; }
+    public partial data.@this<global::app.type.item.text.@this>? Format { get; init; }
 
     /// <summary>Model override (e.g., "gpt-4o"). Falls back to provider settings default.</summary>
-    public partial data.@this<global::app.type.text.@this>? Model { get; init; }
+    public partial data.@this<global::app.type.item.text.@this>? Model { get; init; }
 
     /// <summary>When true, prepends stored conversation history from previous queries.</summary>
     [Default(false)]
-    public partial data.@this<global::app.type.@bool.@this> ContinuePreviousConversation { get; init; }
+    public partial data.@this<global::app.type.item.@bool.@this> ContinuePreviousConversation { get; init; }
 
     /// <summary>Sampling temperature. 0.0 = deterministic.</summary>
     [Default(0.0)]
@@ -98,7 +98,7 @@ public partial class query : IContext, IBuildValidatable
 
     /// <summary>Whether to cache the response. Skipped when Tools is non-null.</summary>
     [Default(true)]
-    public partial data.@this<global::app.type.@bool.@this> Cache { get; init; }
+    public partial data.@this<global::app.type.item.@bool.@this> Cache { get; init; }
 
     [Code]
     public partial ILlm Llm { get; }
@@ -117,9 +117,9 @@ public partial class query : IContext, IBuildValidatable
     {
         var schema = __action?.Parameters?.FirstOrDefault(p =>
             string.Equals(p.Name, "Schema", System.StringComparison.OrdinalIgnoreCase))?.Peek();
-        if (schema is not (null or global::app.type.@null.@this)
-            && !(schema is global::app.type.text.@this st
-                 && (st.Clr<string>() is "" or null || global::app.type.text.@this.HasVariable(st.ToString()))))
+        if (schema is not (null or global::app.type.item.@null.@this)
+            && !(schema is global::app.type.item.text.@this st
+                 && (st.Clr<string>() is "" or null || global::app.type.item.text.@this.HasVariable(st.ToString()))))
             return Task.FromResult(Context.Ok("json"));
 
         var format = __action?.Parameters?.FirstOrDefault(p =>

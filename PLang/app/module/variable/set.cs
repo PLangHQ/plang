@@ -73,7 +73,7 @@ public partial class Set : IContext, IBuildValidatable
     /// </summary>
     public partial data.@this? Type { get; init; }
     [Default(false)]
-    public partial data.@this<global::app.type.@bool.@this> AsDefault { get; init; }
+    public partial data.@this<global::app.type.item.@bool.@this> AsDefault { get; init; }
 
     // Build-time: with no `as` clause, adopt the type of what I capture. The
     // preceding action published its return as %!buildData%; I take its type onto
@@ -93,7 +93,7 @@ public partial class Set : IContext, IBuildValidatable
 
         var source = (await Context.Variable.Get("!buildData")).Peek();
         var inferred = source as global::app.type.@this
-            ?? (source is global::app.type.text.@this t && t.ToString() is { Length: > 0 } n
+            ?? (source is global::app.type.item.text.@this t && t.ToString() is { Length: > 0 } n
                 ? global::app.type.@this.Create(n, context: Context) : null);
         if (inferred is { IsNull: false })
             __action.Parameters.Add(new data.@this("Type", inferred, context: Context));
@@ -201,7 +201,7 @@ public partial class Set : IContext, IBuildValidatable
             // face (ctor matching, magic-byte/extension sniffing) — a born-typed
             // text/binary leaf presents its backing here. Minting re-lifts, so
             // the stored value stays born-typed either way.
-            if (sourceValue is global::app.type.text.@this st) sourceValue = st.Clr<string>();
+            if (sourceValue is global::app.type.item.text.@this st) sourceValue = st.Clr<string>();
             else if (sourceValue is global::app.type.binary.@this sb) sourceValue = sb.Value;
             // The Type value reads through the `type` reader, so it materializes as the type
             // entity itself ({name, kind?, strict?} → type.@this). A bare type-name (raw string)

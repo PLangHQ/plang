@@ -612,7 +612,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// case-insensitively via its own equality). The <c>Add(item)</c> sibling for asks;
     /// returns the plang <c>@bool</c>. (TODO: the other list predicates — IsEmpty, etc. —
     /// still return CLR bool; migrate them in the "plang predicates return @bool" pass.)</summary>
-    public async System.Threading.Tasks.ValueTask<global::app.type.@bool.@this> Contains(global::app.type.item.@this value)
+    public async System.Threading.Tasks.ValueTask<global::app.type.item.@bool.@this> Contains(global::app.type.item.@this value)
         => await Contains(new Data("", value, context: _context));
 
     /// <summary>The item emptiness hook — no entries.</summary>

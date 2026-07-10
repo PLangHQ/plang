@@ -1,8 +1,8 @@
 using System.Text.Json;
-using TextV = global::app.type.text.@this;
+using TextV = global::app.type.item.text.@this;
 using NumberV = global::app.type.number.@this;
-using BoolV = global::app.type.@bool.@this;
-using NullV = global::app.type.@null.@this;
+using BoolV = global::app.type.item.@bool.@this;
+using NullV = global::app.type.item.@null.@this;
 
 namespace PLang.Tests.App.ScalarsAsNative;
 

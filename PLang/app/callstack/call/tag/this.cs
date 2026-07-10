@@ -26,7 +26,7 @@ public sealed class @this : IDictionary<string, Data>, IReadOnlyDictionary<strin
     /// The write surface is plang-typed (<c>text</c> key, <c>data</c> value) so
     /// callers never lower to feed it; the key lowers to the string-backed map
     /// ONCE here at the leaf (the backing stays string-keyed for the navigator).</summary>
-    public void Set(global::app.type.text.@this key, Data value)
+    public void Set(global::app.type.item.text.@this key, Data value)
     {
         lock (_lock) _entries[key.Clr<string>()!] = value;
     }

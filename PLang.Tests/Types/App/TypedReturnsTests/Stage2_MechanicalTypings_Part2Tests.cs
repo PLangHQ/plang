@@ -71,20 +71,20 @@ public class Stage2_MechanicalTypings_Part2Tests
         await Assert.That(typeof(global::app.type.catalog.view.@this).Namespace).IsEqualTo("app.type.catalog.view");
     }
 
-    // test.tag is bare Task<Data> or Task<Data<global::app.type.@bool.@this>>; the meaningful negative
+    // test.tag is bare Task<Data> or Task<Data<global::app.type.item.@bool.@this>>; the meaningful negative
     // guard is that it never degrades to Task<Data<object>>.
     [Test]
     public async Task TestTag_Run_ReturnsTaskDataOfBool_OrStaysVoidLike()
     {
         var ret = RunReturnType<global::app.module.test.Tag>();
         var bareData = typeof(Task<Data>);
-        var dataOfBool = typeof(Task<global::app.data.@this<global::app.type.@bool.@this>>);
+        var dataOfBool = typeof(Task<global::app.data.@this<global::app.type.item.@bool.@this>>);
 
         // `Data<object>` is no longer expressible — `where T : item` rejects `object`, so a
         // handler can never degrade to Task<Data<object>>. The bare-or-bool check is the
         // surviving observable guarantee.
         await Assert.That(ret == bareData || ret == dataOfBool).IsTrue()
-            .Because("test.tag must be bare Task<Data> or Task<Data<global::app.type.@bool.@this>>.");
+            .Because("test.tag must be bare Task<Data> or Task<Data<global::app.type.item.@bool.@this>>.");
     }
 
     [Test]

@@ -183,9 +183,9 @@ public sealed partial class @this : global::app.type.path.@this
         return data.@this<global::app.type.binary.@this>.From(await Send(HttpMethod.Get, content: null, readBody: true, verb, asBytes: true));
     }
 
-    public override async Task<data.@this<global::app.type.@bool.@this>> ExistsAsync()
+    public override async Task<data.@this<global::app.type.item.@bool.@this>> ExistsAsync()
     {
-        if (await AuthGate(Verb.Read) is { } early) return data.@this<global::app.type.@bool.@this>.From(early);
+        if (await AuthGate(Verb.Read) is { } early) return data.@this<global::app.type.item.@bool.@this>.From(early);
         try
         {
             using var req = new HttpRequestMessage(HttpMethod.Head, _uri);
@@ -193,14 +193,14 @@ public sealed partial class @this : global::app.type.path.@this
             using var resp = await _client.SendAsync(req);
             // Exists answers a question — 2xx → true, 4xx → false, both Success.
             if ((int)resp.StatusCode >= 200 && (int)resp.StatusCode < 300)
-                return Context!.Ok<global::app.type.@bool.@this>(true);
+                return Context!.Ok<global::app.type.item.@bool.@this>(true);
             if ((int)resp.StatusCode >= 400 && (int)resp.StatusCode < 500)
-                return Context!.Ok<global::app.type.@bool.@this>(false);
-            return Context!.Error<global::app.type.@bool.@this>(MapStatus(resp.StatusCode));
+                return Context!.Ok<global::app.type.item.@bool.@this>(false);
+            return Context!.Error<global::app.type.item.@bool.@this>(MapStatus(resp.StatusCode));
         }
         catch (System.Exception ex) when (IsNetworkError(ex))
         {
-            return Context!.Error<global::app.type.@bool.@this>(NetworkError(ex));
+            return Context!.Error<global::app.type.item.@bool.@this>(NetworkError(ex));
         }
     }
 

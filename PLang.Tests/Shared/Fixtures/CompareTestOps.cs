@@ -18,8 +18,8 @@ public static class CompareTestOps
     /// <summary>Data-level order with the sort policy: nulls last.</summary>
     public static int OrdD(Data a, Data b)
     {
-        var va = a.Peek() is global::app.type.@null.@this ? null : a.Peek();
-        var vb = b.Peek() is global::app.type.@null.@this ? null : b.Peek();
+        var va = a.Peek() is global::app.type.item.@null.@this ? null : a.Peek();
+        var vb = b.Peek() is global::app.type.item.@null.@this ? null : b.Peek();
         if (va == null && vb == null) return 0;
         if (va == null) return 1;
         if (vb == null) return -1;

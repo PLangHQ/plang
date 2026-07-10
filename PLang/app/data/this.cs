@@ -31,7 +31,7 @@ public partial class @this
     // value (raw source form, descriptor, lazy factory) lives ON the instance:
     // a file holds its own bytes, a source its declared {type, kind}, a
     // computed its factory.
-    private protected global::app.type.item.@this _item = global::app.type.@null.@this.Instance;
+    private protected global::app.type.item.@this _item = global::app.type.item.@null.@this.Instance;
     private protected actor.context.@this _context = null!;
 
     /// <summary>
@@ -251,7 +251,7 @@ public partial class @this
         actor.context.@this? context = null)
     {
         Name = CleanName(name);
-        _item = instance ?? global::app.type.@null.@this.Instance;
+        _item = instance ?? global::app.type.item.@null.@this.Instance;
         Parent = parent;
         Path = BuildPath(parent, Name);
         IsInitialized = true;
@@ -338,7 +338,7 @@ public partial class @this
     /// final-form value). ToString, Equals and debug views read here; they
     /// never load. A consumer that needs raw CLR is a .NET edge → Clr.
     /// </summary>
-    public virtual global::app.type.item.@this Peek() => _item ?? global::app.type.@null.@this.Instance;
+    public virtual global::app.type.item.@this Peek() => _item ?? global::app.type.item.@null.@this.Instance;
 
     /// <summary>
     /// Construct a source-backed (lazy) Data — the value is a
@@ -455,17 +455,17 @@ public partial class @this
     /// concern): initialized and holding neither absence citizen. Distinct
     /// from emptiness ("" and false are present) and truthiness.</summary>
     public bool HasValue => IsInitialized
-        && _item is not global::app.type.@null.@this;
+        && _item is not global::app.type.item.@null.@this;
 
     // The null *value* — a present null carrying the null.@this singleton, so
     // IsInitialized is true (distinct from NotFound/Uninitialized, which leave a
     // null `data` reference with IsInitialized false). The singleton hosts null's
     // behavior (always falsy, null==null) so `is null` value-switches dissolve.
-    public static @this Null(string name = "") => new(name, app.type.@null.@this.Instance);
+    public static @this Null(string name = "") => new(name, app.type.item.@null.@this.Instance);
     public static @this NotFound(string name = "")
     {
         var d = new @this(name);
-        d._item = global::app.type.@null.@this.Instance;
+        d._item = global::app.type.item.@null.@this.Instance;
         d.IsInitialized = false;
         return d;
     }

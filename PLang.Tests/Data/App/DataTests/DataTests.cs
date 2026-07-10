@@ -384,7 +384,7 @@ public class DataTests : System.IAsyncDisposable
         await Assert.That(ov.Name).IsEqualTo("test");
         // Born-native: a present null value carries the null.@this singleton
         // (not a C# null _value). IsInitialized stays true — value, not absence.
-        await Assert.That(ReferenceEquals((ov.Peek()), app.type.@null.@this.Instance)).IsTrue();
+        await Assert.That(ReferenceEquals((ov.Peek()), app.type.item.@null.@this.Instance)).IsTrue();
         await Assert.That(ov.IsInitialized).IsTrue();
     }
 
@@ -404,7 +404,7 @@ public class DataTests : System.IAsyncDisposable
         var ov = _app.Null();
 
         await Assert.That(ov.Name).IsEqualTo("");
-        await Assert.That(ReferenceEquals((ov.Peek()), app.type.@null.@this.Instance)).IsTrue();
+        await Assert.That(ReferenceEquals((ov.Peek()), app.type.item.@null.@this.Instance)).IsTrue();
     }
 
     [Test]
@@ -1008,14 +1008,14 @@ public class DynamicDataTests : System.IAsyncDisposable
     [Test]
     public async Task IsVariable_StandardVariable_ReturnsTrue()
     {
-        var d = new Data("x", new global::app.type.text.@this("%var%", "plang"));
+        var d = new Data("x", new global::app.type.item.text.@this("%var%", "plang"));
         await Assert.That(d.IsVariable).IsTrue();
     }
 
     [Test]
     public async Task IsVariable_ShortName_ReturnsTrue()
     {
-        var d = new Data("x", new global::app.type.text.@this("%v%", "plang"));
+        var d = new Data("x", new global::app.type.item.text.@this("%v%", "plang"));
         await Assert.That(d.IsVariable).IsTrue();
     }
 
@@ -1059,21 +1059,21 @@ public class DynamicDataTests : System.IAsyncDisposable
     [Test]
     public async Task HasVariableReference_EmbeddedVariable_ReturnsTrue()
     {
-        var d = new Data("x", new global::app.type.text.@this("hello %name%", "plang"));
+        var d = new Data("x", new global::app.type.item.text.@this("hello %name%", "plang"));
         await Assert.That(d.HasVariableReference).IsTrue();
     }
 
     [Test]
     public async Task HasVariableReference_MultipleVariables_ReturnsTrue()
     {
-        var d = new Data("x", new global::app.type.text.@this("%a% + %b%", "plang"));
+        var d = new Data("x", new global::app.type.item.text.@this("%a% + %b%", "plang"));
         await Assert.That(d.HasVariableReference).IsTrue();
     }
 
     [Test]
     public async Task HasVariableReference_SingleVariable_ReturnsTrue()
     {
-        var d = new Data("x", new global::app.type.text.@this("%var%", "plang"));
+        var d = new Data("x", new global::app.type.item.text.@this("%var%", "plang"));
         await Assert.That(d.HasVariableReference).IsTrue();
     }
 

@@ -1,6 +1,6 @@
 using app.error;
 using ActionEntity = app.goal.steps.step.actions.action.@this;
-using @bool = global::app.type.@bool.@this;
+using @bool = global::app.type.item.@bool.@this;
 using number = global::app.type.number.@this;
 
 namespace app.callstack;

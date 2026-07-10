@@ -28,7 +28,7 @@ public sealed class Default : IHttp
     public string? Source { get; set; }
 
     private readonly HttpMessageHandler? _handler;
-    private readonly Dictionary<(global::app.type.@bool.@this follow, global::app.type.number.@this max), HttpClient> _clients = new();
+    private readonly Dictionary<(global::app.type.item.@bool.@this follow, global::app.type.number.@this max), HttpClient> _clients = new();
 
     public Default() { }
 
@@ -312,19 +312,19 @@ public sealed class Default : IHttp
     /// over <see cref="ReadLimitedBytesAsync"/> — size-cap / slow-loris logic
     /// lives in one place.
     /// </summary>
-    private static async Task<data.@this<global::app.type.text.@this>> ReadLimitedStringAsync(
+    private static async Task<data.@this<global::app.type.item.text.@this>> ReadLimitedStringAsync(
         HttpContent content, long maxBytes, actor.context.@this context, CancellationToken ct = default)
     {
         var bytes = await ReadLimitedBytesAsync(content, maxBytes, context, ct);
-        if (!bytes.Success) return context.Error<global::app.type.text.@this>(bytes.Error!);
-        return context.Ok<global::app.type.text.@this>(Encoding.UTF8.GetString((await bytes.Value())!.Clr<byte[]>()!));
+        if (!bytes.Success) return context.Error<global::app.type.item.text.@this>(bytes.Error!);
+        return context.Ok<global::app.type.item.text.@this>(Encoding.UTF8.GetString((await bytes.Value())!.Clr<byte[]>()!));
     }
 
     // --- Internal HTTP transport ---
 
     private Task<HttpResponseMessage> SendHttpAsync(
         HttpRequestMessage request, HttpCompletionOption completionOption,
-        global::app.type.@bool.@this followRedirects, global::app.type.number.@this maxRedirects, CancellationToken ct)
+        global::app.type.item.@bool.@this followRedirects, global::app.type.number.@this maxRedirects, CancellationToken ct)
         => Client(followRedirects, maxRedirects).SendAsync(request, completionOption, ct);
 
     public void Dispose()
@@ -337,7 +337,7 @@ public sealed class Default : IHttp
     // key (both value-equal). Redirect policy is baked into the handler at construction, so a client
     // is reused across requests with the same policy (socket reuse / pooling) while each request
     // still picks its own. The only lowering to CLR is at the SocketsHttpHandler (BCL) boundary.
-    private HttpClient Client(global::app.type.@bool.@this followRedirects, global::app.type.number.@this maxRedirects)
+    private HttpClient Client(global::app.type.item.@bool.@this followRedirects, global::app.type.number.@this maxRedirects)
     {
         var key = (followRedirects, maxRedirects);
         if (!_clients.TryGetValue(key, out var client))
@@ -400,17 +400,17 @@ public sealed class Default : IHttp
 
     // --- URL resolution ---
 
-    private static data.@this<global::app.type.text.@this> ResolveUrl(string url, string? baseUrl, actor.context.@this context)
+    private static data.@this<global::app.type.item.text.@this> ResolveUrl(string url, string? baseUrl, actor.context.@this context)
     {
         if (url.StartsWith('/'))
         {
             if (string.IsNullOrEmpty(baseUrl))
-                return context.Error<global::app.type.text.@this>(new ServiceError(
+                return context.Error<global::app.type.item.text.@this>(new ServiceError(
                     "Relative URL requires a BaseUrl configuration. Use 'configure http, base url https://...'",
                     "NoBaseUrl", 400));
 
             baseUrl = baseUrl.TrimEnd('/');
-            return context.Ok<global::app.type.text.@this>(baseUrl + url);
+            return context.Ok<global::app.type.item.text.@this>(baseUrl + url);
         }
 
         if (!url.Contains("://"))
@@ -420,12 +420,12 @@ public sealed class Default : IHttp
         if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
         {
             if (uri.Scheme != "http" && uri.Scheme != "https")
-                return context.Error<global::app.type.text.@this>(new ServiceError(
+                return context.Error<global::app.type.item.text.@this>(new ServiceError(
                     $"Only http:// and https:// URLs are allowed, got {uri.Scheme}://",
                     "InvalidUrlScheme", 400));
         }
 
-        return context.Ok<global::app.type.text.@this>(url);
+        return context.Ok<global::app.type.item.text.@this>(url);
     }
 
     // --- Response parsing ---
@@ -952,7 +952,7 @@ public sealed class Default : IHttp
                 ContentAs.Base64 => (CreateBase64Content(content!.ToString()!), (global::app.error.IError?)null),
                 ContentAs.Form => await CreateFormContentAsync(app, context, content!),
                 ContentAs.Text => (new StringContent(
-                    content is global::app.type.text.@this ? content.ToString()! : JsonSerializer.Serialize(global::app.type.item.@this.Lower<object>(content)),
+                    content is global::app.type.item.text.@this ? content.ToString()! : JsonSerializer.Serialize(global::app.type.item.@this.Lower<object>(content)),
                     Encoding.GetEncoding(encoding)), (global::app.error.IError?)null),
                 _ => (new StringContent(content!.ToString()!, Encoding.GetEncoding(encoding)), (global::app.error.IError?)null)
             };
@@ -965,7 +965,7 @@ public sealed class Default : IHttp
             return await CreateFormContentAsync(app, context, content);
         }
 
-        if (content is global::app.type.text.@this)
+        if (content is global::app.type.item.text.@this)
         {
             var str = content.ToString()!;
             // Try as file path — gated through path.ExistsAsync (AuthGate(Read)).

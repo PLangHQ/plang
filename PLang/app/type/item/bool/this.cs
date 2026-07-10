@@ -1,4 +1,4 @@
-namespace app.type.@bool;
+namespace app.type.item.@bool;
 
 /// <summary>
 /// PLang <c>bool</c> value — the truthiness primitive, backed by a raw CLR

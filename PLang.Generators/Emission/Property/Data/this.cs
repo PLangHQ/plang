@@ -53,7 +53,7 @@ public sealed record @this(
     {
         get
         {
-            const string ChoicePrefix = "global::app.type.choice.@this<";
+            const string ChoicePrefix = "global::app.type.item.choice.@this<";
             return (InnerType != null && InnerType.StartsWith(ChoicePrefix, System.StringComparison.Ordinal))
                 ? $"({InnerType.Substring(ChoicePrefix.Length, InnerType.Length - ChoicePrefix.Length - 1)})({DefaultValue})"
                 : $"{DefaultValue}";
@@ -87,9 +87,9 @@ public sealed record @this(
         get
         {
             if (IsPlainData || IsName) return IsName ? "string" : "object";
-            if (InnerType == "global::app.type.text.@this") return "string";
-            if (InnerType == "global::app.type.@bool.@this") return "bool";
-            const string cp = "global::app.type.choice.@this<";
+            if (InnerType == "global::app.type.item.text.@this") return "string";
+            if (InnerType == "global::app.type.item.@bool.@this") return "bool";
+            const string cp = "global::app.type.item.choice.@this<";
             if (InnerType != null && InnerType.StartsWith(cp, System.StringComparison.Ordinal))
                 return InnerType.Substring(cp.Length, InnerType.Length - cp.Length - 1);
             return "object";
@@ -168,7 +168,7 @@ public sealed record @this(
         sb.AppendLine($"        if (!{Local}.Success) return (null, __PrefixActionContext({Local}.Error!, action));");
         // [Default] also fires when the step value resolves to null (`mime: %unsetVar%`).
         if (DefaultValue != null)
-            sb.AppendLine($"        else if ({Local}.Peek() is global::app.type.@null.@this) {Local} = new global::app.data.@this(\"{ParamName}\", {DefaultRaw}, context: context).As<{InnerType}>();");
+            sb.AppendLine($"        else if ({Local}.Peek() is global::app.type.item.@null.@this) {Local} = new global::app.data.@this(\"{ParamName}\", {DefaultRaw}, context: context).As<{InnerType}>();");
     }
 
     public override void EmitSnapshotEntry(StringBuilder sb)

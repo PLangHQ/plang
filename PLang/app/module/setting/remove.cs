@@ -9,7 +9,7 @@ namespace app.module.setting;
 [Action("remove", Cacheable = false)]
 public partial class Remove : IContext
 {
-    public partial data.@this<global::app.type.text.@this> Key { get; init; }
+    public partial data.@this<global::app.type.item.text.@this> Key { get; init; }
 
     public async Task<data.@this<type.setting>> Run()
     {

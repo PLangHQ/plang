@@ -63,7 +63,7 @@ public class IdentityErrorPathTests
     public async Task GetOrCreateDefault_PromoteSaveFails_ReturnsError()
     {
         // Create a non-default, non-archived identity first (using real DataSource)
-        var create = new Create(Ctx) { Name = (global::app.type.text.@this)"candidate", SetAsDefault = (global::app.type.@bool.@this)false };
+        var create = new Create(Ctx) { Name = (global::app.type.item.text.@this)"candidate", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await create.Attach(null, Ctx);
         var createResult = await create.Run();
         await createResult.IsSuccess();
@@ -125,7 +125,7 @@ public class IdentityErrorPathTests
         var data = await _app.User.Context.Variable.Get("MyIdentity");
         await Assert.That(data).IsNotNull();
         var v = await data!.Value();
-        await Assert.That(v is null or global::app.type.@null.@this).IsTrue();
+        await Assert.That(v is null or global::app.type.item.@null.@this).IsTrue();
     }
 
     // --- Handler save/remove failure paths ---
@@ -134,7 +134,7 @@ public class IdentityErrorPathTests
     public async Task Create_ClearDefaultSaveFails_ReturnsError()
     {
         // Create an existing default identity
-        var h = new Create(Ctx) { Name = (global::app.type.text.@this)"existing", SetAsDefault = (global::app.type.@bool.@this)true };
+        var h = new Create(Ctx) { Name = (global::app.type.item.text.@this)"existing", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await h.Attach(null, Ctx);
         await h.Run();
 
@@ -142,7 +142,7 @@ public class IdentityErrorPathTests
         SwapDataSource(_app, new FailingSaveDataSource(
             await _app.SettingsStore));
 
-        var handler = new Create(Ctx) { Name = (global::app.type.text.@this)"new", SetAsDefault = (global::app.type.@bool.@this)true };
+        var handler = new Create(Ctx) { Name = (global::app.type.item.text.@this)"new", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await handler.Attach(null, Ctx);
         var result = await handler.Run();
 
@@ -158,7 +158,7 @@ public class IdentityErrorPathTests
         SwapDataSource(_app, new FailingSaveDataSource(
             await _app.SettingsStore));
 
-        var handler = new Create(Ctx) { Name = (global::app.type.text.@this)"newid", SetAsDefault = (global::app.type.@bool.@this)false };
+        var handler = new Create(Ctx) { Name = (global::app.type.item.text.@this)"newid", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await handler.Attach(null, Ctx);
         var result = await handler.Run();
 
@@ -171,10 +171,10 @@ public class IdentityErrorPathTests
     public async Task SetDefault_ClearOldDefaultSaveFails_ReturnsError()
     {
         // Create two identities: one default, one not
-        var h1 = new Create(Ctx) { Name = (global::app.type.text.@this)"old", SetAsDefault = (global::app.type.@bool.@this)true };
+        var h1 = new Create(Ctx) { Name = (global::app.type.item.text.@this)"old", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await h1.Attach(null, Ctx);
         await h1.Run();
-        var h2 = new Create(Ctx) { Name = (global::app.type.text.@this)"new", SetAsDefault = (global::app.type.@bool.@this)false };
+        var h2 = new Create(Ctx) { Name = (global::app.type.item.text.@this)"new", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await h2.Attach(null, Ctx);
         await h2.Run();
 
@@ -182,7 +182,7 @@ public class IdentityErrorPathTests
         SwapDataSource(_app, new FailingSaveDataSource(
             await _app.SettingsStore));
 
-        var handler = new SetDefault(Ctx) { Name = (global::app.type.text.@this)"new" };
+        var handler = new SetDefault(Ctx) { Name = (global::app.type.item.text.@this)"new" };
         await handler.Attach(null, Ctx);
         var result = await handler.Run();
 
@@ -195,7 +195,7 @@ public class IdentityErrorPathTests
     public async Task SetDefault_SaveNewDefaultFails_ReturnsError()
     {
         // Create a single non-default identity (no existing defaults to clear)
-        var h = new Create(Ctx) { Name = (global::app.type.text.@this)"target", SetAsDefault = (global::app.type.@bool.@this)false };
+        var h = new Create(Ctx) { Name = (global::app.type.item.text.@this)"target", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await h.Attach(null, Ctx);
         await h.Run();
 
@@ -203,7 +203,7 @@ public class IdentityErrorPathTests
         SwapDataSource(_app, new FailingSaveDataSource(
             await _app.SettingsStore));
 
-        var handler = new SetDefault(Ctx) { Name = (global::app.type.text.@this)"target" };
+        var handler = new SetDefault(Ctx) { Name = (global::app.type.item.text.@this)"target" };
         await handler.Attach(null, Ctx);
         var result = await handler.Run();
 
@@ -215,7 +215,7 @@ public class IdentityErrorPathTests
     [Test]
     public async Task Rename_SaveNewNameFails_ReturnsError()
     {
-        var h = new Create(Ctx) { Name = (global::app.type.text.@this)"oldname", SetAsDefault = (global::app.type.@bool.@this)false };
+        var h = new Create(Ctx) { Name = (global::app.type.item.text.@this)"oldname", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await h.Attach(null, Ctx);
         await h.Run();
 
@@ -223,7 +223,7 @@ public class IdentityErrorPathTests
         SwapDataSource(_app, new FailingSaveDataSource(
             await _app.SettingsStore));
 
-        var handler = new Rename(Ctx) { Name = (global::app.type.text.@this)"oldname", NewName = (global::app.type.text.@this)"newname" };
+        var handler = new Rename(Ctx) { Name = (global::app.type.item.text.@this)"oldname", NewName = (global::app.type.item.text.@this)"newname" };
         await handler.Attach(null, Ctx);
         var result = await handler.Run();
 
@@ -235,7 +235,7 @@ public class IdentityErrorPathTests
     [Test]
     public async Task Rename_RemoveOldNameFails_ReturnsError()
     {
-        var h = new Create(Ctx) { Name = (global::app.type.text.@this)"oldname", SetAsDefault = (global::app.type.@bool.@this)false };
+        var h = new Create(Ctx) { Name = (global::app.type.item.text.@this)"oldname", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await h.Attach(null, Ctx);
         await h.Run();
 
@@ -243,7 +243,7 @@ public class IdentityErrorPathTests
         SwapDataSource(_app, new FailingRemoveDataSource(
             await _app.SettingsStore));
 
-        var handler = new Rename(Ctx) { Name = (global::app.type.text.@this)"oldname", NewName = (global::app.type.text.@this)"newname" };
+        var handler = new Rename(Ctx) { Name = (global::app.type.item.text.@this)"oldname", NewName = (global::app.type.item.text.@this)"newname" };
         await handler.Attach(null, Ctx);
         var result = await handler.Run();
 
@@ -255,7 +255,7 @@ public class IdentityErrorPathTests
     [Test]
     public async Task Archive_SaveFails_ReturnsError()
     {
-        var h = new Create(Ctx) { Name = (global::app.type.text.@this)"toarchive", SetAsDefault = (global::app.type.@bool.@this)false };
+        var h = new Create(Ctx) { Name = (global::app.type.item.text.@this)"toarchive", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await h.Attach(null, Ctx);
         await h.Run();
 
@@ -263,7 +263,7 @@ public class IdentityErrorPathTests
         SwapDataSource(_app, new FailingSaveDataSource(
             await _app.SettingsStore));
 
-        var handler = new Archive(Ctx) { Name = (global::app.type.text.@this)"toarchive" };
+        var handler = new Archive(Ctx) { Name = (global::app.type.item.text.@this)"toarchive" };
         await handler.Attach(null, Ctx);
         var result = await handler.Run();
 
@@ -276,10 +276,10 @@ public class IdentityErrorPathTests
     public async Task Unarchive_SaveFails_ReturnsError()
     {
         // Create and archive an identity
-        var h = new Create(Ctx) { Name = (global::app.type.text.@this)"tounarchive", SetAsDefault = (global::app.type.@bool.@this)false };
+        var h = new Create(Ctx) { Name = (global::app.type.item.text.@this)"tounarchive", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await h.Attach(null, Ctx);
         await h.Run();
-        var archiveH = new Archive(Ctx) { Name = (global::app.type.text.@this)"tounarchive" };
+        var archiveH = new Archive(Ctx) { Name = (global::app.type.item.text.@this)"tounarchive" };
         await archiveH.Attach(null, Ctx);
         await archiveH.Run();
 
@@ -287,7 +287,7 @@ public class IdentityErrorPathTests
         SwapDataSource(_app, new FailingSaveDataSource(
             await _app.SettingsStore));
 
-        var handler = new Unarchive(Ctx) { Name = (global::app.type.text.@this)"tounarchive" };
+        var handler = new Unarchive(Ctx) { Name = (global::app.type.item.text.@this)"tounarchive" };
         await handler.Attach(null, Ctx);
         var result = await handler.Run();
 
@@ -336,7 +336,7 @@ public class IdentityErrorPathTests
         var ds = await _app.SettingsStore;
 
         // Store a valid identity via Create action
-        var create = new Create(Ctx) { Name = (global::app.type.text.@this)"valid", SetAsDefault = (global::app.type.@bool.@this)true };
+        var create = new Create(Ctx) { Name = (global::app.type.item.text.@this)"valid", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await create.Attach(null, Ctx);
         await create.Run();
 
@@ -383,7 +383,7 @@ public class IdentityErrorPathTests
                 new SettingsError("Simulated save failure", "IOError", 500)
                 { TableName = table, KeyName = key }));
         public Task<Data> Remove(string table, string key) => _inner.Remove(table, key);
-        public Task<global::app.data.@this<global::app.type.@bool.@this>> Exists(string table, string key) => _inner.Exists(table, key);
+        public Task<global::app.data.@this<global::app.type.item.@bool.@this>> Exists(string table, string key) => _inner.Exists(table, key);
         public Task<global::app.data.@this<global::app.type.list.@this>> Tables() => _inner.Tables();
         public void Dispose() { }
     }
@@ -403,7 +403,7 @@ public class IdentityErrorPathTests
             => Task.FromResult(Data.FromError(
                 new SettingsError("Simulated remove failure", "IOError", 500)
                 { TableName = table, KeyName = key }));
-        public Task<global::app.data.@this<global::app.type.@bool.@this>> Exists(string table, string key) => _inner.Exists(table, key);
+        public Task<global::app.data.@this<global::app.type.item.@bool.@this>> Exists(string table, string key) => _inner.Exists(table, key);
         public Task<global::app.data.@this<global::app.type.list.@this>> Tables() => _inner.Tables();
         public void Dispose() { }
     }
@@ -425,8 +425,8 @@ public class IdentityErrorPathTests
             => Task.FromResult(Data.FromError(new SettingsError("Simulated failure")));
         public Task<Data> Remove(string table, string key)
             => Task.FromResult(Data.FromError(new SettingsError("Simulated failure")));
-        public Task<global::app.data.@this<global::app.type.@bool.@this>> Exists(string table, string key)
-            => Task.FromResult(global::app.data.@this<global::app.type.@bool.@this>.FromError(new SettingsError("Simulated failure")));
+        public Task<global::app.data.@this<global::app.type.item.@bool.@this>> Exists(string table, string key)
+            => Task.FromResult(global::app.data.@this<global::app.type.item.@bool.@this>.FromError(new SettingsError("Simulated failure")));
         public Task<global::app.data.@this<global::app.type.list.@this>> Tables()
             => Task.FromResult(global::app.data.@this<global::app.type.list.@this>.FromError(new SettingsError("Simulated failure")));
         public void Dispose() { }

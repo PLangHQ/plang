@@ -119,7 +119,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     {
         var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
 
-        var result = (await serializer.Deserialize<global::app.type.text.@this>("\"hello\"").Value())!;
+        var result = (await serializer.Deserialize<global::app.type.item.text.@this>("\"hello\"").Value())!;
 
         await Assert.That(result.ToString()).IsEqualTo("hello");
     }
@@ -139,8 +139,8 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     {
         var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
 
-        var resultTrue = (await serializer.Deserialize<global::app.type.@bool.@this>("true").Value())!;
-        var resultFalse = (await serializer.Deserialize<global::app.type.@bool.@this>("false").Value())!;
+        var resultTrue = (await serializer.Deserialize<global::app.type.item.@bool.@this>("true").Value())!;
+        var resultFalse = (await serializer.Deserialize<global::app.type.item.@bool.@this>("false").Value())!;
 
         await Assert.That(resultTrue.Value).IsTrue();
         await Assert.That(resultFalse.Value).IsFalse();
@@ -151,7 +151,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     {
         var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
 
-        var result = (await serializer.Deserialize<global::app.type.text.@this>("null").Value())!;
+        var result = (await serializer.Deserialize<global::app.type.item.text.@this>("null").Value())!;
 
         await Assert.That(result).IsNull();
     }
@@ -161,7 +161,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     {
         var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
 
-        var result = (await serializer.Deserialize<global::app.type.text.@this>("").Value())!;
+        var result = (await serializer.Deserialize<global::app.type.item.text.@this>("").Value())!;
 
         await Assert.That(result).IsNull();
     }

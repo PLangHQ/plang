@@ -10,7 +10,7 @@ public class StringWithDefaultTests
     {
         await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<StringWithDefault>(app);
-        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.text.@this>;
         await Assert.That((await typed!.Value())?.Clr<string>()).IsEqualTo("hello");
     }
 
@@ -20,7 +20,7 @@ public class StringWithDefaultTests
         await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<StringWithDefault>(app,
             parameters: new[] { ("greeting", (object?)"world") });
-        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.text.@this>;
         await Assert.That((await typed!.Value())?.Clr<string>()).IsEqualTo("world");
     }
 }
@@ -54,7 +54,7 @@ public class EnumWithDefaultTests
     {
         await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<EnumWithDefault>(app);
-        var typed = result.Data as global::app.data.@this<global::app.type.choice.@this<MatrixEnum>>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.choice.@this<MatrixEnum>>;
         await Assert.That((await typed!.Value())).IsEqualTo(MatrixEnum.A);
     }
 
@@ -64,7 +64,7 @@ public class EnumWithDefaultTests
         await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<EnumWithDefault>(app,
             parameters: new[] { ("choice", (object?)"B") });
-        var typed = result.Data as global::app.data.@this<global::app.type.choice.@this<MatrixEnum>>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.choice.@this<MatrixEnum>>;
         await Assert.That((await typed!.Value())).IsEqualTo(MatrixEnum.B);
     }
 }
@@ -76,7 +76,7 @@ public class BoolWithDefaultTests
     {
         await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<BoolWithDefault>(app);
-        var typed = result.Data as global::app.data.@this<global::app.type.@bool.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.@bool.@this>;
         await Assert.That((await typed!.Value()).Value).IsFalse();
     }
 
@@ -86,7 +86,7 @@ public class BoolWithDefaultTests
         await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<BoolWithDefault>(app,
             parameters: new[] { ("flag", (object?)"true") });
-        var typed = result.Data as global::app.data.@this<global::app.type.@bool.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.@bool.@this>;
         await Assert.That((await typed!.Value()).Value).IsTrue();
     }
 }

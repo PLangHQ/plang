@@ -79,7 +79,7 @@ public sealed partial class @this
         // context, never a global CurrentActor pointer.
         var stack = context.CallStack;
         var priorDiff = stack.Diff;
-        stack.Diff = global::app.type.@bool.@this.True;
+        stack.Diff = global::app.type.item.@bool.@this.True;
         stack.EnableDiffStream(context.Variable);
 
         return new Restorer(_current, previous, stack, priorDiff);
@@ -90,11 +90,11 @@ public sealed partial class @this
         private readonly AsyncLocal<IError?> _slot;
         private readonly IError? _previous;
         private readonly app.callstack.@this? _stack;
-        private readonly global::app.type.@bool.@this? _priorDiff;
+        private readonly global::app.type.item.@bool.@this? _priorDiff;
         private bool _disposed;
 
         public Restorer(AsyncLocal<IError?> slot, IError? previous,
-                        app.callstack.@this? stack, global::app.type.@bool.@this? priorDiff)
+                        app.callstack.@this? stack, global::app.type.item.@bool.@this? priorDiff)
         {
             _slot = slot;
             _previous = previous;

@@ -94,7 +94,7 @@ public class Stage2_ValueDoorTests : System.IAsyncDisposable
         // text.@this has no PUBLIC `string Value` property — the string face
         // is internal (gated interop for in-assembly leaf handlers); outside
         // the engine it is emitted only through text.Write(IWriter).
-        var prop = typeof(global::app.type.text.@this).GetProperty("Value",
+        var prop = typeof(global::app.type.item.text.@this).GetProperty("Value",
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
         await Assert.That(prop).IsNull();
     }
@@ -127,8 +127,8 @@ public class Stage2_ValueDoorTests : System.IAsyncDisposable
         // A %ref% value rides as a typed `text` (never a bare System.String); the
         // authored seam stamps the %hole% as a template (Template="plang"), which
         // is what marks it a variable reference.
-        var d = new Data("slot", new global::app.type.text.@this("%x%", "plang"), context: global::PLang.Tests.TestApp.SharedContext);
-        await Assert.That(d.Peek() is global::app.type.text.@this).IsTrue();
+        var d = new Data("slot", new global::app.type.item.text.@this("%x%", "plang"), context: global::PLang.Tests.TestApp.SharedContext);
+        await Assert.That(d.Peek() is global::app.type.item.text.@this).IsTrue();
         await Assert.That(d.IsVariable).IsTrue();
     }
 

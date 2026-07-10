@@ -42,7 +42,7 @@ public class RenderTests : IDisposable
     {
         var context = _app.User.Context;
         context.Variable.Set(new Data("name", "World", context: context));
-        var action = new Render(context) { Template = (global::app.type.text.@this)"Hello {{ name }}", IsFile = (global::app.type.@bool.@this)false };
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"Hello {{ name }}", IsFile = (global::app.type.item.@bool.@this)false };
 
         var result = await _provider.Render(action);
 
@@ -56,7 +56,7 @@ public class RenderTests : IDisposable
         WriteTemplateFile("greeting.html", "Hello {{ name }}!");
         var context = _app.User.Context;
         context.Variable.Set(new Data("name", "PLang", context: context));
-        var action = new Render(context) { Template = (global::app.type.text.@this)"greeting.html", IsFile = (global::app.type.@bool.@this)true };
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"greeting.html", IsFile = (global::app.type.item.@bool.@this)true };
 
         var result = await _provider.Render(action);
 
@@ -68,7 +68,7 @@ public class RenderTests : IDisposable
     public async Task Render_MissingFile_ReturnsError()
     {
         var context = _app.User.Context;
-        var action = new Render(context) { Template = (global::app.type.text.@this)"nonexistent.html", IsFile = (global::app.type.@bool.@this)true };
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"nonexistent.html", IsFile = (global::app.type.item.@bool.@this)true };
 
         var result = await _provider.Render(action);
 
@@ -83,7 +83,7 @@ public class RenderTests : IDisposable
         // At the provider level, null would cause issues — test that the provider
         // handles it gracefully if somehow invoked with null.
         var context = _app.User.Context;
-        var action = new Render(context) { Template = null!, IsFile = (global::app.type.@bool.@this)false };
+        var action = new Render(context) { Template = null!, IsFile = (global::app.type.item.@bool.@this)false };
 
         var result = await _provider.Render(action);
 
@@ -95,7 +95,7 @@ public class RenderTests : IDisposable
     public async Task Render_EmptyTemplate_ReturnsEmptyString()
     {
         var context = _app.User.Context;
-        var action = new Render(context) { Template = (global::app.type.text.@this)"", IsFile = (global::app.type.@bool.@this)false };
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"", IsFile = (global::app.type.item.@bool.@this)false };
 
         var result = await _provider.Render(action);
 
@@ -107,7 +107,7 @@ public class RenderTests : IDisposable
     public async Task Render_LiquidSyntaxError_ReturnsErrorWithPosition()
     {
         var context = _app.User.Context;
-        var action = new Render(context) { Template = (global::app.type.text.@this)"Hello {{ ", IsFile = (global::app.type.@bool.@this)false };
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"Hello {{ ", IsFile = (global::app.type.item.@bool.@this)false };
 
         var result = await _provider.Render(action);
 
@@ -123,7 +123,7 @@ public class RenderTests : IDisposable
         var context = _app.User.Context;
         context.Variable.Set(new Data("greeting", "Hello", context: context));
         context.Variable.Set(new Data("target", "World", context: context));
-        var action = new Render(context) { Template = (global::app.type.text.@this)"{{ greeting }} {{ target }}", IsFile = (global::app.type.@bool.@this)false };
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"{{ greeting }} {{ target }}", IsFile = (global::app.type.item.@bool.@this)false };
 
         var result = await _provider.Render(action);
 
@@ -137,8 +137,8 @@ public class RenderTests : IDisposable
         var context = _app.User.Context;
         context.Variable.Set(new Data("name", "MemoryValue", context: context));
         var overrideParam = new Data("name", "ParamValue", context: context);
-        var action = new Render(context) { Template = (global::app.type.text.@this)"Hello {{ name }}",
-            IsFile = (global::app.type.@bool.@this)false,
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"Hello {{ name }}",
+            IsFile = (global::app.type.item.@bool.@this)false,
             Parameters = new List<Data> { overrideParam }.ToListData()
         };
 
@@ -153,8 +153,8 @@ public class RenderTests : IDisposable
     {
         var context = _app.User.Context;
         var aliasParam = new Data("title", "My Page", context: context);
-        var action = new Render(context) { Template = (global::app.type.text.@this)"Title: {{ title }}",
-            IsFile = (global::app.type.@bool.@this)false,
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"Title: {{ title }}",
+            IsFile = (global::app.type.item.@bool.@this)false,
             Parameters = new List<Data> { aliasParam }.ToListData()
         };
 
@@ -170,8 +170,8 @@ public class RenderTests : IDisposable
         var context = _app.User.Context;
         context.Variable.Set(new Data("visible", "yes", context: context));
         context.Variable.Set(new Data("!hidden", "secret", context: context));
-        var action = new Render(context) { Template = (global::app.type.text.@this)"visible={{ visible }} hidden={{ hidden }}",
-            IsFile = (global::app.type.@bool.@this)false
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"visible={{ visible }} hidden={{ hidden }}",
+            IsFile = (global::app.type.item.@bool.@this)false
         };
 
         var result = await _provider.Render(action);
@@ -201,8 +201,8 @@ public class RenderTests : IDisposable
         _app.Goal.Add(goal);
 
         var context = _app.User.Context;
-        var action = new Render(context) { Template = (global::app.type.text.@this)"Result: {% callGoal 'Greeter' %}",
-            IsFile = (global::app.type.@bool.@this)false
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"Result: {% callGoal 'Greeter' %}",
+            IsFile = (global::app.type.item.@bool.@this)false
         };
 
         var result = await _provider.Render(action);
@@ -218,8 +218,8 @@ public class RenderTests : IDisposable
     public async Task Render_CallGoal_GoalNotFound_ShowsErrorInOutput()
     {
         var context = _app.User.Context;
-        var action = new Render(context) { Template = (global::app.type.text.@this)"Before {% callGoal 'Missing' %} After",
-            IsFile = (global::app.type.@bool.@this)false
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"Before {% callGoal 'Missing' %} After",
+            IsFile = (global::app.type.item.@bool.@this)false
         };
 
         var result = await _provider.Render(action);
@@ -241,8 +241,8 @@ public class RenderTests : IDisposable
     {
         WriteTemplateFile("partial.html", "I am a partial");
         var context = _app.User.Context;
-        var action = new Render(context) { Template = (global::app.type.text.@this)"Before {% include 'partial.html' %} After",
-            IsFile = (global::app.type.@bool.@this)false
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"Before {% include 'partial.html' %} After",
+            IsFile = (global::app.type.item.@bool.@this)false
         };
 
         var result = await _provider.Render(action);
@@ -258,8 +258,8 @@ public class RenderTests : IDisposable
         WriteTemplateFile("greet.html", "Hello {{ name }}");
         var context = _app.User.Context;
         context.Variable.Set(new Data("name", "World", context: context));
-        var action = new Render(context) { Template = (global::app.type.text.@this)"{% include 'greet.html' %}!",
-            IsFile = (global::app.type.@bool.@this)false
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"{% include 'greet.html' %}!",
+            IsFile = (global::app.type.item.@bool.@this)false
         };
 
         var result = await _provider.Render(action);
@@ -276,7 +276,7 @@ public class RenderTests : IDisposable
     {
         var customProvider = new StubTemplateProvider();
         var context = _app.User.Context;
-        var action = new Render(context) { Template = (global::app.type.text.@this)"anything", IsFile = (global::app.type.@bool.@this)false };
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"anything", IsFile = (global::app.type.item.@bool.@this)false };
 
         var result = await customProvider.Render(action);
 
@@ -292,7 +292,7 @@ public class RenderTests : IDisposable
         var context = _app.User.Context;
         // Simulate a goal at goals/MyGoal.goal by setting Goal.Path
         // Path resolves relative to goal's directory
-        var action = new Render(context) { Template = (global::app.type.text.@this)"goals/templates/page.html", IsFile = (global::app.type.@bool.@this)true };
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"goals/templates/page.html", IsFile = (global::app.type.item.@bool.@this)true };
 
         var result = await _provider.Render(action);
 
@@ -305,7 +305,7 @@ public class RenderTests : IDisposable
     {
         WriteTemplateFile("templates/abs.html", "Absolute content");
         var context = _app.User.Context;
-        var action = new Render(context) { Template = (global::app.type.text.@this)"/templates/abs.html", IsFile = (global::app.type.@bool.@this)true };
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"/templates/abs.html", IsFile = (global::app.type.item.@bool.@this)true };
 
         var result = await _provider.Render(action);
 
@@ -321,8 +321,8 @@ public class RenderTests : IDisposable
         var context = _app.User.Context;
         var user = new Dictionary<string, object?> { ["name"] = "Alice", ["age"] = 30 };
         context.Variable.Set(new Data("user", user, context: context));
-        var action = new Render(context) { Template = (global::app.type.text.@this)"{{ user.name }} is {{ user.age }}",
-            IsFile = (global::app.type.@bool.@this)false
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"{{ user.name }} is {{ user.age }}",
+            IsFile = (global::app.type.item.@bool.@this)false
         };
 
         var result = await _provider.Render(action);
@@ -336,8 +336,8 @@ public class RenderTests : IDisposable
     {
         var context = _app.User.Context;
         context.Variable.Set(new Data("items", new List<string> { "a", "b", "c" }, context: context));
-        var action = new Render(context) { Template = (global::app.type.text.@this)"{% for item in items %}{{ item }}{% endfor %}",
-            IsFile = (global::app.type.@bool.@this)false
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"{% for item in items %}{{ item }}{% endfor %}",
+            IsFile = (global::app.type.item.@bool.@this)false
         };
 
         var result = await _provider.Render(action);
@@ -351,8 +351,8 @@ public class RenderTests : IDisposable
     {
         var context = _app.User.Context;
         context.Variable.Set(new Data("name", null, context: context));
-        var action = new Render(context) { Template = (global::app.type.text.@this)"Hello {{ name }}!",
-            IsFile = (global::app.type.@bool.@this)false
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"Hello {{ name }}!",
+            IsFile = (global::app.type.item.@bool.@this)false
         };
 
         var result = await _provider.Render(action);
@@ -365,8 +365,8 @@ public class RenderTests : IDisposable
     public async Task Render_UndefinedVariable_RendersEmpty()
     {
         var context = _app.User.Context;
-        var action = new Render(context) { Template = (global::app.type.text.@this)"Hello {{ missing }}!",
-            IsFile = (global::app.type.@bool.@this)false
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"Hello {{ missing }}!",
+            IsFile = (global::app.type.item.@bool.@this)false
         };
 
         var result = await _provider.Render(action);
@@ -382,8 +382,8 @@ public class RenderTests : IDisposable
         // Data wraps a complex object — template should navigate the inner object, not Data properties
         var user = new Dictionary<string, object?> { ["name"] = "Alice", ["age"] = 30 };
         context.Variable.Set(new Data("user", user, context: context));
-        var action = new Render(context) { Template = (global::app.type.text.@this)"{{ user.name }} is {{ user.age }}",
-            IsFile = (global::app.type.@bool.@this)false
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"{{ user.name }} is {{ user.age }}",
+            IsFile = (global::app.type.item.@bool.@this)false
         };
 
         var result = await _provider.Render(action);
@@ -399,8 +399,8 @@ public class RenderTests : IDisposable
     {
         var context = _app.User.Context;
         context.Variable.Set(new Data("user", null, context: context));
-        var action = new Render(context) { Template = (global::app.type.text.@this)"Hello {{ user.name }}!",
-            IsFile = (global::app.type.@bool.@this)false
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"Hello {{ user.name }}!",
+            IsFile = (global::app.type.item.@bool.@this)false
         };
 
         var result = await _provider.Render(action);
@@ -420,8 +420,8 @@ public class RenderTests : IDisposable
         _app.Goal.Add(goal);
 
         var context = _app.User.Context;
-        var action = new Render(context) { Template = (global::app.type.text.@this)"Before{% callGoal 'EmptyGoal' %}After",
-            IsFile = (global::app.type.@bool.@this)false
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"Before{% callGoal 'EmptyGoal' %}After",
+            IsFile = (global::app.type.item.@bool.@this)false
         };
 
         var result = await _provider.Render(action);
@@ -441,8 +441,8 @@ public class RenderTests : IDisposable
 
         var context = _app.User.Context;
         context.Variable.Set(new Data("goalName", "DynamicGoal", context: context));
-        var action = new Render(context) { Template = (global::app.type.text.@this)"{% callGoal goalName %}",
-            IsFile = (global::app.type.@bool.@this)false
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"{% callGoal goalName %}",
+            IsFile = (global::app.type.item.@bool.@this)false
         };
 
         var result = await _provider.Render(action);
@@ -473,8 +473,8 @@ public class RenderTests : IDisposable
         _app.Goal.Add(goal);
 
         var context = _app.User.Context;
-        var action = new Render(context) { Template = (global::app.type.text.@this)"Number: {% callGoal 'GetNumber' %}",
-            IsFile = (global::app.type.@bool.@this)false
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"Number: {% callGoal 'GetNumber' %}",
+            IsFile = (global::app.type.item.@bool.@this)false
         };
 
         var result = await _provider.Render(action);
@@ -491,8 +491,8 @@ public class RenderTests : IDisposable
     public async Task Render_Include_MissingPartial_ReturnsError()
     {
         var context = _app.User.Context;
-        var action = new Render(context) { Template = (global::app.type.text.@this)"{% include 'nonexistent.html' %}",
-            IsFile = (global::app.type.@bool.@this)false
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"{% include 'nonexistent.html' %}",
+            IsFile = (global::app.type.item.@bool.@this)false
         };
 
         var result = await _provider.Render(action);
@@ -509,8 +509,8 @@ public class RenderTests : IDisposable
         WriteTemplateFile("sub/a.html", "A{% include 'sub/b.html' %}");
         WriteTemplateFile("sub/b.html", "B");
         var context = _app.User.Context;
-        var action = new Render(context) { Template = (global::app.type.text.@this)"{% include 'sub/a.html' %}",
-            IsFile = (global::app.type.@bool.@this)false
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"{% include 'sub/a.html' %}",
+            IsFile = (global::app.type.item.@bool.@this)false
         };
 
         var result = await _provider.Render(action);
@@ -528,8 +528,8 @@ public class RenderTests : IDisposable
     {
         var context = _app.User.Context;
         context.Variable.Set(new Data("name", "<script>alert(1)</script>", context: context));
-        var action = new Render(context) { Template = (global::app.type.text.@this)"{{ name }}",
-            IsFile = (global::app.type.@bool.@this)false
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"{{ name }}",
+            IsFile = (global::app.type.item.@bool.@this)false
         };
 
         var result = await _provider.Render(action);
@@ -548,7 +548,7 @@ public class RenderTests : IDisposable
         var context = _app.User.Context;
         context.Variable.Set(new Data("name", "World", context: context));
         // IsFile=null + template contains {{ — auto-detect should treat as inline
-        var action = new Render(context) { Template = (global::app.type.text.@this)"Hello {{ name }}!"
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"Hello {{ name }}!"
             // IsFile not set — defaults to null
         };
 
@@ -565,7 +565,7 @@ public class RenderTests : IDisposable
         var context = _app.User.Context;
         context.Variable.Set(new Data("greeting", "Hi", context: context));
         // IsFile=null + template looks like a file path (has extension, no Liquid syntax)
-        var action = new Render(context) { Template = (global::app.type.text.@this)"auto.html"
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"auto.html"
             // IsFile not set — auto-detect should find the file
         };
 
@@ -580,7 +580,7 @@ public class RenderTests : IDisposable
     {
         var context = _app.User.Context;
         // IsFile=null + no file extension — auto-detect should treat as inline content
-        var action = new Render(context) { Template = (global::app.type.text.@this)"just plain text with no extension"
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"just plain text with no extension"
         };
 
         var result = await _provider.Render(action);
@@ -605,8 +605,8 @@ public class RenderTests : IDisposable
         _app.Goal.Add(goal);
         context.Goal = goal;
         // The include should resolve relative to the goal's directory (goals/)
-        var action = new Render(context) { Template = (global::app.type.text.@this)"{% include 'templates/footer.html' %}",
-            IsFile = (global::app.type.@bool.@this)false
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"{% include 'templates/footer.html' %}",
+            IsFile = (global::app.type.item.@bool.@this)false
         };
 
         var result = await _provider.Render(action);
@@ -650,9 +650,9 @@ public class RenderTests : IDisposable
 
         public string? Source { get; set; }
 
-        public Task<global::app.data.@this<global::app.type.text.@this>> Render(Render action)
+        public Task<global::app.data.@this<global::app.type.item.text.@this>> Render(Render action)
         {
-            return Task.FromResult(global::app.data.@this<global::app.type.text.@this>.Ok("stub-rendered"));
+            return Task.FromResult(global::app.data.@this<global::app.type.item.text.@this>.Ok("stub-rendered"));
         }
     }
 }

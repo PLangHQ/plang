@@ -107,7 +107,7 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
     {
         var serializer = new global::app.channel.serializer.Text(global::PLang.Tests.TestApp.SharedContext);
 
-        var result = (await serializer.Deserialize<global::app.type.text.@this>("hello").Value())!;
+        var result = (await serializer.Deserialize<global::app.type.item.text.@this>("hello").Value())!;
 
         await Assert.That((result)?.ToString()).IsEqualTo("hello");
     }
@@ -169,9 +169,9 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
     {
         var serializer = new global::app.channel.serializer.Text(global::PLang.Tests.TestApp.SharedContext);
 
-        var trueResult = (await serializer.Deserialize<global::app.type.@bool.@this>("true").Value())!;
-        var falseResult = (await serializer.Deserialize<global::app.type.@bool.@this>("false").Value())!;
-        var trueResultCaps = (await serializer.Deserialize<global::app.type.@bool.@this>("True").Value())!;
+        var trueResult = (await serializer.Deserialize<global::app.type.item.@bool.@this>("true").Value())!;
+        var falseResult = (await serializer.Deserialize<global::app.type.item.@bool.@this>("false").Value())!;
+        var trueResultCaps = (await serializer.Deserialize<global::app.type.item.@bool.@this>("True").Value())!;
 
         await Assert.That(trueResult.Value).IsTrue();
         await Assert.That(falseResult.Value).IsFalse();
@@ -198,7 +198,7 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
         var guidStr = "12345678-1234-1234-1234-123456789012";
 
         // Born-native: there is no `guid` value type — a guid rides the text channel as text.
-        var result = (await serializer.Deserialize<global::app.type.text.@this>(guidStr).Value())!;
+        var result = (await serializer.Deserialize<global::app.type.item.text.@this>(guidStr).Value())!;
 
         await Assert.That(Guid.Parse(result.ToString())).IsEqualTo(Guid.Parse(guidStr));
     }
@@ -243,7 +243,7 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
     {
         var serializer = new global::app.channel.serializer.Text(global::PLang.Tests.TestApp.SharedContext);
 
-        var result = (await serializer.Deserialize<global::app.type.text.@this>("").Value())!;
+        var result = (await serializer.Deserialize<global::app.type.item.text.@this>("").Value())!;
 
         await Assert.That(result).IsNull();
     }
@@ -302,7 +302,7 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
         var serializer = new global::app.channel.serializer.Text(global::PLang.Tests.TestApp.SharedContext);
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("hello"));
 
-        var result = (await (await serializer.DeserializeAsync<global::app.type.text.@this>(stream)).Value())?.ToString();
+        var result = (await (await serializer.DeserializeAsync<global::app.type.item.text.@this>(stream)).Value())?.ToString();
 
         await Assert.That((result)?.ToString()).IsEqualTo("hello");
     }
@@ -336,7 +336,7 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
         var original = "hello world";
 
         var text = (await serializer.Serialize(app.Ok(original)).Value())!.Clr<string>()!;
-        var result = (await serializer.Deserialize<global::app.type.text.@this>(text).Value())!;
+        var result = (await serializer.Deserialize<global::app.type.item.text.@this>(text).Value())!;
 
         await Assert.That(result.ToString()).IsEqualTo(original);
     }
@@ -350,7 +350,7 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
 
         await serializer.SerializeAsync(stream, app.Ok(original));
         stream.Position = 0;
-        var result = (await (await serializer.DeserializeAsync<global::app.type.text.@this>(stream)).Value())?.ToString();
+        var result = (await (await serializer.DeserializeAsync<global::app.type.item.text.@this>(stream)).Value())?.ToString();
 
         await Assert.That(result).IsEqualTo(original);
     }
@@ -374,7 +374,7 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
         var serializer = new global::app.channel.serializer.Text(global::PLang.Tests.TestApp.SharedContext);
         using var stream = new ThrowingStream(canRead: true);
 
-        var result = await serializer.DeserializeAsync<global::app.type.text.@this>(stream);
+        var result = await serializer.DeserializeAsync<global::app.type.item.text.@this>(stream);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("TextDeserializeError");

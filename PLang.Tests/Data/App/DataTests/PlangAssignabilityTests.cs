@@ -19,7 +19,7 @@ public class PlangAssignabilityTests
     public async Task Text_DoesNotImplementIEnumerable()
     {
         await Assert.That(typeof(System.Collections.IEnumerable)
-            .IsAssignableFrom(typeof(global::app.type.text.@this))).IsFalse();
+            .IsAssignableFrom(typeof(global::app.type.item.text.@this))).IsFalse();
     }
 
     [Test]
@@ -43,7 +43,7 @@ public class PlangAssignabilityTests
         await Assert.That(typeof(global::app.type.item.@this).GetMethod("ToRaw", flags)).IsNull();
         await Assert.That(typeof(global::app.type.dict.@this).GetMethod("ToRaw", flags)).IsNull();
         await Assert.That(typeof(global::app.type.list.@this).GetMethod("ToRaw", flags)).IsNull();
-        await Assert.That(typeof(global::app.type.text.@this).GetMethod("ToRaw", flags)).IsNull();
+        await Assert.That(typeof(global::app.type.item.text.@this).GetMethod("ToRaw", flags)).IsNull();
     }
 
     // foreach %s% never char-iterates: EnumerateItems on a text-valued Data

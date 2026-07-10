@@ -24,7 +24,7 @@ public static class json
         // Content off I/O rides as binary bytes; the json is text — decode through
         // the text type (it owns bytes→string), then parse.
         if (raw is not (string or byte[])) return raw;
-        string s = new global::app.type.text.@this(raw).ToString();
+        string s = new global::app.type.item.text.@this(raw).ToString();
         if (string.IsNullOrEmpty(s)) return null;
         // Structured json stays a clr(json) — navigated/enumerated/serialized lazily by the
         // json kind, never materialized into a dict/list up front. A JsonElement clr now

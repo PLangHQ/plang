@@ -24,7 +24,7 @@ public class ConvertBuiltValueTests
     {
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var built = new global::app.type.text.@this("5");
+        var built = new global::app.type.item.text.@this("5");
         // Convert returns the value (item.@this) directly now — no Data wrapper.
         var result = type.Create("number", null, context: ctx).Convert(built, ctx);
         await Assert.That(result).IsTypeOf<global::app.type.number.@this>();
@@ -35,7 +35,7 @@ public class ConvertBuiltValueTests
     {
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var built = new global::app.type.text.@this("abc");
+        var built = new global::app.type.item.text.@this("abc");
         // The build-time safety net: a bad literal must THROW (the throw boundary),
         // never be silently held as the original text (which would pass validation).
         // A throw rides MaterializeFailed at the source boundary; validateResponse

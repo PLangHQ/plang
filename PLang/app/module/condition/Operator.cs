@@ -125,9 +125,9 @@ public sealed class Operator
         // IBooleanResolvable left (a path) answers `if %path% exists` itself.
         // A bool rides born-native as bool.@this — unwrap both shapes.
         var rv = right == null ? null : await right.Value();
-        bool? rb = (rv as global::app.type.@bool.@this)?.Value;
+        bool? rb = (rv as global::app.type.item.@bool.@this)?.Value;
         var lv = left == null ? null : await left.Value();
-        bool leftIsBool = lv is global::app.type.@bool.@this;
+        bool leftIsBool = lv is global::app.type.item.@bool.@this;
         if (rb != null && !leftIsBool)
         {
             bool leftTruthy = left != null && await left.ToBooleanAsync();

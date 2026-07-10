@@ -16,6 +16,6 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
         => reader.Null()
-            ? new global::app.type.@null.@this("code", kind)
+            ? new global::app.type.item.@null.@this("code", kind)
             : new global::app.type.code.@this(reader.String(), kind ?? "text");
 }

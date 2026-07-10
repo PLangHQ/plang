@@ -24,9 +24,9 @@ public class DataResolutionTests
         var data = new Data("v", "%x%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
 
         _app.User.Context.Variable.Set("x", "first");
-        var first = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
+        var first = data.ShallowClone<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
         _app.User.Context.Variable.Set("x", "second");
-        var second = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
+        var second = data.ShallowClone<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
         await Assert.That((await first.Value())?.ToString()).IsEqualTo("first");
         await Assert.That((await second.Value())?.ToString()).IsEqualTo("second");
@@ -42,7 +42,7 @@ public class DataResolutionTests
         for (int i = 0; i < 3; i++)
         {
             _app.User.Context.Variable.Set("i", $"value-{i}");
-            seen.Add((await data.Value<global::app.type.text.@this>())?.Clr<string>());
+            seen.Add((await data.Value<global::app.type.item.text.@this>())?.Clr<string>());
         }
 
         await Assert.That(seen[0]).IsEqualTo("value-0");
@@ -57,7 +57,7 @@ public class DataResolutionTests
     {
         var data = new Data("v", "%scope%", new global::app.type.@this("text", null, false, "plang"), context: _app.User.Context);
         _app.User.Context.Variable.Set("scope", "parent");
-        var parentView = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
+        var parentView = data.ShallowClone<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
         await using var subApp = global::PLang.Tests.TestApp.Create("/sub");
         subApp.User.Context.Variable.Set("scope", "sub");
@@ -65,7 +65,7 @@ public class DataResolutionTests
         // sub scope, mirroring how a goal call injects the value into the sub-goal's
         // context before that goal resolves it.
         data.Context = subApp.User.Context;
-        var subView = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
+        var subView = data.ShallowClone<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
         await Assert.That((await parentView.Value())?.ToString()).IsEqualTo("parent");
         await Assert.That((await subView.Value())?.ToString()).IsEqualTo("sub");
@@ -115,7 +115,7 @@ public class DataResolutionTests
         {
             for (int i = 0; i < 100; i++)
             {
-                var r = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
+                var r = data.ShallowClone<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
                 if (r.Peek()?.ToString() != "value") return false;
             }
             return true;

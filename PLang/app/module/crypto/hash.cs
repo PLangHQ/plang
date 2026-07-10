@@ -10,7 +10,7 @@ public partial class Hash : IContext
     public partial data.@this Data { get; init; }
 
     [Default("keccak256")]
-    public partial data.@this<global::app.type.text.@this> Algorithm { get; init; }
+    public partial data.@this<global::app.type.item.text.@this> Algorithm { get; init; }
 
     /// <summary>
     /// Canonicalize the value in the Store view (all <c>[Store]</c> fields) rather than the
@@ -20,7 +20,7 @@ public partial class Hash : IContext
     /// hash. Sign and verify both pass the data's destination view here so the digest is
     /// over the exact bytes that cross the wire. Default false (Out, for transport).
     /// </summary>
-    public partial data.@this<global::app.type.@bool.@this>? StoreView { get; init; }
+    public partial data.@this<global::app.type.item.@bool.@this>? StoreView { get; init; }
 
     [Code]
     public partial ICrypto Crypto { get; }

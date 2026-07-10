@@ -104,7 +104,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
         var n = slot("name");
         // An absent name rides as the null.@this singleton on the native shape —
         // its ToString is the literal "null", so treat it as empty.
-        var name = n is null or app.type.@null.@this ? "" : n.ToString() ?? "";
+        var name = n is null or app.type.item.@null.@this ? "" : n.ToString() ?? "";
         // The name slot may be a dynamic %var% (e.g. `call %goalName%`). It stays raw
         // here — GetGoalAsync resolves it at dispatch, in the caller's context. The
         // CLR-type-name guard below still catches a literal leak (a %var% never matches).
@@ -118,7 +118,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
         // its ToString is the literal "null", so guard against it — otherwise
         // path.Resolve("null") builds a bogus "/null".
         var pr = slot("prPath");
-        var prRaw = pr is not app.type.@null.@this ? pr : null;
+        var prRaw = pr is not app.type.item.@null.@this ? pr : null;
         // Born-native serializes a path as the structured {scheme, relative} object, not a
         // bare string — `prRaw.ToString()` on that yields "Dictionary`2…", which path.Resolve
         // then turns into a bogus "/Dictionary`2…" (the foreach/goal.call "File not found"

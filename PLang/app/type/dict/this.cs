@@ -138,13 +138,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>Keys in insertion order, as a native <c>list&lt;text&gt;</c> —
     /// the public surface answers in PLang values (<c>%dict!keys%</c>).</summary>
-    public global::app.type.list.@this<global::app.type.text.@this> Keys
+    public global::app.type.list.@this<global::app.type.item.text.@this> Keys
     {
         get
         {
-            var keys = new global::app.type.list.@this<global::app.type.text.@this>(_context);
+            var keys = new global::app.type.list.@this<global::app.type.item.text.@this>(_context);
             foreach (var k in _value.Keys)
-                keys.Add(new Data(k, new global::app.type.text.@this(k)));
+                keys.Add(new Data(k, new global::app.type.item.text.@this(k)));
             return keys;
         }
     }

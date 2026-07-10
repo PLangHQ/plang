@@ -11,7 +11,7 @@ public partial class Throw : IContext
     /// Human-readable message — a quoted string literal: <c>- throw "checkout failed"</c>.
     /// The builder routes a bare literal here; <see cref="Data"/> takes the variables.
     /// </summary>
-    public partial data.@this<global::app.type.text.@this>? Message { get; init; }
+    public partial data.@this<global::app.type.item.text.@this>? Message { get; init; }
 
     /// <summary>
     /// Typed value(s) attached to the error — variables: <c>- throw %order%, %item%</c>.
@@ -22,7 +22,7 @@ public partial class Throw : IContext
 
     [Default(500)]
     public partial data.@this<global::app.type.number.@this> StatusCode { get; init; }
-    public partial data.@this<global::app.type.text.@this>? Key { get; init; }
+    public partial data.@this<global::app.type.item.text.@this>? Key { get; init; }
 
     public async Task<data.@this> Run()
     {

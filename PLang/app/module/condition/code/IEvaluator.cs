@@ -8,7 +8,7 @@ namespace app.module.condition.code;
 // truthiness is resolved with I/O.
 public interface IEvaluator : ICode
 {
-    Task<data.@this<global::app.type.@bool.@this>> Evaluate(If action);
-    Task<data.@this<global::app.type.@bool.@this>> Evaluate(Elseif action);
-    Task<data.@this<global::app.type.@bool.@this>> Evaluate(Compare action);
+    Task<data.@this<global::app.type.item.@bool.@this>> Evaluate(If action);
+    Task<data.@this<global::app.type.item.@bool.@this>> Evaluate(Elseif action);
+    Task<data.@this<global::app.type.item.@bool.@this>> Evaluate(Compare action);
 }

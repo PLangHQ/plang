@@ -35,7 +35,7 @@ public class DataSnapshotTests : System.IAsyncDisposable
 
     [Test] public async Task DataSnapshot_SettableAfterConstruction()
     {
-        var d = new global::app.data.@this<global::app.type.text.@this>("", "x");
+        var d = new global::app.data.@this<global::app.type.item.text.@this>("", "x");
         await Assert.That(d.Snapshot).IsNull();
         d.Snapshot = new global::app.snapshot.@this(global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(d.Snapshot).IsNotNull();

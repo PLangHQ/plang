@@ -26,12 +26,12 @@ public class Fluid : ITemplate
         return parser;
     }
 
-    public async Task<data.@this<global::app.type.text.@this>> Render(Render action)
+    public async Task<data.@this<global::app.type.item.text.@this>> Render(Render action)
     {
         // Null-safe: [IsNotNull] guards the .pr path, but direct C# composition can
         // init Template to null — fail gracefully rather than throw.
         if (action.Template == null || (await action.Template.Value()) is not { } templateVal)
-            return action.Context.Error<global::app.type.text.@this>(new global::app.error.ValidationError(
+            return action.Context.Error<global::app.type.item.text.@this>(new global::app.error.ValidationError(
                 "ui.render requires a template", "MissingTemplate"));
         var templateContent = templateVal.ToString() ?? "";
         var isFile = action.IsFile == null ? null : (await action.IsFile.Value());
@@ -42,13 +42,13 @@ public class Fluid : ITemplate
         {
             var pathData = path.Resolve(templateContent, action.Context);
             if (!await pathData.AsBooleanAsync())
-                return action.Context.Error<global::app.type.text.@this>(new ServiceError(
+                return action.Context.Error<global::app.type.item.text.@this>(new ServiceError(
                     $"Template file not found: {templateContent}", "NotFound", 404));
 
             sourceFile = pathData.Relative;
             var readResult = await pathData.ReadText();
             if (!readResult.Success)
-                return action.Context.Error<global::app.type.text.@this>(readResult.Error
+                return action.Context.Error<global::app.type.item.text.@this>(readResult.Error
                     ?? new ServiceError("Template read failed", "IOError", 500));
             templateContent = (await readResult.Value())?.ToString() ?? "";
         }
@@ -58,7 +58,7 @@ public class Fluid : ITemplate
         if (!parser.TryParse(templateContent, out var fluidTemplate, out var parseError))
         {
             var location = sourceFile != null ? $" in '{sourceFile}'" : "";
-            return action.Context.Error<global::app.type.text.@this>(new ServiceError(
+            return action.Context.Error<global::app.type.item.text.@this>(new ServiceError(
                 $"Template syntax error{location}: {parseError}", "TemplateError", 400));
         }
 
@@ -95,7 +95,7 @@ public class Fluid : ITemplate
         // falsy — same as an undefined variable. Without this it would stringify via
         // ToString() to the literal "null".
         options.ValueConverters.Add(value =>
-            value is global::app.type.@null.@this ? NilValue.Instance : null);
+            value is global::app.type.item.@null.@this ? NilValue.Instance : null);
 
         // `formal` filter: renders any value the way the action catalog writes it —
         // strings with spaces/commas become quoted, %variables% stay bare, dicts/lists
@@ -136,12 +136,12 @@ public class Fluid : ITemplate
         {
             var writer = new StringWriter();
             await fluidTemplate.RenderAsync(writer, NullEncoder.Default, fluidContext);
-            return action.Context.Ok<global::app.type.text.@this>(writer.ToString());
+            return action.Context.Ok<global::app.type.item.text.@this>(writer.ToString());
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
             var location = sourceFile != null ? $" in '{sourceFile}'" : "";
-            return action.Context.Error<global::app.type.text.@this>(new ServiceError(
+            return action.Context.Error<global::app.type.item.text.@this>(new ServiceError(
                 $"Template render error{location}: {ex.Message}", "RenderError", 500));
         }
     }
@@ -400,7 +400,7 @@ public class Fluid : ITemplate
                 // includes (`{% include '../../etc/passwd' %}`) surface as
                 // permission prompts or denials — not silent file reads.
                 var exists = resolved.ExistsAsync().GetAwaiter().GetResult();
-                if (exists.Success && (exists.Peek() as global::app.type.@bool.@this)?.Value == true)
+                if (exists.Success && (exists.Peek() as global::app.type.item.@bool.@this)?.Value == true)
                     return new PlangFileInfo(resolved, candidate);
             }
             return new NotFoundFileInfo(subpath);

@@ -63,8 +63,8 @@ public partial class Handle : IContext, IModifier
     };
 
     public partial global::app.data.@this<global::app.type.number.@this>? StatusCode { get; init; }
-    public partial global::app.data.@this<global::app.type.text.@this>? Key { get; init; }
-    public partial global::app.data.@this<global::app.type.text.@this>? Message { get; init; }
+    public partial global::app.data.@this<global::app.type.item.text.@this>? Key { get; init; }
+    public partial global::app.data.@this<global::app.type.item.text.@this>? Message { get; init; }
     /// <summary>
     /// Action chain to run when the error matches. Preferred over Goal — lets a
     /// developer express "on error, log + fall back + notify" inline without
@@ -74,9 +74,9 @@ public partial class Handle : IContext, IModifier
     public partial global::app.data.@this<global::app.type.clr.@this<global::app.goal.steps.step.actions.@this>>? Actions { get; init; }
     public partial global::app.data.@this<global::app.type.number.@this>? RetryCount { get; init; }
     public partial global::app.data.@this<global::app.type.number.@this>? RetryOverMs { get; init; }
-    public partial global::app.data.@this<global::app.type.choice.@this<ErrorOrder>>? Order { get; init; }
+    public partial global::app.data.@this<global::app.type.item.choice.@this<ErrorOrder>>? Order { get; init; }
     [Default(false)]
-    public partial global::app.data.@this<global::app.type.@bool.@this> IgnoreError { get; init; }
+    public partial global::app.data.@this<global::app.type.item.@bool.@this> IgnoreError { get; init; }
 
     public Task<global::app.data.@this> Run() => Task.FromResult(Context.Ok());
 

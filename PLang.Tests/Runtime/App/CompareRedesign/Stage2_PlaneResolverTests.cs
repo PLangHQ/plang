@@ -25,7 +25,7 @@ public class Stage2_PlaneResolverTests
     {
         // %text!length% — the value's own property, answered in a PLang value
         await using var app = NewApp();
-        var t = new Data("s", new global::app.type.text.@this("hello"), context: app.User.Context);
+        var t = new Data("s", new global::app.type.item.text.@this("hello"), context: app.User.Context);
         var length = await t.Get("!length");
         await Assert.That(length.Peek()).IsTypeOf<global::app.type.number.@this>();
         await Assert.That(length.Peek()!.ToString()).IsEqualTo("5");
@@ -77,7 +77,7 @@ public class Stage2_PlaneResolverTests
         // value family is clean (statics like the lattice `Type` are exempt)
         await Assert.That(global::app.type.catalog.Loader.ReservedShadow(typeof(ReservedShadower)))
             .IsEqualTo("Error");
-        await Assert.That(global::app.type.catalog.Loader.ReservedShadow(typeof(global::app.type.text.@this))).IsNull();
+        await Assert.That(global::app.type.catalog.Loader.ReservedShadow(typeof(global::app.type.item.text.@this))).IsNull();
         await Assert.That(global::app.type.catalog.Loader.ReservedShadow(typeof(global::app.type.dict.@this))).IsNull();
         await Assert.That(global::app.type.catalog.Loader.ReservedShadow(typeof(global::app.type.image.@this))).IsNull();
         await Assert.That(global::app.type.catalog.Loader.ReservedShadow(typeof(global::app.type.path.file.@this))).IsNull();

@@ -59,7 +59,7 @@ public partial class ask : IContext
 {
     /// <summary>The question text shown to the user.</summary>
     [IsNotNull]
-    public partial data.@this<global::app.type.text.@this> Question { get; init; }
+    public partial data.@this<global::app.type.item.text.@this> Question { get; init; }
 
     /// <summary>
     /// Names of variables whose current values survive into the suspend (per

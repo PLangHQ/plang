@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace app.type.choice.list;
+namespace app.type.item.choice.list;
 
 /// <summary>
 /// Registry for [Choices]-attributed vocabulary providers — the closed string lists

@@ -159,7 +159,7 @@ public sealed class @this : ISerializer
                     new app.module.signing.sign(_context) { Data = data,
                         // Hash in the view we're serializing in, so the verifier (re-hashing the
                         // wire-reconstructed bag in the same view) gets matching bytes.
-                        StoreView = new app.data.@this<global::app.type.@bool.@this>("", view == global::app.View.Store, context: _context) },
+                        StoreView = new app.data.@this<global::app.type.item.@bool.@this>("", view == global::app.View.Store, context: _context) },
                     _context);
                 if (signResult.Success) data = signResult;
             }
@@ -235,7 +235,7 @@ public sealed class @this : ISerializer
                 var verifyAction = new global::app.module.signing.verify(_context)
                 {
                     Data = carrier,
-                    SkipFreshnessCheck = new global::app.data.@this<global::app.type.@bool.@this>(
+                    SkipFreshnessCheck = new global::app.data.@this<global::app.type.item.@bool.@this>(
                         "", view == global::app.View.Store),
                 };
                 var verifyResult = await _context.App.Run(verifyAction, _context);

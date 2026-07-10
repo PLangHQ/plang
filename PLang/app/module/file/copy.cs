@@ -10,10 +10,10 @@ public partial class Copy : IContext
     public partial data.@this<path> Destination { get; init; }
 
     [Default(false)]
-    public partial data.@this<global::app.type.@bool.@this> Overwrite { get; init; }
+    public partial data.@this<global::app.type.item.@bool.@this> Overwrite { get; init; }
 
     [Default(true)]
-    public partial data.@this<global::app.type.@bool.@this> IncludeSubfolders { get; init; }
+    public partial data.@this<global::app.type.item.@bool.@this> IncludeSubfolders { get; init; }
 
     public async Task<data.@this<path>> Run()
     {

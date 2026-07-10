@@ -78,7 +78,7 @@ public class SnapshotParamsTests
         var first = result.Snapshot!.FirstOrDefault(p => p.Name == "First");
         await Assert.That(first).IsNotNull();
         await Assert.That(first!.WasAccessed).IsTrue();
-        // PrValue is raw "hello %name%", FinalValue is the resolved Data<global::app.type.text.@this>
+        // PrValue is raw "hello %name%", FinalValue is the resolved Data<global::app.type.item.text.@this>
         await Assert.That(first.PrValue?.ToString()).IsEqualTo("hello %name%");
         await Assert.That(first.FinalValue).IsNotNull();
     }

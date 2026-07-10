@@ -147,8 +147,8 @@ public class RuntimeDoubleWrapTests
         context.Variable.Set("users", users);
 
         var action = new global::app.module.list.Where(context) { ListName = new @this("users"),
-            Field = new global::app.data.@this<global::app.type.text.@this>("", "age"),
-            Operator = new global::app.data.@this<global::app.type.choice.@this<global::app.module.condition.Operator>>("", new global::app.module.condition.Operator(">")),
+            Field = new global::app.data.@this<global::app.type.item.text.@this>("", "age"),
+            Operator = new global::app.data.@this<global::app.type.item.choice.@this<global::app.module.condition.Operator>>("", new global::app.module.condition.Operator(">")),
             Value = new global::app.data.@this("", 20L, context: context),
         };
         await action.Attach(null, context);

@@ -1,4 +1,4 @@
-using Bool = global::app.type.@bool.@this;
+using Bool = global::app.type.item.@bool.@this;
 
 using PLang.Tests.App.Fixtures;
 

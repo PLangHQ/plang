@@ -12,22 +12,22 @@ public class Default : IAssert
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
-    public async Task<data.@this<global::app.type.@bool.@this>> Equals(Equals action)
+    public async Task<data.@this<global::app.type.item.@bool.@this>> Equals(Equals action)
     {
         if (await IsEqual(action.Expected, action.Actual))
-            return action.Context.Ok<global::app.type.@bool.@this>(true);
+            return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
         // Error display keeps the materialised form (the masked/rendered path);
         // only the comparison uses the scalar form.
-        return action.Context.Error<global::app.type.@bool.@this>(new AssertionError(action.Expected?.Peek(), action.Actual?.Peek(), action.Message?.Peek()?.ToString()));
+        return action.Context.Error<global::app.type.item.@bool.@this>(new AssertionError(action.Expected?.Peek(), action.Actual?.Peek(), action.Message?.Peek()?.ToString()));
     }
 
-    public async Task<data.@this<global::app.type.@bool.@this>> NotEquals(NotEquals action)
+    public async Task<data.@this<global::app.type.item.@bool.@this>> NotEquals(NotEquals action)
     {
         if (!await IsEqual(action.Expected, action.Actual))
-            return action.Context.Ok<global::app.type.@bool.@this>(true);
+            return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.@bool.@this>(new AssertionError(action.Expected?.Peek(), action.Actual?.Peek(),
+        return action.Context.Error<global::app.type.item.@bool.@this>(new AssertionError(action.Expected?.Peek(), action.Actual?.Peek(),
             action.Message?.Peek()?.ToString() ?? "Values should not be equal"));
     }
 
@@ -41,43 +41,43 @@ public class Default : IAssert
         return await expected.Compare(actual) == global::app.data.Comparison.Equal;
     }
 
-    public async Task<data.@this<global::app.type.@bool.@this>> IsTrue(IsTrue action)
+    public async Task<data.@this<global::app.type.item.@bool.@this>> IsTrue(IsTrue action)
     {
         if (await ResolveTruthy(action.Value))
-            return action.Context.Ok<global::app.type.@bool.@this>(true);
+            return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.@bool.@this>(new AssertionError(true, (action.Value == null ? null : await action.Value.Value()),
+        return action.Context.Error<global::app.type.item.@bool.@this>(new AssertionError(true, (action.Value == null ? null : await action.Value.Value()),
             (action.Message == null ? null : await action.Message.Value())?.ToString() ?? "Expected truthy value"));
     }
 
-    public async Task<data.@this<global::app.type.@bool.@this>> IsFalse(IsFalse action)
+    public async Task<data.@this<global::app.type.item.@bool.@this>> IsFalse(IsFalse action)
     {
         if (!await ResolveTruthy(action.Value))
-            return action.Context.Ok<global::app.type.@bool.@this>(true);
+            return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.@bool.@this>(new AssertionError(false, (action.Value == null ? null : await action.Value.Value()),
+        return action.Context.Error<global::app.type.item.@bool.@this>(new AssertionError(false, (action.Value == null ? null : await action.Value.Value()),
             (action.Message == null ? null : await action.Message.Value())?.ToString() ?? "Expected falsy value"));
     }
 
-    public data.@this<global::app.type.@bool.@this> IsNull(IsNull action)
+    public data.@this<global::app.type.item.@bool.@this> IsNull(IsNull action)
     {
-        if (global::app.type.@null.@this.IsNullValue(action.Value?.Peek()))
-            return action.Context.Ok<global::app.type.@bool.@this>(true);
+        if (global::app.type.item.@null.@this.IsNullValue(action.Value?.Peek()))
+            return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.@bool.@this>(new AssertionError(null, action.Value?.Peek(),
+        return action.Context.Error<global::app.type.item.@bool.@this>(new AssertionError(null, action.Value?.Peek(),
             action.Message?.Peek()?.ToString() ?? "Expected null"));
     }
 
-    public data.@this<global::app.type.@bool.@this> IsNotNull(IsNotNull action)
+    public data.@this<global::app.type.item.@bool.@this> IsNotNull(IsNotNull action)
     {
-        if (!global::app.type.@null.@this.IsNullValue(action.Value?.Peek()))
-            return action.Context.Ok<global::app.type.@bool.@this>(true);
+        if (!global::app.type.item.@null.@this.IsNullValue(action.Value?.Peek()))
+            return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.@bool.@this>(new AssertionError("(not null)", null,
+        return action.Context.Error<global::app.type.item.@bool.@this>(new AssertionError("(not null)", null,
             action.Message?.Peek()?.ToString() ?? "Expected non-null value"));
     }
 
-    public async Task<data.@this<global::app.type.@bool.@this>> Contains(Contains action)
+    public async Task<data.@this<global::app.type.item.@bool.@this>> Contains(Contains action)
     {
         // The door, not Materialize — a reference (file/url) yields its raw
         // content for containment, the scalar contract.
@@ -93,14 +93,14 @@ public class Default : IAssert
         // trivially passing on every haystack.
         if (vItem != null && cItem != null
             && (await vItem.Contains(action.Container!) || await cItem.Contains(action.Value!)))
-            return action.Context.Ok<global::app.type.@bool.@this>(true);
+            return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.@bool.@this>(new AssertionError(
+        return action.Context.Error<global::app.type.item.@bool.@this>(new AssertionError(
             FormatValue(cItem), vItem,
             action.Message?.Peek()?.ToString() ?? "Container does not contain value"));
     }
 
-    public async Task<data.@this<global::app.type.@bool.@this>> NotContains(NotContains action)
+    public async Task<data.@this<global::app.type.item.@bool.@this>> NotContains(NotContains action)
     {
         var vItem = action.Value == null ? null : await action.Value.Value();
         var cItem = action.Container == null ? null : await action.Container.Value();
@@ -111,29 +111,29 @@ public class Default : IAssert
         // can't claim containment, so assertion passes vacuously.
         if (vItem == null || cItem == null
             || (!await vItem.Contains(action.Container!) && !await cItem.Contains(action.Value!)))
-            return action.Context.Ok<global::app.type.@bool.@this>(true);
+            return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.@bool.@this>(new AssertionError(
+        return action.Context.Error<global::app.type.item.@bool.@this>(new AssertionError(
             $"absent: {FormatValue(cItem)}", vItem,
             action.Message?.Peek()?.ToString() ?? "Container contains value but should not"));
     }
 
-    public async Task<data.@this<global::app.type.@bool.@this>> GreaterThan(GreaterThan action)
+    public async Task<data.@this<global::app.type.item.@bool.@this>> GreaterThan(GreaterThan action)
     {
         if (await Ordered(action.A, action.B) == global::app.data.Comparison.Greater)
-            return action.Context.Ok<global::app.type.@bool.@this>(true);
+            return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.@bool.@this>(new AssertionError(
+        return action.Context.Error<global::app.type.item.@bool.@this>(new AssertionError(
             $"> {FormatValue(action.B?.Peek())}", action.A?.Peek(),
             action.Message?.Peek()?.ToString() ?? $"Expected {FormatValue(action.A?.Peek())} > {FormatValue(action.B?.Peek())}"));
     }
 
-    public async Task<data.@this<global::app.type.@bool.@this>> LessThan(LessThan action)
+    public async Task<data.@this<global::app.type.item.@bool.@this>> LessThan(LessThan action)
     {
         if (await Ordered(action.A, action.B) == global::app.data.Comparison.Less)
-            return action.Context.Ok<global::app.type.@bool.@this>(true);
+            return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.@bool.@this>(new AssertionError(
+        return action.Context.Error<global::app.type.item.@bool.@this>(new AssertionError(
             $"< {FormatValue(action.B?.Peek())}", action.A?.Peek(),
             action.Message?.Peek()?.ToString() ?? $"Expected {FormatValue(action.A?.Peek())} < {FormatValue(action.B?.Peek())}"));
     }

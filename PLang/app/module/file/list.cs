@@ -9,10 +9,10 @@ public partial class List : IContext
     public partial data.@this<path> Path { get; init; }
 
     [Default("*")]
-    public partial data.@this<global::app.type.text.@this> Pattern { get; init; }
+    public partial data.@this<global::app.type.item.text.@this> Pattern { get; init; }
 
     [Default(false)]
-    public partial data.@this<global::app.type.@bool.@this> Recursive { get; init; }
+    public partial data.@this<global::app.type.item.@bool.@this> Recursive { get; init; }
 
     public async Task<data.@this<global::app.type.list.@this<path>>> Run()
     {

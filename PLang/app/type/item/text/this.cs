@@ -1,4 +1,4 @@
-namespace app.type.text;
+namespace app.type.item.text;
 
 /// <summary>
 /// PLang <c>text</c> type — the canonical name for textual content (replaces

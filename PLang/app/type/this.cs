@@ -71,7 +71,7 @@ public sealed class @this : item.@this
     /// Authored-template mode ("plang") — set by the BUILD when the value is a developer-authored
     /// <c>%ref%</c> template, carried in the <c>.pr</c> so the read honors it EXPLICITLY. The read
     /// never infers it from value content (a runtime-ingested string that happens to contain
-    /// <c>%x%</c> is data, not a template). Null = a plain value. Mirrors <c>text.@this.Template</c>.
+    /// <c>%x%</c> is data, not a template). Null = a plain value. Mirrors <c>global::app.type.item.text.@this.Template</c>.
     /// </summary>
     public string? Template { get; init; }
 
@@ -188,16 +188,16 @@ public sealed class @this : item.@this
     public global::app.type.item.@this Convert(object? value, actor.context.@this context)
     {
         Context ??= context;
-        if (value is null) return new global::app.type.@null.@this(Name, Kind?.Name);
+        if (value is null) return new global::app.type.item.@null.@this(Name, Kind?.Name);
 
         // A born-native scalar source (`set %d% = "2026-01-01" as date` makes the literal a
-        // text.@this first) — unwrap the leaf wrapper to its raw form so the target family's
+        // global::app.type.item.text.@this first) — unwrap the leaf wrapper to its raw form so the target family's
         // Convert hook, which speaks raw, can parse it. Mirrors the catalog's item.Clr step;
         // containers (dict/list) are NOT leaves and convert as wholes.
         if (value is global::app.type.item.@this { IsLeaf: true } leaf) value = leaf.Clr<object>();
 
         // OBP: the concrete type owns its own construction. Resolve the family
-        // class (text.@this, number.@this, …) and ask IT to make the value from
+        // class (global::app.type.item.text.@this, number.@this, …) and ask IT to make the value from
         // ours, passing our Kind. This entity only routes — it holds no per-type
         // ("if text", "if number") knowledge. The hub still answers Data (Ok/Error);
         // this door is the throw boundary — a bad conversion throws so it rides the
@@ -258,7 +258,7 @@ public sealed class @this : item.@this
 
         // Typed absence — no value to lift; the declaration survives (a typed null,
         // a tool-parameter slot). A JSON-null literal lands here too (the null citizen).
-        if (value is null or global::app.type.@null.@this) return new global::app.type.@null.@this(Name, Kind?.Name);
+        if (value is null or global::app.type.item.@null.@this) return new global::app.type.item.@null.@this(Name, Kind?.Name);
 
         // A raw-name declared type (variable) NAMES a thing — a raw string name is the
         // variable itself, a write-target, not a value to defer. Born as the name object
@@ -298,8 +298,8 @@ public sealed class @this : item.@this
             if (string.Equals(Name, minted.Name, System.StringComparison.OrdinalIgnoreCase))
             {
                 var refined = Kind != null && minted.Kind == null ? leaf.Kinded(Kind.Name) : leaf;
-                if (Template != null && refined is text.@this rt && rt.Template == null)
-                    refined = new text.@this(rt.ToString(), Template) { Kind = rt.Kind };
+                if (Template != null && refined is global::app.type.item.text.@this rt && rt.Template == null)
+                    refined = new global::app.type.item.text.@this(rt.ToString(), Template) { Kind = rt.Kind };
                 return refined;
             }
             // The value already carries this type as a facet (an image satisfies a path slot) → hold.
@@ -378,7 +378,7 @@ public sealed class @this : item.@this
     {
         // The null VALUE is a typed citizen — the instance member is never
         // C# null, so no consumer ever null-checks the value slot.
-        if (raw is null) return global::app.type.@null.@this.Instance;
+        if (raw is null) return global::app.type.item.@null.@this.Instance;
         if (raw is global::app.type.item.@this already) return already;
         if (raw is global::app.data.@this)
             throw new System.InvalidOperationException(
@@ -434,7 +434,7 @@ public sealed class @this : item.@this
         // A CLR enum IS plang's choice (a closed named set) — build choice<T> for the enum.
         if (raw is System.Enum)
         {
-            var choiceType = typeof(global::app.type.choice.@this<>).MakeGenericType(raw.GetType());
+            var choiceType = typeof(global::app.type.item.choice.@this<>).MakeGenericType(raw.GetType());
             return (global::app.type.item.@this)System.Activator.CreateInstance(choiceType, raw)!;
         }
         // Unowned — rung 2: a strongly-typed C# object rides as item with kind naming

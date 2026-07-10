@@ -1,8 +1,8 @@
 namespace PLang.Tests;
 
 using number = global::app.type.number.@this;
-using OChoice = global::app.type.choice.@this<global::app.type.number.@this.Overflow>;
-using PChoice = global::app.type.choice.@this<global::app.type.number.@this.Precision>;
+using OChoice = global::app.type.item.choice.@this<global::app.type.number.@this.Overflow>;
+using PChoice = global::app.type.item.choice.@this<global::app.type.number.@this.Precision>;
 
 /// <summary>
 /// Test-only static shape for the arithmetic-engine unit tests. Production ops are instance

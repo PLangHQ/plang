@@ -42,7 +42,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
             new global::app.module.signing.verify(app.User.Context)
             {
                 Data = back,
-                SkipFreshnessCheck = new global::app.data.@this<global::app.type.@bool.@this>("", true)
+                SkipFreshnessCheck = new global::app.data.@this<global::app.type.item.@bool.@this>("", true)
             }, app.User.Context);
         await verify.IsFailure();
         await Assert.That(verify.Error!.Key).IsEqualTo("DataHashMismatch");
@@ -84,7 +84,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
     {
         var crypto = new global::app.module.crypto.code.Default();
         var action = new global::app.module.crypto.Hash(app.User.Context) { Data = app.Ok("x"),
-            Algorithm = new global::app.data.@this<global::app.type.text.@this>("", "md5")
+            Algorithm = new global::app.data.@this<global::app.type.item.text.@this>("", "md5")
         };
         var result = await crypto.Hash(action);
         await result.IsFailure();
@@ -114,7 +114,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
             global::app.channel.ChannelDirection.Bidirectional);
         var action = new global::app.module.output.ask(app.User.Context)
         {
-            Question = new global::app.data.@this<global::app.type.text.@this>("", "")
+            Question = new global::app.data.@this<global::app.type.item.text.@this>("", "")
         };
         var result = await ch.Ask(action);
         await result.IsFailure();

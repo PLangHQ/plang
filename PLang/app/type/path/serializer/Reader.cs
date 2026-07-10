@@ -17,9 +17,9 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.@null.@this("path", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this("path", kind);
         string s = reader.String();
-        if (string.IsNullOrEmpty(s)) return new global::app.type.@null.@this("path", kind);
+        if (string.IsNullOrEmpty(s)) return new global::app.type.item.@null.@this("path", kind);
         // Born-with-context: the read context always carries the actor scope; a path resolves
         // through the scheme registry with it (no context-less stub).
         return global::app.type.path.@this.Resolve(s, ctx.Context);

@@ -97,7 +97,7 @@ public class SettingsDataTests
     {
         // Use the settings.set action handler
         var context = _app.System.Context;
-        var handler = new global::app.module.setting.Set(context) { Key = (global::app.type.text.@this)"HandlerKey",
+        var handler = new global::app.module.setting.Set(context) { Key = (global::app.type.item.text.@this)"HandlerKey",
             Value = new global::app.data.@this("", "HandlerValue", context: _app.System.Context)        };
 
         var result = await handler.Run();
@@ -114,7 +114,7 @@ public class SettingsDataTests
     {
         await (await _app.SettingsStore).Set("settings", "TestKey", new global::app.data.@this("TestKey", "TestValue", context: _app.System.Context));
 
-        var handler = new global::app.module.setting.Get(_app.System.Context) { Key = (global::app.type.text.@this)"TestKey"
+        var handler = new global::app.module.setting.Get(_app.System.Context) { Key = (global::app.type.item.text.@this)"TestKey"
         };
 
         var result = await handler.Run();
@@ -125,7 +125,7 @@ public class SettingsDataTests
     [Test]
     public async Task SettingsHandler_Get_MissingKey_ReturnsAskError()
     {
-        var handler = new global::app.module.setting.Get(_app.System.Context) { Key = (global::app.type.text.@this)"MissingKey"
+        var handler = new global::app.module.setting.Get(_app.System.Context) { Key = (global::app.type.item.text.@this)"MissingKey"
         };
 
         var result = await handler.Run();
@@ -138,7 +138,7 @@ public class SettingsDataTests
     {
         await (await _app.SettingsStore).Set("settings", "ToRemove", new global::app.data.@this("ToRemove", "value", context: _app.System.Context));
 
-        var handler = new global::app.module.setting.Remove(_app.System.Context) { Key = (global::app.type.text.@this)"ToRemove"
+        var handler = new global::app.module.setting.Remove(_app.System.Context) { Key = (global::app.type.item.text.@this)"ToRemove"
         };
 
         var result = await handler.Run();

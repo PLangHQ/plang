@@ -31,7 +31,7 @@ public class ConditionHandlerTests : IDisposable
     [Test]
     public async Task IfTrue_NoGoals_ReturnsSuccessWithTrue()
     {
-        var action = new If(_app.User.Context) { Left = _app.User.Context.Ok(true), Operator = _app.User.Context.Ok<global::app.type.choice.@this<Operator>>((global::app.type.choice.@this<Operator>)new Operator("==")), Right = _app.User.Context.Ok(true) };
+        var action = new If(_app.User.Context) { Left = _app.User.Context.Ok(true), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.User.Context.Ok(true) };
         await action.Attach(null, _app.User.Context);
         var result = await action.Run();
 
@@ -42,7 +42,7 @@ public class ConditionHandlerTests : IDisposable
     [Test]
     public async Task IfFalse_NoGoals_ReturnsSuccessWithFalse()
     {
-        var action = new If(_app.User.Context) { Left = _app.User.Context.Ok(false), Operator = _app.User.Context.Ok<global::app.type.choice.@this<Operator>>((global::app.type.choice.@this<Operator>)new Operator("==")), Right = _app.User.Context.Ok(true) };
+        var action = new If(_app.User.Context) { Left = _app.User.Context.Ok(false), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.User.Context.Ok(true) };
         await action.Attach(null, _app.User.Context);
         var result = await action.Run();
 

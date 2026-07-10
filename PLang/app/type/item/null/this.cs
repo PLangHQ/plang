@@ -1,4 +1,4 @@
-namespace app.type.@null;
+namespace app.type.item.@null;
 
 /// <summary>
 /// PLang <c>null</c> value — the null <em>value</em> (a present value that is

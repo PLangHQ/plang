@@ -1,4 +1,4 @@
-namespace app.type.@bool;
+namespace app.type.item.@bool;
 
 public sealed partial class @this
 {

@@ -89,9 +89,9 @@ public class PlangRuntimeTests : IDisposable
         var context = _app.User.Context;
 
         // Register a before-step event
-        var onAction = new global::app.module.@event.On(context) { Trigger = (global::app.type.choice.@this<global::app.@event.Trigger>)global::app.@event.Trigger.BeforeStep,
+        var onAction = new global::app.module.@event.On(context) { Trigger = (global::app.type.item.choice.@this<global::app.@event.Trigger>)global::app.@event.Trigger.BeforeStep,
             GoalToCall = new GoalCall { Name = "LogBefore" },
-            StepPattern = (global::app.type.text.@this)"*"
+            StepPattern = (global::app.type.item.text.@this)"*"
         };
         await onAction.Run();
 

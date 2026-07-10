@@ -13,10 +13,10 @@ namespace PLang.Tests.Shared;
 /// </summary>
 public static class SerializerSyncTestExtensions
 {
-    public static global::app.data.@this<global::app.type.text.@this> Serialize(this ISerializer s, global::app.data.@this d)
+    public static global::app.data.@this<global::app.type.item.text.@this> Serialize(this ISerializer s, global::app.data.@this d)
         => SerializeTo(s, d, global::app.View.Out);
 
-    public static global::app.data.@this<global::app.type.text.@this> Store(this ISerializer s, global::app.data.@this d)
+    public static global::app.data.@this<global::app.type.item.text.@this> Store(this ISerializer s, global::app.data.@this d)
         => SerializeTo(s, d, global::app.View.Store);
 
     public static global::app.data.@this Deserialize(this ISerializer s, string str)
@@ -33,13 +33,13 @@ public static class SerializerSyncTestExtensions
         return s.DeserializeAsync<T>(ms).GetAwaiter().GetResult();
     }
 
-    private static global::app.data.@this<global::app.type.text.@this> SerializeTo(ISerializer s, global::app.data.@this d, global::app.View view)
+    private static global::app.data.@this<global::app.type.item.text.@this> SerializeTo(ISerializer s, global::app.data.@this d, global::app.View view)
     {
         using var ms = new MemoryStream();
         var r = s.SerializeAsync(ms, d, view).GetAwaiter().GetResult();
         return r.Error != null
-            ? global::app.data.@this<global::app.type.text.@this>.FromError(r.Error)
-            : global::app.data.@this<global::app.type.text.@this>.Ok(Encoding.UTF8.GetString(ms.ToArray()));
+            ? global::app.data.@this<global::app.type.item.text.@this>.FromError(r.Error)
+            : global::app.data.@this<global::app.type.item.text.@this>.Ok(Encoding.UTF8.GetString(ms.ToArray()));
     }
 
     private static global::app.data.@this DeserializeFrom(ISerializer s, string str, global::app.View view)

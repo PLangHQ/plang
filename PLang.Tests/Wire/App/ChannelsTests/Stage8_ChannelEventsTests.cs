@@ -183,7 +183,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
             receivedData = payload;
             return Task.FromResult(app.Ok());
         }));
-        var result = await ch.AskAsync(new global::app.module.output.ask(app.User.Context) { Question = new global::app.data.@this<global::app.type.text.@this>("", "") });
+        var result = await ch.AskAsync(new global::app.module.output.ask(app.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "") });
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("answer");
         await Assert.That(receivedData).IsNotNull();
         await Assert.That((await receivedData!.Value())?.ToString()).IsEqualTo("answer");
@@ -203,7 +203,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
             fired = true;
             return Task.FromResult(app.Ok());
         }));
-        await ch.AskAsync(new global::app.module.output.ask(app.User.Context) { Question = new global::app.data.@this<global::app.type.text.@this>("", "q?") });
+        await ch.AskAsync(new global::app.module.output.ask(app.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "q?") });
         await Assert.That(fired).IsTrue();
     }
 

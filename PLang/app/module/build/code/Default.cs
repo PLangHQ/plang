@@ -79,7 +79,7 @@ public class Default : IBuilder
                 if (!wantedActions.Contains($"{a.Module}.{a.ActionName}")) continue;
                 foreach (var p in a.Parameters ?? new())
                 {
-                    var desc = ((await p.Value()) as global::app.type.text.@this)?.Clr<string>() ?? string.Empty;
+                    var desc = ((await p.Value()) as global::app.type.item.text.@this)?.Clr<string>() ?? string.Empty;
                     foreach (System.Text.RegularExpressions.Match m in tokenRx.Matches(desc))
                         if (allTypeNames.Contains(m.Value)) refs.Add(m.Value);
                 }
@@ -160,8 +160,8 @@ public class Default : IBuilder
         var listAction = new file.List(context)
         {
             Path = context.Ok<path>(path.Resolve(rootRelative, context)),
-            Pattern = new data.@this<global::app.type.text.@this>("", "*.goal", context: context),
-            Recursive = new data.@this<global::app.type.@bool.@this>("", true, context: context)
+            Pattern = new data.@this<global::app.type.item.text.@this>("", "*.goal", context: context),
+            Recursive = new data.@this<global::app.type.item.@bool.@this>("", true, context: context)
         };
         var listResult = await app.Run(listAction, context);
         if (!listResult.Success)
@@ -494,7 +494,7 @@ public class Default : IBuilder
                     // NormalizeParameterTypes; without it, ToGoalCall parses "goal.call" as a
                     // dotted name and the type-name guard below false-positives on every
                     // goal.call slot in the catalog.
-                    if ((await p.Value()) is global::app.type.text.@this descText
+                    if ((await p.Value()) is global::app.type.item.text.@this descText
                         && IsCatalogDescription(descText, p.Type!.Name)) continue;
                     var goalCall = ToGoalCall((await p.Value()), context);
                     if (goalCall == null || string.IsNullOrEmpty(goalCall.Name)) continue;
@@ -916,7 +916,7 @@ public class Default : IBuilder
                     // on the .pr — never "type:kind". Skip variable refs
                     // (%var% values resolve at runtime); an authored string
                     // rides as text and presents its string face here.
-                    var sv = p.Peek() as global::app.type.text.@this;
+                    var sv = p.Peek() as global::app.type.item.text.@this;
                     if (p.Peek() is not null && !(sv != null && sv.StartsWith("%") && sv.EndsWith("%")))
                     {
                         var declared = schemaProp.PropertyType;
@@ -935,7 +935,7 @@ public class Default : IBuilder
                 if (p.Peek() is null) continue;
                 // An authored string rides as text — its string face carries
                 // the %var%-reference / empty / catalog-description judgements.
-                var face = p.Peek() as global::app.type.text.@this;
+                var face = p.Peek() as global::app.type.item.text.@this;
                 if (face != null && face.StartsWith("%") && face.EndsWith("%")) continue; // variable reference
                 if (p.Type == null) continue;
 
@@ -997,7 +997,7 @@ public class Default : IBuilder
             foreach (var p in a.Parameters)
             {
                 var raw = (p.Peek() as global::app.type.item.@this)?.RawText;
-                if (raw == null || !global::app.type.text.@this.HasVariable(raw)) continue;
+                if (raw == null || !global::app.type.item.text.@this.HasVariable(raw)) continue;
                 var t = p.Type;
                 p.Declare(new app.type.@this(t?.Name ?? "object", t?.Kind?.Name, t?.Strict ?? false, "plang"));
             }
@@ -1015,7 +1015,7 @@ public class Default : IBuilder
     /// </summary>
     // internal-static for unit tests — the helper has 4 distinct match shapes and the
     // production callers only exercise the match-true path through integration tests.
-    internal static bool IsCatalogDescription(global::app.type.text.@this value, string typeName)
+    internal static bool IsCatalogDescription(global::app.type.item.text.@this value, string typeName)
     {
         if (string.IsNullOrEmpty(typeName)) return false;
         // Span matching is the BCL edge — the text lowers here, inside the

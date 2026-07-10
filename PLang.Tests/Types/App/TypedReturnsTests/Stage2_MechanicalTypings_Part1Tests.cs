@@ -107,7 +107,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     // Footgun guard: a typed handler's T inside Data<T> must not itself be a
     // Data subtype — the implicit Data<T>(T value) operator silently wraps
     // when T = object and the source is already a Data, producing
-    // Data<object>{ Value = Data<global::app.type.@bool.@this>{...} }. Asserting at the type level.
+    // Data<object>{ Value = Data<global::app.type.item.@bool.@this>{...} }. Asserting at the type level.
     [Test]
     public async Task DataValueFromTypedRun_NotDoubleWrapped()
     {

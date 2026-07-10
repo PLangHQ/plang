@@ -119,7 +119,7 @@ public class @this
     /// for md and any kind the system doesn't parse — loads it as <c>text</c>. json overrides.</summary>
     public virtual global::System.Threading.Tasks.ValueTask<global::app.data.@this> Load(
         object raw, global::app.actor.context.@this ctx)
-        => new(ctx.Ok(new global::app.type.text.@this(raw)));
+        => new(ctx.Ok(new global::app.type.item.text.@this(raw)));
 
     /// <summary>Convert a source value INTO a value of this kind — the outbound owns it (dict
     /// from json, audio from text). An error <c>Data</c> when the source can't become this kind.</summary>

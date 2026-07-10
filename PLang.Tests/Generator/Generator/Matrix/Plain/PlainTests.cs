@@ -13,7 +13,7 @@ public class StringPlainTests
         await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<StringPlain>(app,
             parameters: new[] { ("path", (object?)"hello") });
-        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.text.@this>;
         await Assert.That((await typed!.Value())?.Clr<string>()).IsEqualTo("hello");
     }
 
@@ -46,7 +46,7 @@ public class StringPlainTests
         await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<StringPlain>(app,
             parameters: new[] { ("path", (object?)"") });
-        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.text.@this>;
         await Assert.That((await typed!.Value())?.Clr<string>()).IsEqualTo("");
     }
 }
@@ -95,7 +95,7 @@ public class BoolPlainTests
         await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<BoolPlain>(app,
             parameters: new[] { ("flag", (object?)"true") });
-        var typed = result.Data as global::app.data.@this<global::app.type.@bool.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.@bool.@this>;
         await Assert.That((await typed!.Value()).Value).IsTrue();
     }
 
@@ -105,7 +105,7 @@ public class BoolPlainTests
         await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<BoolPlain>(app,
             parameters: new[] { ("flag", (object?)true) });
-        var typed = result.Data as global::app.data.@this<global::app.type.@bool.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.@bool.@this>;
         await Assert.That((await typed!.Value()).Value).IsTrue();
     }
 }

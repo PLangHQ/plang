@@ -22,12 +22,12 @@ public class EventHandlerTests
         => new(context)
         {
             
-            Trigger = (global::app.type.choice.@this<global::app.@event.Trigger>)type,
+            Trigger = (global::app.type.item.choice.@this<global::app.@event.Trigger>)type,
             GoalToCall = new GoalCall { Name = goalName },
-            GoalPattern = (global::app.type.text.@this)goalPattern,
-            StepPattern = (global::app.type.text.@this)stepPattern,
-            ActionPattern = (global::app.type.text.@this)actionPattern,
-            IsRegex = (global::app.type.@bool.@this)isRegex,
+            GoalPattern = (global::app.type.item.text.@this)goalPattern,
+            StepPattern = (global::app.type.item.text.@this)stepPattern,
+            ActionPattern = (global::app.type.item.text.@this)actionPattern,
+            IsRegex = (global::app.type.item.@bool.@this)isRegex,
             Priority = (global::app.type.number.@this)priority
         };
 
@@ -38,7 +38,7 @@ public class EventHandlerTests
         var result = await MakeOn(context, global::app.@event.Trigger.BeforeGoal, "LogGoal", goalPattern: "TestGoal").Run();
 
         await result.IsSuccess();
-        await Assert.That((await result.Value()) is global::app.type.text.@this).IsTrue(); // returns binding id
+        await Assert.That((await result.Value()) is global::app.type.item.text.@this).IsTrue(); // returns binding id
         await Assert.That(context.Events.Count).IsEqualTo(1);
     }
 
@@ -104,7 +104,7 @@ public class EventHandlerTests
 
         await Assert.That(context.Events.Count).IsEqualTo(1);
 
-        var removeHandler = new Remove(context) { EventId = (global::app.type.text.@this)eventId };
+        var removeHandler = new Remove(context) { EventId = (global::app.type.item.text.@this)eventId };
         var removeResult = await removeHandler.Run();
 
         await removeResult.IsSuccess();
@@ -215,9 +215,9 @@ public class EventHandlerTests
             Name = "AfterCallback",
             Parameters = new List<Data> { new Data("callbackRan", true, context: context) }
         };
-        var onAction = new On(context) { Trigger = (global::app.type.choice.@this<global::app.@event.Trigger>)global::app.@event.Trigger.AfterGoal,
+        var onAction = new On(context) { Trigger = (global::app.type.item.choice.@this<global::app.@event.Trigger>)global::app.@event.Trigger.AfterGoal,
             GoalToCall = goalToCall,
-            GoalPattern = (global::app.type.text.@this)"MainGoal"
+            GoalPattern = (global::app.type.item.text.@this)"MainGoal"
         };
         await onAction.Run();
 

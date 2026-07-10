@@ -22,7 +22,7 @@ public class ErrorBuryingReproTest
         { Exception = nre };
 
         var d = new global::app.data.@this("!error", rootError);
-        var resolved = d.ShallowClone<global::app.type.text.@this>(await d.Value<global::app.type.text.@this>());
+        var resolved = d.ShallowClone<global::app.type.item.text.@this>(await d.Value<global::app.type.item.text.@this>());
 
         await resolved.IsFailure();
         // The primary error is the original IError, not the conversion wrapper.

@@ -9,10 +9,10 @@ namespace app.module.condition;
 public partial class If : IContext, IStep
 {
     public partial data.@this? Left { get; init; }
-    public partial data.@this<global::app.type.choice.@this<Operator>> Operator { get; init; }
+    public partial data.@this<global::app.type.item.choice.@this<Operator>> Operator { get; init; }
     public partial data.@this? Right { get; init; }
     [Default(false)]
-    public partial data.@this<global::app.type.@bool.@this> Negate { get; init; }
+    public partial data.@this<global::app.type.item.@bool.@this> Negate { get; init; }
 
     [Code]
     public partial IEvaluator Evaluator { get; }
@@ -108,7 +108,7 @@ public partial class If : IContext, IStep
 
             if (branchResult)
             {
-                data.@this lastResult = Context.Ok<global::app.type.@bool.@this>(true);
+                data.@this lastResult = Context.Ok<global::app.type.item.@bool.@this>(true);
                 foreach (var action in body)
                 {
                     lastResult = await action.RunAsync(Context);

@@ -1,10 +1,10 @@
-namespace app.type.choice.serializer;
+namespace app.type.item.choice.serializer;
 
 using System.Reflection;
 
 /// <summary>
 /// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for
-/// <see cref="app.type.choice.@this{T}"/> — the closed named-set value. Its wire form
+/// <see cref="app.type.item.choice.@this{T}"/> — the closed named-set value. Its wire form
 /// is the chosen option's NAME (a scalar, e.g. <c>"=="</c>); the KIND names the option
 /// set (<c>"operator"</c>, <c>"httpmethod"</c>), which resolves through the type registry
 /// to the closed <c>choice&lt;T&gt;</c> wrapper. The choice builds ITSELF from the name
@@ -22,7 +22,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.@null.@this("choice", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this("choice", kind);
         var name = reader.String();
         if (string.IsNullOrEmpty(kind))
             throw new System.NotSupportedException(

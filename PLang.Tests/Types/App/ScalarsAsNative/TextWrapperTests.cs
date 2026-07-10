@@ -1,4 +1,4 @@
-using Text = global::app.type.text.@this;
+using Text = global::app.type.item.text.@this;
 using Item = global::app.type.item.@this;
 
 using PLang.Tests.App.Fixtures;

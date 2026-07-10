@@ -7,7 +7,7 @@ public partial class Group : IContext
 {
     public partial data.@this<app.variable.@this> ListName { get; init; }
     [IsNotNull]
-    public partial data.@this<global::app.type.text.@this> Key { get; init; }
+    public partial data.@this<global::app.type.item.text.@this> Key { get; init; }
 
     public async Task<data.@this<type.list>> Run()
     {

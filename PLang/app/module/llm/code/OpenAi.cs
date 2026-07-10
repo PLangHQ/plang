@@ -11,7 +11,7 @@ using app.type.path;
 using app.module.http;
 using PlangHttpMethod = app.module.http.HttpMethod;
 using number = global::app.type.number.@this;
-using text = global::app.type.text.@this;
+using text = global::app.type.item.text.@this;
 using item = global::app.type.item.@this;
 
 namespace app.module.llm.code;
@@ -103,7 +103,7 @@ public sealed class OpenAi : ILlm
             if (a.Schema == null || await a.Schema.IsEmpty()) return null;
             return (await a.Schema.Value()) switch
             {
-                global::app.type.text.@this t => t.ToString(),
+                global::app.type.item.text.@this t => t.ToString(),
                 { } v => System.Text.Json.JsonSerializer.Serialize(v, v.GetType()),
                 _ => null,
             };
@@ -221,14 +221,14 @@ public sealed class OpenAi : ILlm
 
             var httpAction = new request(context)
             {
-                Url = new data.@this<global::app.type.text.@this>("", endpoint),
-                Method = new data.@this<global::app.type.choice.@this<PlangHttpMethod>>("", PlangHttpMethod.POST),
+                Url = new data.@this<global::app.type.item.text.@this>("", endpoint),
+                Method = new data.@this<global::app.type.item.choice.@this<PlangHttpMethod>>("", PlangHttpMethod.POST),
                 Body = new data.@this("", body, context: context),
                 Headers = new data.@this<global::app.type.dict.@this>("", global::app.type.dict.@this.FromRaw(headers, context)),
-                Unsigned = new data.@this<global::app.type.@bool.@this>("", true),
+                Unsigned = new data.@this<global::app.type.item.@bool.@this>("", true),
                 TimeoutInSec = new data.@this<global::app.type.number.@this>("", 120),
                 OnStream = action.OnStream,
-                StreamAs = (action.OnStream == null ? null : await action.OnStream.Value()) != null ? new data.@this<global::app.type.choice.@this<StreamFormat>>("", StreamFormat.SSE) : default
+                StreamAs = (action.OnStream == null ? null : await action.OnStream.Value()) != null ? new data.@this<global::app.type.item.choice.@this<StreamFormat>>("", StreamFormat.SSE) : default
             };
 
             data.@this httpResult = await app.Run(httpAction, context);
@@ -1026,7 +1026,7 @@ public sealed class OpenAi : ILlm
         // string; a legacy raw prop is already a string.
         static string? AsText(object? v) => v switch
         {
-            global::app.type.text.@this t => t.Clr<string>(),
+            global::app.type.item.text.@this t => t.Clr<string>(),
             string s => s,
             _ => null,
         };

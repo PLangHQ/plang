@@ -16,10 +16,10 @@ public partial class Verify : IContext
     public partial data.@this Hash { get; init; }
 
     [Default("keccak256")]
-    public partial data.@this<global::app.type.text.@this> Algorithm { get; init; }
+    public partial data.@this<global::app.type.item.text.@this> Algorithm { get; init; }
 
     [Code]
     public partial ICrypto Crypto { get; }
 
-    public async Task<data.@this<global::app.type.@bool.@this>> Run() => await Crypto.Verify(this);
+    public async Task<data.@this<global::app.type.item.@bool.@this>> Run() => await Crypto.Verify(this);
 }

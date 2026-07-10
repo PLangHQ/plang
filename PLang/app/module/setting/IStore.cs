@@ -39,7 +39,7 @@ public interface IStore : IDisposable
     /// Checks if a key exists in a table.
     /// Returns Data with bool value.
     /// </summary>
-    Task<data.@this<global::app.type.@bool.@this>> Exists(string table, string key);
+    Task<data.@this<global::app.type.item.@bool.@this>> Exists(string table, string key);
 
     /// <summary>
     /// Lists all tables in this store.

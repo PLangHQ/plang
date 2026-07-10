@@ -10,7 +10,7 @@ namespace app.module.typedreturns;
 [global::app.module.Action("noopbuild")]
 public partial class NoopBuild : global::app.module.IContext
 {
-    public partial global::app.data.@this<global::app.type.text.@this>? Tag { get; init; }
+    public partial global::app.data.@this<global::app.type.item.text.@this>? Tag { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
 }
 
@@ -18,7 +18,7 @@ public partial class NoopBuild : global::app.module.IContext
 [global::app.module.Action("buildreturnstype")]
 public partial class BuildReturnsType : global::app.module.IContext
 {
-    public partial global::app.data.@this<global::app.type.text.@this>? Tag { get; init; }
+    public partial global::app.data.@this<global::app.type.item.text.@this>? Tag { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
     public Task<global::app.data.@this> Build() => Task.FromResult(Context.Ok("foo"));
 }
@@ -27,7 +27,7 @@ public partial class BuildReturnsType : global::app.module.IContext
 [global::app.module.Action("buildfails")]
 public partial class BuildFails : global::app.module.IContext
 {
-    public partial global::app.data.@this<global::app.type.text.@this>? Tag { get; init; }
+    public partial global::app.data.@this<global::app.type.item.text.@this>? Tag { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
     public Task<global::app.data.@this> Build() => Task.FromResult(
         global::app.data.@this.FromError(new global::app.error.ActionError("forced build failure", "BuildFail", 400)));
@@ -37,7 +37,7 @@ public partial class BuildFails : global::app.module.IContext
 [global::app.module.Action("buildbareok")]
 public partial class BuildBareOk : global::app.module.IContext
 {
-    public partial global::app.data.@this<global::app.type.text.@this>? Tag { get; init; }
+    public partial global::app.data.@this<global::app.type.item.text.@this>? Tag { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
     public Task<global::app.data.@this> Build() => Task.FromResult(global::app.data.@this.Ok());
 }
@@ -47,7 +47,7 @@ public partial class BuildBareOk : global::app.module.IContext
 public partial class BuildOrdered : global::app.module.IContext
 {
     public static readonly List<string> InvocationLog = new();
-    public partial global::app.data.@this<global::app.type.text.@this>? Marker { get; init; }
+    public partial global::app.data.@this<global::app.type.item.text.@this>? Marker { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
     public Task<global::app.data.@this> Build()
     {

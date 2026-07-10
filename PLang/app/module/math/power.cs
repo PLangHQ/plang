@@ -31,11 +31,11 @@ public partial class Power : IContext
     public partial data.@this Exponent { get; init; }
     /// <summary>Integer-overflow mode. Default: Promote (widen; never wrap).</summary>
     [Default(number.Overflow.Promote)]
-    public partial data.@this<global::app.type.choice.@this<number.Overflow>> Overflow { get; init; }
+    public partial data.@this<global::app.type.item.choice.@this<number.Overflow>> Overflow { get; init; }
 
     /// <summary>Precision mode for a double⊕decimal mix. Default: Error (require an explicit choice).</summary>
     [Default(number.Precision.Error)]
-    public partial data.@this<global::app.type.choice.@this<number.Precision>> Precision { get; init; }
+    public partial data.@this<global::app.type.item.choice.@this<number.Precision>> Precision { get; init; }
 
     [Code]
     public partial global::app.module.math.code.IMath Math { get; }

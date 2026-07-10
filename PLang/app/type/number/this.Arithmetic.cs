@@ -20,19 +20,19 @@ public sealed partial class @this
     // Instance ops — the op on the carrier (a.Add(b, …)); the other operand + the overflow/
     // precision settings ride as whole plang values (choice). The op unwraps them at the leaf
     // (the internal DoOp takes the enum; choice → enum is implicit) — no decompose at the call.
-    public @this Add(@this b, global::app.type.choice.@this<Overflow> overflow, global::app.type.choice.@this<Precision> precision)
+    public @this Add(@this b, global::app.type.item.choice.@this<Overflow> overflow, global::app.type.item.choice.@this<Precision> precision)
         => Wrap(() => DoOp(this, b, ArithOp.Add, overflow, precision));
-    public @this Subtract(@this b, global::app.type.choice.@this<Overflow> overflow, global::app.type.choice.@this<Precision> precision)
+    public @this Subtract(@this b, global::app.type.item.choice.@this<Overflow> overflow, global::app.type.item.choice.@this<Precision> precision)
         => Wrap(() => DoOp(this, b, ArithOp.Sub, overflow, precision));
-    public @this Multiply(@this b, global::app.type.choice.@this<Overflow> overflow, global::app.type.choice.@this<Precision> precision)
+    public @this Multiply(@this b, global::app.type.item.choice.@this<Overflow> overflow, global::app.type.item.choice.@this<Precision> precision)
         => Wrap(() => DoOp(this, b, ArithOp.Mul, overflow, precision));
-    public @this Modulo(@this b, global::app.type.choice.@this<Overflow> overflow, global::app.type.choice.@this<Precision> precision)
+    public @this Modulo(@this b, global::app.type.item.choice.@this<Overflow> overflow, global::app.type.item.choice.@this<Precision> precision)
         => Wrap(() => DoOp(this, b, ArithOp.Mod, overflow, precision));
-    public @this Divide(@this b, global::app.type.choice.@this<Overflow> overflow, global::app.type.choice.@this<Precision> precision)
+    public @this Divide(@this b, global::app.type.item.choice.@this<Overflow> overflow, global::app.type.item.choice.@this<Precision> precision)
         => Wrap(() => DoDivide(this, b, precision));
-    public @this IntDivide(@this b, global::app.type.choice.@this<Overflow> overflow, global::app.type.choice.@this<Precision> precision)
+    public @this IntDivide(@this b, global::app.type.item.choice.@this<Overflow> overflow, global::app.type.item.choice.@this<Precision> precision)
         => Wrap(() => DoIntDivide(this, b, overflow));
-    public @this Power(@this exponent, global::app.type.choice.@this<Overflow> overflow, global::app.type.choice.@this<Precision> precision)
+    public @this Power(@this exponent, global::app.type.item.choice.@this<Overflow> overflow, global::app.type.item.choice.@this<Precision> precision)
         => Wrap(() => DoPower(this, exponent, overflow, precision));
 
     // A pure numeric op returns its VALUE and THROWS a keyed AppException on error. It has no

@@ -27,7 +27,7 @@ public class TypeExitTests
 
     [Test] public async Task TypeExit_FalseFor_GenericDataOfNonExitT()
     {
-        var d = new global::app.data.@this<global::app.type.text.@this>("", "hello");
+        var d = new global::app.data.@this<global::app.type.item.text.@this>("", "hello");
         await Assert.That((await d.Value())?.GetType().Exit() ?? false).IsFalse();
     }
 

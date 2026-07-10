@@ -32,7 +32,7 @@ public sealed partial class @this
     }
 
     /// <summary>[Choices] vocabulary registry — reachable as <c>app.type.choices</c>.</summary>
-    public choice.list.@this Choices { get; } = new();
+    public global::app.type.item.choice.list.@this Choices { get; } = new();
 
     /// <summary>
     /// Per-App scheme registry for <see cref="path.@this"/>. Populated at App
@@ -145,7 +145,7 @@ public sealed partial class @this
             if (generic == typeof(data.@this<>))
                 return GetTypeNameStatic(type.GetGenericArguments()[0]);
             // choice<T> surfaces under T's name — it IS T's closed named-set.
-            if (generic == typeof(app.type.choice.@this<>))
+            if (generic == typeof(app.type.item.choice.@this<>))
                 return GetTypeNameStatic(type.GetGenericArguments()[0]);
             // Native typed list — list<T> carries its element type intrinsically.
             if (generic == typeof(app.type.list.@this<>))
@@ -392,7 +392,7 @@ public sealed partial class @this
                 return GetTypeName(type.GetGenericArguments()[0]);
             // choice<T> surfaces under T's name — it IS T's closed named-set (the enum/[Choices]
             // vocabulary), so the catalog renders "operator", "httpmethod", … not "choice".
-            if (generic == typeof(app.type.choice.@this<>))
+            if (generic == typeof(app.type.item.choice.@this<>))
                 return GetTypeName(type.GetGenericArguments()[0]);
             // Native typed list — list<T> carries its element type intrinsically.
             if (generic == typeof(app.type.list.@this<>))
@@ -495,7 +495,7 @@ public sealed partial class @this
         // The choice FAMILY itself — so a wire type {name:"choice", kind:"operator"} resolves
         // (the kind names the closed set; the choice reader maps it to choice<T>). The enum-name
         // aliases below stay for the LLM-facing catalog ("operator", "httpmethod", …).
-        Register("choice", typeof(app.type.choice.@this<>));
+        Register("choice", typeof(app.type.item.choice.@this<>));
 
         foreach (var ns in modules.Names)
             foreach (var actionName in modules.GetActions(ns))
@@ -507,7 +507,7 @@ public sealed partial class @this
                 {
                     if (prop.Name is "EqualityContract" or "Context") continue;
                     if (UnwrapType(prop.PropertyType) is { IsGenericType: true } c
-                        && c.GetGenericTypeDefinition() == typeof(app.type.choice.@this<>))
+                        && c.GetGenericTypeDefinition() == typeof(app.type.item.choice.@this<>))
                     {
                         var inner = c.GetGenericArguments()[0];
                         // Register the name → the choice<T> WRAPPER (c), not the inner T.
@@ -537,7 +537,7 @@ public sealed partial class @this
 
         // choice<T> carries T's closed option set — the validation surface is T's
         // names (enum members, or T's static [Choices] vocabulary).
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(app.type.choice.@this<>))
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(app.type.item.choice.@this<>))
             type = type.GetGenericArguments()[0];
 
         if (type.IsEnum)
@@ -660,7 +660,7 @@ public sealed partial class @this
                         // choice<T> carries its closed named-set on T (enum / [Choices]); walk it
                         // so the option vocabulary surfaces under T's name (operator, httpmethod, …).
                         if (unwrapped is { IsGenericType: true } c
-                            && c.GetGenericTypeDefinition() == typeof(app.type.choice.@this<>))
+                            && c.GetGenericTypeDefinition() == typeof(app.type.item.choice.@this<>))
                             Enqueue(c.GetGenericArguments()[0]);
                     }
                 }

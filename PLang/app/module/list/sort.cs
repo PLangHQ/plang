@@ -7,9 +7,9 @@ public partial class Sort : IContext
 {
     public partial data.@this<app.variable.@this> ListName { get; init; }
     [Default(false)]
-    public partial data.@this<global::app.type.@bool.@this> Descending { get; init; }
+    public partial data.@this<global::app.type.item.@bool.@this> Descending { get; init; }
     /// <summary>Optional element field to sort by — `sort %people% by "age"`. Sorts by element value when absent.</summary>
-    public partial data.@this<global::app.type.text.@this>? By { get; init; }
+    public partial data.@this<global::app.type.item.text.@this>? By { get; init; }
 
     public async Task<data.@this<type.list>> Run()
     {

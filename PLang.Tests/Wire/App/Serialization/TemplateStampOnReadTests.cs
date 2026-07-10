@@ -6,13 +6,13 @@ namespace PLang.Tests.App.Serialization;
 // holeless string never carries the stamp (HasVariableReference stays correct).
 public class TemplateStampOnReadTests
 {
-    private static global::app.type.text.@this ReadText(string json, string? mode)
+    private static global::app.type.item.text.@this ReadText(string json, string? mode)
     {
         var bytes = System.Text.Encoding.UTF8.GetBytes(json);
         var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
         utf8.Read();
         var jr = new global::app.channel.serializer.json.Reader(utf8);
-        return (global::app.type.text.@this)new global::app.type.text.serializer.Reader()
+        return (global::app.type.item.text.@this)new global::app.type.item.text.serializer.Reader()
             .Read(ref jr, null, new global::app.type.reader.ReadContext(global::PLang.Tests.TestApp.SharedContext, mode));
     }
 

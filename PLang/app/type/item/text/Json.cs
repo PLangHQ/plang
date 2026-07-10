@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace app.type.text;
+namespace app.type.item.text;
 
 /// <summary>
 /// Plain-JSON view of a <see cref="@this"/> — bare string. Mirrors dict/list's

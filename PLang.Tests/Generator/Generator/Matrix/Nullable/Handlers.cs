@@ -3,7 +3,7 @@ namespace app.module.matrix.nullables;
 [global::app.module.Action("stringnullable")]
 public partial class StringNullable : global::app.module.IContext
 {
-    public partial global::app.data.@this<global::app.type.text.@this>? Tag { get; init; }
+    public partial global::app.data.@this<global::app.type.item.text.@this>? Tag { get; init; }
     public Task<global::app.data.@this> Run() =>
         Task.FromResult<global::app.data.@this>(Tag ?? global::app.data.@this.Null("tag"));
 }

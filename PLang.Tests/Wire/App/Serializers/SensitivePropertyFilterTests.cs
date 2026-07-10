@@ -89,7 +89,7 @@ public class SensitivePropertyFilterTests
     public async Task Sensitive_NoOpOnTypesWithoutAttribute()
     {
         // A type without [Sensitive] should serialize normally
-        var obj = new { Name = (global::app.type.text.@this)"test", Value = 42 };
+        var obj = new { Name = (global::app.type.item.text.@this)"test", Value = 42 };
 
         var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
         var json = (await serializer.Serialize(_app.Ok(obj)).Value())!.Clr<string>()!;
@@ -199,7 +199,7 @@ public class SensitivePropertyFilterTests
     public async Task Sensitive_IdentityData_PrivateKeyExcluded()
     {
         // End-to-end: create real identity, serialize, verify PrivateKey absent
-        var create = new Create(_app.System.Context) { Name = (global::app.type.text.@this)"e2e", SetAsDefault = (global::app.type.@bool.@this)true };
+        var create = new Create(_app.System.Context) { Name = (global::app.type.item.text.@this)"e2e", SetAsDefault = (global::app.type.item.@bool.@this)true };
         var result = await create.Run();
         var identity = (await result.Value()) as Identity;
 

@@ -9,12 +9,12 @@ namespace app.module.timer;
 [Action("end", Cacheable = false)]
 public partial class End : IContext, IStatic
 {
-    public partial data.@this<global::app.type.text.@this>? Name { get; init; }
+    public partial data.@this<global::app.type.item.text.@this>? Name { get; init; }
 
     public Task<data.@this<global::app.type.duration.@this>> Run()
     {
         // If no name given, use the last started timer
-        var key = (Name?.Peek() as global::app.type.text.@this)?.ToString();
+        var key = (Name?.Peek() as global::app.type.item.text.@this)?.ToString();
         if (key == null)
         {
             if (!Static.TryGetValue("__last__", out var lastObj) || lastObj is not string lastKey)

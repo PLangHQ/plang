@@ -24,21 +24,21 @@ public sealed class TestSigning : global::app.module.signing.code.ISigning
     {
         var unsigned = new global::app.type.signature.@this(
             value: action.Data!,
-            algorithm: new global::app.type.text.@this(Name),
-            nonce: new global::app.type.text.@this("test-nonce"),
+            algorithm: new global::app.type.item.text.@this(Name),
+            nonce: new global::app.type.item.text.@this("test-nonce"),
             created: new global::app.type.datetime.@this(System.DateTimeOffset.FromUnixTimeSeconds(0)),
-            identity: new global::app.type.text.@this("test-public-key"),
+            identity: new global::app.type.item.text.@this("test-public-key"),
             hash: new global::app.module.crypto.type.hash.@this(System.Array.Empty<byte>(), "test"),
             signature: new global::app.type.binary.@this(System.Array.Empty<byte>()));
         return Task.FromResult(action.Context.Ok((object?)unsigned));
     }
 
-    public Task<global::app.data.@this<global::app.type.@bool.@this>> VerifyAsync(global::app.module.signing.verify action)
-        => Task.FromResult(action.Context.Ok<global::app.type.@bool.@this>(new global::app.type.@bool.@this(true)));
+    public Task<global::app.data.@this<global::app.type.item.@bool.@this>> VerifyAsync(global::app.module.signing.verify action)
+        => Task.FromResult(action.Context.Ok<global::app.type.item.@bool.@this>(new global::app.type.item.@bool.@this(true)));
 
-    public global::app.type.binary.@this Sign(global::app.type.signature.@this unsigned, global::app.type.text.@this privateKey)
+    public global::app.type.binary.@this Sign(global::app.type.signature.@this unsigned, global::app.type.item.text.@this privateKey)
         => new global::app.type.binary.@this(System.Array.Empty<byte>());
 
-    public global::app.type.@bool.@this Verify(global::app.type.signature.@this signature)
-        => new global::app.type.@bool.@this(true);
+    public global::app.type.item.@bool.@this Verify(global::app.type.signature.@this signature)
+        => new global::app.type.item.@bool.@this(true);
 }

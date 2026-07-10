@@ -72,7 +72,7 @@ public class VerifyActionTests
         => (global::app.type.signature.@this)signed.Peek();
 
     private static Data Tampered(Data signed,
-        global::app.type.text.@this? algorithm = null,
+        global::app.type.item.text.@this? algorithm = null,
         global::app.type.datetime.@this? created = null,
         global::app.module.crypto.type.hash.@this? hash = null,
         global::app.type.binary.@this? signature = null,
@@ -115,7 +115,7 @@ public class VerifyActionTests
     public async Task Verify_TamperedAlgorithm_Error()
     {
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
-        var tampered = Tampered(signed, algorithm: new global::app.type.text.@this("unknown-algo"));
+        var tampered = Tampered(signed, algorithm: new global::app.type.item.text.@this("unknown-algo"));
 
         var result = await VerifyHelper(tampered, contracts: new List<string> { "C0" });
         await result.IsFailure();

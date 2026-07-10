@@ -16,16 +16,16 @@ namespace app.module.channel;
 [Action("set", Cacheable = false)]
 public partial class Set : IContext
 {
-    public partial data.@this<global::app.type.text.@this> Name { get; init; }
+    public partial data.@this<global::app.type.item.text.@this> Name { get; init; }
     public partial data.@this<GoalCall> Goal { get; init; }
     public partial data.@this<global::app.actor.@this>? Actor { get; init; }
     public partial data.@this<global::app.type.number.@this>? Buffer { get; init; }
     public partial data.@this<global::app.type.duration.@this>? Timeout { get; init; }
-    public partial data.@this<global::app.type.text.@this>? Mime { get; init; }
-    public partial data.@this<global::app.type.text.@this>? Encoding { get; init; }
+    public partial data.@this<global::app.type.item.text.@this>? Mime { get; init; }
+    public partial data.@this<global::app.type.item.text.@this>? Encoding { get; init; }
     /// <summary>"input", "output", or "bidirectional". Default: bidirectional unless
     /// the channel name is "input" or "output", in which case the name decides.</summary>
-    public partial data.@this<global::app.type.text.@this>? Direction { get; init; }
+    public partial data.@this<global::app.type.item.text.@this>? Direction { get; init; }
     public partial data.@this<app.variable.@this>? Encryption { get; init; }
     public partial data.@this<app.variable.@this>? Signing { get; init; }
 

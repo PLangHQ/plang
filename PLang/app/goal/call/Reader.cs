@@ -20,6 +20,6 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         var options = global::app.data.Wire.ReadOptions(ctx with { Verify = false });
         return (global::app.type.item.@this?)System.Text.Json.JsonSerializer
                    .Deserialize<global::app.goal.GoalCall>(reader.RawValue(), options)
-               ?? new global::app.type.@null.@this("goal.call", kind);
+               ?? new global::app.type.item.@null.@this("goal.call", kind);
     }
 }

@@ -72,7 +72,7 @@ public class QueryBasicTests
 
         var action = LlmTestHelper.MakeQuery(Ctx);
         action = new query(Ctx) { Messages = action.Messages,
-            Model = (global::app.type.text.@this)"gpt-4o"
+            Model = (global::app.type.item.text.@this)"gpt-4o"
         };
         await action.Attach(null, Ctx);
         var result = await action.Run();
@@ -182,7 +182,7 @@ public class QueryBasicTests
                 new LlmMessage { Role = "system", Content = "You are helpful" },
                 new LlmMessage { Role = "user", Content = "Hello" }
             }.ToListData<LlmMessage>(),
-            Model = new global::app.data.@this<global::app.type.text.@this>("Model", "claude-99-future")
+            Model = new global::app.data.@this<global::app.type.item.text.@this>("Model", "claude-99-future")
         };
         await action.Attach(null, Ctx);
         var result = await action.Run();
@@ -235,7 +235,7 @@ public class QueryBasicTests
                 new LlmMessage { Role = "system", Content = "You are helpful" },
                 new LlmMessage { Role = "user", Content = "Hello" }
             }.ToListData<LlmMessage>(),
-            Model = new global::app.data.@this<global::app.type.text.@this>("Model", "gpt-5.4-mini-2026-03-17")
+            Model = new global::app.data.@this<global::app.type.item.text.@this>("Model", "gpt-5.4-mini-2026-03-17")
         };
         await action.Attach(null, Ctx);
         var result = await action.Run();

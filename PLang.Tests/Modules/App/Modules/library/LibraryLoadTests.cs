@@ -43,7 +43,7 @@ public class ModuleAddTests
         await using (app)
         {
             var add = new Add(context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
-                Namespace = (global::app.type.text.@this)"app.module"
+                Namespace = (global::app.type.item.text.@this)"app.module"
             };
 
             var countBefore = app.Module.Count;
@@ -62,7 +62,7 @@ public class ModuleAddTests
         await using (app)
         {
             var add = new Add(context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
-                Namespace = (global::app.type.text.@this)"app.module"
+                Namespace = (global::app.type.item.text.@this)"app.module"
             };
 
             var result = await add.Run();
@@ -80,7 +80,7 @@ public class ModuleAddTests
         await using (app)
         {
             var add = new Add(context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
-                Namespace = (global::app.type.text.@this)"Some.Completely.Wrong.Namespace"
+                Namespace = (global::app.type.item.text.@this)"Some.Completely.Wrong.Namespace"
             };
 
             var result = await add.Run();
@@ -98,7 +98,7 @@ public class ModuleAddTests
         await using (app)
         {
             var add = new Add(context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
-                Namespace = (global::app.type.text.@this)"app.module"
+                Namespace = (global::app.type.item.text.@this)"app.module"
             };
 
             var result = await add.Run();
@@ -133,7 +133,7 @@ public class ModuleAddTests
         await using (app)
         {
             var add = new Add(context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
-                Namespace = (global::app.type.text.@this)"app.module"
+                Namespace = (global::app.type.item.text.@this)"app.module"
             };
 
             var result = await add.Run();

@@ -18,7 +18,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.@null.@this("image", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this("image", kind);
         byte[] bytes = reader.Bytes();
         string mime = ctx.Context?.App.Format.Mime("." + (kind ?? "")) ?? $"image/{kind}";
         return new global::app.type.image.@this(bytes, mime);

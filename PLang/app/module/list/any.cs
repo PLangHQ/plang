@@ -11,12 +11,12 @@ public partial class Any : IContext
 {
     public partial data.@this<app.variable.@this> ListName { get; init; }
     [IsNotNull]
-    public partial data.@this<global::app.type.text.@this> Key { get; init; }
+    public partial data.@this<global::app.type.item.text.@this> Key { get; init; }
     [IsNotNull]
-    public partial data.@this<global::app.type.choice.@this<condition.Operator>> Operator { get; init; }
+    public partial data.@this<global::app.type.item.choice.@this<condition.Operator>> Operator { get; init; }
     public partial data.@this Value { get; init; }
 
-    public async Task<data.@this<global::app.type.@bool.@this>> Run()
+    public async Task<data.@this<global::app.type.item.@bool.@this>> Run()
     {
         var data = await Context.Variable.Get(await ListName.Value());
         var key = (await Key.Value())!.Clr<string>()!;
@@ -28,9 +28,9 @@ public partial class Any : IContext
         {
             var left = await item.Get(key);
             if (await op.Evaluate(left, right))
-                return Context.Ok<global::app.type.@bool.@this>(true, Context.Type.Create("bool"));
+                return Context.Ok<global::app.type.item.@bool.@this>(true, Context.Type.Create("bool"));
         }
 
-        return Context.Ok<global::app.type.@bool.@this>(false, Context.Type.Create("bool"));
+        return Context.Ok<global::app.type.item.@bool.@this>(false, Context.Type.Create("bool"));
     }
 }

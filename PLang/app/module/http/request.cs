@@ -16,11 +16,11 @@ namespace app.module.http;
 public partial class request : IContext
 {
     /// <summary>Target URL. Relative URLs resolve against Config.BaseUrl. Bare domains get https:// prefix.</summary>
-    public partial data.@this<global::app.type.text.@this> Url { get; init; }
+    public partial data.@this<global::app.type.item.text.@this> Url { get; init; }
 
     /// <summary>HTTP method. Default: GET.</summary>
     [Default(HttpMethod.GET)]
-    public partial data.@this<global::app.type.choice.@this<HttpMethod>> Method { get; init; }
+    public partial data.@this<global::app.type.item.choice.@this<HttpMethod>> Method { get; init; }
 
     /// <summary>Request body. Strings sent as-is; objects JSON-serialized. Null for bodyless methods (GET, HEAD).</summary>
     public partial data.@this? Body { get; init; }
@@ -30,11 +30,11 @@ public partial class request : IContext
 
     /// <summary>Content-Type for the request body. Default: "application/json".</summary>
     [Default("application/json")]
-    public partial data.@this<global::app.type.text.@this> ContentType { get; init; }
+    public partial data.@this<global::app.type.item.text.@this> ContentType { get; init; }
 
     /// <summary>Character encoding for the request body. Default: "utf-8".</summary>
     [Default("utf-8")]
-    public partial data.@this<global::app.type.text.@this> Encoding { get; init; }
+    public partial data.@this<global::app.type.item.text.@this> Encoding { get; init; }
 
     /// <summary>Request timeout in seconds. Default: 30. Overrides Config.TimeoutInSec.</summary>
     [Default(30)]
@@ -42,7 +42,7 @@ public partial class request : IContext
 
     /// <summary>When true, skips request signing. Default: false (requests are signed).</summary>
     [Default(false)]
-    public partial data.@this<global::app.type.@bool.@this> Unsigned { get; init; }
+    public partial data.@this<global::app.type.item.@bool.@this> Unsigned { get; init; }
 
     /// <summary>Custom signing options. Overrides default signing behavior (contracts, headers, expiry).</summary>
     public partial data.@this<sign>? SignOptions { get; init; }
@@ -52,17 +52,17 @@ public partial class request : IContext
     public partial data.@this<GoalCall>? OnStream { get; init; }
 
     /// <summary>Stream format: Line (NDJSON), SSE (Server-Sent Events), or Bytes (raw chunks).</summary>
-    public partial data.@this<global::app.type.choice.@this<StreamFormat>>? StreamAs { get; init; }
+    public partial data.@this<global::app.type.item.choice.@this<StreamFormat>>? StreamAs { get; init; }
 
     /// <summary>Base URL for resolving relative request URLs. Unset = URLs must be absolute.</summary>
-    public partial data.@this<global::app.type.text.@this>? BaseUrl { get; init; }
+    public partial data.@this<global::app.type.item.text.@this>? BaseUrl { get; init; }
 
     /// <summary>Headers merged into every request; per-request <see cref="Headers"/> win on conflict.</summary>
     public partial data.@this<global::app.type.dict.@this>? DefaultHeaders { get; init; }
 
     /// <summary>Whether to follow HTTP redirects. Default: true.</summary>
     [Default(true)]
-    public partial data.@this<global::app.type.@bool.@this> FollowRedirects { get; init; }
+    public partial data.@this<global::app.type.item.@bool.@this> FollowRedirects { get; init; }
 
     /// <summary>Maximum redirects to follow. Default: 10.</summary>
     [Default(10)]

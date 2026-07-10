@@ -11,13 +11,13 @@ public sealed class Default : IEvaluator
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
-    public Task<data.@this<global::app.type.@bool.@this>> Evaluate(If action) =>
+    public Task<data.@this<global::app.type.item.@bool.@this>> Evaluate(If action) =>
         EvaluateOperator(action.Operator, action.Left, action.Right);
 
-    public Task<data.@this<global::app.type.@bool.@this>> Evaluate(Elseif action) =>
+    public Task<data.@this<global::app.type.item.@bool.@this>> Evaluate(Elseif action) =>
         EvaluateOperator(action.Operator, action.Left, action.Right);
 
-    public Task<data.@this<global::app.type.@bool.@this>> Evaluate(Compare action) =>
+    public Task<data.@this<global::app.type.item.@bool.@this>> Evaluate(Compare action) =>
         EvaluateOperator(action.Operator, action.Left, action.Right);
 
     /// <summary>
@@ -25,11 +25,11 @@ public sealed class Default : IEvaluator
     /// only differ in their declaring type — Operator, Left, Right have
     /// identical semantics, and the guard + try/catch is identical.
     /// </summary>
-    private static async Task<data.@this<global::app.type.@bool.@this>> EvaluateOperator(
-        data.@this<global::app.type.choice.@this<Operator>> operatorData, data.@this? left, data.@this? right)
+    private static async Task<data.@this<global::app.type.item.@bool.@this>> EvaluateOperator(
+        data.@this<global::app.type.item.choice.@this<Operator>> operatorData, data.@this? left, data.@this? right)
     {
         if (!operatorData.Success || await operatorData.Value() == null)
-            return global::app.data.@this<global::app.type.@bool.@this>.From(operatorData);
+            return global::app.data.@this<global::app.type.item.@bool.@this>.From(operatorData);
         try
         {
             // A condition is a boolean question — an absent variable operand is tolerated
@@ -39,7 +39,7 @@ public sealed class Default : IEvaluator
             left = await TolerateAbsentVariable(left);
             right = await TolerateAbsentVariable(right);
             Operator op = (await operatorData.Value())!; bool result = await op.Evaluate(left, right);
-            return operatorData.Context.Ok<global::app.type.@bool.@this>(result);
+            return operatorData.Context.Ok<global::app.type.item.@bool.@this>(result);
         }
         catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)
         {
@@ -61,12 +61,12 @@ public sealed class Default : IEvaluator
         return d;
     }
 
-    private static data.@this<global::app.type.@bool.@this> EvaluationError(global::app.actor.context.@this ctx, data.@this? left, Operator op, data.@this? right, Exception ex)
+    private static data.@this<global::app.type.item.@bool.@this> EvaluationError(global::app.actor.context.@this ctx, data.@this? left, Operator op, data.@this? right, Exception ex)
     {
         var leftType = left?.Peek()?.GetType().Name ?? "null";
         var rightType = right?.Peek()?.GetType().Name ?? "null";
 
-        return ctx.Error<global::app.type.@bool.@this>(new ValidationError(
+        return ctx.Error<global::app.type.item.@bool.@this>(new ValidationError(
             $"Condition evaluation failed: '{left?.Peek()}' ({leftType}) {op.Value} '{right?.Peek()}' ({rightType}) — {ex.Message}",
             "EvaluationError")
         {

@@ -125,10 +125,10 @@ public sealed partial class @this
         }
     }
 
-    public override async Task<data.@this<global::app.type.@bool.@this>> ExistsAsync()
+    public override async Task<data.@this<global::app.type.item.@bool.@this>> ExistsAsync()
     {
-        if (await AuthGate(Verb.Read) is { } early) return data.@this<global::app.type.@bool.@this>.From(early);
-        return Context.Ok<global::app.type.@bool.@this>(System.IO.File.Exists(Absolute) || System.IO.Directory.Exists(Absolute));
+        if (await AuthGate(Verb.Read) is { } early) return data.@this<global::app.type.item.@bool.@this>.From(early);
+        return Context.Ok<global::app.type.item.@bool.@this>(System.IO.File.Exists(Absolute) || System.IO.Directory.Exists(Absolute));
     }
 
     /// <summary>
@@ -217,7 +217,7 @@ public sealed partial class @this
             // lowers through its own Clr at this System.IO edge.
             if (raw is global::app.type.binary.@this binv)
                 await System.IO.File.WriteAllBytesAsync(Absolute, binv.Value);
-            else if (raw is global::app.type.text.@this txtv)
+            else if (raw is global::app.type.item.text.@this txtv)
                 await System.IO.File.WriteAllTextAsync(Absolute, txtv.Clr<string>());
             else
             {
@@ -376,7 +376,7 @@ public sealed partial class @this
 
             var askAction = new module.output.ask(Context)
             {
-                Question = new data.@this<global::app.type.text.@this>("", sb.ToString()),
+                Question = new data.@this<global::app.type.item.text.@this>("", sb.ToString()),
             };
             var askResult = await Context.App.Run(askAction, Context);
 

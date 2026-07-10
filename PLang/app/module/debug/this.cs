@@ -47,7 +47,7 @@ public sealed class @this
     /// Debug detail level — <see cref="Level.Step"/> (default) or <see cref="Level.Action"/>.
     /// A <c>choice&lt;Level&gt;</c> so the --debug walk rejects any value outside the set.
     /// </summary>
-    public global::app.type.choice.@this<global::app.module.debug.Level> Level { get; set; } = global::app.module.debug.Level.Step;
+    public global::app.type.item.choice.@this<global::app.module.debug.Level> Level { get; set; } = global::app.module.debug.Level.Step;
 
     /// <summary>
     /// When true, errors include a dump of all available variables at the point of failure.
@@ -433,12 +433,12 @@ public sealed class @this
 
         // First call to a given (goal, step) gets a clean name; subsequent retries get _N.
         var basePath = traceDir.Combine($"{safeGoal}_{stepKey}.txt");
-        { var __e = basePath.ExistsAsync().GetAwaiter().GetResult(); if (__e.Success && (__e.Peek() as global::app.type.@bool.@this)?.Value == false) return basePath; }
+        { var __e = basePath.ExistsAsync().GetAwaiter().GetResult(); if (__e.Success && (__e.Peek() as global::app.type.item.@bool.@this)?.Value == false) return basePath; }
 
         for (int n = 2; n < 100; n++)
         {
             var candidate = traceDir.Combine($"{safeGoal}_{stepKey}_{n}.txt");
-            { var __e = candidate.ExistsAsync().GetAwaiter().GetResult(); if (__e.Success && (__e.Peek() as global::app.type.@bool.@this)?.Value == false) return candidate; }
+            { var __e = candidate.ExistsAsync().GetAwaiter().GetResult(); if (__e.Success && (__e.Peek() as global::app.type.item.@bool.@this)?.Value == false) return candidate; }
         }
         // Fallback if 100 retries somehow aren't enough — counter guarantees uniqueness.
         return traceDir.Combine($"{safeGoal}_{stepKey}_call{_llmCallCounter}.txt");
@@ -547,7 +547,7 @@ public sealed class @this
         {
             foreach (var p in action.Parameters)
             {
-                if (p.Peek() is global::app.type.text.@this pt
+                if (p.Peek() is global::app.type.item.text.@this pt
                     && pt.Clr<string>() is { } s)
                 {
                     foreach (Match m in VarRefPattern.Matches(s))

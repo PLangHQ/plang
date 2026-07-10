@@ -5,11 +5,11 @@ namespace app.module.list;
 [Action("split")]
 public partial class Split : IContext
 {
-    public partial data.@this<global::app.type.text.@this> Value { get; init; }
+    public partial data.@this<global::app.type.item.text.@this> Value { get; init; }
     [Default(",")]
-    public partial data.@this<global::app.type.text.@this> Separator { get; init; }
+    public partial data.@this<global::app.type.item.text.@this> Separator { get; init; }
     [Default(false)]
-    public partial data.@this<global::app.type.@bool.@this> RemoveEmpty { get; init; }
+    public partial data.@this<global::app.type.item.@bool.@this> RemoveEmpty { get; init; }
 
     public async Task<data.@this<type.list>> Run()
     {

@@ -67,7 +67,7 @@ public partial class @this
                 // container has no such key". Names the unset index, not the whole path.
                 if (!child.IsInitialized && !index.IsLiteral && _context?.Variable != null
                     && (await _context.Variable.Get(index.Inner.ToString())).Peek()
-                        is null or global::app.type.@null.@this)
+                        is null or global::app.type.item.@null.@this)
                 {
                     // Report what the index expression's ROOT variable actually holds — the
                     // common confusion is the root being unset (injection never ran) vs the

@@ -1,4 +1,4 @@
-namespace app.type.text;
+namespace app.type.item.text;
 
 public sealed partial class @this
 {

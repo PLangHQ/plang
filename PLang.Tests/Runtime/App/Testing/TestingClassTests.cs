@@ -114,8 +114,8 @@ public class TestingClassTests
     [Test]
     public async Task Configure_FromJson_IncludeAndExclude_ReplaceExisting()
     {
-        _app.Test.Include.Add(new global::app.type.text.@this("oldInclude"));
-        _app.Test.Exclude.Add(new global::app.type.text.@this("oldExclude"));
+        _app.Test.Include.Add(new global::app.type.item.text.@this("oldInclude"));
+        _app.Test.Exclude.Add(new global::app.type.item.text.@this("oldExclude"));
 
         var result = _app.Setting.Set(_app.Test, new Dictionary<string, object?>
         {

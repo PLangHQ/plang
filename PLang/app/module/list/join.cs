@@ -7,9 +7,9 @@ public partial class Join : IContext
 {
     public partial data.@this<app.variable.@this> ListName { get; init; }
     [Default(",")]
-    public partial data.@this<global::app.type.text.@this> Separator { get; init; }
+    public partial data.@this<global::app.type.item.text.@this> Separator { get; init; }
 
-    public async Task<data.@this<global::app.type.text.@this>> Run()
+    public async Task<data.@this<global::app.type.item.text.@this>> Run()
     {
         var data = await Context.Variable.Get(await ListName.Value());
         var strings = new List<string>();
@@ -18,6 +18,6 @@ public partial class Join : IContext
             strings.Add((await item.Value())?.ToString() ?? "");
 
         var result = string.Join((await Separator.Value())!.Clr<string>()!, strings);
-        return Context.Ok<global::app.type.text.@this>(result, app.type.@this.String);
+        return Context.Ok<global::app.type.item.text.@this>(result, app.type.@this.String);
     }
 }

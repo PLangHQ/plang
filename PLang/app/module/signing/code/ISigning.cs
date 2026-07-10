@@ -14,15 +14,15 @@ public interface ISigning : IKey
     Task<data.@this> SignAsync(sign action);
 
     /// <summary>Full verification pipeline: type check, timeout, nonce, contracts, hash, verify.</summary>
-    Task<data.@this<global::app.type.@bool.@this>> VerifyAsync(verify action);
+    Task<data.@this<global::app.type.item.@bool.@this>> VerifyAsync(verify action);
 
     /// <summary>Low-level crypto primitive: signs the unsigned signature's canonical bytes with the
     /// private key, returns the signature bytes. No context (shared provider) — throws on failure;
     /// the [Code] boundary wraps. Takes the signature whole; decomposes only at the NSec call.</summary>
-    global::app.type.binary.@this Sign(global::app.type.signature.@this unsigned, global::app.type.text.@this privateKey);
+    global::app.type.binary.@this Sign(global::app.type.signature.@this unsigned, global::app.type.item.text.@this privateKey);
 
     /// <summary>Low-level crypto primitive: true if the signature verifies against its own identity.
     /// Throws on bad key/signature input; the [Code] boundary maps false → SignatureInvalid. Takes
     /// the signature whole — Identity is the public key, ToSigningBytes the payload.</summary>
-    global::app.type.@bool.@this Verify(global::app.type.signature.@this signature);
+    global::app.type.item.@bool.@this Verify(global::app.type.signature.@this signature);
 }

@@ -1,7 +1,7 @@
-namespace app.type.@bool.serializer;
+namespace app.type.item.@bool.serializer;
 
 /// <summary>
-/// Reader for <see cref="app.type.@bool.@this"/> — the Data-free <c>raw → bool</c>
+/// Reader for <see cref="app.type.item.@bool.@this"/> — the Data-free <c>raw → bool</c>
 /// deserialize the reader registry dispatches for the <c>bool</c> type. The
 /// injected serializer turns wire bytes into the CLR <paramref name="raw"/> (a
 /// bool or its string form); this turns that into the type instance, the same
@@ -13,9 +13,9 @@ public static class Default
         => raw switch
         {
             null => null,
-            global::app.type.@bool.@this b => b,
-            bool b => new global::app.type.@bool.@this(b),
-            string s when bool.TryParse(s, out var parsed) => new global::app.type.@bool.@this(parsed),
+            global::app.type.item.@bool.@this b => b,
+            bool b => new global::app.type.item.@bool.@this(b),
+            string s when bool.TryParse(s, out var parsed) => new global::app.type.item.@bool.@this(parsed),
             _ => null,
         };
 }

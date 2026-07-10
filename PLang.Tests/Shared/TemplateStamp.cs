@@ -27,7 +27,7 @@ public static class TemplateStamp
             {
                 // Leaf: flag the declared type so the item rebuilds as a template
                 // (Declare re-runs type.Build, which re-kinds a %ref% text to Template="plang").
-                if (global::app.type.text.@this.HasVariable(raw))
+                if (global::app.type.item.text.@this.HasVariable(raw))
                 {
                     var t = p.Type;
                     p.Declare(new global::app.type.@this(t?.Name ?? "object", t?.Kind?.Name, t?.Strict ?? false, "plang"));
@@ -50,9 +50,9 @@ public static class TemplateStamp
     {
         switch (instance)
         {
-            case global::app.type.text.@this t:
-                return t.Template == null && global::app.type.text.@this.HasVariable(t.ToString())
-                    ? new global::app.type.text.@this(t.ToString(), "plang") { Kind = t.Kind }
+            case global::app.type.item.text.@this t:
+                return t.Template == null && global::app.type.item.text.@this.HasVariable(t.ToString())
+                    ? new global::app.type.item.text.@this(t.ToString(), "plang") { Kind = t.Kind }
                     : null;
 
             case global::app.type.list.@this l when l.Template == null:
@@ -106,8 +106,8 @@ public static class TemplateStamp
     {
         switch (raw)
         {
-            case string s when global::app.type.text.@this.HasVariable(s):
-                return new global::app.type.text.@this(s, "plang");
+            case string s when global::app.type.item.text.@this.HasVariable(s):
+                return new global::app.type.item.text.@this(s, "plang");
 
             case IDictionary<string, object?> d:
             {

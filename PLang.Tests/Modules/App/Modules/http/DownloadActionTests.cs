@@ -68,8 +68,8 @@ public class DownloadActionTests
             Content = new System.Net.Http.StringContent("downloaded data", Encoding.UTF8, "text/plain")
         });
 
-        var action = new download(Ctx) { Url = (global::app.type.text.@this)"https://example.com/file.txt",
-            Unsigned = (global::app.type.@bool.@this)true
+        var action = new download(Ctx) { Url = (global::app.type.item.text.@this)"https://example.com/file.txt",
+            Unsigned = (global::app.type.item.@bool.@this)true
         };
 
         await action.Attach(null, Ctx);
@@ -89,8 +89,8 @@ public class DownloadActionTests
             Content = new System.Net.Http.StringContent("Not Found")
         });
 
-        var action = new download(Ctx) { Url = (global::app.type.text.@this)"https://example.com/missing.txt",
-            Unsigned = (global::app.type.@bool.@this)true
+        var action = new download(Ctx) { Url = (global::app.type.item.text.@this)"https://example.com/missing.txt",
+            Unsigned = (global::app.type.item.@bool.@this)true
         };
 
         await action.Attach(null, Ctx);

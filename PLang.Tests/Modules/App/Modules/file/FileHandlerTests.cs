@@ -119,7 +119,7 @@ public class FileHandlerTests : IDisposable
         _app.User.Context.Variable.Set("name", "Ingi");
 
         var action = new Read(_app.User.Context) { Path = MakePath("template.txt"),
-            ResolveVariables = new global::app.data.@this<global::app.type.@bool.@this>("ResolveVariables", true, context: _app.User.Context)
+            ResolveVariables = new global::app.data.@this<global::app.type.item.@bool.@this>("ResolveVariables", true, context: _app.User.Context)
         };
         var result = await action.Run();
 
@@ -136,7 +136,7 @@ public class FileHandlerTests : IDisposable
         _app.User.Context.Variable.Set("name", "Ingi");
 
         var action = new Read(_app.User.Context) { Path = MakePath("literal.txt"),
-            ResolveVariables = new global::app.data.@this<global::app.type.@bool.@this>("ResolveVariables", false, context: _app.User.Context)
+            ResolveVariables = new global::app.data.@this<global::app.type.item.@bool.@this>("ResolveVariables", false, context: _app.User.Context)
         };
         var result = await action.Run();
 
@@ -148,12 +148,12 @@ public class FileHandlerTests : IDisposable
     public async Task Read_ResolveVariablesTrue_BlocksInfrastructureVariables()
     {
         // skipInfrastructure: file content is untrusted — %!app%, %!fileSystem%
-        // etc. must not resolve even when ResolveVariables = (global::app.type.@bool.@this)true. Without this
+        // etc. must not resolve even when ResolveVariables = (global::app.type.item.@bool.@this)true. Without this
         // guard, a malicious file could leak runtime internals through %!app.Id%.
         System.IO.File.WriteAllText(TempPath("untrusted.txt"), "id is %!app.Id%");
 
         var action = new Read(_app.User.Context) { Path = MakePath("untrusted.txt"),
-            ResolveVariables = new global::app.data.@this<global::app.type.@bool.@this>("ResolveVariables", true, context: _app.User.Context)
+            ResolveVariables = new global::app.data.@this<global::app.type.item.@bool.@this>("ResolveVariables", true, context: _app.User.Context)
         };
         var result = await action.Run();
 
@@ -269,7 +269,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Delete_NonexistentFile_IgnoreIfNotFound_ReturnsSuccess()
     {
-        var action = new Delete(_app.User.Context) { Path = MakePath("nope.txt"), IgnoreIfNotFound = (global::app.type.@bool.@this)true };
+        var action = new Delete(_app.User.Context) { Path = MakePath("nope.txt"), IgnoreIfNotFound = (global::app.type.item.@bool.@this)true };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -282,7 +282,7 @@ public class FileHandlerTests : IDisposable
         System.IO.Directory.CreateDirectory(dir);
         System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "child.txt"), "data");
 
-        var action = new Delete(_app.User.Context) { Path = MakeAbsPath(dir), Recursive = (global::app.type.@bool.@this)true };
+        var action = new Delete(_app.User.Context) { Path = MakeAbsPath(dir), Recursive = (global::app.type.item.@bool.@this)true };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -344,7 +344,7 @@ public class FileHandlerTests : IDisposable
         System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "a.txt"), "a");
         System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "b.md"), "b");
 
-        var action = new List(_app.User.Context) { Path = MakeAbsPath(subDir), Pattern = (global::app.type.text.@this)"*.txt" };
+        var action = new List(_app.User.Context) { Path = MakeAbsPath(subDir), Pattern = (global::app.type.item.text.@this)"*.txt" };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -363,7 +363,7 @@ public class FileHandlerTests : IDisposable
         System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "top.txt"), "top");
         System.IO.File.WriteAllText(System.IO.Path.Combine(nested, "deep.txt"), "deep");
 
-        var action = new List(_app.User.Context) { Path = MakeAbsPath(subDir), Recursive = (global::app.type.@bool.@this)true };
+        var action = new List(_app.User.Context) { Path = MakeAbsPath(subDir), Recursive = (global::app.type.item.@bool.@this)true };
         var result = await action.Run();
 
         await result.IsSuccess();

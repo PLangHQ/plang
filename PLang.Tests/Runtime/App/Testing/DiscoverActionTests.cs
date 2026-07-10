@@ -121,8 +121,8 @@ public class DiscoverActionTests
     {
         var action = new global::app.module.test.discover(_app.User.Context) { Path = global::app.data.@this<global::app.type.path.@this>.Ok(
                 global::app.type.path.@this.Resolve(path, _app.User.Context)),
-            Pattern = new global::app.data.@this<global::app.type.text.@this>("Pattern", "*.test.goal"),
-            Recursive = new global::app.data.@this<global::app.type.@bool.@this>("Recursive", recursive)
+            Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
+            Recursive = new global::app.data.@this<global::app.type.item.@bool.@this>("Recursive", recursive)
         };
         var result = await action.Run();
         return result.GetValue<List<global::app.test.@this>>() ?? new List<global::app.test.@this>();
@@ -265,7 +265,7 @@ public class DiscoverActionTests
     [Test]
     public async Task Discover_IncludeFilter_NonMatchingTests_MarkedSkipped()
     {
-        _app.Test.Include.Add(new global::app.type.text.@this("fast"));
+        _app.Test.Include.Add(new global::app.type.item.text.@this("fast"));
         CreateTestFile("Foo.test.goal", "Start", new[] { "set %x% = 1" });  // no tags
 
         var files = await Discover();
@@ -279,7 +279,7 @@ public class DiscoverActionTests
     [Test]
     public async Task Discover_ExcludeFilter_MatchingTests_MarkedSkipped()
     {
-        _app.Test.Exclude.Add(new global::app.type.text.@this("slow"));
+        _app.Test.Exclude.Add(new global::app.type.item.text.@this("slow"));
         CreateTestFile("Foo.test.goal", "Start",
             new[] { "set test tag 'slow'", "set %x% = 1" },
             new (string, string, (string, object?)[])[]
@@ -300,8 +300,8 @@ public class DiscoverActionTests
     [Test]
     public async Task Discover_IncludeAndExclude_ExcludeAppliedAfterInclude()
     {
-        _app.Test.Include.Add(new global::app.type.text.@this("http"));
-        _app.Test.Exclude.Add(new global::app.type.text.@this("slow"));
+        _app.Test.Include.Add(new global::app.type.item.text.@this("http"));
+        _app.Test.Exclude.Add(new global::app.type.item.text.@this("slow"));
         CreateTestFile("Foo.test.goal", "Start",
             new[] { "set test tag 'http', 'slow'", "set %x% = 1" },
             new (string, string, (string, object?)[])[]

@@ -682,7 +682,7 @@ public class TypeMappingTests
     [Test]
     public async Task GetTypeName_DataOfBool_ReturnsBool()
     {
-        var name = TypeMapping.GetTypeName(typeof(global::app.data.@this<global::app.type.@bool.@this>));
+        var name = TypeMapping.GetTypeName(typeof(global::app.data.@this<global::app.type.item.@bool.@this>));
 
         await Assert.That(name).IsEqualTo("bool");
     }
@@ -690,7 +690,7 @@ public class TypeMappingTests
     [Test]
     public async Task GetTypeName_DataOfListString_ReturnsListString()
     {
-        var name = TypeMapping.GetTypeName(typeof(global::app.data.@this<global::app.type.list.@this<global::app.type.text.@this>>));
+        var name = TypeMapping.GetTypeName(typeof(global::app.data.@this<global::app.type.list.@this<global::app.type.item.text.@this>>));
 
         await Assert.That(name).IsEqualTo("list<text>");
     }

@@ -15,7 +15,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.@null.@this("item", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this("item", kind);
         var parser = new json(ctx.Context);
         return global::app.type.@this.Create(parser.ReadSlot(ref reader, ctx), ctx.Context);
     }

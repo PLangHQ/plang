@@ -22,7 +22,7 @@ public static class Default
     public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
     {
         if (raw is not (string or byte[])) return raw;
-        string source = new global::app.type.text.@this(raw).ToString();
+        string source = new global::app.type.item.text.@this(raw).ToString();
         return new global::app.type.code.@this(source, kind ?? "text");
     }
 }

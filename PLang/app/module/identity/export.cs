@@ -11,7 +11,7 @@ namespace app.module.identity;
 [Action("export")]
 public partial class Export : IContext
 {
-    public partial data.@this<global::app.type.text.@this>? Name { get; init; }
+    public partial data.@this<global::app.type.item.text.@this>? Name { get; init; }
 
     [Code]
     public partial IIdentity Identity { get; }

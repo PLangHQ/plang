@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace app.type.choice;
+namespace app.type.item.choice;
 
 /// <summary>
 /// Non-generic view of a <see cref="@this{T}"/> — lets the serializer and Normalize
@@ -128,7 +128,7 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
         @this<T> c => Value.Equals(c.Value),
         T v => Value.Equals(v),
         IChoice ic => string.Equals(ToString(), ic.Name, System.StringComparison.OrdinalIgnoreCase),
-        global::app.type.text.@this t => t.AreEqual(ToString()),
+        global::app.type.item.text.@this t => t.AreEqual(ToString()),
         string s => string.Equals(ToString(), s, System.StringComparison.OrdinalIgnoreCase),
         _ => false,
     };

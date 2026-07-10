@@ -11,11 +11,11 @@ public class TemporalOperatorTests
     private readonly Default _eval = new();
     private static Data D(object? value) => value == null ? new Data("") : global::PLang.Tests.TestApp.SharedContext.Ok(value);
 
-    private Task<global::app.data.@this<global::app.type.@bool.@this>> Eval(object? left, string op, object? right)
-        => _eval.Evaluate(new Compare(global::PLang.Tests.TestApp.SharedContext) { Left = D(left), Operator = global::PLang.Tests.TestApp.SharedContext.Ok<global::app.type.choice.@this<Operator>>((global::app.type.choice.@this<Operator>)new Operator(op)), Right = D(right) });
+    private Task<global::app.data.@this<global::app.type.item.@bool.@this>> Eval(object? left, string op, object? right)
+        => _eval.Evaluate(new Compare(global::PLang.Tests.TestApp.SharedContext) { Left = D(left), Operator = global::PLang.Tests.TestApp.SharedContext.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(op)), Right = D(right) });
 
-    private bool IsTrue(global::app.data.@this<global::app.type.@bool.@this> r) => r.Success && (r.Peek() as global::app.type.@bool.@this)?.Value == true;
-    private bool IsFalse(global::app.data.@this<global::app.type.@bool.@this> r) => r.Success && (r.Peek() as global::app.type.@bool.@this)?.Value == false;
+    private bool IsTrue(global::app.data.@this<global::app.type.item.@bool.@this> r) => r.Success && (r.Peek() as global::app.type.item.@bool.@this)?.Value == true;
+    private bool IsFalse(global::app.data.@this<global::app.type.item.@bool.@this> r) => r.Success && (r.Peek() as global::app.type.item.@bool.@this)?.Value == false;
 
     private static global::app.type.datetime.@this Dt(string iso) => new(System.DateTimeOffset.Parse(iso));
     private static global::app.type.date.@this Date(string iso) => new(System.DateOnly.Parse(iso));

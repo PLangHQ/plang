@@ -8,7 +8,7 @@ namespace app.module.matrix.plain;
 [global::app.module.Action("stringplain")]
 public partial class StringPlain : global::app.module.IContext
 {
-    public partial global::app.data.@this<global::app.type.text.@this> Path { get; init; }
+    public partial global::app.data.@this<global::app.type.item.text.@this> Path { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Path);
 }
 
@@ -22,7 +22,7 @@ public partial class IntPlain : global::app.module.IContext
 [global::app.module.Action("boolplain")]
 public partial class BoolPlain : global::app.module.IContext
 {
-    public partial global::app.data.@this<global::app.type.@bool.@this> Flag { get; init; }
+    public partial global::app.data.@this<global::app.type.item.@bool.@this> Flag { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Flag);
 }
 

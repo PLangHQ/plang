@@ -1,4 +1,4 @@
-using NullV = global::app.type.@null.@this;
+using NullV = global::app.type.item.@null.@this;
 
 using PLang.Tests.App.Fixtures;
 

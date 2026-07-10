@@ -8,17 +8,17 @@ namespace app.module.timer;
 [Action("start", Cacheable = false)]
 public partial class Start : IContext, IStatic
 {
-    public partial data.@this<global::app.type.text.@this>? Name { get; init; }
+    public partial data.@this<global::app.type.item.text.@this>? Name { get; init; }
     [Default("goal")]
-    public partial data.@this<global::app.type.text.@this> Scope { get; init; }
+    public partial data.@this<global::app.type.item.text.@this> Scope { get; init; }
 
-    public async Task<data.@this<global::app.type.@bool.@this>> Run()
+    public async Task<data.@this<global::app.type.item.@bool.@this>> Run()
     {
         var key = Name == null ? "default" : await Name.Clr<string>("default");
         var entry = new TimerEntry(DateTimeOffset.UtcNow, (await Scope.Value())!.Clr<string>()!);
         Static[key] = entry;
         Static["__last__"] = key;
-        return Context.Ok<global::app.type.@bool.@this>(true);
+        return Context.Ok<global::app.type.item.@bool.@this>(true);
     }
 }
 

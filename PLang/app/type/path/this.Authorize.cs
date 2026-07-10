@@ -49,7 +49,7 @@ public partial class @this
             var question = $"{prefix}Allow {actor.Name} to {VerbLabel(verb)} {Absolute}?{hintSuffix} (y/n/a)";
             var askAction = new module.output.ask(Context!)
             {
-                Question = new data.@this<global::app.type.text.@this>("", question, context: Context),
+                Question = new data.@this<global::app.type.item.text.@this>("", question, context: Context),
             };
             var askResult = await Context!.App.Run(askAction, Context);
 

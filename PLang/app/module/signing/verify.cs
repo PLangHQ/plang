@@ -31,10 +31,10 @@ public partial class verify : IContext
     /// signature is intended to outlive the wire-freshness window.
     /// </summary>
     [Default(false)]
-    public partial data.@this<global::app.type.@bool.@this> SkipFreshnessCheck { get; init; }
+    public partial data.@this<global::app.type.item.@bool.@this> SkipFreshnessCheck { get; init; }
 
     [Code]
     public partial ISigning Signer { get; }
 
-    public async Task<data.@this<global::app.type.@bool.@this>> Run() => await Signer.VerifyAsync(this);
+    public async Task<data.@this<global::app.type.item.@bool.@this>> Run() => await Signer.VerifyAsync(this);
 }

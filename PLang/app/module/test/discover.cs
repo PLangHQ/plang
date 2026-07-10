@@ -34,11 +34,11 @@ public partial class discover : IContext
 
     /// <summary>Filename pattern. Default matches PLang test convention.</summary>
     [Default("*.test.goal")]
-    public partial data.@this<global::app.type.text.@this> Pattern { get; init; }
+    public partial data.@this<global::app.type.item.text.@this> Pattern { get; init; }
 
     /// <summary>Walk subdirectories. Default true.</summary>
     [Default(true)]
-    public partial data.@this<global::app.type.@bool.@this> Recursive { get; init; }
+    public partial data.@this<global::app.type.item.@bool.@this> Recursive { get; init; }
 
     public async Task<data.@this<global::app.type.list.@this<global::app.test.@this>>> Run()
     {
@@ -55,8 +55,8 @@ public partial class discover : IContext
 
         // text is a case-insensitive value (Equals/GetHashCode are OrdinalIgnoreCase),
         // so tag matching is text-to-text — no lowering to string.
-        var include = Context.App.Test.Include.Select(r => (global::app.type.text.@this)r.Peek()).ToHashSet();
-        var exclude = Context.App.Test.Exclude.Select(r => (global::app.type.text.@this)r.Peek()).ToHashSet();
+        var include = Context.App.Test.Include.Select(r => (global::app.type.item.text.@this)r.Peek()).ToHashSet();
+        var exclude = Context.App.Test.Exclude.Select(r => (global::app.type.item.text.@this)r.Peek()).ToHashSet();
 
         var files = new List<data.@this>();
         var list = await listed.Value();
@@ -73,7 +73,7 @@ public partial class discover : IContext
 
     /// <summary>Discovers metadata for a single .test.goal file (FilePath form).</summary>
     private async Task<global::app.test.@this> DiscoverOne(FilePath goalFile, global::app.@this app,
-        HashSet<global::app.type.text.@this> include, HashSet<global::app.type.text.@this> exclude)
+        HashSet<global::app.type.item.text.@this> include, HashSet<global::app.type.item.text.@this> exclude)
     {
         // Read the .goal source first — even when the .pr is missing or
         // corrupt, the source goal is enough to identify the file.
@@ -184,7 +184,7 @@ public partial class discover : IContext
 
         // Filter: exclude wins over include. Match the test's tags against the CLI
         // include/exclude sets — text-to-text (case-insensitive lives on text).
-        var fileTags = file.Tags.Select(r => (global::app.type.text.@this)r.Peek()).ToHashSet();
+        var fileTags = file.Tags.Select(r => (global::app.type.item.text.@this)r.Peek()).ToHashSet();
         if (exclude.Count > 0 && exclude.Overlaps(fileTags))
         {
             file.Status = global::app.test.Status.Skipped;
@@ -238,7 +238,7 @@ public partial class discover : IContext
                 case app.type.list.@this nativeList:
                     file.Tags.Add(nativeList);
                     break;
-                case global::app.type.text.@this single when single.IsTruthy():
+                case global::app.type.item.text.@this single when single.IsTruthy():
                     file.Tags.Add(single);
                     break;
             }
@@ -258,7 +258,7 @@ public partial class discover : IContext
             var attr = type?.GetCustomAttribute<RequiresCapabilityAttribute>();
             if (attr != null)
                 foreach (var cap in attr.Capabilities)
-                    file.Tags.Add(new global::app.type.text.@this(cap));
+                    file.Tags.Add(new global::app.type.item.text.@this(cap));
 
             if (string.Equals(action.Module, "goal", StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(action.ActionName, "call", StringComparison.OrdinalIgnoreCase))
@@ -283,7 +283,7 @@ public partial class discover : IContext
         var name = value switch
         {
             GoalCall gc => gc.Name,
-            global::app.type.text.@this s => s.Clr<string>(),
+            global::app.type.item.text.@this s => s.Clr<string>(),
             Clr { Value: System.Text.Json.JsonElement je }
                 when je.ValueKind == System.Text.Json.JsonValueKind.Object
                 && je.TryGetProperty("Name", out var np) => np.GetString(),

@@ -11,7 +11,7 @@ public class StringNullableTests
         await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<StringNullable>(app);
         await result.Data.IsSuccess();
-        await Assert.That((await result.Data.Value()) is null || ReferenceEquals((await result.Data.Value()), global::app.type.@null.@this.Instance)).IsTrue();
+        await Assert.That((await result.Data.Value()) is null || ReferenceEquals((await result.Data.Value()), global::app.type.item.@null.@this.Instance)).IsTrue();
     }
 
     [Test]
@@ -20,7 +20,7 @@ public class StringNullableTests
         await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<StringNullable>(app,
             parameters: new[] { ("tag", (object?)"hello") });
-        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.text.@this>;
         await Assert.That((await typed!.Value())?.Clr<string>()).IsEqualTo("hello");
     }
 
@@ -30,7 +30,7 @@ public class StringNullableTests
         await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<StringNullable>(app,
             parameters: new[] { ("tag", (object?)null) });
-        await Assert.That((await result.Data.Value()) is null || ReferenceEquals((await result.Data.Value()), global::app.type.@null.@this.Instance)).IsTrue();
+        await Assert.That((await result.Data.Value()) is null || ReferenceEquals((await result.Data.Value()), global::app.type.item.@null.@this.Instance)).IsTrue();
     }
 }
 
@@ -41,7 +41,7 @@ public class IntNullableTests
     {
         await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<IntNullable>(app);
-        await Assert.That((await result.Data.Value()) is null || ReferenceEquals((await result.Data.Value()), global::app.type.@null.@this.Instance)).IsTrue();
+        await Assert.That((await result.Data.Value()) is null || ReferenceEquals((await result.Data.Value()), global::app.type.item.@null.@this.Instance)).IsTrue();
     }
 
     [Test]

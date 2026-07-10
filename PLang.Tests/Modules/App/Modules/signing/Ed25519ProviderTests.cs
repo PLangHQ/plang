@@ -81,11 +81,11 @@ public class Ed25519ProviderTests
     // [Code] boundary (SignAsync/VerifyAsync) maps throws → SignatureInvalid/SigningError.
     private static global::app.type.signature.@this Unsigned(string identityPublicKey, string nonce = "nonce-1")
         => new(
-            value: TestApp.SharedContext.Ok(new global::app.type.text.@this("payload")),
-            algorithm: new global::app.type.text.@this("ed25519"),
-            nonce: new global::app.type.text.@this(nonce),
+            value: TestApp.SharedContext.Ok(new global::app.type.item.text.@this("payload")),
+            algorithm: new global::app.type.item.text.@this("ed25519"),
+            nonce: new global::app.type.item.text.@this(nonce),
             created: new global::app.type.datetime.@this(DateTimeOffset.UnixEpoch),
-            identity: new global::app.type.text.@this(identityPublicKey),
+            identity: new global::app.type.item.text.@this(identityPublicKey),
             hash: new global::app.module.crypto.type.hash.@this(Array.Empty<byte>(), "keccak256"),
             signature: new global::app.type.binary.@this(Array.Empty<byte>()));
 
@@ -93,14 +93,14 @@ public class Ed25519ProviderTests
     private static global::app.type.signature.@this Rebuilt(global::app.type.signature.@this s,
         string? nonce = null, string? identity = null, global::app.type.binary.@this? signature = null)
         => new(s.Value, s.Algorithm,
-            nonce == null ? s.Nonce : new global::app.type.text.@this(nonce), s.Created,
-            identity == null ? s.Identity : new global::app.type.text.@this(identity),
+            nonce == null ? s.Nonce : new global::app.type.item.text.@this(nonce), s.Created,
+            identity == null ? s.Identity : new global::app.type.item.text.@this(identity),
             s.Hash, signature ?? s.Signature, s.Expires, s.Contracts);
 
     private global::app.type.signature.@this Signed(KeyPair kp, string nonce = "nonce-1")
     {
         var unsigned = Unsigned(kp.PublicKey, nonce);
-        return unsigned.Signed(_provider.Sign(unsigned, new global::app.type.text.@this(kp.PrivateKey)));
+        return unsigned.Signed(_provider.Sign(unsigned, new global::app.type.item.text.@this(kp.PrivateKey)));
     }
 
     #region Sign
@@ -109,7 +109,7 @@ public class Ed25519ProviderTests
     public async Task Sign_ProducesNonEmpty64ByteSignature()
     {
         var kp = _provider.GenerateKeyPair().keys!;
-        var signature = _provider.Sign(Unsigned(kp.PublicKey), new global::app.type.text.@this(kp.PrivateKey)).Value;
+        var signature = _provider.Sign(Unsigned(kp.PublicKey), new global::app.type.item.text.@this(kp.PrivateKey)).Value;
 
         await Assert.That(signature.Length).IsEqualTo(64);
         await Assert.That(signature.Any(b => b != 0)).IsTrue();
@@ -119,7 +119,7 @@ public class Ed25519ProviderTests
     public async Task Sign_DifferentData_DifferentSignatures()
     {
         var kp = _provider.GenerateKeyPair().keys!;
-        var privateKey = new global::app.type.text.@this(kp.PrivateKey);
+        var privateKey = new global::app.type.item.text.@this(kp.PrivateKey);
         var sig1 = _provider.Sign(Unsigned(kp.PublicKey, "nonce-1"), privateKey).Value;
         var sig2 = _provider.Sign(Unsigned(kp.PublicKey, "nonce-2"), privateKey).Value;
 
@@ -129,7 +129,7 @@ public class Ed25519ProviderTests
     [Test]
     public async Task Sign_InvalidBase64PrivateKey_Throws()
     {
-        await Assert.That(() => _provider.Sign(Unsigned("pub"), new global::app.type.text.@this("not-valid-base64!!!")))
+        await Assert.That(() => _provider.Sign(Unsigned("pub"), new global::app.type.item.text.@this("not-valid-base64!!!")))
             .Throws<FormatException>();
     }
 

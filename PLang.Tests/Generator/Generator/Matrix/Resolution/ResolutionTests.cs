@@ -19,7 +19,7 @@ public class FullVarMatchTests
             variables: new Dictionary<string, object?> { ["path"] = "/tmp/x.txt" });
 
         await result.Data.IsSuccess();
-        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.text.@this>;
         await Assert.That((await typed!.Value())?.ToString()).IsEqualTo("/tmp/x.txt");
     }
 
@@ -34,8 +34,8 @@ public class FullVarMatchTests
             parameters: new[] { ("path", (object?)"%count%") });
 
         await result.Data.IsSuccess();
-        // FullVarMatch's Path is Data<global::app.type.text.@this>; "42" should be the converted string form.
-        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
+        // FullVarMatch's Path is Data<global::app.type.item.text.@this>; "42" should be the converted string form.
+        var typed = result.Data as global::app.data.@this<global::app.type.item.text.@this>;
         await Assert.That((await typed!.Value())?.ToString()).IsEqualTo("42");
     }
 
@@ -48,7 +48,7 @@ public class FullVarMatchTests
         var result = await MatrixRunner.RunAsync<FullVarMatch>(app,
             parameters: new[] { ("path", (object?)"%does_not_exist%") });
 
-        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.text.@this>;
         await Assert.That((await typed!.Value())).IsNull();
     }
 }
@@ -64,7 +64,7 @@ public class InterpolationTests
             parameters: new[] { ("greeting", (object?)"Hello %name%") },
             variables: new Dictionary<string, object?> { ["name"] = "world" });
 
-        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.text.@this>;
         await Assert.That((await typed!.Value())?.ToString()).IsEqualTo("Hello world");
     }
 
@@ -77,7 +77,7 @@ public class InterpolationTests
             parameters: new[] { ("greeting", (object?)"%a% then %b% then %a%") },
             variables: new Dictionary<string, object?> { ["a"] = "first", ["b"] = "second" });
 
-        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.text.@this>;
         await Assert.That((await typed!.Value())?.ToString()).IsEqualTo("first then second then first");
     }
 
@@ -89,7 +89,7 @@ public class InterpolationTests
         var result = await MatrixRunner.RunAsync<Interpolation>(app,
             parameters: new[] { ("greeting", (object?)"plain string") });
 
-        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.text.@this>;
         await Assert.That((await typed!.Value())?.ToString()).IsEqualTo("plain string");
     }
 }
@@ -205,13 +205,13 @@ public class ReResolveAcrossCallsTests
         app.User.Context.Variable.Set("x", "first");
         var first = await MatrixRunner.RunAsync<ReResolveAcrossCalls>(app,
             parameters: new[] { ("value", (object?)"%x%") });
-        var firstTyped = first.Data as global::app.data.@this<global::app.type.text.@this>;
+        var firstTyped = first.Data as global::app.data.@this<global::app.type.item.text.@this>;
         await Assert.That((await firstTyped!.Value())?.ToString()).IsEqualTo("first");
 
         app.User.Context.Variable.Set("x", "second");
         var second = await MatrixRunner.RunAsync<ReResolveAcrossCalls>(app,
             parameters: new[] { ("value", (object?)"%x%") });
-        var secondTyped = second.Data as global::app.data.@this<global::app.type.text.@this>;
+        var secondTyped = second.Data as global::app.data.@this<global::app.type.item.text.@this>;
         await Assert.That((await secondTyped!.Value())?.ToString()).IsEqualTo("second");
     }
 
@@ -259,7 +259,7 @@ public class ReResolveAcrossCallsTests
             app.User.Context.Variable.Set("i", $"value-{i}");
             var r = await MatrixRunner.RunAsync<ReResolveAcrossCalls>(app,
                 parameters: new[] { ("value", (object?)"%i%") });
-            var typed = r.Data as global::app.data.@this<global::app.type.text.@this>;
+            var typed = r.Data as global::app.data.@this<global::app.type.item.text.@this>;
             seen.Add((await typed!.Value())?.Clr<string>());
         }
         await Assert.That(seen[0]).IsEqualTo("value-0");
@@ -290,7 +290,7 @@ public class ConcurrentHandlersTests
                 Parameters = new List<Data> { sharedData }
             };
             var data = await action.RunAsync(app.User.Context);
-            return data.Success && (data is global::app.data.@this<global::app.type.text.@this> typed) && (await typed.Value()) == "value";        })).ToArray();
+            return data.Success && (data is global::app.data.@this<global::app.type.item.text.@this> typed) && (await typed.Value()) == "value";        })).ToArray();
 
         var results = await Task.WhenAll(tasks);
         await Assert.That(results.All(b => b)).IsTrue();
@@ -309,7 +309,7 @@ public class ConcurrentHandlersTests
         var data = new Data("v", "%x%", new global::app.type.@this("text", null, false, "plang"), context: app.User.Context);
 
         var tasks = Enumerable.Range(0, 50).Select(_ => Task.Run(() =>
-            data.Value<global::app.type.text.@this>().AsTask())).ToArray();
+            data.Value<global::app.type.item.text.@this>().AsTask())).ToArray();
         var results = await Task.WhenAll(tasks);
 
         await Assert.That(results.All(r => r != null)).IsTrue();

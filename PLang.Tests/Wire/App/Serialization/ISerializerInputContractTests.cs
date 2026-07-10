@@ -91,8 +91,8 @@ public class ISerializerInputContractTests : System.IAsyncDisposable
             => Task.FromResult(global::app.data.@this.Ok());
         public Task<global::app.data.@this<T>> DeserializeAsync<T>(Stream s, global::app.View view = global::app.View.Out, CancellationToken ct = default) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
             => Task.FromResult(global::app.data.@this<T>.Ok(default!));
-        public global::app.type.item.@this Read(global::app.type.item.source source, global::app.type.reader.ReadContext ctx) => global::app.type.@null.@this.Instance;
-        public global::app.data.@this<global::app.type.text.@this> Serialize(global::app.data.@this data) => global::app.data.@this<global::app.type.text.@this>.Ok("");
+        public global::app.type.item.@this Read(global::app.type.item.source source, global::app.type.reader.ReadContext ctx) => global::app.type.item.@null.@this.Instance;
+        public global::app.data.@this<global::app.type.item.text.@this> Serialize(global::app.data.@this data) => global::app.data.@this<global::app.type.item.text.@this>.Ok("");
         public global::app.data.@this Deserialize(string s) => global::app.data.@this.Ok();
         public global::app.data.@this<T> Deserialize<T>(string s) where T : global::app.type.item.@this, global::app.type.item.ICreate<T> => global::app.data.@this<T>.Ok(default!);
     }

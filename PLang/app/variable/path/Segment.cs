@@ -65,7 +65,7 @@ public abstract class Segment
             if (store != null)
             {
                 var resolved = (await store.Get(Inner.ToString())).Peek();
-                if (resolved is not (null or global::app.type.@null.@this))
+                if (resolved is not (null or global::app.type.item.@null.@this))
                     return resolved.ToString() ?? Inner.ToString();
             }
 

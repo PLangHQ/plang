@@ -143,7 +143,7 @@ public class GeneratorValidationTests
         // Lazy resolution: the property resolves its slot to a typed VIEW via As<T>
         // (conversion/errors surface later, at the value door) — not an eager
         // materialize-and-clone.
-        await Assert.That(stringPlainSrc).Contains("__d.As<global::app.type.text.@this>()");
+        await Assert.That(stringPlainSrc).Contains("__d.As<global::app.type.item.text.@this>()");
         await Assert.That(intPlainSrc).Contains("__d.As<global::app.type.number.@this>()");
     }
 

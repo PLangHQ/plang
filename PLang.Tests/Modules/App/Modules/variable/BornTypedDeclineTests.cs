@@ -15,7 +15,7 @@ public class BornTypedDeclineTests
     public async Task Create_TextValue_DeclinesWithCreateVariableDeclined()
     {
         var ctx = _app.User.Context;
-        global::app.type.item.@this textValue = new global::app.type.text.@this("some value");
+        global::app.type.item.@this textValue = new global::app.type.item.text.@this("some value");
         var asking = new Data("Name", "Name", context: ctx);
 
         var result = global::app.variable.@this.Create(textValue, asking);

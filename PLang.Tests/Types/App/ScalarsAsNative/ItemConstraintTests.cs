@@ -23,10 +23,10 @@ public class ItemConstraintTests
         // Every value type that rides a Data<T> slot is : item.
         System.Type[] wrappers =
         {
-            typeof(global::app.type.number.@this), typeof(global::app.type.text.@this),
+            typeof(global::app.type.number.@this), typeof(global::app.type.item.text.@this),
             typeof(global::app.type.datetime.@this), typeof(global::app.type.date.@this),
             typeof(global::app.type.time.@this), typeof(global::app.type.duration.@this),
-            typeof(global::app.type.@bool.@this), typeof(global::app.type.@null.@this),
+            typeof(global::app.type.item.@bool.@this), typeof(global::app.type.item.@null.@this),
             typeof(global::app.type.dict.@this), typeof(global::app.type.list.@this),
             typeof(global::app.type.path.@this), typeof(global::app.type.image.@this),
             typeof(global::app.type.code.@this), typeof(global::app.variable.@this),

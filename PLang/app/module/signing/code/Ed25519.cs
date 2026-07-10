@@ -31,7 +31,7 @@ public class Ed25519 : ISigning
         var identity = (Identity)(await identityResult.Value())!;
 
         // Hash the inner data — the digest binds the value into the signed bytes.
-        var hashResult = await app.Run<Hash>(new Hash(action.Context) { Data = action.Data, Algorithm = new data.@this<global::app.type.text.@this>("", "keccak256", context: action.Context), StoreView = action.StoreView }, action.Context);
+        var hashResult = await app.Run<Hash>(new Hash(action.Context) { Data = action.Data, Algorithm = new data.@this<global::app.type.item.text.@this>("", "keccak256", context: action.Context), StoreView = action.StoreView }, action.Context);
         if (!hashResult.Success) return hashResult;
         if (await hashResult.Value() is not global::app.module.crypto.type.hash.@this hash)
             return action.Context.Error(new ActionError("Hashing produced no digest", "DataHashMismatch", 500));
@@ -46,10 +46,10 @@ public class Ed25519 : ISigning
         // sign with the identity's private key, stamp the signature in.
         var unsigned = new global::app.type.signature.@this(
             value: action.Data!,
-            algorithm: new global::app.type.text.@this(Name),
-            nonce: new global::app.type.text.@this(nonce),
+            algorithm: new global::app.type.item.text.@this(Name),
+            nonce: new global::app.type.item.text.@this(nonce),
             created: new global::app.type.datetime.@this(now),
-            identity: new global::app.type.text.@this(identity.PublicKey),
+            identity: new global::app.type.item.text.@this(identity.PublicKey),
             hash: hash,
             signature: new global::app.type.binary.@this(Array.Empty<byte>()),
             expires: expires is { } e ? new global::app.type.datetime.@this(e) : null,
@@ -57,7 +57,7 @@ public class Ed25519 : ISigning
 
         try
         {
-            var signed = unsigned.Signed(Sign(unsigned, new global::app.type.text.@this(identity.PrivateKey)));
+            var signed = unsigned.Signed(Sign(unsigned, new global::app.type.item.text.@this(identity.PrivateKey)));
             return action.Context.Ok(signed);
         }
         catch (Exception ex)
@@ -66,10 +66,10 @@ public class Ed25519 : ISigning
         }
     }
 
-    public virtual async Task<data.@this<global::app.type.@bool.@this>> VerifyAsync(verify action)
+    public virtual async Task<data.@this<global::app.type.item.@bool.@this>> VerifyAsync(verify action)
     {
         if (action.Data?.Peek() is not global::app.type.signature.@this signature)
-            return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Data has no signature", "NoSignature", 400));
+            return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Data has no signature", "NoSignature", 400));
 
         var app = action.Context.App;
         // NowUtc may be unset when verify runs at the deserialize boundary (the
@@ -87,12 +87,12 @@ public class Ed25519 : ISigning
         {
             var age = now - signature.Created.Value;
             if (age.TotalMilliseconds > effectiveTimeout)
-                return action.Context.Error<global::app.type.@bool.@this>(new ActionError($"Signature timed out (age: {age.TotalMilliseconds:F0}ms, timeout: {effectiveTimeout}ms)", "TimedOut", 400));
+                return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError($"Signature timed out (age: {age.TotalMilliseconds:F0}ms, timeout: {effectiveTimeout}ms)", "TimedOut", 400));
         }
 
         // 2. Expiry check (signature's intrinsic lifetime — null = permanent).
         if (signature.Expires is { } exp && now > exp.Value)
-            return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Signature has expired", "Expired", 400));
+            return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Signature has expired", "Expired", 400));
 
         // 3. Nonce replay check — paired with step 1 (wire-freshness). For
         // stored artifacts the same nonce naturally re-presents on every read,
@@ -103,7 +103,7 @@ public class Ed25519 : ISigning
             var cacheSettings = new CacheSettings { DurationMs = effectiveTimeout };
             var nonceAdded = await app.Cache.TryAddAsync(nonceCacheKey, action.Context.Ok(true), cacheSettings);
             if (!nonceAdded)
-                return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Nonce has already been used", "NonceReplay", 400));
+                return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Nonce has already been used", "NonceReplay", 400));
         }
 
         // 4. Contract matching — Contracts may be an unset/absent slot (the
@@ -113,39 +113,39 @@ public class Ed25519 : ISigning
             : System.Linq.Enumerable.ToList(System.Linq.Enumerable.Select(
                 contractsList.Items, d => d.Peek().ToString() ?? ""));
         if (!ContractsMatch(System.Linq.Enumerable.ToList(signature.ContractStrings()), expectedContracts))
-            return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Contract mismatch", "ContractMismatch", 400));
+            return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Contract mismatch", "ContractMismatch", 400));
 
         // 5. Data hash verification — rehash the inner value, compare to the
         // signed digest (which carries its own algorithm).
         var storedHash = signature.Hash;
         if (storedHash.Bytes.Length == 0)
-            return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Missing data hash", "DataHashMismatch", 400));
+            return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Missing data hash", "DataHashMismatch", 400));
 
         // Re-hash in the same view the data was stored in. skipFreshness == (View == Store)
         // (set by the reader / the Store-view caller), so it doubles as the hash view: a stored
         // value is a property-bag carrying every [Store] field; hashing it in Out view (a subset)
         // would diverge from the sign-time Store hash.
         var rehash = await app.Run<Hash>(
-            new Hash(action.Context) { Data = signature.Value, Algorithm = new data.@this<global::app.type.text.@this>("", storedHash.Algorithm, context: action.Context),
-                       StoreView = new data.@this<global::app.type.@bool.@this>("", skipFreshness, context: action.Context) }, action.Context);
-        if (!rehash.Success) return global::app.data.@this<global::app.type.@bool.@this>.From(rehash);
+            new Hash(action.Context) { Data = signature.Value, Algorithm = new data.@this<global::app.type.item.text.@this>("", storedHash.Algorithm, context: action.Context),
+                       StoreView = new data.@this<global::app.type.item.@bool.@this>("", skipFreshness, context: action.Context) }, action.Context);
+        if (!rehash.Success) return global::app.data.@this<global::app.type.item.@bool.@this>.From(rehash);
         if (await rehash.Value() is not global::app.module.crypto.type.hash.@this rehashValue || !rehashValue.DigestEquals(storedHash))
-            return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
+            return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
 
         // 6. Signature verification — over the signature's canonical signing bytes.
         if (signature.Signature.Value.Length == 0)
-            return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Missing signature", "SignatureInvalid", 400));
+            return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Missing signature", "SignatureInvalid", 400));
 
         try
         {
             if (!Verify(signature).Value)
-                return action.Context.Error<global::app.type.@bool.@this>(new ActionError("Signature verification failed", "SignatureInvalid", 400));
-            return action.Context.Ok<global::app.type.@bool.@this>(true);
+                return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Signature verification failed", "SignatureInvalid", 400));
+            return action.Context.Ok<global::app.type.item.@bool.@this>(true);
         }
         catch (Exception ex) when (ex is FormatException or ArgumentException
             or System.Security.Cryptography.CryptographicException or InvalidOperationException)
         {
-            return action.Context.Error<global::app.type.@bool.@this>(ActionError.FromException(ex, "SignatureInvalid", 400));
+            return action.Context.Error<global::app.type.item.@bool.@this>(ActionError.FromException(ex, "SignatureInvalid", 400));
         }
     }
 
@@ -190,7 +190,7 @@ public class Ed25519 : ISigning
     // VerifyAsync, which hold action.Context) borns the data.error. Same shape as number ops.
     // They speak plang types; CLR appears only at the NSec call (the 3rd-party perimeter), where
     // the signature is decomposed into its signing bytes / identity / signature bytes.
-    public global::app.type.binary.@this Sign(global::app.type.signature.@this unsigned, global::app.type.text.@this privateKey)
+    public global::app.type.binary.@this Sign(global::app.type.signature.@this unsigned, global::app.type.item.text.@this privateKey)
     {
         var algorithm = SignatureAlgorithm.Ed25519;
         var privateKeyBytes = Convert.FromBase64String(privateKey.ToString());
@@ -199,11 +199,11 @@ public class Ed25519 : ISigning
         return new global::app.type.binary.@this(algorithm.Sign(key, unsigned.ToSigningBytes()));
     }
 
-    public global::app.type.@bool.@this Verify(global::app.type.signature.@this signature)
+    public global::app.type.item.@bool.@this Verify(global::app.type.signature.@this signature)
     {
         var algorithm = SignatureAlgorithm.Ed25519;
         var publicKeyBytes = Convert.FromBase64String(signature.Identity.ToString());
         var nsecPublicKey = NSec.Cryptography.PublicKey.Import(algorithm, publicKeyBytes, KeyBlobFormat.RawPublicKey);
-        return new global::app.type.@bool.@this(algorithm.Verify(nsecPublicKey, signature.ToSigningBytes(), signature.Signature.Value));
+        return new global::app.type.item.@bool.@this(algorithm.Verify(nsecPublicKey, signature.ToSigningBytes(), signature.Signature.Value));
     }
 }

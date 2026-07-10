@@ -25,13 +25,13 @@ public class ItemApexTests
         System.Type[] wrappers =
         {
             typeof(Number), typeof(Dict), typeof(PList),
-            typeof(global::app.type.text.@this),
+            typeof(global::app.type.item.text.@this),
             typeof(global::app.type.datetime.@this),
             typeof(global::app.type.date.@this),
             typeof(global::app.type.time.@this),
             typeof(global::app.type.duration.@this),
-            typeof(global::app.type.@bool.@this),
-            typeof(global::app.type.@null.@this),
+            typeof(global::app.type.item.@bool.@this),
+            typeof(global::app.type.item.@null.@this),
         };
         foreach (var w in wrappers)
             await Assert.That(typeof(Item).IsAssignableFrom(w)).IsTrue();

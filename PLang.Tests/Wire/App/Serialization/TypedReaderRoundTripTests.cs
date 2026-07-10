@@ -21,11 +21,11 @@ public class TypedReaderRoundTripTests
     }
 
     [Test] public async Task Bool_True_Isolated()
-        => await Assert.That(ReadScalar(new global::app.type.@bool.serializer.Reader(), "true", null).Clr<bool>())
+        => await Assert.That(ReadScalar(new global::app.type.item.@bool.serializer.Reader(), "true", null).Clr<bool>())
             .IsTrue();
 
     [Test] public async Task Bool_False_Isolated()
-        => await Assert.That(ReadScalar(new global::app.type.@bool.serializer.Reader(), "false", null).Clr<bool>())
+        => await Assert.That(ReadScalar(new global::app.type.item.@bool.serializer.Reader(), "false", null).Clr<bool>())
             .IsFalse();
 
     [Test] public async Task Guid_Isolated()
@@ -43,7 +43,7 @@ public class TypedReaderRoundTripTests
     }
 
     [Test] public async Task Text_Literal_Isolated()
-        => await Assert.That(ReadScalar(new global::app.type.text.serializer.Reader(), "\"hello\"", null).Clr<string>())
+        => await Assert.That(ReadScalar(new global::app.type.item.text.serializer.Reader(), "\"hello\"", null).Clr<string>())
             .IsEqualTo("hello");
 
     [Test] public async Task Code_Isolated()

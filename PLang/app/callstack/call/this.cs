@@ -149,7 +149,7 @@ public sealed partial class @this : IAsyncDisposable
     /// <c>http.status=503</c>, <c>llm.tokens=2400</c>) and by the <c>tag</c> PLang action.
     /// Thread-safe — Tags owns its lock.
     /// </summary>
-    public void Tag(global::app.type.text.@this key, global::app.data.@this value) => Tags.Set(key, value);
+    public void Tag(global::app.type.item.text.@this key, global::app.data.@this value) => Tags.Set(key, value);
 
     /// <summary>
     /// Typed metadata bag. Use this to attach handler-specific structured data
@@ -333,7 +333,7 @@ public sealed partial class @this : IAsyncDisposable
     private static bool IsScalar(object value) =>
         value switch
         {
-            global::app.type.text.@this t => t.Length.ToInt32() <= 256,
+            global::app.type.item.text.@this t => t.Length.ToInt32() <= 256,
             // Scalar wrappers are deeply immutable (the wrapper-immutability
             // gate) — holding the instance as Before is safe, no clone needed.
             global::app.type.item.@this i => i.IsLeaf,

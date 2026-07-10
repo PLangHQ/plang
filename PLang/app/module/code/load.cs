@@ -16,7 +16,7 @@ public partial class load : IContext
     public partial data.@this<global::app.type.path.@this>? Path { get; init; }
 
     /// <summary>Optional display name for the provider (not currently used — provider supplies its own Name).</summary>
-    public partial data.@this<global::app.type.text.@this>? Name { get; init; }
+    public partial data.@this<global::app.type.item.text.@this>? Name { get; init; }
 
     public async Task<data.@this> Run()
     {

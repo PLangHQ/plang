@@ -20,8 +20,8 @@ public sealed partial class @this
     {
         _context = context;
         _tests = new global::app.type.list.@this<global::app.test.@this>(context);
-        Include = new global::app.type.list.@this<global::app.type.text.@this>(context);
-        Exclude = new global::app.type.list.@this<global::app.type.text.@this>(context);
+        Include = new global::app.type.list.@this<global::app.type.item.text.@this>(context);
+        Exclude = new global::app.type.list.@this<global::app.type.item.text.@this>(context);
     }
 
     /// <summary>When the session started.</summary>
@@ -42,17 +42,17 @@ public sealed partial class @this
     public global::app.type.number.@this Parallel { get; set; } = System.Environment.ProcessorCount;
 
     /// <summary>When true, per-test output.write streams live to stdout. When false, captured and rendered only on failure.</summary>
-    public global::app.type.@bool.@this Verbose { get; set; } = false;
+    public global::app.type.item.@bool.@this Verbose { get; set; } = false;
 
     /// <summary>File report format. Console is always written regardless.</summary>
-    public global::app.type.choice.@this<global::app.test.Format> Format { get; set; } = global::app.test.Format.Json;
+    public global::app.type.item.choice.@this<global::app.test.Format> Format { get; set; } = global::app.test.Format.Json;
 
     /// <summary>Include tag filter (empty = all tests match). Case-insensitive. Set by the
     /// <c>--test</c> walk (<c>["a","b"]</c> → <c>list&lt;text&gt;</c> via the catalog).</summary>
-    public global::app.type.list.@this<global::app.type.text.@this> Include { get; set; }
+    public global::app.type.list.@this<global::app.type.item.text.@this> Include { get; set; }
 
     /// <summary>Exclude tag filter (empty = nothing excluded). Applied after include — exclude wins on conflict.</summary>
-    public global::app.type.list.@this<global::app.type.text.@this> Exclude { get; set; }
+    public global::app.type.list.@this<global::app.type.item.text.@this> Exclude { get; set; }
 
     /// <summary>Back-reference to the App that owns this session (derived from the born
     /// context). Used by reporters to surface App.Version for drift comparisons.</summary>

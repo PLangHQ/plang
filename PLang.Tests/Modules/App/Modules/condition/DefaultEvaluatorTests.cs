@@ -12,14 +12,14 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
 
     private Data D(object? value) => value == null ? new Data("") : _app.User.Context.Ok(value);
 
-    private Task<global::app.data.@this<global::app.type.@bool.@this>> Eval(object? left, string op, object? right)
-        => _eval.Evaluate(new Compare(_app.User.Context) { Left = D(left), Operator = _app.User.Context.Ok<global::app.type.choice.@this<Operator>>((global::app.type.choice.@this<Operator>)new Operator(op)), Right = D(right) });
+    private Task<global::app.data.@this<global::app.type.item.@bool.@this>> Eval(object? left, string op, object? right)
+        => _eval.Evaluate(new Compare(_app.User.Context) { Left = D(left), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(op)), Right = D(right) });
 
-    private Task<global::app.data.@this<global::app.type.@bool.@this>> EvalIf(object? left, string op = "==", object? right = null)
-        => _eval.Evaluate(new If(_app.User.Context) { Left = D(left), Operator = _app.User.Context.Ok<global::app.type.choice.@this<Operator>>((global::app.type.choice.@this<Operator>)new Operator(op)), Right = D(right) });
+    private Task<global::app.data.@this<global::app.type.item.@bool.@this>> EvalIf(object? left, string op = "==", object? right = null)
+        => _eval.Evaluate(new If(_app.User.Context) { Left = D(left), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(op)), Right = D(right) });
 
-    private bool IsTrue(global::app.data.@this<global::app.type.@bool.@this> result) => result.Success && (result.Peek() as global::app.type.@bool.@this)?.Value == true;
-    private bool IsFalse(global::app.data.@this<global::app.type.@bool.@this> result) => result.Success && (result.Peek() as global::app.type.@bool.@this)?.Value == false;
+    private bool IsTrue(global::app.data.@this<global::app.type.item.@bool.@this> result) => result.Success && (result.Peek() as global::app.type.item.@bool.@this)?.Value == true;
+    private bool IsFalse(global::app.data.@this<global::app.type.item.@bool.@this> result) => result.Success && (result.Peek() as global::app.type.item.@bool.@this)?.Value == false;
 
     // --- Evaluate() — All Operators ---
 

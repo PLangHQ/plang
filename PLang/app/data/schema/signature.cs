@@ -25,7 +25,7 @@ public sealed class signature : ISchemaReader
         // Stream the layer's fields off the reader (no FromWire/DOM). The inner `value` IS a
         // Data — it reads through the data reader (recurse), so the verify re-hashes the same
         // reconstruction the writer produced.
-        global::app.type.text.@this algorithm = new("ed25519"), nonce = new(""), identity = new("");
+        global::app.type.item.text.@this algorithm = new("ed25519"), nonce = new(""), identity = new("");
         System.DateTimeOffset created = default;
         System.DateTimeOffset? expires = null;
         string hashAlgo = "keccak256";
@@ -50,7 +50,7 @@ public sealed class signature : ISchemaReader
                     reader.BeginArray();
                     var items = new System.Collections.Generic.List<Data>();
                     while (reader.NextElement())
-                        items.Add(Data.Ok(new global::app.type.text.@this(reader.String())));
+                        items.Add(Data.Ok(new global::app.type.item.text.@this(reader.String())));
                     reader.EndArray();
                     contracts = new global::app.type.list.@this(items, context);
                     break;
@@ -105,7 +105,7 @@ public sealed class signature : ISchemaReader
             var verifyAction = new global::app.module.signing.verify(context)
             {
                 Data = carrier,
-                SkipFreshnessCheck = new global::app.data.@this<global::app.type.@bool.@this>(
+                SkipFreshnessCheck = new global::app.data.@this<global::app.type.item.@bool.@this>(
                     "", ctx.View == global::app.View.Store),
             };
             var verifyResult = context.App
