@@ -34,7 +34,10 @@ PROJECTS=(Modules Types Wire Data Generator Runtime)
 TEST_TIMEOUT="${TEST_TIMEOUT:-15s}"
 
 run_bin() { # $1 = project, rest = args
-  "PLang.Tests/$1/bin/Debug/net10.0/PLang.Tests.$1" --timeout "$TEST_TIMEOUT" "${@:2}"
+  # < /dev/null: a test that reads stdin (a stream/ask-channel test) otherwise BLOCKS
+  # waiting for input until the whole-suite --timeout cap fires — turning a few-second
+  # run into a multi-minute hang. EOF on stdin lets it fail fast instead.
+  "PLang.Tests/$1/bin/Debug/net10.0/PLang.Tests.$1" --timeout "$TEST_TIMEOUT" "${@:2}" < /dev/null
 }
 
 # Run every suite SEQUENTIALLY (one at a time) and report each one's result.
@@ -47,29 +50,75 @@ run_bin() { # $1 = project, rest = args
 # `failed: N>0` or never prints a summary (the runner can segfault at teardown
 # AFTER printing — intermittent — so pass/fail is read from the summary, not the
 # exit code).
+# Rough per-suite wall-clock baselines (2026-07-10, this machine, warm build). Noisy
+# (machine load / JIT), so treat as a drift signal, not a gate: if actual ≫ expected
+# consistently, a suite grew a slow test or a perf regression landed — investigate.
+declare -A SUITE_SECS=( [Generator]=6 [Types]=8 [Runtime]=15 [Wire]=16 [Modules]=27 [Data]=35 )
+
 run_all_suites() { # rest = extra args passed to each suite
   local p fail=0
   # Each suite's FULL output is written to a per-suite log — read those for the truth
   # (the live stdout below is only the one-line summary and can be truncated under a pipe).
   echo "→ full per-suite output: /tmp/devsh_<Suite>.log  (Suite ∈ ${PROJECTS[*]})"
+  echo "→ expected suite times (s, drift signal): $(for p in "${PROJECTS[@]}"; do printf '%s~%s ' "$p" "${SUITE_SECS[$p]:-?}"; done)"
   for p in "${PROJECTS[@]}"; do
     run_bin "$p" "$@" > "/tmp/devsh_$p.log" 2>&1 || true
-    local n
+    local n dur
     n=$(grep -aoE 'failed: [0-9]+' "/tmp/devsh_$p.log" | tail -1 | grep -oE '[0-9]+')
-    if [ -z "$n" ]; then echo "=== $p === NO SUMMARY (crash before summary?) — see /tmp/devsh_$p.log"; fail=1
-    elif [ "$n" != 0 ]; then echo "=== $p === FAILED: $n ($(grep -aoE 'total: [0-9]+' /tmp/devsh_$p.log | tail -1))"; fail=1
-    else echo "=== $p === green ($(grep -aoE 'total: [0-9]+' /tmp/devsh_$p.log | tail -1))"; fi
+    dur=$(grep -aoE 'duration: [0-9smh ]+' "/tmp/devsh_$p.log" | tail -1 | sed 's/duration: //')
+    local tag="${dur:-?} vs ~${SUITE_SECS[$p]:-?}s"
+    if [ -z "$n" ]; then echo "=== $p === NO SUMMARY (crash before summary?) — see /tmp/devsh_$p.log [$tag]"; fail=1
+    elif [ "$n" != 0 ]; then echo "=== $p === FAILED: $n ($(grep -aoE 'total: [0-9]+' /tmp/devsh_$p.log | tail -1)) [$tag]"; fail=1
+    else echo "=== $p === green ($(grep -aoE 'total: [0-9]+' /tmp/devsh_$p.log | tail -1)) [$tag]"; fi
   done
   return $fail
 }
 
+# Run a build; on ANY compile error, SCREAM (impossible to miss) and hard-STOP before
+# running tests — a non-compiling project leaves a STALE artefact, so any result run
+# against it is a LIE (the stale-binary trap). This applies to EVERY build, not just the
+# test projects: a stale PLang.dll (library) or plang.exe (console) poisons results just
+# as badly. Compile errors are NOT test failures; fix them first.
+#   $1 = human label (what's building), $2 = log path, rest = the build command
+scream_build() {
+  local label="$1" log="$2"; shift 2
+  local rc errs
+  "$@" > "$log" 2>&1 && rc=0 || rc=$?
+  # Match CS compile errors from ANY project path (PLang/, PlangConsole/, PLang.Tests/…).
+  # `|| true`: on a CLEAN build grep matches nothing → returns 1, and pipefail+set -e
+  # would kill the script on success. We WANT empty errs there, not an abort.
+  errs=$(grep -aoE '[^ ]+\.cs\([0-9]+,[0-9]+\): error [A-Z0-9]+[^[]*' "$log" | sort -u || true)
+  { [ "$rc" = 0 ] && [ -z "$errs" ]; } && return 0
+  echo
+  echo "########################################################################"
+  echo "##                                                                    ##"
+  echo "##   🛑🛑🛑  BUILD FAILED — COMPILE ERRORS, NOT TEST FAILURES  🛑🛑🛑   ##"
+  echo "##   A non-compiling project runs a STALE artefact — results are LIES. ##"
+  echo "##   FIX COMPILATION FIRST. Do not read any test output below.        ##"
+  echo "##                                                                    ##"
+  echo "########################################################################"
+  echo "##   what failed to build:  $label"
+  echo
+  if [ -n "$errs" ]; then echo "$errs"
+  else echo "  (rc=$rc, no CS error lines matched — raw log tail:)"; tail -25 "$log"; fi
+  echo
+  echo "  (full build log: $log)"
+  echo "########################################################################"
+  exit 2
+}
+# The console is a dependency of every plang test; a stale plang.exe lies just like a stale dll.
+build_console() { scream_build "PlangConsole (+PLang library)" /tmp/devsh_console.log \
+  dotnet build PlangConsole -c Debug --no-restore -p:RunAnalyzers=false -v q --nologo; }
+build_tests() { scream_build "test projects (PLang.Tests/*)" /tmp/devsh_build.log \
+  dotnet msbuild PLang.Tests/All.proj -t:Build "${DEVFLAGS[@]}"; }
+
 case "${1:-build}" in
   build)
-    time dotnet msbuild PLang.Tests/All.proj -t:Build "${DEVFLAGS[@]}"
-    time dotnet build PlangConsole -c Debug --no-restore -p:RunAnalyzers=false -v q --nologo
+    build_tests
+    build_console
     ;;
   test)
-    dotnet msbuild PLang.Tests/All.proj -t:Build "${DEVFLAGS[@]}"
+    build_tests
     if [ -n "${2:-}" ]; then
       # find the project whose sources mention the class; fall back to all
       hits=$(grep -rl "class ${2}" PLang.Tests/*/ --include=*.cs 2>/dev/null | grep -v /obj/ | sed 's|PLang.Tests/||;s|/.*||' | sort -u)
@@ -85,7 +134,7 @@ case "${1:-build}" in
     fi
     ;;
   ptest)
-    dotnet build PlangConsole -c Debug --no-restore -p:RunAnalyzers=false -v q --nologo
+    build_console
     (cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test)
     ;;
   full)
@@ -94,8 +143,12 @@ case "${1:-build}" in
     echo "  Per-suite full output is written to /tmp/devsh_<Suite>.log — read those, not this stdout."
     # Pre-commit gate: analyzers ON. Slower, and invalidates the analyzers-off
     # incremental state once — run when handing off, not per edit.
-    dotnet msbuild PLang.Tests/All.proj -t:Build -p:Configuration=Debug -v:q -nologo
-    dotnet build PlangConsole -c Debug --no-restore -v q --nologo
+    # Analyzers ON here (the gate) — so NOT build_tests/build_console (those are analyzers-off),
+    # but still route through scream_build so a compile error screams and hard-stops.
+    scream_build "test projects (analyzers ON)" /tmp/devsh_build.log \
+      dotnet msbuild PLang.Tests/All.proj -t:Build -p:Configuration=Debug -v:q -nologo
+    scream_build "PlangConsole (+PLang library, analyzers ON)" /tmp/devsh_console.log \
+      dotnet build PlangConsole -c Debug --no-restore -v q --nologo
     fail=0
     run_all_suites || fail=1
     (cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test) || fail=1
