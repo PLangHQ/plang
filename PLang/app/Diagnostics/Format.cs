@@ -43,15 +43,11 @@ public static class Format
     /// </summary>
     public static string Value(object? value)
     {
+        // A debug formatter wants a READABLE value, not canonical json — every value owns a
+        // sync string face (ToString), so no serializer (and no async) is needed here.
         if (value == null) return "(null)";
         if (value is string s) return $"\"{s}\"";
-        var type = value.GetType();
-        if (type.IsPrimitive || value is decimal || value is DateTime
-            || value is DateTimeOffset || value is TimeSpan || value is Guid
-            || value is Enum)
-            return value.ToString() ?? "(null)";
-        try { return JsonSerializer.Serialize(value, DiagnosticOutput); }
-        catch { return type.Name; }
+        return value.ToString() ?? value.GetType().Name;
     }
 
     /// <summary>

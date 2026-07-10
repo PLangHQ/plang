@@ -10,25 +10,19 @@ namespace app.data;
 /// </summary>
 public partial class @this
 {
-    // Per-Data static — pure config bag, no instance variation, allocation efficiency
-    // matters because Data is allocated frequently. Stage 27 disperse-from-Json target.
-    private static readonly JsonSerializerOptions _camelCaseIndented = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
-        Converters = { new global::app.channel.serializer.TimeSpanIso8601() }
-    };
     /// <summary>
     /// Structural golden-file diff: serializes both Data to JSON and walks the trees.
     /// Returns a Data whose Value is a dictionary with match result, field-level diffs,
     /// and lists of missing/extra fields. Distinct from <see cref="Compare"/> — that is
     /// the typed value comparison returning <see cref="Comparison"/>; this is the eval
-    /// runner's report shape.
+    /// runner's report shape. Async because the value writes ITSELF through the json
+    /// writer (no STJ, no per-type converter); both sides serialize the same way, so the
+    /// structural compare is casing-consistent.
     /// </summary>
-    public @this Diff(@this other)
+    public async System.Threading.Tasks.ValueTask<@this> Diff(@this other)
     {
-        var thisJson = SerializeForComparison(this);
-        var otherJson = SerializeForComparison(other);
+        var thisJson = await SerializeForComparison(this);
+        var otherJson = await SerializeForComparison(other);
 
         using var thisDoc = JsonDocument.Parse(thisJson);
         using var otherDoc = JsonDocument.Parse(otherJson);
@@ -38,13 +32,18 @@ public partial class @this
         return new @this("comparison", diff, context: Context);
     }
 
-    private static string SerializeForComparison(@this data)
+    private static async System.Threading.Tasks.ValueTask<string> SerializeForComparison(@this data)
     {
-        // Peek() is statically typed `item.@this`; serializing it directly would
-        // bind STJ to the abstract base's contract (its infra properties) — identical
-        // for every value, so all comparisons would match. Cast to object so STJ uses
-        // the runtime type and the value's own [JsonConverter] (text→"hello", etc.).
-        return JsonSerializer.Serialize((object?)data.Peek(), _camelCaseIndented);
+        // The value writes ITSELF through the json writer — its own Output, no STJ binding to
+        // the abstract base's infra properties, no per-type [JsonConverter].
+        using var buffer = new System.IO.MemoryStream();
+        await using (var utf8 = new Utf8JsonWriter(buffer, new JsonWriterOptions { Indented = true }))
+        {
+            var writer = new global::app.channel.serializer.json.Writer(
+                utf8, view: global::app.View.Out, renderers: data.Context?.App.Type.Renderers, emitsSchema: false);
+            await data.Output(writer, global::app.View.Out, data.Context);
+        }
+        return System.Text.Encoding.UTF8.GetString(buffer.ToArray());
     }
 
     private static Dictionary<string, object?> CompareElements(

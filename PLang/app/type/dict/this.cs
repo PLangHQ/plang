@@ -341,11 +341,23 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         // All-raw backing IS the raw map the caller wants → hand it back (O(1)).
         if (!_hasWrapped && target.IsInstanceOfType(_value)) return _value;
 
-        // A CLR record target: the dict serializes ITSELF (its own [JsonConverter], so
-        // each value renders by its own type) and STJ rebuilds the record with the
-        // shared read options (Context-bound path adapter so nested path fields wire;
-        // record ctors / enums handled). No intermediate map, no hub. (Untyped fallback
-        // only — a typed read gives the record directly; see the SettingsStore/Identity todo.)
+        // A Dictionary<string,T> target — lower each entry to T STRUCTURALLY: each value lowers
+        // ITSELF via Clr, recursive, no json round-trip (the internal-serialize smell dies here).
+        if (typeof(System.Collections.IDictionary).IsAssignableFrom(target)
+            && System.Activator.CreateInstance(target) is System.Collections.IDictionary map)
+        {
+            var elementType = target.IsGenericType ? target.GetGenericArguments()[^1] : typeof(object);
+            foreach (var key in _value.Keys)
+            {
+                var v = Slot(key).Peek();
+                map[key] = v is global::app.type.item.@this iv ? iv.Clr(elementType) : v;
+            }
+            return map;
+        }
+
+        // A CLR record target — the untyped fallback (SettingsStore/Identity todo): the dict
+        // serializes ITSELF (its own [JsonConverter]) and STJ rebuilds the record. This still fires
+        // dict.Json, so dict's attribute strip waits on Create owning record construction (that todo).
         var opts = global::app.channel.serializer.json.Options.Read(Context);
         var utf8 = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(this, opts);
         return System.Text.Json.JsonSerializer.Deserialize(utf8, target, opts);

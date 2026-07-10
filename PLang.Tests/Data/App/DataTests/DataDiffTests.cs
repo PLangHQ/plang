@@ -11,7 +11,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var a = _app.Data("a", "hello");
         var b = _app.Data("b", "hello");
 
-        var result = a.Diff(b);
+        var result = await a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
@@ -24,7 +24,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var a = _app.Data("a", "hello");
         var b = _app.Data("b", "world");
 
-        var result = a.Diff(b);
+        var result = await a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
@@ -39,7 +39,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var a = _app.Data("a", 42);
         var b = _app.Data("b", 42);
 
-        var result = a.Diff(b);
+        var result = await a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
@@ -53,7 +53,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var a = _app.Data("a", (int)42);
         var b = _app.Data("b", (long)42);
 
-        var result = a.Diff(b);
+        var result = await a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
@@ -73,7 +73,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var a = _app.Data("a", obj);
         var b = _app.Data("b", new Dictionary<string, object?>(obj));
 
-        var result = a.Diff(b);
+        var result = await a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
@@ -89,7 +89,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var a = _app.Data("a", expected);
         var b = _app.Data("b", actual);
 
-        var result = a.Diff(b);
+        var result = await a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
@@ -116,7 +116,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var a = _app.Data("a", expected);
         var b = _app.Data("b", actual);
 
-        var result = a.Diff(b);
+        var result = await a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
@@ -139,7 +139,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var a = _app.Data("a", expected);
         var b = _app.Data("b", actual);
 
-        var result = a.Diff(b);
+        var result = await a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
@@ -162,7 +162,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var a = _app.Data("a", expected);
         var b = _app.Data("b", actual);
 
-        var result = a.Diff(b);
+        var result = await a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
@@ -179,7 +179,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var a = _app.Data("a", expected);
         var b = _app.Data("b", actual);
 
-        var result = a.Diff(b);
+        var result = await a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
@@ -195,7 +195,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var a = _app.Data("a", expected);
         var b = _app.Data("b", actual);
 
-        var result = a.Diff(b);
+        var result = await a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
@@ -233,7 +233,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var a = _app.Data("a", expected);
         var b = _app.Data("b", actual);
 
-        var result = a.Diff(b);
+        var result = await a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
@@ -246,7 +246,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var a = _app.Data("a", true);
         var b = _app.Data("b", true);
 
-        var result = a.Diff(b);
+        var result = await a.Diff(b);
         var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
@@ -259,7 +259,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var a = _app.Data("a", "test");
         var b = _app.Data("b", "test");
 
-        var result = a.Diff(b);
+        var result = await a.Diff(b);
 
         await Assert.That(result).IsNotNull();
         await Assert.That(result.Name).IsEqualTo("comparison");
