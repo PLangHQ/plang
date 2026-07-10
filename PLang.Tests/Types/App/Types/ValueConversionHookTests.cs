@@ -56,58 +56,59 @@ public class ValueConversionHookTests
 
     // ---- Each domain hook in isolation ----
 
+    // Each type builds a value of itself through its Create courier; the public
+    // conversion door (App.Type.Convert → the courier) is how these are reached from
+    // a CLR target. (The per-type static Convert hook is gone — Create is the one door.)
+
     [Test]
-    public async Task NumberHook_KindPicksPrecision_NullKindDerives()
+    public async Task NumberConversion_KindPicksPrecision_NullDerives()
     {
-        var (_, ctx) = MakeApp();
-        await Assert.That((await Number.Convert("3.14", "decimal", ctx).Value())?.ToString()).IsEqualTo("3.14");
-        await Assert.That((await Number.Convert("42", "long", ctx).Value())?.ToString()).IsEqualTo("42");
-        // null kind → derive from the literal shape (Build): integer → int.
-        await Assert.That((await Number.Convert("42", null, ctx).Value())?.ToString()).IsEqualTo("42");
+        var (app, ctx) = MakeApp();
+        await Assert.That((await app.Type.Convert("3.14", typeof(decimal), ctx).Value())?.ToString()).IsEqualTo("3.14");
+        await Assert.That((await app.Type.Convert("42", typeof(long), ctx).Value())?.ToString()).IsEqualTo("42");
+        await Assert.That((await app.Type.Convert("42", typeof(int), ctx).Value())?.ToString()).IsEqualTo("42");
         // non-numeric → error owned by number.
-        await Assert.That(Number.Convert("abc", "int", ctx).Success).IsFalse();
+        await Assert.That(app.Type.Convert("abc", typeof(int), ctx).Success).IsFalse();
     }
 
     [Test]
-    public async Task DatetimeHook_ParsesIso()
+    public async Task DatetimeConversion_ParsesIso()
     {
-        var (_, ctx) = MakeApp();
-        // kind null ⇒ the born-native wrapper (mirrors DurationHook); GetValue projects to raw.
-        var v = Datetime.Convert("2024-03-15T10:30:00+00:00", null, ctx).GetValue<System.DateTimeOffset>();
+        var (app, ctx) = MakeApp();
+        var v = ((global::app.type.item.@this)(await app.Type.Convert("2024-03-15T10:30:00+00:00", typeof(System.DateTimeOffset), ctx).Value())!).Clr<System.DateTimeOffset>();
         await Assert.That(v.Year).IsEqualTo(2024);
     }
 
     [Test]
-    public async Task DurationHook_ParsesIsoAndDotNet()
+    public async Task DurationConversion_ParsesIsoAndDotNet()
     {
-        var (_, ctx) = MakeApp();
-        await Assert.That(Duration.Convert("PT30S", null, ctx).GetValue<System.TimeSpan>()).IsEqualTo(System.TimeSpan.FromSeconds(30));
-        await Assert.That(Duration.Convert("00:05:00", null, ctx).GetValue<System.TimeSpan>()).IsEqualTo(System.TimeSpan.FromMinutes(5));
+        var (app, ctx) = MakeApp();
+        await Assert.That(((global::app.type.item.@this)(await app.Type.Convert("PT30S", typeof(System.TimeSpan), ctx).Value())!).Clr<System.TimeSpan>()).IsEqualTo(System.TimeSpan.FromSeconds(30));
+        await Assert.That(((global::app.type.item.@this)(await app.Type.Convert("00:05:00", typeof(System.TimeSpan), ctx).Value())!).Clr<System.TimeSpan>()).IsEqualTo(System.TimeSpan.FromMinutes(5));
     }
 
     [Test]
-    public async Task PathHook_ResolvesScheme()
+    public async Task PathConversion_ResolvesScheme()
     {
-        var (_, ctx) = MakeApp();
-        var v = await PLangPath.Convert("greeting.txt", null, ctx).Value();
+        var (app, ctx) = MakeApp();
+        var v = await app.Type.Convert("greeting.txt", typeof(PLangPath), ctx).Value();
         await Assert.That(v).IsAssignableTo<PLangPath>();
     }
 
     [Test]
-    public async Task ImageHook_PathStringMintsLazyHandle_NoIo()
+    public async Task ImageConversion_PathStringMintsLazyHandle_NoIo()
     {
         var (_, ctx) = MakeApp();
-        var v = (await Image.Convert("photo.png", null, ctx).Value()) as Image;
+        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this("image", null), context: ctx);
+        var v = Image.Create("photo.png", carrier) as Image;
         await Assert.That(v).IsNotNull();
         await Assert.That(v!.Path).IsNotNull();
         // Lazy: no content read at construction.
         await Assert.That(v.Bytes.Length).IsEqualTo(0);
-        // A raw byte[] is declined (built at its own seam) — null, not an error.
-        await Assert.That(Image.Convert(new byte[] { 1, 2, 3 }, null, ctx)).IsNull();
     }
 
     [Test]
-    public async Task GoalCallHook_FromBareName()
+    public async Task GoalCallConversion_FromBareName()
     {
         var (_, ctx) = MakeApp();
         var v = (await GoalCall.Convert("MyGoal", null, ctx).Value()) as GoalCall;

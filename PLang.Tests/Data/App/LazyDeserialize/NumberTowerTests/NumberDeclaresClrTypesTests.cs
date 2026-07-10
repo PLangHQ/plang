@@ -4,12 +4,11 @@ using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using number = global::app.type.item.number.@this;
-using convert = global::app.type.convert.@this;
 
 namespace PLang.Tests.App.LazyDeserialize.NumberTowerTests;
 
-// The distributed-OwnerOf payoff, scoped to number. Adding uint/ulong/Int128/
-// BigInteger touches only number's declaration — never the central convert.
+// The distributed-ownership payoff, scoped to number. Adding uint/ulong/Int128/
+// BigInteger touches only number's declaration — never a central table.
 public class NumberDeclaresClrTypesTests
 {
     [Test] public async Task Number_DeclaresFullTowerCrlTypes()
@@ -27,13 +26,11 @@ public class NumberDeclaresClrTypesTests
     }
 
     // The composition picks up a number-declared CLR type (uint) without any
-    // central switch: OwnerOf routes uint → number, and uint is in number's
-    // own declaration — so the kind was added by editing number alone.
+    // central switch: the ownership door routes uint → the number entity, and uint
+    // is in number's own declaration — so the kind was added by editing number alone.
     [Test] public async Task Number_AddingNewCrlType_RequiresOnlyNumberEdit()
     {
-        var (family, kind) = convert.OwnerOf(typeof(uint));
-        await Assert.That(family).IsEqualTo(typeof(number));
-        await Assert.That(kind).IsEqualTo("uint");
+        await Assert.That(global::PLang.Tests.TestApp.SharedContext.App.Type[typeof(uint)]?.Name).IsEqualTo("number");
         await Assert.That(number.OwnedClrTypes.Any(o => o.Clr == typeof(uint))).IsTrue();
     }
 }
