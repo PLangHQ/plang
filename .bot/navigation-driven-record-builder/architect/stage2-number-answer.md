@@ -21,40 +21,47 @@ The `NumberKind` enum dies with the switches, but the Ladder's rungs are labeled
 ## Renames + one shape fix that ride the re-key (settled with Ingi, code below)
 
 - **`this.Tower.cs` → `this.Ladder.cs`** — "tower" is CS jargon (the "numeric tower") and says nothing; the honest word is already in the file.
+- **`IntegerLadder` → `Ladder`** — there is only ONE ladder (fractional kinds don't climb; the mix policy handles them). One thing needs no qualifier; that it covers the integer track is a doc-comment fact, not a name fact.
+- **`NarrowInteger` → `Narrow`** — verb+noun, the flashing sign. One verb, the caller's intent. `NarrowStrict` aligns in the same pass (overload or a second verb — coder proposes).
 - **`Rung` → `Level`** — "rung" is ordinary English (a ladder's bar) but low-frequency: it fails the transparent-to-a-non-native rule. `Level` is the word Ingi reached for unprompted ("the next level in the ladder"). `Step` is banned — the domain collision we renamed `Descend` away from.
 - **`Fits` moves ONTO the Level** — the name is right (one verb, caller's intent), the placement is the stray-helper smell at its smallest: `Fits(in Rung r, v)` reaches into the rung; the level owns its own question: `level.Fits(v)`.
+- **Statics, settled precisely** (extends the factory sanction by one clause): *factories on the created type, their binding thunk, and private immutable data tables + private methods inside the owning type are sanctioned; hubs and helper classes stay banned.* `Ladder` (the array) = universal immutable constants — static data is its honest lifecycle. `Narrow` = a **private factory** (`Narrow(bigValue, floor) → @this` constructs a number that doesn't exist yet — no `this` to hang it on). **Never justify a static by performance**: methods cost zero per-instance memory (only fields do), and the static-vs-instance call difference is one hidden argument the JIT inlines — negligible, unmeasurable. Factory-ness justifies statics; perf never does.
+- **The re-key mechanics** (found via Ingi's "should they be static?"): kind instances are **per-App, born with context** — a static table cannot hold them, and number's arithmetic runs in ctx-less operators. So **levels carry the kind by NAME** (the token's identity axis — equality is by name, settled); resolution to the per-App kind instance happens only at boundaries that hold ctx (construction, serialization), never inside arithmetic.
 - **The climb stays signed-biased — affirmed, don't "fix" it.** Unsigned kinds exist for *source fidelity* (a lib/db hands you `uint` — kept) and *explicit declaration* (`as uint` — the developer asked for the can't-be-negative constraint). The climb never *enters* unsigned uninvited: an overflow result landing in `uint` sets a trap for the next subtraction (`3 - 5` → wrap/throw the user never caused) — the no-magic rule applied to arithmetic. `uint + uint` that fits its floor stays `uint` (inputs' kind honored); only the climb refuses the unsigned track.
 
 ## The Ladder, target shape (today's logic, new names, kind-token keys)
 
 ```csharp
-// number/this.Ladder.cs — a LEVEL owns its range and answers its own question:
-private readonly record struct Level(kind.@this Kind, BigInteger Min, BigInteger Max, bool Unbounded)
+// number/this.Ladder.cs — a LEVEL owns its range and answers its own question.
+// Levels carry the kind by NAME (static universal data can't hold per-App kind instances):
+private readonly record struct Level(string Kind, BigInteger Min, BigInteger Max, bool Unbounded)
 {
     public bool Fits(BigInteger v) => Unbounded || (v >= Min && v <= Max);
 }
 
-private static readonly Level[] IntegerLadder =
+// ONE ladder — no qualifier (fractional kinds don't climb; the mix policy handles them):
+private static readonly Level[] Ladder =
 {
-    new(/* sbyte */ ..., sbyte.MinValue, sbyte.MaxValue, false),
+    new("sbyte", sbyte.MinValue, sbyte.MaxValue, false),
     ...
-    new(/* int   */ ..., int.MinValue,   int.MaxValue,   false),
-    new(/* long  */ ..., long.MinValue,  long.MaxValue,  false),
+    new("int",   int.MinValue,   int.MaxValue,   false),
+    new("long",  long.MinValue,  long.MaxValue,  false),
     ...
-    new(/* bigint*/ ..., 0, 0, true),                     // the unbounded top
+    new("bigint", 0, 0, true),                            // the unbounded top
 };
 
 // the climb — compute wide, then find the smallest level that holds the result.
 // NO exceptions anywhere: math runs in BigInteger (cannot overflow), placement is comparison.
-private static @this NarrowInteger(BigInteger v, kind.@this floor)
+// A private FACTORY (constructs the result number — no `this` exists yet): the sanctioned static.
+private static @this Narrow(BigInteger v, string floor)
 {
-    var floorLevel = IntegerLadder[LadderIndex(floor)];
+    var floorLevel = Ladder[LadderIndex(floor)];
     if (floorLevel.Fits(v)) return FromBigIntegerAs(v, floor);   // fits where it started → stays
 
     foreach (var k in SignedClimb)                               // int → long → Int128 → BigInteger
     {
         if (MaxMagnitude(k) <= floorMag) continue;               // must be strictly wider
-        if (IntegerLadder[LadderIndex(k)].Fits(v)) return FromBigIntegerAs(v, k);
+        if (Ladder[LadderIndex(k)].Fits(v)) return FromBigIntegerAs(v, k);
     }
     return From(v);                                              // BigInteger catch-all
 }
