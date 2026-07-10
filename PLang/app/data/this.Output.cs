@@ -124,7 +124,7 @@ public partial class @this
                     if (kvp.Value is global::app.data.@this pd)
                         await pd.Output(writer, mode, context);
                     else
-                        await global::app.type.@this.Create(kvp.Value, context).Output(writer, mode, context);
+                        await context.App.Type.Create(kvp.Value, context).Output(writer, mode, context);
                 }
                 writer.EndObject();
             }

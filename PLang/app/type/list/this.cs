@@ -15,8 +15,12 @@ namespace app.type.list;
 /// File-format characteristics (extension → Kind, extension → MIME, Kind →
 /// compressibility) live separately on <see cref="app.format.list.@this"/> at
 /// <c>app.Format</c>.
+///
+/// This IS the collection of all system types (<c>app.Type</c>) — the current and future home,
+/// distinct from <c>app.type.item.list</c> (the plang list VALUE). Its internals are still the
+/// legacy registry blob; Stage-3-core cleans them in place (untangle the Registry index, reparent
+/// the sub-registries to <c>app.type.*</c>) — the class is not going anywhere.
 /// </summary>
-[System.Obsolete("The type registry moves to app.type.item.list (list<type>) + a keyed name index; the other sub-registries reparent to app.type.* — do not add new callers.")]
 public sealed partial class @this
 {
     /// <summary>
@@ -298,19 +302,13 @@ public sealed partial class @this
         }
     }
 
-    // Per-family lift thunk cache — reflect Create<family>() once per plang class, invoke thereafter.
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Func<object?, global::app.actor.context.@this?, global::app.type.item.@this?>> _lifts = new();
-    private static readonly System.Reflection.MethodInfo _createOpen =
-        typeof(@this).GetMethod("Create", 1,
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static,
-            binder: null, System.Type.EmptyTypes, modifiers: null)!;
-
     /// <summary>
     /// The born-native lift — the collection's door (selection + fallback policy is the registry's
     /// job). A raw CLR value or an already-native item becomes its plang value: the type OWNING the
-    /// raw's CLR shape (its <c>OwnedClrTypes</c> declaration) builds it through its own <c>Create</c>;
-    /// a CLR type no type owns rides a <c>Clr</c> carrier (rung 2). Navigated, not switched — no hub.
-    /// Rungs: <c>is item</c> → owned-type lift → container narrowing → <c>Clr</c>.
+    /// raw's CLR shape (its <c>OwnedClrTypes</c> declaration, keyed on the clr index) builds it through
+    /// its own entity <c>Create</c> door; a CLR type no type owns rides a <c>Clr</c> carrier (rung 2).
+    /// Navigated, not switched — no hub. Rungs: <c>is item</c> → container narrowing → clr-index lift →
+    /// <c>Clr</c>.
     /// </summary>
     public global::app.type.item.@this Create(object? raw, global::app.actor.context.@this? context)
     {
@@ -336,16 +334,13 @@ public sealed partial class @this
                 ?? throw new System.InvalidOperationException(
                     $"A raw C# container ({raw.GetType().Name}) could not be narrowed to a native plang list/dict.");
 
-        // The natural lift, NAVIGATED off the OwnedClr ownership map: int → number, DateOnly → date.
-        // The family CLASS drives a reflected Create<family>() thunk (cached); the value's kind comes
-        // from the value itself, so a shared, context-free entity is enough.
-        var (family, _) = global::app.type.convert.@this.OwnerOf(raw.GetType());
-        if (family != null && typeof(global::app.type.item.@this).IsAssignableFrom(family))
-        {
-            var lift = _lifts.GetOrAdd(family, f =>
-                (System.Func<object?, global::app.actor.context.@this?, global::app.type.item.@this?>)_createOpen.MakeGenericMethod(f).Invoke(null, null)!);
-            if (lift(raw, context) is { } lifted) return lifted;
-        }
+        // The natural lift, NAVIGATED off the clr OWNERSHIP index (each type's OwnedClrTypes):
+        // int → number, string → text, DateOnly → date. Ownership, NOT the primitive name — a raw
+        // string is owned by `text`, though its primitive name is `string`; the owning entity drives
+        // its own cached Create thunk.
+        if (_clr.TryGetValue(raw.GetType(), out var ownerName)
+            && this[ownerName] is { } owner && owner.Create(raw, context) is { } lifted)
+            return lifted;
 
         // A CLR enum IS plang's choice (a closed named set) — build choice<T> for the enum.
         if (raw is System.Enum)
@@ -355,12 +350,6 @@ public sealed partial class @this
         // Unowned — rung 2: a strongly-typed C# object rides as a Clr carrier (a product, never a shuttle).
         return new global::app.type.clr.@this(raw, context!);
     }
-
-    // The logic-free thunk (per the ruling): the raw rides straight into the type's own
-    // context-carrying Create (ICreate member 2); no bridge, no Clr shuttle.
-    private static System.Func<object?, global::app.actor.context.@this?, global::app.type.item.@this?> Create<T>()
-        where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-        => (raw, ctx) => T.Create(raw, ctx);
 
     /// <summary>Compile-time generic lookup — returns the catalog-built entity for T.</summary>
     public app.type.@this of<T>()

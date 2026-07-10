@@ -28,7 +28,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public IEnumerator<Data> GetEnumerator()
     {
         foreach (var slot in _items)
-            yield return slot is Data d ? d : new Data("", global::app.type.@this.Create(slot, _context), context: _context);
+            yield return slot is Data d ? d : new Data("", _context.App.Type.Create(slot, _context), context: _context);
     }
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
@@ -107,7 +107,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             d.Context = _context;
             return d;
         }
-        return new Data("", global::app.type.@this.Create(raw, _context), context: _context);
+        return new Data("", _context.App.Type.Create(raw, _context), context: _context);
     }
 
     // The structural face of a raw-or-Data slot — the item instance for the

@@ -37,7 +37,7 @@ public sealed class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
         if (value is @this<T> already) return already;
         if (value is @this list) return new @this<T>(list, data.Context!);
         // A single value / raw container lifts to a base list first, then re-tags.
-        return global::app.type.@this.Create((value as global::app.type.item.@this)?.Clr<object>() ?? value, data.Context) is @this lifted
+        return data.Context!.App.Type.Create((value as global::app.type.item.@this)?.Clr<object>() ?? value, data.Context) is @this lifted
             ? new @this<T>(lifted, data.Context!) : null;
     }
 

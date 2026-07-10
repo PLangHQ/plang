@@ -197,13 +197,16 @@ public class Stage4_PerTypeCompareTests
     }
 
     [Test]
-    public async Task Compare_Sync_OnMaterialisedValues_NoIo()
+    public async Task Compare_IsInstanceAsyncReconcile_NoStaticHook()
     {
-        // per-type Compare runs no I/O — sync over already-materialised values
-        // the per-type hook is sync by signature: static Comparison Compare(object?, object?)
-        var hook = typeof(global::app.type.item.number.@this).GetMethod("Compare",
+        // comparison is the value's own instance reconcile (item.Compare → ValueTask<Comparison>),
+        // async by design so a container walks its elements — there is no static per-type sync hook.
+        var staticHook = typeof(global::app.type.item.number.@this).GetMethod("Compare",
             new[] { typeof(object), typeof(object) });
-        await Assert.That(hook).IsNotNull();
-        await Assert.That(hook!.ReturnType).IsEqualTo(typeof(Comparison));   // no Task/ValueTask
+        await Assert.That(staticHook).IsNull();
+        var instance = typeof(global::app.type.item.@this).GetMethod("Compare",
+            new[] { typeof(global::app.type.item.@this) });
+        await Assert.That(instance).IsNotNull();
+        await Assert.That(instance!.ReturnType).IsEqualTo(typeof(System.Threading.Tasks.ValueTask<Comparison>));
     }
 }

@@ -231,8 +231,15 @@ public partial class @this
         // the value's own truth stands.
         if (type is { IsNull: false } && !type.Polymorphic)
             _item = type.Build(parsed, _context);
+        // A value that needs no lift is context-free — the null citizen (every sentinel:
+        // NotFound/Uninitialized/`new Data(name)`) and an already-native item pass through
+        // without consulting the registry. Only a raw value to lift reaches the collection.
+        else if (parsed is null)
+            _item = global::app.type.item.@null.@this.Instance;
+        else if (parsed is global::app.type.item.@this it)
+            _item = it;
         else
-            _item = global::app.type.@this.Create(parsed, _context);
+            _item = _context.App.Type.Create(parsed, _context);
         Parent = parent;
         Path = BuildPath(parent, Name);
         IsInitialized = true;
@@ -322,7 +329,7 @@ public partial class @this
     /// </summary>
     public virtual void SetValue(object? value)
     {
-        _item = global::app.type.@this.Create(new global::app.type.item.serializer.json(_context).Parse(value), _context);
+        _item = _context.App.Type.Create(new global::app.type.item.serializer.json(_context).Parse(value), _context);
         Updated = System.DateTime.UtcNow;
         IsInitialized = true;
         if (_item is module.IContext contextual)
@@ -352,10 +359,9 @@ public partial class @this
     {
         // The type owns making its value from a raw form — ONE source-maker (app.type.@this.Build),
         // which carries the type's Name/Kind/Strict/format and its template flag. FromRaw is the
-        // Data wrapper around that. A caller may pass a format the wire knows from the slot's token.
-        var d = new @this(name) { _context = context! };
-        d._item = type.Build(raw, context!, format);
-        return d;
+        // Data wrapper around that built instance (the instance ctor, so no throwaway value-build
+        // runs first). A caller may pass a format the wire knows from the slot's token.
+        return new @this(name, type.Build(raw, context!, format), context: context);
     }
 
     /// <summary>True when this Data is source-backed (holds an undecoded form held verbatim).</summary>

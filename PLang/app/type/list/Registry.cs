@@ -29,6 +29,13 @@ public sealed partial class @this
     // Runtime registrations (test harnesses, plugins) merge into the index.
     private readonly ConcurrentDictionary<string, Type> _runtimeNameToType = new(StringComparer.OrdinalIgnoreCase);
 
+    // The clr → owning-plang-name index (int→"number", DateOnly→"date"), populated inline as each
+    // value type is indexed, from its own OwnedClrTypes declaration. Feeds the born-native lift's clr
+    // rung: a raw CLR scalar resolves to the entity that owns its shape. Mutable like its sibling
+    // indices — a code.load type adds its ownership at runtime. Exact keys only; the one Assignable
+    // declaration (path) is always an item.@this and never a raw CLR value.
+    private readonly ConcurrentDictionary<Type, string> _clr = new();
+
     private readonly HashSet<string> _clrTypeFullNames = new(StringComparer.Ordinal);
     private volatile bool _clrTypeFullNamesInitialized;
     private readonly object _clrTypeFullNamesLock = new();
@@ -98,6 +105,11 @@ public sealed partial class @this
         if (string.IsNullOrWhiteSpace(name) || type == null) return;
         _runtimeNameToType[name] = type;
         _typeToName.TryAdd(type, name);
+        // A code.load type owns its CLR shapes at runtime too — add them to the clr index.
+        if (type.GetProperty("OwnedClrTypes", BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+                ?.GetValue(null) is IEnumerable<global::app.type.convert.OwnedClr> owned)
+            foreach (var decl in owned)
+                if (!decl.Assignable) _clr.TryAdd(decl.Clr, name);
     }
 
     private void EnsureInitialized()
@@ -194,7 +206,14 @@ public sealed partial class @this
             }
 
             if (canonical != null)
+            {
                 _typeToName.TryAdd(type, canonical);
+                // The raw CLR shapes this value type owns (int→"number") — the born-native lift's clr rung.
+                if (type.GetProperty("OwnedClrTypes", BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+                        ?.GetValue(null) is IEnumerable<global::app.type.convert.OwnedClr> owned)
+                    foreach (var decl in owned)
+                        if (!decl.Assignable) _clr.TryAdd(decl.Clr, canonical);
+            }
         }
     }
 

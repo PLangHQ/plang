@@ -124,7 +124,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         }
         // Born a FRESH Data each read — never cached back. Leaving the slot raw keeps
         // the aliased backing pristine, so the CLR exit door stays same-ref.
-        return new Data(key, global::app.type.@this.Create(raw, _context), context: _context);
+        return new Data(key, _context.App.Type.Create(raw, _context), context: _context);
     }
     private actor.context.@this _context = null!;
 
@@ -233,7 +233,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (cur is T typed) return typed;
         // The navigated value lifts to its plang type (the source already has the shape) —
         // the type system creates it; no conversion hub.
-        return global::app.type.@this.Create(cur, _context) as T;
+        return _context.App.Type.Create(cur, _context) as T;
     }
 
     // Split a navigation path into segments: "choices[0].message.content" →

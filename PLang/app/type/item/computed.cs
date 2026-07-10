@@ -64,6 +64,6 @@ public sealed class computed : @this, module.IContext
     private @this Compute()
     {
         var raw = _factory();
-        return global::app.type.@this.Create(raw, Context);
+        return Context.App.Type.Create(raw, Context);
     }
 }

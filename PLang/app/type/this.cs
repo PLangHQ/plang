@@ -312,7 +312,7 @@ public sealed class @this : item.@this
         // value via the born-native lift (int → number, DateOnly → date, …), then refine
         // to THIS declared type/kind. The lift owns raw→native; the family Convert hooks
         // speak native values, so raw never reaches them un-lifted.
-        return Build(global::app.type.@this.Create(value, context), context, format);
+        return Build(context.App.Type.Create(value, context), context, format);
     }
 
     /// <summary>
@@ -377,25 +377,42 @@ public sealed class @this : item.@this
     /// as the <c>item</c> apex. A TYPE-SYSTEM concern, not serialization — json
     /// converts its own tokens then calls here for the leaves.
     /// </summary>
-    public static item.@this Create(object? raw, global::app.actor.context.@this? context = null)
+    // The entity's own born-native door: THIS type builds a plang value of itself from a raw
+    // value, through its own logic-free Create thunk (closed once per entity over ClrType).
+    // Returns null when the entity is not an ICreate family (a primitive/host name) or its
+    // core declines — the collection perimeter falls through to the next rung. Context rides
+    // the call; the shared registry entity stays context-free (the thunk holds no state).
+    private System.Func<object?, global::app.actor.context.@this?, item.@this?>? _create;
+
+    // The entity closes its own Create thunk over ClrType on first use (MakeGenericMethod is the
+    // single reflective touch, cached in _create thereafter). A non-ICreate entity (primitive,
+    // host) declines with a null thunk so the collection perimeter falls through to the next rung.
+    public item.@this? Create(object? raw, global::app.actor.context.@this? context)
     {
-        // The context-free fast paths (null citizen, already-native pass-through) answer without
-        // the registry — a null-context caller with a null/item value still works.
-        if (raw is null) return global::app.type.item.@null.@this.Instance;
-        if (raw is global::app.type.item.@this already) return already;
-
-        // Everything else is the collection's born-native lift (selection + fallback = the registry's
-        // job): the owned-type navigate, container narrowing, Clr rung 2. It needs the registry, so a
-        // context is required — a null here is a caller that built a value without one.
-        if (context == null)
-            throw new System.InvalidOperationException(
-                $"A {raw.GetType().Name} value cannot be born without a context. "
-                + "type.Create(raw, context) requires a non-null context — born-with-context, never construct-then-stamp "
-                + "({ Context = … } sets the wrapper after the value is already built). Fix the caller that passed null.\n"
-                + System.Environment.StackTrace);
-
-        return context.App.Type.Create(raw, context);
+        if (_create == null)
+        {
+            if (ClrType is not { } clr
+                || !typeof(item.@this).IsAssignableFrom(clr)
+                || !System.Array.Exists(clr.GetInterfaces(),
+                       i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.ICreate<>)))
+                _create = static (_, _) => null;
+            else
+                _create = (System.Func<object?, global::app.actor.context.@this?, item.@this?>)
+                    _createOpen.MakeGenericMethod(clr).Invoke(null, null)!;
+        }
+        return _create(raw, context);
     }
+
+    // The generic overload is the ONE place the raw→plang bridge lives — logic-free, per the
+    // ruling: the raw rides straight into the type's own context-carrying Create.
+    private static System.Func<object?, global::app.actor.context.@this?, item.@this?> Create<T>()
+        where T : item.@this, global::app.type.item.ICreate<T>
+        => (raw, ctx) => T.Create(raw, ctx);
+
+    private static readonly System.Reflection.MethodInfo _createOpen =
+        typeof(@this).GetMethod(nameof(Create), 1,
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static,
+            binder: null, System.Type.EmptyTypes, modifiers: null)!;
 
     /// <summary>
     /// Normalising factory — the single entry point the LLM, build pipeline,
