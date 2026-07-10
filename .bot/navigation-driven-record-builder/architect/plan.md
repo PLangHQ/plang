@@ -100,6 +100,10 @@ Note: `SetValueOnObject` only *shrinks* here (the clr arm covers host writes); f
 
 - Scan for every remaining `[Obsolete]` (Stage 0's marks). Delete what can die; anything that genuinely can't yet stays marked, with one line in this plan's close-out saying why — known future debt, findable by attribute scan.
 - Success measure: the scan count, before vs after.
+- **Cleanup block (Ingi, 2026-07-10):**
+  - **"object" dies as a type name — "item" is THE universal.** Two names for one universal type is the duplicate: `Polymorphic` (`type/this.cs:353`) accepts both; production only mints "item" (`item/source.cs:50`, `computed.cs:32`, clr's face). Delete `type/object/` (Reader.cs now; `object/serializer/json.cs` dies by the already-ruled absorption into the json kind's `Load`), the `type.Object` static (`type/this.cs:366`), the "object" arm of `Polymorphic`; tests retag `"object"` → `"item"` (`TypedReaderRoundTripTests`, LazyDeserialize suites).
+  - **`item/serializer/Reader.cs` reroutes, not deleted** — "item"-typed slots are legitimate (the universal), so the reader's role stays; its guts (`new serializer.json(ctx)`, the dying parser) reroute to the json kind's `ReadSlot` when the read side lands. Ends one line thin.
+  - **`data.SetValue` → `Set(object?)` overload** — verb+noun dies; the body's `json.Parse` is already in the Data-ctor reroute blast map, so the body becomes the navigated lift via the collection door. It STAYS as `data.Set(path)`'s own rebind primitive (`this.Navigation.cs:146`, the one-level-rebind seam) — it is not replaced by `data.Set`, it is what `data.Set` uses. `SetValueDirect` (internal wire-hydration bypass) renamed in the same pass.
 
 ---
 
