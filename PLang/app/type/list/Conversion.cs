@@ -171,8 +171,7 @@ public sealed partial class @this
             // numeric tower for number, IList for list, …), the value lowers ITSELF —
             // terminal, the value owns its CLR projection. A DIFFERENT family (text→int,
             // text→datetime) is a CONVERT and falls through to the family hooks below.
-            var (ownFamily, _) = global::app.type.convert.@this.OwnerOf(targetType);
-            if (ownFamily != null && ownFamily.IsInstanceOfType(itemValue))
+            if (context?.App.Type[targetType]?.ClrType is { } ownFamily && ownFamily.IsInstanceOfType(itemValue))
             {
                 try { return (itemValue.Clr(targetType), null); }
                 catch (System.Exception ex) when (ex is System.InvalidCastException or System.FormatException or System.OverflowException)
@@ -204,24 +203,16 @@ public sealed partial class @this
         // declined this value shape (e.g. image for raw bytes) — fall through to the
         // residual leaf + plumbing below.
         {
-            var (family, kind) = global::app.type.convert.@this.OwnerOf(targetType);
-            // An error value isn't a convertible payload — let it fall through to the residual
-            // leaf, which keeps the original error primary and demotes the conversion failure
-            // onto its chain (ErrorAsStringSlot). The family hook would otherwise surface its own
-            // "cannot convert" error as primary, burying the real cause.
-            if (family != null && value is not global::app.error.Error)
+            // The owning value type builds itself via its kind-aware courier — resolved from the CLR
+            // target through the ownership index (replaces convert.OwnerOf). An error value isn't a
+            // convertible payload; let it fall through to the residual leaf (keeps the original error
+            // primary). Born-with-context: no context → no family build (fall through).
             {
-                // With an App in scope use the instance dispatch; context-free (the Text
-                // serializer's string deserialize) the scalar families' static Convert hook
-                // still parses into the born-native wrapper.
-                // The owning type builds itself via its kind-aware courier — a carrier declaring the
-                // target family+kind (a typed @null carries Name+Kind, no value-build). Replaces the
-                // reflective convert hub. Born-with-context: no context → no family build (fall through).
-                var entity = context?.App.Type[family];
-                if (entity != null)
+                var entity = context?.App.Type[targetType];
+                if (entity != null && value is not global::app.error.Error)
                 {
                     var carrier = new global::app.data.@this("",
-                        new global::app.type.item.@null.@this(entity.Name, kind), context: context);
+                        new global::app.type.item.@null.@this(entity.Name, entity.Kind?.Name), context: context);
                     var built = entity.Create(value, carrier);
                     if (built != null)
                     {

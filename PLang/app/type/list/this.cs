@@ -291,6 +291,11 @@ public sealed partial class @this
         get
         {
             EnsureInitialized();
+            // The CLR target's OWNING value type: a foreign shape it claims (int → number, via the
+            // clr ownership index) wins over its identity/name (path.@this → path, every path
+            // subclass → path). This is the conversion-ownership door (replaces convert.OwnerOf);
+            // primitive/CLR-name lookups are a separate surface (Get/ResolveType/GetPrimitiveOrMime).
+            if (_clr.TryGetValue(clrType, out var owner)) return this[owner];
             return _typeToName.TryGetValue(clrType, out var name) ? this[name] : null;
         }
     }
