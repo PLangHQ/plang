@@ -12,27 +12,24 @@ namespace app.type.number;
 /// </summary>
 public sealed partial class @this
 {
-    // ---- Comparison (the unified hook — see app.type.compare) ----
+    // ---- Comparison — the value's own behavior (see app.data.Comparison) ----
 
     /// <summary>Outranks text — `text "10" > 9` compares numerically, not lexically.</summary>
-    internal static int CompareRank => 30;
+    public override int Rank => 300;
 
     /// <summary>
-    /// Numeric comparison across the tower, in caller order. The driver coerces the
-    /// non-numeric side via <see cref="FromObject"/> (text "10" → 10); a side that
-    /// can't become a number makes the pair <see cref="global::app.data.Comparison.Incomparable"/>.
+    /// Numeric comparison across the tower, in caller order. The other side coerces into
+    /// a number through the pure <c>Create</c> core (text "10" → 10); a value that can't
+    /// become a number → <see cref="global::app.data.Comparison.Incomparable"/>.
     /// </summary>
-    public static global::app.data.Comparison Compare(object? a, object? b)
+    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other)
     {
-        // The other side coerces into a number through the pure core (text "10" → 10); a value that
-        // can't become a number → Incomparable. Operands ride as items (born-native); no exception.
-        @this? na = a as @this ?? (a as global::app.type.item.@this is { } ia ? Create(ia) : null);
-        @this? nb = b as @this ?? (b as global::app.type.item.@this is { } ib ? Create(ib) : null);
-        if (na == null || nb == null) return global::app.data.Comparison.Incomparable;
-        var c = na.CompareTo(nb);
-        return c < 0 ? global::app.data.Comparison.Less
-             : c > 0 ? global::app.data.Comparison.Greater
-             : global::app.data.Comparison.Equal;
+        var b = other as @this ?? Create(other);
+        if (b is null) return new(global::app.data.Comparison.Incomparable);
+        var c = CompareTo(b);
+        return new(c < 0 ? global::app.data.Comparison.Less
+                 : c > 0 ? global::app.data.Comparison.Greater
+                 : global::app.data.Comparison.Equal);
     }
 
     public bool Equals(@this? other)

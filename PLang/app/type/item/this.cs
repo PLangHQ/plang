@@ -47,6 +47,42 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this data)
         => System.Threading.Tasks.ValueTask.FromResult(this);
 
+    // ---- Comparison — the value's own behavior (see app.data.Comparison) ----
+
+    /// <summary>
+    /// Comparison precedence — higher drives, the lower operand coerces into the higher
+    /// via its <c>Create</c>. Used only relationally (who drives/coerces), never a result,
+    /// never on the wire. Declared per type on the ×10 table (text 100 … list 750, guid 600,
+    /// null 1000); the apex/unranked base is 0. A plugin type declares its own — no central
+    /// catalog. Read off the value's real type (both operands are their real shape by the time
+    /// <see cref="Compare"/> runs — <see cref="Value"/> parsed any source), so it never
+    /// materializes to decide.
+    /// </summary>
+    public virtual int Rank => 0;
+
+    /// <summary>
+    /// Compare this value against <paramref name="other"/> — the reconcile. The higher-ranked
+    /// side drives (<see cref="Order"/>); when the right operand drives, its result is
+    /// <see cref="global::app.data.ComparisonExtensions.Invert">inverted</see> back to caller
+    /// order. Non-virtual — the per-type behavior lives in <see cref="Order"/>; this two-line
+    /// reconcile is uniform. Calls <c>other.Order(this)</c>, NEVER <c>other.Compare(this)</c>,
+    /// which would re-run the rank pick and recurse.
+    /// </summary>
+    public async System.Threading.Tasks.ValueTask<global::app.data.Comparison> Compare(@this other)
+        => Rank >= other.Rank
+            ? await Order(other)
+            : global::app.data.ComparisonExtensions.Invert(await other.Order(this));
+
+    /// <summary>
+    /// The driver's per-type comparison: coerce <paramref name="other"/> into THIS kind (via the
+    /// pure <c>Create</c> core) and order/equate in caller order. The base answers identity —
+    /// equal to itself, else not-equal (a value with no order). A non-coercible other is
+    /// <see cref="global::app.data.Comparison.Incomparable"/>, not an error. Async so a container
+    /// can walk its elements lazily (each element pair awaited as reached, first mismatch exits).
+    /// </summary>
+    protected virtual System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(@this other)
+        => new(ReferenceEquals(this, other) ? global::app.data.Comparison.Equal : global::app.data.Comparison.NotEqual);
+
     /// <summary>The value-less citizen — what a failed door answers (the error
     /// rides the asking binding; the value slot stays never-null). The typeless
     /// null; a declared-but-empty slot uses <c>new null.@this(type, kind)</c>.</summary>

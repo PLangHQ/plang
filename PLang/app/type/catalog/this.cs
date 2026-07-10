@@ -70,14 +70,6 @@ public sealed partial class @this
     public convert.@this Conversions { get; } = new();
 
     /// <summary>
-    /// Per-type comparison hooks — <c>static int CompareRank</c> (specificity; the
-    /// higher-ranked type of a pair drives) and <c>static Comparison Compare(a, b)</c>
-    /// (coerce the other side into my kind, then order/equate in caller order).
-    /// <c>data.Compare</c> dispatches through here via the type entity.
-    /// </summary>
-    public compare.@this Compares { get; } = new();
-
-    /// <summary>
     /// Per-(type, format) renderer table. Vestigial now that a value renders
     /// itself via <c>item.Write</c> — only its membership check feeds Normalize's
     /// "renders-itself, don't reflect" signal. Discovers

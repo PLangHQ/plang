@@ -113,18 +113,13 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
     // choice<T> finds them) ----
 
     /// <summary>Outranks text — the name string coerces into the choice.</summary>
-    internal static int CompareRank => 15;
+    public override int Rank => 150;
 
     /// <summary>Equality-only: <c>Equal</c>/<c>NotEqual</c> by value or by name
-    /// (choice/text/string), never an order. Neither side a choice → Incomparable.</summary>
-    public static global::app.data.Comparison Compare(object? a, object? b)
-    {
-        if (a is @this<T> ca)
-            return ca.AreEqual(b) ? global::app.data.Comparison.Equal : global::app.data.Comparison.NotEqual;
-        if (b is @this<T> cb)
-            return cb.AreEqual(a) ? global::app.data.Comparison.Equal : global::app.data.Comparison.NotEqual;
-        return global::app.data.Comparison.Incomparable;
-    }
+    /// (choice/text), never an order. This choice drives; the other coerces via
+    /// <see cref="AreEqual"/> (a name string / choice matches its member).</summary>
+    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other)
+        => new(AreEqual(other) ? global::app.data.Comparison.Equal : global::app.data.Comparison.NotEqual);
 
     // Equality by value, and by name against a choice/text/string (so
     // `where method equals 'GET'` reconciles).

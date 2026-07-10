@@ -633,43 +633,16 @@ public partial class @this
     }
 
     /// <summary>
-    /// THE comparison entry — compares this value to <paramref name="other"/> and
-    /// returns the sign-free <see cref="Comparison"/>. The driving type is decided
-    /// from the TYPES alone (<see cref="type.Rank"/> — ranking never forces a read),
-    /// then both values are awaited through the door (the only async hops) and the
-    /// driver's sync <c>Compare(a, b)</c> runs in caller order — <c>Less</c> means
-    /// <c>this &lt; other</c>, no sign flip.
-    ///
-    /// <para>Null policy lives here, above every driver: anything vs null is
-    /// equality-comparable (<c>Equal</c>/<c>NotEqual</c>, never
-    /// <c>Incomparable</c>) so <c>%x% == null</c> works for every type.</para>
+    /// THE comparison entry — the thin async door. Both operands are awaited through
+    /// their door (a source parses to its real shape, a scalar/template renders, a
+    /// container returns itself with elements still lazy), then the VALUE reconciles
+    /// itself: <see cref="global::app.type.item.@this.Compare"/> picks the driver by
+    /// <see cref="global::app.type.item.@this.Rank"/> and orders in caller order —
+    /// <c>Less</c> means <c>this &lt; other</c>. Null policy is <c>@null</c>'s own
+    /// behavior (it outranks every value, so its <c>Order</c> answers <c>%x% == null</c>).
     /// </summary>
     public async ValueTask<Comparison> Compare(@this other)
-    {
-        var a = await Value();
-        var b = await other.Value();
-        return CompareValues(other, a, b);
-    }
-
-    /// <summary>
-    /// The sync comparison core — rank, null policy, driver dispatch — over values
-    /// already in memory. <see cref="Compare"/> is the public door-awaiting entry;
-    /// sort's phase-2 comparator (sync by construction, no await inside
-    /// <c>List.Sort</c>) calls this directly on phase-1-materialised keys.
-    /// </summary>
-    internal Comparison CompareValues(@this other, object? a, object? b)
-    {
-        var driver = Type.Rank(other);
-        driver.Context ??= _context ?? other._context;
-
-        // A present null rides as the null.@this singleton — coalesce for the policy.
-        if (a is app.type.@null.@this) a = null;
-        if (b is app.type.@null.@this) b = null;
-        if (a == null || b == null)
-            return a == null && b == null ? Comparison.Equal : Comparison.NotEqual;
-
-        return driver.Compare(a, b);
-    }
+        => await (await Value()).Compare(await other.Value());
 
     /// <summary>
     /// Creates a deep clone of this Data. Value is deep-cloned, metadata is preserved.

@@ -385,18 +385,18 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override System.Threading.Tasks.ValueTask<bool> IsEmpty()
         => System.Threading.Tasks.ValueTask.FromResult(_value.Count == 0);
 
-    // ---- Comparison (the unified hook — see app.type.compare) ----
+    // ---- Comparison — the value's own behavior (see app.data.Comparison) ----
 
     /// <summary>Outranks every scalar — a dict never coerces into one.</summary>
-    internal static int CompareRank => 70;
+    public override int Rank => 700;
 
     /// <summary>Equality-only: structural <c>Equal</c>/<c>NotEqual</c> between two
     /// dicts, never an order (the boundary errors on <c>&lt;</c>/<c>&gt;</c>); a
     /// non-dict other side → <c>Incomparable</c> (how <c>dict == number</c> errors).</summary>
-    public static global::app.data.Comparison Compare(object? a, object? b)
+    protected override async System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other)
     {
-        if (a is not @this da || b is not @this db) return global::app.data.Comparison.Incomparable;
-        return da.AreEqual(db)
+        if (other is not @this od) return global::app.data.Comparison.Incomparable;
+        return await AreEqual(od)
             ? global::app.data.Comparison.Equal
             : global::app.data.Comparison.NotEqual;
     }
@@ -404,18 +404,17 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>
     /// Structural, key-based equality — two dicts are equal when they have the same
     /// keys mapping to equal values (order-insensitive). Each child routes through
-    /// its own comparison (the recursion contract), so a nested number widens and
+    /// its own comparison (the recursion contract, lazy), so a nested number widens and
     /// nested text compares case-insensitive. Dict is equality-only — no order.
     /// </summary>
-    public bool AreEqual(object? other)
+    public async System.Threading.Tasks.ValueTask<bool> AreEqual(object? other)
     {
         if (other is not @this od || _value.Count != od.CountRaw) return false;
         foreach (var key in _value.Keys)
         {
             var entry = Slot(key);
             var match = od.Get(key);
-            if (match == null || entry.CompareValues(match, entry.Peek(), match.Peek())
-                != global::app.data.Comparison.Equal)
+            if (match == null || await entry.Compare(match) is not global::app.data.Comparison.Equal)
                 return false;
         }
         return true;

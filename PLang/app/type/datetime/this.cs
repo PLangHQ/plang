@@ -78,27 +78,22 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override string ToString() =>
         Value.ToString("o", System.Globalization.CultureInfo.InvariantCulture);
 
-    // ---- Comparison (the unified hook — see app.type.compare) ----
+    // ---- Comparison — the value's own behavior (see app.data.Comparison) ----
 
     /// <summary>Date family outranks text — ISO text coerces into the datetime.</summary>
-    internal static int CompareRank => 55;
+    public override int Rank => 550;
 
-    /// <summary>Instant ordering in caller order; the other side coerces through this
-    /// family's own Convert hook (ISO text → datetime). Non-coercible → Incomparable.</summary>
-    public static global::app.data.Comparison Compare(object? a, object? b)
+    /// <summary>Instant ordering in caller order; the other side coerces into datetime through
+    /// the pure <c>Create</c> core (ISO text → datetime). Non-coercible → Incomparable.</summary>
+    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other)
     {
-        var ca = CoerceOwn(a);
-        var cb = CoerceOwn(b);
-        if (ca == null || cb == null) return global::app.data.Comparison.Incomparable;
-        var c = ca.Value.ToUniversalTime().CompareTo(cb.Value.ToUniversalTime());
-        return c < 0 ? global::app.data.Comparison.Less
-             : c > 0 ? global::app.data.Comparison.Greater
-             : global::app.data.Comparison.Equal;
+        var b = other as @this ?? Create(other);
+        if (b is null) return new(global::app.data.Comparison.Incomparable);
+        var c = Value.ToUniversalTime().CompareTo(b.Value.ToUniversalTime());
+        return new(c < 0 ? global::app.data.Comparison.Less
+                 : c > 0 ? global::app.data.Comparison.Greater
+                 : global::app.data.Comparison.Equal);
     }
-
-    private static @this? CoerceOwn(object? v) => v as @this
-        ?? convert.@this.OfStatic(typeof(@this),
-               global::app.type.item.@this.Backing(v), null, null)?.Peek() as @this;
 
     // ---- Equality + order (by instant) ----
     public bool AreEqual(object? other) => other switch

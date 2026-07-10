@@ -86,27 +86,21 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>Bare lowercase <c>true</c>/<c>false</c> — the serializer renders this.</summary>
     public override string ToString() => Value ? "true" : "false";
 
-    // ---- Comparison (the unified hook — see app.type.compare) ----
+    // ---- Comparison — the value's own behavior (see app.data.Comparison) ----
 
     /// <summary>Outranks text — `"true"` coerces into the bool, not vice versa.</summary>
-    internal static int CompareRank => 20;
+    public override int Rank => 200;
 
     /// <summary>Equality-only: <c>Equal</c>/<c>NotEqual</c>, never an order — the
-    /// boundary errors on <c>&lt;</c>/<c>&gt;</c>. The other side coerces through this
-    /// family's own Convert hook ("true" → true). Non-coercible → Incomparable.</summary>
-    public static global::app.data.Comparison Compare(object? a, object? b)
+    /// boundary errors on <c>&lt;</c>/<c>&gt;</c>. The other side coerces into bool through
+    /// the pure <c>Create</c> core ("true" → true). Non-coercible → Incomparable.</summary>
+    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other)
     {
-        var ca = CoerceOwn(a);
-        var cb = CoerceOwn(b);
-        if (ca == null || cb == null) return global::app.data.Comparison.Incomparable;
-        return ca.Value == cb.Value
-            ? global::app.data.Comparison.Equal
-            : global::app.data.Comparison.NotEqual;
+        var b = other as @this ?? Create(other);
+        return new(b is null ? global::app.data.Comparison.Incomparable
+                 : Value == b.Value ? global::app.data.Comparison.Equal
+                 : global::app.data.Comparison.NotEqual);
     }
-
-    private static @this? CoerceOwn(object? v) => v as @this
-        ?? convert.@this.OfStatic(typeof(@this),
-               global::app.type.item.@this.Backing(v), null, null)?.Peek() as @this;
 
     public bool AreEqual(object? other) => other switch
     {

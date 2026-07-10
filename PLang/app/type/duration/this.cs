@@ -86,27 +86,22 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // ---- Truthiness (item): zero is falsy ----
     public override bool IsTruthy() => Value != System.TimeSpan.Zero;
 
-    // ---- Comparison (the unified hook — see app.type.compare) ----
+    // ---- Comparison — the value's own behavior (see app.data.Comparison) ----
 
     /// <summary>Outranks text — ISO-8601 duration text coerces into the duration.</summary>
-    internal static int CompareRank => 40;
+    public override int Rank => 400;
 
-    /// <summary>Span-length ordering in caller order; the other side coerces through this
-    /// family's own Convert hook (ISO text → duration). Non-coercible → Incomparable.</summary>
-    public static global::app.data.Comparison Compare(object? a, object? b)
+    /// <summary>Span-length ordering in caller order; the other side coerces into duration through
+    /// the pure <c>Create</c> core (ISO text → duration). Non-coercible → Incomparable.</summary>
+    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other)
     {
-        var ca = CoerceOwn(a);
-        var cb = CoerceOwn(b);
-        if (ca == null || cb == null) return global::app.data.Comparison.Incomparable;
-        var c = ca.Value.CompareTo(cb.Value);
-        return c < 0 ? global::app.data.Comparison.Less
-             : c > 0 ? global::app.data.Comparison.Greater
-             : global::app.data.Comparison.Equal;
+        var b = other as @this ?? Create(other);
+        if (b is null) return new(global::app.data.Comparison.Incomparable);
+        var c = Value.CompareTo(b.Value);
+        return new(c < 0 ? global::app.data.Comparison.Less
+                 : c > 0 ? global::app.data.Comparison.Greater
+                 : global::app.data.Comparison.Equal);
     }
-
-    private static @this? CoerceOwn(object? v) => v as @this
-        ?? convert.@this.OfStatic(typeof(@this),
-               global::app.type.item.@this.Backing(v), null, null)?.Peek() as @this;
 
     // ---- Equality + order (by span length) ----
     public bool AreEqual(object? other) => other switch

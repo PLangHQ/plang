@@ -349,15 +349,15 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>Removes the first leaf whose value equals <paramref name="value"/> through
     /// the one compare path (structural for dict/list, case-insensitive text).</summary>
-    public bool Remove(object? value)
+    public async System.Threading.Tasks.ValueTask<bool> Remove(object? value)
     {
         // Scan the flattened view once to find the leaf, then a single RemoveAt — avoid
-        // the O(n²) of At(i) per iteration. Membership matches only on Equal.
+        // the O(n²) of At(i) per iteration. Membership matches only on Equal; each element
+        // compares through its own door (lazy).
         var flat = Items;
         var target = value as Data ?? new Data("", value);
         for (int i = 0; i < flat.Count; i++)
-            if (flat[i].CompareValues(target, flat[i].Peek(), target.Peek())
-                == global::app.data.Comparison.Equal) { RemoveAt(i); return true; }
+            if (await flat[i].Compare(target) is global::app.data.Comparison.Equal) { RemoveAt(i); return true; }
         return false;
     }
 
@@ -382,12 +382,12 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         var flat = new List<Data>(Items);
         var values = new Dictionary<Data, object?>(ReferenceEqualityComparer.Instance);
         foreach (var d in flat) values[d] = await d.Value();
-        SortGuarded(flat, (a, b) =>
+        var sorted = await SortAsync(flat, async (a, b) =>
         {
-            int c = OrderOf(a, b, values[a], values[b]);
+            int c = await OrderOf(a, b, values[a], values[b]);
             return descending ? -c : c;
         });
-        ResetTo(flat);
+        ResetTo(sorted);
     }
 
     /// <summary>
@@ -404,20 +404,20 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             var key = await d.Get(field);
             keys[d] = (key, await key.Value());
         }
-        SortGuarded(flat, (a, b) =>
+        var sorted = await SortAsync(flat, async (a, b) =>
         {
             var (ka, va) = keys[a];
             var (kb, vb) = keys[b];
-            int c = OrderOf(ka, kb, va, vb);
+            int c = await OrderOf(ka, kb, va, vb);
             return descending ? -c : c;
         });
-        ResetTo(flat);
+        ResetTo(sorted);
     }
 
-    // The sort boundary: Comparison → sign. Nulls sort LAST (the null policy answers
-    // Equal/NotEqual, which carries no order — sort owns its null placement);
-    // NotEqual/Incomparable between present values is a mixed list → error.
-    private static int OrderOf(Data a, Data b, object? va, object? vb)
+    // The sort boundary: Comparison → sign. Nulls sort LAST (sort owns its null
+    // placement — the value-model null policy answers Equal/NotEqual, which carries no
+    // order); NotEqual/Incomparable between present values is a mixed list → error.
+    private static async System.Threading.Tasks.ValueTask<int> OrderOf(Data a, Data b, object? va, object? vb)
     {
         // A value-less entry (the null citizen, which Peeks itself, OR an absent
         // slot, which Peeks null) sorts last; only present values are ordered.
@@ -426,7 +426,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         if (va == null && vb == null) return 0;
         if (va == null) return 1;
         if (vb == null) return -1;
-        return a.CompareValues(b, va, vb) switch
+        return (await a.Compare(b)) switch
         {
             global::app.data.Comparison.Less => -1,
             global::app.data.Comparison.Equal => 0,
@@ -434,6 +434,25 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             _ => throw new global::app.data.IncomparableException(
                 $"cannot order '{a.Type.Name}' against '{b.Type.Name}' — mixed or unordered values"),
         };
+    }
+
+    // Stable async merge sort — the compare is async (element doors), so List.Sort's
+    // sync comparator won't do; the typed IncomparableException propagates straight up
+    // (no sync-comparator exception unwrap needed).
+    private static async System.Threading.Tasks.ValueTask<List<Data>> SortAsync(
+        List<Data> items, System.Func<Data, Data, System.Threading.Tasks.ValueTask<int>> cmp)
+    {
+        if (items.Count <= 1) return items;
+        int mid = items.Count / 2;
+        var left = await SortAsync(items.GetRange(0, mid), cmp);
+        var right = await SortAsync(items.GetRange(mid, items.Count - mid), cmp);
+        var merged = new List<Data>(items.Count);
+        int i = 0, j = 0;
+        while (i < left.Count && j < right.Count)
+            merged.Add(await cmp(left[i], right[j]) <= 0 ? left[i++] : right[j++]);
+        while (i < left.Count) merged.Add(left[i++]);
+        while (j < right.Count) merged.Add(right[j++]);
+        return merged;
     }
 
     // Replace the rows with a flat sequence (post sort/reverse). The result is all
@@ -446,15 +465,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         _items.AddRange(flat);
     }
 
-    // List.Sort wraps a comparer exception in InvalidOperationException; unwrap the
-    // typed compare error (e.g. "cannot order dict") so callers see the real cause.
-    private static void SortGuarded(List<Data> items, System.Comparison<Data> cmp)
-    {
-        try { items.Sort(cmp); }
-        catch (System.InvalidOperationException ex)
-            when (ex.InnerException is global::app.data.IncomparableException inner)
-        { throw inner; }
-    }
 
     /// <summary>Replaces (or appends at Count) the leaf at the flattened <paramref name="index"/>.</summary>
     internal void SetAt(int index, Data value)
@@ -612,24 +622,24 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // ---- Comparison (the unified hook — see app.type.compare) ----
 
     /// <summary>Outranks everything — a list never coerces into a scalar or dict.</summary>
-    internal static int CompareRank => 75;
+    public override int Rank => 750;
 
     /// <summary>Lexicographic order between two lists in caller order — element pairs
     /// route through the element's own comparison (the recursion contract); the first
-    /// differing pair decides; a prefix sorts first (<c>[1,2] &lt; [1,2,3]</c>). An
-    /// element pair with no order makes the pair <c>NotEqual</c> (equality still
-    /// answers; ordering errors at the boundary). A non-list other side →
-    /// <c>Incomparable</c>.</summary>
-    public static global::app.data.Comparison Compare(object? a, object? b)
+    /// differing pair decides and the tail never materializes (lazy short-circuit);
+    /// a prefix sorts first (<c>[1,2] &lt; [1,2,3]</c>). An element pair with no order
+    /// makes the pair <c>NotEqual</c> (equality still answers; ordering errors at the
+    /// boundary). A non-list other side → <c>Incomparable</c>.</summary>
+    protected override async System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other)
     {
-        if (a is not @this la || b is not @this lb) return global::app.data.Comparison.Incomparable;
-        // Materialize the flattened views once — At(i)/Count are O(rows) walks.
-        var mine = la.Items;
+        if (other is not @this lb) return global::app.data.Comparison.Incomparable;
+        // Flatten the row views once — At(i)/Count are O(rows) walks.
+        var mine = Items;
         var theirs = lb.Items;
         int shared = System.Math.Min(mine.Count, theirs.Count);
         for (int i = 0; i < shared; i++)
         {
-            var c = mine[i].CompareValues(theirs[i], mine[i].Peek(), theirs[i].Peek());
+            var c = await mine[i].Compare(theirs[i]);   // element Data compare — lazy, first mismatch exits
             if (c is global::app.data.Comparison.Less or global::app.data.Comparison.Greater) return c;
             if (c is global::app.data.Comparison.NotEqual or global::app.data.Comparison.Incomparable)
                 return global::app.data.Comparison.NotEqual;
@@ -645,17 +655,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// item routes through its own comparison (the recursion contract), so nested
     /// numbers widen and nested text compares case-insensitive.
     /// </summary>
-    public bool AreEqual(object? other)
-    {
-        if (other is not @this ol) return false;
-        var mine = Items;
-        var theirs = ol.Items;
-        if (mine.Count != theirs.Count) return false;
-        for (int i = 0; i < mine.Count; i++)
-            if (mine[i].CompareValues(theirs[i], mine[i].Peek(), theirs[i].Peek())
-                != global::app.data.Comparison.Equal) return false;
-        return true;
-    }
+    public async System.Threading.Tasks.ValueTask<bool> AreEqual(object? other)
+        => other is @this ol && await Order(ol) is global::app.data.Comparison.Equal;
 
     public override string ToString() => $"[{string.Join(", ", Items.Select(e => e.Peek()))}]";
 }

@@ -61,6 +61,19 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The null citizen — the one value that IS null.</summary>
     public override bool IsNull => true;
 
+    // ---- Comparison — the null citizen owns null policy (see app.data.Comparison) ----
+
+    /// <summary>Highest rank — null always drives, so its <see cref="Order"/> answers
+    /// <c>%x% == null</c> for every value: the policy lives on the citizen, not in the
+    /// reconcile.</summary>
+    public override int Rank => 1000;
+
+    /// <summary>Null policy: <c>null == null → Equal</c>; <c>null vs any value → NotEqual</c>
+    /// (never Incomparable — anything is equality-comparable to null). Ordering against null
+    /// has no order, so <c>%x% &lt; null</c> errors at the boundary, as it should.</summary>
+    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other)
+        => new(other is @this ? global::app.data.Comparison.Equal : global::app.data.Comparison.NotEqual);
+
     /// <summary>Null is always falsy.</summary>
     public override bool IsTruthy() => false;
 

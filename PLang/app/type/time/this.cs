@@ -62,24 +62,19 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // ---- Comparison (the unified hook — see app.type.compare) ----
 
     /// <summary>Date family outranks text — ISO text coerces into the time.</summary>
-    internal static int CompareRank => 45;
+    public override int Rank => 450;
 
-    /// <summary>Ordered comparison in caller order; the other side coerces through this
-    /// family's own Convert hook (ISO text → time). Non-coercible → Incomparable.</summary>
-    public static global::app.data.Comparison Compare(object? a, object? b)
+    /// <summary>Ordered comparison in caller order; the other side coerces into time through
+    /// the pure <c>Create</c> core (ISO text → time). Non-coercible → Incomparable.</summary>
+    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other)
     {
-        var ca = CoerceOwn(a);
-        var cb = CoerceOwn(b);
-        if (ca == null || cb == null) return global::app.data.Comparison.Incomparable;
-        var c = ca.Value.CompareTo(cb.Value);
-        return c < 0 ? global::app.data.Comparison.Less
-             : c > 0 ? global::app.data.Comparison.Greater
-             : global::app.data.Comparison.Equal;
+        var b = other as @this ?? Create(other);
+        if (b is null) return new(global::app.data.Comparison.Incomparable);
+        var c = Value.CompareTo(b.Value);
+        return new(c < 0 ? global::app.data.Comparison.Less
+                 : c > 0 ? global::app.data.Comparison.Greater
+                 : global::app.data.Comparison.Equal);
     }
-
-    private static @this? CoerceOwn(object? v) => v as @this
-        ?? convert.@this.OfStatic(typeof(@this),
-               global::app.type.item.@this.Backing(v), null, null)?.Peek() as @this;
 
     public bool AreEqual(object? other) => other switch
     {

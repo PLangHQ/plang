@@ -272,41 +272,26 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>Empty text is falsy; any non-empty text is truthy.</summary>
     public override bool IsTruthy() => _value.Length > 0;
 
-    // ---- Comparison (the unified hook — see app.type.compare) ----
+    // ---- Comparison — the value's own behavior (see app.data.Comparison) ----
 
     /// <summary>Specificity floor — every other ranked type outranks text and drives.</summary>
-    internal static int CompareRank => 10;
+    public override int Rank => 100;
 
     /// <summary>
     /// Ordinal, case-insensitive ordering in caller order. Text is the floor type,
-    /// so it only drives a pair the other side couldn't claim; coercion is the
-    /// plain string form of the leaf.
+    /// so it only drives a pair the other side couldn't claim (text vs text). The other
+    /// side coerces into text through the pure <c>Create</c> core — the wrapper's content,
+    /// a raw string, an enum's NAME, or a domain value's canonical text form; a container
+    /// has no honest text form so <c>%dict% == "text"</c> is Incomparable.
     /// </summary>
-    public static global::app.data.Comparison Compare(object? a, object? b)
+    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other)
     {
-        // Text coerces the other side into its kind: the wrapper's content, a raw
-        // string, an enum's NAME (`where Status equals 'Timeout'`), or a domain
-        // value's canonical text form (its ToString — e.g. an Ask renders its
-        // answer for exactly this comparison, a type entity its name). Containers
-        // (dict/list) have no honest text form — they stay non-coercible, so
-        // `%dict% == "text"` is Incomparable, not a serialization comparison.
-        static string? Coerce(object? v) => v switch
-        {
-            @this t => t._value,
-            string s => s,
-            System.Enum e => e.ToString(),
-            global::app.type.dict.@this or global::app.type.list.@this => null,
-            System.Collections.IDictionary or System.Collections.IList => null,
-            null => null,
-            _ => v.ToString(),
-        };
-        var sa = Coerce(a);
-        var sb = Coerce(b);
-        if (sa == null || sb == null) return global::app.data.Comparison.Incomparable;
-        var c = string.Compare(sa, sb, System.StringComparison.OrdinalIgnoreCase);
-        return c < 0 ? global::app.data.Comparison.Less
-             : c > 0 ? global::app.data.Comparison.Greater
-             : global::app.data.Comparison.Equal;
+        var b = other as @this ?? Create(other);
+        if (b is null) return new(global::app.data.Comparison.Incomparable);
+        var c = string.Compare(_value, b._value, System.StringComparison.OrdinalIgnoreCase);
+        return new(c < 0 ? global::app.data.Comparison.Less
+                 : c > 0 ? global::app.data.Comparison.Greater
+                 : global::app.data.Comparison.Equal);
     }
 
     // ---- Equality + order (ordinal, case-insensitive — see class doc) ----
