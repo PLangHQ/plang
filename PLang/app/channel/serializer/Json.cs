@@ -20,15 +20,20 @@ public sealed class Json : ISerializer
     private readonly JsonSerializerOptions _options;
     private readonly actor.context.@this _context;
     private readonly ConcurrentDictionary<View, Json> _viewCache = new();
+    // The view this serializer writes in — ForView binds it so the IWriter path
+    // (data.Output) filters [Out]/[Store] properties itself, the way the STJ filter
+    // modifier used to. The base serializer writes the Out view.
+    private readonly View _boundView;
 
     // Born-with-context: a serializer belongs to an actor, and an actor always has a context —
     // it's the context deserialized values are born on (Serialize sources it from the incoming
     // Data instead). There is no context-less serializer.
     public Json(actor.context.@this context) : this(null, context) { }
 
-    private Json(JsonSerializerOptions? options, actor.context.@this context)
+    private Json(JsonSerializerOptions? options, actor.context.@this context, View boundView = View.Out)
     {
         _context = context;
+        _boundView = boundView;
         // When `options` is supplied (ForView / WithIndentation paths), it
         // already carries the PathJsonConverter via STJ's copy semantics —
         // don't allocate a fresh one we'd throw away. Only the `??` branch
@@ -69,29 +74,32 @@ public sealed class Json : ISerializer
                     Modifiers = { global::app.channel.serializer.filter.Sensitive.Strip, global::app.channel.serializer.filter.View.For(v) }
                 }
             };
-            return new Json(viewOptions, _context);
+            return new Json(viewOptions, _context, boundView: v);
         });
     }
 
-    // view is part of the ISerializer contract; json has no Store/Out distinction
-    // (use ForView for property filtering), so it's accepted and ignored here.
+    // The `view` param is the ForView-bound view (json binds it at construction, not per call);
+    // the incoming param is honored when a caller drives the base serializer directly.
     public async Task<data.@this> SerializeAsync(Stream stream, data.@this data, global::app.View view = global::app.View.Out, CancellationToken cancellationToken = default)
     {
         try
         {
-            // Materialize lazy reference fundamentals (image bytes) above the
-            // STJ converter wall — the sync renderers below cannot await.
+            // Materialize lazy reference fundamentals (image bytes) before the write —
+            // the value writes itself below and each node resolves lazily, but the
+            // top-level fundamental (image bytes) still loads here.
             var loadError = await data.Load();
             if (loadError != null) return loadError;
-            var value = data.Peek();
-            if (value == null)
-            {
-                await stream.WriteAsync("null"u8.ToArray(), cancellationToken);
-                return data.Context.Ok();
-            }
-            // Line framing between messages is the channel's job, not the
-            // serializer's — emit only the value's JSON here, no trailing newline.
-            await JsonSerializer.SerializeAsync(stream, value, value.GetType(), _options, cancellationToken);
+
+            // JSON is the "value as JSON view" — the channel drives the writer and the value
+            // writes ITSELF (its own Output → Write(IWriter)); no STJ in the value path, no
+            // per-type converters. Bare: emitsSchema:false skips the {name,type,…} envelope,
+            // so the value rides alone (type inferred on read).
+            View effectiveView = _boundView != global::app.View.Out ? _boundView : view;
+            await using var utf8 = new Utf8JsonWriter(stream);
+            var writer = new global::app.channel.serializer.json.Writer(
+                utf8, _options, effectiveView, _context.App.Type.Renderers, emitsSchema: false);
+            await data.Output(writer, effectiveView, _context);
+            await utf8.FlushAsync(cancellationToken);
             return data.Context.Ok();
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
