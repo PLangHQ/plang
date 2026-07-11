@@ -17,7 +17,7 @@ public class ScalarAccessTests
     // valid UTF-8 — its face stays bytes (decode to text is the explicit `as text`).
     [Test] public async Task Scalar_BytesValue_StaysBytes_NotGuessedAsText()
     {
-        var d = data.FromRaw(Encoding.UTF8.GetBytes("héllo"), type.Create("bytes"), global::PLang.Tests.TestApp.SharedContext); // 6 valid-UTF-8 bytes
+        var d = global::PLang.Tests.Shared.Make.FromRaw(Encoding.UTF8.GetBytes("héllo"), type.Create("bytes"), global::PLang.Tests.TestApp.SharedContext); // 6 valid-UTF-8 bytes
         await Assert.That(d.Peek()?.ToString()).IsEqualTo("(6 bytes)");
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
@@ -26,7 +26,7 @@ public class ScalarAccessTests
     [Test] public async Task Scalar_BytesValue_StaysBytes_WhenInvalidUtf8()
     {
         byte[] invalid = { 0xFF, 0xFE, 0x00, 0x80 };
-        var d = data.FromRaw(invalid, type.Create("bytes"), global::PLang.Tests.TestApp.SharedContext);
+        var d = global::PLang.Tests.Shared.Make.FromRaw(invalid, type.Create("bytes"), global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(d.Peek()?.ToString()).IsEqualTo("(4 bytes)");
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
@@ -34,7 +34,7 @@ public class ScalarAccessTests
     [Test] public async Task Scalar_TextValue_ReturnsString_NoStructuredParse()
     {
         const string json = "{\"port\":8080}";
-        var d = data.FromRaw(json, type.Create("object", "json"), global::PLang.Tests.TestApp.SharedContext);
+        var d = global::PLang.Tests.Shared.Make.FromRaw(json, type.Create("object", "json"), global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(d.Peek()?.ToString()).IsEqualTo(json); // the raw string, not a dict
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);       // never parsed
     }
@@ -47,7 +47,7 @@ public class ScalarAccessTests
         await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-scalarvar-" + System.Guid.NewGuid().ToString("N")[..8]));
         var ctx = app.User.Context;
-        ctx.Variable.Set("cfg", data.FromRaw("{\"port\":8080}", type.Create("object", "json", context: ctx), ctx, "cfg"));
+        ctx.Variable.Set("cfg", global::PLang.Tests.Shared.Make.FromRaw("{\"port\":8080}", type.Create("object", "json", context: ctx), ctx, "cfg"));
 
         await Assert.That(await ctx.Variable.Resolve("%cfg%")).IsEqualTo("{\"port\":8080}");
         await Assert.That(await ctx.Variable.Resolve("%cfg.port%")).IsEqualTo("8080");

@@ -23,7 +23,7 @@ public class ReadFailureTests
     {
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var d = data.FromRaw("{not valid json", type.Create("object", "json", context: ctx), ctx, "bad");
+        var d = global::PLang.Tests.Shared.Make.FromRaw("{not valid json", type.Create("object", "json", context: ctx), ctx, "bad");
         // Touch must NOT throw — the failure is cached as Data.Error.
         var v = await d.Value();
         // A failed materialize answers the typed absence (Value is never C# null),
@@ -52,7 +52,7 @@ public class ReadFailureTests
     {
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var d = data.FromRaw("{not valid json", type.Create("object", "json", context: ctx), ctx, "bad");
+        var d = global::PLang.Tests.Shared.Make.FromRaw("{not valid json", type.Create("object", "json", context: ctx), ctx, "bad");
 
         // A courier (variable memory) holds and relays the Data without touching
         // its value — no parse, so no throw escapes the courier.

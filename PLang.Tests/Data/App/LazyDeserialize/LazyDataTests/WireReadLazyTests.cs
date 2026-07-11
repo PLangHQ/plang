@@ -22,7 +22,7 @@ public class WireReadLazyTests
     // dict<…> values keep their eager path.
     [Test] public async Task WireRead_CapturesValueSlotRaw_DefersMaterialisation()
     {
-        var d = data.FromRaw("{\"a\":1}", global::app.type.@this.Create("object", "json"), global::PLang.Tests.TestApp.SharedContext);
+        var d = global::PLang.Tests.Shared.Make.FromRaw("{\"a\":1}", global::app.type.@this.Create("object", "json"), global::PLang.Tests.TestApp.SharedContext);
         d.Name = "cfg";
         var back = RoundTrip(d);
         await Assert.That(back.HasRaw).IsTrue();

@@ -20,9 +20,10 @@ public class JsonRebindPinTests : System.IAsyncDisposable
 
         // A clr(json) object value under %j% — an immutable JsonElement host.
         using var doc = System.Text.Json.JsonDocument.Parse("""{"a":"one","b":"two"}""");
-        var j = global::app.data.@this.FromRaw(doc.RootElement.Clone(),
-            global::app.type.@this.Create("object", "json", context: _app.User.Context),
-            _app.User.Context, "j");
+        var j = new global::app.data.@this("j",
+            global::app.type.@this.Create("object", "json", context: _app.User.Context)
+                .Create(doc.RootElement.Clone(), _app.User.Context),
+            context: _app.User.Context);
         await stack.Set("j", j);
 
         // One-level deep write — json host materialises into a dict, sets the key.

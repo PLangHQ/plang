@@ -49,7 +49,7 @@ public class TableTypeTests
         await Assert.That(ctx.App.Type.Reader.Of("table", "xlsx")).IsNull();
 
         byte[] bytes = { 0x50, 0x4B, 0x03, 0x04 }; // PK.. zip header (xlsx is a zip)
-        var d = data.FromRaw(bytes, type.Create("table", "xlsx", context: ctx), ctx, "sheet");
+        var d = global::PLang.Tests.Shared.Make.FromRaw(bytes, type.Create("table", "xlsx", context: ctx), ctx, "sheet");
         await Assert.ThrowsAsync<System.NotSupportedException>(async () => await d.Value());
     }
 
@@ -71,7 +71,7 @@ public class TableTypeTests
     {
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var d = data.FromRaw(Csv, type.Create("table", "csv", context: ctx), ctx, "t");
+        var d = global::PLang.Tests.Shared.Make.FromRaw(Csv, type.Create("table", "csv", context: ctx), ctx, "t");
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
         await Assert.That(d.Raw).IsEqualTo((object)Csv);
     }

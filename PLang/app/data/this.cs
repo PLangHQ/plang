@@ -347,23 +347,6 @@ public partial class @this
     /// </summary>
     public virtual global::app.type.item.@this Peek() => _item ?? global::app.type.item.@null.@this.Instance;
 
-    /// <summary>
-    /// Construct a source-backed (lazy) Data — the value is a
-    /// <see cref="global::app.type.item.source"/> holding the undecoded form
-    /// under its declared <c>{type, kind}</c>; the parse runs through the
-    /// instance's own door on first use. Used by the channel boundary and the
-    /// wire reader; <c>set %x% = 5</c> still lifts the value directly.
-    /// </summary>
-    public static @this FromRaw(object raw, type type, actor.context.@this? context = null, string name = "",
-        string? format = null)
-    {
-        // The type owns making its value from a raw form — the entity's Create door (its first branch
-        // defers wire-raw to a lazy source carrying the type's Name/Kind/Strict/format/template). FromRaw
-        // is the Data wrapper around that built instance (the instance ctor, so no throwaway value-build
-        // runs first). A caller may pass a format the wire knows from the slot's token.
-        return new @this(name, type.Create(raw, context, format), context: context);
-    }
-
     /// <summary>True when this Data is source-backed (holds an undecoded form held verbatim).</summary>
     internal bool HasRaw => _item is global::app.type.item.source;
 

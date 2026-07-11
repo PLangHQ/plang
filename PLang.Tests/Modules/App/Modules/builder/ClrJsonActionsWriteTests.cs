@@ -60,8 +60,8 @@ public class ClrJsonActionsWriteTests : System.IAsyncDisposable
         // A genuine clr(json): JsonElement-backed, as the reader produces for json-kind
         // content (the json kind rides on JsonElement, not JsonNode).
         var element = System.Text.Json.JsonDocument.Parse(actionsJson).RootElement.Clone();
-        var clrJsonActions = global::app.data.@this.FromRaw(
-            element, Type.Create("object", "json", context: context), context, "actions");
+        var clrJsonActions = new global::app.data.@this("actions",
+            Type.Create("object", "json", context: context).Create(element, context), context: context);
 
         // The builder write. Today this throws in ClrConvert; after Stage 1 it builds
         // two action hosts onto the slot.

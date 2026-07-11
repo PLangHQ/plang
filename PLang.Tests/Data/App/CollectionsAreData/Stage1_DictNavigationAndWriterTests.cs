@@ -22,7 +22,7 @@ public class Stage1_DictNavigationAndWriterTests : System.IAsyncDisposable
         // materializes Value as a dict — not a raw Dictionary<string,object?> (B+J).
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var d = Data.FromRaw("{\"port\":8080}", type.Create("object", "json", context: ctx), ctx, "cfg");
+        var d = global::PLang.Tests.Shared.Make.FromRaw("{\"port\":8080}", type.Create("object", "json", context: ctx), ctx, "cfg");
         await Assert.That((await d.Value())).IsTypeOf<Dict>();
         await Assert.That(((app.type.item.@this)(await ((Dict)(await d.Value())!).Get("port")!.Value())!).Clr<object>()).IsEqualTo(8080L);
     }

@@ -19,7 +19,7 @@ public class ActionsReaderRoundTripTests
             var raw = "[{\"module\":\"goal\",\"action\":\"call\"}]";
             var type = new global::app.type.@this("actions");
             // Exactly what the data reader builds for a deferred `actions` value slot.
-            var data = global::app.data.@this.FromRaw(raw, type, ctx, format: "application/plang");
+            var data = new global::app.data.@this("", type.Create(raw, ctx, "application/plang"), context: ctx);
 
             var actions = ((await data.Value()) as global::app.type.clr.@this<global::app.goal.steps.step.actions.@this>)?.Value;
             await Assert.That(actions).IsNotNull();

@@ -58,7 +58,7 @@ public class Cut2_TouchMaterializes
         await using var app = NewApp(out _);
         var ctx = app.User.Context;
         const string big = "9999999999999999999999";
-        var d = data.FromRaw(big, type.Create("number", "biginteger", context: ctx), ctx, "n");
+        var d = global::PLang.Tests.Shared.Make.FromRaw(big, type.Create("number", "biginteger", context: ctx), ctx, "n");
         await Assert.That(((global::app.type.item.number.@this)(await d.Value())!).BoxedValue).IsTypeOf<BigInteger>();
         await Assert.That(((global::app.type.item.number.@this)(await d.Value())!).Clr<BigInteger>()).IsEqualTo(BigInteger.Parse(big)); // lossless
     }
@@ -70,7 +70,7 @@ public class Cut2_TouchMaterializes
         await using var app = NewApp(out _);
         var ctx = app.User.Context;
         var bytes = System.Convert.FromBase64String(Png1x1);
-        var d = data.FromRaw(bytes, type.Create("image", "png", context: ctx), ctx, "img");
+        var d = global::PLang.Tests.Shared.Make.FromRaw(bytes, type.Create("image", "png", context: ctx), ctx, "img");
 
         await Assert.That(d.Raw is byte[]).IsTrue();   // scalar = raw bytes, no decode (Peek is the source carrier)
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);

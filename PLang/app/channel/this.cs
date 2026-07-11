@@ -299,8 +299,8 @@ public abstract class @this : IAsyncDisposable, IDisposable
         // unregistered one (a raw blob: image/png, application/plang-goal) is just bytes,
         // read through the value reader (the text serializer), not forced through JSON.
         var serializer = Channels?.Serializers.GetByType(Mime ?? "") ?? Channels?.Serializers.Text;
-        return global::app.data.@this.FromRaw(raw, StampType(context), context, Name,
-            format: serializer?.Type ?? "application/plang");
+        return new global::app.data.@this(Name,
+            StampType(context).Create(raw, context, serializer?.Type ?? "application/plang"), context: context);
     }
 
     /// <summary>

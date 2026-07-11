@@ -16,7 +16,7 @@ public class MaterialiseErrorPathTests
             "plang-materr-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     private static data MalformedJson(global::app.actor.context.@this ctx, string name)
-        => data.FromRaw("{ this is not valid json", type.Create("object", "json", context: ctx), ctx, name);
+        => global::PLang.Tests.Shared.Make.FromRaw("{ this is not valid json", type.Create("object", "json", context: ctx), ctx, name);
 
     [Test] public async Task MalformedJson_ErrorsAtFirstTouch_NotAtRead()
     {

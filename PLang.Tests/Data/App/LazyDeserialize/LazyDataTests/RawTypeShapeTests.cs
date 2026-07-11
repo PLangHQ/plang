@@ -12,7 +12,7 @@ public class RawTypeShapeTests
 {
     [Test] public async Task Raw_ForTextSource_StoredAsString_NotUtf8Encoded()
     {
-        var d = data.FromRaw("hello world", type.Create("text"), global::PLang.Tests.TestApp.SharedContext);
+        var d = global::PLang.Tests.Shared.Make.FromRaw("hello world", type.Create("text"), global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(d.Raw).IsTypeOf<string>();
         await Assert.That((string)d.Raw!).IsEqualTo("hello world");
     }
@@ -20,7 +20,7 @@ public class RawTypeShapeTests
     [Test] public async Task Raw_ForBinarySource_StoredAsByteArray()
     {
         var bytes = new byte[] { 1, 2, 3, 4 };
-        var d = data.FromRaw(bytes, type.Create("image", "png"), global::PLang.Tests.TestApp.SharedContext);
+        var d = global::PLang.Tests.Shared.Make.FromRaw(bytes, type.Create("image", "png"), global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(d.Raw).IsTypeOf<byte[]>();
     }
 
@@ -29,7 +29,7 @@ public class RawTypeShapeTests
     [Test] public async Task Raw_NoUtf8EncodeTax_OnTextRoundTrip()
     {
         const string json = "{\"a\":1}";
-        var d = data.FromRaw(json, type.Create("object", "json"), global::PLang.Tests.TestApp.SharedContext);
+        var d = global::PLang.Tests.Shared.Make.FromRaw(json, type.Create("object", "json"), global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(object.ReferenceEquals(d.Raw, json)).IsTrue();
     }
 }

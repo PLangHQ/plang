@@ -83,7 +83,7 @@ public sealed partial class @this
         {
             var snapshot = build.GetPrSnapshot(Absolute);
             if (snapshot != null)
-                return global::app.data.@this.FromRaw(snapshot, type, Context, Raw, format);
+                return new global::app.data.@this(Raw, type.Create(snapshot, Context, format), context: Context);
         }
 
         if (!System.IO.File.Exists(Absolute))
@@ -102,7 +102,7 @@ public sealed partial class @this
             // Deferred: the source holds the raw bytes under their declared {type, kind};
             // the parse runs through the ONE reader on first touch (.Value()) — a .pr → the
             // goal reader → clr<goal>, a .json → the json reader → clr(json). No eager convert.
-            return global::app.data.@this.FromRaw(bytes, type, Context, Raw, format);
+            return new global::app.data.@this(Raw, type.Create(bytes, Context, format), context: Context);
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {
