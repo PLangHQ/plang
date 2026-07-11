@@ -91,6 +91,25 @@ Public doors `Create`/`Create` → binders `Bind`/`Bind` → thunks `Create<T>`/
 - The public entity pair — unchanged; it was never the problem.
 - The **prose** "courier" in comments (`data/this.cs:312`, `channel/this.cs:259`) and the design docs — the metaphor explaining that carriers relay values without opening them is used correctly there. Only the API name dies.
 
+## Forward note — the context door's shape when `type.Build` dies (settled 2026-07-11)
+
+"The public doors are pure one-liners" is permanent for the **data door** and holds for the **context door only until the Build death lands.** The standing ruling ("the defer rule is the entity door's first branch") plus the FromRaw settlement (2026-07-11, write-up pending) then make the context door ladder-then-thunk:
+
+```csharp
+public item.@this? Create(object? raw, global::app.actor.context.@this? ctx, string? format = null)
+{
+    if (raw is null or item.@null.@this) return new item.@null.@this(Name, Kind?.Name);
+    if (raw is string rawName && ClrType == typeof(app.variable.@this))
+        return app.variable.@this.Resolve(rawName, ctx);
+    if (raw is string or byte[])                        // the defer rule — capture, don't parse
+        return new item.source(raw, Name, Kind?.Name, ctx!, Strict,
+                               format ?? RawFormat(raw, ctx!), template: Template);
+    return _byContext(raw, ctx);                        // already a value → the bound thunk
+}
+```
+
+Everything in this ruling survives untouched underneath: the `Bind` bootstrap, the branch-free thunk invocation (now the door's tail), `Creatable`, the `Create<T>` overloads. The `format?` parameter lives on the context door only — the courier receives materialized values (no defer, no format), and the optional third parameter creates no overload collision; every existing `Create(raw, ctx)` call site compiles unchanged. This is not a violation of "the door is a one-liner" when it lands — the ladder IS the ruled first branch arriving, with Build's one honest parameter (`format`, the capture's encoding) migrating while Build's construction arms die.
+
 ## Acceptance
 
 - Grep `Courier` → prose comments only; no method, field, or type carries it.
