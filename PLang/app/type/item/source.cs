@@ -23,9 +23,9 @@ public sealed class source : @this, module.IContext
     // matching reader; the type pulls itself off it).
     private readonly string _format;
     // The authored-content mode the bytes were read in ("plang" for a developer-authored
-    // goal/.pr, null for runtime ingest). Rides into the reader's ReadContext so a %ref%
-    // leaf borns a live template; the trust is the reader's mode, never the content.
-    private readonly string? _template;
+    // The authored-content mode ("plang" for a developer-authored goal/.pr, null for runtime ingest)
+    // rides into the reader's ReadContext so a %ref% leaf borns a live template; trust the mode, never
+    // the content. Held on the base `Template` property (internal-settable — the build may re-stamp it).
 
     // A full-match %ref% (`%!data%`, `%messages%`) is a REFERENCE, not content — decided ONCE
     // at birth: the raw form and the authored-template flag are immutable, so reading it back is
@@ -37,10 +37,17 @@ public sealed class source : @this, module.IContext
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Get(actor.context.@this ctx)
         => await ctx.Variable.Get((string)_value);   // _value is the raw "%!data%"; the store strips the %
 
-    // Born WITH context — a source is minted only by type.Build (the sole birth site),
-    // which always has a wired scope; the context-less births (the "Judge" phase) are gone.
+    // Born WITH context — a source is minted only by the type entity's Create door (the sole birth
+    // site), which always has a wired scope; the context-less births (the "Judge" phase) are gone.
     [System.Text.Json.Serialization.JsonIgnore]
     public actor.context.@this Context { get; set; } = null!;
+
+    /// <summary>Born from a declared type entity + a raw form — the source-maker the entity's
+    /// <c>Create</c> door and <c>Data.FromRaw</c> share. Pulls Name/Kind/Strict/template off the
+    /// type; the wire may override the format (else the type derives it from the raw).</summary>
+    public source(object value, global::app.type.@this type, actor.context.@this context, string? format = null)
+        : this(value, type.Name, type.Kind?.Name, context, type.Strict,
+               format ?? type.RawFormat(value, context), type.Template) { }
 
     public source(object value, string typeName, string? kind, actor.context.@this context, bool strict = false,
         string format = "text/plain", string? template = null)
@@ -51,12 +58,9 @@ public sealed class source : @this, module.IContext
         _kind = kind;
         _strict = strict;
         _format = format;
-        _template = template;
-        // Expose the authored template on the standard Template property (not just the
-        // private _template), so peek-time consumers — HasVariableReference, output.write —
-        // see a source-born template the same way they see a text-born one. Trust the flag
-        // the builder stamped; do not re-scan the content. (Minimal fix; the right fix moves
-        // resolution into the value's own door — see output-resolution-unification-plan.md.)
+        // The authored template rides the standard Template property — peek-time consumers
+        // (HasVariableReference, output.write) see a source-born template the same way they see a
+        // text-born one. Trust the flag the builder stamped; do not re-scan the content.
         Template = template;
         // Full-match %ref% on ANY declared type is a reference to a binding — resolved by name at
         // .Value(), never parsed through the type reader. Trust the builder's template flag, not
@@ -79,7 +83,7 @@ public sealed class source : @this, module.IContext
     /// <summary>The declared judgement, verbatim — the source IS the declared
     /// type, unparsed.</summary>
     protected internal override global::app.type.@this Mint()
-        => new(_type, _kind, _strict, _template);
+        => new(_type, _kind, _strict, Template);
 
     /// <summary>
     /// In memory now = the raw source form. A byte raw declared <c>text</c> decodes
@@ -117,7 +121,7 @@ public sealed class source : @this, module.IContext
 
     /// <summary>A template-bearing source re-resolves every read (its %refs% can change) — never
     /// cached by the holding Data; a plain source parses once and caches. Mirrors text/dict/list.</summary>
-    public override bool Cacheable => _template == null;
+    public override bool Cacheable => Template == null;
 
     public override async System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this data)
     {
@@ -186,7 +190,7 @@ public sealed class source : @this, module.IContext
     private global::app.type.item.@this Read()
     {
         if (Context.Actor?.Channel.Serializers is { } serializers)
-            return serializers[_format].Read(this, new global::app.type.reader.ReadContext(Context, _template));
+            return serializers[_format].Read(this, new global::app.type.reader.ReadContext(Context, Template));
         // Context is guaranteed (born-in-ctor); reaching here means its Actor/Channel isn't
         // wired yet. Surface it as a clean MaterializeFailed (source.Value catches this), not a
         // silent unparsed return.

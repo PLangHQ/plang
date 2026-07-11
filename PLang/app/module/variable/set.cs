@@ -296,10 +296,10 @@ public partial class Set : IContext, IBuildValidatable
             // carries the declared meaning and the value loads later.
             if (!keepAsIs && converted != null && !targetType.IsInstanceOfType(converted))
             {
-                // Convert now throws on a bad conversion (the throw boundary). A
-                // kind-validatable target defers (validated at load); anything else
-                // surfaces the failure here.
-                try { converted = type.Convert(converted, Context); }
+                // Create throws on a bad conversion (the throw boundary) — converted is a
+                // materialized leaf, so this re-types eagerly. A kind-validatable target defers
+                // (validated at load); anything else surfaces the failure here.
+                try { converted = type.Create(converted, Context); }
                 catch (System.Exception ex) when (ex is System.FormatException
                                                   or System.InvalidOperationException or System.Text.Json.JsonException)
                 {

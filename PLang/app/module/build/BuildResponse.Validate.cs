@@ -170,10 +170,10 @@ public sealed partial class BuildResponse
                     }
 
                     // Ask the declared type object whether it can be made from the value.
-                    // Convert now throws on a bad conversion (the throw boundary) — a clean
-                    // conversion means this parameter is valid; a throw is the bad-literal
-                    // case that must surface as a build error.
-                    try { p.Type.Convert(resolved, (goal.App ?? app)!.User.Context!); continue; }
+                    // Create throws on a bad conversion (the throw boundary) — resolved is a
+                    // materialized leaf, so this re-types eagerly: a clean conversion means this
+                    // parameter is valid; a throw is the bad-literal case that surfaces as a build error.
+                    try { p.Type.Create(resolved, (goal.App ?? app)!.User.Context!); continue; }
                     catch (System.Exception ex) when (ex is System.FormatException
                                                       or System.InvalidOperationException or System.Text.Json.JsonException)
                     { /* fall through to record the build error */ }

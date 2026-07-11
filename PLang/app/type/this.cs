@@ -176,147 +176,6 @@ public sealed class @this : item.@this
         }
     }
 
-    /// <summary>
-    /// Produce a value OF THIS TYPE from <paramref name="value"/>, kind-aware.
-    /// OBP: a type owns its own construction — callers ask the type to make the
-    /// value instead of reaching for <c>Convert.ChangeType</c> themselves. Returns
-    /// the converted value, or an Error when the value cannot honestly become this
-    /// type. <c>Convert.ChangeType</c> survives only as a leaf inside the general
-    /// converter for genuine primitive coercions.
-    /// </summary>
-    [System.Obsolete("Superseded by Type.Create (the type builds itself) — do not add new callers.")]
-    public global::app.type.item.@this Convert(object? value, actor.context.@this context)
-    {
-        Context ??= context;
-        if (value is null) return new global::app.type.item.@null.@this(Name, Kind?.Name);
-
-        // A born-native scalar source (`set %d% = "2026-01-01" as date` makes the literal a
-        // global::app.type.item.text.@this first) — unwrap the leaf wrapper to its raw form so the target family's
-        // Convert hook, which speaks raw, can parse it. Mirrors the catalog's item.Clr step;
-        // containers (dict/list) are NOT leaves and convert as wholes.
-        if (value is global::app.type.item.@this { IsLeaf: true } leaf) value = leaf.Clr<object>();
-
-        // OBP: the concrete type owns its own construction. Resolve the family
-        // class (global::app.type.item.text.@this, number.@this, …) and ask IT to make the value from
-        // ours, passing our Kind. This entity only routes — it holds no per-type
-        // ("if text", "if number") knowledge. The hub still answers Data (Ok/Error);
-        // this door is the throw boundary — a bad conversion throws so it rides the
-        // same MaterializeFailed path as a bad reader parse (source.Value catches it).
-        // The type builds itself from the value via its own kind-aware courier — a carrier whose
-        // declared Type is THIS (a typed @null carries Name+Kind, no value-build) so the courier
-        // reads the declared kind. Replaces the reflective Conversions.Of hub. A non-ICreate entity
-        // leaves the carrier clean (fall to the tail); an ICreate that declines lands data.Fail (throw).
-        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(Name, Kind?.Name), context: context);
-        if (Create(value, carrier) is { } made) return made;
-        if (carrier.Error != null) throw Failed(carrier.Error);
-
-        var target = ClrType
-            ?? throw new System.InvalidOperationException($"Unknown type '{Name}'");
-
-        // No family hook — a non-leaf value (dict/list) lowers ITSELF to the CLR mate
-        // (dict→record deserialize, list→collection). The value owns it; no hub. Clr is
-        // terminal; a real failure rethrows as the convert door's throw.
-        if (value is global::app.type.item.@this iv)
-        {
-            try { return Create(iv.Clr(target), context); }
-            catch (System.Exception ex) when (ex is System.InvalidCastException or System.FormatException
-                                               or System.NotSupportedException or System.Text.Json.JsonException)
-            { throw new System.InvalidOperationException(ex.Message, ex); }
-        }
-
-        // A raw CLR input (a wire string → record, a primitive) — the raw→CLR deserialize
-        // leaf, the last TryConvert use here; folds into the wire serializer next.
-        var (c, err) = global::app.type.list.@this.TryConvert(value, target, context);
-        if (err != null) throw Failed(err);
-        return Create(c, context);
-
-        // The hub/TryConvert report failure as an Error; this door reports it as a throw.
-        // source.Value re-authors the identity as MaterializeFailed at the binding, so the
-        // per-Error Key is not carried — the message is.
-        static System.Exception Failed(global::app.error.IError? error)
-            => new System.InvalidOperationException(error?.Message ?? "conversion failed");
-    }
-
-    /// <summary>
-    /// Build a born-native plang VALUE of this type from a plain value — the read's
-    /// one creator. The type owns its construction (kind-aware), and its context
-    /// comes from the entity itself (stamped at read time), so the caller just hands
-    /// the value: <c>typeRef.Build(5)</c> with <c>{number,int}</c> → <c>number(int 5)</c>,
-    /// in one step. A container / domain value is already its native form and rides
-    /// through whole; a scalar is built (and re-kinded if it arrived at the wrong
-    /// precision) by its family. No lift-then-fix, no <c>clr</c> label.
-    /// </summary>
-    /// <remarks>Named <c>Build</c>, not <c>Create</c>: the static
-    /// <see cref="Create(string, string?, bool, actor.context.@this?)"/> already owns
-    /// that name for making a type ENTITY from a name. (A string is an object, so an
-    /// instance <c>Create(object)</c> would be ambiguous with it.)</remarks>
-    [System.Obsolete("The defer rule moves to the entity Type.Create's first branch (FromRaw → Create) — do not add new callers.")]
-    public item.@this Build(object? value, actor.context.@this context, string? format = null)
-    {
-        // context-never-null: a value is born WITH context. A null here is a construction site
-        // (a Data ctor / FromRaw) that forgot to pass one — fail with a pointer, not an NRE deep
-        // in materialization. (One-liner to delete once every call site is fixed.)
-        if (context is null) throw new System.InvalidOperationException(
-            $"context-never-null: building a '{Name}' value without a context — pass the actor context at the Data/FromRaw construction site.");
-
-        // Typed absence — no value to lift; the declaration survives (a typed null,
-        // a tool-parameter slot). A JSON-null literal lands here too (the null citizen).
-        if (value is null or global::app.type.item.@null.@this) return new global::app.type.item.@null.@this(Name, Kind?.Name);
-
-        // A raw-name declared type (variable) NAMES a thing — a raw string name is the
-        // variable itself, a write-target, not a value to defer. Born as the name object
-        // BEFORE the string→source branch (else it becomes a deferred source and reading
-        // the name resolves it as a lookup → throws).
-        if (value is string rawName
-            && context.App.Type[Name]?.ClrType == typeof(app.variable.@this))
-            return app.variable.@this.Resolve(rawName, context);
-
-        // A raw form (string / byte[]) → defer through a source declared as THIS type,
-        // born WITH context. The format the type carries picks the reader (scalar → text,
-        // container → json, bytes → kind→mime); a caller may override it (the wire knows the
-        // slot's encoding from its token). Parsed once, lazily, on first use. The source carries
-        // THIS type's template flag — the value resolves its %refs% only when the build marked
-        // it a template (never inferred from content). This is the ONE source-maker (FromRaw
-        // delegates here).
-        if (value is string or byte[])
-            return new item.source(value, Name, Kind?.Name, context, Strict, format ?? RawFormat(value, context), template: Template);
-
-        // A container / domain value is already its native form (dict, list, path, image, …) — hold it.
-        if (value is item.@this { IsLeaf: false } native) return native;
-
-        // A built leaf (text/number/… or a source carrying its raw):
-        if (value is item.@this leaf)
-        {
-            // The leaf answers its own raw string face (text's chars, a source's raw); null if it has none.
-            var backing = leaf.RawText;
-            // A raw-name declared type (variable) NAMES a thing — `%s%` is the variable s, a
-            // write-target, not a value to render. Born as the resolved name.
-            if (context.App.Type[Name]?.ClrType == typeof(app.variable.@this) && backing != null)
-                return app.variable.@this.Resolve(backing, context);
-
-            // Already this type → hold; refine a matching leaf to the declared kind /
-            // template. The type carries the flags — the builder decided them; runtime
-            // trusts them and never inspects the content for %var%.
-            var minted = leaf.Mint();
-            if (string.Equals(Name, minted.Name, System.StringComparison.OrdinalIgnoreCase))
-            {
-                var refined = Kind != null && minted.Kind == null ? leaf.Kinded(Kind.Name) : leaf;
-                if (Template != null && refined is global::app.type.item.text.@this rt && rt.Template == null)
-                    refined = new global::app.type.item.text.@this(rt.ToString(), Template) { Kind = rt.Kind };
-                return refined;
-            }
-            // The value already carries this type as a facet (an image satisfies a path slot) → hold.
-            if (leaf.Facet(Name) != null) return leaf;
-            // A different type → re-type via the per-type hook. Convert is the throw boundary.
-            return Convert(leaf, context);
-        }
-
-        // A raw CLR scalar handed straight from C# (rare) → born it to its native plang
-        // value via the born-native lift (int → number, DateOnly → date, …), then refine
-        // to THIS declared type/kind. The lift owns raw→native; the family Convert hooks
-        // speak native values, so raw never reaches them un-lifted.
-        return Build(context.App.Type.Create(value, context), context, format);
-    }
 
     /// <summary>
     /// The wire format the type's raw form carries — picks the reader a minted
@@ -324,7 +183,7 @@ public sealed class @this : item.@this
     /// (the json reader streams it); a byte-backed family's raw is its bytes under
     /// the kind's mime; everything else is a scalar text token.
     /// </summary>
-    private string RawFormat(object raw, actor.context.@this context)
+    internal string RawFormat(object raw, actor.context.@this context)
         => raw is byte[]
             ? context.App.Format.Mime("." + (Kind?.Name ?? "")) ?? "application/octet-stream"
             : string.Equals(Name, "dict", System.StringComparison.OrdinalIgnoreCase)
@@ -387,25 +246,96 @@ public sealed class @this : item.@this
     // the call; the shared registry entity stays context-free (the thunk holds no state).
     private System.Func<object?, global::app.actor.context.@this?, item.@this?>? _create;
 
-    // The entity closes its own Create thunk over ClrType on first use (MakeGenericMethod is the
-    // single reflective touch, cached in _create thereafter). A non-ICreate entity (primitive,
-    // host) declines with a null thunk so the collection perimeter falls through to the next rung.
-    public item.@this? Create(object? raw, global::app.actor.context.@this? context)
+    // THE born-native door — the ENTITY builds a plang VALUE of itself from a raw value, in one
+    // step: null → typed absence; a variable-named type → the variable; wire-raw (string/bytes) →
+    // a lazy source (parse on first touch); an already-native container → held; a built leaf →
+    // refined to the declared kind/template, or re-typed through its family courier; a raw CLR
+    // scalar → born through the family lift, then refined. ALWAYS returns a value (never null); a
+    // bad conversion throws (the throw boundary — rides MaterializeFailed like a reader parse).
+    public item.@this Create(object? raw, global::app.actor.context.@this? context, string? format = null)
     {
-        if (_create == null)
+        // context-never-null: a value is born WITH context. A null here is a construction site that
+        // forgot to pass one — fail with a pointer, not an NRE deep in materialization.
+        if (context is null) throw new System.InvalidOperationException(
+            $"context-never-null: building a '{Name}' value without a context — pass the actor context at the construction site.");
+
+        // Typed absence — the declaration survives (a typed null, a tool-parameter slot; a JSON-null too).
+        if (raw is null or global::app.type.item.@null.@this) return new global::app.type.item.@null.@this(Name, Kind?.Name);
+
+        // A raw-name declared type (variable) NAMES a thing — the name IS the variable (a write-target),
+        // not a value to defer. Before the string→source branch (else the name becomes a deferred source).
+        if (raw is string rawName && context.App.Type[Name]?.ClrType == typeof(app.variable.@this))
+            return app.variable.@this.Resolve(rawName, context);
+
+        // Wire-raw (string / byte[]) → defer through a source declared as THIS type, parsed lazily on
+        // first use. The source carries the type's Name/Kind/Strict/template; the wire may override format.
+        if (raw is string or byte[])
+            return new item.source(raw, this, context, format);
+
+        // A container / domain value is already native (dict, list, path, image, …) — hold it.
+        if (raw is item.@this { IsLeaf: false } native) return native;
+
+        // A built leaf (text/number/… or a source carrying its raw):
+        if (raw is item.@this leaf)
         {
-            if (ClrType is not { } clr
-                || !typeof(item.@this).IsAssignableFrom(clr)
-                || !System.Array.Exists(clr.GetInterfaces(),
-                       i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.ICreate<>)
-                            && i.GenericTypeArguments[0] == clr))   // ICreate<clr> specifically — a subtype
-                                                                    // implementing ICreate<base> can't close Create<subtype>
-                _create = static (_, _) => null;
-            else
-                _create = (System.Func<object?, global::app.actor.context.@this?, item.@this?>)
-                    _createOpen.MakeGenericMethod(clr).Invoke(null, null)!;
+            // A raw-name declared type (variable) NAMES a thing — the leaf's raw string is the variable.
+            var backing = leaf.RawText;
+            if (context.App.Type[Name]?.ClrType == typeof(app.variable.@this) && backing != null)
+                return app.variable.@this.Resolve(backing, context);
+
+            // Already this type → hold; refine a matching leaf to the declared kind / template.
+            var minted = leaf.Mint();
+            if (string.Equals(Name, minted.Name, System.StringComparison.OrdinalIgnoreCase))
+            {
+                var refined = Kind != null && minted.Kind == null ? leaf.Kinded(Kind.Name) : leaf;
+                // The build stamps the authored-template flag AFTER the value is built (via Declare);
+                // set it in place. A source keeps its undecoded bytes (stays lazy) — trust the builder's
+                // flag, never scan content — so an authored %ref% stays unparsed until read.
+                if (Template != null && refined.Template == null) refined.Template = Template;
+                return refined;
+            }
+            // The value already carries this type as a facet (an image satisfies a path slot) → hold.
+            if (leaf.Facet(Name) != null) return leaf;
+            // A different type → unwrap to the leaf's raw CLR form, then re-type EAGERLY via the family
+            // courier (kind-aware build — path parses a string, number parses a token). A decline lands
+            // its reason on the carrier's Error — this door is the throw boundary (rides MaterializeFailed).
+            var lowered = leaf.Clr<object>();
+            var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(Name, Kind?.Name), context: context);
+            if (Create(lowered, carrier) is { } made) return made;
+            if (carrier.Error != null) throw Failed(carrier.Error);
+            // No family hook — the general CLR-target converter builds the mate; lift it back.
+            var target = ClrType ?? throw new System.InvalidOperationException($"Unknown type '{Name}'");
+            var (mate, mateErr) = global::app.type.list.@this.TryConvert(lowered, target, context);
+            if (mateErr != null) throw Failed(mateErr);
+            return Create(mate, context);
         }
-        return _create(raw, context);
+
+        // A raw CLR scalar (int, DateOnly, …) → born through THIS family's own lift, then refine to the
+        // declared type/kind. A non-family declared type routes the raw through the collection perimeter
+        // (the owner's lift or a clr carrier). The family lift speaks raw natively; refine re-enters here.
+        if ((_create ??= Bind())(raw, context) is { } lifted)
+            return string.Equals(Name, lifted.Mint().Name, System.StringComparison.OrdinalIgnoreCase)
+                ? lifted : Create(lifted, context);
+        return Create(context.App.Type.Create(raw, context), context, format);
+
+        static System.Exception Failed(global::app.error.IError? error)
+            => new System.InvalidOperationException(error?.Message ?? "conversion failed");
+    }
+
+    // The family lift thunk (logic-free `T.Create(raw, ctx)`), closed once per entity over ClrType —
+    // the single reflective touch. A non-ICreate entity (primitive/host name) gets a null-thunk so the
+    // raw-CLR branch falls through to the collection perimeter (owner lift or a clr carrier).
+    private System.Func<object?, global::app.actor.context.@this?, item.@this?> Bind()
+    {
+        if (ClrType is not { } clr
+            || !typeof(item.@this).IsAssignableFrom(clr)
+            || !System.Array.Exists(clr.GetInterfaces(),
+                   i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.ICreate<>)
+                        && i.GenericTypeArguments[0] == clr))   // ICreate<clr> specifically — a subtype
+                                                                // implementing ICreate<base> can't close Create<subtype>
+            return static (_, _) => null;
+        return (System.Func<object?, global::app.actor.context.@this?, item.@this?>)
+            _createOpen.MakeGenericMethod(clr).Invoke(null, null)!;
     }
 
     // The generic overload is the ONE place the raw→plang bridge lives — logic-free, per the

@@ -230,7 +230,7 @@ public partial class @this
         // typed absence). A polymorphic stamp / no declared type is the natural lift,
         // the value's own truth stands.
         if (type is { IsNull: false } && !type.Polymorphic)
-            _item = type.Build(parsed, _context);
+            _item = type.Create(parsed, _context);
         // A value that needs no lift is context-free — the null citizen (every sentinel:
         // NotFound/Uninitialized/`new Data(name)`) and an already-native item pass through
         // without consulting the registry. Only a raw value to lift reaches the collection.
@@ -280,7 +280,7 @@ public partial class @this
         // builds from the current (already-built) value — a value already of the type
         // holds (re-kind if needed), a different built type re-types, a %ref%/variable
         // leaf is left for its own resolution. No Build/Judge context fork.
-        _item = declared.Build(_item, _context);
+        _item = declared.Create(_item, _context);
     }
 
     /// <summary>
@@ -357,11 +357,11 @@ public partial class @this
     public static @this FromRaw(object raw, type type, actor.context.@this? context = null, string name = "",
         string? format = null)
     {
-        // The type owns making its value from a raw form — ONE source-maker (app.type.@this.Build),
-        // which carries the type's Name/Kind/Strict/format and its template flag. FromRaw is the
-        // Data wrapper around that built instance (the instance ctor, so no throwaway value-build
+        // The type owns making its value from a raw form — the entity's Create door (its first branch
+        // defers wire-raw to a lazy source carrying the type's Name/Kind/Strict/format/template). FromRaw
+        // is the Data wrapper around that built instance (the instance ctor, so no throwaway value-build
         // runs first). A caller may pass a format the wire knows from the slot's token.
-        return new @this(name, type.Build(raw, context!, format), context: context);
+        return new @this(name, type.Create(raw, context, format), context: context);
     }
 
     /// <summary>True when this Data is source-backed (holds an undecoded form held verbatim).</summary>
