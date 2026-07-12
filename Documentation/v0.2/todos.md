@@ -1855,3 +1855,28 @@ registered for `application/octet-stream`, so a binary value cannot rebuild from
 source. Pre-existing, surfaced by the compare acceptance pass on
 navigation-driven-record-builder. Ingi: fix in one of the coming stages — does not
 have to be that branch.
+
+## 2026-07-12 — Unify type registration + naming (parked; architect decision)
+Killing `NamespaceTail` (item's Type-name reflection) turned out to be a type-registration
+redesign, not a cleanup. Today a type's name is derived in TWO duplicated places — `item.@this`'s
+`NamespaceTail` (for the value's `Type`) and `type/list/Loader.cs`'s `InferName` (for the registry) —
+both computing `[PlangType].Name ?? namespace-tail`. That's the "stored twice" smell. Plus there are
+two registration mechanisms (the folder/`@this`-class convention AND `[PlangType]`), which Ingi wants
+collapsed to one.
+
+Suggested shape (Ingi liked it): each item declares its type entity ONCE as a static field, cheap for
+both readers —
+```csharp
+private static readonly type _type = new("actor", typeof(@this));
+protected internal override type Type => _type;   // cheap: return the static, no reflect/new per access
+// registry enumerates `: item.@this` (they ALL are — verified) and reads _type — one source;
+// [PlangType] + NamespaceTail + InferName all die.
+```
+`clr` is the ONE exception (its Type is dynamic — a clr value reports type=item with the wrapped
+kind, registry-name "clr"), so it keeps a computed `Type` override.
+
+Blocked-on: it rewrites registry discovery (scan-by-attribute → enumerate-item-subclasses + read the
+field), which is load-bearing — architect call. Write-up context in
+`.bot/navigation-driven-record-builder/coder/obp-doc-list-naming-ambiguity.md` neighbourhood + this
+session's discussion. Meanwhile dict/list already declare their names explicitly (committed);
+NamespaceTail stays as the working default for the ~19 domain types.
