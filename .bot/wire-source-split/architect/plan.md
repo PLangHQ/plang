@@ -6,6 +6,8 @@ Branch: `wire-source-split` (from `navigation-driven-record-builder`). Settled w
 
 > **Member-level inventory:** [`surface-inventory.md`](surface-inventory.md) — the flat created/deleted/modified tables for quick reference during implementation and the final `[Obsolete]` cleanup.
 
+> **OBP scan:** [`obp-findings.md`](obp-findings.md) — full-file scan of everything this branch touches. Three items are folded into scope (the `Convert(string)` json arm dies with the `object/json` kind reader; the receive-door collision with `file` channel's existing `Read(byte[], ct)`; `Text._jsonFallback` dead code). The pre-existing-debt list is the CODER'S judgment — fix/rename if cheap while touching the file, else leave recorded.
+
 > **You own this.** The design decisions below are settled (what owns what, what dies, the two source kinds, all names). Every code block is a suggestion — bodies, private plumbing, and mechanics are yours. Existing members quoted here were verified against source during design; re-verify against HEAD as you go. Flag back anything that doesn't survive contact.
 
 ## Why
@@ -278,6 +280,8 @@ An earlier draft gave dict/list a "string token → parse my own literal" arm. I
 | `serializer.list.@this.SerializeAsync(SerializeOptions)` + `ResolveForWrite` + `SerializeOptions` | `channel/serializer/list/this.cs:146-168, 195-202` | step 10 |
 | `deferredRaw` / `deferredFormat` / `born` locals + twin tail arms | `data/reader/this.cs:39-41, tail` | step 4 |
 | file's serializer/format lines | `path/file/this.Operations.cs:73-75` | step 5 |
+| `type.@this.Convert(string)`'s json arm | `type/this.cs:462-472` | step 8 — the `object/json` kind reader is its one home (obp-findings §1) |
+| `Text._jsonFallback` field + ctor param + stale class doc | `Text.cs:21, 27-31, 5-9` | with the `Text.Read` orphan check (obp-findings §3) |
 | ~~`serializer.list.@this.Text` property~~ | `channel/serializer/list/this.cs:130` | REPRIEVED — becomes file-save's content-fallback door (step 10); the earlier delete ruling applied before step 10 gave it a caller |
 | `UnregisteredMimeType` reachable from materialization | via `Serializers[_format]` | unreachable after step 1 (the type STAYS for channel routing) |
 
@@ -306,6 +310,8 @@ Round-trip every wire slot type write→read→write (number, bool, date, dict, 
 ### 9. `StampReadAsync` → the channel's receive door
 
 The wrongness was the serializer type-check (`GetByType(Mime) is plang.@this`) — the channel asking "which class is this" to decide protocol. The fact it gropes for is *"is this content the transport container, or a bare value"* — expressed honestly as a comparison against a named door. The registry gains `Transport` beside its existing `Json` door (`public ISerializer Transport => _byType["application/plang"];` — a noun, the transport serializer's one honest name); the channel's receive becomes:
+
+Collision note (obp-findings §2): `channel/type/file/this.cs:55` already has a public `Read(byte[], ct)` delegating to `StampReadAsync` — it becomes a public face delegating to this base door, or deletes if nothing external calls it (coder checks callers).
 
 ```csharp
 // suggested name: Read (it is the channel's receive door; final name is coder's — callers are

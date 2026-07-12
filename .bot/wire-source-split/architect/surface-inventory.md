@@ -31,6 +31,8 @@ Everything below gets `[System.Obsolete]` at step 0 (plan) and is deleted mechan
 | the wire reader's `deferredRaw`/`deferredFormat`/`born` locals + twin tail arms | `data/reader/this.cs` |
 | file-save's three format lines (`?? Text`, `?? "application/plang"`) | `path/file/this.Operations.cs:73-75` |
 | `Text.Read` — pending orphan confirmation | `Text.cs:79-90` |
+| `type.@this.Convert(string)`'s json arm (obp-findings §1) | `type/this.cs:462-472` |
+| `Text._jsonFallback` field + ctor param + stale class doc (obp-findings §3) | `Text.cs:21, 27-31, 5-9` |
 
 Reprieved: `Serializers.Text` property (`channel/serializer/list/this.cs:130`) — becomes file-save's content fallback.
 
