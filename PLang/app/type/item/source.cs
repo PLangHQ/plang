@@ -14,18 +14,16 @@ namespace app.type.item;
 public sealed class source : @this, module.IContext
 {
     private readonly object _value;
-    private readonly string _type;
-    private readonly string? _kind;
-    private readonly bool _strict;
+    // The declaration, WHOLE — the source IS this type, unparsed. Born with it at Create,
+    // never shredded into Name/Kind/Strict/Template scalars and reassembled (Mint answers it
+    // directly). Name/Kind/Strict/Template all read off this one object.
+    private readonly global::app.type.@this _type;
     // The serializer whose encoding these bytes are in — the .pr wire is
     // application/plang, a channel's content is its own mimetype. At .Value() the
     // source selects this serializer and asks it to read the bytes (it makes the
-    // matching reader; the type pulls itself off it).
+    // matching reader; the type pulls itself off it). A capture-site fact (not the
+    // type's), so it rides its own field — preserved across a re-birth like Raw.
     private readonly string _format;
-    // The authored-content mode the bytes were read in ("plang" for a developer-authored
-    // The authored-content mode ("plang" for a developer-authored goal/.pr, null for runtime ingest)
-    // rides into the reader's ReadContext so a %ref% leaf borns a live template; trust the mode, never
-    // the content. Held on the base `Template` property (internal-settable — the build may re-stamp it).
 
     // A full-match %ref% (`%!data%`, `%messages%`) is a REFERENCE, not content — decided ONCE
     // at birth: the raw form and the authored-template flag are immutable, so reading it back is
@@ -43,31 +41,20 @@ public sealed class source : @this, module.IContext
     public actor.context.@this Context { get; set; } = null!;
 
     /// <summary>Born from a declared type entity + a raw form — the source-maker the entity's
-    /// <c>Create</c> door and <c>Data.FromRaw</c> share. Pulls Name/Kind/Strict/template off the
-    /// type; the wire may override the format (else the type derives it from the raw).</summary>
+    /// <c>Create</c> door shares. The source holds the declaration WHOLE (Name/Kind/Strict/Template
+    /// all live on it); the wire may override the format (else the type derives it from the raw).</summary>
     public source(object value, global::app.type.@this type, actor.context.@this context, string? format = null)
-        : this(value, type.Name, type.Kind?.Name, context, type.Strict,
-               format ?? type.RawFormat(value, context), type.Template) { }
-
-    public source(object value, string typeName, string? kind, actor.context.@this context, bool strict = false,
-        string format = "text/plain", string? template = null)
     {
         _value = value ?? throw new System.ArgumentNullException(nameof(value));
         Context = context ?? throw new System.ArgumentNullException(nameof(context));
-        _type = string.IsNullOrWhiteSpace(typeName) ? "item" : typeName;
-        _kind = kind;
-        _strict = strict;
-        _format = format;
-        // The authored template rides the standard Template property — peek-time consumers
-        // (HasVariableReference, output.write) see a source-born template the same way they see a
-        // text-born one. Trust the flag the builder stamped; do not re-scan the content.
-        Template = template;
+        _type = type ?? throw new System.ArgumentNullException(nameof(type));
+        _format = format ?? type.RawFormat(value, context);
         // Full-match %ref% on ANY declared type is a reference to a binding — resolved by name at
-        // .Value(), never parsed through the type reader. Trust the builder's template flag, not
-        // the content (a structural string that was not marked stays literal content). The
-        // template flag is a BUILD-TIME security gate: untrusted content that merely looks like
-        // "%x%" must NOT auto-resolve to a variable — only a builder-marked template does.
-        if (template != null && value is string reference
+        // .Value(), never parsed through the type reader. Trust the builder's template flag (on the
+        // declaration), not the content: a structural string the builder did not mark stays literal
+        // content. A BUILD-TIME security gate — content that merely looks like "%x%" must NOT
+        // auto-resolve to a variable; only a builder-marked template does. Decided ONCE at birth.
+        if (type.Template != null && value is string reference
             && global::app.data.@this.TryFullVarMatch(reference, out _))
         {
             IsVariable = true;
@@ -77,13 +64,15 @@ public sealed class source : @this, module.IContext
     /// <summary>The undecoded source form — <c>string</c> or <c>byte[]</c>.</summary>
     public object Raw => _value;
 
+    /// <summary>The wire format the raw was captured in — birth state, preserved across a re-birth.</summary>
+    public string Format => _format;
+
     /// <summary>The raw string face, when the source carries text (not bytes).</summary>
     public override string? RawText => _value as string;
 
-    /// <summary>The declared judgement, verbatim — the source IS the declared
-    /// type, unparsed.</summary>
-    protected internal override global::app.type.@this Mint()
-        => new(_type, _kind, _strict, Template);
+    /// <summary>The declared judgement, verbatim — the source IS the declared type, unparsed.
+    /// Held whole since birth; answered directly, not reassembled from scalars.</summary>
+    protected internal override global::app.type.@this Mint() => _type;
 
     /// <summary>
     /// In memory now = the raw source form. A byte raw declared <c>text</c> decodes
@@ -95,7 +84,7 @@ public sealed class source : @this, module.IContext
     /// </summary>
     public override object? Peek()
     {
-        if (_value is byte[] b && _type.ToLowerInvariant() is "text")
+        if (_value is byte[] b && _type.Name.ToLowerInvariant() is "text")
         {
             try { return new System.Text.UTF8Encoding(false, throwOnInvalidBytes: true).GetString(b); }
             catch (System.Text.DecoderFallbackException) { return b; }
@@ -121,7 +110,7 @@ public sealed class source : @this, module.IContext
 
     /// <summary>A template-bearing source re-resolves every read (its %refs% can change) — never
     /// cached by the holding Data; a plain source parses once and caches. Mirrors text/dict/list.</summary>
-    public override bool Cacheable => Template == null;
+    public override bool Cacheable => _type.Template == null;
 
     public override async System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this data)
     {
@@ -155,10 +144,10 @@ public sealed class source : @this, module.IContext
             // hops later as a null navigation. Rides the catch below → MaterializeFailed,
             // named to the binding. (The apex object/item is excluded — a scalar CAN be
             // declared object; only genuine containers must stay containers.)
-            if (_type.ToLowerInvariant() is "dict" or "list"
+            if (_type.Name.ToLowerInvariant() is "dict" or "list"
                 && item is not (global::app.type.item.dict.@this or global::app.type.item.list.@this or global::app.type.clr.@this))
                 throw new System.InvalidOperationException(
-                    $"a '{_type}' value materialized to a non-container ({item.GetType().Name}) — round-trip loss");
+                    $"a '{_type.Name}' value materialized to a non-container ({item.GetType().Name}) — round-trip loss");
             item.Accumulate(this);
             // Resolve the materialized item — a template (text/dict/list) renders against live
             // variables; a plain leaf/container answers itself. The source layer is transparent:
@@ -177,7 +166,7 @@ public sealed class source : @this, module.IContext
                 ? $" [at {je.Path ?? "?"}, line {je.LineNumber?.ToString() ?? "?"}]"
                 : "";
             data.Fail(new global::app.error.Error(
-                $"failed to read %{data.Name}% as {_type}{(_kind != null ? $"/{_kind}" : "")}: {ex.Message}{where}",
+                $"failed to read %{data.Name}% as {_type.Name}{(_type.Kind?.Name is { } k ? $"/{k}" : "")}: {ex.Message}{where}",
                 "MaterializeFailed", 400) { Exception = ex });
             return Absent;
         }
@@ -190,12 +179,12 @@ public sealed class source : @this, module.IContext
     private global::app.type.item.@this Read()
     {
         if (Context.Actor?.Channel.Serializers is { } serializers)
-            return serializers[_format].Read(this, new global::app.type.reader.ReadContext(Context, Template));
+            return serializers[_format].Read(this, new global::app.type.reader.ReadContext(Context, _type.Template));
         // Context is guaranteed (born-in-ctor); reaching here means its Actor/Channel isn't
         // wired yet. Surface it as a clean MaterializeFailed (source.Value catches this), not a
         // silent unparsed return.
         throw new System.InvalidOperationException(
-            $"source declared '{_type}' reached read before its actor channel was wired.");
+            $"source declared '{_type.Name}' reached read before its actor channel was wired.");
     }
 
     /// <summary>

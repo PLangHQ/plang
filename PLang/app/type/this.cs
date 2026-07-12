@@ -281,7 +281,14 @@ public sealed class @this : item.@this
         // A container / domain value is already native (dict, list, path, image, …) — hold it.
         if (raw is item.@this { IsLeaf: false } native) return native;
 
-        // A built leaf (text/number/… or a source carrying its raw):
+        // A source (declared, unparsed) re-declared → RE-BIRTH over the same unread raw with THIS
+        // declaration (which carries the build's stamped kind/template). The value stays immutable
+        // and lazy — no mutation, no parse — so an authored %ref% is still unread bytes until read.
+        // This is the build's template stamp: Declare → Create → here, a fresh source born correct.
+        if (raw is item.source src)
+            return new item.source(src.Raw, this, context, src.Format);
+
+        // A built leaf (text/number/… carrying its raw):
         if (raw is item.@this leaf)
         {
             // A raw-name declared type (variable) NAMES a thing — the leaf's raw string is the variable.
@@ -289,15 +296,11 @@ public sealed class @this : item.@this
             if (context.App.Type[Name]?.ClrType == typeof(app.variable.@this) && backing != null)
                 return app.variable.@this.Resolve(backing, context);
 
-            // Already this type → hold; refine a matching leaf to the declared kind / template.
+            // Already this type → hold; refine a matching leaf to the declared kind.
             var minted = leaf.Mint();
             if (string.Equals(Name, minted.Name, System.StringComparison.OrdinalIgnoreCase))
             {
                 var refined = Kind != null && minted.Kind == null ? leaf.Kinded(Kind.Name) : leaf;
-                // The build stamps the authored-template flag AFTER the value is built (via Declare);
-                // set it in place. A source keeps its undecoded bytes (stays lazy) — trust the builder's
-                // flag, never scan content — so an authored %ref% stays unparsed until read.
-                if (Template != null && refined.Template == null) refined.Template = Template;
                 return refined;
             }
             // The value already carries this type as a facet (an image satisfies a path slot) → hold.

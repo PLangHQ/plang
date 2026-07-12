@@ -177,8 +177,10 @@ public partial class @this
     /// builder's template stamp). <see cref="IsVariable"/> is "%name%" (the
     /// whole value IS a reference); this is "hello %name%" too.
     /// </summary>
+    // Read the template flag off the value's own type entity — a source answers via the declaration
+    // it holds whole (_type.Template), a text via its minted entity. Uniform: ".Type.Template".
     [JsonIgnore]
-    public bool HasVariableReference => _item?.Template != null;
+    public bool HasVariableReference => _item?.Type.Template != null;
 
     [JsonIgnore]
     public DateTime Created { get; }
