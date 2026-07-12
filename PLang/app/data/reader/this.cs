@@ -82,21 +82,25 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                     }
                     else if (reader.Peek() == global::app.channel.serializer.TokenKind.String
                              && (typeRef.Template != null
-                                 || ctx.Context.App.Type[typeRef.Name]?.ClrType == typeof(global::app.variable.@this)))
-                        // A builder-authored SEMANTIC string — a %ref%/template (the IsVariable
-                        // birth gate needs the decoded content) or a variable NAME (type.Create
-                        // resolves it to its binding). The content door owns these; the kind-parse
-                        // stays lazy on the content source. A literal string under any other type
-                        // is NOT semantic — it rides the wire arm below (strict, byte-identical).
+                                 || ctx.Context.App.Type[typeRef.Name]?.ClrType == typeof(global::app.variable.@this)
+                                 || (ctx.Context.App.Type.Reader.Typed(typeRef.Name, typeRef.Kind?.Name)?.StringIsContent ?? true)))
+                        // The CONTENT door. A string token borns a content source when it is: a
+                        // builder-authored %ref%/template (the IsVariable birth gate needs decoded
+                        // content); a variable NAME (type.Create resolves it to its binding); or a
+                        // string that IS this type's own content — the reader says so (text,
+                        // datetime, path, csv, base64 image, the object/item apex). Raw is the
+                        // DECODED content, so Peek / interpolation / events / display read the
+                        // content, never a quoted document slice.
                         value = typeRef.Create(reader.String(), ctx.Context);
                     else
-                        // EVERY other slot — string tokens included — is a wire: a VERBATIM Slice
-                        // (RawValue decodes strings, so it can't serve here), with the capturing
-                        // transport serializer named at the mint site (the reader stays stateless;
-                        // the wire itself never knows a format name). Face validation is free — the
-                        // type's own pull IS the validator on first touch (a still-quoted "23"
-                        // under {number} fails at the number pull; a string under {dict} at
-                        // BeginObject). The BUILD must never emit a mismatched token.
+                        // The STRICT wire: structured/number/bool tokens, and a string under a
+                        // type whose form is NOT a string (the reader said false — a mismatch). A
+                        // verbatim Slice (RawValue decodes strings, so it can't serve), captured
+                        // with the transport serializer at the mint (the reader stays stateless;
+                        // the wire never knows a format name). The type's own pull is the validator
+                        // at first touch — a still-quoted "23" under {number} fails at the number
+                        // pull; a string under {dict} at BeginObject. The BUILD must never emit a
+                        // mismatched token.
                         value = typeRef.Create(
                             System.Text.Encoding.UTF8.GetString(reader.Slice()), ctx.Context,
                             ctx.Context.Actor?.Channel.Serializers?.Transport

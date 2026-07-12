@@ -34,4 +34,18 @@ public interface ITypeReader
     /// </summary>
     global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind, ReadContext ctx)
         where TReader : app.channel.serializer.IReader, allows ref struct;
+
+    /// <summary>
+    /// True when a STRING token IS this type's own content — the value slot decodes it
+    /// (text, datetime, guid, path, choice, url, csv text, base64 image; the polymorphic
+    /// <c>object</c>/<c>item</c> apex too — a scalar can be declared object). Default true.
+    /// A type whose canonical json form is NOT a string overrides FALSE (number, bool, dict,
+    /// list): a string arriving under it is a mismatch, so it rides a strict wire and fails at
+    /// first touch. Consulted at the <c>.pr</c> value mint, only when the token is a string: a
+    /// content string borns a content source (raw = decoded content, so Peek / interpolation /
+    /// events / display read the content, not a quoted document slice); everything else is a
+    /// wire. The fact lives HERE — the type reader already owns "what a string means to me" —
+    /// never as a face catalog above the types.
+    /// </summary>
+    bool StringIsContent => true;
 }
