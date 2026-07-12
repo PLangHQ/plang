@@ -1,5 +1,7 @@
 # OBP scan — findings over every file this branch touches
 
+> **Reconciled with the coder's independent scan** (`coder/obp-scan.md`, landed in parallel — the two scans agree on everything they share). His three action items, ruled: **A accepted** → plan §11 (`ISerializer.Read` narrows to `ITransport : ISerializer`, plang-only; `Json.Read`/`Text.Read` delete outright, twin-body debt resolves free). **B accepted** → plan §10 (read-side twins die symmetrically; `ReadChannelAsync` selects at the owner). **C partial** → plan §12 (binary arm STAYS — `text/writer.cs:47` base64s bytes, disk needs raw; text arm collapses only with a byte-identical golden). His deferral notes (registry 4-dictionary split, vestigial `type.Context` stamp at file `:67`) are on the plan's debt list.
+
 Companion to [`plan.md`](plan.md). Full-file scan (14 files, ~3,250 lines), smell catalog applied member-by-member (`Documentation/v0.2/obp-smells.md` names). Three buckets: items folded into this branch's scope (Ingi approved), and pre-existing debt where **the coder has judgment** — fix/rename on this branch if cheap while already touching the file, or leave recorded here for a later pass. Deleting is always preferred over renaming when the member shouldn't exist at all.
 
 ## In scope for this branch (Ingi-approved additions)

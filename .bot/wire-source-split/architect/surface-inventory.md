@@ -12,6 +12,7 @@ Companion to [`plan.md`](plan.md) — the full design, code bodies, rulings, and
 | method `json.Reader.Slice()` | `channel/serializer/json/reader.cs` | verbatim token capture, quotes/escapes included (strictness ruling B; `RawValue` decodes strings so it cannot serve) |
 | property `Serializers.Transport` | `channel/serializer/list/this.cs` | named door for the transport serializer — kills the `is plang.@this` type-check and feeds the wire mint site |
 | method `channel.Read(byte[], ct)` *(name coder's)* | `channel/this.cs` | the receive door replacing `StampReadAsync` |
+| interface `ITransport : ISerializer` (one member: the slice-decode `Read`) | `channel/serializer/` | plan §11 — plang-only door; wire's field + registry `Transport` typed as it |
 
 Explicitly **not** created (died in earlier design rounds — do not resurrect): `ICreate.Format`/`Encoding`, any `IsJson`/`Structured` flag, dict/list literal arms, an octet-stream registration, the `value/this.cs` serializer rename.
 
@@ -30,7 +31,8 @@ Everything below gets `[System.Obsolete]` at step 0 (plan) and is deleted mechan
 | `SerializeAsync(SerializeOptions)` + `ResolveForWrite` + the `SerializeOptions` carrier | `channel/serializer/list/this.cs:146-168, 195-202` |
 | the wire reader's `deferredRaw`/`deferredFormat`/`born` locals + twin tail arms | `data/reader/this.cs` |
 | file-save's three format lines (`?? Text`, `?? "application/plang"`) | `path/file/this.Operations.cs:73-75` |
-| `Text.Read` — pending orphan confirmation | `Text.cs:79-90` |
+| `ISerializer.Read` member + `Json.Read` + `Text.Read` (plan §11 — no orphan check needed) | `serializer/this.cs:45-53`, `Json.cs:142-151`, `Text.cs:79-90` |
+| read twins: `ResolveSerializer` + `DeserializeAsync<T>(DeserializeOptions)` + `DeserializeOptions`/`ResolveOptions` (plan §10) | `channel/serializer/list/this.cs:173-189, 204-224` |
 | `type.@this.Convert(string)`'s json arm (obp-findings §1) | `type/this.cs:462-472` |
 | `Text._jsonFallback` field + ctor param + stale class doc (obp-findings §3) | `Text.cs:21, 27-31, 5-9` |
 

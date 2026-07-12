@@ -278,6 +278,8 @@ An earlier draft gave dict/list a "string token → parse my own literal" arm. I
 | `channel.@this.StampValue(byte[])` | `channel/this.cs:294-304` | step 9 |
 | `channel.@this.StampType(context)` | `channel/this.cs:307-316` | step 9 |
 | `serializer.list.@this.SerializeAsync(SerializeOptions)` + `ResolveForWrite` + `SerializeOptions` | `channel/serializer/list/this.cs:146-168, 195-202` | step 10 |
+| `ResolveSerializer(ResolveOptions)` + `DeserializeAsync<T>(DeserializeOptions)` + `DeserializeOptions`/`ResolveOptions` carriers | `channel/serializer/list/this.cs:173-189, 204-224` | step 10 (read twins) |
+| `ISerializer.Read` member + `Json.Read` + `Text.Read` | `serializer/this.cs:45-53`, `Json.cs:142-151`, `Text.cs:79-90` | step 11 (narrows to `ITransport`) |
 | `deferredRaw` / `deferredFormat` / `born` locals + twin tail arms | `data/reader/this.cs:39-41, tail` | step 4 |
 | file's serializer/format lines | `path/file/this.Operations.cs:73-75` | step 5 |
 | `type.@this.Convert(string)`'s json arm | `type/this.cs:462-472` | step 8 — the `object/json` kind reader is its one home (obp-findings §1) |
@@ -285,7 +287,7 @@ An earlier draft gave dict/list a "string token → parse my own literal" arm. I
 | ~~`serializer.list.@this.Text` property~~ | `channel/serializer/list/this.cs:130` | REPRIEVED — becomes file-save's content-fallback door (step 10); the earlier delete ruling applied before step 10 gave it a caller |
 | `UnregisteredMimeType` reachable from materialization | via `Serializers[_format]` | unreachable after step 1 (the type STAYS for channel routing) |
 
-**Stays-list (explicit):** `ISerializer.Read` (the wire kind's door — reached by reference, never lookup); `plang.Read` ≡ `Json.Read` twin bodies (both now legitimate doors; dedup is separate debt); `Text.Read` (likely orphaned — verify and delete if so; the Text serializer itself STAYS as file-save's content fallback); the template gate's eager string decode (the one decode at capture — the `%ref%` birth gate needs content); `value.Reader` / `json.Reader`; the reader registry + the `{object,json}`/`{table,csv}` kind-reader door; the registry's `Default`/`GetOrDefault`/`GetByExtension` lookups; laziness end-to-end.
+**Stays-list (explicit):** the slice-decode door itself — now `ITransport.Read`, implemented by plang only (§11; `Json.Read`/`Text.Read` delete, the twin-body debt resolves); the Text serializer (file-save's content fallback); the template gate's eager string decode (the one decode at capture — the `%ref%` birth gate needs content); `value.Reader` / `json.Reader`; the reader registry + the `{object,json}`/`{table,csv}` kind-reader door; the registry's `Default`/`GetOrDefault`/`GetByExtension` lookups; `Save`'s binary arm (raw bytes at the disk edge — §12); laziness end-to-end.
 
 ## Behavior changes + open question
 
@@ -341,12 +343,21 @@ No type-switch, no `StampValue`/`StampType` (§6's inlining lands here), one bou
 - **stream channel:** `Serializers.GetOrDefault(Mime)` — existing door.
 - **file-save:** `Serializers.GetByExtension(Extension) ?? Serializers.Text` — a registered extension wins; otherwise **the value writes itself as content** (the Text serializer's `SerializeAsync` is exactly that: `data.Output(writer, …)` — "a leaf renders bare; a container renders via its format text serializer (json string)", its own doc). **Behavior change, flagged:** today an unregistered-extension file save of a structured value writes the plang ENVELOPE (`{name, type, value, signature}`) into the user's file; after this it writes the CONTENT. A user file gets content, not transport envelopes — but it needs a golden check and Ingi's eyes on the diff.
 - `SerializeAsync(SerializeOptions)`, `ResolveForWrite`, and the `SerializeOptions` carrier die with their last callers. The `data.Peek() is string` shape-sniff dies with them — it was approximating "the value writes itself" with two hard-coded cases.
+- **The read-side twins die symmetrically** (coder OBP scan, item B): `ResolveSerializer(ResolveOptions)` + `DeserializeAsync<T>(DeserializeOptions)` + the `DeserializeOptions`/`ResolveOptions` carriers (`list/this.cs:173-189, 204-224`). Their one caller, `channel/list/this.cs:205` `ReadChannelAsync<T>`, selects at the owner: `Serializers.GetOrDefault(sc.Mime).DeserializeAsync<T>(sc.Stream, …)`. (`ReadChannelAsync`'s own `channel is stream.@this` fork → debt list.)
 
-(Note: `Serializers.Text` gets a reprieve from deletion — it becomes file-save's content-fallback door. The `Text.Read` orphan check below still stands.)
+(Note: `Serializers.Text` gets a reprieve from deletion — it becomes file-save's content-fallback door.)
+
+### 11. `ISerializer.Read` narrows to the transport (coder OBP scan, item A)
+
+Post-branch, only the transport ever answers the slice-decode `Read` — a content source reads via `value.Reader`, a wire via its held reference, which is always the transport. Keeping `Read` on `ISerializer` forces `Text`/`Json` to implement a door nothing calls. So: `Read(source, ctx)` moves off `ISerializer` onto a narrow **`ITransport : ISerializer`** (that one member; name open to bikeshed), implemented by `plang.@this` only. The registry's `Transport` property is typed `ITransport`; the wire's field is `ITransport _reader`. Fallout: `Json.Read` (`Json.cs:142-151`) and `Text.Read` (`Text.cs:79-90`) DELETE outright — no orphan check needed — and the `plang.Read` ≡ `Json.Read` stored-twice debt resolves as a side effect.
+
+### 12. `Save`'s write fork — binary arm stays, text arm conditional (coder OBP scan, item C — partial)
+
+The coder proposed collapsing `Save`'s `raw is binary / raw is text / else` fork (`file/this.Operations.cs:218-229`) entirely into the serializer path. **The binary arm cannot collapse**: the text writer base64-encodes bytes (`text/writer.cs:47` — `Bytes → Convert.ToBase64String`), and disk content must be raw — the arm is the same "bytes are bytes" short-circuit `source.Write` keeps. The **text arm** may collapse into the `Serializers.Text` path only with a byte-identical golden (the `:214` "appends a stdout-style newline" comment looks stale — framing lives in the stream channel now (`stream/this.cs:63-65`); coder verifies and updates the comment either way).
 
 ## Flagged debt (recorded, NOT this branch)
 
-`plang.Read` ≡ `Json.Read` byte-for-byte duplication. `Text.Read` orphan (delete when confirmed). `IReader`/`json.Reader`/`value.Reader` live under `app.channel.serializer.*` but serve the type layer's own door — namespace home worth a future look. goal.call's eager arm in the wire reader (confirmed out of scope — Ingi's future list). The `?? binary` fallback fork in the receive door (step 9 carries it over unchanged).
+`IReader`/`json.Reader`/`value.Reader` live under `app.channel.serializer.*` but serve the type layer's own door — namespace home worth a future look. goal.call's eager arm in the wire reader (confirmed out of scope — Ingi's future list). The `?? binary` fallback fork in the receive door (step 9 carries it over unchanged). `ReadChannelAsync`'s `channel is stream.@this` type fork (`channel/list/this.cs:200`). The reader registry's 4-dictionary Of/Typed split — issue 2's `TypeOf` widening is a conscious deferral; the real fix is Of→Typed everywhere (coder scan). `file` ReadText's `type.Context = Context` stamp (`:67`) — likely vestigial once §5 lands; cleanup then. Plus the full pre-existing list in [`obp-findings.md`](obp-findings.md).
 
 ## OBP validation
 
