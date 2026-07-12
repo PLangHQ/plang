@@ -4,6 +4,8 @@ Branch: `wire-source-split` (from `navigation-driven-record-builder`). Settled w
 
 > **Coder review v1 folded (2026-07-12, Ingi's rulings):** the string-slot routing blocker is fixed per **option B — strictness** (Ingi: "I would prefer strictness"): non-template string tokens ride as wires via a NEW verbatim `Slice()` capture on `json.Reader` (see the Slice note in §4) — NOT the token-kind split the review proposed, which would have let `value:"23"` under `{number}` parse leniently against Ingi's invalid-`.pr` ruling. `_owner` resolved per the review (registry `Transport` door at the mint site). Both minors accepted (§1 guard, `FormatException` in plang's serialize catch).
 
+> **Member-level inventory:** [`surface-inventory.md`](surface-inventory.md) — the flat created/deleted/modified tables for quick reference during implementation and the final `[Obsolete]` cleanup.
+
 > **You own this.** The design decisions below are settled (what owns what, what dies, the two source kinds, all names). Every code block is a suggestion — bodies, private plumbing, and mechanics are yours. Existing members quoted here were verified against source during design; re-verify against HEAD as you go. Flag back anything that doesn't survive contact.
 
 ## Why
