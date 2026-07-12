@@ -48,17 +48,10 @@ public partial class Set : IContext, IBuildValidatable
             }
         }
 
-        if (value?.Type?.Name != null && valueBacking != null)
-        {
-            // Skip validation when value contains %variable% references — they resolve at runtime
-            if (value.HasVariableReference) return null;
-
-            // Born on the wire: the literal already carries its type, so this is a
-            // type-match check, not a conversion. A mismatch is a build error.
-            var targetType = value.Type.ClrType;
-            if (targetType != null && !targetType.IsInstanceOfType(valueBacking))
-                return $"Parameter 'Value' has type={value.Type.Name} but value is not a {value.Type.Name}: {valueBacking}";
-        }
+        // Real content truth has two owners, both elsewhere: the strict-kind probe above
+        // (magic bytes, at build) and the first-touch parse at runtime (strict at the load
+        // seam). A declared-but-unparsed value (a source) is valid by construction — nothing
+        // has become anything yet — so there is no build-time type-match check to make here.
         return null;
     }
 
