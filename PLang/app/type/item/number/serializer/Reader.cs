@@ -12,9 +12,6 @@ public sealed class Reader : global::app.type.reader.ITypeReader
 {
     public string Kind => global::app.type.reader.@this.AnyKind;
 
-    // A number's json form is a number token — a quoted "23" is a mismatch, not content.
-    public bool StringIsContent => false;
-
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
