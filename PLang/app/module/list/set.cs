@@ -11,12 +11,12 @@ public partial class Set : IContext
 
     public async Task<data.@this<type.list>> Run()
     {
-        var nl = app.type.item.list.@this.FromRaw((await (await Context.Variable.Get((await ListName.Value()))).Value()), Context);
-        if (nl == null)
+        var name = await ListName.Value();
+        if (await (await Context.Variable.Get(name)).Value() is not app.type.item.list.@this nl)
             return Context.Error<type.list>(
-                new app.error.ValidationError($"Variable '{(await ListName.Value())}' is not a list"));
-        // Promote to native (no-op when already native) so the in-place set persists.
-        await Context.Variable.Set((await ListName.Value()), nl);
+                new app.error.ValidationError($"Variable '{name}' is not a list"));
+        // Persist the retrieved instance so the in-place set sticks.
+        await Context.Variable.Set(name, nl);
 
         // Typed read — the index is a number end to end; the list lowers it
         // inside its own index-math boundary.

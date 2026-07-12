@@ -171,4 +171,36 @@ public static class Make
     public static global::app.data.@this FromRaw(object raw, global::app.type.@this type,
         global::app.actor.context.@this? context = null, string name = "", string? format = null)
         => new global::app.data.@this(name, type.Create(raw, context, format), context: context);
+
+    /// <summary>
+    /// Test-only: build a native list from a raw CLR sequence, wrapping each element as a Data
+    /// row (nested raw sequences recurse). The production <c>list.@this.FromRaw</c> dissolved —
+    /// runtime callers just pattern-match <c>is list.@this</c>; only test fixtures construct a
+    /// native list from raw CLR, so that construction lives here.
+    /// </summary>
+    public static global::app.type.item.list.@this List(
+        System.Collections.IEnumerable seq, global::app.actor.context.@this context)
+    {
+        var list = new global::app.type.item.list.@this(context);
+        foreach (var item in seq)
+        {
+            if (item is global::app.data.@this existing) { list.Add(existing); continue; }
+            object? element = item is System.Collections.IEnumerable and not string
+                ? List((System.Collections.IEnumerable)item, context)
+                : item;
+            list.Add(new global::app.data.@this("", element, context: context));
+        }
+        return list;
+    }
+
+    /// <summary>Test-only: build a native dict from a raw CLR dictionary — each entry a Data row.
+    /// Sibling of <see cref="List"/>; production callers construct through <c>type.Create</c>.</summary>
+    public static global::app.type.item.dict.@this Dict(
+        System.Collections.IDictionary raw, global::app.actor.context.@this context)
+    {
+        var d = new global::app.type.item.dict.@this(context);
+        foreach (System.Collections.DictionaryEntry e in raw)
+            d.Set(e.Key.ToString()!, e.Value);
+        return d;
+    }
 }

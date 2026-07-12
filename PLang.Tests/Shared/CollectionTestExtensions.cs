@@ -10,7 +10,7 @@ public static class CollectionTestExtensions
     public static global::app.data.@this<global::app.type.item.list.@this> ToListData(this System.Collections.IEnumerable raw, global::app.actor.context.@this? context = null)
     {
         context ??= global::PLang.Tests.TestApp.SharedContext;
-        return new("", global::app.type.item.list.@this.FromRaw(raw, context)!, context: context);
+        return new("", global::PLang.Tests.Shared.Make.List(raw, context)!, context: context);
     }
 
     public static global::app.data.@this<global::app.type.item.list.@this<T>> ToListData<T>(this System.Collections.IEnumerable raw, global::app.actor.context.@this? context = null)

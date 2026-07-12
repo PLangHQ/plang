@@ -9,10 +9,10 @@ public partial class Flatten : IContext
 
     public async Task<data.@this<type.list>> Run()
     {
-        var nl = app.type.item.list.@this.FromRaw((await (await Context.Variable.Get((await ListName.Value()))).Value()), Context);
-        if (nl == null)
+        var name = await ListName.Value();
+        if (await (await Context.Variable.Get(name)).Value() is not app.type.item.list.@this nl)
             return Context.Error<type.list>(
-                new app.error.ValidationError($"Variable '{(await ListName.Value())}' is not a list"));
+                new app.error.ValidationError($"Variable '{name}' is not a list"));
 
         var flat = new app.type.item.list.@this(Context);
         await FlattenNative(nl, flat);
@@ -20,8 +20,9 @@ public partial class Flatten : IContext
     }
 
     // Flatten a native list: a nested-list element's elements are lifted; any other
-    // element Data is kept as-is (its own type-tag preserved). FromRaw has already
-    // converted any nested raw lists to native, so this single arm covers every case.
+    // element Data is kept as-is (its own type-tag preserved). Each element materializes
+    // through its own door — a nested list surfaces as a native list, so this single arm
+    // covers every case.
     private static async Task FlattenNative(app.type.item.list.@this source, app.type.item.list.@this target)
     {
         foreach (var item in source.Items)

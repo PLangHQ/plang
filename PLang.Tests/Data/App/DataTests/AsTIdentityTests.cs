@@ -159,7 +159,7 @@ public class AsTIdentityTests
     public async Task AsT_PlainDataTarget_VarReference_ReturnsLiveVariableData()
     {
         var context = _app.User.Context;
-        var live = new global::app.data.@this("products", global::app.type.item.list.@this.FromRaw(new List<object?> { "a", "b" }, context), context: context);
+        var live = new global::app.data.@this("products", global::PLang.Tests.Shared.Make.List(new List<object?> { "a", "b" }, context), context: context);
         context.Variable.Set(live);
 
         var paramData = new Data("Slot", "%products%", new global::app.type.@this("text", null, false, "plang"), context: context);

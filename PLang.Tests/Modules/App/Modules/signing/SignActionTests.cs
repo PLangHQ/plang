@@ -46,7 +46,7 @@ public class SignActionTests
         TimeSpan? expires = null, Dictionary<string, object>? headers = null)
     {
         var action = new sign(Ctx) { Data = new Data("", data, context: Ctx),
-            Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.item.list.@this>("", global::app.type.item.list.@this.FromRaw(contracts, Ctx), context: Ctx),
+            Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.item.list.@this>("", global::PLang.Tests.Shared.Make.List(contracts, Ctx), context: Ctx),
             Expires = expires.HasValue ? (global::app.type.item.duration.@this)expires.Value : null,
             Headers = headers?.ToDictData()
         };

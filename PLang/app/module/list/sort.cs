@@ -14,12 +14,10 @@ public partial class Sort : IContext
     public async Task<data.@this<type.list>> Run()
     {
         var listName = (await ListName.Value())!;
-        var nl = app.type.item.list.@this.FromRaw(await (await Context.Variable.Get(listName)).Value(), Context);
-        if (nl == null)
+        if (await (await Context.Variable.Get(listName)).Value() is not app.type.item.list.@this nl)
             return Context.Error<type.list>(
                 new app.error.ValidationError($"Variable '{listName}' is not a list"));
-        // Promote the variable to the native list (no-op when already native) so the
-        // in-place sort persists — mirrors list.add's raw→native promotion.
+        // Persist the retrieved instance so the in-place sort sticks.
         await Context.Variable.Set(listName, nl);
 
         // Thin dispatch — the list value type owns ordering, routed through the

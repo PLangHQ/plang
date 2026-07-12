@@ -9,12 +9,12 @@ public partial class Reverse : IContext
 
     public async Task<data.@this<type.list>> Run()
     {
-        var nl = app.type.item.list.@this.FromRaw((await (await Context.Variable.Get((await ListName.Value()))).Value()), Context);
-        if (nl == null)
+        var name = await ListName.Value();
+        if (await (await Context.Variable.Get(name)).Value() is not app.type.item.list.@this nl)
             return Context.Error<type.list>(
-                new app.error.ValidationError($"Variable '{(await ListName.Value())}' is not a list"));
-        // Promote to native (no-op when already native) so the in-place reverse persists.
-        await Context.Variable.Set((await ListName.Value()), nl);
+                new app.error.ValidationError($"Variable '{name}' is not a list"));
+        // Persist the retrieved instance so the in-place reverse sticks.
+        await Context.Variable.Set(name, nl);
 
         nl.Reverse();
         return Context.Ok<type.list>(new type.list { count = nl.CountRaw, value = nl }, Context.Type.Create("list"));

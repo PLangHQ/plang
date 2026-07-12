@@ -9,10 +9,10 @@ public partial class Unique : IContext
 
     public async Task<data.@this<type.list>> Run()
     {
-        var nl = app.type.item.list.@this.FromRaw((await (await Context.Variable.Get((await ListName.Value()))).Value()), Context);
-        if (nl == null)
+        var name = await ListName.Value();
+        if (await (await Context.Variable.Get(name)).Value() is not app.type.item.list.@this nl)
             return Context.Error<type.list>(
-                new app.error.ValidationError($"Variable '{(await ListName.Value())}' is not a list"));
+                new app.error.ValidationError($"Variable '{name}' is not a list"));
 
         // Dedup through the one compare path's structural equality — so a list of
         // equivalent dicts collapses to one (reference-equality HashSet would not).

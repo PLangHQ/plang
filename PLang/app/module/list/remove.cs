@@ -13,11 +13,10 @@ public partial class Remove : IContext
     public async Task<data.@this<type.list>> Run()
     {
         var listName = (await ListName.Value());
-        var nl = app.type.item.list.@this.FromRaw((await (await Context.Variable.Get(listName)).Value()), Context);
-        if (nl == null)
+        if (await (await Context.Variable.Get(listName)).Value() is not app.type.item.list.@this nl)
             return Context.Error<type.list>(
                 new app.error.ValidationError($"Variable '{listName}' is not a list"));
-        // Promote to native (no-op when already native) so the in-place remove persists.
+        // Persist the retrieved instance so the in-place remove sticks.
         await Context.Variable.Set(listName, nl);
 
         // Typed read — number end to end; the list lowers inside its own boundary.
