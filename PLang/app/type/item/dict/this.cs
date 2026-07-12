@@ -53,6 +53,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public @this(actor.context.@this context)
         : this(new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase), context) { }
 
+    /// <summary>A dict's own type entity — the type owns its name (no namespace reflection).</summary>
+    protected internal override global::app.type.@this Type => new("dict", typeof(@this));
+
     /// <summary>THE PURE CORE — a container coerces INTO nothing (highest rank), so the core only
     /// passes a <c>dict</c> through; any other value declines (<c>null</c>). Real construction
     /// (empty-string → empty, native re-tag) needs a context and lives in the courier below.</summary>

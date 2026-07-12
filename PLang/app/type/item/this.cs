@@ -174,11 +174,11 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
 
     /// <summary>
     /// This value's OWN type entity — each type answers ITS way (number stamps its precision as
-    /// kind, text its extension, a source its declared judgement). The single owner of its
-    /// identity; provenance (a dict parsed from a file "still is" a file) is NOT baked in — it
-    /// lives on the value's <see cref="Prior"/> chain and is asked via <see cref="Is"/>.
-    /// The default derives the name from the class's namespace tail (repo convention: a type's
-    /// folder IS its name); types whose mate is value-derived (number's tower) override.
+    /// kind, text its extension, a source its declared judgement, dict/list name themselves). The
+    /// single owner of its identity; provenance lives on the value's <see cref="list"/> and is asked
+    /// via <see cref="Is"/>. The default derives the name from the namespace tail — a reflection
+    /// fallback still used by ~19 domain types (actor/snapshot/…); killing it fully means each
+    /// declaring its name (see coder followups).
     /// </summary>
     protected internal virtual global::app.type.@this Type => new(NamespaceTail(GetType()));
 

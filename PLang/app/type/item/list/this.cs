@@ -60,6 +60,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public @this(actor.context.@this context) : this(new List<object?>(), context) { }
     public @this(IEnumerable<Data> items, actor.context.@this context) : this(new List<object?>(items), context) { _hasWrapped = true; }
 
+    /// <summary>A list's own type entity — the type owns its name (no namespace reflection).</summary>
+    protected internal override global::app.type.@this Type => new("list", typeof(@this));
+
     /// <summary>THE PURE CORE — a container coerces INTO nothing (highest rank), so the core only
     /// passes a <c>list</c> through; any other value declines (<c>null</c>). Real construction
     /// (empty-string → empty, raw sequence → list) needs a context and lives in the courier below.</summary>

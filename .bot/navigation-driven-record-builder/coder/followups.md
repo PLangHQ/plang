@@ -49,3 +49,14 @@ Fluid property enumeration) pulled `list` in and choked on the `type.list.@this`
 fixes it (tests reach it via InternalsVisibleTo). To expose `%x.list%`/`%x.type.list%` navigation
 later, make it public AND teach the reflecting surface(s) to skip it (an [LlmIgnore]/[Out]-style gate),
 verified against those 3 tests.
+
+## Kill NamespaceTail fully — ~19 domain types still free-ride it (Ingi flagged)
+dict/list now declare their names explicitly (`Type => new("dict"/"list", typeof(@this))`).
+NamespaceTail (a value computing its OWN type name via C# namespace reflection — the obpv) is still
+the base `item.@this.Type` default, used by ~19 types that lack an override: actor, snapshot, test,
+test.timing, variable, choice<T>, directory, permission, error, mock, code, LlmMessage, sign,
+identity, settings, BuildResponse, path.StatInfo, type.list.view, and the `type.@this` entity itself
+(verified via a make-abstract build — the CS0534 list). Fully killing it = making base Type abstract
+and giving each an explicit `Type => new("<name>")` (name = its folder tail today). ~19 careful
+overrides; deferred so it's not rushed. NameOf (ICreate error messages) also uses NamespaceTail — a
+static naming helper, separate from the value's identity door.
