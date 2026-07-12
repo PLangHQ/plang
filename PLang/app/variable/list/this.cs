@@ -440,49 +440,34 @@ public partial class @this
         if (string.IsNullOrEmpty(input) || !input.Contains('%'))
             return input;
 
-        // The async door can't be awaited inside Regex.Replace's sync MatchEvaluator
-        // (the sync wall — no GetAwaiter().GetResult()). So pre-resolve every distinct
-        // %var% through the door first, then the sync replace just looks up.
-        // Scalar/output access (access-driven resolution): a bare `%x%` renders the
-        // value's raw source form via Peek(), not a structured parse — `%cfg%` of a
-        // lazily-read config.json is the raw json string. Dotted paths navigate via
-        // Get and come back already materialized.
-        var resolved = new Dictionary<string, string>(StringComparer.Ordinal);
+        // ONE streaming render pass — no pre-resolve map, no sync Regex.Replace wall. Walk the
+        // template in order: write each literal chunk, then render each %var% IN PLACE through the
+        // ONE door — its own data.Output into a text writer. A wire materializes to bare content
+        // (the write rule), a container renders its json text, a datetime/file/stored-ref renders
+        // itself. No Peek (a raw wire slice would leak the quoted document form), no per-type
+        // carve-out. Awaiting between chunks is legal here (no MatchEvaluator sync wall).
+        using var ms = new System.IO.MemoryStream();
+        var w = new global::app.channel.serializer.text.Writer(ms, System.Text.Encoding.UTF8);
+        int pos = 0;
         foreach (Match m in Regex.Matches(input, @"%([^%]+)%"))
         {
+            w.String(input[pos..m.Index]);            // literal text before this reference
+            pos = m.Index + m.Length;
             var varName = m.Groups[1].Value;
-            if (skipInfrastructure && varName.StartsWith('!')) continue;
-            if (resolved.ContainsKey(varName)) continue;
-            var dataVar = await Get(varName);
-            // A reference to an unset USER variable is an error at the reference site —
-            // strict, like any typed language, and consistent with the full-match door
-            // (variable.Value / text.Value both throw/Fail on an absent ref). Infrastructure
-            // refs (%!x%) are optionally-present engine internals (%!error% with no error,
-            // etc.) — they stay literal on absence, never error, whether or not
-            // skipInfrastructure is set.
+            // An infra ref (%!x%) under untrusted input stays literal (never resolved).
+            var dataVar = skipInfrastructure && varName.StartsWith('!') ? null : await Get(varName);
+            // An unset USER ref is an error at the reference site — strict, like any typed
+            // language (variable.Value / text.Value both fail on an absent ref). An infra ref
+            // (%!x%) is an optionally-present engine internal — it stays literal on absence.
             if (dataVar == null || !dataVar.IsInitialized)
             {
-                if (varName.StartsWith('!')) continue;   // infra ref absent → leave literal
+                if (varName.StartsWith('!')) { w.String(m.Value); continue; }
                 throw new global::app.error.VariableNotFoundException(varName);
             }
-            // Render this %var% through the ONE render door — its own data.Output into a text
-            // writer. A wire materializes to bare content (the write rule), a container renders
-            // its json text, a datetime / file / stored-ref renders itself. No Peek (a raw wire
-            // slice would leak the quoted document form), no per-type file/url carve-out — the
-            // Output door owns every shape.
-            using var ms = new System.IO.MemoryStream();
-            var w = new global::app.channel.serializer.text.Writer(ms, System.Text.Encoding.UTF8);
-            await dataVar!.Output(w, global::app.View.Out, _context);
-            resolved[varName] = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+            await dataVar.Output(w, global::app.View.Out, _context);   // the reference, in place
         }
-
-        return Regex.Replace(input, @"%([^%]+)%", match =>
-        {
-            var varName = match.Groups[1].Value;
-            if (skipInfrastructure && varName.StartsWith('!'))
-                return match.Value; // Leave %!var% unresolved for untrusted input
-            return resolved.TryGetValue(varName, out var v) ? v : match.Value;
-        });
+        w.String(input[pos..]);                       // trailing literal
+        return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }
 
     /// <summary>
