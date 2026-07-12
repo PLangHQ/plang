@@ -28,7 +28,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override bool IsLeaf => true;
     public override void Write(global::app.channel.serializer.IWriter w) => w.TimeSpan(Value);
-    protected internal override global::app.type.@this Mint() => new("duration", typeof(System.TimeSpan));
+    protected internal override global::app.type.@this Type => new("duration", typeof(System.TimeSpan));
 
     public @this(System.TimeSpan value) { Value = value; }
 
@@ -55,7 +55,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (Create(value) is { } built) return built;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
             ? new global::app.error.Error($"Cannot parse '{s}' as duration — expected ISO-8601 (e.g. PT30S) or .NET format (e.g. 00:00:30).", "DurationParseFailed", 400)
-            : new global::app.error.Error($"Cannot convert {((value as global::app.type.item.@this)?.Mint().Name ?? value?.GetType().Name)} to duration.", "DurationConversionFailed", 400));
+            : new global::app.error.Error($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to duration.", "DurationConversionFailed", 400));
         return null;
     }
 

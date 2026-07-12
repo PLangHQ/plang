@@ -13,9 +13,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static string Example => "https://example.com/data.json";
     public static string Shape => "string";
 
-    /// <summary>The is-a lattice — a url is-a path.</summary>
-    public static new System.Collections.Generic.IReadOnlyList<System.Type> Type { get; }
-        = new[] { typeof(@this), typeof(global::app.type.item.path.@this) };
 
     /// <summary>The location facet (an <c>HttpPath</c> — owns consent + fetch).</summary>
     [global::app.LlmBuilder, global::app.Out, global::app.Store]
@@ -34,6 +31,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public @this(global::app.type.item.path.@this path)
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
+        // Born from a path — inject its type into this value's history (`is path` from the chain).
+        Accumulate(path);
     }
 
     /// <summary>The remote host — location surface, never fetches.</summary>
@@ -44,10 +43,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>A url's entity: name "url", kind = the extension's canonical
     /// form through the format registry — location metadata, never fetches.</summary>
-    protected internal override global::app.type.@this Mint()
+    protected internal override global::app.type.@this Type
     {
-        var t = Context.App.Format.TypeFromExtension(Path.Extension);
-        return new global::app.type.@this("url", typeof(@this)) { Kind = t is { IsNull: false } ? t.Kind : null };
+        get
+        {
+            var t = Context.App.Format.TypeFromExtension(Path.Extension);
+            return new global::app.type.@this("url", typeof(@this)) { Kind = t is { IsNull: false } ? t.Kind : null };
+        }
     }
 
     /// <summary>

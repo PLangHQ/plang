@@ -72,7 +72,7 @@ public sealed class source : @this, module.IContext
 
     /// <summary>The declared judgement, verbatim — the source IS the declared type, unparsed.
     /// Held whole since birth; answered directly, not reassembled from scalars.</summary>
-    protected internal override global::app.type.@this Mint() => _type;
+    protected internal override global::app.type.@this Type => _type;
 
     /// <summary>
     /// In memory now = the raw source form. A byte raw declared <c>text</c> decodes

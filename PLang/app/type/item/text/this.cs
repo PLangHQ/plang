@@ -53,7 +53,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// An ordinary typed property stamped at creation, never after.</summary>
     public string? Kind { get; init; }
 
-    protected internal override global::app.type.@this Mint()
+    protected internal override global::app.type.@this Type
         => new("text", typeof(string)) { Kind = Kind is { } k ? new global::app.type.kind.@this(k) : null, Template = Template };
 
     /// <summary>
@@ -89,7 +89,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         if (Create(value) is { } built) return built;
         data.Fail(new global::app.error.Error(
-            $"Cannot bind a {((value as global::app.type.item.@this)?.Mint().Name ?? value?.GetType().Name)} to text — it has no textual form.", "TypeConversionFailed", 400));
+            $"Cannot bind a {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to text — it has no textual form.", "TypeConversionFailed", 400));
         return null;
     }
 

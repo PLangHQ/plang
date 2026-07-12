@@ -280,9 +280,11 @@ public partial class Set : IContext, IBuildValidatable
             // name (an image has-a path, so an image bound to a `path` slot satisfies `path`)
             // — keep its own richer type; downgrading would drop the bytes. Same-name is
             // excluded so `as text/md` over `{text}` (and strict) still applies.
+            // Ask the VALUE — its type history answers "an image is-a path" from the "path" entry
+            // it was born with (no CLR-inheritance lattice on the type entity).
             var keepAsIs = Value.Type != null
                 && !string.Equals(Value.Type.Name, type.Name, StringComparison.OrdinalIgnoreCase)
-                && Value.Type.Is(type);
+                && Value.Is(type);
 
             // `as <type>` is a converter: the TYPE makes a value of itself (kind-aware).
             // A byte-backed family (image) keeps a literal path-string — the Type entity

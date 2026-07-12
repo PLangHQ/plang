@@ -141,7 +141,7 @@ public sealed class Json : ISerializer
     /// </summary>
     public global::app.type.item.@this Read(global::app.type.item.source source, global::app.type.reader.ReadContext ctx)
     {
-        var type = source.Mint();
+        var type = source.Type;
         var typeReader = ctx.Context.App.Type.Reader.Reader(type.Name, type.Kind?.Name, ctx.Context);
         byte[] bytes = source.Raw as byte[] ?? Encoding.UTF8.GetBytes(source.Raw.ToString() ?? "");
         var utf8 = new Utf8JsonReader(bytes);

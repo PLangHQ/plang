@@ -168,7 +168,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         if (value is not global::app.type.item.dict.@this dict)
         {
             data.Fail(new global::app.error.Error(
-                $"%{data.Name}% holds a {((value as global::app.type.item.@this)?.Mint().Name ?? value?.GetType().Name)} — 'permission' cannot be created from it.",
+                $"%{data.Name}% holds a {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} — 'permission' cannot be created from it.",
                 "CreateItemDeclined", 400));
             return null;
         }

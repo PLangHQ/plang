@@ -40,7 +40,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override void Write(global::app.channel.serializer.IWriter w) => Kind.Write(this, w);
 
     /// <summary>A number's entity: the exact boxed CLR numeric as the mate, the kind name as kind.</summary>
-    protected internal override global::app.type.@this Mint()
+    protected internal override global::app.type.@this Type
         => new("number", _value.GetType()) { Kind = new global::app.type.kind.@this(Kind.Name) };
 
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
@@ -140,7 +140,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         }
         if (Create(raw) is { } n) return n;
         data.Fail(new global::app.error.Error(
-            $"Cannot convert {(raw as global::app.type.item.@this)?.Mint().Name ?? raw?.GetType().Name} to number.",
+            $"Cannot convert {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name} to number.",
             "NumberConversionFailed", 400));
         return null;
     }

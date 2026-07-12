@@ -33,7 +33,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         Algo = string.IsNullOrEmpty(algo) ? "gzip" : algo;
     }
 
-    protected internal override global::app.type.@this Mint()
+    protected internal override global::app.type.@this Type
         => new("archive", typeof(byte[])) { Kind = Algo is { } k ? new global::app.type.kind.@this(k) : null };
 
     /// <summary>The CLR exit door — archive hands its own compressed bytes.</summary>

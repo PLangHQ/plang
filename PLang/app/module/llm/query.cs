@@ -32,7 +32,7 @@ public partial class query : IContext, IBuildValidatable
         if (value is not global::app.type.item.list.@this
             && value is not Clr { Value: System.Collections.IList }
             && value is not global::app.type.item.text.@this) // text already handled above
-            return $"Parameter 'Messages' must be a list of {{Role, Content}} objects, got {value!.Mint().Name}";
+            return $"Parameter 'Messages' must be a list of {{Role, Content}} objects, got {value!.Type.Name}";
 
         return null;
     }

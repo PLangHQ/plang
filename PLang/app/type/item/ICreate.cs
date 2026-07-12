@@ -80,7 +80,7 @@ public interface ICreate<TSelf> where TSelf : @this, ICreate<TSelf>
             && ((@this)raw).Clr(typeof(TSelf)) is TSelf rec) return rec;
 
         data.Fail(new global::app.error.Error(
-            $"%{data.Name}% holds a {(raw as @this)?.Mint().Name ?? raw?.GetType().Name} — '{@this.NameOf(typeof(TSelf))}' cannot be created from it.",
+            $"%{data.Name}% holds a {(raw as @this)?.Type.Name ?? raw?.GetType().Name} — '{@this.NameOf(typeof(TSelf))}' cannot be created from it.",
             "CreateItemDeclined", 400));
         return null;
     }

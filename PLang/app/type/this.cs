@@ -297,7 +297,7 @@ public sealed class @this : item.@this
                 return app.variable.@this.Resolve(backing, context);
 
             // Already this type → hold; refine a matching leaf to the declared kind.
-            var minted = leaf.Mint();
+            var minted = leaf.Type;
             if (string.Equals(Name, minted.Name, System.StringComparison.OrdinalIgnoreCase))
             {
                 var refined = Kind != null && minted.Kind == null ? leaf.Kinded(Kind.Name) : leaf;
@@ -323,7 +323,7 @@ public sealed class @this : item.@this
         // declared type/kind. A non-family declared type routes the raw through the collection perimeter
         // (the owner's lift or a clr carrier). The family lift speaks raw natively; refine re-enters here.
         if (_byContext(raw, context) is { } lifted)
-            return string.Equals(Name, lifted.Mint().Name, System.StringComparison.OrdinalIgnoreCase)
+            return string.Equals(Name, lifted.Type.Name, System.StringComparison.OrdinalIgnoreCase)
                 ? lifted : Create(lifted, context);
         return Create(context.App.Type.Create(raw, context), context, format);
 
@@ -517,20 +517,14 @@ public sealed class @this : item.@this
     // entity answers only for its OWN identity (name / apex / CLR lattice); the value composes the
     // narrow history. So no _priors / Accumulate / List here — the entity is a pure identity.
 
+    /// <summary>Does this type entity answer to <paramref name="other"/> by its OWN identity? Name
+    /// match, or the <c>item</c> apex. Composition ("an image is-a path") is NOT answered here — it
+    /// lives on the VALUE's type history (a value born from a path carries a "path" entry), asked via
+    /// <see cref="item.@this.Is"/>. No CLR-inheritance lattice, no reflection.</summary>
     public bool Is(@this? other)
-    {
-        if (other == null) return false;
-        if (string.Equals(Name, other.Name, System.StringComparison.OrdinalIgnoreCase)) return true;
-        // `item` is the apex of the value-type lattice (≈ C# object) — every value
-        // is-a item. The narrow (item+kind=json → dict/list) keeps this true.
-        if (string.Equals(other.Name, "item", System.StringComparison.OrdinalIgnoreCase)) return true;
-        var thisClr = ClrType;
-        var otherClr = other.ClrType;
-        if (thisClr == null || otherClr == null) return false;
-        // Walk the inheritance chain by CLR-type identity (transitive: image : path,
-        // path : X ⟹ image Is X), guarding against self/cycles.
-        return Reaches(thisClr, otherClr, new HashSet<System.Type>());
-    }
+        => other != null
+           && (string.Equals(Name, other.Name, System.StringComparison.OrdinalIgnoreCase)
+               || string.Equals(other.Name, "item", System.StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Name-string IS-A query — resolves <paramref name="typeName"/> to a type and
@@ -542,40 +536,8 @@ public sealed class @this : item.@this
     {
         if (string.IsNullOrWhiteSpace(typeName)) return false;
         if (string.Equals(typeName, "item", System.StringComparison.OrdinalIgnoreCase)) return true;
-        if (string.Equals(Name, typeName, System.StringComparison.OrdinalIgnoreCase)) return true;
-        var other = Context?.App.Type[typeName] ?? new @this(typeName);
-        other.Context ??= Context;
-        return Is(other);
+        return string.Equals(Name, typeName, System.StringComparison.OrdinalIgnoreCase);
     }
-
-    private static bool Reaches(System.Type clr, System.Type target, HashSet<System.Type> seen)
-    {
-        if (!seen.Add(clr)) return false;
-        foreach (var parent in Parents(clr))
-        {
-            // Assignability, not identity: a family's PLang name may resolve to a
-            // VARIANT class (the "path" entity can carry FilePath as its CLR mate
-            // — variants resolve to the family name), and the lattice declares the
-            // family base. Either direction of the base/variant pair satisfies.
-            if (parent == target || parent.IsAssignableFrom(target) || target.IsAssignableFrom(parent)) return true;
-            if (Reaches(parent, target, seen)) return true;
-        }
-        return false;
-    }
-
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, IReadOnlyList<System.Type>> _parentsByClr = new();
-
-    /// <summary>The types a concrete type inherits, from its <c>static IReadOnlyList&lt;System.Type&gt; Type</c> (self included).</summary>
-    private static IReadOnlyList<System.Type> Parents(System.Type clrType)
-        => _parentsByClr.GetOrAdd(clrType, static t =>
-        {
-            var prop = t.GetProperty("Type",
-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.FlattenHierarchy);
-            var raw = prop?.GetValue(null);
-            if (raw is IReadOnlyList<System.Type> list) return list;
-            if (raw is IEnumerable<System.Type> seq) return seq.ToList();
-            return System.Array.Empty<System.Type>();
-        });
 
     // --- Catalog properties (init-only; promoted lazily) ---
 

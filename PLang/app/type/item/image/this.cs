@@ -20,18 +20,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public static string Example => "/some/photo.jpg";
     public static string Shape => "string";
 
-    /// <summary>
-    /// The types this one inherits — self included, declared as <c>typeof</c>
-    /// tokens (compiler-checked, rename-safe). An image <em>is-a</em> path
-    /// (it has-a path facet), so <c>image : path</c>. Read by
-    /// <c>type.@this.Is</c> (the static-<c>Type</c> convention): <c>variable.set</c>
-    /// keeps an image bound to a <c>path</c> slot as-is (image wins) rather than
-    /// downgrading it. Substitutability only — no state/behaviour is inherited,
-    /// so multiple entries here carry none of OOP MI's diamond/MRO baggage.
-    /// </summary>
-    public static new System.Collections.Generic.IReadOnlyList<System.Type> Type { get; }
-        = new[] { typeof(@this), typeof(global::app.type.item.path.@this) };
-
     // Null until loaded — a path-backed image reads nothing until first content
     // access. A bytes-backed image sets this in the constructor.
     private byte[]? _bytes;
@@ -85,12 +73,15 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>An image's entity: kind is the format token from its own mime
     /// ("image/gif" → "gif"), canonicalised through the registry when reachable.</summary>
-    protected internal override global::app.type.@this Mint()
+    protected internal override global::app.type.@this Type
     {
-        var t = Path?.Context?.App.Format.TypeFromMime(Mime);
-        var kind = t is { IsNull: false } ? t.Kind?.Name
-            : Mime.IndexOf('/') is var slash and >= 0 ? Mime[(slash + 1)..] : null;
-        return new global::app.type.@this("image") { Kind = (kind == "octet-stream" ? null : kind) is { } k ? new global::app.type.kind.@this(k) : null };
+        get
+        {
+            var t = Path?.Context?.App.Format.TypeFromMime(Mime);
+            var kind = t is { IsNull: false } ? t.Kind?.Name
+                : Mime.IndexOf('/') is var slash and >= 0 ? Mime[(slash + 1)..] : null;
+            return new global::app.type.@this("image") { Kind = (kind == "octet-stream" ? null : kind) is { } k ? new global::app.type.kind.@this(k) : null };
+        }
     }
 
     /// <summary>
@@ -150,6 +141,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         _bytes = bytes ?? System.Array.Empty<byte>();
         _mime = mime ?? "application/octet-stream";
         Path = path;
+        if (path != null) Accumulate(path);   // born from a path → `is path` from the type history
     }
 
     /// <summary>
@@ -162,6 +154,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         _bytes = bytes ?? System.Array.Empty<byte>();
         Path = path;
+        if (path != null) Accumulate(path);   // born from a path → `is path` from the type history
     }
 
     /// <summary>
@@ -173,6 +166,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public @this(global::app.type.item.path.@this path)
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
+        Accumulate(path);   // born from a path → `is path` from the type history
     }
 
     /// <summary>Imprint the strict kind this image's content must match (from `as image/<kind> strict`).</summary>

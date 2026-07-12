@@ -19,7 +19,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public static string Shape => "bool";
 
     public bool Value { get; }
-    protected internal override global::app.type.@this Mint() => new("bool", typeof(bool));
+    protected internal override global::app.type.@this Type => new("bool", typeof(bool));
 
     public @this(bool value) { Value = value; }
 
@@ -75,7 +75,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (Create(value) is { } built) return built;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
             ? new global::app.error.Error($"Cannot parse '{s}' as bool — expected true or false.", "BoolParseFailed", 400)
-            : new global::app.error.Error($"Cannot convert {((value as global::app.type.item.@this)?.Mint().Name ?? value?.GetType().Name)} to bool.", "BoolConversionFailed", 400));
+            : new global::app.error.Error($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to bool.", "BoolConversionFailed", 400));
         return null;
     }
 

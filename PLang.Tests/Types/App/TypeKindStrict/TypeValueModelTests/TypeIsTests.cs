@@ -19,11 +19,16 @@ public class TypeIsTests
         await Assert.That(app.Type["image"].Is(app.Type["image"])).IsTrue();
     }
 
-    [Test] public async Task Is_Facet_ImageIsPath()
+    [Test] public async Task Is_ImageBornFromPath_IsPath()
     {
         await using var app = TestApp.Create("/test");
-        // image declares static Type = ["image","path"] — it has-a path.
-        await Assert.That(app.Type["image"].Is(app.Type["path"])).IsTrue();
+        var ctx = app.User.Context;
+        // Composition is the VALUE's type history: an image born from a path carries a "path"
+        // entry, so the value answers `is path`. (A bare type entity does NOT — no history.)
+        var path = new global::app.type.item.path.file.@this("/test/photo.png", ctx);
+        var img = new image(new byte[] { 1, 2, 3 }, path);
+        await Assert.That(img.Is(app.Type["path"])).IsTrue();
+        await Assert.That(app.Type["image"].Is(app.Type["path"])).IsFalse();   // bare type: no history
     }
 
     [Test] public async Task Is_NonFacet_ImageIsNotText()

@@ -17,7 +17,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// typed property stamped at creation, never after.</summary>
     public string? Kind { get; init; }
 
-    protected internal override global::app.type.@this Mint()
+    protected internal override global::app.type.@this Type
         => new("binary", typeof(byte[])) { Kind = Kind is { } k ? new global::app.type.kind.@this(k) : null };
 
     public @this(byte[] value) { Value = value ?? System.Array.Empty<byte>(); }
@@ -47,7 +47,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         object? clr = (value as global::app.type.item.@this)?.Clr<object>() ?? value;
         data.Fail(clr is string
             ? new global::app.error.Error("Cannot parse string as binary — expected base64.", "BinaryParseFailed", 400)
-            : new global::app.error.Error($"Cannot convert {(value as global::app.type.item.@this)?.Mint().Name ?? value?.GetType().Name} to binary.", "BinaryConversionFailed", 400));
+            : new global::app.error.Error($"Cannot convert {(value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name} to binary.", "BinaryConversionFailed", 400));
         return null;
     }
 

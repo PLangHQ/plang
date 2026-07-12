@@ -55,7 +55,7 @@ public class @this : global::app.type.item.@this, global::app.module.IContext
     /// specialization (<c>json</c> for a JsonElement, <c>*</c> for an unrecognised POCO).
     /// Mirrors <c>number</c>/<c>int</c>: type = the lattice position, kind = the format.
     /// </summary>
-    protected internal override global::app.type.@this Mint()
+    protected internal override global::app.type.@this Type
         => new global::app.type.@this("item", Kind.Name);
 
     /// <summary>In memory now = the carrier itself (a closed box, like every other item whose

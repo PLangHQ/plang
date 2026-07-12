@@ -114,7 +114,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         if (value is @this v) return v;
         data.Fail(new global::app.error.Error(
-            $"%{data.Name}% holds a {value.Mint().Name} — a variable names a thing; it is born typed (declare 'type:variable'), never created from a value.",
+            $"%{data.Name}% holds a {value.Type.Name} — a variable names a thing; it is born typed (declare 'type:variable'), never created from a value.",
             "CreateVariableDeclined", 400));
         return null;
     }

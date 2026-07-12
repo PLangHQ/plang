@@ -193,6 +193,10 @@ public partial class @this
         return _item.Is(other);
     }
 
+    /// <summary>Is this value (now or in its narrow history) the given type? Asks the value's own
+    /// type history.</summary>
+    public bool Is(type other) => _item?.Is(other) ?? false;
+
     [JsonIgnore]
     public DateTime Created { get; }
 
@@ -426,7 +430,7 @@ public partial class @this
     /// owner). Stays null for types without a kind.
     /// </summary>
     [JsonIgnore]
-    public string? Kind => _item?.Mint().Kind?.Name;
+    public string? Kind => _item?.Type.Kind?.Name;
 
     /// <summary>
     /// Enumerates as (key, value) Data pairs. Data owns the knowledge of how to iterate:

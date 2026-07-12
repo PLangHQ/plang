@@ -45,9 +45,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>A typeless null mints "null"; a typed null mints its declared
     /// type/kind so an empty <c>path</c> slot still answers <c>path</c>.</summary>
-    protected internal override global::app.type.@this Mint()
+    protected internal override global::app.type.@this Type
         => _typeName == null
-            ? base.Mint()
+            ? base.Type
             : new global::app.type.@this(_typeName) { Kind = _kind is { } k ? new global::app.type.kind.@this(k) : null };
 
     /// <summary>

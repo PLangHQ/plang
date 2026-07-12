@@ -31,7 +31,7 @@ public sealed class computed : @this, module.IContext
     /// <summary>The declared answer type when the cell advertises one
     /// (%Now% is a datetime); "item" when undeclared — the computation's
     /// answer carries its own truth at each use.</summary>
-    protected internal override global::app.type.@this Mint()
+    protected internal override global::app.type.@this Type
         => new(_declared ?? NamespaceTail(GetType())) { Kind = _declaredKind is { } k ? new global::app.type.kind.@this(k) : null };
 
     public override bool Cacheable => false;

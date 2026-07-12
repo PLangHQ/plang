@@ -83,7 +83,7 @@ public sealed class Text : ISerializer
     /// </summary>
     public global::app.type.item.@this Read(global::app.type.item.source source, global::app.type.reader.ReadContext ctx)
     {
-        var type = source.Mint();
+        var type = source.Type;
         var typeReader = ctx.Context.App.Type.Reader.Reader(type.Name, type.Kind?.Name, ctx.Context);
         var reader = new global::app.channel.serializer.value.Reader(source.Raw);
         return typeReader.Read(ref reader, type.Kind?.Name, ctx);

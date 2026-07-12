@@ -18,6 +18,12 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// </summary>
     [Out, Store] public abstract string Scheme { get; }
 
+    /// <summary>A path value's type is "path"; its scheme ("file", "http") is the Kind — so
+    /// every scheme variant answers <c>is path</c> by name (no CLR-inheritance lattice), and a
+    /// value that narrowed from a path (an image) carries this "path" entry in its type history.</summary>
+    protected internal override global::app.type.@this Type
+        => new global::app.type.@this("path") { Kind = new global::app.type.kind.@this(Scheme) };
+
 
     /// <summary>
     /// String comparison for "is this path under that root" checks. Linux
@@ -98,7 +104,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
         if (value is @this self) return self;
         if (((value as global::app.type.item.@this)?.Clr<object>() ?? value) is not string raw)
         {
-            data.Fail(new global::app.error.Error($"Cannot convert {((value as global::app.type.item.@this)?.Mint().Name ?? value?.GetType().Name)} to path.", "PathConversionFailed", 400));
+            data.Fail(new global::app.error.Error($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to path.", "PathConversionFailed", 400));
             return null;
         }
         try { return data.Context.App.Type.Scheme.From(raw, data.Context); }

@@ -20,7 +20,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override bool IsLeaf => true;
     public override void Write(global::app.channel.serializer.IWriter w) => w.String(ToString());
-    protected internal override global::app.type.@this Mint() => new("date", typeof(System.DateOnly));
+    protected internal override global::app.type.@this Type => new("date", typeof(System.DateOnly));
 
     public @this(System.DateOnly value) { Value = value; }
 
@@ -49,7 +49,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (Create(value) is { } built) return built;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
             ? new global::app.error.Error($"Cannot parse '{s}' as date — expected ISO yyyy-MM-dd.", "DateParseFailed", 400)
-            : new global::app.error.Error($"Cannot convert {((value as global::app.type.item.@this)?.Mint().Name ?? value?.GetType().Name)} to date.", "DateConversionFailed", 400));
+            : new global::app.error.Error($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to date.", "DateConversionFailed", 400));
         return null;
     }
 

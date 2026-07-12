@@ -21,7 +21,7 @@ public sealed class Ask : global::app.type.item.@this, global::app.type.item.ICr
 {
     /// <summary>The entity is "ask" (the namespace-tail default would say
     /// "output", the owning module, not this value's name).</summary>
-    protected internal override global::app.type.@this Mint()
+    protected internal override global::app.type.@this Type
         => new("ask", typeof(Ask));
 
     /// <summary>The user's response on the resume path. Null while the ask is

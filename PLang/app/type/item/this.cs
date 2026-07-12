@@ -104,7 +104,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// <see cref="Write(global::app.channel.serializer.IWriter)"/>, which serializes to a wire writer.)
     /// </summary>
     public virtual System.Threading.Tasks.ValueTask<@this> Set(string key, bool isIndex, object? value)
-        => throw new System.NotSupportedException($"%…% ({Mint().Name}) cannot take a child '{key}'");
+        => throw new System.NotSupportedException($"%…% ({Type.Name}) cannot take a child '{key}'");
 
     /// <summary>
     /// Read counterpart of <see cref="Write(string, object?)"/>: the value
@@ -192,12 +192,14 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     }
 
     /// <summary>
-    /// This value's OWN type entity — the single owner of its identity. Provenance
-    /// (a dict parsed from a file "still is" a file) is NOT baked into the entity;
-    /// it lives on the value's <see cref="Prior"/> chain and is asked via
-    /// <see cref="Is"/> — the value answers, not a rebuilt type chain.
+    /// This value's OWN type entity — each type answers ITS way (number stamps its precision as
+    /// kind, text its extension, a source its declared judgement). The single owner of its
+    /// identity; provenance (a dict parsed from a file "still is" a file) is NOT baked in — it
+    /// lives on the value's <see cref="Prior"/> chain and is asked via <see cref="Is"/>.
+    /// The default derives the name from the class's namespace tail (repo convention: a type's
+    /// folder IS its name); types whose mate is value-derived (number's tower) override.
     /// </summary>
-    internal global::app.type.@this Type => Mint();
+    protected internal virtual global::app.type.@this Type => new(NamespaceTail(GetType()));
 
     /// <summary>
     /// Is this value (now or in its narrow history) an <paramref name="other"/>? Walks the
@@ -212,20 +214,6 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
             if (p.Type.Is(other)) return true;
         return false;
     }
-
-    /// <summary>
-    /// Mints this value's own type entity — each type answers ITS way (number
-    /// stamps its precision as kind, text its extension, a source its declared
-    /// judgement). The default derives the name from the class's namespace
-    /// tail (<c>app.type.item.file.@this</c> → <c>file</c>; the repo convention that
-    /// a type's folder IS its name) and the CLR mate from the value's backing.
-    /// </summary>
-    protected internal virtual global::app.type.@this Mint()
-        // No CLR mate stamped here — a primitive name resolves its mate through
-        // the alias table in the entity's own ctor; a domain name resolves
-        // through the registry when a Context is present. Types whose mate is
-        // value-derived (number's tower) override.
-        => new(NamespaceTail(GetType()));
 
     /// <summary>
     /// How this value clones when its holding <c>Data</c> is cloned. The default
@@ -263,7 +251,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public @this? Facet(string typeName)
     {
         for (var i = (this as @this); i != null; i = i._prior)
-            if (string.Equals(i.Mint().Name, typeName, System.StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(i.Type.Name, typeName, System.StringComparison.OrdinalIgnoreCase))
                 return i;
         return null;
     }

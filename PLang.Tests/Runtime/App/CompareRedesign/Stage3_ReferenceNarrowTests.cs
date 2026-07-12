@@ -54,10 +54,11 @@ public class Stage3_ReferenceNarrowTests : IDisposable
         var result = await Read("file.txt");
         await Assert.That(result.Type!.Name).IsEqualTo("file");
         await Assert.That(result.Peek()).IsTypeOf<global::app.type.item.file.@this>();
-        // .Is() chain — file is-a path is-a item; content untouched
-        await Assert.That(result.Type.Is("file")).IsTrue();
-        await Assert.That(result.Type.Is("path")).IsTrue();
-        await Assert.That(result.Type.Is("item")).IsTrue();
+        // is-a chain answered by the VALUE from its type history (file born from path): file is-a
+        // path is-a item; content untouched.
+        await Assert.That(result.Is("file")).IsTrue();
+        await Assert.That(result.Is("path")).IsTrue();
+        await Assert.That(result.Is("item")).IsTrue();
     }
 
     [Test]

@@ -31,3 +31,12 @@ Worth a dedicated fix (eager scheme init / lock) so name-diffs stop flickering.
 Also relevant to the open byte-backed-source ClrType question
 ([[collapse-byte-backed-source-clrtype]]): the unknown-mime fallback `type.Create("binary", …)` is a
 concrete site where a byte[] borns declared `binary` (now a lazy source).
+
+## `!info` — a standardized metadata surface across all types (Ingi, 2026-07-12)
+Deferred discussion. Today `%config!file%` (facet-value nav via item._prior) returns the origin
+file/path VALUE — navigable FileInfo-like metadata (`!file.size`, `!file.exists`, `!file.fileName`,
+`!file.mimeType`, path.file.Scheme/Extension/…). Ingi: `!file` is the wrong name; it should be a
+STANDARDIZED `!info` property, registered by the type on creation, uniform across all types —
+`!info` on image → EXIF, on text → length, on file → FileInfo. "Standardizing it would give us great
+power." To design after the `type.list` (type-history) change lands. The file type should register the
+info property on the object at creation (not reflection).

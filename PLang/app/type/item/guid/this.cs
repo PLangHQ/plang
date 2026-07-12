@@ -25,7 +25,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override bool IsLeaf => true;
     public override void Write(global::app.channel.serializer.IWriter w) => w.Guid(Value);
-    protected internal override global::app.type.@this Mint() => new("guid", typeof(System.Guid));
+    protected internal override global::app.type.@this Type => new("guid", typeof(System.Guid));
 
     public @this(System.Guid value) { Value = value; }
 
@@ -52,7 +52,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (Create(value) is { } built) return built;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
             ? new global::app.error.Error($"Cannot parse '{s}' as guid — expected a 36-char guid (e.g. 550e8400-e29b-41d4-a716-446655440000).", "GuidParseFailed", 400)
-            : new global::app.error.Error($"Cannot convert {((value as global::app.type.item.@this)?.Mint().Name ?? value?.GetType().Name)} to guid.", "GuidConversionFailed", 400));
+            : new global::app.error.Error($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to guid.", "GuidConversionFailed", 400));
         return null;
     }
 

@@ -48,7 +48,7 @@ public sealed class @this : global::app.type.item.@this
     }
 
     /// <summary>type = <c>table</c>; kind = the encoding it was read from (csv/xlsx).</summary>
-    protected internal override global::app.type.@this Mint() => new("table", Kind);
+    protected internal override global::app.type.@this Type => new("table", Kind);
 
     /// <summary>
     /// Navigate <c>rows</c> (the row list) and <c>headers</c> (the column names).

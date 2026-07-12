@@ -17,9 +17,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static string Example => "/some/config.json";
     public static string Shape => "string";
 
-    /// <summary>The is-a lattice — a file is-a path (read by <c>type.@this.Is</c>).</summary>
-    public static new System.Collections.Generic.IReadOnlyList<System.Type> Type { get; }
-        = new[] { typeof(@this), typeof(global::app.type.item.path.@this) };
 
     /// <summary>The location facet — owns scheme, auth gate, stat.</summary>
     [global::app.LlmBuilder, global::app.Out, global::app.Store]
@@ -39,6 +36,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public @this(global::app.type.item.path.@this path)
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
+        // Born from a path — inject its type into this value's history so `is path` answers from
+        // the type chain (no CLR-inheritance lattice). The type owns its history of types.
+        Accumulate(path);
     }
 
     /// <summary>True once the content is in memory (the reference was examined).</summary>
@@ -47,10 +47,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>A file's entity: name "file", kind = the extension's canonical
     /// form through the format registry ("json", "csv", …) — location metadata,
     /// never reads content.</summary>
-    protected internal override global::app.type.@this Mint()
+    protected internal override global::app.type.@this Type
     {
-        var t = Context.App.Format.TypeFromExtension(Path.Extension);
-        return new global::app.type.@this("file", typeof(@this)) { Kind = t is { IsNull: false } ? t.Kind : null };
+        get
+        {
+            var t = Context.App.Format.TypeFromExtension(Path.Extension);
+            return new global::app.type.@this("file", typeof(@this)) { Kind = t is { IsNull: false } ? t.Kind : null };
+        }
     }
 
     /// <summary>

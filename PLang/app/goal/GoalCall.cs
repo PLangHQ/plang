@@ -21,7 +21,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
 
     /// <summary>The entity is "goal.call" (the namespace-tail default would say
     /// "goal", which is the goal entity's name, not this value's).</summary>
-    protected internal override global::app.type.@this Mint()
+    protected internal override global::app.type.@this Type
         => new("goal.call", typeof(GoalCall));
 
     /// <summary>Event context — set by Events.Stamp when this GoalCall is an event binding.</summary>
