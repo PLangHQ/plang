@@ -242,21 +242,19 @@ public sealed class OpenAi : ILlm
             if (!httpResult.Success)
                 return httpResult;
 
-            // --- Parse response: navigate the channel-deserialized body (a dict);
-            // no JsonElement. http returns plain Data whose lazy value materializes
-            // (json → plang dict) through the reader; Value<dict> hands it typed.
-            var dict = await httpResult.Value<dict>();
-            if (dict == null)
-                return context.Error(new ActionError("LLM response was not an object", "EmptyResponse", 500));
+            // --- Parse response: the body materializes as a clr(json) and is NAVIGATED by path
+            // through its own kind (never lowered to a dict). OpenAi's loop is async, so each hop
+            // is the async Get door; no Value<dict>, no reflection.
+            var response = httpResult;
 
             // Usage / cost. (Token counters + cost math stay CLR/decimal here for now
             // — the class-wide native-plang-types migration is a tracked follow-up;
             // see .bot/compare-redesign/coder/native-plang-types-migration.md.)
-            if (dict.Get<item>("usage") != null)
+            if (await Nav<item>(response, "usage") != null)
             {
-                number callPrompt     = dict.Get<number>("usage.prompt_tokens") ?? 0;
-                number callCompletion = dict.Get<number>("usage.completion_tokens") ?? 0;
-                number callCached     = dict.Get<number>("usage.prompt_tokens_details.cached_tokens") ?? 0;
+                number callPrompt     = await Nav<number>(response, "usage.prompt_tokens") ?? 0;
+                number callCompletion = await Nav<number>(response, "usage.completion_tokens") ?? 0;
+                number callCached     = await Nav<number>(response, "usage.prompt_tokens_details.cached_tokens") ?? 0;
 
                 totalPromptTokens     += callPrompt.ToInt32();
                 totalCompletionTokens += callCompletion.ToInt32();
@@ -281,17 +279,17 @@ public sealed class OpenAi : ILlm
             }
 
             // First choice
-            if (dict.Get<item>("choices[0]") == null)
+            if (await Nav<item>(response, "choices[0]") == null)
                 return context.Error(new ActionError("No choices in LLM response", "EmptyResponse", 500));
 
-            string? content = dict.Get<text>("choices[0].message.content")?.ToString();
+            string? content = (await Nav<text>(response, "choices[0].message.content"))?.ToString();
 
             // Check finish_reason BEFORE parsing content — a truncated response
             // is not a JSON bug, it's the model running out of output budget. The
             // same goes for content_filter (model refused) and other non-"stop"
             // terminations. Surface these as dedicated errors so callers don't
             // waste time parsing incomplete JSON.
-            var finishReason = dict.Get<text>("choices[0].finish_reason")?.ToString();
+            var finishReason = (await Nav<text>(response, "choices[0].finish_reason"))?.ToString();
             var isTerminal = finishReason != null
                 && finishReason != "stop"
                 && finishReason != "tool_calls";
@@ -322,15 +320,14 @@ public sealed class OpenAi : ILlm
                 });
             }
 
-            // --- Tool calls? ---  just more of the dict.
-            var toolCallsValue = dict.Get<global::app.type.item.list.@this>("choices[0].message.tool_calls");
-            if (toolCallsValue != null && toolCallsValue.Count.ToInt32() > 0)
+            // --- Tool calls? ---  navigate them off the clr(json) response (no dict lowering).
+            var toolCalls = await ParseToolCalls(response);
+            if (toolCalls.Count > 0)
             {
                 if (toolCallCount >= (await action.MaxToolCalls.Value())!.ToInt64())
                     break; // hit limit
 
                 lastContent = content;
-                var toolCalls = ParseToolCalls(dict);
 
                 // Slice to remaining budget — never execute more tools than the limit allows
                 int remaining = (await action.MaxToolCalls.Value())!.ToInt32() - toolCallCount;
@@ -964,25 +961,32 @@ public sealed class OpenAi : ILlm
 
     // --- Response parsing ---
 
-    // Tool calls are just part of the response dict — navigate them.
-    private static List<ToolCall> ParseToolCalls(dict response)
+    // Tool calls are just part of the response — navigate them off the clr(json) through its own
+    // kind (enumerate the array, navigate each element), never lowering json to a dict/list.
+    private static async System.Threading.Tasks.ValueTask<List<ToolCall>> ParseToolCalls(data.@this response)
     {
         var result = new List<ToolCall>();
-        var arr = response.Get<global::app.type.item.list.@this>("choices[0].message.tool_calls");
-        if (arr == null) return result;
+        var arr = await response.Get("choices[0].message.tool_calls");
+        if (!arr.IsInitialized) return result;
 
-        int count = arr.Count.ToInt32();
-        for (int i = 0; i < count; i++)
-        {
-            var b = $"choices[0].message.tool_calls[{i}]";
+        foreach (var (_, el) in await arr.EnumerateItems())
             result.Add(new ToolCall
             {
-                Id        = response.Get<text>($"{b}.id")?.ToString() ?? "",
-                Name      = response.Get<text>($"{b}.function.name")?.ToString() ?? "",
-                Arguments = response.Get<text>($"{b}.function.arguments")?.ToString() ?? ""
+                Id        = (await Nav<text>(el, "id"))?.ToString() ?? "",
+                Name      = (await Nav<text>(el, "function.name"))?.ToString() ?? "",
+                Arguments = (await Nav<text>(el, "function.arguments"))?.ToString() ?? ""
             });
-        }
         return result;
+    }
+
+    // Navigate a value by path (async, through its own kind) and hand it typed — null on a miss.
+    // Keeps a json response as clr: no Value<dict> lowering, just the value's own kind navigation.
+    private static async System.Threading.Tasks.ValueTask<T?> Nav<T>(data.@this value, string path)
+        where T : global::app.type.item.@this
+    {
+        var d = await value.Get(path);
+        if (!d.IsInitialized) return null;
+        return (await d.Value()) as T;
     }
 
     // --- Helpers ---
