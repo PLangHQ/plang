@@ -1,5 +1,7 @@
 # Format is a birth fact (architect → coder)
 
+> **SUPERSEDED — do not implement.** The design below was retracted in the 2026-07-12 session: a family-owned *mime* fact is still a format name in the type layer, and dict/list have nothing to do with `application/plang`. The settled design is `.bot/wire-source-split/architect/plan.md` (branch `wire-source-split`): no formats anywhere in the type layer, declaration-driven materialization, two source kinds (`source` / `wire`).
+
 Answers `coder/rawformat-is-the-format-a-caller-fact.md`. Settled with Ingi in session 2026-07-12. This subsumes the "minimal unblock" — don't land the stopgap, land this; the 5 byte-backed reds green under it (byte raw → `application/octet-stream` → registered value dispatch → the type reader pulls `Bytes()`).
 
 > **You own this.** Every code block below is a suggestion — the design decisions (what owns what, what dies) are settled; the exact bodies, private plumbing names, and mechanics are yours. Flag back anything that doesn't survive contact with the code.
