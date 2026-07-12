@@ -3,8 +3,8 @@ namespace app.type.table.serializer;
 /// <summary>
 /// Reader for the <c>table</c> shape encoded as <c>csv</c>. Turns the type's own
 /// raw form (a csv string) into a <see cref="app.type.table.@this"/> grid — the
-/// read-side half keyed at <c>(table, csv)</c> in the reader registry, the mirror
-/// of <see cref="app.type.@object.serializer.json"/> for the tree shape.
+/// read-side half keyed at <c>(table, csv)</c> in the reader registry, the sibling
+/// of the json kind's own <c>Load</c> for the tree shape.
 ///
 /// <para>The first record is the header row; each following record becomes a row
 /// keyed by header. RFC-4180 quoting is honoured — a quoted field may contain

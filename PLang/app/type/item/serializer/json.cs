@@ -27,9 +27,6 @@ public partial class json
             new global::app.type.reader.ReadContext(_context, Verify: false));
     }
 
-    public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
-        => global::app.type.@object.serializer.json.Read(raw, kind, ctx);
-
     private const int MaxDepth = 128;
 
     /// <summary>

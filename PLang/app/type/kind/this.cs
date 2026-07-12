@@ -115,11 +115,15 @@ public class @this
         object host, string key, bool isIndex, object? value, global::app.actor.context.@this ctx)
         => throw new System.NotSupportedException($"kind '{Name}' cannot set a child");
 
-    /// <summary>Load a raw payload (string / bytes) into a value OF this kind. The default —
-    /// for md and any kind the system doesn't parse — loads it as <c>text</c>. json overrides.</summary>
-    public virtual global::System.Threading.Tasks.ValueTask<global::app.data.@this> Load(
+    /// <summary>Decode a raw payload (string / bytes) into a value OF this kind, or DECLINE
+    /// (null) when this kind owns no decode of its own. Decline is the discriminator (same
+    /// answers-or-declines convention as <c>ICreate.Create</c>): the materialization rung asks
+    /// the kind first, and a decline falls to the family's type reader — so a kind whose content
+    /// is just text (md, unknown) declines here and reads as text through its family. Only a kind
+    /// that owns a real decode overrides (json → clr).</summary>
+    public virtual global::System.Threading.Tasks.ValueTask<global::app.data.@this?> Load(
         object raw, global::app.actor.context.@this ctx)
-        => new(ctx.Ok(new global::app.type.item.text.@this(raw)));
+        => new((global::app.data.@this?)null);
 
     /// <summary>Convert a source value INTO a value of this kind — the outbound owns it (dict
     /// from json, audio from text). An error <c>Data</c> when the source can't become this kind.</summary>

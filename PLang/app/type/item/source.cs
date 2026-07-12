@@ -125,9 +125,20 @@ public class source : @this, module.IContext
             return await resolved.Value();
         }
 
-        await System.Threading.Tasks.Task.CompletedTask;
         try
         {
+            // Kind-first materialization (most-specific owner): a kind that owns its own decode
+            // answers on first touch (json → clr) — lazy until here, never at .pr read. The kind is
+            // the REAL subclass via the one selection door; a decline (null) falls to the type
+            // reader below (png→image, csv→table, …). Covers both entrances — a content source and
+            // an inherited wire both parse here. A bad parse rides the catch → MaterializeFailed.
+            if (_type.Kind is { } kind
+                && await Context.App.Type.Kind[kind.Name].Load(_value, Context) is { } loaded)
+            {
+                var decoded = await loaded.Value();
+                decoded.list.Add(this);   // the source rides the materialized value's prior chain
+                return decoded;
+            }
             var item = Read();
             if (ReferenceEquals(item, this)) return this;
             // Container round-trip guard: a value DECLARED a container (dict/list) that

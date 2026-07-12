@@ -63,11 +63,19 @@ public sealed class @this : global::app.type.kind.@this
         return new(dict);
     }
 
-    // Raw json text/bytes → a clr(json), through the single json parse owner.
-    public override global::System.Threading.Tasks.ValueTask<global::app.data.@this> Load(
+    // Raw json text/bytes → clr(json). json owns its OWN parse — object is not a plang type, so
+    // this is the one home (was object/serializer/json.cs, deleted). A non-raw carrier declines
+    // (the family reader handles it); structured json stays a clr, navigated/enumerated lazily by
+    // this kind — a consumer that needs a native structure asks explicitly (`as dict`).
+    public override global::System.Threading.Tasks.ValueTask<global::app.data.@this?> Load(
         object raw, global::app.actor.context.@this ctx)
-        => new(ctx.Ok(global::app.type.@object.serializer.json.Read(
-            raw, "json", new global::app.type.reader.ReadContext(ctx))));
+    {
+        if (raw is not (string or byte[])) return new((global::app.data.@this?)null);
+        var s = new global::app.type.item.text.@this(raw).ToString();
+        if (string.IsNullOrEmpty(s)) return new(ctx.Null());
+        using var doc = JsonDocument.Parse(s);
+        return new(ctx.Ok(new global::app.type.clr.@this(doc.RootElement.Clone(), ctx, this)));
+    }
 
     // Materialize this json content INTO the CLR host target asks for. json owns the format
     // bridge — its element becomes a reader — and the `*` kind owns the shape (the [Store] host
