@@ -150,9 +150,10 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     {
         var data = JsonFile("accum.json");
         await data.Get("database");
-        await Assert.That(data.Type!.Is("dict")).IsTrue();
-        await Assert.That(data.Type.Is("file")).IsTrue();
-        await Assert.That(data.Type.Is("item")).IsTrue();
+        // Provenance is the VALUE's — ask it, not a type entity that copied the chain.
+        await Assert.That(data.Is("dict")).IsTrue();
+        await Assert.That(data.Is("file")).IsTrue();
+        await Assert.That(data.Is("item")).IsTrue();
     }
 
     [Test]
@@ -166,16 +167,16 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     }
 
     [Test]
-    public async Task BangType_PostNarrow_HeadlineIsDict_TypeListIsChain()
+    public async Task PostNarrow_ValueStillIsBothDictAndFile()
     {
         var data = JsonFile("chain.json");
         await data.Get("database");
-        var headline = data.Type!;
-        await Assert.That(headline.Name).IsEqualTo("dict");
-        // %config!type.list% — the chain, newest at index 0
-        var names = headline.List.Select(t => t.Name).ToList();
-        await Assert.That(names[0]).IsEqualTo("dict");
-        await Assert.That(names).Contains("file");
+        // Headline is the narrowed content type.
+        await Assert.That(data.Type!.Name).IsEqualTo("dict");
+        // Provenance lives on the VALUE (its Prior chain), not baked onto the type entity: the
+        // narrowed value still answers `is` for both its content type and its origin.
+        await Assert.That(data.Is("dict")).IsTrue();
+        await Assert.That(data.Is("file")).IsTrue();
     }
 
     [Test]

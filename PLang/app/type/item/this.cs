@@ -192,22 +192,25 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     }
 
     /// <summary>
-    /// This value's type — the entity, minted on ask, the whole chain riding
-    /// along (a dict parsed from a file answers <c>[dict, file]</c>). The
-    /// instance is the single owner of its identity; <c>Data.Type</c> is a
-    /// pure forward to this. Internal: a fresh entity per get — a public
-    /// property here would send reflection walks (serializers, structural
-    /// comparers) into an unbounded mint chain.
+    /// This value's OWN type entity — the single owner of its identity. Provenance
+    /// (a dict parsed from a file "still is" a file) is NOT baked into the entity;
+    /// it lives on the value's <see cref="Prior"/> chain and is asked via
+    /// <see cref="Is"/> — the value answers, not a rebuilt type chain.
     /// </summary>
-    internal global::app.type.@this Type
+    internal global::app.type.@this Type => Mint();
+
+    /// <summary>
+    /// Is this value (now or in its narrow history) an <paramref name="other"/>? Walks the
+    /// value's own <see cref="Prior"/> chain — a <c>read config.json</c> that narrowed to a
+    /// <c>dict</c> still answers <c>Is(file)</c> from the retained source entry. Each entry
+    /// answers by its own type (name / apex / CLR lattice); provenance is the VALUE's, not a
+    /// copy baked onto a type entity.
+    /// </summary>
+    public bool Is(global::app.type.@this? other)
     {
-        get
-        {
-            var minted = Mint();
-            for (var p = _prior; p != null; p = p._prior)
-                minted.Accumulate(p.Mint());
-            return minted;
-        }
+        for (var p = (this as @this); p != null; p = p._prior)
+            if (p.Type.Is(other)) return true;
+        return false;
     }
 
     /// <summary>

@@ -47,9 +47,11 @@ public class Stage2_PlaneResolverTests
     }
 
     [Test]
-    public async Task BangTypeList_ReturnsAccumulatedChain_NewestFirst()
+    public async Task PostNarrow_ValueStillIsBothContentAndOrigin()
     {
-        // %x!type.list% post-narrow → [dict, file] (newest at index 0)
+        // Provenance is the value's own chain — post-narrow it still IS both the parsed content
+        // type and its file origin. (The old %x!type.list% raw-chain surface retired with the
+        // type-entity chain; `is` on the value is the surface.)
         var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-st2chain-" + System.Guid.NewGuid().ToString("N")[..8]);
         Directory.CreateDirectory(dir);
         await using var app = TestApp.Create(dir);
@@ -61,11 +63,9 @@ public class Stage2_PlaneResolverTests
             };
             var data = await read.Run();
             await data.Get("a");                       // narrow
-            var chain = await data.Get("!type.list");
-            var list = (global::app.type.item.list.@this)chain.Peek()!;
-            var names = list.Items.Select(d => ((global::app.type.@this)d.Peek()!).Name).ToList();
-            await Assert.That(names[0]).IsEqualTo("dict");
-            await Assert.That(names).Contains("file");
+            await Assert.That(data.Type!.Name).IsEqualTo("dict");
+            await Assert.That(data.Is("dict")).IsTrue();
+            await Assert.That(data.Is("file")).IsTrue();
         }
         finally { Directory.Delete(dir, true); }
     }

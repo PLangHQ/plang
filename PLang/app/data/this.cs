@@ -182,6 +182,17 @@ public partial class @this
     [JsonIgnore]
     public bool HasVariableReference => _item?.Type.Template != null;
 
+    /// <summary>Is this value (now or in its narrow history) a <paramref name="typeName"/>? Asks the
+    /// VALUE, which walks its own provenance chain (a narrowed <c>dict</c> still answers <c>is file</c>).
+    /// Resolves the name to a type entity through the registry. False for a value-less Data.</summary>
+    public bool Is(string typeName)
+    {
+        if (_item == null || string.IsNullOrWhiteSpace(typeName)) return false;
+        var other = _context?.App.Type[typeName] ?? new type(typeName);
+        other.Context ??= _context;
+        return _item.Is(other);
+    }
+
     [JsonIgnore]
     public DateTime Created { get; }
 
@@ -405,7 +416,7 @@ public partial class @this
             // registry-backed reads (Is, fold properties) resolve.
             if (_item == null) return type.Null;
             var minted = _item.Type;
-            foreach (var entry in minted.List) entry.Context ??= _context;
+            minted.Context ??= _context;   // registry-backed reads (Is, fold properties) resolve
             return minted;
         }
     }

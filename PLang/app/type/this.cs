@@ -512,51 +512,10 @@ public sealed class @this : item.@this
     /// the declared type is kept as-is (image wins over a <c>path</c> hint)
     /// rather than converted/downgraded.</para>
     /// </summary>
-    // --- Accumulated identity (the narrow chain) ---
-    //
-    // A reference narrows to its content type on examination: `read config.json`
-    // is a `file`; navigating it parses the content and the SAME Data's type
-    // becomes `dict` — with `file` RETAINED here. Identity accumulates, so
-    // post-narrow the value `.Is(dict)` AND `.Is(file)`, and `!` resolves
-    // chain-wide (`%config!file!path%` works on both branches).
-    private System.Collections.Generic.List<@this>? _priors;
-
-    /// <summary>
-    /// The identity chain, newest (headline) first: post-narrow
-    /// <c>[dict, file]</c>. A value that never narrowed is just <c>[self]</c>
-    /// (the static lattice answers the rest). JsonIgnore — self-inclusive, so
-    /// a reflective wire walk would cycle; the chain is a navigation surface
-    /// (<c>%x!type.list%</c>), not a wire shape.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonIgnore]
-    public IReadOnlyList<@this> List
-    {
-        get
-        {
-            var chain = new List<@this> { this };
-            if (_priors != null) chain.AddRange(_priors);
-            return chain;
-        }
-    }
-
-    /// <summary>
-    /// Retain <paramref name="prior"/> (and its accumulated chain) behind this
-    /// headline — the narrow calls this when the content type replaces the
-    /// reference type on a Data.
-    /// </summary>
-    public void Accumulate(@this prior)
-    {
-        _priors ??= new List<@this>();
-        foreach (var entry in prior.List)
-            if (!_priors.Any(p => string.Equals(p.Name, entry.Name, System.StringComparison.OrdinalIgnoreCase))
-                && !string.Equals(entry.Name, Name, System.StringComparison.OrdinalIgnoreCase))
-                _priors.Add(entry);
-    }
-
-    /// <summary>The chain entry whose name matches, or null — the chain-wide
-    /// <c>!</c> lookup (<c>%x!file%</c> reaches the file facet post-narrow).</summary>
-    public new @this? Facet(string name) =>
-        List.FirstOrDefault(t => string.Equals(t.Name, name, System.StringComparison.OrdinalIgnoreCase));
+    // Provenance ("a narrowed value still IS what it was") is NOT baked onto the type entity —
+    // it lives on the VALUE's own Prior chain and is answered by item.@this.Is walking it. A type
+    // entity answers only for its OWN identity (name / apex / CLR lattice); the value composes the
+    // narrow history. So no _priors / Accumulate / List here — the entity is a pure identity.
 
     public bool Is(@this? other)
     {
@@ -565,8 +524,6 @@ public sealed class @this : item.@this
         // `item` is the apex of the value-type lattice (≈ C# object) — every value
         // is-a item. The narrow (item+kind=json → dict/list) keeps this true.
         if (string.Equals(other.Name, "item", System.StringComparison.OrdinalIgnoreCase)) return true;
-        // Accumulated identity — a narrowed value still IS what it was.
-        if (_priors != null && _priors.Any(p => p.Is(other))) return true;
         var thisClr = ClrType;
         var otherClr = other.ClrType;
         if (thisClr == null || otherClr == null) return false;
