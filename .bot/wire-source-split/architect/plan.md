@@ -44,6 +44,10 @@ The incumbent owner of "which reader materializes this raw" is `source._format` 
 2. **The `TypeOf` narrowing trap.** `kind.@this.Type` resolves kind→type via `App.Type.Reader.TypeOf(name)` (`type/kind/this.cs:50`), and `TypeOf` scans only the static-mode tables (`_runtime`/`_generated`). Converting `object/json` to a typed reader silently breaks `{binary, json}` → `object` narrowing. Fix: `TypeOf` also scans `_runtimeTyped`/`_generatedTyped` (or the registration keeps a static-table entry). No compile error guards this — it must land with issue 1 in the same commit.
 3. **Pre-existing: the structural throw escapes the failure story.** `source.Value`'s catch filters `JsonException or FormatException or InvalidOperationException` (`source.cs:157`), but `value.Reader`'s structural pulls throw `NotSupportedException` (`value/reader.cs:77-78`) — today a `{dict}`-declared source on the value dispatch throws past MaterializeFailed into the courier. Fix: add `NotSupportedException` to the filter.
 
+## Step 0 — mark the demolition list `[Obsolete]` first (Ingi's ruling)
+
+Before any behavior change, annotate every member on the demolition worklist with `[System.Obsolete("wire-source-split: dies with this branch — see architect/plan.md")]`. Usages light up project-wide from day one, nothing new grows against a dying member, and the final cleanup commit is mechanical: delete everything still carrying the attribute.
+
 ## Code, file by file
 
 ### 1. `PLang/app/type/item/source.cs`
@@ -70,12 +74,21 @@ private protected virtual global::app.type.item.@this Read()
         new global::app.type.reader.ReadContext(Context, _type.Template));  // EXISTING ctor, same args as today
 }
 
-// Write() — the Text.Mime compare dies; content is content, no fork left:
+// Write() — the Text.Mime compare dies. Serialization is a USE (Ingi's ruling: a list literal
+// writes out as a list, never as a quoted blob of its raw). A template persists as AUTHORED —
+// verbatim, quoted, never resolved at write (the %ref% must survive in the .pr). Plain content
+// materializes and the VALUE writes itself — Read() is the same first-touch parse Value() runs;
+// a bad literal fails loud at write instead of corrupting the document. Bytes short-circuit
+// (they already ARE the value's byte form — no point materializing an image to dump its bytes).
 public override void Write(global::app.channel.serializer.IWriter w)
 {
     if (_value is byte[] b) { w.Bytes(b); return; }
-    w.String(_value.ToString() ?? "");   // the value's own content — a quoted string, always
+    if (_value is string s && (IsVariable || _type.Template != null)) { w.String(s); return; }
+    Read().Write(w);   // the value's own render — dict/list via their converter, number inline, text quoted
 }
+// Consequence (value-faithful, Ingi-approved direction): a literal "42" declared {number} now
+// writes 42 inline (was quoted via text/plain); reads back as a wire {number} — value-identical.
+// Coder verifies every item type reachable here implements Write(IWriter) sensibly.
 
 // NEW — re-birth under a new declaration (replaces type/this.cs reaching into src.Raw/src.Format):
 internal virtual source Declared(global::app.type.@this type) => new source(_value, type, Context);
@@ -87,10 +100,12 @@ catch (System.Exception ex) when (ex is System.Text.Json.JsonException or System
 
 `sealed` comes off the class (wire extends it). Everything else — `Value()`'s failure story, the container round-trip guard, `Peek`, `Clone`, navigation, `IsTruthy`, `Cacheable` — is untouched and inherited by wire.
 
-### 2. NEW `PLang/app/type/item/wire.cs`
+### 2. NEW `PLang/app/type/item/wire/this.cs`
+
+Ingi's ruling: wire IS-A item (`wire : source : item.@this`), so it gets its own folder per the @this convention — `type/item/wire/this.cs`, namespace `app.type.item.wire`, class `@this`. (References read `item.wire.@this`; the class body below keeps the name `wire` in prose.)
 
 ```csharp
-namespace app.type.item;
+namespace app.type.item.wire;
 
 /// <summary>
 /// A still-encoded slice of a larger document — raw text in the CAPTURE's encoding (a .pr
@@ -101,12 +116,12 @@ namespace app.type.item;
 /// wire — the capture decodes it to bare content (a <see cref="source"/>); only
 /// structured/number/bool slices ride here. (Unrelated to the input/output channels.)
 /// </summary>
-public sealed class wire : source
+public sealed class @this : global::app.type.item.source
 {
     // The format owner that sliced this raw — an object reference, never a name.
     private readonly global::app.channel.serializer.ISerializer _reader;
 
-    public wire(string slice, global::app.type.@this type, actor.context.@this context,
+    public @this(string slice, global::app.type.@this type, actor.context.@this context,
         global::app.channel.serializer.ISerializer reader)
         : base(slice, type, context)
         => _reader = reader ?? throw new System.ArgumentNullException(nameof(reader));
@@ -119,8 +134,8 @@ public sealed class wire : source
     // Verbatim — already document text, rides inline unquoted, byte-identical.
     public override void Write(global::app.channel.serializer.IWriter w) => w.Raw((string)Raw);
 
-    internal override source Declared(global::app.type.@this type)
-        => new wire((string)Raw, type, Context, _reader);
+    internal override global::app.type.item.source Declared(global::app.type.@this type)
+        => new @this((string)Raw, type, Context, _reader);
 }
 ```
 
@@ -150,7 +165,7 @@ return Create(context.App.Type.Create(raw, context), context);
 /// over itself. Mints the lazy wire; the parse stays at first touch.</summary>
 public item.@this Create(string slice, global::app.actor.context.@this context,
     global::app.channel.serializer.ISerializer reader)
-    => new item.wire(slice, this, context, reader);
+    => new item.wire.@this(slice, this, context, reader);
 ```
 
 ### 4. `PLang/app/data/reader/this.cs` — construct at the point of knowledge
@@ -250,7 +265,7 @@ reader.BeginObject();                    // existing walk, unchanged from here
 | `channel.@this.StampType(context)` | `channel/this.cs:307-316` | step 6 |
 | `deferredRaw` / `deferredFormat` / `born` locals + twin tail arms | `data/reader/this.cs:39-41, tail` | step 4 |
 | file's serializer/format lines | `path/file/this.Operations.cs:73-75` | step 5 |
-| `serializer.list.@this.Text` property | `channel/serializer/list/this.cs:130` | after steps 5+6 remove both callers — delete, or keep only if tests need a door |
+| `serializer.list.@this.Text` property | `channel/serializer/list/this.cs:130` | after steps 5+6 remove both callers — delete it AND its tests (Ingi's ruling; an orphaned door invites new callers) |
 | `UnregisteredMimeType` reachable from materialization | via `Serializers[_format]` | unreachable after step 1 (the type STAYS for channel routing) |
 
 **Stays-list (explicit):** `ISerializer.Read` (the wire kind's door — reached by reference, never lookup); `plang.Read` ≡ `Json.Read` twin bodies (both now legitimate doors; dedup is separate debt); `Text.Read` (likely orphaned after this branch — verify and delete if so); `ResolveForWrite` (channel write policy — different fact, shape flagged as debt); `StampReadAsync` (smaller, still verb+noun — debt); the wire reader's eager string-token decode (settled: format work + the `%ref%` birth gate); `value.Reader` / `json.Reader`; the reader registry; laziness end-to-end.
@@ -258,16 +273,24 @@ reader.BeginObject();                    // existing walk, unchanged from here
 ## Behavior changes + open question
 
 - **The 5 strict-image reds green** ({image,gif} bytes → value dispatch → image reader `Bytes()`), and `{text}`-declared bytes stop throwing too.
-- **Double-encoded leniency (new):** a `{dict}`-declared slot arriving as a json *string containing json* now parses (the literal arm) where today it fails — acceptable, it is the same mechanism that makes authored container literals work.
-- **OPEN — needs Ingi's yes/no + a golden check:** an *authored* container literal (content source `[1,2,3]`) writes out as a quoted string where today it rides inline (`RawFormat` sent it via plang). Round-trips value-identical and signs self-consistently, but `.pr` bytes for that case change. Wire-captured slots are unaffected (verbatim via `wire`).
+- **Settled (Ingi): serialization is a use — a content source writes as its VALUE.** A list literal writes as a list (materialize-on-write, the value renders itself), a number literal writes inline (`42`, was quoted), a template persists as authored, a wire passes through byte-identical. See the `Write` body in §1.
+- **OPEN — double-encoded leniency, awaiting Ingi:** a `{dict}`-declared slot arriving as a json *string containing json* (`"value": "{\"a\": 1}"` instead of `"value": {"a": 1}`) now parses via the literal arm where today it fails at first touch. Same mechanism that makes authored container literals work; question is whether tolerating double-encoding producers is a feature or a masked producer bug.
+
+## Sequencing (Ingi's ruling)
+
+`wire-source-split` finishes FIRST, then merges into `navigation-driven-record-builder` (which inherits the greened reds and must not attempt its own stopgap meanwhile).
 
 ## Coder verify list
 
 Round-trip every wire slot type write→read→write (number, bool, date, dict, list, item, `@schema:data`, goal.call); byte-identical relay of an untouched signed `.pr` (the `wire` kind's whole reason); `.pr` read incl. the build-snapshot arm (string raw → content source → goal reader); `{object,json}` file read and `{binary,json}` channel read (issues 1+2 together); `%ref%` template sources (should be untouched — `IsVariable` short-circuits before `Read()`); the double-string recursion terminates as MaterializeFailed; the wire's inert `IsVariable`; `Text.Read` orphan check; test doubles implementing `ISerializer`; the `Data("", …).Name = name` vs `Data(name, …)` CleanName equivalence.
 
+## In scope, design pending (Ingi: "I would love to see them gone — the noun+verb tells us")
+
+`StampReadAsync` and `ResolveForWrite` are IN SCOPE for this branch — their replacement designs are being settled with Ingi and will land as a plan section. **Do not start on either until that section exists here.**
+
 ## Flagged debt (recorded, NOT this branch)
 
-`StampReadAsync`: verb+noun + `is plang.@this` serializer type-check. `ResolveForWrite`: verb+noun + three-arm fork + `data.Peek() is string` shape-sniff. `plang.Read` ≡ `Json.Read` byte-for-byte duplication. `Text.Read` orphan (delete when confirmed). `IReader`/`json.Reader`/`value.Reader` live under `app.channel.serializer.*` but serve the type layer's own door — namespace home worth a future look. goal.call's eager arm in the wire reader (Ingi's future list).
+`plang.Read` ≡ `Json.Read` byte-for-byte duplication. `Text.Read` orphan (delete when confirmed). `IReader`/`json.Reader`/`value.Reader` live under `app.channel.serializer.*` but serve the type layer's own door — namespace home worth a future look. goal.call's eager arm in the wire reader (confirmed out of scope — Ingi's future list). `StampReadAsync`'s `?? binary` fallback fork (survives into whatever replaces it unless that design says otherwise).
 
 ## OBP validation
 
