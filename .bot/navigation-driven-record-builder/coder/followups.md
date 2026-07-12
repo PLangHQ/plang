@@ -13,16 +13,14 @@ Two smells:
 Surfaced while dissolving `FromRaw` (the channel boundary calls `StampType(context).Create(raw, …)`).
 Pre-existing, not introduced by the collapse. Deferred by Ingi's call — clean up in a later pass.
 
-## `list.@this.FromRaw` / `dict.@this.FromRaw` dissolution — deferred (the risky half)
-Architect ruled these die too (`stage3-courier-name-answer.md` §141). `data.FromRaw` is dissolved
-(4 prod callers inline `new Data(name, type.Create(raw, ctx, format))`; test callers use a
-`Make.FromRaw` helper — SC3, keeps the lazy-source behavior suite). But `list`/`dict.FromRaw` are
-**not** just a rename: `list.FromRaw` recursively converts **nested raw lists** to native eagerly,
-where the perimeter's list ctor is type-on-read (nested lifts happen lazily at `.Value()`). The 6
-`module/list` actions (flatten/remove/unique/sort/set/reverse) rely on "FromRaw already converted
-nested raw lists" — rerouting to `Create` shifts eager→lazy and could break `flatten`'s nested
-detection. Needs verification (run the module/list + CompareRedesign suites against the reroute)
-before landing; deferred so it doesn't muddy the open binary cluster.
+## `list.@this.FromRaw` / `dict.@this.FromRaw` dissolution — DONE (commit 82973cace)
+Resolved. The "eager recursion" fear was unfounded: in all 6 `module/list` callers the input is
+`.Value()` (already a materialized `item`), so `FromRaw` only ever hit its `is list.@this` cast +
+null-guard — the raw-IEnumerable recursion was **dead code** there (only test fixtures passed raw
+CLR collections). Callers now pattern-match `if …Value() is not list.@this nl → error`; OpenAi's
+raw-dict routes through `type.Create`; test fixtures use `Make.List`/`Make.Dict` (SC3). Both
+`this.Convert.cs` files deleted, grep-zero in production, zero regression. `FromRaw` was "a cast
+wearing a coercion costume" (Ingi).
 
 ## Flaky: path/facet scheme-init race (pre-existing)
 7 tests (`PathConversion_ResolvesScheme`, `PathParameter_*`, `FileReadStep_StringPathParameter`,
