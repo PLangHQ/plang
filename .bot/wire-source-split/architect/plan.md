@@ -282,7 +282,7 @@ An earlier draft gave dict/list a "string token → parse my own literal" arm. I
 | `ISerializer.Read` member + `Json.Read` + `Text.Read` | `serializer/this.cs:45-53`, `Json.cs:142-151`, `Text.cs:79-90` | step 11 (narrows to `ITransport`) |
 | `deferredRaw` / `deferredFormat` / `born` locals + twin tail arms | `data/reader/this.cs:39-41, tail` | step 4 |
 | file's serializer/format lines | `path/file/this.Operations.cs:73-75` | step 5 |
-| `type.@this.Convert(string)`'s json arm | `type/this.cs:462-472` | step 8 — the `object/json` kind reader is its one home (obp-findings §1) |
+| `type.@this.Convert(string)`'s json arm — **ADDENDUM: likely the WHOLE method.** A caller grep found no production call site of the string overload (the `data.Convert(kind)` hit is the kind's convert; the build's hits are the type-list's). Coder greps + builds: if caller-less, `Convert(string)` deletes whole, taking the `FromWire` convention lookup + `_wireReaders` cache (`:491-502`) with it — verify nothing else reaches `WireReader` first | `type/this.cs:462-502` | step 8 (obp-findings §1) |
 | `Text._jsonFallback` field + ctor param + stale class doc | `Text.cs:21, 27-31, 5-9` | with the `Text.Read` orphan check (obp-findings §3) |
 | ~~`serializer.list.@this.Text` property~~ | `channel/serializer/list/this.cs:130` | REPRIEVED — becomes file-save's content-fallback door (step 10); the earlier delete ruling applied before step 10 gave it a caller |
 | `UnregisteredMimeType` reachable from materialization | via `Serializers[_format]` | unreachable after step 1 (the type STAYS for channel routing) |
@@ -334,7 +334,7 @@ protected async Task<global::app.data.@this> Read(byte[] raw, CancellationToken 
 }
 ```
 
-No type-switch, no `StampValue`/`StampType` (§6's inlining lands here), one boundary fact compared at one boundary. The `?? binary` fallback survives as existing debt.
+No type-switch, no `StampValue`/`StampType` (§6's inlining lands here), one boundary fact compared at one boundary. The `?? binary` fallback survives as existing debt — **ADDENDUM:** the two declaration-stamp sites disagree on the unknown-mime fallback (this door has `?? binary`; file read's `TypeFromMime` call has none) — unify while touching both (one fallback rule, stated once).
 
 ### 10. `ResolveForWrite` + `SerializeAsync(SerializeOptions)` → callers own their selection
 
@@ -343,7 +343,8 @@ No type-switch, no `StampValue`/`StampType` (§6's inlining lands here), one bou
 - **stream channel:** `Serializers.GetOrDefault(Mime)` — existing door.
 - **file-save:** `Serializers.GetByExtension(Extension) ?? Serializers.Text` — a registered extension wins; otherwise **the value writes itself as content** (the Text serializer's `SerializeAsync` is exactly that: `data.Output(writer, …)` — "a leaf renders bare; a container renders via its format text serializer (json string)", its own doc). **Behavior change, flagged:** today an unregistered-extension file save of a structured value writes the plang ENVELOPE (`{name, type, value, signature}`) into the user's file; after this it writes the CONTENT. A user file gets content, not transport envelopes — but it needs a golden check and Ingi's eyes on the diff.
 - `SerializeAsync(SerializeOptions)`, `ResolveForWrite`, and the `SerializeOptions` carrier die with their last callers. The `data.Peek() is string` shape-sniff dies with them — it was approximating "the value writes itself" with two hard-coded cases.
-- **The read-side twins die symmetrically** (coder OBP scan, item B): `ResolveSerializer(ResolveOptions)` + `DeserializeAsync<T>(DeserializeOptions)` + the `DeserializeOptions`/`ResolveOptions` carriers (`list/this.cs:173-189, 204-224`). Their one caller, `channel/list/this.cs:205` `ReadChannelAsync<T>`, selects at the owner: `Serializers.GetOrDefault(sc.Mime).DeserializeAsync<T>(sc.Stream, …)`. (`ReadChannelAsync`'s own `channel is stream.@this` fork → debt list.)
+- **The read-side twins die symmetrically** (coder OBP scan, item B): `ResolveSerializer(ResolveOptions)` + `DeserializeAsync<T>(DeserializeOptions)` + the `DeserializeOptions`/`ResolveOptions` carriers (`list/this.cs:173-189, 204-224`).
+- **ADDENDUM (post-start, one-way audit): `ReadChannelAsync<T>` unifies through the receive door.** The twins' one caller (`channel/list/this.cs:195-214`) is itself the last second-way to read a channel — an eager typed deserialize beside the lazy boundary stamp. Unify: `ReadChannelAsync<T>` = `channel.ReadAsync(ct)` + `.As<T>()` — the `channel is stream.@this` fork dies with it (stream's own `Read` already rides the receive door). Verified fallout: `ISerializer.DeserializeAsync<T>` keeps exactly ONE caller (the Sqlite settings store, `module/setting/Sqlite.cs:122` — a legitimate store seam; the member stays). Coder verifies stream semantics (framing/EOF) survive the unification; if they can't, fall back to the owner-selection form (`GetOrDefault(sc.Mime).DeserializeAsync<T>(sc.Stream, …)`) and say why in the code.
 
 (Note: `Serializers.Text` gets a reprieve from deletion — it becomes file-save's content-fallback door.)
 
@@ -357,7 +358,7 @@ The coder proposed collapsing `Save`'s `raw is binary / raw is text / else` fork
 
 ## Flagged debt (recorded, NOT this branch)
 
-`IReader`/`json.Reader`/`value.Reader` live under `app.channel.serializer.*` but serve the type layer's own door — namespace home worth a future look. goal.call's eager arm in the wire reader (confirmed out of scope — Ingi's future list). The `?? binary` fallback fork in the receive door (step 9 carries it over unchanged). `ReadChannelAsync`'s `channel is stream.@this` type fork (`channel/list/this.cs:200`). The reader registry's 4-dictionary Of/Typed split — issue 2's `TypeOf` widening is a conscious deferral; the real fix is Of→Typed everywhere (coder scan). `file` ReadText's `type.Context = Context` stamp (`:67`) — likely vestigial once §5 lands; cleanup then. Plus the full pre-existing list in [`obp-findings.md`](obp-findings.md).
+`IReader`/`json.Reader`/`value.Reader` live under `app.channel.serializer.*` but serve the type layer's own door — namespace home worth a future look. goal.call's eager arm in the wire reader (confirmed out of scope — Ingi's future list). The `?? binary` fallback fork in the receive door (step 9 carries it over unchanged). ~~`ReadChannelAsync`'s `channel is stream.@this` type fork~~ (now dies with the §10 addendum unification). The reader registry's 4-dictionary Of/Typed split — issue 2's `TypeOf` widening is a conscious deferral; the real fix is Of→Typed everywhere (coder scan). `file` ReadText's `type.Context = Context` stamp (`:67`) — likely vestigial once §5 lands; cleanup then. Plus the full pre-existing list in [`obp-findings.md`](obp-findings.md).
 
 ## OBP validation
 

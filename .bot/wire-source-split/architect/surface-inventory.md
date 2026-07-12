@@ -49,4 +49,7 @@ Reprieved: `Serializers.Text` property (`channel/serializer/list/this.cs:130`) �
 | `Reader.TypeOf` | scans the typed tables too (`{binary, json}` narrowing survives the conversion) |
 | `channel/type/{http,stream,file}` | re-point `StampReadAsync` calls to the receive door |
 | file-save (`path/file/this.Operations.cs:225`) | picks its serializer by extension, `Serializers.Text` fallback (content, not envelope — flagged behavior change) |
+| `channel/list/this.cs` `ReadChannelAsync<T>` | unifies through the receive door + `As<T>` (§10 addendum) — its `channel is stream.@this` fork dies |
 | dict/list readers | **untouched** (the literal arm was cut by the strictness rulings) |
+
+**Addenda after coder start (also marked ADDENDUM in plan):** `ReadChannelAsync<T>` unification; `type.Convert(string)` likely deletes WHOLE (caller-less — verify) incl. `FromWire`/`_wireReaders`; the two stamp-sites' unknown-mime fallback unifies (`?? binary` rule stated once).
