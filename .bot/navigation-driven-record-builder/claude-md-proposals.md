@@ -49,3 +49,14 @@ with:
 ```
 
 (`Documentation/Runtime2/plang_object_based_pattern.md` no longer exists.)
+
+## architect — v1 — 2026-07-12
+**Target:** /workspace/plang/CLAUDE.md (Runtime2 Conventions + OBP Shape Smells "naked collection" line)
+**Why:** Ingi ruled the collection-naming pattern (2026-07-12, from the coder's `obp-doc-list-naming-ambiguity.md` fight — `TypeList`/`Prior` before landing `item.list`): always singular, always LOWERCASE, a list of a thing is `.list`. The canonical wording now lives in `Documentation/v0.2/obp-smells.md` (naked-collection Fix). Two CLAUDE.md lines now conflict with it: the "Property names on `app.@this` stay PascalCase" convention (explicitly superseded — PascalCase concept properties are legacy drift, renames are end-goal work), and the Console-rule example `app.CurrentActor.Channels.WriteTextAsync` (actor's property is `Channel`, `actor/this.cs:74` — stale even against the old convention).
+**Proposed change:**
+
+```
+1. In "Runtime2 Conventions", the sentence «**Property names on `app.@this` stay PascalCase** (`.Cache`, `.Builder`, …)» gains: «SUPERSEDED (2026-07-12): the end-goal is lowercase singular properties throughout (`app.goal`, `callstack.error`); a list of a thing is `.list` (`item.list`). Existing PascalCase/plural properties are legacy drift — do not copy into new code; renames are end-goal work. Canonical rule: obp-smells.md "naked collection" Fix.»
+2. In the OBP smells summary, the naked-collection line's fix becomes: «its own `X.list` type (private backing, own `Add`, `IReadOnlyList<T>` surface), exposed as a **singular lowercase** property naming the concept (`stack.error`); a thing's OWN list (history/chain) is named `list` (`value.list`) — reaching for a synonym because the concept name is taken means it IS the thing's own list.»
+3. The Console-rule example `app.CurrentActor.Channels.WriteTextAsync` → `app.CurrentActor.Channel.WriteTextAsync` (the property is `Channel`).
+```
