@@ -288,4 +288,8 @@ public sealed class @this : ISerializer
         return typeReader.Read(ref reader, type.Kind?.Name, ctx);
     }
 
+    // A wire slice this transport captured is json/plang text — it rides verbatim into a json
+    // writer (schema on → "plang", off → "json"). A "text" (or any other) writer is a different
+    // format, so the wire materializes there instead of dumping its quoted document slice.
+    public bool Owns(global::app.channel.serializer.IWriter writer) => writer.Format is "plang" or "json";
 }

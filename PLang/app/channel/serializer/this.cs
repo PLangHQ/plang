@@ -51,4 +51,15 @@ public interface ISerializer
     /// renderer (serializer owns the format, the type owns the value).
     /// </summary>
     global::app.type.item.@this Read(global::app.type.item.source source, global::app.type.reader.ReadContext ctx);
+
+    /// <summary>
+    /// True when <paramref name="writer"/> encodes in THIS serializer's own format — a raw
+    /// <c>wire</c> slice this serializer captured rides VERBATIM into it (byte-identical relay).
+    /// Any other writer is a different format, so writing the slice there is a USE: the wire
+    /// materializes and the value writes itself (a text writer gets bare content, not the quoted
+    /// document slice). Default false — a plain-content serializer round-trips no foreign slice;
+    /// the transport overrides for its own json/plang writers. The wire asks its own reader this,
+    /// so no format name lives on the wire (a bson transport answers for bson).
+    /// </summary>
+    bool Owns(global::app.channel.serializer.IWriter writer) => false;
 }

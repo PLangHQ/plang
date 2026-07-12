@@ -24,8 +24,15 @@ public sealed class @this : global::app.type.item.source
     private protected override global::app.type.item.@this Read()
         => _reader.Read(this, new global::app.type.reader.ReadContext(Context, Type.Template));
 
-    // Verbatim — already document text, rides inline unquoted, byte-identical.
-    public override void Write(global::app.channel.serializer.IWriter w) => w.Raw((string)Raw);
+    // A wire writes verbatim ONLY into its own format (a byte-identical relay of the captured
+    // slice); any other writer is a USE — the wire materializes and the value writes itself
+    // (a text writer gets bare content, not the quoted document slice). Strictness holds: a
+    // mismatched slice throws at the materialize, output included — the birth site is the bug.
+    public override void Write(global::app.channel.serializer.IWriter w)
+    {
+        if (_reader.Owns(w)) { w.Raw((string)Raw); return; }
+        Read().Write(w);
+    }
 
     internal override global::app.type.item.source Declared(global::app.type.@this type)
         => new @this((string)Raw, type, Context, _reader);
