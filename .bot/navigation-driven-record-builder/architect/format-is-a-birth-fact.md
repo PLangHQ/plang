@@ -62,8 +62,17 @@ static virtual string Format => global::app.channel.serializer.value.@this.Text;
 
 ```csharp
 /// <summary>A container literal is plang wire — parsed by the plang serializer, never the scalar value reader.</summary>
-public static string Format => "application/plang";
+public static string Format => global::app.channel.serializer.plang.@this.Mime;
 ```
+
+**2b. `PLang/app/channel/serializer/plang/this.cs`** — the serializer owns its mime name, same shape as `value.@this.Text`/`Binary`. Current `public string Type => "application/plang";` (`:46`) →
+
+```csharp
+public const string Mime = "application/plang";
+public string Type => Mime;
+```
+
+No naked `"application/plang"` strings in type files — the type names *the serializer* (compiler-checked, navigable), never a floating string that happens to match one. Sweep the other literals to the const where they mean the plang serializer: `data/reader/this.cs:91`, the registry ctor's `Register` rows. (`"application/plang+json"` in the alias row is a different mime — stays literal or gets its own const, your call.)
 
 **3. `PLang/app/type/this.cs`** — `RawFormat` (`:185-197`) deleted. In its place, the entity door closing the family's static virtual, mirroring the `_openByContext` bind pattern already in this file (`:384-391`). Runs once per entity, cached — the alternative to this one reflection close is a name-switch, which is the obpv being deleted. Suggestion (private plumbing names + where the close lives are yours; note C# forbids a property and method both named `Format` in one class, hence the shape below):
 
@@ -159,7 +168,7 @@ After this the body is "stamp `{type,kind}` from the mime, Create with real-or-n
 |---|---|---|
 | `ICreate.Format`, `type.Format()`, `source._format` | one concept, one name; no synonym | ✓ (Encoding rejected as synonym) |
 | `value.@this` | single word, names the actual distinction (no-envelope, the value's own face) | ✓ |
-| consts `Text`, `Binary` | nouns, name the two faces | ✓ |
+| consts `Text`, `Binary`, `plang.@this.Mime` | nouns; every mime string owned by its serializer, referenced never repeated | ✓ |
 | birth derivation in source ctor | determined on creation, immutable; fork is source's own raw dichotomy (`Peek`/`Write`/`RawText` already fork on it) | ✓ |
 | family fact via `static virtual` | no name-switch, no catalog above the types; one reflection close cached per entity, same price as the existing `Create` binds | ✓ |
 | deleted: `RawFormat` Name-switch, `?? Text` coercions | fork + guess removed at the root | ✓ |
