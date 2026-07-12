@@ -465,22 +465,15 @@ public partial class @this
                 if (varName.StartsWith('!')) continue;   // infra ref absent → leave literal
                 throw new global::app.error.VariableNotFoundException(varName);
             }
-            string? s;
-            if (dataVar?.Peek() is global::app.type.item.file.@this or global::app.type.item.url.@this)
-            {
-                // Interpolation is SCALAR use — a reference renders its content
-                // (the bare-scalar contract), never the location string.
-                var content = await dataVar.Value();
-                s = content is global::app.type.item.binary.@this bin
-                    ? System.Convert.ToBase64String(bin.Value) : content?.ToString();
-            }
-            // A stored variable reference resolves to its value (variable.Value() =>
-            // value.Value()) — so %y% set from %x% renders x's value, not the ref name.
-            // Everything else renders its raw current form (a source stays raw json).
-            else if (dataVar?.Peek() is global::app.variable.@this)
-                s = (await dataVar.Value())?.ToString();
-            else s = dataVar?.Peek()?.ToString();
-            if (s != null) resolved[varName] = s;
+            // Render this %var% through the ONE render door — its own data.Output into a text
+            // writer. A wire materializes to bare content (the write rule), a container renders
+            // its json text, a datetime / file / stored-ref renders itself. No Peek (a raw wire
+            // slice would leak the quoted document form), no per-type file/url carve-out — the
+            // Output door owns every shape.
+            using var ms = new System.IO.MemoryStream();
+            var w = new global::app.channel.serializer.text.Writer(ms, System.Text.Encoding.UTF8);
+            await dataVar!.Output(w, global::app.View.Out, _context);
+            resolved[varName] = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         }
 
         return Regex.Replace(input, @"%([^%]+)%", match =>
