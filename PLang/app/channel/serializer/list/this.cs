@@ -130,6 +130,14 @@ public sealed class @this
     public ISerializer Text => _byType["text/plain"];
 
     /// <summary>
+    /// The transport serializer (<c>application/plang</c>) — the self-describing Data
+    /// container's own serializer, and the reference a captured <c>wire</c> slice holds to
+    /// decode itself. A named door, so the channel receive path compares against it instead
+    /// of type-checking <c>is plang.@this</c>.
+    /// </summary>
+    public ISerializer Transport => _byType["application/plang"];
+
+    /// <summary>
     /// Gets all registered MIME types.
     /// </summary>
     public IEnumerable<string> Types => _byType.Keys;

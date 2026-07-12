@@ -11,19 +11,15 @@ namespace app.type.item;
 /// prior chain. Verbatim passthrough (serialize-without-parse) reads
 /// <see cref="Raw"/> as long as no parse happened.
 /// </summary>
-public sealed class source : @this, module.IContext
+public class source : @this, module.IContext
 {
-    private readonly object _value;
+    // Held for the wire subclass's verbatim write + re-birth; a plain source reads it
+    // through value.Reader, never a format lookup.
+    private protected readonly object _value;
     // The declaration, WHOLE — the source IS this type, unparsed. Born with it at Create,
     // never shredded into Name/Kind/Strict/Template scalars and reassembled (Mint answers it
     // directly). Name/Kind/Strict/Template all read off this one object.
-    private readonly global::app.type.@this _type;
-    // The serializer whose encoding these bytes are in — the .pr wire is
-    // application/plang, a channel's content is its own mimetype. At .Value() the
-    // source selects this serializer and asks it to read the bytes (it makes the
-    // matching reader; the type pulls itself off it). A capture-site fact (not the
-    // type's), so it rides its own field — preserved across a re-birth like Raw.
-    private readonly string _format;
+    private protected readonly global::app.type.@this _type;
 
     // A full-match %ref% (`%!data%`, `%messages%`) is a REFERENCE, not content — decided ONCE
     // at birth: the raw form and the authored-template flag are immutable, so reading it back is
@@ -42,13 +38,12 @@ public sealed class source : @this, module.IContext
 
     /// <summary>Born from a declared type entity + a raw form — the source-maker the entity's
     /// <c>Create</c> door shares. The source holds the declaration WHOLE (Name/Kind/Strict/Template
-    /// all live on it); the wire may override the format (else the type derives it from the raw).</summary>
-    public source(object value, global::app.type.@this type, actor.context.@this context, string? format = null)
+    /// all live on it) and reads its own raw through the (type, kind) reader — no format name.</summary>
+    public source(object value, global::app.type.@this type, actor.context.@this context)
     {
         _value = value ?? throw new System.ArgumentNullException(nameof(value));
         Context = context ?? throw new System.ArgumentNullException(nameof(context));
         _type = type ?? throw new System.ArgumentNullException(nameof(type));
-        _format = format ?? type.RawFormat(value, context);
         // Full-match %ref% on ANY declared type is a reference to a binding — resolved by name at
         // .Value(), never parsed through the type reader. Trust the builder's template flag (on the
         // declaration), not the content: a structural string the builder did not mark stays literal
@@ -63,9 +58,6 @@ public sealed class source : @this, module.IContext
 
     /// <summary>The undecoded source form — <c>string</c> or <c>byte[]</c>.</summary>
     public object Raw => _value;
-
-    /// <summary>The wire format the raw was captured in — birth state, preserved across a re-birth.</summary>
-    public string Format => _format;
 
     /// <summary>The raw string face, when the source carries text (not bytes).</summary>
     public override string? RawText => _value as string;
@@ -154,7 +146,7 @@ public sealed class source : @this, module.IContext
             // "give me the value" returns the value, not an intermediate unrendered template.
             return await item.Value(data);
         }
-        catch (System.Exception ex) when (ex is System.Text.Json.JsonException or System.FormatException or System.InvalidOperationException)
+        catch (System.Exception ex) when (ex is System.Text.Json.JsonException or System.FormatException or System.InvalidOperationException or System.NotSupportedException)
         {
             // SOURCE authors its own failure story — the declared form did not parse
             // as its declared {type, kind}. Keyed MaterializeFailed and naming the
@@ -172,20 +164,24 @@ public sealed class source : @this, module.IContext
         }
     }
 
-    // The dispatch: the serializer whose encoding these bytes are in reads them — it makes the
-    // matching (type, kind) reader (json for the .pr wire, a value reader for text content) and
-    // the type pulls itself off it. One door, every type — the source never makes a reader, never
-    // names a format. (source.Value owns the try/catch + the binding-named failure story.)
-    private global::app.type.item.@this Read()
+    /// <summary>The type reads its own raw form — the declaration is the whole selector. One
+    /// token over the raw via <see cref="global::app.channel.serializer.value.Reader"/>; the
+    /// (type, kind) reader owns the decode (a scalar off its token, csv its text, an image its
+    /// bytes). A structured value never rides here — it is a <see cref="wire.@this"/>, whose
+    /// override reads through its held serializer. (source.Value owns the try/catch + the
+    /// binding-named failure story.)</summary>
+    private protected virtual global::app.type.item.@this Read()
     {
-        if (Context.Actor?.Channel.Serializers is { } serializers)
-            return serializers[_format].Read(this, new global::app.type.reader.ReadContext(Context, _type.Template));
-        // Context is guaranteed (born-in-ctor); reaching here means its Actor/Channel isn't
-        // wired yet. Surface it as a clean MaterializeFailed (source.Value catches this), not a
-        // silent unparsed return.
-        throw new System.InvalidOperationException(
-            $"source declared '{_type.Name}' reached read before its actor channel was wired.");
+        var typeReader = Context.App.Type.Reader.Reader(_type.Name, _type.Kind?.Name, Context);
+        var reader = new global::app.channel.serializer.value.Reader(_value);
+        return typeReader.Read(ref reader, _type.Kind?.Name,
+            new global::app.type.reader.ReadContext(Context, _type.Template));
     }
+
+    /// <summary>Re-birth under a new declaration — the source owns its own re-typing (kills the
+    /// type entity reaching into a source's raw/format). The wire override carries its captured
+    /// serializer across, so a re-declared wire still decodes through its capturer.</summary>
+    internal virtual source Declared(global::app.type.@this type) => new source(_value, type, Context);
 
     /// <summary>
     /// Navigation is first-touch: a source is still its raw form (bytes / json text),
@@ -213,21 +209,18 @@ public sealed class source : @this, module.IContext
     public override bool IsLeaf => true;
 
     /// <summary>
-    /// Verbatim passthrough — the raw form streams out untouched, byte-for-byte the bytes
-    /// that came in (so an untouched relay's signature still verifies). Bytes are base64.
-    /// The format the bytes were captured in decides the shape: a value/text format holds
-    /// the value's own CONTENT (text, a path, a biginteger's digits) → a quoted string;
-    /// every other (json-encoding) format holds JSON (a dict/list/number/bool slot) → it
-    /// rides inline and UNQUOTED via <see cref="global::app.channel.serializer.IWriter.Raw"/>.
+    /// A content source's raw is ALWAYS its own content — a <c>string</c> (text, a template's
+    /// authored <c>%ref%</c>, a path, a scalar's text) or a <c>byte[]</c> blob; never a
+    /// structured value (a dict/list is held native, a still-encoded slice is a
+    /// <see cref="wire.@this"/>). So the content writes itself directly: bytes as bytes, a string
+    /// quoted. No materialize-on-write — there is nothing structured here to render, and a
+    /// mime-named type (<c>text/plain</c>, <c>binary</c>) has no (type, kind) reader to parse
+    /// through. (A <see cref="wire.@this"/> overrides this to write its slice verbatim.)
     /// </summary>
     public override void Write(global::app.channel.serializer.IWriter w)
     {
         if (_value is byte[] b) { w.Bytes(b); return; }
-        var s = _value.ToString() ?? "";
-        if (string.Equals(_format, global::app.channel.serializer.Text.Mime, System.StringComparison.OrdinalIgnoreCase))
-            w.String(s);
-        else
-            w.Raw(s);
+        w.String(_value.ToString() ?? "");
     }
 
 

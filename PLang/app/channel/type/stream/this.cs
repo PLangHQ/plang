@@ -90,7 +90,7 @@ public sealed class @this : global::app.channel.type.session.@this
             // {type, kind} from Mime into lazy Data — no bare text, no eager
             // parse (the value materializes on first touch).
             var bytes = await ReadAllBytesAsync(ct);
-            return await StampReadAsync(bytes, ct);
+            return await Read(bytes, ct);
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {

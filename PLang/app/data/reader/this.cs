@@ -26,7 +26,9 @@ public sealed class @this : global::app.data.schema.ISchemaReader
     {
         var utf8 = new System.Text.Json.Utf8JsonReader(raw);
         utf8.Read();
-        var reader = new global::app.channel.serializer.json.Reader(utf8);
+        // Own the buffer so a wire slot's Slice() gets a verbatim span (not a JsonDocument
+        // round-trip) on this host-carrier subtree entry too.
+        var reader = new global::app.channel.serializer.json.Reader(utf8, raw);
         return Read(ref reader, ctx);
     }
 
@@ -36,9 +38,9 @@ public sealed class @this : global::app.data.schema.ISchemaReader
         string name = "";
         global::app.type.@this? typeRef = null;
         Properties? properties = null;
-        string? deferredRaw = null;    // a value captured for lazy materialization
-        string? deferredFormat = null; // the serializer the captured value needs (string→value, else json)
-        global::app.type.item.@this? born = null;   // a value read eagerly (goal.call — born, not deferred)
+        // The value slot — a lazy source (content or wire) or an eagerly-read item (goal.call);
+        // a source IS an item, so one local carries every arm.
+        global::app.type.item.@this? value = null;
 
         reader.BeginObject();
         while (reader.NextName(out var key))
@@ -68,10 +70,8 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                     // the GoalCall, not a deferred source) — the reader builds its own options
                     // for the nested Data params, so the data reader stays options-free.
                     if (typeRef is { IsNull: false } && typeRef.Name == "goal.call")
-                    {
-                        born = ctx.Context.App.Type.Reader.Reader("goal.call", null, ctx.Context)
+                        value = ctx.Context.App.Type.Reader.Reader("goal.call", null, ctx.Context)
                             .Read(ref reader, null, ctx);
-                    }
                     else if (typeRef is not { IsNull: false })
                     {
                         var preview = System.Text.Encoding.UTF8.GetString(reader.RawValue());
@@ -80,17 +80,29 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                             $"invalid .pr schema: value slot '{(string.IsNullOrEmpty(name) ? "(unnamed)" : name)}' "
                             + $"has no declared type. Value was: {preview}");
                     }
+                    else if (reader.Peek() == global::app.channel.serializer.TokenKind.String
+                             && (typeRef.Template != null
+                                 || ctx.Context.App.Type[typeRef.Name]?.ClrType == typeof(global::app.variable.@this)))
+                        // A builder-authored SEMANTIC string — a %ref%/template (the IsVariable
+                        // birth gate needs the decoded content) or a variable NAME (type.Create
+                        // resolves it to its binding). The content door owns these; the kind-parse
+                        // stays lazy on the content source. A literal string under any other type
+                        // is NOT semantic — it rides the wire arm below (strict, byte-identical).
+                        value = typeRef.Create(reader.String(), ctx.Context);
                     else
-                    {
-                        // The value rides as its raw bytes — off the reader, no DOM (scalar off
-                        // the token, structured sliced from the owned buffer) — materializing
-                        // lazily. A string is content (→ value/text), incl a full-match %ref%
-                        // which its source resolves on read (gated on the authored template);
-                        // any other token is json.
-                        deferredFormat = reader.Peek() == global::app.channel.serializer.TokenKind.String
-                            ? global::app.channel.serializer.Text.Mime : "application/plang";
-                        deferredRaw = System.Text.Encoding.UTF8.GetString(reader.RawValue());
-                    }
+                        // EVERY other slot — string tokens included — is a wire: a VERBATIM Slice
+                        // (RawValue decodes strings, so it can't serve here), with the capturing
+                        // transport serializer named at the mint site (the reader stays stateless;
+                        // the wire itself never knows a format name). Face validation is free — the
+                        // type's own pull IS the validator on first touch (a still-quoted "23"
+                        // under {number} fails at the number pull; a string under {dict} at
+                        // BeginObject). The BUILD must never emit a mismatched token.
+                        value = typeRef.Create(
+                            System.Text.Encoding.UTF8.GetString(reader.Slice()), ctx.Context,
+                            ctx.Context.Actor?.Channel.Serializers?.Transport
+                                ?? throw new JsonException(
+                                    "wire capture reached before the actor channel wired its "
+                                    + "transport serializer — cannot decode a .pr value slot."));
                     break;
                 case "properties":
                     properties = ReadPropertiesObject(ref reader.Inner);
@@ -101,23 +113,15 @@ public sealed class @this : global::app.data.schema.ISchemaReader
             }
         }
         reader.EndObject();
-        if (born != null)
+        if (value != null)
         {
-            var d = new Data(name, born);
+            // One arm: goal.call (eager), a content source, or a wire — all items. The Data is
+            // born WITH the read context: source/wire materialization renders templates and
+            // resolves %refs% against data.Context, so it must carry it (a null context leaves a
+            // template unrendered). CleanName handles the name.
+            var d = new Data(name, value, context: ctx.Context);
             if (properties != null) d.Properties = properties;
             return d;
-        }
-        if (deferredRaw != null && typeRef != null)
-        {
-            // Lazy value slot: rides as its raw source form, materializes on first touch
-            // through the read door (the serializer the raw needs + the authored template).
-            // typeRef.Create's first branch defers wire-raw to a source carrying typeRef's own
-            // template flag (the build stamped it on an authored %ref% value) — NOT inferred from
-            // content. A value with a %x% the build did not mark is plain data, never resolved.
-            var data = new Data("", typeRef.Create(deferredRaw, ctx.Context, deferredFormat), context: ctx.Context);
-            data.Name = name;
-            if (properties != null) data.Properties = properties;
-            return data;
         }
         // No value slot — a typed absence under its declared type. Born WITH the read
         // context: a typed null is still a value construction (type.Build), so it must

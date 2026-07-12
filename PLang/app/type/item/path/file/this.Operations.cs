@@ -66,14 +66,6 @@ public sealed partial class @this
         var type = Context.App.Format.TypeFromMime(mime);
         type.Context = Context;
 
-        // The serializer whose encoding these bytes are in — a registered mime reads
-        // structured via its own reader; an unregistered one (a .pr, an image) reads
-        // through the value reader (the text serializer). The SAME selection the channel
-        // boundary makes in Channel.StampValue, so file and channel reads agree on one reader.
-        var serializers = Context.Actor?.Channel.Serializers;
-        var serializer = serializers?.GetByType(mime) ?? serializers?.Text;
-        var format = serializer?.Type ?? "application/plang";
-
         // During build: a .pr may be mid-rewrite on disk — read the snapshotted bytes.
         // Still deferred: the source holds the raw form under {goal}; .Value() runs the reader.
         // TODO(build-mode-inversion): build mode sniffed from a foreign layer (the file op
@@ -83,7 +75,7 @@ public sealed partial class @this
         {
             var snapshot = build.GetPrSnapshot(Absolute);
             if (snapshot != null)
-                return new global::app.data.@this(Raw, type.Create(snapshot, Context, format), context: Context);
+                return new global::app.data.@this(Raw, type.Create(snapshot, Context), context: Context);
         }
 
         if (!System.IO.File.Exists(Absolute))
@@ -102,7 +94,7 @@ public sealed partial class @this
             // Deferred: the source holds the raw bytes under their declared {type, kind};
             // the parse runs through the ONE reader on first touch (.Value()) — a .pr → the
             // goal reader → clr<goal>, a .json → the json reader → clr(json). No eager convert.
-            return new global::app.data.@this(Raw, type.Create(bytes, Context, format), context: Context);
+            return new global::app.data.@this(Raw, type.Create(bytes, Context), context: Context);
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {

@@ -169,8 +169,8 @@ public static class Make
     /// call sites now write inline; kept here so the lazy-source behavior tests stay concise.
     /// </summary>
     public static global::app.data.@this FromRaw(object raw, global::app.type.@this type,
-        global::app.actor.context.@this? context = null, string name = "", string? format = null)
-        => new global::app.data.@this(name, type.Create(raw, context, format), context: context);
+        global::app.actor.context.@this? context = null, string name = "")
+        => new global::app.data.@this(name, type.Create(raw, context), context: context);
 
     /// <summary>
     /// Test-only: build a native list from a raw CLR sequence, wrapping each element as a Data

@@ -183,20 +183,6 @@ public sealed class @this : item.@this
 
 
     /// <summary>
-    /// The wire format the type's raw form carries — picks the reader a minted
-    /// <see cref="item.source"/> materialises through. A container's raw is JSON
-    /// (the json reader streams it); a byte-backed family's raw is its bytes under
-    /// the kind's mime; everything else is a scalar text token.
-    /// </summary>
-    internal string RawFormat(object raw, actor.context.@this context)
-        => raw is byte[]
-            ? context.App.Format.Mime("." + (Kind?.Name ?? "")) ?? "application/octet-stream"
-            : string.Equals(Name, "dict", System.StringComparison.OrdinalIgnoreCase)
-              || string.Equals(Name, "list", System.StringComparison.OrdinalIgnoreCase)
-                ? "application/plang"
-                : global::app.channel.serializer.Text.Mime;
-
-    /// <summary>
     /// The "null" type — the type of a Data whose Value is null and no explicit
     /// Type was set.  Replaces the historical <c>Data.Type == null</c> sentinel
     /// so the property can be non-null end-to-end.  Wire serialization skips it
@@ -258,7 +244,7 @@ public sealed class @this : item.@this
     // refined to the declared kind/template, or re-typed through its family courier; a raw CLR
     // scalar → born through the family lift, then refined. ALWAYS returns a value (never null); a
     // bad conversion throws (the throw boundary — rides MaterializeFailed like a reader parse).
-    public item.@this Create(object? raw, global::app.actor.context.@this? context, string? format = null)
+    public item.@this Create(object? raw, global::app.actor.context.@this? context)
     {
         // context-never-null: a value is born WITH context. A null here is a construction site that
         // forgot to pass one — fail with a pointer, not an NRE deep in materialization.
@@ -274,19 +260,19 @@ public sealed class @this : item.@this
             return app.variable.@this.Resolve(rawName, context);
 
         // Wire-raw (string / byte[]) → defer through a source declared as THIS type, parsed lazily on
-        // first use. The source carries the type's Name/Kind/Strict/template; the wire may override format.
+        // first use. The source carries the type's Name/Kind/Strict/template and reads its own raw.
         if (raw is string or byte[])
-            return new item.source(raw, this, context, format);
+            return new item.source(raw, this, context);
 
         // A container / domain value is already native (dict, list, path, image, …) — hold it.
         if (raw is item.@this { IsLeaf: false } native) return native;
 
-        // A source (declared, unparsed) re-declared → RE-BIRTH over the same unread raw with THIS
-        // declaration (which carries the build's stamped kind/template). The value stays immutable
-        // and lazy — no mutation, no parse — so an authored %ref% is still unread bytes until read.
-        // This is the build's template stamp: Declare → Create → here, a fresh source born correct.
+        // A source (declared, unparsed) re-declared → the source RE-BIRTHS itself over the same
+        // unread raw with THIS declaration (which carries the build's stamped kind/template). The
+        // value stays immutable and lazy — no mutation, no parse — so an authored %ref% is still
+        // unread bytes until read. A wire's override carries its capturing serializer across.
         if (raw is item.source src)
-            return new item.source(src.Raw, this, context, src.Format);
+            return src.Declared(this);
 
         // A built leaf (text/number/… carrying its raw):
         if (raw is item.@this leaf)
@@ -326,11 +312,19 @@ public sealed class @this : item.@this
         if (_byContext(raw, context) is { } lifted)
             return string.Equals(Name, lifted.Type.Name, System.StringComparison.OrdinalIgnoreCase)
                 ? lifted : Create(lifted, context);
-        return Create(context.App.Type.Create(raw, context), context, format);
+        return Create(context.App.Type.Create(raw, context), context);
 
         static System.Exception Failed(global::app.error.IError? error)
             => new System.InvalidOperationException(error?.Message ?? "conversion failed");
     }
+
+    /// <summary>A still-encoded slice + the serializer that sliced it — the capture hands over
+    /// itself. Mints the lazy <see cref="item.wire.@this"/>; the parse stays at first touch. The
+    /// capture door beside the content <see cref="Create(object?, actor.context.@this?)"/> door —
+    /// same verb, the capture's knowledge as an argument, never a format name.</summary>
+    public item.@this Create(string slice, global::app.actor.context.@this context,
+        global::app.channel.serializer.ISerializer reader)
+        => new item.wire.@this(slice, this, context, reader);
 
     // The data door — the kind-aware build: THIS type makes itself from a value, reading the declared
     // kind off the carrier's Type and landing a decline on data.Fail (the retype path Convert owned).

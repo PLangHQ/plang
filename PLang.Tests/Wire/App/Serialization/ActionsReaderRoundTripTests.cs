@@ -18,8 +18,10 @@ public class ActionsReaderRoundTripTests
             // The wire shape of a recovery chain value: a bare array of action records.
             var raw = "[{\"module\":\"goal\",\"action\":\"call\"}]";
             var type = new global::app.type.@this("actions");
-            // Exactly what the data reader builds for a deferred `actions` value slot.
-            var data = new global::app.data.@this("", type.Create(raw, ctx, "application/plang"), context: ctx);
+            // Exactly what the data reader builds for a deferred `actions` value slot: a wire
+            // slice + the capturing transport serializer (the array token rides as its raw bytes).
+            var data = new global::app.data.@this("",
+                type.Create(raw, ctx, ctx.Actor!.Channel.Serializers.Transport), context: ctx);
 
             var actions = ((await data.Value()) as global::app.type.clr.@this<global::app.goal.steps.step.actions.@this>)?.Value;
             await Assert.That(actions).IsNotNull();

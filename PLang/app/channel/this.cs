@@ -269,52 +269,26 @@ public abstract class @this : IAsyncDisposable, IDisposable
     /// prefix (e.g. <c>application/plang-goal</c>, a goal source) correctly
     /// stamp as values, with no per-extension special-casing anywhere.</para>
     /// </summary>
-    protected async Task<global::app.data.@this> StampReadAsync(byte[] raw, CancellationToken ct = default)
+    protected async Task<global::app.data.@this> Read(byte[] raw, CancellationToken ct = default)
     {
-        // The container is whatever the plang transport serializer is registered
-        // for — a semantic check, not a string prefix. Sibling MIMEs that aren't
-        // the container (application/plang-goal, application/json, …) fall through
-        // to value stamping.
-        if (Channels?.Serializers.GetByType(Mime ?? "") is global::app.channel.serializer.plang.@this serializer)
+        var serializers = Channels?.Serializers;
+        // Is this content the transport container, or a bare value? One boundary fact,
+        // compared against the named door — no `is plang.@this` type-check. Sibling MIMEs
+        // that aren't the container (application/plang-goal, application/json, …) are values.
+        if (serializers != null && serializers.GetByType(Mime ?? "") == serializers.Transport)
         {
             using var ms = new MemoryStream(raw);
             // The container deserializer returns the reconstructed Data itself
             // (never an envelope around it — the store seam rejects bare nesting).
-            return await serializer.DeserializeAsync(ms, cancellationToken: ct);
+            return await serializers.Transport.DeserializeAsync(ms, cancellationToken: ct);
         }
-        return StampValue(raw);
-    }
-
-    /// <summary>
-    /// Stamps a value-typed payload — <see cref="Mime"/> names a value, not the
-    /// plang container. Content off I/O is raw bytes: the source holds the
-    /// <c>byte[]</c> typed <c>binary</c> + the kind, and the kind's reader decodes
-    /// on access (json→dict, jpg→image, md→text). No eager bytes-vs-string split.
-    /// </summary>
-    private global::app.data.@this StampValue(byte[] raw)
-    {
+        // Bare value content: the mime stamps the declaration — {binary, kind} (jpg→image,
+        // json→object via the kind narrowing); octet-stream / unset → binary, no kind. The
+        // type reads its own raw. Content off I/O is bytes and rides as bytes (no eager split).
         var context = Actor?.Context;
-        // The serializer that reads these bytes names itself — store its own Type. A
-        // registered mime (application/json) reads structured via its own reader; an
-        // unregistered one (a raw blob: image/png, application/plang-goal) is just bytes,
-        // read through the value reader (the text serializer), not forced through JSON.
-        var serializer = Channels?.Serializers.GetByType(Mime ?? "") ?? Channels?.Serializers.Text;
-        return new global::app.data.@this(Name,
-            StampType(context).Create(raw, context, serializer?.Type ?? "application/plang"), context: context);
-    }
-
-    /// <summary>
-    /// The <c>{binary, kind}</c> the channel's <see cref="Mime"/> stamps. Content
-    /// off I/O is raw bytes — it IS binary; the mime's subtype is the kind (the
-    /// decode hint). octet-stream / unset Mime → <c>binary</c> with no kind.
-    /// Everything else routes through <see cref="app.format.list.@this.TypeFromMime"/>.
-    /// </summary>
-    private global::app.type.@this StampType(global::app.actor.context.@this? context)
-    {
-        var t = Channels?.App?.Format?.TypeFromMime(Mime ?? "")
-                ?? global::app.type.@this.Create("binary", null, context: context);
-        t.Context = context;
-        return t;
+        var type = Channels?.App?.Format?.TypeFromMime(Mime ?? "")
+                   ?? global::app.type.@this.Create("binary", null, context: context);
+        return new global::app.data.@this(Name, type.Create(raw, context), context: context);
     }
 
     /// <summary>

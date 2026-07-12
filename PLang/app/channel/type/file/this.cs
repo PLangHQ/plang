@@ -44,16 +44,17 @@ public sealed class @this : global::app.channel.@this
         // as an error Data (it owns the System.IO), so the channel stays clean.
         var bytes = await _path.ReadBytes();
         if (!bytes.Success) return bytes;
-        return await StampReadAsync((await bytes.Value())!.Value, ct);
+        return await Read((await bytes.Value())!.Value, ct);
     }
 
     /// <summary>
     /// Stamp + parse content the caller already holds — the file value samples
     /// its bytes ONCE (through its own gate) and hands them here so the
-    /// boundary's mime stamping applies without a second disk read.
+    /// boundary's mime stamping applies without a second disk read. A public face
+    /// over the base receive door (external callers: url / file item reads).
     /// </summary>
-    public Task<global::app.data.@this> Read(byte[] raw, CancellationToken ct = default)
-        => StampReadAsync(raw, ct);
+    public new Task<global::app.data.@this> Read(byte[] raw, CancellationToken ct = default)
+        => base.Read(raw, ct);
 
     public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
         => Task.FromResult(data.Context.Error(new ServiceError(

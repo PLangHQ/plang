@@ -40,7 +40,7 @@ public sealed class @this : global::app.channel.@this
     }
 
     public override Task<global::app.data.@this> Read(CancellationToken ct = default)
-        => StampReadAsync(_body, ct);
+        => Read(_body, ct);
 
     public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
         => Task.FromResult(data.Context.Error(new ServiceError(

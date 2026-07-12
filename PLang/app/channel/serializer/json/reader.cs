@@ -142,4 +142,27 @@ public ref struct Reader : IReader
                     return System.Text.Encoding.UTF8.GetBytes(doc.RootElement.GetRawText());
         }
     }
+
+    /// <summary>
+    /// The current value's VERBATIM document bytes — the raw token span exactly as it
+    /// appears, quotes and escapes intact (<c>"line1\nline2"</c> comes back quoted, not
+    /// decoded). Unlike <see cref="RawValue"/> (which decodes a string token to its
+    /// content), this is byte-identical to the source, so a <c>wire</c> slice written back
+    /// verbatim keeps the document's — and its signature's — bytes. Structured tokens skip
+    /// to their matching close; scalars are already fully read. Needs the owned buffer: the
+    /// STJ-nested read (buffer-less) has no verbatim span, so it throws LOUDLY rather than
+    /// silently normalizing through a JsonDocument round-trip.
+    /// </summary>
+    public byte[] Slice()
+    {
+        if (_buffer == null)
+            throw new JsonException(
+                "json.Reader.Slice: verbatim capture needs the owned buffer, but this reader "
+                + "was created without one (STJ-nested path). A wire slice cannot be taken here — "
+                + "route the read through the buffered entry.");
+        int start = (int)_r.TokenStartIndex;
+        if (_r.TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray)
+            _r.Skip();   // advance past the matching close; scalars are already fully read
+        return _buffer.AsSpan(start, (int)_r.BytesConsumed - start).ToArray();
+    }
 }
