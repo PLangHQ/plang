@@ -2,6 +2,8 @@
 
 Branch: `wire-source-split` (from `navigation-driven-record-builder`). Settled with Ingi in session 2026-07-12. **Supersedes** `.bot/navigation-driven-record-builder/architect/format-is-a-birth-fact.md` — that doc's center (a family-owned mime fact) was wrong; do not implement it.
 
+> **Coder review v1 folded (2026-07-12, Ingi's rulings):** the string-slot routing blocker is fixed per **option B — strictness** (Ingi: "I would prefer strictness"): non-template string tokens ride as wires via a NEW verbatim `Slice()` capture on `json.Reader` (see the Slice note in §4) — NOT the token-kind split the review proposed, which would have let `value:"23"` under `{number}` parse leniently against Ingi's invalid-`.pr` ruling. `_owner` resolved per the review (registry `Transport` door at the mint site). Both minors accepted (§1 guard, `FormatException` in plang's serialize catch).
+
 > **You own this.** The design decisions below are settled (what owns what, what dies, the two source kinds, all names). Every code block is a suggestion — bodies, private plumbing, and mechanics are yours. Existing members quoted here were verified against source during design; re-verify against HEAD as you go. Flag back anything that doesn't survive contact.
 
 ## Why
@@ -83,7 +85,7 @@ private protected virtual global::app.type.item.@this Read()
 public override void Write(global::app.channel.serializer.IWriter w)
 {
     if (_value is byte[] b) { w.Bytes(b); return; }
-    if (_value is string s && (IsVariable || _type.Template != null)) { w.String(s); return; }
+    if (_value is string s && _type.Template != null) { w.String(s); return; }   // coder: `IsVariable ||` was dead — IsVariable is only ever set under Template != null (source.cs:57)
     Read().Write(w);   // the value's own render — dict/list via their converter, number inline, text quoted
 }
 // Consequence (value-faithful, Ingi-approved direction): a literal "42" declared {number} now
@@ -184,16 +186,27 @@ case "value":
         // non-text type is legal is a builder-stamped %ref%/template). The IsVariable birth
         // gate needs the decoded content; the template rides on the TYPE slot
         // ({name, kind, strict, template} — type/this.json.cs), so typeRef.Template is in hand.
+        // reader.String() directly — no GetBytes/GetString round-trip.
         value = typeRef.Create(reader.String(), ctx.Context);
     else
-        // EVERY other slot — string tokens included — is a wire: a verbatim slice, the
-        // capture passing ITSELF with it. Face validation is free: the type's own pull IS
-        // the validator (the number reader pulls a number token — "23" under {number} fails
-        // right there; the dict reader pulls BeginObject — a string token under {dict} fails
-        // right there). MaterializeFailed at first touch; the BUILD must never emit a
-        // mismatched token (Ingi: `value:"23"` declared {number} is INVALID .pr).
-        value = typeRef.Create(System.Text.Encoding.UTF8.GetString(reader.RawValue()), ctx.Context, _owner);
+        // EVERY other slot — string tokens included — is a wire: a VERBATIM slice (see the
+        // Slice note below — RawValue() decodes strings, so it cannot be used here), with the
+        // capturing serializer named at the mint site from the registry's Transport door (the
+        // data reader stays stateless — coder's resolution; the wire itself never knows a
+        // format name). Face validation is free: the type's own pull IS the validator —
+        // json.Reader's number pull (GetDouble) THROWS on a still-quoted string token, so
+        // `"23"` under {number} fails right there (Ingi's invalid-.pr ruling, enforced with no
+        // catalog); the dict pull fails at BeginObject; a date under {date} pulls String() and
+        // lives (a string token IS a date's json face). MaterializeFailed at first touch; the
+        // BUILD must never emit a mismatched token.
+        value = typeRef.Create(reader.Slice(), ctx.Context,
+            ctx.Context.Actor?.Channel.Serializers?.Transport ?? throw ...);
     break;
+```
+
+**The Slice note (coder's blocker, Ingi's ruling B).** `json.Reader.RawValue()` DECODES string tokens — `json/reader.cs:120-125` is `UTF8.GetBytes(_r.GetString())`, quotes stripped, escapes resolved (its doc says so: "a string is its UTF-8 content (unescaped)"). Decoded content can never be a wire — wire's contract is "still document text, written back verbatim." So the wire arm needs a NEW verbatim capture on `json.Reader` — suggested name `Slice()` — returning the raw token span *including quotes and escapes*: `Utf8JsonReader.TokenStartIndex` + the owned buffer, the same slicing `RawValue()` already does for object/array tokens; extend it to every token kind. Two coder cares: (1) the buffer-less STJ-nested fallback path (`RawValue`'s doc: "falls back to a single JsonDocument round-trip") needs its own verbatim story — JsonDocument re-serialization normalizes escapes, which breaks byte-identity; if verbatim is unattainable on that path, say so loudly in the code rather than silently normalizing; (2) a relay test with escapes (`"line1\nline2"` slot) proving byte-identical write-back. With `Slice()`, string slots DO relay byte-identical — the coder's "casualty" note is repaired, not accepted.
+
+```csharp
 
 // tail — the born/deferred twin arms merge:
 if (value != null)
@@ -205,7 +218,9 @@ if (value != null)
 // typed-null tail unchanged
 ```
 
-`_owner` is the serializer this reader reads for — the plang serializer hands itself down when invoking the Data read (ctor or field; plumbing is yours). Quirk to verify in the merge: today's deferred arm does `new Data("", …)` then `data.Name = name` while the born arm passes name directly — confirm `CleanName` makes them equivalent.
+The capturing serializer is named AT THE MINT SITE from the registry's `Transport` door (coder's resolution to the stateless conflict: the data reader is documented stateless — `data/reader/this.cs:13` — and is reached through the static schema registry at `Wire.cs:156`, so nothing can hand itself down without an interface ripple or ReadContext pollution; the mint site looking it up keeps the reader stateless, and the wire itself still never knows a format name). Quirk to verify in the merge: today's deferred arm does `new Data("", …)` then `data.Name = name` while the born arm passes name directly — confirm `CleanName` makes them equivalent.
+
+**Write-side failure story (coder's minor, accepted):** materialize-on-write (`Read().Write(w)` in §1) can throw `FormatException` on a bad runtime-made literal, and `plang.SerializeAsync`'s catch filters only `JsonException or NotSupportedException or IOException` (`plang/this.cs:180`) — add `FormatException` there; the serializer boundary owns its failure story. (`.pr`-borne slots can't hit this under the strictness rulings — the wire arm never decodes.)
 
 ### 5. `PLang/app/type/item/path/file/this.Operations.cs`
 
@@ -280,7 +295,7 @@ An earlier draft gave dict/list a "string token → parse my own literal" arm. I
 
 ## Coder verify list
 
-Round-trip every wire slot type write→read→write (number, bool, date, dict, list, item, `@schema:data`, goal.call) — string slots now byte-identical; byte-identical relay of an untouched signed `.pr` (the `wire` kind's whole reason); an invalid-face fixture (`value:"23"` declared `{number}`, string token under `{dict}`) surfaces MaterializeFailed at first touch, named to the binding; dict/list TEMPLATE round-trip through the template gate (template rides the type slot — `type/this.json.cs`); `.pr` read incl. the build-snapshot arm (string raw → content source → goal reader); `{object,json}` file read and `{binary,json}` channel read (issues 1+2 together); `%ref%` template sources; the wire's inert `IsVariable`; wire truthiness through `ToBooleanAsync` (materializes, then answers — incl. the empty-string slice); `Peek` consumer audit on unmaterialized values (debug/display, `KindHooks.Of(targetType, p.Peek())`); the unregistered-extension file-save golden (envelope → content, step 10); `Text.Read` orphan check; test doubles implementing `ISerializer`; the `Data("", …).Name = name` vs `Data(name, …)` CleanName equivalence.
+Round-trip every wire slot type write→read→write (number, bool, date, dict, list, item, `@schema:data`, goal.call) — string slots byte-identical via `Slice()`, incl. an escapes case (`"line1\nline2"`); the `Slice()` STJ-nested fallback path (verbatim unattainable there → loud, never silent normalization); byte-identical relay of an untouched signed `.pr` (the `wire` kind's whole reason); an invalid-face fixture (`value:"23"` declared `{number}`, string token under `{dict}`) surfaces MaterializeFailed at first touch, named to the binding; dict/list TEMPLATE round-trip through the template gate (template rides the type slot — `type/this.json.cs`); `.pr` read incl. the build-snapshot arm (string raw → content source → goal reader); `{object,json}` file read and `{binary,json}` channel read (issues 1+2 together); `%ref%` template sources; the wire's inert `IsVariable`; wire truthiness through `ToBooleanAsync` (materializes, then answers — incl. the empty-string slice); `Peek` consumer audit on unmaterialized values (debug/display, `KindHooks.Of(targetType, p.Peek())`); the unregistered-extension file-save golden (envelope → content, step 10); `Text.Read` orphan check; test doubles implementing `ISerializer`; the `Data("", …).Name = name` vs `Data(name, …)` CleanName equivalence.
 
 ## In scope (Ingi): `StampReadAsync` and `ResolveForWrite` go
 
