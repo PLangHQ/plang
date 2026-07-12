@@ -365,6 +365,8 @@ The coder proposed collapsing `Save`'s `raw is binary / raw is text / else` fork
 
 ## Flagged debt (recorded, NOT this branch)
 
+**Materialize-on-foreign-output for sources** (Ingi, post-branch design item — full spec in `Documentation/Runtime2/todos.md` 2026-07-12): extends the wire write rule to content sources at `item.Output` — one uniform law for every unmaterialized holder; prize is untouched `{datetime}`/`{number}` slots rendering properly; prerequisite is a reader-coverage audit (the truncation failure class). Do NOT attempt on this branch.
+
 `IReader`/`json.Reader`/`value.Reader` live under `app.channel.serializer.*` but serve the type layer's own door — namespace home worth a future look. goal.call's eager arm in the wire reader (confirmed out of scope — Ingi's future list). The `?? binary` fallback fork in the receive door (step 9 carries it over unchanged). ~~`ReadChannelAsync`'s `channel is stream.@this` type fork~~ (now dies with the §10 addendum unification). The reader registry's 4-dictionary Of/Typed split — issue 2's `TypeOf` widening is a conscious deferral; the real fix is Of→Typed everywhere (coder scan). `file` ReadText's `type.Context = Context` stamp (`:67`) — likely vestigial once §5 lands; cleanup then. Plus the full pre-existing list in [`obp-findings.md`](obp-findings.md).
 
 ## OBP validation
