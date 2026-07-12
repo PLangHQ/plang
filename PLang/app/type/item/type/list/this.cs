@@ -34,20 +34,4 @@ public sealed class @this
         foreach (var p in _priors) if (p.Is(other)) return true;
         return false;
     }
-
-    /// <summary>The first prior (recursively) whose type NAME matches — the facet a <c>%x!file%</c> /
-    /// <c>Data&lt;file&gt;</c> slot reaches after a narrow (the item checks itself first).</summary>
-    public global::app.type.item.@this? Facet(string typeName)
-    {
-        foreach (var p in _priors) if (p.Facet(typeName) is { } f) return f;
-        return null;
-    }
-
-    /// <summary>The first prior (recursively) that IS a <typeparamref name="T"/> (the item checks
-    /// itself first).</summary>
-    public T? Facet<T>() where T : global::app.type.item.@this
-    {
-        foreach (var p in _priors) if (p.Facet<T>() is { } f) return f;
-        return null;
-    }
 }

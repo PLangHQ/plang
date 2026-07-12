@@ -113,20 +113,9 @@ public class Stage3_ReferenceNarrowTests : IDisposable
         await Assert.That(data.Type!.Name).IsEqualTo("dict");
     }
 
-    [Test]
-    public async Task BangFileBangPath_ResolvesWithoutReading_MaterializeCountZero()
-    {
-        var data = JsonFile("untouched.json");
-        var facet = await data.Get("!file");
-        await Assert.That(facet.IsInitialized).IsTrue();
-        var pathChild = await facet.Get("!path");
-        await Assert.That(pathChild.Peek()).IsNotNull();
-        // the property plane never read content: the reference is still unloaded
-        // and the Data never narrowed
-        var reference = (global::app.type.item.file.@this)data.Peek()!;
-        await Assert.That(reference.IsLoaded).IsFalse();
-        await Assert.That(data.Type!.Name).IsEqualTo("file");
-    }
+    // (BangFileBangPath_ResolvesWithoutReading_MaterializeCountZero deleted — the %x!file% value-nav
+    //  it tested was retired with Facet; the metadata surface returns as the standardized !info,
+    //  where its tests will be added.)
 
     [Test]
     public async Task DotField_OnFile_ReadsAndParsesAndNarrows_MaterializeCountOne()
@@ -192,20 +181,8 @@ public class Stage3_ReferenceNarrowTests : IDisposable
         await Assert.That(await op.Evaluate(data, right)).IsTrue();
     }
 
-    [Test]
-    public async Task BangFileBangPath_ResolvesOnUnNarrowed_AND_Narrowed_Branches()
-    {
-        // un-narrowed branch
-        var a = JsonFile("brancha.json");
-        var facetA = await a.Get("!file");
-        await Assert.That(facetA.IsInitialized).IsTrue();
-        // narrowed branch — the stashed reference serves the facet
-        var b = JsonFile("branchb.json");
-        await b.Get("database");
-        var facetB = await b.Get("!file");
-        await Assert.That(facetB.IsInitialized).IsTrue();
-        await Assert.That(facetB.Peek()).IsTypeOf<global::app.type.item.file.@this>();
-    }
+    // (BangFileBangPath_ResolvesOnUnNarrowed_AND_Narrowed_Branches deleted — same retirement as above:
+    //  the %x!file% value-nav returns as the standardized !info.)
 
     [Test]
     public async Task NarrowIsIdempotent_RacingNavigationsConverge_NoCorruption()

@@ -167,7 +167,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// This value's type history — the values it evolved THROUGH (a dict parsed from a file holds
     /// the file; an image born from a path holds the path). A value that never narrowed has an empty
     /// list. The narrowing/constructing type just <c>list.Add(prior)</c> — the list owns its add
-    /// (no accumulate ceremony); <see cref="Is"/> and <see cref="Facet(string)"/> query it.
+    /// (no accumulate ceremony); <see cref="Is"/> queries it.
     /// </summary>
     private global::app.type.item.type.list.@this? _list;
     internal global::app.type.item.type.list.@this list => _list ??= new();
@@ -219,17 +219,6 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     // Declare), when it detects a %ref%. A value is otherwise immutable; this one build-seam flag
     // is set in place rather than re-minting the whole value.
     public string? Template { get; internal set; }
-
-    /// <summary>The history entry whose type name matches — self or a prior.
-    /// Null when this value never was that type.</summary>
-    public @this? Facet(string typeName)
-        => string.Equals(Type.Name, typeName, System.StringComparison.OrdinalIgnoreCase) ? (@this)this : list.Facet(typeName);
-
-    /// <summary>The history entry that IS a <typeparamref name="T"/> — self or a
-    /// prior. The typed face of <see cref="Facet(string)"/>; the default
-    /// <see cref="ICreate{TSelf}.Create"/> answers a slot from here (a
-    /// <c>Data&lt;file&gt;</c> slot stays satisfied after the file parsed).</summary>
-    public T? Facet<T>() where T : @this => this is T t ? t : list.Facet<T>();
 
     /// <summary>
     /// True when the value is already its own final answer — opening its door

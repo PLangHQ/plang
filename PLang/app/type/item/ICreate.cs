@@ -57,9 +57,8 @@ public interface ICreate<TSelf> where TSelf : @this, ICreate<TSelf>
     /// </summary>
     static virtual TSelf? Create(object? raw, global::app.data.@this data)
     {
-        // Pass-through / chain facet — free for every type, same instance rides out.
+        // Pass-through — the same instance rides out.
         if (raw is TSelf self) return self;
-        if (raw is @this fv && fv.Facet<TSelf>() is { } facet) return facet;
 
         // An error value isn't a convertible payload — keep it primary, demote the failure.
         if (raw is @this ev && ev.Clr<object>() is global::app.error.Error errVal)

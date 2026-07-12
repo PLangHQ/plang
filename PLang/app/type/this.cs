@@ -303,8 +303,9 @@ public sealed class @this : item.@this
                 var refined = Kind != null && minted.Kind == null ? leaf.Kinded(Kind.Name) : leaf;
                 return refined;
             }
-            // The value already carries this type as a facet (an image satisfies a path slot) → hold.
-            if (leaf.Facet(Name) != null) return leaf;
+            // The value's type history already contains this type (an image born from a path
+            // satisfies a path slot) → hold it, don't downgrade.
+            if (leaf.Is(context.App.Type[Name])) return leaf;
             // A different type → unwrap to the leaf's raw CLR form, then re-type EAGERLY via the family
             // courier (kind-aware build — path parses a string, number parses a token). A decline lands
             // its reason on the carrier's Error — this door is the throw boundary (rides MaterializeFailed).

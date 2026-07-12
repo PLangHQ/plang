@@ -269,13 +269,6 @@ public partial class @this
         if (prop != null)
             return new @this(key, prop.GetValue(this), parent: this);
 
-        // Chain-wide facet: `%x!file%` reaches the reference facet whether or not
-        // the value narrowed. The instance's own chain answers — pre-narrow the
-        // value IS the facet; post-narrow the prior chain holds the
-        // location-only reference (the parse stamped it).
-        if (_item?.Facet(key) is { } facetValue)
-            return new @this(key, facetValue, parent: this);
-
         // Property plane on the value itself — `!path`/`!host`/`!size`/`!length`
         // reach the value's own typed metadata surface without materialising
         // content (Peek). Properties were checked first above, so a user-set
