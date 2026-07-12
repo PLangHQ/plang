@@ -164,32 +164,13 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual bool Cacheable => true;
 
     /// <summary>
-    /// The narrow chain — the instance this value evolved FROM (a dict parsed
-    /// from a file holds the file here). Stamped once by the narrowing type at
-    /// mint; null for a value that never narrowed. Newest first: walking
-    /// <c>Prior</c> links yields the full history.
+    /// This value's type history — the values it evolved THROUGH (a dict parsed from a file holds
+    /// the file; an image born from a path holds the path). A value that never narrowed has an empty
+    /// list. The narrowing/constructing type just <c>list.Add(prior)</c> — the list owns its add
+    /// (no accumulate ceremony); <see cref="Is"/> and <see cref="Facet(string)"/> query it.
     /// </summary>
-    public @this? Prior => _prior;
-    private @this? _prior;
-
-    /// <summary>
-    /// Joins <paramref name="prior"/> into this value's creation history —
-    /// called by the type that minted this answer (the file accumulates itself
-    /// onto the dict it parsed). Appends at the END of the chain — a parse
-    /// answer may already carry its source form as a prior (dict ← source ←
-    /// file). Never rewrites an existing link.
-    /// </summary>
-    internal void Accumulate(@this prior)
-    {
-        if (ReferenceEquals(prior, this)) return;
-        var tail = (this as @this)!;
-        while (tail._prior != null)
-        {
-            if (ReferenceEquals(tail._prior, prior)) return;
-            tail = tail._prior;
-        }
-        if (!ReferenceEquals(tail, prior)) tail._prior = prior;
-    }
+    private global::app.type.item.type.list.@this? _list;
+    internal global::app.type.item.type.list.@this list => _list ??= new();
 
     /// <summary>
     /// This value's OWN type entity — each type answers ITS way (number stamps its precision as
@@ -202,18 +183,11 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     protected internal virtual global::app.type.@this Type => new(NamespaceTail(GetType()));
 
     /// <summary>
-    /// Is this value (now or in its narrow history) an <paramref name="other"/>? Walks the
-    /// value's own <see cref="Prior"/> chain — a <c>read config.json</c> that narrowed to a
-    /// <c>dict</c> still answers <c>Is(file)</c> from the retained source entry. Each entry
-    /// answers by its own type (name / apex / CLR lattice); provenance is the VALUE's, not a
-    /// copy baked onto a type entity.
+    /// Is this value (now or in its narrow history) an <paramref name="other"/>? Asks its type
+    /// history — a <c>read config.json</c> that narrowed to a <c>dict</c> still answers
+    /// <c>Is(file)</c> because the file rides in <see cref="list"/>.
     /// </summary>
-    public bool Is(global::app.type.@this? other)
-    {
-        for (var p = (this as @this); p != null; p = p._prior)
-            if (p.Type.Is(other)) return true;
-        return false;
-    }
+    public bool Is(global::app.type.@this? other) => Type.Is(other) || list.Has(other);
 
     /// <summary>
     /// How this value clones when its holding <c>Data</c> is cloned. The default
@@ -246,26 +220,16 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     // is set in place rather than re-minting the whole value.
     public string? Template { get; internal set; }
 
-    /// <summary>The chain entry whose type name matches — self or a prior.
+    /// <summary>The history entry whose type name matches — self or a prior.
     /// Null when this value never was that type.</summary>
     public @this? Facet(string typeName)
-    {
-        for (var i = (this as @this); i != null; i = i._prior)
-            if (string.Equals(i.Type.Name, typeName, System.StringComparison.OrdinalIgnoreCase))
-                return i;
-        return null;
-    }
+        => string.Equals(Type.Name, typeName, System.StringComparison.OrdinalIgnoreCase) ? (@this)this : list.Facet(typeName);
 
-    /// <summary>The chain entry that IS a <typeparamref name="T"/> — self or a
+    /// <summary>The history entry that IS a <typeparamref name="T"/> — self or a
     /// prior. The typed face of <see cref="Facet(string)"/>; the default
     /// <see cref="ICreate{TSelf}.Create"/> answers a slot from here (a
     /// <c>Data&lt;file&gt;</c> slot stays satisfied after the file parsed).</summary>
-    public T? Facet<T>() where T : @this
-    {
-        for (var i = (this as @this); i != null; i = i._prior)
-            if (i is T t) return t;
-        return null;
-    }
+    public T? Facet<T>() where T : @this => this is T t ? t : list.Facet<T>();
 
     /// <summary>
     /// True when the value is already its own final answer — opening its door

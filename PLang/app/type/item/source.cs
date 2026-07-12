@@ -148,7 +148,7 @@ public sealed class source : @this, module.IContext
                 && item is not (global::app.type.item.dict.@this or global::app.type.item.list.@this or global::app.type.clr.@this))
                 throw new System.InvalidOperationException(
                     $"a '{_type.Name}' value materialized to a non-container ({item.GetType().Name}) — round-trip loss");
-            item.Accumulate(this);
+            item.list.Add(this);
             // Resolve the materialized item — a template (text/dict/list) renders against live
             // variables; a plain leaf/container answers itself. The source layer is transparent:
             // "give me the value" returns the value, not an intermediate unrendered template.

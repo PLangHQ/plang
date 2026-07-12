@@ -40,3 +40,12 @@ STANDARDIZED `!info` property, registered by the type on creation, uniform acros
 `!info` on image → EXIF, on text → length, on file → FileInfo. "Standardizing it would give us great
 power." To design after the `type.list` (type-history) change lands. The file type should register the
 info property on the object at creation (not reflection).
+
+## `item.list` is internal — public nav exposure needs reflecting surfaces to skip it
+The item's type-history collection (`app.type.item.type.list.@this`, at `type/item/type/list/this.cs`)
+is exposed as `item.list` — but INTERNAL, not public. A public `list` property regressed 3 Modules
+tests (LLM image query, Fluid file-path render, choice-from-text): a reflecting surface (LLM schema /
+Fluid property enumeration) pulled `list` in and choked on the `type.list.@this` return type. Internal
+fixes it (tests reach it via InternalsVisibleTo). To expose `%x.list%`/`%x.type.list%` navigation
+later, make it public AND teach the reflecting surface(s) to skip it (an [LlmIgnore]/[Out]-style gate),
+verified against those 3 tests.

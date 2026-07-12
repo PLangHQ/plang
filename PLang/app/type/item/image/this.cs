@@ -141,7 +141,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         _bytes = bytes ?? System.Array.Empty<byte>();
         _mime = mime ?? "application/octet-stream";
         Path = path;
-        if (path != null) Accumulate(path);   // born from a path → `is path` from the type history
+        if (path != null) this.list.Add(path);   // born from a path → `is path` from the type history
     }
 
     /// <summary>
@@ -154,7 +154,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         _bytes = bytes ?? System.Array.Empty<byte>();
         Path = path;
-        if (path != null) Accumulate(path);   // born from a path → `is path` from the type history
+        if (path != null) this.list.Add(path);   // born from a path → `is path` from the type history
     }
 
     /// <summary>
@@ -166,7 +166,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public @this(global::app.type.item.path.@this path)
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
-        Accumulate(path);   // born from a path → `is path` from the type history
+        this.list.Add(path);   // born from a path → `is path` from the type history
     }
 
     /// <summary>Imprint the strict kind this image's content must match (from `as image/<kind> strict`).</summary>

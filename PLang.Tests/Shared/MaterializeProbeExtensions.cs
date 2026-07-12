@@ -13,14 +13,22 @@ public static class MaterializeProbeExtensions
     public static int MaterializeCount(this global::app.data.@this d)
     {
         if (d.RawUntouched) return 0;
-        // Parsed values carry their unparsed form in the prior chain (the
+        // Parsed values carry their unparsed form in the type history (the
         // source / the file the parse rebound away from); authored values have
         // no such prior and never parsed.
-        for (var p = d.Item?.Prior; p != null; p = p.Prior)
+        return d.Item != null && HasParsedPrior(d.Item) ? 1 : 0;
+    }
+
+    private static bool HasParsedPrior(global::app.type.item.@this item)
+    {
+        foreach (var p in item.list.Priors)
+        {
             if (p is global::app.type.item.source
                 or global::app.type.item.file.@this
                 or global::app.type.item.url.@this)
-                return 1;
-        return 0;
+                return true;
+            if (HasParsedPrior(p)) return true;
+        }
+        return false;
     }
 }

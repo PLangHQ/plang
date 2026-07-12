@@ -32,7 +32,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
         // Born from a path — inject its type into this value's history (`is path` from the chain).
-        Accumulate(path);
+        this.list.Add(path);
     }
 
     /// <summary>The remote host — location surface, never fetches.</summary>
@@ -93,7 +93,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         if (!read.Success) { data.Fail(read.Error!); return Absent; }
         var answer = read.Item;
         if (answer == null || ReferenceEquals(answer, this)) return this;
-        answer.Accumulate(this);
+        answer.list.Add(this);
         return answer;
     }
 

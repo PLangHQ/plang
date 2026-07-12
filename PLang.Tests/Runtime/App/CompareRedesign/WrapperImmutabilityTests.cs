@@ -39,11 +39,10 @@ public class WrapperImmutabilityTests
     }
 
     // Named exemptions — the load-once slot (`_raw`: set on load, nulled on
-    // parse, owned by the type's own load path) and the set-once chain stamp
-    // (`_prior`: creation history, appended once by the narrowing type, never
-    // rewritten). Both disciplines live in the owning class; everything else
-    // stays locked.
-    private static readonly string[] ExemptFields = { "_raw", "_prior" };
+    // parse, owned by the type's own load path) and the lazily-built type-history collection (`_list`: created on first access, its own Add discipline
+    // lives on the collection type). Both disciplines live in the owning class;
+    // everything else stays locked.
+    private static readonly string[] ExemptFields = { "_raw", "_list" };
 
     [Test]
     public async Task EveryInstanceField_IncludingInherited_IsReadonly()
