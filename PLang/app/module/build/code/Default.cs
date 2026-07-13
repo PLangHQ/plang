@@ -669,7 +669,7 @@ public class Default : IBuilder
 
     // --- Enrich Response ---
 
-    public data.@this EnrichResponse(enrichResponse action)
+    public async Task<data.@this> EnrichResponse(enrichResponse action)
     {
 
         var response = action.StepResults.Peek() as BuildResponse;
@@ -689,7 +689,7 @@ public class Default : IBuilder
                 step.Actions.Clear();
                 foreach (var a in prior.Actions) step.Actions.Add(a);
                 if (string.IsNullOrEmpty(step.Formal))
-                    step.Formal = RenderFormal(prior.Actions);
+                    step.Formal = await RenderFormal(prior.Actions, action.Context);
                 step.Source = "known";
             }
             else if (prior.Actions.Count == 0)
@@ -709,49 +709,53 @@ public class Default : IBuilder
         return action.Context.Ok(response);
     }
 
-    private static string RenderFormal(Actions actions)
+    // The formal line (module.action Name([type] value), … | modifier…) is rendered by the
+    // actionFormal template, not C#: the actions become a self-describing plang value model, each
+    // param value writes ITSELF via the template's `| formal` filter (the value's own text.Writer —
+    // no STJ, no [JsonConverter]). This is the backfill for a reused step whose LLM `formal` is empty.
+    private async Task<string> RenderFormal(Actions actions, global::app.actor.context.@this ctx)
     {
-        var segments = new List<string>();
-        foreach (var a in actions)
+        var model = new global::app.type.item.list.@this(ctx);
+        foreach (var a in actions) model.Add(ActionModel(a, ctx));
+
+        var parameters = new global::app.type.item.list.@this(ctx);
+        parameters.Add(new data.@this("actions", model, context: ctx));
+
+        var render = new global::app.module.ui.Render(ctx)
         {
-            segments.Add(RenderActionFormal(a));
-            foreach (var mod in a.Modifiers)
-                segments.Add(RenderActionFormal(mod));
-        }
-        return string.Join(" | ", segments);
+            Template = new data.@this<global::app.type.item.text.@this>("", "/system/builder/templates/actionFormal.template", context: ctx),
+            IsFile = new data.@this<global::app.type.item.@bool.@this>("", true, context: ctx),
+            Parameters = ctx.Ok<global::app.type.item.list.@this>(parameters),
+        };
+        var result = await ctx.App.Run(render, ctx);
+        if (!result.Success)
+            throw new global::app.error.AppException(
+                $"Failed to render the actionFormal template: {result.Error?.Message}", "FormalRenderFailed", 500);
+        return (await result.Value())?.ToString()?.Trim() ?? "";
     }
 
-    private static string RenderActionFormal(app.goal.steps.step.actions.action.@this a)
+    // An action (or modifier — a modifier IS an action) as a navigable dict the template loops.
+    private global::app.type.item.dict.@this ActionModel(app.goal.steps.step.actions.action.@this a, global::app.actor.context.@this ctx)
     {
-        var sb = new System.Text.StringBuilder();
-        sb.Append(a.Module).Append('.').Append(a.ActionName);
-        if (a.Parameters.Count > 0)
-        {
-            sb.Append(' ');
-            for (int i = 0; i < a.Parameters.Count; i++)
-            {
-                if (i > 0) sb.Append(", ");
-                var p = a.Parameters[i];
-                sb.Append(p.Name).Append('(');
-                if (p.Type != null) sb.Append('[').Append(p.Type.Name).Append("] ");
-                sb.Append(FormatValue(p.Peek()));
-                sb.Append(')');
-            }
-        }
-        return sb.ToString();
+        var d = new global::app.type.item.dict.@this(ctx);
+        d.Set("Module", a.Module);
+        d.Set("ActionName", a.ActionName);
+        var ps = new global::app.type.item.list.@this(ctx);
+        foreach (var p in a.Parameters) ps.Add(ParamModel(p, ctx));
+        d.Set("Parameters", ps);
+        var mods = new global::app.type.item.list.@this(ctx);
+        foreach (var m in a.Modifiers) mods.Add(ActionModel(m, ctx));
+        d.Set("Modifiers", mods);
+        return d;
     }
 
-    private static string FormatValue(object? v)
+    private global::app.type.item.dict.@this ParamModel(data.@this p, global::app.actor.context.@this ctx)
     {
-        if (v == null) return "null";
-        if (v is string s) return s.Contains(' ') || s.Contains(',') ? $"\"{s}\"" : s;
-        if (v is bool b) return b ? "true" : "false";
-        // InvariantCulture so locale-sensitive numeric output stays symmetric with
-        // TypeConverter's InvariantCulture parse — see ExampleRenderer.cs for context.
-        if (v is IConvertible conv) return System.Convert.ToString(conv, System.Globalization.CultureInfo.InvariantCulture) ?? "";
-        // Structured values (dicts, lists, POCOs like GoalCall) → JSON.
-        try { return System.Text.Json.JsonSerializer.Serialize(v); }
-        catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException) { return v.ToString() ?? ""; }
+        var d = new global::app.type.item.dict.@this(ctx);
+        d.Set("Name", p.Name);
+        if (!string.IsNullOrEmpty(p.Type.Name)) d.Set("Type", p.Type.Name);
+        d.Set("Value", p.Peek());   // the value writes itself in the template via | formal
+        return d;
     }
 
     // --- App ---

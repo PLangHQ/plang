@@ -20,7 +20,7 @@ public interface IBuilder : ICode
     Task<data.@this> ValidateStepActions(validateStepActions action);
     data.@this Merge(merge action);
     Task<data.@this> PromoteGroups(promoteGroups action);
-    data.@this EnrichResponse(enrichResponse action);
+    Task<data.@this> EnrichResponse(enrichResponse action);
     Task<data.@this> Load(load action);
     Task<data.@this> AppSave(appSave action);
 }
