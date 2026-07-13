@@ -1929,3 +1929,24 @@ reflection-garbage at the perimeter so the `[JsonConverter]` strip could proceed
 delete when this lands. Sibling of the error-rendering-via-os-templates piece
 (`architect/stage2-perimeter-and-error-templates-answer.md` §4) — same "presentation lives in plang
 templates, not C#" law.
+
+## Debug + error value rendering → templates + plang types
+
+**Date:** 2026-07-13 (branch `navigation-driven-record-builder`, Ingi). Two render sites still
+format values in C# and lean on raw CLR shapes instead of plang types — they don't fire the 13
+`[JsonConverter]`s (so the converter strip is safe), but they violate "never format text in C#" and
+"plang types everywhere":
+
+- **`debug/this.cs` `FormatValue`** — a plang item value falls to `value.ToString()`; the JSON branch
+  is guarded to raw `IDictionary`/`IList` (`JsonSerializer.Serialize`). Convert the debug value
+  render to a plang template (`ui.render`) driving each value's own writer; work in plang types
+  (`item`/`dict`/`list`), not raw CLR collections + STJ.
+- **`error/IError.Wire.cs`** — the machine (`application/json`/`plang`) error face. Its envelope
+  fields are hand-written via `Utf8JsonWriter`, and `Details`/`Params`/`Variables` ride raw STJ.
+  This is the machine half of the error split (`architect/stage2-perimeter-and-error-templates-answer.md`
+  §4); the **human** half (`text/plain`/`html`) becomes os templates in that separate directed piece.
+  Fold this in there: the error value writes ITSELF through the one writer, plang types throughout,
+  presentation via `os/system/error/<code>.<ext>` templates.
+
+Sibling of the formal-render piece (which moved `Default.RenderFormal` off C#/STJ onto the
+actionFormal template). Same law: presentation lives in plang templates, values are plang types.
