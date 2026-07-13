@@ -108,16 +108,37 @@ public class Fluid : ITemplate
         {
             using var ms = new System.IO.MemoryStream();
             var w = new global::app.channel.serializer.text.Writer(ms, System.Text.Encoding.UTF8);
+            // Fluid dismantles a bound value into its own wrappers/views at every level, so the
+            // filter bridges the Fluid shape to the writer recursively: a native view or plang
+            // container writes itself; a Fluid dict-wrapper / array is walked (its entries may be
+            // more wrappers); a scalar/leaf rides the writer directly (bare at top, json nested).
             void Emit(object? v)
             {
                 switch (v)
                 {
-                    case NativeDictView dv: w.Value(dv.Native); return;
-                    case NativeListView lv: w.Value(lv.Native); return;
+                    case FluidValue fv: Emit(fv.ToObjectValue()); return;
+                    case NativeDictView dv: Emit(dv.Native); return;
+                    case NativeListView lv: Emit(lv.Native); return;
+                    case global::app.type.item.dict.@this pd:
+                        w.BeginObject();
+                        foreach (var e in pd.Entries) { w.Name(e.Name); Emit(e.Peek()); }
+                        w.EndObject();
+                        return;
+                    case global::app.type.item.list.@this pl:
+                        w.BeginArray(pl.CountRaw);
+                        foreach (var it in pl.Items) Emit(it.Peek());
+                        w.EndArray();
+                        return;
                     case IFluidIndexable idx:
                         w.BeginObject();
-                        foreach (var key in idx.Keys) { idx.TryGetValue(key, out var fv); w.Name(key); Emit(fv?.ToObjectValue()); }
+                        foreach (var key in idx.Keys) { idx.TryGetValue(key, out var fx); w.Name(key); Emit(fx); }
                         w.EndObject();
+                        return;
+                    case string s: w.String(s); return;
+                    case System.Collections.IEnumerable e:
+                        w.BeginArray(-1);
+                        foreach (var it in e) Emit(it);
+                        w.EndArray();
                         return;
                     default: w.Value(v); return;
                 }
