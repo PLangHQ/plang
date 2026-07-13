@@ -299,11 +299,10 @@ public sealed class @this : item.@this
             var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(Name, Kind?.Name), context: context);
             if (Create(lowered, carrier) is { } made) return made;
             if (carrier.Error != null) throw Failed(carrier.Error);
-            // No family hook — the general CLR-target converter builds the mate; lift it back.
-            var target = ClrType ?? throw new System.InvalidOperationException($"Unknown type '{Name}'");
-            var (mate, mateErr) = global::app.type.list.@this.TryConvert(lowered, target, context);
-            if (mateErr != null) throw Failed(mateErr);
-            return Create(mate, context);
+            // No family hook AND no error — nothing can build this shape (architect ruling: the
+            // general CLR-target converter fallback dies; a leaf no family retypes is a producer bug).
+            throw new System.InvalidOperationException(
+                $"cannot build a '{Name}' from a {leaf.Type.Name} value — no family hook");
         }
 
         // A raw CLR scalar (int, DateOnly, …) → born through THIS family's own lift, then refine to the
