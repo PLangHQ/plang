@@ -87,7 +87,7 @@ public sealed class Json : ISerializer
             View effectiveView = _boundView != global::app.View.Out ? _boundView : view;
             await using var utf8 = new Utf8JsonWriter(stream);
             var writer = new global::app.channel.serializer.json.Writer(
-                utf8, _options, effectiveView, _context.App.Type.Renderer, emitsSchema: false);
+                utf8, effectiveView, _context.App.Type.Renderer, emitsSchema: false);
             await data.Output(writer, effectiveView, _context);
             await utf8.FlushAsync(cancellationToken);
             return data.Context.Ok();

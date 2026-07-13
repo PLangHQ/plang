@@ -43,25 +43,17 @@ public class Default : ICrypto
             // "application/plang" (custom transport, test double, future format),
             // fail loud — hash and wire would diverge silently and signature
             // verification would behave inconsistently across the same payload.
-            var registered = action.Context?.Actor?.Channel.Serializers.GetByType("application/plang");
-            if (registered != null && registered is not global::app.channel.serializer.plang.@this)
-                return action.Context.Error<global::app.module.crypto.type.hash.@this>(new ActionError(
-                    "Registered application/plang serializer is not the canonical plang.@this; hash bytes would diverge from wire bytes.",
-                    "SerializerMismatch", 500));
-            var serializer = (registered as global::app.channel.serializer.plang.@this)
-                             ?? new global::app.channel.serializer.plang.@this(action.Context);
             // Hash in the view the data is serialized in. A stored value's wire shape carries
             // every [Store] field; its reconstruction is a property-bag that re-emits them all,
             // so hashing in Out view (a subset) would diverge from the typed value's Out hash.
             // Sign/verify pass the destination view so the digest is over the wire bytes.
             var view = (action.StoreView != null && (await action.StoreView.Value())?.Value == true)
                 ? global::app.View.Store : global::app.View.Out;
-            var options = view == global::app.View.Store ? serializer.StoreOptions : serializer.OutboundOptions;
             // The value writes its OWN canonical bytes via data.Output — deterministic (fixed
-            // key order, entries insertion-order); sign and verify both run it, so they agree
-            // regardless of the wire format. View.Out omits the binding name (hash is name-
-            // independent), and data.Output never emits a signature, so there's nothing to
-            // suppress — no per-hash signature suppression is needed in the layer model.
+            // key order, entries insertion-order), independent of any serializer options, so hash
+            // bytes ≡ wire bytes by construction; sign and verify both run it and agree. View.Out
+            // omits the binding name (hash is name-independent), and data.Output never emits a
+            // signature, so there's nothing to suppress in the layer model.
             // TODO: serialize-to-MemoryStream-then-hash is the wrong shape — data.Output
             // should produce its hash intrinsically (write into a hashing writer), not via an
             // intermediate buffer. Correct behaviour, wrong means.
@@ -69,7 +61,7 @@ public class Default : ICrypto
             await using (var utf8 = new System.Text.Json.Utf8JsonWriter(hashStream))
             {
                 var writer = new global::app.channel.serializer.json.Writer(
-                    utf8, options, view,
+                    utf8, view,
                     action.Context?.App?.Type?.Renderer, emitsSchema: true);
                 await data.Output(writer, view, action.Context, layer: true);
             }

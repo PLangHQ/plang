@@ -120,21 +120,6 @@ public sealed class @this : ITransport
         };
 
     /// <summary>
-    /// Raw outbound options — exposed for canonicalization (crypto.Hash) so the
-    /// signed bytes match the wire bytes.
-    /// </summary>
-    internal JsonSerializerOptions OutboundOptions => _outbound;
-
-    /// <summary>
-    /// Store-view options — the [Store]-including, Sensitive-keeping recipe used
-    /// for local persistence. Exposed so the snapshot wire serializer
-    /// (<see cref="global::app.snapshot.Io"/>) layers its IError converter on top
-    /// of this one recipe rather than duplicating the camelCase + Wire + path +
-    /// transport-modifier construction.
-    /// </summary>
-    internal JsonSerializerOptions StoreOptions => _store;
-
-    /// <summary>
     /// Options for the snapshot durable-execution wire — Store view, non-signing,
     /// with the polymorphic <see cref="global::app.error.ErrorWire"/> for the
     /// Errors trail. Consumed by <c>App.SnapshotToWire</c>/<c>SnapshotFromWire</c>.
@@ -163,10 +148,9 @@ public sealed class @this : ITransport
                     _context);
                 if (signResult.Success) data = signResult;
             }
-            var options = view == global::app.View.Store ? _store : _outbound;
             await using var utf8 = new Utf8JsonWriter(stream);
             var writer = new global::app.channel.serializer.json.Writer(
-                utf8, options, view, _context.App.Type.Renderer, emitsSchema: true);
+                utf8, view, _context.App.Type.Renderer, emitsSchema: true);
             // A layer (signature) writes its OWN @schema:<kind> envelope; a plain Data
             // writes the @schema:data layer. The layer-vs-data choice lives here, at the
             // serializer boundary — data.Output stays clean (@schema:data only).
@@ -192,10 +176,9 @@ public sealed class @this : ITransport
     public async Task SerializeItemAsync(Stream stream, global::app.type.item.@this item,
         global::app.View view = global::app.View.Store, CancellationToken cancellationToken = default)
     {
-        var options = view == global::app.View.Store ? _store : _outbound;
         await using var utf8 = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true });
         var writer = new global::app.channel.serializer.json.Writer(
-            utf8, options, view, _context.App.Type.Renderer, emitsSchema: true);
+            utf8, view, _context.App.Type.Renderer, emitsSchema: true);
         await item.Output(writer, view, _context);
         await utf8.FlushAsync(cancellationToken);
     }

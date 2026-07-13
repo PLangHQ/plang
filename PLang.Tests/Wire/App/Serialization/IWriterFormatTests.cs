@@ -12,7 +12,7 @@ public class IWriterFormatTests
         System.IO.Stream stream, global::app.type.renderer.@this? renderers = null)
     {
         var utf = new Utf8JsonWriter(stream);
-        return new global::app.channel.serializer.json.Writer(utf, options: null,
+        return new global::app.channel.serializer.json.Writer(utf,
             view: global::app.View.Out, renderers: renderers);
     }
 

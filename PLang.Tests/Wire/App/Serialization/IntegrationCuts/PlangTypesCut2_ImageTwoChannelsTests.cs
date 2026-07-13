@@ -66,7 +66,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.channel.serializer.json.Writer(utf, options: null,
+            var w = new global::app.channel.serializer.json.Writer(utf,
                 view: global::app.View.Out, renderers: app.Type.Renderer);
             w.Value(img);
         }

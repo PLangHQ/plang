@@ -15,17 +15,15 @@ namespace app.channel.serializer.json;
 public sealed class Writer : IWriter
 {
     private readonly Utf8JsonWriter _writer;
-    private readonly JsonSerializerOptions _options;
     private readonly app.View _view;
     private readonly app.type.renderer.@this? _renderers;
     private readonly bool _emitsSchema;
 
-    public Writer(Utf8JsonWriter writer, JsonSerializerOptions? options = null,
+    public Writer(Utf8JsonWriter writer,
         app.View view = app.View.Out, app.type.renderer.@this? renderers = null,
         bool emitsSchema = false)
     {
         _writer = writer;
-        _options = options ?? new JsonSerializerOptions();
         _view = view;
         _renderers = renderers;
         _emitsSchema = emitsSchema;
