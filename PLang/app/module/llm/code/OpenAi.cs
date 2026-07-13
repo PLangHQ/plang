@@ -101,12 +101,13 @@ public sealed class OpenAi : ILlm
         async System.Threading.Tasks.Task<string?> SchemaOf(query a)
         {
             if (a.Schema == null || await a.Schema.IsEmpty()) return null;
-            return (await a.Schema.Value()) switch
-            {
-                global::app.type.item.text.@this t => t.ToString(),
-                { } v => System.Text.Json.JsonSerializer.Serialize(v, v.GetType()),
-                _ => null,
-            };
+            // The schema writes ITSELF through the Text serializer: a free-form json/yaml string
+            // rides bare (as authored), a structured value (dict/list from a .goal json literal)
+            // renders as json. NEVER STJ on the wrapper — that emitted the value's C# property bag
+            // ({"Cacheable":…,"IsLeaf":…}) instead of the schema.
+            using var ms = new System.IO.MemoryStream();
+            await context.Actor.Channel.Serializers.Text.SerializeAsync(ms, a.Schema);
+            return System.Text.Encoding.UTF8.GetString(ms.ToArray());
         }
 
         // Format slot — absent/empty is "no explicit format" (the door hands
@@ -576,7 +577,16 @@ public sealed class OpenAi : ILlm
                 var goalResult = await app.RunGoalAsync(execCall, context);
 
                 if (goalResult.Success)
-                    result = !goalResult.Peek().IsNull ? JsonSerializer.Serialize(goalResult.Peek()) : "";
+                {
+                    if (goalResult.Peek().IsNull) result = "";
+                    else
+                    {
+                        // The tool result writes ITSELF as json — never STJ on the item (property bag).
+                        using var ms = new System.IO.MemoryStream();
+                        await context.Actor.Channel.Serializers.GetByType("application/json")!.SerializeAsync(ms, goalResult);
+                        result = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+                    }
+                }
                 else
                     result = "Error: " + (goalResult.Error?.Message ?? "Unknown error");
             }

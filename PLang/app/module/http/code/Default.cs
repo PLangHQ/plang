@@ -944,18 +944,30 @@ public sealed class Default : IHttp
     {
         var content = await action.Content.Value();
         var context = action.Context;
+        var serializers = context.Actor.Channel.Serializers;
+
+        // The value writes ITSELF through the serializer named by the body's content-type — no
+        // Lower + STJ (which emits the wrapper's C# property bag), no type-shape branch. The Text
+        // serializer renders a leaf bare and a container as json; the json serializer renders json.
+        async Task<string> Body(global::app.channel.serializer.ISerializer serializer)
+        {
+            using var ms = new MemoryStream();
+            await serializer.SerializeAsync(ms, action.Content);
+            return Encoding.GetEncoding(encoding).GetString(ms.ToArray());
+        }
+
         if ((action.As == null ? null : await action.As.Value()) is { } asChoice && asChoice is { } && (ContentAs?)asChoice is { } contentAs)
         {
-            return contentAs switch
+            switch (contentAs)
             {
-                ContentAs.File => await CreateFileContentAsync(app, context, content!.ToString()!),
-                ContentAs.Base64 => (CreateBase64Content(content!.ToString()!), (global::app.error.IError?)null),
-                ContentAs.Form => await CreateFormContentAsync(app, context, content!),
-                ContentAs.Text => (new StringContent(
-                    content is global::app.type.item.text.@this ? content.ToString()! : JsonSerializer.Serialize(global::app.type.item.@this.Lower<object>(content)),
-                    Encoding.GetEncoding(encoding)), (global::app.error.IError?)null),
-                _ => (new StringContent(content!.ToString()!, Encoding.GetEncoding(encoding)), (global::app.error.IError?)null)
-            };
+                case ContentAs.File: return await CreateFileContentAsync(app, context, content!.ToString()!);
+                case ContentAs.Base64: return (CreateBase64Content(content!.ToString()!), null);
+                case ContentAs.Form: return await CreateFormContentAsync(app, context, content!);
+                case ContentAs.Text:
+                    return (new StringContent(await Body(serializers.Text), Encoding.GetEncoding(encoding)), null);
+                default:
+                    return (new StringContent(content!.ToString()!, Encoding.GetEncoding(encoding)), null);
+            }
         }
 
         // Auto-detect
@@ -980,11 +992,9 @@ public sealed class Default : IHttp
             return (new StringContent(str, Encoding.GetEncoding(encoding)), null);
         }
 
-        // Lower the native value to its CLR form before serializing — JSON-
-        // serializing the value wrapper directly would emit its C# property bag
-        // ({"Cacheable":...,"IsLeaf":...}) instead of the list/object content.
+        // The native value writes ITSELF as json content (list/object), never the C# property bag.
         return (new StringContent(
-            JsonSerializer.Serialize(global::app.type.item.@this.Lower<object>(content)),
+            await Body(serializers.GetByType("application/json")!),
             Encoding.GetEncoding(encoding),
             "application/json"), null);
     }
