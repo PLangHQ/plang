@@ -17,9 +17,24 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
-        var entity = System.Text.Json.JsonSerializer.Deserialize<global::app.type.@this>(reader.RawValue());
-        if (entity == null) return new global::app.type.item.@null.@this("type", kind);
-        entity.Context = ctx.Context;
-        return entity;
+        // Token-parse the descriptor {name, kind?, strict?, template?} — the symmetric mirror of
+        // type.@this.Write; no STJ, no per-type converter. Field names are written lowercase.
+        if (reader.Null()) return new global::app.type.item.@null.@this("type", kind);
+        reader.BeginObject();
+        string? name = null, typeKind = null, template = null; bool strict = false;
+        while (reader.NextName(out var field))
+        {
+            switch (field)
+            {
+                case "name":     name = reader.String(); break;
+                case "kind":     typeKind = reader.String(); break;
+                case "strict":   strict = reader.Bool(); break;
+                case "template": template = reader.String(); break;
+                default:         reader.Skip(); break;
+            }
+        }
+        reader.EndObject();
+        if (name == null) return new global::app.type.item.@null.@this("type", kind);
+        return new global::app.type.@this(name, typeKind, strict, template) { Context = ctx.Context };
     }
 }

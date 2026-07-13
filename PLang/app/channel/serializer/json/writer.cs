@@ -85,7 +85,9 @@ public sealed class Writer : IWriter
         if (record.Type is { IsNull: false })
         {
             _writer.WritePropertyName("type");
-            System.Text.Json.JsonSerializer.Serialize(_writer, record.Type, _options);
+            // The type descriptor writes ITSELF ({name, kind?, strict?}) through this same
+            // writer — no STJ, no per-type converter, symmetric with every other value.
+            record.Type.Write(this);
         }
 
         _writer.WritePropertyName("value");

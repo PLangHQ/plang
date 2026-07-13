@@ -29,15 +29,15 @@ namespace app.type;
 // value — authored in the language (`as image/gif, strict`), riding in the .pr,
 // holdable in a variable (`set %t% = %x!type%`). TypeName derives from the
 // namespace ("type"); behavior defaults from the item base.
-[JsonConverter(typeof(json))]
 public sealed class @this : item.@this
 {
-    /// <summary>Self-write: the type entity's <c>{name, kind?, strict?}</c> identity — the same
-    /// shape Data writes for its <c>type</c> field, used when a type entity rides as a VALUE
-    /// (e.g. a <c>variable.set</c> <c>Type</c> default).</summary>
-    public override System.Threading.Tasks.ValueTask Output(
-        global::app.channel.serializer.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    /// <summary>Self-write (the sync core; base <c>Output</c> wraps it): the type entity's
+    /// <c>{name, kind?, strict?}</c> identity — the same shape Data writes for its <c>type</c>
+    /// slot. Used both when a type entity rides as a VALUE (a <c>variable.set</c> <c>Type</c>
+    /// default) and for the Data envelope's <c>type</c> field (<c>json.Writer.BeginRecord</c>).
+    /// Descriptor metadata is pure sync primitives — no <c>%var%</c>, no async — so it lives on
+    /// <c>Write</c>, not an <c>Output</c> override.</summary>
+    public override void Write(global::app.channel.serializer.IWriter writer)
     {
         writer.BeginObject();
         writer.Name("name"); writer.String(Name);
@@ -45,7 +45,6 @@ public sealed class @this : item.@this
         if (Strict) { writer.Name("strict"); writer.Bool(true); }
         if (!string.IsNullOrEmpty(Template)) { writer.Name("template"); writer.String(Template!); }
         writer.EndObject();
-        return System.Threading.Tasks.ValueTask.CompletedTask;
     }
 
     [JsonPropertyName("name")]

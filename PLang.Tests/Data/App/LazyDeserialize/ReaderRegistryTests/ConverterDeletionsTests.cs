@@ -29,13 +29,13 @@ public class ConverterDeletionsTests
         await Assert.That(PLangAssembly.GetType("app.type.item.path.JsonConverter")).IsNull();
     }
 
-    [Test] public async Task TypeJson_StillExists_ReadsTypeDescriptor()
+    [Test] public async Task TypeJson_IsGone_DescriptorRoundTripsThroughWriteAndReader()
     {
-        // app/type/this.json.cs — class `json` in `app.type`. **Stays**
-        // per architect's mid-graph Converter resolution: it reads the
-        // type descriptor `{name, kind, strict}` (the wire `type` slot),
-        // not a value.
-        await Assert.That(PLangAssembly.GetType("app.type.json")).IsNotNull();
+        // app/type/this.json.cs — class `json` in `app.type`. **Deleted**: the type
+        // descriptor {name, kind?, strict?} now writes itself via type.@this.Write
+        // (json.Writer.BeginRecord) and reads token-based via type/serializer/Reader —
+        // no STJ, no per-type converter. The last [JsonConverter] under type/ is gone.
+        await Assert.That(PLangAssembly.GetType("app.type.json")).IsNull();
     }
 
     // Architect call (2026-06-03): these three are NOT folded into one
