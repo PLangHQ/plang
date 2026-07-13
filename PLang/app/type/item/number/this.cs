@@ -21,7 +21,6 @@ namespace app.type.item.number;
 /// The old <c>_i/_d/_f</c> tagged union and the <c>float→double</c> collapse
 /// are gone.</para>
 /// </summary>
-[System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, System.IEquatable<@this>, System.IComparable<@this>, System.IComparable, System.IConvertible
 {
     // The exact boxed CLR numeric — the single source of truth.

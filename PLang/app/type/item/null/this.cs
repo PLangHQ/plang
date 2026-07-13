@@ -18,7 +18,6 @@ namespace app.type.item.@null;
 /// sort-last policy lives on <c>Compare</c>, not the wrapper). Bare wire form is
 /// <c>null</c>.</para>
 /// </summary>
-[System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     public static string Example => "null";

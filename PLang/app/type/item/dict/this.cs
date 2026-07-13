@@ -13,15 +13,13 @@ namespace app.type.item.dict;
 /// <para>Symmetric to <c>app.type.item.list.@this</c> (the list value type):
 /// <c>dict</c> owns key-lookup and serialize-as-<c>{}</c>; <c>list</c> owns
 /// index navigation and serialize-as-<c>[]</c>.</para>
+///
+/// <para>A dict has NO per-type STJ converter — it writes itself as an object
+/// <c>{}</c> through <c>Output</c> → the json.Writer's dict arm (the same path the
+/// <c>application/plang</c> wire uses via Data.Normalize). Raw STJ never sees a dict
+/// (that path would reflect Count/Keys/Entries and bury the real keys); reading a
+/// dict is the reader's / <c>kind[json].Parse</c>'s job, never STJ reconstruction.</para>
 /// </summary>
-// The [JsonConverter] governs the RAW-STJ projection only — the snapshot-clone
-// round-trip, debug-variable display, plain `application/json` channel, and the
-// `set ... type=json` SerializeToNode path. Without it, raw STJ reflects the C#
-// surface (Count/Keys/Entries) and buries the real keys. The `application/plang`
-// WIRE path never hits this: there a dict rides through Data.Normalize → the
-// json.Writer's dict arm (an object `{}`), never STJ — so the "domain types ride
-// the wire as property bags" rule is intact; this is the value's JSON view.
-[System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, module.IContext
 {
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>

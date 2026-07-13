@@ -14,7 +14,6 @@ namespace app.type.item.archive;
 /// byte[] courier: a real item is not reflected as a transparent property bag, so
 /// it never drags the runtime context graph onto the wire.</para>
 /// </summary>
-[System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     public static string Example => "(archive)";

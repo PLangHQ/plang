@@ -7,7 +7,6 @@ namespace app.type.item.date;
 /// with this wrapper. Order/equality are day-precision; the bare wire form is
 /// ISO <c>yyyy-MM-dd</c>.
 /// </summary>
-[System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     System.IEquatable<@this>
 {

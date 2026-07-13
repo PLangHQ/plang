@@ -10,7 +10,6 @@ namespace app.type.item.datetime;
 /// collapse into method calls. Order is chronological by instant; equality is
 /// same-instant; the bare wire form is ISO round-trip (<c>"o"</c>).</para>
 /// </summary>
-[System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     System.IEquatable<@this>
 {

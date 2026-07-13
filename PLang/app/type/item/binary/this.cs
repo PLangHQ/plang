@@ -5,7 +5,6 @@ namespace app.type.item.binary;
 /// reads, crypto output). Sibling to <c>image</c> but untyped (no MIME). Backed by
 /// a CLR <c>byte[]</c>; the bare wire form is base64.
 /// </summary>
-[System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     public static string Example => "(bytes)";

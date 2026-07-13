@@ -15,7 +15,6 @@ namespace app.type.item.duration;
 /// the empty-is-falsy convention of the other scalars. The bare wire form is
 /// ISO-8601 (<see cref="ToString"/>).</para>
 /// </summary>
-[System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     System.IEquatable<@this>
 {

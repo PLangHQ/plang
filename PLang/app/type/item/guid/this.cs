@@ -12,7 +12,6 @@ namespace app.type.item.guid;
 /// <b>Truthiness policy: the empty guid is falsy</b>, any other is truthy —
 /// matching the empty-is-falsy convention of the other scalars.</para>
 /// </summary>
-[System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     System.IEquatable<@this>
 {

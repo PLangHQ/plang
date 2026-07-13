@@ -6,7 +6,6 @@ namespace app.type.item.time;
 /// unhandled); this wrapper closes that gap. Order/equality are within
 /// time-of-day; the bare wire form is ISO <c>HH:mm:ss[.fffffff]</c>.
 /// </summary>
-[System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     System.IEquatable<@this>
 {

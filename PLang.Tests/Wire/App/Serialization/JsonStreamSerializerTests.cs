@@ -115,38 +115,6 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task Deserialize_SimpleString_ReturnsString()
-    {
-        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
-
-        var result = (await serializer.Deserialize<global::app.type.item.text.@this>("\"hello\"").Value())!;
-
-        await Assert.That(result.ToString()).IsEqualTo("hello");
-    }
-
-    [Test]
-    public async Task Deserialize_Number_ReturnsNumber()
-    {
-        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
-
-        var result = (await serializer.Deserialize<global::app.type.item.number.@this>("42").Value())!;
-
-        await Assert.That(result).IsEqualTo(42);
-    }
-
-    [Test]
-    public async Task Deserialize_Boolean_ReturnsBoolean()
-    {
-        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
-
-        var resultTrue = (await serializer.Deserialize<global::app.type.item.@bool.@this>("true").Value())!;
-        var resultFalse = (await serializer.Deserialize<global::app.type.item.@bool.@this>("false").Value())!;
-
-        await Assert.That(resultTrue.Value).IsTrue();
-        await Assert.That(resultFalse.Value).IsFalse();
-    }
-
-    [Test]
     public async Task Deserialize_Null_ReturnsNull()
     {
         var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
