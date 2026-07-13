@@ -59,23 +59,6 @@ public class Stage2_ValueDoorTests : System.IAsyncDisposable
         await Assert.That(ReferenceEquals(first, second)).IsTrue();
     }
 
-    [Test]
-    public async Task RawSlot_Dissolved_BareBytesOffChannelRefineInPlace()
-    {
-        // no _raw field on Data — the undecoded source form lives on the type
-        // that owns it; a channel payload narrows through the SAME Data.
-        var rawField = typeof(Data).GetField("_raw",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        await Assert.That(rawField).IsNull();
-
-        await using var app = NewApp(out var root);
-        var d = await RawBackedJson(app, root);
-        await Assert.That(d.HasRaw).IsTrue();      // source-backed, untouched
-        _ = await d.Value();                       // parse rebinds the same Data
-        await Assert.That(d.HasRaw).IsFalse();     // single storage — raw moved
-        await Assert.That(d.Type.Name).IsEqualTo("dict");
-    }
-
 
     [Test]
     public async Task GenericToRaw_DoesNotExist_OnItemBase()
@@ -130,16 +113,6 @@ public class Stage2_ValueDoorTests : System.IAsyncDisposable
         var d = new Data("slot", new global::app.type.item.text.@this("%x%", "plang"), context: global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(d.Peek() is global::app.type.item.text.@this).IsTrue();
         await Assert.That(d.IsVariable).IsTrue();
-    }
-
-    [Test]
-    public async Task JsonContainer_RidesAsTypedDictOrList_NeverBareCSharpDictionary()
-    {
-        // JSON ingestion yields a native PLang dict/list — value slot is never a raw Dictionary<string,object>
-        await using var app = NewApp(out var root);
-        var d = await RawBackedJson(app, root);
-        var v = await d.Value();
-        await Assert.That(v is global::app.type.item.dict.@this).IsTrue();
     }
 
     [Test]

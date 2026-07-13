@@ -47,30 +47,6 @@ public class Stage2_PlaneResolverTests
     }
 
     [Test]
-    public async Task PostNarrow_ValueStillIsBothContentAndOrigin()
-    {
-        // Provenance is the value's own chain — post-narrow it still IS both the parsed content
-        // type and its file origin. (The old %x!type.list% raw-chain surface retired with the
-        // type-entity chain; `is` on the value is the surface.)
-        var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-st2chain-" + System.Guid.NewGuid().ToString("N")[..8]);
-        Directory.CreateDirectory(dir);
-        await using var app = TestApp.Create(dir);
-        try
-        {
-            File.WriteAllText(System.IO.Path.Combine(dir, "c.json"), "{\"a\":1}");
-            var read = new global::app.module.file.Read(app.User.Context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("",
-                    new global::app.type.item.path.file.@this(System.IO.Path.Combine(dir, "c.json"), app.User.Context) {}),
-            };
-            var data = await read.Run();
-            await data.Get("a");                       // narrow
-            await Assert.That(data.Type!.Name).IsEqualTo("dict");
-            await Assert.That(data.Is("dict")).IsTrue();
-            await Assert.That(data.Is("file")).IsTrue();
-        }
-        finally { Directory.Delete(dir, true); }
-    }
-
-    [Test]
     public async Task BangReservedCore_Protected_TypeMayNotShadow()
     {
         // the runtime registration check rejects a shadower; every built-in

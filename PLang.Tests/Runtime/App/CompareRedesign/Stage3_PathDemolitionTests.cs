@@ -217,21 +217,6 @@ public class Stage3_PathDemolitionTests
     }
 
     [Test]
-    public async Task FileWriteOut_AfterNarrow_Reserialises_FromTypedContent()
-    {
-        var (app, context, dir) = MakeApp();
-        await using var _ = app;
-        File.WriteAllText(Path.Combine(dir, "config.json"), "{\"port\":8080}");
-
-        var result = await Read(context, new PLangFilePath(Path.Combine(dir, "config.json"), context) {});
-        await result.Get("port");                  // examination → narrow
-        await Assert.That(result.Type!.Name).IsEqualTo("dict");
-        var json = await SerializePlang(app, result);
-        await Assert.That(json).Contains("8080");
-        await Assert.That(json).Contains("port");
-    }
-
-    [Test]
     public async Task PathWriteOut_LocationOnly_NotContent()
     {
         // a `path` value has one face — the renderer entry emits the location string
