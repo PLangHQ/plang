@@ -135,7 +135,7 @@ public sealed class @this
     /// decode itself. A named door, so the channel receive path compares against it instead
     /// of type-checking <c>is plang.@this</c>.
     /// </summary>
-    public ISerializer Transport => _byType["application/plang"];
+    public ITransport Transport => (ITransport)_byType["application/plang"];
 
     /// <summary>
     /// Gets all registered MIME types.

@@ -41,7 +41,7 @@ namespace app.channel.serializer.plang;
 /// via the per-actor serializer.
 /// </para>
 /// </summary>
-public sealed class @this : ISerializer
+public sealed class @this : ITransport
 {
     public string Type => "application/plang";
     public string Extension => ".plang";

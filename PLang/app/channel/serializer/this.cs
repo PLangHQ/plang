@@ -43,16 +43,6 @@ public interface ISerializer
     Task<data.@this<T>> DeserializeAsync<T>(Stream stream, global::app.View view = global::app.View.Out, CancellationToken cancellationToken = default) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>;
 
     /// <summary>
-    /// Reads a <c>source</c>'s undecoded bytes (from a <c>.pr</c> or channel content) into
-    /// its plang type. THIS serializer knows the encoding its bytes are in, so it makes the
-    /// matching <see cref="IReader"/> over them; the type then pulls itself off that reader
-    /// (<c>App.Type.Reader(name, kind).Read</c>) — format-agnostic. The serializer navigates
-    /// the source for its raw + declared type; the read-side counterpart of the write
-    /// renderer (serializer owns the format, the type owns the value).
-    /// </summary>
-    global::app.type.item.@this Read(global::app.type.item.source source, global::app.type.reader.ReadContext ctx);
-
-    /// <summary>
     /// True when <paramref name="writer"/> encodes in THIS serializer's own format — a raw
     /// <c>wire</c> slice this serializer captured rides VERBATIM into it (byte-identical relay).
     /// Any other writer is a different format, so writing the slice there is a USE: the wire
@@ -62,4 +52,22 @@ public interface ISerializer
     /// so no format name lives on the wire (a bson transport answers for bson).
     /// </summary>
     bool Owns(global::app.channel.serializer.IWriter writer) => false;
+}
+
+/// <summary>
+/// The transport — the one serializer that also decodes a still-encoded slice back into its plang
+/// type. Only a <c>wire</c> reaches <see cref="Read"/> (through the reference it captured at birth),
+/// and a wire is only ever captured by the transport, so no plain-content serializer implements it.
+/// Narrowed off <see cref="ISerializer"/> so <c>Text</c>/<c>Json</c> don't carry a door nothing calls.
+/// </summary>
+public interface ITransport : ISerializer
+{
+    /// <summary>
+    /// Reads a <c>source</c>'s undecoded bytes (a <c>.pr</c> slice) into its plang type. THIS
+    /// serializer knows the encoding its bytes are in, so it makes the matching <see cref="IReader"/>
+    /// over them; the type then pulls itself off that reader (<c>App.Type.Reader(name, kind).Read</c>)
+    /// — format-agnostic. The read-side counterpart of the write renderer (serializer owns the
+    /// format, the type owns the value).
+    /// </summary>
+    global::app.type.item.@this Read(global::app.type.item.source source, global::app.type.reader.ReadContext ctx);
 }

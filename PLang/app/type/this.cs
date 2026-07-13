@@ -323,7 +323,7 @@ public sealed class @this : item.@this
     /// capture door beside the content <see cref="Create(object?, actor.context.@this?)"/> door —
     /// same verb, the capture's knowledge as an argument, never a format name.</summary>
     public item.@this Create(string slice, global::app.actor.context.@this context,
-        global::app.channel.serializer.ISerializer reader)
+        global::app.channel.serializer.ITransport reader)
         => new item.wire.@this(slice, this, context, reader);
 
     // The data door — the kind-aware build: THIS type makes itself from a value, reading the declared
