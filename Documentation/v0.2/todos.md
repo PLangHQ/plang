@@ -1880,3 +1880,29 @@ field), which is load-bearing — architect call. Write-up context in
 `.bot/navigation-driven-record-builder/coder/obp-doc-list-naming-ambiguity.md` neighbourhood + this
 session's discussion. Meanwhile dict/list already declare their names explicitly (committed);
 NamespaceTail stays as the working default for the ~19 domain types.
+
+## 2026-07-13 — Enforce context-never-null at Data construction (own branch)
+
+The `Data.Context` getter already documents the intent ("born-with-context: a null here is a
+bug to fix at the caller, no fallback"), but it's **not enforced**. A context-less value-Data
+surfaces as a cryptic NRE deep in serialization/navigation (e.g. `Text.SerializeAsync:44`,
+`data.Context.Ok()`), not at the construction site.
+
+**The guard** (prototyped + reverted on wire-source-split): in the two value-bearing `Data`
+ctors, after `_context = context ?? parent?._context`, throw a self-diagnosing
+`context-never-null` error when `_context == null` AND the Data carries a real value (the
+null-citizen sentinels — NotFound / Uninitialized / `new Data(name)` — stay context-free and
+are exempt).
+
+**Blast radius (measured):** ~668 orphan value-Data creations across the test suite +
+production. Dominated by:
+- **`Data<T>.Ok(value)`** (`data/this.cs:823`) — a context-less static factory used everywhere;
+  either require context or route callers through `context.Ok<T>`.
+- Hundreds of raw `new Data<T>("","x")` test orphans (pass the test's `TestApp` context).
+- A few **real production orphans** the guard caught: `app.module.llm.query.Run`,
+  `app.module.llm.code.OpenAi.Query` (~15 each) — genuine bugs, fix at the source.
+
+Too large to ride wire-source-split (would bury the branch under hundreds of test edits).
+Do as its own branch: add the guard, fix `Data<T>.Ok`, fix the production orphans, sweep the
+tests. This also fixes the `ChannelEntity_Write` isolation flakiness (a context-less Data that
+only flakily gets stamped).
