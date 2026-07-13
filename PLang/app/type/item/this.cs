@@ -299,6 +299,8 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// during the consumer-tail transition); anything else is absent. One
     /// owner for the discipline so edge call sites don't each re-implement it.
     /// </summary>
+    [System.Obsolete("Lower<T> is a thin wrapper around Clr<T> — call the value's own .Clr<T>() "
+        + "directly (a door answer is already an item). Slated for removal; do not add new callers.")]
     internal static T? Lower<T>(object? doorAnswer) => doorAnswer switch
     {
         // A plang value lowers to CLR via its own door FIRST — every item is also
