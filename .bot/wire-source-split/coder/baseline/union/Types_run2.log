@@ -1,0 +1,209 @@
+
+████████╗██╗   ██╗███╗   ██╗██╗████████╗
+╚══██╔══╝██║   ██║████╗  ██║██║╚══██╔══╝
+   ██║   ██║   ██║██╔██╗ ██║██║   ██║
+   ██║   ██║   ██║██║╚██╗██║██║   ██║
+   ██║   ╚██████╔╝██║ ╚████║██║   ██║
+   ╚═╝    ╚═════╝ ╚═╝  ╚═══╝╚═╝   ╚═╝
+
+   TUnit v1.13.11.0 | 64-bit | Ubuntu 22.04.5 LTS | linux-x64 | .NET 10.0.9 | Microsoft Testing Platform v2.1.0
+
+   Engine Mode: SourceGenerated
+
+skipped NoRawScalarEscapes_ParseSeamSweep (1ms)
+  Pre-existing: the Unwrap parse seam borns a raw String without a context, tripping the born-with-context guard. Not introduced here; fix tracked at the parent-branch level.
+failed UnwrapJsonElement_Null_ProducesDataNullSingleton (7ms)
+  TUnit.Engine.Exceptions.TestFailedException: ArgumentNullException: Value cannot be null. (Parameter 'context')
+    at app.type.item.dict.this..ctor(Dictionary`2 backing, this context) in /workspace/plang/PLang/app/type/item/dict/this.cs:83
+    at app.type.item.dict.this..ctor(this context) in /workspace/plang/PLang/app/type/item/dict/this.cs:54
+    at app.type.item.serializer.json.ObjectLeaf(JsonElement element, Int32 depth) in /workspace/plang/PLang/app/type/item/serializer/json.cs:140
+    at app.type.item.serializer.json.Parse(Object value, Int32 depth) in /workspace/plang/PLang/app/type/item/serializer/json.cs:98
+    at app.data.this..ctor(String name, Object value, this type, this parent, this context) in /workspace/plang/PLang/app/data/this.cs:243
+    at PLang.Tests.App.ScalarsAsNative.ConstructionBornNativeTests.Unwrap(String json) in /workspace/plang/PLang.Tests/Types/App/ScalarsAsNative/ConstructionBornNativeTests.cs:23
+    at PLang.Tests.App.ScalarsAsNative.ConstructionBornNativeTests.UnwrapJsonElement_Null_ProducesDataNullSingleton() in /workspace/plang/PLang.Tests/Types/App/ScalarsAsNative/ConstructionBornNativeTests.cs:69
+failed CryptoVerify_DefaultsAlgorithmFromHashValue (98ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.module.crypto.Verify.Run() in /workspace/plang/PLang/app/module/crypto/verify.cs:24
+    at PLang.Tests.App.TypeKindStrict.HashTypeTests.CryptoVerify_DefaultsAlgorithmFromHashValue() in /workspace/plang/PLang.Tests/Types/App/TypeKindStrict/HashTypeTests.cs:86
+    at PLang.Tests.App.TypeKindStrict.HashTypeTests.CryptoVerify_DefaultsAlgorithmFromHashValue() in /workspace/plang/PLang.Tests/Types/App/TypeKindStrict/HashTypeTests.cs:88
+failed VarAsImageGifStrict_BuildsClean_FailsAtRuntime (43ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to contain "gif"
+  but found "variable.set: UnregisteredMimeType: No serializer registered for mimetype 'application/octet-stream'."
+  
+  at Assert.That(result.Error?.Message ?? "").Contains("gif")
+failed SetAsTextMd_NavigationResolvesKindFromVariableExpression (101ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "text"
+  but found "null"
+  
+  at Assert.That((await name.Value())?.ToString()).IsEqualTo("text")
+failed LiteralGifAsImageGifStrict_BuildsAndRunsClean (77ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [UnregisteredMimeType] variable.set: UnregisteredMimeType: No serializer registered for mimetype 'application/octet-stream'.
+  but found False
+  
+  at Assert.That(data.Success).IsTrue().Because("Data failed: [UnregisteredMimeType] variable.set: UnregisteredMimeType: No serializer registered for mimetype 'application/octet-stream'.")
+failed Schema_Kinds_CoversAdvertisedAndExtensionFamilies (58ms)
+  TUnit.Engine.Exceptions.TestFailedException: KeyNotFoundException: The given key 'number' was not present in the dictionary.
+    at System.Collections.Generic.Dictionary`2.get_Item(TKey key)
+    at PLang.Tests.App.TypeKindStrict.IntegrationCutsTests.Cut3_LlmSeesOneUnifiedVocabulary.Schema_Kinds_CoversAdvertisedAndExtensionFamilies() in /workspace/plang/PLang.Tests/Types/App/TypeKindStrict/IntegrationCutsTests/Cut3_LlmSeesOneUnifiedVocabulary.cs:17
+    at PLang.Tests.App.TypeKindStrict.IntegrationCutsTests.Cut3_LlmSeesOneUnifiedVocabulary.Schema_Kinds_CoversAdvertisedAndExtensionFamilies() in /workspace/plang/PLang.Tests/Types/App/TypeKindStrict/IntegrationCutsTests/Cut3_LlmSeesOneUnifiedVocabulary.cs:23
+failed Schema_Kinds_AdvertisesNumberPrecisions (81ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That(kinds.ContainsKey("number")).IsTrue()
+failed SetAsImage_MintsPathBackedHandle_NoReadAtSet (36ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That((await stored!.Value()) is image).IsTrue()
+failed Serialize_StrictMismatch_FailsCleanly_BeforeStreamWrite (14ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be false, because Expected failure but Data succeeded with value: null
+  but found True
+  
+  at Assert.That(data.Success).IsFalse().Because("Expected failure but Data succeeded with value: null")
+failed Run_StrictImageGifWithRuntimeVarResolvingToPng_ThrowsTypedError (39ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to contain "gif"
+  but found "variable.set: UnregisteredMimeType: No serializer registered for mimetype 'application/octet-stream'."
+  
+  at Assert.That(result.Error?.Message ?? "").Contains("gif")
+failed Run_StrictImageGifWithRuntimeVarResolvingToGif_Mints (33ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [UnregisteredMimeType] variable.set: UnregisteredMimeType: No serializer registered for mimetype 'application/octet-stream'.
+  but found False
+  
+  at Assert.That(data.Success).IsTrue().Because("Data failed: [UnregisteredMimeType] variable.set: UnregisteredMimeType: No serializer registered for mimetype 'application/octet-stream'.")
+failed Wire_Write_OmitsTypeForNullSentinel (5ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be false
+  but found True
+  
+  at Assert.That(json.Contains("\"type\"")).IsFalse()
+failed Entity_Kinds_PopulatedForNumber (86ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to not be null
+  but value is null
+  
+  at Assert.That(num.Kinds).IsNotNull()
+failed Data_PropertyAccess_UsesDeclaredTypeForMaterialization (17ms)
+  TUnit.Engine.Exceptions.TestFailedException: KeyNotFoundException: No PLang type registered under name 'json'.
+    at app.type.list.this.get_Item(String typeName) in /workspace/plang/PLang/app/type/list/this.cs:274
+    at app.type.this.Create(Object raw, this context, String format) in /workspace/plang/PLang/app/type/this.cs:273
+    at app.data.this..ctor(String name, Object value, this type, this parent, this context) in /workspace/plang/PLang/app/data/this.cs:250
+    at PLang.Tests.App.TypedReturnsTests.Stage0_DataMaterializationTests.Data_PropertyAccess_UsesDeclaredTypeForMaterialization() in /workspace/plang/PLang.Tests/Types/App/TypedReturnsTests/Stage0_DataMaterializationTests.cs:38
+failed Data_Materialization_CachesResultOnFirstAccess (17ms)
+  TUnit.Engine.Exceptions.TestFailedException: KeyNotFoundException: No PLang type registered under name 'json'.
+    at app.type.list.this.get_Item(String typeName) in /workspace/plang/PLang/app/type/list/this.cs:274
+    at app.type.this.Create(Object raw, this context, String format) in /workspace/plang/PLang/app/type/this.cs:273
+    at app.data.this..ctor(String name, Object value, this type, this parent, this context) in /workspace/plang/PLang/app/data/this.cs:250
+    at PLang.Tests.App.TypedReturnsTests.Stage0_DataMaterializationTests.Data_Materialization_CachesResultOnFirstAccess() in /workspace/plang/PLang.Tests/Types/App/TypedReturnsTests/Stage0_DataMaterializationTests.cs:51
+failed ModulesDescribe_BuilderRecordHandlers_AdvertiseConcreteReturnTypes (109ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at PLang.Tests.App.TypedReturnsTests.Stage2_MechanicalTypings_Part2Tests.ModulesDescribe_BuilderRecordHandlers_AdvertiseConcreteReturnTypes() in /workspace/plang/PLang.Tests/Types/App/TypedReturnsTests/Stage2_MechanicalTypings_Part2Tests.cs:107
+failed Body_ImagePng_ScalarIsBytes_ValueMaterializesImage (59ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.module.http.request.Run() in /workspace/plang/PLang/app/module/http/request.cs:85
+    at PLang.Tests.App.TypedReturnsTests.Stage3_HttpContentTypeDispatchTests.Get(String url, Action`1 shape) in /workspace/plang/PLang.Tests/Types/App/TypedReturnsTests/Stage3_HttpContentTypeDispatchTests.cs:58
+    at PLang.Tests.App.TypedReturnsTests.Stage3_HttpContentTypeDispatchTests.Body_ImagePng_ScalarIsBytes_ValueMaterializesImage() in /workspace/plang/PLang.Tests/Types/App/TypedReturnsTests/Stage3_HttpContentTypeDispatchTests.cs:93
+failed Body_TextHtml_StampsBinaryHtml (63ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.module.http.request.Run() in /workspace/plang/PLang/app/module/http/request.cs:85
+    at PLang.Tests.App.TypedReturnsTests.Stage3_HttpContentTypeDispatchTests.Get(String url, Action`1 shape) in /workspace/plang/PLang.Tests/Types/App/TypedReturnsTests/Stage3_HttpContentTypeDispatchTests.cs:58
+    at PLang.Tests.App.TypedReturnsTests.Stage3_HttpContentTypeDispatchTests.Body_TextHtml_StampsBinaryHtml() in /workspace/plang/PLang.Tests/Types/App/TypedReturnsTests/Stage3_HttpContentTypeDispatchTests.cs:80
+failed Body_ApplicationJson_StampsBinaryJson_LazyThenNavigates (96ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.module.http.request.Run() in /workspace/plang/PLang/app/module/http/request.cs:85
+    at PLang.Tests.App.TypedReturnsTests.Stage3_HttpContentTypeDispatchTests.Get(String url, Action`1 shape) in /workspace/plang/PLang.Tests/Types/App/TypedReturnsTests/Stage3_HttpContentTypeDispatchTests.cs:58
+    at PLang.Tests.App.TypedReturnsTests.Stage3_HttpContentTypeDispatchTests.Body_ApplicationJson_StampsBinaryJson_LazyThenNavigates() in /workspace/plang/PLang.Tests/Types/App/TypedReturnsTests/Stage3_HttpContentTypeDispatchTests.cs:68
+failed Body_TextCsv_StampsBinary (64ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.module.http.request.Run() in /workspace/plang/PLang/app/module/http/request.cs:85
+    at PLang.Tests.App.TypedReturnsTests.Stage3_HttpContentTypeDispatchTests.Get(String url, Action`1 shape) in /workspace/plang/PLang.Tests/Types/App/TypedReturnsTests/Stage3_HttpContentTypeDispatchTests.cs:58
+    at PLang.Tests.App.TypedReturnsTests.Stage3_HttpContentTypeDispatchTests.Body_TextCsv_StampsBinary() in /workspace/plang/PLang.Tests/Types/App/TypedReturnsTests/Stage3_HttpContentTypeDispatchTests.cs:117
+failed Body_MissingContentType_StampsBinary (105ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.module.http.request.Run() in /workspace/plang/PLang/app/module/http/request.cs:85
+    at PLang.Tests.App.TypedReturnsTests.Stage3_HttpContentTypeDispatchTests.Get(String url, Action`1 shape) in /workspace/plang/PLang.Tests/Types/App/TypedReturnsTests/Stage3_HttpContentTypeDispatchTests.cs:58
+    at PLang.Tests.App.TypedReturnsTests.Stage3_HttpContentTypeDispatchTests.Body_MissingContentType_StampsBinary() in /workspace/plang/PLang.Tests/Types/App/TypedReturnsTests/Stage3_HttpContentTypeDispatchTests.cs:105
+failed Body_BrokenJson_UntouchedIsRawBytes_NoEagerFail (46ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.module.http.request.Run() in /workspace/plang/PLang/app/module/http/request.cs:85
+    at PLang.Tests.App.TypedReturnsTests.Stage3_HttpContentTypeDispatchTests.Get(String url, Action`1 shape) in /workspace/plang/PLang.Tests/Types/App/TypedReturnsTests/Stage3_HttpContentTypeDispatchTests.cs:58
+    at PLang.Tests.App.TypedReturnsTests.Stage3_HttpContentTypeDispatchTests.Body_BrokenJson_UntouchedIsRawBytes_NoEagerFail() in /workspace/plang/PLang.Tests/Types/App/TypedReturnsTests/Stage3_HttpContentTypeDispatchTests.cs:130
+failed Metadata_StatusIsProperty_NotBody (57ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.module.http.request.Run() in /workspace/plang/PLang/app/module/http/request.cs:85
+    at PLang.Tests.App.TypedReturnsTests.Stage3_HttpContentTypeDispatchTests.Get(String url, Action`1 shape) in /workspace/plang/PLang.Tests/Types/App/TypedReturnsTests/Stage3_HttpContentTypeDispatchTests.cs:58
+    at PLang.Tests.App.TypedReturnsTests.Stage3_HttpContentTypeDispatchTests.Metadata_StatusIsProperty_NotBody() in /workspace/plang/PLang.Tests/Types/App/TypedReturnsTests/Stage3_HttpContentTypeDispatchTests.cs:140
+failed LlmQuery_Build_WithFormatNoSchema_ReturnsOkWithFormatValue (79ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be null
+  but found [ValueRequired] 'messages' must have a value
+  
+  at Assert.That(resolveErr).IsNull()
+failed LlmQuery_Build_WithSchema_ReturnsOkWithJson (100ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be null
+  but found [ValueRequired] 'messages' must have a value
+  
+  at Assert.That(resolveErr).IsNull()
+failed LlmQuery_Build_NeitherSchemaNorFormat_ReturnsBareOk (61ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be null
+  but found [ValueRequired] 'messages' must have a value
+  
+  at Assert.That(resolveErr).IsNull()
+failed Resolve_Context_NotStored_OnInstance (61ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to not be equal to this
+  but both values are this
+  
+  at Assert.That(v.GetType().Name).IsNotEqualTo("this")
+failed ReadText_OnDotPrFile_StillReturnsGoal_RegressionGuard (59ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That((await read.Value()) is Goal).IsTrue()
+failed Redirect_Signature_IsFreshForDestination_NotOriginalUrl (445ms)
+  TUnit.Engine.Exceptions.TestFailedException: KeyNotFoundException: The given key was not present in the dictionary.
+    at System.Text.Json.JsonElement.GetProperty(String propertyName)
+    at PLang.Tests.App.Types.PathTests.Http.HttpPathRedirectTests.Redirect_Signature_IsFreshForDestination_NotOriginalUrl() in /workspace/plang/PLang.Tests/Types/App/Types/PathTests/Http/HttpPathRedirectTests.cs:189
+failed SchemeHandler_Exposes_PublicSingleStringConstructor (6ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to not be null
+  but value is null
+  
+  at Assert.That(ctor).IsNotNull()
+failed LoadDll_SealedNameAsRendererTypeName_FailsWith_TypeLoadCollision (12ms)
+  TUnit.Engine.Exceptions.TestFailedException: TypeLoadException: Could not load type 'app.type.catalog.ITypeRenderer' from assembly 'PLangLibrary, Version=0.2.1.0, Culture=neutral, PublicKeyToken=null'.
+    at System.Reflection.RuntimeAssembly.GetExportedTypes()
+    at app.type.list.Loader.Register(Assembly assembly, this registry) in /workspace/plang/PLang/app/type/list/Loader.cs:96
+    at PLang.Tests.App.Types.RuntimeTypeLoadingTests.LoadDll_SealedNameAsRendererTypeName_FailsWith_TypeLoadCollision() in /workspace/plang/PLang.Tests/Types/App/Types/RuntimeTypeLoadingTests.cs:161
+failed Formats_ExtensionToPlangName_ReadsThroughRegistry (6ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to System.Text.Json.Nodes.JsonNode
+  but found 
+  
+  at Assert.That(_types.Get("json")).IsEqualTo(typeof(System.Text.Json.Nodes.JsonNode))
+failed LoadDll_Money_RegistersTypeAndRenderer_ProducesExpectedWireString (2ms)
+  TUnit.Engine.Exceptions.TestFailedException: TypeLoadException: Could not load type 'app.type.catalog.ITypeRenderer' from assembly 'PLangLibrary, Version=0.2.1.0, Culture=neutral, PublicKeyToken=null'.
+    at System.Reflection.RuntimeAssembly.GetExportedTypes()
+    at app.type.list.Loader.Register(Assembly assembly, this registry) in /workspace/plang/PLang/app/type/list/Loader.cs:96
+    at PLang.Tests.App.Types.TypeProviderDllRoundtripTests.LoadDll_Money_RegistersTypeAndRenderer_ProducesExpectedWireString() in /workspace/plang/PLang.Tests/Types/App/Types/TypeProviderDllRoundtripTests.cs:21
+failed LoadDll_CustomInt_OverridesBuiltInName_RuntimeRendererWins (6ms)
+  TUnit.Engine.Exceptions.TestFailedException: TypeLoadException: Could not load type 'app.type.catalog.ITypeRenderer' from assembly 'PLangLibrary, Version=0.2.1.0, Culture=neutral, PublicKeyToken=null'.
+    at System.Reflection.RuntimeAssembly.GetExportedTypes()
+    at app.type.list.Loader.Register(Assembly assembly, this registry) in /workspace/plang/PLang/app/type/list/Loader.cs:96
+    at PLang.Tests.App.Types.TypeProviderDllRoundtripTests.LoadDll_CustomInt_OverridesBuiltInName_RuntimeRendererWins() in /workspace/plang/PLang.Tests/Types/App/Types/TypeProviderDllRoundtripTests.cs:51
+failed InfraDoor_ReachesEveryHook_FromClrTarget (85ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be of type this
+  but Value is of type this, not this
+  
+  at Assert.That(await app.Type.Convert("photo.png", typeof(Image), ctx).Value()).IsTypeOf<this>()
+failed BuilderValidate_OnlyOneTerminalVariableSetPerStep_LastInChainWins (14ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to not be null
+  but value is null
+  
+  at Assert.That(lastType).IsNotNull()
+failed BuilderValidate_BuildReturnsOkWithTypeName_SetsTerminalVariableSetType (10ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to not be null
+  but value is null
+  
+  at Assert.That(typeParam).IsNotNull()
+
+Test run summary: Failed! - /workspace/plang/PLang.Tests/Types/bin/Debug/net10.0/PLang.Tests.Types.dll (net10.0|x64)
+  total: 726
+  failed: 37
+  succeeded: 688
+  skipped: 1
+  duration: 5s 789ms

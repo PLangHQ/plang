@@ -1,0 +1,106 @@
+
+████████╗██╗   ██╗███╗   ██╗██╗████████╗
+╚══██╔══╝██║   ██║████╗  ██║██║╚══██╔══╝
+   ██║   ██║   ██║██╔██╗ ██║██║   ██║
+   ██║   ██║   ██║██║╚██╗██║██║   ██║
+   ██║   ╚██████╔╝██║ ╚████║██║   ██║
+   ╚═╝    ╚═════╝ ╚═╝  ╚═══╝╚═╝   ╚═╝
+
+   TUnit v1.13.11.0 | 64-bit | Ubuntu 22.04.5 LTS | linux-x64 | .NET 10.0.9 | Microsoft Testing Platform v2.1.0
+
+   Engine Mode: SourceGenerated
+
+failed DoesNotFire_OnSystemIoFile_InsidePathTypesNamespace (129ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be false
+  but found True
+  
+  at Assert.That(diags.Any(d => d.Id == "PLNG002")).IsFalse()
+skipped DataWrappedActionList_DoesNotRecurseIntoActions (0ms)
+  Params resolve eagerly at dispatch — nested-action params resolve prematurely; fixed by the pure-lazy source-gen refactor (resolve only on handler .Value()). See todos 2026-06-15.
+skipped DataWrappedActionList_SubActionParametersRemainRaw (0ms)
+  Params resolve eagerly at dispatch — nested-action params resolve prematurely; fixed by the pure-lazy source-gen refactor (resolve only on handler .Value()). See todos 2026-06-15.
+failed DataWrappedDict_NestedVar_DeepResolves (87ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "substituted"
+  but found "%x%"
+  
+  at Assert.That((await d.Get("inner")!.Value()).ToString()).IsEqualTo("substituted")
+failed DataWrappedList_NestedVarInDict_DeepResolvesAndTypes (243ms)
+  TUnit.Engine.Exceptions.TestFailedException: JsonException: The JSON value could not be converted to System.String. Path: $.role | LineNumber: 0 | BytePositionInLine: 9.
+    at System.Text.Json.ThrowHelper.ReThrowWithPath(ReadStack& state, Utf8JsonReader& reader, Exception ex)
+    at System.Text.Json.Serialization.JsonConverter`1.ReadCore(Utf8JsonReader& reader, T& value, JsonSerializerOptions options, ReadStack& state)
+    at System.Text.Json.Serialization.Metadata.JsonTypeInfo`1.Deserialize(Utf8JsonReader& reader, ReadStack& state)
+    at System.Text.Json.Serialization.Metadata.JsonTypeInfo`1.DeserializeAsObject(Utf8JsonReader& reader, ReadStack& state)
+    at System.Text.Json.JsonSerializer.ReadFromSpanAsObject(ReadOnlySpan`1 utf8Json, JsonTypeInfo jsonTypeInfo, Nullable`1 actualByteCount)
+    at app.type.item.dict.this.Clr(Type target) in /workspace/plang/PLang/app/type/item/dict/this.cs:366
+    at app.type.item.this.Clr[T]() in /workspace/plang/PLang/app/type/item/this.cs:293
+    at PLang.Tests.Generator.Matrix.DataWrapped.DataWrappedListTests.DataWrappedList_NestedVarInDict_DeepResolvesAndTypes() in /workspace/plang/PLang.Tests/Generator/Generator/Matrix/DataWrapped/DataWrappedTests.cs:57
+    at PLang.Tests.Generator.Matrix.DataWrapped.DataWrappedListTests.DataWrappedList_NestedVarInDict_DeepResolvesAndTypes() in /workspace/plang/PLang.Tests/Generator/Generator/Matrix/DataWrapped/DataWrappedTests.cs:58
+  --->  System.InvalidOperationException: Cannot get the value of a token type 'StartObject' as a string.
+    at System.Text.Json.ThrowHelper.ThrowInvalidOperationException_ExpectedString(JsonTokenType tokenType)
+    at System.Text.Json.Utf8JsonReader.GetString()
+    at System.Text.Json.Serialization.Metadata.JsonPropertyInfo`1.ReadJsonAndSetMember(Object obj, ReadStack& state, Utf8JsonReader& reader)
+    at System.Text.Json.Serialization.Converters.ObjectDefaultConverter`1.OnTryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value)
+    at System.Text.Json.Serialization.JsonConverter`1.TryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value, Boolean& isPopulatedValue)
+    at System.Text.Json.Serialization.JsonConverter`1.ReadCore(Utf8JsonReader& reader, T& value, JsonSerializerOptions options, ReadStack& state)
+skipped FullVarMatch_MissingVariable_ReturnsErrorOrNotFound (0ms)
+  Resolution-error timing is owned by the eager dispatch-resolve; moves to handler .Value() with the pure-lazy source-gen refactor. See todos 2026-06-15.
+failed DeepResolutionDict_NestedList_FullyWalked (74ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "alpha"
+  but found "%a%"
+  
+  at Assert.That(inner[0]).IsEqualTo("alpha")
+failed DeepResolutionDict_PrimitiveVar_Substituted (78ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "substituted"
+  but found "%x%"
+  
+  at Assert.That((await d.Get("inner")!.Value()).ToString()).IsEqualTo("substituted")
+failed DeepResolutionList_NestedDict_SubstitutesInside (77ms)
+  TUnit.Engine.Exceptions.TestFailedException: JsonException: The JSON value could not be converted to System.String. Path: $.role | LineNumber: 0 | BytePositionInLine: 9.
+    at System.Text.Json.ThrowHelper.ReThrowWithPath(ReadStack& state, Utf8JsonReader& reader, Exception ex)
+    at System.Text.Json.Serialization.JsonConverter`1.ReadCore(Utf8JsonReader& reader, T& value, JsonSerializerOptions options, ReadStack& state)
+    at System.Text.Json.Serialization.Metadata.JsonTypeInfo`1.Deserialize(Utf8JsonReader& reader, ReadStack& state)
+    at System.Text.Json.Serialization.Metadata.JsonTypeInfo`1.DeserializeAsObject(Utf8JsonReader& reader, ReadStack& state)
+    at System.Text.Json.JsonSerializer.ReadFromSpanAsObject(ReadOnlySpan`1 utf8Json, JsonTypeInfo jsonTypeInfo, Nullable`1 actualByteCount)
+    at app.type.item.dict.this.Clr(Type target) in /workspace/plang/PLang/app/type/item/dict/this.cs:366
+    at app.type.item.this.Clr[T]() in /workspace/plang/PLang/app/type/item/this.cs:293
+    at PLang.Tests.Generator.Matrix.Resolution.DeepResolutionListTests.DeepResolutionList_NestedDict_SubstitutesInside() in /workspace/plang/PLang.Tests/Generator/Generator/Matrix/Resolution/ResolutionTests.cs:115
+    at PLang.Tests.Generator.Matrix.Resolution.DeepResolutionListTests.DeepResolutionList_NestedDict_SubstitutesInside() in /workspace/plang/PLang.Tests/Generator/Generator/Matrix/Resolution/ResolutionTests.cs:116
+  --->  System.InvalidOperationException: Cannot get the value of a token type 'StartObject' as a string.
+    at System.Text.Json.ThrowHelper.ThrowInvalidOperationException_ExpectedString(JsonTokenType tokenType)
+    at System.Text.Json.Utf8JsonReader.GetString()
+    at System.Text.Json.Serialization.Metadata.JsonPropertyInfo`1.ReadJsonAndSetMember(Object obj, ReadStack& state, Utf8JsonReader& reader)
+    at System.Text.Json.Serialization.Converters.ObjectDefaultConverter`1.OnTryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value)
+    at System.Text.Json.Serialization.JsonConverter`1.TryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value, Boolean& isPopulatedValue)
+    at System.Text.Json.Serialization.JsonConverter`1.ReadCore(Utf8JsonReader& reader, T& value, JsonSerializerOptions options, ReadStack& state)
+failed DeepResolutionList_NestedListsAndDicts_FullyWalked (85ms)
+  TUnit.Engine.Exceptions.TestFailedException: JsonException: The JSON value could not be converted to System.String. Path: $.role | LineNumber: 0 | BytePositionInLine: 9.
+    at System.Text.Json.ThrowHelper.ReThrowWithPath(ReadStack& state, Utf8JsonReader& reader, Exception ex)
+    at System.Text.Json.Serialization.JsonConverter`1.ReadCore(Utf8JsonReader& reader, T& value, JsonSerializerOptions options, ReadStack& state)
+    at System.Text.Json.Serialization.Metadata.JsonTypeInfo`1.Deserialize(Utf8JsonReader& reader, ReadStack& state)
+    at System.Text.Json.Serialization.Metadata.JsonTypeInfo`1.DeserializeAsObject(Utf8JsonReader& reader, ReadStack& state)
+    at System.Text.Json.JsonSerializer.ReadFromSpanAsObject(ReadOnlySpan`1 utf8Json, JsonTypeInfo jsonTypeInfo, Nullable`1 actualByteCount)
+    at app.type.item.dict.this.Clr(Type target) in /workspace/plang/PLang/app/type/item/dict/this.cs:366
+    at app.type.item.this.Clr[T]() in /workspace/plang/PLang/app/type/item/this.cs:293
+    at PLang.Tests.Generator.Matrix.Resolution.DeepResolutionListTests.DeepResolutionList_NestedListsAndDicts_FullyWalked() in /workspace/plang/PLang.Tests/Generator/Generator/Matrix/Resolution/ResolutionTests.cs:143
+    at PLang.Tests.Generator.Matrix.Resolution.DeepResolutionListTests.DeepResolutionList_NestedListsAndDicts_FullyWalked() in /workspace/plang/PLang.Tests/Generator/Generator/Matrix/Resolution/ResolutionTests.cs:145
+  --->  System.InvalidOperationException: Cannot get the value of a token type 'StartObject' as a string.
+    at System.Text.Json.ThrowHelper.ThrowInvalidOperationException_ExpectedString(JsonTokenType tokenType)
+    at System.Text.Json.Utf8JsonReader.GetString()
+    at System.Text.Json.Serialization.Metadata.JsonPropertyInfo`1.ReadJsonAndSetMember(Object obj, ReadStack& state, Utf8JsonReader& reader)
+    at System.Text.Json.Serialization.Converters.ObjectDefaultConverter`1.OnTryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value)
+    at System.Text.Json.Serialization.JsonConverter`1.TryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value, Boolean& isPopulatedValue)
+    at System.Text.Json.Serialization.JsonConverter`1.ReadCore(Utf8JsonReader& reader, T& value, JsonSerializerOptions options, ReadStack& state)
+skipped SnapshotOnError_SensitiveProperty_NullPrValue_StaysNull (0ms)
+  The error-snapshot of a null-resolving [Sensitive] param is owned by the eager dispatch-resolve; reworked by the pure-lazy source-gen refactor. See todos 2026-06-15.
+failed EnumWithDefault_StringValue_ConvertsToMember (88ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to B
+  but found 
+  
+  at Assert.That(await typed!.Value()).IsEqualTo(MatrixEnum.B)
+
+Test run summary: Failed! - /workspace/plang/PLang.Tests/Generator/bin/Debug/net10.0/PLang.Tests.Generator.dll (net10.0|x64)
+  total: 198
+  failed: 8
+  succeeded: 186
+  skipped: 4
+  duration: 3s 408ms

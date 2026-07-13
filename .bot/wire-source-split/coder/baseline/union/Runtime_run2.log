@@ -1,0 +1,1367 @@
+
+████████╗██╗   ██╗███╗   ██╗██╗████████╗
+╚══██╔══╝██║   ██║████╗  ██║██║╚══██╔══╝
+   ██║   ██║   ██║██╔██╗ ██║██║   ██║
+   ██║   ██║   ██║██║╚██╗██║██║   ██║
+   ██║   ╚██████╔╝██║ ╚████║██║   ██║
+   ╚═╝    ╚═════╝ ╚═╝  ╚═══╝╚═╝   ╚═╝
+
+   TUnit v1.13.11.0 | 64-bit | Ubuntu 22.04.5 LTS | linux-x64 | .NET 10.0.9 | Microsoft Testing Platform v2.1.0
+
+   Engine Mode: SourceGenerated
+
+failed AtSchemaBlocked_AsDictKey_WireMarkerOnly (24ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to throw ArgumentException
+  but threw System.NullReferenceException
+  
+  at Assert.That(() => d.Set(new Data("@schema", "data"))).Throws<ArgumentException>()
+failed ViaChannel_AssemblesActions_AndKeepsParamType (706ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That(param.HasVariableReference).IsTrue()
+failed FileWriteOut_UnNarrowed_EmitsRawContentBytes (173ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "file"
+  but found "text"
+  
+  at Assert.That(result.Type!.Name).IsEqualTo("file")
+failed BinaryEquality_SameByteSequence_Equal (110ms)
+  TUnit.Engine.Exceptions.TestFailedException: UnregisteredMimeType: No serializer registered for mimetype 'application/octet-stream'.
+    at app.channel.serializer.list.this.GetByMimeType(String mimeType) in /workspace/plang/PLang/app/channel/serializer/list/this.cs:59
+    at app.channel.serializer.list.this.get_Item(String mimeType) in /workspace/plang/PLang/app/channel/serializer/list/this.cs:66
+    at app.type.item.source.Read() in /workspace/plang/PLang/app/type/item/source.cs:182
+    at app.type.item.source.Value(this data) in /workspace/plang/PLang/app/type/item/source.cs:139
+    at app.data.this.Value() in /workspace/plang/PLang/app/data/this.cs:318
+    at app.data.this.Compare(this other) in /workspace/plang/PLang/app/data/this.cs:651
+    at PLang.Tests.App.CompareRedesign.Stage4_PerTypeCompareTests.Cmp(this app, Object a, Object b, String aType, String bType) in /workspace/plang/PLang.Tests/Runtime/App/CompareRedesign/Stage4_PerTypeCompareTests.cs:20
+    at PLang.Tests.App.CompareRedesign.Stage4_PerTypeCompareTests.BinaryEquality_SameByteSequence_Equal() in /workspace/plang/PLang.Tests/Runtime/App/CompareRedesign/Stage4_PerTypeCompareTests.cs:135
+    at PLang.Tests.App.CompareRedesign.Stage4_PerTypeCompareTests.BinaryEquality_SameByteSequence_Equal() in /workspace/plang/PLang.Tests/Runtime/App/CompareRedesign/Stage4_PerTypeCompareTests.cs:136
+failed Pile2_SqliteSettings_BindsSerializedBlob_NoToRaw (2ms)
+  TUnit.Engine.Exceptions.TestFailedException: DirectoryNotFoundException: Could not find a part of the path '/workspace/plang/PLang/app/module/settings/Sqlite.cs'.
+    at Interop.ThrowExceptionForIoErrno(ErrorInfo errorInfo, String path, Boolean isDirError)
+    at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String path, OpenFlags flags, Int32 mode, Boolean failForSymlink, Boolean& wasSymlink, Func`4 createOpenException)
+    at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, UnixFileMode openPermissions, Int64& fileLength, UnixFileMode& filePermissions, Boolean failForSymlink, Boolean& wasSymlink, Func`4 createOpenException)
+    at System.IO.Strategies.OSFileStreamStrategy..ctor(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+    at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize, FileOptions options, Int64 preallocationSize)
+    at System.IO.File.AsyncStreamReader(String path, Encoding encoding)
+    at System.IO.File.InternalReadAllTextAsync(String path, Encoding encoding, CancellationToken cancellationToken)
+    at PLang.Tests.App.CompareRedesign.Stage6_ConsumersTests.Pile2_SqliteSettings_BindsSerializedBlob_NoToRaw() in /workspace/plang/PLang.Tests/Runtime/App/CompareRedesign/Stage6_ConsumersTests.cs:178
+failed Sort_TwoPhase_KeysMaterialiseAsync_OrderSync_NoGetResult (3ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to contain "public async System.Threading.Tasks.Task SortByValue"
+  but found "using System.Reflection;
+  using System.Text.Json.Nodes;
+  using System.Text.Json.Serialization;
+  using app.Attributes;
+  using app.module;
+  
+  namespace app.type.list;
+  
+  /// <summary>
+  /// Owns PLang name ↔ CLR type identity, the [Choices] vocabulary registry, and the
+  /// type-conversion entry points. The primary partial holds the public surface; the
+  /// <c>Registry</c> partial (formerly <c>Utils.PlangTypeIndex</c>) absorbs assembly
+  /// indexing for [PlangType] and the @this convention.
+  ///
+  /// File-format characteristics (extension → Kind, extension → MIME, Kind →
+  /// compressibility) live separately on <see cref="app.format.list.@this"/> at
+  /// <c>app.Format</c>.
+  ///
+  /// This IS the collection of all system types (<c>app.Type</c>) — the current and future home,
+  /// distinct from <c>app.type.item.list</c> (the plang list VALUE). Its internals are still the
+  /// legacy registry blob; Stage-3-core cleans them in place (untangle the Registry index, reparent
+  /// the sub-registries to <c>app.type.*</c>) — the class is not going anywhere.
+  /// </summary>
+  public sealed partial class @this
+  {
+      /// <summary>
+      /// The context this catalog births values from. The type catalog is a
+      /// system-owned collection, born with the App's system context.
+      /// </summary>
+      internal actor.context.@this Context { get; }
+  
+      public @this(actor.context.@this context) : this()
+      {
+          Context = context;
+          Kind = new kind.list.@this(context);   // per-App, born with context → its kinds are stamped
+      }
+  
+      /// <summary>[Choices] vocabulary registry — reachable as <c>app.type.choices</c>.</summary>
+      public global::app.type.item.choice.list.@this Choice { get; } = new();
+  
+      /// <summary>
+      /// Per-App scheme registry for <see cref="path.@this"/>. Populated at App
+      /// construction with built-in factories (<c>"file"</c>; later <c>"http"</c>
+      /// and <c>"https"</c>). External DLLs loaded via <c>code.load</c> add their
+      /// own schemes via <see cref="global::app.type.item.path.scheme.@this.Register"/>.
+      /// </summary>
+      public global::app.type.item.path.scheme.@this Scheme { get; } = new();
+  
+      /// <summary>
+      /// Per-App build-time kind dispatcher — discovers and invokes each
+      /// registered type's <c>static string? Build(object?)</c> hook (the
+      /// build-time sibling of <c>Resolve</c>). Owns the reflection cache.
+      /// Call: <c>App.Type.KindHooks.Of(declaredType, value)</c> during build to
+      /// stamp <c>Type.Kind</c> alongside <c>Type.Name</c>. Renamed from
+      /// <c>Kinds</c> so the word stops colliding with <see cref="@this.Kind"/>
+      /// (per-value subtype) and the advertised-vocabulary <c>type.Kinds</c>.
+      /// </summary>
+      public kind.Hooks KindHooks { get; } = new();
+  
+      /// <summary>
+      /// The singleton store of kind behaviors (navigate / enumerate / load / convert), one
+      /// <see cref="kind.behavior.@this"/> per format. INTERNAL plumbing — reached only
+      /// through the kind token (<c>value.Kind.Navigate(…)</c>), never a flat
+      /// <c>App.Type.&lt;plural&gt;</c>. Distinct from <see cref="KindHooks"/> (build-time
+      /// kind stamping) and <c>type.Kinds</c> (advertised vocabulary).
+      /// </summary>
+      internal kind.list.@this Kind { get; private set; } = new(null);
+  
+      /// <summary>
+      /// Per-(type, format) renderer table. Vestigial now that a value renders
+      /// itself via <c>item.Write</c> — only its membership check feeds Normalize's
+      /// "renders-itself, don't reflect" signal. Discovers
+      /// <c>app/types/&lt;name&gt;/serializer/&lt;format&gt;.cs</c> classes via
+      /// reflection over <see cref="renderer.@this.Assemblies"/> and exposes a
+      /// runtime-registration seam for DLLs loaded at runtime.
+      /// </summary>
+      public renderer.@this Renderer { get; } = new();
+  
+      /// <summary>
+      /// Per-(type, kind) reader dispatch — the read-side mirror of
+      /// <see cref="Renderers"/>. Discovers <c>app/type/&lt;name&gt;/serializer/&lt;kind&gt;.cs</c>
+      /// classes exposing a static <c>Read(object, string?, ReadContext)</c> and
+      /// exposes the same runtime-registration seam. The single json
+      /// <c>Converter</c> routes mid-graph typed fields through here.
+      /// </summary>
+      public reader.@this Reader { get; } = new();
+  
+      // --- Primitive lookup tables ---
+      // Aliases / canonical-name data lives on app.type.primitive.@this — one
+      // home for the seeded entries that both the registry (instance lookup) and
+      // the static no-context fallback (GetPrimitiveOrMime / GetPrimitiveName)
+      // read from.
+  
+      private const int MaxGenericDepth = 20;
+  
+      /// <summary>
+      /// Static-friendly subset of <see cref="Get"/> that handles primitives and MIME without
+      /// touching the per-App registry. Used as a fallback when no <c>Context</c> is available
+      /// (e.g. <c>Data.Type.ClrType</c> on a Data minted outside an action's context).
+      /// </summary>
+      public static System.Type? GetPrimitiveOrMime(string typeName)
+      {
+          if (string.IsNullOrWhiteSpace(typeName)) return null;
+          if (app.type.primitive.@this.Aliases.TryGetValue(typeName, out var primitive)) return primitive;
+          // Context-free domain types — resolvable without an App registry so the
+          // entry-seam fold (type.Judge runs at Data construction, before Context
+          // is wired) can ask a declared type its CLR nature. `variable` is the
+          // raw-name type judged here; it carries [PlangType] for the registry path too.
+          if (string.Equals(typeName, "variable", System.StringComparison.OrdinalIgnoreCase))
+              return typeof(app.variable.@this);
+          return ClrFromMime(typeName);
+      }
+  
+      /// <summary>
+      /// Static-friendly subset of <see cref="GetTypeName"/> covering the primitive table only —
+      /// returns null for domain/[Choices]/array/generic types. Used as a no-context fallback by
+      /// <see cref="data.@this"/> when inferring a Type from a value without an active Context.
+      /// </summary>
+      public static string? GetPrimitiveName(System.Type type)
+      {
+          var underlying = Nullable.GetUnderlyingType(type) ?? type;
+          return app.type.primitive.@this.Canonical.TryGetValue(underlying, out var name) ? name : null;
+      }
+  
+      /// <summary>
+      /// Static-friendly variant of <see cref="GetTypeName"/> — handles primitives, generics,
+      /// nullable, arrays, Data&lt;T&gt; unwrap, and reads [PlangType] / @this convention names
+      /// directly off the type via reflection (no per-App registry). For callers that don't
+      /// have an App in scope (e.g. <see cref="app.module.@this"/> instances constructed
+      /// without an App backing in test fixtures).
+      /// </summary>
+      public static string GetTypeNameStatic(System.Type type)
+      {
+          if (type == null) return "object";
+  
+          var underlying = Nullable.GetUnderlyingType(type);
+          if (underlying != null) return GetTypeNameStatic(underlying) + "?";
+  
+          if (type.IsGenericType)
+          {
+              var generic = type.GetGenericTypeDefinition();
+              if (generic == typeof(data.@this<>))
+                  return GetTypeNameStatic(type.GetGenericArguments()[0]);
+              // choice<T> surfaces under T's name — it IS T's closed named-set.
+              if (generic == typeof(app.type.item.choice.@this<>))
+                  return GetTypeNameStatic(type.GetGenericArguments()[0]);
+              // Native typed list — list<T> carries its element type intrinsically.
+              if (generic == typeof(app.type.item.list.@this<>))
+                  return $"list<{GetTypeNameStatic(type.GetGenericArguments()[0])}>";
+              if (generic == typeof(List<>) || generic == typeof(IList<>)
+                  || generic == typeof(IEnumerable<>) || generic == typeof(ICollection<>)
+                  || generic == typeof(IReadOnlyCollection<>) || generic == typeof(IReadOnlyList<>)
+                  || generic == typeof(HashSet<>))
+                  return $"list<{GetTypeNameStatic(type.GetGenericArguments()[0])}>";
+              if (generic == typeof(Dictionary<,>) || generic == typeof(IDictionary<,>))
+              {
+                  var args = type.GetGenericArguments();
+                  return $"dict<{GetTypeNameStatic(args[0])},{GetTypeNameStatic(args[1])}>";
+              }
+          }
+  
+          if (type == typeof(data.@this)) return "object";
+  
+          if (type.IsArray)
+          {
+              var elementType = type.GetElementType()!;
+              if (elementType == typeof(byte)) return "bytes";
+              return $"list<{GetTypeNameStatic(elementType)}>";
+          }
+  
+          if (app.type.primitive.@this.Canonical.TryGetValue(type, out var name)) return name;
+  
+          var listIface = type.GetInterfaces().FirstOrDefault(i =>
+              i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
+          if (listIface != null)
+              return $"list<{GetTypeNameStatic(listIface.GetGenericArguments()[0])}>";
+  
+          // [PlangType("name")] direct attribute read — first non-null Name wins.
+          var plangAttr = type.GetCustomAttributes<PlangTypeAttribute>(inherit: false)
+              .FirstOrDefault(a => a.Name != null);
+          if (plangAttr?.Name != null) return plangAttr.Name;
+  
+          // @this convention: last-namespace-segment lowercased.
+          if (string.Equals(type.Name, "this", StringComparison.Ordinal) && !string.IsNullOrEmpty(type.Namespace))
+          {
+              var ns = type.Namespace!;
+              var lastDot = ns.LastIndexOf('.');
+              return (lastDot >= 0 ? ns[(lastDot + 1)..] : ns).ToLowerInvariant();
+          }
+  
+          return StripGenericArity(type.Name).ToLowerInvariant();
+      }
+  
+      // --- PLang name → CLR type ---
+  
+      /// <summary>
+      /// PLang type name → CLR type. Handles generics (list&lt;string&gt;), dictionaries,
+      /// nullable (int?), and MIME types. Depth-guarded against unbounded generic nesting.
+      /// </summary>
+      public System.Type? Get(string typeName) => Get(typeName, 0);
+  
+      /// <summary>Alias for <see cref="Get(string)"/> — preserves existing <c>app.type.Clr</c> caller habit.</summary>
+      public System.Type? Clr(string plangName) => Get(plangName);
+  
+      // --- Stage 3 accessor surface ---
+  
+      // Catalog cache keyed by PLang type name.  The no-module catalog walk is
+      // App-global (only the KnownTypes() seed varies, and that seed is identity
+      // to this registry instance), so a single Lazy is enough: BuildTypeEntries
+      // runs once per registry instance and every fold-property read of
+      // app.Type[name] then comes from the cache.
+      //
+      // The (modules)-overload of BuildTypeEntries stays uncached — its input is
+      // the App's module set which can change at runtime via code.load.
+      private readonly Lazy<Dictionary<string, app.type.@this>> _catalogByName;
+  
+      private Dictionary<string, app.type.@this> CatalogByName => _catalogByName.Value;
+  
+      public @this()
+      {
+          _catalogByName = new Lazy<Dictionary<string, app.type.@this>>(() =>
+          {
+              var dict = new Dictionary<string, app.type.@this>(StringComparer.OrdinalIgnoreCase);
+              foreach (var entry in BuildTypeEntries(null))
+              {
+                  // Collision resolution: when two CLR types map to the same PLang
+                  // name (e.g. `app.goal.@this` the goal entity and
+                  // `app.channel.type.goal.@this` the goal-channel both lowercase to
+                  // "goal" via the @this convention), prefer the catalog-richer
+                  // entry.  First-wins TryAdd over reflection-ordered types is
+                  // non-deterministic — a Scalar entry could shadow a Record with
+                  // populated Fields depending on assembly load order.
+                  // Richness rank: Record (has Fields) > Enum (has Values) > Scalar.
+                  // (codeanalyzer v2 finding #1.)
+                  if (!dict.TryGetValue(entry.Name, out var existing))
+                  {
+                      dict[entry.Name] = entry;
+                      continue;
+                  }
+                  if (Rank(entry) > Rank(existing))
+                      dict[entry.Name] = entry;
+              }
+              return dict;
+          });
+      }
+  
+      // Higher = catalog-richer.  Used to break same-name ties deterministically.
+      private static int Rank(app.type.@this entry)
+      {
+          if (entry.Fields != null && entry.Fields.Count > 0) return 3;  // Record
+          if (entry.Values != null && entry.Values.Count > 0) return 2;  // Enum
+          if (entry.Shape != null || entry.ConstructorSignature != null) return 1;  // Scalar
+          return 0;  // barren
+      }
+  
+      /// <summary>
+      /// Index by PLang type name.  Returns the catalog-built entity — fully
+      /// populated with Fields / Values / Shape / Example / Description / Kinds
+      /// / ClrType.  Throws on miss; index-miss is a hard error.
+      /// </summary>
+      /// <remarks>
+      /// Both doors (<c>app.Type[name]</c> and <c>data.Type</c>) hand back
+      /// equivalent entities — same catalog fold data, same ClrType.  Per
+      /// codeanalyzer v1 finding #1: returning <c>new app.type.@this(name)</c>
+      /// here would ship a contextless half-entity whose fold properties
+      /// silently null; cached catalog lookup closes that gap.
+      /// </remarks>
+      public app.type.@this this[string typeName]
+      {
+          get
+          {
+              if (CatalogByName.TryGetValue(typeName, out var built)) return built;
+              if (Get(typeName) == null)
+                  throw new KeyNotFoundException($"No PLang type registered under name '{typeName}'.");
+              // Primitive / MIME / generic-shape: not in the catalog (catalog covers
+              // domain types only) but the name resolves.  Hand back a bare entity
+              // with ClrType pre-stamped from the static path — no Promote() rebuild
+              // can populate fold data for primitives, so this is the right answer.
+              return new app.type.@this(typeName, Get(typeName));
+          }
+      }
+  
+      /// <summary>
+      /// Index by CLR type — the type entity for a live CLR type's plang identity, or null when
+      /// the CLR type names no plang type (a raw POCO). The navigable mirror of
+      /// <see cref="this[string]"/>; replaces the old <c>ResolveName</c> verb-lookup. Null on miss
+      /// (a CLR type MAY not be plang vocabulary), unlike the name door's throw-on-miss.
+      /// </summary>
+      public app.type.@this? this[System.Type clrType]
+      {
+          get
+          {
+              EnsureInitialized();
+              // The CLR target's OWNING value type: a foreign shape it claims (int → number, via the
+              // clr ownership index) wins over its identity/name (path.@this → path, every path
+              // subclass → path). This is the conversion-ownership door (replaces convert.OwnerOf);
+              // primitive/CLR-name lookups are a separate surface (Get/ResolveType/GetPrimitiveOrMime).
+              if (_clr.TryGetValue(clrType, out var owner)) return this[owner];
+              return _typeToName.TryGetValue(clrType, out var name) ? this[name] : null;
+          }
+      }
+  
+      /// <summary>
+      /// The born-native lift — the collection's door (selection + fallback policy is the registry's
+      /// job). A raw CLR value or an already-native item becomes its plang value: the type OWNING the
+      /// raw's CLR shape (its <c>OwnedClrTypes</c> declaration, keyed on the clr index) builds it through
+      /// its own entity <c>Create</c> door; a CLR type no type owns rides a <c>Clr</c> carrier (rung 2).
+      /// Navigated, not switched — no hub. Rungs: <c>is item</c> → container narrowing → clr-index lift →
+      /// <c>Clr</c>.
+      /// </summary>
+      public global::app.type.item.@this Create(object? raw, global::app.actor.context.@this? context)
+      {
+          if (raw is null) return global::app.type.item.@null.@this.Instance;
+          if (raw is global::app.type.item.@this already) return already;
+          if (raw is global::app.data.@this)
+              throw new System.InvalidOperationException(
+                  "A bare Data may not be stored as a value — return the inner value via its own factory, "
+                  + "never the Data wrapper.\n" + System.Environment.StackTrace);
+  
+          // A sequence of Data / native items narrows to a native list, preserving the instances.
+          if (raw is System.Collections.Generic.IEnumerable<global::app.data.@this> dataSeq)
+              return new global::app.type.item.list.@this(dataSeq, context!);
+          if (raw is System.Collections.Generic.IEnumerable<global::app.type.item.@this> itemSeq)
+              return new global::app.type.item.list.@this(itemSeq, context!);
+          if (raw is System.Collections.Generic.List<object?> objList)
+              return new global::app.type.item.list.@this(objList, context!);
+          if (raw is System.Collections.Generic.Dictionary<string, object?> objDict)
+              return new global::app.type.item.dict.@this(objDict, context!);
+          if (raw is System.Collections.IDictionary || (raw is System.Collections.IList && raw is not byte[]))
+              return new global::app.type.item.serializer.json(context).Parse(
+                         System.Text.Json.JsonSerializer.SerializeToElement(raw)) as global::app.type.item.@this
+                  ?? throw new System.InvalidOperationException(
+                      $"A raw C# container ({raw.GetType().Name}) could not be narrowed to a native plang list/dict.");
+  
+          // The natural lift, NAVIGATED off the clr OWNERSHIP index (each type's OwnedClrTypes):
+          // int → number, string → text, DateOnly → date. Ownership, NOT the primitive name — a raw
+          // string is owned by `text`, though its primitive name is `string`; the owning entity drives
+          // its own cached Create thunk.
+          if (_clr.TryGetValue(raw.GetType(), out var ownerName)
+              && this[ownerName] is { } owner && owner.Create(raw, context) is { } lifted)
+              return lifted;
+  
+          // A CLR enum IS plang's choice (a closed named set) — build choice<T> for the enum.
+          if (raw is System.Enum)
+              return (global::app.type.item.@this)System.Activator.CreateInstance(
+                  typeof(global::app.type.item.choice.@this<>).MakeGenericType(raw.GetType()), raw)!;
+  
+          // Unowned — rung 2: a strongly-typed C# object rides as a Clr carrier (a product, never a shuttle).
+          return new global::app.type.clr.@this(raw, context!);
+      }
+  
+      /// <summary>Compile-time generic lookup — returns the catalog-built entity for T.</summary>
+      public app.type.@this of<T>()
+      {
+          var name = GetTypeName(typeof(T));
+          return CatalogByName.TryGetValue(name, out var built)
+              ? built
+              : new app.type.@this(name, typeof(T));
+      }
+  
+      private System.Type? Get(string typeName, int depth)
+      {
+          if (string.IsNullOrWhiteSpace(typeName)) return null;
+          if (depth > MaxGenericDepth) return null;
+  
+          if (typeName.StartsWith("list<", StringComparison.OrdinalIgnoreCase) && typeName.EndsWith(">"))
+          {
+              var innerTypeName = typeName[5..^1];
+              var innerType = Get(innerTypeName, depth + 1);
+              return innerType != null ? typeof(List<>).MakeGenericType(innerType) : null;
+          }
+  
+          if ((typeName.StartsWith("dict<", StringComparison.OrdinalIgnoreCase) ||
+               typeName.StartsWith("dictionary<", StringComparison.OrdinalIgnoreCase)) && typeName.EndsWith(">"))
+          {
+              var prefix = typeName.StartsWith("dict<", StringComparison.OrdinalIgnoreCase) ? 5 : 11;
+              var inner = typeName[prefix..^1];
+              var parts = inner.Split(',');
+              if (parts.Length == 2)
+              {
+                  var keyType = Get(parts[0].Trim(), depth + 1);
+                  var valueType = Get(parts[1].Trim(), depth + 1);
+                  if (keyType == null || valueType == null) return null;
+                  return typeof(Dictionary<,>).MakeGenericType(keyType, valueType);
+              }
+          }
+  
+          // Registry is the single source of truth — primitives are seeded into
+          // it at init via SeedClrPrimitives. The static Primitives dict still
+          // backs the no-context fallback (GetPrimitiveOrMime / GetPrimitiveName).
+          var domainType = ResolveType(typeName);
+          if (domainType != null) return domainType;
+  
+          var mimeType = ClrFromMime(typeName);
+          if (mimeType != null) return mimeType;
+  
+          return null;
+      }
+  
+      /// <summary>
+      /// MIME content-type → CLR type for deserialization. Returns <c>null</c>
+      /// when the input isn't a MIME string (no slash) or isn't a recognised family.
+      /// Pure logic with no instance state — exposed as static so it's reachable from
+      /// any caller, and from <see cref="Get"/>'s internal path.
+      /// </summary>
+      public static System.Type? ClrFromMime(string mimeType)
+      {
+          if (string.IsNullOrWhiteSpace(mimeType) || !mimeType.Contains('/')) return null;
+  
+          if (mimeType.StartsWith("text/", StringComparison.OrdinalIgnoreCase))
+              return typeof(string);
+          if (mimeType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)
+              || mimeType.StartsWith("audio/", StringComparison.OrdinalIgnoreCase)
+              || mimeType.StartsWith("video/", StringComparison.OrdinalIgnoreCase))
+              return typeof(byte[]);
+          if (mimeType.Equals("application/json", StringComparison.OrdinalIgnoreCase))
+              return typeof(object);
+          if (mimeType.Equals("application/plang-goal", StringComparison.OrdinalIgnoreCase))
+              return typeof(app.goal.@this);
+          if (mimeType.Equals("application/octet-stream", StringComparison.OrdinalIgnoreCase))
+              return typeof(byte[]);
+  
+          return null;
+      }
+  
+      // --- CLR type → PLang name ---
+  
+      /// <summary>
+      /// CLR type → PLang type name.
+      /// </summary>
+      public string GetTypeName(System.Type type)
+      {
+          if (type == null) return "object";
+  
+          var underlying = Nullable.GetUnderlyingType(type);
+          if (underlying != null)
+              return GetTypeName(underlying) + "?";
+  
+          if (type.IsGenericType)
+          {
+              var generic = type.GetGenericTypeDefinition();
+              if (generic == typeof(data.@this<>))
+                  return GetTypeName(type.GetGenericArguments()[0]);
+              // choice<T> surfaces under T's name — it IS T's closed named-set (the enum/[Choices]
+              // vocabulary), so the catalog renders "operator", "httpmethod", … not "choice".
+              if (generic == typeof(app.type.item.choice.@this<>))
+                  return GetTypeName(type.GetGenericArguments()[0]);
+              // Native typed list — list<T> carries its element type intrinsically.
+              if (generic == typeof(app.type.item.list.@this<>))
+                  return $"list<{GetTypeName(type.GetGenericArguments()[0])}>";
+              if (generic == typeof(List<>) || generic == typeof(IList<>)
+                  || generic == typeof(IEnumerable<>) || generic == typeof(ICollection<>)
+                  || generic == typeof(IReadOnlyCollection<>) || generic == typeof(IReadOnlyList<>)
+                  || generic == typeof(HashSet<>)
+                  || (generic.FullName != null && (
+                      generic.FullName.StartsWith("System.Collections.Immutable.ImmutableList`", StringComparison.Ordinal)
+                      || generic.FullName.StartsWith("System.Collections.Generic.ISet`", StringComparison.Ordinal))))
+              {
+                  return $"list<{GetTypeName(type.GetGenericArguments()[0])}>";
+              }
+              if (generic == typeof(Dictionary<,>) || generic == typeof(IDictionary<,>)
+                  || (generic.FullName != null && (
+                      generic.FullName.StartsWith("System.Collections.Concurrent.ConcurrentDictionary`", StringComparison.Ordinal)
+                      || generic.FullName.StartsWith("System.Collections.ObjectModel.ReadOnlyDictionary`", StringComparison.Ordinal)
+                      || generic.FullName.StartsWith("System.Collections.Generic.SortedDictionary`", StringComparison.Ordinal)
+                      || generic.FullName.StartsWith("System.Collections.Immutable.ImmutableDictionary`", StringComparison.Ordinal))))
+              {
+                  var args = type.GetGenericArguments();
+                  return $"dict<{GetTypeName(args[0])},{GetTypeName(args[1])}>";
+              }
+          }
+  
+          if (type == typeof(data.@this))
+              return "object";
+  
+          if (type.IsArray)
+          {
+              var elementType = type.GetElementType()!;
+              if (elementType == typeof(byte))
+                  return "bytes";
+              return $"list<{GetTypeName(elementType)}>";
+          }
+  
+          if (app.type.primitive.@this.Canonical.TryGetValue(type, out var name))
+              return name;
+  
+          var listIface = type.GetInterfaces().FirstOrDefault(i =>
+              i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
+          if (listIface != null)
+              return $"list<{GetTypeName(listIface.GetGenericArguments()[0])}>";
+  
+          EnsureInitialized();
+          if (_typeToName.TryGetValue(type, out var declared)) return declared;
+  
+          if (Choice.Has(type))
+              return StripGenericArity(type.Name).ToLowerInvariant();
+  
+          return StripGenericArity(type.Name).ToLowerInvariant();
+      }
+  
+      /// <summary>Alias for <see cref="GetTypeName"/> — preserves existing <c>app.type.Name</c> caller habit.</summary>
+      public string Name(System.Type clrType) => GetTypeName(clrType);
+  
+      private static string StripGenericArity(string name)
+      {
+          var idx = name.IndexOf('`');
+          return idx >= 0 ? name[..idx] : name;
+      }
+  
+      // --- Registration ---
+  
+      /// <summary>
+      /// Registers a domain type for deserialization and type resolution.
+      /// Prefer declaring [PlangType(name)] on the class itself — that's the single
+      /// source of truth. This API remains for test harnesses that synthesize types.
+      /// </summary>
+      public void Register(string plangName, System.Type clrType)
+      {
+          RegisterRuntime(plangName, clrType);
+      }
+  
+      /// <summary>
+      /// Registers domain types needed for settings store rehydration.
+      /// Called by App constructor. Today this is a no-op — Identity carries
+      /// <c>[PlangType("identity")]</c> on the class itself, which the assembly
+      /// scan picks up. The hook stays so future domain types that need
+      /// runtime registration (test harness shims, dynamically loaded plugins)
+      /// have an obvious entry point.
+      /// </summary>
+      public void RegisterDomainTypes()
+      {
+      }
+  
+      /// <summary>
+      /// Registers module-defined <c>choice&lt;T&gt;</c> inner types (the <c>[Choices]</c>
+      /// vocabularies / enums a handler param names, e.g. <c>operator</c> on
+      /// <c>condition.if</c>) into the RUNTIME registry. The cached name→type map is built
+      /// module-less (<see cref="BuildTypeEntries"/>(null)), and these types live in
+      /// <c>app.module.*</c>, surfacing only through handler params — so without this the
+      /// catalog resolves them FORWARD (<c>choice&lt;Operator&gt;</c> → "operator") but not
+      /// REVERSE ("operator" → <c>Operator</c>), and <c>Wire.ReadBody</c> of a
+      /// <c>type:operator</c> param throws. Called at boot once actions are discovered.
+      /// </summary>
+      public void RegisterModuleChoiceTypes(global::app.module.@this modules)
+      {
+          // The choice FAMILY itself — so a wire type {name:"choice", kind:"operator"} resolves
+          // (the kind names the closed set; the choice reader maps it to choice<T>). The enum-name
+          // aliases below stay for the LLM-facing catalog ("operator", "httpmethod", …).
+          Register("choice", typeof(app.type.item.choice.@this<>));
+  
+          foreach (var ns in modules.Names)
+              foreach (var actionName in modules.GetActions(ns))
+              {
+                  var actionType = modules.GetActionType(ns, actionName);
+                  if (actionType == null) continue;
+                  foreach (var prop in actionType.GetProperties(
+                      System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+                  {
+                      if (prop.Name is "EqualityContract" or "Context") continue;
+                      if (UnwrapType(prop.PropertyType) is { IsGenericType: true } c
+                          && c.GetGenericTypeDefinition() == typeof(app.type.item.choice.@this<>))
+                      {
+                          var inner = c.GetGenericArguments()[0];
+                          // Register the name → the choice<T> WRAPPER (c), not the inner T.
+                          // The Convert hook (name→member, e.g. "!=") lives on choice<T>;
+                          // registering the inner leaves the name resolving to a type with no
+                          // hook, so a value falls through to the generic JSON deserializer.
+                          Register(GetTypeName(inner), c);
+                      }
+                  }
+              }
+      }
+  
+      // --- Constrained-value catalog ---
+  
+      /// <summary>
+      /// Gets the valid values for a constrained type — enum names for real enums,
+      /// or the [Choices] vocabulary for types that declare one. Returns null when
+      /// the type is neither an enum nor a [Choices]-bearing type.
+      /// </summary>
+      public string[]? GetValidValues(System.Type type, actor.context.@this? context = null)
+      {
+          var underlying = Nullable.GetUnderlyingType(type);
+          if (underlying != null) type = underlying;
+  
+          if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(data.@this<>))
+              type = type.GetGenericArguments()[0];
+  
+          // choice<T> carries T's closed option set — the validation surface is T's
+          // names (enum members, or T's static [Choices] vocabulary).
+          if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(app.type.item.choice.@this<>))
+              type = type.GetGenericArguments()[0];
+  
+          if (type.IsEnum)
+              return Enum.GetNames(type);
+  
+          return Choice.Get(type, context);
+      }
+  
+      /// <summary>Alias for <see cref="GetValidValues"/> — preserves existing <c>app.type.ValidValues</c> caller habit.</summary>
+      public string[]? ValidValues(System.Type type, actor.context.@this? context = null) => GetValidValues(type, context);
+  
+      // --- Type-kind queries ---
+  
+      /// <summary>
+      /// True for [PlangType] domain types whose wire form is a primitive (typically string).
+      /// Pure reflection — kept static so it's reachable from <see cref="Utils.TypeConverter"/>'s
+      /// static path without needing an App instance.
+      /// </summary>
+      public static bool IsScalarPlangType(System.Type type)
+      {
+          // A type is catalog-visible when it's named via [PlangType] override OR is
+          // an @this class (last-namespace-segment convention).
+          var hasPlangName = type
+              .GetCustomAttributes(typeof(PlangTypeAttribute), inherit: false)
+              .Length > 0;
+          var isThisClass = string.Equals(type.Name, "this", System.StringComparison.Ordinal);
+          if (!hasPlangName && !isThisClass) return false;
+  
+          // Resolve(input, context) factory → catalog derives the wire shape from the
+          // first parameter. Marks the type as scalar without further checks.
+          if (type.GetMethod("Resolve", BindingFlags.Public | BindingFlags.Static) != null)
+              return true;
+  
+          // Static Shape property → caller asserts the wire form explicitly.
+          if (ReadStaticString(type, "Shape") != null)
+              return true;
+  
+          // Final fallback: a catalog-named type with no [LlmBuilder] properties is, by
+          // convention, a wrapped primitive. The catalog renders it as a string.
+          foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+          {
+              if (System.Attribute.IsDefined(prop, typeof(LlmBuilderAttribute)))
+                  return false;
+          }
+          return true;
+      }
+  
+      /// <summary>
+      /// True when <paramref name="type"/> is a primitive PLang type. Pure logic — static.
+      /// </summary>
+      public static bool IsPrimitive(System.Type type)
+      {
+          var underlying = Nullable.GetUnderlyingType(type) ?? type;
+          return underlying.IsPrimitive
+              || underlying == typeof(string)
+              || underlying == typeof(decimal)
+              || underlying == typeof(DateTime)
+              || underlying == typeof(DateTimeOffset)
+              || underlying == typeof(DateOnly)
+              || underlying == typeof(TimeOnly)
+              || underlying == typeof(TimeSpan)
+              || underlying == typeof(Guid);
+      }
+  
+      // --- Conversion methods now live in Types/Conversion.cs (the partial). ---
+  
+      // --- Catalog support ---
+  
+      /// <summary>
+      /// Returns the primitive type names exposed to the builder (excludes aliases like
+      /// "text"→"string" and all nullable variants). Domain types are surfaced through
+      /// the schemas block via [PlangType] declarations, not listed here.
+      /// </summary>
+      public List<string> GetBuilderTypeNames() => app.type.primitive.@this.BuilderNames.ToList();
+  
+      /// <summary>Alias for <see cref="GetBuilderTypeNames"/> — preserves existing <c>app.type.BuilderNames</c> caller habit.</summary>
+      public List<string> BuilderNames() => GetBuilderTypeNames();
+  
+      /// <summary>
+      /// Walks action parameter types and returns structured catalog entries.
+      /// Discovery is transitive: every type referenced in a schema is itself surfaced.
+      ///   - Enum (or ValidValues) → TypeEntry with Values populated.
+      ///   - Record                → TypeEntry with Fields built from [LlmBuilder] props.
+      ///   - Opaque (no markers)   → not surfaced.
+      /// </summary>
+      [System.Obsolete("Type/module discovery moves to list<type>/list<module> + a Fluid render — do not add new callers.")]
+      public List<app.type.@this> BuildTypeEntries(app.module.@this? modules)
+      {
+          var entries = new List<app.type.@this>();
+          var seen = new HashSet<System.Type>();
+          var queue = new Queue<System.Type>();
+  
+          void Enqueue(System.Type? t)
+          {
+              if (t == null || seen.Contains(t)) return;
+              if (IsPrimitive(t) || t == typeof(object)) return;
+              if (t.IsArray || t.IsGenericType) return;
+              queue.Enqueue(t);
+          }
+  
+          if (modules != null)
+          {
+              foreach (var ns in modules.Names)
+              {
+                  foreach (var actionName in modules.GetActions(ns))
+                  {
+                      var actionType = modules.GetActionType(ns, actionName);
+                      if (actionType == null) continue;
+  
+                      foreach (var prop in actionType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                      {
+                          if (prop.Name == "EqualityContract" || prop.Name == "Context") continue;
+                          var unwrapped = UnwrapType(prop.PropertyType);
+                          Enqueue(unwrapped);
+                          // A native typed list<T> carries its element type intrinsically;
+                          // walk it so the builder gets T's schema (e.g. list<LlmMessage>).
+                          if (unwrapped is { IsGenericType: true } u
+                              && u.GetGenericTypeDefinition() == typeof(app.type.item.list.@this<>))
+                              Enqueue(u.GetGenericArguments()[0]);
+                          // choice<T> carries its closed named-set on T (enum / [Choices]); walk it
+                          // so the option vocabulary surfaces under T's name (operator, httpmethod, …).
+                          if (unwrapped is { IsGenericType: true } c
+                              && c.GetGenericTypeDefinition() == typeof(app.type.item.choice.@this<>))
+                              Enqueue(c.GetGenericArguments()[0]);
+                      }
+                  }
+              }
+          }
+          else
+          {
+              foreach (var t in KnownTypes())
+                  Enqueue(t);
+          }
+  
+          while (queue.Count > 0)
+          {
+              var type = queue.Dequeue();
+              if (!seen.Add(type)) continue;
+  
+              var typeName = GetTypeName(type);
+  
+              // Skip the type entity itself — its wire shape ({name, kind?, strict?})
+              // and kind vocabulary are taught explicitly in the compile prompt's
+              // "Type reference" block. Rendering it as a catalog scalar
+              // ("type: string") confuses the LLM.
+              if (type == typeof(app.type.@this)) continue;
+              // Skip `data.@this` — actions with polymorphic Value slots (variable.set
+              // etc.) declare it as `object`; surfacing it again as a scalar
+              // ("object: string") in the catalog is redundant and confusing.
+              if (type == typeof(data.@this)) continue;
+  
+              // Catalog metadata sourced from static-property convention on the type:
+              //   public static string Example => "...";
+              //   public static string Description => "...";
+              //   public static string Shape => "string";
+              // Missing properties → null. Replaces the former [PlangType(Example=, ...)]
+              // parameters; the attribute now only carries Name overrides for divergent
+              // cases (goal.call, catalog).
+              string? staticExample = ReadStaticString(type, "Example");
+              string? staticDescription = ReadStaticString(type, "Description");
+              string? staticShape = ReadStaticString(type, "Shape");
+              IReadOnlyList<string>? staticKinds = ReadStaticStringList(type, "Kinds");
+  
+              var values = GetValidValues(type);
+              if (values != null)
+              {
+                  entries.Add(new app.type.@this(typeName, ResolveType(typeName) is { IsAbstract: true } baseClr && baseClr.IsAssignableFrom(type) ? baseClr : type)
+                  {
+                      Values = values,
+                      Description = staticDescription,
+                      Example = staticExample,
+                  });
+                  continue;
+              }
+  
+              var resolveMethod = type.GetMethod("Resolve",
+                  BindingFlags.Public | BindingFlags.Static);
+              string? constructorSignature = null;
+              string? derivedShape = null;
+              if (resolveMethod != null)
+              {
+                  var resolveParams = resolveMethod.GetParameters();
+                  if (resolveParams.Length >= 1)
+                  {
+                      var first = resolveParams[0];
+                      derivedShape = GetTypeName(first.ParameterType);
+                      constructorSignature = $"{first.Name}: {derivedShape}";
+                  }
+              }
+  
+              var llmProps = new List<app.type.Field>();
+              foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+              {
+                  if (!prop.CanRead || prop.Name == "EqualityContract") continue;
+                  if (!Attribute.IsDefined(prop, typeof(LlmBuilderAttribute))) continue;
+                  // [LlmBuilder] is the explicit opt-in for catalog visibility;
+                  // [JsonIgnore] only governs STJ wire shape. A property can be
+                  // both (e.g. type.Kind: not on the entity's own wire — the
+                  // wire emits `kind` from data.Type.Kind via Wire.cs — but
+                  // discoverable as a builder field).
+  
+                  llmProps.Add(new app.type.Field
+                  {
+                      Name = char.ToLower(prop.Name[0]) + prop.Name[1..],
+                      TypeName = GetTypeName(prop.PropertyType),
+                  });
+                  Enqueue(UnwrapType(prop.PropertyType));
+              }
+  
+              // Scalar discriminant: either has a Resolve(input, context) factory (so the
+              // wire shape is derivable), declares a static Shape property, or is
+              // catalog-named but has no LLM-builder properties (a domain wrapper around
+              // a primitive). Records have llmProps; scalars don't.
+              var hasPlangName = type.GetCustomAttributes<PlangTypeAttribute>().Any();
+              var isThisClass = string.Equals(type.Name, "this", System.StringComparison.Ordinal);
+              bool isScalar = constructorSignature != null
+                  || staticShape != null
+                  || ((hasPlangName || isThisClass) && llmProps.Count == 0);
+  
+              if (isScalar)
+              {
+                  entries.Add(new app.type.@this(typeName, ResolveType(typeName) is { IsAbstract: true } baseClr && baseClr.IsAssignableFrom(type) ? baseClr : type)
+                  {
+                      Shape = derivedShape ?? staticShape ?? "string",
+                      ConstructorSignature = constructorSignature,
+                      Properties = llmProps.Count > 0 ? llmProps : null,
+                      Description = staticDescription,
+                      Example = staticExample,
+                      Kinds = staticKinds,
+                  });
+                  continue;
+              }
+  
+              if (llmProps.Count > 0)
+              {
+                  entries.Add(new app.type.@this(typeName, ResolveType(typeName) is { IsAbstract: true } baseClr && baseClr.IsAssignableFrom(type) ? baseClr : type)
+                  {
+                      Fields = llmProps,
+                      Description = staticDescription,
+                      Example = staticExample,
+                      Kinds = staticKinds,
+                  });
+              }
+          }
+  
+          return entries;
+      }
+  
+      /// <summary>
+      /// Returns the catalog's record/enum entries, keyed by name. When two distinct
+      /// CLR types resolve to the same PLang name (e.g. two <c>@this</c> classes
+      /// sharing a last-namespace-segment), the first one wins — the registry's
+      /// <c>ResolveName</c> follows the same first-wins rule so consumers stay
+      /// consistent across the catalog and the type lookup.
+      /// </summary>
+      public Dictionary<string, app.type.@this> ComplexSchemas() => CatalogByName;
+  
+      /// <summary>
+      /// Reads a public-static string property by name from <paramref name="type"/>.
+      /// Used to source catalog metadata (Example, Description, Shape) from a
+      /// convention rather than from a per-parameter attribute — see
+      /// <see cref="BuildTypeEntries"/>. Returns null when the property is absent,
+      /// non-string, or throws.
+      /// </summary>
+      private static string? ReadStaticString(System.Type type, string propertyName)
+      {
+          var prop = type.GetProperty(propertyName,
+              BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+          if (prop == null || prop.PropertyType != typeof(string)) return null;
+          try
+          {
+              return prop.GetValue(null) as string;
+          }
+          catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
+          {
+              return null;
+          }
+      }
+  
+      /// <summary>
+      /// Reads a public-static <c>IReadOnlyList&lt;string&gt;</c> (or <c>IEnumerable&lt;string&gt;</c>)
+      /// property — the catalog's opt-in <c>Kinds</c> vocabulary convention. Returns null when
+      /// the property is absent, the wrong shape, or throws.
+      /// </summary>
+      private static IReadOnlyList<string>? ReadStaticStringList(System.Type type, string propertyName)
+      {
+          var prop = type.GetProperty(propertyName,
+              BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+          if (prop == null) return null;
+          try
+          {
+              var raw = prop.GetValue(null);
+              if (raw is IReadOnlyList<string> list) return list;
+              if (raw is IEnumerable<string> seq) return seq.ToList();
+              return null;
+          }
+          catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
+          {
+              return null;
+          }
+      }
+  
+      /// <summary>
+      /// Unwraps generic wrappers (List&lt;T&gt;, Nullable&lt;T&gt;) to get the inner type.
+      /// </summary>
+      private static System.Type? UnwrapType(System.Type type)
+      {
+          var underlying = Nullable.GetUnderlyingType(type);
+          if (underlying != null) return UnwrapType(underlying);
+  
+          if (type.IsGenericType)
+          {
+              var generic = type.GetGenericTypeDefinition();
+              if (generic == typeof(data.@this<>))
+                  return UnwrapType(type.GetGenericArguments()[0]);
+              if (generic == typeof(List<>) || generic == typeof(IList<>))
+                  return UnwrapType(type.GetGenericArguments()[0]);
+              if (generic == typeof(Dictionary<,>) || generic == typeof(IDictionary<,>))
+                  return null;
+          }
+  
+          var listIface = type.GetInterfaces().FirstOrDefault(i =>
+              i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
+          if (listIface != null)
+              return UnwrapType(listIface.GetGenericArguments()[0]);
+  
+          if (type.IsArray)
+              return UnwrapType(type.GetElementType()!);
+  
+          if (IsPrimitive(type)) return null;
+          return type;
+      }
+  }
+  "
+  
+  at Assert.That(src).Contains("public async System.Threading.Tasks.Task SortByValue")
+failed NoInstanceProperty_HasASetter (19ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be empty, because a settable wrapper property makes shared instances corruptible at a distance
+  but collection contains items: [app.type.item.text.this: this.Template, app.type.item.bool.this: this.Template, app.type.item.number.this: this.Template, app.type.item.binary.this: this.Template, app.type.item.date.this: this.Template, app.type.item.datetime.this: this.Template, app.type.item.time.this: this.Template, app.type.item.duration.this: this.Template, app.type.item.null.this: this.Template]
+  
+  at Assert.That(offenders).IsEmpty().Because("a settable wrapper property makes shared instances corruptible at a distance")
+failed EveryInstanceField_IncludingInherited_IsReadonly (69ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be empty, because a writable wrapper field makes shared instances corruptible at a distance
+  but collection contains items: [app.type.item.text.this: this.<Template>k__BackingField, app.type.item.bool.this: this.<Template>k__BackingField, app.type.item.number.this: this.<Template>k__BackingField, app.type.item.binary.this: this.<Template>k__BackingField, app.type.item.date.this: this.<Template>k__BackingField, app.type.item.datetime.this: this.<Template>k__BackingField, app.type.item.time.this: this.<Template>k__BackingField, app.type.item.duration.this: this.<Template>k__BackingField, app.type.item.null.this: this.<Template>k__BackingField]
+  
+  at Assert.That(offenders).IsEmpty().Because("a writable wrapper field makes shared instances corruptible at a distance")
+failed PathIsUnder_ReplacesRelativeStartsWith (155ms)
+  TUnit.Engine.Exceptions.TestFailedException: DirectoryNotFoundException: Could not find a part of the path '/workspace/plang/PLang/app/module/builder/code/Default.cs'.
+    at Interop.ThrowExceptionForIoErrno(ErrorInfo errorInfo, String path, Boolean isDirError)
+    at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String path, OpenFlags flags, Int32 mode, Boolean failForSymlink, Boolean& wasSymlink, Func`4 createOpenException)
+    at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, UnixFileMode openPermissions, Int64& fileLength, UnixFileMode& filePermissions, Boolean failForSymlink, Boolean& wasSymlink, Func`4 createOpenException)
+    at System.IO.Strategies.OSFileStreamStrategy..ctor(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+    at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize, FileOptions options, Int64 preallocationSize)
+    at System.IO.File.AsyncStreamReader(String path, Encoding encoding)
+    at System.IO.File.InternalReadAllTextAsync(String path, Encoding encoding, CancellationToken cancellationToken)
+    at PLang.Tests.App.CompareRedesign.Stage7_PathGrowthTests.PathIsUnder_ReplacesRelativeStartsWith() in /workspace/plang/PLang.Tests/Runtime/App/CompareRedesign/Stage7_PathGrowthTests.cs:31
+    at PLang.Tests.App.CompareRedesign.Stage7_PathGrowthTests.PathIsUnder_ReplacesRelativeStartsWith() in /workspace/plang/PLang.Tests/Runtime/App/CompareRedesign/Stage7_PathGrowthTests.cs:33
+failed App_ReportsItemApex_KindApp (7ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "app"
+  but found "*"
+  
+  at Assert.That(v.Kind).IsEqualTo("app")
+failed CallStack_ReportsItemApex_KindCallstack (67ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "callstack"
+  but found "*"
+  
+  at Assert.That(v.Kind).IsEqualTo("callstack")
+failed Trace_HandleReportsConceptName_NotNamespaceTail (1ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "trace"
+  but found "*"
+  
+  at Assert.That(v.Kind).IsEqualTo("trace")
+failed Variables_HandleReportsConceptName_NotNamespaceTail (2ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "variable"
+  but found "*"
+  
+  at Assert.That(v.Kind).IsEqualTo("variable")
+failed ErrorAsStringSlot_OriginalErrorStaysPrimary_ConversionFailureGoesOnChain (8ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "NullReferenceException"
+  but found "TypeConversionFailed"
+  
+  at Assert.That(resolved.Error!.Key).IsEqualTo("NullReferenceException")
+skipped SignatureFailure_CorruptedGrantInStore_FindSkipsIt (109ms)
+  Tamper-detection moved to verify-on-read at the application/plang store boundary; SettingsStore verify-on-read is a deferred todo (OBP rewrite).
+skipped SignatureVerificationCached_FindWalksSameDataOnce (0ms)
+  The in-memory VerifiedFlag verification cache was removed with Data.Signature; grant verification is now a store-read-boundary concern (deferred todo).
+skipped IdempotentAdd_PersistedSamePathTwice_SingleSqliteRow (0ms)
+  Reads a persisted grant back from sqlite via GetAll — now a signed-store round-trip that rides the deferred SettingsStore verify-on-read work (todos.md).
+hellofailed LoadFromFile_SlashName_LeafMatchesAgainstUnqualifiedGoalName (294ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That((await result.Value()) is PLangGoal).IsTrue()
+failed SlashName_Resolved_ByRootRelative_WhenNoAncestorMatches (294ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That((await result.Value()) is PLangGoal).IsTrue()
+failed SlashName_Resolved_ByCallerAncestorWalk (343ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That((await result.Value()) is PLangGoal).IsTrue()
+failed BareName_Resolved_AgainstCallersOwnBuildFolder (363ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That((await result.Value()) is PLangGoal).IsTrue()
+failed ChannelEntity_Write_RoundTripsDataThroughTheElement (60ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.channel.serializer.Text.SerializeAsync(Stream stream, this data, View view, CancellationToken cancellationToken) in /workspace/plang/PLang/app/channel/serializer/Text.cs:44
+    at app.channel.type.stream.this.Write(this data, CancellationToken ct) in /workspace/plang/PLang/app/channel/type/stream/this.cs:53
+    at app.channel.this.WriteAsync(this data, CancellationToken ct) in /workspace/plang/PLang/app/channel/this.cs:124
+    at PLang.Tests.App.SingularNamespaces.AccessorTests.ChannelAccessorTests.ChannelEntity_Write_RoundTripsDataThroughTheElement() in /workspace/plang/PLang.Tests/Runtime/App/SingularNamespaces/AccessorTests/ChannelAccessorTests.cs:34
+    at PLang.Tests.App.SingularNamespaces.AccessorTests.ChannelAccessorTests.ChannelEntity_Write_RoundTripsDataThroughTheElement() in /workspace/plang/PLang.Tests/Runtime/App/SingularNamespaces/AccessorTests/ChannelAccessorTests.cs:35
+failed BuilderCatalog_ForFixedTypeSet_RendersByteIdentical_BeforeAndAfterEntryFold (160ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That(schema.Kinds.ContainsKey("number")).IsTrue()
+failed EqualsHandler_OnSuccess_VariablesNotPopulated (37ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.module.assert.Equals.Run() in /workspace/plang/PLang/app/module/assert/equals.cs:17
+    at PLang.Tests.App.Tester.AssertionErrorVariablesTests.EqualsHandler_OnSuccess_VariablesNotPopulated() in /workspace/plang/PLang.Tests/Runtime/App/Testing/AssertionErrorVariablesTests.cs:86
+failed EqualsHandler_OnFailure_PopulatesVariablesFromSnapshot (56ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.module.assert.Equals.Run() in /workspace/plang/PLang/app/module/assert/equals.cs:17
+    at PLang.Tests.App.Tester.AssertionErrorVariablesTests.EqualsHandler_OnFailure_PopulatesVariablesFromSnapshot() in /workspace/plang/PLang.Tests/Runtime/App/Testing/AssertionErrorVariablesTests.cs:67
+failed AllAssertHandlers_OnFailure_ConsistentlyPopulateVariables (56ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.module.assert.Equals.Run() in /workspace/plang/PLang/app/module/assert/equals.cs:17
+    at PLang.Tests.App.Tester.AssertionErrorVariablesTests.AllAssertHandlers_OnFailure_ConsistentlyPopulateVariables() in /workspace/plang/PLang.Tests/Runtime/App/Testing/AssertionErrorVariablesTests.cs:103
+failed Simple_IfFalse_BranchIndexIs1 (131ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That(result.Properties.Contains("branchIndex")).IsTrue()
+failed Simple_IfTrue_BranchIndexIs0 (139ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That(result.Properties.Contains("branchIndex")).IsTrue()
+failed MultiBranch_SecondBranchMatches_BranchIndexIs1 (62ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be 1
+  but found 0
+  
+  at Assert.That(await result.Properties.Get<int>("branchIndex")).IsEqualTo(1)
+failed Debug_LevelAction_AttachesWidenedHandlers_NoThrowOnFire (128ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to contain "ACTION [BEFORE]"
+  but found "=== DEBUG [BEFORE]: Step [0] of Dbg ===
+    Text: set x
+    Action: variable.set
+      Name = x
+      Value = 1
+    Call Stack:
+      at Dbg.enter (step 1) in /Dbg.goal
+  ========================================
+  
+  
+  === DEBUG [AFTER]: Step [0] of Dbg ===
+  ========================================
+  
+  
+  --- DEBUG: Goal 'Dbg' completed ---
+  
+  "
+  
+  at Assert.That(debugOut).Contains("ACTION [BEFORE]")
+failed Discover_UserTags_ExtractedFromTestTagActionInPr (92ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because expected plang @bool true
+  but found False
+  
+  at Assert.That(value.Value).IsTrue().Because("expected plang @bool true")
+failed Discover_AutoTags_TraverseSubGoals_UnionsAcrossCallChain (138ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because expected plang @bool true
+  but found False
+  
+  at Assert.That(value.Value).IsTrue().Because("expected plang @bool true")
+failed Report_ConsoleCapture_AnsiEscapeSequences_Stripped (11ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.type.item.list.this`1.Create(Object value, this data) in /workspace/plang/PLang/app/type/item/list/this.Generic.cs:40
+    at app.data.this.Value[T]() in /workspace/plang/PLang/app/data/this.cs:518
+    at app.module.test.report.ResolveTests() in /workspace/plang/PLang/app/module/test/report.cs:83
+    at app.module.test.report.Run() in /workspace/plang/PLang/app/module/test/report.cs:27
+    at PLang.Tests.App.Tester.EdgeCaseTests.Report_ConsoleCapture_AnsiEscapeSequences_Stripped() in /workspace/plang/PLang.Tests/Runtime/App/Testing/EdgeCaseTests.cs:128
+failed Discover_ExcludeFilter_MatchingTests_MarkedSkipped (124ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to Skipped
+  but found Ready
+  
+  at Assert.That(file.Status).IsEqualTo(global::app.test.Status.Skipped)
+failed Report_Format_DefaultIsJson_WritesResultsJson (19ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.type.item.list.this`1.Create(Object value, this data) in /workspace/plang/PLang/app/type/item/list/this.Generic.cs:40
+    at app.data.this.Value[T]() in /workspace/plang/PLang/app/data/this.cs:518
+    at app.module.test.report.ResolveTests() in /workspace/plang/PLang/app/module/test/report.cs:83
+    at app.module.test.report.Run() in /workspace/plang/PLang/app/module/test/report.cs:27
+    at PLang.Tests.App.Tester.ReportActionTests.Report() in /workspace/plang/PLang.Tests/Runtime/App/Testing/ReportActionTests.cs:64
+    at PLang.Tests.App.Tester.ReportActionTests.Report_Format_DefaultIsJson_WritesResultsJson() in /workspace/plang/PLang.Tests/Runtime/App/Testing/ReportActionTests.cs:102
+failed Report_OutputDirectory_IsDotTestRelativeToDiscoveryPath (25ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.type.item.list.this`1.Create(Object value, this data) in /workspace/plang/PLang/app/type/item/list/this.Generic.cs:40
+    at app.data.this.Value[T]() in /workspace/plang/PLang/app/data/this.cs:518
+    at app.module.test.report.ResolveTests() in /workspace/plang/PLang/app/module/test/report.cs:83
+    at app.module.test.report.Run() in /workspace/plang/PLang/app/module/test/report.cs:27
+    at PLang.Tests.App.Tester.ReportActionTests.Report() in /workspace/plang/PLang.Tests/Runtime/App/Testing/ReportActionTests.cs:64
+    at PLang.Tests.App.Tester.ReportActionTests.Report_OutputDirectory_IsDotTestRelativeToDiscoveryPath() in /workspace/plang/PLang.Tests/Runtime/App/Testing/ReportActionTests.cs:89
+failed Report_JUnit_TestNameWithXmlSpecialChars_Escaped (19ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.type.item.list.this`1.Create(Object value, this data) in /workspace/plang/PLang/app/type/item/list/this.Generic.cs:40
+    at app.data.this.Value[T]() in /workspace/plang/PLang/app/data/this.cs:518
+    at app.module.test.report.ResolveTests() in /workspace/plang/PLang/app/module/test/report.cs:83
+    at app.module.test.report.Run() in /workspace/plang/PLang/app/module/test/report.cs:27
+    at PLang.Tests.App.Tester.ReportActionTests.Report() in /workspace/plang/PLang.Tests/Runtime/App/Testing/ReportActionTests.cs:64
+    at PLang.Tests.App.Tester.ReportActionTests.Report_JUnit_TestNameWithXmlSpecialChars_Escaped() in /workspace/plang/PLang.Tests/Runtime/App/Testing/ReportActionTests.cs:135
+failed MultiActionOrchestrate_InnerElseIfMatches_FilterSkipsPhantomSites_SubStepsRun (76ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be within 0 of 1
+  but found 0, which differs by 1
+  
+  at Assert.That(Convert.ToInt64((await vars.GetValue("subran"))!)).IsEqualTo(1L)
+failed Report_Format_Junit_WritesJunitXml (1ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.type.item.list.this`1.Create(Object value, this data) in /workspace/plang/PLang/app/type/item/list/this.Generic.cs:40
+    at app.data.this.Value[T]() in /workspace/plang/PLang/app/data/this.cs:518
+    at app.module.test.report.ResolveTests() in /workspace/plang/PLang/app/module/test/report.cs:83
+    at app.module.test.report.Run() in /workspace/plang/PLang/app/module/test/report.cs:27
+    at PLang.Tests.App.Tester.ReportActionTests.Report() in /workspace/plang/PLang.Tests/Runtime/App/Testing/ReportActionTests.cs:64
+    at PLang.Tests.App.Tester.ReportActionTests.Report_Format_Junit_WritesJunitXml() in /workspace/plang/PLang.Tests/Runtime/App/Testing/ReportActionTests.cs:118
+failed Report_Console_AlwaysWritesSummary_RegardlessOfFormat (1ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.type.item.list.this`1.Create(Object value, this data) in /workspace/plang/PLang/app/type/item/list/this.Generic.cs:40
+    at app.data.this.Value[T]() in /workspace/plang/PLang/app/data/this.cs:518
+    at app.module.test.report.ResolveTests() in /workspace/plang/PLang/app/module/test/report.cs:83
+    at app.module.test.report.Run() in /workspace/plang/PLang/app/module/test/report.cs:27
+    at PLang.Tests.App.Tester.ReportActionTests.Report() in /workspace/plang/PLang.Tests/Runtime/App/Testing/ReportActionTests.cs:64
+    at PLang.Tests.App.Tester.ReportActionTests.Report_Console_AlwaysWritesSummary_RegardlessOfFormat() in /workspace/plang/PLang.Tests/Runtime/App/Testing/ReportActionTests.cs:75
+failed Report_Junit_StaleStatus_EmitsSkippedWithReason (6ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.type.item.list.this`1.Create(Object value, this data) in /workspace/plang/PLang/app/type/item/list/this.Generic.cs:40
+    at app.data.this.Value[T]() in /workspace/plang/PLang/app/data/this.cs:518
+    at app.module.test.report.ResolveTests() in /workspace/plang/PLang/app/module/test/report.cs:83
+    at app.module.test.report.Run() in /workspace/plang/PLang/app/module/test/report.cs:27
+    at PLang.Tests.App.Tester.ReportActionTests.Report() in /workspace/plang/PLang.Tests/Runtime/App/Testing/ReportActionTests.cs:64
+    at PLang.Tests.App.Tester.ReportActionTests.Report_Junit_StaleStatus_EmitsSkippedWithReason() in /workspace/plang/PLang.Tests/Runtime/App/Testing/ReportActionTests.cs:255
+failed Report_Junit_FailStatus_EmitsFailureElement (25ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.type.item.list.this`1.Create(Object value, this data) in /workspace/plang/PLang/app/type/item/list/this.Generic.cs:40
+    at app.data.this.Value[T]() in /workspace/plang/PLang/app/data/this.cs:518
+    at app.module.test.report.ResolveTests() in /workspace/plang/PLang/app/module/test/report.cs:83
+    at app.module.test.report.Run() in /workspace/plang/PLang/app/module/test/report.cs:27
+    at PLang.Tests.App.Tester.ReportActionTests.Report() in /workspace/plang/PLang.Tests/Runtime/App/Testing/ReportActionTests.cs:64
+    at PLang.Tests.App.Tester.ReportActionTests.Report_Junit_FailStatus_EmitsFailureElement() in /workspace/plang/PLang.Tests/Runtime/App/Testing/ReportActionTests.cs:198
+failed Report_Coverage_ModuleActionTable_ShowsUniverseVsObserved (1ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.type.item.list.this`1.Create(Object value, this data) in /workspace/plang/PLang/app/type/item/list/this.Generic.cs:40
+    at app.data.this.Value[T]() in /workspace/plang/PLang/app/data/this.cs:518
+    at app.module.test.report.ResolveTests() in /workspace/plang/PLang/app/module/test/report.cs:83
+    at app.module.test.report.Run() in /workspace/plang/PLang/app/module/test/report.cs:27
+    at PLang.Tests.App.Tester.ReportActionTests.Report() in /workspace/plang/PLang.Tests/Runtime/App/Testing/ReportActionTests.cs:64
+    at PLang.Tests.App.Tester.ReportActionTests.Report_Coverage_ModuleActionTable_ShowsUniverseVsObserved() in /workspace/plang/PLang.Tests/Runtime/App/Testing/ReportActionTests.cs:154
+failed Report_Junit_TimeoutStatus_EmitsFailureWithTypeTimeout (27ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.type.item.list.this`1.Create(Object value, this data) in /workspace/plang/PLang/app/type/item/list/this.Generic.cs:40
+    at app.data.this.Value[T]() in /workspace/plang/PLang/app/data/this.cs:518
+    at app.module.test.report.ResolveTests() in /workspace/plang/PLang/app/module/test/report.cs:83
+    at app.module.test.report.Run() in /workspace/plang/PLang/app/module/test/report.cs:27
+    at PLang.Tests.App.Tester.ReportActionTests.Report() in /workspace/plang/PLang.Tests/Runtime/App/Testing/ReportActionTests.cs:64
+    at PLang.Tests.App.Tester.ReportActionTests.Report_Junit_TimeoutStatus_EmitsFailureWithTypeTimeout() in /workspace/plang/PLang.Tests/Runtime/App/Testing/ReportActionTests.cs:216
+failed Report_Junit_SkippedStatus_EmitsSkippedElement (25ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.type.item.list.this`1.Create(Object value, this data) in /workspace/plang/PLang/app/type/item/list/this.Generic.cs:40
+    at app.data.this.Value[T]() in /workspace/plang/PLang/app/data/this.cs:518
+    at app.module.test.report.ResolveTests() in /workspace/plang/PLang/app/module/test/report.cs:83
+    at app.module.test.report.Run() in /workspace/plang/PLang/app/module/test/report.cs:27
+    at PLang.Tests.App.Tester.ReportActionTests.Report() in /workspace/plang/PLang.Tests/Runtime/App/Testing/ReportActionTests.cs:64
+    at PLang.Tests.App.Tester.ReportActionTests.Report_Junit_SkippedStatus_EmitsSkippedElement() in /workspace/plang/PLang.Tests/Runtime/App/Testing/ReportActionTests.cs:235
+failed Report_FailureDetail_RendersVariablesSnapshot_WithUnsetAndNullMarkers (27ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.type.item.list.this`1.Create(Object value, this data) in /workspace/plang/PLang/app/type/item/list/this.Generic.cs:40
+    at app.data.this.Value[T]() in /workspace/plang/PLang/app/data/this.cs:518
+    at app.module.test.report.ResolveTests() in /workspace/plang/PLang/app/module/test/report.cs:83
+    at app.module.test.report.Run() in /workspace/plang/PLang/app/module/test/report.cs:27
+    at PLang.Tests.App.Tester.ReportActionTests.Report() in /workspace/plang/PLang.Tests/Runtime/App/Testing/ReportActionTests.cs:64
+    at PLang.Tests.App.Tester.ReportActionTests.Report_FailureDetail_RendersVariablesSnapshot_WithUnsetAndNullMarkers() in /workspace/plang/PLang.Tests/Runtime/App/Testing/ReportActionTests.cs:282
+failed Report_Coverage_BranchTable_PerSiteShowsObservedIndices (33ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.type.item.list.this`1.Create(Object value, this data) in /workspace/plang/PLang/app/type/item/list/this.Generic.cs:40
+    at app.data.this.Value[T]() in /workspace/plang/PLang/app/data/this.cs:518
+    at app.module.test.report.ResolveTests() in /workspace/plang/PLang/app/module/test/report.cs:83
+    at app.module.test.report.Run() in /workspace/plang/PLang/app/module/test/report.cs:27
+    at PLang.Tests.App.Tester.ReportActionTests.Report() in /workspace/plang/PLang.Tests/Runtime/App/Testing/ReportActionTests.cs:64
+    at PLang.Tests.App.Tester.ReportActionTests.Report_Coverage_BranchTable_PerSiteShowsObservedIndices() in /workspace/plang/PLang.Tests/Runtime/App/Testing/ReportActionTests.cs:173
+failed Run_TestChildCoverage_MergedIntoParentCoverage (147ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That(observed.Any(x => x == ("variable", "set"))).IsTrue()
+failed Run_OnlyReadyTests_Executed_StaleAndSkippedPreserved (233ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be 1
+  but found 0
+  
+  at Assert.That(runs.Count(r => r.Status == global::app.test.Status.Pass)).IsEqualTo(1)
+failed Run_AfterActionSubscription_CapturesCoverageOnChildApp (146ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That(coverage.ModuleActions.Any(x => x.Module == "variable" && x.Action == "set")).IsTrue()
+failed Run_TestingIsEnabled_SetToTrueInChildApp (186ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to Pass
+  but found Fail
+  
+  at Assert.That(run.Status).IsEqualTo(global::app.test.Status.Pass)
+failed Run_AssertionFailureInTest_CapturedInResult_NoPropagatedException (247ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That(run.Error is global::app.error.AssertionError).IsTrue()
+failed Run_TimeoutExceeded_TestMarkedTimeout (252ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to Timeout
+  but found Fail
+  
+  at Assert.That(run.Status).IsEqualTo(global::app.test.Status.Timeout)
+failed Run_FixtureWithConditionIf_ProductionSubscriber_RecordsBranchLabelAndChain (205ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to Pass
+  but found Fail
+  
+  at Assert.That(run.Status).IsEqualTo(global::app.test.Status.Pass)
+failed Run_FreshAppPerTest_IsolationBoundaryIsFileLevel (363ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That(runs.All(r => r.Status == global::app.test.Status.Pass)).IsTrue()
+failed Run_OutputCapture_OutputChannelOnly_ErrorChannelExcluded (277ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to Pass
+  but found Fail
+  
+  at Assert.That(run.Status).IsEqualTo(global::app.test.Status.Pass)
+failed Run_FixtureThrowsUnexpectedException_CapturedAsFail_LoopContinues (306ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to Pass
+  but found Fail
+  
+  at Assert.That(passed.Status).IsEqualTo(global::app.test.Status.Pass)
+failed Metadata_Report_FlagsDriftWhenPrBuilderVersionMismatchesCurrent (1ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.type.item.list.this`1.Create(Object value, this data) in /workspace/plang/PLang/app/type/item/list/this.Generic.cs:40
+    at app.data.this.Value[T]() in /workspace/plang/PLang/app/data/this.cs:518
+    at app.module.test.report.ResolveTests() in /workspace/plang/PLang/app/module/test/report.cs:83
+    at app.module.test.report.Run() in /workspace/plang/PLang/app/module/test/report.cs:27
+    at PLang.Tests.App.Tester.TestMetadataTests.Metadata_Report_FlagsDriftWhenPrBuilderVersionMismatchesCurrent() in /workspace/plang/PLang.Tests/Runtime/App/Testing/TestMetadataTests.cs:94
+skipped Snapshot_NullValuedVariable_PresentAsNull_NotAbsent (0ms)
+  Deferred to the snapshot redesign. A variable set to null is now the null citizen; how a null-valued variable surfaces in the snapshot dict (C# null vs the citizen) is settled there, alongside the null-vs-absent model.
+skipped Snapshot_CapturesByReference_MutationAfterSnapshotIsReflected (0ms)
+  Snapshot capture is being redesigned. By-reference capture only holds for the native-aliased CLR shapes (List<object?>/Dictionary<string,object?>); a List<int> is normalized into a list value, so reference-mutation is no longer observed. Re-asserted against the new snapshot model.
+failed Run_Timings_OnlyEntryGoalTopLevelSteps_NestedRollUp (347ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to Pass
+  but found Fail
+  
+  at Assert.That(run.Status).IsEqualTo(global::app.test.Status.Pass)
+failed NewInstance_IsEnabled_FalseByDefault (26ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be false
+  but found True
+  
+  at Assert.That(_app.Test != null).IsFalse()
+failed Configure_FromJson_IncludeAndExclude_ReplaceExisting (106ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [DeserializationFailed] Failed to deserialize List`1 to this`1: The collection type 'app.type.item.list.this`1[app.type.item.text.this]' is abstract, an interface, or is read only, and could not be instantiated and populated. Path: $ | LineNumber: 0 | BytePositionInLine: 1.
+  but found False
+  
+  at Assert.That(data.Success).IsTrue().Because("Data failed: [DeserializationFailed] Failed to deserialize List`1 to this`1: The collection type 'app.type.item.list.this`1[app.type.item.text.this]' is abstract, an interface, or is read only, and could not be instantiated and populated. Path: $ | LineNumber: 0 | BytePositionInLine: 1.")
+failed Snapshot_AfterInnerScopeSet_ReflectsMostRecentWrite (31ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to 2
+  but found 2
+  
+  at Assert.That(snapshot["x"]).IsEqualTo(2)
+failed Configure_FromJson_AllFieldsApplied (128ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [DeserializationFailed] Failed to deserialize List`1 to this`1: The collection type 'app.type.item.list.this`1[app.type.item.text.this]' is abstract, an interface, or is read only, and could not be instantiated and populated. Path: $ | LineNumber: 0 | BytePositionInLine: 1.
+  but found False
+  
+  at Assert.That(data.Success).IsTrue().Because("Data failed: [DeserializationFailed] Failed to deserialize List`1 to this`1: The collection type 'app.type.item.list.this`1[app.type.item.text.this]' is abstract, an interface, or is read only, and could not be instantiated and populated. Path: $ | LineNumber: 0 | BytePositionInLine: 1.")
+failed Snapshot_UserVariables_AllIncludedInDictionary (44ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to 1
+  but found 1
+  
+  at Assert.That(snapshot["foo"]).IsEqualTo(1)
+failed Roundtrip_StepsAndActions_Preserved (94ms)
+  TUnit.Engine.Exceptions.TestFailedException: InvalidOperationException: Each parameter in the deserialization constructor on type 'app.data.this' must bind to an object property or field on deserialization. Each parameter name and type must match with a property or field on the object. Fields are only considered when 'JsonSerializerOptions.IncludeFields' is enabled. The name match can be case-insensitive.
+    at System.Text.Json.ThrowHelper.ThrowInvalidOperationException_ConstructorParameterIncompleteBinding(Type parentType)
+    at System.Text.Json.Serialization.Converters.ObjectWithParameterizedConstructorConverter`1.OnTryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value)
+    at System.Text.Json.Serialization.JsonConverter`1.TryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value, Boolean& isPopulatedValue)
+    at System.Text.Json.Serialization.JsonCollectionConverter`2.OnTryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, TCollection& value)
+    at System.Text.Json.Serialization.JsonConverter`1.TryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value, Boolean& isPopulatedValue)
+    at System.Text.Json.Serialization.Metadata.JsonPropertyInfo`1.ReadJsonAndSetMember(Object obj, ReadStack& state, Utf8JsonReader& reader)
+    at System.Text.Json.Serialization.Converters.ObjectDefaultConverter`1.OnTryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value)
+    at System.Text.Json.Serialization.JsonConverter`1.TryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value, Boolean& isPopulatedValue)
+    at System.Text.Json.Serialization.JsonCollectionConverter`2.OnTryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, TCollection& value)
+    at System.Text.Json.Serialization.JsonConverter`1.TryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value, Boolean& isPopulatedValue)
+    at System.Text.Json.Serialization.Metadata.JsonPropertyInfo`1.ReadJsonAndSetMember(Object obj, ReadStack& state, Utf8JsonReader& reader)
+    at System.Text.Json.Serialization.Converters.ObjectDefaultConverter`1.OnTryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value)
+    at System.Text.Json.Serialization.JsonConverter`1.TryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value, Boolean& isPopulatedValue)
+    at System.Text.Json.Serialization.JsonCollectionConverter`2.OnTryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, TCollection& value)
+    at System.Text.Json.Serialization.JsonConverter`1.TryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value, Boolean& isPopulatedValue)
+    at System.Text.Json.Serialization.Metadata.JsonPropertyInfo`1.ReadJsonAndSetMember(Object obj, ReadStack& state, Utf8JsonReader& reader)
+    at System.Text.Json.Serialization.Converters.ObjectDefaultConverter`1.OnTryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value)
+    at System.Text.Json.Serialization.JsonConverter`1.TryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value, Boolean& isPopulatedValue)
+    at System.Text.Json.Serialization.JsonConverter`1.ReadCore(Utf8JsonReader& reader, T& value, JsonSerializerOptions options, ReadStack& state)
+    at System.Text.Json.Serialization.Metadata.JsonTypeInfo`1.Deserialize(Utf8JsonReader& reader, ReadStack& state)
+    at System.Text.Json.JsonSerializer.ReadFromSpan[TValue](ReadOnlySpan`1 utf8Json, JsonTypeInfo`1 jsonTypeInfo, Nullable`1 actualByteCount)
+    at System.Text.Json.JsonSerializer.ReadFromSpan[TValue](ReadOnlySpan`1 json, JsonTypeInfo`1 jsonTypeInfo)
+    at PLang.Tests.App.Utils.GoalSerializationTests.Roundtrip_StepsAndActions_Preserved() in /workspace/plang/PLang.Tests/Runtime/App/Utility/GoalDataTests.cs:126
+failed TryConvertTo_DictToStep_Works (29ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Conversion failed: Failed to deserialize Dictionary`2 to this: Each parameter in the deserialization constructor on type 'app.data.this' must bind to an object property or field on deserialization. Each parameter name and type must match with a property or field on the object. Fields are only considered when 'JsonSerializerOptions.IncludeFields' is enabled. The name match can be case-insensitive.
+failed Run_ParallelExecution_RespectsSemaphoreLimit (758ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That(runs.All(r => r.Status == global::app.test.Status.Pass)).IsTrue()
+failed VariableSet_BangSyntax_WritesProperty (21ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to 100
+  but found 100
+  
+  at Assert.That(await response.Properties.Value("cost")).IsEqualTo(100)
+
+Test run summary: Failed! - /workspace/plang/PLang.Tests/Runtime/bin/Debug/net10.0/PLang.Tests.Runtime.dll (net10.0|x64)
+  total: 748
+  failed: 65
+  succeeded: 678
+  skipped: 5
+  duration: 14s 367ms

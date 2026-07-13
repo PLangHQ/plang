@@ -5,6 +5,14 @@ Establishes the red set so regressions are told from pre-existing failures BY NA
 (counts are flaky — diff names). C# suites only (`./dev.sh`); plang `--test` is not
 run on this branch (does not work in the current state).
 
+> **AUTHORITATIVE baseline is `union/` (2026-07-13).** The single-run `<Suite>.txt`
+> lists below are **flaky-low** — a single `dev.sh full` of a flaky suite records a
+> coin-flip red-set (Wire recorded 10; the true parent red-set is 31; Runtime 14 vs 65).
+> Diffing against them manufactures false "new reds." Use `union/<Suite>_union.txt`
+> (parent, ×2 runs unioned) and grep the kept `union/<Suite>_run*.log`. Verified:
+> every candidate "new red" during implementation (Wire ×15, Runtime ×11, Types ×6,
+> Data ×1, AsT, SettingsData) is in the union → **zero real regressions on the branch.**
+
 ## C# suites (`./dev.sh full`)
 
 | Suite | Failing / Total |
