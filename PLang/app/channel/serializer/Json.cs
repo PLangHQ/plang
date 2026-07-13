@@ -51,10 +51,6 @@ public sealed class Json : ISerializer
             Converters =
             {
                 new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
-                // The native dict value type projects to a `{}` object under raw
-                // STJ — without this it reflects its C# surface (Entries → Data …)
-                // and cycles.
-                new global::app.type.item.dict.Json(),
                 new global::app.channel.serializer.json.Converter(context)
             }
         };
@@ -180,11 +176,4 @@ public sealed class Json : ISerializer
     /// serializer's outbound chain.
     /// </summary>
     public Json ForInbound() => WithModifier(global::app.channel.serializer.filter.Transport.ForInbound);
-
-    /// <summary>
-    /// Internal accessor for the raw STJ options. Used by canonicalization
-    /// code that needs to serialize through the same options the wire writer
-    /// uses (so hashed-bytes ≡ wire-bytes).
-    /// </summary>
-    internal JsonSerializerOptions RawOptions => _options;
 }

@@ -13,14 +13,6 @@ namespace app.variable.list;
 /// </summary>
 public partial class @this
 {
-    // Symmetric write+read for snapshot cloning. Pure config bag — `static readonly`
-    // is the Rule C exception class for stateless option holders. Stage 27 disperse-from-Json target.
-    private static readonly System.Text.Json.JsonSerializerOptions _snapshotClone = new()
-    {
-        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
-        PropertyNameCaseInsensitive = true,
-    };
-
     private readonly ConcurrentDictionary<string, data.@this> _variables = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Func<string, System.Threading.Tasks.ValueTask<data.@this>>> _navigables
         = new(StringComparer.OrdinalIgnoreCase);
