@@ -97,43 +97,6 @@ public class Fluid : ITemplate
         options.ValueConverters.Add(value =>
             value is global::app.type.item.@null.@this ? NilValue.Instance : null);
 
-        // `{{ p.Value }}` on a Data reaches the value through the value's OWN door, lazily:
-        // Value() is an async method, not a property, so reflection alone binds nil. This async
-        // accessor calls await d.Value() on member access (Fluid awaits it), so a param's value —
-        // a Data reached mid-render — materializes only when the template asks for it.
-        options.MemberAccessStrategy.Register<global::app.data.@this, object?>("Value",
-            async d => (object?)await d.Value());
-
-        // `formal` filter: the value writes ITSELF the way the catalog writes it — a scalar
-        // bare (hello, 42, true), a dict/list as compact JSON — through the text channel's
-        // writer (bare-at-top / json-nested). Used by templates that serialize action
-        // parameters into the "module.action Name([type] value)" shape the builder LLM knows.
-        // The bound value arrives as a native view (unwrap to its backing) or a raw scalar.
-        options.Filters.AddFilter("formal", (input, args, context) =>
-        {
-            using var ms = new System.IO.MemoryStream();
-            var w = new global::app.channel.serializer.text.Writer(ms, System.Text.Encoding.UTF8);
-            // The bound value arrives as a native view (unwrap to its backing item, which writes
-            // itself), a Fluid dict-wrapper (Fluid re-wraps an IDictionary — walk it to an object),
-            // or a raw scalar/item (the writer handles it directly).
-            void Emit(object? v)
-            {
-                switch (v)
-                {
-                    case NativeDictView dv: w.Value(dv.Native); return;
-                    case NativeListView lv: w.Value(lv.Native); return;
-                    case IFluidIndexable idx:
-                        w.BeginObject();
-                        foreach (var key in idx.Keys) { idx.TryGetValue(key, out var fv); w.Name(key); Emit(fv?.ToObjectValue()); }
-                        w.EndObject();
-                        return;
-                    default: w.Value(v); return;
-                }
-            }
-            Emit(input.ToObjectValue());
-            return new StringValue(System.Text.Encoding.UTF8.GetString(ms.ToArray()));
-        });
-
         // Configure file provider for {% include %} / {% render %} tags
         var basePath = GetTemplateBaseDir(action);
         options.FileProvider = new PlangFileProvider(action.Context.App, basePath, action.Context);
@@ -206,10 +169,6 @@ public class Fluid : ITemplate
     /// </summary>
     private sealed class NativeDictView(app.type.item.dict.@this d) : IDictionary<string, object?>
     {
-        // The backing native — so a consumer (the `formal` filter) reaches the value itself
-        // and drives its own writer, instead of rebuilding a raw copy off the view surface.
-        internal app.type.item.dict.@this Native => d;
-
         public object? this[string key]
         {
             get => d.Get(key)?.Peek();
@@ -253,9 +212,6 @@ public class Fluid : ITemplate
     /// </summary>
     private sealed class NativeListView(app.type.item.list.@this l) : IList<object?>
     {
-        // The backing native — the `formal` filter reaches the value itself (see NativeDictView.Native).
-        internal app.type.item.list.@this Native => l;
-
         public object? this[int index]
         {
             get => l.At(index)?.Peek();
