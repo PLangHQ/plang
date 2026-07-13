@@ -85,11 +85,10 @@ public class RegistryFoldTests
     }
 
     [Test]
-    public async Task Conversion_TryConvertTo_RoutesThroughRegistry_NotPrimitivesDict()
+    public async Task Conversion_TextScalar_LowersToNumericTarget()
     {
-        var (value, error) = global::app.type.list.@this.TryConvert("42", typeof(int), _app.User.Context);
-        await Assert.That(error).IsNull();
-        await Assert.That(value).IsEqualTo(42);
+        // A value lowers itself to a CLR target through its own Clr — no central door.
+        await Assert.That(new global::app.type.item.text.@this("42").Clr<int>()).IsEqualTo(42);
     }
 
     [Test]

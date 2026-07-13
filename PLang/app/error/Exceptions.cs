@@ -93,7 +93,9 @@ public class VariableNotFoundException : AppException
     public string VariableName { get; }
 
     public VariableNotFoundException(string variableName)
-        : base($"Variable '{variableName}' not found", "VariableNotFound", 404)
+        : base($"Variable %{variableName}% is not set, or is not reachable in the current context. "
+             + "Check that it was assigned before this point, or that the dot-path navigation matches the value's actual shape.",
+               "VariableNotFound", 404)
     {
         VariableName = variableName;
     }

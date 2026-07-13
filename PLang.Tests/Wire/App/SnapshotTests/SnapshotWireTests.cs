@@ -166,9 +166,10 @@ public class SnapshotWireTests
             await call.DisposeAsync();
         }
 
-        // The string → snapshot conversion the runtime performs for a Data<snapshot> slot.
-        var converted = (await context.App.Type.Convert(json, typeof(global::app.snapshot.@this), context).Value())
-            as global::app.snapshot.@this;
+        // The string → snapshot conversion the runtime performs for a Data<snapshot> slot:
+        // the snapshot builds ITSELF from its wire string through its own Create door.
+        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this("snapshot", null), context: context);
+        var converted = global::app.snapshot.@this.Create(new global::app.type.item.text.@this(json), carrier);
         await Assert.That(converted).IsNotNull();
 
         var result = await converted!.Resume(context);

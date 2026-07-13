@@ -3,12 +3,13 @@ using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using PLangPath = global::app.type.item.path.@this;
 using FilePath = global::app.type.item.path.file.@this;
-using Conversion = global::app.type.list.@this;
 
 namespace PLang.Tests.App.Types.PathTests;
 
 /// <summary>
-/// PLang <c>path</c> type-mapper dispatches through the scheme registry.
+/// PLang <c>path</c> builds itself from a raw string through its own <c>Create</c>
+/// courier — scheme dispatch via the registry, an unknown scheme declining onto
+/// <c>data.Fail</c> (no central conversion door).
 /// </summary>
 public class PathTypeMapperTests
 {
@@ -20,28 +21,38 @@ public class PathTypeMapperTests
         return (app, app.User.Context);
     }
 
+    // Build a path the way a handler parameter does: the type constructs itself from
+    // the raw string, landing any failure on the carrier Data.
+    private static (PLangPath? value, global::app.error.IError? error) Build(string raw, global::app.actor.context.@this ctx)
+    {
+        var d = new global::app.data.@this("", new global::app.type.item.@null.@this("path", null), context: ctx);
+        var v = PLangPath.Create(raw, d);
+        return (v, d.Error);
+    }
+
     [Test] public async Task PathParameter_SchemedFileValue_ResolvesTo_FilePath()
     {
         var (_, context) = MakeApp();
-        var (value, error) = Conversion.TryConvert("file:///abs/x.txt", typeof(PLangPath), context);
+        var (value, error) = Build("file:///abs/x.txt", context);
         await Assert.That(error).IsNull();
-        await Assert.That(value).IsTypeOf<FilePath>();
+        // (object) cast: path has an implicit string operator; assert on the runtime type.
+        await Assert.That((object?)value).IsTypeOf<FilePath>();
     }
 
     [Test] public async Task PathParameter_BareValue_ResolvesTo_FilePath()
     {
         var (_, context) = MakeApp();
-        var (value, error) = Conversion.TryConvert("/abs/x.txt", typeof(PLangPath), context);
+        var (value, error) = Build("/abs/x.txt", context);
         await Assert.That(error).IsNull();
-        await Assert.That(value).IsTypeOf<FilePath>();
+        await Assert.That((object?)value).IsTypeOf<FilePath>();
     }
 
     [Test] public async Task PathParameter_UnknownScheme_BecomesDataFail_NoExceptionEscape()
     {
         var (_, context) = MakeApp();
-        // s3 is not registered — the type-mapper must catch SchemeNotRegistered
-        // and shape it as an Error, never let the exception escape.
-        var (value, error) = Conversion.TryConvert("s3://bucket/key", typeof(PLangPath), context);
+        // s3 is not registered — Create must catch SchemeNotRegistered and shape it
+        // as an Error on the Data, never let the exception escape.
+        var (value, error) = Build("s3://bucket/key", context);
         await Assert.That(value).IsNull();
         await Assert.That(error).IsNotNull();
         await Assert.That(error!.Key).IsEqualTo("SchemeNotRegistered");
@@ -50,7 +61,7 @@ public class PathTypeMapperTests
     [Test] public async Task PathParameter_RelativeValue_ResolvesAgainstGoalDirectory()
     {
         var (_, context) = MakeApp();
-        var (value, error) = Conversion.TryConvert("rel.txt", typeof(PLangPath), context);
+        var (value, error) = Build("rel.txt", context);
         await Assert.That(error).IsNull();
         var fp = (FilePath)value!;
         // Relative resolution preserves Raw and produces an absolute path.
@@ -65,7 +76,7 @@ public class PathTypeMapperTests
         await filePath.WriteText("hello from a string param");
 
         // Resolve a Path the way a handler parameter does, then run file.read.
-        var (value, _) = Conversion.TryConvert("greeting.txt", typeof(PLangPath), context);
+        var (value, _) = Build("greeting.txt", context);
         var read = new global::app.module.file.Read(context) { Path = new global::app.data.@this<PLangPath>("", (PLangPath)value!),
         };
         var result = await read.Run();

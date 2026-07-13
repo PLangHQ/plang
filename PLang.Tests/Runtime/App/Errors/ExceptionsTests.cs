@@ -123,7 +123,9 @@ public class ExceptionsTests
         var ex = new VariableNotFoundException("userName");
 
         await Assert.That(ex.VariableName).IsEqualTo("userName");
-        await Assert.That(ex.Message).IsEqualTo("Variable 'userName' not found");
+        // The message names the variable and points at the unresolved-variable cause.
+        await Assert.That(ex.Message).Contains("%userName%");
+        await Assert.That(ex.Message).Contains("not set");
         await Assert.That(ex.Key).IsEqualTo("VariableNotFound");
         await Assert.That(ex.StatusCode).IsEqualTo(404);
     }

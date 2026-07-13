@@ -16,7 +16,7 @@ public static class DataReadExtensions
         var v = d.Peek();
         if (v == null) return null;
         if (targetType.IsInstanceOfType(v)) return v;
-        var (converted, _) = global::app.type.list.@this.TryConvert(v, targetType, global::PLang.Tests.TestApp.SharedContext);
-        return converted;
+        // The value lowers ITSELF to the CLR target (the central convert door is gone).
+        return v is global::app.type.item.@this it ? it.Clr(targetType) : v;
     }
 }

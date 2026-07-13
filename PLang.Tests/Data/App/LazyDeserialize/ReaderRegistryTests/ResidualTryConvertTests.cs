@@ -4,37 +4,32 @@ using TUnit.Assertions.Extensions;
 
 namespace PLang.Tests.App.LazyDeserialize.ReaderRegistryTests;
 
-// Stage 1 moves the type-owned branches of `AppTypes.TryConvert` onto each
-// type's `Read`. The *generic plumbing* — nullable unwrap, the
-// assignable-fast-path, list element-walk — stays as the registry's
-// residual. These rows pin that the residual still works after the carve.
+// The central conversion door is gone — a value lowers ITSELF to a CLR target via its
+// own `Clr`, a list walks its elements through theirs. These rows pin that self-lowering
+// (scalar → numeric target, sequence → typed list) after the door was removed.
 public class ResidualTryConvertTests
 {
-    private static global::app.@this NewApp()
-        => global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-residual-" + System.Guid.NewGuid().ToString("N")[..8]));
+    private static readonly global::app.actor.context.@this Ctx = global::PLang.Tests.TestApp.SharedContext;
 
-    [Test] public async Task TryConvert_NullableUnwrap_StillWorks()
+    [Test] public async Task Scalar_LowersToNumericTarget()
     {
-        await using var app = NewApp();
-        var d = app.Type.Convert("5", typeof(int?), app.User.Context);
-        await Assert.That(Lower<long>(await d.Value())).IsEqualTo(5L);
+        // A text scalar lowers itself to a numeric CLR target (invariant ChangeType).
+        await Assert.That(new global::app.type.item.text.@this("5").Clr<long>()).IsEqualTo(5L);
     }
 
-    [Test] public async Task TryConvert_AssignableFastPath_StillWorks()
+    [Test] public async Task Number_LowersToAssignableTarget()
     {
-        await using var app = NewApp();
-        // int is assignable to object — returned as-is, no conversion.
-        var d = app.Type.Convert(5, typeof(object), app.User.Context);
-        await Assert.That(Lower<long>(await d.Value())).IsEqualTo(5L);
+        await Assert.That(((global::app.type.item.number.@this)5).Clr<long>()).IsEqualTo(5L);
     }
 
-    [Test] public async Task TryConvert_ListElementWalk_StillWorks()
+    [Test] public async Task List_LowersEachElement_ToTypedList()
     {
-        await using var app = NewApp();
-        var src = new System.Collections.Generic.List<object> { "1", "2", "3" };
-        var d = app.Type.Convert(src, typeof(System.Collections.Generic.List<int>), app.User.Context);
-        var list = Lower<System.Collections.Generic.List<int>>(await d.Value());
+        var lst = new global::app.type.item.list.@this(Ctx);
+        lst.Add(new global::app.type.item.text.@this("1"));
+        lst.Add(new global::app.type.item.text.@this("2"));
+        lst.Add(new global::app.type.item.text.@this("3"));
+
+        var list = lst.Clr<System.Collections.Generic.List<int>>();
         await Assert.That(list).IsNotNull();
         await Assert.That(list!.Count).IsEqualTo(3);
         await Assert.That(list[0]).IsEqualTo(1);
