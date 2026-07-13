@@ -104,13 +104,16 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     }
 
     [Test]
-    public async Task ContentKindInference_JsonExtension_NarrowsToDict()
+    public async Task ContentKindInference_JsonExtension_StaysClrNavigable_ConvertsToDictOnAsk()
     {
         var data = JsonFile();
         await Assert.That(data.Type!.Kind?.Name).IsEqualTo("json");
+        // json content STAYS clr(json), navigated by the json kind — no automatic narrow.
         var child = await data.Get("database");
         await Assert.That((await child.Value())?.ToString()).IsEqualTo("plang");
-        await Assert.That(data.Type!.Name).IsEqualTo("dict");
+        // A consumer that wants a native dict asks — the dict kind owns json→dict.
+        var asDict = await data.Convert(data.Context.App.Type.Kind["dict"]);
+        await Assert.That(asDict.Type!.Name).IsEqualTo("dict");
     }
 
     // (BangFileBangPath_ResolvesWithoutReading_MaterializeCountZero deleted — the %x!file% value-nav
