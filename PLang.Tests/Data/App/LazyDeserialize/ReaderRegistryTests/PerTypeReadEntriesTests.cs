@@ -14,10 +14,13 @@ public class PerTypeReadEntriesTests
     // Independent #3 — the registry-level "the (object, json) entry
     // exists" probe. Architect 829785fbe sets shape-based dispatch:
     // json/xml/yaml live under `object`; csv/xlsx under the new `table`.
-    [Test] public async Task Reader_Of_ObjectJson_ReturnsDelegate()
+    // json is NOT a reader-registry entry — object is not a plang type, so the (object,json)
+    // reader is gone; the json KIND owns the decode (Kind["json"].Load → clr). Documents the
+    // removal so nothing re-registers it.
+    [Test] public async Task Of_ObjectJson_IsGone_JsonOwnedByKind()
     {
         var r = new global::app.type.reader.@this();
-        await Assert.That(r.Of("object", "json")).IsNotNull();
+        await Assert.That(r.Of("object", "json")).IsNull();
     }
 
     // The new `table` type's primary kind. `(table, csv)` lands in-branch;
