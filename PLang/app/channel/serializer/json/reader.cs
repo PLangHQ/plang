@@ -147,19 +147,23 @@ public ref struct Reader : IReader
     /// The current value's VERBATIM document bytes — the raw token span exactly as it
     /// appears, quotes and escapes intact (<c>"line1\nline2"</c> comes back quoted, not
     /// decoded). Unlike <see cref="RawValue"/> (which decodes a string token to its
-    /// content), this is byte-identical to the source, so a <c>wire</c> slice written back
-    /// verbatim keeps the document's — and its signature's — bytes. Structured tokens skip
-    /// to their matching close; scalars are already fully read. Needs the owned buffer: the
-    /// STJ-nested read (buffer-less) has no verbatim span, so it throws LOUDLY rather than
-    /// silently normalizing through a JsonDocument round-trip.
+    /// content), this is byte-identical to the source when the buffer is owned (the entry
+    /// path), so a <c>wire</c> slice written back verbatim keeps the document's — and its
+    /// signature's — bytes. Structured tokens skip to their matching close; scalars are
+    /// already fully read.
+    /// <para>BUFFER-LESS (the STJ-nested read — a nested Data's value slot): there are no
+    /// original bytes to slice (the DOM already normalized escapes/whitespace), so verbatim
+    /// is genuinely unattainable. Falls back to a JsonDocument round-trip — functionally
+    /// correct, still valid json (a string comes back quoted). BYTE-IDENTITY BOUNDARY: a
+    /// NESTED signed-relay slot won't re-verify through this path; top-level signed relay IS
+    /// byte-identical via the buffered entry. (This is the same limit <see cref="RawValue"/>
+    /// carries for its structured fallback.)</para>
     /// </summary>
     public byte[] Slice()
     {
         if (_buffer == null)
-            throw new JsonException(
-                "json.Reader.Slice: verbatim capture needs the owned buffer, but this reader "
-                + "was created without one (STJ-nested path). A wire slice cannot be taken here — "
-                + "route the read through the buffered entry.");
+            using (JsonDocument doc = JsonDocument.ParseValue(ref _r))
+                return System.Text.Encoding.UTF8.GetBytes(doc.RootElement.GetRawText());
         int start = (int)_r.TokenStartIndex;
         if (_r.TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray)
             _r.Skip();   // advance past the matching close; scalars are already fully read
