@@ -74,7 +74,14 @@ public sealed class @this : global::app.type.kind.@this
         var s = new global::app.type.item.text.@this(raw).ToString();
         if (string.IsNullOrEmpty(s)) return new(ctx.Null());
         using var doc = JsonDocument.Parse(s);
-        return new(ctx.Ok(new global::app.type.clr.@this(doc.RootElement.Clone(), ctx, this)));
+        var e = doc.RootElement;
+        // Only STRUCTURED json stays a clr(json) (ruling 6 — navigated/enumerated lazily by this
+        // kind). A bare-scalar root IS its native value — the same dispatch this kind's Data/Scalar
+        // already use for leaves — so `42` is a number, not a clr(json number) that compares
+        // Incomparable to one.
+        return e.ValueKind is JsonValueKind.Object or JsonValueKind.Array
+            ? new(ctx.Ok(new global::app.type.clr.@this(e.Clone(), ctx, this)))
+            : new(ctx.Ok(Scalar(e)));
     }
 
     // Materialize this json content INTO the CLR host target asks for. json owns the format
