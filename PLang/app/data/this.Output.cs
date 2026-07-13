@@ -106,10 +106,10 @@ public partial class @this
         // load). Out renders %var%/templates and loads reference-fundamental bytes at
         // the leaf via the value door, then the materialized item writes itself (the
         // sync leaf reads the now-loaded bytes).
-        if (mode == View.Store || RawUntouched)
-            await _item.Output(writer, mode, context);
-        else
-            await (await Value()).Output(writer, mode, context);
+        // The value writes ITSELF (OBP: each item owns its render) — no pre-materialise through
+        // Value. An untouched source relays its raw verbatim; a materialised template renders
+        // itself; a leaf writes itself. Store vs Out rides in `mode`, honoured by each item.
+        await _item.Output(writer, mode, context);
 
         if (writer.EmitsSchema)
         {

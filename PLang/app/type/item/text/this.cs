@@ -127,6 +127,32 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return new @this(interpolated);
     }
 
+    /// <summary>
+    /// The text writes ITSELF (OBP: the value is responsible for its own render), so
+    /// <c>data.Output</c> never pre-materialises through <c>Value</c>. Plain content and the
+    /// Store view write the raw form verbatim (a <c>.pr</c> keeps the authored <c>%ref%</c>). A
+    /// whole-match <c>%ref%</c> is a reference — the bound value writes itself. A partial template
+    /// renders to its string form (a template becomes ONE value — its literals+refs can't ride as
+    /// interleaved tokens into a json/plang writer) and writes that.
+    /// </summary>
+    public override async System.Threading.Tasks.ValueTask Output(
+        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context)
+    {
+        if (Template == null || mode == global::app.View.Store || context?.Variable == null)
+        {
+            writer.String(_value);
+            return;
+        }
+        if (IsVariable)
+        {
+            var resolved = await Get(context);
+            if (resolved is { IsInitialized: true }) { await resolved.Output(writer, mode, context); return; }
+            throw new global::app.error.VariableNotFoundException(resolved!.Name);   // the lookup already carries the name
+        }
+        writer.String(await context.Variable.Resolve(_value));
+    }
+
     public override bool IsLeaf => true;
 
     /// <summary>A stamped template whose WHOLE content is one <c>%ref%</c> IS a reference
