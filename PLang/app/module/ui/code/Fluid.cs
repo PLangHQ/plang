@@ -97,6 +97,35 @@ public class Fluid : ITemplate
         options.ValueConverters.Add(value =>
             value is global::app.type.item.@null.@this ? NilValue.Instance : null);
 
+        // `formal` filter: the value writes ITSELF the way the catalog writes it — a scalar
+        // bare (hello, 42, true), a dict/list as compact JSON — through the text channel's
+        // writer (bare-at-top / json-nested). Templates use it for the catalog's
+        // "module.action Name([type] value)" shape; pure Liquid can't JSON-render a structured
+        // value, so the value owns that render (converter-free — no STJ, no [JsonConverter]).
+        // The bound value arrives as a native view (unwrap to its backing), a Fluid dict-wrapper
+        // (Fluid re-wraps an IDictionary — walk it to an object), or a raw scalar/item.
+        options.Filters.AddFilter("formal", (input, args, context) =>
+        {
+            using var ms = new System.IO.MemoryStream();
+            var w = new global::app.channel.serializer.text.Writer(ms, System.Text.Encoding.UTF8);
+            void Emit(object? v)
+            {
+                switch (v)
+                {
+                    case NativeDictView dv: w.Value(dv.Native); return;
+                    case NativeListView lv: w.Value(lv.Native); return;
+                    case IFluidIndexable idx:
+                        w.BeginObject();
+                        foreach (var key in idx.Keys) { idx.TryGetValue(key, out var fv); w.Name(key); Emit(fv?.ToObjectValue()); }
+                        w.EndObject();
+                        return;
+                    default: w.Value(v); return;
+                }
+            }
+            Emit(input.ToObjectValue());
+            return new StringValue(System.Text.Encoding.UTF8.GetString(ms.ToArray()));
+        });
+
         // Configure file provider for {% include %} / {% render %} tags
         var basePath = GetTemplateBaseDir(action);
         options.FileProvider = new PlangFileProvider(action.Context.App, basePath, action.Context);
@@ -169,6 +198,9 @@ public class Fluid : ITemplate
     /// </summary>
     private sealed class NativeDictView(app.type.item.dict.@this d) : IDictionary<string, object?>
     {
+        // The backing native — the `formal` filter reaches the value itself and drives its writer.
+        internal app.type.item.dict.@this Native => d;
+
         public object? this[string key]
         {
             get => d.Get(key)?.Peek();
@@ -212,6 +244,9 @@ public class Fluid : ITemplate
     /// </summary>
     private sealed class NativeListView(app.type.item.list.@this l) : IList<object?>
     {
+        // The backing native — the `formal` filter reaches the value itself (see NativeDictView.Native).
+        internal app.type.item.list.@this Native => l;
+
         public object? this[int index]
         {
             get => l.At(index)?.Peek();
