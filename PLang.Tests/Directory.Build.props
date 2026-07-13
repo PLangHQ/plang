@@ -67,8 +67,6 @@
     <Using Include="app.channel.type.stream.@this" Alias="StreamChannel" />
     <Using Include="app.channel.ChannelDirection" Alias="ChannelDirection" />
     <Using Include="app.channel.serializer.list.@this" Alias="Serializers" />
-    <Using Include="app.channel.serializer.list.SerializeOptions" Alias="SerializeOptions" />
-    <Using Include="app.channel.serializer.list.DeserializeOptions" Alias="DeserializeOptions" />
     <Using Include="app.data.@this" Alias="Data" />
     <Using Include="app.data.Properties" Alias="Properties" />
     <Using Include="app.data.DynamicData" Alias="DynamicData" />

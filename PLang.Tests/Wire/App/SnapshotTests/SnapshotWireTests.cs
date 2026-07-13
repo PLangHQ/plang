@@ -288,11 +288,13 @@ public class SnapshotWireTests
     }
 
     [Test]
-    public async Task FileSave_OfSnapshot_ThroughChannel_ProducesWireEnvelope()
+    public async Task FileSave_OfSnapshot_UnregisteredExtension_WritesJsonContent()
     {
-        // `save %x% to file 'foo.snapshot'`: an unknown extension must serialize a
-        // structured Data through the Wire serializer (content-aware fallback),
-        // not the plain application/json STJ path which can't render snapshot.@this.
+        // `save %snapshot% to file 'foo.snapshot'`: an unregistered extension falls to the Text
+        // serializer, and the text writer renders a container AS JSON (the writer owns
+        // BeginObject/BeginArray — no per-type override, no shape selector). So a snapshot writes
+        // its json content — the snapshot's own sections, nested Data self-describing via @schema —
+        // NOT the top-level plang wire envelope. (A resumable save uses a plang-registered extension.)
         var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-fs-" + System.Guid.NewGuid().ToString("N")[..8]));
         var context = app.User.Context;
@@ -303,14 +305,16 @@ public class SnapshotWireTests
             new global::app.type.@this("snapshot"), context: context);
 
         using var ms = new System.IO.MemoryStream();
-        var result = await context.Actor.Channel.Serializers.SerializeAsync(
-            new global::app.channel.serializer.list.SerializeOptions
-            { Stream = ms, Data = d, Extension = ".snapshot" });
+        // file-save owns its selector (its Extension); an unregistered one falls to Text (content).
+        var serializers = context.Actor.Channel.Serializers;
+        var serializer = serializers.GetByExtension(".snapshot") ?? serializers.Text;
+        var result = await serializer.SerializeAsync(ms, d);
 
-        // file.save of a snapshot must produce the wire envelope (content-aware
-        // fallback routes structured Data to the Wire serializer, not plain STJ).
+        var content = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(ms.Length).IsGreaterThan(0);
+        // json content: the snapshot's own object, its sections present — the value wrote itself.
+        await Assert.That(content.StartsWith("{")).IsTrue();
+        await Assert.That(content).Contains("\"Variables\"");
     }
 
     [Test]

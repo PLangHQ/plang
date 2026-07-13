@@ -50,13 +50,8 @@ public sealed class @this : global::app.channel.type.session.@this
 
         try
         {
-            var serResult = await Channels!.Serializers.SerializeAsync(new SerializeOptions
-            {
-                Stream = Stream,
-                Data = data,
-                Type = Mime,
-                CancellationToken = ct
-            });
+            // The stream owns its selector (its Mime); the registry just looks up.
+            var serResult = await Channels!.Serializers.GetOrDefault(Mime).SerializeAsync(Stream, data, cancellationToken: ct);
             // Line framing is the channel's job (console/pipe ergonomics, NDJSON):
             // delimit each line-oriented text message with a newline. Binary and the
             // self-describing plang envelope are not framed.

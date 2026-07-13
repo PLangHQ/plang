@@ -214,8 +214,12 @@ public sealed partial class @this
             else
             {
                 await using var stream = System.IO.File.Create(Absolute);
-                var serResult = await Context.Actor.Channel.Serializers.SerializeAsync(new global::app.channel.serializer.list.SerializeOptions
-                    { Stream = stream, Data = value!, Extension = Extension });
+                // file-save owns its selector (its Extension): a registered extension writes that
+                // format; an unregistered one writes the value AS CONTENT (the Text serializer
+                // renders it — a leaf bare, a container as its json text), NOT the plang envelope.
+                var serializers = Context.Actor.Channel.Serializers;
+                var serializer = serializers.GetByExtension(Extension) ?? serializers.Text;
+                var serResult = await serializer.SerializeAsync(stream, value!);
                 if (!serResult.Success)
                     return Context.Error<global::app.type.item.path.@this>(serResult.Error!);
             }

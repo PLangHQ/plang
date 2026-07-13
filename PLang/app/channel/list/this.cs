@@ -197,20 +197,11 @@ public sealed class @this : IAsyncDisposable
         var (channel, error) = GetChannel(channelName, requireRead: true);
         if (error != null) return error;
 
-        if (channel is channel.type.stream.@this sc)
-        {
-            // Serializer returns Data<T> already with its own Success/Error —
-            // forward as-is; no extra try/catch needed because parse failures
-            // travel through Data.Error now instead of throwing.
-            return await Serializers.DeserializeAsync<T>(new DeserializeOptions
-            {
-                Stream = sc.Stream,
-                Type = sc.Mime,
-                CancellationToken = cancellationToken
-            });
-        }
-
-        return await channel!.ReadAsync(cancellationToken);
+        // One read door: the channel reads its bytes through the receive boundary (stream's own
+        // Read rides it too), stamping lazy Data; As<T> coerces to the caller's type. Parse
+        // failures ride Data.Error, so the read's own Success gate is the only branch.
+        var read = await channel!.ReadAsync(cancellationToken);
+        return read.Success ? read.As<T>() : read;
     }
 
     /// <summary>Convenience text write.</summary>

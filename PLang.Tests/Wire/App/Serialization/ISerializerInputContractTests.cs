@@ -1,5 +1,4 @@
 using System.Reflection;
-using app.channel.serializer.list;
 using app.channel.serializer;
 
 namespace PLang.Tests.App.Serialization;
@@ -34,23 +33,6 @@ public class ISerializerInputContractTests : System.IAsyncDisposable
         await Assert.That(methods.Count).IsEqualTo(1);
         var parms = methods[0].GetParameters();
         await Assert.That(parms[1].ParameterType).IsEqualTo(typeof(global::app.data.@this));
-    }
-
-    // 1.7 — SerializeOptions.Type carries the MIME string (renamed from ContentType).
-    [Test]
-    public async Task SerializeOptions_Type_CarriesMimeString()
-    {
-        var opts = new SerializeOptions { Type = "application/json" };
-        await Assert.That(opts.Type).IsEqualTo("application/json");
-    }
-
-    // 1.8 — SerializeOptions.Data is typed as Data (not object?).
-    [Test]
-    public async Task SerializeOptions_Data_IsTypedAsData()
-    {
-        var prop = typeof(SerializeOptions).GetProperty("Data");
-        await Assert.That(prop).IsNotNull();
-        await Assert.That(prop!.PropertyType).IsEqualTo(typeof(global::app.data.@this));
     }
 
     // 1.11 — Stream channel's renamed Write hook passes the full Data into the registered
@@ -95,30 +77,5 @@ public class ISerializerInputContractTests : System.IAsyncDisposable
         public global::app.data.@this<global::app.type.item.text.@this> Serialize(global::app.data.@this data) => global::app.data.@this<global::app.type.item.text.@this>.Ok("");
         public global::app.data.@this Deserialize(string s) => global::app.data.@this.Ok();
         public global::app.data.@this<T> Deserialize<T>(string s) where T : global::app.type.item.@this, global::app.type.item.ICreate<T> => global::app.data.@this<T>.Ok(default!);
-    }
-
-    // SerializeOptions.Type-old: the previous ContentType property is gone.
-    [Test]
-    public async Task SerializeOptions_ContentType_PropertyRemoved()
-    {
-        var prop = typeof(SerializeOptions).GetProperty("ContentType");
-        await Assert.That(prop).IsNull();
-    }
-
-    // DeserializeOptions / ResolveOptions: same Type rename — both compile in usage.
-    [Test]
-    public async Task DeserializeOptions_Type_CarriesMimeString_NoContentTypeProperty()
-    {
-        var opts = new DeserializeOptions { Type = "application/plang" };
-        await Assert.That(opts.Type).IsEqualTo("application/plang");
-        await Assert.That(typeof(DeserializeOptions).GetProperty("ContentType")).IsNull();
-    }
-
-    [Test]
-    public async Task ResolveOptions_Type_CarriesMimeString_NoContentTypeProperty()
-    {
-        var opts = new ResolveOptions { Type = "application/plang" };
-        await Assert.That(opts.Type).IsEqualTo("application/plang");
-        await Assert.That(typeof(ResolveOptions).GetProperty("ContentType")).IsNull();
     }
 }
