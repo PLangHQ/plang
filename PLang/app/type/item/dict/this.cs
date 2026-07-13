@@ -358,12 +358,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             return map;
         }
 
-        // A CLR record target — the untyped fallback (SettingsStore/Identity todo): the dict
-        // serializes ITSELF (its own [JsonConverter]) and STJ rebuilds the record. This still fires
-        // dict.Json, so dict's attribute strip waits on Create owning record construction (that todo).
-        var opts = global::app.channel.serializer.json.Options.Read(Context);
-        var utf8 = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(this, opts);
-        return System.Text.Json.JsonSerializer.Deserialize(utf8, target, opts);
+        // A settable-prop CLR record target — the reflection kind builds it from THIS dict's slots
+        // (each value lowers itself via its own Clr). No STJ, no self-serialize round-trip — the
+        // firing site for dict.Json dies here.
+        return new global::app.type.item.kind.reflection.@this().Read(this, target, Context);
     }
 
 

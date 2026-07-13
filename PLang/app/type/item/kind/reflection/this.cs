@@ -93,6 +93,33 @@ public sealed class @this : global::app.type.kind.@this
         return host;
     }
 
+    /// <summary>
+    /// The record-from-slots source — the same verb, a second source beside the token-stream
+    /// <see cref="Read{TReader}"/>: build a settable-prop host from a live <c>dict</c>'s slots
+    /// (the same <c>[Store]</c> wire-name selector Output writes). The values are already items,
+    /// so each lowers ITSELF via its own <c>Clr</c> — no tokenizing the dict to re-read it. A
+    /// nested record property recurses (its dict's <c>Clr</c> lands back here); a list of records
+    /// is the list kind's job, element by element.
+    /// </summary>
+    public object? Read(global::app.type.item.dict.@this slots, global::System.Type target,
+        global::app.actor.context.@this ctx)
+    {
+        var host = global::System.Activator.CreateInstance(target)!;
+        // Index the dict's entries by name, case-insensitive — matching the IReader Read's key
+        // policy (a hand-built plang dict's keys aren't guaranteed to match the wire-name casing).
+        var byName = new global::System.Collections.Generic.Dictionary<string, global::app.data.@this>(
+            global::System.StringComparer.OrdinalIgnoreCase);
+        foreach (var e in slots.Entries) byName[e.Name] = e;
+
+        foreach (var entry in global::app.channel.serializer.filter.Tagged.PropertiesFor(target, global::app.View.Store))
+        {
+            if (!entry.Property.CanWrite || !byName.TryGetValue(entry.WireName, out var slot)) continue;
+            // The value is already an item (Peek) — it lowers ITSELF to the property's CLR type.
+            entry.Property.SetValue(host, slot.Peek().Clr(entry.Property.PropertyType));
+        }
+        return host;
+    }
+
     // Read one value AS its declared CLR type off the reader.
     private object? ReadValue<TReader>(ref TReader reader, global::System.Type type,
         global::app.type.reader.ReadContext ctx)
