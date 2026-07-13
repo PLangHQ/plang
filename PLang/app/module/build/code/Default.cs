@@ -1172,9 +1172,11 @@ public class Default : IBuilder
     private static GoalCall? ToGoalCall(object? value, actor.context.@this context)
     {
         if (value is GoalCall gc) return gc;
-        // GoalCall owns its own assembly (string / JsonElement / dict → goal.call);
-        // reach it through the infra door — the same registry-dispatched Convert
-        // hook every type uses (number, image, path).
-        return context.App.Type.Convert(value, typeof(GoalCall), context).Peek() as GoalCall;
+        // GoalCall builds itself (string / JsonElement / dict → goal.call) through its own entity
+        // courier — the same Create door every type uses; a carrier declared goal.call so the
+        // family build fires eagerly (the context door would defer a string to a source).
+        var carrier = new global::app.data.@this("",
+            new global::app.type.item.@null.@this("goal.call"), context: context);
+        return context.App.Type["goal.call"]?.Create(value, carrier) as GoalCall;
     }
 }

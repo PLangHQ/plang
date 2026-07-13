@@ -60,3 +60,15 @@ identity, settings, BuildResponse, path.StatInfo, type.list.view, and the `type.
 and giving each an explicit `Type => new("<name>")` (name = its folder tail today). ~19 careful
 overrides; deferred so it's not rushed. NameOf (ICreate error messages) also uses NamespaceTail — a
 static naming helper, separate from the value's identity door.
+
+## `setting.Set(object node, IDictionary<string,object?>)` — raw input should be Data (Ingi, 2026-07-13)
+The CLI `--flag={…}` walk (`setting/this.cs:82`, callers `Executor.cs:64-116`) binds a RAW
+`IDictionary<string,object?>` (parsed from `--flag` JSON) onto a C# config object's properties.
+Because the values arrive raw, the leaf bind lifts-then-lowers: `App.Type.Create(kvp.Value, ctx).Clr(prop.PropertyType)`.
+Ingi's point: the value should already be a `Data` (text item) by the time it reaches here —
+if `Executor` produced `Data` from the `--flag` JSON, the bind is just `value.Clr(prop.PropertyType)`
+at the C#-property edge, no lift. The lift is "runtime adjusting to raw input." Distinct from the
+`SettingsStore` (`%setting.X%`, sqlite) path, which already IS `data.Output`→SQL (TEXT via a
+MemoryStream bridge — the store owns its TEXT↔stream conversion; also worth a look). Deferred — Ingi
+will look into the settings shape later. The TryConvert-removal change here is correct for the raw
+input it currently gets.

@@ -99,8 +99,17 @@ public sealed class @this
             }
             else
             {
-                var (val, err) = global::app.type.list.@this.TryConvert(kvp.Value, prop.PropertyType, _context, kvp.Key);
-                if (err != null) return _context.Error(err);
+                // Lift the raw setting to its plang value, then let it lower ITSELF to the
+                // property's CLR type — the value owns its projection, no central converter.
+                object? val;
+                try { val = _context.App.Type.Create(kvp.Value, _context).Clr(prop.PropertyType); }
+                catch (System.Exception ex) when (ex is System.InvalidCastException or System.FormatException
+                    or System.OverflowException or System.NotSupportedException)
+                {
+                    return _context.Error(new global::app.error.Error(
+                        $"setting '{kvp.Key}' cannot bind to {prop.PropertyType.Name}: {ex.Message}",
+                        "TypeConversionFailed", 400) { Exception = ex });
+                }
                 prop.SetValue(node, val);
             }
         }
