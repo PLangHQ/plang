@@ -58,7 +58,7 @@ public class DataValueRawTests
 
         // The list rides as native; reading it does not resolve the unstamped
         // %x% placeholders — they stay literal.
-        var read = global::app.type.item.@this.Lower<List<object?>>(await data.Value());
+        var read = Lower<List<object?>>(await data.Value());
         await Assert.That((string)read![0]!).IsEqualTo("%x%");
         await Assert.That((string)read![2]!).IsEqualTo("%x%");
     }
@@ -73,7 +73,7 @@ public class DataValueRawTests
 
         // The dict rides as native; reading it does not resolve the unstamped
         // %user% placeholder — it stays literal.
-        var read = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await data.Value());
+        var read = Lower<Dictionary<string, object?>>(await data.Value());
         await Assert.That((string)read!["name"]!).IsEqualTo("%user%");
     }
 

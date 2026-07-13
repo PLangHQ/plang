@@ -12,7 +12,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var b = _app.Data("b", "hello");
 
         var result = await a.Diff(b);
-        var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
+        var diff = Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
         await Assert.That(diff!["match"]).IsEqualTo(true);
@@ -25,7 +25,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var b = _app.Data("b", "world");
 
         var result = await a.Diff(b);
-        var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
+        var diff = Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
         await Assert.That(diff!["match"]).IsEqualTo(false);
@@ -40,7 +40,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var b = _app.Data("b", 42);
 
         var result = await a.Diff(b);
-        var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
+        var diff = Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
         await Assert.That(diff!["match"]).IsEqualTo(true);
@@ -54,7 +54,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var b = _app.Data("b", (long)42);
 
         var result = await a.Diff(b);
-        var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
+        var diff = Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
         await Assert.That(diff!["match"]).IsEqualTo(true);
@@ -74,7 +74,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var b = _app.Data("b", new Dictionary<string, object?>(obj));
 
         var result = await a.Diff(b);
-        var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
+        var diff = Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
         await Assert.That(diff!["match"]).IsEqualTo(true);
@@ -90,7 +90,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var b = _app.Data("b", actual);
 
         var result = await a.Diff(b);
-        var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
+        var diff = Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
         await Assert.That(diff!["match"]).IsEqualTo(false);
@@ -117,7 +117,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var b = _app.Data("b", actual);
 
         var result = await a.Diff(b);
-        var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
+        var diff = Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
         await Assert.That(diff!["match"]).IsEqualTo(false);
@@ -140,7 +140,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var b = _app.Data("b", actual);
 
         var result = await a.Diff(b);
-        var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
+        var diff = Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
         await Assert.That(diff!["match"]).IsEqualTo(false);
@@ -163,7 +163,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var b = _app.Data("b", actual);
 
         var result = await a.Diff(b);
-        var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
+        var diff = Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
         await Assert.That(diff!["match"]).IsEqualTo(true);
@@ -180,7 +180,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var b = _app.Data("b", actual);
 
         var result = await a.Diff(b);
-        var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
+        var diff = Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
         await Assert.That(diff!["match"]).IsEqualTo(true);
@@ -196,7 +196,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var b = _app.Data("b", actual);
 
         var result = await a.Diff(b);
-        var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
+        var diff = Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
         await Assert.That(diff!["match"]).IsEqualTo(false);
@@ -234,7 +234,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var b = _app.Data("b", actual);
 
         var result = await a.Diff(b);
-        var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
+        var diff = Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
         await Assert.That(diff!["match"]).IsEqualTo(false);
@@ -247,7 +247,7 @@ public class DataDiffTests : System.IAsyncDisposable
         var b = _app.Data("b", true);
 
         var result = await a.Diff(b);
-        var diff = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
+        var diff = Lower<Dictionary<string, object?>>(await result.Value());
 
         await Assert.That(diff).IsNotNull();
         await Assert.That(diff!["match"]).IsEqualTo(true);

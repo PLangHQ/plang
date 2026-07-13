@@ -88,9 +88,9 @@ public sealed class Default : IHttp
         var resolvedUrl = (await urlResult.Value())!.Clr<string>()!;
 
         var defaultHeaders = action.DefaultHeaders == null ? null
-            : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.DefaultHeaders.Value());
+            : (await action.DefaultHeaders.Value()).Clr<Dictionary<string, object>>();
         var headers = MergeHeaders(action.Headers == null ? null
-            : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.Headers.Value()), defaultHeaders);
+            : (await action.Headers.Value()).Clr<Dictionary<string, object>>(), defaultHeaders);
 
         // Build body
         HttpContent? httpContent = null;
@@ -101,7 +101,7 @@ public sealed class Default : IHttp
         if (bodyVal != null)
         {
             if (contentType.Equals("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase)
-                && global::app.type.item.@this.Lower<Dictionary<string, object>>(bodyVal) is { } formDict)
+                && bodyVal.Clr<Dictionary<string, object>>() is { } formDict)
             {
                 var formValues = new Dictionary<string, string>();
                 foreach (var kvp in formDict)
@@ -173,9 +173,9 @@ public sealed class Default : IHttp
         var resolvedUrl = (await urlResult.Value())!.Clr<string>()!;
 
         var defaultHeaders = action.DefaultHeaders == null ? null
-            : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.DefaultHeaders.Value());
+            : (await action.DefaultHeaders.Value()).Clr<Dictionary<string, object>>();
         var headers = MergeHeaders(action.Headers == null ? null
-            : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.Headers.Value()), defaultHeaders);
+            : (await action.Headers.Value()).Clr<Dictionary<string, object>>(), defaultHeaders);
         var requestMessage = new HttpRequestMessage(SysHttpMethod.Get, resolvedUrl);
         ApplyHeaders(requestMessage, headers);
 
@@ -218,9 +218,9 @@ public sealed class Default : IHttp
         var resolvedUrl = (await urlResult.Value())!.Clr<string>()!;
 
         var defaultHeaders = action.DefaultHeaders == null ? null
-            : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.DefaultHeaders.Value());
+            : (await action.DefaultHeaders.Value()).Clr<Dictionary<string, object>>();
         var headers = MergeHeaders(action.Headers == null ? null
-            : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.Headers.Value()), defaultHeaders);
+            : (await action.Headers.Value()).Clr<Dictionary<string, object>>(), defaultHeaders);
 
         var (httpContent, contentErr) = await ResolveUploadContentAsync(action, app, encoding);
         if (contentErr != null) return action.Context.Error(contentErr);
@@ -1029,9 +1029,10 @@ public sealed class Default : IHttp
         var form = new MultipartFormDataContent();
         Dictionary<string, object> fields;
 
-        // A native dict value (the production shape — Content resolved from %var%)
-        // lowers to its entries; a raw CLR Dictionary passes straight through.
-        if (global::app.type.item.@this.Lower<Dictionary<string, object>>(content) is { } dict)
+        // A native dict value (the production shape — Content resolved from %var%) lowers to its
+        // entries via its own Clr; a raw CLR Dictionary passes straight through.
+        if (((content as global::app.type.item.@this)?.Clr<Dictionary<string, object>>()
+             ?? content as Dictionary<string, object>) is { } dict)
             fields = dict;
         else if (content is JsonElement je)
         {

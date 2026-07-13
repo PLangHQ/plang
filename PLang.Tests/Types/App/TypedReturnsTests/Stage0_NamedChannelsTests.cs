@@ -95,7 +95,7 @@ public class Stage0_NamedChannelsTests
         var w1 = Warning("file.read", "duplicate");
         var w2 = Warning("file.read", "duplicate");
 
-        var raw = global::app.type.item.@this.Lower<Dictionary<string, object?>>(w1)!;
+        var raw = Lower<Dictionary<string, object?>>(w1)!;
         await Assert.That((string)raw["action"]!).IsEqualTo("file.read");
         await Assert.That((string)raw["message"]!).IsEqualTo("duplicate");
         await Assert.That(await w1.AreEqual(w2)).IsTrue()

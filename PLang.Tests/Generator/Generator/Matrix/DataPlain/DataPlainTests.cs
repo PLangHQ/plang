@@ -32,7 +32,7 @@ public class DataPlainTests
             parameters: new[] { ("payload", (object?)raw) });
         // A list value rides as the native list type now.
         await Assert.That((await result.Data.Value())).IsTypeOf<global::app.type.item.list.@this>();
-        var list = global::app.type.item.@this.Lower<List<object?>>(await result.Data.Value());
+        var list = Lower<List<object?>>(await result.Data.Value());
         await Assert.That(list).IsNotNull();
         await Assert.That(list!.Count).IsEqualTo(3);
     }

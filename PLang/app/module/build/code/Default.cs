@@ -27,7 +27,7 @@ public class Default : IBuilder
         // entries. The Compile step passes the planner's action set so the
         // prompt carries only the relevant rows. Null/empty → full catalog.
         var filter = action.Actions == null ? null
-            : global::app.type.item.@this.Lower<List<string>>(await action.Actions.Value());
+            : (await action.Actions.Value()).Clr<List<string>>();
         if (filter is { Count: > 0 })
         {
             var wanted = new HashSet<string>(filter, StringComparer.OrdinalIgnoreCase);
@@ -60,7 +60,7 @@ public class Default : IBuilder
         // entries renderer (TypeSchemas/TypeNames) all stay intact. Empty/null
         // filter → full catalog (back-compat).
         var filter = action.Actions == null ? null
-            : global::app.type.item.@this.Lower<List<string>>(await action.Actions.Value());
+            : (await action.Actions.Value()).Clr<List<string>>();
         if (filter is { Count: > 0 })
         {
             var allTypeNames = new HashSet<string>(
@@ -167,7 +167,7 @@ public class Default : IBuilder
         if (!listResult.Success)
             return listResult;
 
-        var files = global::app.type.item.@this.Lower<List<path>>(await listResult.Value());
+        var files = (await listResult.Value()).Clr<List<path>>();
         if (files == null || files.Count == 0)
             return context.Ok(new List<Goal>());
 
@@ -356,7 +356,7 @@ public class Default : IBuilder
         }
         // Sync build surface — read the in-memory backing (the planner's list
         // is authored in this process; no door to open).
-        var input = global::app.type.item.@this.Lower<List<string>>(await action.Actions.Value()) ?? new List<string>();
+        var input = (await action.Actions.Value()).Clr<List<string>>() ?? new List<string>();
         var modules = action.Context.App.Module;
 
         var result = new List<string>();

@@ -386,7 +386,7 @@ public class VariablesTests : System.IAsyncDisposable
         await Assert.That((await itemsObj!.Value())).IsTypeOf<global::app.type.item.list.@this>();
 
         // Access the list directly
-        var list = global::app.type.item.@this.Lower<List<object>>(await itemsObj.Value())!;
+        var list = Lower<List<object>>(await itemsObj.Value())!;
         await Assert.That((list[0])?.ToString()).IsEqualTo("first");
         await Assert.That((list[1])?.ToString()).IsEqualTo("second");
     }

@@ -186,7 +186,7 @@ public class AsTIdentityTests
         var canonical = await paramData.AsCanonical();
 
         await Assert.That(ReferenceEquals(canonical, paramData)).IsFalse();
-        var resolved = global::app.type.item.@this.Lower<List<object?>>(await canonical.Value())!;
+        var resolved = Lower<List<object?>>(await canonical.Value())!;
         await Assert.That((resolved[0])?.ToString()).IsEqualTo("hello");
         await Assert.That((resolved[1])?.ToString()).IsEqualTo("literal");
     }
@@ -205,7 +205,7 @@ public class AsTIdentityTests
         var canonical = await paramData.AsCanonical();
 
         await Assert.That(ReferenceEquals(canonical, paramData)).IsFalse();
-        var resolved = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await canonical.Value())!;
+        var resolved = Lower<Dictionary<string, object?>>(await canonical.Value())!;
         await Assert.That((resolved["role"])?.ToString()).IsEqualTo("system");
         await Assert.That((resolved["content"])?.ToString()).IsEqualTo("You are a compiler");
     }
@@ -250,7 +250,7 @@ public class AsTIdentityTests
 
         var canonical = await paramData.AsCanonical();
 
-        var resolved = global::app.type.item.@this.Lower<List<object?>>(await canonical.Value())!;
+        var resolved = Lower<List<object?>>(await canonical.Value())!;
         await Assert.That(resolved.Count).IsEqualTo(3);
         await Assert.That((resolved[0])?.ToString()).IsEqualTo("a");
         await Assert.That((resolved[1])?.ToString()).IsEqualTo("b");
@@ -275,7 +275,7 @@ public class AsTIdentityTests
 
         var canonical = await paramData.AsCanonical();
 
-        var resolved = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await canonical.Value())!;
+        var resolved = Lower<Dictionary<string, object?>>(await canonical.Value())!;
         await Assert.That((resolved["message"])?.ToString()).IsEqualTo("boom");
     }
 }

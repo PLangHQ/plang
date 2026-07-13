@@ -106,7 +106,7 @@ public sealed partial class @this : ISnapshot
                 if (!loadResult.Success)
                     throw new System.IO.FileNotFoundException(
                         loadResult.Error?.Message ?? "Provider source DLL not loadable.");
-                assembly = global::app.type.item.@this.Lower<System.Reflection.Assembly>(loadResult.Peek())!;
+                assembly = loadResult.Peek()!.Clr<System.Reflection.Assembly>()!;
             }
             catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
             {

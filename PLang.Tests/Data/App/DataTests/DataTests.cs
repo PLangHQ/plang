@@ -1000,7 +1000,7 @@ public class DynamicDataTests : System.IAsyncDisposable
         var now = DateTime.UtcNow;
         var dov = new DynamicData("now", () => now, _app.User.Context);
 
-        await Assert.That(global::app.type.item.@this.Lower<System.DateTimeOffset>(await dov.Value())).IsEqualTo(now);
+        await Assert.That(Lower<System.DateTimeOffset>(await dov.Value())).IsEqualTo(now);
     }
 
     // --- IsVariable tests ---

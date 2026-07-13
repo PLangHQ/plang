@@ -16,7 +16,7 @@ public partial class goals : IContext
     {
         var result = await Builder.Goals(this);
         if (!result.Success) return data.@this<global::app.type.item.list.@this<global::app.type.clr.@this<Goal>>>.From(result);
-        var goals = global::app.type.item.@this.Lower<List<Goal>>(await result.Value()) ?? new List<Goal>();
+        var goals = (await result.Value()).Clr<List<Goal>>() ?? new List<Goal>();
         // goal is a host now — each rides the plang list as clr<goal>.
         var carried = new List<global::app.type.clr.@this<Goal>>(goals.Count);
         foreach (var g in goals) carried.Add(new global::app.type.clr.@this<Goal>(g, Context));

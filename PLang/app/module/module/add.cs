@@ -26,7 +26,7 @@ public partial class Add : IContext
         if (!loadResult.Success) return Error(loadResult.Error!);
 
         var ns = Namespace == null ? null : (await Namespace.Value())?.ToString();
-        var count = app.Module.Discover(global::app.type.item.@this.Lower<System.Reflection.Assembly>(await loadResult.Value())!, ns);
+        var count = app.Module.Discover((await loadResult.Value()).Clr<System.Reflection.Assembly>()!, ns);
         return Data(new type.module { name = dllPath.FileNameWithoutExtension, actions = count });
     }
 }

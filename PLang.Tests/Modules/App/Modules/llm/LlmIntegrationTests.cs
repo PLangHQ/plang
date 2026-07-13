@@ -90,7 +90,7 @@ public class LlmIntegrationTests
         await result.IsSuccess();
         // Value should be parsed JSON (JsonElement)
         await Assert.That((await result.Value())).IsNotNull();
-        var __low = global::app.type.item.@this.Lower<object>(await result.Value());
+        var __low = Lower<object>(await result.Value());
         var json = __low is JsonElement je ? je : JsonSerializer.SerializeToElement<object?>(__low is global::app.type.item.dict.@this _nd ? _nd.Clr<object>() : (await result.Value()));
         await Assert.That(json.TryGetProperty("sentiment", out _)).IsTrue();
         await Assert.That((await result.Properties.Value("Format"))?.ToString()).IsEqualTo("json");

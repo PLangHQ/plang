@@ -18,7 +18,7 @@ public class ResidualTryConvertTests
     {
         await using var app = NewApp();
         var d = app.Type.Convert("5", typeof(int?), app.User.Context);
-        await Assert.That(global::app.type.item.@this.Lower<long>(await d.Value())).IsEqualTo(5L);
+        await Assert.That(Lower<long>(await d.Value())).IsEqualTo(5L);
     }
 
     [Test] public async Task TryConvert_AssignableFastPath_StillWorks()
@@ -26,7 +26,7 @@ public class ResidualTryConvertTests
         await using var app = NewApp();
         // int is assignable to object — returned as-is, no conversion.
         var d = app.Type.Convert(5, typeof(object), app.User.Context);
-        await Assert.That(global::app.type.item.@this.Lower<long>(await d.Value())).IsEqualTo(5L);
+        await Assert.That(Lower<long>(await d.Value())).IsEqualTo(5L);
     }
 
     [Test] public async Task TryConvert_ListElementWalk_StillWorks()
@@ -34,7 +34,7 @@ public class ResidualTryConvertTests
         await using var app = NewApp();
         var src = new System.Collections.Generic.List<object> { "1", "2", "3" };
         var d = app.Type.Convert(src, typeof(System.Collections.Generic.List<int>), app.User.Context);
-        var list = global::app.type.item.@this.Lower<System.Collections.Generic.List<int>>(await d.Value());
+        var list = Lower<System.Collections.Generic.List<int>>(await d.Value());
         await Assert.That(list).IsNotNull();
         await Assert.That(list!.Count).IsEqualTo(3);
         await Assert.That(list[0]).IsEqualTo(1);

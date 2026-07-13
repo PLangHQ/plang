@@ -25,11 +25,11 @@ public class Stage6_DiffRenameTests
         var a = new Data("a", "hello", context: global::PLang.Tests.TestApp.SharedContext);
         var b = new Data("b", "hello", context: global::PLang.Tests.TestApp.SharedContext);
         var result = await a.Diff(b);
-        var tree = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
+        var tree = Lower<Dictionary<string, object?>>(await result.Value());
         await Assert.That(tree).IsNotNull();
         await Assert.That(tree!["match"]).IsEqualTo(true);
         var c = new Data("c", "different", context: global::PLang.Tests.TestApp.SharedContext);
-        var tree2 = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await (await a.Diff(c)).Value());
+        var tree2 = Lower<Dictionary<string, object?>>(await (await a.Diff(c)).Value());
         await Assert.That(tree2!["match"]).IsEqualTo(false);
     }
 }

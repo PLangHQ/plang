@@ -293,25 +293,6 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     internal T? Clr<T>() => (T?)Clr(typeof(T));
 
     /// <summary>
-    /// The .NET-edge read over a value-door answer: a typed answer lowers
-    /// ITSELF via <see cref="Clr{T}"/>; an answer already in the target CLR
-    /// shape passes through (the door still hands raw CLR for rung-2 values
-    /// during the consumer-tail transition); anything else is absent. One
-    /// owner for the discipline so edge call sites don't each re-implement it.
-    /// </summary>
-    [System.Obsolete("Lower<T> is a thin wrapper around Clr<T> — call the value's own .Clr<T>() "
-        + "directly (a door answer is already an item). Slated for removal; do not add new callers.")]
-    internal static T? Lower<T>(object? doorAnswer) => doorAnswer switch
-    {
-        // A plang value lowers to CLR via its own door FIRST — every item is also
-        // an `object`, so the universal `T t` arm below would otherwise swallow a
-        // `Lower<object>` and hand back the unlowered wrapper instead of its CLR form.
-        @this it => it.Clr<T>(),
-        T t => t,
-        _ => default,
-    };
-
-    /// <summary>
     /// The typed source-face seam for CLR-facing machinery (ctor matching,
     /// kind probes, TryConvert): a LEAF value lowers to its own backing via
     /// its <see cref="Clr(System.Type)"/>; containers and non-items pass

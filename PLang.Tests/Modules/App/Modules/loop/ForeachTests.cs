@@ -48,7 +48,7 @@ public class ForeachTests
         var result = await action.RunAsync(context);
 
         await result.IsSuccess();
-        var loopResult = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
+        var loopResult = Lower<Dictionary<string, object?>>(await result.Value());
         await Assert.That((long)loopResult!["itemCount"]!).IsEqualTo(0L);
         await Assert.That((bool)loopResult["completed"]!).IsTrue();
     }
@@ -136,7 +136,7 @@ public class ForeachTests
         var result = await action.RunAsync(context);
 
         await result.IsSuccess();
-        var loopResult = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
+        var loopResult = Lower<Dictionary<string, object?>>(await result.Value());
         await Assert.That((long)loopResult!["itemCount"]!).IsEqualTo(0L);
         await Assert.That((bool)loopResult["completed"]!).IsTrue();
     }
@@ -156,7 +156,7 @@ public class ForeachTests
         var result = await action.RunAsync(context);
 
         await result.IsSuccess();
-        var loopResult = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await result.Value());
+        var loopResult = Lower<Dictionary<string, object?>>(await result.Value());
         await Assert.That((bool)loopResult!["completed"]!).IsFalse();
         await Assert.That((long)loopResult["itemCount"]!).IsEqualTo(0L);
     }

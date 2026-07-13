@@ -84,7 +84,7 @@ public sealed class OpenAi : ILlm
         // a goal.call parameter to QueryAndValidatePlan so it re-binds each attempt). See
         // .bot/type-kind-strict/builder/v2/baseline-findings.md.
         // The .NET edge: the message list lowers ITSELF to the API's CLR shape.
-        var rawMessages = global::app.type.item.@this.Lower<List<LlmMessage>>(await action.Messages.Value());
+        var rawMessages = (await action.Messages.Value()).Clr<List<LlmMessage>>();
         if (rawMessages is not { Count: > 0 })
             return context.Error(new ActionError("Messages list is empty or null", "ValidationError", 400));
 
@@ -155,7 +155,7 @@ public sealed class OpenAi : ILlm
         // by cacheKey != null), so cache:false is a full bypass: no read, no stale entry left behind.
         // The .NET edge: the tool list lowers itself once; reused below.
         List<GoalCall>? goalTools = action.Tools == null ? null
-            : global::app.type.item.@this.Lower<List<GoalCall>>(await action.Tools.Value());
+            : (await action.Tools.Value()).Clr<List<GoalCall>>();
         string? cacheKey = null;
         if (await action.Cache.ToBooleanAsync() && goalTools == null)
         {
@@ -551,7 +551,7 @@ public sealed class OpenAi : ILlm
 
         string result;
         var goalCall = (action.Tools == null ? null
-                : global::app.type.item.@this.Lower<List<GoalCall>>(await action.Tools.Value()))
+                : (await action.Tools.Value()).Clr<List<GoalCall>>())
             ?.Find(t => t.Name == toolCall.Name);
         if (goalCall == null)
         {
