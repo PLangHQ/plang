@@ -1906,3 +1906,26 @@ Too large to ride wire-source-split (would bury the branch under hundreds of tes
 Do as its own branch: add the guard, fix `Data<T>.Ok`, fix the production orphans, sweep the
 tests. This also fixes the `ChannelEntity_Write` isolation flakiness (a context-less Data that
 only flakily gets stamped).
+
+## Builder LLM format via templates — never format text in C# (kill FormatActionsJson)
+
+**Date:** 2026-07-13 (branch `navigation-driven-record-builder`, Ingi). The goal builder's
+LLM-facing format is built in C# (`goal/Methods.cs` — `FormatForLlmFallback` string-builds the
+preview; `BuildFormatData` + the interim `FormatActionsJson` writer helper produce a pre-serialized
+JSON string per step). This is text-formatting in C#, which we don't do.
+
+**Direction:**
+- `FormatForLlmFallback` should NOT format text in C# — move it to an os template
+  (`os/system/module/llm/…`, rendered via `ui.render`/Fluid), the same way the primary
+  `goalFormatForLlm.template` path works. Everything is plang.
+- `FormatActionsJson` should NOT exist. Instead of producing a JSON string in C#, `BuildFormatData`
+  exposes each step's actions/params as **self-describing objects** — the param value IS the item
+  (`p.Peek()`), which the template navigates and renders itself (loop `%step.actions%`,
+  `%action.parameters%`, show `%parameter.value%`). The object describes itself; the template loops
+  it. No C#-side serialize, no pre-baked JSON string.
+
+The interim `FormatActionsJson` (writer-driven, committed on this branch) only fixed the immediate
+reflection-garbage at the perimeter so the `[JsonConverter]` strip could proceed; it is a stopgap to
+delete when this lands. Sibling of the error-rendering-via-os-templates piece
+(`architect/stage2-perimeter-and-error-templates-answer.md` §4) — same "presentation lives in plang
+templates, not C#" law.
