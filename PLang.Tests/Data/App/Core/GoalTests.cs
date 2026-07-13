@@ -289,6 +289,11 @@ public class GoalTests : System.IAsyncDisposable
         await Assert.That(result).Contains("\"module\":\"output\"");
         await Assert.That(result).Contains("\"action\":\"write\"");
         await Assert.That(result).Contains("\"name\":\"Data\"");
+        // The value writes ITSELF through the one json writer — a clean "hello",
+        // not the reflected item surface ({"Rank":…,"RawText":"hello",…}).
+        await Assert.That(result).Contains("\"value\":\"hello\"");
+        await Assert.That(result).DoesNotContain("RawText");
+        await Assert.That(result).DoesNotContain("Cacheable");
     }
 
     [Test]

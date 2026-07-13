@@ -23,15 +23,13 @@ public sealed partial class @this
 		if (scribanTemplate.HasErrors)
 			return FormatForLlmFallback();
 
-		var data = BuildFormatData();
+		var data = BuildFormatData(context);
 		var result = await scribanTemplate.RenderAsync(data);
 		return result.Trim();
 	}
 
-	private object BuildFormatData()
+	private object BuildFormatData(actor.context.@this? context)
 	{
-		var jsonOpts = JsonSerializerOptions.Default;
-
 		return new
 		{
 			name = Name,
@@ -43,16 +41,7 @@ public sealed partial class @this
 				comment = s.Comment,
 				has_actions = s.Actions.Count > 0,
 				actions_json = s.Actions.Count > 0
-					? JsonSerializer.Serialize(
-						new
-						{
-							actions = s.Actions.Select(a => new
-							{
-								module = a.Module,
-								action = a.ActionName,
-								parameters = a.Parameters.Select(p => new { name = p.Name, value = p.Peek() }),
-							})
-						}, jsonOpts)
+					? FormatActionsJson(s.Actions, context)
 					: null
 			}).ToList(),
 			has_errors = Errors.Count > 0,
@@ -62,10 +51,45 @@ public sealed partial class @this
 		};
 	}
 
+	// The pr preview a step shows the builder LLM: {actions:[{module, action, parameters:[{name, value}]}]}.
+	// Each param value writes ITSELF through the one json writer — dict→{}, list→[], leaf→its own form,
+	// [Sensitive] masked via the value's own Output — instead of raw STJ reflecting the item's C# surface.
+	private string FormatActionsJson(global::app.goal.steps.step.actions.@this actions, actor.context.@this? context)
+	{
+		using var buffer = new System.IO.MemoryStream();
+		using (var utf8 = new Utf8JsonWriter(buffer))
+		{
+			var w = new global::app.channel.serializer.json.Writer(
+				utf8, view: global::app.View.Out, renderers: context?.App?.Type.Renderer, emitsSchema: false);
+			w.BeginObject();
+			w.Name("actions");
+			w.BeginArray(actions.Count);
+			foreach (var a in actions)
+			{
+				w.BeginObject();
+				w.Name("module"); w.String(a.Module);
+				w.Name("action"); w.String(a.ActionName);
+				w.Name("parameters");
+				w.BeginArray(a.Parameters.Count);
+				foreach (var p in a.Parameters)
+				{
+					w.BeginObject();
+					w.Name("name"); w.String(p.Name);
+					w.Name("value"); w.Value(p.Peek());
+					w.EndObject();
+				}
+				w.EndArray();
+				w.EndObject();
+			}
+			w.EndArray();
+			w.EndObject();
+		}
+		return System.Text.Encoding.UTF8.GetString(buffer.ToArray());
+	}
+
 	private string FormatForLlmFallback()
 	{
 		var sb = new System.Text.StringBuilder();
-		var jsonOpts = JsonSerializerOptions.Default;
 
 		if (!string.IsNullOrEmpty(Comment))
 			sb.AppendLine($"/ {Comment}");
@@ -78,16 +102,7 @@ public sealed partial class @this
 
 			var prefix = new string(' ', step.Indent) + "- ";
 			var prInfo = step.Actions.Count > 0
-				? JsonSerializer.Serialize(
-					new
-					{
-						actions = step.Actions.Select(a => new
-						{
-							module = a.Module,
-							action = a.ActionName,
-							parameters = a.Parameters.Select(p => new { name = p.Name, value = p.Peek() })
-						})
-					}, jsonOpts)
+				? FormatActionsJson(step.Actions, null)
 				: "null";
 			sb.AppendLine($"{prefix}{step.Text}  <= pr: {prInfo}");
 		}
