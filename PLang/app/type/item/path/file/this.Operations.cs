@@ -201,22 +201,17 @@ public sealed partial class @this
         {
             EnsureParentDir();
             var raw = value == null ? null : await value.Value();
-            // A born-native text/binary value rides as its wrapper. Persisted file
-            // content IS the value's bare form, so unwrap to the backing here —
-            // otherwise it falls to the channel serializer, whose text path appends a
-            // stdout-style newline that doesn't belong in file content.
-            // Persisted file content IS the value's bare form — the leaf
-            // lowers through its own Clr at this System.IO edge.
+            // Raw bytes ride straight to disk — a binary value IS its byte form, and the text
+            // writer would base64 it (bytes are bytes at the System.IO edge, no serializer).
             if (raw is global::app.type.item.binary.@this binv)
                 await System.IO.File.WriteAllBytesAsync(Absolute, binv.Value);
-            else if (raw is global::app.type.item.text.@this txtv)
-                await System.IO.File.WriteAllTextAsync(Absolute, txtv.Clr<string>());
             else
             {
                 await using var stream = System.IO.File.Create(Absolute);
-                // file-save owns its selector (its Extension): a registered extension writes that
-                // format; an unregistered one writes the value AS CONTENT (the Text serializer
-                // renders it — a leaf bare, a container as its json text), NOT the plang envelope.
+                // file-save owns its selector (its Extension); the VALUE writes itself into that
+                // format's writer: a registered extension writes that format (a text value to
+                // .json is json-quoted, to .txt is bare); an unregistered one falls to Text —
+                // a leaf bare, a container as its json content. No special text arm, no shape branch.
                 var serializers = Context.Actor.Channel.Serializers;
                 var serializer = serializers.GetByExtension(Extension) ?? serializers.Text;
                 var serResult = await serializer.SerializeAsync(stream, value!);
