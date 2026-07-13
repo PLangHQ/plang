@@ -87,10 +87,11 @@ public sealed class Writer : global::app.channel.serializer.IWriter
             case System.Guid g: Guid(g); return;
             case System.Enum e: Enum(e); return;
             case byte[] bytes: Bytes(bytes); return;
-            // A LEAF item renders itself through its own door — bare at the top (its scalar
-            // method, depth 0). Mirrors json.Writer.Value's item arm so both entrances
-            // (Value(item) / item.Write(w)) agree. A CONTAINER item (dict/list) has no bare
-            // form — it falls to the default and rides the json delegate as structure.
+            // TOMBSTONE — a closing door, do NOT build on it. Value(item) is being retired:
+            // an item in hand is rendered by asking `item.Output`, never by handing the boxed
+            // item to a writer. This leaf arm (mirroring json.Writer's item arm) keeps existing
+            // Value(item) feeders green until they migrate to Output; it dies with piece (B) when
+            // that inventory empties. Value(object) narrows back to raw normalized CLR leaves.
             case global::app.type.item.@this { IsLeaf: true } v: v.Write(this); return;
             default:                                    // container / Data / enumerable → json content
                 Structural().Value(normalized);

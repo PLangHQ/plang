@@ -69,16 +69,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static @this FromBase64(string base64, string algorithm)
         => new(System.Convert.FromBase64String(base64), algorithm);
 
-    /// <summary>
-    /// Wire read-back: reconstruct a <c>hash</c> from its base64 string form and
-    /// the kind carried on the <c>type</c> envelope. The <c>type.@this.Convert</c>
-    /// seam discovers this by convention (a <c>static object? FromWire(string,
-    /// string?)</c>) so the core type system reconstructs a kinded scalar without
-    /// referencing this module. The algorithm rides as the kind; falls back to
-    /// keccak256 (the signing default) when none was stamped.
-    /// </summary>
-    public static object? FromWire(string raw, string? kind)
-        => string.IsNullOrEmpty(raw) ? null : FromBase64(raw, kind ?? "keccak256");
 
     /// <summary>True when this digest's bytes equal another's.</summary>
     public bool DigestEquals(@this other)

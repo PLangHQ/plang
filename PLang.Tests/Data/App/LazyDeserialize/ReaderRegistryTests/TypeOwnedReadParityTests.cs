@@ -47,18 +47,18 @@ public class TypeOwnedReadParityTests
         await Assert.That(read("3.14", "float", ctx)).IsEqualTo((object)3.14f);
     }
 
-    [Test] public async Task HashRead_MatchesPriorFromWireOutput()
+    [Test] public async Task HashRead_RebuildsFromBase64AndKind()
     {
-        // hash's Read re-houses FromWire; the registry read equals FromWire.
+        // hash's ONE wire read is the registry reader (FromWire folded in, the convention name
+        // gone): a base64 digest + the kind-carried algorithm rebuild the value.
         var bytes = new byte[] { 1, 2, 3, 4, 250, 99 };
         var b64 = System.Convert.ToBase64String(bytes);
         var r = new global::app.type.reader.@this();
         var rc = new global::app.type.reader.ReadContext(global::PLang.Tests.TestApp.SharedContext);
         var via = r.Of("hash", null)!(b64, "keccak256", rc) as global::app.module.crypto.type.hash.@this;
-        var prior = global::app.module.crypto.type.hash.@this.FromWire(b64, "keccak256") as global::app.module.crypto.type.hash.@this;
         await Assert.That(via).IsNotNull();
-        await Assert.That(via!.ToBase64()).IsEqualTo(prior!.ToBase64());
-        await Assert.That(via.Algorithm).IsEqualTo(prior.Algorithm);
+        await Assert.That(via!.ToBase64()).IsEqualTo(b64);
+        await Assert.That(via.Algorithm).IsEqualTo("keccak256");
     }
 
     [Test] public async Task ErrorWire_RoundTrips_AsSpecializedSnapshotConverter()

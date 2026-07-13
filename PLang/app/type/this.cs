@@ -451,19 +451,6 @@ public sealed class @this : item.@this
     public override int GetHashCode() => System.HashCode.Combine(
         Name.ToLowerInvariant(), Kind?.Name.ToLowerInvariant(), Strict);
 
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Reflection.MethodInfo?> _wireReaders = new();
-
-    internal static System.Reflection.MethodInfo? WireReader(System.Type clrType)
-        => _wireReaders.GetOrAdd(clrType, static t =>
-        {
-            var m = t.GetMethod("FromWire",
-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
-                binder: null,
-                types: new[] { typeof(string), typeof(string) },
-                modifiers: null);
-            return m != null && m.ReturnType == typeof(object) ? m : null;
-        });
-
     /// <summary>
     /// Does this type stand in for <paramref name="other"/> — is it the same
     /// type, or does it compose <paramref name="other"/> as a facet? An image

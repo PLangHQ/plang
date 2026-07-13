@@ -7,8 +7,9 @@ namespace app.module.snapshot;
 /// <c>Data&lt;snapshot.@this&gt;</c>, so the runtime converts whatever
 /// <c>%snap%</c> holds — typically the wire bytes just read off disk — into the
 /// snapshot object at the action boundary (the lazy-param <c>As&lt;T&gt;</c>
-/// path → <c>snapshot.@this.FromWire</c>). Read stays dumb; the type-driven
-/// rebuild is pulled here by declaring the type.
+/// path → <c>snapshot.@this.Create</c>, which reads the wire through the plang
+/// serializer). Read stays dumb; the type-driven rebuild is pulled here by
+/// declaring the type.
 ///
 /// <para>Resuming re-enters the captured CallStack position
 /// (<see cref="global::app.snapshot.@this.Resume"/>) — deterministic, no live LLM.</para>

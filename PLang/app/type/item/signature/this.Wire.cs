@@ -8,11 +8,12 @@ using binary = global::app.type.item.binary.@this;
 using hash = global::app.module.crypto.type.hash.@this;
 
 /// <summary>
-/// signature layer — wire reconstruction (<see cref="FromWire"/>) and the
-/// canonical signing-bytes (<see cref="ToSigningBytes"/>) the signing module
-/// signs/verifies over. The layer owns BOTH directions of its own bytes (OBP):
-/// <see cref="@this.Write"/> renders it, FromWire reads it, ToSigningBytes is the
-/// deterministic attestation surface — the module never reaches into wire shape.
+/// signature layer — wire reconstruction (the token-based schema reader,
+/// <c>data/schema/signature.cs</c>) and the canonical signing-bytes
+/// (<see cref="ToSigningBytes"/>) the signing module signs/verifies over. The layer
+/// owns BOTH directions of its own bytes (OBP): <see cref="@this.Write"/> renders it,
+/// the schema reader reads it (no FromWire/DOM), ToSigningBytes is the deterministic
+/// attestation surface — the module never reaches into wire shape.
 /// </summary>
 public sealed partial class @this
 {

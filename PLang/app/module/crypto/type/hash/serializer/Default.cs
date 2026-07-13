@@ -18,12 +18,13 @@ public static class Default
     }
 
     /// <summary>
-    /// Read mirror of <see cref="Write"/> — re-houses <c>hash.FromWire</c> behind
-    /// the reader registry. The algorithm rides as <paramref name="kind"/>; a
-    /// base64 digest string rebuilds the hash value. The signing-side STJ
-    /// <c>HashDataConverter</c> (object-shaped <c>{type,value}</c>) stays where
-    /// its semantics apply.
+    /// Read mirror of <see cref="Write"/> — the ONE wire read-back for <c>hash</c>. A base64
+    /// digest string rebuilds the value; the algorithm rides as <paramref name="kind"/>
+    /// (falls back to keccak256, the signing default). The signing-side STJ
+    /// <c>HashDataConverter</c> (object-shaped <c>{type,value}</c>) stays where its semantics apply.
     /// </summary>
     public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
-        => raw is string s ? global::app.module.crypto.type.hash.@this.FromWire(s, kind) : null;
+        => raw is string s && !string.IsNullOrEmpty(s)
+            ? global::app.module.crypto.type.hash.@this.FromBase64(s, kind ?? "keccak256")
+            : null;
 }
