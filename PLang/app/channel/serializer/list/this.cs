@@ -21,7 +21,7 @@ public sealed class @this
     public @this(actor.context.@this context)
     {
         var json = new global::app.channel.serializer.Json(context);
-        var text = new global::app.channel.serializer.Text(context, jsonFallback: json);
+        var text = new global::app.channel.serializer.Text(context);
         var plang = new global::app.channel.serializer.plang.@this(context);
 
         Register(json);

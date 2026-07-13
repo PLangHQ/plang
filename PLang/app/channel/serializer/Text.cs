@@ -3,9 +3,9 @@ using System.Text;
 namespace app.channel.serializer;
 
 /// <summary>
-/// Plain text serializer - emits data.Value as its string representation.
-/// Falls back to JSON for complex types so that e.g. List&lt;T&gt; outputs proper JSON
-/// instead of "System.Collections.Generic.List`1[...]".
+/// Plain-text serializer — the value writes ITSELF via <c>data.Output</c> into a
+/// <see cref="text.Writer"/>: a leaf renders bare, a container renders as json (the writer owns
+/// <c>BeginObject</c>/<c>BeginArray</c>, no per-type override). No Data envelope.
 /// </summary>
 public sealed class Text : ISerializer
 {
@@ -18,17 +18,15 @@ public sealed class Text : ISerializer
     public string Extension => ".txt";
 
     private readonly Encoding _encoding;
-    private readonly global::app.channel.serializer.Json _jsonFallback;
     // The context deserialized values are born on — Deserialize has no Data to source one from
     // (unlike Serialize, which uses data.Context). Born-with-context: a serializer belongs to an
     // actor and an actor always has a context, so this is non-null.
     private readonly actor.context.@this _context;
 
-    public Text(actor.context.@this context, Encoding? encoding = null, global::app.channel.serializer.Json? jsonFallback = null)
+    public Text(actor.context.@this context, Encoding? encoding = null)
     {
         _context = context;
         _encoding = encoding ?? Encoding.UTF8;
-        _jsonFallback = jsonFallback ?? new global::app.channel.serializer.Json(context);
     }
 
     public async Task<data.@this> SerializeAsync(Stream stream, data.@this data, global::app.View view = global::app.View.Out, CancellationToken cancellationToken = default)
