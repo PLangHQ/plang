@@ -282,6 +282,24 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
     }
 
     [Test]
+    public async Task SerializeAsync_Container_WritesJson()
+    {
+        // A container has no bare-text form, so the text writer renders it AS json — it owns
+        // BeginObject/BeginArray (no per-type override, no shape selector). A leaf writes bare
+        // (see above); a container writes json content. Underpins file-save + http/llm egress.
+        var context = global::PLang.Tests.TestApp.SharedContext;
+        var serializer = new global::app.channel.serializer.Text(context);
+        var dict = new global::app.type.item.dict.@this(context).Set("name", "test");
+        using var stream = new MemoryStream();
+
+        await serializer.SerializeAsync(stream, app.Ok(dict));
+
+        stream.Position = 0;
+        var text = Encoding.UTF8.GetString(stream.ToArray());
+        await Assert.That(text).IsEqualTo("{\"name\":\"test\"}");
+    }
+
+    [Test]
     public async Task SerializeAsync_Null_WritesNothing()
     {
         // A null value has no plain-text content, and the serializer no longer
