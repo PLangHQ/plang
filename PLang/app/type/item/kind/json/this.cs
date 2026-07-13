@@ -64,15 +64,16 @@ public sealed class @this : global::app.type.kind.@this
     }
 
     // Raw json text/bytes → clr(json). json owns its OWN parse — object is not a plang type, so
-    // this is the one home (was object/serializer/json.cs, deleted). A non-raw carrier declines
-    // (the family reader handles it); structured json stays a clr, navigated/enumerated lazily by
-    // this kind — a consumer that needs a native structure asks explicitly (`as dict`).
-    public override global::System.Threading.Tasks.ValueTask<global::app.data.@this?> Load(
-        object raw, global::app.actor.context.@this ctx)
+    // this is the one home (was object/serializer/json.cs, deleted). The SYNC decode: both the
+    // async materialization (base Load wraps this) and the sync wire graduation (Clr / Write) share
+    // this one body. A non-raw carrier declines (null → the family reader handles it); structured
+    // json stays a clr, navigated/enumerated lazily by this kind — a consumer that needs a native
+    // structure asks explicitly (`as dict`).
+    public override global::app.type.item.@this? Parse(object raw, global::app.actor.context.@this ctx)
     {
-        if (raw is not (string or byte[])) return new((global::app.data.@this?)null);
+        if (raw is not (string or byte[])) return null;                        // decline — not a raw json payload
         var s = new global::app.type.item.text.@this(raw).ToString();
-        if (string.IsNullOrEmpty(s)) return new(ctx.Null());
+        if (string.IsNullOrEmpty(s)) return ctx.App.Type.Create(null, ctx);    // empty → the null value (NOT a decline)
         using var doc = JsonDocument.Parse(s);
         var e = doc.RootElement;
         // Only STRUCTURED json stays a clr(json) (ruling 6 — navigated/enumerated lazily by this
@@ -80,8 +81,8 @@ public sealed class @this : global::app.type.kind.@this
         // already use for leaves — so `42` is a number, not a clr(json number) that compares
         // Incomparable to one.
         return e.ValueKind is JsonValueKind.Object or JsonValueKind.Array
-            ? new(ctx.Ok(new global::app.type.clr.@this(e.Clone(), ctx, this)))
-            : new(ctx.Ok(Scalar(e)));
+            ? new global::app.type.clr.@this(e.Clone(), ctx, this)
+            : ctx.App.Type.Create(Scalar(e), ctx);
     }
 
     // Materialize this json content INTO the CLR host target asks for. json owns the format

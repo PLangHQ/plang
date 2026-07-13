@@ -92,9 +92,8 @@ public class source : @this, module.IContext
     protected internal override @this Clone() => this;
 
     /// <summary>
-    /// The parse: raw → value via the reader registry for (type, kind), falling
-    /// back to the type's own <c>Convert</c> for a string raw. The answer is a
-    /// new instance with this source as its prior; a raw with no reader and no
+    /// The parse: raw → value via the reader registry for (type, kind). The answer
+    /// is a new instance with this source as its prior; a raw with no reader and no
     /// type answers itself (the bytes are the value).
     /// </summary>
     /// <summary>Never final — the door parses the raw form into its value on read.</summary>

@@ -453,35 +453,6 @@ public sealed class @this : item.@this
     public override int GetHashCode() => System.HashCode.Combine(
         Name.ToLowerInvariant(), Kind?.Name.ToLowerInvariant(), Strict);
 
-    public object? Convert(string raw)
-    {
-        if (string.Equals(Name, "json", System.StringComparison.OrdinalIgnoreCase))
-        {
-            // Parse to the native value graph (dict / list / primitives), not a
-            // raw Dictionary — collections hold Data, and an unexamined json
-            // object narrows to `dict` on first touch.
-            var parsed = JsonSerializer.Deserialize<object?>(raw,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            return new item.serializer.json(Context!).Parse(parsed);
-        }
-
-        // Kinded scalar read-back: a string-shaped type whose value carries a
-        // sub-format the CLR type can't express (a hash's algorithm) reconstructs
-        // through its own `static object? FromWire(string raw, string? kind)`.
-        // Discovered by convention so the core type system rebuilds a kinded
-        // value without referencing the (possibly module-owned) type — the Kind
-        // on this entity is the only thing it can't read off the wire string.
-        var clr = ClrType;
-        if (clr != null)
-        {
-            var reader = WireReader(clr);
-            if (reader != null)
-                return reader.Invoke(null, new object?[] { raw, Kind });
-        }
-
-        return AppTypes.TryConvert(raw, clr ?? typeof(object), Context).Value;
-    }
-
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Reflection.MethodInfo?> _wireReaders = new();
 
     internal static System.Reflection.MethodInfo? WireReader(System.Type clrType)
