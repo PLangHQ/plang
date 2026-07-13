@@ -979,14 +979,14 @@ public class Default : IBuilder
                 // Already correctly typed? Skip (e.g. value is bool, target is bool).
                 if (targetType.IsInstanceOfType(p.Peek())) continue;
 
-                // Convert in either direction: string → bool/int/double/etc., or
-                // numeric/bool → string when the parameter is declared string. The LLM
-                // emitting `Key=404 (int)` for a string-declared Key gets normalized here.
-                var conv = context.App.Type.Convert(p.Peek(), targetType, context);
-                if (!conv.Peek().IsNull)
-                    p.SetValue(conv.Peek());
-                else if (conv.Error != null)
-                    errors.Add($"{a.Module}.{a.ActionName}.{p.Name}: {conv.Error.Message}");
+                // Normalize the value to its declared type: p.Type builds itself from the value
+                // item (kind from p.Type, declared in loop 1) — string → bool/int, numeric/bool →
+                // text. The LLM emitting `Key=404 (int)` for a string-declared Key becomes a text
+                // value here. The content door is the throw-on-decline boundary, so a bad value
+                // collects into errors for LlmFixer to retry.
+                try { p.SetValue(p.Type.Create(p.Peek(), context)); }
+                catch (System.InvalidOperationException ex)
+                { errors.Add($"{a.Module}.{a.ActionName}.{p.Name}: {ex.Message}"); }
             }
 
             // Template flag — the ONE %var% detection, done at build. A param whose value
