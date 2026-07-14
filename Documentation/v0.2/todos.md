@@ -1951,7 +1951,14 @@ format values in C# and lean on raw CLR shapes instead of plang types — they d
 Sibling of the formal-render piece (which moved `Default.RenderFormal` off C#/STJ onto the
 actionFormal template). Same law: presentation lives in plang templates, values are plang types.
 
-## 2026-07-14 — General data-url / base64 type (fell out of W8)
+## ~~General data-url / base64 type (fell out of W8)~~ — shipped as the `base64` type
+**Date:** 2026-07-14 → **Closed:** 2026-07-14 on branch `navigation-driven-record-builder` (commit 3f6353bea).
+
+Shipped as the `base64` value type, but the design settled differently than described below.
+A data-url is NOT auto-built into the mime's type; it becomes a `base64` value whose own type
+is `{base64, kind: <mime tail>}` (the own-name rule forbids reporting `{image, gif}`), and
+`as image` / `as binary` is the explicit conversion. `base64` owns the `data:` parse; a bare
+untyped `"data:…"` literal stays text (no born-door sniffing). Original description kept below.
 
 `data:<mime>;base64,<bytes>` is base64 bytes + a MIME label — NOT image-specific. Today
 `data:` is not a registered scheme, so `Create("data:image/gif;…")` declines and the value
