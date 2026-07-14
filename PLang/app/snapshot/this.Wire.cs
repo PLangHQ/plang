@@ -1,6 +1,3 @@
-using System.Text.Json;
-using System.Text.Json.Nodes;
-
 namespace app.snapshot;
 
 /// <summary>
@@ -37,46 +34,20 @@ public sealed partial class @this
     }
 
     /// <summary>
-    /// The born-with-context creation door (<c>Data.Value&lt;snapshot&gt;</c> dispatches
-    /// here): rebuilds a snapshot tree from its wire string, born in the data
-    /// binding's context (<paramref name="data"/><c>.Context</c> — never a loose
-    /// static context param). The result is the same in-memory shape
-    /// <see cref="global::app.@this.Snapshot"/> produces, so <see cref="global::app.@this.Restore"/>
-    /// consumes it unchanged. The wire is the Data envelope
-    /// <c>{name, type, value:{…sections…}}</c>; each section is read back by its owner.
+    /// The born-with-context creation door (<c>Data.Value&lt;snapshot&gt;</c> dispatches here).
+    ///
+    /// <para>RESTORE IS DEFERRED to the ISnapshot redesign. Snapshot capture + write are live
+    /// (the write is format-independent — it drives <see cref="global::app.channel.serializer.IWriter"/>).
+    /// The read half — rebuilding each typed section from the wire — will move onto an
+    /// <c>IReader</c> (symmetric with the writer), replacing the STJ read cursor that was torn
+    /// out with the last <c>JsonConverter</c>/<c>JsonSerializerOptions</c>. Until that lands,
+    /// reading a snapshot back throws.</para>
     /// </summary>
     public static @this? Create(global::app.type.item.@this value, global::app.data.@this data)
     {
         if (value is @this self) return self;
-        string? json = value.Clr<string>();
-        if (string.IsNullOrEmpty(json)) return null;
-
-        var opts = new global::app.channel.serializer.plang.@this(data.Context).SnapshotOptions;
-        var parsed = JsonNode.Parse(json)?.AsObject()
-            ?? throw new JsonException("Snapshot wire root is not a JSON object");
-        // Envelope-tolerant: file.save serializes the snapshot as ONE Data
-        // envelope ({name,type,value:{…sections…}}); peel that single layer to
-        // the section object. (A double envelope would mean a Data was wrapped
-        // in another Data upstream — that's a bug to fix at the source, not here.)
-        var root = parsed["value"] is JsonObject inner && parsed.ContainsKey("type")
-            ? inner
-            : parsed;
-        var s = new @this(data.Context);
-
-        void Load(string name, System.Action<Io, @this> read)
-        {
-            if (root[name] is not JsonObject node) return;
-            read(new Io(node, opts), s.Section(name));
-        }
-
-        Load("Variables", global::app.variable.list.@this.Read);
-        Load("Errors",    global::app.error.list.@this.Read);
-        Load("Providers", global::app.module.code.@this.Read);
-        Load("Statics",   global::app.Statics.@this.Read);
-        Load("Build",     global::app.module.build.@this.Read);
-        Load("Test",   global::app.test.list.@this.Read);
-        Load("CallStack", global::app.callstack.@this.Read);
-
-        return s;
+        throw new System.NotSupportedException(
+            "Snapshot restore is deferred to the ISnapshot redesign — the read cursor rebuilds " +
+            "on IReader (symmetric with the IWriter write side) there. See Documentation/v0.2/todos.md.");
     }
 }

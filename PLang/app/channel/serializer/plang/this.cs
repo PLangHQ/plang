@@ -1,6 +1,4 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 
 namespace app.channel.serializer.plang;
 
@@ -46,12 +44,7 @@ public sealed class @this : ITransport
     public string Type => "application/plang";
     public string Extension => ".plang";
 
-    private readonly JsonSerializerOptions _outbound;
-    private readonly JsonSerializerOptions _inbound;
-    private readonly JsonSerializerOptions _store;
-    private readonly JsonSerializerOptions _snapshot;
-    // The Wire for each read view — held so the buffer-owning entry drives it directly,
-    // instead of fishing it back out of options.Converters.
+    // The Wire for each read view — held so the buffer-owning entry drives it directly.
     private readonly global::app.data.Wire _inboundWire;
     private readonly global::app.data.Wire _storeWire;
 
@@ -63,68 +56,13 @@ public sealed class @this : ITransport
     public @this(actor.context.@this context)
     {
         _context = context;
-        var pathConverter = new global::app.channel.serializer.json.Converter(context);
 
-        // Pass context so a lazily-deferred value slot read back through this
-        // (per-actor) serializer carries the context it needs to materialize.
-        _outbound = BuildOptions(
-            new global::app.data.Wire(global::app.View.Out, context: context),
-            pathConverter,
-            global::app.channel.serializer.filter.Transport.ForOutbound);
-
+        // The read wires — the buffer-owning entry (ReadBuffered) drives them directly.
         // deferVerify: this serializer reads through the async DeserializeAsync, so a signed
         // Data's verify runs there (awaited) instead of sync-waiting inside the ref-struct reader.
         _inboundWire = new global::app.data.Wire(global::app.View.Out, context: context, deferVerify: true);
-        _inbound = BuildOptions(
-            _inboundWire,
-            pathConverter,
-            global::app.channel.serializer.filter.Transport.ForInbound);
-
         _storeWire = new global::app.data.Wire(global::app.View.Store, context: context, deferVerify: true);
-        _store = BuildOptions(
-            _storeWire,
-            pathConverter,
-            global::app.channel.serializer.filter.Transport.ForOutbound);
-
-        // Snapshot durable-execution wire: Store view (local round-trip, keeps
-        // [Sensitive]) but NON-signing — a snapshot is internal in-process state,
-        // not an actor-boundary crossing. Adds the polymorphic IError converter
-        // for the Errors trail section. Same recipe otherwise → one source of truth.
-        _snapshot = BuildOptions(
-            new global::app.data.Wire(global::app.View.Store, sign: false, context: context),
-            pathConverter,
-            global::app.channel.serializer.filter.Transport.ForOutbound);
-        _snapshot.Converters.Add(new global::app.error.ErrorWire());
     }
-
-    private static JsonSerializerOptions BuildOptions(
-        global::app.data.Wire wire,
-        global::app.channel.serializer.json.Converter pathConverter,
-        System.Action<JsonTypeInfo> modifier)
-        => new()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            PropertyNameCaseInsensitive = true,
-            WriteIndented = false,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            Converters =
-            {
-                new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
-                wire,
-                pathConverter,
-            },
-            TypeInfoResolver = new DefaultJsonTypeInfoResolver
-            {
-                Modifiers = { modifier }
-            }
-        };
-
-    /// <summary>
-    /// Options for the snapshot durable-execution wire — Store view, non-signing,
-    /// with the polymorphic <see cref="global::app.error.ErrorWire"/> for the
-    /// Errors trail. Consumed by <c>App.SnapshotToWire</c>/<c>SnapshotFromWire</c>.
-    /// </summary>
-    internal JsonSerializerOptions SnapshotOptions => _snapshot;
 
     /// <summary>
     /// View-aware stream write — the one place a Data drives its own wire via data.Output
@@ -190,11 +128,9 @@ public sealed class @this : ITransport
             if (stream.CanSeek && stream.Length == 0) return _context.Ok();
             // The container IS a Data — return the reconstruction itself, never
             // an Ok envelope around it (the bare-Data double-wrap the store seam rejects).
-            var options = view == global::app.View.Store ? _store : _inbound;
-            // Own the buffer: read the bytes and drive the Wire read directly rather than
-            // letting STJ drive it. STJ hands a converter a ref reader WITHOUT the buffer, so
-            // a deferred value slot must DOM; with the buffer in hand the read can slice value
-            // slots raw (RawValue). The Wire converter still serves nested Data via STJ.
+            // Own the buffer: read the bytes and drive the Wire read directly. With the buffer
+            // in hand the read slices value slots raw (RawValue); a nested Data reads through
+            // the same schema-dispatch entry, no STJ.
             byte[] bytes;
             using (var ms = new MemoryStream())
             {
@@ -203,7 +139,7 @@ public sealed class @this : ITransport
             }
             if (bytes.Length == 0) return _context.Ok();
             var wire = view == global::app.View.Store ? _storeWire : _inboundWire;
-            var v = wire.ReadBuffered(bytes, options);
+            var v = wire.ReadBuffered(bytes);
             if (v == null) return _context.Ok();
 
             // Deferred verify: the sync reader stamped the unverified signature layer here

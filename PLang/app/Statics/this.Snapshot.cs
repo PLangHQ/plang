@@ -37,10 +37,4 @@ public sealed partial class @this : ISnapshot
         }
     }
 
-    // Statics is provisional: bag values are object?, so non-scalar values
-    // rehydrate as JsonElement. Scalars round-trip cleanly, which is what the
-    // current callers store.
-    public static void Read(global::app.snapshot.Io io, global::app.snapshot.@this section)
-        => section.Write("bags", io.Get<Dictionary<string, Dictionary<string, object?>>>("bags")
-            ?? new(StringComparer.OrdinalIgnoreCase));
 }

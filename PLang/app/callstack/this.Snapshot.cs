@@ -168,17 +168,6 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
         context.CallStack._restoredChain = restored;
     }
 
-    public static void Read(global::app.snapshot.Io io, global::app.snapshot.@this s)
-    {
-        var frames = new List<global::app.snapshot.@this>();
-        foreach (var frameIo in io.GetSectionList("frames"))
-        {
-            var frame = new global::app.snapshot.@this(s.Context);
-            call.@this.ReadFrame(frameIo, frame);
-            frames.Add(frame);
-        }
-        s.Write("frames", frames);
-    }
 
     /// <summary>
     /// Variable mutation events whose timestamp is strictly later than <paramref name="t"/>.

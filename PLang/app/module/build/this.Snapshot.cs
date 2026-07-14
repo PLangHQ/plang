@@ -14,6 +14,4 @@ public sealed partial class @this : ISnapshot
     /// </summary>
     public static void Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
         => context.App.Build = new global::app.module.build.@this(context);
-
-    public static void Read(global::app.snapshot.Io io, global::app.snapshot.@this section) { }
 }

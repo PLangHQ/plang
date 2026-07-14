@@ -61,21 +61,6 @@ public class TypeOwnedReadParityTests
         await Assert.That(via.Algorithm).IsEqualTo("keccak256");
     }
 
-    [Test] public async Task ErrorWire_RoundTrips_AsSpecializedSnapshotConverter()
-    {
-        // error stays snapshot-specialized (architect call) — ErrorWire is not
-        // folded into the value-reader registry. Pin that the specialized
-        // converter still round-trips an Error verbatim (no behavior change).
-        var err = new global::app.error.Error("boom", "BoomKey", 418);
-        var opts = new System.Text.Json.JsonSerializerOptions
-        { Converters = { new global::app.error.ErrorWire() } };
-        var json = System.Text.Json.JsonSerializer.Serialize<global::app.error.IError>(err, opts);
-        var back = System.Text.Json.JsonSerializer.Deserialize<global::app.error.IError>(json, opts);
-        await Assert.That(back!.Message).IsEqualTo("boom");
-        await Assert.That(back.Key).IsEqualTo("BoomKey");
-        await Assert.That(back.StatusCode).IsEqualTo(418);
-    }
-
     [Test] public async Task TimeSpanRead_MatchesPriorTimeSpanIso8601Output()
     {
         // duration's Read parses ISO-8601 to the same TimeSpan the format-layer

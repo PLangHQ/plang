@@ -152,11 +152,6 @@ public sealed partial class @this : ISnapshot
         }
     }
 
-    public static void Read(global::app.snapshot.Io io, global::app.snapshot.@this section)
-    {
-        section.Write("registrations", io.Get<List<Registration>>("registrations") ?? new());
-        section.Write("defaultOverrides", io.Get<List<DefaultOverride>>("defaultOverrides") ?? new());
-    }
 
     private static string InstanceName(System.Type implType)
     {

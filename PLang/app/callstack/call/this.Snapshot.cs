@@ -47,20 +47,4 @@ public sealed partial class @this
         return -1;
     }
 
-    /// <summary>
-    /// Rehydrates one frame's scalars into a section, preserving the int typing
-    /// (<c>stepIndex</c>/<c>actionIndex</c> as <c>int</c>, not <c>long</c>) that
-    /// <see cref="callstack.@this.Restore"/>'s <c>Read&lt;int&gt;</c> depends on.
-    /// </summary>
-    public static void ReadFrame(global::app.snapshot.Io io, global::app.snapshot.@this frame)
-    {
-        frame.Write("goalName",     io.Get<string>("goalName")   ?? "");
-        frame.Write("goalPrPath",   io.Get<string>("goalPrPath") ?? "");
-        frame.Write("goalHash",     io.Get<string>("goalHash")   ?? "");
-        frame.Write("stepIndex",    io.Get<int>("stepIndex"));
-        frame.Write("actionIndex",  io.Get<int>("actionIndex"));
-        frame.Write("actionModule", io.Get<string>("actionModule") ?? "");
-        frame.Write("actionName",   io.Get<string>("actionName") ?? "");
-        frame.Write("id",           io.Get<string>("id") ?? "");
-    }
 }

@@ -14,6 +14,4 @@ public sealed partial class @this : ISnapshot
     /// </summary>
     public static void Restore(snapshot.@this s, actor.context.@this context)
         => context.App.Test = new @this(context);
-
-    public static void Read(snapshot.Io io, snapshot.@this section) { }
 }

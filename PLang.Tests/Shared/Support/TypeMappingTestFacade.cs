@@ -38,10 +38,6 @@ internal static class TypeMapping
 /// </summary>
 internal static class Json
 {
-    // The shared STJ read options — the one production source (path/enum/timespan
-    // converters, case-insensitive). A test needing the dict/record read set routes here.
-    public static System.Text.Json.JsonSerializerOptions CaseInsensitiveRead => global::app.channel.serializer.json.Options.Read();
-
     public static System.Text.Json.JsonSerializerOptions CamelCaseIndented => global::app.@this.CamelCaseIndented;
     public static System.Text.Json.JsonSerializerOptions DiagnosticOutput => global::app.Diagnostics.Format.Options;
 }

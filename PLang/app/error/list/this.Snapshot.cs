@@ -17,11 +17,4 @@ public sealed partial class @this : ISnapshot
         if (!s.HasSection("trail")) return;
         global::app.error.trail.@this.Restore(s.Section("trail"), context);
     }
-
-    public static void Read(global::app.snapshot.Io io, global::app.snapshot.@this s)
-    {
-        var sub = io.GetSection("trail");
-        if (sub == null) return;
-        global::app.error.trail.@this.Read(sub, s.Section("trail"));
-    }
 }

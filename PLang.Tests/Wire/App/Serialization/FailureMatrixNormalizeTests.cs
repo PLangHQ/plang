@@ -20,12 +20,11 @@ public class FailureMatrixNormalizeTests : System.IAsyncDisposable
         // context-ful Wire — there is no context-less default converter); the channel layer wraps
         // it into a PlangDeserializeError. Pin the read-level behavior; the channel wrap is
         // exercised in higher-level tests.
-        var truncated = "{\"name\":\"x\",\"value\":";
-        var options = global::app.data.Wire.ReadOptions(
-            new global::app.type.reader.ReadContext(app.User.Context));
+        var truncated = System.Text.Encoding.UTF8.GetBytes("{\"name\":\"x\",\"value\":");
+        var wire = new global::app.data.Wire(global::app.View.Out, app.User.Context);
         try
         {
-            System.Text.Json.JsonSerializer.Deserialize<Data>(truncated, options);
+            wire.ReadBuffered(truncated);
             await Assert.That(false).IsTrue().Because("Expected JsonException");
         }
         catch (System.Text.Json.JsonException)

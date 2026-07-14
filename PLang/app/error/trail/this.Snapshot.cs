@@ -18,9 +18,6 @@ public sealed partial class @this : ISnapshot
         context.App.Error.RestoreTrail(entries);
     }
 
-    public static void Read(global::app.snapshot.Io io, global::app.snapshot.@this s)
-        => s.Write("entries", io.Get<List<IError>>("entries") ?? new List<IError>());
-
     /// <summary>
     /// Bulk-loads entries from a snapshot and freezes the Trail in one step.
     /// Used by <see cref="Restore"/>; not part of the public API.
