@@ -302,6 +302,12 @@ Overridden in v2 (see the sections above for the full reasoning):
 - **v2's `ToString`/`Write` reconstruct the data-url when mime-kinded.** No — the wire value is the payload; the kind already rides in the type slot, so a data-url `ToString` double-carries the mime and every `write out %x%` would print `data:…` instead of the payload. Reconstructing the data-url is an explicit ask (a later `.DataUrl` navigation property if wanted — not now).
 - **Error policy** (new since v2): `Parse` throws `FormatException` where there is no `data.Fail`; the courier converts to `data.Fail`; comparison catches → `Incomparable`. The pure core declines only on non-strings.
 
+## Addendum 2 — memory: drop the source after the encode (Ingi review)
+
+The sketch's `private readonly global::app.type.item.@this? _source;` keeps the encoded source alive for the base64 value's whole lifetime — `%image% as base64` would hold the image bytes (1×) AND the payload (~1.33×) forever. The encode is stable and cached, so release it: make the field non-readonly and set `_source = null;` immediately after `_value = System.Convert.ToBase64String(bytes);` in the `Value` door. (Do NOT add `_source` to the prior chain as a substitute — the whole point is letting it collect.)
+
+Related discipline for `RawBytes` consumers generally: `text.RawBytes` and `base64.RawBytes` compute a fresh transient array per call (representation change — unavoidable). Read the face once at a boundary and hold the result; never poll it in a loop. Reference-backed faces (`binary`/`image`/`source`) return the one backing, no copy. And when your item-base commit lands, add the symmetric `source` override — `public override byte[]? RawBytes => _value as byte[];` beside its existing `RawText` (source.cs:63) — so the unprocessed byte form rides the same face as the unprocessed text form.
+
 ## OBP validation (new surfaces)
 
 | Surface | Check | Verdict |
