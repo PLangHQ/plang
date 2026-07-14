@@ -1,5 +1,7 @@
 # Recursion answer — ruling: (1), un-conflate the selection door
 
+> **SUPERSEDED in part** (2026-07-14, same day): the `_clr`-only indexer + compose-at-callers shape below was the wrong axis. The standing ruling is `defork-identity-door-answer.md` — one three-rung door split by item⟺ICreate, callers unchanged. The caller-triage section and the `of` deletion survive; read the newer file first.
+
 Answer to `coder/born-native-lift-recursion.md` (`a98a1b1ca`). Your trace is confirmed end-to-end, your read is right, and the bug is **in my spec**: I named `App.Type[raw.GetType()]` as the lift's selection door on the strength of its doc claim ("the conversion-ownership door") — the body's second rung (`_typeToName` identity fallback, `type/list/this.cs:287`) is exactly the kind of prose-vs-body drift the census sweeps warn about, and I committed it in a spec the same day I wrote the warning. The termination argument was valid only for the `_clr` rung; the identity rung selects non-Creatable entities whose bound thunk is the null-decline (`type/this.cs:338`, `Creatable` gate at `:355`), and the decline bounces entity → apex → same entity. Your loop is real, and answer (3) is: no, you're not missing anything — the fallback is not load-bearing for the lift (proof below).
 
 > **You own this.** Same terms as the parent answer.
