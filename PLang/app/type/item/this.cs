@@ -363,6 +363,13 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual string? RawText => null;
 
     /// <summary>
+    /// The raw byte form this value carries (binary's bytes, an image's loaded bytes,
+    /// text's UTF-8 content), or null when the value has no byte face — a container
+    /// serializes through a format instead. Mirror of <see cref="RawText"/>.
+    /// </summary>
+    public virtual byte[]? RawBytes => null;
+
+    /// <summary>
     /// True for a scalar leaf — a value with no sub-structure that rides the wire as
     /// a single bare token (text/number/bool/date-family/duration/binary/null/choice).
     /// Normalize passes a leaf straight to the writer (which renders it bare); a

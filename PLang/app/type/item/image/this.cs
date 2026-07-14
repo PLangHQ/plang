@@ -40,6 +40,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     [global::app.Out, global::app.Store]
     public byte[] Bytes => _bytes ?? System.Array.Empty<byte>();
 
+    /// <summary>image's byte face — its loaded bytes, null until a path-backed image
+    /// materializes at its Value door (the encode door loads first, which is right).</summary>
+    public override byte[]? RawBytes => _bytes;
+
     [global::app.Out, global::app.Store]
     public string Mime => _mime ??= (Path?.MimeType ?? "application/octet-stream");
 
@@ -111,6 +115,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public static @this? Create(object? raw)
     {
         if (raw is @this self) return self;
+        // A base64 → its DECODED bytes → an image (mime sniffed off the magic bytes). Before the
+        // unwrap below: lowering a base64 to its payload STRING would then die in the scheme registry.
+        if (raw is global::app.type.item.base64.@this b64)
+            return b64.RawBytes is { } bts ? FromBytes(bts) : null;
         object? value = raw is global::app.type.item.@this rit ? rit.Clr<object>() : raw;
         return value is byte[] bytes ? FromBytes(bytes) : null;
     }

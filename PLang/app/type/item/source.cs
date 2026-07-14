@@ -62,6 +62,9 @@ public class source : @this, module.IContext
     /// <summary>The raw string face, when the source carries text (not bytes).</summary>
     public override string? RawText => _value as string;
 
+    /// <summary>The raw byte face, when the source carries bytes (not text) — symmetric with RawText.</summary>
+    public override byte[]? RawBytes => _value as byte[];
+
     /// <summary>The declared judgement, verbatim — the source IS the declared type, unparsed.
     /// Held whole since birth; answered directly, not reassembled from scalars.</summary>
     protected internal override global::app.type.@this Type => _type;

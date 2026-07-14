@@ -280,6 +280,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>text's raw string face — its characters.</summary>
     public override string? RawText => _value;
 
+    /// <summary>text's byte face — its UTF-8 content (used when encoding a text to base64).</summary>
+    public override byte[]? RawBytes => System.Text.Encoding.UTF8.GetBytes(_value);
+
     public bool Contains(string other) =>
         _value.Contains(other ?? string.Empty, System.StringComparison.OrdinalIgnoreCase);
     public bool StartsWith(string other) =>

@@ -1,11 +1,11 @@
 using image = global::app.type.item.image.@this;
+using base64 = global::app.type.item.base64.@this;
 
 namespace PLang.Tests.App.Types;
 
-// plang-types — Stage 5
-// image.Resolve(string) — path / data-url / base64 disambiguation.
-// image.Resolve(byte[]) — direct construction with mime sniffed from magic bytes.
-// Sync Resolve handles in-memory forms only; file/http paths require async (ResolveAsync).
+// image meets only BYTES now — FromBytes(byte[]) sniffs the mime off the magic bytes.
+// The string forms moved off image: a data-url / bare base64 is a `base64` value whose
+// decoded bytes reach image via the Create base64 arm; a file path loads through the path verbs.
 
 public class ImageParseTests
 {
@@ -16,66 +16,38 @@ public class ImageParseTests
     };
     private static readonly byte[] JpegBytes = new byte[] { 0xFF, 0xD8, 0xFF, 0xE0, 0x00 };
 
-    private static global::app.@this NewApp()
-        => TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-imgparse-" + System.Guid.NewGuid().ToString("N")[..8]));
-
-    [Test] public async Task Resolve_FilePath_Constructs_FromFileBytes()
+    [Test] public async Task DataUrl_AsBase64_ThenImage_SniffsMimeFromBytes()
     {
-        await using var app = NewApp();
-        System.IO.Directory.CreateDirectory(app.AbsolutePath);
-        var rel = "img-parse-" + System.Guid.NewGuid().ToString("N")[..8] + ".png";
-        var abs = System.IO.Path.Combine(app.AbsolutePath, rel);
-        System.IO.File.WriteAllBytes(abs, PngBytes);
-        try
-        {
-            var img = await image.ResolveAsync(abs, app.User.Context);
-            await Assert.That(img).IsNotNull();
-            await Assert.That(img!.Mime).IsEqualTo("image/png");
-            await Assert.That(img.Bytes.Length).IsEqualTo(PngBytes.Length);
-        }
-        finally { try { System.IO.File.Delete(abs); } catch { } }
-    }
-
-    [Test] public async Task Resolve_DataUrl_PicksMimeFromHeader()
-    {
-        await using var app = NewApp();
-        var b64 = System.Convert.ToBase64String(PngBytes);
-        var dataUrl = "data:image/png;base64," + b64;
-        var img = image.Resolve(dataUrl, app.User.Context);
-        await Assert.That(img!.Mime).IsEqualTo("image/png");
-    }
-
-    [Test] public async Task Resolve_RawBase64String_DetectsAsImage()
-    {
-        await using var app = NewApp();
-        var b64 = System.Convert.ToBase64String(PngBytes);
-        var img = image.Resolve(b64, app.User.Context);
+        // A data-url is a base64 value (kind off the mime header); its decoded bytes build the
+        // image through Create's base64 arm — mime sniffed off the magic bytes (content truth).
+        var dataUrl = "data:image/png;base64," + System.Convert.ToBase64String(PngBytes);
+        var img = image.Create(base64.Parse(dataUrl));
         await Assert.That(img).IsNotNull();
-        await Assert.That(img!.Mime).IsEqualTo("image/png");
+        await Assert.That(((image)img!).Mime).IsEqualTo("image/png");
     }
 
-    // image.ResolveAsync's http branch is latent (no shipping handler binds an
-    // image from a URL string). Deferral tracked in Documentation/v0.2/todos.md
-    // "image.@this HTTP fetch via ResolveAsync". Real test + mock HTTP server
-    // land when a handler that consumes Data<image> from a URL ships.
+    [Test] public async Task RawBase64_AsBase64_ThenImage_DetectsAsImage()
+    {
+        var b64 = new base64(System.Convert.ToBase64String(PngBytes));
+        var img = image.Create(b64);
+        await Assert.That(img).IsNotNull();
+        await Assert.That(((image)img!).Mime).IsEqualTo("image/png");
+    }
 
-    [Test] public async Task Resolve_ByteArray_PngMagicBytes_PicksImagePng()
+    [Test] public async Task FromBytes_PngMagicBytes_PicksImagePng()
     {
         var img = image.FromBytes(PngBytes);
         await Assert.That(img!.Mime).IsEqualTo("image/png");
     }
 
-    [Test] public async Task Resolve_ByteArray_JpegMagicBytes_PicksImageJpeg()
+    [Test] public async Task FromBytes_JpegMagicBytes_PicksImageJpeg()
     {
         var img = image.FromBytes(JpegBytes);
         await Assert.That(img!.Mime).IsEqualTo("image/jpeg");
     }
 
-    [Test] public async Task Resolve_GarbageString_ReturnsNull_NoThrow()
+    [Test] public async Task FromBytes_NonImageBytes_ReturnsNull_NoThrow()
     {
-        await using var app = NewApp();
-        await Assert.That(image.Resolve("not an image", app.User.Context)).IsNull();
-        await Assert.That(image.Resolve("", app.User.Context)).IsNull();
+        await Assert.That(image.FromBytes(new byte[] { 0x00, 0x01, 0x02, 0x03 })).IsNull();
     }
 }

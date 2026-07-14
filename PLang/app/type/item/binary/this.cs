@@ -66,6 +66,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override bool IsLeaf => true;
     public override void Write(global::app.channel.serializer.IWriter w) => w.Bytes(Value);
 
+    /// <summary>binary's byte face IS its bytes.</summary>
+    public override byte[]? RawBytes => Value;
+
     /// <summary>Non-empty bytes are truthy.</summary>
     public override bool IsTruthy() => Value.Length > 0;
 
