@@ -63,11 +63,21 @@ Branch drifted Stage0 **129 → 361** reds. Root-caused by clustering:
   consumers guarding `X == null` before `(await X.Value()).Clr<>()` NRE'd. Added `|| await X.IsEmpty()`
   (the correct `http Body` pattern) at 8 direct-deref sites (llm Tools, http Headers, mock Params,
   build Actions). **361 → ~224, zero regressions** (by-name vs HEAD baseline).
-- **Remaining ~224 root-caused → architect** (`coder/stabilization-findings.md`, `59ad86ef5`):
-  text→`choice` create-gap (~13, biggest — `choice<T>` lacks a text-parsing ICreate face, only
-  `FromName`), http `[Code] IHttp` provider-null (12), `json.Writer` missing `goal` Normalize case
-  (4), `goal.getTypes` List-lower keepalive (dies Stage 4), snapshot deferral (7). All PRE-EXISTING
-  (in HEAD baseline) — not defork regressions. Awaiting architect ruling on the create-model ones.
+- **Cluster 1 — text→`choice`** (architect ruling + reader follow-up): `choice<T>.Parse(symbol)` +
+  three ICreate faces; `FromName` deleted; `IChoice.Name`→`Symbol`; closed `Reader<T>` per set (no
+  read-time reflection, boot-registered). Condition suite recovered.
+- **Cluster 2 — http `[Code]` provider** (architect ruling): the generator emits the `[Code]` getter
+  as `?? throw not-attached` instead of `!`-masked NRE — a fixture reaching `Run()` outside the
+  pipeline now names the miss. Attached the direct-Run http fixtures (×3) + the sibling
+  assert/crypto/identity fixtures the throw surfaced. http cluster resolved.
+- **Cluster 3 — json.Writer bare-goal**: escalated — the producer is a `[Out] app.goal.@this` field
+  on `app.test.@this` (not a `context.Ok(goal)`); awaiting the architect's fork ruling
+  (`coder/cluster3-producer-shape-note.md`).
+- **Trajectory: 361 → 202**, all root-cause fixes / architect rulings, **zero real regressions**
+  (every "new" name verified pre-existing/flaky by-name vs the HEAD baseline). Remaining ~202 =
+  cluster 3 (pending), the ~26 scattered individual assertions (per-test cleanup), snapshot deferral,
+  goal.getTypes List-lower (dies Stage 4), and a revealed AssertionError.Variables-snapshot bug.
+  Full remaining map: `coder/stabilization-remaining.md`.
 
 ## Stage 4 — module-discovery (STARTED)
 
