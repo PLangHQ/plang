@@ -193,7 +193,18 @@ A type that reads differently per kind (`table`: csv vs xlsx) registers one read
 
 ---
 
-## 4. The born path — how a raw value becomes yours
+## 4. The value lifecycle — how data flows through the type system
+
+### Unprocessed data has two pure forms
+
+Nothing is processed until it is actually used. Data enters the system as **pure text or pure bytes, undecoded** — that pair is the whole vocabulary of "raw". Two carriers hold it:
+
+- **`item.source`** (`app/type/item/source.cs`) — the undecoded form (`string` or `byte[]`) plus the declared `{type, kind}` judgment, held whole. It IS the declared type, unparsed.
+- **`item.wire`** — a still-encoded slice captured together with the serializer that sliced it (born via the entity's capture door, `Create(slice, context, ITransport)`).
+
+While unprocessed, purity is guarded: `Peek()` answers the raw form and **never sniffs** ("is this valid UTF-8?" is not asked — a byte raw stays bytes unless the *declaration* says text); serializing an untouched source writes its raw verbatim (`source.Write` — bytes as bytes, string quoted; a wire writes its slice through its captured format). A full-match `%ref%` marked by the builder is a reference, not content — decided once at birth, resolved by name, never parsed.
+
+### Birth — the entity door
 
 The born-native door is the type entity's `Create` (`app/type/this.cs`): `context.App.Type[name].Create(raw, context)`. **Context-never-null** — a value is born WITH context; passing null throws with a pointer at the construction site.
 
@@ -214,7 +225,23 @@ The born-native door is the type entity's `Create` (`app/type/this.cs`): `contex
   → your reader builds the born-native instance; parse failure → MaterializeFailed on the binding
 ```
 
-So a scalar is born **lazy** (a `source` carrying the declaration whole) and materializes through *your reader* on first use. The declared `{type, kind}` picks the reader — which is why the wire type must name a registered type, and why your `Type` property must report your own name (§1). A still-encoded slice captured with its serializer takes the sibling capture door, `Create(slice, context, ITransport)` → a lazy `item.wire`.
+So a scalar is born **lazy** (a `source` carrying the declaration whole) and materializes through *your reader* on first use. The declared `{type, kind}` picks the reader — which is why the wire type must name a registered type, and why your `Type` property must report your own name (§1).
+
+### Graduation — and its asymmetry
+
+First touch (`.Value()`) turns the carrier into the typed value; the holding `Data` rebinds to the answer, and the source rides the materialized value's **prior chain** (`item.list.Add(source)`) so provenance survives — a dict parsed from a file still answers `Is(file)`. But graduation means different things per family:
+
+- **Content leaves (text, binary, image, base64): graduation is a judgment, not a transformation.** The raw string/bytes that rode the wire *become the backing* — a text IS its string, a binary IS its bytes, forever. The raw form never dies; it graduates with the value.
+- **Structured values (dict, list, domain): graduation is a transformation.** The parse turns raw into structure, and the raw's life ends there (the prior chain keeps a provenance copy, frozen at parse time — never read it back as "the raw"; after a mutation it is stale).
+- **Lazy references (path-backed image, file, url): the stage order inverts.** The value is *typed first, raw arrives later* — an image exists with no bytes until its `Value` door loads them through the path's auth gate. Raw is acquired post-graduation, at the door.
+
+### The raw faces — raw is a property, not a stage
+
+Because of that asymmetry, "unprocessed form" is not something only carriers have — it is a question any value may answer *right now*: `RawText` (`item/this.cs`, default null) is the raw string face; its byte mirror `RawBytes` lands with the base64 type. The carrier answers before the parse (`source.RawText => _value as string`); a content leaf answers always (`text.RawText => _value`); a structured value answers null — a *semantic* answer ("my text/bytes are format-relative — go through a serializer"), not a missing implementation. The engine consumes the face uniformly: the entity door reads `leaf.RawText` off a built leaf to resolve a variable name — no type-switch on where the value is in its life.
+
+### After graduation — re-typing
+
+A built value re-enters the entity door when a declaration re-types it: same type name → `Kinded` refine (a re-kinded *copy* — values are immutable); the type history already satisfies the ask (`leaf.Is(type)`) → held as-is, never downgraded (an image stays an image in a `path` slot); a genuinely different family → lowered through the value's own `Clr` and rebuilt through the target family's courier — the throw boundary; a family that cannot build the shape errors, never silently passing the old value through.
 
 ---
 
