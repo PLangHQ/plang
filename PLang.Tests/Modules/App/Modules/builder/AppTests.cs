@@ -80,6 +80,14 @@ public class AppTests
         var root = doc.RootElement;
         await Assert.That(root.GetProperty("id").GetString()).IsEqualTo("test-id");
         await Assert.That(root.GetProperty("version").GetString()).IsEqualTo("0.2");
+
+        // Golden: the reflected [Store] face is EXACTLY the 5 stamp fields (no App-graph leak,
+        // no @schema envelope), indented (the goal-.pr writer path).
+        await Assert.That(json).Contains("\n");
+        await Assert.That(json).DoesNotContain("@schema");
+        var keys = new System.Collections.Generic.HashSet<string>();
+        foreach (var p in root.EnumerateObject()) keys.Add(p.Name);
+        await Assert.That(keys).IsEquivalentTo(new[] { "id", "name", "created", "updated", "version" });
     }
 
     [Test]

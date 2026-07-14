@@ -38,6 +38,19 @@ internal static class TypeMapping
 /// </summary>
 internal static class Json
 {
-    public static System.Text.Json.JsonSerializerOptions CamelCaseIndented => global::app.@this.CamelCaseIndented;
+    // Test-only: several suites hand-write a goal to a .pr file for the runtime to load.
+    // Production's App.Save moved off this bag to the clr + SerializeItemAsync path (W7); the bag
+    // lives here now, owned by its only remaining (test) callers. Keeps the path converter so a
+    // goal's path fields serialize scheme-correct (goals carry no TimeSpan, so no TimeSpan converter).
+    public static System.Text.Json.JsonSerializerOptions CamelCaseIndented { get; } = new()
+    {
+        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+        WriteIndented = true,
+        Converters =
+        {
+            new global::app.channel.serializer.json.Converter(),
+        },
+    };
+
     public static System.Text.Json.JsonSerializerOptions DiagnosticOutput => global::app.Diagnostics.Format.Options;
 }

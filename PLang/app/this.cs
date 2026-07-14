@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Reflection;
 using app.actor.context;
 using app.module.setting;
@@ -32,31 +31,31 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Unique identifier for this app. Loaded from app.pr, or generated on first run.
     /// </summary>
-    [JsonPropertyName("id")]
+    [global::app.Store]
     public string Id { get; internal set; }
 
     /// <summary>
     /// Name of this app.
     /// </summary>
-    [JsonPropertyName("name")]
+    [global::app.Store]
     public string Name { get; internal set; }
 
     /// <summary>
     /// When the app was first created.
     /// </summary>
-    [JsonPropertyName("created")]
+    [global::app.Store]
     public DateTime Created { get; internal set; }
 
     /// <summary>
     /// When the app was last updated.
     /// </summary>
-    [JsonPropertyName("updated")]
+    [global::app.Store]
     public DateTime Updated { get; internal set; }
 
     /// <summary>
     /// Version of the builder used.
     /// </summary>
-    [JsonPropertyName("version")]
+    [global::app.Store]
     public string? Version { get; internal set; }
 
     /// <summary>
@@ -415,30 +414,21 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Saves app identity to .build/app.pr.
     /// </summary>
-    /// <summary>
-    /// CamelCase + indented JsonSerializerOptions. Pure config bag — `static readonly` is the
-    /// Rule C exception class for stateless option holders. Internal so tests can route
-    /// through it; production callers (App.Save, data.Compare) use copies on their own type.
-    /// </summary>
-    internal static readonly JsonSerializerOptions CamelCaseIndented = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
-        Converters = {
-            new global::app.channel.serializer.TimeSpanIso8601(),
-            new global::app.channel.serializer.json.Converter()
-        }
-    };
-
     public async Task<data.@this> Save()
     {
         Updated = DateTime.UtcNow;
         if (Created == default) Created = Updated;
-        var json = JsonSerializer.Serialize(
-            new { id = Id, name = Name, created = Created, updated = Updated, version = Version },
-            CamelCaseIndented);
+        // App writes its own app.pr through the SAME door a goal writes its .pr: wrap the host in
+        // a clr carrier and let the serializer reflect its [Store] face — indented, Store view. No
+        // hard-coded field list (add a [Store] prop → it persists), no json.Writer, no options bag;
+        // indentation and format are the serializer's, not App's.
+        var serializer = (global::app.channel.serializer.plang.@this)
+            System.Context!.Actor!.Channel.Serializers.GetOrDefault("application/plang");
+        using var ms = new global::System.IO.MemoryStream();
+        await serializer.SerializeItemAsync(ms,
+            new global::app.type.clr.@this<global::app.@this>(this, System.Context!), global::app.View.Store);
         var prPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", System.Context!);
-        var written = await prPath.WriteText(json);
+        var written = await prPath.WriteText(global::System.Text.Encoding.UTF8.GetString(ms.ToArray()));
         if (!written.Success) return written;
         return System.Context!.Ok(this);
     }
