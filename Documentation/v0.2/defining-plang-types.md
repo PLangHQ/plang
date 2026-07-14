@@ -1,242 +1,228 @@
 # Defining a PLang type in C# — and its read/write (I/O) layer
 
-This is the guide for adding a new value type to PLang (a `number`, `path`, `choice`,
-`image`, …) and wiring how it crosses the wire. Two ideas run through everything:
+This is the guide for adding a new value type to PLang (a `number`, `path`, `choice`, `image`, …) and wiring how it crosses the wire. Three ideas run through everything:
 
-1. **A type knows how to create itself.** All construction lives *on the type* — never in
-   a static helper class beside it. A static helper (`FooMeta`, `FooUtil`) that a type
-   leans on to build itself is a smell; dissolve it onto the type.
-2. **Format never leaks into a type.** A value reads and writes through the abstract
-   `IReader`/`IWriter` — it never names STJ, JSON, CSV, or any concrete serializer. If you
-   see a `[JsonConverter]`, a `Utf8JsonReader`, or `System.Text.Json` inside a value type,
-   that is the alarm: the format has leaked in. The one home for format is the
-   `channel/serializer/*` layer, which hands your type an `IReader`/`IWriter`.
+1. **A type creates itself.** All construction lives *on the type* — the `ICreate<@this>` doors, never a static helper class beside it and never a named factory next to the doors. A `FooMeta`/`FooUtil` the type leans on, or a one-caller `FromX(...)` private static, is the same smell; dissolve it into the type's `Create`.
+2. **CLR types are known to a value type in exactly two places: the `Create` doors (birth) and the `Clr` door (exit).** The backing field is private; content leaves the type only via `Write(IWriter)`, the typed ops, or the value door — a .NET edge lowers through `Clr`. No public CLR-typed property, no CLR parameter on any other member.
+3. **Format never leaks into a type.** A value reads and writes through the abstract `IReader`/`IWriter` — it never names STJ, JSON, CSV, or any concrete serializer. A `[JsonConverter]`, a `Utf8JsonReader`, or `System.Text.Json` inside a value type is the alarm. The one home for format is the `channel/serializer/*` layer, which hands your type an `IReader`/`IWriter`.
 
 ---
 
 ## 0. What is `item` (`: item.@this`)?
 
-`app.type.item.@this` is the abstract base of **every** PLang value — `text`, `number`,
-`path`, `list`, `dict`, `choice`, `image`, your new one. When you write
-`public sealed class @this : global::app.type.item.@this`, you are saying *"this class IS a
-PLang value."* By convention the class is always named `@this` and lives in `this.cs`, so
-consumers alias it (`global::app.type.number.@this` = the `number` value).
+`app.type.item.@this` (`PLang/app/type/item/this.cs`) is the abstract base of **every** PLang value — `text`, `number`, `path`, `list`, `dict`, `choice`, `image`, your new one. Writing `public sealed class @this : global::app.type.item.@this` says *"this class IS a PLang value."* By convention the class is always named `@this` and lives in `this.cs`, so consumers alias it (`global::app.type.item.number.@this` = the `number` value).
 
-`item.@this` is the polymorphic root the whole runtime moves values around as — variable
-memory holds `item`s, `Data` wraps an `item`, couriers pass `item`s without looking inside.
-It defines the small set of virtual members every value answers (materialize, render,
-self-describe, exit-to-CLR — the table in §1). A value type is just: *a class that IS an
-`item`, holds its own backing, and overrides those members to behave like its kind.*
+`item.@this` is the polymorphic root the whole runtime moves values around as — variable memory holds `item`s, `Data` wraps an `item`, couriers pass `item`s without looking inside. It is **storage-free**: the base carries only behavior, never a value slot; the backing (`string`/`long`/`byte[]`/…) lives on each subtype as a private field.
 
-`Data` (`app.data.@this`) is **not** an `item` — it is the envelope that *holds* one (`Data.Item`),
-plus name/type/properties/signature. The value lives on the `item`; `Data` is the binding.
+`Data` (`app.data.@this`) is **not** an `item` — it is the binding that *holds* one, plus name/type/properties/signature. The value lives on the `item`; `Data` is the binding.
+
+A type is a plang value iff it implements `ICreate<@this>` — that marker is what lets the type entity's born door close its generic `Create` thunks over the class (`app/type/this.cs`, `Creatable`).
 
 ---
 
 ## 1. The type class
 
-Every value type is a `sealed class @this : app.type.item.@this` living at
-`app/type/<name>/this.cs` (the folder name is the PLang type name — `app/type/number`,
-`app/type/path`, …). It implements `ICreate<@this>` so it can build itself, and it holds
-its own backing value.
+Every value type is a `sealed class @this : app.type.item.@this, ICreate<@this>` living at `app/type/item/<name>/this.cs` — the folder name is the PLang type name (`app/type/item/number`, `app/type/item/path`, …).
 
 ```csharp
-namespace app.type.myvalue;
+namespace app.type.item.myvalue;
 
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    private readonly <backing> _value;      // the CLR backing (string, long, byte[], a record, …)
+    // THE backing — a private field, never a property at any visibility.
+    // Content leaves the type only via Write(IWriter), the typed ops, or the
+    // door; a .NET edge lowers through Clr. (See text/this.cs for the model.)
+    private readonly <backing> _value;
     public @this(<backing> value) { _value = value; }
 ```
 
-### Members you implement on `item.@this`
+An **inbound** implicit operator (`public static implicit operator @this(<backing> v) => new(v);`) is fine — it is the entry lift. An **outbound** implicit (`@this` → backing) is banned: every site would be a silent CLR exit; a real .NET edge names `Clr` instead.
+
+### Members you override on `item.@this`
+
+The base (`app/type/item/this.cs`) defines the full virtual surface; a new type overrides the rows that apply:
 
 | Member | What it does | Notes |
 |---|---|---|
-| `Mint()` | Returns the type's `{name, kind}` self-description. | This is what `Data.Type` reports and what the wire writes as the value's declared type. |
-| `Write(IWriter w)` | Renders the value to the wire — **format-independent** (see §3). | A leaf writes one token (`w.String(...)`); a container brackets its elements. |
-| `IsLeaf` | `true` for a single-token scalar; `false` for a container (dict/list). | Drives whether Normalize brackets it. |
-| `Clr(Type target)` | The CLR exit door — hand the backing to a .NET boundary. | Only at a real .NET/3rd-party edge (`ClrConvert(_value, target)`). Never lower mid-flight. |
+| `Type` | The value's own type entity — `new("myvalue", typeof(<backing>)) { Kind = … }`. | What `Data.Type` reports and what the wire writes as the declared type. **The name is your own folder name, always** — the declared name selects the reader on the way back in (see §4), so a value reporting another type's name does not round-trip as itself. |
+| `Write(IWriter w)` | Renders the bare wire form — format-independent (§3). | A leaf writes one token (`w.String(...)`); the base throws, so a missing override is loud. May branch on `w.Format` when the type renders differently per format (image: base64 vs text label vs raw bytes). |
+| `Output(writer, mode, ctx)` | The full async self-write. | Default routes to `Write` — only containers/references/templates override. |
+| `IsLeaf` | `true` for a single-token scalar; default `false`. | Drives the serializer's leaf-vs-structure branch. |
+| `Clr(Type target)` | THE CLR exit door — hand the private backing to `ClrConvert(_value, target)`. | Only a real .NET/3rd-party edge calls it. Lossy conversion throws, never a silent default. |
 | `ToString()` | The display/text face. | |
-| `Value(Data)` | The value door — resolve/materialize (lazy read, template render, reference deref). | A plain scalar answers itself; a lazy/reference value resolves here. |
-| `IsTruthy()` / `AsBooleanAsync()` | The value's boolean meaning. | Implement `IBooleanResolvable` if truthiness needs I/O. |
-| `IsVariable` / `Get(ctx)` | Only if the value is a reference (a `%x%` naming a binding). | Content answers `false`/`null`; see the variable-as-value work. |
+| `Value(Data)` | THE value door — "I am going to use this value, make yourself ready." | A plain scalar answers itself (the default). A lazy value (path-backed image, deferred parse, template) loads/parses/renders **here** — laziness is construction state resolved at this door, never a specially-named method. Failures go `data.Fail(error)` + return `Absent`; the only blessed surface of the `Data` here is `Fail`. |
+| `Cacheable` | May the holding `Data` keep the door's answer? | `false` when the answer depends on outside state (template render, computed). |
+| `IsTruthy()` / `AsBooleanAsync()` | The value's boolean meaning. | Override `AsBooleanAsync` only when truthiness needs I/O (path existence). |
+| `IsEmpty()` / `Contains(needle)` | Emptiness / membership, each type's own answer. | No ToString fallback — a needle never matches a serialization. |
+| `Rank` / `Order(other)` | Comparison: higher rank drives; the driver coerces the other side through its own pure `Create` core. | A non-coercible other is `Incomparable`, not an error. |
+| `Kinded(kind)` | A re-kinded **copy** (values are immutable, never restamped in place). | Only for types with a kind axis. |
+| `Get(parent, key)` / `Set(key, isIndex, value)` | Navigation / child write. | Leaves usually keep the defaults (or fail with their own story — see text's `CantNavigateText`). |
+| `Peek()` | What is in memory NOW — sync, no I/O, no parse. | |
+| `IsVariable` / `Get(ctx)` | Only if the value can be a reference to a named binding. | Content answers `false`/`null`. |
 
-You do **not** implement `Peek()`, `Cacheable`, `Navigate`, etc. unless your type needs to
-override the base behavior.
+### Catalog statics (LLM-facing teaching)
+
+The type catalog folds these static properties into the type entity (`BuildTypeEntries` → `type.@this.Promote`), so the builder LLM can teach the type:
+
+```csharp
+public static string Example => "readme.md";          // canonical literal
+public static string Shape => "string";               // the wire-scalar shape
+public static string Description => "…";              // semantic teaching
+public static IReadOnlyList<string> Kinds => […];     // advertised kind vocabulary (only if closed)
+```
 
 ---
 
-## 2. Construction — the type creates itself
+## 2. Construction — the `ICreate<@this>` doors
 
-Two entry points, both **static, on the type** (no helper class):
+Construction is `app.type.item.ICreate<TSelf>` (`app/type/item/ICreate.cs`) — three static-virtual faces, all **on the type**. The target owns the conversion ("we want number, the number knows how to create it"), never the source, never a catalog above the types.
 
-### `ICreate<@this>.Create(item value, Data data)` — the typed door (`As<T>`)
+### `Create(object? raw)` — the pure core
 
-Called when a `Data<MyValue>` slot resolves (`GetParameter(...).As<MyValue>()`). Return the
-built value, or `data.Fail(...)` + `null` to decline. Pass-through and facet handling come
-free from the default implementation; override only if your type has a special construction
-(e.g. re-tagging a `list` into a specialized collection).
+*The ONE runtime boundary.* Per its own contract: "`object` because this method IS the crossing — a raw CLR value and an item of another type flow through the SAME switch (`int i => …` beside `text t => …`)". Context-free, no `Fail` — a decline is `null`, not a failure. This is where rule 2 of the header lives: the CLR arms exist here and nowhere else on the class.
 
-### `Convert(object? value, string? kind, context)` — the value-to-type conversion hook
-
-Every type owns how it is **built from another value**. This is *distinct* from the reader
-(§3): the reader deserializes from the **wire** (bytes/tokens → value); `Convert` converts an
-**already-in-memory value** — a raw CLR value, or another plang type's wrapper — *into* this
-type. It's what `set %x% = v as <Type>`, `As<T>`, comparisons, file-content coercion, and the
-whole-payload serializer decode all call. Your `number → text` example: `text.Convert(number)`
-— the *target* type knows how to build itself from a number. Nearly every type defines one.
-
-The shape every hook follows (see `bool` / `guid` / `number`):
+The shape every type follows (this is `binary`'s real core):
 
 ```csharp
-public static data.@this Convert(object? value, string? kind, context)
+public static @this? Create(object? raw)
 {
-    // 1. UNWRAP a plang wrapper to its raw backing, so the parse below sees what it expects
-    //    (the specific wrapper, or the generic item → Clr).
-    if (value is global::app.type.item.@this iv) value = iv.Clr<object>();
-
-    // 2. SWITCH on the actual value — pass a same-type/raw CLR through, PARSE a string,
-    //    ERROR on anything else. Never a blind value.ToString(): it loses the type and
-    //    mis-handles non-strings.
-    return value switch
+    if (raw is @this self) return self;                                  // pass-through
+    object? value = raw is global::app.type.item.@this rit ? rit.Clr<object>() : raw;   // another item exits via ITS Clr door
+    switch (value)
     {
-        null            => context.Ok(value),
-        @this self      => context.Ok(self),                       // already this type
-        <rawclr> raw    => context.Ok(new @this(raw)),             // the raw CLR backing
-        string s        => TryParse(s, out var v)                  // a literal — parse it
-                             ? context.Ok(new @this(v))
-                             : context.Error(new Error($"Cannot parse '{s}' as <type>.", "<Type>ParseFailed", 400)),
-        _               => context.Error(new Error($"Cannot convert {value.GetType().Name} to <type>.", "<Type>ConversionFailed", 400)),
-    };
+        case byte[] b: return (@this)b;                                  // the raw backing
+        case string s:                                                   // a literal — parse it
+            try { return (@this)System.Convert.FromBase64String(s); }
+            catch (System.FormatException) { return null; }
+        default: return null;                                            // decline — not a failure
+    }
 }
 ```
 
-Output is always the born-native wrapper (a value built by its type IS a plang value); a
-`.NET` edge unwraps with `.Clr<T>()`. `kind` picks a precision/variant where the type has one
-(`number` uses it to place the value in its numeric tower).
+Never a blind `value.ToString()` — it loses the source type and mis-handles non-strings. Switch on the real value; parse strings; decline the rest.
 
-**Rule that holds regardless — no static helper class.** If you catch yourself writing a
-`MyValueMeta`/`MyValueUtil` static class that the type calls to build itself, stop and move
-that code *onto* the type (per-`T` static fields cache fine on a closed generic). Static
-helper classes need explicit sign-off — default to not having one. Worked example: `choice<T>`
-— its enum-vs-named-set resolution lives on `choice<T>` (`Names`, `FromName`), not a helper.
+### `Create(object? raw, actor.context.@this? ctx)` — the context face
+
+The default delegates to the pure core. Override **only** when the type resolves against an actor (a reference fundamental — `path`/`file`/`image`/`url` need the scheme registry). Context lives on the minority that needs it, not the scalar majority.
+
+### `Create(object? raw, data.@this data)` — the courier
+
+The typed ask (`Data.Value<T>()`, a `Data<T>` slot resolving). The default runs pass-through → the context face → the container self-deserialize → fails typed. Override it to land *your* decline reasons (`data.Fail(new Error(...))` — the error belongs to the binding the caller already holds) or to honor a kind override (number's `as decimal`). Implementations touch **only** `data.Fail`; everything else on the `Data` is courier state and off-limits.
+
+### Rules that hold regardless
+
+- **No static helper class, no named factory beside the doors.** A `FromString`/`FromBytes`-style private static with one caller is `Create`'s own switch arm wearing a name — inline it. (Existing `image.FromBytes` survives only because catalog reflection can't disambiguate same-name static overloads; that is a documented exception, not a pattern.)
+- **Laziness is state, not a method.** A value that defers work (encode, load, parse) holds its source in a field at construction and resolves at the `Value(data)` door — see `image` (path-backed, materializes at `Value`, caches). Never a `DoXLazily(...)` helper: a method call executes now; only a constructed value defers.
+- **Output is always the born-native wrapper.** A value built by its type IS a plang value; a .NET edge unwraps with `Clr<T>()`.
 
 ---
 
 ## 3. The I/O layer — read/write, format-free
 
-This is the heart. A value crosses the wire through **two type-owned, format-agnostic**
-methods. Neither knows what serializer is driving it.
+A value crosses the wire through type-owned, format-agnostic members. None of them knows what serializer is driving.
 
 ### Writing — `Write(IWriter w)`
 
-`IWriter` is the abstract sink: `Null()`, `Bool()`, `Long()`, `String()`, `Bytes()`,
-`BeginArray(count)`/`EndArray()`, `BeginObject()`/`Name()`/`EndObject()`, `Raw()`. A leaf
-writes one token; a container brackets. Example (a scalar):
+`IWriter` (`app/channel/serializer/IWriter.cs`) is the abstract sink: `Null/Bool/Int/Long/Float/Double/Decimal/String/Bytes/DateTime/DateTimeOffset/TimeSpan/Guid/Enum`, `Raw` (verbatim passthrough), `BeginArray(count)/EndArray`, `BeginObject/Name/EndObject`, `BeginRecord/EndRecord` (the Data envelope), plus `Format` (the short token — `"json"`, `"plang"`, `"text"`, …) and `EmitsSchema`. A leaf writes one token:
 
 ```csharp
-public override void Write(IWriter w) => w.String(ToString());
+public override void Write(global::app.channel.serializer.IWriter w) => w.String(ToString());
 ```
 
-The concrete writer (a JSON writer, a text writer) is chosen by the *channel/format* layer —
-your type only ever sees `IWriter`.
+The concrete writer is chosen by the channel/format layer — your type only ever sees `IWriter`. Branching on `w.Format` is legitimate format-*asymmetric* rendering (image); naming a concrete serializer is not.
 
-### Reading — `serializer/Reader.cs` (an `ITypeReader`)
+### Reading — the `(type, kind)` reader registry
 
-Put the read at `app/type/<name>/serializer/Reader.cs`. It **auto-registers** by namespace
-convention: a class in `app.type.<name>.serializer` implementing `ITypeReader` with a
-parameterless ctor is registered under the `(name, Kind)` key at boot — no manual wiring.
+The registry (`app/type/reader/this.cs`) holds **two read modes side by side, both load-bearing**:
+
+- **`Typed` — the token-stream pull** (`ITypeReader`): the type pulls its value token-by-token off a tokenized source (the `.pr` wire read, `json.Reader`), no DOM.
+- **`Of` — the whole-payload content decode** (a static `Read`): the raw string/bytes is already in hand and the type decodes it whole (CSV parse, base64, image bytes).
+
+A type may ship both — its wire value streams via `Typed`, its content form (a file's bytes materializing through `source.Value`) decodes via `Of`.
+
+**The typed pull reader** lives at `app/type/item/<name>/serializer/Reader.cs`. It auto-registers by namespace convention: a non-abstract class in a namespace ending `.serializer`, implementing `ITypeReader`, with a parameterless ctor — the segment before `.serializer` (leading `@` stripped) is the type name. This is `bool`'s real reader:
 
 ```csharp
-namespace app.type.myvalue.serializer;
+namespace app.type.item.@bool.serializer;
 
 public sealed class Reader : global::app.type.reader.ITypeReader
 {
-    public string Kind => global::app.type.reader.@this.AnyKind;   // or "json"/"csv"/… per variant
+    public string Kind => global::app.type.reader.@this.AnyKind;   // or a concrete kind token per variant
 
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.@null.@this("myvalue", kind);
-        // pull the value off the abstract reader — you never name a format:
-        return new @this(reader.String());     // or reader.Long(), reader.Bytes(), BeginArray()…, per shape
+        if (reader.Null()) return new global::app.type.item.@null.@this("bool", kind);
+        return reader.Peek() switch
+        {
+            TokenKind.Bool => new global::app.type.item.@bool.@this(reader.Bool()),
+            TokenKind.String when bool.TryParse(reader.String(), out var parsed)
+                => new global::app.type.item.@bool.@this(parsed),
+            _ => new global::app.type.item.@null.@this("bool", kind),
+        };
     }
 }
 ```
 
-`IReader` is the abstract source, mirroring `IWriter`: `Peek()` (the current `TokenKind`),
-`Null()`, `Bool()`, `Long()`, `String()`, `Bytes()`, `BeginArray()`/`NextElement()`/`EndArray()`,
-`BeginObject()`/`NextName()`/`EndObject()`. The `ref TReader … allows ref struct` signature
-lets a stack-only reader (`json.Reader` over `Utf8JsonReader`) cross with no boxing,
-monomorphized per format. Read from the first token; leave the cursor on the last.
+`IReader` (`app/channel/serializer/IReader.cs`) mirrors `IWriter`: `Peek()` (the current `TokenKind`), the leaf pulls (`Null/Bool/Int/Long/Number/Float/Double/Decimal/String/Bytes/DateTime/DateTimeOffset/TimeSpan/Guid`), `BeginArray/NextElement/EndArray`, `BeginObject/NextName/EndObject`, `RawValue()` (capture encoded bytes verbatim — the lazy passthrough), `Skip()`. The `ref TReader … allows ref struct` signature lets a stack-only reader cross with no boxing, monomorphized per format. Cursor contract: read from the first token; leave the cursor on the value's **last** token.
 
-**The same `Reader` serves every format** — a `.pr` JSON token, a CSV payload, a byte blob.
-That is the whole point: `bool`'s reader reads a bool the same way whether the bytes were
-JSON or anything else.
+**The whole-payload decode** lives at `app/type/item/<name>/serializer/<Kind>.cs` — a `public static class` exposing `static object? Read(object raw, string? kind, ReadContext ctx)`. The class name maps to the kind token (`Default` → the `"*"` wildcard).
 
-### Kinds — the `(type, kind)` registry
+`ReadContext` carries the actor `Context`, the authored-`Template` mode, the `View`, and signature-verification flags — the decode context, threaded so signatures without re-threading every `Read`.
 
-A type that reads differently per kind (`table` reads `csv` vs `xlsx`; `choice` reads
-`operator` vs `httpmethod`) uses `Kind` to name the variant, or `AnyKind` (`"*"`) to read
-uniformly and switch on the passed `kind` inside `Read`. The registry key is `(typeName, kind)`
-with an `AnyKind` fallback.
+**The same reader serves every format** — a `.pr` JSON token, a CSV payload, a byte blob. That is the whole point: `bool`'s reader reads a bool the same way whatever the bytes were.
+
+### Kinds
+
+A type that reads differently per kind (`table`: csv vs xlsx) registers one reader per kind token; a type that reads uniformly registers `AnyKind` (`"*"`) and may switch on the passed `kind` inside `Read`. Lookup precedence: runtime-exact → generated-exact → runtime-`*` → generated-`*`. The selection door is `Context.App.Type.Reader.Reader(typeName, kind, context)` — it throws loudly when the resolved type ships no reader, because **every value type owns a `serializer/Reader.cs`**.
 
 ---
 
-## 4. The born path — how a `.pr` value reaches your reader
+## 4. The born path — how a raw value becomes yours
+
+The born-native door is the type entity's `Create` (`app/type/this.cs`): `context.App.Type[name].Create(raw, context)`. **Context-never-null** — a value is born WITH context; passing null throws with a pointer at the construction site.
 
 ```
 .pr slot { name, type:{name, kind}, value }
-  → Wire.ReadBody                         (data/reader/this.cs)  — reads the token
-  → Data.FromRaw → type.Build             (type/this.cs)         — a string/bytes value DEFERS to…
-  → item.source                           (a lazy carrier holding the raw + declared {type, kind})
+  → the wire read hands the raw + declared type to the entity door
+  → entity.Create(raw, context):
+      null                → the typed null citizen
+      string / byte[]     → item.source(raw, type, context)      — LAZY, unparsed
+      native container    → held as-is
+      a source, re-declared → source.Declared(type)              — re-birth, still unread
+      a built leaf        → same name: Kinded refine · type-history Is: held ·
+                            else lower via ITS Clr, re-enter through the family courier
+      a raw CLR scalar    → the family lift (TSelf.Create via the entity's bound thunk)
   → …first touch (.Value())…
-  → source.Read → serializers[format].Read (channel/serializer/*) — picks the format serializer
-  → your ITypeReader.Read(ref IReader, kind, ctx)                 — the type reads itself
+  → source.Value: kind-first (App.Type.Kind[kind].Load — a kind that owns its decode wins),
+    else the (type, kind) reader via App.Type.Reader.Reader(name, kind, ctx)
+  → your reader builds the born-native instance; parse failure → MaterializeFailed on the binding
 ```
 
-So a scalar value is born **lazy** (a `source`), and materializes through *your reader* on
-first use. The declared `{type, kind}` in the `.pr` picks which reader — which is why the
-wire type must name a registered type. (A container's raw is JSON; a scalar/value's raw is
-its own content; a full-match `%ref%` is a reference and resolves through the variable door,
-never a reader.)
+So a scalar is born **lazy** (a `source` carrying the declaration whole) and materializes through *your reader* on first use. The declared `{type, kind}` picks the reader — which is why the wire type must name a registered type, and why your `Type` property must report your own name (§1). A still-encoded slice captured with its serializer takes the sibling capture door, `Create(slice, context, ITransport)` → a lazy `item.wire`.
 
 ---
 
 ## 5. Registering the type name
 
-The reader auto-registers, but the **type name** must resolve in the catalog so the born path
-can build the `{type, kind}`. Built-in types register from their `app.type.*` namespace;
-a family type (like `choice`, whose closed forms surface under a kind) is registered
-explicitly (`catalog.Register("choice", typeof(choice<>))`). If `type.Build` throws
-`No PLang type registered under name 'X'`, the name isn't in the registry — register it.
-
----
+The reader auto-registers, but the **type name** must resolve through the catalog (`app.Type[name]`, `app/type/list/this.cs`) so the born path can build the declared type. Built-in `app.type.item.*.@this` classes index by convention (the Registry partial scans assemblies for `[PlangType]` and the `@this` convention); a family type whose closed forms surface under a kind registers explicitly (`Register("choice", typeof(choice.@this<>))`). If `app.Type[name]` throws `No PLang type registered under name 'X'`, the name isn't in the registry — register it.
 
 ## 6. Smells — stop if you see these
 
-- **A `[JsonConverter]` / `System.Text.Json` / `Utf8JsonReader` inside a value type.** Format
-  has leaked in. The wire form is `Write(IWriter)` + `serializer/Reader.cs`, nothing else.
-- **A static helper class the type calls to build itself** (`FooMeta.Build`, `FooUtil.Parse`).
-  The type creates itself; move the code onto the type. Static helper classes need explicit
-  sign-off — default to *not* having one.
-- **A reader that routes wire-reading through `Convert`.** The reader (§3) pulls the value
-  off `IReader` and builds it directly — it does *not* deserialize via `Convert`. `Convert`
-  (§2) is for value-to-type conversion, a different concern; keep the two paths separate.
-- **A blind `value.ToString()` inside `Convert`.** You lose the source type and mis-handle
-  non-strings. Unwrap the wrapper, switch on the real type, parse strings, error the rest.
-- **`.Clr` / `value.Clr<object>()` mid-flight.** Lowering to CLR then re-lifting is the
-  raw-CLR-era smell. Stay in plang types; `Clr` is only for the final `.NET`/3rd-party edge.
-- **The reader/writer knowing the concrete format.** If `Read`/`Write` names a serializer,
-  the abstraction is broken — they see only `IReader`/`IWriter`.
+- **A `[JsonConverter]` / `System.Text.Json` / `Utf8JsonReader` inside a value type.** Format has leaked in. The wire form is `Write(IWriter)` + `serializer/Reader.cs`, nothing else.
+- **A CLR type visible outside the Create/Clr doors.** A public backing property, a CLR-typed parameter on an op, a foreign type reading your backing — all break rule 2. The backing is a private field; consumers go through the typed ops or the doors.
+- **A static helper class or a named factory beside `Create`** (`FooMeta.Build`, `FromString`, `EncodeLazily`). The type creates itself in its `Create` arms; deferred work is construction state resolved at `Value`. Static helper classes need explicit sign-off — default to *not* having one.
+- **A `Type` property reporting a name that isn't the folder name.** The declared name selects the reader on read-back (§4); a borrowed identity does not round-trip as your type.
+- **A reader that routes wire-reading through `Create`.** The reader (§3) pulls the value off `IReader` and builds it directly; `Create` (§2) converts an already-in-memory value. Two concerns, two paths.
+- **A blind `value.ToString()` inside `Create`.** You lose the source type and mis-handle non-strings.
+- **`.Clr` / `Clr<object>()` mid-flight.** Lowering to CLR then re-lifting is the raw-CLR-era smell. Stay in plang types; `Clr` is only for the final .NET/3rd-party edge. (The one sanctioned unwrap is the pure core's first line — that method IS the crossing.)
+- **The reader/writer knowing the concrete format.** `Read`/`Write` see only `IReader`/`IWriter`; branching on the abstract `Format` token is the ceiling.
 
 ## 7. Worked examples in the tree
 
-- **Simplest scalar:** `app/type/bool/serializer/Reader.cs` — one token in, `bool` out.
-- **Bytes / kinded:** `app/type/binary`, `app/type/image` — read bytes, kind narrows the type.
-- **Container:** `app/type/list/serializer/Reader.cs` — `BeginArray()` / `NextElement()`.
-- **Family + kind:** `app/type/choice/serializer/Reader.cs` — reads the option name off any
-  reader, resolves the closed `choice<T>` from the kind, and lets the type build itself
-  (`choice<T>.FromName`). No converter, no helper class.
+- **Simplest scalar:** `app/type/item/bool/serializer/Reader.cs` — one token in, `bool` out.
+- **String-backed, private backing, templates:** `app/type/item/text/this.cs` — the model for backing discipline, inbound-only implicit, `Rank`/`Order` coercion via the pure core.
+- **Bytes / kinded:** `app/type/item/binary`, `app/type/item/image` — bytes in, kind narrows; image is the model for lazy state resolved at the `Value` door and for format-asymmetric `Write`.
+- **Container:** `app/type/item/list/serializer/Reader.cs` — `BeginArray()` / `NextElement()`.
+- **Family + kind:** `app/type/item/choice/serializer/Reader.cs` — reads the option name off any reader, resolves the closed `choice<T>` from the kind, and lets the type build itself.
