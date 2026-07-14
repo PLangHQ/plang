@@ -54,9 +54,30 @@ if (typeof(app.type.item.@this).IsAssignableFrom(clrType)
 return this["clr"];                                                       // POCO/host → clr(T)
 ```
 
-## What's left
-- Deferred (architect-logged, not this branch): snapshot RESTORE rebuild; PLNG004 render
-  worklist; clr/format/text possibly-legit STJ boundary; the enum→choice folding into the
-  choice family (noted in the lift comment, not built).
-- The 2 pre-existing `ValidateActions_*` reds and the goal-load reflection-reader cluster are
-  HEAD-level, not from this defork.
+## Stabilization pass (after the defork — Ingi: "get back to base")
+
+Branch drifted Stage0 **129 → 361** reds. Root-caused by clustering:
+
+- **Fixed (`30d95c69e`): the Uninitialized-sentinel NRE cascade — −125.** The null-model change
+  made unset optional slots resolve to `data.@this<T>.Uninitialized(name)` (non-null sentinel), so
+  consumers guarding `X == null` before `(await X.Value()).Clr<>()` NRE'd. Added `|| await X.IsEmpty()`
+  (the correct `http Body` pattern) at 8 direct-deref sites (llm Tools, http Headers, mock Params,
+  build Actions). **361 → ~224, zero regressions** (by-name vs HEAD baseline).
+- **Remaining ~224 root-caused → architect** (`coder/stabilization-findings.md`, `59ad86ef5`):
+  text→`choice` create-gap (~13, biggest — `choice<T>` lacks a text-parsing ICreate face, only
+  `FromName`), http `[Code] IHttp` provider-null (12), `json.Writer` missing `goal` Normalize case
+  (4), `goal.getTypes` List-lower keepalive (dies Stage 4), snapshot deferral (7). All PRE-EXISTING
+  (in HEAD baseline) — not defork regressions. Awaiting architect ruling on the create-model ones.
+
+## Stage 4 — module-discovery (STARTED)
+
+Plan written: `coder/v2/plan.md` (`db531a01d`). Replaces `module.Describe()` with value-object
+views (`app.module.list : list<module>` → `module.Actions : list<action>` → `action.Properties :
+list<type>`, reflection once at the action leaf) + Fluid templates; delete `Describe`/`StepActions`/
+`BuildTypeEntries`. Decomposed 4a–4e. **Next: 4a** = new `module`/`action` value types mirroring
+`goal.list`/`type.list` — a new core-type surface that likely wants an architect shape-pass first
+(as `type.list` got `stage3-type-collection-answer.md`). Baseline to hold: ~224.
+
+## Deferred (architect-logged, not this branch)
+snapshot RESTORE rebuild; PLNG004 render worklist; clr/format/text STJ boundary; enum→choice
+folding into the choice family (noted in the lift comment, not built).
