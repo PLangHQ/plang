@@ -49,6 +49,18 @@ The views must expose the SAME structure so the Fluid template reproduces the pr
 - **4e — migrate callers + delete.** Repoint `Describe()`/`StepActions`/`BuildTypeEntries(modules)`
   callers (type/this.cs, build/code/IBuilder.cs, type/list/view, spec/render, kind/reflection,
   kind/list, step/actions/action) to the views; delete the three; verify teaching parity + baseline.
+- **4f — test report via `ui.render` (Ingi, 2026-07-14).** The test report currently
+  auto-serializes the `app.test.@this` object graph (`test.report.Wire` → the value serializer);
+  the goal host on `test.Goal` only rides the wire because the WHOLE result is reflected. Same
+  pattern as 4d: render `list<test-result>` through a Fluid template that pulls exactly what the
+  report needs — test id ← `Goal.Path`, `Status`, `Duration`, `Error`, `Stdout` — and shape the
+  output as template VARIANTS (junit XML / json / text), retiring the bespoke C# serializers
+  (`module/test/report.cs`, `app/test/junit/this.cs`). Intentional structure over reflected dump;
+  decouples the report from the object graph, so no host ever needs a wire face for the report's
+  sake. The general WriteReflected host-lift (cluster-3 home 1, landed `c0bf92130`) STAYS as the
+  safety rule for any *other* item holding an `[Out]` host; 4f just stops the report relying on
+  auto-serialization. Architect to confirm the report template shape + which output formats are
+  variants vs. kept.
 
 ## Risks / open questions
 
