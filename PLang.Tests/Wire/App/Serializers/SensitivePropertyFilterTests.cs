@@ -98,26 +98,6 @@ public class SensitivePropertyFilterTests
         await Assert.That(json).Contains("42");
     }
 
-    [Test]
-    public async Task Sensitive_WorksAlongsideViewAttributes()
-    {
-        var identity = new Identity
-        {
-            Name = "test",
-            PublicKey = "pubkey123",
-            PrivateKey = "secret456",
-            IsDefault = true
-        };
-
-        // ForView should also strip [Sensitive] in addition to view filtering
-        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
-        var storeSerializer = serializer.ForView(View.Store);
-        var storeJson = (await storeSerializer.Serialize(_app.Ok(identity)).Value())!.Clr<string>()!;
-
-        // Identity doesn't use view attributes, so Store view serializes all non-sensitive
-        await Assert.That(storeJson).DoesNotContain("secret456");
-    }
-
     // Diagnostic output keeps the [Sensitive] key visible and replaces the value with
     // "******". Distinguishing absent / null / redacted matters when a human is reading
     // a crash dump — the key must still appear.

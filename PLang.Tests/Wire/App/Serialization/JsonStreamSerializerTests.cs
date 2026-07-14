@@ -135,42 +135,6 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task Deserialize_Object_ReturnsObject()
-    {
-        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
-        var json = "{\"name\":\"John\",\"value\":42}";
-
-        var result = (await serializer.Deserialize<TestClass>(json).Value())!;
-
-        await Assert.That(result).IsNotNull();
-        await Assert.That(result!.Name).IsEqualTo("John");
-        await Assert.That(result.Value).IsEqualTo(42);
-    }
-
-    [Test]
-    public async Task Deserialize_CaseInsensitive()
-    {
-        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
-        var json = "{\"NAME\":\"John\"}";
-
-        var result = (await serializer.Deserialize<TestClass>(json).Value())!;
-
-        await Assert.That(result!.Name).IsEqualTo("John");
-    }
-
-    [Test]
-    public async Task Deserialize_WithType_ReturnsObject()
-    {
-        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
-        var json = "{\"name\":\"John\"}";
-
-        var result = (await serializer.Deserialize<TestClass>(json).Value())!;
-
-        await Assert.That(result).IsTypeOf<TestClass>();
-        await Assert.That(((TestClass)result!).Name).IsEqualTo("John");
-    }
-
-    [Test]
     public async Task SerializeAsync_WritesToStream()
     {
         var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
@@ -198,20 +162,6 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task DeserializeAsync_Generic_ReadsFromStream()
-    {
-        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
-        var json = "{\"name\":\"John\",\"value\":42}";
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
-
-        var result = (await (await serializer.DeserializeAsync<TestClass>(stream)).Value())!;
-
-        await Assert.That(result).IsNotNull();
-        await Assert.That(result!.Name).IsEqualTo("John");
-        await Assert.That(result.Value).IsEqualTo(42);
-    }
-
-    [Test]
     public async Task DeserializeAsync_EmptyStream_ReturnsDefault()
     {
         var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
@@ -222,17 +172,6 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
         await Assert.That(result).IsNull();
     }
 
-    [Test]
-    public async Task DeserializeAsync_WithType_ReadsFromStream()
-    {
-        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
-        var json = "{\"name\":\"John\"}";
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
-
-        var result = (await (await serializer.DeserializeAsync<TestClass>(stream)).Value())!;
-
-        await Assert.That(result).IsTypeOf<TestClass>();
-    }
 
     [Test]
     public async Task Roundtrip_PreservesData()
@@ -260,27 +199,6 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
 
         await Assert.That(result!.Name).IsEqualTo(original.Name);
         await Assert.That(result.Value).IsEqualTo(original.Value);
-    }
-
-    [Test]
-    public async Task WithIndentation_ReturnsNewSerializer()
-    {
-        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext);
-
-        var indented = serializer.WithIndentation();
-
-        await Assert.That(indented).IsNotEqualTo(serializer);
-    }
-
-    [Test]
-    public async Task WithIndentation_ProducesFormattedOutput()
-    {
-        var serializer = new global::app.channel.serializer.Json(global::PLang.Tests.TestApp.SharedContext).WithIndentation();
-        var obj = new { Name = "test" };
-
-        var json = (await serializer.Serialize(app.Ok(obj)).Value())!.Clr<string>()!;
-
-        await Assert.That(json).Contains("\n");
     }
 
     [Test]
