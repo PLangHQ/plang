@@ -268,4 +268,4 @@ The reader auto-registers, but the **type name** must resolve through the catalo
 - **String-backed, private backing, templates:** `app/type/item/text/this.cs` — the model for backing discipline, inbound-only implicit, `Rank`/`Order` coercion via the pure core.
 - **Bytes / kinded:** `app/type/item/binary`, `app/type/item/image` — bytes in, kind narrows; image is the model for lazy state resolved at the `Value` door and for format-asymmetric `Write`.
 - **Container:** `app/type/item/list/serializer/Reader.cs` — `BeginArray()` / `NextElement()`.
-- **Family + kind:** `app/type/item/choice/serializer/Reader.cs` — reads the option name off any reader, resolves the closed `choice<T>` from the kind, and lets the type build itself.
+- **Family + kind:** `app/type/item/choice/serializer/Reader.cs` — reads the option symbol off any reader, resolves the closed `choice<T>` from the kind, and lets the type build itself.
