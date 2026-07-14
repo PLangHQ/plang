@@ -536,8 +536,18 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
                 foreach (var el in seq) if (el != null) await WriteReflected(writer, el, mode, context);
                 writer.EndArray();
                 break;
-            // A raw C# scalar — the WRITER owns rendering each kind (string/bool/number/date/enum/…).
-            default: writer.Value(value); break;
+            // A domain HOST riding an [Out] property (test.Goal) — not writer vocabulary. This is the
+            // reflection→wire boundary, so it lifts the host through the door; clr(host).Output renders
+            // its own tagged face ([Out]/[Sensitive] discipline intact). Writer-vocabulary scalars
+            // (string/int/date/…) keep the writer's rendering.
+            default:
+                if (context != null && value is not System.IConvertible
+                    && context.App.Type[value.GetType()].ClrType == typeof(global::app.type.clr.@this))
+                {
+                    await global::app.type.item.@this.Create(value, context).Output(writer, mode, context);
+                    break;
+                }
+                writer.Value(value); break;
         }
     }
 
