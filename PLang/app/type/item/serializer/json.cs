@@ -15,18 +15,6 @@ public partial class json
 
     public json(actor.context.@this context) => _context = context;
 
-    // Read options carrying a CONTEXT-FUL Wire for a nested Data — Options.Read adds the
-    // path converter but not the Wire, so without this a nested Deserialize<Data> falls to
-    // the [JsonConverter] default (a context-less Wire). Built once per parser.
-    private System.Text.Json.JsonSerializerOptions? _nestedOptions;
-    private System.Text.Json.JsonSerializerOptions NestedOptions()
-    {
-        if (_nestedOptions != null) return _nestedOptions;
-        // Nested reconstruction: skip verify — the inner Data is covered by the outer signature.
-        return _nestedOptions = global::app.data.Wire.ReadOptions(
-            new global::app.type.reader.ReadContext(_context, Verify: false));
-    }
-
     private const int MaxDepth = 128;
 
     /// <summary>
@@ -96,7 +84,7 @@ public partial class json
                     // A nested Data reads through a CONTEXT-FUL Wire (the parser is born with
                     // its context) — never the bare [JsonConverter] default, which is a
                     // context-less Wire and leaves the nested read unable to reach App.
-                    ? System.Text.Json.JsonSerializer.Deserialize<global::app.data.@this>(element, NestedOptions())
+                    ? new global::app.data.reader.@this().Read(System.Text.Encoding.UTF8.GetBytes(element.GetRawText()), new global::app.type.reader.ReadContext(_context, Verify: false))
                     : ObjectLeaf(element, depth),
                 System.Text.Json.JsonValueKind.Array => ArrayLeaf(element, depth),
                 _ => element,
@@ -166,7 +154,7 @@ public partial class json
             System.Text.Json.JsonValueKind.Null => null,
             System.Text.Json.JsonValueKind.Undefined => null,
             System.Text.Json.JsonValueKind.Object => global::app.data.@this.IsDataMarked(element)
-                ? System.Text.Json.JsonSerializer.Deserialize<global::app.data.@this>(element, NestedOptions())
+                ? new global::app.data.reader.@this().Read(System.Text.Encoding.UTF8.GetBytes(element.GetRawText()), new global::app.type.reader.ReadContext(_context, Verify: false))
                 : ObjectLeaf(element, depth),
             System.Text.Json.JsonValueKind.Array => ArrayLeaf(element, depth),
             _ => element.GetRawText(),
