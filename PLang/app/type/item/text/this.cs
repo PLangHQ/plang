@@ -57,25 +57,19 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>
     /// THE PURE CORE — "text, make yourself from this value, or decline." A <c>text</c> passes
-    /// through; a structured item (dict/list/json DOM) renders its canonical JSON TEXT (that is what
-    /// <c>text/json</c> means); a scalar stringifies invariantly. An opaque domain object has no
-    /// honest textual form → <c>null</c> (decline). Shared by the ICreate courier and comparison.
+    /// through; a scalar stringifies invariantly. A structured value (dict/list) renders its own
+    /// canonical text through ITS output, not here — <c>text</c> knows nothing of those types.
+    /// An opaque domain object has no honest textual form → <c>null</c> (decline). Shared by the
+    /// ICreate courier and comparison.
     /// </summary>
     public static @this? Create(object? raw)
     {
         if (raw is @this self) return self;
-        // Native dict/list ITEMS aren't IDictionary/IEnumerable, but they render their
-        // canonical {}/[] textual form (text/json means json TEXT) — checked on the item.
-        if (raw is global::app.type.item.dict.@this or global::app.type.item.list.@this)
-            return (@this)System.Text.Json.JsonSerializer.Serialize(raw);
         // An item of another type unwraps to its clr (a read); a raw CLR value is already its clr.
         object? clr = raw is global::app.type.item.@this it ? it.Clr<object>() : raw;
         return clr switch
         {
             string s => (@this)s,
-            System.Text.Json.JsonElement or System.Text.Json.Nodes.JsonNode
-                or System.Collections.IDictionary => (@this)System.Text.Json.JsonSerializer.Serialize(clr),
-            System.Collections.IEnumerable and not byte[] => (@this)System.Text.Json.JsonSerializer.Serialize(clr),
             System.IConvertible c => (@this)(System.Convert.ToString(c, System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty),
             _ => null,
         };

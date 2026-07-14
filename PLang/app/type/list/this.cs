@@ -314,11 +314,21 @@ public sealed partial class @this
             return new global::app.type.item.list.@this(objList, context!);
         if (raw is System.Collections.Generic.Dictionary<string, object?> objDict)
             return new global::app.type.item.dict.@this(objDict, context!);
-        if (raw is System.Collections.IDictionary || (raw is System.Collections.IList && raw is not byte[]))
-            return new global::app.type.item.serializer.json(context).Parse(
-                       System.Text.Json.JsonSerializer.SerializeToElement(raw)) as global::app.type.item.@this
-                ?? throw new System.InvalidOperationException(
-                    $"A raw C# container ({raw.GetType().Name}) could not be narrowed to a native plang list/dict.");
+        // A non-generic container narrows the same way its generic sibling above does — build the
+        // native dict/list DIRECTLY from its entries (store raw, type on read), no STJ round-trip.
+        if (raw is System.Collections.IDictionary idict)
+        {
+            var d = new System.Collections.Generic.Dictionary<string, object?>();
+            foreach (System.Collections.DictionaryEntry e in idict)
+                d[e.Key?.ToString() ?? ""] = e.Value;
+            return new global::app.type.item.dict.@this(d, context!);
+        }
+        if (raw is System.Collections.IList ilist && raw is not byte[])
+        {
+            var l = new System.Collections.Generic.List<object?>();
+            foreach (var e in ilist) l.Add(e);
+            return new global::app.type.item.list.@this(l, context!);
+        }
 
         // The natural lift, NAVIGATED off the clr OWNERSHIP index (each type's OwnedClrTypes):
         // int → number, string → text, DateOnly → date. Ownership, NOT the primitive name — a raw
