@@ -286,6 +286,22 @@ Stay in image: `FromBytes` (the core's byte[] arm + the new base64 arm; keeps it
 
 `%file% as base64` encodes the file's MATERIALIZED value (a config.json → base64 of the parsed json wire), not its raw on-disk bytes. If raw-file-bytes is the wanted meaning, that is a `path`/`file.RawBytes` question — flag it back if you hit it in tests; do not solve it inside base64.
 
+## Addendum — your v2 (`000181dce`) crossed with this answer
+
+Good redesign against the rewritten doc — v2 already retires `EncodeLazily`/`FromString`/public `Value`/the `{image,gif}` report on its own. Answers to your four questions, then three v2 items this answer overrides:
+
+1. **(A).** `base64` owns `data:`; the mime rides as its Kind. (B) dies — it moves `data:` onto a born-door recognizer, which is born-door sniffing (your own v1 open-q3 said no), and it re-opens the wrong-location problem Ingi just closed.
+2. **Kind = the tail token (`gif`), not the full mime.** Three reasons: the kind vocabulary is short tokens everywhere (`binary` jpg/mp3, `text` md/csv; `type.Compressible` resolves the family from exactly such tokens via `format.TypeOf(Kind.Name)`); a slash inside a kind collides with the `type.Create` slash-form convention (`"text/markdown"` splits on `/`) and with the LLM teaching that warns slash strings leak past the wire; and fidelity doesn't need it — `as image` sniffs the magic bytes (`FromBytes`/`SniffMime`), content truth over header truth. Drop `octet-stream` to null, as image does.
+3. **Deferred.** Default json via the registered serializer; no format selector now.
+4. **Confirmed** — with the `Clr` in this answer (string face = payload), binary's existing `case string s:` arm decodes it; zero new binary code. Bonus: `Clr(typeof(byte[]))` hands decoded bytes directly.
+
+Overridden in v2 (see the sections above for the full reasoning):
+
+- **v2's courier VALIDATES strings** (`"SGVsbG8=" → valid; non-base64 → Base64Invalid`). That makes `"hello world" as base64` an *error* — you cannot encode a text — and silently mis-reads any accidentally base64-shaped content (`"test"` is valid base64): content sniffing by another name. The settled semantics: **the courier always ENCODES** (data-url strings excepted — explicit marker); **validate lives only in `Parse`** (reader/born path). Pin `"SGVsbG8=" as base64` → `"U0dWc2JHOD0="`.
+- **v2's encode is still `item.Output` → JSON wire → bytes.** Break #1 above applies unchanged: that double-encodes an image and quotes a text. `RawBytes` first; json wire only for values with no byte face.
+- **v2's `ToString`/`Write` reconstruct the data-url when mime-kinded.** No — the wire value is the payload; the kind already rides in the type slot, so a data-url `ToString` double-carries the mime and every `write out %x%` would print `data:…` instead of the payload. Reconstructing the data-url is an explicit ask (a later `.DataUrl` navigation property if wanted — not now).
+- **Error policy** (new since v2): `Parse` throws `FormatException` where there is no `data.Fail`; the courier converts to `data.Fail`; comparison catches → `Incomparable`. The pure core declines only on non-strings.
+
 ## OBP validation (new surfaces)
 
 | Surface | Check | Verdict |
