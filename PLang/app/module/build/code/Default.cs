@@ -927,9 +927,17 @@ public class Default : IBuilder
                         var underlying = System.Nullable.GetUnderlyingType(declared) ?? declared;
                         if (underlying.IsGenericType && underlying.GetGenericTypeDefinition() == typeof(global::app.data.@this<>))
                             underlying = underlying.GetGenericArguments()[0];
-                        var kind = context.App.Type.KindHooks.Of(underlying, p.Peek());
-                        if (kind != null)
-                            p.Declare(new app.type.@this(p.Type.Name) { Kind = kind is { } k ? new global::app.type.kind.@this(k) : null });
+                        // Build through the family's eager door and stamp the param with the built
+                        // value's OWN type descriptor ({name, kind}) — one construction door (image
+                        // parses its path extension → jpg, number reads the literal's precision → int).
+                        // A decline (null, or an error on the throwaway carrier) → no stamp; never
+                        // fail the build over a kind probe.
+                        if (context.App.Type[underlying] is { } entity)
+                        {
+                            var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(entity.Name), context: context);
+                            if (entity.Create(p.Peek(), carrier) is { Type.Kind: not null } built)
+                                p.Declare(built.Type);
+                        }
                     }
                 }
             }

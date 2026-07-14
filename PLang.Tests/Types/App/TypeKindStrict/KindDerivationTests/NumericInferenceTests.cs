@@ -36,13 +36,11 @@ public class NumericInferenceTests : System.IAsyncDisposable
         await Assert.That(d.Type.Name).IsEqualTo("text");
     }
 
-    [Test] public async Task BuildStamp_AgreesWithRuntimeMint()
+    [Test] public async Task RuntimeMint_IntLiteral_StampsNumberInt()
     {
-        // Both paths converge on {number, int} for an int literal.
+        // An int literal mints {number, int} — the kind is intrinsic to the value.
         var runtime = new global::app.data.@this("x", 5, context: _app.User.Context);
-        var buildKind = global::app.type.item.number.@this.Build("5");
         await Assert.That(runtime.Type.Name).IsEqualTo("number");
         await Assert.That(runtime.Type.Kind?.Name).IsEqualTo("int");
-        await Assert.That(buildKind).IsEqualTo("int");
     }
 }

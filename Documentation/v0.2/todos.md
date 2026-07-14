@@ -1950,3 +1950,14 @@ format values in C# and lean on raw CLR shapes instead of plang types — they d
 
 Sibling of the formal-render piece (which moved `Default.RenderFormal` off C#/STJ onto the
 actionFormal template). Same law: presentation lives in plang templates, values are plang types.
+
+## 2026-07-14 — General data-url / base64 type (fell out of W8)
+
+`data:<mime>;base64,<bytes>` is base64 bytes + a MIME label — NOT image-specific. Today
+`data:` is not a registered scheme, so `Create("data:image/gif;…")` declines and the value
+never constructs (the deleted `image.Build` hook stamped `kind:gif` onto an unbuildable
+value — a papered-over bug W8 exposed). The honest fix is a general decoder: parse the
+data-url → `(mime, bytes)` → `Format.TypeFromMime(mime)` → build that type from the bytes,
+so the kind falls out of the built value (image/gif→image kind gif, application/pdf→…,
+text/plain→text). Ingi wants this done as its own piece AND as a "how hard is it to add a
+new plang type" exercise (a `base64` type). Plan to be shown before building.

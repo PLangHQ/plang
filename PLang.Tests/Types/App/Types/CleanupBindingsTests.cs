@@ -94,20 +94,6 @@ public class CleanupBindingsTests
         await Assert.That(back).IsEqualTo(t);
     }
 
-    [Test] public async Task None_OfFourCleanupTypes_DeclaresTypeBuildHook()
-    {
-        // datetime/date/time/duration don't have a `kind`, so none should
-        // declare a static Build(object?) hook.
-        var kinds = new global::app.type.kind.Hooks();
-        await Assert.That(kinds.Of(typeof(System.DateTimeOffset), System.DateTimeOffset.UtcNow)).IsNull();
-        await Assert.That(kinds.Of(typeof(System.DateOnly), System.DateOnly.MinValue)).IsNull();
-        await Assert.That(kinds.Of(typeof(System.TimeOnly), System.TimeOnly.MinValue)).IsNull();
-        await Assert.That(kinds.Of(typeof(System.TimeSpan), System.TimeSpan.Zero)).IsNull();
-        // The wrapper @this types also don't declare Build.
-        await Assert.That(kinds.Of(typeof(global::app.type.item.datetime.@this), null)).IsNull();
-        await Assert.That(kinds.Of(typeof(global::app.type.item.duration.@this), null)).IsNull();
-    }
-
     [Test] public async Task CatalogLeadsWithDuration_TimespanNotPrimary()
     {
         // duration is the canonical name for typeof(TimeSpan); timespan is

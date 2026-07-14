@@ -55,11 +55,4 @@ public class NumberKindDerivationTests
             await Assert.That(number.Kinds[name].Create((number)1)).IsNotNull();
     }
 
-    // app/data/this.cs:242 no longer collapses float→double at stamp time.
-    [Test] public async Task BuildHook_StampsFromValueGetType_NoFloatCollapse()
-    {
-        await Assert.That(number.Build(1.5f)).IsEqualTo("float");
-        await Assert.That(number.Build(1.5d)).IsEqualTo("double");
-        await Assert.That(number.Build(5u)).IsEqualTo("uint");
-    }
 }

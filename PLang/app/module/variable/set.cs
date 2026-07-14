@@ -219,17 +219,16 @@ public partial class Set : IContext, IBuildValidatable
             // ClrType carries the right mate (typeof(int) for {number, int}).
             var targetType = type.ClrType ?? Context.App.Type.Get(typeName);
 
-            // Stamp kind from the value via the type's Build hook (image parses
-            // its path's extension → jpg; number reads the literal's precision →
-            // int). `text` has no Build hook (a literal's spelling is not its
-            // kind), so a text literal naturally derives nothing here.
+            // Stamp kind from the value by building through the family's eager door and
+            // reading the kind off the built value (image parses its path's extension → jpg;
+            // number reads the literal's precision → int). `text` has no kind for a literal
+            // (a spelling is not a kind), so a text literal naturally derives nothing. A decline
+            // (null / error on the throwaway carrier) → no kind.
             if (type.Kind == null && targetType != null)
             {
-                var derivedKind = Context.App.Type.KindHooks.Of(targetType, sourceValue)
-                                  ?? (Context.App.Type[typeName] is { ClrType: { } familyClr }
-                                      ? Context.App.Type.KindHooks.Of(familyClr, sourceValue)
-                                      : null);
-                if (derivedKind != null) type.Kind = Context.App.Type.Kind[derivedKind];
+                var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(typeName), context: Context);
+                if (Context.App.Type[typeName].Create(sourceValue, carrier)?.Type.Kind is { } derivedKind)
+                    type.Kind = derivedKind;
             }
             if (targetType == null)
             {

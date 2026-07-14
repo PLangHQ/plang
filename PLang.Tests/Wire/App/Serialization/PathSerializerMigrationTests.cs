@@ -7,9 +7,8 @@ namespace PLang.Tests.App.Serialization;
 // The wire shape (portable Relative / Raw / Absolute fallback) is preserved
 // exactly — byte-for-byte parity against the legacy JsonConverter.
 //
-// path.Build("https://…") → "http" lives on path/this.Build.cs (Stage 1).
-// The legacy JsonConverter is intentionally retained for STJ read-side parity
-// pending a follow-up that migrates every STJ path-typed read to Resolve.
+// A path's kind is its scheme, read off the built value (App.Type["path"].Create) — no
+// build-time hook. https stays https (scheme-accurate).
 
 public class PathSerializerMigrationTests
 {
@@ -55,25 +54,29 @@ public class PathSerializerMigrationTests
         await Assert.That(json.Contains("\"scheme\":")).IsFalse();
     }
 
-    [Test]
-    public async Task PathBuild_HttpsScheme_ReturnsHttpKind()
+    // Kind now derives by building through the family's eager door and reading it off the
+    // built value (KindHooks + path.Build deleted) — https→http, bare→file, unchanged.
+    private static string? KindVia(global::app.@this app, string typeName, object? raw)
     {
-        await Assert.That(global::app.type.item.path.@this.Build("https://example.test/a")).IsEqualTo("http");
+        var ctx = app.User.Context;
+        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(typeName), context: ctx);
+        return ctx.App.Type[typeName].Create(raw, carrier)?.Type.Kind?.Name;
     }
 
     [Test]
-    public async Task PathBuild_FileScheme_ReturnsFileKind()
+    public async Task PathKind_HttpsScheme_ViaCreate_IsHttps()
     {
-        await Assert.That(global::app.type.item.path.@this.Build("/srv/myapp/a.txt")).IsEqualTo("file");
+        // Scheme-accurate (W8 A): a built HttpPath reports its real scheme — https stays https
+        // (the deleted path.Build hook collapsed http+https → "http").
+        await using var app = NewApp();
+        await Assert.That(KindVia(app, "path", "https://example.test/a")).IsEqualTo("https");
     }
 
     [Test]
-    public async Task PathBuild_Unknown_ReturnsNull_NoThrow()
+    public async Task PathKind_FileScheme_ViaCreate_IsFile()
     {
-        await Assert.That(global::app.type.item.path.@this.Build(null)).IsNull();
-        await Assert.That(global::app.type.item.path.@this.Build("")).IsNull();
-        await Assert.That(global::app.type.item.path.@this.Build(42)).IsNull();
-        await Assert.That(global::app.type.item.path.@this.Build("%var%")).IsNull();
+        await using var app = NewApp();
+        await Assert.That(KindVia(app, "path", "/srv/myapp/a.txt")).IsEqualTo("file");
     }
 
     // Placeholder removed; converter deletion is tracked in

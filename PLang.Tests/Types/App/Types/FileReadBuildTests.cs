@@ -29,13 +29,6 @@ public class FileReadBuildTests
         await Assert.That(k).IsEqualTo("text");
     }
 
-    [Test] public async Task FileReadBuild_KindSupplied_ByImageBuild_NotByActionBuild()
-    {
-        // The kind comes from image.Build, NOT from the action's Build.
-        // image.Build("photo.jpg") → "jpg" (the subtype/extension).
-        await Assert.That(image.Build("photo.jpg")).IsEqualTo("jpg");
-    }
-
     [Test] public async Task FileReadRun_ImageMime_ConstructsImageValue_NotRawBytes()
     {
         // file.read.Run() detects an image MIME from the ReadText result and

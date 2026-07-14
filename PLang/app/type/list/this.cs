@@ -47,22 +47,10 @@ public sealed partial class @this
     public global::app.type.item.path.scheme.@this Scheme { get; } = new();
 
     /// <summary>
-    /// Per-App build-time kind dispatcher — discovers and invokes each
-    /// registered type's <c>static string? Build(object?)</c> hook (the
-    /// build-time sibling of <c>Resolve</c>). Owns the reflection cache.
-    /// Call: <c>App.Type.KindHooks.Of(declaredType, value)</c> during build to
-    /// stamp <c>Type.Kind</c> alongside <c>Type.Name</c>. Renamed from
-    /// <c>Kinds</c> so the word stops colliding with <see cref="@this.Kind"/>
-    /// (per-value subtype) and the advertised-vocabulary <c>type.Kinds</c>.
-    /// </summary>
-    public kind.Hooks KindHooks { get; } = new();
-
-    /// <summary>
     /// The singleton store of kind behaviors (navigate / enumerate / load / convert), one
     /// <see cref="kind.behavior.@this"/> per format. INTERNAL plumbing — reached only
     /// through the kind token (<c>value.Kind.Navigate(…)</c>), never a flat
-    /// <c>App.Type.&lt;plural&gt;</c>. Distinct from <see cref="KindHooks"/> (build-time
-    /// kind stamping) and <c>type.Kinds</c> (advertised vocabulary).
+    /// <c>App.Type.&lt;plural&gt;</c>. Distinct from <c>type.Kinds</c> (advertised vocabulary).
     /// </summary>
     internal kind.list.@this Kind { get; private set; } = new(null);
 

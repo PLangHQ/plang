@@ -531,8 +531,7 @@ public sealed class @this : item.@this
     /// <summary>
     /// Developer-meaningful kind vocabulary from a static <c>Kinds</c> property.
     /// Advertised vocabulary the LLM may emit; distinct from <see cref="Kind"/>
-    /// (the per-value subtype) and the build-hook dispatcher
-    /// <c>App.Type.KindHooks</c>.
+    /// (the per-value subtype).
     /// </summary>
     public IReadOnlyList<string>? Kinds { get => Promote()._kinds; init => _kinds = value; }
 
