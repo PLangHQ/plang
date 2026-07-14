@@ -2,8 +2,6 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 using app.channel.serializer;
 using app.actor.context;
 using app.error;
@@ -37,36 +35,6 @@ public sealed class Default : IHttp
     /// All real provider logic runs — only the HTTP transport is swapped.
     /// </summary>
     public Default(HttpMessageHandler handler) => _handler = handler;
-
-    private readonly JsonSerializerOptions _transportInOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        PropertyNameCaseInsensitive = true,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        TypeInfoResolver = new DefaultJsonTypeInfoResolver
-        {
-            Modifiers = { global::app.channel.serializer.filter.Transport.ForInbound }
-        }
-    };
-
-    // Per-request inbound options: the [In] filter + a CONTEXT-FUL Wire so an inbound Data reads
-    // through the read door (verifies if it carries a signature — this is the OUTER message). Store
-    // view (an exact copy, not the Out wire view).
-    private JsonSerializerOptions TransportIn(actor.context.@this context)
-    {
-        var o = new JsonSerializerOptions(_transportInOptions);
-        o.Converters.Add(new global::app.data.Wire(global::app.View.Store, context: context));
-        return o;
-    }
-
-    // Case-insensitive read for HTTP responses (signing, JSON body parsing, plang).
-    // Stage 27 disperse-from-Json target — was Utils.Json.CaseInsensitiveRead.
-    private readonly JsonSerializerOptions _caseInsensitiveRead = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter(allowIntegerValues: true), new app.data.EmptyStringToNullEnumConverterFactory(), new global::app.channel.serializer.TimeSpanIso8601() },
-        NumberHandling = JsonNumberHandling.AllowReadingFromString
-    };
 
     // --- IHttp: action-level methods ---
 
@@ -496,15 +464,13 @@ public sealed class Default : IHttp
     }
 
     /// <summary>
-    /// Parses application/plang response: deserialize as data.@this (with Signature via [In]),
+    /// Parses application/plang response: read the wire as data.@this (with Signature via [In]),
     /// verify signature, set %!ServiceIdentity%.
     ///
-    /// **Why not Serializers.GetByContentType?** application/plang is the engine's
-    /// own transport — `_transportInOptions` carries the [In] signature-inflow
-    /// shape that the generic JSON serializer doesn't know about. Routing
-    /// through the registry would lose Signature parsing; this raw
-    /// `JsonSerializer.Deserialize&lt;data.@this&gt;` is intentional. Same rationale
-    /// applies to <c>StreamPlangAsync</c>'s per-line NDJSON deserialize.
+    /// The read routes through the registered transport (application/plang's own serializer) —
+    /// its read door owns the [In] signature inflow, the buffer path, and deferred verify, so
+    /// the module no longer duplicates a private Wire+options rig. Same door serves
+    /// <c>StreamPlangAsync</c>'s per-line NDJSON read and the signed-error-body probe.
     /// </summary>
     private async Task<data.@this> ParsePlangResponseAsync(
         HttpResponseMessage response,
@@ -521,27 +487,20 @@ public sealed class Default : IHttp
         }
         var body = (await bodyRead.Value())!.Clr<string>()!;
 
-        data.@this? data;
-        try
+        // The registered transport reads the wire — the plang serializer's own read door
+        // (buffer path, deferred verify, [In] signature inflow, one owner). Store view = an
+        // exact copy of the inbound message, not the Out wire view. A parse failure surfaces
+        // as a keyed Error (PlangDeserializeError), not a throw.
+        data.@this data;
+        using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(body)))
         {
-            data = JsonSerializer.Deserialize<data.@this>(body, TransportIn(context));
-        }
-        catch (JsonException ex)
-        {
-            var err = context.Error(new ServiceError(
-                $"Failed to deserialize application/plang response: {ex.Message}",
-                "PlangDeserializeError", 400));
-            BuildProperties(err, request, response);
-            return err;
-        }
-
-        if (data == null)
-        {
-            var err = context.Error(new ServiceError(
-                "application/plang response deserialized to null",
-                "PlangDeserializeError", 400));
-            BuildProperties(err, request, response);
-            return err;
+            var read = await context.Actor!.Channel.Serializers.Transport.DeserializeAsync(ms, global::app.View.Store);
+            if (!read.Success)
+            {
+                BuildProperties(read, request, response);
+                return read;
+            }
+            data = read;
         }
 
         // Data.Signature is populated from the wire via [In] — pass straight to verify
@@ -572,8 +531,13 @@ public sealed class Default : IHttp
     {
         // Try deserializing as data.@this with transport options (may have Signature via [In])
         data.@this? data = null;
-        try { data = JsonSerializer.Deserialize<data.@this>(errorBody, TransportIn(context)); }
-        catch (JsonException) { /* not valid data.@this JSON — try legacy format below */ }
+        using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(errorBody)))
+        {
+            // A non-plang error body reads back as a failure — data stays null and the
+            // legacy-format fallback below takes over.
+            var read = await context.Actor!.Channel.Serializers.Transport.DeserializeAsync(ms, global::app.View.Store);
+            if (read.Success) data = read;
+        }
 
         // A signed response body reads back as a `signature` layer wrapping the
         // inner data (the read boundary auto-verifies; verify peels it).
@@ -840,19 +804,20 @@ public sealed class Default : IHttp
             if (line == null) break;
             if (string.IsNullOrEmpty(line)) continue;
 
-            // Each NDJSON line is a data object with Signature populated via [In]
-            data.@this? data;
-            try
+            // Each NDJSON line is a data object with Signature populated via [In] — read
+            // through the registered transport (one owner for the plang wire).
+            data.@this data;
+            using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(line)))
             {
-                data = JsonSerializer.Deserialize<data.@this>(line, TransportIn(context));
+                var read = await context.Actor!.Channel.Serializers.Transport.DeserializeAsync(ms, global::app.View.Store);
+                if (!read.Success)
+                {
+                    await app.System.Channel.WriteAsync(global::app.channel.list.@this.Error,
+                        context.Error(new ServiceError("Malformed NDJSON line in application/plang stream", "PlangStreamError", 400)));
+                    continue;
+                }
+                data = read;
             }
-            catch (JsonException)
-            {
-                await app.System.Channel.WriteAsync(global::app.channel.list.@this.Error,
-                    context.Error(new ServiceError("Malformed NDJSON line in application/plang stream", "PlangStreamError", 400)));
-                continue;
-            }
-            if (data == null) continue;
 
             // Verify signature — pass Data straight to verify
             var verifyAction = new signing.verify(context)
