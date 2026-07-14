@@ -109,6 +109,18 @@ The default delegates to the pure core. Override **only** when the type resolves
 
 The typed ask (`Data.Value<T>()`, a `Data<T>` slot resolving). The default runs pass-through → the context face → the container self-deserialize → fails typed. Override it to land *your* decline reasons (`data.Fail(new Error(...))` — the error belongs to the binding the caller already holds) or to honor a kind override (number's `as decimal`). Implementations touch **only** `data.Fail`; everything else on the `Data` is courier state and off-limits.
 
+**The courier has two entrances, and they hand different shapes.** `As<T>`/`Data.Value<T>()` hands the source **item** (a `text` arrives as a `text`); the entity door's leaf-retype path (`type/this.cs`, the built-leaf branch) lowers the leaf through its `Clr` **first** and hands the raw CLR form (that same `text` arrives as a `string`). Courier arms must handle both — "receives only plang types" is never true here.
+
+### Declines vs errors
+
+A `Create` door answers a value it cannot build in one of two ways, and the split is the *reason*, not the caller:
+
+- **Wrong type = decline.** An `int` offered to `path`, a `dict` offered to `guid` — not this type's to build. The pure core answers `null`, silently; the default courier turns an unhandled decline into the typed `CreateItemDeclined` fail.
+- **Malformed value = error, never a silent null.** A string that *claims* the type's shape but is invalid (a non-base64 payload, an unparseable number literal, a malformed data-url) is a broken value, and swallowing it as a decline loses the reason. Report through whichever channel the door has:
+  - **No `data` in scope** (the pure core's parse, a shared parse helper, a wire reader) → **throw** (`FormatException` with the specific reason). On the born path the throw rides `source.Value`'s catch (`FormatException`/`JsonException`/…) into `MaterializeFailed`, named to the binding — validation-at-the-door for free.
+  - **The courier** catches that throw and converts it to `data.Fail` (a keyed error on the binding).
+  - **Comparison** (`Order` coercing via the pure core) catches locally and answers `Incomparable` — per the base contract, a non-coercible operand is not an error.
+
 ### Rules that hold regardless
 
 - **No static helper class, no named factory beside the doors.** A `FromString`/`FromBytes`-style private static with one caller is `Create`'s own switch arm wearing a name — inline it. (Existing `image.FromBytes` survives only because catalog reflection can't disambiguate same-name static overloads; that is a documented exception, not a pattern.)
@@ -175,6 +187,8 @@ public sealed class Reader : global::app.type.reader.ITypeReader
 
 ### Kinds
 
+A kind is a **short tail token** (`md`, `gif`, `int`, `json`), never a slash form — `"text/markdown"` is the *authoring* form, which `type.Create` splits into name + kind on the first slash, and the LLM teaching explicitly warns the slash string off the wire. A kind token carries its content family on its own (`type.Compressible` resolves jpg→image, mp3→audio through `format.TypeOf(kind)`), so a mime never needs to ride whole.
+
 A type that reads differently per kind (`table`: csv vs xlsx) registers one reader per kind token; a type that reads uniformly registers `AnyKind` (`"*"`) and may switch on the passed `kind` inside `Read`. Lookup precedence: runtime-exact → generated-exact → runtime-`*` → generated-`*`. The selection door is `Context.App.Type.Reader.Reader(typeName, kind, context)` — it throws loudly when the resolved type ships no reader, because **every value type owns a `serializer/Reader.cs`**.
 
 ---
@@ -216,6 +230,8 @@ The reader auto-registers, but the **type name** must resolve through the catalo
 - **A `Type` property reporting a name that isn't the folder name.** The declared name selects the reader on read-back (§4); a borrowed identity does not round-trip as your type.
 - **A reader that routes wire-reading through `Create`.** The reader (§3) pulls the value off `IReader` and builds it directly; `Create` (§2) converts an already-in-memory value. Two concerns, two paths.
 - **A blind `value.ToString()` inside `Create`.** You lose the source type and mis-handle non-strings.
+- **A malformed value swallowed as a decline.** `return null` on an invalid payload of the right shape loses the reason and surfaces three hops later as a mystery. Wrong type declines; a broken value errors — throw where no `data.Fail` is in scope, `data.Fail` in the courier (§2 "Declines vs errors").
+- **Content sniffing to pick semantics.** "Is this string already base64/json/a path?" guesses are forks that mis-read accidental matches. Branch only on explicit markers (a `data:` prefix, a declared kind, a scheme) — a bare value takes the one default path.
 - **`.Clr` / `Clr<object>()` mid-flight.** Lowering to CLR then re-lifting is the raw-CLR-era smell. Stay in plang types; `Clr` is only for the final .NET/3rd-party edge. (The one sanctioned unwrap is the pure core's first line — that method IS the crossing.)
 - **The reader/writer knowing the concrete format.** `Read`/`Write` see only `IReader`/`IWriter`; branching on the abstract `Format` token is the ceiling.
 
