@@ -1,7 +1,6 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
 
 namespace app.data;
 
@@ -233,55 +232,5 @@ public static class JsonString
             else sb.Append(c);
         }
         return sb.ToString();
-    }
-}
-
-/// <summary>
-/// Handles empty strings for nullable enum properties during JSON deserialization.
-/// LLMs produce "" for unset enum fields — this converts them to null instead of failing.
-/// Used by <see cref="app.type.list.@this"/>'s case-insensitive read options and by HTTP transport.
-/// </summary>
-public class EmptyStringToNullEnumConverterFactory : JsonConverterFactory
-{
-    public override bool CanConvert(System.Type typeToConvert)
-    {
-        if (!typeToConvert.IsGenericType) return false;
-        if (typeToConvert.GetGenericTypeDefinition() != typeof(System.Nullable<>)) return false;
-        return System.Nullable.GetUnderlyingType(typeToConvert)?.IsEnum == true;
-    }
-
-    public override JsonConverter CreateConverter(System.Type typeToConvert, JsonSerializerOptions options)
-    {
-        var enumType = System.Nullable.GetUnderlyingType(typeToConvert)!;
-        var converterType = typeof(EmptyStringToNullEnumConverter<>).MakeGenericType(enumType);
-        return (JsonConverter)System.Activator.CreateInstance(converterType)!;
-    }
-}
-
-public class EmptyStringToNullEnumConverter<T> : JsonConverter<T?> where T : struct, System.Enum
-{
-    public override T? Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
-    {
-        if (reader.TokenType == JsonTokenType.Null) return null;
-        if (reader.TokenType == JsonTokenType.String)
-        {
-            var str = reader.GetString();
-            if (string.IsNullOrEmpty(str)) return null;
-            if (System.Enum.TryParse<T>(str, ignoreCase: true, out var result)) return result;
-        }
-        if (reader.TokenType == JsonTokenType.Number)
-        {
-            var num = reader.GetInt32();
-            return (T)System.Enum.ToObject(typeof(T), num);
-        }
-        return null;
-    }
-
-    public override void Write(Utf8JsonWriter writer, T? value, JsonSerializerOptions options)
-    {
-        if (value.HasValue)
-            writer.WriteStringValue(value.Value.ToString());
-        else
-            writer.WriteNullValue();
     }
 }
