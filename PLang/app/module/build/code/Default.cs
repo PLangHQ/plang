@@ -26,7 +26,7 @@ public class Default : IBuilder
         // Optional filter: restrict the catalog to the named module.action
         // entries. The Compile step passes the planner's action set so the
         // prompt carries only the relevant rows. Null/empty → full catalog.
-        var filter = action.Actions == null ? null
+        var filter = action.Actions == null || await action.Actions.IsEmpty() ? null
             : (await action.Actions.Value()).Clr<List<string>>();
         if (filter is { Count: > 0 })
         {
@@ -59,7 +59,7 @@ public class Default : IBuilder
         // referenced by the named module.action set. Primitive types and the
         // entries renderer (TypeSchemas/TypeNames) all stay intact. Empty/null
         // filter → full catalog (back-compat).
-        var filter = action.Actions == null ? null
+        var filter = action.Actions == null || await action.Actions.IsEmpty() ? null
             : (await action.Actions.Value()).Clr<List<string>>();
         if (filter is { Count: > 0 })
         {

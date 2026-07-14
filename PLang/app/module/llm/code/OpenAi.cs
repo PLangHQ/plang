@@ -154,7 +154,7 @@ public sealed class OpenAi : ILlm
         // (build-mode-inversion §6.D, Case A). Gating cacheKey also skips the write below (guarded
         // by cacheKey != null), so cache:false is a full bypass: no read, no stale entry left behind.
         // The .NET edge: the tool list lowers itself once; reused below.
-        List<GoalCall>? goalTools = action.Tools == null ? null
+        List<GoalCall>? goalTools = action.Tools == null || await action.Tools.IsEmpty() ? null
             : (await action.Tools.Value()).Clr<List<GoalCall>>();
         string? cacheKey = null;
         if (await action.Cache.ToBooleanAsync() && goalTools == null)
@@ -550,7 +550,7 @@ public sealed class OpenAi : ILlm
         }
 
         string result;
-        var goalCall = (action.Tools == null ? null
+        var goalCall = (action.Tools == null || await action.Tools.IsEmpty() ? null
                 : (await action.Tools.Value()).Clr<List<GoalCall>>())
             ?.Find(t => t.Name == toolCall.Name);
         if (goalCall == null)

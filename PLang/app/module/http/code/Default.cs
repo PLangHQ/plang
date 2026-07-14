@@ -55,9 +55,9 @@ public sealed class Default : IHttp
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = (await urlResult.Value())!.Clr<string>()!;
 
-        var defaultHeaders = action.DefaultHeaders == null ? null
+        var defaultHeaders = action.DefaultHeaders == null || await action.DefaultHeaders.IsEmpty() ? null
             : (await action.DefaultHeaders.Value()).Clr<Dictionary<string, object>>();
-        var headers = MergeHeaders(action.Headers == null ? null
+        var headers = MergeHeaders(action.Headers == null || await action.Headers.IsEmpty() ? null
             : (await action.Headers.Value()).Clr<Dictionary<string, object>>(), defaultHeaders);
 
         // Build body
@@ -140,9 +140,9 @@ public sealed class Default : IHttp
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = (await urlResult.Value())!.Clr<string>()!;
 
-        var defaultHeaders = action.DefaultHeaders == null ? null
+        var defaultHeaders = action.DefaultHeaders == null || await action.DefaultHeaders.IsEmpty() ? null
             : (await action.DefaultHeaders.Value()).Clr<Dictionary<string, object>>();
-        var headers = MergeHeaders(action.Headers == null ? null
+        var headers = MergeHeaders(action.Headers == null || await action.Headers.IsEmpty() ? null
             : (await action.Headers.Value()).Clr<Dictionary<string, object>>(), defaultHeaders);
         var requestMessage = new HttpRequestMessage(SysHttpMethod.Get, resolvedUrl);
         ApplyHeaders(requestMessage, headers);
@@ -185,9 +185,9 @@ public sealed class Default : IHttp
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = (await urlResult.Value())!.Clr<string>()!;
 
-        var defaultHeaders = action.DefaultHeaders == null ? null
+        var defaultHeaders = action.DefaultHeaders == null || await action.DefaultHeaders.IsEmpty() ? null
             : (await action.DefaultHeaders.Value()).Clr<Dictionary<string, object>>();
-        var headers = MergeHeaders(action.Headers == null ? null
+        var headers = MergeHeaders(action.Headers == null || await action.Headers.IsEmpty() ? null
             : (await action.Headers.Value()).Clr<Dictionary<string, object>>(), defaultHeaders);
 
         var (httpContent, contentErr) = await ResolveUploadContentAsync(action, app, encoding);
