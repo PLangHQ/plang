@@ -17,11 +17,14 @@ public sealed record @this(
 {
     public override void EmitProperty(StringBuilder sb)
     {
-        // [Code] keeps a small service-cache field, filled by Attach with error handling —
-        // NOT the param machinery. (A lazy getter can't surface the "provider not registered"
-        // error, only NRE.)
+        // [Code] keeps a small service-cache field, filled by Attach (which surfaces the
+        // "provider not registered" error) — NOT the param machinery. The getter surfaces the
+        // OTHER lifecycle miss: accessed before Attach ran (an action reached outside the
+        // pipeline), naming it instead of a bare NRE.
         sb.AppendLine($"    private {TypeName}? {Backing};");
-        sb.AppendLine($"    public partial {TypeName} {Name} => {Backing}!;");
+        sb.AppendLine($"    public partial {TypeName} {Name} => {Backing} ?? throw new global::System.InvalidOperationException(");
+        sb.AppendLine($"        \"{TypeName} is not attached — Attach(context) did not run on this action. \"");
+        sb.AppendLine($"        + \"Actions run through the pipeline, which attaches [Code] providers before Run().\");");
         sb.AppendLine();
     }
 

@@ -39,6 +39,7 @@ public class HttpChannelTests
         handler.Respond = _ => new HttpResponseMessage(HttpStatusCode.OK)
         { Content = new StringContent(body, Encoding.UTF8, contentType) };
         var action = new request(app.User.Context) { Url = (global::app.type.item.text.@this)"https://x/y", Unsigned = (global::app.type.item.@bool.@this)true };
+        await action.Attach(null, app.User.Context);
         return await action.Run();
     }
 
