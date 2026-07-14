@@ -68,5 +68,62 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
         await Assert.That(json.ToLowerInvariant()).DoesNotContain("valuekind");
     }
 
+    [Test]
+    public async Task ClrEntity_IsRegistered_WithCarrierClrType()
+    {
+        // The identity door's last rung returns this["clr"] — so "clr" MUST resolve to the carrier
+        // entity, else the door throws on the name miss. ClrType is the carrier so its Create builds one.
+        var entity = _app.Type["clr"];
+        await Assert.That(entity.Name).IsEqualTo("clr");
+        await Assert.That(entity.ClrType).IsEqualTo(typeof(global::app.type.clr.@this));
+    }
+
+    [Test]
+    public async Task Indexer_UnownedPoco_AnswersClrEntity_NeverNull()
+    {
+        // A CLR type no value type owns is not an item and not _clr-owned → the door's third rung
+        // answers the clr entity (never null), whose Create builds the carrier.
+        var entity = _app.Type[typeof(Poco)];
+        await Assert.That(entity.Name).IsEqualTo("clr");
+    }
+
+    [Test]
+    public async Task ApexLift_UnownedPoco_BecomesClrCarrier_Terminates()
+    {
+        var ctx = _app.User.Context;
+        // The lift routes an unowned object through the clr entity's Create — terminal, no bounce back
+        // into the lift. Completing at all is the no-recursion proof; the carrier still navigates.
+        var lifted = global::app.type.item.@this.Create(new Poco { Label = "hi" }, ctx);
+        await Assert.That(lifted).IsTypeOf<global::app.type.clr.@this>();
+        await Assert.That((await (await ctx.Ok(lifted).Get("Label")).Value())?.ToString()).IsEqualTo("hi");
+    }
+
+    [Test]
+    public async Task ApexLift_NonItemNamedHost_BecomesClrCarrier_NoRecursion()
+    {
+        var ctx = _app.User.Context;
+        // A non-item host (the type registry itself) — rung 2's item⟺ICreate guard sends it to the clr
+        // entity instead of resurrecting a non-Creatable named entity whose decline used to loop.
+        var lifted = global::app.type.item.@this.Create(ctx.App.Type, ctx);
+        await Assert.That(lifted).IsTypeOf<global::app.type.clr.@this>();
+    }
+
+    [Test]
+    public async Task KindProbe_UnownedParam_BuildsClrCarrier_SoProbeSkipsStamp()
+    {
+        var ctx = _app.User.Context;
+        // The build-time kind probe stamps a param ONLY when the built value has its own item type.
+        // An unowned param answers the clr entity → a clr carrier → the probe's `is not clr` guard
+        // leaves the param on its declared type instead of stamping a bogus item/* kind.
+        var clrEntity = _app.Type[typeof(Poco)];
+        var built = clrEntity.Create("anything", ctx.Ok(new global::app.type.item.@null.@this(clrEntity.Name)));
+        await Assert.That(built).IsTypeOf<global::app.type.clr.@this>();
+
+        // Contrast: an owned type builds its own value with a real kind → the probe stamps it.
+        var numBuilt = _app.Type["number"].Create("5", ctx.Ok(new global::app.type.item.@null.@this("number")));
+        await Assert.That(numBuilt is global::app.type.clr.@this).IsFalse();
+        await Assert.That(numBuilt!.Type.Kind).IsNotNull();
+    }
+
     private sealed class Poco { public string Label { get; set; } = ""; }
 }

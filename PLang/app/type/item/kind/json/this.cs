@@ -73,7 +73,7 @@ public sealed class @this : global::app.type.kind.@this
     {
         if (raw is not (string or byte[])) return null;                        // decline — not a raw json payload
         var s = new global::app.type.item.text.@this(raw).ToString();
-        if (string.IsNullOrEmpty(s)) return ctx.App.Type.Create(null, ctx);    // empty → the null value (NOT a decline)
+        if (string.IsNullOrEmpty(s)) return global::app.type.item.@this.Create(null, ctx);    // empty → the null value (NOT a decline)
         using var doc = JsonDocument.Parse(s);
         var e = doc.RootElement;
         // Only STRUCTURED json stays a clr(json) (ruling 6 — navigated/enumerated lazily by this
@@ -82,7 +82,7 @@ public sealed class @this : global::app.type.kind.@this
         // Incomparable to one.
         return e.ValueKind is JsonValueKind.Object or JsonValueKind.Array
             ? new global::app.type.clr.@this(e.Clone(), ctx, this)
-            : ctx.App.Type.Create(Scalar(e), ctx);
+            : global::app.type.item.@this.Create(Scalar(e), ctx);
     }
 
     // Materialize this json content INTO the CLR host target asks for. json owns the format

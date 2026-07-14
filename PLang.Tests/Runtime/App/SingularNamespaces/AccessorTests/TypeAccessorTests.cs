@@ -21,10 +21,10 @@ public class TypeAccessorTests
         await Assert.That(t.ClrType).IsEqualTo(typeof(int));
     }
 
-    [Test] public async Task AppType_OfT_ReturnsTypeEntity_ForCompileTimeGeneric()
+    [Test] public async Task AppType_IndexByRuntimeType_ReturnsTypeEntity()
     {
         await using var app = TestApp.Create("/test");
-        var entity = app.Type.of<string>();
+        var entity = app.Type[typeof(string)];
         await Assert.That(entity.Name).IsEqualTo("text");
     }
 

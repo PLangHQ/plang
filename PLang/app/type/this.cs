@@ -243,7 +243,10 @@ public sealed class @this : item.@this
     // refined to the declared kind/template, or re-typed through its family courier; a raw CLR
     // scalar → born through the family lift, then refined. ALWAYS returns a value (never null); a
     // bad conversion throws (the throw boundary — rides MaterializeFailed like a reader parse).
-    public item.@this Create(object? raw, global::app.actor.context.@this? context)
+    // `new`: app.type.@this : item.@this, so this instance door (build the DECLARED type) deliberately
+    // hides item's static apex lift (build WHATEVER the raw is). Different questions, distinguished by
+    // receiver — an entity instance calls this; item.@this.Create(...) reaches the apex.
+    public new item.@this Create(object? raw, global::app.actor.context.@this? context)
     {
         // context-never-null: a value is born WITH context. A null here is a construction site that
         // forgot to pass one — fail with a pointer, not an NRE deep in materialization.
@@ -310,7 +313,7 @@ public sealed class @this : item.@this
         if (_byContext(raw, context) is { } lifted)
             return string.Equals(Name, lifted.Type.Name, System.StringComparison.OrdinalIgnoreCase)
                 ? lifted : Create(lifted, context);
-        return Create(context.App.Type.Create(raw, context), context);
+        return Create(global::app.type.item.@this.Create(raw, context), context);
 
         static System.Exception Failed(global::app.error.IError? error)
             => new System.InvalidOperationException(error?.Message ?? "conversion failed");

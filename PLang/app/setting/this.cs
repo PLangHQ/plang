@@ -102,7 +102,7 @@ public sealed class @this
                 // Lift the raw setting to its plang value, then let it lower ITSELF to the
                 // property's CLR type — the value owns its projection, no central converter.
                 object? val;
-                try { val = _context.App.Type.Create(kvp.Value, _context).Clr(prop.PropertyType); }
+                try { val = global::app.type.item.@this.Create(kvp.Value, _context).Clr(prop.PropertyType); }
                 catch (System.Exception ex) when (ex is System.InvalidCastException or System.FormatException
                     or System.OverflowException or System.NotSupportedException)
                 {

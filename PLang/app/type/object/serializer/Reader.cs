@@ -19,6 +19,6 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     {
         if (reader.Null()) return new global::app.type.item.@null.@this("object", kind);
         var parser = new global::app.type.item.serializer.json(ctx.Context);
-        return ctx.Context.App.Type.Create(parser.ReadSlot(ref reader, ctx), ctx.Context);
+        return global::app.type.item.@this.Create(parser.ReadSlot(ref reader, ctx), ctx.Context);
     }
 }

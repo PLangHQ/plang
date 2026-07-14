@@ -932,12 +932,16 @@ public class Default : IBuilder
                         // parses its path extension → jpg, number reads the literal's precision → int).
                         // A decline (null, or an error on the throwaway carrier) → no stamp; never
                         // fail the build over a kind probe.
-                        if (context.App.Type[underlying] is { } entity)
-                        {
-                            var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(entity.Name), context: context);
-                            if (entity.Create(p.Peek(), carrier) is { Type.Kind: not null } built)
-                                p.Declare(built.Type);
-                        }
+                        // `underlying` is the DECLARED param CLR type — an identity lookup ("what plang
+                        // type IS this"). The indexer is never-null; a POCO param answers the clr entity,
+                        // which wraps the authored value in a generic carrier (kind `*`). That is not a
+                        // real kind refinement — only a value with its OWN item type (image → jpg, number
+                        // → int) stamps; a clr carrier leaves the param on its declared type.
+                        var entity = context.App.Type[underlying];
+                        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(entity.Name), context: context);
+                        if (entity.Create(p.Peek(), carrier) is { Type.Kind: not null } built
+                            && built is not global::app.type.clr.@this)
+                            p.Declare(built.Type);
                     }
                 }
             }

@@ -29,6 +29,63 @@ namespace app.type.item;
 public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this>
 {
     /// <summary>
+    /// The inferred lift — "build WHATEVER this raw is". The apex's OWN ICreate face: for the
+    /// UNDECLARED raw (no target type in hand), <c>item</c> is the produced type, so <c>item</c>
+    /// owns the construction. Infers the owner via the collection's CONVERSION-ownership door
+    /// (<c>App.Type[clrType]</c>) and builds through that entity's own <c>Create</c>; a CLR type no
+    /// type owns rides a <c>Clr</c> carrier. Rungs: <c>is item</c> → container narrowing → ownership
+    /// lift → enum→choice → <c>Clr</c>. Navigated, not switched. The DECLARED ask is a different door:
+    /// <c>App.Type[name].Create(raw, ctx)</c> (the entity door) builds the type the caller named.
+    /// ALWAYS returns a value (never null); a bare <c>Data</c> is a producer bug and throws.
+    /// </summary>
+    public static @this Create(object? raw, global::app.actor.context.@this? context)
+    {
+        if (raw is null) return global::app.type.item.@null.@this.Instance;
+        if (raw is @this already) return already;
+        if (raw is global::app.data.@this)
+            throw new System.InvalidOperationException(
+                "A bare Data may not be stored as a value — return the inner value via its own factory, "
+                + "never the Data wrapper.\n" + System.Environment.StackTrace);
+
+        // A sequence of Data / native items narrows to a native list, preserving the instances.
+        if (raw is System.Collections.Generic.IEnumerable<global::app.data.@this> dataSeq)
+            return new global::app.type.item.list.@this(dataSeq, context!);
+        if (raw is System.Collections.Generic.IEnumerable<@this> itemSeq)
+            return new global::app.type.item.list.@this(itemSeq, context!);
+        if (raw is System.Collections.Generic.List<object?> objList)
+            return new global::app.type.item.list.@this(objList, context!);
+        if (raw is System.Collections.Generic.Dictionary<string, object?> objDict)
+            return new global::app.type.item.dict.@this(objDict, context!);
+        // A non-generic container narrows the same way its generic sibling above does — build the
+        // native dict/list DIRECTLY from its entries (store raw, type on read), no STJ round-trip.
+        if (raw is System.Collections.IDictionary idict)
+        {
+            var d = new System.Collections.Generic.Dictionary<string, object?>();
+            foreach (System.Collections.DictionaryEntry e in idict)
+                d[e.Key?.ToString() ?? ""] = e.Value;
+            return new global::app.type.item.dict.@this(d, context!);
+        }
+        if (raw is System.Collections.IList ilist && raw is not byte[])
+        {
+            var l = new System.Collections.Generic.List<object?>();
+            foreach (var e in ilist) l.Add(e);
+            return new global::app.type.item.list.@this(l, context!);
+        }
+
+        // A CLR enum IS plang's choice (a closed named set) — build choice<T> for the enum. BEFORE
+        // the index ask: an enum is neither an item nor _clr-owned, so the door would answer clr.
+        if (raw is System.Enum)
+            return (@this)System.Activator.CreateInstance(
+                typeof(global::app.type.item.choice.@this<>).MakeGenericType(raw.GetType()), raw)!;
+
+        // The natural lift, NAVIGATED off the identity door: the owning entity drives its own cached
+        // Create thunk (int → number, string → text). The door is never null — a CLR type no value
+        // type owns answers the clr entity, whose Create builds the carrier — so this is the single
+        // terminal rung; the old separate Clr fallback dissolves into entity dispatch.
+        return context!.App.Type[raw.GetType()].Create(raw, context);
+    }
+
+    /// <summary>
     /// THE value door — "I am going to use this value, make yourself ready."
     /// Loads if needed, parses if needed, renders if stamped (ready MEANS
     /// ready: a template whose holes are unfilled is not ready). May answer

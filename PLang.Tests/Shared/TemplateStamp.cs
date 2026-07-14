@@ -127,7 +127,7 @@ public static class TemplateStamp
 
             // A literal leaf (holeless string, number, bool) — built as its plain type.
             default:
-                return context.App.Type.Create(raw, context);
+                return global::app.type.item.@this.Create(raw, context);
         }
     }
 }

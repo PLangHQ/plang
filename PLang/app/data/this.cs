@@ -256,7 +256,7 @@ public partial class @this
         else if (parsed is global::app.type.item.@this it)
             _item = it;
         else
-            _item = _context.App.Type.Create(parsed, _context);
+            _item = global::app.type.item.@this.Create(parsed, _context);
         Parent = parent;
         Path = BuildPath(parent, Name);
         IsInitialized = true;
@@ -346,7 +346,7 @@ public partial class @this
     /// </summary>
     public virtual void SetValue(object? value)
     {
-        _item = _context.App.Type.Create(new global::app.type.item.serializer.json(_context).Parse(value), _context);
+        _item = global::app.type.item.@this.Create(new global::app.type.item.serializer.json(_context).Parse(value), _context);
         Updated = System.DateTime.UtcNow;
         IsInitialized = true;
         if (_item is module.IContext contextual)

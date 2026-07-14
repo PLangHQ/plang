@@ -274,87 +274,28 @@ public sealed partial class @this
     /// <see cref="this[string]"/>; replaces the old <c>ResolveName</c> verb-lookup. Null on miss
     /// (a CLR type MAY not be plang vocabulary), unlike the name door's throw-on-miss.
     /// </summary>
-    public app.type.@this? this[System.Type clrType]
+    public app.type.@this this[System.Type clrType]
     {
         get
         {
             EnsureInitialized();
-            // The CLR target's OWNING value type: a foreign shape it claims (int → number, via the
-            // clr ownership index) wins over its identity/name (path.@this → path, every path
-            // subclass → path). This is the conversion-ownership door (replaces convert.OwnerOf);
-            // primitive/CLR-name lookups are a separate surface (Get/ResolveType/GetPrimitiveOrMime).
-            if (_clr.TryGetValue(clrType, out var owner)) return this[owner];
-            return _typeToName.TryGetValue(clrType, out var name) ? this[name] : null;
+            // ONE identity door — "what plang type IS this CLR type" — split on the model's axis
+            // (is this CLR type a plang item?), never null and never leaking a System.Type back.
+            if (_clr.TryGetValue(clrType, out var owner)) return this[owner];   // conversion owner: int → number, string → text
+            // An item type IS vocabulary (path.file → path). The IsAssignableFrom guard is item ⟺
+            // ICreate made machine-checkable: _typeToName is the NAMING index and legitimately holds
+            // non-item hosts (goal, the serializers registry) for their teaching names — answering
+            // Type[typeof(goal)] with a named "goal" entity would resurrect "goal is a plang type"
+            // and hand construction a non-Creatable entity whose decline is the recursion we killed.
+            if (typeof(app.type.item.@this).IsAssignableFrom(clrType)
+                && _typeToName.TryGetValue(clrType, out var name)) return this[name];
+            return this["clr"];   // not a plang item → it IS clr(T); its Create builds the carrier (terminal)
         }
     }
 
-    /// <summary>
-    /// The born-native lift — the collection's door (selection + fallback policy is the registry's
-    /// job). A raw CLR value or an already-native item becomes its plang value: the type OWNING the
-    /// raw's CLR shape (its <c>OwnedClrTypes</c> declaration, keyed on the clr index) builds it through
-    /// its own entity <c>Create</c> door; a CLR type no type owns rides a <c>Clr</c> carrier (rung 2).
-    /// Navigated, not switched — no hub. Rungs: <c>is item</c> → container narrowing → clr-index lift →
-    /// <c>Clr</c>.
-    /// </summary>
-    public global::app.type.item.@this Create(object? raw, global::app.actor.context.@this? context)
-    {
-        if (raw is null) return global::app.type.item.@null.@this.Instance;
-        if (raw is global::app.type.item.@this already) return already;
-        if (raw is global::app.data.@this)
-            throw new System.InvalidOperationException(
-                "A bare Data may not be stored as a value — return the inner value via its own factory, "
-                + "never the Data wrapper.\n" + System.Environment.StackTrace);
-
-        // A sequence of Data / native items narrows to a native list, preserving the instances.
-        if (raw is System.Collections.Generic.IEnumerable<global::app.data.@this> dataSeq)
-            return new global::app.type.item.list.@this(dataSeq, context!);
-        if (raw is System.Collections.Generic.IEnumerable<global::app.type.item.@this> itemSeq)
-            return new global::app.type.item.list.@this(itemSeq, context!);
-        if (raw is System.Collections.Generic.List<object?> objList)
-            return new global::app.type.item.list.@this(objList, context!);
-        if (raw is System.Collections.Generic.Dictionary<string, object?> objDict)
-            return new global::app.type.item.dict.@this(objDict, context!);
-        // A non-generic container narrows the same way its generic sibling above does — build the
-        // native dict/list DIRECTLY from its entries (store raw, type on read), no STJ round-trip.
-        if (raw is System.Collections.IDictionary idict)
-        {
-            var d = new System.Collections.Generic.Dictionary<string, object?>();
-            foreach (System.Collections.DictionaryEntry e in idict)
-                d[e.Key?.ToString() ?? ""] = e.Value;
-            return new global::app.type.item.dict.@this(d, context!);
-        }
-        if (raw is System.Collections.IList ilist && raw is not byte[])
-        {
-            var l = new System.Collections.Generic.List<object?>();
-            foreach (var e in ilist) l.Add(e);
-            return new global::app.type.item.list.@this(l, context!);
-        }
-
-        // The natural lift, NAVIGATED off the clr OWNERSHIP index (each type's OwnedClrTypes):
-        // int → number, string → text, DateOnly → date. Ownership, NOT the primitive name — a raw
-        // string is owned by `text`, though its primitive name is `string`; the owning entity drives
-        // its own cached Create thunk.
-        if (_clr.TryGetValue(raw.GetType(), out var ownerName)
-            && this[ownerName] is { } owner && owner.Create(raw, context) is { } lifted)
-            return lifted;
-
-        // A CLR enum IS plang's choice (a closed named set) — build choice<T> for the enum.
-        if (raw is System.Enum)
-            return (global::app.type.item.@this)System.Activator.CreateInstance(
-                typeof(global::app.type.item.choice.@this<>).MakeGenericType(raw.GetType()), raw)!;
-
-        // Unowned — rung 2: a strongly-typed C# object rides as a Clr carrier (a product, never a shuttle).
-        return new global::app.type.clr.@this(raw, context!);
-    }
-
-    /// <summary>Compile-time generic lookup — returns the catalog-built entity for T.</summary>
-    public app.type.@this of<T>()
-    {
-        var name = GetTypeName(typeof(T));
-        return CatalogByName.TryGetValue(name, out var built)
-            ? built
-            : new app.type.@this(name, typeof(T));
-    }
+    // The born-native lift moved to its rightful owner — the produced type. "Build whatever this raw
+    // is" is item.@this.Create(raw, ctx) (item's own ICreate face); the registry keeps only SELECTION
+    // (the identity indexer this[System.Type], both string doors), never construction.
 
     private System.Type? Get(string typeName, int depth)
     {

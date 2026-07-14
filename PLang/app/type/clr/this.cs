@@ -8,8 +8,16 @@ namespace app.type.clr;
 /// graduates to its own item subclass only when a generic answer stops being the true
 /// answer for it.
 /// </summary>
-public class @this : global::app.type.item.@this, global::app.module.IContext
+public class @this : global::app.type.item.@this, global::app.module.IContext, global::app.type.item.ICreate<@this>
 {
+    /// <summary>The clr entity's construction face — wrap ANY foreign host in a carrier. A CLR type
+    /// no value type owns IS clr(T), so this never declines for a real host; it is terminal, which
+    /// is what lets the lift's clr rung be plain entity dispatch instead of a special case. The
+    /// <c>new</c> hides item's apex lift (build-WHATEVER-the-raw-is) with the build-a-clr answer the
+    /// "clr" entity owns; null raw is a citizen handled upstream, so it declines here.</summary>
+    public static new @this? Create(object? raw, global::app.actor.context.@this? ctx)
+        => raw is null ? null : new @this(raw, ctx!);
+
     public object Value { get; }
 
     [System.Text.Json.Serialization.JsonIgnore]
