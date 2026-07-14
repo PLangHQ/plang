@@ -83,6 +83,7 @@ public class HashTypeTests
         var verify = new global::app.module.crypto.Verify(ctx) { Data = ctx.Ok("hello"),
             Hash = digest,
         };
+        await verify.Attach(null, ctx);
         var result = await verify.Run();
         await result.IsSuccess();
         await Assert.That((await result.Value())!.Value).IsTrue();

@@ -180,6 +180,7 @@ public class SensitivePropertyFilterTests
     {
         // End-to-end: create real identity, serialize, verify PrivateKey absent
         var create = new Create(_app.System.Context) { Name = (global::app.type.item.text.@this)"e2e", SetAsDefault = (global::app.type.item.@bool.@this)true };
+        await create.Attach(null, _app.System.Context);
         var result = await create.Run();
         var identity = (await result.Value()) as Identity;
 

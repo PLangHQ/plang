@@ -64,6 +64,7 @@ public class AssertionErrorVariablesTests
         context.Variable.Set("label", "foo");
 
         var action = new AssertEquals(context) { Expected = D(1), Actual = D(2) };
+        await action.Attach(null, context);
         var result = await action.Run();
 
         await result.IsFailure();
@@ -83,6 +84,7 @@ public class AssertionErrorVariablesTests
         context.Variable.Set("x", 1);
 
         var action = new AssertEquals(context) { Expected = D(5), Actual = D(5) };
+        await action.Attach(null, context);
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -100,17 +102,25 @@ public class AssertionErrorVariablesTests
         var context = _app.User.Context;
         context.Variable.Set("watched", "sentinel");
 
+        // Attach binds each handler's [Code] provider (the construction half of the lifecycle)
+        // before Run — the pipeline does this; a direct-Run fixture must too.
+        async Task<Data> AR(global::app.module.ICodeGenerated a)
+        {
+            await a.Attach(null, context);
+            return await ((dynamic)a).Run();
+        }
+
         var failures = new List<Data>
         {
-            await new AssertEquals(context) { Expected = D(1), Actual = D(2) }.Run(),
-            await new AssertNotEquals(context) { Expected = D(1), Actual = D(1) }.Run(),
-            await new AssertIsTrue(context) { Value = D(false) }.Run(),
-            await new AssertIsFalse(context) { Value = D(true) }.Run(),
-            await new AssertIsNull(context) { Value = D(42) }.Run(),
-            await new AssertIsNotNull(context) { Value = D(null) }.Run(),
-            await new AssertContains(context) { Value = D("zzz"), Container = D("hello") }.Run(),
-            await new AssertGreaterThan(context) { A = D(1), B = D(5) }.Run(),
-            await new AssertLessThan(context) { A = D(5), B = D(1) }.Run()
+            await AR(new AssertEquals(context) { Expected = D(1), Actual = D(2) }),
+            await AR(new AssertNotEquals(context) { Expected = D(1), Actual = D(1) }),
+            await AR(new AssertIsTrue(context) { Value = D(false) }),
+            await AR(new AssertIsFalse(context) { Value = D(true) }),
+            await AR(new AssertIsNull(context) { Value = D(42) }),
+            await AR(new AssertIsNotNull(context) { Value = D(null) }),
+            await AR(new AssertContains(context) { Value = D("zzz"), Container = D("hello") }),
+            await AR(new AssertGreaterThan(context) { A = D(1), B = D(5) }),
+            await AR(new AssertLessThan(context) { A = D(5), B = D(1) })
         };
 
         foreach (var result in failures)
