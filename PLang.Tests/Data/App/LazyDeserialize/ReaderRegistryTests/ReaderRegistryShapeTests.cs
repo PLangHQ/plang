@@ -37,7 +37,9 @@ public class ReaderRegistryShapeTests
 
     [Test] public async Task Reader_HasRegister_TakingTypeKindAndDelegate()
     {
-        MethodInfo? reg = typeof(global::app.type.reader.@this).GetMethod("Register");
+        // Disambiguated by parameter types — a typed ITypeReader Register overload sits beside it.
+        MethodInfo? reg = typeof(global::app.type.reader.@this).GetMethod("Register",
+            new[] { typeof(string), typeof(string), typeof(global::app.type.reader.@this.Read) });
         await Assert.That(reg).IsNotNull();
         var ps = reg!.GetParameters();
         await Assert.That(ps.Length).IsEqualTo(3);

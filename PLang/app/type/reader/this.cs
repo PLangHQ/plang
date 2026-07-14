@@ -152,6 +152,15 @@ public sealed class @this
         _runtime[(typeName, kind)] = read;
     }
 
+    /// <summary>The typed runtime seam — mirrors the untyped <see cref="Register(string,string,Read)"/>
+    /// for an <see cref="ITypeReader"/> registered at boot (the closed choice readers) or by a
+    /// <c>code.load</c> DLL shipping typed readers. Same precedence as the untyped side.</summary>
+    public void Register(string typeName, string kind, ITypeReader reader)
+    {
+        if (string.IsNullOrWhiteSpace(typeName) || string.IsNullOrWhiteSpace(kind) || reader == null) return;
+        _runtimeTyped[(typeName, kind)] = reader;
+    }
+
     private void EnsureInitialized()
     {
         if (_initialized) return;
@@ -191,7 +200,8 @@ public sealed class @this
             // names the (type, kind) variant. Registered into the token-stream table;
             // the static Default.Read branch below registers the whole-payload decode.
             // A type may ship both (its wire read and its content decode).
-            if (!type.IsAbstract && typeof(ITypeReader).IsAssignableFrom(type)
+            if (!type.IsAbstract && !type.IsGenericTypeDefinition
+                && typeof(ITypeReader).IsAssignableFrom(type)
                 && type.GetConstructor(System.Type.EmptyTypes) is { } ctor)
             {
                 var instance = (ITypeReader)ctor.Invoke(null);

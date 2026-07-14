@@ -1,42 +1,25 @@
 namespace app.type.item.choice.serializer;
 
-using System.Reflection;
-
 /// <summary>
-/// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for
-/// <see cref="app.type.item.choice.@this{T}"/> — the closed named-set value. Its wire form
-/// is the chosen option's SYMBOL (a scalar, e.g. <c>"=="</c>); the KIND names the option
-/// set (<c>"operator"</c>, <c>"httpmethod"</c>), which resolves through the type registry
-/// to the closed <c>choice&lt;T&gt;</c> wrapper. The choice builds ITSELF from the symbol
-/// (<c>choice&lt;T&gt;.Parse</c>) — the reader only resolves the closed type and hands
-/// it the scalar. Format-agnostic: the same impl reads the symbol off any <c>IReader</c>.
+/// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for ONE closed option set —
+/// registered per (choice, kind) by the boot walk that discovers the closed sets
+/// (<c>RegisterModuleChoiceTypes</c>). The wire form is the option's SYMBOL (a scalar, e.g.
+/// <c>"=="</c>); the symbol parses through the type's own <see cref="app.type.item.choice.@this{T}.Parse"/>,
+/// and an unknown symbol's <see cref="System.FormatException"/> rides the born path to
+/// MaterializeFailed named to the binding. No reflection at read time — the closed type is
+/// baked into <typeparamref name="T"/>.
 /// </summary>
-public sealed class Reader : global::app.type.reader.ITypeReader
+public sealed class Reader<T> : global::app.type.reader.ITypeReader where T : notnull
 {
-    // The closed choice<T> wrapper's own Parse(symbol) — cached per wrapper.
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, MethodInfo> _parse = new();
-
-    public string Kind => global::app.type.reader.@this.AnyKind;
+    private readonly string _kind;
+    public Reader(string kind) { _kind = kind; }
+    public string Kind => _kind;
 
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
         if (reader.Null()) return new global::app.type.item.@null.@this("choice", kind);
-        var symbol = reader.String();
-        if (string.IsNullOrEmpty(kind))
-            throw new System.NotSupportedException(
-                "choice reader: a choice value needs its kind (the option-set name, e.g. 'operator').");
-
-        // The kind names the closed set; the registry maps it to the choice<T> wrapper
-        // (RegisterModuleChoiceTypes did the reverse "operator" → choice<Operator> mapping).
-        var wrapper = ctx.Context.App.Type[kind!].ClrType
-            ?? throw new System.NotSupportedException($"choice reader: no closed type for kind '{kind}'.");
-
-        var parse = _parse.GetOrAdd(wrapper, static w =>
-            w.GetMethod("Parse", BindingFlags.Public | BindingFlags.Static)
-            ?? throw new System.NotSupportedException($"choice<{w.Name}>: has no static Parse(symbol)."));
-
-        return (global::app.type.item.@this)parse.Invoke(null, new object?[] { symbol })!;
+        return global::app.type.item.choice.@this<T>.Parse(reader.String());
     }
 }

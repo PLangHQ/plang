@@ -501,10 +501,17 @@ public sealed partial class @this
                     {
                         var inner = c.GetGenericArguments()[0];
                         // Register the name → the choice<T> WRAPPER (c), not the inner T.
-                        // The Convert hook (name→member, e.g. "!=") lives on choice<T>;
+                        // The Parse hook (symbol→member, e.g. "!=") lives on choice<T>;
                         // registering the inner leaves the name resolving to a type with no
                         // hook, so a value falls through to the generic JSON deserializer.
-                        Register(GetTypeName(inner), c);
+                        var kindName = GetTypeName(inner);
+                        Register(kindName, c);
+                        // The closed reader for this set — one reflective instantiation at boot,
+                        // then a typed read-time call (no per-read reflection). The kind is the
+                        // option-set name ("operator", "httpmethod", …).
+                        Reader.Register("choice", kindName,
+                            (reader.ITypeReader)System.Activator.CreateInstance(
+                                typeof(app.type.item.choice.serializer.Reader<>).MakeGenericType(inner), kindName)!);
                     }
                 }
             }
