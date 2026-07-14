@@ -75,8 +75,14 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
             case System.Text.Json.JsonElement je:
                 try
                 {
-                    return context.Ok(System.Text.Json.JsonSerializer.Deserialize<GoalCall>(
-                        je.GetRawText(), global::app.channel.serializer.json.Options.Read()));
+                    // Build ingest hands a JsonElement — read it through goal.call's OWN reader
+                    // (the reflection kind), the same one owner the .pr load uses. No STJ restart.
+                    var bytes = System.Text.Encoding.UTF8.GetBytes(je.GetRawText());
+                    var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
+                    utf8.Read();
+                    var reader = new global::app.channel.serializer.json.Reader(utf8, bytes);
+                    return context.Ok(new global::app.goal.call.Reader().Read(ref reader, null,
+                        new global::app.type.reader.ReadContext(context, Verify: false)));
                 }
                 catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
                 {
