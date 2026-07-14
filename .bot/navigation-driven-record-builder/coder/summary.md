@@ -79,14 +79,13 @@ Branch drifted Stage0 **129 → 361** reds. Root-caused by clustering:
   goal.getTypes List-lower (dies Stage 4), and a revealed AssertionError.Variables-snapshot bug.
   Full remaining map: `coder/stabilization-remaining.md`.
 
-## Stage 4 — module-discovery (STARTED)
+## Stage 4 — module-discovery → MOVED to its own branch
 
-Plan written: `coder/v2/plan.md` (`db531a01d`). Replaces `module.Describe()` with value-object
-views (`app.module.list : list<module>` → `module.Actions : list<action>` → `action.Properties :
-list<type>`, reflection once at the action leaf) + Fluid templates; delete `Describe`/`StepActions`/
-`BuildTypeEntries`. Decomposed 4a–4e. **Next: 4a** = new `module`/`action` value types mirroring
-`goal.list`/`type.list` — a new core-type surface that likely wants an architect shape-pass first
-(as `type.list` got `stage3-type-collection-answer.md`). Baseline to hold: ~224.
+Stage 4 (module-discovery: `app.module.list`/`action`/`type` views + `ui.render` templates
+replacing `Describe`, incl. 4f the test report via `ui.render`) is **split out to the
+`module-discovery` branch** (off this branch @ `e7e38861b`), so it gets its own architect plan and
+a clean ~195 baseline. The coder's 4a–4f seed + handoff live at
+`.bot/module-discovery/coder/`. Architect authors the plan there next.
 
 ## Deferred (architect-logged, not this branch)
 snapshot RESTORE rebuild; PLNG004 render worklist; clr/format/text STJ boundary; enum→choice
