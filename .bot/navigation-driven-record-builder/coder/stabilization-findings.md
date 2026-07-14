@@ -96,5 +96,32 @@ redesign. Documented, no action.
 | 4 List-lower | 2 | goal.getTypes keepalive | dies Stage 4 |
 | 5 snapshot | 7 | intentional deferral | ISnapshot redesign |
 
-Cluster 1 is the highest-leverage and is yours to rule (it's the create model). Per Ingi I'm
-moving to **Stage 4 (module-discovery)** now; these findings wait for your ruling on 1–3.
+Cluster 1 is the highest-leverage and is yours to rule (it's the create model).
+
+## Recommendation (coder)
+
+The key thing surfaced talking it through with Ingi: **"back to base" and "do Stage 4" are
+different goals** — the remaining reds barely overlap with what Stage 4 touches. Three separable
+tracks:
+
+1. **Back-to-base (green) — highest ROI, does NOT need Stage 4.** Fix **Cluster 1 (text→choice)**
+   first: it's the biggest cluster (~13 tests + the whole condition suite via the `if`/`compare`
+   `Operator`), and the fix is one small create-model face on `choice<T>` using the existing
+   `FromName`. Cheap, high-yield — **this is your ruling to make and I recommend it first.** Then
+   Clusters 2 (http provider-null) and 3 (json.Writer goal). That recovers most of the 224.
+
+2. **Finish the architecture + unblock Stage 5 — this is what Stage 4 buys.** Stage 4's payoff is
+   *not* red-count: it deletes `Describe`/`StepActions`/`BuildTypeEntries` (3 of the 7 `[Obsolete]`
+   marks, so Stage 5's sweep can't run until Stage 4 lands), makes the builder prompt user-editable
+   (Fluid templates), converts the last raw-dictionary registry to `list<module>` values, and
+   retires `goal.getTypes` (Cluster 4). Bigger effort; payoff is cleanliness + editable prompt, not
+   green tests.
+
+3. **Park — safe.** All remaining reds are characterized here and are pre-existing (in the HEAD
+   baseline), so parking blocks nothing — the caveat is carrying a red baseline into Stage 4 makes
+   Stage-4 regressions harder to spot (the baseline problem).
+
+**My call:** do Cluster 1 (text→choice) now regardless — it's cheap and the highest-yield step to a
+clean-ish baseline — then decide Stage 4 vs park from there. I'm holding on Stage 4 4a (new
+`module`/`action` value types) pending your steer, since that's a new core-type surface that likely
+wants a shape-pass like `type.list` got (`stage3-type-collection-answer.md`).
