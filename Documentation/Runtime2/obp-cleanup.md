@@ -201,3 +201,11 @@ Delete in the cleanup pass unless a near-term consumer is known.
 **Status:** open — mechanical rename, safe to do inline on any branch already touching permission.
 
 **The OBP-clean target:** `Read.Allows(other)`, `verb.Allows(requested)`, `permission.Allows(path, verb)` — the grant answers "does this allow the request?". `HasAccess` stays (sanctioned `HasX` boolean compound). `Documentation/v0.2/obp-smells.md` variant-design section already documents the target name.
+
+## coder — module-discovery — NormalizeParameterTypes(Actions, modules, context)
+**Where:** `PLang/app/module/action/build/code/Default.cs:893` (called :472).
+**Smell:** verb+noun free function taking `Actions` + the module registry — parameter-type
+normalization is behavior that should live on the action/Actions type, not a static pass in
+the build code threading the registry through. Likely collapses once `action.Properties` (4c)
+carries the type entities and each action normalizes its own params.
+**Disposition (Ingi):** follow-up after all module-discovery stages land — not fixed inline.
