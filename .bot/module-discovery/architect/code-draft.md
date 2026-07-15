@@ -199,6 +199,17 @@ os/system/error/404.txt          ← per-code override wins over default (the ex
 
 STAYS: `Error.Write(IWriter)` — the wire face is serialization, not presentation. Verify item: trace `Format()`'s callers (the channel error-output path expected) and repoint each to the render; list any caller that needs the text SYNC (a template render is async — a sync wall here → stop and surface).
 
+## For the comment round — where your knowledge beats my trace
+
+This is read-and-comment, no code yet. The spots I most want your read on:
+
+1. **Hot-path check on the moved queries.** `IsModifier`/`GetModifierOrder`/`IsCacheable`/`GetActionType` move onto the action element — trace who calls them and WHEN. If any sit on the per-step run path (modifier scheduling?), minting/holding elements there changes a hot path; say so and we keep an index-level fast door for those instead of forcing the element hop.
+2. **Fluid over hosts — spike it FIRST, not at 4d.** The known precedent is bad: exposing `item.list` publicly broke 3 Modules tests because Fluid's reflecting enumeration choked on an unexpected member type. The templates will enumerate host elements with async prose doors and plang-list properties — one early spike (a module element through `render`) de-risks the whole stage.
+3. **The parity gate's capture point.** Where does the golden get captured — the final rendered prompt string that `build/code/Default.cs` assembles from `Describe()`, or the StepActions structure? Name the seam; the gate is only as good as its capture.
+4. **`Cacheable`'s two owners** — the `.pr`-stored `Cacheable` on the action vs the attribute read. Inventory who reads which and propose the single owner.
+5. **The two deliberate behavior changes** — push back if you see a consumer that breaks: choice registration on App-attach + inline (a `code.load` module NOW gets its closed sets — today it silently doesn't), and catalog cost moving from rebuild-per-`Describe()`-call to cached-elements-invalidated-on-mutation.
+6. **Order flexibility**: 4g (error templates) is independent of 4a–4e and can land whenever; 4f needs only the template machinery. If 4a's split turns out bigger than it reads, say so before starting, not after.
+
 ## Cost/caching model (settled)
 
 - Running an action never touches the views (dispatch reads the internal index).
