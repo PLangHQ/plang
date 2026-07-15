@@ -79,6 +79,11 @@ public sealed class @this : IAsyncDisposable
             count++;
         }
 
+        // A code.load'd assembly may bring its own closed sets (choice<T> params) — register them
+        // once its actions are in. At boot App isn't attached yet; the app ctor registers the PLang
+        // assembly's choices explicitly, so this only fires for a runtime-loaded assembly.
+        App?.Type.Choice.Register(assembly);
+
         return count;
     }
 

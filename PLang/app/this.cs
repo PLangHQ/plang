@@ -301,10 +301,11 @@ public sealed partial class @this : IAsyncDisposable
 
         Code.RegisterDefaults();
         Type.RegisterDomainTypes();
-        // Module choice<T> inner types (operator, …) live in app.module.* and only
-        // surface through handler params — register them so the runtime catalog
-        // resolves them by name (the cached map is built module-less).
-        Type.RegisterModuleChoiceTypes(_modules);
+        // Closed sets (choice<T>: operator, httpmethod, …) surface only through handler params
+        // and enum choices carry no [Choices] marker, so the choice registry discovers them by
+        // scanning the assembly's choice<T> usages — reverse-resolvable ("operator" → choice<T>)
+        // + readable. code.load re-runs this for a late-loaded assembly (Discover below).
+        Type.Choice.Register(typeof(global::app.@this).Assembly);
         Type.Scheme.Register("file", (raw, context) => global::app.type.item.path.file.@this.Resolve(raw, context));
         Type.Scheme.Register("http", (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context));
         Type.Scheme.Register("https", (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context));

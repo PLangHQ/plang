@@ -35,8 +35,9 @@ public sealed partial class @this
         Kind = new kind.list.@this(context);   // per-App, born with context → its kinds are stamped
     }
 
-    /// <summary>[Choices] vocabulary registry — reachable as <c>app.type.choices</c>.</summary>
-    public global::app.type.item.choice.list.@this Choice { get; } = new();
+    /// <summary>The choice registry — the closed-set vocabulary. Owns discovering closed sets
+    /// and registering each set's name + reader. Reachable as <c>app.type.choice</c>.</summary>
+    public global::app.type.item.choice.list.@this Choice { get; }
 
     /// <summary>
     /// Per-App scheme registry for <see cref="path.@this"/>. Populated at App
@@ -206,6 +207,7 @@ public sealed partial class @this
 
     public @this()
     {
+        Choice = new global::app.type.item.choice.list.@this(this);
         _catalogByName = new Lazy<Dictionary<string, app.type.@this>>(() =>
         {
             var dict = new Dictionary<string, app.type.@this>(StringComparer.OrdinalIgnoreCase);
@@ -470,52 +472,6 @@ public sealed partial class @this
     {
     }
 
-    /// <summary>
-    /// Registers module-defined <c>choice&lt;T&gt;</c> inner types (the <c>[Choices]</c>
-    /// vocabularies / enums a handler param names, e.g. <c>operator</c> on
-    /// <c>condition.if</c>) into the RUNTIME registry. The cached name→type map is built
-    /// module-less (<see cref="BuildTypeEntries"/>(null)), and these types live in
-    /// <c>app.module.*</c>, surfacing only through handler params — so without this the
-    /// catalog resolves them FORWARD (<c>choice&lt;Operator&gt;</c> → "operator") but not
-    /// REVERSE ("operator" → <c>Operator</c>), and <c>Wire.ReadBody</c> of a
-    /// <c>type:operator</c> param throws. Called at boot once actions are discovered.
-    /// </summary>
-    public void RegisterModuleChoiceTypes(global::app.module.list.@this modules)
-    {
-        // The choice FAMILY itself — so a wire type {name:"choice", kind:"operator"} resolves
-        // (the kind names the closed set; the choice reader maps it to choice<T>). The enum-name
-        // aliases below stay for the LLM-facing catalog ("operator", "httpmethod", …).
-        Register("choice", typeof(app.type.item.choice.@this<>));
-
-        foreach (var ns in modules.Names)
-            foreach (var actionName in modules.GetActions(ns))
-            {
-                var actionType = modules.GetActionType(ns, actionName);
-                if (actionType == null) continue;
-                foreach (var prop in actionType.GetProperties(
-                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
-                {
-                    if (prop.Name is "EqualityContract" or "Context") continue;
-                    if (UnwrapType(prop.PropertyType) is { IsGenericType: true } c
-                        && c.GetGenericTypeDefinition() == typeof(app.type.item.choice.@this<>))
-                    {
-                        var inner = c.GetGenericArguments()[0];
-                        // Register the name → the choice<T> WRAPPER (c), not the inner T.
-                        // The Parse hook (symbol→member, e.g. "!=") lives on choice<T>;
-                        // registering the inner leaves the name resolving to a type with no
-                        // hook, so a value falls through to the generic JSON deserializer.
-                        var kindName = GetTypeName(inner);
-                        Register(kindName, c);
-                        // The closed reader for this set — one reflective instantiation at boot,
-                        // then a typed read-time call (no per-read reflection). The kind is the
-                        // option-set name ("operator", "httpmethod", …).
-                        Reader.Register("choice", kindName,
-                            (reader.ITypeReader)System.Activator.CreateInstance(
-                                typeof(app.type.item.choice.serializer.Reader<>).MakeGenericType(inner), kindName)!);
-                    }
-                }
-            }
-    }
 
     // --- Constrained-value catalog ---
 

@@ -18,6 +18,53 @@ public sealed class @this
     private readonly object _gate = new();
     private Dictionary<System.Type, MethodInfo>? _registry;
 
+    // The owning type registry — a closed set registers its name (kind → choice<T>) and its
+    // reader through here, so both facets stay under the concept that discovers them.
+    private readonly global::app.type.list.@this _owner;
+    internal @this(global::app.type.list.@this owner) { _owner = owner; }
+
+    /// <summary>
+    /// Register every closed set (<c>choice&lt;T&gt;</c>) reachable in <paramref name="assembly"/>
+    /// so its NAME resolves (kind → <c>choice&lt;T&gt;</c>, the reverse of the forward catalog) and
+    /// its values READ (a <c>Reader&lt;T&gt;</c> per set). A set is only identifiable by its usage —
+    /// an enum choice carries no <c>[Choices]</c> marker — so this reflects the assembly's property
+    /// types. Fired when an assembly is discovered: boot (the PLang assembly) and <c>code.load</c>
+    /// (an external one), so a late-loaded module's choice params register the same as built-ins.
+    /// Idempotent — re-registering the same set overwrites.
+    /// </summary>
+    public void Register(System.Reflection.Assembly assembly)
+    {
+        // The choice FAMILY — a wire type {name:"choice", kind:"operator"} resolves to choice<T>.
+        _owner.Register("choice", typeof(global::app.type.item.choice.@this<>));
+
+        var seen = new HashSet<System.Type>();
+        foreach (var t in SafeTypes(assembly))
+            foreach (var prop in t.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            {
+                var u = Unwrap(prop.PropertyType);
+                if (!u.IsGenericType || u.GetGenericTypeDefinition() != typeof(global::app.type.item.choice.@this<>))
+                    continue;
+                if (!seen.Add(u)) continue;
+
+                var inner = u.GetGenericArguments()[0];
+                var kindName = _owner.GetTypeName(inner);
+                // name → the choice<T> WRAPPER (the symbol→member Parse hook lives on choice<T>,
+                // not the inner T — registering the inner leaves a value falling to generic JSON).
+                _owner.Register(kindName, u);
+                // the closed reader for this set — one reflective instantiation, then typed reads.
+                _owner.Reader.Register("choice", kindName,
+                    (global::app.type.reader.ITypeReader)System.Activator.CreateInstance(
+                        typeof(global::app.type.item.choice.serializer.Reader<>).MakeGenericType(inner), kindName)!);
+            }
+    }
+
+    // A code.load'd assembly may reference types it can't fully load; keep the ones that resolve.
+    private static IEnumerable<System.Type> SafeTypes(System.Reflection.Assembly assembly)
+    {
+        try { return assembly.GetTypes(); }
+        catch (System.Reflection.ReflectionTypeLoadException ex) { return ex.Types.Where(t => t != null)!; }
+    }
+
     /// <summary>
     /// Returns the choices for <paramref name="type"/> if it (or its underlying
     /// constrained type — through Nullable and Data wrappers) has a [Choices] method.
