@@ -2,6 +2,15 @@
 
 The code shapes from the architect/Ingi review round, in landing order. Traced against `b3d5dcd9b`.
 
+> **ROUND-2 CORRECTIONS (settled 2026-07-15, override anything below that conflicts — plan.md models #6/#6b/#6c are the spec):**
+> 1. Teaching is ALREADY ~90% Fluid (four live templates); the only C# text moving is the per-param `desc` glue → the templates' param loops. No StringBuilder hunt.
+> 2. The two SUMMARY templates go TREE (`%modules%`, `{{ module.Description }}` — it's the module's description); `stepActionDetails` gets a FILTERED flat `%actions%` via the EXISTING `list.where` + Operator `"in"`: `- where %actions% Name in %planStep.actions%, write to %actions%` — its nested dedup-match loop dies. The catalog action gains `Name` ("file.read").
+> 3. The draft's `modules.md` below demotes to a user-facing docs example — it is NOT the builder swap; the four existing templates are, with minimal edits (param loops + prose member names + summary-tree flip).
+> 4. Parity goldens capture the RENDERED strings (`%actionSummary%`, `%actionDetails%`); add nullable + `[Default]` params to the golden cases; verify who renders `v2/summary.md` (possibly dead) and what `Describe()` emits per param today (`:328` GetTypeName over the raw `Data<T>` prop type — unchecked).
+> 5. `build.actions`/`build.types` dissolve into navigation + templates (`%!app…%` → `app.module`/`app.type.list`; verify/add the type collection's enumeration door). Thin convenience actions = your call.
+> 6. `Cacheable`: single owner = the `[Action]` attribute read lazily on the element; delete dead `IsCacheable` + the stuffed field.
+> 7. The SPIKE is five-legged (plan.md, pieces section) and is 4a's first commit. No LINQ branch — the list module already has the query surface; the lazy/deferred upgrade is a logged follow-on.
+
 > **You own this.** Every block is a suggestion reviewed for SHAPE — bodies, naming inside methods, factoring are yours. Where a body says "= today's X, relocated", the incumbent's body is the spec; where something is uncertain the block says verify.
 
 ## 4a — the split: the registry IS the collection
