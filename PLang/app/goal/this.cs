@@ -321,7 +321,7 @@ public sealed partial class @this
     /// files have modifiers correctly nested. Without recursion sub-goal steps keep
     /// modifiers flat and fail at runtime (flat modifiers' no-op Run wipes %!data%).
     /// </summary>
-    public void GroupModifiersRecursive(app.module.@this modules)
+    public void GroupModifiersRecursive(app.module.list.@this modules)
     {
         Steps.GroupAllModifiers(modules);
         foreach (var subGoal in Goals)

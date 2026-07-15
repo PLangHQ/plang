@@ -4,7 +4,7 @@ using app.module;
 using app.actor.context;
 using app.error;
 
-namespace app.module;
+namespace app.module.list;
 
 /// <summary>
 /// Flat action registry. Owns discovery, registration, and resolution of all actions.
@@ -217,7 +217,7 @@ public sealed class @this : IAsyncDisposable
 
     /// <summary>
     /// Describes all registered actions with parameter metadata for the LLM builder prompt.
-    /// global::app.module.@this owns this because it knows its own types.
+    /// global::app.module.list.@this owns this because it knows its own types.
     /// </summary>
     /// <summary>
     /// Returns the inventory of channel names visible to the given actor at build time

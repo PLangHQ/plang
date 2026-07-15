@@ -34,7 +34,7 @@ public class ModuleAccessorTests
 
     [Test] public async Task AppModule_HasNoCurrentMember_ReflectionGuard()
     {
-        var t = typeof(global::app.module.@this);
+        var t = typeof(global::app.module.list.@this);
         var current = t.GetProperty("current");
         await Assert.That(current).IsNull();
     }

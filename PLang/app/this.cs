@@ -20,7 +20,7 @@ namespace app;
 public sealed partial class @this : IAsyncDisposable
 {
     private readonly CancellationTokenSource _shutdownCts = new();
-    private readonly global::app.module.@this _modules;
+    private readonly global::app.module.list.@this _modules;
     private readonly global::app.goal.list.@this _goals;
     private bool _disposed;
 
@@ -134,7 +134,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Flat action registry. Discovers, registers, and resolves actions by module.action.
     /// Built-in actions from PLang assembly, external DLLs add via Discover().
     /// </summary>
-    public global::app.module.@this Module => _modules;
+    public global::app.module.list.@this Module => _modules;
 
     /// <summary>
     /// Type-keyed provider registry for pluggable module implementations.
@@ -265,7 +265,7 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public keepalive.@this KeepAlive { get; } = new();
 
-    public @this(string absolutePath, global::app.module.@this? modules = null,
+    public @this(string absolutePath, global::app.module.list.@this? modules = null,
         string? environment = null,
         bool autoWireConsoleChannels = true)
     {
@@ -293,7 +293,7 @@ public sealed partial class @this : IAsyncDisposable
         Code = new AppCode(System.Context);
         _settingsStore = new Lazy<Task<global::app.module.action.setting.IStore>>(CreateSettingsStoreAsync);
         Setting = new global::app.setting.@this(System.Context);
-        _modules = modules ?? new global::app.module.@this();
+        _modules = modules ?? new global::app.module.list.@this();
         _modules.App = this;
         _goals = new global::app.goal.list.@this { App = this };
 

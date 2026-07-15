@@ -18,7 +18,7 @@ public class GroupModifiersTests
     [Test]
     public async Task GroupModifiers_NoModifiers_Unchanged()
     {
-        var modules = new global::app.module.@this();
+        var modules = new global::app.module.list.@this();
         var actions = Flat(("file", "read"), ("variable", "set"));
 
         actions.GroupModifiers(modules);
@@ -33,7 +33,7 @@ public class GroupModifiersTests
     [Test]
     public async Task GroupModifiers_ModifierAfterExecutable_Attached()
     {
-        var modules = new global::app.module.@this();
+        var modules = new global::app.module.list.@this();
         var actions = Flat(("file", "read"), ("cache", "wrap"));
 
         actions.GroupModifiers(modules);
@@ -47,7 +47,7 @@ public class GroupModifiersTests
     [Test]
     public async Task GroupModifiers_MultipleModifiersOnOneAction_SortedByOrder()
     {
-        var modules = new global::app.module.@this();
+        var modules = new global::app.module.list.@this();
         // Insertion order: error(3), cache(2), timeout(1) — should sort to timeout, cache, error
         var actions = Flat(
             ("file", "read"),
@@ -68,7 +68,7 @@ public class GroupModifiersTests
     [Test]
     public async Task GroupModifiers_ModifierBetweenTwoExecutables_AttachesToPreceding()
     {
-        var modules = new global::app.module.@this();
+        var modules = new global::app.module.list.@this();
         var actions = Flat(("file", "read"), ("cache", "wrap"), ("variable", "set"));
 
         actions.GroupModifiers(modules);
@@ -84,7 +84,7 @@ public class GroupModifiersTests
     [Test]
     public async Task GroupModifiers_LeadingModifier_NoPreceeding_EdgeCase()
     {
-        var modules = new global::app.module.@this();
+        var modules = new global::app.module.list.@this();
         // Leading modifier has no preceding executable — it is dropped, not an error
         var actions = Flat(("cache", "wrap"), ("file", "read"));
 
@@ -98,7 +98,7 @@ public class GroupModifiersTests
     [Test]
     public async Task GroupModifiers_Mixed_CorrectGrouping()
     {
-        var modules = new global::app.module.@this();
+        var modules = new global::app.module.list.@this();
         // [file.read, cache.wrap, error.handle, variable.set, timeout.after]
         // -> file.read with sorted [cache(2), error(3)]; variable.set with [timeout(1)]
         var actions = Flat(

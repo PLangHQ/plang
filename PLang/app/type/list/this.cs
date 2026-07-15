@@ -114,7 +114,7 @@ public sealed partial class @this
     /// Static-friendly variant of <see cref="GetTypeName"/> — handles primitives, generics,
     /// nullable, arrays, Data&lt;T&gt; unwrap, and reads [PlangType] / @this convention names
     /// directly off the type via reflection (no per-App registry). For callers that don't
-    /// have an App in scope (e.g. <see cref="app.module.@this"/> instances constructed
+    /// have an App in scope (e.g. <see cref="app.module.list.@this"/> instances constructed
     /// without an App backing in test fixtures).
     /// </summary>
     public static string GetTypeNameStatic(System.Type type)
@@ -480,7 +480,7 @@ public sealed partial class @this
     /// REVERSE ("operator" → <c>Operator</c>), and <c>Wire.ReadBody</c> of a
     /// <c>type:operator</c> param throws. Called at boot once actions are discovered.
     /// </summary>
-    public void RegisterModuleChoiceTypes(global::app.module.@this modules)
+    public void RegisterModuleChoiceTypes(global::app.module.list.@this modules)
     {
         // The choice FAMILY itself — so a wire type {name:"choice", kind:"operator"} resolves
         // (the kind names the closed set; the choice reader maps it to choice<T>). The enum-name
@@ -621,7 +621,7 @@ public sealed partial class @this
     ///   - Opaque (no markers)   → not surfaced.
     /// </summary>
     [System.Obsolete("Type/module discovery moves to list<type>/list<module> + a Fluid render — do not add new callers.")]
-    public List<app.type.@this> BuildTypeEntries(app.module.@this? modules)
+    public List<app.type.@this> BuildTypeEntries(app.module.list.@this? modules)
     {
         var entries = new List<app.type.@this>();
         var seen = new HashSet<System.Type>();

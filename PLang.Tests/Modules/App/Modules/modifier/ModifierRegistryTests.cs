@@ -11,7 +11,7 @@ public class ModifierRegistryTests
     [Test]
     public async Task IsModifier_ModifierAttributedHandler_ReturnsTrue()
     {
-        var modules = new global::app.module.@this();
+        var modules = new global::app.module.list.@this();
 
         await Assert.That(modules.IsModifier("timeout", "after")).IsTrue();
         await Assert.That(modules.IsModifier("cache", "wrap")).IsTrue();
@@ -21,7 +21,7 @@ public class ModifierRegistryTests
     [Test]
     public async Task IsModifier_RegularHandler_ReturnsFalse()
     {
-        var modules = new global::app.module.@this();
+        var modules = new global::app.module.list.@this();
 
         await Assert.That(modules.IsModifier("variable", "set")).IsFalse();
         await Assert.That(modules.IsModifier("file", "read")).IsFalse();
@@ -30,7 +30,7 @@ public class ModifierRegistryTests
     [Test]
     public async Task IsModifier_UnknownAction_ReturnsFalse()
     {
-        var modules = new global::app.module.@this();
+        var modules = new global::app.module.list.@this();
 
         await Assert.That(modules.IsModifier("nonexistent", "nope")).IsFalse();
     }
@@ -42,7 +42,7 @@ public class ModifierRegistryTests
     [Test]
     public async Task GetModifierOrder_ReturnsCorrectOrder()
     {
-        var modules = new global::app.module.@this();
+        var modules = new global::app.module.list.@this();
 
         await Assert.That(modules.GetModifierOrder("timeout", "after")).IsEqualTo(1);
         await Assert.That(modules.GetModifierOrder("cache", "wrap")).IsEqualTo(2);
@@ -92,7 +92,7 @@ public class ModifierRegistryTests
     {
         // Modifier modules appear in the action summary so the LLM can discover them
         // — they go through the same [Action] registration as any other handler.
-        var modules = new global::app.module.@this();
+        var modules = new global::app.module.list.@this();
         var described = await modules.Describe();
 
         var names = described.Select(a => $"{a.Module}.{a.ActionName}").ToHashSet();

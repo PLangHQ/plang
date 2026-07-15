@@ -77,7 +77,7 @@ public partial class getTypes : IContext
         Dictionary<string, string> working,
         Dictionary<string, string> currentStepSnapshot,
         ref string? chainReturnType,
-        global::app.module.@this modules,
+        global::app.module.list.@this modules,
         global::app.@this app)
     {
         if (string.Equals(action.Module, "variable", StringComparison.OrdinalIgnoreCase)
@@ -193,7 +193,7 @@ public partial class getTypes : IContext
 
     private static string DetermineReturnType(
         global::app.goal.steps.step.actions.action.@this action,
-        global::app.module.@this modules)
+        global::app.module.list.@this modules)
     {
         var type = modules.GetActionType(action.Module, action.ActionName);
         if (type == null) return "object";

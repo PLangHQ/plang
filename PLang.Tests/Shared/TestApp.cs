@@ -12,7 +12,7 @@ public static class TestApp
 {
     public static global::app.@this Create(
         string absolutePath,
-        global::app.module.@this? modules = null,
+        global::app.module.list.@this? modules = null,
         string? environment = null,
         bool autoWireConsoleChannels = true)
     {

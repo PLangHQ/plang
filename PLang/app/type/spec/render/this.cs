@@ -23,9 +23,9 @@ namespace app.type.spec.render;
 /// </summary>
 public sealed class @this
 {
-    private readonly app.module.@this _modules;
+    private readonly app.module.list.@this _modules;
 
-    public @this(app.module.@this modules) { _modules = modules; }
+    public @this(app.module.list.@this modules) { _modules = modules; }
 
     public string Render(ExampleSpec spec)
     {

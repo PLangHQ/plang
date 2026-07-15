@@ -136,7 +136,7 @@ public sealed partial class @this : IList<action.@this>
     /// Modifiers are sorted by [Modifier(Order = N)] so the outermost wrapper comes first.
     /// A leading modifier with no preceding executable is dropped. Mutates in place.
     /// </summary>
-    public void GroupModifiers(global::app.module.@this modules)
+    public void GroupModifiers(global::app.module.list.@this modules)
     {
         if (_items.Count == 0) return;
 

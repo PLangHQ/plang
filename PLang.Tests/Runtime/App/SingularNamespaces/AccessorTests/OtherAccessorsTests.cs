@@ -6,7 +6,7 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.SingularNamespaces.AccessorTests;
 
 // Batch D (part 2) — the remaining accessor renames: event, format, variable, error, navigator.
-// Plus the headline negative guard: the four App* wrapper aliases (global::app.goal.list.@this/global::app.channel.list.@this/global::app.@event.list.@this/global::app.module.@this)
+// Plus the headline negative guard: the four App* wrapper aliases (global::app.goal.list.@this/global::app.channel.list.@this/global::app.@event.list.@this/global::app.module.list.@this)
 // no longer exist anywhere in the codebase.
 public class OtherAccessorsTests
 {

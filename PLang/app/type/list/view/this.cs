@@ -24,9 +24,9 @@ namespace app.type.list.view;
 [System.Obsolete("Superseded by a Fluid render over list<module>/list<type> — do not add new callers.")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    private readonly app.module.@this _modules;
+    private readonly app.module.list.@this _modules;
 
-    public @this(app.module.@this modules) { _modules = modules; }
+    public @this(app.module.list.@this modules) { _modules = modules; }
 
     /// <summary>Ordered list of primitive type names exposed to the builder.</summary>
     [LlmBuilder]

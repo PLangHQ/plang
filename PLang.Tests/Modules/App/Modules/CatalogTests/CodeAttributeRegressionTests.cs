@@ -19,7 +19,7 @@ namespace PLang.Tests.App.Modules.CatalogTests;
 public class CodeAttributeRegressionTests
 {
     private static Assembly PLangAssembly =>
-        typeof(global::app.module.@this).Assembly;
+        typeof(global::app.module.list.@this).Assembly;
 
     [Test]
     public async Task CodeAttribute_TypeExistsInAppModulesNamespace()
