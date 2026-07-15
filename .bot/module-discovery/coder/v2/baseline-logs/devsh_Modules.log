@@ -1,0 +1,269 @@
+
+████████╗██╗   ██╗███╗   ██╗██╗████████╗
+╚══██╔══╝██║   ██║████╗  ██║██║╚══██╔══╝
+   ██║   ██║   ██║██╔██╗ ██║██║   ██║
+   ██║   ██║   ██║██║╚██╗██║██║   ██║
+   ██║   ╚██████╔╝██║ ╚████║██║   ██║
+   ╚═╝    ╚═════╝ ╚═╝  ╚═══╝╚═╝   ╚═╝
+
+   TUnit v1.13.11.0 | 64-bit | Ubuntu 22.04.5 LTS | linux-x64 | .NET 10.0.9 | Microsoft Testing Platform v2.1.0
+
+   Engine Mode: SourceGenerated
+
+  Saved Start (0.0s)
+  Saved Test (0.0s)
+  Saved Public (0.0s)
+failed GenerateLlmFilePath_ProducedViaPathDerivationVerbs (33ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at PLang.Tests.App.Modules.Debug.DebugTraceWriteTests.GenerateLlmFilePath_ProducedViaPathDerivationVerbs() in /workspace/plang/PLang.Tests/Modules/App/Modules/Debug/DebugTraceWriteTests.cs:32
+failed TraceWrite_GoesThroughPathVerbs_NotFileWriteAllText (33ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at PLang.Tests.App.Modules.Debug.DebugTraceWriteTests.TraceWrite_GoesThroughPathVerbs_NotFileWriteAllText() in /workspace/plang/PLang.Tests/Modules/App/Modules/Debug/DebugTraceWriteTests.cs:48
+failed Build_SurfacesRecordAsKindRecordWithFields (37ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to not be null
+  but value is null
+  
+  at Assert.That(goal).IsNotNull()
+failed TypeSchemas_RendersRecordsAndEnumsInExpectedShape (34ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to not be null
+  but value is null
+  
+  at Assert.That(goal).IsNotNull()
+failed Discover_WithDotDotTraversal_DeniedByAuthGate (164ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to not be equal to NullReferenceException
+  but both values are NullReferenceException
+  
+  at Assert.That(result.Error!.Key).IsNotEqualTo("NullReferenceException")
+failed FluidInclude_InRootTemplate_RendersSilently (481ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to contain "Hello footer"
+  but found "(12 bytes)"
+  
+  at Assert.That((await result.Value())!.Clr<string>()).Contains("Hello footer")
+failed SaveGoal_CamelCase_StoreOnly (79ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to contain ""description""
+  but found "{
+    "name": "Test",
+    "steps": [],
+    "goals": [],
+    "visibility": "Private",
+    "path": "/Test.goal",
+    "prPath": "/.build/test.pr",
+    "isSetup": false,
+    "isEvent": false,
+    "isSystem": false,
+    "isTest": false
+  }"
+  
+  at Assert.That(json).Contains("\"description\"")
+failed ValidateActions_SkipsVariableReferences (51ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "%flag%"
+  but found "null"
+  
+  at Assert.That((await leftParam.Value())?.ToString()).IsEqualTo("%flag%")
+failed SaveGoal_WithSubGoals_SingleFile (145ms)
+  TUnit.Engine.Exceptions.TestFailedException: JsonException: The JSON value could not be converted to app.goal.Visibility. Path: $.goals[0].visibility | LineNumber: 8 | BytePositionInLine: 29.
+    at System.Text.Json.ThrowHelper.ThrowJsonException(String message)
+    at System.Text.Json.Serialization.Converters.EnumConverter`1.Read(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options)
+    at System.Text.Json.Serialization.Metadata.JsonPropertyInfo`1.ReadJsonAndSetMember(Object obj, ReadStack& state, Utf8JsonReader& reader)
+    at System.Text.Json.Serialization.Converters.ObjectDefaultConverter`1.OnTryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value)
+    at System.Text.Json.Serialization.JsonConverter`1.TryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value, Boolean& isPopulatedValue)
+    at System.Text.Json.Serialization.JsonCollectionConverter`2.OnTryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, TCollection& value)
+    at System.Text.Json.Serialization.JsonConverter`1.TryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value, Boolean& isPopulatedValue)
+    at System.Text.Json.Serialization.Metadata.JsonPropertyInfo`1.ReadJsonAndSetMember(Object obj, ReadStack& state, Utf8JsonReader& reader)
+    at System.Text.Json.Serialization.Converters.ObjectDefaultConverter`1.OnTryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value)
+    at System.Text.Json.Serialization.JsonConverter`1.TryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value, Boolean& isPopulatedValue)
+    at System.Text.Json.Serialization.JsonConverter`1.ReadCore(Utf8JsonReader& reader, T& value, JsonSerializerOptions options, ReadStack& state)
+    at System.Text.Json.Serialization.Metadata.JsonTypeInfo`1.Deserialize(Utf8JsonReader& reader, ReadStack& state)
+    at System.Text.Json.JsonSerializer.ReadFromSpan[TValue](ReadOnlySpan`1 utf8Json, JsonTypeInfo`1 jsonTypeInfo, Nullable`1 actualByteCount)
+    at System.Text.Json.JsonSerializer.ReadFromSpan[TValue](ReadOnlySpan`1 json, JsonTypeInfo`1 jsonTypeInfo)
+    at PLang.Tests.App.Modules.builder.SaveGoalsTests.SaveGoal_WithSubGoals_SingleFile() in /workspace/plang/PLang.Tests/Modules/App/Modules/builder/SaveGoalsTests.cs:118
+failed SaveGoal_SerializesToPrPath (182ms)
+  TUnit.Engine.Exceptions.TestFailedException: JsonException: The JSON value could not be converted to app.goal.Visibility. Path: $.visibility | LineNumber: 20 | BytePositionInLine: 25.
+    at System.Text.Json.ThrowHelper.ThrowJsonException(String message)
+    at System.Text.Json.Serialization.Converters.EnumConverter`1.Read(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options)
+    at System.Text.Json.Serialization.Metadata.JsonPropertyInfo`1.ReadJsonAndSetMember(Object obj, ReadStack& state, Utf8JsonReader& reader)
+    at System.Text.Json.Serialization.Converters.ObjectDefaultConverter`1.OnTryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value)
+    at System.Text.Json.Serialization.JsonConverter`1.TryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value, Boolean& isPopulatedValue)
+    at System.Text.Json.Serialization.JsonConverter`1.ReadCore(Utf8JsonReader& reader, T& value, JsonSerializerOptions options, ReadStack& state)
+    at System.Text.Json.Serialization.Metadata.JsonTypeInfo`1.Deserialize(Utf8JsonReader& reader, ReadStack& state)
+    at System.Text.Json.JsonSerializer.ReadFromSpan[TValue](ReadOnlySpan`1 utf8Json, JsonTypeInfo`1 jsonTypeInfo, Nullable`1 actualByteCount)
+    at System.Text.Json.JsonSerializer.ReadFromSpan[TValue](ReadOnlySpan`1 json, JsonTypeInfo`1 jsonTypeInfo)
+    at PLang.Tests.App.Modules.builder.SaveGoalsTests.SaveGoal_SerializesToPrPath() in /workspace/plang/PLang.Tests/Modules/App/Modules/builder/SaveGoalsTests.cs:66
+failed ValidateActions_GoalCallPath_Resolved (202ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to ".build/dosomething.pr"
+  but found ""
+  
+  at Assert.That(resolvedCall!.PrPath?.ToString().Replace('\\', '/').TrimStart('/')).IsEqualTo(".build/dosomething.pr")
+failed Hash_SHA256_ProducesCorrectHash (10ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+  but found "6c6ae5bd5d15276f795ba145a5e8ac1b8417b1ff488c1aeae773417262dcbdf4"
+  
+  at Assert.That(hex).IsEqualTo("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08")
+failed Hash_Keccak256_ProducesCorrectHash (1ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "9c22ff5f21f0b81b113e63f7db6da94fedef11b2119b4088b89664fb9a3cb658"
+  but found "5d183022536b35a21c04c43b9a3ff4d7bee3eb8e4f5855d76dd49727c0890ff0"
+  
+  at Assert.That(hex).IsEqualTo("9c22ff5f21f0b81b113e63f7db6da94fedef11b2119b4088b89664fb9a3cb658")
+failed Set_NullValue_StoresAndRetrieves (17ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [PlangDeserializeError] Plang deserialize failed: invalid .pr schema: value slot 'NullKey' has no declared type. Value was: null
+  but found False
+  
+  at Assert.That(data.Success).IsTrue().Because("Data failed: [PlangDeserializeError] Plang deserialize failed: invalid .pr schema: value slot 'NullKey' has no declared type. Value was: null")
+failed MyIdentity_UpdatedAfterSetDefault (78ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "first"
+  but found "default"
+  
+  at Assert.That(id1!.Name).IsEqualTo("first")
+failed GoalCall_ExistingProperties_UnchangedAfterNewFields (143ms)
+  TUnit.Engine.Exceptions.TestFailedException: InvalidOperationException: Each parameter in the deserialization constructor on type 'app.data.this' must bind to an object property or field on deserialization. Each parameter name and type must match with a property or field on the object. Fields are only considered when 'JsonSerializerOptions.IncludeFields' is enabled. The name match can be case-insensitive.
+    at System.Text.Json.ThrowHelper.ThrowInvalidOperationException_ConstructorParameterIncompleteBinding(Type parentType)
+    at System.Text.Json.Serialization.Converters.ObjectWithParameterizedConstructorConverter`1.OnTryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value)
+    at System.Text.Json.Serialization.JsonConverter`1.TryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value, Boolean& isPopulatedValue)
+    at System.Text.Json.Serialization.JsonCollectionConverter`2.OnTryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, TCollection& value)
+    at System.Text.Json.Serialization.JsonConverter`1.TryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value, Boolean& isPopulatedValue)
+    at System.Text.Json.Serialization.Metadata.JsonPropertyInfo`1.ReadJsonAndSetMember(Object obj, ReadStack& state, Utf8JsonReader& reader)
+    at System.Text.Json.Serialization.Converters.ObjectDefaultConverter`1.OnTryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value)
+    at System.Text.Json.Serialization.JsonConverter`1.TryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value, Boolean& isPopulatedValue)
+    at System.Text.Json.Serialization.JsonConverter`1.ReadCore(Utf8JsonReader& reader, T& value, JsonSerializerOptions options, ReadStack& state)
+    at System.Text.Json.Serialization.Metadata.JsonTypeInfo`1.Deserialize(Utf8JsonReader& reader, ReadStack& state)
+    at System.Text.Json.JsonSerializer.ReadFromSpan[TValue](ReadOnlySpan`1 utf8Json, JsonTypeInfo`1 jsonTypeInfo, Nullable`1 actualByteCount)
+    at System.Text.Json.JsonSerializer.ReadFromSpan[TValue](ReadOnlySpan`1 json, JsonTypeInfo`1 jsonTypeInfo)
+    at PLang.Tests.App.Modules.llm.LlmTypeTests.GoalCall_ExistingProperties_UnchangedAfterNewFields() in /workspace/plang/PLang.Tests/Modules/App/Modules/llm/LlmTypeTests.cs:97
+    at PLang.Tests.App.Modules.llm.LlmTypeTests.GoalCall_ExistingProperties_UnchangedAfterNewFields() in /workspace/plang/PLang.Tests/Modules/App/Modules/llm/LlmTypeTests.cs:103
+failed Query_CacheHit_PropertiesPreserved (105ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "preserved"
+  but found "{Value: "preserved", RawResponse: "preserved", Model: "gpt-5.4-nano", PromptTokens: 5, CompletionTo…" which differs at index 0:
+      ↓
+     "{Value: ""
+     "preserved"
+      ↑
+  
+  at Assert.That((await result2.Value())?.ToString()).IsEqualTo("preserved")
+  Validation failed (retry 1/1): Not found: .build/validator.pr
+  Validation failed (no retries left): Not found: .build/validator.pr
+  Validation failed (retry 1/3): Not found: .build/alwaysfails.pr
+  Validation failed (retry 2/3): Not found: .build/alwaysfails.pr
+  Validation failed (retry 3/3): Not found: .build/alwaysfails.pr
+  Validation failed (no retries left): Not found: .build/alwaysfails.pr
+  Validation failed (retry 1/2): Not found: .build/nonexistentvalidator.pr
+  Validation failed (retry 2/2): Not found: .build/nonexistentvalidator.pr
+  Validation failed (no retries left): Not found: .build/nonexistentvalidator.pr
+failed Handle_GoalFirst_GoalSucceeds_ReturnsGoalResult (32ms)
+  TUnit.Engine.Exceptions.TestFailedException: InvalidCastException: List`1 cannot lower to this — the type must own this Clr projection.
+    at app.type.item.this.ClrConvert(Object backing, Type target) in /workspace/plang/PLang/app/type/item/this.cs:387
+    at app.type.item.list.this.Clr(Type target) in /workspace/plang/PLang/app/type/item/list/this.cs:562
+    at app.type.item.this.Clr[T]() in /workspace/plang/PLang/app/type/item/this.cs:350
+    at app.data.this.Clr[T]() in /workspace/plang/PLang/app/data/this.cs:783
+    at app.module.error.Handle.<>c__DisplayClass26_0.<<Wrap>b__0>d.MoveNext() in /workspace/plang/PLang/app/module/error/handle.cs:100
+    --- End of stack trace from previous location ---
+    at app.goal.steps.step.actions.action.modifiers.this.RunAsync(Func`1 innermost, this context) in /workspace/plang/PLang/app/goal/steps/step/actions/action/modifiers/this.cs:56
+    at app.goal.steps.step.actions.action.this.RunAsync(this context) in /workspace/plang/PLang/app/goal/steps/step/actions/action/this.cs:253
+    at PLang.Tests.App.Modules.modifier.ErrorHandleTests.Handle_GoalFirst_GoalSucceeds_ReturnsGoalResult() in /workspace/plang/PLang.Tests/Modules/App/Modules/modifier/ErrorHandleTests.cs:314
+failed Handle_RetryFirst_GoalFails_ErrorChains (65ms)
+  TUnit.Engine.Exceptions.TestFailedException: InvalidCastException: List`1 cannot lower to this — the type must own this Clr projection.
+    at app.type.item.this.ClrConvert(Object backing, Type target) in /workspace/plang/PLang/app/type/item/this.cs:387
+    at app.type.item.list.this.Clr(Type target) in /workspace/plang/PLang/app/type/item/list/this.cs:562
+    at app.type.item.this.Clr[T]() in /workspace/plang/PLang/app/type/item/this.cs:350
+    at app.data.this.Clr[T]() in /workspace/plang/PLang/app/data/this.cs:783
+    at app.module.error.Handle.<>c__DisplayClass26_0.<<Wrap>b__0>d.MoveNext() in /workspace/plang/PLang/app/module/error/handle.cs:100
+    --- End of stack trace from previous location ---
+    at app.goal.steps.step.actions.action.modifiers.this.RunAsync(Func`1 innermost, this context) in /workspace/plang/PLang/app/goal/steps/step/actions/action/modifiers/this.cs:56
+    at app.goal.steps.step.actions.action.this.RunAsync(this context) in /workspace/plang/PLang/app/goal/steps/step/actions/action/this.cs:253
+    at PLang.Tests.App.Modules.modifier.ErrorHandleTests.Handle_RetryFirst_GoalFails_ErrorChains() in /workspace/plang/PLang.Tests/Modules/App/Modules/modifier/ErrorHandleTests.cs:364
+failed Handle_GoalFirst_GoalFails_ErrorChains (21ms)
+  TUnit.Engine.Exceptions.TestFailedException: InvalidCastException: List`1 cannot lower to this — the type must own this Clr projection.
+    at app.type.item.this.ClrConvert(Object backing, Type target) in /workspace/plang/PLang/app/type/item/this.cs:387
+    at app.type.item.list.this.Clr(Type target) in /workspace/plang/PLang/app/type/item/list/this.cs:562
+    at app.type.item.this.Clr[T]() in /workspace/plang/PLang/app/type/item/this.cs:350
+    at app.data.this.Clr[T]() in /workspace/plang/PLang/app/data/this.cs:783
+    at app.module.error.Handle.<>c__DisplayClass26_0.<<Wrap>b__0>d.MoveNext() in /workspace/plang/PLang/app/module/error/handle.cs:100
+    --- End of stack trace from previous location ---
+    at app.goal.steps.step.actions.action.modifiers.this.RunAsync(Func`1 innermost, this context) in /workspace/plang/PLang/app/goal/steps/step/actions/action/modifiers/this.cs:56
+    at app.goal.steps.step.actions.action.this.RunAsync(this context) in /workspace/plang/PLang/app/goal/steps/step/actions/action/this.cs:253
+    at PLang.Tests.App.Modules.modifier.ErrorHandleTests.Handle_GoalFirst_GoalFails_ErrorChains() in /workspace/plang/PLang.Tests/Modules/App/Modules/modifier/ErrorHandleTests.cs:330
+failed Handle_RetryFirst_GoalSucceeds_ReturnsOk (26ms)
+  TUnit.Engine.Exceptions.TestFailedException: InvalidCastException: List`1 cannot lower to this — the type must own this Clr projection.
+    at app.type.item.this.ClrConvert(Object backing, Type target) in /workspace/plang/PLang/app/type/item/this.cs:387
+    at app.type.item.list.this.Clr(Type target) in /workspace/plang/PLang/app/type/item/list/this.cs:562
+    at app.type.item.this.Clr[T]() in /workspace/plang/PLang/app/type/item/this.cs:350
+    at app.data.this.Clr[T]() in /workspace/plang/PLang/app/data/this.cs:783
+    at app.module.error.Handle.<>c__DisplayClass26_0.<<Wrap>b__0>d.MoveNext() in /workspace/plang/PLang/app/module/error/handle.cs:100
+    --- End of stack trace from previous location ---
+    at app.goal.steps.step.actions.action.modifiers.this.RunAsync(Func`1 innermost, this context) in /workspace/plang/PLang/app/goal/steps/step/actions/action/modifiers/this.cs:56
+    at app.goal.steps.step.actions.action.this.RunAsync(this context) in /workspace/plang/PLang/app/goal/steps/step/actions/action/this.cs:253
+    at PLang.Tests.App.Modules.modifier.ErrorHandleTests.Handle_RetryFirst_GoalSucceeds_ReturnsOk() in /workspace/plang/PLang.Tests/Modules/App/Modules/modifier/ErrorHandleTests.cs:348
+failed Describe_ModifierActions_AppearInSummary (16ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.module.this.Describe() in /workspace/plang/PLang/app/module/this.cs:354
+    at PLang.Tests.App.Modules.modifier.ModifierRegistryTests.Describe_ModifierActions_AppearInSummary() in /workspace/plang/PLang.Tests/Modules/App/Modules/modifier/ModifierRegistryTests.cs:96
+failed Settings_DotNotation_MissingKey_ReturnsAskError (24ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be false, because Expected failure but Data succeeded with value: null
+  but found True
+  
+  at Assert.That(data.Success).IsFalse().Because("Expected failure but Data succeeded with value: null")
+failed ActorDataSource_IsCreatedLazily (24ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That(System.IO.Directory.Exists(dbDir)).IsTrue()
+failed ErrorPropagation_VariablesGet_SettingsMissing_ReturnsAskError (16ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be false, because Expected failure but Data succeeded with value: null
+  but found True
+  
+  at Assert.That(data.Success).IsFalse().Because("Expected failure but Data succeeded with value: null")
+failed Settings_CorruptDatabase_ReturnsSettingsError (20ms)
+  TUnit.Engine.Exceptions.TestFailedException: DirectoryNotFoundException: Could not find a part of the path '/tmp/plang_test_settings_c2737d96/.db/system.sqlite'.
+    at Interop.ThrowExceptionForIoErrno(ErrorInfo errorInfo, String path, Boolean isDirError)
+    at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String path, OpenFlags flags, Int32 mode, Boolean failForSymlink, Boolean& wasSymlink, Func`4 createOpenException)
+    at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, UnixFileMode openPermissions, Int64& fileLength, UnixFileMode& filePermissions, Boolean failForSymlink, Boolean& wasSymlink, Func`4 createOpenException)
+    at System.IO.File.OpenHandle(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize)
+    at System.IO.File.WriteToFile(String path, FileMode mode, ReadOnlySpan`1 contents, Encoding encoding)
+    at PLang.Tests.App.Modules.settings.SettingsDataTests.Settings_CorruptDatabase_ReturnsSettingsError() in /workspace/plang/PLang.Tests/Modules/App/Modules/settings/SettingsDataTests.cs:261
+failed Variables_Clone_SettingsData_MissingKey_ReturnsAskError (38ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be false, because Expected failure but Data succeeded with value: null
+  but found True
+  
+  at Assert.That(data.Success).IsFalse().Because("Expected failure but Data succeeded with value: null")
+failed LoadAction_NoCtorDll_ReturnsProviderConstructorError (235ms)
+  TUnit.Engine.Exceptions.TestFailedException: TypeLoadException: Method 'VerifyAsync' in type 'NoCtorProvider.NoCtorSigningProvider' from assembly 'NoCtorProvider, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null' does not have an implementation.
+    at System.Reflection.RuntimeAssembly.GetExportedTypes()
+    at app.type.list.Loader.Register(Assembly assembly, this registry) in /workspace/plang/PLang/app/type/list/Loader.cs:96
+    at app.module.code.load.Run() in /workspace/plang/PLang/app/module/code/load.cs:40
+    at PLang.Tests.App.Modules.provider.ProviderModuleTests.LoadAction_NoCtorDll_ReturnsProviderConstructorError() in /workspace/plang/PLang.Tests/Modules/App/Modules/provider/ProviderModuleTests.cs:174
+failed LoadAction_ValidDll_RegistersProvider (262ms)
+  TUnit.Engine.Exceptions.TestFailedException: TypeLoadException: Method 'VerifyAsync' in type 'TestProvider.TestSigningProvider' from assembly 'TestProvider, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null' does not have an implementation.
+    at System.Reflection.RuntimeAssembly.GetExportedTypes()
+    at app.type.list.Loader.Register(Assembly assembly, this registry) in /workspace/plang/PLang/app/type/list/Loader.cs:96
+    at app.module.code.load.Run() in /workspace/plang/PLang/app/module/code/load.cs:40
+    at PLang.Tests.App.Modules.provider.ProviderModuleTests.LoadAction_ValidDll_RegistersProvider() in /workspace/plang/PLang.Tests/Modules/App/Modules/provider/ProviderModuleTests.cs:134
+failed Render_IncludeResolvesFromGoalDirectory (325ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to contain "Footer content"
+  but found "(14 bytes)"
+  
+  at Assert.That(output).Contains("Footer content")
+failed Render_Include_RendersPartialInline (324ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to contain "I am a partial"
+  but found "Before (14 bytes) After"
+  
+  at Assert.That(output).Contains("I am a partial")
+failed Render_Include_InheritsVariables (536ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to contain "Hello World"
+  but found "(16 bytes)!"
+  
+  at Assert.That(output).Contains("Hello World")
+failed Render_Include_NestedPathResolvesRelativeToPartial (568ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to contain "A"
+  but found "(27 bytes)"
+  
+  at Assert.That(output).Contains("A")
+
+Canceling the test session...
+
+The test run was cancelled.
+
+Test run summary: Aborted - /workspace/plang/PLang.Tests/Modules/bin/Debug/net10.0/PLang.Tests.Modules.dll (net10.0|x64)
+  total: 796
+  failed: 33
+  succeeded: 763
+  skipped: 0
+  duration: 15s 843ms

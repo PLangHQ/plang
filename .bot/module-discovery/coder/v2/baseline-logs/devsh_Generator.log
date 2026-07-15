@@ -1,0 +1,62 @@
+
+████████╗██╗   ██╗███╗   ██╗██╗████████╗
+╚══██╔══╝██║   ██║████╗  ██║██║╚══██╔══╝
+   ██║   ██║   ██║██╔██╗ ██║██║   ██║
+   ██║   ██║   ██║██║╚██╗██║██║   ██║
+   ██║   ╚██████╔╝██║ ╚████║██║   ██║
+   ╚═╝    ╚═════╝ ╚═╝  ╚═══╝╚═╝   ╚═╝
+
+   TUnit v1.13.11.0 | 64-bit | Ubuntu 22.04.5 LTS | linux-x64 | .NET 10.0.9 | Microsoft Testing Platform v2.1.0
+
+   Engine Mode: SourceGenerated
+
+failed DoesNotFire_OnSystemIoFile_InsidePathTypesNamespace (102ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be false
+  but found True
+  
+  at Assert.That(diags.Any(d => d.Id == "PLNG002")).IsFalse()
+skipped DataWrappedActionList_DoesNotRecurseIntoActions (0ms)
+  Params resolve eagerly at dispatch — nested-action params resolve prematurely; fixed by the pure-lazy source-gen refactor (resolve only on handler .Value()). See todos 2026-06-15.
+skipped DataWrappedActionList_SubActionParametersRemainRaw (0ms)
+  Params resolve eagerly at dispatch — nested-action params resolve prematurely; fixed by the pure-lazy source-gen refactor (resolve only on handler .Value()). See todos 2026-06-15.
+failed DataWrappedDict_NestedVar_DeepResolves (97ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "substituted"
+  but found "%x%"
+  
+  at Assert.That((await d.Get("inner")!.Value()).ToString()).IsEqualTo("substituted")
+failed DataWrappedList_NestedVarInDict_DeepResolvesAndTypes (150ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "you are a compiler"
+  but found "%comment%"
+  
+  at Assert.That(items[0].Content).IsEqualTo("you are a compiler")
+skipped FullVarMatch_MissingVariable_ReturnsErrorOrNotFound (0ms)
+  Resolution-error timing is owned by the eager dispatch-resolve; moves to handler .Value() with the pure-lazy source-gen refactor. See todos 2026-06-15.
+failed DeepResolutionDict_NestedList_FullyWalked (60ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "alpha"
+  but found "%a%"
+  
+  at Assert.That(inner[0]).IsEqualTo("alpha")
+failed DeepResolutionDict_PrimitiveVar_Substituted (62ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "substituted"
+  but found "%x%"
+  
+  at Assert.That((await d.Get("inner")!.Value()).ToString()).IsEqualTo("substituted")
+failed DeepResolutionList_NestedDict_SubstitutesInside (61ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "You are a compiler"
+  but found "%prompt%"
+  
+  at Assert.That(items[0].Content).IsEqualTo("You are a compiler")
+failed DeepResolutionList_NestedListsAndDicts_FullyWalked (61ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "alpha"
+  but found "%a%"
+  
+  at Assert.That(items[0].Content).IsEqualTo("alpha")
+skipped SnapshotOnError_SensitiveProperty_NullPrValue_StaysNull (0ms)
+  The error-snapshot of a null-resolving [Sensitive] param is owned by the eager dispatch-resolve; reworked by the pure-lazy source-gen refactor. See todos 2026-06-15.
+
+Test run summary: Failed! - /workspace/plang/PLang.Tests/Generator/bin/Debug/net10.0/PLang.Tests.Generator.dll (net10.0|x64)
+  total: 198
+  failed: 7
+  succeeded: 187
+  skipped: 4
+  duration: 3s 301ms

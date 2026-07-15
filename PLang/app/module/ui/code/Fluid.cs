@@ -66,11 +66,14 @@ public class Fluid : ITemplate
         var options = new TemplateOptions();
         options.MaxSteps = 100_000; // Defense-in-depth: prevent pathological templates from running indefinitely
         options.MaxRecursion = 100; // Prevent deeply recursive includes
-        // UnsafeMemberAccessStrategy allows access to all public properties without per-type registration.
-        // PLang templates render internal objects (Goals, Steps, Actions) — no user-supplied types.
-        options.MemberAccessStrategy = new UnsafeMemberAccessStrategy();
-        options.MemberAccessStrategy.IgnoreCasing = true;
-        options.MemberAccessStrategy.MemberNameStrategy = MemberNameStrategies.Default;
+        // A plang value navigates by its OWN door (Data.Get — the same navigation list.where /
+        // condition use), not by C# reflection. Reflection reads a clr HOST carrier's surface
+        // (Kind/Value/Context), never the host's own members — so `{{ module.Name }}` over a
+        // carried host reads blank. The strategy routes member access on any plang item through
+        // Get so a host, a scalar's backing, and a navigated child all resolve through one door;
+        // everything else falls back to reflection. Dict/list ride their read-through views
+        // (converted before member access), so this catches the items reflection can't navigate.
+        options.MemberAccessStrategy = new PlangDoorStrategy(action.Context) { IgnoreCasing = true };
 
         // Make PLang native collections / JsonNode Fluid-readable WITHOUT copying.
         // Fluid binds via reflection / IDictionary / IEnumerable only — it doesn't
@@ -188,6 +191,58 @@ public class Fluid : ITemplate
         }
     }
 
+
+    /// <summary>
+    /// Member access for plang values goes through <c>Data.Get</c> — the value's OWN
+    /// navigation door — instead of C# reflection. A plang item routes to the door accessor;
+    /// any other type falls back to reflection (the base <see cref="UnsafeMemberAccessStrategy"/>).
+    /// </summary>
+    internal sealed class PlangDoorStrategy : MemberAccessStrategy
+    {
+        // UnsafeMemberAccessStrategy is sealed, so reflection fallback is COMPOSED, not inherited:
+        // a plang item routes to the door; every other type (Goal, Step, POCO) reflects as before.
+        private readonly PlangDoorAccessor _door;
+        private readonly UnsafeMemberAccessStrategy _reflection = new() { IgnoreCasing = true, MemberNameStrategy = MemberNameStrategies.Default };
+
+        public PlangDoorStrategy(global::app.actor.context.@this context)
+        {
+            _door = new PlangDoorAccessor(context);
+            IgnoreCasing = true;
+        }
+
+        public override IMemberAccessor GetAccessor(Type type, string name)
+            => typeof(global::app.type.item.@this).IsAssignableFrom(type)
+                ? _door
+                : _reflection.GetAccessor(type, name);
+
+        // Registration (the {% for %}/member map) is the reflection strategy's job — plang items
+        // never register, they navigate through the door.
+        public override void Register(Type type, IEnumerable<KeyValuePair<string, IMemberAccessor>> accessors)
+            => _reflection.Register(type, accessors);
+    }
+
+    /// <summary>Navigates a plang item by member name through its <c>Data.Get</c> door — the same
+    /// navigation <c>list.where</c>/<c>condition</c> use, so templates and predicates read a value
+    /// the one way. Async because a door can be I/O (a path's existence, a computed value).</summary>
+    private sealed class PlangDoorAccessor(global::app.actor.context.@this context) : IAsyncMemberAccessor
+    {
+        public async Task<object> GetAsync(object obj, string name, TemplateContext ctx)
+        {
+            // Resolve through the Value door (references/computed/prose resolve), then lower a LEAF
+            // to its raw backing so Fluid sees a real bool/string/number (truthiness, comparison,
+            // `where:`); a container or host passes through as its item — the converters wrap a
+            // dict/list into a view, a host re-enters this door on its next member.
+            var resolved = await (await new global::app.data.@this("", obj, context: context).Get(name)).Value();
+            return global::app.type.item.@this.Backing(resolved)!;
+        }
+
+        // The value door is async (a path stat, a computed render). Templates render via
+        // RenderAsync, so Fluid always takes GetAsync — the sync face would have to block on
+        // the async door (sync-over-async), so it refuses instead of deadlocking.
+        public object Get(object obj, string name, TemplateContext ctx)
+            => throw new System.NotSupportedException(
+                "plang template member access is async — render through RenderAsync, not the sync path.");
+    }
 
     /// <summary>
     /// Fluid value converter — turns a PLang native <c>dict</c>/<c>list</c> or a

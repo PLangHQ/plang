@@ -1,0 +1,158 @@
+
+████████╗██╗   ██╗███╗   ██╗██╗████████╗
+╚══██╔══╝██║   ██║████╗  ██║██║╚══██╔══╝
+   ██║   ██║   ██║██╔██╗ ██║██║   ██║
+   ██║   ██║   ██║██║╚██╗██║██║   ██║
+   ██║   ╚██████╔╝██║ ╚████║██║   ██║
+   ╚═╝    ╚═════╝ ╚═╝  ╚═══╝╚═╝   ╚═╝
+
+   TUnit v1.13.11.0 | 64-bit | Ubuntu 22.04.5 LTS | linux-x64 | .NET 10.0.9 | Microsoft Testing Platform v2.1.0
+
+   Engine Mode: SourceGenerated
+
+failed OnAsk_OnMessageChannel_FiresPreSerialise (16ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.type.item.this.Create(Object raw, this context) in /workspace/plang/PLang/app/type/item/this.cs:85
+    at app.data.this..ctor(String name, Object value, this type, this parent, this context) in /workspace/plang/PLang/app/data/this.cs:259
+    at app.data.this.Ok(Object value, this type) in /workspace/plang/PLang/app/data/this.Result.cs:73
+    at PLang.Tests.App.ChannelsTests.Stage8_ChannelEventsTests.MessageProbeChannel.Ask(ask action, CancellationToken ct) in /workspace/plang/PLang.Tests/Wire/App/ChannelsTests/Stage8_ChannelEventsTests.cs:295
+    at app.channel.this.AskAsync(ask action, CancellationToken ct) in /workspace/plang/PLang/app/channel/this.cs:163
+    at PLang.Tests.App.ChannelsTests.Stage8_ChannelEventsTests.OnAsk_OnMessageChannel_FiresPreSerialise() in /workspace/plang/PLang.Tests/Wire/App/ChannelsTests/Stage8_ChannelEventsTests.cs:206
+skipped Compress_RoutesThrough_RegisteredApplicationPlangSerializer (0ms)
+  Serializing within an actor now signs the inner payload, so compressed/hashed bytes are a signature LAYER. The archived wire shape and compress/hash-over-signature round-trip need the archive-as-layer design (deferred). NOTE: Decompress currently loses the inner value through this path - see todos.md.
+skipped Decompress_AfterCompress_PreservesProperties (0ms)
+  Serializing within an actor now signs the inner payload, so compressed/hashed bytes are a signature LAYER. The archived wire shape and compress/hash-over-signature round-trip need the archive-as-layer design (deferred). NOTE: Decompress currently loses the inner value through this path - see todos.md.
+skipped Decompress_AfterCompress_PreservesNameAndValue (0ms)
+  Serializing within an actor now signs the inner payload, so compressed/hashed bytes are a signature LAYER. The archived wire shape and compress/hash-over-signature round-trip need the archive-as-layer design (deferred). NOTE: Decompress currently loses the inner value through this path - see todos.md.
+skipped SigningVerify_AfterWireByteTamper_ReturnsDataHashMismatch (0ms)
+  Serializing within an actor now signs the inner payload, so compressed/hashed bytes are a signature LAYER. The archived wire shape and compress/hash-over-signature round-trip need the archive-as-layer design (deferred). NOTE: Decompress currently loses the inner value through this path - see todos.md.
+skipped Cut1_CryptoVerify_SucceedsAgainstWireBytes (0ms)
+  Serializing within an actor now signs the inner payload, so compressed/hashed bytes are a signature LAYER. The archived wire shape and compress/hash-over-signature round-trip need the archive-as-layer design (deferred). NOTE: Decompress currently loses the inner value through this path - see todos.md.
+skipped Cut2_Decompress_ReturnsOriginalWithInnerSignaturePreserved (0ms)
+  Serializing within an actor now signs the inner payload, so compressed/hashed bytes are a signature LAYER. The archived wire shape and compress/hash-over-signature round-trip need the archive-as-layer design (deferred). NOTE: Decompress currently loses the inner value through this path - see todos.md.
+skipped Cut2_TamperingValueByte_FailsOuterSignatureVerify (0ms)
+  Serializing within an actor now signs the inner payload, so compressed/hashed bytes are a signature LAYER. The archived wire shape and compress/hash-over-signature round-trip need the archive-as-layer design (deferred). NOTE: Decompress currently loses the inner value through this path - see todos.md.
+skipped Cut2_OuterWireJson_HasArchivedTypeBytesValueAndSignature (0ms)
+  Serializing within an actor now signs the inner payload, so compressed/hashed bytes are a signature LAYER. The archived wire shape and compress/hash-over-signature round-trip need the archive-as-layer design (deferred). NOTE: Decompress currently loses the inner value through this path - see todos.md.
+failed Serialize_Object_IgnoresNullProperties (17ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at PLang.Tests.App.Serialization.JsonStreamSerializerTests.Serialize_Object_IgnoresNullProperties() in /workspace/plang/PLang.Tests/Wire/App/Serialization/JsonStreamSerializerTests.cs:89
+failed Roundtrip_StreamBased_PreservesData (8ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at PLang.Tests.App.Serialization.JsonStreamSerializerTests.Roundtrip_StreamBased_PreservesData() in /workspace/plang/PLang.Tests/Wire/App/Serialization/JsonStreamSerializerTests.cs:200
+failed Roundtrip_PreservesData (84ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at PLang.Tests.App.Serialization.JsonStreamSerializerTests.Roundtrip_PreservesData() in /workspace/plang/PLang.Tests/Wire/App/Serialization/JsonStreamSerializerTests.cs:182
+failed Serialize_Enum_UsesCamelCase (256ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to contain "active"
+  but found "{"status":"Active"}"
+  
+  at Assert.That(json).Contains("active")
+failed Properties_RoundTrip_ListOfPrimitives (156ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "three"
+  but found "System.Collections.Generic.Dictionary`2[System.String,System.Object]"
+  
+  at Assert.That((roundList[2])?.ToString()).IsEqualTo("three")
+failed Cut4_TamperingPropertyValue_FailsOuterSignatureVerify (531ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be false, because Expected failure but Data succeeded with value: true
+  but found True
+  
+  at Assert.That(data.Success).IsFalse().Because("Expected failure but Data succeeded with value: true")
+failed Properties_RoundTrip_NestedDictOfPrimitives (171ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to 100
+  but found System.Collections.Generic.Dictionary`2[System.String,System.Object]
+  
+  at Assert.That(roundDict!["cost"]).IsEqualTo(100L)
+failed OuterSignature_AfterPropertiesValueTamper_FailsVerify (168ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be false, because Expected failure but Data succeeded with value: true
+  but found True
+  
+  at Assert.That(data.Success).IsFalse().Because("Expected failure but Data succeeded with value: true")
+failed Serialize_Object_ReturnsJson (37ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to contain "name"
+  but found "{"Name":"test"}"
+  
+  at Assert.That(result).Contains("name")
+failed SignatureType_XmlDoc_NoLongerMentionsEnvelope (7ms)
+  TUnit.Engine.Exceptions.TestFailedException: DirectoryNotFoundException: Could not find a part of the path '/workspace/plang/PLang/app/type/signature/this.cs'.
+    at Interop.ThrowExceptionForIoErrno(ErrorInfo errorInfo, String path, Boolean isDirError)
+    at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String path, OpenFlags flags, Int32 mode, Boolean failForSymlink, Boolean& wasSymlink, Func`4 createOpenException)
+    at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, UnixFileMode openPermissions, Int64& fileLength, UnixFileMode& filePermissions, Boolean failForSymlink, Boolean& wasSymlink, Func`4 createOpenException)
+    at System.IO.Strategies.OSFileStreamStrategy..ctor(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+    at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize, FileOptions options, Int64 preallocationSize)
+    at System.IO.File.AsyncStreamReader(String path, Encoding encoding)
+    at System.IO.File.InternalReadAllTextAsync(String path, Encoding encoding, CancellationToken cancellationToken)
+    at PLang.Tests.App.Serialization.TransportRenameTests.SignatureType_XmlDoc_NoLongerMentionsEnvelope() in /workspace/plang/PLang.Tests/Wire/App/Serialization/TransportRenameTests.cs:35
+failed Deserialize_ShallowNesting_StillWorks (1ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [PlangDeserializeError] Plang deserialize failed: invalid .pr schema: value slot 'a' has no declared type. Value was: {"name":"a","value":{"name":"a","value":{"name":"a","value":{"name":"a","value":{"name":"a","value":{"name":"a","value":…
+  but found False
+  
+  at Assert.That(data.Success).IsTrue().Because("Data failed: [PlangDeserializeError] Plang deserialize failed: invalid .pr schema: value slot 'a' has no declared type. Value was: {"name":"a","value":{"name":"a","value":{"name":"a","value":{"name":"a","value":{"name":"a","value":{"name":"a","value":…")
+failed AssertionError_Message_MasksSensitiveViaDiagnosticOutput (19ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to not contain "topsecret-PLAINTEXT-777"
+  but found "topsecret-PLAINTEXT-777" in "Expected: "nope", Actual: LeakySecretRecord { Name = alice, Secret = topsecret-PLAINTEXT-777 }"
+  
+  at Assert.That(error.Message).DoesNotContain("topsecret-PLAINTEXT-777")
+skipped ErrorsTrail_SurvivesWireRoundTrip_WithContentAndId (0ms)
+  Deferred to the snapshot-wire redesign. The snapshot's Data-normalization serializes each IError as an empty [Out] property bag instead of deferring to ErrorWire, so Message is dropped on round-trip. Re-asserted against the new snapshot model.
+failed EndToEnd_SuspendedState_SurvivesDisk_AndResumesToSuccess (223ms)
+  TUnit.Engine.Exceptions.TestFailedException: InvalidOperationException: Snapshot could not be rebuilt from wire JSON
+    at app.this.SnapshotFromWire(String json, this context) in /workspace/plang/PLang/app/this.SnapshotWire.cs:35
+    at app.this.ResumeFromWire(String json, this context) in /workspace/plang/PLang/app/this.SnapshotWire.cs:47
+    at PLang.Tests.App.SnapshotTests.SnapshotWireTests.EndToEnd_SuspendedState_SurvivesDisk_AndResumesToSuccess() in /workspace/plang/PLang.Tests/Wire/App/SnapshotTests/SnapshotWireTests.cs:137
+failed BuildAndTestingBits_SurviveWireRoundTrip (111ms)
+  TUnit.Engine.Exceptions.TestFailedException: InvalidOperationException: Snapshot could not be rebuilt from wire JSON
+    at app.this.SnapshotFromWire(String json, this context) in /workspace/plang/PLang/app/this.SnapshotWire.cs:35
+    at PLang.Tests.App.SnapshotTests.SnapshotWireTests.RoundTrip(this app, this snap) in /workspace/plang/PLang.Tests/Wire/App/SnapshotTests/SnapshotWireTests.cs:13
+    at PLang.Tests.App.SnapshotTests.SnapshotWireTests.BuildAndTestingBits_SurviveWireRoundTrip() in /workspace/plang/PLang.Tests/Wire/App/SnapshotTests/SnapshotWireTests.cs:38
+failed EmptyApp_WireIsValidJson_AndRestoresClean (172ms)
+  TUnit.Engine.Exceptions.TestFailedException: InvalidOperationException: Snapshot could not be rebuilt from wire JSON
+    at app.this.SnapshotFromWire(String json, this context) in /workspace/plang/PLang/app/this.SnapshotWire.cs:35
+    at PLang.Tests.App.SnapshotTests.SnapshotWireTests.EmptyApp_WireIsValidJson_AndRestoresClean() in /workspace/plang/PLang.Tests/Wire/App/SnapshotTests/SnapshotWireTests.cs:447
+failed SerializedString_ConvertsToSnapshotViaTypeSystem_AndResumesToSuccess (253ms)
+  TUnit.Engine.Exceptions.TestFailedException: NotSupportedException: Snapshot restore is deferred to the ISnapshot redesign — the read cursor rebuilds on IReader (symmetric with the IWriter write side) there. See Documentation/v0.2/todos.md.
+    at app.snapshot.this.Create(this value, this data) in /workspace/plang/PLang/app/snapshot/this.Wire.cs:49
+    at PLang.Tests.App.SnapshotTests.SnapshotWireTests.SerializedString_ConvertsToSnapshotViaTypeSystem_AndResumesToSuccess() in /workspace/plang/PLang.Tests/Wire/App/SnapshotTests/SnapshotWireTests.cs:172
+failed Testing_RoundTrip_PreservesIsEnabled (76ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be false
+  but found True
+  
+  at Assert.That(dst.Test != null).IsFalse()
+failed CallStackFrames_Scalars_RoundTripWithIntTyping (177ms)
+  TUnit.Engine.Exceptions.TestFailedException: InvalidOperationException: Snapshot could not be rebuilt from wire JSON
+    at app.this.SnapshotFromWire(String json, this context) in /workspace/plang/PLang/app/this.SnapshotWire.cs:35
+    at PLang.Tests.App.SnapshotTests.SnapshotWireTests.RoundTrip(this app, this snap) in /workspace/plang/PLang.Tests/Wire/App/SnapshotTests/SnapshotWireTests.cs:13
+    at PLang.Tests.App.SnapshotTests.SnapshotWireTests.CallStackFrames_Scalars_RoundTripWithIntTyping() in /workspace/plang/PLang.Tests/Wire/App/SnapshotTests/SnapshotWireTests.cs:93
+Allow User to execute //nonexistent/ghost-provider.dll? (y/n/a)
+failed MidStackChain_SurvivesDisk_ResumesDeep_AndUnwindsToEntryGoal (287ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at PLang.Tests.App.SnapshotTests.SnapshotWireTests.MidStackChain_SurvivesDisk_ResumesDeep_AndUnwindsToEntryGoal() in /workspace/plang/PLang.Tests/Wire/App/SnapshotTests/SnapshotWireTests.cs:233
+failed PlangPath_AsSnapshotConvert_EditSurvivesResume (287ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That(conv is global::app.snapshot.@this).IsTrue()
+failed TypedSnapshotString_NavigateEditResume_PersistsEdit (237ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at PLang.Tests.App.SnapshotTests.SnapshotWireTests.TypedSnapshotString_NavigateEditResume_PersistsEdit() in /workspace/plang/PLang.Tests/Wire/App/SnapshotTests/SnapshotWireTests.cs:391
+failed Variables_SurviveWireRoundTrip_WithValueAndType (166ms)
+  TUnit.Engine.Exceptions.TestFailedException: InvalidOperationException: Snapshot could not be rebuilt from wire JSON
+    at app.this.SnapshotFromWire(String json, this context) in /workspace/plang/PLang/app/this.SnapshotWire.cs:35
+    at PLang.Tests.App.SnapshotTests.SnapshotWireTests.RoundTrip(this app, this snap) in /workspace/plang/PLang.Tests/Wire/App/SnapshotTests/SnapshotWireTests.cs:13
+    at PLang.Tests.App.SnapshotTests.SnapshotWireTests.Variables_SurviveWireRoundTrip_WithValueAndType() in /workspace/plang/PLang.Tests/Wire/App/SnapshotTests/SnapshotWireTests.cs:22
+failed NavigateAndEditCapturedVariable_ThenResumeToSuccess (141ms)
+  TUnit.Engine.Exceptions.TestFailedException: InvalidCastException: Unable to cast object of type 'app.type.item.null.this' to type 'System.IConvertible'.
+    at System.Convert.ToInt64(Object value)
+    at PLang.Tests.App.SnapshotTests.SnapshotWireTests.NavigateAndEditCapturedVariable_ThenResumeToSuccess() in /workspace/plang/PLang.Tests/Wire/App/SnapshotTests/SnapshotWireTests.cs:426
+failed ThrowTimeSnapshot_EditSurvivesResume (268ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to not be null
+  but value is null
+  
+  at Assert.That(snap).IsNotNull()
+
+Test run summary: Failed! - /workspace/plang/PLang.Tests/Wire/bin/Debug/net10.0/PLang.Tests.Wire.dll (net10.0|x64)
+  total: 472
+  failed: 25
+  succeeded: 438
+  skipped: 9
+  duration: 13s 923ms

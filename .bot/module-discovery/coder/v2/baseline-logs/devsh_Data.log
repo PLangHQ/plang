@@ -1,0 +1,281 @@
+
+████████╗██╗   ██╗███╗   ██╗██╗████████╗
+╚══██╔══╝██║   ██║████╗  ██║██║╚══██╔══╝
+   ██║   ██║   ██║██╔██╗ ██║██║   ██║
+   ██║   ██║   ██║██║╚██╗██║██║   ██║
+   ██║   ╚██████╔╝██║ ╚████║██║   ██║
+   ╚═╝    ╚═════╝ ╚═╝  ╚═══╝╚═╝   ╚═╝
+
+   TUnit v1.13.11.0 | 64-bit | Ubuntu 22.04.5 LTS | linux-x64 | .NET 10.0.9 | Microsoft Testing Platform v2.1.0
+
+   Engine Mode: SourceGenerated
+
+skipped F1_SignedElementInList_SurvivesPlangWireRoundTrip (3ms)
+  Per-element in-memory signing was removed: signing is an I/O-boundary concern now — one signature layer wraps the WHOLE payload, not each nested Data. Element-level survival of a signature at rest no longer applies; the list round-trip itself is covered below.
+failed Materialize_JsonObjectRoot_NarrowsToDict (122ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be of type this
+  but Value is of type this, not this
+  
+  at Assert.That(await d.Value()).IsTypeOf<this>()
+failed Materialize_JsonArrayRoot_NarrowsToListValueType (59ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be of type this
+  but Value is of type this, not this
+  
+  at Assert.That(await d.Value()).IsTypeOf<this>()
+failed GetValue_WithMismatchedType_ReturnsDefault (25ms)
+  TUnit.Engine.Exceptions.TestFailedException: FormatException: The input string 'hello' was not in a correct format.
+    at System.Number.ThrowFormatException[TChar](ReadOnlySpan`1 value)
+    at System.String.System.IConvertible.ToInt32(IFormatProvider provider)
+    at System.Convert.ChangeType(Object value, Type conversionType, IFormatProvider provider)
+    at app.type.item.this.ClrConvert(Object backing, Type target) in /workspace/plang/PLang/app/type/item/this.cs:380
+    at app.type.item.source.Clr(Type target) in /workspace/plang/PLang/app/type/item/source.cs:240
+    at PLang.Tests.DataReadExtensions.GetValue(this d, Type targetType) in /workspace/plang/PLang.Tests/Shared/DataReadExtensions.cs:20
+    at PLang.Tests.DataReadExtensions.GetValue[T](this d) in /workspace/plang/PLang.Tests/Shared/DataReadExtensions.cs:12
+    at PLang.Tests.App.Core.DataResultTests.GetValue_WithMismatchedType_ReturnsDefault() in /workspace/plang/PLang.Tests/Data/App/Core/ReturnTests.cs:95
+failed Add_ThrowsWhenPathIsEmptyString (1ms)
+  TUnit.Engine.Exceptions.TestFailedException: ArgumentException: path cannot be empty (Parameter 'path')
+    at app.type.item.path.file.this.ValidatePath(String path, this app) in /workspace/plang/PLang/app/type/item/path/file/this.Validate.cs:33
+    at app.type.item.path.file.this.Resolve(String rawPath, this context) in /workspace/plang/PLang/app/type/item/path/file/this.cs:109
+    at app.this.<>c.<.ctor>b__114_0(String raw, this context) in /workspace/plang/PLang/app/this.cs:308
+    at app.type.item.path.scheme.this.From(String raw, this context) in /workspace/plang/PLang/app/type/item/path/scheme/this.cs:56
+    at app.type.item.path.this.Resolve(String rawPath, this context) in /workspace/plang/PLang/app/type/item/path/this.cs:166
+    at PLang.Tests.App.Core.GoalsTests.Add_ThrowsWhenPathIsEmptyString() in /workspace/plang/PLang.Tests/Data/App/Core/GoalsTests.cs:503
+failed GetByPrPathAsync_ReturnsNull_ForCachedSetupGoal (3ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at app.goal.list.this.GetByPrPathAsync(String prPath, CancellationToken ct) in /workspace/plang/PLang/app/goal/list/this.cs:331
+    at PLang.Tests.App.Core.GoalsTests.GetByPrPathAsync_ReturnsNull_ForCachedSetupGoal() in /workspace/plang/PLang.Tests/Data/App/Core/GoalsTests.cs:400
+failed ReadFile_ReturnMapsResultToVariable (78ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [Error] Failed to parse goal file: ReadFile.pr
+  but found False
+  
+  at Assert.That(data.Success).IsTrue().Because("Data failed: [Error] Failed to parse goal file: ReadFile.pr")
+failed FilePaths_FromSubfolder_AbsoluteRootWorks (77ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [Error] Failed to parse goal file: sub/FilePathsFromSub.pr
+  but found False
+  
+  at Assert.That(data.Success).IsTrue().Because("Data failed: [Error] Failed to parse goal file: sub/FilePathsFromSub.pr")
+failed FullPipeline_LoadAndExecute_VariablesOutputDefaults (89ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "Hello, World!"
+  but found "%greeting%, %user%!"
+  
+  at Assert.That(await context.Variable.GetValue("message")).IsEqualTo("Hello, World!")
+failed FilePaths_FromRoot_RelativeAbsoluteSubfolderDotSlash (68ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true, because Data failed: [Error] Failed to parse goal file: FilePathsFromRoot.pr
+  but found False
+  
+  at Assert.That(data.Success).IsTrue().Because("Data failed: [Error] Failed to parse goal file: FilePathsFromRoot.pr")
+failed StartGoal_Programmatic_SetsVariablesAndWritesOutput (175ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to contain "Plang"
+  but found "%name%
+  NewVar: %newVarName%
+  "
+  
+  at Assert.That(output).Contains("Plang")
+failed ResolveValue_FullMissingVariable_FailsVariableNotFound (133ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be false, because Expected failure but Data succeeded with value: null
+  but found True
+  
+  at Assert.That(data.Success).IsFalse().Because("Expected failure but Data succeeded with value: null")
+failed AsT_SameType_ReturnsSourceInstance (29ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That(ReferenceEquals(source.Peek(), result)).IsTrue()
+failed AsT_PlainDataTarget_DictWithNestedVars_ResolvesAndReturnsFreshData (57ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "You are a compiler"
+  but found "%prompt%"
+  
+  at Assert.That((resolved["content"])?.ToString()).IsEqualTo("You are a compiler")
+failed AsT_PlainDataTarget_DictWithInfraVar_ResolvesAtCanonicalWalk (85ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "boom"
+  but found "%!error%"
+  
+  at Assert.That((resolved["message"])?.ToString()).IsEqualTo("boom")
+failed AsT_PlainDataTarget_ListWithNestedVars_ResolvesAndReturnsFreshData (65ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "hello"
+  but found "%greeting%"
+  
+  at Assert.That((resolved[0])?.ToString()).IsEqualTo("hello")
+failed AsT_DictWithNestedVars_DeepResolvesAndTypes (76ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "You are a compiler"
+  but found "%prompt%"
+  
+  at Assert.That((dict["content"])?.ToString()).IsEqualTo("You are a compiler")
+failed AsT_ListWithNestedVars_DeepResolvesAndTypes (46ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "hello"
+  but found "%greeting%"
+  
+  at Assert.That((items[0])?.ToString()).IsEqualTo("hello")
+failed AsT_PlainDataTarget_VarReference_ReturnsLiveVariableData (95ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That(ReferenceEquals(canonical, live)).IsTrue()
+failed Decompress_InvalidInner_ReturnsError (120ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "not an archive"
+  but found "null"
+  
+  at Assert.That((await result.Value())?.ToString()).IsEqualTo("not an archive")
+Allow User to read /workspace/plang/PLang.Tests/Shared/etc/passwd? (y/n/a)
+failed DeepResolution_ListWithVar_RefreshesPerCall (68ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "value1"
+  but found "%comment%"
+  
+  at Assert.That(first.GetValue<List<global::app.module.llm.LlmMessage>>()![0].Content).IsEqualTo("value1")
+failed CompressDecompress_RoundTrip_PreservesData (79ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "The quick brown fox jumps over the lazy dog"
+  but found "null"
+  
+  at Assert.That((await decompressed.Value())?.ToString()).IsEqualTo("The quick brown fox jumps over the lazy dog")
+failed GetValue_Generic_WrongType_ReturnsDefault (14ms)
+  TUnit.Engine.Exceptions.TestFailedException: FormatException: The input string 'hello' was not in a correct format.
+    at System.Number.ThrowFormatException[TChar](ReadOnlySpan`1 value)
+    at System.String.System.IConvertible.ToInt32(IFormatProvider provider)
+    at System.Convert.ChangeType(Object value, Type conversionType, IFormatProvider provider)
+    at app.type.item.this.ClrConvert(Object backing, Type target) in /workspace/plang/PLang/app/type/item/this.cs:380
+    at app.type.item.source.Clr(Type target) in /workspace/plang/PLang/app/type/item/source.cs:240
+    at PLang.Tests.DataReadExtensions.GetValue(this d, Type targetType) in /workspace/plang/PLang.Tests/Shared/DataReadExtensions.cs:20
+    at PLang.Tests.DataReadExtensions.GetValue[T](this d) in /workspace/plang/PLang.Tests/Shared/DataReadExtensions.cs:12
+    at PLang.Tests.App.DataTests.DataTests.GetValue_Generic_WrongType_ReturnsDefault() in /workspace/plang/PLang.Tests/Data/App/DataTests/DataTests.cs:174
+skipped GetChild_PropertyReflection_AccessesObjectProperty (0ms)
+  Navigates an anonymous CLR object parked in item.clr — the reflection navigator misses the carrier and falls back to Data.Name. Resolved by clr removal (foreign objects become :item or a hard error). See clr-removal-epic.
+skipped GetChild_CaseInsensitiveProperty_Works (0ms)
+  Navigates an anonymous CLR object parked in item.clr — the reflection navigator misses the carrier and falls back to Data.Name. Resolved by clr removal (foreign objects become :item or a hard error). See clr-removal-epic.
+failed Decompress_ArchivedData_ReturnsOriginal (230ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to "Hello world"
+  but found "null"
+  
+  at Assert.That((await decompressed.Value())?.ToString()).IsEqualTo("Hello world")
+failed IsEmpty_EmptyString_ReturnsTrue (191ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That(await ov.IsEmpty()).IsTrue()
+skipped Name_PartialInterpolation_KeepsSlotName (0ms)
+  Name propagation is owned by AsCanonical (via the old ShallowClone(Value<T>()) path); reworked by the pure-lazy source-gen refactor. See todos 2026-06-15.
+skipped Name_UnsetVariable_PropagatesVarName_NotInitialized (0ms)
+  Name propagation is owned by AsCanonical (via the old ShallowClone(Value<T>()) path); reworked by the pure-lazy source-gen refactor. See todos 2026-06-15.
+skipped Name_FullMatch_StoredVarRef_PropagatesImmediateName_NoChain (0ms)
+  Name propagation is owned by AsCanonical (via the old ShallowClone(Value<T>()) path); reworked by the pure-lazy source-gen refactor. See todos 2026-06-15.
+skipped Name_FullVarMatch_PropagatesLiveVariableName (0ms)
+  Name propagation is owned by AsCanonical (via the old ShallowClone(Value<T>()) path); reworked by the pure-lazy source-gen refactor. See todos 2026-06-15.
+failed Type_LazyDerivation_WithContext (246ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to System.String
+  but found app.type.item.text.this
+  
+  at Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(string))
+failed Reader_DoesNotSniffJsonByLookingForLeadingBrace (15ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be 0
+  but found 1
+  
+  at Assert.That(d.MaterializeCount()).IsEqualTo(0)
+failed Reader_DoesNotSniffYamlByLookingForColon (16ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be 0
+  but found 1
+  
+  at Assert.That(d.MaterializeCount()).IsEqualTo(0)
+failed Reader_DoesNotSniffXmlByLookingForAngleBracket (16ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be 0
+  but found 1
+  
+  at Assert.That(d.MaterializeCount()).IsEqualTo(0)
+failed Reader_DoesNotSniffCsvByLookingForCommas (16ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be 0
+  but found 1
+  
+  at Assert.That(d.MaterializeCount()).IsEqualTo(0)
+failed Cut1_UntouchedConfigJson_SerializesByteIdentical (2ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to contain ""value":{"port":8080}"
+  but found "{"@schema":"signature","type":"test-signing","nonce":"test-nonce","created":"1970-01-01T00:00:00+00:00","identity":"test-public-key","hash":{"type":"test","value":""},"signature":"","value":{"@schema":"data","type":{"name":"object","kind":"json"},"value":"{\u0022port\u0022:8080}"}}"
+  
+  at Assert.That(wire).Contains("\"value\":" + ConfigJson)
+failed Navigation_ReadsValueWhichMaterialises (73ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be of type this
+  but Value is of type this, not this
+  
+  at Assert.That(await d.Value()).IsTypeOf<this>()
+failed VarReference_InAuthoredValue_StillResolvesFreshPerRead (93ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be 0
+  but found 1
+  
+  at Assert.That(d.MaterializeCount()).IsEqualTo(0)
+failed Cut5_RoundTrip_PreservesExactKind_AcrossTower (118ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to System.SByte
+  but found System.Int32
+  
+  at Assert.That(((global::app.type.item.number.@this)(await r.Value())!).BoxedValue.GetType()).IsEqualTo(expectedClr)
+failed Value_AuthoredPath_NeverInvokesReader (102ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be 0
+  but found 1
+  
+  at Assert.That(d.MaterializeCount()).IsEqualTo(0)
+failed Read_NumberBigInteger_From22DigitString_LossLess (23ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be of type BigInteger
+  but Value is of type Decimal, not BigInteger
+  
+  at Assert.That(((global::app.type.item.number.@this)(await r.Value())!).BoxedValue).IsTypeOf<BigInteger>()
+failed Read_NumberFloat_NegativeZero_PreservesSignAndKind (82ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be of type Single
+  but Value is of type Decimal, not Single
+  
+  at Assert.That(((global::app.type.item.number.@this)(await r.Value())!).BoxedValue).IsTypeOf<Single>()
+failed Read_NumberUInt_FromBigDecimalString_ProducesUInt (103ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be of type UInt32
+  but Value is of type Int64, not UInt32
+  
+  at Assert.That(((global::app.type.item.number.@this)(await r.Value())!).BoxedValue).IsTypeOf<UInt32>()
+failed Read_NumberHalf_FromString_PreservesHalf (149ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be of type Half
+  but Value is of type Decimal, not Half
+  
+  at Assert.That(((global::app.type.item.number.@this)(await r.Value())!).BoxedValue).IsTypeOf<Half>()
+failed TableXlsx_HasNoReaderYet_ThrowsUntilOneIsAdded (56ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to throw NotSupportedException
+  but no exception was thrown
+  
+  at Assert.That(action).Throws<NotSupportedException>()
+failed ErrorWire_RegisteredOnlyWhereItApplies_Snapshot (1ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to not be null
+  but value is null
+  
+  at Assert.That(PLangAssembly.GetType("app.error.ErrorWire")).IsNotNull()
+failed TimeSpanIso8601_LivesInFormatLayer_NotOnType (1ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to not be null
+  but value is null
+  
+  at Assert.That(t).IsNotNull()
+failed Reader_Of_NumberInt_ReturnsDelegate (3ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to not be null
+  but value is null
+  
+  at Assert.That(r.Of("number", "int")).IsNotNull()
+failed Reader_Of_NumberBigInteger_ReturnsDelegate (1ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to not be null
+  but value is null
+  
+  at Assert.That(r.Of("number", "biginteger")).IsNotNull()
+failed Snapshot_FromWire_StillExists (1ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to not be null
+  but value is null
+  
+  at Assert.That(m).IsNotNull()
+failed NumberRead_MatchesPriorConvertOutput (2ms)
+  TUnit.Engine.Exceptions.TestFailedException: NullReferenceException: Object reference not set to an instance of an object.
+    at PLang.Tests.App.LazyDeserialize.ReaderRegistryTests.TypeOwnedReadParityTests.NumberRead_MatchesPriorConvertOutput() in /workspace/plang/PLang.Tests/Data/App/LazyDeserialize/ReaderRegistryTests/TypeOwnedReadParityTests.cs:43
+failed ToDictionary_ReturnsAllVariables (66ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be equal to 30
+  but found 30
+  
+  at Assert.That(dict["age"]).IsEqualTo(30)
+failed Set_StripsPercentFromName (73ms)
+  TUnit.Engine.Exceptions.TestFailedException: AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That(stack.Contains("name")).IsTrue()
+
+Test run summary: Failed! - /workspace/plang/PLang.Tests/Data/bin/Debug/net10.0/PLang.Tests.Data.dll (net10.0|x64)
+  total: 886
+  failed: 47
+  succeeded: 832
+  skipped: 7
+  duration: 10s 360ms
