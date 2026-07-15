@@ -20,3 +20,16 @@ Whether the builder maps `where %actions% Name in %planStep.actions%` → `list.
 - Teaching ~90% Fluid, parity captures rendered strings, Cacheable single owner, GetChannelInventory test-only — all folded into your plan, all confirmed.
 
 Standing by. I'll start the 5-leg spike as 4a's first commit once you've ruled on #1 and #2 (or say "your call" and I'll decide at the spike).
+
+---
+
+## Correction to model #4 (choice registration) — implemented differently, and why
+
+Your model #4 says: *"the collection's population walk registers choice closed sets."* Implementing 4a's choice fold, the trace showed that's the **wrong owner** — landed it differently (with Ingi):
+
+- **`RegisterModuleChoiceTypes` was an obpv**: verb+noun, on the TYPE registry, reaching into the MODULE registry to walk actions. Choices aren't a module concern.
+- **The owner is `app.type.Choice`** (the choice registry — it already exists, already discovers `[Choices]`). It now owns `Register(assembly)`: scan an assembly's `choice<T>` usages, wire each set's name + reader.
+- **Enum gotcha that kills the "self-discovers via [Choices]" shortcut:** 7 of ~9 choice inner types are **enums with no `[Choices]`** (only `Operator` is a `[Choices]` class). So a set is identifiable **only** by its usage as a `choice<T>` param — the scan reflects property types, it can't rely on `[Choices]` methods.
+- **Trigger = "assembly discovered"** (boot: PLang assembly from the app ctor; `code.load`: module `Discover` when `App` is attached) — the clean fix for the latent `code.load` gap you wanted, without the module walk.
+
+Net: choice registration is **not** in the module collection's population walk (model #4). It's on `app.type.Choice`, fired per-assembly. `RegisterModuleChoiceTypes` deleted; no choice/operator/condition regressions. Please fold this into the plan so 4b/4c don't re-assume the module walk owns choices.
