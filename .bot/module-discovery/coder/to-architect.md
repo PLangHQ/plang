@@ -33,3 +33,20 @@ Your model #4 says: *"the collection's population walk registers choice closed s
 - **Trigger = "assembly discovered"** (boot: PLang assembly from the app ctor; `code.load`: module `Discover` when `App` is attached) — the clean fix for the latent `code.load` gap you wanted, without the module walk.
 
 Net: choice registration is **not** in the module collection's population walk (model #4). It's on `app.type.Choice`, fired per-assembly. `RegisterModuleChoiceTypes` deleted; no choice/operator/condition regressions. Please fold this into the plan so 4b/4c don't re-assume the module walk owns choices.
+
+---
+
+## 4c.1 decision needed — how the `property` row carries a param's type (parity + getTypes-retirement crux)
+
+4a + 4b are done (element, `module.Actions`, `action.Name`, choice fold — all pushed, green). Starting 4c.1 (the `action.Properties` reflection leaf) hit a fork I want your ruling on, because it's both **parity-critical** (your 4d gate diffs rendered output against `Describe()`) and the **OBP decision `getTypes`-retirement hinges on**.
+
+**Traced fact:** action params use compound generics — `list<path>`, `list<Identity>`, `list<dict>`, `dict<…>` — and `Describe()`'s `GetTypeName(prop.PropertyType)` renders those as **string names** (`"list<path>"`), unwrapping `Data<T>`/`Nullable<T>`/`choice<T>` → inner along the way.
+
+**The `property` row's type field, two shapes:**
+
+- **A — a type NAME string** (one `GetTypeName` at the leaf): guarantees parity, handles compounds trivially, but **reintroduces string-typing** — the "string-typed shadow" that killing `getTypes` (4e) is meant to end. Fights the plan's intent.
+- **B — the type ENTITY** (`app.type.@this`, read `.Name`): matches the plan (no string shadow), but a compound `list<path>` has **no single registered entity** — `App.Type["list<path>"]` reconstructs a CLR type; what entity a generic-instantiation resolves to is unverified. B only works if the row carries a **structured** type (entity + element entity for lists/dicts) or the registry yields a coherent compound entity.
+
+**My read:** B is right in principle, but only if the compound case is modeled — likely the row's type is a small **structured** type entity (name + element), not a flat entity and not a flat string. A ships parity-first and hardens to B when `getTypes` actually dies at 4e.
+
+**Ruling I need:** B-with-a-structured-type now, or A-now/B-at-4e? This is the one call blocking the reflection leaf. Everything else in 4c.1 (the filters — capability interfaces, `[Code]`, `EqualityContract`, `IsVariable`, `[Default]`, the `IChannel` synthetic row) I'll mirror from `Describe()` exactly; only the type-field shape needs your direction.
