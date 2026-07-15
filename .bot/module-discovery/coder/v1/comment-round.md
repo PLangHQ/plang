@@ -75,3 +75,33 @@ Endorsed — but note the templates ALREADY enumerate `a.Parameters` (a `List<da
 
 ## Net recommendation
 Land order fine. The one framing correction that matters: **model #6 is ~90% already true** — don't scope "kill C# text assembly" as a big hunt; it's the one `desc` line at `module/this.cs:341-352` moving into 4 templates. The parity gate's real job is proving those 4 rewritten templates reconstruct today's exact output from `property` rows — capture goldens at the rendered-string seam, not at `Describe()`.
+
+---
+
+# Round 2 — verifying the GREENLIT plan's new claims (traced against `48142bba7`)
+
+Architect folded round-1 in and added round-2 design assertions. Traced each. Verdict: **the plan is sound; one load-bearing coupling and three verify-items to pin before 4a.**
+
+## The load-bearing coupling nobody has stated outright
+
+Model 6b's `- where %actions% Name in %planStep.actions%` **only works if the catalog returns a NATIVE `app.type.item.list.@this`** — because `list.where` gates on subject type (`list/where.cs:36 subjectVal is item.list.@this`). Today `build.actions` returns `clr<StepActions>` (`build/code/Default.cs:38,43`) — a clr HOST, not a native list. Fed to `where` as-is, it falls straight to the apex error (`where.cs:54` "…has no fields to scope into"). So model 5b (native-list surfaces) and model 6b (`where`-filtered `%actions%`) are **the same requirement** — `build.actions` dissolving into `app.module` navigation MUST yield the native list, not a re-wrapped clr host. If 4a ships native-list surfaces but 6c's navigation still hands back a clr host, `where` breaks silently at build time. Pin it: the spike's leg (e) must assert `where` over the REAL catalog surface, not a hand-built `item.list`.
+
+## Spike leg (e) — `list.where` `Name in` over clr(action): LOW risk, mechanism already proven
+
+Traced the whole path; every piece exists:
+- `list/where.cs:60 Keep` → `subject.Get(field)` per element → `clr.Get(parent,"Name")` (`clr/this.cs:95`) → reflection kind `t.GetProperty("Name", Public|…)` walking base types (`kind/reflection/this.cs:19-25`). **Navigates any public property by name** (navigate is open on the host carrier; only serialize is `[Out]`-gated). Needs the action element to expose public `Name` ("file.read") — that's exactly 4b's add.
+- Operator `"in"`: `condition/Operator.cs:34 ["in"] = (l,r) => Contains(r,l)`; `Choices() = Registry.Keys` (`:61`) so `choice<Operator>` accepts "in". `Name in %list%` → is the action's Name contained in planStep.actions. ✅
+- This is the SAME reflection-Get-by-name that today's templates already use to navigate `clr<StepActions>` elements — so it's not new machinery, just a new caller. Only genuinely-new bit is `Get` over the element via `list.where` instead of Fluid; both bottom out in the reflection kind.
+
+**Verify at spike, don't assume:** the builder must MAP `where %actions% Name in %planStep.actions%` to `list.where{ Field="Name", Operator="in", Value=%planStep.actions% }` — read the `.pr` after building that goal and confirm Operator="in" and Value binds the LIST (not a scalar/first-element). That's a builder-mapping unknown, orthogonal to the runtime path above.
+
+## getTypes — confirmed, and the leak is real
+
+`goal.getTypes Goal=%goal%, write to %varTypes%` is live at `BuildStep/Start.goal` (the `goal.getTypes` line, feeding `%varTypes%[step.Index]` → `stepForLlm.template`). It's the ONLY live caller and it's a **goal-walk for per-step variable scope types** — distinct from the catalog work, exactly as the architect pinned. The entity-names-only rule is right: its replacement must emit type ENTITY names, never the `string`/`int`/`object` its own doc calls "PLang type names". Confirmed this is a 4e goal-walk piece, not part of the catalog swap.
+
+## build.actions / build.types dissolution (6c) — one door to verify exists
+
+`build.actions`→`%actions%` and `build.types`→`%typeInfo%` are the two `Compile` catalog feeds. `build.actions` dissolving needs `app.module` → `.list` navigation reachable from a goal via `%!app…%` (the collection surface 4a builds — fine). `build.types` dissolving needs the TYPE-vocabulary equivalent: **verify `app.type.list` has an enumeration door** the template can iterate. The architect already flagged "verify/add the type collection's enumeration door" — confirming it's a real open item, not settled. If `app.type.list` has no public enumerate, 6c's `build.types` dissolution needs that door added first (small, but it's a dependency of the type-vocabulary template).
+
+## Net
+Plan is green to start with the 5-leg spike as 4a's first commit. The one thing I'd add to the spike's acceptance: **prove `where` over the actual native-list catalog surface** (the coupling above), not a synthetic `item.list` — that's where a silent build-time break would hide.
