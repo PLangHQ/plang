@@ -22,6 +22,11 @@ public sealed partial class @this
     [Newtonsoft.Json.JsonProperty("action")]
     public string ActionName { get; set; } = "";
 
+    /// <summary>The qualified action name — "file.read". The class-zoom face templates read
+    /// as one token instead of composing module + action.</summary>
+    [JsonIgnore]
+    public string Name => $"{Module}.{ActionName}";
+
     [Store, LlmBuilder, Debug, Default]
     public List<global::app.data.@this> Parameters { get; init; } = new();
 

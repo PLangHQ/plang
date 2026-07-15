@@ -19,4 +19,23 @@ public sealed class @this
         Name = name;
         _list = list;
     }
+
+    // Action elements cached — the class-zoom face on the .pr action host, minted once off
+    // the registry's index and living as long as this element (which the registry drops on
+    // its own mutation). The list wrapper mints fresh per ask over the same cached elements.
+    private System.Collections.Generic.List<global::app.goal.steps.step.actions.action.@this>? _actions;
+
+    /// <summary>The module's actions as the NATIVE plang list — filterable by the list module,
+    /// renderable by templates.</summary>
+    public global::app.type.item.list.@this Actions
+        => new((_actions ??= _list.GetActions(Name)
+                    .Select(a => new global::app.goal.steps.step.actions.action.@this
+                    {
+                        Module = Name,
+                        ActionName = a,
+                        ParameterSchema = _list.GetActionType(Name, a),
+                    })
+                    .ToList())
+               .Select(a => (object?)a).ToList(),
+            _list.App.System.Context);
 }
