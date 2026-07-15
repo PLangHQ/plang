@@ -132,25 +132,24 @@ public sealed class @this : IAsyncDisposable
     public IEnumerable<string> Names
         => _modules.Keys;
 
-    // --- Stage 3 accessor surface ---
+    // --- Selection + enumeration: the concept's element surface ---
 
-    /// <summary>Index by module name. Throws on miss.</summary>
-    public IReadOnlyDictionary<string, Type> this[string moduleName]
-    {
-        get
-        {
-            if (!_modules.TryGetValue(moduleName, out var actions))
-                throw new KeyNotFoundException($"No module named '{moduleName}'.");
-            // Project the (Type type, ...) entry to just the Type for the consumer.
-            var projected = new Dictionary<string, Type>(actions.Count, StringComparer.OrdinalIgnoreCase);
-            foreach (var kvp in actions)
-                if (kvp.Value.Type != null) projected[kvp.Key] = kvp.Value.Type;
-            return projected;
-        }
-    }
+    // Module elements cached — a fresh element mints on first selection and lives as long as
+    // the registry entry (invalidated by the registry's own mutations: RegisterType/Register/
+    // Remove/Clear each drop the element).
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, global::app.module.@this> _elements
+        = new(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>Enumerate module names.</summary>
-    public IEnumerable<string> list => _modules.Keys;
+    /// <summary>Select a module element by name. Throws on miss (names are authored).</summary>
+    public global::app.module.@this this[string name]
+        => _modules.ContainsKey(name)
+            ? _elements.GetOrAdd(name, n => new global::app.module.@this(n, this))
+            : throw new KeyNotFoundException($"No module named '{name}'.");
+
+    /// <summary>The modules as the NATIVE plang list — filterable by the list module,
+    /// renderable by templates. A fresh, cheap wrapper per ask over the same cached elements.</summary>
+    public global::app.type.item.list.@this list
+        => new(Names.Select(n => (object?)this[n]).ToList(), App.System.Context);
 
     public IEnumerable<string> GetActions(string module)
         => _modules.TryGetValue(module, out var actions) ? actions.Keys : Enumerable.Empty<string>();

@@ -10,20 +10,22 @@ namespace PLang.Tests.App.SingularNamespaces.AccessorTests;
 // stay as methods on module.@this. NO .current — action modules are dispatched, not navigated.
 public class ModuleAccessorTests
 {
-    [Test] public async Task AppModule_IndexByName_SelectsTheModule()
+    [Test] public async Task AppModule_IndexByName_SelectsTheModuleElement()
     {
         await using var app = TestApp.Create("/test");
-        var fileActions = app.Module["file"];
-        await Assert.That(fileActions).IsNotNull();
-        await Assert.That(fileActions.Count).IsGreaterThan(0);
+        var file = app.Module["file"];
+        await Assert.That(file).IsNotNull();
+        await Assert.That(file.Name).IsEqualTo("file");
     }
 
     [Test] public async Task AppModuleList_Enumerates_LoadedModules()
     {
         await using var app = TestApp.Create("/test");
-        var names = app.Module.list.ToList();
+        // .list is the NATIVE plang list of module elements; Names is the raw name enumeration.
+        var names = app.Module.Names.ToList();
         await Assert.That(names.Contains("file")).IsTrue();
         await Assert.That(names.Contains("variable")).IsTrue();
+        await Assert.That(app.Module.list.CountRaw).IsGreaterThan(0);
     }
 
     [Test] public async Task AppModule_ResolvesAndDispatchesAction_UnderTheNewShape()
