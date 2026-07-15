@@ -439,7 +439,12 @@ public sealed class @this : item.@this
         return lower;
     }
 
-    public override string ToString() => Name;
+    // The entity's face — the kind rides IN the name for a container family (a list<path> reads
+    // "list<path>", the compound's plang face), and stands alone for a scalar sub-kind (a "text"
+    // with kind "md" is still "text" to the vocabulary). Templates print this; parity with the
+    // old GetTypeName strings is the entity's own responsibility.
+    public override string ToString()
+        => Kind != null && (Name == "list" || Name == "dict") ? $"{Name}<{Kind.Name}>" : Name;
 
     /// <summary>
     /// Value equality — the entity is minted on ask now, so two asks yield two

@@ -291,8 +291,47 @@ public sealed partial class @this
             // and hand construction a non-Creatable entity whose decline is the recursion we killed.
             if (typeof(app.type.item.@this).IsAssignableFrom(clrType)
                 && _typeToName.TryGetValue(clrType, out var name)) return this[name];
+            // A container generic answers {family, kind: element} — the choice precedent
+            // (choice<Operator> = {choice, kind:operator}) generalized to list/dict. The kind is
+            // DERIVED from the C# generic argument, never stored beside the type; goal.variables
+            // reads it back (Type[kind] → the element entity) and the entity's face composes it.
+            if (ContainerFamily(clrType) is { } fam)
+                return new app.type.@this(fam.Family, GetTypeName(fam.Element));
             return this["clr"];   // not a plang item → it IS clr(T); its Create builds the carrier (terminal)
         }
+    }
+
+    // The container families whose element rides as the KIND (list<path> = {list, kind:path}).
+    // Mirrors GetTypeName's generic recognition — the element is the kind; dict's kind is the VALUE
+    // (key defaults text; surface a keyed axis only if a real param needs one). Returns null for
+    // non-containers (they resolve on the item/clr rungs).
+    private static (string Family, System.Type Element)? ContainerFamily(System.Type type)
+    {
+        if (type.IsArray)
+        {
+            var arr = type.GetElementType()!;
+            return arr == typeof(byte) ? null : ("list", arr);   // byte[] is "bytes", not a list
+        }
+        if (type.IsGenericType)
+        {
+            var g = type.GetGenericTypeDefinition();
+            var args = type.GetGenericArguments();
+            if (g == typeof(app.type.item.list.@this<>)) return ("list", args[0]);
+            if (g == typeof(List<>) || g == typeof(IList<>) || g == typeof(IEnumerable<>) || g == typeof(ICollection<>)
+                || g == typeof(IReadOnlyCollection<>) || g == typeof(IReadOnlyList<>) || g == typeof(HashSet<>)
+                || (g.FullName?.StartsWith("System.Collections.Immutable.ImmutableList`", StringComparison.Ordinal) ?? false)
+                || (g.FullName?.StartsWith("System.Collections.Generic.ISet`", StringComparison.Ordinal) ?? false))
+                return ("list", args[0]);
+            if (g == typeof(Dictionary<,>) || g == typeof(IDictionary<,>)
+                || (g.FullName?.StartsWith("System.Collections.Concurrent.ConcurrentDictionary`", StringComparison.Ordinal) ?? false)
+                || (g.FullName?.StartsWith("System.Collections.ObjectModel.ReadOnlyDictionary`", StringComparison.Ordinal) ?? false)
+                || (g.FullName?.StartsWith("System.Collections.Generic.SortedDictionary`", StringComparison.Ordinal) ?? false)
+                || (g.FullName?.StartsWith("System.Collections.Immutable.ImmutableDictionary`", StringComparison.Ordinal) ?? false))
+                return ("dict", args[^1]);
+        }
+        var listIface = type.GetInterfaces().FirstOrDefault(i =>
+            i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
+        return listIface != null ? ("list", listIface.GetGenericArguments()[0]) : null;
     }
 
     // The born-native lift moved to its rightful owner — the produced type. "Build whatever this raw
