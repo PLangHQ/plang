@@ -1,8 +1,8 @@
 using app;
-using app.module.setting;
+using app.module.action.setting;
 using app.variable;
-using app.module.identity;
-using app.module.identity.code;
+using app.module.action.identity;
+using app.module.action.identity.code;
 
 namespace app.actor;
 
@@ -132,7 +132,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         {
             var (idProvider, _) = app.Code.Get<IIdentity>();
             if (idProvider == null) return null;
-            var result = idProvider.GetOrCreateDefaultAsync(new global::app.module.identity.Get(app.System.Context)).GetAwaiter().GetResult();
+            var result = idProvider.GetOrCreateDefaultAsync(new global::app.module.action.identity.Get(app.System.Context)).GetAwaiter().GetResult();
             return result.Success
                 ? (result.Peek() as global::app.type.item.@this)?.Clr<Identity>() ?? result.Peek() as Identity
                 : null;

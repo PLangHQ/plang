@@ -4,7 +4,7 @@ using TUnit.Assertions.Extensions;
 using app;
 using app.type;
 using app.type.list;
-using app.module.output;
+using app.module.action.output;
 
 namespace PLang.Tests.App.CallbackTests;
 

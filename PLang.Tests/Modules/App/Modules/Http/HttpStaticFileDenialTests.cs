@@ -19,7 +19,7 @@ public class HttpStaticFileDenialTests
         public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
-        public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok(_answer));
+        public override Task<global::app.data.@this> Ask(global::app.module.action.output.ask action, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok(_answer));
     }
 
     private static PLangEngine NewApp(out string root)
@@ -48,7 +48,7 @@ public class HttpStaticFileDenialTests
         bool denied = false;
         try
         {
-            var result = await global::app.module.http.code.Default.CreateFileContentAsync(app, app.User.Context, outOfRoot);
+            var result = await global::app.module.action.http.code.Default.CreateFileContentAsync(app, app.User.Context, outOfRoot);
             denied = result.Error != null;
         }
         catch (System.IO.IOException) { denied = true; }
@@ -62,7 +62,7 @@ public class HttpStaticFileDenialTests
         app.User.Channel.Register(ch);
         var file = System.IO.Path.Combine(root, "public.txt");
         System.IO.File.WriteAllText(file, "hello");
-        var result = await global::app.module.http.code.Default.CreateFileContentAsync(app, app.User.Context, file);
+        var result = await global::app.module.action.http.code.Default.CreateFileContentAsync(app, app.User.Context, file);
         await Assert.That(result.Error).IsNull();
         var bytes = await result.Content!.ReadAsByteArrayAsync();
         await Assert.That(System.Text.Encoding.UTF8.GetString(bytes)).IsEqualTo("hello");

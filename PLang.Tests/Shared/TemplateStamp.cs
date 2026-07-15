@@ -3,7 +3,7 @@ namespace PLang.Tests;
 /// <summary>
 /// Test-only helper that stamps the authored-template flag on an action's
 /// %ref%-bearing parameters, mirroring what the plang builder does at leaf level
-/// (<c>app.module.build.code.Default.NormalizeParameterTypes</c>, the template
+/// (<c>app.module.action.build.code.Default.NormalizeParameterTypes</c>, the template
 /// loop): a parameter whose raw string face carries a <c>%var%</c> hole is
 /// declared with <c>type.template = "plang"</c> so it resolves live at dispatch.
 /// Tests author actions the way the builder does; the .pr carries this flag.

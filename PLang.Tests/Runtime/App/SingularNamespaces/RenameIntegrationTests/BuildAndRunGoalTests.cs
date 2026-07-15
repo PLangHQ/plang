@@ -20,7 +20,7 @@ public class BuildAndRunGoalTests
         // Smoke: the renamed namespaces compile and the renamed-module action types exist.
         var setType = app.Module.GetActionType("variable", "set");
         await Assert.That(setType).IsNotNull();
-        await Assert.That(setType!.Namespace).IsEqualTo("app.module.variable");
+        await Assert.That(setType!.Namespace).IsEqualTo("app.module.action.variable");
 
         // And the engine handed-off Variables registry resolves through the new types.
         app.User.Context.Variable.Set("greeting", "hello");
@@ -34,6 +34,6 @@ public class BuildAndRunGoalTests
         await using var app = TestApp.Create("/test");
         var fileType = app.Module.GetActionType("file", "read");
         await Assert.That(fileType).IsNotNull();
-        await Assert.That(fileType!.Namespace).StartsWith("app.module.file");
+        await Assert.That(fileType!.Namespace).StartsWith("app.module.action.file");
     }
 }

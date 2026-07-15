@@ -148,7 +148,7 @@ public class SetTests
         {
             new Data("Value", "%myVar%", global::PLang.Tests.TestApp.SharedContext.Type.Create("int"), context: _app.User.Context)
         };
-        var result = global::app.module.variable.Set.ValidateBuild(parameters);
+        var result = global::app.module.action.variable.Set.ValidateBuild(parameters);
 
         await Assert.That(result).IsNull();
     }
@@ -160,7 +160,7 @@ public class SetTests
         {
             new Data("Value", "not a number", global::PLang.Tests.TestApp.SharedContext.Type.Create("int"), context: _app.User.Context)
         };
-        var result = global::app.module.variable.Set.ValidateBuild(parameters);
+        var result = global::app.module.action.variable.Set.ValidateBuild(parameters);
 
         await Assert.That(result).IsNotNull();
         await Assert.That(result!).Contains("type=number");
@@ -173,7 +173,7 @@ public class SetTests
         {
             new Data("Value", 42, global::PLang.Tests.TestApp.SharedContext.Type.Create("int"), context: _app.User.Context)
         };
-        var result = global::app.module.variable.Set.ValidateBuild(parameters);
+        var result = global::app.module.action.variable.Set.ValidateBuild(parameters);
 
         await Assert.That(result).IsNull();
     }

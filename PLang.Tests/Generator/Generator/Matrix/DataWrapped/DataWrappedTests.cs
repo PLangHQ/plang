@@ -51,10 +51,10 @@ public class DataWrappedListTests
         var result = await MatrixRunner.RunAsync<DataWrappedList>(app,
             parameters: new[] { ("messages", (object?)raw) },
             variables: new Dictionary<string, object?> { ["comment"] = "you are a compiler" });
-        var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>>;
         // Read the way a real handler does: enumerate, resolve + convert each row through its door.
-        var items = new List<global::app.module.llm.LlmMessage>();
-        foreach (var row in (await typed!.Value())!) items.Add((await row.Value()).Clr<global::app.module.llm.LlmMessage>()!);
+        var items = new List<global::app.module.action.llm.LlmMessage>();
+        foreach (var row in (await typed!.Value())!) items.Add((await row.Value()).Clr<global::app.module.action.llm.LlmMessage>()!);
         await Assert.That(items[0].Content).IsEqualTo("you are a compiler");
     }
 
@@ -64,7 +64,7 @@ public class DataWrappedListTests
         await using var app = TestApp.Create("/app");
         var result = await MatrixRunner.RunAsync<DataWrappedList>(app,
             parameters: new[] { ("messages", (object?)new List<object?>()) });
-        var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>>;
         await Assert.That((await typed!.Value())!.Count).IsEqualTo(0);
     }
 }

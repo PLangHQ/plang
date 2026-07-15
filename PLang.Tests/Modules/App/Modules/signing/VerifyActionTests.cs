@@ -1,11 +1,11 @@
 using app.actor.context;
 using app.error;
 using app.variable;
-using app.module.code;
-using app.module.signing.code;
-using app.module.crypto;
-using app.module.identity;
-using app.module.signing;
+using app.module.action.code;
+using app.module.action.signing.code;
+using app.module.action.crypto;
+using app.module.action.identity;
+using app.module.action.signing;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.signing;
@@ -74,7 +74,7 @@ public class VerifyActionTests
     private static Data Tampered(Data signed,
         global::app.type.item.text.@this? algorithm = null,
         global::app.type.item.datetime.@this? created = null,
-        global::app.module.crypto.type.hash.@this? hash = null,
+        global::app.module.action.crypto.type.hash.@this? hash = null,
         global::app.type.item.binary.@this? signature = null,
         bool contractsNull = false)
     {
@@ -173,7 +173,7 @@ public class VerifyActionTests
     {
         var signed = await SignHelper(new { amount = 100 }, contracts: new List<string> { "C0" });
         var tampered = Tampered(signed,
-            hash: new global::app.module.crypto.type.hash.@this(new byte[32], "keccak256"));
+            hash: new global::app.module.action.crypto.type.hash.@this(new byte[32], "keccak256"));
 
         var result = await VerifyHelper(tampered, contracts: new List<string> { "C0" });
         await result.IsFailure();

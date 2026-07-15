@@ -307,7 +307,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
 
     private async Task<data.@this> LoadFromFile(string prPath, string resolvedName, app.@this app, actor.context.@this context)
     {
-        var readAction = new module.file.Read(context)
+        var readAction = new module.action.file.Read(context)
         {
             Path = context.Ok<path>(path.Resolve(prPath, context))
         };

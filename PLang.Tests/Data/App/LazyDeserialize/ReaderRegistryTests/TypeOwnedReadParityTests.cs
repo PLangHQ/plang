@@ -55,7 +55,7 @@ public class TypeOwnedReadParityTests
         var b64 = System.Convert.ToBase64String(bytes);
         var r = new global::app.type.reader.@this();
         var rc = new global::app.type.reader.ReadContext(global::PLang.Tests.TestApp.SharedContext);
-        var via = r.Of("hash", null)!(b64, "keccak256", rc) as global::app.module.crypto.type.hash.@this;
+        var via = r.Of("hash", null)!(b64, "keccak256", rc) as global::app.module.action.crypto.type.hash.@this;
         await Assert.That(via).IsNotNull();
         await Assert.That(via!.ToBase64()).IsEqualTo(b64);
         await Assert.That(via.Algorithm).IsEqualTo("keccak256");

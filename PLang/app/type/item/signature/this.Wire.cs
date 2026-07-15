@@ -5,7 +5,7 @@ namespace app.type.item.signature;
 using text = global::app.type.item.text.@this;
 using datetime = global::app.type.item.datetime.@this;
 using binary = global::app.type.item.binary.@this;
-using hash = global::app.module.crypto.type.hash.@this;
+using hash = global::app.module.action.crypto.type.hash.@this;
 
 /// <summary>
 /// signature layer — wire reconstruction (the token-based schema reader,

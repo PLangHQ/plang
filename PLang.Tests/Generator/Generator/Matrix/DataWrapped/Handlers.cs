@@ -10,7 +10,7 @@ public partial class DataWrappedString : global::app.module.IContext
 [global::app.module.Action("datawrappedlist")]
 public partial class DataWrappedList : global::app.module.IContext
 {
-    public partial global::app.data.@this<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>> Messages { get; init; }
+    public partial global::app.data.@this<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>> Messages { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Messages);
 }
 

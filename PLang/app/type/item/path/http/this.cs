@@ -444,11 +444,11 @@ public sealed partial class @this : global::app.type.item.path.@this
             // path produces a fresh, destination-specific signature. Path only by
             // design — the recipient validates the host against itself.
             var canonical = $"{method}\n{_uri.PathAndQuery}\n{body ?? ""}";
-            var sign = new module.signing.sign(Context!)
+            var sign = new module.action.signing.sign(Context!)
             {
                 Data = new data.@this("", canonical, context: Context),
             };
-            var signResult = await Context.App.Run<module.signing.sign>(sign, Context);
+            var signResult = await Context.App.Run<module.action.signing.sign>(sign, Context);
             if (signResult.Success)
             {
                 var json = JsonSerializer.Serialize(signResult);

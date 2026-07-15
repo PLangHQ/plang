@@ -15,22 +15,22 @@ public class Stage3_HttpResponseTests
     [Test]
     public async Task HttpResponse_Type_IsDeleted()
     {
-        var asm = typeof(global::app.module.http.request).Assembly;
+        var asm = typeof(global::app.module.action.http.request).Assembly;
         await Assert.That(asm.GetType("app.http.response.@this")).IsNull();
     }
 
     [Test]
     public async Task HttpRequest_Run_ReturnsTaskData_NotResponse()
-        => await Assert.That(RunReturnType<global::app.module.http.request>())
+        => await Assert.That(RunReturnType<global::app.module.action.http.request>())
             .IsEqualTo(typeof(Task<Data>));
 
     [Test]
     public async Task HttpUpload_Run_ReturnsTaskData_NotResponse()
-        => await Assert.That(RunReturnType<global::app.module.http.upload>())
+        => await Assert.That(RunReturnType<global::app.module.action.http.upload>())
             .IsEqualTo(typeof(Task<Data>));
 
     [Test]
     public async Task HttpDownload_Run_SignatureUnchanged()
-        => await Assert.That(RunReturnType<global::app.module.http.download>())
+        => await Assert.That(RunReturnType<global::app.module.action.http.download>())
             .IsEqualTo(typeof(Task<Data>));
 }

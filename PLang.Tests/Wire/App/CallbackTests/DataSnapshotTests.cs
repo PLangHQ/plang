@@ -3,7 +3,7 @@ using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using app.module;
-using app.module.output;
+using app.module.action.output;
 
 namespace PLang.Tests.App.CallbackTests;
 

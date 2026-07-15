@@ -79,7 +79,7 @@ public sealed class @this : ITransport
             if (_context.Actor != null && data.Peek() is not global::app.type.item.signature.@this)
             {
                 var signResult = await _context.App.Run(
-                    new app.module.signing.sign(_context) { Data = data,
+                    new app.module.action.signing.sign(_context) { Data = data,
                         // Hash in the view we're serializing in, so the verifier (re-hashing the
                         // wire-reconstructed bag in the same view) gets matching bytes.
                         StoreView = new app.data.@this<global::app.type.item.@bool.@this>("", view == global::app.View.Store, context: _context) },
@@ -151,7 +151,7 @@ public sealed class @this : ITransport
                 v.PendingVerification = null;
                 var carrier = _context.Ok(layer);
                 carrier.Context = _context;
-                var verifyAction = new global::app.module.signing.verify(_context)
+                var verifyAction = new global::app.module.action.signing.verify(_context)
                 {
                     Data = carrier,
                     SkipFreshnessCheck = new global::app.data.@this<global::app.type.item.@bool.@this>(

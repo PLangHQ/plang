@@ -145,7 +145,7 @@ public class Phase0Proof
     public async Task Phase04_ListType_IsPreserved()
     {
         // INPUT: Data.Ok with a list value and explicit list type
-        var listValue = new global::app.module.list.type.list
+        var listValue = new global::app.module.action.list.type.list
         {
             count = 3,
             value = new List<object?> { 1, 2, 3 }

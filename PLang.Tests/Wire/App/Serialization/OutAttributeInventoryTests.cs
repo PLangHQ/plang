@@ -21,19 +21,19 @@ public class OutAttributeInventoryTests
     // 1. Identity ------------------------------------------------------------
     [Test] public async Task Identity_Name_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.module.identity.Identity), "Name")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.module.action.identity.Identity), "Name")).IsTrue();
     }
     [Test] public async Task Identity_PublicKey_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.module.identity.Identity), "PublicKey")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.module.action.identity.Identity), "PublicKey")).IsTrue();
     }
     [Test] public async Task Identity_PrivateKey_StaysSensitive_NoOut()
     {
-        await Assert.That(HasOut(typeof(global::app.module.identity.Identity), "PrivateKey")).IsFalse();
+        await Assert.That(HasOut(typeof(global::app.module.action.identity.Identity), "PrivateKey")).IsFalse();
     }
     [Test] public async Task Identity_IsDefault_IsArchived_Created_NotOut()
     {
-        var t = typeof(global::app.module.identity.Identity);
+        var t = typeof(global::app.module.action.identity.Identity);
         await Assert.That(HasOut(t, "IsDefault")).IsFalse();
         await Assert.That(HasOut(t, "IsArchived")).IsFalse();
         await Assert.That(HasOut(t, "Created")).IsFalse();
@@ -80,11 +80,11 @@ public class OutAttributeInventoryTests
     // 3. list (module.list.types.list) -------------------------------------
     [Test] public async Task List_Count_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.module.list.type.list), "count")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.module.action.list.type.list), "count")).IsTrue();
     }
     [Test] public async Task List_Value_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.module.list.type.list), "value")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.module.action.list.type.list), "value")).IsTrue();
     }
 
     // 4. Variable ------------------------------------------------------------
@@ -158,11 +158,11 @@ public class OutAttributeInventoryTests
     // 9. setting -------------------------------------------------------------
     [Test] public async Task Setting_Key_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.module.setting.type.setting), "key")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.module.action.setting.type.setting), "key")).IsTrue();
     }
     [Test] public async Task Setting_Value_HasOut_AndMasked()
     {
-        var t = typeof(global::app.module.setting.type.setting);
+        var t = typeof(global::app.module.action.setting.type.setting);
         await Assert.That(HasOut(t, "value")).IsTrue();
         await Assert.That(HasMasked(t, "value")).IsTrue();
     }
@@ -173,7 +173,7 @@ public class OutAttributeInventoryTests
     // 11. Ask ----------------------------------------------------------------
     [Test] public async Task Ask_Answer_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.module.output.Ask), "Answer")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.module.action.output.Ask), "Answer")).IsTrue();
     }
 
     // 12. Mock ---------------------------------------------------------------
@@ -189,10 +189,10 @@ public class OutAttributeInventoryTests
     // 13. condition.Operator -------------------------------------------------
     [Test] public async Task ConditionOperator_Value_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.module.condition.Operator), "Value")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.module.action.condition.Operator), "Value")).IsTrue();
     }
     [Test] public async Task ConditionOperator_Evaluate_NotOut_Delegate()
     {
-        await Assert.That(HasOut(typeof(global::app.module.condition.Operator), "Evaluate")).IsFalse();
+        await Assert.That(HasOut(typeof(global::app.module.action.condition.Operator), "Evaluate")).IsFalse();
     }
 }

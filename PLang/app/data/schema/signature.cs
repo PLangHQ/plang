@@ -76,7 +76,7 @@ public sealed class signature : ISchemaReader
 
         var layer = new global::app.type.item.signature.@this(
             inner, algorithm, nonce, new global::app.type.item.datetime.@this(created), identity,
-            new global::app.module.crypto.type.hash.@this(hashValue, hashAlgo), sig,
+            new global::app.module.action.crypto.type.hash.@this(hashValue, hashAlgo), sig,
             expires is { } ex ? new global::app.type.item.datetime.@this(ex) : null, contracts);
 
         // The inner data is re-hashed during verify (canonicalized through the wire), so it
@@ -102,7 +102,7 @@ public sealed class signature : ISchemaReader
 
             var carrier = Data.Ok(layer);
             carrier.Context = context;
-            var verifyAction = new global::app.module.signing.verify(context)
+            var verifyAction = new global::app.module.action.signing.verify(context)
             {
                 Data = carrier,
                 SkipFreshnessCheck = new global::app.data.@this<global::app.type.item.@bool.@this>(

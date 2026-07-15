@@ -1,5 +1,5 @@
 using Comparison = global::app.data.Comparison;
-using Operator = global::app.module.condition.Operator;
+using Operator = global::app.module.action.condition.Operator;
 
 namespace PLang.Tests.App.CompareRedesign;
 
@@ -58,10 +58,10 @@ public class Stage6_ConsumersTests
     {
         // assert/code/Default.cs Equals/NotEquals/GreaterThan/LessThan/Contains/NotContains await Compare and map per the table
         // the comparing asserts are async (they await data.Compare) — the interface pins it
-        var m = typeof(global::app.module.assert.code.IAssert).GetMethod("Equals");
+        var m = typeof(global::app.module.action.assert.code.IAssert).GetMethod("Equals");
         await Assert.That(m).IsNotNull();
         await Assert.That(typeof(Task).IsAssignableFrom(m!.ReturnType)).IsTrue();
-        var gt = typeof(global::app.module.assert.code.IAssert).GetMethod("GreaterThan");
+        var gt = typeof(global::app.module.action.assert.code.IAssert).GetMethod("GreaterThan");
         await Assert.That(typeof(Task).IsAssignableFrom(gt!.ReturnType)).IsTrue();
     }
 
@@ -112,7 +112,7 @@ public class Stage6_ConsumersTests
     public async Task ComparerObjectDefault_NotUsedAnywhere_GrepGate()
     {
         // sort.cs no longer references Comparer<object>.Default — uses the typed Compare pipeline
-        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "list", "sort.cs"));
+        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "action", "list", "sort.cs"));
         await Assert.That(src).DoesNotContain("Comparer<object>.Default");
         var listSrc = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "type", "list", "this.cs"));
         await Assert.That(listSrc).DoesNotContain("Comparer<object>.Default");
@@ -144,7 +144,7 @@ public class Stage6_ConsumersTests
         var list = new global::app.type.item.list.@this(ctx);
         list.Add(new Data("", dict, context: ctx));
         await ctx.Variable.Set("items", list);
-        var result = await app.Run(new global::app.module.list.IndexOf(ctx) { ListName = new global::app.data.@this<global::app.variable.@this>("", new global::app.variable.@this("items")),
+        var result = await app.Run(new global::app.module.action.list.IndexOf(ctx) { ListName = new global::app.data.@this<global::app.variable.@this>("", new global::app.variable.@this("items")),
             Value = D(app, 99, "number"),
         }, ctx);
         await result.IsSuccess();
@@ -163,7 +163,7 @@ public class Stage6_ConsumersTests
         list.Add(new Data("", 5, context: ctx));
         list.Add(new Data("", 5, context: ctx));
         await ctx.Variable.Set("items", list);
-        var result = await app.Run(new global::app.module.list.Unique(ctx) { ListName = new global::app.data.@this<global::app.variable.@this>("", new global::app.variable.@this("items")),
+        var result = await app.Run(new global::app.module.action.list.Unique(ctx) { ListName = new global::app.data.@this<global::app.variable.@this>("", new global::app.variable.@this("items")),
         }, ctx);
         await result.IsSuccess();
     }
@@ -186,7 +186,7 @@ public class Stage6_ConsumersTests
         // llm/OpenAi.cs — cache restore NAVIGATES the entry uniformly (dict.Entries or
         // clr(json).Enumerate), not a raw Dictionary copy via ToRaw. The old per-shape
         // reconstruction is gone — a clr(json) round-trips as raw json now.
-        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "llm", "code", "OpenAi.cs"));
+        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "action", "llm", "code", "OpenAi.cs"));
         await Assert.That(src).DoesNotContain("ToRaw");
         await Assert.That(src).Contains("d.Entries");
         await Assert.That(src).Contains("c.Enumerate()");
@@ -197,7 +197,7 @@ public class Stage6_ConsumersTests
     {
         // ui/Fluid.cs — natives render through lazy read-through views (zero copy);
         // no ToRaw deep-copy call. (The one mention is the comment stating that.)
-        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "ui", "code", "Fluid.cs"));
+        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "action", "ui", "code", "Fluid.cs"));
         await Assert.That(src).DoesNotContain(".Clr<object>()");
         await Assert.That(src).Contains("NativeCollectionConverter");
     }

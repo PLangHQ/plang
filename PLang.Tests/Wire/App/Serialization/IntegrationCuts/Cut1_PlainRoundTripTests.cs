@@ -78,8 +78,8 @@ public class Cut1_PlainRoundTripTests
         await using (app)
         {
             back.Context = app.User.Context;
-            var verify = await app.Run<global::app.module.signing.verify>(
-                new global::app.module.signing.verify(app.User.Context)
+            var verify = await app.Run<global::app.module.action.signing.verify>(
+                new global::app.module.action.signing.verify(app.User.Context)
                 {
                     Data = back,
                     SkipFreshnessCheck = new global::app.data.@this<global::app.type.item.@bool.@this>("", true)

@@ -1,7 +1,7 @@
 using app.actor.context;
 using app;
 using app.variable;
-using app.module.math;
+using app.module.action.math;
 
 namespace PLang.Tests.App.actions.math;
 
@@ -244,7 +244,7 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new global::app.module.math.Random(context) { Min = (global::app.type.item.number.@this)1, Max = (global::app.type.item.number.@this)10 };
+        var action = new global::app.module.action.math.Random(context) { Min = (global::app.type.item.number.@this)1, Max = (global::app.type.item.number.@this)10 };
         await action.Attach(null, context);
         var result = await action.Run();
 

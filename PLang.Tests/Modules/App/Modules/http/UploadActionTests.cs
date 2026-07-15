@@ -3,10 +3,10 @@ using System.Net.Http.Headers;
 using System.Text;
 using app.actor.context;
 using app.variable;
-using app.module.http;
-using app.module.http.code;
+using app.module.action.http;
+using app.module.action.http.code;
 using PLangEngine = global::app.@this;
-using HttpMethod = global::app.module.http.HttpMethod;
+using HttpMethod = global::app.module.action.http.HttpMethod;
 
 namespace PLang.Tests.App.Modules.http;
 
@@ -69,7 +69,7 @@ public class UploadActionTests
     {
         var action = new upload(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", "Hello upload", context: Ctx),
-            As = (global::app.type.item.choice.@this<global::app.module.http.ContentAs>)ContentAs.Text,
+            As = (global::app.type.item.choice.@this<global::app.module.action.http.ContentAs>)ContentAs.Text,
             Unsigned = (global::app.type.item.@bool.@this)true
         };
 
@@ -90,7 +90,7 @@ public class UploadActionTests
 
         var action = new upload(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", "upload.txt", context: Ctx),
-            As = (global::app.type.item.choice.@this<global::app.module.http.ContentAs>)ContentAs.File,
+            As = (global::app.type.item.choice.@this<global::app.module.action.http.ContentAs>)ContentAs.File,
             Unsigned = (global::app.type.item.@bool.@this)true
         };
 
@@ -110,7 +110,7 @@ public class UploadActionTests
 
         var action = new upload(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", b64, context: Ctx),
-            As = (global::app.type.item.choice.@this<global::app.module.http.ContentAs>)ContentAs.Base64,
+            As = (global::app.type.item.choice.@this<global::app.module.action.http.ContentAs>)ContentAs.Base64,
             Unsigned = (global::app.type.item.@bool.@this)true
         };
 
@@ -163,8 +163,8 @@ public class UploadActionTests
     {
         var action = new upload(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", "data", context: Ctx),
-            Method = (global::app.type.item.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.PUT,
-            As = (global::app.type.item.choice.@this<global::app.module.http.ContentAs>)ContentAs.Text,
+            Method = (global::app.type.item.choice.@this<global::app.module.action.http.HttpMethod>)HttpMethod.PUT,
+            As = (global::app.type.item.choice.@this<global::app.module.action.http.ContentAs>)ContentAs.Text,
             Unsigned = (global::app.type.item.@bool.@this)true
         };
 
@@ -185,7 +185,7 @@ public class UploadActionTests
 
         var action = new upload(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", "data", context: Ctx),
-            As = (global::app.type.item.choice.@this<global::app.module.http.ContentAs>)ContentAs.Text,
+            As = (global::app.type.item.choice.@this<global::app.module.action.http.ContentAs>)ContentAs.Text,
             Unsigned = (global::app.type.item.@bool.@this)true
         };
 
@@ -230,7 +230,7 @@ public class UploadActionTests
     {
         var action = new upload(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", new Dictionary<string, object> { ["field1"] = "value1" }, context: Ctx),
-            As = (global::app.type.item.choice.@this<global::app.module.http.ContentAs>)ContentAs.Form,
+            As = (global::app.type.item.choice.@this<global::app.module.action.http.ContentAs>)ContentAs.Form,
             Unsigned = (global::app.type.item.@bool.@this)true
         };
 
@@ -255,7 +255,7 @@ public class UploadActionTests
 
         var action = new upload(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", new Dictionary<string, object> { ["title"] = "My Doc", ["file"] = "@document.pdf" }, context: Ctx),
-            As = (global::app.type.item.choice.@this<global::app.module.http.ContentAs>)ContentAs.Form,
+            As = (global::app.type.item.choice.@this<global::app.module.action.http.ContentAs>)ContentAs.Form,
             Unsigned = (global::app.type.item.@bool.@this)true
         };
 

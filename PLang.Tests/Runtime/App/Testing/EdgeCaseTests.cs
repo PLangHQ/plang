@@ -78,7 +78,7 @@ public class EdgeCaseTests
         // inner grandchild-runs).
 
         var emptyList = new List<global::app.test.@this>();
-        var outerAction = new global::app.module.test.run(_app.User.Context) { Tests = emptyList.ToListData<global::app.test.@this>(),
+        var outerAction = new global::app.module.action.test.run(_app.User.Context) { Tests = emptyList.ToListData<global::app.test.@this>(),
             Parallel = null,
             Timeout = null
         };
@@ -94,7 +94,7 @@ public class EdgeCaseTests
     [Test]
     public async Task Discover_PathTraversal_OutsideProjectRoot_Rejected()
     {
-        var action = new global::app.module.test.discover(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
+        var action = new global::app.module.action.test.discover(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
                 global::app.type.item.path.@this.Resolve("../../../etc", _app.User.Context)),
             Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<global::app.type.item.@bool.@this>("Recursive", true)
@@ -124,7 +124,7 @@ public class EdgeCaseTests
         run.Complete(global::app.test.Status.Fail, new global::app.error.AssertionError(1, 2));
         _app.Test.Add(run);
 
-        var action = new global::app.module.test.report(_app.User.Context);
+        var action = new global::app.module.action.test.report(_app.User.Context);
         await action.Run();
 
         var output = CapturedOutput();

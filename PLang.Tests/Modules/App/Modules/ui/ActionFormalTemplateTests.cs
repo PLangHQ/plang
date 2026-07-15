@@ -1,8 +1,8 @@
 using app;
 using app.actor.context;
 using app.variable;
-using app.module.ui;
-using app.module.ui.code;
+using app.module.action.ui;
+using app.module.action.ui.code;
 
 namespace PLang.Tests.App.Modules.ui;
 
@@ -16,14 +16,14 @@ public class ActionFormalTemplateTests : IDisposable
 {
     private readonly string _tempDir;
     private readonly global::app.@this _app;
-    private readonly global::app.module.ui.code.Fluid _provider;
+    private readonly global::app.module.action.ui.code.Fluid _provider;
 
     public ActionFormalTemplateTests()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_actionformal_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = global::PLang.Tests.TestApp.Plain(_tempDir);
-        _provider = new global::app.module.ui.code.Fluid();
+        _provider = new global::app.module.action.ui.code.Fluid();
     }
 
     public void Dispose()

@@ -1,8 +1,8 @@
 using app.actor.context;
 using app.error;
 using app.variable;
-using app.module.crypto;
-using app.module.crypto.code;
+using app.module.action.crypto;
+using app.module.action.crypto.code;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.crypto;
@@ -46,7 +46,7 @@ public class ProviderResolutionTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        var hash = ((global::app.module.crypto.type.hash.@this)(await result.Value())!).Bytes;
+        var hash = ((global::app.module.action.crypto.type.hash.@this)(await result.Value())!).Bytes;
         // Mock returns all-zero bytes
         await Assert.That(hash).IsEquivalentTo(new byte[32]);
     }
@@ -54,14 +54,14 @@ public class ProviderResolutionTests
     [Test]
     public async Task Hash_NoProviderConfigured_FallsToBuiltInDefault()
     {
-        // Fresh engine, no crypto settings — should use global::app.module.crypto.code.Default
+        // Fresh engine, no crypto settings — should use global::app.module.action.crypto.code.Default
         var action = new Hash(Ctx) { Data = Ctx.Ok("hello"), Algorithm = (global::app.type.item.text.@this)"keccak256" };
         await action.Attach(null, Ctx);
         var result = await action.Run();
 
         await result.IsSuccess();
-        var hash = ((global::app.module.crypto.type.hash.@this)(await result.Value())!).Bytes;
-        // Should not be all zeros (global::app.module.crypto.code.Default produces real keccak256)
+        var hash = ((global::app.module.action.crypto.type.hash.@this)(await result.Value())!).Bytes;
+        // Should not be all zeros (global::app.module.action.crypto.code.Default produces real keccak256)
         await Assert.That(hash).IsNotEquivalentTo(new byte[32]);
         await Assert.That(hash.Length).IsEqualTo(32);
     }
@@ -90,7 +90,7 @@ public class ProviderResolutionTests
         public bool IsBuiltIn { get; set; }
 
         public string? Source { get; set; }
-        public System.Threading.Tasks.Task<global::app.data.@this<global::app.module.crypto.type.hash.@this>> Hash(Hash action) => System.Threading.Tasks.Task.FromResult(action.Context.Ok<global::app.module.crypto.type.hash.@this>(new global::app.module.crypto.type.hash.@this(new byte[32], "keccak256"), global::app.type.@this.Create("hash", kind: "keccak256"))); // all zeros
+        public System.Threading.Tasks.Task<global::app.data.@this<global::app.module.action.crypto.type.hash.@this>> Hash(Hash action) => System.Threading.Tasks.Task.FromResult(action.Context.Ok<global::app.module.action.crypto.type.hash.@this>(new global::app.module.action.crypto.type.hash.@this(new byte[32], "keccak256"), global::app.type.@this.Create("hash", kind: "keccak256"))); // all zeros
         public System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.@bool.@this>> Verify(Verify action) => System.Threading.Tasks.Task.FromResult(global::app.data.@this<global::app.type.item.@bool.@this>.Ok(false));     }
 
     private class AlwaysTrueVerifier : ICrypto
@@ -101,5 +101,5 @@ public class ProviderResolutionTests
         public bool IsBuiltIn { get; set; }
 
         public string? Source { get; set; }
-        public System.Threading.Tasks.Task<global::app.data.@this<global::app.module.crypto.type.hash.@this>> Hash(Hash action) => System.Threading.Tasks.Task.FromResult(action.Context.Ok<global::app.module.crypto.type.hash.@this>(new global::app.module.crypto.type.hash.@this(new byte[32], "keccak256"), global::app.type.@this.Create("hash", kind: "keccak256")));         public System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.@bool.@this>> Verify(Verify action) => System.Threading.Tasks.Task.FromResult(global::app.data.@this<global::app.type.item.@bool.@this>.Ok(true));     }
+        public System.Threading.Tasks.Task<global::app.data.@this<global::app.module.action.crypto.type.hash.@this>> Hash(Hash action) => System.Threading.Tasks.Task.FromResult(action.Context.Ok<global::app.module.action.crypto.type.hash.@this>(new global::app.module.action.crypto.type.hash.@this(new byte[32], "keccak256"), global::app.type.@this.Create("hash", kind: "keccak256")));         public System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.@bool.@this>> Verify(Verify action) => System.Threading.Tasks.Task.FromResult(global::app.data.@this<global::app.type.item.@bool.@this>.Ok(true));     }
 }

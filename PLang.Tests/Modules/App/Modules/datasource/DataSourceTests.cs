@@ -1,5 +1,5 @@
 using app.actor.context;
-using app.module.setting;
+using app.module.action.setting;
 using app.error;
 using app.variable;
 using PLangEngine = global::app.@this;
@@ -31,10 +31,10 @@ public class DataSourceTests
         catch { /* best effort cleanup */ }
     }
 
-    private async System.Threading.Tasks.Task<global::app.module.setting.Sqlite> CreateDataSource()
+    private async System.Threading.Tasks.Task<global::app.module.action.setting.Sqlite> CreateDataSource()
     {
         var dbPath = global::app.type.item.path.@this.Resolve("/.db/test.sqlite", _app.System.Context!);
-        return await global::app.module.setting.Sqlite.CreateAsync(dbPath, _app.System.Context!);
+        return await global::app.module.action.setting.Sqlite.CreateAsync(dbPath, _app.System.Context!);
     }
 
     [Test]
@@ -174,7 +174,7 @@ public class DataSourceTests
     [Test]
     public async Task ResolveTableName_ReturnsLastNamespaceSegment()
     {
-        var result = global::app.module.setting.IStore.ResolveTableName(typeof(global::app.module.setting.Set));
+        var result = global::app.module.action.setting.IStore.ResolveTableName(typeof(global::app.module.action.setting.Set));
         await Assert.That(result).IsEqualTo("setting");
     }
 
@@ -276,7 +276,7 @@ public class DataSourceTests
     [Test]
     public async Task InMemory_CrudOperations()
     {
-        using var ds = global::app.module.setting.Sqlite.InMemory("test_crud", _app.User.Context);
+        using var ds = global::app.module.action.setting.Sqlite.InMemory("test_crud", _app.User.Context);
 
         // Set
         var setResult = await ds.Set("items", "key1", new Data("key1", "value1", context: _app.System.Context!));
@@ -307,7 +307,7 @@ public class DataSourceTests
     [Test]
     public async Task InMemory_SchemaPersistsAcrossOperations()
     {
-        using var ds = global::app.module.setting.Sqlite.InMemory("test_schema", _app.User.Context);
+        using var ds = global::app.module.action.setting.Sqlite.InMemory("test_schema", _app.User.Context);
 
         // First operation creates the table
         await ds.Set("persistent", "key1", new Data("key1", "value1", context: _app.System.Context!));
@@ -327,8 +327,8 @@ public class DataSourceTests
     [Test]
     public async Task InMemory_TwoNamesAreIsolated()
     {
-        using var ds1 = global::app.module.setting.Sqlite.InMemory("db_alpha", _app.User.Context);
-        using var ds2 = global::app.module.setting.Sqlite.InMemory("db_beta", _app.User.Context);
+        using var ds1 = global::app.module.action.setting.Sqlite.InMemory("db_alpha", _app.User.Context);
+        using var ds2 = global::app.module.action.setting.Sqlite.InMemory("db_beta", _app.User.Context);
 
         await ds1.Set("shared", "key", new Data("key", "alpha_value", context: _app.System.Context!));
         await ds2.Set("shared", "key", new Data("key", "beta_value", context: _app.System.Context!));
@@ -344,12 +344,12 @@ public class DataSourceTests
     public async Task InMemory_DisposeClosesDb()
     {
         // Create, populate, dispose
-        var ds1 = global::app.module.setting.Sqlite.InMemory("disposable_db", _app.User.Context);
+        var ds1 = global::app.module.action.setting.Sqlite.InMemory("disposable_db", _app.User.Context);
         await ds1.Set("data", "key", new Data("key", "value", context: _app.System.Context!));
         ds1.Dispose();
 
         // New datasource with same name should start empty (sentinel closed → DB vanished)
-        using var ds2 = global::app.module.setting.Sqlite.InMemory("disposable_db", _app.User.Context);
+        using var ds2 = global::app.module.action.setting.Sqlite.InMemory("disposable_db", _app.User.Context);
         var result = await ds2.Get<global::app.type.item.@this>("data", "key");
         await result.IsSuccess();
         await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();

@@ -33,7 +33,7 @@ public class Stage3_PathDemolitionTests
 
     private static async Task<Data> Read(global::app.actor.context.@this context, global::app.type.item.path.@this p)
     {
-        var action = new global::app.module.file.Read(context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", p),
+        var action = new global::app.module.action.file.Read(context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", p),
         };
         var result = await action.Run();
         await result.IsSuccess();

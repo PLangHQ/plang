@@ -17,13 +17,13 @@ public class DebugModeBypassTests : System.IAsyncDisposable
 
     [Test] public async Task FilterCache_IsKeyedByTypeAndMode_DoesNotPoisonAcrossModes()
     {
-        var outEntries = global::app.channel.serializer.filter.Tagged.PropertiesFor(typeof(global::app.module.identity.Identity), global::app.View.Out);
-        var debugEntries = global::app.channel.serializer.filter.Tagged.PropertiesFor(typeof(global::app.module.identity.Identity), global::app.View.Debug);
+        var outEntries = global::app.channel.serializer.filter.Tagged.PropertiesFor(typeof(global::app.module.action.identity.Identity), global::app.View.Out);
+        var debugEntries = global::app.channel.serializer.filter.Tagged.PropertiesFor(typeof(global::app.module.action.identity.Identity), global::app.View.Debug);
         await Assert.That(outEntries.Count).IsLessThan(debugEntries.Count);
         // Both cached: re-fetch returns the same array references.
-        await Assert.That(global::app.channel.serializer.filter.Tagged.PropertiesFor(typeof(global::app.module.identity.Identity), global::app.View.Out))
+        await Assert.That(global::app.channel.serializer.filter.Tagged.PropertiesFor(typeof(global::app.module.action.identity.Identity), global::app.View.Out))
             .IsSameReferenceAs(outEntries);
-        await Assert.That(global::app.channel.serializer.filter.Tagged.PropertiesFor(typeof(global::app.module.identity.Identity), global::app.View.Debug))
+        await Assert.That(global::app.channel.serializer.filter.Tagged.PropertiesFor(typeof(global::app.module.action.identity.Identity), global::app.View.Debug))
             .IsSameReferenceAs(debugEntries);
     }
 }

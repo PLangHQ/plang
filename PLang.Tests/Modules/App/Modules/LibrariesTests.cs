@@ -286,7 +286,7 @@ public class LibrariesTests
         var modules = new global::app.module.@this();
         modules.Clear(); // start fresh
 
-        var count = modules.Discover(typeof(global::app.@this).Assembly, "app.module");
+        var count = modules.Discover(typeof(global::app.@this).Assembly, "app.module.action");
 
         await Assert.That(modules.Contains("variable", "set")).IsTrue();
         await Assert.That(modules.Contains("output", "write")).IsTrue();

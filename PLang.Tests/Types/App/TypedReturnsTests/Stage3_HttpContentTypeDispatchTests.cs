@@ -1,9 +1,9 @@
 using System.Net;
 using System.Net.Http;
 using System.Text;
-using app.module.code;
-using app.module.http;
-using app.module.http.code;
+using app.module.action.code;
+using app.module.action.http;
+using app.module.action.http.code;
 using data = global::app.data.@this;
 
 namespace PLang.Tests.App.TypedReturnsTests;
@@ -146,7 +146,7 @@ public class Stage3_HttpContentTypeDispatchTests
     [Test]
     public async Task HttpDownload_BodyDispatch_NotApplied()
     {
-        var ret = typeof(global::app.module.http.download)
+        var ret = typeof(global::app.module.action.http.download)
             .GetMethod("Run", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance, System.Type.EmptyTypes)!
             .ReturnType;
         await Assert.That(ret).IsEqualTo(typeof(Task<Data>));

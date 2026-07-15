@@ -30,7 +30,7 @@ public class ItemConstraintTests
             typeof(global::app.type.item.dict.@this), typeof(global::app.type.item.list.@this),
             typeof(global::app.type.item.path.@this), typeof(global::app.type.item.image.@this),
             typeof(global::app.type.code.@this), typeof(global::app.variable.@this),
-            typeof(global::app.module.output.Ask), typeof(global::app.snapshot.@this),
+            typeof(global::app.module.action.output.Ask), typeof(global::app.snapshot.@this),
         };
         foreach (var t in wrappers)
             await Assert.That(IsItem(t)).IsTrue();
@@ -69,7 +69,7 @@ public class ItemConstraintTests
     {
         // Ask (resume sentinel), snapshot (execution-state), path (domain value) are
         // all : item — they honor no ordering/equality contract they can't keep.
-        await Assert.That(IsItem(typeof(global::app.module.output.Ask))).IsTrue();
+        await Assert.That(IsItem(typeof(global::app.module.action.output.Ask))).IsTrue();
         await Assert.That(IsItem(typeof(global::app.snapshot.@this))).IsTrue();
         await Assert.That(IsItem(typeof(global::app.type.item.path.@this))).IsTrue();
     }

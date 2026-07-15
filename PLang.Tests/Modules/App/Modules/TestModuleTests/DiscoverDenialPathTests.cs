@@ -16,7 +16,7 @@ public class DiscoverDenialPathTests
         public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
-        public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok(_answer));
+        public override Task<global::app.data.@this> Ask(global::app.module.action.output.ask action, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok(_answer));
     }
 
     private static PLangEngine NewApp(out string root)
@@ -32,7 +32,7 @@ public class DiscoverDenialPathTests
         var app = NewApp(out _);
         app.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = "//etc";
-        var action = new global::app.module.test.discover(app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
+        var action = new global::app.module.action.test.discover(app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
                 global::app.type.item.path.@this.Resolve(outOfRoot, app.User.Context)),
             Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<global::app.type.item.@bool.@this>("Recursive", false)
@@ -46,7 +46,7 @@ public class DiscoverDenialPathTests
     {
         var app = NewApp(out _);
         app.User.Channel.Register(new CannedChannel("n"));
-        var action = new global::app.module.test.discover(app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
+        var action = new global::app.module.action.test.discover(app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
                 global::app.type.item.path.@this.Resolve("//../../../etc", app.User.Context)),
             Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<global::app.type.item.@bool.@this>("Recursive", false)

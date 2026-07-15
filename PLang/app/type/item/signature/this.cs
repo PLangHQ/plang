@@ -4,7 +4,7 @@ using IWriter = global::app.channel.serializer.IWriter;
 using text = global::app.type.item.text.@this;
 using datetime = global::app.type.item.datetime.@this;
 using binary = global::app.type.item.binary.@this;
-using hash = global::app.module.crypto.type.hash.@this;
+using hash = global::app.module.action.crypto.type.hash.@this;
 
 /// <summary>
 /// PLang <c>signature</c> value — the cryptographic-attestation <b>layer</b> that

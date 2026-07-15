@@ -109,10 +109,10 @@ public class DeepResolutionListTests
             parameters: new[] { ("messages", (object?)raw) },
             variables: new Dictionary<string, object?> { ["prompt"] = "You are a compiler" });
 
-        var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>>;
         // Read the way a real handler does: enumerate, resolve + convert each row through its door.
-        var items = new List<global::app.module.llm.LlmMessage>();
-        foreach (var row in (await typed!.Value())!) items.Add((await row.Value()).Clr<global::app.module.llm.LlmMessage>()!);
+        var items = new List<global::app.module.action.llm.LlmMessage>();
+        foreach (var row in (await typed!.Value())!) items.Add((await row.Value()).Clr<global::app.module.action.llm.LlmMessage>()!);
         await Assert.That(items[0].Content).IsEqualTo("You are a compiler");
     }
 
@@ -138,9 +138,9 @@ public class DeepResolutionListTests
             parameters: new[] { ("messages", (object?)raw) },
             variables: new Dictionary<string, object?> { ["a"] = "alpha", ["b"] = "beta" });
 
-        var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>>;
-        var items = new List<global::app.module.llm.LlmMessage>();
-        foreach (var row in (await typed!.Value())!) items.Add((await row.Value()).Clr<global::app.module.llm.LlmMessage>()!);
+        var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>>;
+        var items = new List<global::app.module.action.llm.LlmMessage>();
+        foreach (var row in (await typed!.Value())!) items.Add((await row.Value()).Clr<global::app.module.action.llm.LlmMessage>()!);
         await Assert.That(items[0].Content).IsEqualTo("alpha");
         await Assert.That(items[1].Content).IsEqualTo("beta");
     }

@@ -45,14 +45,14 @@ public class StrictValidateBuildTests
 
     [Test] public async Task ValidateBuild_StrictImageGifWithGifLiteral_ReturnsNull()
     {
-        var result = global::app.module.variable.Set.ValidateBuild(
+        var result = global::app.module.action.variable.Set.ValidateBuild(
             Params(GifBytes, Type("image", "gif", true)));
         await Assert.That(result).IsNull();
     }
 
     [Test] public async Task ValidateBuild_StrictImageGifWithPngLiteral_ReturnsError()
     {
-        var result = global::app.module.variable.Set.ValidateBuild(
+        var result = global::app.module.action.variable.Set.ValidateBuild(
             Params(PngBytes, Type("image", "gif", true)));
         await Assert.That(result).IsNotNull();
         await Assert.That(result!).Contains("gif");
@@ -61,28 +61,28 @@ public class StrictValidateBuildTests
 
     [Test] public async Task ValidateBuild_StrictImageGifWithVarRef_ReturnsNull_DefersToRuntime()
     {
-        var result = global::app.module.variable.Set.ValidateBuild(
+        var result = global::app.module.action.variable.Set.ValidateBuild(
             Params("%upload%", Type("image", "gif", true)));
         await Assert.That(result).IsNull();
     }
 
     [Test] public async Task ValidateBuild_StrictTextMdWithLiteral_ReturnsNull()
     {
-        var result = global::app.module.variable.Set.ValidateBuild(
+        var result = global::app.module.action.variable.Set.ValidateBuild(
             Params("hello", Type("text", "md", true)));
         await Assert.That(result).IsNull();
     }
 
     [Test] public async Task ValidateBuild_NotStrict_DoesNotValidate_EvenOnMismatch()
     {
-        var result = global::app.module.variable.Set.ValidateBuild(
+        var result = global::app.module.action.variable.Set.ValidateBuild(
             Params(PngBytes, Type("image", "gif")));
         await Assert.That(result).IsNull();
     }
 
     [Test] public async Task ValidateBuild_StrictWithNoKind_ReturnsNull()
     {
-        var result = global::app.module.variable.Set.ValidateBuild(
+        var result = global::app.module.action.variable.Set.ValidateBuild(
             Params(GifBytes, Type("image", null, true)));
         await Assert.That(result).IsNull();
     }

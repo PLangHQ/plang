@@ -1,4 +1,4 @@
-using app.module.debug;
+using app.module.action.debug;
 using static PLang.Tests.App.CallStackTests.CallStackTestHelpers;
 
 namespace PLang.Tests.App.Modules.debug;

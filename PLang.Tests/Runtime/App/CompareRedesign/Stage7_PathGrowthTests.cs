@@ -42,7 +42,7 @@ public class Stage7_PathGrowthTests
         var kind = p.Kind;
         await Assert.That(kind.IsNull).IsFalse();
         // the file.read Build hint routes through the type
-        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "file", "read.cs"));
+        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "action", "file", "read.cs"));
         await Assert.That(src).DoesNotContain("TypeFromExtension(p.Extension)");
         await Assert.That(src).Contains("p.Kind");
     }

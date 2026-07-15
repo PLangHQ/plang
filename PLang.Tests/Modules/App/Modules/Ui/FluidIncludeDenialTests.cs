@@ -7,7 +7,7 @@ namespace PLang.Tests.App.Modules.Ui;
 
 /// <summary>
 /// Fluid include-denial tests. Drives
-/// <see cref="global::app.module.ui.code.Fluid.Render"/> with a real
+/// <see cref="global::app.module.action.ui.code.Fluid.Render"/> with a real
 /// <c>{% include %}</c> template. The handler instantiates
 /// <c>PlangFileProvider</c>+<c>PlangFileInfo</c>, which route reads through
 /// <c>path.ReadText</c>. A mutation that reverted to <c>System.IO.File.ReadAllText</c>
@@ -22,7 +22,7 @@ public class FluidIncludeDenialTests
         public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
-        public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
+        public override Task<global::app.data.@this> Ask(global::app.module.action.output.ask action, CancellationToken ct = default)
         {
             System.Threading.Interlocked.Increment(ref AskCount);
             return Task.FromResult(global::app.data.@this.Ok(_answer));
@@ -55,8 +55,8 @@ public class FluidIncludeDenialTests
         System.IO.Directory.CreateDirectory(outOfRoot);
         System.IO.File.WriteAllText(System.IO.Path.Combine(outOfRoot, "secret.liquid"), "SECRET_TOKEN");
 
-        var fluid = new global::app.module.ui.code.Fluid();
-        var action = new global::app.module.ui.Render(app.User.Context) { Template = new global::app.data.@this<global::app.type.item.text.@this>("Template",
+        var fluid = new global::app.module.action.ui.code.Fluid();
+        var action = new global::app.module.action.ui.Render(app.User.Context) { Template = new global::app.data.@this<global::app.type.item.text.@this>("Template",
                 "{% include '" + outOfRoot + "/secret.liquid' %}"),
             IsFile = new global::app.data.@this<global::app.type.item.@bool.@this>("IsFile", false)
         };
@@ -84,8 +84,8 @@ public class FluidIncludeDenialTests
         };
         app.User.Context.Goal = goal;
 
-        var fluid = new global::app.module.ui.code.Fluid();
-        var action = new global::app.module.ui.Render(app.User.Context) { Template = new global::app.data.@this<global::app.type.item.text.@this>("Template", "{% include 'partials/footer.liquid' %}"),
+        var fluid = new global::app.module.action.ui.code.Fluid();
+        var action = new global::app.module.action.ui.Render(app.User.Context) { Template = new global::app.data.@this<global::app.type.item.text.@this>("Template", "{% include 'partials/footer.liquid' %}"),
             IsFile = new global::app.data.@this<global::app.type.item.@bool.@this>("IsFile", false)
         };
         var result = await fluid.Render(action);

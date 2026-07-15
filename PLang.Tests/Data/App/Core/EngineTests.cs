@@ -185,7 +185,7 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
-        engine.Debug = new global::app.module.debug.@this(engine.System.Context);
+        engine.Debug = new global::app.module.action.debug.@this(engine.System.Context);
 
         await Assert.That(engine.Debug != null).IsTrue();
     }

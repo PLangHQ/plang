@@ -34,7 +34,7 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
             nonce: new global::app.type.item.text.@this("9f"),
             created: new global::app.type.item.datetime.@this(new System.DateTimeOffset(2026, 6, 15, 10, 0, 0, System.TimeSpan.Zero)),
             identity: new global::app.type.item.text.@this("alice"),
-            hash: new global::app.module.crypto.type.hash.@this(System.Convert.FromBase64String("ZGlnZXN0"), "keccak256"),
+            hash: new global::app.module.action.crypto.type.hash.@this(System.Convert.FromBase64String("ZGlnZXN0"), "keccak256"),
             signature: new global::app.type.item.binary.@this(System.Convert.FromBase64String("c2ln")));
 
         var json = Render(sig);
@@ -72,7 +72,7 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
             nonce: new global::app.type.item.text.@this("n"),
             created: new global::app.type.item.datetime.@this(System.DateTimeOffset.UnixEpoch),
             identity: new global::app.type.item.text.@this("id"),
-            hash: new global::app.module.crypto.type.hash.@this(new byte[] { 0x68 }, "keccak256"),
+            hash: new global::app.module.action.crypto.type.hash.@this(new byte[] { 0x68 }, "keccak256"),
             signature: new global::app.type.item.binary.@this(new byte[] { 0x01 }));
 
         using var doc = JsonDocument.Parse(Render(sig));

@@ -4,8 +4,8 @@ using System.Text;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using app.module.http;
-using app.module.http.code;
+using app.module.action.http;
+using app.module.action.http.code;
 using httpchannel = global::app.channel.type.http.@this;
 
 namespace PLang.Tests.App.LazyDeserialize.OneBoundaryTests;

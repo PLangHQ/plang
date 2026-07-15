@@ -1,0 +1,14 @@
+using app.variable;
+using app.module.action.code;
+
+namespace app.module.action.ui.code;
+
+/// <summary>
+/// Template rendering provider. Swappable via app.Code.
+/// Default implementation uses Fluid (Liquid syntax).
+/// </summary>
+public interface ITemplate : ICode
+{
+    /// <summary>Renders the template described by the action and returns the output string as Data.</summary>
+    Task<data.@this<global::app.type.item.text.@this>> Render(Render action);
+}

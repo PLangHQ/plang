@@ -60,7 +60,7 @@ public class FailureMatrixNormalizeTests : System.IAsyncDisposable
     [Test] public async Task SettingWithoutMaskedTag_LeakingRawValue_FailsRuntimeAssert()
     {
         // setting.value has [Masked] applied (Stage 1). Reflection confirms.
-        var p = typeof(global::app.module.setting.type.setting).GetProperty("value");
+        var p = typeof(global::app.module.action.setting.type.setting).GetProperty("value");
         await Assert.That(p!.IsDefined(typeof(global::app.MaskedAttribute), inherit: true)).IsTrue();
     }
 }

@@ -1,4 +1,4 @@
-using app.module.code;
+using app.module.action.code;
 
 namespace PLang.Tests.App.SnapshotTests;
 
@@ -28,9 +28,9 @@ public class ProvidersSnapshotTests
 
         var snap = src.Snapshot(src.User.Context);
         var registrations = snap.Section("Providers")
-            .Read<List<global::app.module.code.@this.Registration>>("registrations");
+            .Read<List<global::app.module.action.code.@this.Registration>>("registrations");
         var overrides = snap.Section("Providers")
-            .Read<List<global::app.module.code.@this.DefaultOverride>>("defaultOverrides");
+            .Read<List<global::app.module.action.code.@this.DefaultOverride>>("defaultOverrides");
 
         await Assert.That(registrations).IsNotNull();
         await Assert.That(registrations!.Any(r => r.ProviderName == "custom")).IsTrue();
@@ -73,7 +73,7 @@ public class ProvidersSnapshotTests
 
         var defaultGrep = dst.Code.Get<global::app.data.code.IGrep>();
         await Assert.That(defaultGrep.Error).IsNull();
-        await Assert.That(((global::app.module.code.ICode)defaultGrep.Provider!).Name).IsEqualTo("custom");
+        await Assert.That(((global::app.module.action.code.ICode)defaultGrep.Provider!).Name).IsEqualTo("custom");
     }
 
     [Test]
@@ -82,13 +82,13 @@ public class ProvidersSnapshotTests
         // Captured runtime registration's DLL/source can't be loaded → referent-integrity
         // hard error. No silent fallback to system default.
         var snap = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
-        snap.Section("Providers").Write("registrations", new List<global::app.module.code.@this.Registration>
+        snap.Section("Providers").Write("registrations", new List<global::app.module.action.code.@this.Registration>
         {
             new(typeof(global::app.data.code.IGrep).AssemblyQualifiedName!,
                 "ghost",
                 "/nonexistent/ghost-provider.dll")
         });
-        snap.Section("Providers").Write("defaultOverrides", new List<global::app.module.code.@this.DefaultOverride>());
+        snap.Section("Providers").Write("defaultOverrides", new List<global::app.module.action.code.@this.DefaultOverride>());
 
         var dst = global::PLang.Tests.TestApp.Create("/dst");
         await Assert.ThrowsAsync<ProviderRestoreException>(async () =>
@@ -104,8 +104,8 @@ public class ProvidersSnapshotTests
         // Registrations succeed but default-selection name doesn't match any registered
         // provider → referent-integrity hard error.
         var snap = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
-        snap.Section("Providers").Write("registrations", new List<global::app.module.code.@this.Registration>());
-        snap.Section("Providers").Write("defaultOverrides", new List<global::app.module.code.@this.DefaultOverride>
+        snap.Section("Providers").Write("registrations", new List<global::app.module.action.code.@this.Registration>());
+        snap.Section("Providers").Write("defaultOverrides", new List<global::app.module.action.code.@this.DefaultOverride>
         {
             new(typeof(global::app.data.code.IGrep).AssemblyQualifiedName!, "phantom")
         });
@@ -126,7 +126,7 @@ public class ProvidersSnapshotTests
         var app = global::PLang.Tests.TestApp.Create("/test");
         var snap = app.Snapshot(app.User.Context);
         var registrations = snap.Section("Providers")
-            .Read<List<global::app.module.code.@this.Registration>>("registrations");
+            .Read<List<global::app.module.action.code.@this.Registration>>("registrations");
 
         await Assert.That(registrations).IsNotNull();
         await Assert.That(registrations!.Count).IsEqualTo(0);
@@ -145,7 +145,7 @@ public class ProvidersSnapshotTests
 
         var snap = src.Snapshot(src.User.Context);
         var registrations = snap.Section("Providers")
-            .Read<List<global::app.module.code.@this.Registration>>("registrations");
+            .Read<List<global::app.module.action.code.@this.Registration>>("registrations");
 
         await Assert.That(registrations).IsNotNull();
         await Assert.That(registrations!.Count).IsEqualTo(1);

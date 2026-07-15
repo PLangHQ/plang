@@ -47,7 +47,7 @@ public class @this : global::app.channel.type.session.@this
         return await InvokeGoal(Actor.Context.Ok((object?)null), ct);
     }
 
-    public override async Task<global::app.data.@this> Ask(module.output.ask action, CancellationToken ct = default)
+    public override async Task<global::app.data.@this> Ask(module.action.output.ask action, CancellationToken ct = default)
     {
         var prompt = action.Context.Ok(action.Question == null ? null : await action.Question.Value());
         return await InvokeGoal(prompt, ct);

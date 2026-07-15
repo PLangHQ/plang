@@ -74,7 +74,7 @@ public class Stage2_GetParameterLazyTests
     {
         // file/read.cs: value read via `await Path.Value()`, the resolution-error guard
         // `if (!Path.Success)` AFTER the await, use after the guard.
-        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot, "PLang", "app", "module", "file", "read.cs"));
+        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot, "PLang", "app", "module", "action", "file", "read.cs"));
         var awaitIdx = src.IndexOf("await Path.Value()", StringComparison.Ordinal);
         var guardIdx = src.IndexOf("if (!Path.Success)", StringComparison.Ordinal);
         await Assert.That(awaitIdx >= 0).IsTrue();

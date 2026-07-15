@@ -3,7 +3,7 @@ namespace PLang.Tests.App.Types.ConversionGapTests;
 using Data = global::app.data.@this;
 using Dict = global::app.type.item.dict.@this;
 using PlangList = global::app.type.item.list.@this;
-using LlmMessage = global::app.module.llm.LlmMessage;
+using LlmMessage = global::app.module.action.llm.LlmMessage;
 
 /// <summary>
 /// The ONE dict→record suite: a plang <c>dict</c> lowers to a settable-prop CLR

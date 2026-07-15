@@ -1,7 +1,7 @@
 namespace app.type.list;
 
 /// <summary>
-/// Type-system analogue of <see cref="app.module.code.ICode"/> for
+/// Type-system analogue of <see cref="app.module.action.code.ICode"/> for
 /// runtime-loaded DLLs that ship per-(type, format) renderers. A loaded
 /// assembly exposes one <see cref="ITypeRenderer"/> instance per format
 /// it supports; the loader registers each via

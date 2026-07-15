@@ -303,10 +303,10 @@ public class DataAsTResolutionTests
 
         // Mirrors how llm.query reads %fixerMessages% — typed slot is List<LlmMessage>.
         var paramData = new Data("Messages", "%fixerMessages%", new global::app.type.@this("text", null, false, "plang"), context: context);
-        var result = paramData.ShallowClone<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>>(await paramData.Value<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>>());
+        var result = paramData.ShallowClone<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>>(await paramData.Value<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>>());
 
         await result.IsSuccess();
-        var content = result.GetValue<List<global::app.module.llm.LlmMessage>>()![0].Content!;
+        var content = result.GetValue<List<global::app.module.action.llm.LlmMessage>>()![0].Content!;
         await Assert.That(content).IsEqualTo("literal text with %goal.Name% and %buildStart% inside");
         // Negative assertion — the bug substituted these:
         await Assert.That(content).DoesNotContain("BuildGoal");

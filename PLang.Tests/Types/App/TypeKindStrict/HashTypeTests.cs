@@ -2,7 +2,7 @@ using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using PLangEngine = global::app.@this;
-using hash = global::app.module.crypto.type.hash.@this;
+using hash = global::app.module.action.crypto.type.hash.@this;
 
 namespace PLang.Tests.App.TypeKindStrict;
 
@@ -67,20 +67,20 @@ public class HashTypeTests
     {
         await using var app = TestApp.Create("/test");
         var ctx = app.User.Context;
-        var crypto = new global::app.module.crypto.code.Default();
+        var crypto = new global::app.module.action.crypto.code.Default();
 
         // Produce a sha256 digest of a Data, then verify the SAME Data against
         // the produced hash value directly — no manual base64, no manual type
         // stamp. The algorithm rides on the hash value (sha256), so verify must
         // succeed with NO explicit Algorithm (which defaults to keccak256).
-        var digest = await crypto.Hash(new global::app.module.crypto.Hash(ctx) { Data = ctx.Ok("hello"),
+        var digest = await crypto.Hash(new global::app.module.action.crypto.Hash(ctx) { Data = ctx.Ok("hello"),
             Algorithm = new global::app.data.@this<global::app.type.item.text.@this>("Algorithm", "sha256"),
         });
         await digest.IsSuccess();
         await Assert.That((await digest.Value()) is hash).IsTrue();
         await Assert.That(((hash)(await digest.Value())!).Algorithm).IsEqualTo("sha256");
 
-        var verify = new global::app.module.crypto.Verify(ctx) { Data = ctx.Ok("hello"),
+        var verify = new global::app.module.action.crypto.Verify(ctx) { Data = ctx.Ok("hello"),
             Hash = digest,
         };
         await verify.Attach(null, ctx);

@@ -1,4 +1,4 @@
-using app.module.file;
+using app.module.action.file;
 using PLangPath = global::app.type.item.path.@this;
 using PLangFilePath = global::app.type.item.path.file.@this;
 
@@ -81,7 +81,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
         System.IO.File.WriteAllText(TempPath("report.csv"), "name,age\nAda,42\n");
         var data = await Read("report.csv");
         await Assert.That(data.Type!.Kind?.Name).IsEqualTo("csv");
-        var op = new global::app.module.condition.Operator("is");
+        var op = new global::app.module.action.condition.Operator("is");
         var right = new Data("", "table", context: _app.User.Context);
         var isTable = await op.Evaluate(data, right);
         var rightList = new Data("", "list", context: _app.User.Context);

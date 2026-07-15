@@ -90,7 +90,7 @@ public class TestMetadataTests
         _app.Version = "v2.0"; // current app builder version
         _app.Test.Add(NewTest("T", builderVersion: "v1.0")); // stale
 
-        var action = new global::app.module.test.report(_app.User.Context);
+        var action = new global::app.module.action.test.report(_app.User.Context);
         await action.Run();
 
         var output = CapturedOutput();

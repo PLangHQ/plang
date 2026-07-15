@@ -1,10 +1,10 @@
 using app.actor.context;
 using app.error;
 using app.variable;
-using app.module.crypto;
-using app.module.crypto.code;
+using app.module.action.crypto;
+using app.module.action.crypto.code;
 using PLangEngine = global::app.@this;
-using hash = global::app.module.crypto.type.hash.@this;
+using hash = global::app.module.action.crypto.type.hash.@this;
 
 namespace PLang.Tests.App.Modules.crypto;
 
@@ -56,7 +56,7 @@ public class HashActionTests
     [Test]
     public async Task Hash_ObjectInput_ProducesDeterministicHash()
     {
-        var refHash = await new global::app.module.crypto.code.Default().Hash(new Hash(Ctx) { Data = Ctx.Ok("hello"), Algorithm = (global::app.type.item.text.@this)"keccak256" });
+        var refHash = await new global::app.module.action.crypto.code.Default().Hash(new Hash(Ctx) { Data = Ctx.Ok("hello"), Algorithm = (global::app.type.item.text.@this)"keccak256" });
 
         var action = new Hash(Ctx) { Data = Ctx.Ok("hello"), Algorithm = (global::app.type.item.text.@this)"keccak256" };
         await action.Attach(null, Ctx);
@@ -245,5 +245,5 @@ public class HashActionTests
         public bool IsBuiltIn { get; set; }
 
         public string? Source { get; set; }
-        public System.Threading.Tasks.Task<global::app.data.@this<global::app.module.crypto.type.hash.@this>> Hash(Hash action) => System.Threading.Tasks.Task.FromResult(global::app.data.@this<global::app.module.crypto.type.hash.@this>.FromError(new ActionError("Provider failure", "ProviderError", 500)));         public System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.@bool.@this>> Verify(Verify action) => System.Threading.Tasks.Task.FromResult(global::app.data.@this<global::app.type.item.@bool.@this>.FromError(new ActionError("Provider failure", "ProviderError", 500)));     }
+        public System.Threading.Tasks.Task<global::app.data.@this<global::app.module.action.crypto.type.hash.@this>> Hash(Hash action) => System.Threading.Tasks.Task.FromResult(global::app.data.@this<global::app.module.action.crypto.type.hash.@this>.FromError(new ActionError("Provider failure", "ProviderError", 500)));         public System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.@bool.@this>> Verify(Verify action) => System.Threading.Tasks.Task.FromResult(global::app.data.@this<global::app.type.item.@bool.@this>.FromError(new ActionError("Provider failure", "ProviderError", 500)));     }
 }

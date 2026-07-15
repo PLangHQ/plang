@@ -1,4 +1,4 @@
-using Discover = global::app.module.test.discover;
+using Discover = global::app.module.action.test.discover;
 
 namespace PLang.Tests.App.Modules.test;
 

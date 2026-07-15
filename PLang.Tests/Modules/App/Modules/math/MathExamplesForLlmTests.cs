@@ -1,4 +1,4 @@
-using app.module.math;
+using app.module.action.math;
 using PLangEngine = global::app.@this;
 using ExampleSpec = global::app.type.spec.Example;
 
@@ -21,7 +21,7 @@ public class MathExamplesForLlmTests
     public void Setup()
     {
         _app = TestApp.Create("/test");
-        _app.Build = new global::app.module.build.@this(_app.System.Context);
+        _app.Build = new global::app.module.action.build.@this(_app.System.Context);
     }
 
     [After(Test)]

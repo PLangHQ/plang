@@ -41,10 +41,10 @@ public static class TestApp
         // The built-in ed25519 is registered as BOTH ISigning and IKey (keygen). Replace both
         // so identity creation skips real ed25519 keygen too — keygen is the dominant per-test
         // crypto cost. Tests that assert real keys/keygen stay on the real provider.
-        app.Code.Register<global::app.module.signing.code.ISigning>(provider);
-        app.Code.Register<global::app.module.signing.code.IKey>(provider);
-        app.Code.SetDefault<global::app.module.signing.code.ISigning>("test-signing");
-        app.Code.SetDefault<global::app.module.signing.code.IKey>("test-signing");
+        app.Code.Register<global::app.module.action.signing.code.ISigning>(provider);
+        app.Code.Register<global::app.module.action.signing.code.IKey>(provider);
+        app.Code.SetDefault<global::app.module.action.signing.code.ISigning>("test-signing");
+        app.Code.SetDefault<global::app.module.action.signing.code.IKey>("test-signing");
     }
 
     /// <summary>
@@ -56,8 +56,8 @@ public static class TestApp
     /// </summary>
     public static void UseSharedIdentity(global::app.@this app)
     {
-        app.Code.Register<global::app.module.identity.code.IIdentity>(new global::PLang.Tests.Shared.TestIdentity { IsBuiltIn = true });
-        app.Code.SetDefault<global::app.module.identity.code.IIdentity>("test-identity");
+        app.Code.Register<global::app.module.action.identity.code.IIdentity>(new global::PLang.Tests.Shared.TestIdentity { IsBuiltIn = true });
+        app.Code.SetDefault<global::app.module.action.identity.code.IIdentity>("test-identity");
     }
 
     /// <summary>

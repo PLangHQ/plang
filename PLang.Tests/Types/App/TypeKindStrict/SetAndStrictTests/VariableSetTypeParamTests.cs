@@ -9,7 +9,7 @@ public class VariableSetTypeParamTests
 {
     [Test] public async Task SetType_IsTypeEntity_NotString()
     {
-        var t = typeof(global::app.module.variable.Set);
+        var t = typeof(global::app.module.action.variable.Set);
         var prop = t.GetProperty("Type", BindingFlags.Public | BindingFlags.Instance)!;
         await Assert.That(prop).IsNotNull();
         // Born-native: `type` is not `: item`, so it can't ride a Data<T> — the Type slot is a
@@ -20,7 +20,7 @@ public class VariableSetTypeParamTests
 
     [Test] public async Task SetType_IsNullable()
     {
-        var t = typeof(global::app.module.variable.Set);
+        var t = typeof(global::app.module.action.variable.Set);
         var prop = t.GetProperty("Type", BindingFlags.Public | BindingFlags.Instance)!;
         // The `as` clause is optional — the slot is nullable-annotated (`data.@this?`).
         var nullability = new NullabilityInfoContext().Create(prop);

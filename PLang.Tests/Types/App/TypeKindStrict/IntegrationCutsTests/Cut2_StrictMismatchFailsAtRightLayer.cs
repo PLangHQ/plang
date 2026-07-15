@@ -40,7 +40,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
         var valueData = new global::app.data.@this("Value", PngBytes, context: ctx);
         var typeData = new global::app.data.@this("Type", Type("image", "gif", true), context: ctx);
         var parameters = new List<global::app.data.@this> { nameData, valueData, typeData };
-        var error = global::app.module.variable.Set.ValidateBuild(parameters);
+        var error = global::app.module.action.variable.Set.ValidateBuild(parameters);
         await Assert.That(error).IsNotNull();
         await Assert.That(error!).Contains("gif");
     }
@@ -55,7 +55,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
         var valueData = new global::app.data.@this("Value", "%upload%", context: context);
         var typeData = new global::app.data.@this("Type", Type("image", "gif", true), context: context);
         var validateParams = new List<global::app.data.@this> { nameData, valueData, typeData };
-        await Assert.That(global::app.module.variable.Set.ValidateBuild(validateParams)).IsNull();
+        await Assert.That(global::app.module.action.variable.Set.ValidateBuild(validateParams)).IsNull();
 
         var action = TestAction.Create("variable", "set",
             ("name", "%img%"),
@@ -74,7 +74,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
         var valueData = new global::app.data.@this("Value", GifBytes, context: context);
         var typeData = new global::app.data.@this("Type", Type("image", "gif", true), context: context);
         var validateParams = new List<global::app.data.@this> { nameData, valueData, typeData };
-        await Assert.That(global::app.module.variable.Set.ValidateBuild(validateParams)).IsNull();
+        await Assert.That(global::app.module.action.variable.Set.ValidateBuild(validateParams)).IsNull();
 
         var action = TestAction.Create("variable", "set",
             ("name", "%img%"),

@@ -51,8 +51,8 @@ public static class PrParam
         foreach (var t in typeof(global::app.module.ActionAttribute).Assembly.GetTypes())
         {
             var attr = t.GetCustomAttribute<global::app.module.ActionAttribute>();
-            if (attr == null || t.Namespace == null || !t.Namespace.StartsWith("app.module.")) continue;
-            var module = t.Namespace["app.module.".Length..];
+            if (attr == null || t.Namespace == null || !t.Namespace.StartsWith("app.module.action.")) continue;
+            var module = t.Namespace["app.module.action.".Length..];
             map[(Lc(module), Lc(attr.Name ?? t.Name))] = t;
         }
         return map;

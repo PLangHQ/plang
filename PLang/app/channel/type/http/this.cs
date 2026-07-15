@@ -46,7 +46,7 @@ public sealed class @this : global::app.channel.@this
         => Task.FromResult(data.Context.Error(new ServiceError(
             "http channel write (request send) flows through the http module transport", "ChannelWriteUnsupported", 400)));
 
-    public override Task<global::app.data.@this> Ask(module.output.ask action, CancellationToken ct = default)
+    public override Task<global::app.data.@this> Ask(module.action.output.ask action, CancellationToken ct = default)
         => Task.FromResult(action.Context.Error(new ServiceError(
             "http channel does not support ask", "ChannelNoAsk", 400)));
 }

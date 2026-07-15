@@ -365,7 +365,7 @@ public sealed partial class @this
             if (!destOk)   sb.Append("\n  - write ").Append(destination.Absolute);
             sb.Append("\n(y/n/a — covers all)");
 
-            var askAction = new module.output.ask(Context)
+            var askAction = new module.action.output.ask(Context)
             {
                 Question = new data.@this<global::app.type.item.text.@this>("", sb.ToString()),
             };
@@ -374,7 +374,7 @@ public sealed partial class @this
             if (askResult.ShouldExit()) return data.@this<global::app.type.item.path.@this>.From(askResult);
             if (!askResult.Success) return data.@this<global::app.type.item.path.@this>.From(askResult);
 
-            var ask = await askResult.Value() as global::app.module.output.Ask;
+            var ask = await askResult.Value() as global::app.module.action.output.Ask;
             var answer = ask?.Answer?.Trim();
             switch (answer)
             {

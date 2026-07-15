@@ -6,7 +6,7 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.SingularNamespaces.AccessorTests;
 
 // Batch D (part 1) — app.module: action registry as a normal collection node (NO demote).
-// app.module["file"] selects, app.module.list enumerates, the 6 ops (GetCodeGenerated/Discover/Describe/Contains/Remove)
+// app.module["file"] selects, app.module.action.list enumerates, the 6 ops (GetCodeGenerated/Discover/Describe/Contains/Remove)
 // stay as methods on module.@this. NO .current — action modules are dispatched, not navigated.
 public class ModuleAccessorTests
 {

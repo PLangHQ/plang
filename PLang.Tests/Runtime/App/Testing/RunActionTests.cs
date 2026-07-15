@@ -87,7 +87,7 @@ public class RunActionTests
 
     private async Task<IReadOnlyList<global::app.test.@this>> RunTests(List<global::app.test.@this> tests, int? parallel = null, int? timeoutSec = null)
     {
-        var action = new global::app.module.test.run(_app.User.Context) { Tests = tests.ToListData<global::app.test.@this>(),
+        var action = new global::app.module.action.test.run(_app.User.Context) { Tests = tests.ToListData<global::app.test.@this>(),
             Parallel = parallel.HasValue ? new global::app.data.@this<global::app.type.item.number.@this>("Parallel", parallel.Value, context: _app.User.Context) : null,
             Timeout = timeoutSec.HasValue ? new global::app.data.@this<global::app.type.item.number.@this>("Timeout", timeoutSec.Value, context: _app.User.Context) : null
         };
@@ -162,7 +162,7 @@ public class RunActionTests
                 stopOnError: false));
         }
 
-        global::app.module.test.run.ChildAppCreated += Probe;
+        global::app.module.action.test.run.ChildAppCreated += Probe;
         try
         {
             var tests = new List<global::app.test.@this>();
@@ -184,7 +184,7 @@ public class RunActionTests
         }
         finally
         {
-            global::app.module.test.run.ChildAppCreated -= Probe;
+            global::app.module.action.test.run.ChildAppCreated -= Probe;
         }
     }
 
@@ -266,7 +266,7 @@ public class RunActionTests
             if (childApp.AbsolutePath.StartsWith(_tempDir))
                 observedChildOsDir = childApp.OsDirectory;
         }
-        global::app.module.test.run.ChildAppCreated += Probe;
+        global::app.module.action.test.run.ChildAppCreated += Probe;
         try
         {
             var test = BuildFixture("OsDir.test.goal", "S", new (string, string, List<Data>)[]
@@ -282,7 +282,7 @@ public class RunActionTests
         }
         finally
         {
-            global::app.module.test.run.ChildAppCreated -= Probe;
+            global::app.module.action.test.run.ChildAppCreated -= Probe;
         }
     }
 
@@ -299,7 +299,7 @@ public class RunActionTests
             if (childApp.AbsolutePath.StartsWith(_tempDir))
                 observed = childApp.Test != null;
         }
-        global::app.module.test.run.ChildAppCreated += Probe;
+        global::app.module.action.test.run.ChildAppCreated += Probe;
         try
         {
             var test = BuildFixture("IsEn.test.goal", "E", new (string, string, List<Data>)[]
@@ -315,7 +315,7 @@ public class RunActionTests
         }
         finally
         {
-            global::app.module.test.run.ChildAppCreated -= Probe;
+            global::app.module.action.test.run.ChildAppCreated -= Probe;
         }
     }
 
@@ -334,7 +334,7 @@ public class RunActionTests
             if (childApp.AbsolutePath.StartsWith(_tempDir))
                 Interlocked.Increment(ref childAppsCreated);
         }
-        global::app.module.test.run.ChildAppCreated += Probe;
+        global::app.module.action.test.run.ChildAppCreated += Probe;
         try
         {
             var ready = BuildFixture("Ready.test.goal", "R", new (string, string, List<Data>)[]
@@ -361,7 +361,7 @@ public class RunActionTests
         }
         finally
         {
-            global::app.module.test.run.ChildAppCreated -= Probe;
+            global::app.module.action.test.run.ChildAppCreated -= Probe;
         }
     }
 
@@ -481,7 +481,7 @@ public class RunActionTests
                 global::app.channel.list.@this.Error, errStream,
                 ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
         }
-        global::app.module.test.run.ChildAppCreated += Probe;
+        global::app.module.action.test.run.ChildAppCreated += Probe;
         try
         {
             var test = BuildFixture("OutCap.test.goal", "OutCap", new (string, string, List<Data>)[]
@@ -507,7 +507,7 @@ public class RunActionTests
         }
         finally
         {
-            global::app.module.test.run.ChildAppCreated -= Probe;
+            global::app.module.action.test.run.ChildAppCreated -= Probe;
         }
     }
 

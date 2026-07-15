@@ -18,7 +18,7 @@ public class SqliteAuthorizeDenialTests
         public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
-        public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
+        public override Task<global::app.data.@this> Ask(global::app.module.action.output.ask action, CancellationToken ct = default)
         {
             System.Threading.Interlocked.Increment(ref AskCount);
             return Task.FromResult(global::app.data.@this.Ok(_answer));
@@ -41,7 +41,7 @@ public class SqliteAuthorizeDenialTests
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "external.sqlite");
         var dbPath = new FilePath(outOfRoot, app.User.Context);
         bool threw = false;
-        try { using var _ = await global::app.module.setting.Sqlite.CreateAsync(dbPath, app.User.Context); }
+        try { using var _ = await global::app.module.action.setting.Sqlite.CreateAsync(dbPath, app.User.Context); }
         catch (System.InvalidOperationException) { threw = true; }
         await Assert.That(threw).IsTrue();
         await Assert.That(System.IO.File.Exists(outOfRoot)).IsFalse();
@@ -53,7 +53,7 @@ public class SqliteAuthorizeDenialTests
         var ch = new CannedChannel("UNEXPECTED");
         app.User.Channel.Register(ch);
         var dbPath = new FilePath(System.IO.Path.Combine(root, "data.sqlite"), app.User.Context);
-        using var _ = await global::app.module.setting.Sqlite.CreateAsync(dbPath, app.User.Context);
+        using var _ = await global::app.module.action.setting.Sqlite.CreateAsync(dbPath, app.User.Context);
         await Assert.That(ch.AskCount).IsEqualTo(0);
     }
 }

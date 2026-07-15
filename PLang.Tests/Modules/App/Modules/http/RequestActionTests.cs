@@ -6,12 +6,12 @@ using System.Text.Json;
 using app.channel.serializer;
 using app.actor.context;
 using app.variable;
-using app.module.code;
-using app.module.http;
-using app.module.http.code;
-using app.module.signing;
+using app.module.action.code;
+using app.module.action.http;
+using app.module.action.http.code;
+using app.module.action.signing;
 using PLangEngine = global::app.@this;
-using HttpMethod = global::app.module.http.HttpMethod;
+using HttpMethod = global::app.module.action.http.HttpMethod;
 
 namespace PLang.Tests.App.Modules.http;
 
@@ -128,7 +128,7 @@ public class RequestActionTests
         };
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/users",
-            Method = (global::app.type.item.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.POST,
+            Method = (global::app.type.item.choice.@this<global::app.module.action.http.HttpMethod>)HttpMethod.POST,
             Body = new global::app.data.@this("", new Dictionary<string, object> { ["name"] = "Alice" }, context: Ctx),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
@@ -144,7 +144,7 @@ public class RequestActionTests
     public async Task Post_FormUrlEncoded_SendsCorrectContentType()
     {
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/login",
-            Method = (global::app.type.item.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.POST,
+            Method = (global::app.type.item.choice.@this<global::app.module.action.http.HttpMethod>)HttpMethod.POST,
             ContentType = (global::app.type.item.text.@this)"application/x-www-form-urlencoded",
             Body = new global::app.data.@this("", new Dictionary<string, object> { ["user"] = "alice", ["pass"] = "secret" }, context: Ctx),
             Unsigned = (global::app.type.item.@bool.@this)true
@@ -205,7 +205,7 @@ public class RequestActionTests
     public async Task Get_NullBody_NoContent()
     {
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/ping",
-            Method = (global::app.type.item.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.POST,
+            Method = (global::app.type.item.choice.@this<global::app.module.action.http.HttpMethod>)HttpMethod.POST,
             Body = null,
             Unsigned = (global::app.type.item.@bool.@this)true
         };
@@ -549,7 +549,7 @@ public class RequestActionTests
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/bytes",
             OnStream = new global::app.goal.GoalCall { Name = "HandleBytes" },
-            StreamAs = (global::app.type.item.choice.@this<global::app.module.http.StreamFormat>)StreamFormat.Bytes,
+            StreamAs = (global::app.type.item.choice.@this<global::app.module.action.http.StreamFormat>)StreamFormat.Bytes,
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await _app.Run(action, Ctx);
@@ -649,7 +649,7 @@ public class RequestActionTests
     public async Task Post_ContentHeaders_RoutedToContentHeaders()
     {
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/content",
-            Method = (global::app.type.item.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.POST,
+            Method = (global::app.type.item.choice.@this<global::app.module.action.http.HttpMethod>)HttpMethod.POST,
             Body = new global::app.data.@this("", "test body", context: Ctx),
             Headers = new Dictionary<string, object> { ["Content-Encoding"] = "gzip", ["X-Custom"] = "req-header" }.ToDictData(),
             Unsigned = (global::app.type.item.@bool.@this)true

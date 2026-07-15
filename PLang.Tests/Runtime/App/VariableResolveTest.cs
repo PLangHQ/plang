@@ -82,13 +82,13 @@ public class VariableResolveTest : System.IAsyncDisposable
         await using var app = TestApp.Create("/tmp/var-set-bang-" + System.Guid.NewGuid().ToString("N")[..8]);
         var context = app.User.Context;
 
-        await app.Run<global::app.module.variable.Set>(new global::app.module.variable.Set(app.User.Context)
+        await app.Run<global::app.module.action.variable.Set>(new global::app.module.action.variable.Set(app.User.Context)
         {
             Name = new global::app.data.@this<global::app.variable.@this>("", new global::app.variable.@this("response")),
             Value = app.User.Context.Ok("hello"),
         }, context);
 
-        await app.Run<global::app.module.variable.Set>(new global::app.module.variable.Set(app.User.Context)
+        await app.Run<global::app.module.action.variable.Set>(new global::app.module.action.variable.Set(app.User.Context)
         {
             Name = new global::app.data.@this<global::app.variable.@this>("",
                 global::app.variable.@this.Resolve("%response!cost%", context)),
@@ -104,13 +104,13 @@ public class VariableResolveTest : System.IAsyncDisposable
         await using var app = TestApp.Create("/tmp/var-set-malformed-" + System.Guid.NewGuid().ToString("N")[..8]);
         var context = app.User.Context;
 
-        await app.Run<global::app.module.variable.Set>(new global::app.module.variable.Set(app.User.Context)
+        await app.Run<global::app.module.action.variable.Set>(new global::app.module.action.variable.Set(app.User.Context)
         {
             Name = new global::app.data.@this<global::app.variable.@this>("", new global::app.variable.@this("response")),
             Value = app.User.Context.Ok("hello"),
         }, context);
 
-        var result = await app.Run<global::app.module.variable.Set>(new global::app.module.variable.Set(app.User.Context)
+        var result = await app.Run<global::app.module.action.variable.Set>(new global::app.module.action.variable.Set(app.User.Context)
         {
             Name = new global::app.data.@this<global::app.variable.@this>("",
                 global::app.variable.@this.Resolve("%response!!cost%", context)),

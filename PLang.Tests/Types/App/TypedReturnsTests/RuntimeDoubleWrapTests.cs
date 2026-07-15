@@ -1,7 +1,7 @@
 using System.Reflection;
-using app.module.list;
+using app.module.action.list;
 using app.variable;
-using MathAdd = app.module.math.Add;
+using MathAdd = app.module.action.math.Add;
 
 namespace PLang.Tests.App.TypedReturnsTests;
 
@@ -146,9 +146,9 @@ public class RuntimeDoubleWrapTests
         var u2 = new global::app.type.item.dict.@this(context); u2.Set(new global::app.data.@this("age", 15L, context: context)); users.Add(new global::app.data.@this("", u2));
         context.Variable.Set("users", users);
 
-        var action = new global::app.module.list.Where(context) { ListName = new @this("users"),
+        var action = new global::app.module.action.list.Where(context) { ListName = new @this("users"),
             Field = new global::app.data.@this<global::app.type.item.text.@this>("", "age"),
-            Operator = new global::app.data.@this<global::app.type.item.choice.@this<global::app.module.condition.Operator>>("", new global::app.module.condition.Operator(">")),
+            Operator = new global::app.data.@this<global::app.type.item.choice.@this<global::app.module.action.condition.Operator>>("", new global::app.module.action.condition.Operator(">")),
             Value = new global::app.data.@this("", 20L, context: context),
         };
         await action.Attach(null, context);

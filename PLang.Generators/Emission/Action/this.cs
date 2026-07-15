@@ -215,8 +215,8 @@ public static class @this
 
         // Resolve each parameter into a local (decode %var%/literal in this context).
         // Setting key per param is module.action.param, read off the tree location: module = first
-        // segment after "app.module.", action = the record/class name (== the action name).
-        const string settingModulePrefix = "app.module.";
+        // segment after "app.module.action.", action = the record/class name (== the action name).
+        const string settingModulePrefix = "app.module.action.";
         var settingModule = info.Namespace.StartsWith(settingModulePrefix)
             ? info.Namespace.Substring(settingModulePrefix.Length).Split('.')[0]
             : info.Namespace;
@@ -271,7 +271,7 @@ public static class @this
         if (info.ImplementsIStep) sb.AppendLine("        Step = action?.Step!;");
         if (info.ImplementsIStatic)
         {
-            const string prefix = "app.module.";
+            const string prefix = "app.module.action.";
             var moduleName = info.Namespace.StartsWith(prefix)
                 ? info.Namespace.Substring(prefix.Length).Split('.')[0]
                 : info.Namespace;

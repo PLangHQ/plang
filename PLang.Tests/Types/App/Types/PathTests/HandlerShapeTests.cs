@@ -16,19 +16,19 @@ public class HandlerShapeTests
 
     private static readonly string[] FileHandlerTypeNames =
     {
-        "app.module.file.Read", "app.module.file.Save", "app.module.file.Copy",
-        "app.module.file.Move", "app.module.file.Delete", "app.module.file.Exists",
-        "app.module.file.List",
+        "app.module.action.file.Read", "app.module.action.file.Save", "app.module.action.file.Copy",
+        "app.module.action.file.Move", "app.module.action.file.Delete", "app.module.action.file.Exists",
+        "app.module.action.file.List",
     };
 
     [Test] public async Task IFile_Interface_AbsentFromProductionAssembly()
     {
-        await Assert.That(AppAssembly.GetType("app.module.file.code.IFile")).IsNull();
+        await Assert.That(AppAssembly.GetType("app.module.action.file.code.IFile")).IsNull();
     }
 
     [Test] public async Task DefaultFileProvider_AbsentFromProductionAssembly()
     {
-        await Assert.That(AppAssembly.GetType("app.module.file.code.Default")).IsNull();
+        await Assert.That(AppAssembly.GetType("app.module.action.file.code.Default")).IsNull();
     }
 
     [Test] public async Task PLangFileSystem_AndWrapperLayer_AbsentFromProductionAssembly()
@@ -56,7 +56,7 @@ public class HandlerShapeTests
 
     [Test] public async Task NoProductionType_References_IFile()
     {
-        bool Mentions(System.Type? t) => t != null && t.Name == "IFile" && t.Namespace == "app.module.file.code";
+        bool Mentions(System.Type? t) => t != null && t.Name == "IFile" && t.Namespace == "app.module.action.file.code";
         var offenders = AppAssembly.GetTypes()
             .Where(t =>
                 t.GetInterfaces().Any(Mentions)
@@ -105,7 +105,7 @@ public class HandlerShapeTests
         var fp = global::app.type.item.path.file.@this.Resolve("doc.txt", app.User.Context);
         await fp.WriteText("delegated body");
 
-        var handler = new global::app.module.file.Read(app.User.Context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", fp),
+        var handler = new global::app.module.action.file.Read(app.User.Context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", fp),
         };
         var viaHandler = await handler.Run();
         var viaPath = await global::app.type.item.path.file.@this.Resolve("doc.txt", app.User.Context).ReadText();
@@ -127,7 +127,7 @@ public class HandlerShapeTests
         System.IO.File.WriteAllText(target, "secret");
 
         var fp = new global::app.type.item.path.file.@this(target, app.User.Context);
-        var handler = new global::app.module.file.Read(app.User.Context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", fp),
+        var handler = new global::app.module.action.file.Read(app.User.Context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", fp),
         };
         var result = await handler.Run();
         await result.IsFailure();
@@ -159,6 +159,6 @@ public class HandlerShapeTests
         public CannedNoChannel() { Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
-        public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok("n"));
+        public override Task<global::app.data.@this> Ask(global::app.module.action.output.ask action, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok("n"));
     }
 }

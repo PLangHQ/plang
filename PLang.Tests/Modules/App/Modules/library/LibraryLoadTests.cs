@@ -2,7 +2,7 @@ using app.actor.context;
 using app;
 using app.variable;
 using app.module;
-using app.module.module;
+using app.module.action.module;
 
 namespace PLang.Tests.App.Modules.module;
 

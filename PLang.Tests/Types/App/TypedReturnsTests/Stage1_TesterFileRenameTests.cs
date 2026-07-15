@@ -5,7 +5,7 @@ namespace PLang.Tests.App.TypedReturnsTests;
 // Contract: the single-test value type lives at app.test.@this — the value
 // element beside its collection (app.test.list). Its PLang catalog name is
 // "test", derived from the @this namespace tail (no [PlangType] override). The
-// historical names (app.tester.File, app.tester.test.@this, app.module.test.test)
+// historical names (app.tester.File, app.tester.test.@this, app.module.action.test.test)
 // and the "testfile" PLang name are all gone.
 
 public class Stage1_TesterFileRenameTests

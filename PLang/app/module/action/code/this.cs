@@ -1,0 +1,276 @@
+using System.Collections.Concurrent;
+using app.error;
+using app.variable;
+using app.module.action.crypto.code;
+using app.module.action.identity.code;
+using app.module.action.signing.code;
+using app.module.action.ui.code;
+
+namespace app.module.action.code;
+
+/// <summary>
+/// Named provider registry. Each provider interface type can have multiple named implementations.
+/// First registered becomes default. Thread-safe via ConcurrentDictionary.
+/// Generic methods delegate to non-generic — single source of truth for all logic.
+/// </summary>
+public sealed partial class @this : IAsyncDisposable
+{
+    private readonly ConcurrentDictionary<System.Type, ConcurrentDictionary<string, ICode>> _providers = new();
+    private bool _disposed;
+
+    /// <summary>
+    /// The context this registry births its result Data from. The registry is a
+    /// system-owned collection, born with the App's system context.
+    /// </summary>
+    private readonly actor.context.@this Context;
+
+    public @this(actor.context.@this context) => Context = context;
+
+    // Remembers which provider RegisterDefaults marked as the type's default. Used by
+    // Snapshot capture to decide whether the *current* default differs from what a
+    // freshly-booted App would set. Without this, SetDefault() clearing the built-in's
+    // IsDefault flag would erase the evidence needed to detect the override.
+    private readonly ConcurrentDictionary<System.Type, string> _builtInDefaults = new();
+
+    /// <summary>
+    /// Disposes every registered provider instance (IAsyncDisposable preferred,
+    /// IDisposable fallback). Same projection as <see cref="All"/>.
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        foreach (var provider in _providers.Values.SelectMany(p => p.Values))
+        {
+            if (provider is IAsyncDisposable asyncProv)
+                await asyncProv.DisposeAsync();
+            else if (provider is IDisposable disposableProv)
+                disposableProv.Dispose();
+        }
+    }
+
+    // --- Generic convenience methods (delegate to non-generic) ---
+
+    /// <summary>
+    /// Registers a named provider. First registered for a type becomes default.
+    /// </summary>
+    public data.@this Register<T>(T provider) where T : class, ICode
+        => Register(typeof(T), provider);
+
+    /// <summary>
+    /// Gets a provider by name, or the default if name is null/empty.
+    /// Returns typed Data&lt;T&gt; with error if not found.
+    /// </summary>
+    // A code provider is a CLR capability, never a PLang value — it rides in a BARE Data
+    // (no generic T → satisfies where T:item) with the provider in .Value. Callers read
+    // .Success/.Value (cast to the provider type).
+    // A provider is engine plumbing — rung-3, NEVER a plang value, so it never
+    // rides a Data (no clr-carrier round-trip, no Peek to unwrap). The typed
+    // provider comes back directly beside a typed error.
+    public (T? Provider, global::app.error.IError? Error) Get<T>(string? name = null) where T : class, ICode
+    {
+        if (!_providers.TryGetValue(typeof(T), out var typeDict))
+            return (null, new ActionError($"No {typeof(T).Name} provider registered", "ProviderNotFound", 404));
+
+        if (!string.IsNullOrEmpty(name))
+        {
+            if (!typeDict.TryGetValue(name, out var provider))
+                return (null, new ActionError($"Provider '{name}' not found for {typeof(T).Name}", "ProviderNotFound", 404));
+            return ((T)provider, null);
+        }
+
+        foreach (var kvp in typeDict)
+            if (kvp.Value.IsDefault)
+                return ((T)kvp.Value, null);
+
+        return (null, new ActionError($"No default {typeof(T).Name} provider registered", "ProviderNotFound", 404));
+    }
+
+    /// <summary>
+    /// Gets the default, or the provided fallback if none registered.
+    /// </summary>
+    public T GetOrDefault<T>(T defaultProvider) where T : class, ICode
+        => Get<T>().Provider ?? defaultProvider;
+
+    /// <summary>
+    /// Removes a provider by name. Cannot remove the default.
+    /// </summary>
+    public data.@this Remove<T>(string name) where T : class, ICode
+        => Remove(typeof(T), name);
+
+    /// <summary>
+    /// Sets a named provider as the default for its type.
+    /// </summary>
+    public data.@this SetDefault<T>(string name) where T : class, ICode
+        => SetDefault(typeof(T), name);
+
+    /// <summary>
+    /// Lists all providers for a specific type.
+    /// </summary>
+    public IReadOnlyList<T> List<T>() where T : class, ICode
+    {
+        if (!_providers.TryGetValue(typeof(T), out var typeDict))
+            return Array.Empty<T>();
+
+        return typeDict.Values.Cast<T>().ToList();
+    }
+
+    /// <summary>
+    /// Lists all providers across all types.
+    /// </summary>
+    public IReadOnlyList<ICode> List()
+    {
+        var result = new List<ICode>();
+        foreach (var typeDict in _providers.Values)
+            result.AddRange(typeDict.Values);
+        return result;
+    }
+
+    /// <summary>
+    /// Checks if any provider is registered for the given type.
+    /// </summary>
+    /// <summary>
+    /// Iterates all provider instances across all types.
+    /// Used for disposal and inspection.
+    /// </summary>
+    public IEnumerable<ICode> All() => _providers.Values
+        .SelectMany(dict => dict.Values);
+
+    public bool Has<T>() where T : class, ICode
+    {
+        return _providers.TryGetValue(typeof(T), out var typeDict) && !typeDict.IsEmpty;
+    }
+
+    // --- Non-generic methods (single source of truth) ---
+
+    /// <summary>
+    /// Registers a provider by runtime-resolved type. First registered for a type becomes default.
+    /// </summary>
+    public data.@this Register(System.Type providerType, ICode provider)
+    {
+        var typeDict = _providers.GetOrAdd(providerType, _ => new ConcurrentDictionary<string, ICode>(StringComparer.OrdinalIgnoreCase));
+
+        if (!typeDict.TryAdd(provider.Name, provider))
+            return Context.Error(new ActionError($"Provider '{provider.Name}' already registered for {providerType.Name}", "ProviderExists", 409));
+
+        if (typeDict.Count == 1)
+            provider.IsDefault = true;
+
+        // A provider is engine plumbing, never a plang value — the registration
+        // just succeeds. Returning the provider as the value would wrap a CLR
+        // service in a Data (a throwaway clr); the value is never read.
+        return Context.Ok();
+    }
+
+    /// <summary>
+    /// Lists all providers registered for a runtime-resolved type (typed C# access).
+    /// </summary>
+    public IReadOnlyList<ICode> List(System.Type providerType)
+        => _providers.TryGetValue(providerType, out var typeDict)
+            ? typeDict.Values.ToList()
+            : Array.Empty<ICode>();
+
+    /// <summary>
+    /// Removes a named provider by runtime-resolved type. Cannot remove the default.
+    /// </summary>
+    public data.@this Remove(System.Type providerType, string name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return Context.Error(new ActionError("Provider name is required", "ValidationError", 400));
+
+        if (!_providers.TryGetValue(providerType, out var typeDict))
+            return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
+
+        if (!typeDict.TryGetValue(name, out var provider))
+            return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
+
+        if (provider.IsDefault)
+            return Context.Error(new ActionError($"Cannot remove default provider '{name}'. Set another as default first.", "CannotRemoveDefault", 400));
+
+        typeDict.TryRemove(name, out _);
+        return Context.Ok();
+    }
+
+    /// <summary>
+    /// Sets a named provider as default by runtime-resolved type.
+    /// </summary>
+    public data.@this SetDefault(System.Type providerType, string name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return Context.Error(new ActionError("Provider name is required", "ValidationError", 400));
+
+        if (!_providers.TryGetValue(providerType, out var typeDict))
+            return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
+
+        if (!typeDict.TryGetValue(name, out var newDefault))
+            return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
+
+        // Set new default first, then clear old — avoids window where Get<T>() returns null
+        newDefault.IsDefault = true;
+        foreach (var kvp in typeDict)
+        {
+            if (kvp.Value != newDefault)
+                kvp.Value.IsDefault = false;
+        }
+        return Context.Ok();
+    }
+
+    /// <summary>
+    /// Resolves a PLang provider type name to its CLR type.
+    /// Owns the mapping — callers don't need to know interface types.
+    /// </summary>
+    public System.Type? ResolveType(string? typeName)
+    {
+        return typeName?.ToLowerInvariant() switch
+        {
+            "signing" or "isigningprovider" => typeof(ISigning),
+            "key" or "ikeyprovider" => typeof(IKey),
+            "identity" or "iidentityprovider" => typeof(IIdentity),
+            "crypto" or "icryptoprovider" => typeof(ICrypto),
+            "http" or "ihttpprovider" => typeof(global::app.module.action.http.code.IHttp),
+            "evaluator" or "ievaluator" => typeof(global::app.module.action.condition.code.IEvaluator),
+            "assert" or "iassertprovider" => typeof(global::app.module.action.assert.code.IAssert),
+            // "file" / "ifileprovider" removed — file actions no longer route through a
+            // [Code]-partial provider; FilePath holds the verb impls directly.
+            "template" or "itemplateprovider" => typeof(ITemplate),
+            "llm" or "illmprovider" => typeof(global::app.module.action.llm.code.ILlm),
+            "builder" or "ibuilderprovider" => typeof(global::app.module.action.build.code.IBuilder),
+            null or "" => typeof(ISigning),
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Registers built-in default providers. Called by App constructor.
+    /// Each module owns its default provider — this method is the single registration point.
+    /// </summary>
+    public void RegisterDefaults()
+    {
+        // Stamp every built-in registration so the snapshot capture skips them —
+        // the fresh App's RegisterDefaults reproduces the same set on Restore, so
+        // they don't need to ride along in the payload.
+        var ed25519 = new Ed25519();
+        RegisterBuiltIn<ISigning>(ed25519);
+        RegisterBuiltIn<IKey>(ed25519);
+        RegisterBuiltIn<IIdentity>(new global::app.module.action.identity.code.Default());
+        RegisterBuiltIn<ICrypto>(new global::app.module.action.crypto.code.Default());
+        RegisterBuiltIn<global::app.module.action.math.code.IMath>(new global::app.module.action.math.code.Default());
+        RegisterBuiltIn<global::app.module.action.http.code.IHttp>(new global::app.module.action.http.code.Default());
+        RegisterBuiltIn<global::app.module.action.condition.code.IEvaluator>(new global::app.module.action.condition.code.Default());
+        RegisterBuiltIn<global::app.module.action.assert.code.IAssert>(new global::app.module.action.assert.code.Default());
+        // global::app.module.action.file.code.IFile registration removed in Stage 3.
+        RegisterBuiltIn<ITemplate>(new global::app.module.action.ui.code.Fluid());
+        RegisterBuiltIn<global::app.module.action.llm.code.ILlm>(new global::app.module.action.llm.code.OpenAi());
+        RegisterBuiltIn<global::app.module.action.build.code.IBuilder>(new global::app.module.action.build.code.Default());
+        RegisterBuiltIn<global::app.data.code.IGrep>(new global::app.data.code.Default());
+    }
+
+    private void RegisterBuiltIn<T>(T provider) where T : class, ICode
+    {
+        provider.IsBuiltIn = true;
+        Register(typeof(T), provider);
+        // Stamp the type's "natural" default name *once* — the first built-in for a type
+        // becomes default by virtue of being first-registered, mirroring Register's contract.
+        _builtInDefaults.TryAdd(typeof(T), provider.Name);
+    }
+}

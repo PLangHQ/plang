@@ -1,13 +1,13 @@
 using app.variable;
-using app.module.crypto;
-using app.module.crypto.code;
-using hash = global::app.module.crypto.type.hash.@this;
+using app.module.action.crypto;
+using app.module.action.crypto.code;
+using hash = global::app.module.action.crypto.type.hash.@this;
 
 namespace PLang.Tests.App.Modules.crypto;
 
 public class DefaultCryptoProviderTests
 {
-    private readonly global::app.module.crypto.code.Default _provider = new();
+    private readonly global::app.module.action.crypto.code.Default _provider = new();
 
     private static Hash HashAction(object data, string algorithm = "keccak256")
         => new(global::PLang.Tests.TestApp.SharedContext) {  Data = global::PLang.Tests.TestApp.SharedContext.Ok(data), Algorithm = (global::app.type.item.text.@this)algorithm };

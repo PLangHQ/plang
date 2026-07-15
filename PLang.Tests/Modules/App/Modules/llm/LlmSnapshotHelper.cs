@@ -4,8 +4,8 @@ using System.Text;
 using System.Text.Json;
 using app.goal;
 using app.variable;
-using app.module.llm;
-using app.module.llm.code;
+using app.module.action.llm;
+using app.module.action.llm.code;
 
 namespace PLang.Tests.App.Modules.llm;
 

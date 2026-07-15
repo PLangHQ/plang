@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Reflection;
 using app.actor.context;
-using app.module.setting;
+using app.module.action.setting;
 using app.error;
 using app.variable;
 using app.module;
@@ -154,7 +154,7 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Pluggable step cache. Default: in-memory. Swap via: - use 'redis.dll' for caching
     /// </summary>
-    public ICache Cache { get; internal set; } = new global::app.module.cache.Memory();
+    public ICache Cache { get; internal set; } = new global::app.module.action.cache.Memory();
 
     /// <summary>
     /// App-level persistent key-value store backed by <c>.db/system.sqlite</c>
@@ -163,8 +163,8 @@ public sealed partial class @this : IAsyncDisposable
     /// Created lazily on first access so tests with fictional paths and apps
     /// that never touch settings don't pay for SQLite-file creation at boot.
     /// </summary>
-    public Task<global::app.module.setting.IStore> SettingsStore => _settingsStore.Value;
-    private Lazy<Task<global::app.module.setting.IStore>> _settingsStore = null!;
+    public Task<global::app.module.action.setting.IStore> SettingsStore => _settingsStore.Value;
+    private Lazy<Task<global::app.module.action.setting.IStore>> _settingsStore = null!;
 
     /// <summary>
     /// The app-level setting authority (chain root, <c>_parent == null</c>). Holds both lifetimes
@@ -196,7 +196,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Build mode controller. null = off; non-null = on (born under --build).
     /// When present, actors use in-memory datasources.
     /// </summary>
-    public global::app.module.build.@this? Build { get; set; }
+    public global::app.module.action.build.@this? Build { get; set; }
 
     /// <summary>
     /// Allow creating a new app if none exists. Set via --app={"create":true}. Default false.
@@ -291,7 +291,7 @@ public sealed partial class @this : IAsyncDisposable
         // startup — null = off. Presence is the enable signal (no IsEnabled).
         Type = new type.list.@this(System.Context);
         Code = new AppCode(System.Context);
-        _settingsStore = new Lazy<Task<global::app.module.setting.IStore>>(CreateSettingsStoreAsync);
+        _settingsStore = new Lazy<Task<global::app.module.action.setting.IStore>>(CreateSettingsStoreAsync);
         Setting = new global::app.setting.@this(System.Context);
         _modules = modules ?? new global::app.module.@this();
         _modules.App = this;
@@ -573,19 +573,19 @@ public sealed partial class @this : IAsyncDisposable
         return await goal.RunAsync(context);
     }
 
-    private async Task<global::app.module.setting.IStore> CreateSettingsStoreAsync()
+    private async Task<global::app.module.action.setting.IStore> CreateSettingsStoreAsync()
     {
         // Testing: in-memory db scoped by App.Id so per-test Apps never share state.
         // SQLite's shared-cache merges in-memory dbs with identical DataSource names,
         // so the App.Id scoping is load-bearing.
         if (Test != null)
-            return global::app.module.setting.Sqlite.InMemory($"system-{Id}", System.Context);
+            return global::app.module.action.setting.Sqlite.InMemory($"system-{Id}", System.Context);
 
         // Lift to Path: AuthGate fires inside Sqlite.CreateAsync on Write,
         // parent dir creation via path.Mkdir. Async all the way — no sync-wait,
         // so parallel App constructions never starve the threadpool.
         var dbPath = global::app.type.item.path.@this.Resolve("/.db/system.sqlite", System.Context);
-        return await global::app.module.setting.Sqlite.CreateAsync(dbPath, System.Context);
+        return await global::app.module.action.setting.Sqlite.CreateAsync(dbPath, System.Context);
     }
 
     public async ValueTask DisposeAsync()

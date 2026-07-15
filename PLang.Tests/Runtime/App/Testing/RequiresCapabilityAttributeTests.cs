@@ -72,10 +72,10 @@ public class RequiresCapabilityAttributeTests
     [Test]
     public async Task RealHandlers_HaveExpectedCapabilities_VerifiedByReflection()
     {
-        var request = typeof(global::app.module.http.request).GetCustomAttribute<RequiresCapabilityAttribute>();
-        var download = typeof(global::app.module.http.download).GetCustomAttribute<RequiresCapabilityAttribute>();
-        var upload = typeof(global::app.module.http.upload).GetCustomAttribute<RequiresCapabilityAttribute>();
-        var llm = typeof(global::app.module.llm.query).GetCustomAttribute<RequiresCapabilityAttribute>();
+        var request = typeof(global::app.module.action.http.request).GetCustomAttribute<RequiresCapabilityAttribute>();
+        var download = typeof(global::app.module.action.http.download).GetCustomAttribute<RequiresCapabilityAttribute>();
+        var upload = typeof(global::app.module.action.http.upload).GetCustomAttribute<RequiresCapabilityAttribute>();
+        var llm = typeof(global::app.module.action.llm.query).GetCustomAttribute<RequiresCapabilityAttribute>();
 
         await Assert.That(request?.Capabilities).IsEquivalentTo(new[] { "network" });
         await Assert.That(download?.Capabilities).IsEquivalentTo(new[] { "network" });

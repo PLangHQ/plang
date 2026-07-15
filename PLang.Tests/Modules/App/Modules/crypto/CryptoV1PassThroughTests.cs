@@ -1,4 +1,4 @@
-using app.module.crypto;
+using app.module.action.crypto;
 
 namespace PLang.Tests.App.Modules.crypto;
 

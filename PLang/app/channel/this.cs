@@ -106,7 +106,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
     /// other action state. Session blocks until answer; Message returns
     /// <c>Data&lt;Ask&gt;</c> with Snapshot attached (engine short-circuits).
     /// </summary>
-    public abstract Task<global::app.data.@this> Ask(module.output.ask action, CancellationToken ct = default);
+    public abstract Task<global::app.data.@this> Ask(module.action.output.ask action, CancellationToken ct = default);
 
     /// <summary>
     /// Public write entry. Wraps Write in BeforeWrite / AfterWrite event firing.
@@ -157,7 +157,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
     /// Public ask entry. Fires OnAsk after the Ask completes (Session: post-answer;
     /// Message: pre-suspend — the channel kind decides timing).
     /// </summary>
-    public virtual async Task<global::app.data.@this> AskAsync(module.output.ask action, CancellationToken ct = default)
+    public virtual async Task<global::app.data.@this> AskAsync(module.action.output.ask action, CancellationToken ct = default)
     {
         global::app.data.@this result;
         try { result = await Ask(action, ct); }

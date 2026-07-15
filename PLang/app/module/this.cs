@@ -29,7 +29,7 @@ public sealed class @this : IAsyncDisposable
     public @this()
     {
         Schema = new global::app.type.list.view.@this(this);
-        Discover(typeof(@this).Assembly, "app.module");
+        Discover(typeof(@this).Assembly, "app.module.action");
     }
 
     /// <summary>
@@ -58,7 +58,7 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     public int Discover(Assembly assembly, string? baseNamespace = null)
     {
-        baseNamespace ??= "app.module";
+        baseNamespace ??= "app.module.action";
         int count = 0;
 
         var actionTypes = assembly.GetTypes()
@@ -293,7 +293,7 @@ public sealed class @this : IAsyncDisposable
         return orphans;
     }
 
-    [System.Obsolete("Module discovery moves to app.module.list (list<module>) + a Fluid render — do not add new callers.")]
+    [System.Obsolete("Module discovery moves to app.module.action.list (list<module>) + a Fluid render — do not add new callers.")]
     public async Task<StepActions> Describe()
     {
         var result = new StepActions();

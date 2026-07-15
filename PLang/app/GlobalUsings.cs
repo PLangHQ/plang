@@ -45,7 +45,7 @@ global using AppTypes = app.type.list.@this;
 // sites to bare `type` (collides with the contextual keyword sites, so opting for the qualified form).
 
 // Code subsystem (the runtime escape-hatch — was Providers)
-global using AppCode = app.module.code.@this;
+global using AppCode = app.module.action.code.@this;
 
 // Variables (was MemoryStack)
 global using Variables = app.variable.list.@this;
@@ -59,18 +59,18 @@ global using ISnapshot = app.snapshot.ISnapshot;
 global using AppStatics = app.Statics.@this;
 
 // Standalone concepts
-global using ICache = app.module.cache.ICache;
-global using Debug = app.module.debug.@this;
+global using ICache = app.module.action.cache.ICache;
+global using Debug = app.module.action.debug.@this;
 global using Test = app.test.@this;
 
-// Call: not a global alias — app.module.goal.Call (the goal.call action handler) collides.
+// Call: not a global alias — app.module.action.goal.Call (the goal.call action handler) collides.
 // Use app.callstack.call.@this fully qualified, or per-file alias.
 
 // Builder: can't be global alias — v1 PLang.Builder namespace conflict (legacy).
 // Inside app.@this: the `Builder` property shadows the `builder` namespace, so
-// type references must be fully qualified (global::app.module.build.@this).
+// type references must be fully qualified (global::app.module.action.build.@this).
 // Inside other app.*: builder.@this resolves naturally.
-// Outside app.*: use app.module.build.@this or a per-file alias.
+// Outside app.*: use app.module.action.build.@this or a per-file alias.
 
 // App: can't be global alias — app.@this IS the app root
 // Inside app.*: use app.@this (parent namespace resolves naturally)

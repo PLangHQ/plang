@@ -12,7 +12,7 @@ public class Stage4_ChannelResolutionTests
     {
         // The Write action implements IChannel — the generator emits a
         // `Channel { get; set; }` slot. Verify via reflection.
-        var writeType = typeof(global::app.module.output.Write);
+        var writeType = typeof(global::app.module.action.output.Write);
         var prop = writeType.GetProperty("Channel");
         await Assert.That(prop).IsNotNull();
         await Assert.That(prop!.PropertyType).IsEqualTo(typeof(global::app.channel.@this));
@@ -54,7 +54,7 @@ public class Stage4_ChannelResolutionTests
         app.User.Channel.Register(new StreamChannel("output", captured, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
 
-        var write = new global::app.module.output.Write(app.User.Context) { Data = app.Ok("hello-default"),
+        var write = new global::app.module.action.output.Write(app.User.Context) { Data = app.Ok("hello-default"),
             Channel = app.User.Channel.Resolve(null)
         };
         // Direct Run skips ExecuteAsync's reset of init backing fields.
@@ -72,7 +72,7 @@ public class Stage4_ChannelResolutionTests
         app.User.Channel.Register(new StreamChannel("logger", loggerCapture, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
 
-        var write = new global::app.module.output.Write(app.User.Context) { Data = app.Ok("targetted"),
+        var write = new global::app.module.action.output.Write(app.User.Context) { Data = app.Ok("targetted"),
             Channel = app.User.Channel.Resolve("logger")
         };
         await write.Run();
@@ -92,7 +92,7 @@ public class Stage4_ChannelResolutionTests
         var data = app.Ok("payload");
         data.Properties.Set("custom-prop", "x");
 
-        var write = new global::app.module.output.Write(app.User.Context) { Data = data,
+        var write = new global::app.module.action.output.Write(app.User.Context) { Data = data,
             Channel = probe
         };
         await write.Run();
@@ -108,7 +108,7 @@ public class Stage4_ChannelResolutionTests
         var writeOverload = channelsType.GetMethods()
             .FirstOrDefault(m => m.Name == "WriteAsync"
                 && m.GetParameters().Length == 1
-                && m.GetParameters()[0].ParameterType == typeof(global::app.module.output.Write));
+                && m.GetParameters()[0].ParameterType == typeof(global::app.module.action.output.Write));
         await Assert.That(writeOverload).IsNull();
     }
 
@@ -126,6 +126,6 @@ public class Stage4_ChannelResolutionTests
             return Task.FromResult(Data.Ok());
         }
         public override Task<Data> Read(CancellationToken ct = default) => Task.FromResult(Data.Ok());
-        public override Task<Data> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        public override Task<Data> Ask(global::app.module.action.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok());
     }
 }

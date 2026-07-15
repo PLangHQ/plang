@@ -1,11 +1,11 @@
-using app.module.cache;
+using app.module.action.cache;
 using app.goal.steps.step;
 using app.variable;
 
 namespace PLang.Tests.App.Core;
 
 /// <summary>
-/// Tests ICache.TryAddAsync atomic semantics on global::app.module.cache.memory.
+/// Tests ICache.TryAddAsync atomic semantics on global::app.module.action.cache.memory.
 /// TryAddAsync is the atomic add-if-absent operation needed for nonce replay prevention.
 /// </summary>
 public class CacheTryAddTests : System.IAsyncDisposable
@@ -19,7 +19,7 @@ public class CacheTryAddTests : System.IAsyncDisposable
     [Test]
     public async Task TryAddAsync_NewKey_ReturnsTrue()
     {
-        var cache = new global::app.module.cache.Memory();
+        var cache = new global::app.module.action.cache.Memory();
 
         var result = await cache.TryAddAsync("nonce-1", app.Ok("value"), MakeSettings());
 
@@ -29,7 +29,7 @@ public class CacheTryAddTests : System.IAsyncDisposable
     [Test]
     public async Task TryAddAsync_ExistingKey_ReturnsFalse()
     {
-        var cache = new global::app.module.cache.Memory();
+        var cache = new global::app.module.action.cache.Memory();
         var settings = MakeSettings();
 
         var first = await cache.TryAddAsync("nonce-1", app.Ok("value1"), settings);
@@ -42,7 +42,7 @@ public class CacheTryAddTests : System.IAsyncDisposable
     [Test]
     public async Task TryAddAsync_DifferentKeys_BothTrue()
     {
-        var cache = new global::app.module.cache.Memory();
+        var cache = new global::app.module.action.cache.Memory();
         var settings = MakeSettings();
 
         var result1 = await cache.TryAddAsync("nonce-1", app.Ok("value1"), settings);
@@ -55,7 +55,7 @@ public class CacheTryAddTests : System.IAsyncDisposable
     [Test]
     public async Task TryAddAsync_AfterExpiry_ReturnsTrue()
     {
-        var cache = new global::app.module.cache.Memory();
+        var cache = new global::app.module.action.cache.Memory();
         var settings = MakeSettings(durationMs: 1000);
 
         var first = await cache.TryAddAsync("nonce-1", app.Ok("value"), settings);
@@ -70,7 +70,7 @@ public class CacheTryAddTests : System.IAsyncDisposable
     [Test]
     public async Task TryAddAsync_ConcurrentCalls_OnlyOneSucceeds()
     {
-        var cache = new global::app.module.cache.Memory();
+        var cache = new global::app.module.action.cache.Memory();
         var settings = MakeSettings();
 
         var tasks = Enumerable.Range(0, 10)

@@ -155,7 +155,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
     {
         // module/builder/code/Default.cs's ToStepList reads the native list value type
         // (the one is-List<object?> value site swept, K). Reflection-invoke it.
-        var method = typeof(global::app.module.build.code.Default).GetMethod("ToStepList",
+        var method = typeof(global::app.module.action.build.code.Default).GetMethod("ToStepList",
             BindingFlags.NonPublic | BindingFlags.Static);
         await Assert.That(method).IsNotNull();
         var list = new ListV(app.User.Context);

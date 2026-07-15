@@ -99,7 +99,7 @@ public class Stage2_NavigationAsyncTests
         // RenderAsync is async; FluidValue.Create(await kvp.Value.Value(), ...) materialises BEFORE the sync render walk
         // The render path materialises parameter values (await kvp.Value.Value()) BEFORE the
         // sync template walk — proven by the source shape: FluidValue.Create over awaited values.
-        var src = await File.ReadAllTextAsync(Path.Combine(FindRepoRoot(), "PLang/app/module/ui/code/Fluid.cs"));
+        var src = await File.ReadAllTextAsync(Path.Combine(FindRepoRoot(), "PLang/app/module/action/ui/code/Fluid.cs"));
         await Assert.That(src).Contains("FluidValue.Create(await");
     }
 }

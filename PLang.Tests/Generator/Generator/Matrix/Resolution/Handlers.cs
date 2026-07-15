@@ -17,7 +17,7 @@ public partial class Interpolation : global::app.module.IContext
 [global::app.module.Action("deepresolutionlist")]
 public partial class DeepResolutionList : global::app.module.IContext
 {
-    public partial global::app.data.@this<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>> Messages { get; init; }
+    public partial global::app.data.@this<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>> Messages { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Messages);
 }
 

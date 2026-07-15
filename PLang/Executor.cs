@@ -107,7 +107,7 @@ namespace PLang
 			parameters.TryGetValue("!build", out var buildValue);
 			if (buildValue is not (null or false))
 			{
-				app.Build = new global::app.module.build.@this(app.System.Context);
+				app.Build = new global::app.module.action.build.@this(app.System.Context);
 				if (!parameters.ContainsKey("path"))
 					userVars.Set("path", startupDirectory);
 

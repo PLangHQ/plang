@@ -2,7 +2,7 @@ using System.Text.Json;
 using app.actor.context;
 using app.variable;
 using app.Utils;
-using app.module.build;
+using app.module.action.build;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.builder;
@@ -22,7 +22,7 @@ public class AppTests
             "plang_test_builder_app_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = TestApp.Create(_tempDir);
-        _app.Build = new global::app.module.build.@this(_app.System.Context);
+        _app.Build = new global::app.module.action.build.@this(_app.System.Context);
     }
 
     [After(Test)]

@@ -1,11 +1,11 @@
 using app.variable;
 using ListV = global::app.type.item.list.@this;
 using DictV = global::app.type.item.dict.@this;
-using Op = global::app.module.condition.Operator;
-using Where = global::app.module.list.Where;
-using Sort = global::app.module.list.Sort;
-using Unique = global::app.module.list.Unique;
-using Group = global::app.module.list.Group;
+using Op = global::app.module.action.condition.Operator;
+using Where = global::app.module.action.list.Where;
+using Sort = global::app.module.action.list.Sort;
+using Unique = global::app.module.action.list.Unique;
+using Group = global::app.module.action.list.Group;
 
 namespace PLang.Tests.App.CollectionsAreData;
 

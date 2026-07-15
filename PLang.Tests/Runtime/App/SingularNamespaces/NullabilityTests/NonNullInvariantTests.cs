@@ -92,7 +92,7 @@ public class NonNullInvariantTests
         // lookup of their own.
         var sources = new[] {
             "PLang/app/data/this.cs",
-            "PLang/app/module/variable/set.cs",
+            "PLang/app/module/action/variable/set.cs",
         };
         var repo = System.IO.Path.GetFullPath(System.IO.Path.Combine(System.AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
         foreach (var rel in sources)
