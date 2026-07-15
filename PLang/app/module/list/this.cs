@@ -223,9 +223,6 @@ public sealed class @this : IAsyncDisposable
     /// (registered on actor.Channel). The builder catalog passes this to the LLM so it
     /// can pick a channel from real names — no `to <name>` pattern parsing.
     /// </summary>
-    public IReadOnlyList<string> GetChannelInventory(global::app.actor.@this actor)
-        => actor.Channel.ChannelNames.ToList();
-
     // Capability interfaces — their declared properties are wired by the source generator
     // from the execution context (Step, Channels, Event, Static, Context) and are NOT
     // user-supplied parameters. Describe() filters them so the catalog doesn't teach the

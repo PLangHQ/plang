@@ -24,7 +24,7 @@ public class Stage4_BuilderCatalogTests
         global::app.@this.WireDefaultConsoleChannels(app.User);
         app.User.Channel.Register(StreamChannel.Memory("logger"));
 
-        var inventory = app.Module.GetChannelInventory(app.User);
+        var inventory = app.User.Channel.ChannelNames.ToList();
         await Assert.That(inventory).Contains("output");
         await Assert.That(inventory).Contains("error");
         await Assert.That(inventory).Contains("input");
