@@ -1,3 +1,18 @@
+## architect — v2 — 2026-07-15
+**Target:** /workspace/plang/CLAUDE.md (Runtime2 Conventions, first bullet — the merged-concepts sentence)
+**Why:** Ingi ruled (Stage 4 namespace move) that all action-handler code lives at `app.module.action.<name>` — the merged engine-concepts included ("they're actions too, they just touch app") — freeing `app.module.*` for the module concept (element/collection/selection). The documented "under `app/module/<name>/`" location is now wrong.
+**Proposed change:** In the first Runtime2 Conventions bullet, replace
+
+```
+Seven engine concepts (`Cache`, `Builder`, `Callback`, `Settings`, `Modules`, `Code`, `Debug`) merged with their action-module counterparts under `app/module/<name>/` — no separate top-level folder remains for those.
+```
+
+with
+
+```
+ALL action-handler code lives under `app/module/action/<name>/` (`app.module.action.file`, `app.module.action.list`, …) — including the seven merged engine concepts (`Cache`, `Builder`, `Callback`, `Settings`, `Modules`, `Code`, `Debug`); no separate top-level folder remains for those. `app.module.*` itself is the module CONCEPT (element `app.module.@this`, collection `app.module.list.@this`) plus the action-contract surface (`IAction`, `ICodeGenerated`, capability interfaces, attributes).
+```
+
 ## architect — v1 — 2026-07-15
 **Target:** /workspace/plang/CLAUDE.md (Runtime2 Conventions, the `app/` casing bullet)
 **Why:** Ingi ruled (module-discovery planning, 2026-07-15) that properties on `app.@this` are lowercase + singular like everything else in the PLang vocabulary — "not sure where that rule came from but it's wrong." Stage 4 introduces the first lowercase node (`app.module`); the documented PascalCase-properties carve-out now contradicts the ruling and will mislead the next reader. Existing properties (`.Cache`, `.Goal`, `.FileSystem`, …) rename in their own mechanical pass, not on this branch.

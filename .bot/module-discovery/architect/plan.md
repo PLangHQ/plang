@@ -25,6 +25,10 @@ Settled with Ingi 2026-07-15. Supersedes the shape parts of `coder/stage4-plan-s
 
 ## The pieces, in landing order
 
+**PRE-4a — the namespace move (found in 4a, blessed `architect/namespace-move-answer.md`):** all 30 action modules relocate to `app.module.action.<name>` (incl. the 7 merged engine-concepts — "they're actions too"), freeing `app.module.*` for the concept; the action-contract surface (IAction/ICodeGenerated/capability interfaces/attributes) STAYS at `app.module`; discovery's `baseNamespace` flips at both sites; generator + analyzer namespace-literal greps and the three-path smoke (dispatch, `[Code]` attach, choice registration) gate green; the `.pr` wire is unchanged (module names derive identically). Lands first; 4a resumes on top.
+
+**Spike consequence (leg d):** element prose doors are SYNC properties, resolved/cached at population — Fluid reaches members through the `Data.Get` door (`PlangDoorAccessor`, landed with the spike) but cannot reach async methods. The draft's `async Task<string?> Description()` shapes become `string? Description`.
+
 4a–4c land BEHIND the living `Describe()` (both alive, suite green); 4d adds the templates; the parity gate passes; 4e switches and deletes; 4f rides the same template machinery.
 
 - **SPIKE (first commit):** Fluid + the query path over the new shapes, five legs — (a) enumeration of host elements, (b) Fluid filters (`where:`/`map:`) over element properties on a NATIVE plang list (the member type that broke 3 tests when `item.list` went public), (c) the `property` row host, (d) async prose doors (least proven — if Fluid can't await them, prose pre-resolves at mint; surface early), (e) `list.where`'s `subject.Get(field)` over `clr(action)` elements (the `Name in %planStep.actions%` filter).
