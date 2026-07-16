@@ -156,6 +156,13 @@ public sealed class @this : IAsyncDisposable
     public global::app.type.item.list.@this list
         => new(Names.Select(n => (object?)this[n]).ToList(), App.System.Context);
 
+    private global::app.module.action.@this? _action;
+
+    /// <summary>The flat action collection — every module's actions + modifiers, enumerated at
+    /// <c>.list</c> (<c>%!app.module.action.list%</c>). Per-module selection stays on the module
+    /// collection (<c>this[name]</c>); this is the cross-module union the builder catalog walks.</summary>
+    public global::app.module.action.@this action => _action ??= new(this);
+
     public IEnumerable<string> GetActions(string module)
         => _modules.TryGetValue(module, out var actions) ? actions.Keys : Enumerable.Empty<string>();
 
