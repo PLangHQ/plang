@@ -102,12 +102,20 @@ public partial class @this
                 isNullable = nCtx.Create(prop).WriteState == NullabilityState.Nullable;
 
             var value = UnwrapToValue(prop.PropertyType);
+            // bare Data is the polymorphic "object" slot; every other value type resolves its
+            // entity through the identity door (compounds ride the kind axis).
+            var entity = value == typeof(global::app.data.@this) ? type["object"] : type[value];
+
+            // Host params (Goal, Step, SignOptions, BuildResponse, StepActions, ...) resolve to
+            // `clr` — the LLM can never author a host object, and naming one would leak the C# type
+            // (the door refuses to). Filter them from the catalog like the capability interfaces so
+            // ONLY plang types reach the LLM.
+            if (entity.Name == "clr") continue;
+
             rows.Add(new property.@this
             {
                 Name = prop.Name,
-                // bare Data is the polymorphic "object" slot; every other value type resolves its
-                // entity through the identity door (compounds ride the kind axis).
-                Type = value == typeof(global::app.data.@this) ? type["object"] : type[value],
+                Type = entity,
                 Nullable = isNullable,
                 IsVariable = IsVariableNameSlot(prop.PropertyType),
                 Default = prop.GetCustomAttribute<global::app.module.DefaultAttribute>()?.Value,
