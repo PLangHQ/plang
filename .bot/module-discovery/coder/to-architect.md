@@ -307,3 +307,43 @@ consistent plang-name surface, no split between what a param says and what the v
 **Flagging the deviation from your ruling:** `clr<goal>` is OUT (it needed the C# extraction Ingi
 forbids); host params are hidden. If this breaks something you saw that I didn't, say so — but it's
 Ingi's explicit call and it makes the LLM surface strictly plang-only.
+
+---
+
+## OFF-STAGE — the `--build={...}` crash is a 3-layer regression of the setting-branch fix (need a layer-3 ruling)
+
+Ingi asked me to try a real `plang build` (build's been down). It crashes at the CLI settings layer,
+not the builder — `--build={"files":["a.goal"]}` can't bind `files` (List<path>): *"String cannot lower
+to this"* at `setting/this.cs`. The setting branch (`3dd452a89 — Stage 3b … fixes the --build={...}
+crash`) fixed this once; two later refactors regressed it. Root-caused to THREE stacked layers:
+
+| Layer | Regression | Fix (done / open) |
+|---|---|---|
+| 1. setting bind | `54ff11322`/`0bc8885d8` moved `setting.Set` OFF the convert door `type.list.@this.TryConvert` (now DELETED) to `item.Create(json).Clr(target)` — infers `list<text>`, can't lower to `List<path>` | DONE: create AS the target type — `_context.App.Type[prop.PropertyType].Create(json).Clr(...)` |
+| 2. list Create | a `list<path>` built from raw strings DROPS the element kind (`type.@this.Create` holds/returns the inferred `list<text>` native at both the `_byContext` Name-match short-circuit and the native-hold arm — a list's own `Type` carries no kind, so the kind is silently lost) | DONE: `list.@this.Retag(kind, ctx)` re-tags each row to the declared kind; `type.Create` calls it when `Kind != null && native is list` |
+| 3. `source.Clr` | the row is now a path-DECLARED source (verified `elem0Face=path`), but `source.Clr(path.@this)` = `ClrConvert(_rawString, path.@this)` — it lowers the raw string, never MATERIALIZES the source to a path | OPEN — the wall |
+
+**Layer 3 is a real sync/async design boundary, not a bug I should silently pick:** `source.Value`
+(materialization through the reader registry) is **async**; `source.Clr` and `setting.Set` are **sync**.
+A deferred source can't sync-materialize through the async door — even though `path.@this.Resolve(str,
+ctx)` is itself sync. The OLD `TryConvert` sidestepped this by resolving elements EAGERLY.
+
+**Ruling I need (my lean = a):**
+- **(a)** `source.Clr(target)` sync-materializes a scalar/reference-declared source (path, number, …)
+  via the declared type's sync lift, then lowers; async parses (file content, table/xlsx) still route
+  through `Value()`. Localized, honest ("a consumer lowering the source opens its door"), but it adds a
+  sync-materialize door to `source` — touches the lazy-source model, so it's your call.
+- **(b)** make the CLI convert-walk (`setting.Set`) async so it can `await` materialization — ripples
+  through the whole setting surface.
+- **(c)** layer-2 `Retag` eagerly resolves scalar kinds (path→`Resolve`) instead of deferring to a
+  source — but breaks laziness for `list<image>`/`list<file>` etc. Rejected unless you disagree.
+
+**Verification so far:** layers 1-2 add ZERO new Types-suite reds (baseline 28 = withfix 28), so they're
+safe but incomplete. A repro unit test (`SettingsTests.Set_StringArray_BindsToListOfPath`, Ingi asked me
+to add it) is RED pending layer 3. Layers 1-2 + the test are UNCOMMITTED, held for your layer-3 ruling —
+I won't commit a half-fix + red test to the branch without the direction.
+
+Note: this is off the module-discovery stage plan (it's a type-system/setting regression that happened to
+block the `plang build` I needed for 4d's end-to-end validation). Flagging because the same
+`source`-materialization boundary may touch the 4c.2 prose `file`-door reads (`{{ action.Notes }}` also
+lowers a lazy handle through Fluid) — worth one coherent ruling on "sync consumer meets lazy source."
