@@ -256,3 +256,54 @@ build` trace (the render is deterministic pre-LLM — faithful but heavier + cat
 (C) I keep digging on why `clr<StepActions>`+`data`-params render empty under the door in isolation to
 get a byte-faithful OLD capture (most literal to the note, unknown time cost). Capture harness is written
 and held as the evidence. Holding the 4d gate for this.
+
+---
+
+## Ingi RULING — supersedes `clr<goal>`: HOST PARAMS ARE HIDDEN; text/binary win + vocab updated
+
+You ruled (A) enforced, and I built the param-desc collector: **343 params compared, 19 mismatches**, and
+they resolve into exactly three buckets. Ingi ruled on the two that need his call — and one of them
+**changes your `clr<goal>` type-face ruling**. Writing it up so the plan stays coherent.
+
+### The 19, and what Ingi decided
+
+**① Host params (16): `this`/`sign`/`buildresponse` → HIDDEN (was: your `clr<goal>`).**
+Ingi's constraint: *only plang types visible to the LLM; never extract the C# type to show it.* Two
+findings from the trace forced the reconsider:
+- The NEW identity door is already clean — a host resolves to **bare `clr`** (`type/list/this.cs:300`
+  `this["clr"]`), it does NOT extract the C# name. The CLR leak was in the DELETED path
+  (`GetTypeName:476` → `StripGenericArity(type.Name)` → `Goal.@this` renders **`this`**, the literal C#
+  class name).
+- **`clr<goal>` can't be built without re-introducing the leak:** `goal`/`step` are NOT plang type
+  names (that's *why* OLD showed the C# `this`); deriving `goal` means reading the C# namespace — the
+  exact extraction Ingi forbids.
+- The LLM can't author a host object anyway. So: **filter host params out of the catalog**, like the
+  capability interfaces already are. Machine-checkable, no name-parsing: a host param is exactly the one
+  whose `row.Type.Name == "clr"`. `build.merge`, `error.handle.Actions`, `http.*.SignOptions`,
+  `environment.run.*`, `build.*` lose their host params from the LLM view; the LLM sees ONLY
+  plang-typed, authorable params. Zero `clr` reaches it.
+- Net effect on the gate: these 16 aren't "desc exceptions" — they're **intentional DROPS** (present in
+  Describe, absent in the new catalog). The golden has fewer params; the parity test line-items them as
+  dropped-because-host.
+
+**② Two naming deltas → text/binary WIN, vocab updated (Ingi):**
+```
+output.write.channel:   OLD='string?'  → 'text?'    (the synthetic channel row)
+signing.sign.RawBytes:  OLD='bytes'    → 'binary'
+```
+The type entities face the true plang names (`text`/`binary`); Ingi ruled we ACCEPT them AND update the
+LLM type-vocabulary surface so it lists `text`/`binary` (retiring Describe's `string`/`bytes`) — one
+consistent plang-name surface, no split between what a param says and what the vocab lists.
+
+**③ The other 325 params: exact match** — nullability, `%var%`, `= default`, compounds (`list<path>`).
+
+### What I'm implementing now (Ingi's rulings)
+1. Filter `row.Type.Name == "clr"` host params out of the reflection leaf (`action.Properties`) — mirrors
+   the capability-interface filter.
+2. Accept `text`/`binary`; update the LLM type vocabulary template to match.
+3. Param-desc parity gate: after the host-drop, assert the ONLY remaining Describe deltas are the two
+   accepted naming improvements — zero unexplained diffs.
+
+**Flagging the deviation from your ruling:** `clr<goal>` is OUT (it needed the C# extraction Ingi
+forbids); host params are hidden. If this breaks something you saw that I didn't, say so — but it's
+Ingi's explicit call and it makes the LLM surface strictly plang-only.
