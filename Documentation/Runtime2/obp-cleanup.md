@@ -209,3 +209,11 @@ normalization is behavior that should live on the action/Actions type, not a sta
 the build code threading the registry through. Likely collapses once `action.Properties` (4c)
 carries the type entities and each action normalizes its own params.
 **Disposition (Ingi):** follow-up after all module-discovery stages land — not fixed inline.
+
+## coder — module-discovery — ContainerFamily vs GetTypeName (dedup)
+**Where:** `PLang/app/type/list/this.cs` — `ContainerFamily` (the door rung's family detection)
+duplicates `GetTypeName`'s generic-family cases (list.@this<>, List<>/IList<>/…, Dictionary<>/…).
+**Smell:** two owners of "which plang container family is this CLR generic." End-state (architect):
+`GetTypeName(t)` becomes `this[t].ToString()` (the entity owns its face), collapsing both into the
+door + entity. Deferred — GetTypeName is broadly called and returns nullability-suffixed strings;
+the collapse rides with the 4e/getTypes-retirement cleanup.
