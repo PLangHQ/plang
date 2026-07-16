@@ -152,3 +152,28 @@ module-discovery or its own piece.
 
 Current state: 4a/4b/4c.1 done + pushed + parity-proven; `ParameterSchema` deleted per your ruling;
 modifier element facts landed as interim. Holding the `GroupModifiers` rewire for this ruling.
+
+---
+
+## 4c.2 prose doors — the load-mechanism fork (spike settled "sync property"; the LOADING is unresolved)
+
+The modifier reshape is done + pushed (`modifier : action`, Nest, deletions, no regressions). Starting
+4c.2 (prose doors: `module`/`action` `.Description`/`.Notes`/`.Examples`) hits a real fork the spike
+didn't resolve. The spike proved Fluid reads a **sync property** (can't await a method / Task-prop). But:
+
+**Prose reads are inherently ASYNC** — `MarkdownTeaching.Load` reads `os/system/modules/<m>/…md` through
+the `path` verb surface (`ReadText`, AuthGate); `System.IO` is banned, so there is no sync read. So a sync
+`string? Description` property can't load its own value.
+
+**Traced the primitives — neither fits cleanly:**
+- `computed` is a **sync** `Func<object?>` factory — can't await the md read.
+- `source` has an async `Value()` but is coupled to `.pr` lazy-deserialize (path+line, variable resolution) — wrong domain for "read this md as text."
+- My Fluid door IS async (`GetAsync → Data.Get(name).Value()`), so a sync property returning a **lazy-async plang value** WOULD resolve — but there's no clean lazy-async-text item to return.
+
+**Two shapes, and the choice ties to 6c (navigation vs getter):**
+- **A — async pre-load into cached sync strings.** The element gets an `await LoadProse()`; a catalog GETTER action (async) pre-loads every element's prose before `%modules%`, then the sync `Description` returns the cached string. Clean, mirrors what `Describe()` does today (loads all prose eagerly) — BUT requires the builder to reach the catalog via an **async getter action**, not the pure `%!app.module.list%` **navigation** 6c leaned toward (navigation has no async-load point).
+- **B — a lazy-async-text item.** `Description` (sync property) returns a small lazy item whose `Value()` does the async md read; the async Fluid door / variable navigation resolves it. Works with navigation OR getter — but needs a NEW item type (or bending `source`), and a lazy-file-text item that's never authored/created-from-values brushes the item⟺ICreate rule you hold.
+
+**Ruling I need:** A (async getter pre-loads sync strings; commit to a getter, not navigation) or B (a lazy-async-text item; and is that a legit item or an ICreate violation)? This decides the element's prose shape AND whether 6c's catalog access is a getter or navigation.
+
+Note: the prose/template forks are clustering (type-face at 4d, now prose load) — might be worth a single 4c.2/4d design pass. Holding 4c.2 for this.
