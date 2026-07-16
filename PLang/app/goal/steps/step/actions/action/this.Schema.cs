@@ -22,14 +22,20 @@ public partial class @this
 
     private System.Collections.Generic.IReadOnlyList<property.@this>? _rows;
 
-    /// <summary>The declared parameter slots as the NATIVE plang list. THE reflection site — once
-    /// per element, cached. Filters exactly as the catalog: capability-interface props, [Code],
-    /// EqualityContract are dropped; Data&lt;T&gt;/Nullable&lt;T&gt; unwrap to the type entity;
-    /// Data&lt;variable&gt; → IsVariable; [Default] → Default; the IChannel synthetic "channel"
-    /// row rides along.</summary>
+    /// <summary>The declared parameter rows, TYPED — the ONE reflection site's output, cached per
+    /// element. Build validation reads Nullable / Default / Name here instead of re-reflecting the
+    /// handler (the four scattered NullabilityInfoContext probes collapse to this single crossing).
+    /// The plang-facing <see cref="Properties"/> wraps these same rows.</summary>
+    internal System.Collections.Generic.IReadOnlyList<property.@this> ParameterRows => _rows ??= Reflect();
+
+    /// <summary>The declared parameter slots as the NATIVE plang list — the plang face of
+    /// <see cref="ParameterRows"/>. Filters exactly as the catalog: capability-interface props, [Code],
+    /// EqualityContract, host (clr) params are dropped; Data&lt;T&gt;/Nullable&lt;T&gt; unwrap to the
+    /// type entity; Data&lt;variable&gt; → IsVariable; [Default] → Default; the IChannel synthetic
+    /// "channel" row rides along.</summary>
     [JsonIgnore]
     public global::app.type.item.list.@this Properties
-        => new((_rows ??= Reflect()).Select(r => (object?)r).ToList(),
+        => new(ParameterRows.Select(r => (object?)r).ToList(),
                Context ?? throw new System.InvalidOperationException(
                    "action.Properties needs the catalog context — stamp it at mint; a .pr-zoom action navigates via the clr carrier."));
 

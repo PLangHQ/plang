@@ -545,30 +545,25 @@ public class Default : IBuilder
             // the param, the runtime can't construct the action's parameter record.
             // Catch it at build time so LlmFixer / HandleValidationError can re-prompt.
             {
-                var actType = modules.GetActionType(a.Module, a.ActionName);
-                if (actType != null)
+                // Read the ONE reflection site — the catalog element's declared parameter rows —
+                // instead of re-reflecting the handler with a fresh NullabilityInfoContext. The rows
+                // already drop [Code] / capability / EqualityContract / host params; a required slot
+                // is a row that's non-nullable with no [Default].
+                var element = modules.Contains(a.Module, a.ActionName)
+                    ? modules[a.Module][a.ActionName]
+                    : null;
+                if (element != null)
                 {
                     var emitted = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                     if (a.Parameters != null)
                         foreach (var p in a.Parameters) emitted.Add(p.Name);
 
-                    var nullCtx = new System.Reflection.NullabilityInfoContext();
-                    foreach (var prop in actType.GetProperties(
-                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+                    foreach (var row in element.ParameterRows)
                     {
-                        if (prop.Name == "EqualityContract") continue;
-                        if (System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.module.CodeAttribute>(prop) != null) continue;
-                        if (System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.module.DefaultAttribute>(prop) != null) continue;
-                        if (CapabilityPropName(prop)) continue;
-
-                        var nullable = System.Nullable.GetUnderlyingType(prop.PropertyType) != null
-                            || (!prop.PropertyType.IsValueType
-                                && nullCtx.Create(prop).WriteState == System.Reflection.NullabilityState.Nullable);
-                        if (nullable) continue;
-
-                        if (!emitted.Contains(prop.Name))
+                        if (row.Nullable || row.Default != null) continue;
+                        if (!emitted.Contains(row.Name))
                             validationErrors.Add(
-                                $"{a.Module}.{a.ActionName}: required parameter '{prop.Name}' is missing. " +
+                                $"{a.Module}.{a.ActionName}: required parameter '{row.Name}' is missing. " +
                                 $"Every action must emit all non-nullable, non-default parameters.");
                     }
                 }
@@ -903,6 +898,10 @@ public class Default : IBuilder
             // tags the parameter's declared CLR type (Key → "string"). The schema wins —
             // it's the contract, not the LLM's view of the value.
             var actionType = modules.GetActionType(a.Module, a.ActionName);
+            // The catalog element's declared rows — the ONE reflection site, read for nullable-slot
+            // detection below instead of re-reflecting with a NullabilityInfoContext.
+            var rows = modules.Contains(a.Module, a.ActionName)
+                ? modules[a.Module][a.ActionName].ParameterRows : null;
             if (actionType != null)
             {
                 var props = actionType.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
@@ -962,7 +961,7 @@ public class Default : IBuilder
                 // empty string in place so the conversion error surfaces and
                 // LlmFixer retries.
                 if (face is { } emptyFace && !emptyFace.IsTruthy()
-                    && global::app.module.action.build.ValidateResponseHelpers.IsNullableSchemaProp(actionType, p.Name))
+                    && global::app.module.action.build.ValidateResponseHelpers.IsNullableSchemaProp(rows, p.Name))
                 {
                     p.SetValue(null);
                     continue;

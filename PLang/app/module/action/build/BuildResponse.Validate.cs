@@ -112,9 +112,11 @@ public sealed partial class BuildResponse
             {
                 if (a.Parameters == null) continue;
 
-                // Cache the action's schema prop info per (module, action) — looked up
-                // once for the parameter loop, used to detect nullable slots.
-                var actionType = modules?.GetActionType(a.Module, a.ActionName);
+                // The catalog element's declared rows — the ONE reflection site, looked up once for
+                // the parameter loop and read for nullable-slot detection (no re-reflection here).
+                var rows = modules != null && modules.Contains(a.Module, a.ActionName)
+                    ? modules[a.Module][a.ActionName].ParameterRows
+                    : null;
 
                 foreach (var p in a.Parameters)
                 {
@@ -138,7 +140,7 @@ public sealed partial class BuildResponse
                     // TryConvert path below.
                     if (resolved is global::app.type.item.text.@this emptyT && !emptyT.IsTruthy())
                     {
-                        if (ValidateResponseHelpers.IsNullableSchemaProp(actionType, p.Name))
+                        if (ValidateResponseHelpers.IsNullableSchemaProp(rows, p.Name))
                         {
                             p.SetValue(null);
                             continue;
@@ -230,36 +232,13 @@ internal static class ValidateResponseHelpers
     }
 
     /// <summary>
-    /// True when the action's parameter slot named <paramref name="paramName"/> is
-    /// nullable (Data&lt;T&gt;? or T?). Used to decide whether an LLM-emitted "" can
-    /// be safely normalized to null. Null actionType (action not found) returns
-    /// false — without schema we can't make the call, fall through to the
-    /// convertibility error.
+    /// True when the action's parameter slot named <paramref name="paramName"/> is nullable — read
+    /// from the catalog element's declared rows (the ONE reflection site owns nullability), not
+    /// re-reflected here. Null/absent rows (action not found, or the name isn't a declared slot) →
+    /// false: without the schema we can't make the call, fall through to the convertibility error.
     /// </summary>
-    public static bool IsNullableSchemaProp(System.Type? actionType, string paramName)
-    {
-        if (actionType == null) return false;
-        var prop = actionType.GetProperty(paramName,
-            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-        if (prop == null) return false;
-
-        // Value type Nullable<T> — Path is Data<T>? where T is class/value-type wrapper.
-        if (System.Nullable.GetUnderlyingType(prop.PropertyType) != null) return true;
-
-        // Reference-type nullability (the source-generator emits Data<T>? as an
-        // annotated reference type, not Nullable<>). NullabilityInfoContext gives us
-        // the Write nullability of the property.
-        try
-        {
-            var nullCtx = new System.Reflection.NullabilityInfoContext();
-            return nullCtx.Create(prop).WriteState == System.Reflection.NullabilityState.Nullable;
-        }
-        catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
-        {
-            // NullabilityInfoContext can throw on edge-case generic instantiations
-            // (e.g. unsupported reflected type). Default to "not nullable" so we err
-            // toward surfacing the LLM mistake rather than silently swallowing it.
-            return false;
-        }
-    }
+    public static bool IsNullableSchemaProp(
+        System.Collections.Generic.IReadOnlyList<global::app.goal.steps.step.actions.action.property.@this>? rows,
+        string paramName)
+        => rows?.FirstOrDefault(r => string.Equals(r.Name, paramName, System.StringComparison.OrdinalIgnoreCase))?.Nullable ?? false;
 }
