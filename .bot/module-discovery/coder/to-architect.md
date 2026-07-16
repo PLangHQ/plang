@@ -102,3 +102,53 @@ smelly seam.
 
 This decides both 4c.1's leaf home and whether 4c.3's self-ID is even the right model. Holding 4c.3
 until you rule. (4a/4b/4c.1 rows+leaf+Return are done, pushed, green, parity-proven.)
+
+---
+
+## Proposed reshape (Ingi) — `modifier` is its own type; `IsModifier`/`ModifierOrder` dissolve
+
+Ingi's OBP read on the 4c.3 modifier facts, and I agree: **`IsModifier` is a boolean discriminator
+on `action`, and `ModifierOrder` is `Order` wearing a qualifier because it's homeless on `action` —
+the classic "a flag = a type wanting to exist."** A modifier is a **real domain kind, not a usage
+distinction**: `cache.wrap`/`error.handle`/`timeout.after` are ALWAYS modifiers (marked `[Modifier]`),
+and a modifier *wraps a preceding action* rather than standing alone. So it deserves its own `this`,
+and then `IsModifier` vanishes (the type is the answer) and `ModifierOrder` → `Order`.
+
+### The proposal (want your ruling before I build — this changes the concept model + .pr/builder story)
+
+**`modifier` as its own type, subtype of / sharing the base with `action`.** A modifier IS dispatched
+exactly like an action (handler, params, `Run()`) — only its ROLE differs — so the mechanism is shared;
+`Order` lives on the modifier.
+
+Two levels, and the second is where the real decision is:
+
+1. **Catalog (clean, easy):** the module element exposes **`Actions`** and **`Modifiers`** as two homes;
+   `[Modifier]` at discovery routes each. The distinction becomes STRUCTURAL (which collection), not a
+   flag — the catalog's existing `# Modifiers` section renders from `module.Modifiers`. No `IsModifier`
+   in the catalog/templates. (This is what I'd have consumed at 4c/4d anyway.)
+
+2. **Built step (.pr):** today the LLM emits a flat list, a modifier following its target, and
+   `GroupModifiers` nests it. Options:
+   - modifier as its own type in the flat list → grouping is `if (x is modifier)` at ONE seam (a real
+     type distinction, not a scattered bool) — already better; OR
+   - **the deeper win: emit the modifier straight into the target's `Modifiers` slot at build/parse**
+     (the formal already says it — `file.read | cache.wrap`, the pipe IS "wrap the preceding"). Then the
+     flat list never carries modifiers and **`GroupModifiers` disappears entirely** — the obpv we were
+     fighting dissolves rather than relocates.
+
+### Why this over the path we were on
+The 4c.3 plan was "swap `GroupModifiers` to catalog-join on element facts, delete the registry methods at
+4e." This reshape is the cleaner END: `IsModifier`/`ModifierOrder` don't exist to swap, and (option 2b)
+`GroupModifiers` doesn't exist to fix. It's BIGGER — touches discovery, the module element (two lists),
+the catalog templates, and possibly the builder emit — so it's your call whether it's in-scope for
+module-discovery or its own piece.
+
+### Questions for you
+1. `modifier : action` subtype, or a shared base with `action`? (A modifier shares dispatch entirely.)
+2. Option 2a (type-check at the one grouping seam) or 2b (builder emits into the slot, `GroupModifiers`
+   dies)? 2b is the real fix but reaches into the build/parse flow.
+3. In-scope for module-discovery (fold into 4c/4e), or a dedicated follow-on? I've landed the element
+   facts (`IsModifier`/`ModifierOrder`) green as an interim — they'd be replaced by the type, not kept.
+
+Current state: 4a/4b/4c.1 done + pushed + parity-proven; `ParameterSchema` deleted per your ruling;
+modifier element facts landed as interim. Holding the `GroupModifiers` rewire for this ruling.
