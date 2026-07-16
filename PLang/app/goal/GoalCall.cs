@@ -368,6 +368,8 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
             return context.Error(new global::app.error.ActionError(
                 $"Goal '{Name}' not found in '{prPath}'", "GoalNotFound", 404));
 
-        return context.Ok(found);
+        // Ride back as clr<goal> — SAME shape as the in-memory path's Found(), so the dispatcher
+        // (RunGoalAsync / Start) unwraps ONE shape. A bare Goal here NREs the `as clr<Goal>` unwrap.
+        return context.Ok(new global::app.type.clr.@this<@this>(found, context));
     }
 }
