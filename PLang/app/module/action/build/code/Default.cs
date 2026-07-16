@@ -175,20 +175,23 @@ public class Default : IBuilder
         // Honor the user's specified order — building has bootstrapping concerns
         // (e.g., system/builder rebuilding itself: BuildGoal must come LAST so
         // earlier iterations use the previous in-memory build pipeline).
-        var buildFiles = app.Build.Files;
-        if (buildFiles.Count > 0)
-        {
-            // Ensure filter paths have Context so FileName/Relative work
-            foreach (var bf in buildFiles)
-                bf.Context ??= context;
+        // Each row lifts to a path at ITS door — a JSON-string row becomes a path (path.Create), a
+        // %var% row resolves the variable. This is the materialize-on-read the plang-typed Build.Files
+        // buys: the walk stored the list lazily, the consumer opens each row here.
+        var filters = new List<path>();
+        foreach (var row in app.Build.Files)
+            if (await row.Value<global::app.type.item.path.@this>() is { } bf)
+            { bf.Context ??= context; filters.Add(bf); }
 
+        if (filters.Count > 0)
+        {
             // The affix/filename filter semantics live on path (path.Matches) —
             // the type owns its containment math.
             bool MatchesPattern(path f, path bf) => f.Matches(bf).Value;
 
             var ordered = new List<path>();
             var seen = new HashSet<string>();
-            foreach (var bf in buildFiles)
+            foreach (var bf in filters)
             {
                 foreach (var f in files)
                 {

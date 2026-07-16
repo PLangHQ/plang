@@ -17,10 +17,12 @@ public sealed partial class @this
 
 
     /// <summary>
-    /// Optional file filter. When set, only these files are built — IN ORDER.
+    /// Optional file filter. When set, only these files are built — IN ORDER. A native plang list:
+    /// the walk stores it lazily (JSON strings born as path-declared rows), and each row lifts to a
+    /// path at the CONSUMER's door (<c>row.Value&lt;path&gt;()</c>) — no set-time materialization.
     /// Set via --build={"files":"test.goal"} or --build={"files":["test.goal","run.goal"]}
     /// </summary>
-    public List<path> Files { get; set; } = new();
+    public global::app.type.item.list.@this Files { get; set; }
 
     /// <summary>
     /// Whether to use LLM cache. Default true. Set via --build={"cache":false}
@@ -58,6 +60,7 @@ public sealed partial class @this
     public @this(actor.context.@this context)
     {
         _context = context;
+        Files = new global::app.type.item.list.@this(context);
     }
 
     /// <summary>The context this subsystem was born with (system-scoped).</summary>

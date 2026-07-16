@@ -99,10 +99,20 @@ public sealed class @this
             }
             else
             {
-                // Lift the raw setting to its plang value, then let it lower ITSELF to the
-                // property's CLR type — the value owns its projection, no central converter.
+                // Lift the raw setting to its plang value. A plang-typed property (a native
+                // list<path>, a number) stores the plang value DIRECTLY — no Clr boundary to cross; it
+                // holds lazy and materializes at the CONSUMER's door (row.Value<path>()). Only a CLR
+                // slot (bool/string) or a typed-generic plang slot the born native value can't fit
+                // lowers via Clr (the value owns its projection).
                 object? val;
-                try { val = global::app.type.item.@this.Create(kvp.Value, _context).Clr(prop.PropertyType); }
+                try
+                {
+                    var built = global::app.type.item.@this.Create(kvp.Value, _context);
+                    val = typeof(global::app.type.item.@this).IsAssignableFrom(prop.PropertyType)
+                          && prop.PropertyType.IsInstanceOfType(built)
+                        ? built
+                        : built.Clr(prop.PropertyType);
+                }
                 catch (System.Exception ex) when (ex is System.InvalidCastException or System.FormatException
                     or System.OverflowException or System.NotSupportedException)
                 {
