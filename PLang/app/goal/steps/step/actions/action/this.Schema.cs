@@ -13,6 +13,26 @@ public sealed partial class @this
     [JsonIgnore]
     internal global::app.actor.context.@this? Context { get; init; }
 
+    // The handler CLR type — reached TRANSIENTLY through the module element's door (the owner),
+    // never stored on this action. Null when there's no catalog Context or the identity is unknown.
+    private System.Type? Handler
+        => Context != null && Context.App.Module.Contains(Module)
+            ? Context.App.Module[Module].Handler(ActionName)
+            : null;
+
+    /// <summary>Whether this action is a modifier (its handler's <c>[Modifier]</c>) — a class-zoom
+    /// FACT off the handler, joined by identity at the modifier-grouping site. False on a .pr-zoom
+    /// action with no catalog context.</summary>
+    [JsonIgnore]
+    public bool IsModifier
+        => Handler?.GetCustomAttribute<global::app.module.ModifierAttribute>() != null;
+
+    /// <summary>The modifier nesting order (lower = outermost wrapper); int.MaxValue for a
+    /// non-modifier or a missing attribute.</summary>
+    [JsonIgnore]
+    public int ModifierOrder
+        => Handler?.GetCustomAttribute<global::app.module.ModifierAttribute>()?.Order ?? int.MaxValue;
+
     private System.Collections.Generic.IReadOnlyList<property.@this>? _rows;
 
     /// <summary>The declared parameter slots as the NATIVE plang list. THE reflection site — once
@@ -20,6 +40,7 @@ public sealed partial class @this
     /// EqualityContract are dropped; Data&lt;T&gt;/Nullable&lt;T&gt; unwrap to the type entity;
     /// Data&lt;variable&gt; → IsVariable; [Default] → Default; the IChannel synthetic "channel"
     /// row rides along.</summary>
+    [JsonIgnore]
     public global::app.type.item.list.@this Properties
         => new((_rows ??= Reflect()).Select(r => (object?)r).ToList(),
                Context ?? throw new System.InvalidOperationException(
@@ -32,6 +53,7 @@ public sealed partial class @this
     /// <c>Task&lt;Data&lt;T&gt;&gt;</c> signature (compounds ride the kind axis). Null when the
     /// return is polymorphic: a bare <c>Task&lt;Data&gt;</c> or <c>Data&lt;object&gt;</c> declares
     /// no concrete type. Cached; the twin of <see cref="Properties"/>, feeding goal.variables.</summary>
+    [JsonIgnore]
     public global::app.type.@this? Return
     {
         get
@@ -44,8 +66,9 @@ public sealed partial class @this
 
     private global::app.type.@this? ReflectReturn()
     {
-        if (ParameterSchema == null || Context == null) return null;
-        var run = ParameterSchema.GetMethod("Run", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes);
+        var handler = Handler;
+        if (handler == null || Context == null) return null;
+        var run = handler.GetMethod("Run", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes);
         if (run == null) return null;
 
         var ret = run.ReturnType;
@@ -71,16 +94,17 @@ public sealed partial class @this
     private System.Collections.Generic.List<property.@this> Reflect()
     {
         var rows = new System.Collections.Generic.List<property.@this>();
-        if (ParameterSchema == null) return rows;
+        var handler = Handler;
+        if (handler == null) return rows;
         var type = Context!.App.Type;
         var nCtx = new NullabilityInfoContext();
 
         var capabilityProps = new System.Collections.Generic.HashSet<string>(
-            CapabilityInterfaces.Where(i => i.IsAssignableFrom(ParameterSchema))
+            CapabilityInterfaces.Where(i => i.IsAssignableFrom(handler))
                 .SelectMany(i => i.GetProperties().Select(p => p.Name)),
             System.StringComparer.OrdinalIgnoreCase);
 
-        foreach (var prop in ParameterSchema.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        foreach (var prop in handler.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
             if (prop.Name == "EqualityContract") continue;
             if (capabilityProps.Contains(prop.Name)) continue;
@@ -105,7 +129,7 @@ public sealed partial class @this
 
         // IChannel actions: source-gen resolves the Channel slot off a "channel" param — surface it
         // so the LLM can emit a name from the actor's inventory.
-        if (typeof(global::app.module.IChannel).IsAssignableFrom(ParameterSchema))
+        if (typeof(global::app.module.IChannel).IsAssignableFrom(handler))
             rows.Add(new property.@this { Name = "channel", Type = type["string"], Nullable = true });
 
         return rows;

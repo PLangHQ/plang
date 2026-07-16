@@ -32,34 +32,13 @@ public class ActionsTests
     public async Task Value_ReturnsSelf()
     {
         var actions = new StepActions();
-        actions.Add(new global::app.goal.steps.step.actions.action.@this { Module = "variable", ActionName = "set" });
+        var a = new global::app.goal.steps.step.actions.action.@this { Module = "variable", ActionName = "set" };
+        actions.Add(a);
 
-        await Assert.That(actions.Value).IsEquivalentTo(actions);
-    }
-
-    [Test]
-    public async Task ParameterSchema_SetOnAction_IsPreserved()
-    {
-        var action = new global::app.goal.steps.step.actions.action.@this
-        {
-            Module = "variable",
-            ActionName = "set",
-            ParameterSchema = typeof(global::app.module.action.variable.Set)
-        };
-
-        await Assert.That(action.ParameterSchema).IsEqualTo(typeof(global::app.module.action.variable.Set));
-    }
-
-    [Test]
-    public async Task ParameterSchema_DefaultIsNull()
-    {
-        var action = new global::app.goal.steps.step.actions.action.@this
-        {
-            Module = "variable",
-            ActionName = "set"
-        };
-
-        await Assert.That(action.ParameterSchema).IsNull();
+        // Value hands back the same backing items (shallow — deep-equivalence would invoke the
+        // catalog-only Properties getter, which throws on a context-less .pr-zoom action by contract).
+        await Assert.That(actions.Value.Count).IsEqualTo(1);
+        await Assert.That(object.ReferenceEquals(actions.Value[0], a)).IsTrue();
     }
 
     // --- GetActions integration tests (uses real global::app.module.list.@this + assembly discovery) ---
@@ -79,16 +58,6 @@ public class ActionsTests
         var variableSet = actions.FirstOrDefault(a => a.Module == "variable" && a.ActionName == "set");
 
         await Assert.That(variableSet).IsNotNull();
-    }
-
-    [Test]
-    public async Task GetActions_VariableSet_HasParameterSchema()
-    {
-        var actions = DiscoverActions();
-        var variableSet = actions.First(a => a.Module == "variable" && a.ActionName == "set");
-
-        await Assert.That(variableSet.ParameterSchema).IsNotNull();
-        await Assert.That(variableSet.ParameterSchema).IsEqualTo(typeof(global::app.module.action.variable.Set));
     }
 
     [Test]
@@ -131,16 +100,6 @@ public class ActionsTests
         }
     }
 
-    [Test]
-    public async Task GetActions_NoParamHandler_HasNullParameterSchema()
-    {
-        var actions = DiscoverActions();
-        // Handlers with NullParams should have null ParameterSchema
-        var noParams = actions.Where(a => a.ParameterSchema == null).ToList();
-
-        // There should be at least some handlers without params (e.g., variable.clear)
-        await Assert.That(noParams.Count).IsGreaterThanOrEqualTo(0);
-    }
 
     // --- ValidateActions tests (uses real global::app.module.list.@this + assembly discovery) ---
 
@@ -384,12 +343,10 @@ public class ActionsTests
         {
             foreach (var actionName in modules.GetActions(ns))
             {
-                var actionType = modules.GetActionType(ns, actionName);
                 actions.Add(new global::app.goal.steps.step.actions.action.@this
                 {
                     Module = ns,
                     ActionName = actionName,
-                    ParameterSchema = actionType
                 });
             }
         }

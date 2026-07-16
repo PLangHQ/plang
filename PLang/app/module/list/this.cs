@@ -416,9 +416,6 @@ public sealed class @this : IAsyncDisposable
                     moduleDescriptionCache[ns] = moduleDescription;
                 }
 
-                // Per-action modifier classification from [Modifier] on the class
-                bool isModifier = parameterType.GetCustomAttribute<ModifierAttribute>() != null;
-
                 // Per-action LLM teaching from markdown files. Falls back to
                 // C# attribute-sourced Description when the markdown file is
                 // absent — keeps the catalog populated while the migration runs.
@@ -430,7 +427,6 @@ public sealed class @this : IAsyncDisposable
                 {
                     Module = ns,
                     ActionName = actionName,
-                    ParameterSchema = parameterType,
                     Parameters = parameters,
                     Cacheable = cacheable,
                     Examples = examples,
@@ -442,7 +438,6 @@ public sealed class @this : IAsyncDisposable
                     ModuleNotes = teaching.ModuleNotes,
                     ExamplesMd = teaching.ExamplesMd,
                     ModuleExamplesMd = teaching.ModuleExamplesMd,
-                    IsModifier = isModifier
                 });
             }
         }

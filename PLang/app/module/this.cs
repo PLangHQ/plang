@@ -20,6 +20,11 @@ public sealed class @this
         _list = list;
     }
 
+    /// <summary>The handler CLR type for one of this module's actions — the owner's answer, handed
+    /// TRANSIENTLY to the reflection leaf. The type lives in the registry index (keyed by the
+    /// identity the action carries); it never rides on the action itself.</summary>
+    internal System.Type? Handler(string actionName) => _list.GetActionType(Name, actionName);
+
     // Action elements cached — the class-zoom face on the .pr action host, minted once off
     // the registry's index and living as long as this element (which the registry drops on
     // its own mutation). The list wrapper mints fresh per ask over the same cached elements.
@@ -33,8 +38,7 @@ public sealed class @this
                     {
                         Module = Name,
                         ActionName = a,
-                        ParameterSchema = _list.GetActionType(Name, a),
-                        Context = _list.App.System.Context,   // catalog-zoom — powers action.Properties
+                        Context = _list.App.System.Context,   // catalog-zoom — the leaf reaches its handler back through this
                     })
                     .ToList())
                .Select(a => (object?)a).ToList(),

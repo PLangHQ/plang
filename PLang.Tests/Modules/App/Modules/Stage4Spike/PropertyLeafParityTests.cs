@@ -43,7 +43,6 @@ public class PropertyLeafParityTests
             {
                 Module = described.Module,
                 ActionName = described.ActionName,
-                ParameterSchema = described.ParameterSchema,
                 Context = ctx,
             };
 
@@ -94,8 +93,7 @@ public class PropertyLeafParityTests
         {
             var element = new ActionEl
             {
-                Module = described.Module, ActionName = described.ActionName,
-                ParameterSchema = described.ParameterSchema, Context = ctx,
+                Module = described.Module, ActionName = described.ActionName, Context = ctx,
             };
             // Describe's ReturnTypeName is null (no value) or "data" (polymorphic) or a concrete
             // name; the entity is null for both null/"data"/object, non-null for a concrete type.

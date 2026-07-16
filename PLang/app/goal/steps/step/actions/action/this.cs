@@ -10,8 +10,6 @@ public sealed partial class @this
 {
     // An action is a plain C# host — carried as clr<action>, reflected off its [Store] props.
 
-    [JsonIgnore]
-    public System.Type? ParameterSchema { get; init; }
     [Store, LlmBuilder, Debug, Default]
     [JsonPropertyName("module")]
     [Newtonsoft.Json.JsonProperty("module")]
@@ -201,15 +199,6 @@ public sealed partial class @this
         }
     }
 
-    /// <summary>
-    /// True when this action is declared as a modifier via [Modifier] on its class.
-    /// Modifier actions wrap the preceding action rather than standing on their own
-    /// (e.g. cache.wrap, error.handle, timeout.after). The catalog renders modifier
-    /// actions in their own section. Per-action, so a module can carry a mix —
-    /// e.g. error.throw (action) and error.handle (modifier) share the error module.
-    /// </summary>
-    [JsonIgnore]
-    public bool IsModifier { get; init; }
 
     /// <summary>
     /// Looks up a parameter by name. Walks Parameters first, falls back to Defaults,
