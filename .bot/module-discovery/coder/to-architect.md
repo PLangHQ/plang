@@ -50,3 +50,21 @@ Net: choice registration is **not** in the module collection's population walk (
 **My read:** B is right in principle, but only if the compound case is modeled — likely the row's type is a small **structured** type entity (name + element), not a flat entity and not a flat string. A ships parity-first and hardens to B when `getTypes` actually dies at 4e.
 
 **Ruling I need:** B-with-a-structured-type now, or A-now/B-at-4e? This is the one call blocking the reflection leaf. Everything else in 4c.1 (the filters — capability interfaces, `[Code]`, `EqualityContract`, `IsVariable`, `[Default]`, the `IChannel` synthetic row) I'll mirror from `Describe()` exactly; only the type-field shape needs your direction.
+
+---
+
+## 4c.1 parity fork — the door refuses to name hosts; `Describe()` emits the string shadow's junk
+
+Built 4c.1 (identity-door container rung — committed+green; `property.@this` row; the `action.Properties` reflection leaf — build clean, reflects `Type` through the door). Wrote a parity test comparing the leaf to `Describe()` across the WHOLE catalog. It flagged a real fork, not a leaf bug:
+
+**A — host-typed params (~17): the door answers `clr`; `Describe()` answers the host's teaching name.**
+- `Data<Goal>` → door `clr`, Describe **`this`**; `SignOptions` → `sign`; `BuildResponse` → `buildresponse`; `Step`/`Action`/`Actions` → `this`.
+- This is BY DESIGN: `this[System.Type]` deliberately refuses to name hosts (its own comment: naming `Type[typeof(goal)]` "goal" would "resurrect 'goal is a plang type' and hand construction a non-Creatable entity"). So the door is OBP-correct; `Describe()` is teaching the LLM that a param has type literally **`"this"`** — the exact string-typed shadow `getTypes`-retirement kills.
+
+**The ruling I need:** does the 4d parity gate demand **byte-strict reproduction** of `Describe()` (including junk like `"this"`), or is the door's honest `clr` the **correct new behavior** and the golden re-pins? My read: the door is right — reproducing `"this"` would re-enshrine the shadow. But it's a deliberate deviation from strict parity, so it's the gate's philosophy call (yours + Ingi's), not mine.
+
+**Sub-question if you rule "accept `clr`":** is `clr` the right catalog face for a host param, or should a host param render as its host name some *other* honest way (e.g. the carrier's kind, so `Data<Goal>` reads `clr<goal>` or just `goal` as a NON-constructable teaching label)? The LLM does need *some* signal for these params; `clr` alone may be too opaque. This is the real design question under the fork.
+
+**B — two namer divergences I'll just fix** (align the door to `GetTypeName`): `byte[]` → door `binary` vs `bytes`; synthetic `channel` row → `text` vs `string`. Unless you want those surfaced too, I'll match `GetTypeName`.
+
+Landing note: everything else in the leaf (filters, `IsVariable`, `[Default]`, `IChannel` row, nullability) matches `Describe()` exactly — only the host-type face and the two B cases differ. Parity test held uncommitted as the evidence.

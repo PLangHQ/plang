@@ -217,3 +217,13 @@ duplicates `GetTypeName`'s generic-family cases (list.@this<>, List<>/IList<>/�
 `GetTypeName(t)` becomes `this[t].ToString()` (the entity owns its face), collapsing both into the
 door + entity. Deferred — GetTypeName is broadly called and returns nullability-suffixed strings;
 the collapse rides with the 4e/getTypes-retirement cleanup.
+
+### Why ContainerFamily looks bad (Ingi flagged 2026-07-16) — the root, not just the dedup
+The method's ugliness (a long `FullName.StartsWith("System.Collections.Immutable.ImmutableList`"…)`
+list) is a SYMPTOM: it mirrors `GetTypeName`'s CLR-collection recognition, which exists because raw
+CLR collections (`List<>`, `Dictionary<>`, `ImmutableList<>`, arrays, `IReadOnlyList<>`, …) leak into
+action param/return types. If param/return types were always PLANG types (`list<T>`/`dict` — the
+plang-types-everywhere direction), the whole CLR-collection branch vanishes and only the one plang
+case (`list.@this<T>`) remains — a clean two-liner. So the real fix isn't "tidy the list"; it's
+"stop CLR collections entering the type surface." Revisit with Ingi; ties to the plang-types vision,
+not just the GetTypeName/ContainerFamily dedup above.

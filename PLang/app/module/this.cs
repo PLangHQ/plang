@@ -34,6 +34,7 @@ public sealed class @this
                         Module = Name,
                         ActionName = a,
                         ParameterSchema = _list.GetActionType(Name, a),
+                        Context = _list.App.System.Context,   // catalog-zoom — powers action.Properties
                     })
                     .ToList())
                .Select(a => (object?)a).ToList(),
