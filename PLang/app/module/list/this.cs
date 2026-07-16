@@ -287,8 +287,6 @@ public sealed class @this : IAsyncDisposable
         var result = new StepActions();
         var nCtx = new NullabilityInfoContext();
         // Cache module descriptions by namespace — populated on first encounter per namespace
-        var moduleDescriptionCache = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
-        var markdownRoot = ResolveMarkdownTeachingRoot();
 
         foreach (var ns in Names)
         {
@@ -353,78 +351,22 @@ public sealed class @this : IAsyncDisposable
                 if (actionAttr != null)
                     cacheable = actionAttr.Cacheable;
 
-                // Prefer structured ExamplesForLlm() when the action class declares one.
-                // The static method returns ExampleSpec[]; the renderer derives type tags
-                // and nested-action JSON from reflection so authors only write meaning
-                // (which action, which parameter, what value) — never raw type tags or
-                // hand-built JSON. Falls back to [Example] attributes for not-yet-migrated
-                // actions; the two coexist during transition.
-                List<data.@this> examples;
-                var examplesForLlm = parameterType.GetMethod("ExamplesForLlm",
-                    BindingFlags.Public | BindingFlags.Static, binder: null,
-                    types: System.Type.EmptyTypes, modifiers: null);
-                if (examplesForLlm != null
-                    && typeof(app.type.spec.Example[]).IsAssignableFrom(examplesForLlm.ReturnType))
-                {
-                    var specs = (app.type.spec.Example[]?)examplesForLlm.Invoke(null, null)
-                        ?? System.Array.Empty<app.type.spec.Example>();
-                    var renderer = new app.type.spec.render.@this(this);
-                    examples = specs
-                        .Select(s => new data.@this(s.UserIntent, renderer.Render(s), context: App.System.Context))
-                        .ToList();
-                }
-                else
-                {
-                    examples = parameterType.GetCustomAttributes<ExampleAttribute>()
-                        .Select(e => new data.@this(e.Plang, e.Mapping, context: App.System.Context))
-                        .ToList();
-                }
 
                 var returnType = DescribeReturnType(parameterType);
                 var returnTypeName = DescribeReturnTypeName(parameterType);
 
-                // Action-level description from [System.ComponentModel.Description]
-                var descAttr = parameterType.GetCustomAttribute<System.ComponentModel.DescriptionAttribute>();
-                var actionDescription = descAttr?.Description;
-
-                // Module-level description: cache per namespace, search all types in namespace on first miss
-                if (!moduleDescriptionCache.TryGetValue(ns, out var moduleDescription))
-                {
-                    moduleDescription = null;
-                    foreach (var type in GetAllTypesInNamespace(ns))
-                    {
-                        var modDesc = type.GetCustomAttribute<ModuleDescriptionAttribute>();
-                        if (modDesc != null)
-                        {
-                            moduleDescription = modDesc.Description;
-                            break;
-                        }
-                    }
-                    moduleDescriptionCache[ns] = moduleDescription;
-                }
-
-                // Per-action LLM teaching from markdown files. Falls back to
-                // C# attribute-sourced Description when the markdown file is
-                // absent — keeps the catalog populated while the migration runs.
-                var teaching = await MarkdownTeaching.Load(markdownRoot, ns, actionName);
-                var mergedDescription = teaching.Description ?? actionDescription;
-                var mergedModuleDescription = teaching.ModuleDescription ?? moduleDescription;
-
+                // Teaching prose (Description / Notes / Examples) is no longer assembled here — it
+                // rides as lazy `file` handles on the action/module elements (the class-zoom prose
+                // doors over os/system/modules/{module}/{...}.md). Describe now carries only the
+                // structural facts the param-desc parity still compares (params, return, cacheable).
                 result.Add(new global::app.goal.steps.step.actions.action.@this
                 {
                     Module = ns,
                     ActionName = actionName,
                     Parameters = parameters,
                     Cacheable = cacheable,
-                    Examples = examples,
                     ReturnType = returnType,
                     ReturnTypeName = returnTypeName,
-                    Description = mergedDescription,
-                    ModuleDescription = mergedModuleDescription,
-                    Notes = teaching.Notes,
-                    ModuleNotes = teaching.ModuleNotes,
-                    ExamplesMd = teaching.ExamplesMd,
-                    ModuleExamplesMd = teaching.ModuleExamplesMd,
                 });
             }
         }

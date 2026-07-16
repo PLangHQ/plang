@@ -57,6 +57,56 @@ public partial class @this
         }
     }
 
+    // Action-level teaching prose — file handles over os/system/modules/{Module}/{ActionName}.{facet}.md,
+    // the twins of the module element's module.{facet}.md doors. Lazy references: born unread, content
+    // materializes at the Value door, an absent file is falsy (existence truthiness) so
+    // `{% if action.Notes %}` guards presence without reading. The template concats module-first + action.
+    private global::app.type.item.file.@this? _description;
+    private global::app.type.item.file.@this? _notes;
+    private global::app.type.item.file.@this? _examples;
+
+    /// <summary>The action's description prose — {ActionName}.description.md as a lazy file handle.</summary>
+    [JsonIgnore]
+    public global::app.type.item.file.@this Description => _description ??= Prose("description");
+
+    /// <summary>The action's notes prose — {ActionName}.notes.md as a lazy file handle.</summary>
+    [JsonIgnore]
+    public global::app.type.item.file.@this Notes => _notes ??= Prose("notes");
+
+    /// <summary>The action's examples prose — {ActionName}.examples.md as a lazy file handle.</summary>
+    [JsonIgnore]
+    public global::app.type.item.file.@this Examples => _examples ??= Prose("examples");
+
+    // The module's teaching prose, reached THROUGH the module element (module.{facet}.md) — navigation,
+    // not copy. The per-action detail template concats module-first + action for a full teaching block.
+    private global::app.module.@this ModuleElement
+        => (Context ?? throw new System.InvalidOperationException(
+                "action module prose needs the catalog context — a .pr-zoom action navigates via the clr carrier."))
+            .App.Module[Module];
+
+    /// <summary>The module's description prose (module.description.md), through the module element.</summary>
+    [JsonIgnore]
+    public global::app.type.item.file.@this ModuleDescription => ModuleElement.Description;
+
+    /// <summary>The module's notes prose (module.notes.md), through the module element.</summary>
+    [JsonIgnore]
+    public global::app.type.item.file.@this ModuleNotes => ModuleElement.Notes;
+
+    /// <summary>The module's examples prose (module.examples.md), through the module element.</summary>
+    [JsonIgnore]
+    public global::app.type.item.file.@this ModuleExamples => ModuleElement.Examples;
+
+    private global::app.type.item.file.@this Prose(string facet)
+    {
+        var ctx = Context ?? throw new System.InvalidOperationException(
+            "action prose needs the catalog context — a .pr-zoom action navigates via the clr carrier, not the prose doors.");
+        var root = ctx.App.Module.ResolveMarkdownTeachingRoot()
+            ?? throw new System.InvalidOperationException(
+                "action prose needs the teaching root — the module collection resolves it from App.OsDirectory.");
+        var path = root.Combine(Module).Combine($"{ActionName}.{facet}.md");
+        return new global::app.type.item.file.@this(path);
+    }
+
     private global::app.type.@this? ReflectReturn()
     {
         var handler = Handler;
