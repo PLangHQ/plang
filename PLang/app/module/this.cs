@@ -41,12 +41,15 @@ public sealed class @this
         foreach (var name in _list.GetActions(Name))
         {
             var order = Handler(name)?.GetCustomAttribute<global::app.module.ModifierAttribute>()?.Order;
+            // The catalog element carries the [Action] cache flag so the teaching template can tag
+            // [no-cache] — read off the registry (its single source), not defaulted.
+            var cacheable = _list.IsCacheable(Name, name);
             if (order != null)
                 _modifiers.Add(new global::app.goal.steps.step.actions.action.modifier.@this
-                    { Module = Name, ActionName = name, Order = order.Value, Context = ctx });
+                    { Module = Name, ActionName = name, Order = order.Value, Cacheable = cacheable, Context = ctx });
             else
                 _actions.Add(new global::app.goal.steps.step.actions.action.@this
-                    { Module = Name, ActionName = name, Context = ctx });
+                    { Module = Name, ActionName = name, Cacheable = cacheable, Context = ctx });
         }
     }
 

@@ -1,37 +1,29 @@
 {% comment %}
-v3 action-set: planner emits %planStep.actions% as a flat list of "module.action"
-strings. Render schemas + examples for each unique action, dedup'd. The compiler
-decides chain order, modifier nesting, and recovery placement from the action
-examples themselves — the planner no longer commits to a chain shape.
-
-v4: per-action LLM teaching (Description / Notes / Examples) is sourced from
-markdown files at os/system/modules/<module>/{module,<action>}.{notes,examples,description}.md
-and rendered ONLY for actions in the planner's set. See
-.bot/compile-llm-notes-per-action/architect/plan.md "Renderer" section.
-Modifiers (error.handle, cache.wrap, timeout.after) render through this same
-path — no special-case.
+v5: renders from the module-discovery catalog surface. %actions% is the flat action list already
+filtered to the planner's set (`where %!app.module.action.list% Name in %planStep.actions%`), so this
+template just walks it — no dedup loop. Each action element answers its own Name, Properties (the
+declared parameter rows), Return, and prose through lazy `file` doors over
+os/system/modules/<module>/{module,<action>}.{description,notes,examples}.md. `{% if x.Notes %}` is an
+existence guard (an absent facet file is falsy); `{{ x.Notes }}` emits the md content. Module prose
+(x.ModuleX) reaches through the module element; the block concats module-first + action.
 {% endcomment %}
-{% assign seen = "" %}
-{% for actName in planStep.actions %}{% assign key = actName | strip %}{% unless seen contains key %}{% assign seen = seen | append: "|" | append: key %}{% assign parts = key | split: "." %}{% assign segModule = parts[0] %}{% assign segAction = parts[1] %}{% for a in actions %}{% if a.Module == segModule and a.ActionName == segAction %}
-## {{ a.Module }}.{{ a.ActionName }}{% unless a.Cacheable %} [no-cache]{% endunless %}
-{% if a.DescriptionRendered %}
+{% for a in actions %}
+## {{ a.Name }}{% unless a.Cacheable %} [no-cache]{% endunless %}
+{% if a.ModuleDescription or a.Description %}
 Description:
-{{ a.DescriptionRendered }}
-{% endif %}
-Parameters:
-{% if a.Parameters.size > 0 %}{% for p in a.Parameters %}  - {{ p.Name }}: {{ p.Value }}
+{% if a.ModuleDescription %}{{ a.ModuleDescription }}
+{% endif %}{% if a.Description %}{{ a.Description }}
+{% endif %}{% endif %}Parameters:
+{% if a.Properties.size > 0 %}{% for p in a.Properties %}  - {{ p.Name }}: {% if p.IsVariable %}%var%{% else %}{{ p.Type }}{% if p.Nullable %}?{% endif %}{% if p.Default %} = {{ p.Default }}{% endif %}{% endif %}
 {% endfor %}{% else %}  (no parameters)
-{% endif %}{% if a.ReturnTypeName %}→ returns {{ a.ReturnTypeName }}
-{% endif %}{% if a.NotesRendered %}
+{% endif %}{% if a.Return %}→ returns {{ a.Return }}
+{% endif %}{% if a.ModuleNotes or a.Notes %}
 Notes:
-{{ a.NotesRendered }}
-{% endif %}
-{% if a.Examples.size > 0 or a.ExamplesMdRendered.size > 0 %}Examples:
-{% for ex in a.Examples %}  Step text: `{{ ex.Name }}`
-  ```json
-  {{ ex.Value }}
-  ```
-{% endfor %}{% for ex in a.ExamplesMdRendered %}  {{ ex }}
-
-{% endfor %}{% endif %}
-{% endif %}{% endfor %}{% endunless %}{% endfor %}
+{% if a.ModuleNotes %}{{ a.ModuleNotes }}
+{% endif %}{% if a.Notes %}{{ a.Notes }}
+{% endif %}{% endif %}{% if a.ModuleExamples or a.Examples %}
+Examples:
+{% if a.ModuleExamples %}{{ a.ModuleExamples }}
+{% endif %}{% if a.Examples %}{{ a.Examples }}
+{% endif %}{% endif %}
+{% endfor %}
