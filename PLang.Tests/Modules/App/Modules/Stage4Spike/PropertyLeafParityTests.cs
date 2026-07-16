@@ -81,4 +81,30 @@ public class PropertyLeafParityTests
         await Assert.That(mismatches).IsEmpty()
             .Because("reflection-leaf rows must reproduce Describe(): " + string.Join(" | ", mismatches.Take(25)));
     }
+
+    [Test]
+    public async Task ActionReturn_MatchesDescribe_PolymorphicVsConcrete()
+    {
+        var app = global::PLang.Tests.TestApp.Create("/tmp/s4-return");
+        var catalog = await app.Module.Describe();
+        var ctx = app.User.Context;
+
+        var mismatches = new System.Collections.Generic.List<string>();
+        foreach (var described in catalog)
+        {
+            var element = new ActionEl
+            {
+                Module = described.Module, ActionName = described.ActionName,
+                ParameterSchema = described.ParameterSchema, Context = ctx,
+            };
+            // Describe's ReturnTypeName is null (no value) or "data" (polymorphic) or a concrete
+            // name; the entity is null for both null/"data"/object, non-null for a concrete type.
+            bool describePolymorphic = described.ReturnTypeName is null or "data";
+            bool entityPolymorphic = element.Return is null;
+            if (describePolymorphic != entityPolymorphic)
+                mismatches.Add($"{described.Module}.{described.ActionName}: Return {(entityPolymorphic ? "null" : element.Return!.ToString())} vs ReturnTypeName '{described.ReturnTypeName}'");
+        }
+        await Assert.That(mismatches).IsEmpty()
+            .Because("action.Return polymorphic/concrete must agree with Describe: " + string.Join(" | ", mismatches.Take(20)));
+    }
 }

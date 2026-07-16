@@ -25,6 +25,40 @@ public sealed partial class @this
                Context ?? throw new System.InvalidOperationException(
                    "action.Properties needs the catalog context — stamp it at mint; a .pr-zoom action navigates via the clr carrier."));
 
+    private global::app.type.@this? _return;
+    private bool _returnComputed;
+
+    /// <summary>The action's declared return type as an ENTITY — read off <c>Run()</c>'s
+    /// <c>Task&lt;Data&lt;T&gt;&gt;</c> signature (compounds ride the kind axis). Null when the
+    /// return is polymorphic: a bare <c>Task&lt;Data&gt;</c> or <c>Data&lt;object&gt;</c> declares
+    /// no concrete type. Cached; the twin of <see cref="Properties"/>, feeding goal.variables.</summary>
+    public global::app.type.@this? Return
+    {
+        get
+        {
+            if (_returnComputed) return _return;
+            _returnComputed = true;
+            return _return = ReflectReturn();
+        }
+    }
+
+    private global::app.type.@this? ReflectReturn()
+    {
+        if (ParameterSchema == null || Context == null) return null;
+        var run = ParameterSchema.GetMethod("Run", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes);
+        if (run == null) return null;
+
+        var ret = run.ReturnType;
+        if (ret.IsGenericType && ret.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.Task<>))
+            ret = ret.GetGenericArguments()[0];
+
+        // Only Data<T> declares a concrete return; bare Data (or Data<object>) is polymorphic → null.
+        if (!ret.IsGenericType || ret.GetGenericTypeDefinition() != typeof(global::app.data.@this<>))
+            return null;
+        var t = ret.GetGenericArguments()[0];
+        return t == typeof(object) ? null : Context.App.Type[t];   // entity (compounds ride kind)
+    }
+
     // The execution-context slots the source generator wires (not user-supplied params) — filtered
     // out of the catalog so the LLM never emits them.
     private static readonly System.Type[] CapabilityInterfaces =
