@@ -68,3 +68,37 @@ Built 4c.1 (identity-door container rung — committed+green; `property.@this` r
 **B — two namer divergences I'll just fix** (align the door to `GetTypeName`): `byte[]` → door `binary` vs `bytes`; synthetic `channel` row → `text` vs `string`. Unless you want those surfaced too, I'll match `GetTypeName`.
 
 Landing note: everything else in the leaf (filters, `IsVariable`, `[Default]`, `IChannel` row, nullability) matches `Describe()` exactly — only the host-type face and the two B cases differ. Parity test held uncommitted as the evidence.
+
+---
+
+## `ParameterSchema` is an obpv — needed before 4c.3 (Ingi flagged, wants your ruling)
+
+Doing 4c.3 (kill the `GroupModifiers(modules)` obpv) surfaced that the clean fix leans on
+`action.ParameterSchema` — and Ingi flagged **that itself is an obpv**, so building on it would
+spread the smell. Pausing 4c.3 for your shape ruling.
+
+**What it is:** `public System.Type? ParameterSchema { get; init; }` on the action host
+(`action/this.cs:14`). A **raw `System.Type`** — a CLR reflection handle stored on the action —
+with a **noun+noun name** ("Parameter"+"Schema") that hides what it actually is: the action's
+handler class. The 4c.1 reflection leaf (`this.Schema.cs`) reflects off it (`GetProperties`,
+`GetMethod("Run")`, `IsAssignableFrom`) to build `Properties`/`Return`.
+
+**Two smells:**
+1. **clr-leak** — a bare `System.Type` living in the domain (the action), reflected off in place. The value layer works in plang types; a stored reflection handle is the CLR boundary leaking inward.
+2. **name** — `ParameterSchema` is a compound noun standing in for "the handler type"; it names the *content* (a schema of parameters) rather than being the thing.
+
+**Where it's used (whole surface):** set at catalog mint (`module/this.cs:36`) and by `Describe`
+(`list/this.cs:433`); read only by the reflection leaf (`Properties`/`Return`). Nothing else.
+
+**The 4c.3 tension:** the modifier-grouping fix wants each built action to self-identify
+(`IsModifier`/`ModifierOrder` off its own handler), which meant *populating `ParameterSchema` on
+built actions too* — spreading the obpv onto the .pr-built path. Don't want to do that under a
+smelly seam.
+
+**Ruling I need — what's the right shape for "the action's handler / its declared schema"?** Candidates:
+- The action **IS** the handler at class-zoom (item⟺host): reflect off the action's own type, no stored `System.Type` field. But a built action isn't the handler instance — it's the .pr record — so this may not hold.
+- The **catalog** (module element) owns the reflection and hands the action its resolved `Properties`/`Return` (plang entities, no `System.Type`); the action stores *those*, never a reflection handle.
+- Keep a handler reference but as a proper concept/name (not `ParameterSchema`, not a bare `System.Type`) — e.g. the action's `type` entity + a handler door.
+
+This decides both 4c.1's leaf home and whether 4c.3's self-ID is even the right model. Holding 4c.3
+until you rule. (4a/4b/4c.1 rows+leaf+Return are done, pushed, green, parity-proven.)
