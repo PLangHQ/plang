@@ -347,3 +347,49 @@ Note: this is off the module-discovery stage plan (it's a type-system/setting re
 block the `plang build` I needed for 4d's end-to-end validation). Flagging because the same
 `source`-materialization boundary may touch the 4c.2 prose `file`-door reads (`{{ action.Notes }}` also
 lowers a lazy handle through Fluid) — worth one coherent ruling on "sync consumer meets lazy source."
+
+---
+
+## Ingi RULING — supersedes layer-3 (b): setting properties hold Data (lazy), materialize on read
+
+Your layer-3 ruling was (b) — the settings walk goes async and eager-materializes. I implemented it
+(async `setting.Set` + a per-element `Resolved` materializer). Ingi reviewed it and rejected the whole
+approach as a smell: *"when a setting is set, the incoming should be set on the property; when it is
+needed it should be materialized — not following why this materialization is happening at set-time."*
+He's right, and it exposes the real cause.
+
+**Why eager materialization was forced (the trace):**
+```
+app.Build.Files : public List<path> Files { get; set; }   // a CLR type — build/this.cs:23
+setting.Set(node, {"files":[...]}) → prop.SetValue(node, val)   // val MUST be a concrete List<path>
+```
+The property is CLR `List<path>`, so `SetValue` needs concrete paths NOW — it can't hold a lazy plang
+value. THAT drags materialization to set-time. `list.Value()` isn't enough because a list is lazy
+per-element (Value hands back the list; elements stay unresolved sources). My `Resolved` helper was
+reimplementing that per-element resolve — and it ALSO broke scalar settings (int→`number` cast: the
+create-as-target overreach hit every property, not just the `List<path>` that regressed).
+
+**Ingi's ruling = the parked "raw input should be Data" reshape:** setting properties hold a **plang
+value** (a `list<path>` / `Data`), stored lazily; consumers materialize on their own door
+(`await Files.Value()`). No set-time materialization, no `Resolved`, no async walk. `list.Value()`
+suffices at the consumer.
+
+**This supersedes layer-3 (b).** (b) was the right ruling GIVEN CLR-typed properties; Ingi's fix removes
+that premise. Flagging the supersede so the trail is straight (same pattern as host-params-hidden
+superseding `clr<goal>`).
+
+**Scope the design (yours):**
+- Which setting properties become plang/`Data` — just the plang-typed ones (`List<path>`, paths, lists),
+  or ALL of them (scalars too, per the general "raw input is Data" vision)? Scalars (int/bool/enum) bind
+  fine through CLR today; the ONLY regression was `List<path>`.
+- Consumer surface: `app.Build.Files` is read as `List<path>` in `build/code/Default.cs` (the Goals
+  action's file filter) — that site (and any peer) moves to reading through the plang value's door.
+- `setting.Set` collapses to: create the plang value as the target type (layers 1-2 — create-as-declared
+  + `Retag` — are REUSED here to born the lazy `list<path>`), then STORE it on the property. No Clr, no
+  materialize, likely no async.
+
+**State:** my superseded async-walk implementation (async `Set` + `Resolved` + Executor async + source.Clr
+message + test awaits) is UNCOMMITTED and will be replaced by the reshape — I did not commit it. Layers
+1-2 (create-as-target + `Retag`) survive into the reshape. The repro test
+(`SettingsTests.Set_StringArray_BindsToListOfPath`) stands as the acceptance target. Holding for your
+reshape design (scope + the property/consumer shape).
