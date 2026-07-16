@@ -201,3 +201,58 @@ together fixes the catalog face once; ruling them apart risks 4c.2's answer cont
 **Ask:** one short ruling on getter-vs-navigation for the catalog surface, and I'll derive both faces
 from it. If you'd rather split them, say so and I'll take type-face first (it only gates 4d's pin, not
 4c.2). Standing by — no new work until you rule.
+
+---
+
+## 4d PARITY GATE — the OLD whole-template render won't reproduce in isolation (methodology ruling)
+
+Your ruling (`catalog-face-answer.md`) landed; both faces derived. 4c.2 module-prose doors + the flat
+action collection (`%!app.module.action.list%`, Ingi's steer) are built, pushed, green. Starting the 4d
+parity gate — your note says *"Pin goldens of the RENDERED STRINGS handed to the LLM today
+(`%actionSummary%` from Plan.goal, `%actionDetails%` from Start.goal:22); after the swap, the rewritten
+templates must reproduce them."* That capture step is fighting the exact boundary Stage 4 removes.
+
+**Only TWO live templates** (confirmed): `summary.planner.md` (Plan) + `stepActionDetails.template`
+(Compile). `v2/summary.md` and v1 `summary.md` are DEAD (no render caller) — delete at 4e.
+
+**The blocker — reproducing the OLD render outside the live builder:**
+- Feeding `%actions%` as `clr<StepActions>` (the live shape build.actions returns) renders **nothing**
+  through the Fluid door — the spike's `clr.Peek() => this` finding: the carrier isn't enumerable.
+- Feeding the same action objects as a **native list** renders module/action **names**, but
+  `a.Description` and the `data`-shaped params (`p.Name`/`p.Value`) render **empty**:
+  ```
+  ## file.read
+  Parameters:
+    - :          ← p.Name / p.Value both empty (Describe stores desc AS the data's value; the door eats it)
+    - :
+  → returns data
+  ```
+- `a.Module`/`a.ActionName` reflect fine; `a.Description` + the `List<data>` params don't. The OLD
+  render only works inside the live builder's Fluid wiring, which a unit test can't cheaply stand up.
+
+**Root of it:** the OLD render leans on `clr<StepActions>` + Describe's `data`-valued params — precisely
+the shapes 4d deletes. So "byte-capture the OLD render" asks me to resurrect the removed boundary just to
+snapshot it.
+
+**Proposed methodology (my lean) — prove parity WITHOUT reproducing the OLD whole-template render:**
+1. **Param-desc parity (unit, C#):** for every catalog action+param, `Describe()`'s desc string
+   (`"path"`, `"actor?"`, `"int = 1"`, `"%var% string"`) — read directly in C#, NOT through Fluid —
+   equals the NEW template's row-composed desc (`p.Type` face + `?` if Nullable + `= x` if Default +
+   `%var%` if IsVariable). This IS "the gate's real job: proving the templates reconstruct the `desc`
+   text from row facts" (your line), and it targets the exact risk you named (the `?`/`= x`
+   reconstruction) without the clr-render fight.
+2. **New-template snapshot golden:** pin the NEW template's rendered output over the pinned catalog
+   (module WITH prose, one WITHOUT, `[Code]` action, choice param, nullable, `[Default]`) — the NEW
+   surface renders cleanly (proven by RealCatalogRenderTests). Type-face (`clr<goal>`) + prose (file
+   doors) deltas are baked into the golden per your "re-pin with named exceptions."
+
+**The deviation I'm flagging (not burying):** this DROPS the literal "capture `%actionSummary%` /
+`%actionDetails%` from the OLD render and diff" step. Net parity guarantee is arguably STRONGER
+(per-param C# equality vs Describe is exact, not a whole-string diff that hides which param drifted), but
+it's a real departure from the note's wording.
+
+**Ruling I need:** (A) param-desc parity + new snapshot [my lean]; (B) capture OLD from a real `plang
+build` trace (the render is deterministic pre-LLM — faithful but heavier + catalog-drift sensitive); or
+(C) I keep digging on why `clr<StepActions>`+`data`-params render empty under the door in isolation to
+get a byte-faithful OLD capture (most literal to the note, unknown time cost). Capture harness is written
+and held as the evidence. Holding the 4d gate for this.
