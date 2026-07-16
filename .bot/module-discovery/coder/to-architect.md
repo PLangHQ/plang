@@ -393,3 +393,55 @@ message + test awaits) is UNCOMMITTED and will be replaced by the reshape — I 
 1-2 (create-as-target + `Retag`) survive into the reshape. The repro test
 (`SettingsTests.Set_StringArray_BindsToListOfPath`) stands as the acceptance target. Holding for your
 reshape design (scope + the property/consumer shape).
+
+---
+
+## RESHAPE SCOPING — the pattern already exists; only Build.Files is the outlier
+
+Scoped the setting-property→plang-type reshape (Ingi's ruling) against the actual nodes. Key finding:
+**most setting nodes ALREADY hold plang types — the reshape is nearly done, `Build.Files` is the one
+un-promoted CLR outlier.**
+
+**The `Set(node, dict)` walk targets (all their settable props):**
+| Node | Property | Type | Status |
+|---|---|---|---|
+| `app.Test` (`test/list`) | TimeoutSeconds | `number` | ✅ plang already |
+| | Parallel | `number` | ✅ plang |
+| | Format | `choice<Format>` | ✅ plang |
+| | Include / Exclude | `list<text>` | ✅ plang |
+| `app.CallStack` | MaxFrames | `number` | ✅ plang |
+| `app.Build` | Cache | `bool` | CLR scalar (binds fine) |
+| | **Files** | **`List<path>`** | ❌ **CLR — the crash** |
+| `app` (--app) | Environment / Create | `string` / `bool` | CLR scalar (binds fine) |
+
+So the fix is small + precedented: **`Build.Files: List<path>` → `list<path>` (plang)**, mirroring
+`Test.Include: list<text>`. Store the lazy plang list at set-time; the ONE consumer
+(`build/code/Default.cs:178` `app.Build.Files`, the Goals file-filter) reads through its door.
+
+**The real gap to design (why my walk broke):** even a plang `list<path>` property doesn't fix it via
+the *current* walk, because the walk does `Create(json).Clr(prop.PropertyType)` and
+`list.Clr(typeof(list.@this<path>))` DECOMPOSES (the elem-detection arm at `list/this.cs:544` fires on
+the IEnumerable target) → each element `source.Clr(path)` → the same cross-family wall. For a
+plang-typed property the walk should **store the plang value DIRECTLY, no Clr** (the property already IS
+the plang type; there's nothing to lower). Two shapes:
+- **(i) walk-side:** if `prop.PropertyType` is a plang `item.@this` (`number`/`choice`/`list<…>`), the
+  walk stores `Create(json, ctx)` as-is (`SetValue(node, plangValue)`); only a genuine CLR scalar prop
+  (`bool`/`string`/`int`) takes the `.Clr` path. Layers 1-2 (create-as-declared + `Retag`) born the lazy
+  `list<path>`; no materialization; the consumer opens the door on read.
+- **(ii) type-side:** `list.Clr(target)` returns SELF when `target` is the plang list type (it already
+  IS a plang list) — only decompose for a CLR collection target (`List<path>`, `path[]`). Fixes it for
+  every plang-list consumer, not just the walk.
+
+My lean: **(i)** for the walk (matches "store lazy, materialize on read" exactly) — but (ii) looks like a
+latent correctness bug in `list.Clr` regardless (a plang-list lowered to its own plang type shouldn't
+decompose). Possibly both.
+
+**Scalars (Build.Cache, app.Environment/Create):** no friction — promote-or-leave per the general "raw
+input is Data" vision is your call; nothing forces them this branch.
+
+**Consumer surface is tiny:** `Build.Files` → 1 site (`Default.cs:178`). `Test.Include/Exclude`/etc are
+already plang and already read through their doors — no change. So the blast radius is `build/this.cs`
+(the property type) + `Default.cs:178` (read via door) + the walk's plang-vs-scalar branch.
+
+**Ruling I need:** (i) / (ii) / both, and whether scalars promote now. Then it's a small, precedented
+change and the skipped repro (`Set_StringArray_BindsToListOfPath`, `601c8a7e3`) unskips green.
