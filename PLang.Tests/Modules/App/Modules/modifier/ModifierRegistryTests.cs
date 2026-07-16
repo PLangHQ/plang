@@ -85,8 +85,8 @@ public class ModifierRegistryTests
     {
         // Modifier modules appear in the action summary so the LLM can discover them
         // — they go through the same [Action] registration as any other handler.
-        var modules = new global::app.module.list.@this();
-        var described = await modules.Describe();
+        await using var app = TestApp.Create("/app");
+        var described = await app.Module.Describe();
 
         var names = described.Select(a => $"{a.Module}.{a.ActionName}").ToHashSet();
         await Assert.That(names).Contains("timeout.after");

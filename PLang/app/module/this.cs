@@ -75,4 +75,33 @@ public sealed class @this
                 ?? (global::app.goal.steps.step.actions.action.@this?)_modifiers!.FirstOrDefault(m => string.Equals(m.ActionName, actionName, System.StringComparison.OrdinalIgnoreCase));
         }
     }
+
+    // Module-wide teaching prose — file handles over os/system/modules/{Name}/module.{facet}.md.
+    // Lazy references: the handle is born unread, content materializes at the Value door (AuthGate'd
+    // path verbs), and an absent file is falsy (existence truthiness) so `{% if module.Notes %}`
+    // guards presence without reading. The catalog's teaching layer, navigated — not eager-loaded.
+    private global::app.type.item.file.@this? _description;
+    private global::app.type.item.file.@this? _notes;
+    private global::app.type.item.file.@this? _examples;
+
+    /// <summary>The module's description prose — module.description.md as a lazy file handle.</summary>
+    public global::app.type.item.file.@this Description => _description ??= Prose("description");
+
+    /// <summary>The module's notes prose — module.notes.md as a lazy file handle.</summary>
+    public global::app.type.item.file.@this Notes => _notes ??= Prose("notes");
+
+    /// <summary>The module's examples prose — module.examples.md as a lazy file handle.</summary>
+    public global::app.type.item.file.@this Examples => _examples ??= Prose("examples");
+
+    // The path-and-root logic of the dissolving MarkdownTeaching.Load, homed on the element that
+    // owns the prose: root (the collection's teaching root) + module folder + module.{facet}.md.
+    private global::app.type.item.file.@this Prose(string facet)
+    {
+        var root = _list.ResolveMarkdownTeachingRoot()
+            ?? throw new System.InvalidOperationException(
+                "module prose needs the teaching root — the collection resolves it from App.OsDirectory; " +
+                "a module element minted without a live System context can't reach it.");
+        var path = root.Combine(Name).Combine($"{MarkdownTeaching.ModuleStem}.{facet}.md");
+        return new global::app.type.item.file.@this(path);
+    }
 }
