@@ -3,7 +3,7 @@ Plan
 / The planner only names which actions are involved; the compiler decides chain order
 / and shape from each action's authored examples.
 
-- build.actions, write to %actions%
+- set %modules% = %!app.module.list%
 - render template "/system/actions/v2/summary.planner.md", write to %actionSummary%
 - render template "/system/builder/llm/templates/goalFormat.template", write to %goalForLlm%
 - render template "/system/builder/llm/Plan.llm", write to %planPrompt%
