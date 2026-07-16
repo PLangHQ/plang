@@ -227,3 +227,20 @@ plang-types-everywhere direction), the whole CLR-collection branch vanishes and 
 case (`list.@this<T>`) remains — a clean two-liner. So the real fix isn't "tidy the list"; it's
 "stop CLR collections entering the type surface." Revisit with Ingi; ties to the plang-types vision,
 not just the GetTypeName/ContainerFamily dedup above.
+
+---
+
+## `CountRaw` — the two-count obpv (list + dict) [logged 2026-07-16, Ingi flagged]
+
+`list.@this` and `dict.@this` each expose BOTH a plang `Count` (`number`) AND an internal raw
+`int CountRaw`. Two counts for one concept — the naked-collection/duplicate smell. `count should give
+count, there shouldn't be 2 count` (Ingi). Collapse to the single plang `Count`.
+
+**Scope (~20 sites):** `list/this.cs` (11 internal uses for index math), `dict/this.cs:138,423`, and
+~10 `list.*` action modules (`sort`/`reverse`/`group`/`flatten`/`range`/`unique`/`remove`/`split`) that
+set an `int count` field on the `type.list` result struct via `nl.CountRaw`, plus a few tests
+(`RealCatalogRenderTests`, `SetTypeInferenceTests`, …). The cascade: the `type.list.count` field is a
+raw `int` too — collapsing `CountRaw` likely means that field becomes `number` (or the modules read
+`Count`). Focused refactor; do NOT fold into unrelated work.
+
+Not a blocker — the settings reshape (c13532536) already avoids `CountRaw` in new code.
