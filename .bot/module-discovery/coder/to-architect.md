@@ -177,3 +177,27 @@ the `path` verb surface (`ReadText`, AuthGate); `System.IO` is banned, so there 
 **Ruling I need:** A (async getter pre-loads sync strings; commit to a getter, not navigation) or B (a lazy-async-text item; and is that a legit item or an ICreate violation)? This decides the element's prose shape AND whether 6c's catalog access is a getter or navigation.
 
 Note: the prose/template forks are clustering (type-face at 4d, now prose load) — might be worth a single 4c.2/4d design pass. Holding 4c.2 for this.
+
+---
+
+## Recommendation — rule the two open forks as ONE catalog-face pass, not piecemeal
+
+Everything I can build without a ruling is built, pushed, green (spike, Fluid door, namespace move,
+choice fold, 4a/4b/4c.1 rows+leaf+Return, `ParameterSchema` deletion, modifier reshape). What's left
+is **two open forks, and they're the same decision wearing two hats** — both are "what face does a
+catalog fact present to the builder template, and how is it loaded":
+
+1. **Type-face (4d golden):** does a host param render as honest `clr`, or re-enshrine `Describe()`'s
+   `"this"` string-shadow? (You leaned "accept `clr`, golden re-pins" — needs confirming so I pin the
+   golden.)
+2. **Prose-load (4c.2):** async pre-load into cached sync strings via a **getter** (A), vs a
+   lazy-async-text **item** resolved by navigation (B).
+
+They converge on ONE question: **is 6c's catalog access a GETTER action (async load point exists) or
+pure `%!app.module.list%` NAVIGATION (no async point)?** Fork 2 can't resolve without it, and fork 1's
+"what's a teaching-honest non-constructable label" is the same navigation-surface question. Ruling them
+together fixes the catalog face once; ruling them apart risks 4c.2's answer contradicting 4d's.
+
+**Ask:** one short ruling on getter-vs-navigation for the catalog surface, and I'll derive both faces
+from it. If you'd rather split them, say so and I'll take type-face first (it only gates 4d's pin, not
+4c.2). Standing by — no new work until you rule.
