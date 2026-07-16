@@ -64,6 +64,43 @@ chainReturn = Context.App.module[a.Module]?.Actions[a.ActionName]?.Return;
 - **Dies with the rename**: `TypeNameOf` (the name-fishing switch), `ElementOf` (the regex), `DetermineReturnType` (per-call reflection — cached on the element now), `ToValueType`'s object→item folding (entities are canonical at birth), `GetTypeNameStatic` leaves this path. The goal line becomes `- goal.variables Goal=%goal%, write to %varTypes%` (`BuildStep/Start.goal:19`); `getTypes` the name dies with the shadow it carried.
 - Name reasoning on record: `variables` names what you get back (the goal's variables, per step, typed — noun-answer actions have precedent: `list.count`, `list.first`); `scope` was accurate but jargon; the per-step slicing is said by the return shape.
 
+## Addendum — `GetTypeName`'s fate (Ingi asked; traced 2026-07-16)
+
+`GetTypeName` (type/list/this.cs:411-478) is THREE questions fused into one method, and the ruling above already re-homes two of them:
+
+1. **Slot conventions** (:415-424 — `Nullable<T>` → `"?"`, `Data<T>` unwrap, `choice<T>` surfaces as T): declaration-slot facts, not type names. Already re-homed: `Nullable` is a ROW fact; the `Data<T>` unwrap is the reflection leaf's job (your `this.Schema.cs` mirrors it — correct).
+2. **Compound naming** (:429-461 — `"list<path>"`, `"dict<k,v>"`, arrays): the string shadow. Becomes the door's generic rung + the entity's own face. **One gap my rung code missed, found in this trace: the door also needs the ARRAY rung** — `T[]` → `{list, kind: element}`, `byte[]` → the primitives-table answer — `GetTypeName` handled arrays at :448-454 and `IsGenericType` doesn't catch them.
+3. **Leaf naming** (:463-477 — primitives table → `_typeToName` → lowercased fallback): the one legitimate question. It survives as **`Name(System.Type)`**, which stops being an alias (:482) and becomes the method, leaf-only:
+
+```csharp
+/// <summary>The plang NAME of a CLR type — the naming index (vocabulary, kind tokens,
+/// display), distinct from the identity door (construction). LEAF names only: slot
+/// conventions (Nullable/Data<T>) are the reflection leaf's row facts; compounds are
+/// entities {family, kind} whose own face composes "list<path>".</summary>
+public string Name(System.Type clrType)
+{
+    if (app.type.primitive.@this.Canonical.TryGetValue(clrType, out var name)) return name;
+    EnsureInitialized();
+    if (_typeToName.TryGetValue(clrType, out var declared)) return declared;
+    return StripGenericArity(clrType.Name).ToLowerInvariant();
+}
+```
+
+**Deleted at 4e:** the `GetTypeName` spelling + fused body; `GetTypeNameStatic` whole (:121-157 — it is a FORK: the same rungs duplicated statically, and all four of its callers are Describe/getTypes paths that die at 4e anyway).
+
+**Caller dispositions (all seven production sites):**
+
+| Caller | End state |
+|---|---|
+| `module/list/this.cs:329,528` (Describe param loops), `:495` (DescribeReturnTypeName) | die at 4e with Describe |
+| `getTypes.cs:216` | dies at 4e (`goal.variables` reads `action.Return`) |
+| `build/code/Default.cs:914` (schema stamp) | slot-unwrap once (the loop already does at :927-929) → the DOOR → `p.Declare(entity)`; the `!= "object"` filter becomes `entity.Polymorphic` |
+| `spec/render/this.cs:177` (example type tags) | the door → the entity FACE (`this[unwrapped].ToString()`); rides into the examples door at 4e |
+| `choice/list/this.cs:50` (closed-set kind token) | `Name(inner)` — genuinely leaf naming, stays as-is |
+| the door's generic/array rungs | use `Name(element)` for kind tokens — leaf naming INSIDE the door. This is WHY Name survives: `list<goal>`'s kind must be `"goal"` (the vocabulary answer), never `"clr"` (the construction answer) — naming and identity are two doors by design. |
+
+Net after 4e: two consumer kinds remain — the door (kind tokens) and display/teaching faces — both on `Name()`, ~5 lines, one question. The verb+noun spelling does not outlive the stage.
+
 ## Landing order
 
 Door rung → 4c.1 rows (+ `action.Return` while you're in the partial) → templates/parity (4d) → `goal.variables` at 4e with the deletions.
