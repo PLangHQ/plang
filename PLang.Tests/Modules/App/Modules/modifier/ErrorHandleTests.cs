@@ -32,11 +32,11 @@ public class ErrorHandleTests
         };
     }
 
-    private static PrAction ErrorHandler(params (string name, object? value)[] parameters)
+    private static global::app.goal.steps.step.actions.action.modifier.@this ErrorHandler(params (string name, object? value)[] parameters)
     {
         var list = new List<global::app.data.@this>();
         foreach (var p in parameters) list.Add(new(p.name, p.value, context: global::PLang.Tests.TestApp.SharedContext));
-        return new PrAction
+        return new global::app.goal.steps.step.actions.action.modifier.@this
         {
             Module = "error", ActionName = "handle",
             Parameters = list

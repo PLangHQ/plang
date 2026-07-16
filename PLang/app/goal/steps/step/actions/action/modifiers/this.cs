@@ -1,34 +1,37 @@
 using System.Collections;
-using PrAction = global::app.goal.steps.step.actions.action.@this;
+using PrModifier = global::app.goal.steps.step.actions.action.modifier.@this;
 
 namespace app.goal.steps.step.actions.action.modifiers;
 
 /// <summary>
-/// Ordered list of modifier actions attached to an Action.
-/// Owns the right-to-left fold that wraps an inner operation at runtime —
-/// first in the list becomes the outermost wrapper.
+/// Ordered list of modifiers attached to an action. Owns the right-to-left fold that wraps
+/// an inner operation at runtime — first in the list becomes the outermost wrapper.
 /// </summary>
-public sealed class @this : IList<PrAction>
+public sealed class @this : IList<PrModifier>
 {
-    private readonly List<PrAction> _items = new();
+    private readonly List<PrModifier> _items = new();
 
     public @this() { }
-    public @this(IEnumerable<PrAction> items) { _items = new List<PrAction>(items); }
+    public @this(IEnumerable<PrModifier> items) { _items = new List<PrModifier>(items); }
 
-    public PrAction this[int index] { get => _items[index]; set => _items[index] = value; }
+    /// <summary>Order by each modifier's <c>Order</c> — the collection sorts its own; outermost
+    /// wrapper (lowest Order) first. Runtime keeps position; this is the build-time nesting order.</summary>
+    public void Sort() => _items.Sort((x, y) => x.Order.CompareTo(y.Order));
+
+    public PrModifier this[int index] { get => _items[index]; set => _items[index] = value; }
     public int Count => _items.Count;
     public bool IsReadOnly => false;
 
-    public void Add(PrAction item) => _items.Add(item);
-    public void AddRange(IEnumerable<PrAction> items) => _items.AddRange(items);
+    public void Add(PrModifier item) => _items.Add(item);
+    public void AddRange(IEnumerable<PrModifier> items) => _items.AddRange(items);
     public void Clear() => _items.Clear();
-    public bool Contains(PrAction item) => _items.Contains(item);
-    public void CopyTo(PrAction[] array, int arrayIndex) => _items.CopyTo(array, arrayIndex);
-    public int IndexOf(PrAction item) => _items.IndexOf(item);
-    public void Insert(int index, PrAction item) => _items.Insert(index, item);
-    public bool Remove(PrAction item) => _items.Remove(item);
+    public bool Contains(PrModifier item) => _items.Contains(item);
+    public void CopyTo(PrModifier[] array, int arrayIndex) => _items.CopyTo(array, arrayIndex);
+    public int IndexOf(PrModifier item) => _items.IndexOf(item);
+    public void Insert(int index, PrModifier item) => _items.Insert(index, item);
+    public bool Remove(PrModifier item) => _items.Remove(item);
     public void RemoveAt(int index) => _items.RemoveAt(index);
-    public IEnumerator<PrAction> GetEnumerator() => _items.GetEnumerator();
+    public IEnumerator<PrModifier> GetEnumerator() => _items.GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => _items.GetEnumerator();
 
     /// <summary>

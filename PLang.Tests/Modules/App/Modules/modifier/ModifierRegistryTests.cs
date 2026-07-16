@@ -1,52 +1,45 @@
+using Modifier = global::app.goal.steps.step.actions.action.modifier.@this;
+
 namespace PLang.Tests.App.Modules.modifier;
 
 /// <summary>
-/// Tests for modifier awareness in the module registry (IsModifier, GetModifierOrder)
-/// and Step.Clone() support for action modifiers.
+/// Tests that the catalog element answers the modifier ROLE structurally — a [Modifier] handler
+/// is a `modifier` type in the module's Modifiers home; Order lives on the type. And Step.Clone().
 /// </summary>
 public class ModifierRegistryTests
 {
-    #region IsModifier
+
+    #region role by type
 
     [Test]
-    public async Task IsModifier_ModifierAttributedHandler_ReturnsTrue()
+    public async Task ModifierAttributedHandler_IsAModifierElement()
     {
-        var modules = new global::app.module.list.@this();
-
-        await Assert.That(modules.IsModifier("timeout", "after")).IsTrue();
-        await Assert.That(modules.IsModifier("cache", "wrap")).IsTrue();
-        await Assert.That(modules.IsModifier("error", "handle")).IsTrue();
+        await using var app = TestApp.Create("/app");
+        // the module element routes [Modifier] handlers to the Modifiers home; the type IS the role.
+        await Assert.That(app.Module["timeout"]!["after"] is Modifier).IsTrue();
+        await Assert.That(app.Module["cache"]!["wrap"] is Modifier).IsTrue();
+        await Assert.That(app.Module["error"]!["handle"] is Modifier).IsTrue();
     }
 
     [Test]
-    public async Task IsModifier_RegularHandler_ReturnsFalse()
+    public async Task RegularHandler_IsNotAModifierElement()
     {
-        var modules = new global::app.module.list.@this();
-
-        await Assert.That(modules.IsModifier("variable", "set")).IsFalse();
-        await Assert.That(modules.IsModifier("file", "read")).IsFalse();
-    }
-
-    [Test]
-    public async Task IsModifier_UnknownAction_ReturnsFalse()
-    {
-        var modules = new global::app.module.list.@this();
-
-        await Assert.That(modules.IsModifier("nonexistent", "nope")).IsFalse();
+        await using var app = TestApp.Create("/app");
+        await Assert.That(app.Module["variable"]!["set"] is Modifier).IsFalse();
+        await Assert.That(app.Module["file"]!["read"] is Modifier).IsFalse();
     }
 
     #endregion
 
-    #region GetModifierOrder
+    #region Order on the type
 
     [Test]
-    public async Task GetModifierOrder_ReturnsCorrectOrder()
+    public async Task Order_LivesOnTheModifierType()
     {
-        var modules = new global::app.module.list.@this();
-
-        await Assert.That(modules.GetModifierOrder("timeout", "after")).IsEqualTo(1);
-        await Assert.That(modules.GetModifierOrder("cache", "wrap")).IsEqualTo(2);
-        await Assert.That(modules.GetModifierOrder("error", "handle")).IsEqualTo(3);
+        await using var app = TestApp.Create("/app");
+        await Assert.That(((Modifier)app.Module["timeout"]!["after"]!).Order).IsEqualTo(1);
+        await Assert.That(((Modifier)app.Module["cache"]!["wrap"]!).Order).IsEqualTo(2);
+        await Assert.That(((Modifier)app.Module["error"]!["handle"]!).Order).IsEqualTo(3);
     }
 
     #endregion
@@ -69,7 +62,7 @@ public class ModifierRegistryTests
                     ActionName = "read",
                     Modifiers = new ActionModifiers
                     {
-                        new PrAction { Module = "cache", ActionName = "wrap" }
+                        new global::app.goal.steps.step.actions.action.modifier.@this { Module = "cache", ActionName = "wrap" }
                     }
                 }
             }

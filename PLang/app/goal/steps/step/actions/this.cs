@@ -131,12 +131,13 @@ public sealed partial class @this : IList<action.@this>
     }
 
     /// <summary>
-    /// Takes a flat list where modifier actions follow their target action, and groups
-    /// each modifier onto the preceding executable action's Modifiers collection.
-    /// Modifiers are sorted by [Modifier(Order = N)] so the outermost wrapper comes first.
-    /// A leading modifier with no preceding executable is dropped. Mutates in place.
+    /// Nests each modifier onto the preceding action's Modifiers slot — the flat LLM order becomes
+    /// the .pr shape. The ROLE is answered by the CATALOG element (a modifier is a TYPE there, not a
+    /// flag): the flat item, read as a plain action host, becomes the modifier it IS, with Order from
+    /// the catalog. A leading modifier with no preceding action is dropped with a warning. Mutates
+    /// in place. (The flat list carries modifiers only until the builder emits nested — then this dies.)
     /// </summary>
-    public void GroupModifiers(global::app.module.list.@this modules)
+    public void Nest(global::app.module.list.@this modules)
     {
         if (_items.Count == 0) return;
 
@@ -144,36 +145,31 @@ public sealed partial class @this : IList<action.@this>
         _items.Clear();
         action.@this? current = null;
 
-        foreach (var action in flat)
+        foreach (var a in flat)
         {
-            if (modules.IsModifier(action.Module, action.ActionName))
+            if (modules.Contains(a.Module)
+                && modules[a.Module][a.ActionName] is action.modifier.@this catalog)
             {
                 if (current == null)
                 {
                     Step?.Warnings.Add(new Info
                     {
                         Key = "DroppedLeadingModifier",
-                        Message = $"Modifier '{action.Module}.{action.ActionName}' has no preceding action and was dropped"
+                        Message = $"Modifier '{a.Module}.{a.ActionName}' has no preceding action and was dropped"
                     });
                     continue;
                 }
-                current.Modifiers.Add(action);
+                current.Modifiers.Add(new action.modifier.@this
+                    { Module = a.Module, ActionName = a.ActionName, Parameters = a.Parameters, Order = catalog.Order });
             }
             else
             {
-                current = action;
-                _items.Add(action);
+                current = a;
+                _items.Add(a);
             }
         }
 
-        foreach (var action in _items)
-        {
-            if (action.Modifiers.Count <= 1) continue;
-            var sorted = action.Modifiers
-                .OrderBy(m => modules.GetModifierOrder(m.Module, m.ActionName))
-                .ToList();
-            action.Modifiers.Clear();
-            foreach (var m in sorted) action.Modifiers.Add(m);
-        }
+        foreach (var a in _items)
+            a.Modifiers.Sort();   // by Order — the collection sorts its own; no registry callback
     }
 }

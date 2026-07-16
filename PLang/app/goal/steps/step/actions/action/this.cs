@@ -6,7 +6,7 @@ namespace app.goal.steps.step.actions.action;
 /// A single action within a step — the LLM-mapped unit of execution.
 /// Identifies the module and handler to invoke, with typed parameters, return mappings, and defaults.
 /// </summary>
-public sealed partial class @this
+public partial class @this
 {
     // An action is a plain C# host — carried as clr<action>, reflected off its [Store] props.
 

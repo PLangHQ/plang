@@ -18,7 +18,7 @@ public class CacheWrapTests
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();
 
-    private static PrAction CacheModifier(long durationMs, string? key = null, bool sliding = false)
+    private static global::app.goal.steps.step.actions.action.modifier.@this CacheModifier(long durationMs, string? key = null, bool sliding = false)
     {
         var parameters = new List<global::app.data.@this>
         {
@@ -26,7 +26,7 @@ public class CacheWrapTests
             new("sliding", sliding, context: global::PLang.Tests.TestApp.SharedContext)
         };
         if (key != null) parameters.Add(new("key", key, context: global::PLang.Tests.TestApp.SharedContext));
-        return new PrAction
+        return new global::app.goal.steps.step.actions.action.modifier.@this
         {
             Module = "cache",
             ActionName = "wrap",

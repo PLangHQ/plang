@@ -6,7 +6,7 @@ namespace app.goal.steps.step.actions.action;
 // The class-zoom face of the action host — the catalog view. A .pr action carries its steps;
 // the same host at class zoom answers its declared parameter slots (the reflection leaf) for
 // the builder catalog. Reflection happens ONCE here, cached on the element.
-public sealed partial class @this
+public partial class @this
 {
     /// <summary>Catalog-zoom context — stamped when the module element mints this action for the
     /// catalog; null on a .pr-loaded action (which navigates via the clr carrier, not this list).</summary>
@@ -19,19 +19,6 @@ public sealed partial class @this
         => Context != null && Context.App.Module.Contains(Module)
             ? Context.App.Module[Module].Handler(ActionName)
             : null;
-
-    /// <summary>Whether this action is a modifier (its handler's <c>[Modifier]</c>) — a class-zoom
-    /// FACT off the handler, joined by identity at the modifier-grouping site. False on a .pr-zoom
-    /// action with no catalog context.</summary>
-    [JsonIgnore]
-    public bool IsModifier
-        => Handler?.GetCustomAttribute<global::app.module.ModifierAttribute>() != null;
-
-    /// <summary>The modifier nesting order (lower = outermost wrapper); int.MaxValue for a
-    /// non-modifier or a missing attribute.</summary>
-    [JsonIgnore]
-    public int ModifierOrder
-        => Handler?.GetCustomAttribute<global::app.module.ModifierAttribute>()?.Order ?? int.MaxValue;
 
     private System.Collections.Generic.IReadOnlyList<property.@this>? _rows;
 

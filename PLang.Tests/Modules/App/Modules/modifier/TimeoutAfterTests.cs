@@ -20,7 +20,7 @@ public class TimeoutAfterTests
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();
 
-    private static PrAction TimeoutModifier(int ms) => new()
+    private static global::app.goal.steps.step.actions.action.modifier.@this TimeoutModifier(int ms) => new()
     {
         Module = "timeout",
         ActionName = "after",
@@ -132,7 +132,7 @@ public class TimeoutAfterTests
         // Inner func throws OCE directly instead of returning a failed Data result.
         var modifiers = new ActionModifiers
         {
-            new PrAction
+            new global::app.goal.steps.step.actions.action.modifier.@this
             {
                 Module = "timeout", ActionName = "after",
                 Parameters = new List<global::app.data.@this> { new("ms", 1, context: Ctx) }
@@ -166,7 +166,7 @@ public class TimeoutAfterTests
             Modifiers = new ActionModifiers
             {
                 TimeoutModifier(50),
-                new PrAction
+                new global::app.goal.steps.step.actions.action.modifier.@this
                 {
                     Module = "error", ActionName = "handle",
                     Parameters = new List<global::app.data.@this> { new("ignoreError", true, context: Ctx) }

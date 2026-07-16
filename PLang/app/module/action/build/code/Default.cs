@@ -262,7 +262,7 @@ public class Default : IBuilder
         // Group modifier actions onto their preceding executable action — recursive so
         // sub-goals are grouped too. Without this, sub-goal steps serialize with flat
         // modifiers and fail at runtime (a modifier's no-op Run wipes %!data%).
-        goal.GroupModifiersRecursive(app.Module);
+        goal.NestRecursive(app.Module);
 
         // Final safety net before persisting. Re-runs structural validation against the
         // goal's current Steps — catches any mismatch (step count, missing actions on

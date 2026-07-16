@@ -180,26 +180,6 @@ public sealed class @this : IAsyncDisposable
         return attr?.Cacheable ?? true;
     }
 
-    /// <summary>
-    /// Returns whether an action is a modifier (from its [Modifier] attribute).
-    /// </summary>
-    public bool IsModifier(string module, string actionName)
-    {
-        var type = GetActionType(module, actionName);
-        return type?.GetCustomAttribute<ModifierAttribute>() != null;
-    }
-
-    /// <summary>
-    /// Returns the modifier nesting order (lower = outermost wrapper).
-    /// int.MaxValue for non-modifier actions or when the attribute is missing.
-    /// </summary>
-    public int GetModifierOrder(string module, string actionName)
-    {
-        var type = GetActionType(module, actionName);
-        var attr = type?.GetCustomAttribute<ModifierAttribute>();
-        return attr?.Order ?? int.MaxValue;
-    }
-
     public int Count => _modules.Values.Sum(a => a.Count);
 
     /// <summary>

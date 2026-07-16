@@ -159,10 +159,11 @@ public sealed partial class @this
                 Defaults = a.Defaults != null ? new List<data.@this>(a.Defaults) : null,
                 Errors = new List<Info>(a.Errors),
                 Warnings = new List<Info>(a.Warnings),
-                Modifiers = new ActionModifiers(a.Modifiers.Select(m => new Action
+                Modifiers = new ActionModifiers(a.Modifiers.Select(m => new global::app.goal.steps.step.actions.action.modifier.@this
                 {
                     Module = m.Module,
                     ActionName = m.ActionName,
+                    Order = m.Order,
                     Parameters = new List<data.@this>(m.Parameters),
                     Defaults = m.Defaults != null ? new List<data.@this>(m.Defaults) : null,
                     Errors = new List<Info>(m.Errors),

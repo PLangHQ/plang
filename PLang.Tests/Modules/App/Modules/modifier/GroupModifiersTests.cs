@@ -18,10 +18,10 @@ public class GroupModifiersTests
     [Test]
     public async Task GroupModifiers_NoModifiers_Unchanged()
     {
-        var modules = new global::app.module.list.@this();
+        await using var app = TestApp.Create("/gm-" + System.Guid.NewGuid().ToString("N")[..6]); var modules = app.Module;
         var actions = Flat(("file", "read"), ("variable", "set"));
 
-        actions.GroupModifiers(modules);
+        actions.Nest(modules);
 
         await Assert.That(actions.Count).IsEqualTo(2);
         await Assert.That(actions[0].Module).IsEqualTo("file");
@@ -33,10 +33,10 @@ public class GroupModifiersTests
     [Test]
     public async Task GroupModifiers_ModifierAfterExecutable_Attached()
     {
-        var modules = new global::app.module.list.@this();
+        await using var app = TestApp.Create("/gm-" + System.Guid.NewGuid().ToString("N")[..6]); var modules = app.Module;
         var actions = Flat(("file", "read"), ("cache", "wrap"));
 
-        actions.GroupModifiers(modules);
+        actions.Nest(modules);
 
         await Assert.That(actions.Count).IsEqualTo(1);
         await Assert.That(actions[0].Module).IsEqualTo("file");
@@ -47,7 +47,7 @@ public class GroupModifiersTests
     [Test]
     public async Task GroupModifiers_MultipleModifiersOnOneAction_SortedByOrder()
     {
-        var modules = new global::app.module.list.@this();
+        await using var app = TestApp.Create("/gm-" + System.Guid.NewGuid().ToString("N")[..6]); var modules = app.Module;
         // Insertion order: error(3), cache(2), timeout(1) — should sort to timeout, cache, error
         var actions = Flat(
             ("file", "read"),
@@ -55,7 +55,7 @@ public class GroupModifiersTests
             ("cache", "wrap"),
             ("timeout", "after"));
 
-        actions.GroupModifiers(modules);
+        actions.Nest(modules);
 
         await Assert.That(actions.Count).IsEqualTo(1);
         var mods = actions[0].Modifiers;
@@ -68,10 +68,10 @@ public class GroupModifiersTests
     [Test]
     public async Task GroupModifiers_ModifierBetweenTwoExecutables_AttachesToPreceding()
     {
-        var modules = new global::app.module.list.@this();
+        await using var app = TestApp.Create("/gm-" + System.Guid.NewGuid().ToString("N")[..6]); var modules = app.Module;
         var actions = Flat(("file", "read"), ("cache", "wrap"), ("variable", "set"));
 
-        actions.GroupModifiers(modules);
+        actions.Nest(modules);
 
         await Assert.That(actions.Count).IsEqualTo(2);
         await Assert.That(actions[0].Module).IsEqualTo("file");
@@ -84,11 +84,11 @@ public class GroupModifiersTests
     [Test]
     public async Task GroupModifiers_LeadingModifier_NoPreceeding_EdgeCase()
     {
-        var modules = new global::app.module.list.@this();
+        await using var app = TestApp.Create("/gm-" + System.Guid.NewGuid().ToString("N")[..6]); var modules = app.Module;
         // Leading modifier has no preceding executable — it is dropped, not an error
         var actions = Flat(("cache", "wrap"), ("file", "read"));
 
-        actions.GroupModifiers(modules);
+        actions.Nest(modules);
 
         await Assert.That(actions.Count).IsEqualTo(1);
         await Assert.That(actions[0].Module).IsEqualTo("file");
@@ -98,7 +98,7 @@ public class GroupModifiersTests
     [Test]
     public async Task GroupModifiers_Mixed_CorrectGrouping()
     {
-        var modules = new global::app.module.list.@this();
+        await using var app = TestApp.Create("/gm-" + System.Guid.NewGuid().ToString("N")[..6]); var modules = app.Module;
         // [file.read, cache.wrap, error.handle, variable.set, timeout.after]
         // -> file.read with sorted [cache(2), error(3)]; variable.set with [timeout(1)]
         var actions = Flat(
@@ -108,7 +108,7 @@ public class GroupModifiersTests
             ("variable", "set"),
             ("timeout", "after"));
 
-        actions.GroupModifiers(modules);
+        actions.Nest(modules);
 
         await Assert.That(actions.Count).IsEqualTo(2);
         await Assert.That(actions[0].Module).IsEqualTo("file");

@@ -99,8 +99,10 @@ public static class Make
         global::app.goal.steps.step.actions.action.@this inner,
         params global::app.goal.steps.step.actions.action.@this[] modifiers)
     {
-        foreach (var modifier in modifiers)
-            inner.Modifiers.Add(modifier);
+        foreach (var m in modifiers)
+            inner.Modifiers.Add(m as global::app.goal.steps.step.actions.action.modifier.@this
+                ?? new global::app.goal.steps.step.actions.action.modifier.@this
+                { Module = m.Module, ActionName = m.ActionName, Parameters = m.Parameters });
         return inner;
     }
 
