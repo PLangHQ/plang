@@ -23,6 +23,27 @@ rename the property (e.g. `Depth`) when `modifiers.Sort`/`RunAsync` move onto `a
 
 Also committed: `modifier` now has its own `Type => "modifier"` face (was inheriting "action").
 
+## DONE — modifiers.@this collection DELETED (`3829bbb73`) — first of 3
+
+`action.Modifiers` is now a plain `List<modifier>` (reflection reads the array; `action.Output`
+writes it explicitly — byte-identical). The wrap-fold + Position sort re-homed onto `action`
+(`action.RunModifiers`; `actions.Nest` sorts inline). `modifiers/this.cs` + `ActionModifiers` alias
+gone. All 18 modifier tests green; Wire zero-delta. **This is the template for the remaining two
+collection deletions.**
+
+### The pattern for `actions.@this` and `steps.@this` (repeat it)
+1. Give the parent an explicit Store `Output` (step: `{index,text,…,actions}`; goal: `{name,…,steps,goals}`)
+   — reproduce the reflected [Store] key order (check a real `.pr`); this replaces the delegating Output.
+2. Change the collection property to a plain typed `List<T>` (reflection reads the array; the explicit
+   Output writes it). Verify Wire byte-identical.
+3. Re-home the collection's methods onto the parent (per items-answer.md table): `steps.RunAsync`
+   (the step loop + skipBelowIndent) → `goal.RunAsync`; `steps.MergeFrom`/`HasIndentedChildren`/`Nest`
+   → goal/step; `actions.Chain`/`Branches`/`FirstConditionIndex`/`IsFirstCondition`/`Nest` → step;
+   `actions.Value` dies.
+4. Delete the class + its alias (prod GlobalUsings + `PLang.Tests/Directory.Build.props`). Rewrite test
+   callers of the re-homed methods.
+5. Verify: Wire zero-delta, controlled per-class on Modules/Data/Runtime.
+
 ## DONE — increment 3 so far (all verified zero-delta / controlled)
 
 - **action owns its Store wire explicitly** (`9d0dfbf7a`) — `action.Output` writes
