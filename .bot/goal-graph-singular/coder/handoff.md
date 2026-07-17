@@ -14,6 +14,15 @@ wire); reflect-`Set` (base `Get` already reflects; base `Set` threw). Verified: 
 Wire + Modules zero-delta multi-run; Data zero-delta under controlled per-class comparison; layer-5
 write green (`ClrJsonActionsWriteTests`).
 
+## Known clash to resolve during modifier re-homing
+
+`modifier.Order` (int nesting-order property, 3 sites: step Clone, actions mint, modifiers.Sort) now
+collides by name with the base `item.Order(@this)` comparison verb → CS0108 hide warning (introduced
+when `action` became an item, inc 1). Harmless (base `Compare` binds the verb in base scope), but
+rename the property (e.g. `Depth`) when `modifiers.Sort`/`RunAsync` move onto `action`.
+
+Also committed: `modifier` now has its own `Type => "modifier"` face (was inheriting "action").
+
 ## NEXT — increment 3: explicit Write + readers (the real new code, architect verify #1)
 
 Replace the delegating `Output` with an explicit token `Write`/`Output` per level, add
