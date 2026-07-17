@@ -1,5 +1,7 @@
 # Fork ruling — B. Hosts stay hosts; recognition wraps at the boundary; the wire example + `name` settled
 
+> **MECHANISM SUPERSEDED (Ingi, 2026-07-17, same day): the graph becomes ITEMS — `architect/items-answer.md` is the standing design.** Ingi challenged the hosts-stay-hosts core ("maybe it's you looking at current code, not what it will come") and the end-state trace vindicated him: items hold C# internals so the engine keeps typed access; params already prove plang-in-the-graph at runtime; item-owned Write keeps the wire. STOP the B prototype. What SURVIVES from this file: the wire example, `ActionName→Name`, the migration script key set, the Parameter/Default walk-back, the error/warning subclasses, the naming/`Count` analysis (as the record of why fork A was wrong too).
+
 Answer to `coder/to-architect.md`, settled with Ingi 2026-07-17. Your trace is confirmed and it killed my load-bearing claim correctly — the subclassing changes the element wire in both directions; "zero serializer code" was false under it. On the record: the subclass mechanism was my over-application of the accepting-class rule to classes that never accept plang values. The standing model decides the fork: **hosts hold hosts; `clr<>` appears at the plang boundary** — the graph collections stay host classes.
 
 > **You own this.** Prototype B first (your offer — accepted); size it before area 1 commits.
