@@ -202,7 +202,8 @@ public class ErrorHandleTests
             ErrorHandler(("retryCount", 2), ("order", "RetryFirst"))
         };
 
-        var result = await new global::app.goal.steps.step.actions.action.@this { Modifiers = modifiers }.RunModifiers(persistentlyFailing, Ctx);
+        var (wrapped, _) = await modifiers[0].Wrap(persistentlyFailing, Ctx);
+        var result = await wrapped!();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).IsEqualTo("persistent failure");
@@ -226,7 +227,8 @@ public class ErrorHandleTests
             ErrorHandler(("retryCount", 1), ("order", "GoalFirst"))
         };
 
-        var result = await new global::app.goal.steps.step.actions.action.@this { Modifiers = modifiers }.RunModifiers(persistentlyFailing, Ctx);
+        var (wrapped, _) = await modifiers[0].Wrap(persistentlyFailing, Ctx);
+        var result = await wrapped!();
 
         await result.IsFailure();
         await Assert.That(callCount).IsEqualTo(2); // 1 initial + 1 retry
@@ -246,7 +248,8 @@ public class ErrorHandleTests
 
         var modifiers = new List<global::app.goal.steps.step.actions.action.modifier.@this> { ErrorHandler(("retryCount", 3)) };
 
-        var result = await new global::app.goal.steps.step.actions.action.@this { Modifiers = modifiers }.RunModifiers(persistentlyFailing, Ctx);
+        var (wrapped, _) = await modifiers[0].Wrap(persistentlyFailing, Ctx);
+        var result = await wrapped!();
 
         await result.IsFailure();
         await Assert.That(callCount).IsEqualTo(4); // 1 initial + 3 retries
@@ -272,7 +275,8 @@ public class ErrorHandleTests
             ErrorHandler(("retryCount", 3))
         };
 
-        var result = await new global::app.goal.steps.step.actions.action.@this { Modifiers = modifiers }.RunModifiers(statefulNext, Ctx);
+        var (wrapped, _) = await modifiers[0].Wrap(statefulNext, Ctx);
+        var result = await wrapped!();
 
         await result.IsSuccess();
         await Assert.That(callCount).IsEqualTo(2);

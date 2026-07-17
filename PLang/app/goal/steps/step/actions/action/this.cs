@@ -160,8 +160,26 @@ public partial class @this
             data = beforeResult;
             data.Handled = false;
         }
+        else if (Modifiers.Count == 0)
+            data = await DispatchAsync(context);
         else
-            data = await RunModifiers(() => DispatchAsync(context), context);
+        {
+            // The action composes its modifiers around its own dispatch — right-to-left, lowest
+            // Position outermost (the slot is pre-sorted by Nest). Each modifier wraps the inner in
+            // ITSELF (modifier.Wrap); then AfterAction fires once per modifier so coverage tracks
+            // presence (a modifier wraps, it never runs the standalone path).
+            Func<Task<global::app.data.@this>> execute = () => DispatchAsync(context);
+            for (int i = Modifiers.Count - 1; i >= 0; i--)
+            {
+                var (wrapped, wrapError) = await Modifiers[i].Wrap(execute, context);
+                if (wrapError != null) return context.Error(wrapError);
+                execute = wrapped!;
+            }
+            data = await execute();
+            foreach (var modifier in Modifiers)
+                await context.LifecycleFor(modifier).After.Run(
+                    context, app.@event.Trigger.AfterAction, modifier, data);
+        }
 
         // %!data% is the last action's result, stored AS-IS. A reference stays a
         // reference and a lazy source stays unread — %!data% never forces a value.
@@ -174,34 +192,6 @@ public partial class @this
         if (!afterResult.Success) return afterResult;
 
         return data;
-    }
-
-    /// <summary>
-    /// Runs <paramref name="innermost"/> wrapped by this action's modifiers, right-to-left (lowest
-    /// Position outermost — the slot is pre-sorted). The action owns this fold (re-homed from the
-    /// deleted modifiers collection): each modifier resolves its own handler via WrapAround, then
-    /// AfterAction fires once per modifier so coverage tracks modifier presence (a modifier wraps,
-    /// it never runs through the standalone RunAsync path). An empty slot is the bare inner run.
-    /// </summary>
-    internal async Task<global::app.data.@this> RunModifiers(
-        Func<Task<global::app.data.@this>> innermost, actor.context.@this context)
-    {
-        if (Modifiers.Count == 0) return await innermost();
-
-        var execute = innermost;
-        for (int i = Modifiers.Count - 1; i >= 0; i--)
-        {
-            var (wrapped, error) = await Modifiers[i].WrapAround(execute, context);
-            if (error != null) return context.Error(error);
-            execute = wrapped!;
-        }
-        var result = await execute();
-
-        foreach (var modifier in Modifiers)
-            await context.LifecycleFor(modifier).After.Run(
-                context, app.@event.Trigger.AfterAction, modifier, result);
-
-        return result;
     }
 
     /// <summary>
@@ -241,47 +231,6 @@ public partial class @this
         await using var _ = call;
         using var _anchor = context.AnchorScope(this);
         return await call.ExecuteAsync(handler!, context);
-    }
-
-    /// <summary>
-    /// Wraps the given inner delegate with this modifier action. Resolves this action's
-    /// handler, verifies it implements IModifier, and runs ExecuteAsync so the source-generated
-    /// properties are populated before Wrap() reads them. Called by Modifiers.RunAsync.
-    /// </summary>
-    public async Task<(Func<Task<global::app.data.@this>>? Wrapped, global::app.error.IError? Error)> WrapAround(
-        Func<Task<global::app.data.@this>> next,
-        actor.context.@this context)
-    {
-        var (shell, error) = context.App!.Module.GetCodeGenerated(this, context);
-        if (error != null) return (null, error);
-        // Resolve populates the handler's params so Wrap() reads real values.
-        var (handler, resolveErr) = await shell!.Resolve(this, context);
-        if (resolveErr != null) return (null, resolveErr);
-        if (handler is not module.IModifier mod)
-        {
-            // Pinpoint WHERE the misplaced "modifier" lives. Modifier Actions don't
-            // have their own Step propagated from the host (the Actions container only
-            // sets Step on top-level items), so fall back to the live runtime context
-            // for goal/step info.
-            var step = Step ?? context.Step;
-            var goalName = step?.Goal?.Name;
-            var goalPath = step?.Goal?.Path;
-            var stepText = step?.Text;
-            var stepIndex = step?.Index;
-            var loc = (goalName, goalPath, stepText, stepIndex) switch
-            {
-                ({ } g, { } p, { } t, { } i) => $" — in goal {g} ({p}) step [{i}] \"{t}\"",
-                ({ } g, _, { } t, { } i) => $" — in goal {g} step [{i}] \"{t}\"",
-                (_, _, { } t, { } i) => $" — in step [{i}] \"{t}\"",
-                _ => ""
-            };
-            return (null, new global::app.error.ActionError(
-                $"{Module}.{ActionName} is not a modifier (it was placed in a modifiers array but isn't one). " +
-                $"Move it out as a peer action in the step's top-level actions array.{loc}",
-                "ModifierError", 400));
-        }
-
-        return (mod.Wrap(next, context), null);
     }
 
     /// <summary>

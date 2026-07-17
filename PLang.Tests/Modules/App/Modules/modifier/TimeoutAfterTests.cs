@@ -145,7 +145,8 @@ public class TimeoutAfterTests
             throw new OperationCanceledException();
         };
 
-        var result = await new global::app.goal.steps.step.actions.action.@this { Modifiers = modifiers }.RunModifiers(throwingInner, Ctx);
+        var (wrapped, _) = await modifiers[0].Wrap(throwingInner, Ctx);
+        var result = await wrapped!();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Timeout");
