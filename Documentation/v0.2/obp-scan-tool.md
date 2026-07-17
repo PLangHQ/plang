@@ -7,7 +7,7 @@ Companion to `obp-scan.md`. The scan procedure fails when it's done by fluent re
 New top-level dev-tool project: **`Tools/ObpScan/`** (`Tools/ObpScan/ObpScan.csproj`, `net10.0` console). NOT under `PLang.Generators/` — that's the shipped netstandard2.0 analyzer assembly; a console tool that loads a workspace doesn't belong there. `Tools/` is a new folder for dev utilities (nothing else needs to ship it).
 
 - References: `Microsoft.CodeAnalysis.CSharp`, `Microsoft.CodeAnalysis.Workspaces.MSBuild`, `Microsoft.Build.Locator`.
-- Not in the main solution build path; run on demand: `dotnet run --project Tools/ObpScan -- <type-or-file>`.
+- Not in the main solution build path, **not a build gate, never runs on build.** On-demand ONLY — I run it when Ingi asks for an OBP scan: `dotnet run --project Tools/ObpScan -- <type-or-file>` → prints the table → done.
 
 ## What it computes (the three columns of the table)
 
@@ -39,7 +39,3 @@ Plus a footer summary: "N members, M flagged (K name, L length, P misplaced-hint
 
 - **Machine owns the fingerprints** it can't be talked out of: compound/verb+noun names, long methods, caller-set-vs-declaring-namespace. These are exactly the checks I have the rules for but skip when reading fluently.
 - **I own only the ownership *judgment*** — "is this caller's concept genuinely a different concept?" — fed reliable caller data, with every flagged member on the table so none can be skipped.
-
-## Optional follow-on (not now)
-
-The two pure-mechanical checks (compound-name, long-method) could later become warning-severity Roslyn analyzers (`PLNG005`/`PLNG006` in `PLang.Generators/Diagnostics/`) for continuous pressure — but start with the on-demand util; a build warning on every legit compound name is noise until the codebase is cleaner.
