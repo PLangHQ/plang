@@ -23,6 +23,17 @@ rename the property (e.g. `Depth`) when `modifiers.Sort`/`RunAsync` move onto `a
 
 Also committed: `modifier` now has its own `Type => "modifier"` face (was inheriting "action").
 
+## DONE — increment 3 so far (all verified zero-delta / controlled)
+
+- **action owns its Store wire explicitly** (`9d0dfbf7a`) — `action.Output` writes
+  `{module, action, parameters, defaults?, modifiers}` directly (Debug still delegates). Byte-identical.
+  Prereq for deleting the `modifiers.@this` collection.
+- **child-write reflect-default on base `item.Set`** (`84c5a2802`) — the 3 triplicated Set overrides
+  (goal/step/action) collapsed to ONE base default (architect Finding 1; no context needed). Containers
+  still override. Layer-5 write green.
+- **modifier.Order → Position** (`84c5a2802`, superseded my earlier `Depth`) — Position is the honest
+  noun (Depth wrong axis, Rank = the compare verb).
+
 ## DONE — goal-read flip + modifier.Order rename (increment 3, part 1)
 
 - **goal rides as `Data<goal>`, not `clr<goal>`** (`4639b86cc`). Reader returns the goal item;
