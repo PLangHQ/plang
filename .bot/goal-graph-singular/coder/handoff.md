@@ -23,6 +23,21 @@ rename the property (e.g. `Depth`) when `modifiers.Sort`/`RunAsync` move onto `a
 
 Also committed: `modifier` now has its own `Type => "modifier"` face (was inheriting "action").
 
+## Sizing done for the remaining pieces (all dedicated-pass, NOT tail-of-session)
+
+- **goal-read flip (`clr<goal>` → `Data<goal>`)** — 33 sites / ~13 files. NOT compiler-guided: sites do
+  `(x as clr<goal>)?.Value`, so returning a goal item makes those casts silently null at RUNTIME (no
+  compile error). Must audit each site + lean on test deltas. Entry: `goal/serializer/Reader.cs` (the
+  obsolete stub returns `clr<goal>(goal)` via the reflection reader — change to return the goal item)
+  + `goal/list/this.cs:372` `LoadFromFileAsync` (`as clr<goal>` → the goal item).
+- **explicit token `Output`** — graph items serialize in Store (.pr) AND Debug (callstack/llm
+  snapshots), so a hand-written Output must reproduce BOTH modes (Debug = all public props). The
+  delegating Output already does this correctly; hand-rolling it is high-risk/low-gain until the
+  reader flip forces it. Keep delegating until then.
+- **singular sweep** — 99 files; carries via reflection wire automatically (WireName derives from
+  property) EXCEPT `ActionName→Name` (wire `action→name`, breaks byte-identical → needs the bootstrap
+  `.pr` hand-edit + rebuild).
+
 ## NEXT — increment 3: explicit Write + readers (the real new code, architect verify #1)
 
 Replace the delegating `Output` with an explicit token `Write`/`Output` per level, add
