@@ -16,7 +16,7 @@ public sealed class @this : IList<PrModifier>
 
     /// <summary>Order by each modifier's <c>Order</c> — the collection sorts its own; outermost
     /// wrapper (lowest Order) first. Runtime keeps position; this is the build-time nesting order.</summary>
-    public void Sort() => _items.Sort((x, y) => x.Order.CompareTo(y.Order));
+    public void Sort() => _items.Sort((x, y) => x.Depth.CompareTo(y.Depth));
 
     public PrModifier this[int index] { get => _items[index]; set => _items[index] = value; }
     public int Count => _items.Count;

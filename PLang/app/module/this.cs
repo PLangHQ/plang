@@ -46,7 +46,7 @@ public sealed class @this
             var cacheable = _list.IsCacheable(Name, name);
             if (order != null)
                 _modifiers.Add(new global::app.goal.steps.step.actions.action.modifier.@this
-                    { Module = Name, ActionName = name, Order = order.Value, Cacheable = cacheable, Context = ctx });
+                    { Module = Name, ActionName = name, Depth = order.Value, Cacheable = cacheable, Context = ctx });
             else
                 _actions.Add(new global::app.goal.steps.step.actions.action.@this
                     { Module = Name, ActionName = name, Cacheable = cacheable, Context = ctx });

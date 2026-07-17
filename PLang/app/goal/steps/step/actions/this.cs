@@ -160,7 +160,7 @@ public sealed partial class @this : IList<action.@this>
                     continue;
                 }
                 current.Modifiers.Add(new action.modifier.@this
-                    { Module = a.Module, ActionName = a.ActionName, Parameters = a.Parameters, Order = catalog.Order });
+                    { Module = a.Module, ActionName = a.ActionName, Parameters = a.Parameters, Depth = catalog.Depth });
             }
             else
             {
