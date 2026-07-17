@@ -68,7 +68,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 ## What survives unchanged from the plan/map
 
 - The singular sweep: namespaces (`app.goal.step.action.*`), properties (`Step`/`Action`/`Modifier`/`Child`/`Parameter`/`Default`/`Error`/`Warning`), wire keys, `ActionName→Name` (`action→name`), os/ files, LLM schemas, CLI keys — all areas 2-3 as planned.
-- **The migration story**: item-owned `Write` reproduces today's bare shape → §E's key-rename script + full rebuild, no bootstrap deadlock. The golden: `.pr` byte-identical except renamed keys.
+- **The migration story** (rescoped — see the MIGRATION banner + plan area 4): item-owned `Write` reproduces today's bare shape, so hand-editing the ~11 builder bootstrap `.pr` keys is enough to boot; the fresh binary rebuilds all other `.pr`. The golden: item `Write` output byte-identical except renamed keys.
 - `error.list`/`warning.list` thin subclasses; `Parameter`/`Default` as `List<data.@this>` (already the item world's shape — rows are Data); backref members stay typed refs (now internal to items); scalars stay C# internals (the sanctioned-crossing test governs the faces).
 - Areas 0, 4, 5 acceptance gates — plus: the engine inner loop reads internals (perf pin trivially holds); `Data<goal>` replaces `Data<clr<goal>>` at the consumers (`goal/getTypes`-successor, `environment/run` — the sweep's compiler finds them).
 
