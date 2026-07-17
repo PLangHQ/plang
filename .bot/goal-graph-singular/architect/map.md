@@ -155,7 +155,7 @@ Rejected: a both-keys compat reader (violates no-backward-compat and leaves a fo
 1. **D1 = RENAME** — everything singular including the LLM schema keys; the two compile schemas unify while touched.
 2. **D2 = handler params ALSO singular** — inventory-first; CLI keys are user-facing (docs ride); `.pr` param names regenerate via the full rebuild, not the script.
 3. **D3 = leave `build.actions`** — module-discovery 6c deletes it; no churn on a corpse (the one named plural survivor).
-4. **NEW (from A0.3, needs Ingi):** `goal.Goals` → the sub-goal collection's singular name. `goal.Goal` collides semantically with the `step.Goal`/`steps.Goal` PARENT backrefs (same word, opposite direction). Options: accept `goal.Goal` (context disambiguates: on goal = children, on step = parent), or a different word for children. Blocking only the goal.Goals rename, nothing else.
+4. **D4 = `goal.Child`** (Ingi, 2026-07-17). The sub-goal collection is `goal.Child` — the symmetric name to the EXISTING `Parent` backref (`goal/this.cs` getter stamps `g.Parent ??= this`; relations name both ends of one axis: `goal.Parent` up, `goal.Child` down). Wire `child:[…]`; `%goal.Child[2]%`. Rejected: `goal.Goal` (collides with the parent-backref meaning), `private` (C# keyword + names a visibility that is already the `Visibility` property), `Sub` (fragment), `Local` (runner-up — names scoping, but the property IS structure). The `List<@this> _goals` storage gets the same accepting-class treatment as the other collections (or an explicitly deferred note if the sweep bounds it) — it is the same shape that caused layer 4.
 
 ## OBP scan of the map's own code (the pass, run 2026-07-17)
 

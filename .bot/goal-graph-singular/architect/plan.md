@@ -14,7 +14,7 @@ The goal graph is the runtime's spine and it violates the language's own naming 
 
 **1. The graph rewrite** (map §A/§B/§C/§F — the core):
 - The three collection classes rewritten as `list.@this` subtypes at the convention slots (`goal/step/list/`, `goal/step/action/list/`, `goal/step/action/modifier/list/`) — full member accounting in map §A; born-with-context (the late-set `Context` dies); the `IList<T>` facades keep C# consumers compiling.
-- Element property renames: `goal.Step`, `step.Action`, `action.Modifier` — the wire follows automatically (WireName = camelCase of the property; zero serializer code).
+- Element property renames: `goal.Step`, `step.Action`, `action.Modifier`, **`goal.Goals` → `goal.Child`** (D4 — the `Parent`-symmetry name; wire `child:`), `action.Parameters` → `action.Parameter` (pulls PLang.Generators' `GetParameter` surface into the rename), `step.Warnings` → `step.Warning` — the wire follows automatically (WireName = camelCase of the property; zero serializer code). The inventory commit closes the list (map A0.3 — these three were missed by the first sweep; assume more until the inventory says otherwise).
 - Namespaces `app.goal.steps.step.actions.*` → `app.goal.step.action.*` (99 files), 6 aliases, the 3 real literals (`node?["steps"]` ×2 → `["step"]`; `record["modifiers"]` → `"modifier"`).
 - `ContainerFamily` drops the `IList<>` probe; the exact-generic residue aligns claim=build (map §F). The apex gains zero rungs.
 - `action.list` gains its ICreate face (the builder's `set %goal.Step[i].Action%` is a real list→collection creation).
