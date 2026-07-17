@@ -8,10 +8,10 @@ namespace app.goal.steps.step.actions.action.modifier;
 /// </summary>
 public class @this : global::app.goal.steps.step.actions.action.@this
 {
-    /// <summary>Nesting depth (lower = outermost wrapper) — from [Modifier(Order = N)] at catalog
-    /// mint. Not stored in the .pr: position in the Modifiers slot carries it at runtime. Named Depth,
-    /// not Order, because the base item.@this owns Order(@this) as the comparison verb.</summary>
-    public int Depth { get; init; }
+    /// <summary>Linear wrap precedence (lower = outermost wrapper) — from [Modifier(Order = N)] at
+    /// catalog mint. Not stored in the .pr: position in the Modifiers slot carries it at runtime. Named
+    /// Position, not Order, because the base item.@this owns Order(@this) as the comparison verb.</summary>
+    public int Position { get; init; }
 
     /// <summary>A modifier IS a distinct plang type (the role is the type), not an action — it names
     /// itself "modifier". The wire shape rides action's (module/action/parameters/…), but its identity

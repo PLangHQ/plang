@@ -37,9 +37,9 @@ public class ModifierRegistryTests
     public async Task Order_LivesOnTheModifierType()
     {
         await using var app = TestApp.Create("/app");
-        await Assert.That(((Modifier)app.Module["timeout"]!["after"]!).Depth).IsEqualTo(1);
-        await Assert.That(((Modifier)app.Module["cache"]!["wrap"]!).Depth).IsEqualTo(2);
-        await Assert.That(((Modifier)app.Module["error"]!["handle"]!).Depth).IsEqualTo(3);
+        await Assert.That(((Modifier)app.Module["timeout"]!["after"]!).Position).IsEqualTo(1);
+        await Assert.That(((Modifier)app.Module["cache"]!["wrap"]!).Position).IsEqualTo(2);
+        await Assert.That(((Modifier)app.Module["error"]!["handle"]!).Position).IsEqualTo(3);
     }
 
     #endregion

@@ -163,7 +163,7 @@ public sealed partial class @this
                 {
                     Module = m.Module,
                     ActionName = m.ActionName,
-                    Depth = m.Depth,
+                    Position = m.Position,
                     Parameters = new List<data.@this>(m.Parameters),
                     Defaults = m.Defaults != null ? new List<data.@this>(m.Defaults) : null,
                     Errors = new List<Info>(m.Errors),

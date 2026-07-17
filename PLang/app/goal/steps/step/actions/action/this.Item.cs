@@ -54,25 +54,4 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         writer.EndArray();
         writer.EndObject();
     }
-
-    /// <summary>The child-WRITE door — reflects onto a public property of this item, the mirror of the
-    /// base Get (which already reflects via the clr carrier). The member value lowers ITSELF to the
-    /// property type (<c>value.Clr(propType)</c> — a clr(json) actions array builds the action hosts),
-    /// then rides into the slot. Returns THIS: an item's child-write mutates in place (no clr wrapper).
-    /// TRANSITIONAL alongside the delegating Output, until the graph items are born-with-context and
-    /// delegate to the reflection (*) kind like the base Get does.</summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex, object? value)
-    {
-        // A Data opens its door to the concrete value first (mirror of clr.Set — a host takes a
-        // typed child, never a lazy Data).
-        if (value is global::app.data.@this dv) value = await dv.Value();
-        var prop = GetType().GetProperty(key, System.Reflection.BindingFlags.Public
-            | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-        if (prop == null || !prop.CanWrite)
-            throw new System.NotSupportedException($"'{Type.Name}' has no writable property '{key}'");
-        if (value is global::app.type.item.@this iv && !prop.PropertyType.IsInstanceOfType(value))
-            value = iv.Clr(prop.PropertyType);
-        prop.SetValue(this, value);
-        return this;
-    }
 }

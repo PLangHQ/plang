@@ -21,20 +21,4 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         global::app.channel.serializer.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
         => await new global::app.type.item.kind.reflection.@this(context).Output(this, writer, mode, context);
-
-    /// <summary>The child-WRITE door — reflects onto a public property of this item (mirror of the
-    /// base Get's reflect-default). The value opens its Data door, lowers ITSELF to the property type,
-    /// then rides into the slot. Returns THIS (mutate-in-place). TRANSITIONAL — see action/this.Item.cs.</summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex, object? value)
-    {
-        if (value is global::app.data.@this dv) value = await dv.Value();
-        var prop = GetType().GetProperty(key, System.Reflection.BindingFlags.Public
-            | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-        if (prop == null || !prop.CanWrite)
-            throw new System.NotSupportedException($"'{Type.Name}' has no writable property '{key}'");
-        if (value is global::app.type.item.@this iv && !prop.PropertyType.IsInstanceOfType(value))
-            value = iv.Clr(prop.PropertyType);
-        prop.SetValue(this, value);
-        return this;
-    }
 }

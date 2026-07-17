@@ -157,11 +157,27 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// (<paramref name="isIndex"/> tells positional from named, the grammar's Index-vs-Member fact),
     /// a <c>clr</c> host routes to its kind. Returns the (possibly REPLACED) value — a kind may
     /// materialize an immutable host into a new one; the caller rebinds when the instance differs.
-    /// A leaf that can't take a child throws. (Distinct from
-    /// <see cref="Write(global::app.channel.serializer.IWriter)"/>, which serializes to a wire writer.)
+    /// <para>The DEFAULT reflects a public CLR property off THIS value — the write-symmetric twin of
+    /// <see cref="Get"/>'s reflect-default (a domain item's <c>step.Action</c>, a scalar's backing).
+    /// The member value opens its Data door, lowers ITSELF to the property type (<c>value.Clr</c> — the
+    /// sanctioned crossing), and rides into the slot; returns THIS (mutate-in-place). Containers
+    /// (<c>dict</c>/<c>list</c>) override with key/index writes; a value with no writable property for
+    /// <paramref name="key"/> throws. No context needed — reflection writes the slot directly.</para>
+    /// (Distinct from <see cref="Write(global::app.channel.serializer.IWriter)"/>, which serializes.)
     /// </summary>
-    public virtual System.Threading.Tasks.ValueTask<@this> Set(string key, bool isIndex, object? value)
-        => throw new System.NotSupportedException($"%…% ({Type.Name}) cannot take a child '{key}'");
+    public virtual async System.Threading.Tasks.ValueTask<@this> Set(string key, bool isIndex, object? value)
+    {
+        // A Data opens its door to the concrete value first (a host takes a typed child, never a lazy Data).
+        if (value is global::app.data.@this dv) value = await dv.Value();
+        var prop = GetType().GetProperty(key, System.Reflection.BindingFlags.Public
+            | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+        if (prop == null || !prop.CanWrite)
+            throw new System.NotSupportedException($"%…% ({Type.Name}) cannot take a child '{key}'");
+        if (value is @this iv && !prop.PropertyType.IsInstanceOfType(value))
+            value = iv.Clr(prop.PropertyType);
+        prop.SetValue(this, value);
+        return this;
+    }
 
     /// <summary>
     /// Read counterpart of <see cref="Write(string, object?)"/>: the value
