@@ -3,8 +3,9 @@ using Microsoft.CodeAnalysis;
 
 namespace ObpScan;
 
-/// <summary>A type under scan — owns rendering its own member table and the missing-type summary.
-/// It builds Members and asks each for its own verdicts; it does not compute smells about them.</summary>
+/// <summary>A type under scan — owns rendering its own member table. It builds Members and asks each
+/// for its own verdicts (it does not compute smells about them); the running tally + missing-type
+/// detection belong to <see cref="Summary"/>, which each row reports to.</summary>
 public sealed class TypeScan
 {
     private readonly INamedTypeSymbol _type;
@@ -21,40 +22,32 @@ public sealed class TypeScan
     public async Task<string> Render()
     {
         var declNs = _type.ContainingNamespace?.ToDisplayString() ?? "";
+        var members = _type.GetMembers().Where(Member.IsScannable)
+            .Select(s => new Member(s, declNs)).ToList();
+
+        // resolve every member's callers concurrently — the per-member SymbolFinder search was the
+        // sequential bottleneck; the searches are independent, so they run in parallel.
+        var callers = await Task.WhenAll(members.Select(m => m.Callers(_solution)));
+
         var sb = new StringBuilder();
         sb.AppendLine().AppendLine($"## {FullName}").AppendLine();
         sb.AppendLine("| Member | Lines | Name flag | Callers (namespaces) | Ownership hint |");
         sb.AppendLine("|--------|-------|-----------|----------------------|----------------|");
 
-        int members = 0, nameFlags = 0, longFlags = 0, misplaced = 0;
-        var clusters = new Dictionary<string, int>();
-
-        foreach (var symbol in _type.GetMembers().Where(Member.IsScannable))
+        var summary = new Summary();
+        for (int i = 0; i < members.Count; i++)
         {
-            members++;
-            var member = new Member(symbol, declNs);
-            var callers = await member.Callers(_solution);
-            var ownership = member.Judge(callers);
-
-            if (member.Name.IsCompound) nameFlags++;
-            if (member.Lines > 15) longFlags++;
-            if (ownership.ForeignConcept is { } fc)
-            {
-                misplaced++;
-                clusters[fc] = clusters.GetValueOrDefault(fc) + 1;
-            }
+            var member = members[i];
+            var ownership = member.Judge(callers[i]);
+            summary.Add(member.Name, member.Lines, ownership);
 
             var lenCell = member.Lines > 15 ? $"**{member.Lines}**" : member.Lines.ToString();
-            var callerCell = callers.Count == 0 ? "(none/internal)"
-                : string.Join(", ", callers.Distinct().Select(Concept.Short).Take(4));
-            sb.AppendLine($"| {symbol.Name} | {lenCell} | {member.Name.Flag} | {callerCell} | {ownership.Verdict} |");
+            var callerCell = callers[i].Count == 0 ? "(none/internal)"
+                : string.Join(", ", callers[i].Distinct().Select(Concept.Short).Take(4));
+            sb.AppendLine($"| {member.Name} | {lenCell} | {member.Name.Flag} | {callerCell} | {ownership.Verdict} |");
         }
 
-        sb.AppendLine();
-        sb.AppendLine($"**{members} members — flagged: {nameFlags} name, {longFlags} long, {misplaced} misplaced-hint.**");
-        foreach (var (concept, count) in clusters.Where(c => c.Value >= 3).OrderByDescending(c => c.Value))
-            sb.AppendLine($"> ⚠ **missing-type signal**: {count} members whose callers live in `{concept}` — "
-                + $"a `{concept}` concept is likely trapped in this type.");
+        sb.Append(summary.Footer());
         return sb.ToString();
     }
 }

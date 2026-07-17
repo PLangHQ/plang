@@ -34,10 +34,11 @@ public sealed class MemberName
     }
 
     /// <summary>A single word is clean (a verb naming intent, or a noun). More than one word is a
-    /// compound — the smell — unless it's a boolean Is/Has (a sanctioned exemption, still noted).
-    /// A contract member is never OUR smell — the interface/base named it.</summary>
-    public bool IsCompound => !_contract && Words.Count > 1;
-    private bool CarriesVerb => Words.Any(Verbs.Contains);
+    /// compound — the smell. Exemptions, neither counted nor hard-flagged: a boolean (a predicate is
+    /// a naturally-phrased question — Is/Has/Implements/Carries) and a contract member (the
+    /// interface/base named it, not us).</summary>
+    public bool IsCompound => !_contract && !_boolish && Words.Count > 1;
+    private bool HasVerb => Words.Any(Verbs.Contains);
 
     /// <summary>The name's own verdict cell for the scan row.</summary>
     public string Flag
@@ -47,8 +48,8 @@ public sealed class MemberName
             if (_contract) return "contract";
             if (Words.Count <= 1) return "clean";
             var shown = string.Join("·", Words);
-            if (_boolish && Words[0] is "Is" or "Has") return $"compound-bool ({shown})";
-            return CarriesVerb ? $"**VERB+NOUN** ({shown})" : $"**COMPOUND** ({shown})";
+            if (_boolish) return $"bool ({shown})";
+            return HasVerb ? $"**VERB+NOUN** ({shown})" : $"**COMPOUND** ({shown})";
         }
     }
 

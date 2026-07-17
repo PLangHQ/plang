@@ -7,7 +7,7 @@ Companion to `obp-scan.md`. The scan procedure fails when it's done by fluent re
 New top-level dev-tool project: **`Tools/ObpScan/`** (`Tools/ObpScan/ObpScan.csproj`, `net10.0` console). NOT under `PLang.Generators/` — that's the shipped netstandard2.0 analyzer assembly; a console tool that loads a workspace doesn't belong there. `Tools/` is a new folder for dev utilities (nothing else needs to ship it).
 
 - References: `Microsoft.CodeAnalysis.CSharp`, `Microsoft.CodeAnalysis.Workspaces.MSBuild`, `Microsoft.Build.Locator`.
-- Not in the main solution build path, **not a build gate, never runs on build.** On-demand ONLY — I run it when Ingi asks for an OBP scan: `dotnet run --project Tools/ObpScan -- <type-or-file>` → prints the table → done.
+- Not in the main solution build path, **not a build gate, never runs on build.** **Runtime ~15s** (one MSBuild load + parallel per-member SymbolFinder) — no long timeout needed. On-demand ONLY — I run it when Ingi asks for an OBP scan: `dotnet run --project Tools/ObpScan -- <type-or-file>` → prints the table → done.
 
 ## What it computes (the three columns of the table)
 
