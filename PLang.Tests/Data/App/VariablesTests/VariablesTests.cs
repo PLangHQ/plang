@@ -913,10 +913,10 @@ public class VariablesAccessorTests : System.IAsyncDisposable
         var newStep = new global::app.goal.steps.step.@this { Index = 0, Text = "updated" };
         stack.Set("goal.Steps[0]", newStep);
 
-        // Goal should still be a Goal, not a dictionary — it rides as its clr carrier
-        // (Peek→self), the goal reachable through the carrier's own door.
+        // Goal should still be a Goal, not a dictionary — it is a plang item now (the
+        // hosts-stay-hosts model was reversed), so it rides as ITSELF, not a clr carrier.
         var retrieved = await stack.Get("goal");
-        await Assert.That((await retrieved.Value())).IsTypeOf<global::app.type.clr.@this>();
+        await Assert.That((await retrieved.Value())).IsTypeOf<global::app.goal.@this>();
 
         // Sub-goal names should survive
         var subName = await stack.Get("goal.Goals[0].Name");
@@ -929,19 +929,19 @@ public class VariablesAccessorTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task Set_GoalRidesAsClrCarrier_PreservingIdentity()
+    public async Task Set_GoalRidesAsItem_PreservingIdentity()
     {
         var stack = new Variables(_app.User.Context);
         var goal = new global::app.goal.@this { Name = "MyGoal" };
         stack.Set("goal", goal);
 
-        // A goal is a host, so it rides as a clr carrier (Peek→self): the Data holds the carrier.
+        // A goal is a plang item now (the hosts-stay-hosts model was reversed) — it rides as
+        // ITSELF, not wrapped in a clr carrier. The Data holds the goal directly.
         var retrieved = await stack.Get("goal");
         await Assert.That(retrieved).IsNotNull();
 
-        // The carrier's inner value IS the same goal object — identity is preserved.
-        var carrier = (global::app.type.clr.@this)retrieved!.Peek()!;
-        await Assert.That(object.ReferenceEquals(carrier.Value, goal)).IsTrue();
+        // Peek answers the same goal instance — identity is preserved with no carrier hop.
+        await Assert.That(object.ReferenceEquals(retrieved!.Peek(), goal)).IsTrue();
     }
 
     // ResolveDeep was deleted in v4 (resolution lives in data.Value<T>() per call).
