@@ -18,6 +18,12 @@ The sweep: the goal graph goes singular everywhere — classes at the collection
 | Tracked `.pr` files carrying plural keys | **806** |
 | Test snapshot JSONs with plural keys | 0 |
 
+## A0. CORRECTIONS from the full-body trace (2026-07-17, second pass — these fix MY earlier sketch)
+
+1. **The `Rows(index)` accessor in the first A1 sketch was INVENTED** — `list.@this`'s storage is `private readonly List<object?> _items` (list/this.cs:42), and its public faces (`Items` :193, `At`) walk LEAF-FLATTENING logic and mint `Data` wrappers per access — deriving through them would put a flatten-walk in the runtime's inner loop. **The seam is one keyword: `_items` becomes `private protected`** — same-assembly subclasses reach storage directly, no new members, public semantics untouched. The facades below read `(Step)_items[i]` — hot-loop cost ≈ today (one cast).
+2. **The layer-5 "action.list gains an ICreate face" was the WRONG mechanism.** `set %goal.Step[i].Action% = %compileResult.actions%` flows through the `*`-kind `Set` → `value.Clr(PropertyType)` → the json kind materializes INTO the declared CLR shape via the Read machinery (the Stage-1 door). So the builder-set and the `.pr` read use ONE mechanism: the reflection/json read constructing the collection. No ICreate face; the verify is that the read path constructs the new subclass (ctor with context + Add).
+3. **The plural inventory was INCOMPLETE — the graph has more plural properties than Steps/Actions/Modifiers:** `goal.Goals` (`goal/this.cs:53` — sub-goals, wire `goals:`; renaming to `Goal` COLLIDES with `step.Goal`/`steps.Goal` backrefs semantically — NAMING DECISION for Ingi: `goal.Goal` regardless? or another word), **`action.Parameters`** (wire `parameters:[…]` in every `.pr` AND the compile schemas AND the generator's `GetParameter` surface — the source generator enters the blast radius), `step.Warnings`, plus whatever the inventory commit finds. The migration script and schema renames extend accordingly.
+
 ## A. The rewritten classes (real code — these are the non-mechanical core)
 
 ### A1. `app/goal/step/list/this.cs` (was `goal/steps/this.cs` — every member listed, none silently dropped)
@@ -69,9 +75,26 @@ public sealed class @this : global::app.type.item.list.@this, IList<Step>, ICont
 
 **Dies:** the private `List<Step> _items` (storage moves to the base), the parameterless ctor + late-set `Context { get; set; }` (born-with-context; the base carries it — the late-stamp smell dies with the rewrite). **Verify:** every `new steps.@this()` construction site (GoalMapper/tests/reader) gets a context to hand.
 
-### A2. `app/goal/step/action/list/this.cs` (was `actions/this.cs`, 175 lines)
+### A2. `app/goal/step/action/list/this.cs` (was `actions/this.cs`, 175 lines — EVERY member accounted)
 
-Same reshape as A1 (base rows + `IList<action>` facade + born-with-context). Domain members ride with identifier-only bodies: `Nest(modules)` (the catalog join + modifier re-mint, from the modifier ruling), `GroupModifiersRecursive`'s successor, the `Step` backref + `DroppedLeadingModifier` warning path. **Gains the ICreate face** (layer 5 made honest): `set %goal.Step[i].Action% = %compileResult.…%` is a *list → action.list* creation — `Create(raw, data)` wraps/retags a native list's rows into this collection.
+Same reshape as A1 (`private protected _items` on the base + `IList<action.@this>` facade + born-with-context). Full member accounting from the read:
+
+| Member | Disposition |
+|---|---|
+| `Step? Step` backref + per-access stamp (`a.Step ??= Step`, :19) | rides — known kept smell (mutate-on-read), documented |
+| indexer/Count/Add/AddRange/Clear/Contains/CopyTo/IndexOf/Insert/Remove/RemoveAt/GetEnumerator | the facade over base `_items` — bodies as today, storage swapped |
+| **`Value => _items` (:44)** | **DIES — a public raw-storage leak (naked-collection smell). Trace its callers; each reads through the facade or the plang face instead** |
+| `FirstConditionIndex()` (:49), `IsFirstCondition()` (:60) | ride; bodies identifier-only |
+| **`ComputeBranchChain(int)` (:78)** | **renames — verb+noun obpv. → `Chain(int)`** (returns the branch-label chain); body unchanged |
+| **`SplitAtConditions(int)` (:106)** | **renames — compound. → `Branches(int)`** (returns (condition, body) branches); body unchanged incl. the Step-propagation-via-indexer note |
+| `Nest(modules)` (:140-174) | rides verbatim (the modifier-ruling body: catalog join, re-mint, `DroppedLeadingModifier`, `Modifiers.Sort()` → `Modifier.Sort()`) |
+| ctors | born-with-context; parameterless dies |
+
+Layer 5 rides the ONE read mechanism (correction A0.2) — no ICreate face.
+
+### A2b. The layer-5 write path (corrected)
+
+`set %goal.Step[i].Action% = %list-or-clr(json)%` → `*`-kind `Set` → `value.Clr(action.list.@this)` → the json/list kind materializes into the declared shape via Read — the same construction the `.pr` load uses. VERIFY: the reflection Read constructs the subclass (context ctor; populates via `Add`); `error.Handle.Wrap`'s `Actions?.Clr<…>()` (`error/handle.cs:100`) becomes `Action?.Clr<action.list.@this>()` and now succeeds because the declared property IS the collection type — the old cross-family wall was `List<Step>`-vs-infra, which this dissolves.
 
 ### A3. `app/goal/step/action/modifier/list/this.cs` (was `action/modifiers/this.cs`, 69 lines)
 
@@ -127,8 +150,21 @@ Rejected: a both-keys compat reader (violates no-backward-compat and leaves a fo
 - Full suite by-name diff vs this branch's baseline; `plang build` Sanity end-to-end.
 - Grep gates at close: `goal.steps`, `\.Steps\b`, `\.Actions\b`, `\.Modifiers\b`, `"steps"` in production + os → zero.
 
-## Open decisions for Ingi (blocking plan.md)
+## Decisions (settled 2026-07-17)
 
-1. **D1** — LLM schema keys: rename (one vocabulary, cache bust + quality gate) or keep (seam split)?
-2. **D2** — confirm the boundary: graph only; plural handler params stay.
-3. **D3** — `build.actions` action name: leave for 6c's deletion?
+1. **D1 = RENAME** — everything singular including the LLM schema keys; the two compile schemas unify while touched.
+2. **D2 = handler params ALSO singular** — inventory-first; CLI keys are user-facing (docs ride); `.pr` param names regenerate via the full rebuild, not the script.
+3. **D3 = leave `build.actions`** — module-discovery 6c deletes it; no churn on a corpse (the one named plural survivor).
+4. **NEW (from A0.3, needs Ingi):** `goal.Goals` → the sub-goal collection's singular name. `goal.Goal` collides semantically with the `step.Goal`/`steps.Goal` PARENT backrefs (same word, opposite direction). Options: accept `goal.Goal` (context disambiguates: on goal = children, on step = parent), or a different word for children. Blocking only the goal.Goals rename, nothing else.
+
+## OBP scan of the map's own code (the pass, run 2026-07-17)
+
+| Finding | Class | Disposition |
+|---|---|---|
+| `Rows(index)` in my first A1 sketch | invented member (quoted-or-marked violation) | replaced by the `private protected _items` seam (A0.1) |
+| `actions.Value => _items` | naked-collection leak (pre-existing) | dies in A2; callers traced to the facade |
+| `ComputeBranchChain` / `SplitAtConditions` | verb+noun compounds (pre-existing, in-pass classes) | rename to `Chain` / `Branches` in A2 |
+| `a.Step ??= Step`, `_steps.Goal = this` getter stamps | mutate-on-read (pre-existing) | KEPT, documented — ctor-wiring fix is its own piece, not this branch |
+| `private protected _items` seam | family storage sharing | accepted: the subclass IS a list; no public leak; one keyword |
+| layer-5 via ICreate face (my earlier claim) | second door beside the read mechanism | corrected to the ONE read path (A0.2/A2b) |
+| `goal.Goals` getter `Parent ??=` stamp + `List<@this>` | plain-CLR sub-goal list — the SAME accepting-class shape that caused layer 4 | fold into the sweep: `List<@this>` → the collection treatment or explicitly deferred with a note — Ingi's D4 decides the name first |
