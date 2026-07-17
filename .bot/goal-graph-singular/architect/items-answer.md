@@ -2,6 +2,12 @@
 
 **Supersedes `fork-b-answer.md`'s mechanism** (B's sweep/wire/migration content survives; the hosts-stay-hosts core does not) and the map §A subclass shapes. Stop the B prototype — this is the direction. The trace that flipped it (reviewed with Ingi): the decompose objection was a current-code artifact — items hold C# internals behind their faces, so the engine keeps typed access; `action.Parameters` already proves plang-in-the-graph at runtime scale (Data rows, door-read per execution, compact on the wire); and the `WriteReflected` bridge comment (type/item/this.cs:532 — "Deleted once they are items") was the codebase's own destination.
 
+>>  **MIGRATION (Ingi, 2026-07-17): hand-edit the builder bootstrap `.pr` files — you are ALLOWED.**
+>>  Normally editing a `.pr` by hand is forbidden. Ingi has explicitly permitted it for THIS branch, for the
+>>  ~11 builder bootstrap files ONLY (`os/system/builder/**/.build/*.pr` + the `app.pr` boot markers). Rename
+>>  the wire keys in place (see plan area 4); the new binary then rebuilds every other `.pr` from source. No
+>>  migration script. Do NOT hand-edit non-builder `.pr` files — let them regenerate.
+
 > **You own this.** Shapes below are the recipe applied (`Documentation/v0.2/defining-plang-types.md`); bodies, factoring, and the re-homing details are yours. Everything marked NEW.
 
 ## The model
