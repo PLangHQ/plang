@@ -23,6 +23,19 @@ rename the property (e.g. `Depth`) when `modifiers.Sort`/`RunAsync` move onto `a
 
 Also committed: `modifier` now has its own `Type => "modifier"` face (was inheriting "action").
 
+## DONE — goal-read flip + modifier.Order rename (increment 3, part 1)
+
+- **goal rides as `Data<goal>`, not `clr<goal>`** (`4639b86cc`). Reader returns the goal item;
+  `GetGoalAsync` (in-memory `Found()` + file path), `RunGoalAsync`, and all 24 read-unwrap /
+  write-wrap / `Data<T>`-slot / `list<clr<goal>>` sites collapse to the goal item. Zero residual
+  `clr<goal>` in production. The in-memory `Found()` wrap (GoalCall.cs:225) was the silent-null NRE
+  that broke every goal-run test until fixed.
+- **Catalog drop:** graph-infra item params (goal/step/action/modifier) now drop from the builder
+  catalog by identity (`action/this.Schema.cs`) — they were hidden as clr hosts before; as items they
+  leaked into LLM vocabulary. Fixed `ParamDesc_Parity`.
+- **modifier.Order → Depth** (`e8676d872`) — resolved the CS0108 shadow of `item.Order(@this)`.
+- Verified zero-delta (controlled per-class) on Wire/Modules/Runtime/Data throughout.
+
 ## Sizing done for the remaining pieces (all dedicated-pass, NOT tail-of-session)
 
 - **goal-read flip (`clr<goal>` → `Data<goal>`)** — 33 sites / ~13 files. NOT compiler-guided: sites do
