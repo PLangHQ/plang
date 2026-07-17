@@ -42,7 +42,32 @@ The `.pr` the runtime runs lives at `os/system/builder/.build/*.pr` (OsDirectory
 2. The registered `builder` channel is a **goal channel that's `IsExecuting`** — `Resolve` (`channel/list/this.cs:110`) returns `null` for a goal channel with `IsExecuting == true`. A goal-backed channel writing to itself / re-entrancy could trip this.
 3. `BuilderChannel.pr` fails to load (another stale/missing system `.pr`), so `channel.set`'s goal binding is empty — but `:9` didn't error, so probably not.
 
-Start: trace `channel/set.cs` (registration site + actor) and `output/write`'s channel resolution (`Channels.Resolve`), and dump whether `actor.Channel._channels` contains `"builder"` right after `Build.goal:9` vs at `EmitBuildEvent:12`.
+### ROOT-CAUSED (2026-07-17): channel name resolves to the UNPARSED raw `"builder"` (quotes included)
+
+The exact error is `Channel '"builder"' not found` — the lookup name carries the JSON quotes.
+Not IsExecuting, not a wrong actor, not stale `.pr`:
+- `.pr` param is clean: `emitbuildevent.pr` step[1] action[0] param[1] = `{name:"channel", type:{name:"text"}, value:"builder"}`.
+- `channel.set` registers `builder` (clean — `Name.Value().Clr<string>()`).
+- BUT the generated IChannel resolution (`app.module.action.output.Write.Action.g.cs:57`, emitted from
+  `PLang.Generators/Emission/Action/this.cs:287`) reads the name via **`param.Peek()?.ToString()`**.
+  `Peek()` returns the lazy source's RAW form — the wire slice `"builder"` WITH quotes, never parsed —
+  so `Channel.Resolve("\"builder\"")` (line 58) misses the registered `builder` → ChannelNotFound.
+
+**Candidate fix:** the generated `Resolve(...)` is **async** (`Task<(ICodeGenerated?, IError?)>`), so read the
+PARSED value: `(await param.Value())?.ToString()` instead of `.Peek()?.ToString()`. VERIFY first that
+`text.Value()` on this source yields clean `builder` (strips the wire quotes) — write a focused test that
+loads `emitbuildevent.pr` and inspects the channel param's `Peek()` vs `await Value()`. If `Value()` is
+clean, change the generator emission (netstandard2.0 — regenerate) at
+`PLang.Generators/Emission/Action/this.cs:287`. Then rebuild + re-run the repro.
+
+**Why it regressed:** the `Peek()` (raw, sync) approach assumed the param's raw IS the clean string; the
+born-native/lazy-source wire model makes `Peek()` the unparsed JSON slice. A general IChannel-named-write
+concern (any `write out %x% channel: "foo"`), not build-specific — check whether named-channel writes pass
+anywhere in the suite to gauge blast radius.
+
+(Earlier hypotheses — different actor, goal-channel IsExecuting, BuilderChannel.pr load — all traced and
+RULED OUT: registration is on the same User actor, the first write can't be IsExecuting, and channel.set
+reached `Build.goal:11` without erroring.)
 
 ## Discipline (do NOT skip)
 
