@@ -157,6 +157,20 @@ Rejected: a both-keys compat reader (violates no-backward-compat and leaves a fo
 3. **D3 = leave `build.actions`** — module-discovery 6c deletes it; no churn on a corpse (the one named plural survivor).
 4. **D4 = `goal.Child`** (Ingi, 2026-07-17). The sub-goal collection is `goal.Child` — the symmetric name to the EXISTING `Parent` backref (`goal/this.cs` getter stamps `g.Parent ??= this`; relations name both ends of one axis: `goal.Parent` up, `goal.Child` down). Wire `child:[…]`; `%goal.Child[2]%`. Rejected: `goal.Goal` (collides with the parent-backref meaning), `private` (C# keyword + names a visibility that is already the `Visibility` property), `Sub` (fragment), `Local` (runner-up — names scoping, but the property IS structure). The `List<@this> _goals` storage gets the same accepting-class treatment as the other collections (or an explicitly deferred note if the sweep bounds it) — it is the same shape that caused layer 4.
 
+## Third pass (settled with Ingi 2026-07-17) — Error/Warning, Parameter/Default, backrefs, the crossing test
+
+**Error/Warning collections (step AND action — both carry the `List<Info>` pair today):**
+- `step.Error : error.list.@this` — rows ARE the error objects: `Add(global::app.error.IError)`; **callers never flatten into a wrapper** — the producing site hands the `IError` it already holds (Error/ActionError/ServiceError), consumers read the error object they get from the list.
+- `step.Warning : warning.list.@this` — **the `Info` class is REPLACED by `Warning`** (`app/Info.cs` → `app/Warning.cs`; it only ever carried `{Key, Message}` warning shape). Warning sites write `new Warning { Key, Message }`.
+- **Shared face = an interface, never a shared base or duplicated fields** (Ingi's direction): IF a consumer reads errors and warnings uniformly (`.Message`/`.Key` — a viewer loop, an output template), define the small shared interface then; coder checks during the sweep whether such a consumer exists — if none does, note it and don't pre-build (the wire needs nothing: reflection writes each host's own props).
+- Both lists: thin `list.@this` subclasses via the private-protected seam (the native `Add` takes items; these rows are hosts).
+
+**`action.Parameter` / `action.Default`: native lists** (`List<data.@this>` → `list.@this` — rows ARE Data, the most natural promotion in the sweep; the wire keeps the Data-envelope row shape). **The generator's `GetParameter` changes to the native-list row lookup** — PLang.Generators is in the blast radius twice (rename + structure); one visit.
+
+**C closed — backrefs (`step.Goal`, `action.Step`, `goal.Parent`) STAY host references.** The trace: 0 plang-side set sites (the decompose-on-set has no live occurrence), 26 C#-interior sets, hundreds of C#-interior reads that would each gain a `.Value` unwrap under promotion (no implicit — the outbound-implicit ban). Post-sweep the graph's plang-assigned properties (the collections) store whole; the backref promotion would fix zero sites and cost hundreds.
+
+**The sanctioned-crossing test (Ingi ok'd; goes in the plan's audit):** *does the destination genuinely require CLR (its storage, or a 3rd-party API)? Then the value crosses ITSELF, once, at that edge (`value.Clr(target)` at the slot — lower-on-write symmetric with lift-on-read). Could the destination have held the plang value? Then lowering was the violation — promote the slot instead.* The banned shapes stay banned: foreign hands (`data.Value as X` in couriers), mid-flight lowering, call-site pre-decomposition (`path.Absolute`).
+
 ## OBP scan of the map's own code (the pass, run 2026-07-17)
 
 | Finding | Class | Disposition |

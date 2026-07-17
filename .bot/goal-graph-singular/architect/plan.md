@@ -38,9 +38,13 @@ The goal graph is the runtime's spine and it violates the language's own naming 
 - Grep gates: `app.goal.steps`, `\.Steps\b`, `\.Actions\b`, `\.Modifiers\b`, `"steps"`/`"actions"`/`"modifiers"` wire keys in production + os + the inventoried plural param names → zero (D3's `build.actions` the one named survivor, with its 6c death note).
 - Merge back into `get-builder-running`.
 
+**1b. The property promotions from the plang-type audit** (map "Third pass"): `step.Error`/`action.Error` as `error.list` (`Add(IError)`, callers hand the error they hold — no flattening); `step.Warning`/`action.Warning` as `warning.list` (**`Info` replaced by `Warning`**; shared error/warning face = an interface only if a uniform consumer exists — coder checks, doesn't pre-build); `action.Parameter`/`action.Default` as native lists (**the generator's `GetParameter` moves to the native-list row lookup**); backrefs STAY host references (the 0-sets/hundreds-of-reads trace, on record in the map); scalars stay CLR — each slot-write is the sanctioned crossing per the test in the audit section.
+
 ## Demolition (must NOT survive)
 
 - `goal/steps/this.cs`, `…/actions/this.cs`, `…/modifiers/this.cs` (the classes at the old slots), the plural folders themselves, `_items` private storage ×3, the parameterless ctors + late-set `Context` ×3.
+- **`app/Info.cs` (the class — replaced by `Warning`), the four `List<Info>` properties, and every site flattening a real error into an Info** (the producer hands its `IError` to `error.list.Add` instead).
+- `actions.Value` (the raw-storage leak), `ComputeBranchChain`/`SplitAtConditions` (renamed `Chain`/`Branches`).
 - Aliases `GoalSteps`/`StepActions`/`ActionModifiers` (replaced or re-pointed).
 - `ContainerFamily`'s `IList<>` interface probe.
 - Every inventoried plural handler-param property name.
@@ -68,3 +72,5 @@ The goal graph is the runtime's spine and it violates the language's own naming 
 ## Plang-type leaf audit
 
 The rewritten collections ARE plang values (the point). Rows store raw hosts (lift-on-read — `list<clr<step>>` per the parent plan). No new CLR leaves introduced; the CLI settings keys rename but their VALUES bind exactly as before (`Build.File` stays the native plang list per the settings ruling). Flag any new scalar the implementation adds that answers a raw CLR name.
+
+**The sanctioned-crossing test (Ingi, 2026-07-17 — apply it to every slot this plan touches):** *does the destination genuinely require CLR — its own storage, or a 3rd-party API? Then the value crosses ITSELF, once, at that edge (`value.Clr(target)` at the slot; lower-on-write symmetric with lift-on-read). Could the destination have held the plang value? Then lowering was the violation — promote the slot instead.* This is why: collections/settings promoted (could hold plang); host scalars (`Text`, `Index`, `Indent`, bools) stay CLR and cross at their slot (the host IS the C# side; the boundary sits where crossings are fewest); banned shapes stay banned (courier `data.Value as X`, mid-flight lowering, call-site pre-decomposition).
