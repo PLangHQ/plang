@@ -1,9 +1,32 @@
-# coder handoff — graph→items, increment 1 (action/step) — WIP, NOT committed
+# coder handoff — graph→items
 
 Branch `goal-graph-singular`. Implementing the items-answer.md direction (graph becomes plang items).
-Two uncommitted files: `app/goal/steps/step/actions/action/this.Item.cs`, `app/goal/steps/step/this.Item.cs`.
 
-## What's done (increment 1: action + step become items, transitional)
+## COMMITTED
+
+- **Increment 1** (`be6bbf294`): `action` + `step` → items (modifier rides free via `: action`).
+- **Increment 2** (`3839f4b86`): `goal` → item; 2 Variables tests updated to the item model
+  (they asserted the reversed clr<goal> carrier).
+
+All four graph classes (`goal`/`step`/`action`/`modifier`) are now `: item.@this, ICreate`. Faces are
+additive + TRANSITIONAL: `Type`/`IsLeaf`; `Output` delegates to the reflection (*) kind (byte-identical
+wire); reflect-`Set` (base `Get` already reflects; base `Set` threw). Verified: PLang builds clean;
+Wire + Modules zero-delta multi-run; Data zero-delta under controlled per-class comparison; layer-5
+write green (`ClrJsonActionsWriteTests`).
+
+## NEXT — increment 3: explicit Write + readers (the real new code, architect verify #1)
+
+Replace the delegating `Output` with an explicit token `Write`/`Output` per level, add
+`app/goal/**/serializer/Reader.cs` (`ITypeReader`), and flip the `.pr` READ off the reflection kind
+onto the per-type readers. Recipe: `Documentation/v0.2/defining-plang-types.md` §3-4.
+- Golden: item `Write` output byte-identical to today except renamed keys (the singular sweep).
+- Param rows (`Parameters`/`Defaults` = `List<data>`) ride the EXISTING `@schema:data` reader.
+- `modifier : action` reader constructs the subtype by declared element type; give `modifier` its own
+  `Type => "modifier"` face (today it inherits action's "action").
+- Then: delete the 3 collection classes (`steps`/`actions`/`modifiers`) + re-home methods
+  (items-answer.md table), then the singular sweep (names/wire keys/`ActionName→Name`), migration, accept.
+
+## Detail from increment 1 (retained)
 
 - `action` and `step` now `: item.@this, ICreate<@this>` (modifier rides free as `: action`).
 - Faces: `Type` (`new("action"/"step", typeof(@this))`), `IsLeaf => false`.
