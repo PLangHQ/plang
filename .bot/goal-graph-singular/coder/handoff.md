@@ -31,6 +31,26 @@ writes it explicitly — byte-identical). The wrap-fold + Position sort re-homed
 gone. All 18 modifier tests green; Wire zero-delta. **This is the template for the remaining two
 collection deletions.**
 
+### ⚠ `actions.@this` is MORE entangled than modifiers — dual role (mapped, not yet done)
+`actions.@this` (`StepActions`) is woven through THREE subsystems, so it's not a clean single-role
+delete like modifiers:
+1. **Graph collection** — `step.Actions` (change to `List<action>` with a `Step`-stamping getter,
+   like `goal.Goals` stamps `Parent`). NOTE: `List<T>` is a plain CLR list → step's *delegating*
+   Output already writes it via reflection's IEnumerable bridge, so **no explicit step Output is
+   needed** for the deletion (that's a separate Finding-2 nicety).
+2. **`condition.if` orchestration** — `Orchestrate(actions.@this actions, …)` calls
+   `actions.SplitAtConditions`/`ComputeBranchChain`/`IndexOf`. Re-homing `SplitAtConditions`(→Branches)
+   /`ComputeBranchChain`(→Chain)/`FirstConditionIndex`/`IsFirstCondition`/`Nest` onto `step` means
+   `Orchestrate` takes a `step` (or the List) — a signature change in core control-flow.
+3. **Builder catalog (role 2)** — `module.list.Describe()` RETURNS `StepActions` and does
+   `new StepActions()`; `build.code` getActions/getTypes use `action.Actions.Value()` +
+   `clr<StepActions>`. `actions.Value` "dies" per the plan but these consumers need a home first
+   (the architect noted `build.actions`/Describe dissolve in module-discovery 6c).
+
+Do it as a coordinated pass across all three (or split: decouple the graph first, leave role-2's
+`actions.@this` alive until 6c). `steps.@this` is likely cleaner (single role, but owns the
+`RunAsync` step loop → `goal.RunAsync`).
+
 ### The pattern for `actions.@this` and `steps.@this` (repeat it)
 1. Give the parent an explicit Store `Output` (step: `{index,text,…,actions}`; goal: `{name,…,steps,goals}`)
    — reproduce the reflected [Store] key order (check a real `.pr`); this replaces the delegating Output.
