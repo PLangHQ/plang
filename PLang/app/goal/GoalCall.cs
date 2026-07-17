@@ -220,9 +220,9 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
         if (PrPath != null)
             return await LoadFromFile(PrPath.ToString(), resolvedName, app, context);
 
-        // A goal answered from memory rides back as clr<goal>, same as the .pr-load path — the
-        // dispatcher (RunGoalAsync) unwraps one shape, not two.
-        data.@this Found(@this g) => context.Ok(new global::app.type.clr.@this<@this>(g, context));
+        // A goal is a plang item now — it rides back as itself, same as the .pr-load path (the
+        // reader returns the goal item, not a clr<goal> carrier).
+        data.@this Found(@this g) => context.Ok(g);
 
         // 1. Check via the action's step's goal chain (action → step → goal → walk up)
         var currentGoal = Action?.Step?.Goal;
@@ -316,7 +316,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
 
         // The value door — a source-backed .pr payload parses through its own
         // Ready() here (the goal reader), answering the Goal instance.
-        if (((await result.Value()) as global::app.type.clr.@this<global::app.goal.@this>)?.Value is not { } goal)
+        if ((await result.Value()) as global::app.goal.@this is not { } goal)
             // Surface the underlying parse failure (source.Value keys it
             // MaterializeFailed with the slot name + reason) — a generic "not a Goal"
             // hides WHERE the .pr is malformed.
@@ -368,8 +368,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
             return context.Error(new global::app.error.ActionError(
                 $"Goal '{Name}' not found in '{prPath}'", "GoalNotFound", 404));
 
-        // Ride back as clr<goal> — SAME shape as the in-memory path's Found(), so the dispatcher
-        // (RunGoalAsync / Start) unwraps ONE shape. A bare Goal here NREs the `as clr<Goal>` unwrap.
-        return context.Ok(new global::app.type.clr.@this<@this>(found, context));
+        // Ride back as the goal item — SAME shape as the in-memory path's Found() and the .pr reader.
+        return context.Ok(found);
     }
 }

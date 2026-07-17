@@ -12,7 +12,6 @@ namespace app.goal.serializer;
 /// <c>clr</c>, this reader and the goal-as-type machinery go. See
 /// <c>.bot/read-path-unification/architect/v1/stage-final-cleanup.md</c>.</para>
 /// </summary>
-[System.Obsolete("goal rides as clr(goal); the .pr read moves to the format-agnostic reflection reader — do not add new callers.")]
 public sealed class Reader : global::app.type.reader.ITypeReader
 {
     public string Kind => global::app.type.reader.@this.AnyKind;
@@ -21,10 +20,12 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
-        // goal is a host — build it by reflecting its [Store] props off the reader, carry as
-        // clr<goal> (an item). No STJ; the * kind's Read is the one .pr materializer. The .pr
-        // payload is JSON, so open a json reader over the raw bytes (the scalar value.Reader the
-        // channel hands us carries them as one token) and drive the structured walk off that.
+        // goal is a plang ITEM now (the hosts-stay-hosts model was reversed) — the reader returns the
+        // goal itself, not a clr<goal> carrier. Its C# internals (Steps/Actions/…) are still read by
+        // reflecting the [Store] props (the * kind's Read is the one .pr materializer, transitional);
+        // the explicit token walk replaces the reflection hop later. The .pr payload is JSON, so open
+        // a json reader over the raw bytes (the scalar value.Reader the channel hands us carries them
+        // as one token) and drive the structured walk off that.
         var raw = reader.RawValue();
         if (raw.Length == 0) return new global::app.type.item.@null.@this("goal", kind);
         var utf8 = new System.Text.Json.Utf8JsonReader(raw);
@@ -32,8 +33,6 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         var jsonReader = new global::app.channel.serializer.json.Reader(utf8);
         var goal = new global::app.type.item.kind.reflection.@this()
             .Read(ref jsonReader, typeof(global::app.goal.@this), ctx) as global::app.goal.@this;
-        return goal is null
-            ? new global::app.type.item.@null.@this("goal", kind)
-            : new global::app.type.clr.@this<global::app.goal.@this>(goal, ctx.Context);
+        return goal ?? (global::app.type.item.@this)new global::app.type.item.@null.@this("goal", kind);
     }
 }

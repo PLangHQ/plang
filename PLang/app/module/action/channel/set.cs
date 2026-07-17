@@ -43,7 +43,7 @@ public partial class Set : IContext
 
         var goalResult = await goalCall.GetGoalAsync(Context.App, Context);
         if (!goalResult.Success) return goalResult;
-        var goalEntry = ((await goalResult.Value()) as global::app.type.clr.@this<global::app.goal.@this>)!.Value;
+        var goalEntry = ((await goalResult.Value()) as global::app.goal.@this)!;
 
         var direction = ResolveDirection(name, Direction == null ? null : (await Direction.Value())?.Clr<string>());
 

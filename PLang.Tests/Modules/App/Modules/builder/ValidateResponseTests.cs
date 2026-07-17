@@ -44,7 +44,7 @@ public class ValidateResponseTests
         global::app.@this app)
     {
         return new validateResponse(app.User.Context) { StepResults = new global::app.data.@this<BuildResponse>("", response),
-            Goal = new global::app.data.@this<global::app.type.clr.@this<Goal>>("", new global::app.type.clr.@this<Goal>(goal, app.User.Context))
+            Goal = new global::app.data.@this<Goal>("", goal)
         };
     }
 
@@ -112,7 +112,7 @@ public class ValidateResponseTests
     public async Task NullInputs_ReturnsError()
     {
         var action = new validateResponse(_app.User.Context) { StepResults = new global::app.data.@this<BuildResponse>(),
-            Goal = new global::app.data.@this<global::app.type.clr.@this<Goal>>(),
+            Goal = new global::app.data.@this<Goal>(),
         };
         var result = await action.Run();
 

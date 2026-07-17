@@ -46,6 +46,7 @@ public static class RealGoalLoad
             throw new System.InvalidOperationException(
                 $"RealGoalLoad: channel read failed — {read.Error?.Message}");
 
-        return ((await read.Value()) as global::app.type.clr.@this<global::app.goal.@this>)!.Value;
+        // goal is a plang item now — the load answers the goal itself, not a clr<goal> carrier.
+        return ((await read.Value()) as global::app.goal.@this)!;
     }
 }

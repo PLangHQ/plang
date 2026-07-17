@@ -123,7 +123,7 @@ public class GetGoalsTests
         var prSerializer = (global::app.channel.serializer.plang.@this)
             _app.User.Channel.Serializers.GetByMimeType("application/plang");
         using var prMs = new System.IO.MemoryStream();
-        await prSerializer.SerializeItemAsync(prMs, new global::app.type.clr.@this<Goal>(prGoal, _app.User.Context), global::app.View.Store);
+        await prSerializer.SerializeItemAsync(prMs, prGoal, global::app.View.Store);
         var prJson = System.Text.Encoding.UTF8.GetString(prMs.ToArray());
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "start.pr"), prJson);
 

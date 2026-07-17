@@ -291,7 +291,7 @@ public class Default : IBuilder
         var serializer = (global::app.channel.serializer.plang.@this)
             context.Actor.Channel.Serializers.GetOrDefault("application/plang");
         using var ms = new System.IO.MemoryStream();
-        await serializer.SerializeItemAsync(ms, new global::app.type.clr.@this<Goal>(goal, context), global::app.View.Store);
+        await serializer.SerializeItemAsync(ms, goal, global::app.View.Store);
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
 
         var saveAction = new file.Save(context)
@@ -1100,7 +1100,7 @@ public class Default : IBuilder
         Goal? prGoal;
         try
         {
-            prGoal = ((await readResult.Value()) as global::app.type.clr.@this<Goal>)?.Value;
+            prGoal = (await readResult.Value()) as Goal;
         }
         catch (System.Exception ex) when (ex is not (System.OperationCanceledException
             or System.OutOfMemoryException or System.StackOverflowException))
@@ -1175,7 +1175,7 @@ public class Default : IBuilder
             // downstream checks (or runtime) will surface a NotFound for it.
             goalCall.Action ??= action;
             var resolved = await goalCall.GetGoalAsync(app, context);
-            if (resolved.Success && ((await resolved.Value()) as global::app.type.clr.@this<Goal>)?.Value is { } g && g.PrPath != null)
+            if (resolved.Success && (await resolved.Value()) as Goal is { } g && g.PrPath != null)
             {
                 // Pre-resolve the .pr path. A slash-qualified Name keeps its
                 // folder prefix in the saved .pr — LoadFromFile leaf-matches it

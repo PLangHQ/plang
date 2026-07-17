@@ -17,7 +17,7 @@ public partial class validateResponse : IContext
 
     /// <summary>The goal being built — used to verify step count and prior actions.</summary>
     [IsNotNull]
-    public partial data.@this<global::app.type.clr.@this<Goal>> Goal { get; init; }
+    public partial data.@this<Goal> Goal { get; init; }
 
     public async Task<app.data.@this> Run()
     {

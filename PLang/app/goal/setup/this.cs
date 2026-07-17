@@ -57,7 +57,7 @@ public sealed class @this
                 // FilePath.ReadText path. The per-Actor serializer carries a
                 // Context-bound PathJsonConverter so Path fields land wired.
                 var read = await file.ReadText();
-                if (!read.Success || ((await read.Value()) as global::app.type.clr.@this<global::app.goal.@this>)?.Value is not { } goal || !goal.IsSetup) continue;
+                if (!read.Success || (await read.Value()) as global::app.goal.@this is not { } goal || !goal.IsSetup) continue;
 
                 foreach (var step in goal.Steps)
                 {

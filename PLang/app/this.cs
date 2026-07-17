@@ -527,7 +527,7 @@ public sealed partial class @this : IAsyncDisposable
         var goalResult = await goalCall.GetGoalAsync(this, context);
         if (!goalResult.Success) return goalResult;
 
-        var goal = ((await goalResult.Value()) as global::app.type.clr.@this<Goal>)!.Value;
+        var goal = ((await goalResult.Value()) as Goal)!;
 
         // User code executes under the User actor's context.
         return await goal.RunAsync(User.Context);
@@ -563,7 +563,7 @@ public sealed partial class @this : IAsyncDisposable
                 await context.Variable.Set(param.Name, param);
             }
 
-        return await ((await goalResult.Value()) as global::app.type.clr.@this<Goal>)!.Value.RunAsync(context);
+        return await ((await goalResult.Value()) as Goal)!.RunAsync(context);
     }
 
     /// <summary>

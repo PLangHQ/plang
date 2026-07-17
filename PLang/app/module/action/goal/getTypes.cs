@@ -32,7 +32,7 @@ namespace app.module.action.goal;
 [System.Obsolete("A string-typed shadow of the type system — type/element/return-type discovery moves to the type entities and module views; do not add new callers.")]
 public partial class getTypes : IContext
 {
-    public partial data.@this<global::app.type.clr.@this<global::app.goal.@this>> Goal { get; init; }
+    public partial data.@this<global::app.goal.@this> Goal { get; init; }
 
     public async Task<data.@this<global::app.type.item.list.@this<global::app.type.item.dict.@this>>> Run()
     {

@@ -162,11 +162,21 @@ public partial class @this
             // entity through the identity door (compounds ride the kind axis).
             var entity = value == typeof(global::app.data.@this) ? type["object"] : type[value];
 
-            // Host params (Goal, Step, SignOptions, BuildResponse, StepActions, ...) resolve to
-            // `clr` — the LLM can never author a host object, and naming one would leak the C# type
-            // (the door refuses to). Filter them from the catalog like the capability interfaces so
-            // ONLY plang types reach the LLM.
+            // Host params (SignOptions, BuildResponse, ...) resolve to `clr` — the LLM can never
+            // author a host object, and naming one would leak the C# type (the door refuses to).
+            // Filter them from the catalog like the capability interfaces so ONLY plang types reach
+            // the LLM.
             if (entity.Name == "clr") continue;
+
+            // Graph-infra items (goal / step / action / modifier) are STRUCTURE the builder injects,
+            // never LLM vocabulary — the compiler builds the graph, the LLM never authors a whole
+            // goal/step/action as a param. They became plang items in the graph-singular sweep, so
+            // they no longer resolve to `clr` and would otherwise leak into the catalog; drop them
+            // by identity (subclasses — modifier : action — ride the IsAssignableFrom).
+            if (typeof(global::app.goal.@this).IsAssignableFrom(value)
+                || typeof(global::app.goal.steps.step.@this).IsAssignableFrom(value)
+                || typeof(global::app.goal.steps.step.actions.action.@this).IsAssignableFrom(value))
+                continue;
 
             rows.Add(new property.@this
             {

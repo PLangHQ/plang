@@ -93,7 +93,7 @@ public partial class discover : IContext
         }
         // Born-typed: text content rides as the text wrapper; its string form
         // is ToString (a Goal already matched the first arm).
-        var sourceGoal = ((await goalRead.Value()) as global::app.type.clr.@this<Goal>)?.Value
+        var sourceGoal = (await goalRead.Value()) as Goal
             ?? Goal.Parse((await goalRead.Value())?.ToString() ?? "", goalFile)
             ?? new Goal { Path = goalFile };
 
@@ -146,7 +146,7 @@ public partial class discover : IContext
                 StatusReason = prRead.Error?.Message ?? "pr corrupt"
             };
         }
-        var prGoal = ((await prRead.Value()) as global::app.type.clr.@this<Goal>)?.Value;
+        var prGoal = (await prRead.Value()) as Goal;
         if (prGoal == null)
         {
             return new global::app.test.@this(Context)

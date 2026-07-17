@@ -40,7 +40,7 @@ public class ClrJsonActionsWriteTests : System.IAsyncDisposable
         _app.Goal.Add(goal);
         // goal flows as clr<goal> now (a host); the builder holds it that way, so %goal%
         // navigates/writes through the clr carrier's reflection kind.
-        await context.Variable.Set("goal", new global::app.type.clr.@this<Goal>(goal, context));
+        await context.Variable.Set("goal", goal);
 
         // The compile result: a clr(json) array of action objects — exactly what the LLM
         // compile hands back (`%compileResult.actions%`).
