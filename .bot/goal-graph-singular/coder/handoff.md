@@ -51,6 +51,22 @@ Do it as a coordinated pass across all three (or split: decouple the graph first
 `actions.@this` alive until 6c). `steps.@this` is likely cleaner (single role, but owns the
 `RunAsync` step loop → `goal.RunAsync`).
 
+**ATTEMPTED the graph-decouple + reverted (findings, so the next pass skips the dead ends).**
+Making `step.Actions` a `List<action>`, re-homing FirstConditionIndex/IsFirstCondition/Chain/Branches/
+Nest onto `step`, and rewiring `condition.if.Orchestrate(step, …)` got **PLang to build clean**. But
+the fallout showed `actions.@this`'s TYPE is embedded in production method SIGNATURES beyond the
+property: `condition.if.Orchestrate`, `RenderFormal(Actions, …)`, `IndexOfAction(actions.@this, …)`
+(callstack snapshot), `Describe() → StepActions`, `getActions`/`getTypes` (`clr<StepActions>` +
+`.Value()`), and `ValidateActions(actions.@this)`. Each must flip to `List<action>` too — and the TEST
+suite has two distinct users (construct `step.Actions` → need `List`; exercise the `actions.@this`
+CLASS methods `.Value`/`.FirstConditionIndex` → need the class) so a blanket sed mis-converts the
+second kind. **Conclusion: this is a genuine coordinated refactor across ~8 production signatures +
+per-file test surgery, not a bounded increment.** Recommended order for the next pass: (a) change every
+production signature that types the step's actions from `actions.@this`→`List<action>` FIRST (compiler
+lists them), (b) then the property + re-home, (c) then split the test edits by user-kind, (d) leave
+`actions.@this` alive ONLY for `Describe`/`getActions` role-2 until 6c. `RenderFormal`/`IndexOfAction`
+just want an `IReadOnlyList<action>` — widen them.
+
 ### The pattern for `actions.@this` and `steps.@this` (repeat it)
 1. Give the parent an explicit Store `Output` (step: `{index,text,…,actions}`; goal: `{name,…,steps,goals}`)
    — reproduce the reflected [Store] key order (check a real `.pr`); this replaces the delegating Output.
