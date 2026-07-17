@@ -24,7 +24,25 @@ The `.pr` the runtime runs lives at `os/system/builder/.build/*.pr` (OsDirectory
 | 1 | **CLI settings bind** | `--build={"files":[...]}` → `String cannot lower to this` at `setting/this.cs` | ✅ FIXED (`c13532536` on module-discovery) — `Build.Files` is now a plang `list<path>`; the walk stores it lazily, the consumer lifts each row via `row.Value<path>()` |
 | 2 | **Bootstrap NRE** | `NullReferenceException` at `this.cs:566` (`goalResult.Value() as clr<Goal>`!) | ✅ FIXED (`a1908911f` on module-discovery) — `GoalCall.LoadFromFile` (the PrPath path) now rides back as `clr<goal>`, matching the in-memory `Found()`; the kind-redesign (`4cb19476b`) had updated the dispatcher + memory path but not this one |
 | 3 | **`builder` channel not found** | `Channel 'builder' not found` at `EmitBuildEvent.goal:12` (`write out %msg% channel: "builder"`) | ❌ **NEXT — start here** |
-| 4+ | unknown | — | each fix likely unmasks the next; expect more |
+| 4 | **Fluid door recursion** | StackOverflow in `PlangDoorAccessor.GetAsync` inside a `{% for %}` member access | ❌ NEXT (channel fix `f1c58bba2` unmasked it) |
+| 5+ | unknown | — | each fix unmasks the next |
+
+### Layer 4 — first look (2026-07-17)
+
+`plang build` now clears the channel and fails DEEPER with a stack overflow:
+```
+app.module.action.ui.code.Fluid+PlangDoorAccessor.GetAsync(object, string, TemplateContext)
+Fluid.Values.ObjectValueBase.GetValueAsync(...)
+Fluid.Ast.IdentifierSegment.ResolveAsync → MemberExpression.EvaluateAsync → ForStatement.WriteToAsync
+```
+The spike's `PlangDoorAccessor` (`app/module/action/ui/code/Fluid.cs`) — `GetAsync` does
+`(await new Data("", obj, ctx).Get(name).Value())` then returns `item.@this.Backing(resolved)`. A value
+inside a `{% for %}` loop, when a member is accessed, resolves to something whose OWN member access
+re-enters the door on the same shape → infinite recursion. Identify WHICH template + value: could be one
+of the module-discovery templates (`summary.planner` / `stepActionDetails` iterate module/action elements
+through the door — though their isolated render tests pass, so the build's data/shape may differ) or an
+existing one (`build-output.template`, `goalFormat`). Bisect by rendering each build template over the
+real build data; the recursion is a `Backing()` that hands Fluid a value which loops.
 
 ## Layer 3 — findings so far (the current front)
 
