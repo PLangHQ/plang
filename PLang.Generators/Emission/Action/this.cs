@@ -281,10 +281,12 @@ public static class @this
         {
             sb.Append("""
                         {
-                            // The channel param rides as a text value after born-native —
-                            // its string face is the channel name (a raw `as string` would
-                            // null a text.@this and silently default to Output).
-                            var __channelName = action?.Parameters?.FirstOrDefault(d => string.Equals(d.Name, "channel", System.StringComparison.OrdinalIgnoreCase))?.Peek()?.ToString();
+                            // The channel name is the PARSED value's string face — await Value(), not
+                            // Peek(): Peek() hands back the lazy source's RAW wire slice, which for a
+                            // .pr text param is the JSON-quoted form (`"builder"`) and misses the
+                            // channel registered under the clean name.
+                            var __channelParam = action?.Parameters?.FirstOrDefault(d => string.Equals(d.Name, "channel", System.StringComparison.OrdinalIgnoreCase));
+                            var __channelName = __channelParam == null ? null : (await __channelParam.Value())?.ToString();
                             Channel = (context.Actor ?? app.User).Channel.Resolve(__channelName);
                             if (Channel == null)
                                 return new global::app.error.ServiceError(
