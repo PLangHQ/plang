@@ -28,7 +28,7 @@ The goal graph is the runtime's spine and it violates the language's own naming 
 
 **3. os/ authored surface** (map §D): the 10 files — `%goal.Steps[…]%` → `%goal.Step[…]%`, template member renames, `planStep.actions` → `planStep.action`, the schema keys above.
 
-**4. The `.pr` migration + full rebuild** (map §E): the one-shot key-rename script over the 806 tracked files (graph keys ONLY — its job is bootstrap-readability, nothing else) → new binary builds green → **full `plang build` regenerates everything** (params get their new names here) → diff reviewed (expected changes only) → the script is deleted. No both-keys compat reader.
+**4. The `.pr` migration + full rebuild** (map §E): the one-shot key-rename script over the 806 tracked files — **its key set is EVERY renamed `[Store]` wire key, closed by the inventory** (`steps→step`, `actions→action`, `modifiers→modifier`, `goals→child`, `parameters→parameter`, `defaults→default`, + whatever the inventory adds; verify whether `errors`/`warnings` are `[Store]` at all) — because bootstrap-readability is the job: a missed key (e.g. `parameters:`) means the new reader loads actions without params and the bootstrap build can't run. Param name VALUES (inside parameter rows) still ride the rebuild, not the script. Then: new binary builds green → **full `plang build` regenerates everything** → diff reviewed → the script is deleted. No both-keys compat reader.
 
 **5. Acceptance.**
 - The layer-4 repro (Fluid `{% for step in goal.step %}`) green; layer-3 unaffected; `Nest` suite green.
@@ -39,6 +39,15 @@ The goal graph is the runtime's spine and it violates the language's own naming 
 - Merge back into `get-builder-running`.
 
 **1b. The property promotions from the plang-type audit** (map "Third pass"): `step.Error`/`action.Error` as `error.list` (`Add(IError)`, callers hand the error they hold — no flattening); `step.Warning`/`action.Warning` as `warning.list` (**`Info` replaced by `Warning`**; shared error/warning face = an interface only if a uniform consumer exists — coder checks, doesn't pre-build); `action.Parameter`/`action.Default` as native lists (**the generator's `GetParameter` moves to the native-list row lookup**); backrefs STAY host references (the 0-sets/hundreds-of-reads trace, on record in the map); scalars stay CLR — each slot-write is the sanctioned crossing per the test in the audit section.
+
+## For the comment round — where your knowledge beats the trace
+
+1. **The `private protected _items` seam** — smallest seam I found for the facades; if you see a cleaner storage access (or a reason the seam leaks), say so before building three classes on it.
+2. **The migration script's key set** — area 4 lists it; you close it with the inventory. Anything key-renamed but missed by the script = a silent bootstrap break; propose the verification (a post-script grep for the old keys across the 806?).
+3. **Hot-path measurement** — pick the method (a Sanity-goal run timed pre/post? the Types suite wall-clock?) and the threshold that triggers the typed-cache fallback.
+4. **`errors`/`warnings` `[Store]` status** — my grep didn't show attributes on those four properties; if they're not wire-stored, the script skips them and the collections change is C#-only.
+5. **The LLM schema/param renames** (areas 2-3) — you're closest to the compile-quality risk; if the prompt-reference eyeball needs to be a harder gate (a golden per template), upgrade it.
+6. **Anything in map §A's member accounting that doesn't survive contact** — the map is traced but the code wins; flag contradictions rather than following it.
 
 ## Demolition (must NOT survive)
 
