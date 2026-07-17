@@ -2,6 +2,8 @@
 
 The procedure for auditing changed C# against the OBP smells. The smells themselves are named and defined in [`obp-smells.md`](obp-smells.md) — this doc only orders the hunt.
 
+> **Mechanize it — don't scan by fluent reading.** Run `Tools/ObpScan` (spec: `obp-scan-tool.md`) to emit the per-member table (name-flag + line count + caller set) so every member arrives pre-listed; the reader adds only the ownership verdict. A prose impression is not a scan — the failure signature is presenting the first fingerprinted smell and calling it done.
+
 ## Procedure — when asked to "obpscan"
 
 1. Find the range: everything changed since the **last scanned commit** (recorded at the bottom of this file). `git diff <last-scanned>..HEAD --stat` for the file list, then read the diffs.
