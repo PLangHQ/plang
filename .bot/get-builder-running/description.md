@@ -24,25 +24,33 @@ The `.pr` the runtime runs lives at `os/system/builder/.build/*.pr` (OsDirectory
 | 1 | **CLI settings bind** | `--build={"files":[...]}` → `String cannot lower to this` at `setting/this.cs` | ✅ FIXED (`c13532536` on module-discovery) — `Build.Files` is now a plang `list<path>`; the walk stores it lazily, the consumer lifts each row via `row.Value<path>()` |
 | 2 | **Bootstrap NRE** | `NullReferenceException` at `this.cs:566` (`goalResult.Value() as clr<Goal>`!) | ✅ FIXED (`a1908911f` on module-discovery) — `GoalCall.LoadFromFile` (the PrPath path) now rides back as `clr<goal>`, matching the in-memory `Found()`; the kind-redesign (`4cb19476b`) had updated the dispatcher + memory path but not this one |
 | 3 | **`builder` channel not found** | `Channel 'builder' not found` at `EmitBuildEvent.goal:12` (`write out %msg% channel: "builder"`) | ❌ **NEXT — start here** |
-| 4 | **Fluid door recursion** | StackOverflow in `PlangDoorAccessor.GetAsync` inside a `{% for %}` member access | ❌ NEXT (channel fix `f1c58bba2` unmasked it) |
-| 5+ | unknown | — | each fix unmasks the next |
+| 4 | **item.Create ⇄ type.Create bounce** | StackOverflow — NOT a Fluid-door bug; `item.Create` can't build a generic-only `IList<>` collection (`app.goal.steps.@this`) that `ContainerFamily` claims → infinite bounce | 🔎 ROOT-CAUSED (see below) — ruling requested from architect (`coder/to-architect.md`) |
+| 5 | **`error.Handle.Actions.Clr<actions.@this>()`** | `InvalidCastException: List\`1 cannot lower to this` at `error/handle.cs:100` — native list can't `.Clr` down to infra `actions.@this` | ❌ NEXT (unmasked when layer 4's bounce is cut) |
+| 6+ | unknown | — | each fix unmasks the next |
 
-### Layer 4 — first look (2026-07-17)
+### Layer 4 — ROOT-CAUSED (2026-07-17): `item.Create ⇄ type.Create` bounce, NOT a Fluid-door bug
 
-`plang build` now clears the channel and fails DEEPER with a stack overflow:
+The door is only the *trigger*; the loop is in the type-system apex. Confirmed with a thread-static
+depth probe on `item.@this.Create` (FailFast at depth 60) → `raw = app.goal.steps.this`.
+
+**Trace** (`{% for step in goal.steps %}` over a `goal` that rides as a clr host):
 ```
-app.module.action.ui.code.Fluid+PlangDoorAccessor.GetAsync(object, string, TemplateContext)
-Fluid.Values.ObjectValueBase.GetValueAsync(...)
-Fluid.Ast.IdentifierSegment.ResolveAsync → MemberExpression.EvaluateAsync → ForStatement.WriteToAsync
+PlangDoorAccessor.GetAsync(goalHost,"steps")  Fluid.cs:235
+→ clr.@this.Get → kind.@this.Get (* reflection) → kind.@this.Data(name, goal.Steps, …)
+→ new data.@this(…, steps.@this, …)  →  item.@this.Create(steps.@this)   ← bounce
 ```
-The spike's `PlangDoorAccessor` (`app/module/action/ui/code/Fluid.cs`) — `GetAsync` does
-`(await new Data("", obj, ctx).Get(name).Value())` then returns `item.@this.Backing(resolved)`. A value
-inside a `{% for %}` loop, when a member is accessed, resolves to something whose OWN member access
-re-enters the door on the same shape → infinite recursion. Identify WHICH template + value: could be one
-of the module-discovery templates (`summary.planner` / `stepActionDetails` iterate module/action elements
-through the door — though their isolated render tests pass, so the build's data/shape may differ) or an
-existing one (`build-output.template`, `goalFormat`). Bisect by rendering each build template over the
-real build data; the recursion is a `Backing()` that hands Fluid a value which loops.
+`app.goal.steps.@this` (`goal/steps/this.cs:8`) is `IList<Step>, IContext` — **generic-only** `IList<Step>`,
+no non-generic `System.Collections.IList`. So `item.Create` (`type/item/this.cs:41`) skips its
+narrowing rungs (61–72 check non-generic `IDictionary`/`IList` + a few exact generics), falls to line 85
+`App.Type[steps.@this]`, which via `ContainerFamily` (`type/list/this.cs:332`, finds `IList<>`) returns a
+**synthetic** `type.@this("list","step")` — `ClrType` null → not `Creatable`. That entity's
+`type.Create` (`type/this.cs:316`) declines and re-calls the apex → **infinite bounce.** The asymmetry
+(*ContainerFamily claims it, the apex can't build it*) is the bug; it hits every gap collection
+(`HashSet<>`, `List<string>`, `IReadOnlyList<>`, …), not just `steps`.
+
+**Fix options + recommendation (A) written up for architect ruling:** `coder/to-architect.md`.
+Design question: does an infra `IList<X>+IContext` collection ride as a native plang `list` (narrow —
+option A/B) or a clr host (navigate — option C)?
 
 ## Layer 3 — findings so far (the current front)
 
