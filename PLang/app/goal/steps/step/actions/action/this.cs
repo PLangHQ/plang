@@ -31,8 +31,11 @@ public partial class @this
     [Store, Debug, Default]
     public List<global::app.data.@this>? Defaults { get; set; }
 
+    /// <summary>The modifiers wrapping this action (cache.wrap, error.handle, timeout.after) — an
+    /// internal typed list; the action owns their right-to-left wrap fold (see RunAsync) and their
+    /// sort (actions.Nest). Position within the slot carries the nesting order at runtime.</summary>
     [Store, Debug, Default]
-    public modifiers.@this Modifiers { get; init; } = new();
+    public List<modifier.@this> Modifiers { get; init; } = new();
 
     [Debug]
     public List<Info> Errors { get; init; } = new();
@@ -158,10 +161,7 @@ public partial class @this
             data.Handled = false;
         }
         else
-        {
-            Func<Task<global::app.data.@this>> dispatch = () => DispatchAsync(context);
-            data = await Modifiers.RunAsync(dispatch, context);
-        }
+            data = await RunModifiers(() => DispatchAsync(context), context);
 
         // %!data% is the last action's result, stored AS-IS. A reference stays a
         // reference and a lazy source stays unread — %!data% never forces a value.
@@ -174,6 +174,34 @@ public partial class @this
         if (!afterResult.Success) return afterResult;
 
         return data;
+    }
+
+    /// <summary>
+    /// Runs <paramref name="innermost"/> wrapped by this action's modifiers, right-to-left (lowest
+    /// Position outermost — the slot is pre-sorted). The action owns this fold (re-homed from the
+    /// deleted modifiers collection): each modifier resolves its own handler via WrapAround, then
+    /// AfterAction fires once per modifier so coverage tracks modifier presence (a modifier wraps,
+    /// it never runs through the standalone RunAsync path). An empty slot is the bare inner run.
+    /// </summary>
+    internal async Task<global::app.data.@this> RunModifiers(
+        Func<Task<global::app.data.@this>> innermost, actor.context.@this context)
+    {
+        if (Modifiers.Count == 0) return await innermost();
+
+        var execute = innermost;
+        for (int i = Modifiers.Count - 1; i >= 0; i--)
+        {
+            var (wrapped, error) = await Modifiers[i].WrapAround(execute, context);
+            if (error != null) return context.Error(error);
+            execute = wrapped!;
+        }
+        var result = await execute();
+
+        foreach (var modifier in Modifiers)
+            await context.LifecycleFor(modifier).After.Run(
+                context, app.@event.Trigger.AfterAction, modifier, result);
+
+        return result;
     }
 
     /// <summary>

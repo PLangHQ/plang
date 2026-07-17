@@ -6,7 +6,6 @@ global using Step = app.goal.steps.step.@this;
 global using ErrorOrder = app.goal.steps.step.ErrorOrder;
 global using CacheSettings = app.goal.steps.step.CacheSettings;
 global using StepActions = app.goal.steps.step.actions.@this;
-global using ActionModifiers = app.goal.steps.step.actions.action.modifiers.@this;
 
 // Event types
 global using Lifecycle = app.@event.lifecycle.@this;

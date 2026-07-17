@@ -60,7 +60,7 @@ public class ModifierRegistryTests
                 {
                     Module = "file",
                     ActionName = "read",
-                    Modifiers = new ActionModifiers
+                    Modifiers = new List<global::app.goal.steps.step.actions.action.modifier.@this>
                     {
                         new global::app.goal.steps.step.actions.action.modifier.@this { Module = "cache", ActionName = "wrap" }
                     }

@@ -38,7 +38,7 @@ public class TimeoutAfterTests
             {
                 new("name", "%fast%", new global::app.type.@this("variable"), context: Ctx), new("value", "done", context: Ctx)
             },
-            Modifiers = new ActionModifiers { TimeoutModifier(5000) }
+            Modifiers = new List<global::app.goal.steps.step.actions.action.modifier.@this> { TimeoutModifier(5000) }
         };
 
         var result = await action.RunAsync(Ctx);
@@ -55,7 +55,7 @@ public class TimeoutAfterTests
             Module = "timer",
             ActionName = "sleep",
             Parameters = new List<global::app.data.@this> { new("ms", 5000, context: Ctx) },
-            Modifiers = new ActionModifiers { TimeoutModifier(50) }
+            Modifiers = new List<global::app.goal.steps.step.actions.action.modifier.@this> { TimeoutModifier(50) }
         };
 
         var result = await action.RunAsync(Ctx);
@@ -74,7 +74,7 @@ public class TimeoutAfterTests
             Module = "timer",
             ActionName = "sleep",
             Parameters = new List<global::app.data.@this> { new("ms", 10_000, context: Ctx) },
-            Modifiers = new ActionModifiers { TimeoutModifier(30) }
+            Modifiers = new List<global::app.goal.steps.step.actions.action.modifier.@this> { TimeoutModifier(30) }
         };
 
         var start = DateTimeOffset.UtcNow;
@@ -99,7 +99,7 @@ public class TimeoutAfterTests
             Module = "timer",
             ActionName = "sleep",
             Parameters = new List<global::app.data.@this> { new("ms", 10_000, context: Ctx) },
-            Modifiers = new ActionModifiers { TimeoutModifier(5000) }
+            Modifiers = new List<global::app.goal.steps.step.actions.action.modifier.@this> { TimeoutModifier(5000) }
         };
 
         await Assert.That(async () => await action.RunAsync(Ctx))
@@ -116,7 +116,7 @@ public class TimeoutAfterTests
             Module = "timer",
             ActionName = "sleep",
             Parameters = new List<global::app.data.@this> { new("ms", 1000, context: Ctx) },
-            Modifiers = new ActionModifiers { TimeoutModifier(0) }
+            Modifiers = new List<global::app.goal.steps.step.actions.action.modifier.@this> { TimeoutModifier(0) }
         };
 
         var result = await action.RunAsync(Ctx);
@@ -130,7 +130,7 @@ public class TimeoutAfterTests
     {
         // Triggers the catch(OperationCanceledException) fallback path (after.cs:45-51).
         // Inner func throws OCE directly instead of returning a failed Data result.
-        var modifiers = new ActionModifiers
+        var modifiers = new List<global::app.goal.steps.step.actions.action.modifier.@this>
         {
             new global::app.goal.steps.step.actions.action.modifier.@this
             {
@@ -145,7 +145,7 @@ public class TimeoutAfterTests
             throw new OperationCanceledException();
         };
 
-        var result = await modifiers.RunAsync(throwingInner, Ctx);
+        var result = await new global::app.goal.steps.step.actions.action.@this { Modifiers = modifiers }.RunModifiers(throwingInner, Ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Timeout");
@@ -163,7 +163,7 @@ public class TimeoutAfterTests
             Module = "timer",
             ActionName = "sleep",
             Parameters = new List<global::app.data.@this> { new("ms", 5000, context: Ctx) },
-            Modifiers = new ActionModifiers
+            Modifiers = new List<global::app.goal.steps.step.actions.action.modifier.@this>
             {
                 TimeoutModifier(50),
                 new global::app.goal.steps.step.actions.action.modifier.@this

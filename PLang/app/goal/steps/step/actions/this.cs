@@ -170,6 +170,6 @@ public sealed partial class @this : IList<action.@this>
         }
 
         foreach (var a in _items)
-            a.Modifiers.Sort();   // by Order — the collection sorts its own; no registry callback
+            a.Modifiers.Sort((x, y) => x.Position.CompareTo(y.Position));   // outermost wrapper (lowest Position) first
     }
 }
