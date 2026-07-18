@@ -60,7 +60,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 | `steps.MergeFrom` / `HasIndentedChildren` | goal (merge is goal-level; indent is a question about the goal's sequence) |
 | `steps.Nest` (per-step iteration) | goal; the per-step body onto **step** |
 | `actions.Nest` (the catalog join) | **step** (it reshapes the step's action chain) |
-| `actions.Chain` / `Branches` / `FirstConditionIndex` / `IsFirstCondition` | **condition module, as a `Branches` type** (NOT step — see `condition-branches-answer.md`; these are condition.if's logic, their verb names signal a missing type) |
+| `actions.Chain` / `Branches` / `FirstConditionIndex` / `IsFirstCondition` | **condition module, as a `Decision` type** (NOT step — see `condition-decision-answer.md`; these are condition.if's logic, their verb names signal a missing type) |
 | `actions.Value` | already sentenced — dies |
 | `modifiers.RunAsync` (the wrap fold) + `Sort` | **action** (it wraps THIS action's dispatch; `action/this.cs:247` becomes its own fold) |
 | Goal/Step backref stamping | construction-time wiring where possible; getter-stamp survives only where construction can't reach |
