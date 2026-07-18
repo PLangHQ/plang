@@ -104,6 +104,31 @@ just want an `IReadOnlyList<action>` — widen them.
 - **modifier.Order → Depth** (`e8676d872`) — resolved the CS0108 shadow of `item.Order(@this)`.
 - Verified zero-delta (controlled per-class) on Wire/Modules/Runtime/Data throughout.
 
+## Test-confidence sweep (Ingi flagged a false-pass; chased the whole cluster)
+
+Ingi caught that `MultiBranch_FirstBranchMatches` was GREEN while broken — `Get<int>("branchIndex")`
+returns default 0 for a MISSING property, so it asserted 0-from-missing and never noticed `%x%`
+was unresolved. That opened a real cluster of masked failures. Fixed, all committed:
+
+- **`%ref%` params had no plang template** → never resolved (`"cannot order text and number"`).
+  `Make.Action` now stamps `template="plang"` on `%var%` strings, like the builder
+  (`1f435f5ff`). Fixed MultiBranch/MultiActionOrchestrate.
+- **Hardened the false-pass hole** — branch tests assert `Contains("branchIndex")` before reading it.
+- **`BuildFixture`/`Run_Timings` wrote `.pr` via raw STJ**, unreadable by the branch's plang reader
+  (`StartObject as string`) — turned 12 of 14 `RunActionTests` dark. Now write via the plang
+  serializer like the real build (`956549b48`, `6bf32241b`). **12→13 recovered.**
+- **`assert.isNull`/`isNotNull` Peeked the raw value** (a `%ref%` peeks to its name/literal, never
+  null) while every other assert resolves via `.Value()`. Now resolve; unset `%var%` = absent = null
+  (typed catch). Async interface. Fixed Run_FreshAppPerTest (`333046518`).
+- **Permanent diagnostic** (Ingi: stop hand-adding DIAG throws): `PLang.Tests/Shared/TestRunAssertions.cs`
+  — `runs.AssertAllPass()` surfaces each failing run's Status+Reason+Error in the failure text.
+
+**OPEN — 1 test + a value-model question:** `Run_AssertionFailureInTest` — `Variable.Snapshot()`
+(`variable/list/this.cs:573`) captures `kvp.Value.Peek()`, which under the lazy-wire model is an
+unmaterialized `wire.@this` slice, not `42`. The diagnostic snapshot holds wire slices; the test wants
+CLR values. Materializing means resolving every var (async + I/O) vs the sync/by-ref/about-to-dispose
+design — an architect call. Flagged, not patched.
+
 ## Sizing done for the remaining pieces (all dedicated-pass, NOT tail-of-session)
 
 - **goal-read flip (`clr<goal>` → `Data<goal>`)** — 33 sites / ~13 files. NOT compiler-guided: sites do
