@@ -126,6 +126,9 @@ public class ConditionIfBranchIndexTests
             (">", 5, "b", 2));
 
         await Assert.That(result).IsNotNull();
+        // Assert PRESENCE first — Get<int> returns default 0 for a MISSING property, so a bare
+        // IsEqualTo(0) would false-pass if the branch never fired (e.g. an unresolved %x%).
+        await Assert.That(result.Properties.Contains("branchIndex")).IsTrue();
         await Assert.That((await result.Properties.Get<int>("branchIndex"))).IsEqualTo(0);
     }
 
@@ -138,6 +141,7 @@ public class ConditionIfBranchIndexTests
             (">", 5, "b", 2));
 
         await Assert.That(result).IsNotNull();
+        await Assert.That(result.Properties.Contains("branchIndex")).IsTrue();
         await Assert.That((await result.Properties.Get<int>("branchIndex"))).IsEqualTo(1);
     }
 

@@ -48,11 +48,16 @@ public static class Make
             ActionName = actionName,
         };
         foreach (var (name, value) in parameters)
-            // Param(...) hands back a ready Data carrying an explicit type; a plain
-            // tuple value borns its natural type.
+            // Param(...) hands back a ready Data carrying an explicit type; a plain tuple value
+            // borns its natural type — EXCEPT a string carrying a %ref% (full or embedded), which
+            // borns as text/template="plang" (the builder stamps this on any %var% value, so the
+            // read fills the holes against live variables — a plain `("Left", "%x%")` would otherwise
+            // ride as literal text and never resolve at eval).
             action.Parameters.Add(value is global::app.data.@this typed
                 ? typed
-                : new global::app.data.@this(name, value, context: global::PLang.Tests.TestApp.SharedContext));
+                : value is string s && System.Text.RegularExpressions.Regex.IsMatch(s, "%[A-Za-z_]")
+                    ? new global::app.data.@this(name, s, new global::app.type.@this("text", template: "plang"), context: global::PLang.Tests.TestApp.SharedContext)
+                    : new global::app.data.@this(name, value, context: global::PLang.Tests.TestApp.SharedContext));
         return action;
     }
 
