@@ -10,17 +10,17 @@ namespace app.goal;
 /// </summary>
 public partial class @this
 {
-    public async Task<data.@this> RunFrom(actor.context.@this context, int stepIdx, int actionIdx)
+    public async Task<data.@this> Resume(actor.context.@this context, int stepIdx, int actionIdx)
     {
         if (stepIdx < 0 || stepIdx >= Steps.Count)
             return context.Error(new error.ServiceError(
-                $"RunFrom: stepIdx {stepIdx} out of range [0, {Steps.Count})",
+                $"Resume: stepIdx {stepIdx} out of range [0, {Steps.Count})",
                 "InvalidPosition", 400));
 
         var step = Steps[stepIdx];
         step.Goal ??= this;
 
-        var result = await step.RunFrom(context, actionIdx);
+        var result = await step.Resume(context, actionIdx);
         if (result.ShouldExit()) return result;
 
         for (int i = stepIdx + 1; i < Steps.Count; i++)

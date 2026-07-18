@@ -7,12 +7,12 @@ using ActionEntity = global::app.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.CallbackTests;
 
-/// Stage 2a — Batch 4: `Step.RunFrom(context, actionIdx)` and
-/// `Goal.RunFrom(context, stepIdx, actionIdx)` — continuation helpers used by
+/// Stage 2a — Batch 4: `Step.Resume(context, actionIdx)` and
+/// `Goal.Resume(context, stepIdx, actionIdx)` — continuation helpers used by
 /// `Snapshot.ResumeChain`. The architect resolved against a
 /// `Steps.RunAsync(fromIndex)` overload — the remaining-steps loop lives
-/// inside Goal.RunFrom.
-public class GoalRunFromTests
+/// inside Goal.Resume.
+public class GoalResumeTests
 {
     private static global::app.@this NewApp() =>
         TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
@@ -45,7 +45,7 @@ public class GoalRunFromTests
         actionA.Step = step; actionB.Step = step;
         step.Actions.Add(actionA); step.Actions.Add(actionB);
 
-        var result = await step.RunFrom(context, 0);
+        var result = await step.Resume(context, 0);
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("a"))).IsEqualTo("A");
         await Assert.That((await context.Variable.GetValue("b"))).IsEqualTo("B");
@@ -62,7 +62,7 @@ public class GoalRunFromTests
         actionA.Step = step; actionB.Step = step;
         step.Actions.Add(actionA); step.Actions.Add(actionB);
 
-        var result = await step.RunFrom(context, 1);
+        var result = await step.Resume(context, 1);
         await result.IsSuccess();
         await Assert.That((await context.Variable.Get("a")).IsInitialized).IsFalse(); // skipped
         await Assert.That((await context.Variable.GetValue("b"))).IsEqualTo("B");
@@ -78,7 +78,7 @@ public class GoalRunFromTests
             SetStep(1, "s1", "from-here"),
             SetStep(2, "s2", "and-after"));
 
-        var result = await goal.RunFrom(context, stepIdx: 1, actionIdx: 0);
+        var result = await goal.Resume(context, stepIdx: 1, actionIdx: 0);
         await result.IsSuccess();
         await Assert.That((await context.Variable.Get("s0")).IsInitialized).IsFalse();
         await Assert.That((await context.Variable.GetValue("s1"))).IsEqualTo("from-here");
@@ -88,10 +88,10 @@ public class GoalRunFromTests
     [Test]
     public async Task GoalRunFrom_ShortCircuits_OnExitTypedResume()
     {
-        // Pin the contract: when RunFrom's first step returns Exit-typed Data,
-        // RunFrom returns immediately and does not advance into later steps.
+        // Pin the contract: when Resume's first step returns Exit-typed Data,
+        // Resume returns immediately and does not advance into later steps.
         // We can't easily force an Exit-typed step result without 2a.4 wiring,
-        // so here we verify the predicate Goal.RunFrom uses (ShouldExit) is
+        // so here we verify the predicate Goal.Resume uses (ShouldExit) is
         // the same one the step loop uses — covered by StepLoopShouldExitTests.
         // The integration test in 2a.8 (StatelessCrossGoalResumes) pins the
         // end-to-end behavior.
@@ -104,7 +104,7 @@ public class GoalRunFromTests
     public async Task StepsRunAsync_FromIndexOverload_SkipsEarlierSteps()
     {
         // Architect resolved against adding a Steps.RunAsync(fromIndex) overload.
-        // The from-index loop lives inside Goal.RunFrom — exercised by
+        // The from-index loop lives inside Goal.Resume — exercised by
         // GoalRunFrom_ResumesActionThenRemainingStepsInGoal above. This test
         // pins the contract that earlier steps are not re-run.
         var app = NewApp();
@@ -113,7 +113,7 @@ public class GoalRunFromTests
             SetStep(0, "first", "should-not-run"),
             SetStep(1, "second", "runs"));
 
-        await goal.RunFrom(context, stepIdx: 1, actionIdx: 0);
+        await goal.Resume(context, stepIdx: 1, actionIdx: 0);
         await Assert.That((await context.Variable.Get("first")).IsInitialized).IsFalse();
         await Assert.That((await context.Variable.GetValue("second"))).IsEqualTo("runs");
     }

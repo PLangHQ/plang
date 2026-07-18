@@ -9,7 +9,7 @@ namespace PLang.Tests.App.CallbackTests;
 
 /// Stage 2a — Batch 4: `Data.ShouldExit()` unifies the three distinct
 /// stop-conditions (unhandled failure, Returned, Exit-typed) into one branch
-/// for the step loop, `Step.RunAsync`, and `Goal.RunFrom`.
+/// for the step loop, `Step.RunAsync`, and `Goal.Resume`.
 public class StepLoopShouldExitTests : System.IAsyncDisposable
 {
     private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/StepLoopShouldExitTests-" + System.Guid.NewGuid().ToString("N")[..6]);

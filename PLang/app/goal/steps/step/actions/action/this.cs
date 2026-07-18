@@ -102,7 +102,7 @@ public partial class @this
     /// </summary>
     [JsonIgnore]
     public bool IsFirst =>
-        Step?.Actions is { } acts && global::app.module.action.condition.decision.@this.HeadIs(acts, this);
+        Step?.Actions is { } acts && global::app.module.action.condition.decision.@this.IsHead(acts, this);
 
     [JsonIgnore]
     public Step? Step { get; set; }

@@ -9,7 +9,7 @@ namespace app.goal.steps.step;
 /// </summary>
 public partial class @this
 {
-    public async Task<data.@this> RunFrom(actor.context.@this context, int fromActionIdx)
+    public async Task<data.@this> Resume(actor.context.@this context, int fromActionIdx)
     {
         context.Step = this;
 

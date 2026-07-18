@@ -32,7 +32,7 @@ public sealed partial class @this
 
         // Bottom: re-enter the goal at the suspended (StepIndex, ActionIndex).
         if (idx == chain.Count - 1)
-            return await frame.Goal.RunFrom(context, frame.StepIndex, frame.ActionIndex);
+            return await frame.Goal.Resume(context, frame.StepIndex, frame.ActionIndex);
 
         // Parent: its action is a "call SubGoal" mid-flight. Push so children
         // see it as caller, recurse into the sub-goal, then continue from
@@ -42,6 +42,6 @@ public sealed partial class @this
         var subResult = await ResumeChain(chain, idx + 1, context);
         if (subResult.ShouldExit()) return subResult;
 
-        return await frame.Goal.RunFrom(context, frame.StepIndex, frame.ActionIndex + 1);
+        return await frame.Goal.Resume(context, frame.StepIndex, frame.ActionIndex + 1);
     }
 }

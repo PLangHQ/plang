@@ -1124,7 +1124,7 @@ public class Default : IBuilder
         }
 
         if (prGoal.Name.Equals(goal.Name, StringComparison.OrdinalIgnoreCase))
-            goal.MergeFrom(prGoal);
+            goal.Merge(prGoal);
 
         return errors;
     }

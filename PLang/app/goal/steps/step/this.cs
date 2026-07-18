@@ -30,7 +30,7 @@ public sealed partial class @this
 
     /// <summary>
     /// Text of the prior-build step that produced this step's Actions. Set by
-    /// Goal.MergeFrom when actions are carried over from an existing .pr. Used
+    /// Goal.Merge when actions are carried over from an existing .pr. Used
     /// by the builder prompt to decide between @known (PriorText == Text) and
     /// @hint (PriorText != Text). Transient — not serialized to .pr.
     /// </summary>
@@ -139,43 +139,6 @@ public sealed partial class @this
         if (!afterResult.Success) return afterResult;
 
         return result;
-    }
-
-
-    public @this Clone()
-    {
-        return new @this
-        {
-            Index = Index,
-            Text = Text,
-            LineNumber = LineNumber,
-            Indent = Indent,
-            Comment = Comment,
-            Actions = new actions.@this(Actions.Select(a => new Action
-            {
-                Module = a.Module,
-                ActionName = a.ActionName,
-                Parameters = new List<data.@this>(a.Parameters),
-                Defaults = a.Defaults != null ? new List<data.@this>(a.Defaults) : null,
-                Errors = new List<Info>(a.Errors),
-                Warnings = new List<Info>(a.Warnings),
-                Modifiers = new List<global::app.goal.steps.step.actions.action.modifier.@this>(a.Modifiers.Select(m => new global::app.goal.steps.step.actions.action.modifier.@this
-                {
-                    Module = m.Module,
-                    ActionName = m.ActionName,
-                    Position = m.Position,
-                    Parameters = new List<data.@this>(m.Parameters),
-                    Defaults = m.Defaults != null ? new List<data.@this>(m.Defaults) : null,
-                    Errors = new List<Info>(m.Errors),
-                    Warnings = new List<Info>(m.Warnings)
-                }))
-            })),
-            WaitForExecution = WaitForExecution,
-            Goal = Goal,
-            Intent = Intent,
-            Errors = new List<Info>(Errors),
-            Warnings = new List<Info>(Warnings)
-        };
     }
 
     /// <summary>

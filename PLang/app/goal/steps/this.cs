@@ -77,7 +77,7 @@ public sealed class @this : IList<Step>, IContext
     /// OLD step 0) and fed the builder wrong @known hints.
     /// Sets PriorText on each merged step so the builder template can emit @known.
     /// </summary>
-    public void MergeFrom(@this priorSteps)
+    public void Merge(@this priorSteps)
     {
         if (priorSteps == null || priorSteps.Count == 0) return;
 

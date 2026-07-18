@@ -31,12 +31,29 @@ public sealed class @this : IReadOnlyList<Branch>
     public static @this? Of(IList<Action> actions)
     {
         int head = Head(actions);
-        return head < 0 ? null : new @this(Split(actions, head), Labels(actions, head));
+        if (head < 0) return null;
+
+        // The declared label chain: {true,false} for a bare single-action if; else one label per
+        // condition action (if / elseif[N] / else), tagged by its action name.
+        var chain = new List<string>();
+        if (actions.Count == 1)
+            chain.AddRange(new[] { "true", "false" });
+        else
+            for (int i = head; i < actions.Count; i++)
+            {
+                var a = actions[i];
+                if (!a.IsCondition) continue;
+                chain.Add(string.Equals(a.ActionName, "if", System.StringComparison.OrdinalIgnoreCase) ? "if"
+                        : string.Equals(a.ActionName, "else", System.StringComparison.OrdinalIgnoreCase) ? "else"
+                        : $"elseif[{chain.Count}]");
+            }
+
+        return new @this(Split(actions, head), chain);
     }
 
     /// <summary>Is <paramref name="action"/> the head <c>condition.if</c> of <paramref name="actions"/>?
     /// Coverage records sites against the head — inner-elseif firings don't own the site.</summary>
-    public static bool HeadIs(IList<Action> actions, Action action)
+    public static bool IsHead(IList<Action> actions, Action action)
     {
         int head = Head(actions);
         return head >= 0 && ReferenceEquals(actions[head], action);
@@ -77,28 +94,6 @@ public sealed class @this : IReadOnlyList<Branch>
         }
         if (body != null) branches.Add(new Branch(condition, body));
         return branches;
-    }
-
-    // {true,false} for a bare single-action if; else one label per condition action
-    // (if / elseif[N] / else), tagged by its action name.
-    private static List<string> Labels(IList<Action> actions, int start)
-    {
-        if (actions.Count == 1)
-            return new List<string> { "true", "false" };
-
-        var chain = new List<string>();
-        for (int i = start; i < actions.Count; i++)
-        {
-            var a = actions[i];
-            if (!a.IsCondition) continue;
-            if (string.Equals(a.ActionName, "if", System.StringComparison.OrdinalIgnoreCase))
-                chain.Add("if");
-            else if (string.Equals(a.ActionName, "else", System.StringComparison.OrdinalIgnoreCase))
-                chain.Add("else");
-            else
-                chain.Add($"elseif[{chain.Count}]");
-        }
-        return chain;
     }
 
     public int Count => _branches.Count;

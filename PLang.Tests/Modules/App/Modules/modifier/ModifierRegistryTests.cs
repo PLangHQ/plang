@@ -44,40 +44,6 @@ public class ModifierRegistryTests
 
     #endregion
 
-    #region Step.Clone
-
-    [Test]
-    public async Task StepClone_ClonesActionModifiers()
-    {
-        // Step with action that has modifiers -> Clone() copies modifiers too
-        var step = new Step
-        {
-            Index = 0,
-            Text = "read file with cache",
-            Actions = new StepActions
-            {
-                new PrAction
-                {
-                    Module = "file",
-                    ActionName = "read",
-                    Modifiers = new List<global::app.goal.steps.step.actions.action.modifier.@this>
-                    {
-                        new global::app.goal.steps.step.actions.action.modifier.@this { Module = "cache", ActionName = "wrap" }
-                    }
-                }
-            }
-        };
-
-        var clone = step.Clone();
-
-        await Assert.That(clone.Actions[0].Modifiers.Count).IsEqualTo(1);
-        await Assert.That(clone.Actions[0].Modifiers[0].Module).IsEqualTo("cache");
-        // Verify it's a copy, not the same reference
-        await Assert.That(clone.Actions[0].Modifiers).IsNotSameReferenceAs(step.Actions[0].Modifiers);
-    }
-
-    #endregion
-
     #region Describe
 
     [Test]

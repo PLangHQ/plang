@@ -53,7 +53,21 @@ public partial class @this
         {
             if (_returnComputed) return _return;
             _returnComputed = true;
-            return _return = ReflectReturn();
+
+            var handler = Handler;
+            if (handler == null || Context == null) return _return = null;
+            var run = handler.GetMethod("Run", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes);
+            if (run == null) return _return = null;
+
+            var ret = run.ReturnType;
+            if (ret.IsGenericType && ret.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.Task<>))
+                ret = ret.GetGenericArguments()[0];
+
+            // Only Data<T> declares a concrete return; bare Data (or Data<object>) is polymorphic → null.
+            if (!ret.IsGenericType || ret.GetGenericTypeDefinition() != typeof(global::app.data.@this<>))
+                return _return = null;
+            var t = ret.GetGenericArguments()[0];
+            return _return = t == typeof(object) ? null : Context.App.Type[t];   // entity (compounds ride kind)
         }
     }
 
@@ -107,24 +121,6 @@ public partial class @this
         return new global::app.type.item.file.@this(path);
     }
 
-    private global::app.type.@this? ReflectReturn()
-    {
-        var handler = Handler;
-        if (handler == null || Context == null) return null;
-        var run = handler.GetMethod("Run", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes);
-        if (run == null) return null;
-
-        var ret = run.ReturnType;
-        if (ret.IsGenericType && ret.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.Task<>))
-            ret = ret.GetGenericArguments()[0];
-
-        // Only Data<T> declares a concrete return; bare Data (or Data<object>) is polymorphic → null.
-        if (!ret.IsGenericType || ret.GetGenericTypeDefinition() != typeof(global::app.data.@this<>))
-            return null;
-        var t = ret.GetGenericArguments()[0];
-        return t == typeof(object) ? null : Context.App.Type[t];   // entity (compounds ride kind)
-    }
-
     // The execution-context slots the source generator wires (not user-supplied params) — filtered
     // out of the catalog so the LLM never emits them.
     private static readonly System.Type[] CapabilityInterfaces =
@@ -139,8 +135,7 @@ public partial class @this
         var rows = new System.Collections.Generic.List<property.@this>();
         var handler = Handler;
         if (handler == null) return rows;
-        var type = Context!.App.Type;
-        var nCtx = new NullabilityInfoContext();
+        var types = Context!.App.Type;
 
         var capabilityProps = new System.Collections.Generic.HashSet<string>(
             CapabilityInterfaces.Where(i => i.IsAssignableFrom(handler))
@@ -153,65 +148,21 @@ public partial class @this
             if (capabilityProps.Contains(prop.Name)) continue;
             if (prop.GetCustomAttribute<global::app.module.CodeAttribute>() != null) continue;
 
-            bool isNullable = System.Nullable.GetUnderlyingType(prop.PropertyType) != null;
-            if (!isNullable && !prop.PropertyType.IsValueType)
-                isNullable = nCtx.Create(prop).WriteState == NullabilityState.Nullable;
+            var row = new property.@this(prop, types);
 
-            var value = UnwrapToValue(prop.PropertyType);
-            // bare Data is the polymorphic "object" slot; every other value type resolves its
-            // entity through the identity door (compounds ride the kind axis).
-            var entity = value == typeof(global::app.data.@this) ? type["object"] : type[value];
+            // Slots the LLM must never author: host params lower to `clr` (naming one would leak the
+            // C# type); the graph-infra items (goal/step/action/modifier) are STRUCTURE the compiler
+            // injects, never LLM vocabulary. Drop both by the row's own type name.
+            if (row.Type.Name is "clr" or "goal" or "step" or "action" or "modifier") continue;
 
-            // Host params (SignOptions, BuildResponse, ...) resolve to `clr` — the LLM can never
-            // author a host object, and naming one would leak the C# type (the door refuses to).
-            // Filter them from the catalog like the capability interfaces so ONLY plang types reach
-            // the LLM.
-            if (entity.Name == "clr") continue;
-
-            // Graph-infra items (goal / step / action / modifier) are STRUCTURE the builder injects,
-            // never LLM vocabulary — the compiler builds the graph, the LLM never authors a whole
-            // goal/step/action as a param. They became plang items in the graph-singular sweep, so
-            // they no longer resolve to `clr` and would otherwise leak into the catalog; drop them
-            // by identity (subclasses — modifier : action — ride the IsAssignableFrom).
-            if (typeof(global::app.goal.@this).IsAssignableFrom(value)
-                || typeof(global::app.goal.steps.step.@this).IsAssignableFrom(value)
-                || typeof(global::app.goal.steps.step.actions.action.@this).IsAssignableFrom(value))
-                continue;
-
-            rows.Add(new property.@this
-            {
-                Name = prop.Name,
-                Type = entity,
-                Nullable = isNullable,
-                IsVariable = IsVariableNameSlot(prop.PropertyType),
-                Default = prop.GetCustomAttribute<global::app.module.DefaultAttribute>()?.Value,
-            });
+            rows.Add(row);
         }
 
         // IChannel actions: source-gen resolves the Channel slot off a "channel" param — surface it
         // so the LLM can emit a name from the actor's inventory.
         if (typeof(global::app.module.IChannel).IsAssignableFrom(handler))
-            rows.Add(new property.@this { Name = "channel", Type = type["string"], Nullable = true });
+            rows.Add(new property.@this { Name = "channel", Type = types["string"], Nullable = true });
 
         return rows;
-    }
-
-    // Data<T>/Nullable<T> unwrap to the value type; the door owns the rest (list.@this<T>,
-    // choice<T>, scalars). Mirrors GetTypeName's Data/Nullable unwrapping.
-    private static System.Type UnwrapToValue(System.Type t)
-    {
-        var n = System.Nullable.GetUnderlyingType(t);
-        if (n != null) t = n;
-        if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(global::app.data.@this<>))
-            t = t.GetGenericArguments()[0];
-        return t;
-    }
-
-    private static bool IsVariableNameSlot(System.Type propType)
-    {
-        var underlying = System.Nullable.GetUnderlyingType(propType) ?? propType;
-        if (!underlying.IsGenericType) return false;
-        if (underlying.GetGenericTypeDefinition() != typeof(global::app.data.@this<>)) return false;
-        return underlying.GetGenericArguments()[0] == typeof(global::app.variable.@this);
     }
 }

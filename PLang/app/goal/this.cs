@@ -220,22 +220,22 @@ public sealed partial class @this
 
     /// <summary>
     /// Merges LLM-derived fields from an existing built goal onto this freshly-parsed goal.
-    /// Delegates to Steps.MergeFrom for this goal's steps, then recurses into sub-goals
+    /// Delegates to Steps.Merge for this goal's steps, then recurses into sub-goals
     /// matched by Name so every sub-goal's steps also get their prior Actions + PriorText
     /// back. Without the recursion, @known / keep:true only fire for the top-level goal
     /// of a multi-goal .goal file.
     /// </summary>
-    public void MergeFrom(@this? existing)
+    public void Merge(@this? existing)
     {
         if (existing == null) return;
-        Steps.MergeFrom(existing.Steps);
+        Steps.Merge(existing.Steps);
 
         if (existing.Goals.Count == 0) return;
         foreach (var subGoal in Goals)
         {
             var priorSub = existing.Goals.FirstOrDefault(g =>
                 string.Equals(g.Name, subGoal.Name, StringComparison.OrdinalIgnoreCase));
-            if (priorSub != null) subGoal.MergeFrom(priorSub);
+            if (priorSub != null) subGoal.Merge(priorSub);
         }
 
     }

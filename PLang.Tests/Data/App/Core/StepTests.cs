@@ -126,54 +126,6 @@ public class StepTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task Clone_CreatesDeepCopy()
-    {
-        var originalGoal = new Goal { Name = "TestGoal" };
-        var original = new Step
-        {
-            Index = 1,
-            Text = "original text",
-            LineNumber = 5,
-            Indent = 1,
-            Comment = "original comment",
-            Actions = new StepActions
-            {
-                new global::app.goal.steps.step.actions.action.@this
-                {
-                    Module = "variable",
-                    ActionName = "set",
-                    Parameters = new List<Data> { app.Data("name", "test") },
-                }
-            },
-            WaitForExecution = false,
-            Goal = originalGoal
-        };
-
-        var clone = original.Clone();
-
-        await Assert.That(clone.Index).IsEqualTo(original.Index);
-        await Assert.That(clone.Text).IsEqualTo(original.Text);
-        await Assert.That(clone.LineNumber).IsEqualTo(original.LineNumber);
-        await Assert.That(clone.Indent).IsEqualTo(original.Indent);
-        await Assert.That(clone.Comment).IsEqualTo(original.Comment);
-        await Assert.That(clone.Actions.Count).IsEqualTo(1);
-        await Assert.That(clone.Actions[0].Module).IsEqualTo("variable");
-        await Assert.That(clone.Actions[0].ActionName).IsEqualTo("set");
-        await Assert.That(clone.WaitForExecution).IsEqualTo(original.WaitForExecution);
-        await Assert.That(clone.Goal).IsEqualTo(original.Goal);
-    }
-
-    [Test]
-    public async Task Clone_IsNotSameReference()
-    {
-        var original = new Step { Index = 1, Text = "test" };
-
-        var clone = original.Clone();
-
-        await Assert.That(clone).IsNotEqualTo(original);
-    }
-
-    [Test]
     public async Task ToString_ReturnsFormattedString()
     {
         var step = new Step { Index = 5, Text = "call http endpoint" };

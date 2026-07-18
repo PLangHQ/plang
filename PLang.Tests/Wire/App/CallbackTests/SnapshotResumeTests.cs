@@ -96,8 +96,8 @@ public class SnapshotResumeTests
 
     [Test] public async Task ResumeChain_MultiActionStep_ContinuesAtActionIndexPlusOne()
     {
-        // Pinned by Goal.RunFrom contract (GoalRunFromTests). ResumeChain's
-        // parent-frame branch calls Goal.RunFrom(context, stepIdx, ActionIndex+1) —
+        // Pinned by Goal.Resume contract (GoalRunFromTests). ResumeChain's
+        // parent-frame branch calls Goal.Resume(context, stepIdx, ActionIndex+1) —
         // the +1 mirrors what GoalRunFrom's tests already pin. End-to-end
         // exercised by 2a.8's cross-goal .test.goal fixture.
         await Assert.That(true).IsTrue();

@@ -7,7 +7,7 @@ using Action = global::app.goal.steps.step.actions.action.@this;
 namespace PLang.Tests.App.Modules.builder;
 
 /// <summary>
-/// Tests for Step.Merge() and Goal.MergeFrom() — OBP methods that own
+/// Tests for Step.Merge() and Goal.Merge() — OBP methods that own
 /// the knowledge of which fields are LLM-derived vs structural.
 /// </summary>
 public class MergeTests
@@ -105,7 +105,7 @@ public class MergeTests
 
     #endregion
 
-    #region Goal.MergeFrom
+    #region Goal.Merge
 
     [Test]
     public async Task GoalMergeFrom_MatchesByText_MergesLlmFields()
@@ -136,7 +136,7 @@ public class MergeTests
             }
         };
 
-        freshGoal.MergeFrom(existingGoal);
+        freshGoal.Merge(existingGoal);
 
         // Matched step gets actions
         await Assert.That(freshGoal.Steps[0].Actions.Count).IsEqualTo(1);
@@ -172,7 +172,7 @@ public class MergeTests
             }
         };
 
-        freshGoal.MergeFrom(existingGoal);
+        freshGoal.Merge(existingGoal);
 
         await Assert.That(freshGoal.Steps[0].Actions.Count).IsEqualTo(0);
     }
@@ -187,7 +187,7 @@ public class MergeTests
         };
 
         // Should not throw
-        freshGoal.MergeFrom(null);
+        freshGoal.Merge(null);
 
         await Assert.That(freshGoal.Steps.Count).IsEqualTo(1);
         await Assert.That(freshGoal.Steps[0].Actions.Count).IsEqualTo(0);
@@ -223,7 +223,7 @@ public class MergeTests
             }
         };
 
-        freshGoal.MergeFrom(existingGoal);
+        freshGoal.Merge(existingGoal);
 
         // First match gets the actions, second stays empty
         await Assert.That(freshGoal.Steps[0].Actions.Count).IsEqualTo(1);
