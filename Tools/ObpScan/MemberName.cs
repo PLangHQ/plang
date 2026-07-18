@@ -54,9 +54,11 @@ public sealed class MemberName
             if (_contract) return "contract";
             var shown = string.Join("·", Words);
             if (_boolish) return $"bool ({shown})";
+            // a verb-bearing compound is BEHAVIOUR first — it wins over a trailing plural noun
+            // (SplitAtConditions is a Split method, not a "Conditions" collection).
+            if (Words.Count > 1 && HasVerb) return $"**VERB+NOUN** ({shown})";
             if (IsPlural) return $"**PLURAL** ({shown}) → {Singular()}";
             if (Words.Count <= 1) return "clean";
-            if (HasVerb) return $"**VERB+NOUN** ({shown})";
             if (Stripped() is { } s) return $"**REDUNDANT** ({shown}) → {s}";
             return $"compound ({shown})";
         }
