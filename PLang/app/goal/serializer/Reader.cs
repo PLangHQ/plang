@@ -3,32 +3,23 @@ namespace app.goal.serializer;
 /// <summary>
 /// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for <c>goal</c> — a <c>.pr</c>
 /// payload materializing back into a <see cref="app.goal.@this"/>. The read-side mirror of
-/// <see cref="app.goal.@this.Output"/>: the goal reads its own bare <c>[Store]</c> shape token by
-/// token, each step via the <see cref="app.goal.steps.step.serializer.Reader"/> and each sub-goal via
-/// this reader's own recursion. The <c>.pr</c> payload arrives as one scalar token off the channel, so
-/// this bridges it to a json walk once at the top; the step/action readers walk the same reader in
-/// place. The Goal backref + Synthetic are stamped by the caller (goal.list load).
+/// <see cref="app.goal.@this.Output"/>: the goal walks the handed <see cref="app.channel.serializer.IReader"/>
+/// in place (the channel already made the one reader and positioned it at the first token), each step
+/// via the sibling <see cref="app.goal.steps.step.serializer.Reader"/> and each sub-goal via this
+/// reader's own recursion. The Goal backref + Synthetic are stamped by the caller (goal.list load).
 /// </summary>
 public sealed class Reader : global::app.type.reader.ITypeReader
 {
+    private readonly global::app.goal.steps.step.serializer.Reader _step = new();
+
     public string Kind => global::app.type.reader.@this.AnyKind;
 
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
-        var raw = reader.RawValue();
-        if (raw.Length == 0) return new global::app.type.item.@null.@this("goal", kind);
-        var utf8 = new System.Text.Json.Utf8JsonReader(raw);
-        utf8.Read();
-        var jsonReader = new global::app.channel.serializer.json.Reader(utf8, raw);
-        return ReadGoal(ref jsonReader, ctx);
-    }
+        if (reader.Null()) return new global::app.type.item.@null.@this("goal", kind);
 
-    // The goal's bare [Store] shape. Static + recursive so a sub-goal reads through the same walk.
-    internal static global::app.goal.@this ReadGoal(
-        ref global::app.channel.serializer.json.Reader reader, global::app.type.reader.ReadContext ctx)
-    {
         string name = "";
         string? description = null, comment = null, hash = null, builderVersion = null;
         global::app.type.item.choice.@this<global::app.goal.Visibility> visibility = global::app.goal.Visibility.Private;
@@ -38,9 +29,9 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         var goals = new System.Collections.Generic.List<global::app.goal.@this>();
 
         reader.BeginObject();
-        while (reader.NextName(out var fieldName))
+        while (reader.NextName(out var field))
         {
-            switch (fieldName)
+            switch (field)
             {
                 case "name": name = reader.String(); break;
                 case "description": description = reader.String(); break;
@@ -48,13 +39,13 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "steps":
                     reader.BeginArray();
                     while (reader.NextElement())
-                        steps.Add(global::app.goal.steps.step.serializer.Reader.ReadStep(ref reader, ctx));
+                        steps.Add((global::app.goal.steps.step.@this)_step.Read(ref reader, kind, ctx));
                     reader.EndArray();
                     break;
                 case "goals":
                     reader.BeginArray();
                     while (reader.NextElement())
-                        goals.Add(ReadGoal(ref reader, ctx));
+                        goals.Add((global::app.goal.@this)Read(ref reader, kind, ctx));
                     reader.EndArray();
                     break;
                 case "visibility":

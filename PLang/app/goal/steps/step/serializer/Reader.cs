@@ -2,26 +2,24 @@ namespace app.goal.steps.step.serializer;
 
 /// <summary>
 /// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for <c>step</c> — the read-side
-/// mirror of <see cref="app.goal.steps.step.@this.Output"/>. Reads the step's bare <c>[Store]</c>
-/// shape token by token and constructs the step natively; each action rides the
-/// <see cref="app.goal.steps.step.actions.action.serializer.Reader"/>. Fields land in locals first
-/// so the step's <c>init</c> props construct once (no reflection SetValue). The Goal backref +
-/// Synthetic are stamped by the caller (goal.list load), not here.
+/// mirror of <see cref="app.goal.steps.step.@this.Output"/>. Walks the handed
+/// <see cref="app.channel.serializer.IReader"/> in place: the step's bare <c>[Store]</c> shape, each
+/// action via the sibling <see cref="app.goal.steps.step.actions.action.serializer.Reader"/>. Fields
+/// land in locals first so the step's <c>init</c> props construct once. The Goal backref + Synthetic
+/// are stamped by the caller (goal.list load).
 /// </summary>
 public sealed class Reader : global::app.type.reader.ITypeReader
 {
+    private readonly global::app.goal.steps.step.actions.action.serializer.Reader _action = new();
+
     public string Kind => global::app.type.reader.@this.AnyKind;
 
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
-        => ReadStep(ref reader, ctx);
-
-    // Static so the goal reader shares the one walk per step without a fresh registry lookup.
-    internal static global::app.goal.steps.step.@this ReadStep<TReader>(
-        ref TReader reader, global::app.type.reader.ReadContext ctx)
-        where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
+        if (reader.Null()) return new global::app.type.item.@null.@this("step", kind);
+
         int index = 0, lineNumber = 0, indent = 0;
         string text = "";
         string? comment = null, intent = null, formal = null, source = null;
@@ -41,8 +39,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "actions":
                     reader.BeginArray();
                     while (reader.NextElement())
-                        actions.Add(global::app.goal.steps.step.actions.action.serializer.Reader
-                            .ReadAction(ref reader, isModifier: false, ctx));
+                        actions.Add((global::app.goal.steps.step.actions.action.@this)_action.Read(ref reader, kind, ctx));
                     reader.EndArray();
                     break;
                 case "intent": intent = reader.String(); break;

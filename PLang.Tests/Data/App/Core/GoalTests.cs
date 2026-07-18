@@ -22,7 +22,6 @@ public class GoalTests : System.IAsyncDisposable
             Hash = "abc123",
             IsSetup = true,
             IsEvent = false,
-            InputParameters = new Dictionary<string, string> { { "param1", "string" } },
             Goals = new List<global::app.goal.@this> { new() { Name = "SubGoal1" }, new() { Name = "SubGoal2" } },
             Steps = new GoalSteps
             {
@@ -34,13 +33,12 @@ public class GoalTests : System.IAsyncDisposable
         await Assert.That(goal.Name).IsEqualTo("TestGoal");
         await Assert.That(goal.Description).IsEqualTo("A test goal");
         await Assert.That(goal.Comment).IsEqualTo("This is a comment");
-        await Assert.That(goal.Visibility).IsEqualTo(Visibility.Public);
+        await Assert.That(goal.Visibility.Value).IsEqualTo(Visibility.Public);
         await Assert.That(goal.Path).IsEqualTo("/path/to/goal.goal");
         await Assert.That(goal.PrPath).IsEqualTo("/path/to/.build/goal.pr");
         await Assert.That(goal.Hash).IsEqualTo("abc123");
         await Assert.That(goal.IsSetup).IsTrue();
         await Assert.That(goal.IsEvent).IsFalse();
-        await Assert.That(goal.InputParameters!.Count).IsEqualTo(1);
         await Assert.That(goal.Goals.Count).IsEqualTo(2);
         await Assert.That(goal.Steps.Count).IsEqualTo(2);
     }
@@ -58,7 +56,7 @@ public class GoalTests : System.IAsyncDisposable
     {
         var goal = new Goal();
 
-        await Assert.That(goal.Visibility).IsEqualTo(Visibility.Private);
+        await Assert.That(goal.Visibility.Value).IsEqualTo(Visibility.Private);
     }
 
     [Test]
