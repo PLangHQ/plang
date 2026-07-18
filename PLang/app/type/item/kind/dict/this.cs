@@ -4,8 +4,8 @@ namespace app.type.item.kind.dict;
 
 /// <summary>
 /// The dict kind — a raw CLR <see cref="System.Collections.IDictionary"/> host (a POCO's
-/// <c>Dictionary&lt;string,string&gt;</c>, e.g. <c>goal.InputParameters</c>). Owns key-descend
-/// (<c>%goal.InputParameters.foo%</c>), entry-enumeration, and object-Output. Also owns the
+/// <c>Dictionary&lt;string,string&gt;</c>). Owns key-descend (<c>%config.settings.foo%</c>),
+/// entry-enumeration, and object-Output. Also owns the
 /// OUTBOUND convert: <c>dict</c> knows how to build itself FROM a json source, so <c>%x% as
 /// dict</c> (a clr(json) → native dict) is here, not on json — reusing the universal DOM
 /// narrower (<c>item.serializer.json.Parse</c>). Claims <c>IDictionary</c> by assignable match.

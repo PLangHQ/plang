@@ -57,7 +57,7 @@ public sealed partial class @this
     }
 
     [Store, LlmBuilder, Debug, Default]
-    public Visibility Visibility { get; init; } = Visibility.Private;
+    public global::app.type.item.choice.@this<Visibility> Visibility { get; init; } = global::app.goal.Visibility.Private;
 
     public override string ToString()
     {
@@ -168,9 +168,6 @@ public sealed partial class @this
     {
         get => Path?.Parent;
     }
-
-    [Store, LlmBuilder, Debug, Default]
-    public Dictionary<string, string>? InputParameters { get; init; }
 
     [LlmIgnore]
     [JsonIgnore]
@@ -439,7 +436,7 @@ public sealed partial class @this
                     currentGoal = new @this
                     {
                         Name = "Start",
-                        Visibility = goals.Count == 0 ? Visibility.Public : Visibility.Private,
+                        Visibility = goals.Count == 0 ? global::app.goal.Visibility.Public : global::app.goal.Visibility.Private,
                         Path = path
                     };
                     goals.Add(currentGoal);
@@ -513,7 +510,7 @@ public sealed partial class @this
             {
                 Name = goalName,
                 Comment = goalComment,
-                Visibility = goals.Count == 0 ? Visibility.Public : Visibility.Private,
+                Visibility = goals.Count == 0 ? global::app.goal.Visibility.Public : global::app.goal.Visibility.Private,
                 Path = path,
                 IsSetup = isSetup,
                 IsSystem = isSystem,

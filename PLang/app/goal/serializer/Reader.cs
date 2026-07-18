@@ -1,16 +1,13 @@
 namespace app.goal.serializer;
 
 /// <summary>
-/// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for <c>goal</c> — a
-/// <c>.pr</c> payload materializing back into a <see cref="app.goal.@this"/>. The
-/// payload is JSON text; the reader takes its raw bytes off the pass and deserializes
-/// the goal through the context-bound <c>GoalReadOptions</c> (Path fields land wired,
-/// <c>%ref%</c> step params born as live templates).
-///
-/// <para>BRIDGE: goal is really a host CLR object, not a plang value type — this reader
-/// exists so the read path unifies now. Final-stage cleanup (Ingi): goal rides as
-/// <c>clr</c>, this reader and the goal-as-type machinery go. See
-/// <c>.bot/read-path-unification/architect/v1/stage-final-cleanup.md</c>.</para>
+/// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for <c>goal</c> — a <c>.pr</c>
+/// payload materializing back into a <see cref="app.goal.@this"/>. The read-side mirror of
+/// <see cref="app.goal.@this.Output"/>: the goal reads its own bare <c>[Store]</c> shape token by
+/// token, each step via the <see cref="app.goal.steps.step.serializer.Reader"/> and each sub-goal via
+/// this reader's own recursion. The <c>.pr</c> payload arrives as one scalar token off the channel, so
+/// this bridges it to a json walk once at the top; the step/action readers walk the same reader in
+/// place. The Goal backref + Synthetic are stamped by the caller (goal.list load).
 /// </summary>
 public sealed class Reader : global::app.type.reader.ITypeReader
 {
@@ -20,19 +17,78 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
-        // goal is a plang ITEM now (the hosts-stay-hosts model was reversed) — the reader returns the
-        // goal itself, not a clr<goal> carrier. Its C# internals (Steps/Actions/…) are still read by
-        // reflecting the [Store] props (the * kind's Read is the one .pr materializer, transitional);
-        // the explicit token walk replaces the reflection hop later. The .pr payload is JSON, so open
-        // a json reader over the raw bytes (the scalar value.Reader the channel hands us carries them
-        // as one token) and drive the structured walk off that.
         var raw = reader.RawValue();
         if (raw.Length == 0) return new global::app.type.item.@null.@this("goal", kind);
         var utf8 = new System.Text.Json.Utf8JsonReader(raw);
         utf8.Read();
-        var jsonReader = new global::app.channel.serializer.json.Reader(utf8);
-        var goal = new global::app.type.item.kind.reflection.@this()
-            .Read(ref jsonReader, typeof(global::app.goal.@this), ctx) as global::app.goal.@this;
-        return goal ?? (global::app.type.item.@this)new global::app.type.item.@null.@this("goal", kind);
+        var jsonReader = new global::app.channel.serializer.json.Reader(utf8, raw);
+        return ReadGoal(ref jsonReader, ctx);
+    }
+
+    // The goal's bare [Store] shape. Static + recursive so a sub-goal reads through the same walk.
+    internal static global::app.goal.@this ReadGoal(
+        ref global::app.channel.serializer.json.Reader reader, global::app.type.reader.ReadContext ctx)
+    {
+        string name = "";
+        string? description = null, comment = null, hash = null, builderVersion = null;
+        global::app.type.item.choice.@this<global::app.goal.Visibility> visibility = global::app.goal.Visibility.Private;
+        global::app.type.item.path.@this? path = null;
+        bool isSetup = false, isEvent = false, isSystem = false, isTest = false;
+        var steps = new global::app.goal.steps.@this();
+        var goals = new System.Collections.Generic.List<global::app.goal.@this>();
+
+        reader.BeginObject();
+        while (reader.NextName(out var fieldName))
+        {
+            switch (fieldName)
+            {
+                case "name": name = reader.String(); break;
+                case "description": description = reader.String(); break;
+                case "comment": comment = reader.String(); break;
+                case "steps":
+                    reader.BeginArray();
+                    while (reader.NextElement())
+                        steps.Add(global::app.goal.steps.step.serializer.Reader.ReadStep(ref reader, ctx));
+                    reader.EndArray();
+                    break;
+                case "goals":
+                    reader.BeginArray();
+                    while (reader.NextElement())
+                        goals.Add(ReadGoal(ref reader, ctx));
+                    reader.EndArray();
+                    break;
+                case "visibility":
+                    visibility = global::app.type.item.choice.@this<global::app.goal.Visibility>.Parse(reader.String());
+                    break;
+                case "path": path = global::app.type.item.path.@this.Resolve(reader.String(), ctx.Context); break;
+                // prPath is DERIVED from Path (its init is a no-op) — consume and discard.
+                case "prPath": reader.Skip(); break;
+                case "hash": hash = reader.String(); break;
+                case "builderVersion": builderVersion = reader.String(); break;
+                case "isSetup": isSetup = reader.Bool(); break;
+                case "isEvent": isEvent = reader.Bool(); break;
+                case "isSystem": isSystem = reader.Bool(); break;
+                case "isTest": isTest = reader.Bool(); break;
+                default: reader.Skip(); break;
+            }
+        }
+        reader.EndObject();
+
+        return new global::app.goal.@this
+        {
+            Name = name,
+            Description = description,
+            Comment = comment,
+            Steps = steps,
+            Goals = goals,
+            Visibility = visibility,
+            Path = path,
+            Hash = hash,
+            BuilderVersion = builderVersion,
+            IsSetup = isSetup,
+            IsEvent = isEvent,
+            IsSystem = isSystem,
+            IsTest = isTest,
+        };
     }
 }

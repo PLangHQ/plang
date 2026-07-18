@@ -311,7 +311,7 @@ public sealed class @this
     /// <summary>
     /// Gets public goals only.
     /// </summary>
-    public IEnumerable<goal.@this> Public => _goals.Values.Where(g => g.Visibility == goal.Visibility.Public);
+    public IEnumerable<goal.@this> Public => _goals.Values.Where(g => g.Visibility.Value == goal.Visibility.Public);
 
     /// <summary>
     /// Gets event goals only.
