@@ -19,11 +19,11 @@ Before deleting or re-homing a type, and on any new type before pushing: `dotnet
 - **MISPLACED / behavioral VERB+NOUN → escalate to architect, do NOT silently relocate.** (That's the whole condition finding — the tool flags it.)
 - PLURAL / REDUNDANT name flags → fix in the sweep, no need to ask.
 
-## OPEN — flag to architect, don't guess
+## Resolved (were open — settled w/ Ingi 2026-07-18)
 
-- **`step.Clone` (35 lines)** — hand-rolled god-clone that reaches across step→action→modifier, hardcoding every field the sweep renames. Not on any demolition list. Fate undecided: die into the item-base `Clone` (blocked by the `Goal` backref recursion), or shrink to per-item clones. **Decide before the sweep touches it** (it hardcodes `ActionName`/`Errors`/`Modifiers` — all renaming).
-- **`action.Reflect` (61 lines)** — the reflection leaf (Properties/Return). Longest method on the branch. Decompose — but it's live module-discovery code; how it splits is a design call.
-- **`step.RunFrom` (30) / `steps.MergeFrom` (21)** — verb+noun. The rename is clear (fold in sweep); whether they want a deeper reshape is open.
+- **`step.Clone` (35) → DELETE.** Zero production callers (grep-verified); only two tests exercise it (`StepTests.cs`, `modifier/ModifierRegistryTests.cs`) — circular, they test the method's existence. Dead code. Delete the method + those two tests. No item-base-Clone reconciliation needed.
+- **`action.Reflect` (61) → decompose; the row builds itself (NO static factory).** `Reflect` produces `action.Properties` — the param schema the compiler shows the LLM (rendered by `stepActionDetails.template`). It mixes a filter with field-by-field row construction. Fix: **`property.@this` gains a constructor `new property.@this(PropertyInfo prop, App.Type)`** that reflects its own Name/Type/Nullable/Default/IsVariable (absorbs `UnwrapToValue` + `IsVariableNameSlot`). `Reflect` keeps only the filter loop — skip EqualityContract/capability/`[Code]`, build the row, drop it when `row.Type.Name` ∈ {clr, goal, step, action, modifier}, plus the channel row (~61→~25). `ReflectReturn` (verb+noun, single caller) inlines into the `Return` getter.
+- **`RunFrom` → `Resume`, `MergeFrom` → `Merge`.** These are obpv (multi-word method names; the ONLY name exemption is boolean Is/Has — no preposition carve-out). `RunFrom` IS the snapshot-resume mechanism → `Resume(context, fromIdx)`. `MergeFrom` matches the existing `step.Merge` → `Merge(prior)`. Rename on `step`, `goal`, `steps`/`goal.step` collection + the snapshot/build callers.
 
 ## Not damage — for the record
 The branch's NEW files (`*.Item.cs`, `property`, `modifier`, the `Decision` type) are clean. Every smell above is pre-existing behavior the branch re-homes — which is exactly why #2 (raw-List) and #3 (re-home-to-step) matter: a re-home that lands on the wrong owner keeps the smell. Check the re-home TARGET, not just "the class dies."
