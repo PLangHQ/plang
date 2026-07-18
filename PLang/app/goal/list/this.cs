@@ -365,8 +365,10 @@ public sealed class @this
             var readResult = await prPath.ReadText();
             if (!readResult.Success || readResult.Peek().IsNull)
                 return app.System.Context.Error(readResult.Error ?? new Error($"Failed to read goal file: {prPath}"));
-            if ((await readResult.Value()) as global::app.goal.@this is not { } primary)
-                return app.System.Context.Error(new Error($"Failed to parse goal file: {prPath}"));
+            var materialized = await readResult.Value();
+            if (materialized as global::app.goal.@this is not { } primary)
+                return app.System.Context.Error(readResult.Error ?? new Error(
+                    $"Failed to parse goal file: {prPath} — read produced {materialized.GetType().Name}, not a goal"));
 
             foreach (var step in primary.Steps)
             {
