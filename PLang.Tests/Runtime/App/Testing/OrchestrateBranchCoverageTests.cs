@@ -126,11 +126,11 @@ public class OrchestrateBranchCoverageTests
         // 6. Both condition.if actions fire AfterAction — outer as orchestrator,
         //    inner on the simple path during elseif evaluation. Old-shape fixtures
         //    (two condition.if) have IsIfHead=true on both, so we use the legacy
-        //    IsFirstConditionInStep predicate here purely as a distinguisher to
+        //    IsFirst predicate here purely as a distinguisher to
         //    confirm the inner action's Step is propagated (the SplitAtConditions
         //    fix from d05c138d).
-        var outerObservations = observed.Where(o => o.action.IsFirstConditionInStep).ToList();
-        var innerObservations = observed.Where(o => !o.action.IsFirstConditionInStep).ToList();
+        var outerObservations = observed.Where(o => o.action.IsFirst).ToList();
+        var innerObservations = observed.Where(o => !o.action.IsFirst).ToList();
         await Assert.That(outerObservations.Count).IsGreaterThanOrEqualTo(1);
         await Assert.That(innerObservations.Count).IsGreaterThanOrEqualTo(1);
     }
@@ -177,10 +177,10 @@ public class OrchestrateBranchCoverageTests
         // Force Actions → step binding (same path the runtime takes via enumeration).
         _ = step.Actions;
 
-        var branches = step.Actions.SplitAtConditions(0);
+        var decision = global::app.module.action.condition.decision.@this.Of(step.Actions)!;
 
-        await Assert.That(branches.Count).IsEqualTo(2);
-        foreach (var (condition, body) in branches)
+        await Assert.That(decision.Count).IsEqualTo(2);
+        foreach (var (condition, body) in decision)
         {
             await Assert.That(condition).IsNotNull();
             await Assert.That(condition!.Step).IsNotNull();
@@ -192,12 +192,12 @@ public class OrchestrateBranchCoverageTests
             }
         }
 
-        // Inner elseif (second condition action) must report IsFirstConditionInStep=false.
-        var innerElseIf = branches[1].condition!;
-        await Assert.That(innerElseIf.IsFirstConditionInStep).IsFalse();
+        // Inner elseif (second condition action) must report IsFirst=false.
+        var innerElseIf = decision[1].Condition!;
+        await Assert.That(innerElseIf.IsFirst).IsFalse();
 
-        // Outer if (first condition action) must report IsFirstConditionInStep=true.
-        var outerIf = branches[0].condition!;
-        await Assert.That(outerIf.IsFirstConditionInStep).IsTrue();
+        // Outer if (first condition action) must report IsFirst=true.
+        var outerIf = decision[0].Condition!;
+        await Assert.That(outerIf.IsFirst).IsTrue();
     }
 }

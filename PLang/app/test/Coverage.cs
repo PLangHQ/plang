@@ -78,7 +78,7 @@ public sealed class Coverage
     /// Records the declared branch chain for a site. Only stored the first time —
     /// seed-then-observe is safe; re-seeding with a different chain is ignored.
     /// </summary>
-    public void RecordBranchChain(string site, List<string> chain)
+    public void RecordBranchChain(string site, IReadOnlyList<string> chain)
     {
         if (chain == null || chain.Count == 0) return;
         _branchChains.TryAdd(site, new List<string>(chain));

@@ -308,15 +308,10 @@ public partial class discover : IContext
 
         goal.ForEachAction((step, action) =>
         {
-            if (seededSteps.Add(step.Index))
+            if (seededSteps.Add(step.Index)
+                && global::app.module.action.condition.decision.@this.Of(step.Actions) is { } decision)
             {
-                int firstIfIndex = step.Actions.FirstConditionIndex();
-                if (firstIfIndex >= 0)
-                {
-                    var chain = step.Actions.ComputeBranchChain(firstIfIndex);
-                    var site = $"{goalId}:{step.Index}";
-                    coverage.RecordBranchChain(site, chain);
-                }
+                coverage.RecordBranchChain($"{goalId}:{step.Index}", decision.Chain);
             }
 
             if (string.Equals(action.Module, "goal", StringComparison.OrdinalIgnoreCase) &&

@@ -2,6 +2,7 @@ using app;
 using app.variable;
 using app.module.action.condition.code;
 using Action = app.goal.steps.step.actions.action.@this;
+using Decision = app.module.action.condition.decision.@this;
 
 namespace app.module.action.condition;
 
@@ -70,15 +71,15 @@ public partial class If : IContext, IStep
     private async Task<data.@this> Orchestrate(
         app.goal.steps.step.actions.@this actions, bool firstConditionResult)
     {
-        int myIndex = actions.IndexOf(__action);
-        if (myIndex < 0) myIndex = 0;
-
-        var branches = actions.SplitAtConditions(myIndex);
+        // Decision owns the branch structure (condition.if owns running it). A condition fired to
+        // reach here, so the head exists — but guard the null for safety.
+        var decision = Decision.Of(actions);
+        if (decision == null) return Data(false);
 
         // Execute: first branch uses our already-evaluated result
-        for (int b = 0; b < branches.Count; b++)
+        for (int b = 0; b < decision.Count; b++)
         {
-            var (condition, body) = branches[b];
+            var (condition, body) = decision[b];
             bool branchResult;
 
             if (b == 0)
@@ -124,7 +125,7 @@ public partial class If : IContext, IStep
                         : $"elseif[{b}]";
                 lastResult.Properties.Set("branchIndex", b);
                 lastResult.Properties.Set("branchLabel", label);
-                lastResult.Properties.Set("branchChain", actions.ComputeBranchChain(myIndex));
+                lastResult.Properties.Set("branchChain", decision.Chain);
                 return lastResult;
             }
         }

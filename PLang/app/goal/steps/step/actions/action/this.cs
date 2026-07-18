@@ -76,8 +76,8 @@ public partial class @this
 
     /// <summary>
     /// True for any condition chain action: condition.if, condition.elseif, or condition.else.
-    /// Used by SplitAtConditions / ComputeBranchChain to split an orchestrated step's actions
-    /// into per-branch groups.
+    /// Used by the condition.Decision type to split an orchestrated step's actions into per-branch
+    /// groups.
     /// </summary>
     [JsonIgnore]
     public bool IsCondition =>
@@ -96,12 +96,13 @@ public partial class @this
         string.Equals(ActionName, "if", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
-    /// True when this is the first condition.if action in its step. Used by coverage
+    /// True when this is the head condition.if action in its step. Used by coverage
     /// to ignore inner-elseif simple-path firings that would otherwise mix
     /// true/false labels into the orchestrator's declared chain.
     /// </summary>
     [JsonIgnore]
-    public bool IsFirstConditionInStep => Step?.Actions.IsFirstCondition(this) ?? false;
+    public bool IsFirst =>
+        Step?.Actions is { } acts && global::app.module.action.condition.decision.@this.HeadIs(acts, this);
 
     [JsonIgnore]
     public Step? Step { get; set; }
