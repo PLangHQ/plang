@@ -40,7 +40,7 @@ public class RunActionTests
     /// Creates a .test.goal + .pr pair on disk at the temp dir. Returns a global::app.test.@this
     /// ready for test.run (Status=Ready, Directory=abs, PrPath relative to Directory).
     /// </summary>
-    private global::app.test.@this BuildFixture(string relativePath, string goalName,
+    private async Task<global::app.test.@this> BuildFixture(string relativePath, string goalName,
         (string module, string actionName, List<Data> parameters)[] actions)
     {
         var absFile = System.IO.Path.Combine(_tempDir, relativePath.Replace('/', System.IO.Path.DirectorySeparatorChar));
@@ -75,8 +75,16 @@ public class RunActionTests
         var prFile = System.IO.Path.Combine(absDir, ".build",
             System.IO.Path.GetFileNameWithoutExtension(absFile).ToLowerInvariant() + ".pr");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(prFile)!);
-        System.IO.File.WriteAllText(prFile,
-            JsonSerializer.Serialize(goal, global::app.Utils.Json.CamelCaseIndented));
+        // Write the .pr through the PLANG serializer (goal.Output, Store view) — the same path the
+        // real build takes — NOT raw STJ. The reader reads the plang wire shape ({name,type,value}
+        // per param); a raw-STJ dump of the Data C# surface no longer round-trips through it.
+        var serializer = (global::app.channel.serializer.plang.@this)
+            _app.User.Channel.Serializers.GetOrDefault("application/plang");
+        using (var ms = new System.IO.MemoryStream())
+        {
+            await serializer.SerializeItemAsync(ms, goal, global::app.View.Store);
+            System.IO.File.WriteAllText(prFile, System.Text.Encoding.UTF8.GetString(ms.ToArray()));
+        }
 
         return new global::app.test.@this(global::PLang.Tests.TestApp.SharedContext)
         {
@@ -103,7 +111,7 @@ public class RunActionTests
     public async Task Run_FreshAppPerTest_IsolationBoundaryIsFileLevel()
     {
         // TestA: sets %shared% = 1
-        var testA = BuildFixture("A.test.goal", "TestA", new (string, string, List<Data>)[]
+        var testA = await BuildFixture("A.test.goal", "TestA", new (string, string, List<Data>)[]
         {
             ("variable", "set", new List<Data>
             {
@@ -113,7 +121,7 @@ public class RunActionTests
         });
 
         // TestB: asserts %shared% is null (should be unset if isolation works)
-        var testB = BuildFixture("B.test.goal", "TestB", new (string, string, List<Data>)[]
+        var testB = await BuildFixture("B.test.goal", "TestB", new (string, string, List<Data>)[]
         {
             ("assert", "isNull", new List<Data>
             {
@@ -167,7 +175,7 @@ public class RunActionTests
         {
             var tests = new List<global::app.test.@this>();
             for (int i = 0; i < 4; i++)
-                tests.Add(BuildFixture($"T{i}.test.goal", $"T{i}", new (string, string, List<Data>)[]
+                tests.Add(await BuildFixture($"T{i}.test.goal", $"T{i}", new (string, string, List<Data>)[]
                 {
                     ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("x"), context: _app.User.Context), new("Value", i, context: _app.User.Context) })
                 }));
@@ -197,7 +205,7 @@ public class RunActionTests
         // timeout.after wrapping a long-running action — the inner action blows the
         // outer test-level timeout. For a CPU-bound-free fixture: use timer.wait
         // or a large sleep. Simplest: construct a goal that sleeps.
-        var slow = BuildFixture("Slow.test.goal", "Slow", new (string, string, List<Data>)[]
+        var slow = await BuildFixture("Slow.test.goal", "Slow", new (string, string, List<Data>)[]
         {
             ("timer", "sleep", new List<Data>
             {
@@ -216,7 +224,7 @@ public class RunActionTests
     [Test]
     public async Task Run_AfterActionSubscription_CapturesCoverageOnChildApp()
     {
-        var test = BuildFixture("Cov.test.goal", "Cov", new (string, string, List<Data>)[]
+        var test = await BuildFixture("Cov.test.goal", "Cov", new (string, string, List<Data>)[]
         {
             ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("x"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) }),
             ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("y"), context: _app.User.Context), new("Value", 2, context: _app.User.Context) })
@@ -234,7 +242,7 @@ public class RunActionTests
     [Test]
     public async Task Run_TestChildCoverage_MergedIntoParentCoverage()
     {
-        var test = BuildFixture("MergeA.test.goal", "M", new (string, string, List<Data>)[]
+        var test = await BuildFixture("MergeA.test.goal", "M", new (string, string, List<Data>)[]
         {
             ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("a"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) })
         });
@@ -269,7 +277,7 @@ public class RunActionTests
         global::app.module.action.test.run.ChildAppCreated += Probe;
         try
         {
-            var test = BuildFixture("OsDir.test.goal", "S", new (string, string, List<Data>)[]
+            var test = await BuildFixture("OsDir.test.goal", "S", new (string, string, List<Data>)[]
             {
                 ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("x"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) })
             });
@@ -302,7 +310,7 @@ public class RunActionTests
         global::app.module.action.test.run.ChildAppCreated += Probe;
         try
         {
-            var test = BuildFixture("IsEn.test.goal", "E", new (string, string, List<Data>)[]
+            var test = await BuildFixture("IsEn.test.goal", "E", new (string, string, List<Data>)[]
             {
                 ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("x"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) })
             });
@@ -337,7 +345,7 @@ public class RunActionTests
         global::app.module.action.test.run.ChildAppCreated += Probe;
         try
         {
-            var ready = BuildFixture("Ready.test.goal", "R", new (string, string, List<Data>)[]
+            var ready = await BuildFixture("Ready.test.goal", "R", new (string, string, List<Data>)[]
             {
                 ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("x"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) })
             });
@@ -373,7 +381,7 @@ public class RunActionTests
     {
         // Fixture sets a variable before the assert so AssertionError.Variables can
         // demonstrate it carried through test.run's failure path (end-to-end check).
-        var test = BuildFixture("Fail.test.goal", "F", new (string, string, List<Data>)[]
+        var test = await BuildFixture("Fail.test.goal", "F", new (string, string, List<Data>)[]
         {
             ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("score"), context: _app.User.Context), new("Value", 42, context: _app.User.Context) }),
             ("assert", "equals", new List<Data>
@@ -422,7 +430,7 @@ public class RunActionTests
         // Operator passes through as a string — the runtime resolver constructs the
         // Operator IObject at execution time. (Real .pr files store it as string too;
         // serializing Operator directly hits a Func-not-serializable NotSupportedException.)
-        var fixture = BuildFixture("Cond.test.goal", "Cond", new (string, string, List<Data>)[]
+        var fixture = await BuildFixture("Cond.test.goal", "Cond", new (string, string, List<Data>)[]
         {
             ("condition", "if", new List<Data>
             {
@@ -484,7 +492,7 @@ public class RunActionTests
         global::app.module.action.test.run.ChildAppCreated += Probe;
         try
         {
-            var test = BuildFixture("OutCap.test.goal", "OutCap", new (string, string, List<Data>)[]
+            var test = await BuildFixture("OutCap.test.goal", "OutCap", new (string, string, List<Data>)[]
             {
                 // No `channel` param → defaults to "output".
                 ("output", "write", new List<Data> { new("Data", "hello-output", context: _app.User.Context) }),
@@ -550,7 +558,7 @@ public class RunActionTests
 
         // Entry goal: 3 top-level steps. Step 1 calls Helper (which has its own
         // 2 steps). Timings should record exactly steps 0, 1, 2 of the entry.
-        var entry = BuildFixture("Tim.test.goal", "Tim", new (string, string, List<Data>)[]
+        var entry = await BuildFixture("Tim.test.goal", "Tim", new (string, string, List<Data>)[]
         {
             ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("a"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) }),
             ("goal", "call", new List<Data>
@@ -589,7 +597,7 @@ public class RunActionTests
         // return an ActionError before the handler runs. That goes through the outer
         // catch-all path only for OTHER kinds of failures. Simpler: construct a
         // fixture whose .pr is malformed JSON so goal loading throws.
-        var throwing = BuildFixture("Throw.test.goal", "T", new (string, string, List<Data>)[]
+        var throwing = await BuildFixture("Throw.test.goal", "T", new (string, string, List<Data>)[]
         {
             ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("x"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) })
         });
@@ -598,7 +606,7 @@ public class RunActionTests
         var prAbs = System.IO.Path.Combine(_tempDir, ".build", "throw.test.pr");
         System.IO.File.WriteAllText(prAbs, "{ \"name\": INVALID_JSON");
 
-        var healthy = BuildFixture("Healthy.test.goal", "H", new (string, string, List<Data>)[]
+        var healthy = await BuildFixture("Healthy.test.goal", "H", new (string, string, List<Data>)[]
         {
             ("variable", "set", new List<Data> { new("Name", new global::app.variable.@this("y"), context: _app.User.Context), new("Value", 2, context: _app.User.Context) })
         });
