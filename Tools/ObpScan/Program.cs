@@ -19,10 +19,10 @@ using var codebase = await Codebase.Load(args.Length > 1 ? args[1] : "PLang/PLan
 var scans = await codebase.Find(args[0]);
 
 if (scans.Count == 0) { Console.Error.WriteLine($"no type matched '{args[0]}'"); return 1; }
-if (scans.Count > 5)
+if (scans.Count > 40)
 {
-    Console.Error.WriteLine($"'{args[0]}' matched {scans.Count} types — narrow it:");
-    foreach (var s in scans.Take(20)) Console.Error.WriteLine("  " + s.FullName);
+    Console.Error.WriteLine($"'{args[0]}' matched {scans.Count} types — too broad, narrow it:");
+    foreach (var s in scans.Take(40)) Console.Error.WriteLine("  " + s.FullName);
     return 1;
 }
 

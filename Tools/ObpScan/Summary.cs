@@ -14,7 +14,7 @@ public sealed class Summary
     public void Add(MemberName name, int lines, Ownership ownership)
     {
         _members++;
-        if (name.IsCompound) _nameFlags++;
+        if (name.IsFlagged) _nameFlags++;
         if (lines > 15) _longFlags++;
         if (ownership.ForeignConcept is { } concept)
         {
