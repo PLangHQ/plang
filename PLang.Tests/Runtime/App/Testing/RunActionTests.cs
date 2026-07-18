@@ -552,9 +552,15 @@ public class RunActionTests
 
         var helperPrAbs = System.IO.Path.Combine(_tempDir, ".build", "helper.pr");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(helperPrAbs)!);
-        System.IO.File.WriteAllText(helperPrAbs,
-            System.Text.Json.JsonSerializer.Serialize(helperGoal,
-                global::app.Utils.Json.CamelCaseIndented));
+        // Write via the plang serializer (goal.Output, Store) — the real build path — not raw STJ,
+        // so the reader can read it back (see BuildFixture).
+        var helperSerializer = (global::app.channel.serializer.plang.@this)
+            _app.User.Channel.Serializers.GetOrDefault("application/plang");
+        using (var hms = new System.IO.MemoryStream())
+        {
+            await helperSerializer.SerializeItemAsync(hms, helperGoal, global::app.View.Store);
+            System.IO.File.WriteAllText(helperPrAbs, System.Text.Encoding.UTF8.GetString(hms.ToArray()));
+        }
 
         // Entry goal: 3 top-level steps. Step 1 calls Helper (which has its own
         // 2 steps). Timings should record exactly steps 0, 1, 2 of the entry.
