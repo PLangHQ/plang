@@ -53,7 +53,11 @@ public sealed class MemberName
         {
             if (_contract) return "contract";
             var shown = string.Join("·", Words);
-            if (_boolish) return $"bool ({shown})";
+            // the ONLY name exemption is a boolean PREFIXED Is/Has (docs). A boolean named with Is/Has
+            // anywhere else (HeadIs) is Noun+Verb — still the smell; suggest moving the marker to the front.
+            if (_boolish && Words.Count > 0 && Words[0] is "Is" or "Has") return $"bool ({shown})";
+            if (_boolish && Words.Contains("Is"))
+                return $"**BOOL-SUFFIX** ({shown}) → Is{string.Concat(Words.Where(w => w != "Is"))}";
             // a verb-bearing compound is BEHAVIOUR first — it wins over a trailing plural noun
             // (SplitAtConditions is a Split method, not a "Conditions" collection).
             if (Words.Count > 1 && HasVerb) return $"**VERB+NOUN** ({shown})";
