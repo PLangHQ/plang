@@ -14,8 +14,8 @@ public interface IAssert : ICode
     Task<data.@this<global::app.type.item.@bool.@this>> NotEquals(NotEquals action);
     Task<data.@this<global::app.type.item.@bool.@this>> IsTrue(IsTrue action);
     Task<data.@this<global::app.type.item.@bool.@this>> IsFalse(IsFalse action);
-    data.@this<global::app.type.item.@bool.@this> IsNull(IsNull action);
-    data.@this<global::app.type.item.@bool.@this> IsNotNull(IsNotNull action);
+    Task<data.@this<global::app.type.item.@bool.@this>> IsNull(IsNull action);
+    Task<data.@this<global::app.type.item.@bool.@this>> IsNotNull(IsNotNull action);
     Task<data.@this<global::app.type.item.@bool.@this>> Contains(Contains action);
     Task<data.@this<global::app.type.item.@bool.@this>> NotContains(NotContains action);
     Task<data.@this<global::app.type.item.@bool.@this>> GreaterThan(GreaterThan action);

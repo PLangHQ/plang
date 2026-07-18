@@ -125,7 +125,7 @@ public class RunActionTests
         {
             ("assert", "isNull", new List<Data>
             {
-                new("Value", "%shared%", context: _app.User.Context)
+                new("Value", "%shared%", new global::app.type.@this("variable"), context: _app.User.Context)
             })
         });
 
@@ -133,7 +133,7 @@ public class RunActionTests
         var runs = results.ToList();
 
         await Assert.That(runs.Count).IsEqualTo(2);
-        await Assert.That(runs.All(r => r.Status == global::app.test.Status.Pass)).IsTrue();
+        await runs.AssertAllPass();
     }
 
     // With Config.Parallel = (global::app.type.item.number.@this)2 and 4 tests, at most 2 tests run concurrently.

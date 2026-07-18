@@ -59,22 +59,37 @@ public class Default : IAssert
             (action.Message == null ? null : await action.Message.Value())?.ToString() ?? "Expected falsy value"));
     }
 
-    public data.@this<global::app.type.item.@bool.@this> IsNull(IsNull action)
+    public async Task<data.@this<global::app.type.item.@bool.@this>> IsNull(IsNull action)
     {
-        if (global::app.type.item.@null.@this.IsNullValue(action.Value?.Peek()))
+        // RESOLVE the value (open its door), don't Peek the raw form — a %ref%/template Peeks to its
+        // unrendered source (the name / the literal) and would never read as null. Same door
+        // IsTrue/IsFalse/Contains use. An UNSET %var% is absent → null for a null-check (not an error).
+        var value = await ResolveOrNull(action.Value);
+        if (global::app.type.item.@null.@this.IsNullValue(value))
             return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.item.@bool.@this>(new AssertionError(null, action.Value?.Peek(),
+        return action.Context.Error<global::app.type.item.@bool.@this>(new AssertionError(null, value,
             action.Message?.Peek()?.ToString() ?? "Expected null"));
     }
 
-    public data.@this<global::app.type.item.@bool.@this> IsNotNull(IsNotNull action)
+    public async Task<data.@this<global::app.type.item.@bool.@this>> IsNotNull(IsNotNull action)
     {
-        if (!global::app.type.item.@null.@this.IsNullValue(action.Value?.Peek()))
+        var value = await ResolveOrNull(action.Value);
+        if (!global::app.type.item.@null.@this.IsNullValue(value))
             return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
         return action.Context.Error<global::app.type.item.@bool.@this>(new AssertionError("(not null)", null,
             action.Message?.Peek()?.ToString() ?? "Expected non-null value"));
+    }
+
+    // Resolve a value for a null-check: open its door, but treat an unset %var% as absent (null)
+    // rather than a hard read error — "is %shared% null" is exactly the question you ask BEFORE
+    // knowing whether the variable was ever set.
+    private static async Task<global::app.type.item.@this?> ResolveOrNull(data.@this? value)
+    {
+        if (value == null) return null;
+        try { return await value.Value(); }
+        catch (global::app.error.VariableNotFoundException) { return null; }
     }
 
     public async Task<data.@this<global::app.type.item.@bool.@this>> Contains(Contains action)

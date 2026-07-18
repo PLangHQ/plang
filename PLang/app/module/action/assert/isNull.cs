@@ -12,6 +12,6 @@ public partial class IsNull : IContext
     [Code]
     public partial IAssert Assert { get; }
 
-    public Task<data.@this<global::app.type.item.@bool.@this>> Run() =>
-        Task.FromResult(AssertSnapshot.WithVariables(Assert.IsNull(this), Context));
+    public async Task<data.@this<global::app.type.item.@bool.@this>> Run() =>
+        AssertSnapshot.WithVariables(await Assert.IsNull(this), Context);
 }
