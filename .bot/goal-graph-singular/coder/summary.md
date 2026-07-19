@@ -1,91 +1,65 @@
 # Coder summary — branch `goal-graph-singular`
 
 ## What this is
-Make the goal graph "singular" and turn `goal`/`step`/`action`/`modifier` into plang **items**
-(`item.@this` + `ICreate`), delete the three bespoke collection classes
-(`modifiers.@this`, `actions.@this`, `steps.@this`), flip `clr<goal>`→`Data<goal>`, do the
-singular property/wire sweep, then the `.pr` migration + acceptance. Architect plan lives in
-`.bot/goal-graph-singular/architect/` (`items-answer.md` = mechanism, `demolition-followup.md`
-= the gated deletion worklist).
+Graph → plang items: `goal`/`step`/`action`/`modifier` become `item.@this`, the three bespoke
+collection classes delete, `Visibility`→`choice`, `.pr` read/write moves off reflection onto explicit
+item Output + per-type readers. Architect plan: `.bot/goal-graph-singular/architect/` (`items-answer.md`,
+`demolition-followup.md`, `binary-boundary-answer.md`).
 
-## What was done (latest — the 3 small architect directives, commit `8809cc1a4`)
-All from `architect/branch-review-findings.md` "Post-Decision landing":
+## Landed so far (all pushed, green modulo proven-pre-existing failures)
 
-1. **`Decision.HeadIs` → `IsHead`** (Is must be a prefix) + inlined the private `Labels` label-chain
-   builder into `Of`. Caller `action.IsFirst` updated.
-   `PLang/app/module/action/condition/decision/this.cs`, `action/this.cs`.
-2. **`step.Clone()` DELETED** — dead, zero production callers. Removed its two tests
-   (`StepTests.Clone_*`, `ModifierRegistryTests.StepClone_*`).
-   `PLang/app/goal/steps/step/this.cs`.
-3. **`RunFrom` → `Resume`, `MergeFrom` → `Merge`** (obpv — the only name exemption is boolean
-   Is/Has, no preposition carve-out). Renamed on `step`, `goal`, `steps` collection + the
-   snapshot/build callers + tests; the two partial files renamed
-   `this.RunFrom.cs`→`this.Resume.cs`; test `GoalRunFromTests`→`GoalResumeTests`.
-4. **`action.Reflect` decompose** — `property.@this` gained a self-building ctor
-   `new property.@this(PropertyInfo, type.list)` that reflects its own Name/Type/Nullable/
-   Default/IsVariable (absorbed `UnwrapToValue` + `IsVariableNameSlot`, both inlined — no
-   statics left). `Reflect()` is now just the filter loop, dropping rows by `row.Type.Name`
-   ∈ {clr, goal, step, action, modifier}. `ReflectReturn` (verb+noun, single caller) inlined
-   into the `Return` getter and deleted.
-   `PLang/app/goal/steps/step/actions/action/property/this.cs`, `.../action/this.Schema.cs`.
+### Increment-3 write side
+`goal`/`step`/`action` write themselves via explicit `Output` (was: reflection). `Visibility` enum →
+`choice<Visibility>` (self-serializes its symbol). Dead `InputParameters` deleted.
 
-### Tests (all green after the change; deltas are zero vs. baseline)
-- Wire (Resume/snapshot): `GoalResumeTests` 5/5, `SnapshotResumeTests`+`StepLoopShouldExitTests` pass.
-- Modules: `MergeTests` 12/12, `ModifierRegistryTests` 4/4.
-- Data: `StepTests` 13/13.
-- Catalog (Reflect output): `TypedPropertyCatalogTests` 5/5, `DescribeTests` 3/3,
-  `ModulesDescribeReturnTypeTests` 7/7, `Stage4_BuilderCatalogTests` 3/3, `ParamDescParity`,
-  `PropertyLeafParity`, `Stage5_ChannelActionsBuilderCatalog`, `Stage2_MechanicalTypings_Part1` all pass.
-- **One pre-existing failure** (confirmed on clean HEAD via stash+rebuild, NOT mine):
-  `Stage2_MechanicalTypings_Part2Tests.ModulesDescribe_BuilderRecordHandlers_AdvertiseConcreteReturnTypes`
-  — `builder.types` absent from `Describe()` (NRE at the test's `types!`). Independent of this diff.
+### Increment-3 read side (architect ruling 3a + binary-boundary A)
+Per-type `ITypeReader`s (`goal`/`step`/`action` `serializer/Reader.cs`) walk the handed `IReader`; no
+`Read*` statics. The **goal reader is the binary→json content boundary**: a `.pr`-from-disk load hands a
+scalar `value.Reader`, so the goal parses its own json bytes once (`new json.Reader`) and `Walk`s in
+place — step/action readers walk that reader nested. Architect ruled this is A (correct; content decode
+belongs on the type), not a "never-new-a-reader" violation.
 
-### Also already landed earlier on the branch (context)
-- `modifiers.@this` deleted; `modifier.Wrap` owns the wrap fold; `Position` (was `Order`).
-- `Decision` type created; condition methods left `actions.@this`.
-- item base `Set` = reflect-default; `GoalCall` returns goal item direct (no `clr<goal>` wrap).
-- Test-confidence sweep: `Make.Action` templates `%var%` params; `TestRunAssertions` diagnostic;
-  RunActionTests 2→13; assert.isNull/isNotNull RESOLVE (async).
+### Gate-2 Phase A — `actions.@this` DELETED (commit `f38bcdfc8`)
+- `step.Actions`: `actions.@this` → `List<action>` + getter-loop back-ref (`a.Step ??= this`).
+- `actions.Nest` re-homed onto **step** (`step.Nest`) — step owns its action chain; `steps.Nest` loops calling it.
+- Recovery-chain + catalog params (`error.handle.Actions`, `validate.Actions`, `builder.actions` return,
+  `if.Orchestrate`) `clr<actions.@this>` → `clr<List<action>>`.
+- Obsolete `actions/serializer/Reader.cs` deleted (architect: not replaced — elements read via `action`'s reader).
+- `StepActions` alias deleted (prod GlobalUsings + test Directory.Build.props repointed to `List<action>`).
+- Migrated ~10 prod consumers + tests; deleted obsolete `ActionsReaderRoundTripTests` + the `.Value` test.
 
-## What's left (the big, gated piece — increment 3)
-Deleting `actions.@this`/`steps.@this` is **Gate 2** in `demolition-followup.md` — blocked until
-**increment 3** lands:
-1. **Explicit `Write`/`Output` for `step` and `goal`** (today they delegate to the reflection `*`
-   kind — Finding #2). `action` already has explicit Store Output.
-2. **Per-type `serializer/Reader.cs`** at goal/step/action level — reads native items, param rows
-   ride the existing `@schema:data` reader. This REPLACES the reflection-kind read for the graph.
-3. **Flip the `.pr` read** off the reflection kind onto the new readers.
-4. **Then** delete the three collection classes + re-home (`steps.RunAsync`→`goal.RunAsync`,
-   `actions.Nest`→`step`, etc. per items-answer table).
-5. **Singular sweep** (LineNumber→Line, ActionName→Name, Steps→Step, Goals→Child, wire keys …).
-6. **`.pr` migration**: hand-edit the ~11 builder bootstrap `.pr` keys (Ingi-permitted for THIS
-   branch only), rebuild everything else from source. Golden: item `Write` byte-identical mod keys.
+**Validated:** GroupModifiers 6/6 (Nest re-home), ActionsTests 19/19, StepTests 13/13, ErrorHandle 17/17
+(recovery chain materializes via `clr<List<action>>`), Condition 10/10, GetActions 10/10. RunActionTests
+1 pre-existing; ValidateActions 2 **baseline-confirmed pre-existing** (`c05b9ba6e`).
 
-Architect flags the readers as "the real new code" and the honest risk. This touches the wire/type
-boundary — **paused here for design alignment on the increment-3 approach before starting** (per the
-discipline: discuss significant wire/type-shape changes first).
+## What's left
 
-## Code example (the directive-4 pattern — row self-builds)
+### Gate-2 Phase B — `steps.@this` DELETE (next, bigger)
+- `goal.Steps`: `steps.@this` → `List<step>` + getter-loop back-ref.
+- Re-home per `items-answer.md`: `steps.RunAsync` (step loop) → **`goal.RunAsync`** absorbs it;
+  `steps.Merge` → `goal.Merge` inlines; `steps.HasIndentedChildren` → goal; `steps.Nest` → goal loop.
+- Handle `IContext`/`Context` (steps implemented `IContext`; consumers set `goal.Steps.Context`).
+- Delete `GoalSteps` alias → `List<step>`. Flip the goal reader's `new steps.@this()` → `List<step>`.
+- Run `Tools/ObpScan` on the re-homed members before pushing (architect).
+
+### Then
+Singular sweep (`LineNumber→Line`, `ActionName→Name`, `Steps→Step`, `Goals→Child`, namespaces
+`goal.steps.step`→`goal.step`, wire keys) + `.pr` migration (hand-edit ~11 builder bootstrap `.pr`, rebuild rest).
+
+## Open notes for architect (non-blocking)
+- Recovery-chain actions read via **reflection** (`clr<List<action>>` list-host), not the `action` reader —
+  functionally correct (ErrorHandle 17/17) and matches the pre-existing behavior, but a minor read-path
+  inconsistency vs graph actions. Flag if the architect wants it unified to a plang `list<action>`.
+
+## Code example (Phase A pattern — storage swap + getter-loop back-ref)
 ```csharp
-// property/this.cs — the row reflects itself; the loop only filters
-[System.Diagnostics.CodeAnalysis.SetsRequiredMembers]
-public @this(PropertyInfo prop, global::app.type.list.@this types)
+// step/this.cs
+private List<Action> _actions = new();
+[Store, Debug, Default]
+public List<Action> Actions
 {
-    var bare = System.Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
-    bool isDataGeneric = bare.IsGenericType
-        && bare.GetGenericTypeDefinition() == typeof(global::app.data.@this<>);
-    Name = prop.Name;
-    Nullable = /* Nullable<T> or nullable-ref via NullabilityInfoContext */;
-    IsVariable = isDataGeneric && bare.GetGenericArguments()[0] == typeof(variable.@this);
-    var value = isDataGeneric ? bare.GetGenericArguments()[0] : bare;
-    Type = value == typeof(global::app.data.@this) ? types["object"] : types[value];
-    Default = prop.GetCustomAttribute<DefaultAttribute>()?.Value;
+    get { foreach (var a in _actions) a.Step ??= this; return _actions; }   // back-ref, was the collection's indexer
+    set => _actions = value ?? new();
 }
-// this.Schema.cs — Reflect() is now just the filter
-foreach (var prop in handler.GetProperties(...)) {
-    if (skip) continue;
-    var row = new property.@this(prop, types);
-    if (row.Type.Name is "clr" or "goal" or "step" or "action" or "modifier") continue;
-    rows.Add(row);
-}
+public void Nest(module.list.@this modules) { /* re-homed from actions.@this — reshapes THIS step's chain */ }
 ```
