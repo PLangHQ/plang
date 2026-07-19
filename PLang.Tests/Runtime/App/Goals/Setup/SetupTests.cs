@@ -372,17 +372,17 @@ public class SetupTests
     /// Creates a minimal no-op Actions collection that won't fail during step execution.
     /// Steps with empty actions succeed immediately.
     /// </summary>
-    private static global::app.goal.steps.step.actions.@this CreateNoOpActions()
+    private static StepActions CreateNoOpActions()
     {
-        return new global::app.goal.steps.step.actions.@this();
+        return new StepActions();
     }
 
     /// <summary>
     /// Creates an Actions collection with an unknown module that will fail at runtime.
     /// </summary>
-    private static global::app.goal.steps.step.actions.@this CreateFailingActions()
+    private static StepActions CreateFailingActions()
     {
-        return new global::app.goal.steps.step.actions.@this
+        return new StepActions
         {
             new global::app.goal.steps.step.actions.action.@this
             {

@@ -46,12 +46,57 @@ public sealed partial class @this
     [Store, LlmBuilder, Debug, Default]
     public string? Comment { get; init; }
 
-    private actions.@this _actions = new();
+    private List<Action> _actions = new();
     [Store, Debug, Default]
-    public actions.@this Actions
+    public List<Action> Actions
     {
-        get { _actions.Step = this; return _actions; }
+        // The step owns its actions natively; the getter stamps the back-ref so a navigated /
+        // executed action reaches its step (the collection class that used to do this is gone).
+        get { foreach (var a in _actions) a.Step ??= this; return _actions; }
         set => _actions = value ?? new();
+    }
+
+    /// <summary>
+    /// Nests each modifier onto the preceding action's Modifiers slot — the flat LLM order becomes
+    /// the .pr shape. A modifier is a TYPE in the catalog (not a flag): the flat item, read as a plain
+    /// action, becomes the modifier it IS, with Position from the catalog. A leading modifier with no
+    /// preceding action is dropped with a warning. Mutates in place. (Carried only until the builder
+    /// emits nested — then it is a no-op.)
+    /// </summary>
+    public void Nest(global::app.module.list.@this modules)
+    {
+        if (_actions.Count == 0) return;
+
+        var flat = _actions.ToList();
+        _actions.Clear();
+        Action? current = null;
+
+        foreach (var a in flat)
+        {
+            if (modules.Contains(a.Module)
+                && modules[a.Module][a.ActionName] is actions.action.modifier.@this catalog)
+            {
+                if (current == null)
+                {
+                    Warnings.Add(new Info
+                    {
+                        Key = "DroppedLeadingModifier",
+                        Message = $"Modifier '{a.Module}.{a.ActionName}' has no preceding action and was dropped"
+                    });
+                    continue;
+                }
+                current.Modifiers.Add(new actions.action.modifier.@this
+                    { Module = a.Module, ActionName = a.ActionName, Parameters = a.Parameters, Position = catalog.Position });
+            }
+            else
+            {
+                current = a;
+                _actions.Add(a);
+            }
+        }
+
+        foreach (var a in _actions)
+            a.Modifiers.Sort((x, y) => x.Position.CompareTo(y.Position));   // outermost wrapper (lowest Position) first
     }
 
     /// <summary>

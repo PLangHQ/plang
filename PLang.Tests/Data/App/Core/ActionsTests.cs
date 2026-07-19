@@ -28,18 +28,6 @@ public class ActionsTests
         await Assert.That(actions.Count).IsEqualTo(2);
     }
 
-    [Test]
-    public async Task Value_ReturnsSelf()
-    {
-        var actions = new StepActions();
-        var a = new global::app.goal.steps.step.actions.action.@this { Module = "variable", ActionName = "set" };
-        actions.Add(a);
-
-        // Value hands back the same backing items (shallow — deep-equivalence would invoke the
-        // catalog-only Properties getter, which throws on a context-less .pr-zoom action by contract).
-        await Assert.That(actions.Value.Count).IsEqualTo(1);
-        await Assert.That(object.ReferenceEquals(actions.Value[0], a)).IsTrue();
-    }
 
     // --- GetActions integration tests (uses real global::app.module.list.@this + assembly discovery) ---
 

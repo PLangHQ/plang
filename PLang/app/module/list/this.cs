@@ -282,9 +282,9 @@ public sealed class @this : IAsyncDisposable
     }
 
     [System.Obsolete("Module discovery moves to app.module.action.list (list<module>) + a Fluid render — do not add new callers.")]
-    public async Task<StepActions> Describe()
+    public async Task<List<global::app.goal.steps.step.actions.action.@this>> Describe()
     {
-        var result = new StepActions();
+        var result = new List<global::app.goal.steps.step.actions.action.@this>();
         var nCtx = new NullabilityInfoContext();
         // Cache module descriptions by namespace — populated on first encounter per namespace
 

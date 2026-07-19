@@ -4,7 +4,7 @@ using System.Text.Json;
 using app.goal;
 using app.variable;
 using Goal = app.goal.@this;
-using Actions = app.goal.steps.step.actions.@this;
+using Actions = System.Collections.Generic.List<app.goal.steps.step.actions.action.@this>;
 
 namespace app.module.action.build.code;
 
@@ -31,16 +31,16 @@ public class Default : IBuilder
         if (filter is { Count: > 0 })
         {
             var wanted = new HashSet<string>(filter, StringComparer.OrdinalIgnoreCase);
-            var subset = new StepActions();
+            var subset = new List<global::app.goal.steps.step.actions.action.@this>();
             foreach (var a in catalog)
                 if (wanted.Contains($"{a.Module}.{a.ActionName}"))
                     subset.Add(a);
-            return action.Context.Ok(new global::app.type.clr.@this<StepActions>(subset, action.Context));
+            return action.Context.Ok(new global::app.type.clr.@this<List<global::app.goal.steps.step.actions.action.@this>>(subset, action.Context));
         }
 
-        // StepActions is a host — it rides as clr<StepActions> (the Run signature carries that),
-        // so the consumer unwraps one shape, matching the goal/step/action graph.
-        return action.Context.Ok(new global::app.type.clr.@this<StepActions>(catalog, action.Context));
+        // The catalog rides as clr<List<action>> (the Run signature carries that), so the consumer
+        // unwraps one shape, matching the goal/step/action graph.
+        return action.Context.Ok(new global::app.type.clr.@this<List<global::app.goal.steps.step.actions.action.@this>>(catalog, action.Context));
     }
 
     // --- Types ---
@@ -410,7 +410,7 @@ public class Default : IBuilder
         if ((action.Actions == null ? null : await action.Actions.Value()) == null)
             return context.Ok(true);
 
-        var actions = action.Actions.Clr<global::app.goal.steps.step.actions.@this>()!;
+        var actions = action.Actions.Clr<List<global::app.goal.steps.step.actions.action.@this>>()!;
         var notFound = new List<string>();
         foreach (var a in actions)
         {

@@ -2,7 +2,7 @@ namespace app.type.item.kind.list;
 
 /// <summary>
 /// The list kind — a raw CLR <see cref="System.Collections.IList"/> host (a POCO's
-/// <c>List&lt;Step&gt;</c>, <c>StepActions</c>, …). Owns index-descend (<c>goal.Steps[0]</c>),
+/// <c>List&lt;Step&gt;</c>, <c>List&lt;action&gt;</c>, …). Owns index-descend (<c>goal.Steps[0]</c>),
 /// element-enumeration (foreach), and array-Output. Claims <see cref="System.Collections.IList"/>
 /// by assignable match, so any concrete list resolves here (exact ClrForm wins first, so
 /// <c>JsonElement</c> stays json).

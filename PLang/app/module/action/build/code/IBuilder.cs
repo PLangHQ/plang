@@ -2,7 +2,7 @@ using app.variable;
 using app.module.action.code;
 using app.Utils;
 using Goal = app.goal.@this;
-using Actions = app.goal.steps.step.actions.@this;
+using Actions = System.Collections.Generic.List<app.goal.steps.step.actions.action.@this>;
 
 namespace app.module.action.build.code;
 

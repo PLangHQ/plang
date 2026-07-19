@@ -52,7 +52,7 @@ public sealed class @this : global::app.type.kind.@this
 
     // The inverse of Output: build a host CLR object by reflecting its [Store] props and pulling
     // each off the format-agnostic reader (wire order drives, unknown names skip, missing names
-    // keep the property default). A collection host (StepActions : IList<action>) reads as an
+    // keep the property default). A collection host (List<action>) reads as an
     // array of its element; List<Data> props hand their bytes to the @schema:data reader
     // (%var%-born / template / signing byte-identical).
     public object? Read<TReader>(ref TReader reader, global::System.Type target,
@@ -61,7 +61,7 @@ public sealed class @this : global::app.type.kind.@this
     {
         if (reader.Null()) return null;
 
-        // Collection host — an array of its element type (StepActions→action, GoalSteps→step).
+        // Collection host — an array of its element type (GoalSteps→step).
         // These are IList<T> (generic only), so add through ICollection<T>.Add by interface.
         var element = ElementTypeOf(target);
         if (element != null)

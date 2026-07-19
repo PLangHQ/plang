@@ -38,7 +38,7 @@ public sealed partial class @this
     }
 
     private static int IndexOfAction(
-        global::app.goal.steps.step.actions.@this actions,
+        System.Collections.Generic.List<global::app.goal.steps.step.actions.action.@this> actions,
         global::app.goal.steps.step.actions.action.@this needle)
     {
         for (int i = 0; i < actions.Count; i++)

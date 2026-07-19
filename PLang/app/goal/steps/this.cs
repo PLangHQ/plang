@@ -59,13 +59,12 @@ public sealed class @this : IList<Step>, IContext
 
     /// <summary>
     /// Nests each step's modifiers onto their preceding action for every step
-    /// in this collection. Delegates per-step nesting to Actions.Nest —
-    /// Steps owns the iteration (OBP rule 5).
+    /// in this collection. Each step owns its own nesting; Steps owns the iteration.
     /// </summary>
     public void Nest(global::app.module.list.@this modules)
     {
         foreach (var step in _items)
-            step.Actions.Nest(modules);
+            step.Nest(modules);
     }
 
     /// <summary>

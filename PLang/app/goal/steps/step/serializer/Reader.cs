@@ -24,7 +24,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         string text = "";
         string? comment = null, intent = null, formal = null, source = null;
         bool waitForExecution = true;
-        var actions = new global::app.goal.steps.step.actions.@this();
+        var actions = new System.Collections.Generic.List<global::app.goal.steps.step.actions.action.@this>();
 
         reader.BeginObject();
         while (reader.NextName(out var name))

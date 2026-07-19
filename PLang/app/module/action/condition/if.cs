@@ -69,7 +69,7 @@ public partial class If : IContext, IStep
     /// Then evaluates conditions in order and runs the first matching branch.
     /// </summary>
     private async Task<data.@this> Orchestrate(
-        app.goal.steps.step.actions.@this actions, bool firstConditionResult)
+        System.Collections.Generic.List<app.goal.steps.step.actions.action.@this> actions, bool firstConditionResult)
     {
         // Decision owns the branch structure (condition.if owns running it). A condition fired to
         // reach here, so the head exists — but guard the null for safety.

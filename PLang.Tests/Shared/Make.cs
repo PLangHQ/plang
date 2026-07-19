@@ -153,7 +153,7 @@ public static class Make
 
         for (int i = 0; i < steps.Length; i++)
         {
-            var actions = new global::app.goal.steps.step.actions.@this();
+            var actions = new System.Collections.Generic.List<global::app.goal.steps.step.actions.action.@this>();
             foreach (var action in steps[i].Actions)
                 actions.Add(action);
 

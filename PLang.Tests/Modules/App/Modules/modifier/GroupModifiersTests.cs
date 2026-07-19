@@ -21,7 +21,7 @@ public class GroupModifiersTests
         await using var app = TestApp.Create("/gm-" + System.Guid.NewGuid().ToString("N")[..6]); var modules = app.Module;
         var actions = Flat(("file", "read"), ("variable", "set"));
 
-        actions.Nest(modules);
+        new Step { Actions = actions }.Nest(modules);
 
         await Assert.That(actions.Count).IsEqualTo(2);
         await Assert.That(actions[0].Module).IsEqualTo("file");
@@ -36,7 +36,7 @@ public class GroupModifiersTests
         await using var app = TestApp.Create("/gm-" + System.Guid.NewGuid().ToString("N")[..6]); var modules = app.Module;
         var actions = Flat(("file", "read"), ("cache", "wrap"));
 
-        actions.Nest(modules);
+        new Step { Actions = actions }.Nest(modules);
 
         await Assert.That(actions.Count).IsEqualTo(1);
         await Assert.That(actions[0].Module).IsEqualTo("file");
@@ -55,7 +55,7 @@ public class GroupModifiersTests
             ("cache", "wrap"),
             ("timeout", "after"));
 
-        actions.Nest(modules);
+        new Step { Actions = actions }.Nest(modules);
 
         await Assert.That(actions.Count).IsEqualTo(1);
         var mods = actions[0].Modifiers;
@@ -71,7 +71,7 @@ public class GroupModifiersTests
         await using var app = TestApp.Create("/gm-" + System.Guid.NewGuid().ToString("N")[..6]); var modules = app.Module;
         var actions = Flat(("file", "read"), ("cache", "wrap"), ("variable", "set"));
 
-        actions.Nest(modules);
+        new Step { Actions = actions }.Nest(modules);
 
         await Assert.That(actions.Count).IsEqualTo(2);
         await Assert.That(actions[0].Module).IsEqualTo("file");
@@ -88,7 +88,7 @@ public class GroupModifiersTests
         // Leading modifier has no preceding executable — it is dropped, not an error
         var actions = Flat(("cache", "wrap"), ("file", "read"));
 
-        actions.Nest(modules);
+        new Step { Actions = actions }.Nest(modules);
 
         await Assert.That(actions.Count).IsEqualTo(1);
         await Assert.That(actions[0].Module).IsEqualTo("file");
@@ -108,7 +108,7 @@ public class GroupModifiersTests
             ("variable", "set"),
             ("timeout", "after"));
 
-        actions.Nest(modules);
+        new Step { Actions = actions }.Nest(modules);
 
         await Assert.That(actions.Count).IsEqualTo(2);
         await Assert.That(actions[0].Module).IsEqualTo("file");
