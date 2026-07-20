@@ -52,6 +52,15 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         writer.BeginArray(Modifiers.Count);
         foreach (var m in Modifiers) await m.Output(writer, mode, context);
         writer.EndArray();
+        // The branch body of a control-flow action — omitted on ordinary actions (empty Child).
+        // Each child step writes itself; the tree serializes recursively.
+        if (Child.Count > 0)
+        {
+            writer.Name("child");
+            writer.BeginArray(Child.Count);
+            foreach (var s in Child) await s.Output(writer, mode, context);
+            writer.EndArray();
+        }
         writer.EndObject();
     }
 }

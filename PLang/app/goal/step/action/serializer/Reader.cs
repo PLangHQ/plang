@@ -12,6 +12,11 @@ namespace app.goal.step.action.serializer;
 /// </summary>
 public sealed class Reader : global::app.type.reader.ITypeReader
 {
+    // Lazy — the action reads its Child steps through the step reader, which reads its actions back
+    // through THIS reader. A `new()` field would recurse at construction; lazy breaks the cycle.
+    private global::app.goal.step.serializer.Reader? _stepReader;
+    private global::app.goal.step.serializer.Reader StepReader => _stepReader ??= new();
+
     public string Kind => global::app.type.reader.@this.AnyKind;
 
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
@@ -60,6 +65,14 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                         action.Modifiers.Add(modifier);
                     }
                     reader.EndArray();
+                    break;
+                case "child":
+                    var childSteps = new System.Collections.Generic.List<global::app.goal.step.@this>();
+                    reader.BeginArray();
+                    while (reader.NextElement())
+                        childSteps.Add((global::app.goal.step.@this)StepReader.Read(ref reader, null, ctx));
+                    reader.EndArray();
+                    action.Child = new global::app.goal.step.list.@this(childSteps);
                     break;
                 default: reader.Skip(); break;
             }

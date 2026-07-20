@@ -42,7 +42,7 @@ public partial class @this
     /// Both nesting forms land here: inline <c>if/elseif/else</c> (each condition action carries its body)
     /// and indented sub-step blocks (folded onto the gate action). A <c>step.list</c>, so it runs itself.</summary>
     [Store, Debug, Default]
-    public global::app.goal.step.list.@this Child { get; init; } = new(new List<global::app.goal.step.@this>());
+    public global::app.goal.step.list.@this Child { get; set; } = new(new List<global::app.goal.step.@this>());
 
     [Debug]
     public List<Info> Errors { get; init; } = new();
