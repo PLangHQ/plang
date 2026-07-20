@@ -144,27 +144,24 @@ public static class Make
         {
             Name = name,
             Path = global::app.type.item.path.@this.Resolve(path, global::PLang.Tests.TestApp.SharedContext),
-            // Steps need a context so the disabled-step probe (and any enumeration,
-            // e.g. PrWrite serialization in RealGoalLoad.ViaChannel) doesn't deref a
-            // null context. Transient like the param births — the real actor context
-            // is stamped when the goal is read back through a channel.
-            Steps = new global::app.goal.steps.@this { Context = global::PLang.Tests.TestApp.SharedContext },
         };
 
+        var stepList = new System.Collections.Generic.List<global::app.goal.step.@this>();
         for (int i = 0; i < steps.Length; i++)
         {
             var actions = new System.Collections.Generic.List<global::app.goal.step.action.@this>();
             foreach (var action in steps[i].Actions)
                 actions.Add(action);
 
-            goal.Steps.Add(new global::app.goal.step.@this
+            stepList.Add(new global::app.goal.step.@this
             {
                 Index = i,
                 Indent = steps[i].Indent,
                 Text = steps[i].Text,
-                Actions = actions,
+                Action = new global::app.goal.step.action.list.@this(actions),
             });
         }
+        goal.Step = new global::app.goal.step.list.@this(stepList);
 
         return goal;
     }
