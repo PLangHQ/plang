@@ -16,8 +16,8 @@ public class NavigationPathParityTests
 
     [Test]
     [Arguments("user.name", new[] { "user", "name" })]
-    [Arguments("goal.Steps[planStep.index]", new[] { "goal", "Steps", "[planStep.index]" })]
-    [Arguments("goal.Steps[step.Index].Actions", new[] { "goal", "Steps", "[step.Index]", "Actions" })]
+    [Arguments("goal.Step[planStep.index]", new[] { "goal", "Steps", "[planStep.index]" })]
+    [Arguments("goal.Step[step.Index].Action", new[] { "goal", "Steps", "[step.Index]", "Actions" })]
     [Arguments("items[0]", new[] { "items", "[0]" })]
     [Arguments("items[0].value", new[] { "items", "[0]", "value" })]
     [Arguments("trace.plan.steps[step.Index].actions", new[] { "trace", "plan", "steps", "[step.Index]", "actions" })]
@@ -38,7 +38,7 @@ public class NavigationPathParityTests
     {
         foreach (var s in new[]
         {
-            "user.name", "goal.Steps[planStep.index]", "goal.Steps[step.Index].Actions",
+            "user.name", "goal.Step[planStep.index]", "goal.Step[step.Index].Action",
             "items[0].value", "x!file!path", "!data.branchIndex",
             "data.grep(\"pattern\").maxLength(100)", "tags.\"key.with.dots\"",
         })
@@ -48,7 +48,7 @@ public class NavigationPathParityTests
     [Test]
     public async Task Split_peels_head_from_tail()
     {
-        var path = NavPath.Parse("goal.Steps[planStep.index]");
+        var path = NavPath.Parse("goal.Step[planStep.index]");
         var (head, tail) = path.Split();
 
         await Assert.That(head).IsTypeOf<Segment.Member>();

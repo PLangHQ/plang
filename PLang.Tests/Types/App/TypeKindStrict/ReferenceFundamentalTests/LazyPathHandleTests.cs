@@ -45,7 +45,7 @@ public class LazyPathHandleTests
             ("name", "%pic%"),
             ("value", "ghost.jpg"),
             ("type", new global::app.type.@this("image")));
-        var result = await action.RunAsync(context);
+        var result = await action.Run(context);
         await result.IsSuccess();
 
         var stored = await context.Variable.Get("pic");

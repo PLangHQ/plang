@@ -10,8 +10,7 @@ public class EventsSinceTests
         var goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", global::PLang.Tests.TestApp.SharedContext) };
         var step = new Step { Index = 0, Text = "step", Goal = goal };
         var action = new ActionEntity { Module = "test", ActionName = "test" };
-        action.Step = step; step.Actions.Add(action); goal.Steps.Add(step);
-        goal.Steps.Context = app.User.Context;
+        action.Step = step; step.Action.Add(action); goal.Step.Add(step);
         app.Goal.Add(goal);
         return (app, action);
     }

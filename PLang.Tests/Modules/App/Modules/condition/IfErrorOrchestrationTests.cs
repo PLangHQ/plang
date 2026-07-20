@@ -41,9 +41,9 @@ public class IfErrorOrchestrationTests : IDisposable
                 Make.Action("condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "DoesNotExist" })))));
-        var step = goal.Steps.First();
+        var step = goal.Step.list.First();
 
-        var result = await step.RunAsync(_app.User.Context);
+        var result = await step.Run(_app.User.Context);
 
         // The 404 must surface. Handled=true on condition.if's result is a
         // control-flow signal to Step.RunAsync (don't re-iterate siblings),
@@ -68,9 +68,9 @@ public class IfErrorOrchestrationTests : IDisposable
             Make.Step("if true, write ran",
                 Make.Action("condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
                 Make.Action("output", "write", ("Data", "ran")))));
-        var step = goal.Steps.First();
+        var step = goal.Step.list.First();
 
-        var result = await step.RunAsync(_app.User.Context);
+        var result = await step.Run(_app.User.Context);
 
         await result.IsSuccess();
 

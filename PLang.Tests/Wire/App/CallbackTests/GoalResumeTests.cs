@@ -10,7 +10,7 @@ namespace PLang.Tests.App.CallbackTests;
 /// Stage 2a — Batch 4: `Step.Resume(context, actionIdx)` and
 /// `Goal.Resume(context, stepIdx, actionIdx)` — continuation helpers used by
 /// `Snapshot.ResumeChain`. The architect resolved against a
-/// `Steps.RunAsync(fromIndex)` overload — the remaining-steps loop lives
+/// `Steps.Run(fromIndex)` overload — the remaining-steps loop lives
 /// inside Goal.Resume.
 public class GoalResumeTests
 {
@@ -23,14 +23,14 @@ public class GoalResumeTests
         var action = TestAction.Create("variable", "set", ("name", "%" + varName + "%"), ("value", value));
         var step = new Step { Index = index, Text = $"set %{varName}% = {value}" };
         action.Step = step;
-        step.Actions.Add(action);
+        step.Action.Add(action);
         return step;
     }
 
     private static Goal Build(string name, params Step[] steps)
     {
         var goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", global::PLang.Tests.TestApp.SharedContext) };
-        foreach (var s in steps) { s.Goal = goal; goal.Steps.Add(s); }
+        foreach (var s in steps) { s.Goal = goal; goal.Step.Add(s); }
         return goal;
     }
 
@@ -43,7 +43,7 @@ public class GoalResumeTests
         var actionB = TestAction.Create("variable", "set", ("name", "%b%"), ("value", "B"));
         var step = new Step { Index = 0, Text = "multi" };
         actionA.Step = step; actionB.Step = step;
-        step.Actions.Add(actionA); step.Actions.Add(actionB);
+        step.Action.Add(actionA); step.Action.Add(actionB);
 
         var result = await step.Resume(context, 0);
         await result.IsSuccess();
@@ -60,7 +60,7 @@ public class GoalResumeTests
         var actionB = TestAction.Create("variable", "set", ("name", "%b%"), ("value", "B"));
         var step = new Step { Index = 0, Text = "multi" };
         actionA.Step = step; actionB.Step = step;
-        step.Actions.Add(actionA); step.Actions.Add(actionB);
+        step.Action.Add(actionA); step.Action.Add(actionB);
 
         var result = await step.Resume(context, 1);
         await result.IsSuccess();
@@ -103,7 +103,7 @@ public class GoalResumeTests
     [Test]
     public async Task StepsRunAsync_FromIndexOverload_SkipsEarlierSteps()
     {
-        // Architect resolved against adding a Steps.RunAsync(fromIndex) overload.
+        // Architect resolved against adding a Steps.Run(fromIndex) overload.
         // The from-index loop lives inside Goal.Resume — exercised by
         // GoalRunFrom_ResumesActionThenRemainingStepsInGoal above. This test
         // pins the contract that earlier steps are not re-run.

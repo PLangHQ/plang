@@ -132,7 +132,6 @@ public class PrPipelineTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("SubRelative", "/sub/SubRelative.goal",
             Make.Step("read subdata.txt, write to %content%",
                 Make.Action("file", "read", ("path", "subdata.txt")))));
-        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -153,7 +152,6 @@ public class PrPipelineTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("ParentTraversal", "/sub/ParentTraversal.goal",
             Make.Step("read ../testdata.txt, write to %fromParent%",
                 Make.Action("file", "read", ("path", "../testdata.txt")))));
-        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -173,7 +171,6 @@ public class PrPipelineTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("ParentAndDown", "/sub/ParentAndDown.goal",
             Make.Step("read ../sub/subdata.txt, write to %backAndDown%",
                 Make.Action("file", "read", ("path", "../sub/subdata.txt")))));
-        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -193,7 +190,6 @@ public class PrPipelineTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("ReadMissing", "/ReadMissing.goal",
             Make.Step("read nonexistent.txt, write to %content%",
                 Make.Action("file", "read", ("path", "nonexistent.txt")))));
-        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -214,7 +210,6 @@ public class PrPipelineTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("ReadEscape", "/ReadEscape.goal",
             Make.Step("read ../../etc/passwd, write to %content%",
                 Make.Action("file", "read", ("path", "../../etc/passwd")))));
-        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;

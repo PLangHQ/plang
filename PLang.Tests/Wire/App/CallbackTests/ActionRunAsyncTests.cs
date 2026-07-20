@@ -4,7 +4,7 @@ using TUnit.Assertions.Extensions;
 
 namespace PLang.Tests.App.CallbackTests;
 
-/// Stage 2a — Batch 4: action owns its execution. `action.RunAsync(context)` is
+/// Stage 2a — Batch 4: action owns its execution. `action.Run(context)` is
 /// the single entry; `App.Run` is deleted (Run retained as the inline-
 /// C#-composition wrapper that builds an entity and dispatches through the
 /// same path — spec-deferred for later removal once handlers grow their own
@@ -20,7 +20,7 @@ public class ActionRunAsyncTests
         var app = NewApp();
         var context = app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%v%"), ("value", "ok"));
-        var result = await action.RunAsync(context);
+        var result = await action.Run(context);
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("v"))).IsEqualTo("ok");
     }

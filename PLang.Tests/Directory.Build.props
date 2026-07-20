@@ -53,7 +53,6 @@
     <Using Include="app.goal.step.@this" Alias="Step" />
     <Using Include="app.goal.step.ErrorOrder" Alias="ErrorOrder" />
     <Using Include="app.goal.step.CacheSettings" Alias="CacheSettings" />
-    <Using Include="System.Collections.Generic.List&lt;app.goal.step.action.@this&gt;" Alias="StepActions" />
     <Using Include="app.goal.step.action.@this" Alias="PrAction" />
     <Using Include="app.goal.@this" Alias="Goal" />
     <Using Include="app.goal.Visibility" Alias="Visibility" />

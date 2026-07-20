@@ -2,7 +2,7 @@ namespace PLang.Tests.Shared;
 
 /// <summary>
 /// Concise goal construction for tests — instead of the nested
-/// <c>new Goal { Steps = new GoalSteps { new Step { Actions = new StepActions {
+/// <c>new Goal { Step = new GoalSteps { new Step { Action = new StepActions {
 /// new PrAction { Parameters = ... } } } } }</c>, write:
 ///
 /// <code>

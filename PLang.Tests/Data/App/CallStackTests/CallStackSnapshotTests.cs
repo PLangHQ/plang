@@ -11,15 +11,15 @@ public class CallStackSnapshotTests
         var step = new Step { Index = 0, Text = stepText, Goal = goal };
         var action = new ActionEntity { Module = module, ActionName = actionName };
         action.Step = step;
-        step.Actions.Add(action);
-        goal.Steps.Add(step);
+        step.Action.Add(action);
+        goal.Step.Add(step);
         return (goal, step, action);
     }
 
     private static global::app.@this BuildAppWithGoals(params Goal[] goals)
     {
         var app = global::PLang.Tests.TestApp.Create("/test");
-        foreach (var g in goals) { g.Steps.Context = app.User.Context; app.Goal.Add(g); }
+        foreach (var g in goals) app.Goal.Add(g);
         return app;
     }
 

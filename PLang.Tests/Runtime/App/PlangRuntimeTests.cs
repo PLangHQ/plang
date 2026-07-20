@@ -43,7 +43,7 @@ public class PlangRuntimeTests : IDisposable
         {
             Index = 0,
             Text = "write hello",
-            Actions = new StepActions
+            Action = new StepActions
             {
                 new global::app.goal.step.action.@this
                 {
@@ -56,7 +56,7 @@ public class PlangRuntimeTests : IDisposable
 
         var steps = new GoalSteps { step };
         var context = _app.User.Context;
-        var result = await steps.RunAsync(context);
+        var result = await steps.Run(context);
 
         await result.IsSuccess();
 

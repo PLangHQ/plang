@@ -105,7 +105,7 @@ public class SnapshotWireTests
         var action = TestAction.Create("variable", "set", ("name", "%" + varName + "%"), ("value", value));
         var step = new Step { Index = index, Text = $"set %{varName}% = {value}" };
         action.Step = step;
-        step.Actions.Add(action);
+        step.Action.Add(action);
         return step;
     }
 
@@ -122,12 +122,12 @@ public class SnapshotWireTests
         var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         var step0 = SetStep(0, "s0", "first"); step0.Goal = goal;
         var step1 = SetStep(1, "s1", "second"); step1.Goal = goal;
-        goal.Steps.Add(step0); goal.Steps.Add(step1);
+        goal.Step.Add(step0); goal.Step.Add(step1);
         app.Goal.Add(goal);
 
         // Suspend at step1/action0 (what the throw-time snapshot captures).
         string json;
-        await using (var call = context.CallStack.Push(step1.Actions[0], context.Variable))
+        await using (var call = context.CallStack.Push(step1.Action[0], context.Variable))
         {
             json = await app.SnapshotToWire(app.Snapshot(app.User.Context));   // <-- to disk (string)
             await call.DisposeAsync();
@@ -156,11 +156,11 @@ public class SnapshotWireTests
         var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         var step0 = SetStep(0, "s0", "first"); step0.Goal = goal;
         var step1 = SetStep(1, "s1", "second"); step1.Goal = goal;
-        goal.Steps.Add(step0); goal.Steps.Add(step1);
+        goal.Step.Add(step0); goal.Step.Add(step1);
         app.Goal.Add(goal);
 
         string json;
-        await using (var call = context.CallStack.Push(step1.Actions[0], context.Variable))
+        await using (var call = context.CallStack.Push(step1.Action[0], context.Variable))
         {
             json = await app.SnapshotToWire(app.Snapshot(app.User.Context));
             await call.DisposeAsync();
@@ -182,7 +182,7 @@ public class SnapshotWireTests
         var action = TestAction.Create("variable", "set", ("name", "%" + varName + "%"), ("value", expr));
         var step = new Step { Index = index, Text = $"set %{varName}% = {expr}" };
         action.Step = step;
-        step.Actions.Add(action);
+        step.Action.Add(action);
         return step;
     }
 
@@ -208,21 +208,21 @@ public class SnapshotWireTests
         var st0 = SetStep(0, "a", "A");                 st0.Goal = start;
         var st1 = SetStep(1, "calledSub", "yes");       st1.Goal = start;   // stands in for `call Sub`
         var st2 = SetStepRef(2, "entryReached", "END"); st2.Goal = start;   // post-call: only runs on unwind
-        start.Steps.Add(st0); start.Steps.Add(st1); start.Steps.Add(st2);
+        start.Step.Add(st0); start.Step.Add(st1); start.Step.Add(st2);
 
         // Sub: [0] set b, [1] the throw point (suspended here), [2] continuation reading %i%.
         var sub = new Goal { Name = "Sub", Path = global::app.type.item.path.@this.Resolve("/Sub.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/Sub.pr", global::PLang.Tests.TestApp.SharedContext) };
         var sb0 = SetStep(0, "b", "B");                  sb0.Goal = sub;
         var sb1 = SetStep(1, "passedThrow", "ok");       sb1.Goal = sub;    // the `throw if i==1` step
         var sb2 = SetStepRef(2, "seenI", "%i%");         sb2.Goal = sub;    // reads the patched value
-        sub.Steps.Add(sb0); sub.Steps.Add(sb1); sub.Steps.Add(sb2);
+        sub.Step.Add(sb0); sub.Step.Add(sb1); sub.Step.Add(sb2);
 
         app.Goal.Add(start); app.Goal.Add(sub);
 
         // Suspend mid-stack: Start at its call step (1,0), Sub at its throw step (1,0).
         string json;
-        await using (var startFrame = context.CallStack.Push(start.Steps[1].Actions[0], context.Variable))
-        await using (var subFrame = context.CallStack.Push(sub.Steps[1].Actions[0], context.Variable))
+        await using (var startFrame = context.CallStack.Push(start.Step[1].Action[0], context.Variable))
+        await using (var subFrame = context.CallStack.Push(sub.Step[1].Action[0], context.Variable))
         {
             json = await app.SnapshotToWire(app.Snapshot(app.User.Context));
         }
@@ -260,12 +260,12 @@ public class SnapshotWireTests
         var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         var step0 = SetStep(0, "x", "1");          step0.Goal = goal;
         var step1 = SetStepRef(1, "seen", "%x%");  step1.Goal = goal;
-        goal.Steps.Add(step0); goal.Steps.Add(step1);
+        goal.Step.Add(step0); goal.Step.Add(step1);
         app.Goal.Add(goal);
 
         context.Variable.Set("x", 1L);
         string json;
-        await using (var call = context.CallStack.Push(goal.Steps[1].Actions[0], context.Variable))
+        await using (var call = context.CallStack.Push(goal.Step[1].Action[0], context.Variable))
         {
             json = await app.SnapshotToWire(app.Snapshot(app.User.Context));
         }
@@ -331,14 +331,14 @@ public class SnapshotWireTests
         var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         var step0 = SetStep(0, "x", "1");          step0.Goal = goal;
         var step1 = SetStepRef(1, "seen", "%x%");  step1.Goal = goal;
-        goal.Steps.Add(step0); goal.Steps.Add(step1);
+        goal.Step.Add(step0); goal.Step.Add(step1);
         app.Goal.Add(goal);
 
         context.Variable.Set("x", 1L);
         string json;
-        await using (var call = context.CallStack.Push(goal.Steps[1].Actions[0], context.Variable))
+        await using (var call = context.CallStack.Push(goal.Step[1].Action[0], context.Variable))
         {
-            var err = new ServiceError("boom", goal.Steps[1],
+            var err = new ServiceError("boom", goal.Step[1],
                 context.CallStack.Current!.SnapshotChain());
             json = await app.SnapshotToWire(app.Snapshot(err, app.User.Context));   // throw-time overload
         }
@@ -373,12 +373,12 @@ public class SnapshotWireTests
         var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         var step0 = SetStep(0, "x", "1");          step0.Goal = goal;
         var step1 = SetStepRef(1, "seen", "%x%");  step1.Goal = goal;
-        goal.Steps.Add(step0); goal.Steps.Add(step1);
+        goal.Step.Add(step0); goal.Step.Add(step1);
         app.Goal.Add(goal);
 
         context.Variable.Set("x", 1L);
         string json;
-        await using (var call = context.CallStack.Push(goal.Steps[1].Actions[0], context.Variable))
+        await using (var call = context.CallStack.Push(goal.Step[1].Action[0], context.Variable))
             json = await app.SnapshotToWire(app.Snapshot(app.User.Context));
 
         // %snap% = string value, but TYPED as snapshot (what an honored `as snapshot` yields).
@@ -407,13 +407,13 @@ public class SnapshotWireTests
         var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         var step0 = SetStep(0, "x", "1");                step0.Goal = goal;
         var step1 = SetStepRef(1, "seen", "%x%");        step1.Goal = goal;   // reads the edited value
-        goal.Steps.Add(step0); goal.Steps.Add(step1);
+        goal.Step.Add(step0); goal.Step.Add(step1);
         app.Goal.Add(goal);
 
         // Suspend at step1 with %x% = 1 captured.
         context.Variable.Set("x", 1L);
         string json;
-        await using (var call = context.CallStack.Push(goal.Steps[1].Actions[0], context.Variable))
+        await using (var call = context.CallStack.Push(goal.Step[1].Action[0], context.Variable))
         {
             json = await app.SnapshotToWire(app.Snapshot(app.User.Context));
         }

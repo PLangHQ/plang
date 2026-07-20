@@ -4,7 +4,7 @@ namespace PLang.Tests.App.Modules.CatalogTests;
 
 /// <summary>
 /// The 4d summary.planner template renders the module-element TREE — `{% for module in modules %}`
-/// with module.Name / module.Description and module.Actions / module.Modifiers as the structural
+/// with module.Name / module.Description and module.Action / module.Modifiers as the structural
 /// split. The old flat `map|uniq|sort` + `where "IsModifier"` grouping is gone. Structure pinned over
 /// the real catalog (module descriptions ride ProseDoorFluidTests — same file-door construct).
 /// </summary>

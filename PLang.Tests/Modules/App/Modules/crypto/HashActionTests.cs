@@ -107,7 +107,7 @@ public class HashActionTests
             Module = "crypto", ActionName = "hash",
             Parameters = new List<Data> { new Data("data", null, context: Ctx), new Data("algorithm", "keccak256", context: Ctx) }
         };
-        var result = await action.RunAsync(Ctx);
+        var result = await action.Run(Ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
@@ -214,7 +214,7 @@ public class HashActionTests
             Module = "crypto", ActionName = "verify",
             Parameters = new List<Data> { new Data("data", null, context: Ctx), new Data("hash", "abc123", context: Ctx), new Data("algorithm", "keccak256", context: Ctx) }
         };
-        var result = await action.RunAsync(Ctx);
+        var result = await action.Run(Ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();

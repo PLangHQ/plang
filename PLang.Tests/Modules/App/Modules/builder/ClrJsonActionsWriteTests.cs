@@ -5,9 +5,9 @@ namespace PLang.Tests.App.Modules.builder;
 
 /// <summary>
 /// Pins the builder blocker (navigation-driven-record-builder, Stage 1): writing a
-/// clr(json) actions array onto a plang-typed <c>%goal.Steps[i].Actions%</c> slot.
+/// clr(json) actions array onto a plang-typed <c>%goal.Step[i].Action%</c> slot.
 ///
-/// The builder's compile step does <c>set %goal.Steps[i].Actions% = %compileResult.actions%</c>,
+/// The builder's compile step does <c>set %goal.Step[i].Action% = %compileResult.actions%</c>,
 /// where the RHS is a clr(json) (the LLM result). Today the write lowers the clr(json)
 /// into <c>StepActions</c>/<c>List&lt;action&gt;</c> via <c>ClrConvert</c>, which terminal-throws
 /// ("the type must own this Clr projection") — the built goal ends up with no actions.
@@ -34,9 +34,9 @@ public class ClrJsonActionsWriteTests : System.IAsyncDisposable
             Name = "G",
             Path = global::app.type.item.path.@this.Resolve("/G.goal", context),
             PrPath = global::app.type.item.path.@this.Resolve("/G.pr", context),
-            Steps = new GoalSteps { new Step { Index = 0, Text = "do stuff" } },
+            Step = new GoalSteps { new Step { Index = 0, Text = "do stuff" } },
         };
-        goal.Steps[0].Goal = goal;
+        goal.Step[0].Goal = goal;
         _app.Goal.Add(goal);
         // goal flows as clr<goal> now (a host); the builder holds it that way, so %goal%
         // navigates/writes through the clr carrier's reflection kind.
@@ -65,12 +65,12 @@ public class ClrJsonActionsWriteTests : System.IAsyncDisposable
 
         // The builder write. Today this throws in ClrConvert; after Stage 1 it builds
         // two action hosts onto the slot.
-        await context.Variable.Set("goal.Steps[0].Actions", clrJsonActions);
+        await context.Variable.Set("goal.Step[0].Action", clrJsonActions);
 
-        await Assert.That(goal.Steps[0].Actions.Count).IsEqualTo(2);
-        await Assert.That(goal.Steps[0].Actions[0].Module).IsEqualTo("variable");
-        await Assert.That(goal.Steps[0].Actions[0].ActionName).IsEqualTo("set");
-        await Assert.That(goal.Steps[0].Actions[1].Module).IsEqualTo("output");
-        await Assert.That(goal.Steps[0].Actions[1].ActionName).IsEqualTo("write");
+        await Assert.That(goal.Step[0].Action.Count).IsEqualTo(2);
+        await Assert.That(goal.Step[0].Action[0].Module).IsEqualTo("variable");
+        await Assert.That(goal.Step[0].Action[0].ActionName).IsEqualTo("set");
+        await Assert.That(goal.Step[0].Action[1].Module).IsEqualTo("output");
+        await Assert.That(goal.Step[0].Action[1].ActionName).IsEqualTo("write");
     }
 }

@@ -53,7 +53,7 @@ public class HashTypeTests
         var ctx = app.User.Context;
         var action = TestAction.Create("crypto", "hash",
             ("data", "hello"), ("algorithm", "sha256"));
-        var result = await action.RunAsync(ctx);
+        var result = await action.Run(ctx);
         await result.IsSuccess();
         await Assert.That(result.Type!.Name).IsEqualTo("hash");
         await Assert.That(result.Type!.Kind?.Name).IsEqualTo("sha256");

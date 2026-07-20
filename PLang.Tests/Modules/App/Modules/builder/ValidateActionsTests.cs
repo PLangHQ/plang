@@ -45,7 +45,7 @@ public class ValidateActionsTests
             new Action { Module = "file", ActionName = "read", Parameters = new List<Data> { new("Path", "test.txt", context: _app.User.Context) } }
         };
 
-        var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.clr.@this<StepActions>(actions, _app.User.Context)) };
+        var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.clr.@this<System.Collections.Generic.List<global::app.goal.step.action.@this>>(actions, _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -60,7 +60,7 @@ public class ValidateActionsTests
             new Action { Module = "nonexistent", ActionName = "fake" }
         };
 
-        var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.clr.@this<StepActions>(actions, _app.User.Context)) };
+        var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.clr.@this<System.Collections.Generic.List<global::app.goal.step.action.@this>>(actions, _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsFailure();
@@ -96,7 +96,7 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.clr.@this<StepActions>(actions, _app.User.Context)) };
+        var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.clr.@this<System.Collections.Generic.List<global::app.goal.step.action.@this>>(actions, _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -122,7 +122,7 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.clr.@this<StepActions>(actions, _app.User.Context)) };
+        var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.clr.@this<System.Collections.Generic.List<global::app.goal.step.action.@this>>(actions, _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -142,7 +142,7 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.clr.@this<StepActions>(actions, _app.User.Context)) };
+        var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.clr.@this<System.Collections.Generic.List<global::app.goal.step.action.@this>>(actions, _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -175,7 +175,7 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.clr.@this<StepActions>(actions, _app.User.Context)) };
+        var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.clr.@this<System.Collections.Generic.List<global::app.goal.step.action.@this>>(actions, _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -206,7 +206,7 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.clr.@this<StepActions>(actions, _app.User.Context)) };
+        var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.clr.@this<System.Collections.Generic.List<global::app.goal.step.action.@this>>(actions, _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
@@ -235,7 +235,7 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.clr.@this<StepActions>(actions, _app.User.Context)) };
+        var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.clr.@this<System.Collections.Generic.List<global::app.goal.step.action.@this>>(actions, _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();

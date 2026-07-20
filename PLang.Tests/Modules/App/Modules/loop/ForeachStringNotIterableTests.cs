@@ -30,7 +30,7 @@ public class ForeachStringNotIterableTests
         context.Variable.Set("s", "hello");
 
         // Body goal runs once per iteration.
-        _app.Goal.Add(new Goal { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", global::PLang.Tests.TestApp.SharedContext), Steps = new GoalSteps() });
+        _app.Goal.Add(new Goal { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", global::PLang.Tests.TestApp.SharedContext), Step = new GoalSteps() });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("StringRunner",
             Make.Step("foreach %s%, call DoNothing",
@@ -38,9 +38,9 @@ public class ForeachStringNotIterableTests
                     ("collection", "%s%"), Make.Param("itemname", "%item%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "DoNothing" })))));
-        var step = goal.Steps.First();
+        var step = goal.Step.list.First();
 
-        var result = await step.RunAsync(context);
+        var result = await step.Run(context);
 
         await result.IsSuccess();
         var loopResult = Lower<Dictionary<string, object?>>(await result.Value());
@@ -54,7 +54,7 @@ public class ForeachStringNotIterableTests
         var context = _app.User.Context;
         context.Variable.Set("s", "hello");
 
-        _app.Goal.Add(new Goal { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", global::PLang.Tests.TestApp.SharedContext), Steps = new GoalSteps() });
+        _app.Goal.Add(new Goal { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", global::PLang.Tests.TestApp.SharedContext), Step = new GoalSteps() });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("WholeStringRunner",
             Make.Step("foreach %s%, call DoNothing",
@@ -62,9 +62,9 @@ public class ForeachStringNotIterableTests
                     ("collection", "%s%"), Make.Param("itemname", "%item%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "DoNothing" })))));
-        var step = goal.Steps.First();
+        var step = goal.Step.list.First();
 
-        await step.RunAsync(context);
+        await step.Run(context);
 
         await Assert.That((await context.Variable.GetValue("item"))).IsEqualTo("hello");
     }
@@ -76,7 +76,7 @@ public class ForeachStringNotIterableTests
         var context = _app.User.Context;
         context.Variable.Set("n", 42);
 
-        _app.Goal.Add(new Goal { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", global::PLang.Tests.TestApp.SharedContext), Steps = new GoalSteps() });
+        _app.Goal.Add(new Goal { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", global::PLang.Tests.TestApp.SharedContext), Step = new GoalSteps() });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("NumberRunner",
             Make.Step("foreach %n%, call DoNothing",
@@ -84,9 +84,9 @@ public class ForeachStringNotIterableTests
                     ("collection", "%n%"), Make.Param("itemname", "%item%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "DoNothing" })))));
-        var step = goal.Steps.First();
+        var step = goal.Step.list.First();
 
-        var result = await step.RunAsync(context);
+        var result = await step.Run(context);
 
         await result.IsSuccess();
         var loopResult = Lower<Dictionary<string, object?>>(await result.Value());

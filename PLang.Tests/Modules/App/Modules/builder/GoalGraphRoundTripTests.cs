@@ -69,14 +69,14 @@ public class GoalGraphRoundTripTests : System.IAsyncDisposable
         await Assert.That(goal.Path?.ToString()).IsEqualTo("/BuilderSanity/MarkBig.goal");
         await Assert.That(goal.IsSetup).IsFalse();
 
-        await Assert.That(goal.Steps.Count).IsEqualTo(1);
-        var step = goal.Steps[0];
+        await Assert.That(goal.Step.Count).IsEqualTo(1);
+        var step = goal.Step[0];
         await Assert.That(step.Text).IsEqualTo("set %label% = 'big'");
         await Assert.That(step.LineNumber).IsEqualTo(2);
         await Assert.That(step.WaitForExecution).IsTrue();
 
-        await Assert.That(step.Actions.Count).IsEqualTo(1);
-        var action = step.Actions[0];
+        await Assert.That(step.Action.Count).IsEqualTo(1);
+        var action = step.Action[0];
         await Assert.That(action.Module).IsEqualTo("variable");
         await Assert.That(action.ActionName).IsEqualTo("set");
         await Assert.That(action.Parameters.Count).IsEqualTo(2);

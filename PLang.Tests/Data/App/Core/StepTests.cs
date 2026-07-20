@@ -18,7 +18,7 @@ public class StepTests : System.IAsyncDisposable
             LineNumber = 10,
             Indent = 2,
             Comment = "This makes an HTTP call",
-            Actions = new StepActions
+            Action = new StepActions
             {
                 new global::app.goal.step.action.@this
                 {
@@ -35,9 +35,9 @@ public class StepTests : System.IAsyncDisposable
         await Assert.That(step.LineNumber).IsEqualTo(10);
         await Assert.That(step.Indent).IsEqualTo(2);
         await Assert.That(step.Comment).IsEqualTo("This makes an HTTP call");
-        await Assert.That(step.Actions.Count).IsEqualTo(1);
-        await Assert.That(step.Actions[0].Module).IsEqualTo("http");
-        await Assert.That(step.Actions[0].ActionName).IsEqualTo("get");
+        await Assert.That(step.Action.Count).IsEqualTo(1);
+        await Assert.That(step.Action[0].Module).IsEqualTo("http");
+        await Assert.That(step.Action[0].ActionName).IsEqualTo("get");
         await Assert.That(step.WaitForExecution).IsFalse();
     }
 
@@ -54,8 +54,8 @@ public class StepTests : System.IAsyncDisposable
     {
         var step = new Step();
 
-        await Assert.That(step.Actions).IsNotNull();
-        await Assert.That(step.Actions.Count).IsEqualTo(0);
+        await Assert.That(step.Action).IsNotNull();
+        await Assert.That(step.Action.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -85,19 +85,18 @@ public class StepTests : System.IAsyncDisposable
         var goal = new Goal
         {
             Name = "Test",
-            Steps = new GoalSteps
+            Step = new GoalSteps
             {
                 new Step { Index = 0, Text = "if %flag%", Indent = 0 },
                 new Step { Index = 1, Text = "set %x% = 1", Indent = 1 },
                 new Step { Index = 2, Text = "write out done", Indent = 0 }
             }
         };
-        goal.Steps.Context = app.User.Context;
-        foreach (var s in goal.Steps) s.Goal = goal;
+        foreach (var s in goal.Step.list) s.Goal = goal;
 
-        await Assert.That(goal.Steps[0].HasSubSteps).IsTrue();
-        await Assert.That(goal.Steps[1].HasSubSteps).IsFalse();
-        await Assert.That(goal.Steps[2].HasSubSteps).IsFalse();
+        await Assert.That(goal.Step[0].HasSubSteps).IsTrue();
+        await Assert.That(goal.Step[1].HasSubSteps).IsFalse();
+        await Assert.That(goal.Step[2].HasSubSteps).IsFalse();
     }
 
     [Test]
@@ -106,7 +105,7 @@ public class StepTests : System.IAsyncDisposable
         var goal = new Goal
         {
             Name = "Test",
-            Steps = new GoalSteps
+            Step = new GoalSteps
             {
                 new Step { Index = 0, Text = "if %x% > 5", Indent = 0 },
                 new Step { Index = 1, Text = "if %y% > 100", Indent = 1 },
@@ -115,14 +114,13 @@ public class StepTests : System.IAsyncDisposable
                 new Step { Index = 4, Text = "write out done", Indent = 0 }
             }
         };
-        goal.Steps.Context = app.User.Context;
-        foreach (var s in goal.Steps) s.Goal = goal;
+        foreach (var s in goal.Step.list) s.Goal = goal;
 
-        await Assert.That(goal.Steps[0].HasSubSteps).IsTrue();
-        await Assert.That(goal.Steps[1].HasSubSteps).IsTrue();
-        await Assert.That(goal.Steps[2].HasSubSteps).IsFalse();
-        await Assert.That(goal.Steps[3].HasSubSteps).IsFalse();
-        await Assert.That(goal.Steps[4].HasSubSteps).IsFalse();
+        await Assert.That(goal.Step[0].HasSubSteps).IsTrue();
+        await Assert.That(goal.Step[1].HasSubSteps).IsTrue();
+        await Assert.That(goal.Step[2].HasSubSteps).IsFalse();
+        await Assert.That(goal.Step[3].HasSubSteps).IsFalse();
+        await Assert.That(goal.Step[4].HasSubSteps).IsFalse();
     }
 
     [Test]

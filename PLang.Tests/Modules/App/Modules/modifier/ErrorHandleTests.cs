@@ -69,7 +69,7 @@ public class ErrorHandleTests
             Modifiers = new List<global::app.goal.step.action.modifier.@this> { ErrorHandler(("ignoreError", true)) }
         };
 
-        var result = await action.RunAsync(Ctx);
+        var result = await action.Run(Ctx);
 
         await result.IsSuccess();
         await Assert.That((await Ctx.Variable.GetValue("ok"))).IsEqualTo("v");
@@ -81,7 +81,7 @@ public class ErrorHandleTests
         var action = Throw("boom",
             modifiers: new List<global::app.goal.step.action.modifier.@this> { ErrorHandler(("ignoreError", true)) });
 
-        var result = await action.RunAsync(Ctx);
+        var result = await action.Run(Ctx);
 
         await result.IsSuccess();
     }
@@ -95,7 +95,7 @@ public class ErrorHandleTests
                 ErrorHandler(("statusCode", 404), ("ignoreError", true))
             });
 
-        var result = await action.RunAsync(Ctx);
+        var result = await action.Run(Ctx);
 
         await result.IsSuccess();
     }
@@ -109,7 +109,7 @@ public class ErrorHandleTests
                 ErrorHandler(("statusCode", 404), ("ignoreError", true))
             });
 
-        var result = await action.RunAsync(Ctx);
+        var result = await action.Run(Ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
@@ -124,7 +124,7 @@ public class ErrorHandleTests
                 ErrorHandler(("key", "notfound"), ("ignoreError", true))
             });
 
-        var result = await action.RunAsync(Ctx);
+        var result = await action.Run(Ctx);
 
         await result.IsSuccess();
     }
@@ -138,7 +138,7 @@ public class ErrorHandleTests
                 ErrorHandler(("message", "connection"), ("ignoreError", true))
             });
 
-        var result = await action.RunAsync(Ctx);
+        var result = await action.Run(Ctx);
 
         await result.IsSuccess();
     }
@@ -152,7 +152,7 @@ public class ErrorHandleTests
                 ErrorHandler(("key", "NotFound"), ("ignoreError", true))
             });
 
-        var result = await action.RunAsync(Ctx);
+        var result = await action.Run(Ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Timeout");
@@ -167,7 +167,7 @@ public class ErrorHandleTests
                 ErrorHandler(("message", "connection"), ("ignoreError", true))
             });
 
-        var result = await action.RunAsync(Ctx);
+        var result = await action.Run(Ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).IsEqualTo("disk full");
@@ -179,7 +179,7 @@ public class ErrorHandleTests
         var action = Throw("anything", statusCode: 418,
             modifiers: new List<global::app.goal.step.action.modifier.@this> { ErrorHandler(("ignoreError", true)) });
 
-        var result = await action.RunAsync(Ctx);
+        var result = await action.Run(Ctx);
 
         await result.IsSuccess();
     }
@@ -297,9 +297,9 @@ public class ErrorHandleTests
                 PrParam.IsVarNameSlot(module, actionName, p.name) ? new global::app.type.@this("variable") : null, context: global::PLang.Tests.TestApp.SharedContext)).ToList()
         };
         var step = new Step { Text = $"test step for {name}" };
-        step.Actions.Add(prAction);
+        step.Action.Add(prAction);
         var goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", global::PLang.Tests.TestApp.SharedContext) };
-        goal.Steps.Add(step);
+        goal.Step.Add(step);
         _app.Goal.Add(goal);
         return goal;
     }
@@ -315,7 +315,7 @@ public class ErrorHandleTests
                 ErrorHandler(("actions", CallGoal("SuccessGoal")), ("order", "GoalFirst"))
             });
 
-        var result = await action.RunAsync(Ctx);
+        var result = await action.Run(Ctx);
 
         await result.IsSuccess();
     }
@@ -331,7 +331,7 @@ public class ErrorHandleTests
                 ErrorHandler(("actions", CallGoal("FailGoal")), ("order", "GoalFirst"))
             });
 
-        var result = await action.RunAsync(Ctx);
+        var result = await action.Run(Ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error!.ErrorChain.Count).IsGreaterThan(0);
@@ -349,7 +349,7 @@ public class ErrorHandleTests
                 ErrorHandler(("actions", CallGoal("SuccessGoal2")), ("order", "RetryFirst"))
             });
 
-        var result = await action.RunAsync(Ctx);
+        var result = await action.Run(Ctx);
 
         await result.IsSuccess();
     }
@@ -365,7 +365,7 @@ public class ErrorHandleTests
                 ErrorHandler(("actions", CallGoal("FailGoal2")), ("order", "RetryFirst"))
             });
 
-        var result = await action.RunAsync(Ctx);
+        var result = await action.Run(Ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error!.ErrorChain.Count).IsGreaterThan(0);

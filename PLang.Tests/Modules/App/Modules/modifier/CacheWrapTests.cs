@@ -47,7 +47,7 @@ public class CacheWrapTests
             Modifiers = new List<global::app.goal.step.action.modifier.@this> { CacheModifier(60_000, "miss-key") }
         };
 
-        var result = await action.RunAsync(Ctx);
+        var result = await action.Run(Ctx);
 
         await result.IsSuccess();
         await Assert.That((await Ctx.Variable.GetValue("x"))).IsEqualTo("first");
@@ -76,7 +76,7 @@ public class CacheWrapTests
             Modifiers = new List<global::app.goal.step.action.modifier.@this> { CacheModifier(60_000, "hit-key") }
         };
 
-        var result = await action.RunAsync(Ctx);
+        var result = await action.Run(Ctx);
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("cached-value");
@@ -94,7 +94,7 @@ public class CacheWrapTests
             Modifiers = new List<global::app.goal.step.action.modifier.@this> { CacheModifier(60_000, "fail-key") }
         };
 
-        var result = await action.RunAsync(Ctx);
+        var result = await action.Run(Ctx);
 
         await result.IsFailure();
 
@@ -116,7 +116,7 @@ public class CacheWrapTests
             Modifiers = new List<global::app.goal.step.action.modifier.@this> { CacheModifier(60_000, "my-custom-key") }
         };
 
-        await action.RunAsync(Ctx);
+        await action.Run(Ctx);
 
         var underCustomKey = await Ctx.App!.Cache.GetAsync("my-custom-key");
         await Assert.That(underCustomKey).IsNotNull();
@@ -140,7 +140,7 @@ public class CacheWrapTests
             Modifiers = new List<global::app.goal.step.action.modifier.@this> { CacheModifier(60_000) } // no Key
         };
 
-        await action.RunAsync(Ctx);
+        await action.Run(Ctx);
 
         var cached = await Ctx.App!.Cache.GetAsync("step:/foo/bar.goal:7");
         await Assert.That(cached).IsNotNull();
@@ -163,7 +163,7 @@ public class CacheWrapTests
             Modifiers = new List<global::app.goal.step.action.modifier.@this> { CacheModifier(60_000, "slide-key", sliding: true) }
         };
 
-        await action.RunAsync(Ctx);
+        await action.Run(Ctx);
 
         var cached = await Ctx.App!.Cache.GetAsync("slide-key");
         await Assert.That(cached).IsNotNull();
@@ -187,7 +187,7 @@ public class CacheWrapTests
             Modifiers = new List<global::app.goal.step.action.modifier.@this> { CacheModifier(60_000, "restore-key") }
         };
 
-        await action.RunAsync(Ctx);
+        await action.Run(Ctx);
 
         var dataVar = await Ctx.Variable.Get("!data");
         await Assert.That(dataVar).IsNotNull();

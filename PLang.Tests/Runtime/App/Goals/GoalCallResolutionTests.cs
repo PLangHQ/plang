@@ -1,6 +1,5 @@
 using System.Text.Json;
 using app.goal;
-using app.goal.steps;
 using app.goal.step;
 using app.goal.step.action;
 using PLangAction = app.goal.step.action.@this;
@@ -54,7 +53,7 @@ public class GoalCallResolutionTests
     {
         var abs = System.IO.Path.Combine(_tempDir, relativePrPath.Replace('/', System.IO.Path.DirectorySeparatorChar));
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(abs)!);
-        var goal = new PLangGoal { Name = goalName, Path = global::app.type.item.path.@this.Resolve("/" + goalName, global::PLang.Tests.TestApp.SharedContext), Steps = new GoalSteps() };
+        var goal = new PLangGoal { Name = goalName, Path = global::app.type.item.path.@this.Resolve("/" + goalName, global::PLang.Tests.TestApp.SharedContext), Step = new GoalSteps() };
         _ = goal.Hash; // ensures serializable shape is snapshotted
         System.IO.File.WriteAllText(abs, JsonSerializer.Serialize(goal, global::app.Utils.Json.CamelCaseIndented));
     }
@@ -65,11 +64,11 @@ public class GoalCallResolutionTests
     /// </summary>
     private PLangAction CallerAt(string callerGoalPath)
     {
-        var goal = new PLangGoal { Name = "Caller", Path = global::app.type.item.path.@this.Resolve(callerGoalPath, global::PLang.Tests.TestApp.SharedContext), Steps = new GoalSteps() };
+        var goal = new PLangGoal { Name = "Caller", Path = global::app.type.item.path.@this.Resolve(callerGoalPath, global::PLang.Tests.TestApp.SharedContext), Step = new GoalSteps() };
         var step = new Step { Index = 0, Text = "call something", Goal = goal };
-        goal.Steps.Add(step);
+        goal.Step.Add(step);
         var action = new PLangAction { Module = "goal", ActionName = "call", Step = step };
-        step.Actions.Add(action);
+        step.Action.Add(action);
         return action;
     }
 

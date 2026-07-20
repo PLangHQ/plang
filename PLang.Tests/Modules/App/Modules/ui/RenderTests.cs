@@ -191,7 +191,7 @@ public class RenderTests : IDisposable
         {
             Name = "Greeter",
             Path = global::app.type.item.path.@this.Resolve("/Greeter.goal", global::PLang.Tests.TestApp.SharedContext),
-            Steps = new GoalSteps
+            Step = new GoalSteps
             {
                 MakeStep("variable", "set",
                     new Dictionary<string, object?> { { "name", "greeting" }, { "value", "Hello from goal" } },
@@ -460,7 +460,7 @@ public class RenderTests : IDisposable
         {
             Name = "GetNumber",
             Path = global::app.type.item.path.@this.Resolve("/GetNumber.goal", global::PLang.Tests.TestApp.SharedContext),
-            Steps = new GoalSteps
+            Step = new GoalSteps
             {
                 MakeStep("variable", "set",
                     new Dictionary<string, object?> { { "name", "num" }, { "value", 42 } },
@@ -635,7 +635,7 @@ public class RenderTests : IDisposable
         {
             Index = index,
             Text = text,
-            Actions = new StepActions { action }
+            Action = new StepActions { action }
         };
     }
 

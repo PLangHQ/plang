@@ -905,13 +905,12 @@ public class VariablesAccessorTests : System.IAsyncDisposable
         var goal = new global::app.goal.@this { Name = "BuildGoal" };
         goal.Goals.Add(new global::app.goal.@this { Name = "SubGoal" });
         var step = new global::app.goal.step.@this { Index = 0, Text = "original" };
-        goal.Steps.Add(step);
-        goal.Steps.Context = _app.User.Context;
+        goal.Step.Add(step);
         stack.Set("goal", goal);
 
-        // Simulate what builder.merge does: set %goal.Steps[0]% = newStep
+        // Simulate what builder.merge does: set %goal.Step[0]% = newStep
         var newStep = new global::app.goal.step.@this { Index = 0, Text = "updated" };
-        stack.Set("goal.Steps[0]", newStep);
+        stack.Set("goal.Step[0]", newStep);
 
         // Goal should still be a Goal, not a dictionary — it is a plang item now (the
         // hosts-stay-hosts model was reversed), so it rides as ITSELF, not a clr carrier.
@@ -924,7 +923,7 @@ public class VariablesAccessorTests : System.IAsyncDisposable
         await Assert.That((await subName.Value())?.ToString()).IsEqualTo("SubGoal");
 
         // Step should be updated
-        var stepText = await stack.Get("goal.Steps[0].Text");
+        var stepText = await stack.Get("goal.Step[0].Text");
         await Assert.That((await stepText.Value())?.ToString()).IsEqualTo("updated");
     }
 

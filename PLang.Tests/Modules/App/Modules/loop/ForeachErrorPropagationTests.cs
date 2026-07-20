@@ -40,9 +40,9 @@ public class ForeachErrorPropagationTests
                     ("collection", "%items%"), Make.Param("itemname", "%item%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "NonExistentGoal" })))));
-        var step = goal.Steps.First();
+        var step = goal.Step.list.First();
 
-        var result = await step.RunAsync(context);
+        var result = await step.Run(context);
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
@@ -86,7 +86,7 @@ public class ForeachErrorPropagationTests
         {
             Index = 0,
             Text = "if true, call MissingGoal",
-            Actions = new StepActions { innerCondAction, innerGoalCall }
+            Action = new StepActions { innerCondAction, innerGoalCall }
         };
         innerCondAction.Step = innerStep;
         innerGoalCall.Step = innerStep;
@@ -95,7 +95,7 @@ public class ForeachErrorPropagationTests
         {
             Name = "Inner",
             Path = global::app.type.item.path.@this.Resolve("/Inner.goal", global::PLang.Tests.TestApp.SharedContext),
-            Steps = new GoalSteps { innerStep }
+            Step = new GoalSteps { innerStep }
         };
         innerStep.Goal = innerGoal;
         _app.Goal.Add(innerGoal);
@@ -107,9 +107,9 @@ public class ForeachErrorPropagationTests
                     ("collection", "%items%"), Make.Param("itemname", "%item%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "Inner" })))));
-        var outerStep = outerGoal.Steps.First();
+        var outerStep = outerGoal.Step.list.First();
 
-        var result = await outerStep.RunAsync(context);
+        var result = await outerStep.Run(context);
 
         // The 404 from MissingGoal must propagate all the way up — not be
         // swallowed by condition.if's Handled flag.
@@ -130,7 +130,7 @@ public class ForeachErrorPropagationTests
         var context = _app.User.Context;
         context.Variable.Set("items", new List<object?> { "a", "b", "c" });
 
-        _app.Goal.Add(new Goal { Name = "Noop", Path = global::app.type.item.path.@this.Resolve("/Noop.goal", global::PLang.Tests.TestApp.SharedContext), Steps = new GoalSteps() });
+        _app.Goal.Add(new Goal { Name = "Noop", Path = global::app.type.item.path.@this.Resolve("/Noop.goal", global::PLang.Tests.TestApp.SharedContext), Step = new GoalSteps() });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("NoopRunner",
             Make.Step("foreach %items%, call Noop item=%item%",
@@ -138,9 +138,9 @@ public class ForeachErrorPropagationTests
                     ("collection", "%items%"), Make.Param("itemname", "%item%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "Noop" })))));
-        var step = goal.Steps.First();
+        var step = goal.Step.list.First();
 
-        var result = await step.RunAsync(context);
+        var result = await step.Run(context);
 
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("item"))).IsEqualTo("c");

@@ -61,7 +61,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
             ("name", "%img%"),
             ("value", "%upload%"),
             ("type", Type("image", "gif", true)));
-        var result = await action.RunAsync(context);
+        var result = await action.Run(context);
         await result.IsFailure();
         await Assert.That(result.Error?.Message ?? "").Contains("gif");
     }
@@ -80,7 +80,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
             ("name", "%img%"),
             ("value", GifBytes),
             ("type", Type("image", "gif", true)));
-        var result = await action.RunAsync(context);
+        var result = await action.Run(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("img");
         // A strict declaration validates AND becomes: the gif magic bytes match
@@ -102,7 +102,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
             ("name", "%img%"),
             ("value", pngImage),
             ("type", Type("image", "gif", true)));
-        var result = await action.RunAsync(context);
+        var result = await action.Run(context);
         await result.IsFailure();
         await Assert.That(result.Error?.Message ?? "").Contains("gif");
     }
@@ -115,7 +115,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
             ("name", "%img%"),
             ("value", gifImage),
             ("type", Type("image", "gif", true)));
-        var result = await action.RunAsync(context);
+        var result = await action.Run(context);
         await result.IsSuccess();
     }
 }

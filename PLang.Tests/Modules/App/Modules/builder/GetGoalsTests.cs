@@ -53,7 +53,7 @@ public class GetGoalsTests
         await Assert.That(goals).IsNotNull();
         await Assert.That(goals!.Count).IsGreaterThanOrEqualTo(1);
         await Assert.That(goals[0].Name).IsEqualTo("Start");
-        await Assert.That(goals[0].Steps.Count).IsEqualTo(2);
+        await Assert.That(goals[0].Step.Count).IsEqualTo(2);
     }
 
     [Test]
@@ -101,12 +101,12 @@ public class GetGoalsTests
         {
             Name = "Start",
             Path = global::app.type.item.path.@this.Resolve("/Start.goal", global::PLang.Tests.TestApp.SharedContext),
-            Steps = new GoalSteps
+            Step = new GoalSteps
             {
                 new Step
                 {
                     Text = "write out 'hello'",
-                    Actions = new StepActions(new[]
+                    Action = new StepActions(new[]
                     {
                         new global::app.goal.step.action.@this
                         {
@@ -135,8 +135,8 @@ public class GetGoalsTests
         var startGoal = goals!.FirstOrDefault(g => g.Name == "Start");
         await Assert.That(startGoal).IsNotNull();
         // Merged actions from .pr data
-        await Assert.That(startGoal!.Steps[0].Actions.Count).IsEqualTo(1);
-        await Assert.That(startGoal.Steps[0].Actions[0].Module).IsEqualTo("output");
+        await Assert.That(startGoal!.Step[0].Action.Count).IsEqualTo(1);
+        await Assert.That(startGoal.Step[0].Action[0].Module).IsEqualTo("output");
     }
 
     [Test]
@@ -264,7 +264,7 @@ public class GetGoalsTests
         await Assert.That(goals).IsNotNull();
         await Assert.That(goals!.Count).IsGreaterThanOrEqualTo(1);
         // Steps should have empty actions (no merge happened)
-        await Assert.That(goals[0].Steps[0].Actions.Count).IsEqualTo(0);
+        await Assert.That(goals[0].Step[0].Action.Count).IsEqualTo(0);
         // Warnings should contain the corrupt file error
         await Assert.That(result.Warnings).IsNotNull();
         await Assert.That(result.Warnings!.Any(w => w.Key == "CorruptPrFile")).IsTrue();

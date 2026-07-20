@@ -13,18 +13,16 @@ namespace app.goal.step.action.list;
 /// </summary>
 public sealed class @this
 {
-    private readonly IReadOnlyList<Action> _actions;
-    public @this(IReadOnlyList<Action> actions) => _actions = actions;
+    // See step.list — a List reused when the caller has one, wrapped once otherwise; Add is a
+    // construction affordance only (the graph is read-only after load).
+    private readonly List<Action> _actions;
+    public @this(IReadOnlyList<Action> actions) => _actions = actions as List<Action> ?? new List<Action>(actions);
 
     public Action this[int i] => _actions[i];                  // step.action[0]
     public IReadOnlyList<Action> list => _actions;            // step.action.list
     public int Count => _actions.Count;
-    public int IndexOf(Action a)                              // coverage key
-    {
-        for (int i = 0; i < _actions.Count; i++)
-            if (ReferenceEquals(_actions[i], a)) return i;
-        return -1;
-    }
+    public void Add(Action action) => _actions.Add(action);   // construction only
+    public int IndexOf(Action a) => _actions.IndexOf(a);      // coverage key
 
     /// <summary>Runs the chain: setup / non-condition actions dispatch in order; a condition evaluates,
     /// and if truthy runs its <c>Child</c> branch and stops (the rest of the chain — elseif/else — is

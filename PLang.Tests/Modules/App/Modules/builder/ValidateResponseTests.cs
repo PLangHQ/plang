@@ -16,7 +16,7 @@ public class ValidateResponseTests
     {
         var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/Test.goal", global::PLang.Tests.TestApp.SharedContext) };
         for (int i = 0; i < stepCount; i++)
-            goal.Steps.Add(new Step { Index = i, Text = $"step {i}" });
+            goal.Step.Add(new Step { Index = i, Text = $"step {i}" });
         return goal;
     }
 
@@ -26,8 +26,8 @@ public class ValidateResponseTests
         for (int i = 0; i < stepCount; i++)
         {
             var step = new Step { Index = i, Text = $"step {i}" };
-            step.Actions.Add(new PrAction { Module = "output", ActionName = "write" });
-            goal.Steps.Add(step);
+            step.Action.Add(new PrAction { Module = "output", ActionName = "write" });
+            goal.Step.Add(step);
         }
         return goal;
     }
@@ -36,7 +36,7 @@ public class ValidateResponseTests
     {
         var s = new Step { Index = index };
         foreach (var (m, a) in actions)
-            s.Actions.Add(new PrAction { Module = m, ActionName = a });
+            s.Action.Add(new PrAction { Module = m, ActionName = a });
         return s;
     }
 

@@ -2,7 +2,7 @@ using app.module.action.ui;
 
 namespace PLang.Tests.App.Modules.Stage4Spike;
 
-// 4a/4b end-to-end: the REAL catalog (app.module.list → module elements → module.Actions →
+// 4a/4b end-to-end: the REAL catalog (app.module.list → module elements → module.Action →
 // action elements) renders through the real Fluid provider via the PlangDoorStrategy. Proves
 // the element surface + the Data.Get door carry the whole chain a builder template will walk.
 public class RealCatalogRenderTests
@@ -34,10 +34,10 @@ public class RealCatalogRenderTests
     public async Task ModuleActions_RenderTheirNames_ThroughFluid()
     {
         await using var app = global::PLang.Tests.TestApp.Create("/tmp/s4-realcat-2");
-        // module.Actions is the native list of action class-zoom elements; each action's Name
+        // module.Action is the native list of action class-zoom elements; each action's Name
         // navigates through the Data.Get door.
         var outp = await Render(app,
-            "{% for m in modules %}{% if m.Name == 'file' %}{% for a in m.Actions %}{{ a.Name }};{% endfor %}{% endif %}{% endfor %}");
+            "{% for m in modules %}{% if m.Name == 'file' %}{% for a in m.Action %}{{ a.Name }};{% endfor %}{% endif %}{% endfor %}");
         await Assert.That(outp).Contains("file.read");
     }
 

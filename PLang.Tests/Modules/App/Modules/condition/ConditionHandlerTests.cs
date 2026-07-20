@@ -78,11 +78,11 @@ public class ConditionHandlerTests : IDisposable
         var step = new Step
         {
             Index = 0, Text = "if true, write true-branch",
-            Actions = new StepActions { condAction, thenAction }
+            Action = new StepActions { condAction, thenAction }
         };
         condAction.Step = step;
 
-        var result = await step.RunAsync(_app.User.Context);
+        var result = await step.Run(_app.User.Context);
 
         await result.IsSuccess();
 
@@ -130,11 +130,11 @@ public class ConditionHandlerTests : IDisposable
         var step = new Step
         {
             Index = 0, Text = "if false then, else write else",
-            Actions = new StepActions { condAction, thenAction, elseCondAction, elseAction }
+            Action = new StepActions { condAction, thenAction, elseCondAction, elseAction }
         };
         condAction.Step = step;
 
-        var result = await step.RunAsync(_app.User.Context);
+        var result = await step.Run(_app.User.Context);
 
         await result.IsSuccess();
 

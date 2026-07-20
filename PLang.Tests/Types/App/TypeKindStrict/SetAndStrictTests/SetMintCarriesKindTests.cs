@@ -22,7 +22,7 @@ public class SetMintCarriesKindTests
         var action = TestAction.Create("variable", "set",
             ("name", "%doc%"),
             ("value", "readme.md"));
-        var result = await action.RunAsync(context);
+        var result = await action.Run(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("doc");
         await Assert.That(stored!.Type!.Name).IsEqualTo("text");
@@ -39,7 +39,7 @@ public class SetMintCarriesKindTests
             ("name", "%doc%"),
             ("value", "readme.md"),
             ("type", new global::app.type.@this("text")));
-        var result = await action.RunAsync(context);
+        var result = await action.Run(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("doc");
         await Assert.That(stored!.Type!.Name).IsEqualTo("text");
@@ -55,7 +55,7 @@ public class SetMintCarriesKindTests
             ("name", "%pic%"),
             ("value", "file.jpg"),
             ("type", new global::app.type.@this("image")));
-        var result = await action.RunAsync(context);
+        var result = await action.Run(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("pic");
         await Assert.That(stored!.Type!.Name).IsEqualTo("image");
@@ -70,7 +70,7 @@ public class SetMintCarriesKindTests
         var action = TestAction.Create("variable", "set",
             ("name", "%x%"),
             ("value", "file.jpg"));
-        var result = await action.RunAsync(context);
+        var result = await action.Run(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("x");
         await Assert.That(stored!.Type!.Name).IsEqualTo("text");
@@ -84,7 +84,7 @@ public class SetMintCarriesKindTests
             ("name", "%img%"),
             ("value", "real.gif"),
             ("type", new global::app.type.@this("image", "gif")));
-        var result = await action.RunAsync(context);
+        var result = await action.Run(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("img");
         await Assert.That(stored!.Type!.Name).IsEqualTo("image");

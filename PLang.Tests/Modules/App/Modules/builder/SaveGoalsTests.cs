@@ -47,12 +47,12 @@ public class SaveGoalsTests
     public async Task SaveGoal_SerializesToPrPath()
     {
         var step = new Step { Text = "write hello", Index = 0 };
-        step.Actions.Add(new PrAction { Module = "output", ActionName = "write" });
+        step.Action.Add(new PrAction { Module = "output", ActionName = "write" });
         var goal = new Goal
         {
             Name = "Start",
             Path = global::app.type.item.path.@this.Resolve("/Start.goal", _app.User.Context),
-            Steps = new GoalSteps { step }
+            Step = new GoalSteps { step }
         };
 
         var action = new goalsSave(_app.User.Context) { Goal = new("", goal), App = AppParam() };
@@ -67,7 +67,7 @@ public class SaveGoalsTests
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true, Converters = { new global::app.channel.serializer.json.Converter(_app.User.Context) } });
         await Assert.That(saved).IsNotNull();
         await Assert.That(saved!.Name).IsEqualTo("Start");
-        await Assert.That(saved.Steps.Count).IsEqualTo(1);
+        await Assert.That(saved.Step.Count).IsEqualTo(1);
     }
 
     [Test]

@@ -90,13 +90,13 @@ public class SetupTests
     {
         // Create a setup goal with two steps
         var step1 = new Step { Index = 0, Text = "step one",
-            Actions = CreateNoOpActions() };
+            Action = CreateNoOpActions() };
         var step2 = new Step { Index = 1, Text = "step two",
-            Actions = CreateNoOpActions() };
+            Action = CreateNoOpActions() };
         var goal = new Goal
         {
             Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
-            Steps = new global::app.goal.steps.@this(new[] { step1, step2 })
+            Step = new GoalSteps(new[] { step1, step2 })
         };
         step1.Goal = goal;
         step2.Goal = goal;
@@ -127,11 +127,11 @@ public class SetupTests
     public async Task RunAsync_RerunsStepWithChangedHash()
     {
         var step = new Step { Index = 0, Text = "create table",
-            Actions = CreateNoOpActions() };
+            Action = CreateNoOpActions() };
         var goal = new Goal
         {
             Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
-            Steps = new global::app.goal.steps.@this(new[] { step })
+            Step = new GoalSteps(new[] { step })
         };
         step.Goal = goal;
         _app.Goal.Add(goal);
@@ -142,7 +142,7 @@ public class SetupTests
 
         // Simulate changed step (different hash) — new step object with different hash
         var changedStep = new Step { Index = 0, Text = "create table v2",
-            Actions = CreateNoOpActions() };
+            Action = CreateNoOpActions() };
         changedStep.Goal = goal;
 
         // The changed step should NOT be found as executed
@@ -155,7 +155,7 @@ public class SetupTests
         var goal = new Goal
         {
             Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
-            Steps = new global::app.goal.steps.@this()
+            Step = new GoalSteps()
         };
         _app.Goal.Add(goal);
 
@@ -187,12 +187,12 @@ public class SetupTests
         var step = new Step
         {
             Index = 0, Text = "failing step",
-            Actions = CreateFailingActions()
+            Action = CreateFailingActions()
         };
         var goal = new Goal
         {
             Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
-            Steps = new global::app.goal.steps.@this(new[] { step })
+            Step = new GoalSteps(new[] { step })
         };
         step.Goal = goal;
         _app.Goal.Add(goal);
@@ -209,13 +209,13 @@ public class SetupTests
     public async Task RunAsync_CancellationAborts()
     {
         var step1 = new Step { Index = 0, Text = "step one",
-            Actions = CreateNoOpActions() };
+            Action = CreateNoOpActions() };
         var step2 = new Step { Index = 1, Text = "step two",
-            Actions = CreateNoOpActions() };
+            Action = CreateNoOpActions() };
         var goal = new Goal
         {
             Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
-            Steps = new global::app.goal.steps.@this(new[] { step1, step2 })
+            Step = new GoalSteps(new[] { step1, step2 })
         };
         step1.Goal = goal;
         step2.Goal = goal;

@@ -21,7 +21,7 @@ public class MergeTests
         var source = new Step
         {
             Text = "do something",
-            Actions = new StepActions(new[]
+            Action = new StepActions(new[]
             {
                 new Action { Module = "output", ActionName = "write", Parameters = new List<Data> { new("Message", "hello", context: global::PLang.Tests.TestApp.SharedContext) } }
             })
@@ -29,8 +29,8 @@ public class MergeTests
 
         target.Merge(source);
 
-        await Assert.That(target.Actions.Count).IsEqualTo(1);
-        await Assert.That(target.Actions[0].Module).IsEqualTo("output");
+        await Assert.That(target.Action.Count).IsEqualTo(1);
+        await Assert.That(target.Action[0].Module).IsEqualTo("output");
     }
 
     [Test]
@@ -43,7 +43,7 @@ public class MergeTests
             Index = 99,
             Indent = 0,
             LineNumber = 1,
-            Actions = new StepActions(new[]
+            Action = new StepActions(new[]
             {
                 new Action { Module = "file", ActionName = "read" }
             })
@@ -57,7 +57,7 @@ public class MergeTests
         await Assert.That(target.Indent).IsEqualTo(2);
         await Assert.That(target.LineNumber).IsEqualTo(10);
         // LLM field copied
-        await Assert.That(target.Actions.Count).IsEqualTo(1);
+        await Assert.That(target.Action.Count).IsEqualTo(1);
     }
 
     [Test]
@@ -67,14 +67,14 @@ public class MergeTests
         var target = new Step
         {
             Text = "step",
-            Actions = new StepActions(new[] { originalAction })
+            Action = new StepActions(new[] { originalAction })
         };
         var source = new Step { Text = "step" }; // Empty LLM fields
 
         target.Merge(source);
 
         // Actions not cleared because source has 0 actions
-        await Assert.That(target.Actions.Count).IsEqualTo(1);
+        await Assert.That(target.Action.Count).IsEqualTo(1);
     }
 
     [Test]
@@ -113,7 +113,7 @@ public class MergeTests
         var freshGoal = new Goal
         {
             Name = "Test",
-            Steps = new GoalSteps
+            Step = new GoalSteps
             {
                 new Step { Text = "do something", Index = 0 },
                 new Step { Text = "do another thing", Index = 1 }
@@ -123,12 +123,12 @@ public class MergeTests
         var existingGoal = new Goal
         {
             Name = "Test",
-            Steps = new GoalSteps
+            Step = new GoalSteps
             {
                 new Step
                 {
                     Text = "do something",
-                    Actions = new StepActions(new[]
+                    Action = new StepActions(new[]
                     {
                         new Action { Module = "output", ActionName = "write" }
                     })
@@ -139,9 +139,9 @@ public class MergeTests
         freshGoal.Merge(existingGoal);
 
         // Matched step gets actions
-        await Assert.That(freshGoal.Steps[0].Actions.Count).IsEqualTo(1);
+        await Assert.That(freshGoal.Step[0].Action.Count).IsEqualTo(1);
         // Unmatched step keeps empty
-        await Assert.That(freshGoal.Steps[1].Actions.Count).IsEqualTo(0);
+        await Assert.That(freshGoal.Step[1].Action.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -150,7 +150,7 @@ public class MergeTests
         var freshGoal = new Goal
         {
             Name = "Test",
-            Steps = new GoalSteps
+            Step = new GoalSteps
             {
                 new Step { Text = "new step that didn't exist before", Index = 0 }
             }
@@ -159,12 +159,12 @@ public class MergeTests
         var existingGoal = new Goal
         {
             Name = "Test",
-            Steps = new GoalSteps
+            Step = new GoalSteps
             {
                 new Step
                 {
                     Text = "old step text",
-                    Actions = new StepActions(new[]
+                    Action = new StepActions(new[]
                     {
                         new Action { Module = "file", ActionName = "read" }
                     })
@@ -174,7 +174,7 @@ public class MergeTests
 
         freshGoal.Merge(existingGoal);
 
-        await Assert.That(freshGoal.Steps[0].Actions.Count).IsEqualTo(0);
+        await Assert.That(freshGoal.Step[0].Action.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -183,14 +183,14 @@ public class MergeTests
         var freshGoal = new Goal
         {
             Name = "Test",
-            Steps = new GoalSteps { new Step { Text = "step", Index = 0 } }
+            Step = new GoalSteps { new Step { Text = "step", Index = 0 } }
         };
 
         // Should not throw
         freshGoal.Merge(null);
 
-        await Assert.That(freshGoal.Steps.Count).IsEqualTo(1);
-        await Assert.That(freshGoal.Steps[0].Actions.Count).IsEqualTo(0);
+        await Assert.That(freshGoal.Step.Count).IsEqualTo(1);
+        await Assert.That(freshGoal.Step[0].Action.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -200,7 +200,7 @@ public class MergeTests
         var freshGoal = new Goal
         {
             Name = "Test",
-            Steps = new GoalSteps
+            Step = new GoalSteps
             {
                 new Step { Text = "do something", Index = 0 },
                 new Step { Text = "do something", Index = 1 }
@@ -210,12 +210,12 @@ public class MergeTests
         var existingGoal = new Goal
         {
             Name = "Test",
-            Steps = new GoalSteps
+            Step = new GoalSteps
             {
                 new Step
                 {
                     Text = "do something",
-                    Actions = new StepActions(new[]
+                    Action = new StepActions(new[]
                     {
                         new Action { Module = "output", ActionName = "write" }
                     })
@@ -226,8 +226,8 @@ public class MergeTests
         freshGoal.Merge(existingGoal);
 
         // First match gets the actions, second stays empty
-        await Assert.That(freshGoal.Steps[0].Actions.Count).IsEqualTo(1);
-        await Assert.That(freshGoal.Steps[1].Actions.Count).IsEqualTo(0);
+        await Assert.That(freshGoal.Step[0].Action.Count).IsEqualTo(1);
+        await Assert.That(freshGoal.Step[1].Action.Count).IsEqualTo(0);
     }
 
     #endregion

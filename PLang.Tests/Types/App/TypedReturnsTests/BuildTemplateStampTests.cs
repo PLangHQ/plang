@@ -20,7 +20,7 @@ public class BuildTemplateStampTests
         var goal = Make.Goal("G", "/g.goal",
             Make.Step("s", Make.Action("error", "throw", ("Message", "hello %name%"))));
 
-        var actions = goal.Steps[0].Actions;
+        var actions = goal.Step[0].Action.list;
         global::app.module.action.build.code.Default.NormalizeParameterTypes(actions, app.Module, ctx);
 
         var msg = actions.First().Parameters.First(p => p.Name == "Message");
@@ -36,7 +36,7 @@ public class BuildTemplateStampTests
         var goal = Make.Goal("G", "/g.goal",
             Make.Step("s", Make.Action("error", "throw", ("Message", "hello world"))));
 
-        var actions = goal.Steps[0].Actions;
+        var actions = goal.Step[0].Action.list;
         global::app.module.action.build.code.Default.NormalizeParameterTypes(actions, app.Module, ctx);
 
         var msg = actions.First().Parameters.First(p => p.Name == "Message");
@@ -52,7 +52,7 @@ public class BuildTemplateStampTests
         var goal = Make.Goal("G", "/g.goal",
             Make.Step("s", Make.Action("error", "throw", ("Message", "count is %n% today"))));
 
-        var actions = goal.Steps[0].Actions;
+        var actions = goal.Step[0].Action.list;
         global::app.module.action.build.code.Default.NormalizeParameterTypes(actions, app.Module, ctx);
 
         var msg = actions.First().Parameters.First(p => p.Name == "Message");

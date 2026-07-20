@@ -16,9 +16,9 @@ public class GoalFileTests
 
         await Assert.That(goal).IsNotNull();
         await Assert.That(goal!.Name).IsEqualTo("MyGoal");
-        await Assert.That(goal.Steps.Count).IsEqualTo(2);
-        await Assert.That(goal.Steps[0].Text).IsEqualTo("step one");
-        await Assert.That(goal.Steps[1].Text).IsEqualTo("step two");
+        await Assert.That(goal.Step.Count).IsEqualTo(2);
+        await Assert.That(goal.Step[0].Text).IsEqualTo("step one");
+        await Assert.That(goal.Step[1].Text).IsEqualTo("step two");
     }
 
     [Test]
@@ -37,9 +37,9 @@ public class GoalFileTests
     {
         var goal = Goal.Parse("MyGoal\n- top level\n    - indent 1\n        - indent 2", global::app.type.item.path.@this.Resolve("/Indent.goal", global::PLang.Tests.TestApp.SharedContext));
 
-        await Assert.That(goal!.Steps[0].Indent).IsEqualTo(0);
-        await Assert.That(goal.Steps[1].Indent).IsEqualTo(1);
-        await Assert.That(goal.Steps[2].Indent).IsEqualTo(2);
+        await Assert.That(goal!.Step[0].Indent).IsEqualTo(0);
+        await Assert.That(goal.Step[1].Indent).IsEqualTo(1);
+        await Assert.That(goal.Step[2].Indent).IsEqualTo(2);
     }
 
     [Test]
@@ -47,8 +47,8 @@ public class GoalFileTests
     {
         var goal = Goal.Parse("MyGoal\n- first line\n  continuation line", global::app.type.item.path.@this.Resolve("/Cont.goal", global::PLang.Tests.TestApp.SharedContext));
 
-        await Assert.That(goal!.Steps.Count).IsEqualTo(1);
-        await Assert.That(goal.Steps[0].Text).IsEqualTo("first line\ncontinuation line");
+        await Assert.That(goal!.Step.Count).IsEqualTo(1);
+        await Assert.That(goal.Step[0].Text).IsEqualTo("first line\ncontinuation line");
     }
 
     [Test]
@@ -64,8 +64,8 @@ public class GoalFileTests
     {
         var goal = Goal.Parse("MyGoal\n- step one\n/ step comment\n- step two", global::app.type.item.path.@this.Resolve("/StepComment.goal", global::PLang.Tests.TestApp.SharedContext));
 
-        await Assert.That(goal!.Steps[0].Comment).IsNull();
-        await Assert.That(goal.Steps[1].Comment).IsEqualTo("step comment");
+        await Assert.That(goal!.Step[0].Comment).IsNull();
+        await Assert.That(goal.Step[1].Comment).IsEqualTo("step comment");
     }
 
     [Test]
@@ -100,7 +100,7 @@ public class GoalFileTests
     {
         var goal = Goal.Parse("MyGoal\n- top\n\t- indented", global::app.type.item.path.@this.Resolve("/Tabs.goal", global::PLang.Tests.TestApp.SharedContext));
 
-        await Assert.That(goal!.Steps[1].Indent).IsEqualTo(1);
+        await Assert.That(goal!.Step[1].Indent).IsEqualTo(1);
     }
 
     [Test]
@@ -118,8 +118,8 @@ public class GoalFileTests
     {
         var goal = Goal.Parse("First\n- step a\n\n\n\nSecond\n- step b", global::app.type.item.path.@this.Resolve("/Blank.goal", global::PLang.Tests.TestApp.SharedContext));
 
-        await Assert.That(goal!.Steps.Count).IsEqualTo(1);
-        await Assert.That(goal.Goals[0].Steps.Count).IsEqualTo(1);
+        await Assert.That(goal!.Step.Count).IsEqualTo(1);
+        await Assert.That(goal.Goals[0].Step.Count).IsEqualTo(1);
     }
 
     [Test]
@@ -127,8 +127,8 @@ public class GoalFileTests
     {
         var goal = Goal.Parse("MyGoal\n- step one\n- step two", global::app.type.item.path.@this.Resolve("/Lines.goal", global::PLang.Tests.TestApp.SharedContext));
 
-        await Assert.That(goal!.Steps[0].LineNumber).IsEqualTo(2);
-        await Assert.That(goal.Steps[1].LineNumber).IsEqualTo(3);
+        await Assert.That(goal!.Step[0].LineNumber).IsEqualTo(2);
+        await Assert.That(goal.Step[1].LineNumber).IsEqualTo(3);
     }
 
     [Test]
@@ -147,7 +147,7 @@ public class GoalFileTests
         await Assert.That(goal).IsNotNull();
         await Assert.That(goal!.Name).IsEqualTo("Start");
         await Assert.That(goal.Visibility).IsEqualTo(Visibility.Public);
-        await Assert.That(goal.Steps.Count).IsEqualTo(2);
+        await Assert.That(goal.Step.Count).IsEqualTo(2);
     }
 
     [Test]
@@ -155,8 +155,8 @@ public class GoalFileTests
     {
         var goal = Goal.Parse("MyGoal\n-", global::app.type.item.path.@this.Resolve("/BareDash.goal", global::PLang.Tests.TestApp.SharedContext));
 
-        await Assert.That(goal!.Steps.Count).IsEqualTo(1);
-        await Assert.That(goal.Steps[0].Text).IsEqualTo("");
+        await Assert.That(goal!.Step.Count).IsEqualTo(1);
+        await Assert.That(goal.Step[0].Text).IsEqualTo("");
     }
 
     [Test]
@@ -164,8 +164,8 @@ public class GoalFileTests
     {
         var goal = Goal.Parse("MyGoal\n// this is a comment\n- step", global::app.type.item.path.@this.Resolve("/DoubleSlash.goal", global::PLang.Tests.TestApp.SharedContext));
 
-        await Assert.That(goal!.Steps.Count).IsEqualTo(1);
-        await Assert.That(goal.Steps[0].Comment).IsEqualTo("/ this is a comment");
+        await Assert.That(goal!.Step.Count).IsEqualTo(1);
+        await Assert.That(goal.Step[0].Comment).IsEqualTo("/ this is a comment");
     }
 
     [Test]
@@ -173,7 +173,7 @@ public class GoalFileTests
     {
         var goal = Goal.Parse("MyGoal\n- write out 'select from list'\n\\Select option", global::app.type.item.path.@this.Resolve("/Escape.goal", global::PLang.Tests.TestApp.SharedContext));
 
-        await Assert.That(goal!.Steps.Count).IsEqualTo(1);
-        await Assert.That(goal.Steps[0].Text).IsEqualTo("write out 'select from list'\nSelect option");
+        await Assert.That(goal!.Step.Count).IsEqualTo(1);
+        await Assert.That(goal.Step[0].Text).IsEqualTo("write out 'select from list'\nSelect option");
     }
 }

@@ -43,7 +43,7 @@ public class MergeStepTests
         var source = new Step
         {
             Text = "do something",
-            Actions = new StepActions(new[]
+            Action = new StepActions(new[]
             {
                 new Action { Module = "output", ActionName = "write", Parameters = new List<Data> { new("Message", "hi", context: _app.User.Context) } }
             })
@@ -55,8 +55,8 @@ public class MergeStepTests
         await result.IsSuccess();
         var merged = ((await result.Value()) as global::app.type.clr.@this<Step>)?.Value;
         await Assert.That(merged).IsNotNull();
-        await Assert.That(merged!.Actions.Count).IsEqualTo(1);
-        await Assert.That(merged.Actions[0].Module).IsEqualTo("output");
+        await Assert.That(merged!.Action.Count).IsEqualTo(1);
+        await Assert.That(merged.Action[0].Module).IsEqualTo("output");
         // Structural fields preserved
         await Assert.That(merged.Text).IsEqualTo("do something");
         await Assert.That(merged.Index).IsEqualTo(0);

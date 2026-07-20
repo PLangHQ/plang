@@ -58,7 +58,7 @@ public class BornTypedDeclineTests
             }
         };
 
-        var result = await act.RunAsync(ctx);
+        var result = await act.Run(ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("CreateVariableDeclined");
@@ -81,7 +81,7 @@ public class BornTypedDeclineTests
             }
         };
 
-        var result = await act.RunAsync(ctx);
+        var result = await act.Run(ctx);
 
         await result.IsSuccess();
         await Assert.That((await ctx.Variable.GetValue("path"))?.ToString()).IsEqualTo(".");

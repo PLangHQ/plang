@@ -887,7 +887,7 @@ public class Default : IBuilder
     /// without this, an LLM-emitted value that can't convert to the declared type
     /// would silently keep the wrong-typed value and the runtime would fail later.
     /// </summary>
-    internal static List<string> NormalizeParameterTypes(Actions actions, global::app.module.list.@this modules,
+    internal static List<string> NormalizeParameterTypes(System.Collections.Generic.IReadOnlyList<global::app.goal.step.action.@this> actions, global::app.module.list.@this modules,
         actor.context.@this context)
     {
         var errors = new List<string>();

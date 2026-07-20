@@ -23,7 +23,7 @@ public class GoalTests : System.IAsyncDisposable
             IsSetup = true,
             IsEvent = false,
             Goals = new List<global::app.goal.@this> { new() { Name = "SubGoal1" }, new() { Name = "SubGoal2" } },
-            Steps = new GoalSteps
+            Step = new GoalSteps
             {
                 new Step { Index = 0, Text = "first step" },
                 new Step { Index = 1, Text = "second step" }
@@ -40,7 +40,7 @@ public class GoalTests : System.IAsyncDisposable
         await Assert.That(goal.IsSetup).IsTrue();
         await Assert.That(goal.IsEvent).IsFalse();
         await Assert.That(goal.Goals.Count).IsEqualTo(2);
-        await Assert.That(goal.Steps.Count).IsEqualTo(2);
+        await Assert.That(goal.Step.Count).IsEqualTo(2);
     }
 
     [Test]
@@ -80,8 +80,8 @@ public class GoalTests : System.IAsyncDisposable
     {
         var goal = new Goal();
 
-        await Assert.That(goal.Steps).IsNotNull();
-        await Assert.That(goal.Steps.Count).IsEqualTo(0);
+        await Assert.That(goal.Step).IsNotNull();
+        await Assert.That(goal.Step.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -137,14 +137,12 @@ public class GoalTests : System.IAsyncDisposable
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new GoalSteps
+            Step = new GoalSteps
             {
                 new Step { Index = 0, Text = "first step" },
                 new Step { Index = 1, Text = "second step" }
             }
         };
-
-        goal.Steps.Context = _app.User.Context;
         var text = goal.ToText();
 
         await Assert.That(text).Contains("TestGoal");
@@ -160,8 +158,6 @@ public class GoalTests : System.IAsyncDisposable
             Name = "TestGoal",
             Comment = "This is a goal comment"
         };
-
-        goal.Steps.Context = _app.User.Context;
         var text = goal.ToText();
 
         await Assert.That(text).Contains("/ This is a goal comment");
@@ -173,13 +169,11 @@ public class GoalTests : System.IAsyncDisposable
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new GoalSteps
+            Step = new GoalSteps
             {
                 new Step { Index = 0, Text = "step", Comment = "step comment" }
             }
         };
-
-        goal.Steps.Context = _app.User.Context;
         var text = goal.ToText();
 
         await Assert.That(text).Contains("/ step comment");
@@ -191,15 +185,13 @@ public class GoalTests : System.IAsyncDisposable
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new GoalSteps
+            Step = new GoalSteps
             {
                 new Step { Index = 0, Text = "no indent", Indent = 0 },
                 new Step { Index = 1, Text = "one indent", Indent = 1 },
                 new Step { Index = 2, Text = "two indent", Indent = 2 }
             }
         };
-
-        goal.Steps.Context = _app.User.Context;
         var text = goal.ToText();
 
         await Assert.That(text).Contains("- no indent");
@@ -222,13 +214,11 @@ public class GoalTests : System.IAsyncDisposable
         var goal = new Goal
         {
             Name = "Start",
-            Steps = new GoalSteps
+            Step = new GoalSteps
             {
                 new Step { Index = 0, Text = "write out \"hello\"" }
             }
         };
-
-        goal.Steps.Context = _app.User.Context;
         var str = goal.ToString();
 
         await Assert.That(str).IsEqualTo("Start\n- write out \"hello\"");

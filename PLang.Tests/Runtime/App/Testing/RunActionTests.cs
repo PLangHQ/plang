@@ -57,18 +57,18 @@ public class RunActionTests
         {
             Name = goalName,
             Path = global::app.type.item.path.@this.Resolve("/" + relativePath, global::PLang.Tests.TestApp.SharedContext),
-            Steps = new GoalSteps()
+            Step = new GoalSteps()
         };
         for (int i = 0; i < actions.Length; i++)
         {
             var step = new Step { Index = i, Text = $"action {i}" };
-            step.Actions.Add(new PrAction
+            step.Action.Add(new PrAction
             {
                 Module = actions[i].module,
                 ActionName = actions[i].actionName,
                 Parameters = actions[i].parameters
             });
-            goal.Steps.Add(step);
+            goal.Step.Add(step);
         }
         _ = goal.Hash; // snapshot
 
@@ -534,14 +534,14 @@ public class RunActionTests
         {
             Name = "Helper",
             Path = global::app.type.item.path.@this.Resolve("/Helper.goal", global::PLang.Tests.TestApp.SharedContext),
-            Steps = new GoalSteps
+            Step = new GoalSteps
             {
-                new Step { Index = 0, Text = "h0", Actions = new StepActions
+                new Step { Index = 0, Text = "h0", Action = new StepActions
                 {
                     new PrAction { Module = "variable", ActionName = "set",
                         Parameters = new List<Data> { new("Name", new global::app.variable.@this("h0"), context: _app.User.Context), new("Value", 0, context: _app.User.Context) } }
                 }},
-                new Step { Index = 1, Text = "h1", Actions = new StepActions
+                new Step { Index = 1, Text = "h1", Action = new StepActions
                 {
                     new PrAction { Module = "variable", ActionName = "set",
                         Parameters = new List<Data> { new("Name", new global::app.variable.@this("h1"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) } }

@@ -21,7 +21,7 @@ public class Cut1_TypedSetRoundTripsKind
             ("name", "%doc%"),
             ("value", "readme.md"),
             ("type", new global::app.type.@this("text", "md")));
-        var result = await action.RunAsync(context);
+        var result = await action.Run(context);
         await result.IsSuccess();
 
         var stored = await context.Variable.Get("doc");
@@ -37,7 +37,7 @@ public class Cut1_TypedSetRoundTripsKind
             ("name", "%doc%"),
             ("value", "readme.md"),
             ("type", new global::app.type.@this("text", "md")));
-        await action.RunAsync(context);
+        await action.Run(context);
 
         // Navigation via the same engine path used by `%doc.Type.Name%` in goal text.
         var name = await (await context.Variable.Get("doc"))!.Get("Type.Name");

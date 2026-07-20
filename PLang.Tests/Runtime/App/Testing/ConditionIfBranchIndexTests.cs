@@ -101,7 +101,7 @@ public class ConditionIfBranchIndexTests
         // there, after its sub-evaluations). It is the step's first action — but the
         // LOADED instance, since the read borns fresh actions (the hand-built ones we
         // passed in are not what runs).
-        var orchestrator = goal.Steps.First().Actions.First();
+        var orchestrator = goal.Step.list.First().Action.list.First();
         _app.User.Context.Events.Register(new EventBinding(
             Trigger.AfterAction,
             (context, action, result) =>

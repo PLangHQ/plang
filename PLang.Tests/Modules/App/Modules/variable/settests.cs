@@ -19,7 +19,7 @@ public class SetTests
     {
         var context = _app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%testVar%"), ("value", "testValue"));
-        var result = await action.RunAsync(context);
+        var result = await action.Run(context);
 
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("testVar"))).IsEqualTo("testValue");
@@ -32,7 +32,7 @@ public class SetTests
         // reads it) — the write side of the setting front door — not on the variable store.
         var context = _app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%!http.request.timeout%"), ("value", 5));
-        var result = await action.RunAsync(context);
+        var result = await action.Run(context);
 
         await result.IsSuccess();
         await Assert.That((await context.Setting.Get(global::app.setting.Storage.InMemory, "http.request.timeout")).Success).IsTrue();
@@ -44,7 +44,7 @@ public class SetTests
     {
         var context = _app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%count%"), ("value", 42), ("type", "int"));
-        var result = await action.RunAsync(context);
+        var result = await action.Run(context);
 
         await result.IsSuccess();
         await Assert.That((await context.Variable.Get("count"))!.Type!.ClrType).IsEqualTo(typeof(int));
@@ -55,7 +55,7 @@ public class SetTests
     {
         var context = _app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%testVar%"), ("value", "testValue"));
-        var result = await action.RunAsync(context);
+        var result = await action.Run(context);
 
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("testVar"))).IsEqualTo("testValue");
@@ -69,7 +69,7 @@ public class SetTests
     {
         var context = _app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%count%"), ("value", 42), ("type", "int"));
-        var result = await action.RunAsync(context);
+        var result = await action.Run(context);
 
         await result.IsSuccess();
         await Assert.That((await context.Variable.Get("count"))!.Type!.Name).IsEqualTo("number");
@@ -82,11 +82,11 @@ public class SetTests
 
         // Set initial value
         var setAction = TestAction.Create("variable", "set", ("name", "%x%"), ("value", "original"));
-        await setAction.RunAsync(context);
+        await setAction.Run(context);
 
         // Try to set default — should not overwrite
         var defaultAction = TestAction.Create("variable", "set", ("name", "%x%"), ("value", "default"), ("asdefault", true));
-        var result = await defaultAction.RunAsync(context);
+        var result = await defaultAction.Run(context);
 
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("x"))).IsEqualTo("original");
@@ -100,7 +100,7 @@ public class SetTests
     {
         var context = _app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%y%"), ("value", "default"), ("asdefault", true));
-        var result = await action.RunAsync(context);
+        var result = await action.Run(context);
 
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("y"))).IsEqualTo("default");
@@ -121,7 +121,7 @@ public class SetTests
         var action = TestAction.Create("variable", "set",
             ("name", "%myVar%"), ("value", "hello"));
 
-        var result = await action.RunAsync(context);
+        var result = await action.Run(context);
 
         await result.IsSuccess();
 

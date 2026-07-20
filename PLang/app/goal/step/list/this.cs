@@ -11,12 +11,17 @@ namespace app.goal.step.list;
 /// </summary>
 public sealed class @this
 {
-    private readonly IReadOnlyList<Step> _steps;
-    public @this(IReadOnlyList<Step> steps) => _steps = steps;
+    // Storage is a List reused-not-copied when the caller already has one (the reader/parser build a
+    // List then wrap; the parser mutates it after wrapping — the node must see those adds). A genuine
+    // IReadOnlyList (a `.list` copy target) is wrapped once. The graph is read-only after load; Add is
+    // a construction affordance (builder/tests), never called on a live goal.
+    private readonly List<Step> _steps;
+    public @this(IReadOnlyList<Step> steps) => _steps = steps as List<Step> ?? new List<Step>(steps);
 
     public Step this[int i] => _steps[i];                       // goal.step[0]
     public IReadOnlyList<Step> list => _steps;                 // goal.step.list  (IEnumerable → list kind → navigable)
     public int Count => _steps.Count;
+    public void Add(Step step) => _steps.Add(step);            // construction only
 
     /// <summary>Runs the steps in sequence. A return / exit propagates up (ShouldExit folds Returned).
     /// No indent skip-state — a fired control-flow action runs its own Child, so nesting is structural.</summary>

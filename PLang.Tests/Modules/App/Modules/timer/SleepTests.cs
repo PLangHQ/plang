@@ -21,7 +21,7 @@ public class SleepTests
     {
         var action = Create("timer", "sleep", ("ms", 1));
 
-        var result = await action.RunAsync(Ctx);
+        var result = await action.Run(Ctx);
 
         await result.IsSuccess();
     }

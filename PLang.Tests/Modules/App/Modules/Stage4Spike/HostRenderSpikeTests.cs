@@ -121,7 +121,7 @@ public class HostRenderSpikeTests
         var app = global::PLang.Tests.TestApp.Plain("/tmp/s4spike-c");
         var modules = SampleModules(app.User.Context);
         var outp = await Render(app,
-            "{% for m in modules %}{% for a in m.Actions %}{% for p in a.Properties %}" +
+            "{% for m in modules %}{% for a in m.Action %}{% for p in a.Properties %}" +
             "{{ p.Name }}:{% if p.IsVariable %}%var%{% else %}{{ p.TypeName }}{% if p.Nullable %}?{% endif %}{% endif %}" +
             "{% if p.Default %}={{ p.Default }}{% endif %} {% endfor %}{% endfor %}{% endfor %}",
             modules);

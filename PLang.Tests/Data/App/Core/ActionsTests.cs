@@ -192,7 +192,7 @@ public class ActionsTests
         var step = new Step { Index = 0, Text = "set greeting" };
         var stepFromLlm = new Step
         {
-            Actions = new StepActions
+            Action = new StepActions
             {
                 new global::app.goal.step.action.@this { Module = "variable", ActionName = "set" }
             }
@@ -202,9 +202,9 @@ public class ActionsTests
 
         await Assert.That(error).IsNull();
         await Assert.That(result).IsNotNull();
-        await Assert.That(result!.Actions.Count).IsEqualTo(1);
-        await Assert.That(result.Actions[0].Module).IsEqualTo("variable");
-        await Assert.That(result.Actions[0].ActionName).IsEqualTo("set");
+        await Assert.That(result!.Action.Count).IsEqualTo(1);
+        await Assert.That(result.Action[0].Module).IsEqualTo("variable");
+        await Assert.That(result.Action[0].ActionName).IsEqualTo("set");
     }
 
     [Test]
@@ -213,7 +213,7 @@ public class ActionsTests
         var step = new Step { Index = 3, Text = "original text", LineNumber = 10 };
         var stepFromLlm = new Step
         {
-            Actions = new StepActions
+            Action = new StepActions
             {
                 new global::app.goal.step.action.@this { Module = "output", ActionName = "write" }
             }
@@ -233,7 +233,7 @@ public class ActionsTests
         var step = new Step { Index = 0, Text = "test" };
         var stepFromLlm = new Step
         {
-            Actions = new StepActions(),
+            Action = new StepActions(),
             Errors = new List<Info> { new() { Key = "E1", Message = "Some error" } },
             Warnings = new List<Info> { new() { Key = "W1", Message = "Some warning" } }
         };
@@ -254,17 +254,17 @@ public class ActionsTests
         {
             Index = 0,
             Text = "test",
-            Actions = new StepActions
+            Action = new StepActions
             {
                 new global::app.goal.step.action.@this { Module = "old", ActionName = "action" }
             }
         };
-        var stepFromLlm = new Step { Actions = new StepActions() };
+        var stepFromLlm = new Step { Action = new StepActions() };
 
         var (result, error) = MergeStep(step, stepFromLlm);
 
         await Assert.That(error).IsNull();
-        await Assert.That(result!.Actions.Count).IsEqualTo(0);
+        await Assert.That(result!.Action.Count).IsEqualTo(0);
     }
 
     /// <summary>
@@ -277,8 +277,7 @@ public class ActionsTests
         if (stepFromLlm == null)
             return (null, new global::app.error.ProgramError("Step result from LLM cannot be null", key: "MergeError"));
 
-        step.Actions.Clear();
-        step.Actions.AddRange(stepFromLlm.Actions);
+        step.Action = new global::app.goal.step.action.list.@this(stepFromLlm.Action.list);
 
         if (stepFromLlm.Errors.Count > 0)
         {

@@ -56,7 +56,7 @@ public class TypeIsTests
             ("name", "%p%"),
             ("value", img),
             ("type", new global::app.type.@this("path")));
-        var result = await action.RunAsync(ctx);
+        var result = await action.Run(ctx);
         await result.IsSuccess();
 
         var stored = await ctx.Variable.Get("p");

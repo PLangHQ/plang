@@ -14,9 +14,8 @@ public class CallSnapshotTests
         var step = new Step { Index = 0, Text = stepText, Goal = goal };
         var action = new ActionEntity { Module = module, ActionName = actionName };
         action.Step = step;
-        step.Actions.Add(action);
-        goal.Steps.Add(step);
-        goal.Steps.Context = app.User.Context;
+        step.Action.Add(action);
+        goal.Step.Add(step);
         app.Goal.Add(goal);
         return (app, action);
     }
@@ -70,9 +69,8 @@ public class CallSnapshotTests
             var dstStep = new Step { Index = 0, Text = action.Step!.Text, Goal = dstGoal };
             var dstAction = new ActionEntity { Module = "test", ActionName = "test" };
             dstAction.Step = dstStep;
-            dstStep.Actions.Add(dstAction);
-            dstGoal.Steps.Add(dstStep);
-            dstGoal.Steps.Context = dst.User.Context;
+            dstStep.Action.Add(dstAction);
+            dstGoal.Step.Add(dstStep);
             dst.Goal.Add(dstGoal);
 
             dst.Restore(snap, dst.User.Context);
@@ -116,9 +114,8 @@ public class CallSnapshotTests
             var dstStep = new Step { Index = 0, Text = "DIFFERENT step text", Goal = dstGoal };
             var dstAction = new ActionEntity { Module = "test", ActionName = "test" };
             dstAction.Step = dstStep;
-            dstStep.Actions.Add(dstAction);
-            dstGoal.Steps.Add(dstStep);
-            dstGoal.Steps.Context = dst.User.Context;
+            dstStep.Action.Add(dstAction);
+            dstGoal.Step.Add(dstStep);
             dst.Goal.Add(dstGoal);
 
             await Assert.ThrowsAsync<CallbackGoalHashMismatch>(async () =>
@@ -142,9 +139,8 @@ public class CallSnapshotTests
             var dstStep = new Step { Index = 0, Text = action.Step!.Text, Goal = dstGoal };
             var dstAction = new ActionEntity { Module = "test", ActionName = "test" };
             dstAction.Step = dstStep;
-            dstStep.Actions.Add(dstAction);
-            dstGoal.Steps.Add(dstStep);
-            dstGoal.Steps.Context = dst.User.Context;
+            dstStep.Action.Add(dstAction);
+            dstGoal.Step.Add(dstStep);
             dst.Goal.Add(dstGoal);
 
             var goalBefore = dstGoal;
@@ -155,8 +151,8 @@ public class CallSnapshotTests
 
             // Same instances — Restore is read-only on the registry.
             await Assert.That(dst.Goal.Get("PureGoal")).IsSameReferenceAs(goalBefore);
-            await Assert.That(goalBefore.Steps[0]).IsSameReferenceAs(stepBefore);
-            await Assert.That(stepBefore.Actions[0]).IsSameReferenceAs(actionBefore);
+            await Assert.That(goalBefore.Step[0]).IsSameReferenceAs(stepBefore);
+            await Assert.That(stepBefore.Action[0]).IsSameReferenceAs(actionBefore);
         }
     }
 

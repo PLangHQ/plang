@@ -225,12 +225,12 @@ public class DiscoverActionTests
         {
             Name = "Helper",
             Path = global::app.type.item.path.@this.Resolve("/Helper.goal", global::PLang.Tests.TestApp.SharedContext),
-            Steps = new GoalSteps
+            Step = new GoalSteps
             {
                 new Step
                 {
                     Index = 0, Text = "http get",
-                    Actions = new StepActions
+                    Action = new StepActions
                     {
                         new PrAction
                         {

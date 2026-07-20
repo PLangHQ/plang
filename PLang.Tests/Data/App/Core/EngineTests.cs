@@ -12,7 +12,7 @@ public class EngineTests
         {
             Index = index,
             Text = text,
-            Actions = new StepActions
+            Action = new StepActions
             {
                 new global::app.goal.step.action.@this
                 {
@@ -32,7 +32,7 @@ public class EngineTests
         {
             Index = index,
             Text = text,
-            Actions = new StepActions
+            Action = new StepActions
             {
                 new global::app.goal.step.action.@this
                 {
@@ -253,7 +253,6 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
         var goal = new Goal { Name = "EmptyGoal", Path = global::app.type.item.path.@this.Resolve("/EmptyGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
-        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var result = await engine.RunGoalAsync(new GoalCall { Name = "EmptyGoal" }, engine.User.Context);
@@ -269,14 +268,13 @@ public class EngineTests
         {
             Name = "TestGoal",
             Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext),
-            Steps = new GoalSteps
+            Step = new GoalSteps
             {
                 MakeStep("variable", "set",
                     new Dictionary<string, object?> { { "name", "x" }, { "value", "y" } },
                     index: 0, text: "set variable")
             }
         };
-        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         // Cancel via the engine's shutdown — Goal.RunAsync checks context.CancellationToken
@@ -293,7 +291,6 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
         var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
-        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
         var context = engine.User.Context;
         await engine.RunGoalAsync(goal, context);
@@ -309,7 +306,6 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
         var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
-        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -327,7 +323,6 @@ public class EngineTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("TestGoal",
             Make.Step("set variable",
                 Make.Action("variable", "set", Make.Param("Name", "test", "variable"), ("Value", "hello")))));
-        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var context = engine.User.Context;
@@ -346,13 +341,12 @@ public class EngineTests
         {
             Name = "TestGoal",
             Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext),
-            Steps = new GoalSteps
+            Step = new GoalSteps
             {
                 MakeStep("variable", "get", index: 0, text: "get variable")
                 // Missing name parameter -> will fail
             }
         };
-        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" }, engine.User.Context);
@@ -368,7 +362,7 @@ public class EngineTests
         var context = engine.User.Context;
 
         var steps = new GoalSteps { step };
-        var result = await steps.RunAsync(context);
+        var result = await steps.Run(context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ActionNotFound");
@@ -384,7 +378,7 @@ public class EngineTests
 
         var context = engine.User.Context;
         var steps = new GoalSteps { step };
-        await steps.RunAsync(context);
+        await steps.Run(context);
 
         await Assert.That((await context.Variable.GetValue("source"))).IsEqualTo("hello");
     }
@@ -404,7 +398,7 @@ public class EngineTests
         // are translated to ServiceError there, not at the Step level. Step.RunAsync's
         // catch still exists for non-handler failures (event handlers, iteration logic).
         var steps = new GoalSteps { step };
-        var result = await steps.RunAsync(context);
+        var result = await steps.Run(context);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ServiceError");
     }
@@ -421,7 +415,7 @@ public class EngineTests
         var context = engine.User.Context;
 
         var steps = new GoalSteps { step };
-        var result = await steps.RunAsync(context);
+        var result = await steps.Run(context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ActionError");
@@ -503,7 +497,6 @@ public class EngineTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("TestGoal",
             Make.Step("set variable",
                 Make.Action("variable", "set", Make.Param("Name", "test", "variable"), ("Value", "hello")))));
-        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var result = await engine.RunGoalAsync(goal, engine.System.Context);
@@ -522,7 +515,6 @@ public class EngineTests
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("TestGoal",
             Make.Step("set variable",
                 Make.Action("variable", "set", Make.Param("Name", "test", "variable"), ("Value", "system-value")))));
-        goal.Steps.Context = engine.User.Context;
         engine.Goal.Add(goal);
 
         var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" }, engine.System.Context);

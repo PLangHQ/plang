@@ -21,7 +21,7 @@ public class ModifierActionTests
             ActionName = "modifieraction",
             Parameters = new List<Data> { new Data("tag", "X", context: app.User.Context) }
         };
-        await action.RunAsync(app.User.Context);
+        await action.Run(app.User.Context);
 
         await Assert.That(app.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
@@ -40,8 +40,8 @@ public class ModifierActionTests
             Parameters = new List<Data> { new Data("path", "x", context: app.User.Context) }
         };
         // Two dispatches simulate a retry-modifier wrapping the same action twice.
-        await action.RunAsync(app.User.Context);
-        await action.RunAsync(app.User.Context);
+        await action.Run(app.User.Context);
+        await action.Run(app.User.Context);
 
         await Assert.That(app.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
@@ -66,7 +66,7 @@ public class ModifierActionTests
         // Action.RunAsync level. We verify that the frame depth stays balanced after a
         // direct App.Run dispatch (the override path doesn't apply here, but the symmetric
         // push/pop still holds).
-        await action.RunAsync(app.User.Context);
+        await action.Run(app.User.Context);
         await Assert.That(app.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
 
@@ -85,7 +85,7 @@ public class ModifierActionTests
             ActionName = "stringplain",
             Parameters = new List<Data> { new Data("path", "x", context: app.User.Context) }
         };
-        var result = await action.RunAsync(app.User.Context);
+        var result = await action.Run(app.User.Context);
         await result.IsSuccess();
     }
 }

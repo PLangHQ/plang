@@ -21,7 +21,7 @@ public class ForeachTests
         var items = new List<object?> { "a", "b", "c" };
         context.Variable.Set("items", items);
 
-        _app.Goal.Add(new Goal { Name = "ProcessItem", Path = global::app.type.item.path.@this.Resolve("/ProcessItem.goal", global::PLang.Tests.TestApp.SharedContext), Steps = new GoalSteps() });
+        _app.Goal.Add(new Goal { Name = "ProcessItem", Path = global::app.type.item.path.@this.Resolve("/ProcessItem.goal", global::PLang.Tests.TestApp.SharedContext), Step = new GoalSteps() });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("ForeachRunner",
             Make.Step("foreach %items%, call ProcessItem item=%item%",
@@ -29,9 +29,9 @@ public class ForeachTests
                     Make.Template("collection", "%items%"), Make.Param("itemname", "%item%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "ProcessItem" })))));
-        var step = goal.Steps.First();
+        var step = goal.Step.list.First();
 
-        var result = await step.RunAsync(context);
+        var result = await step.Run(context);
 
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("item"))).IsEqualTo("c");
@@ -45,7 +45,7 @@ public class ForeachTests
 
         var action = TestAction.Create("loop", "foreach",
             ("collection", "%items%"), ("itemname", "%item%"));
-        var result = await action.RunAsync(context);
+        var result = await action.Run(context);
 
         await result.IsSuccess();
         var loopResult = Lower<Dictionary<string, object?>>(await result.Value());
@@ -59,7 +59,7 @@ public class ForeachTests
         var context = _app.User.Context;
         context.Variable.Set("items", new List<object?> { "hello" });
 
-        _app.Goal.Add(new Goal { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", global::PLang.Tests.TestApp.SharedContext), Steps = new GoalSteps() });
+        _app.Goal.Add(new Goal { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", global::PLang.Tests.TestApp.SharedContext), Step = new GoalSteps() });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("SetsItemRunner",
             Make.Step("foreach %items%, call DoNothing item=%myItem%",
@@ -67,9 +67,9 @@ public class ForeachTests
                     Make.Template("collection", "%items%"), Make.Param("itemname", "%myItem%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "DoNothing" })))));
-        var step = goal.Steps.First();
+        var step = goal.Step.list.First();
 
-        var result = await step.RunAsync(context);
+        var result = await step.Run(context);
 
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("myItem"))).IsEqualTo("hello");
@@ -82,7 +82,7 @@ public class ForeachTests
         var dict = new Dictionary<string, object?> { ["name"] = "Alice", ["age"] = 30 };
         context.Variable.Set("dict", dict);
 
-        _app.Goal.Add(new Goal { Name = "DictGoal", Path = global::app.type.item.path.@this.Resolve("/DictGoal.goal", global::PLang.Tests.TestApp.SharedContext), Steps = new GoalSteps() });
+        _app.Goal.Add(new Goal { Name = "DictGoal", Path = global::app.type.item.path.@this.Resolve("/DictGoal.goal", global::PLang.Tests.TestApp.SharedContext), Step = new GoalSteps() });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("DictRunner",
             Make.Step("foreach %dict%, call DictGoal item=%val%",
@@ -90,9 +90,9 @@ public class ForeachTests
                     Make.Template("collection", "%dict%"), Make.Param("itemname", "%val%", "variable"), Make.Param("keyname", "%key%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "DictGoal" })))));
-        var step = goal.Steps.First();
+        var step = goal.Step.list.First();
 
-        var result = await step.RunAsync(context);
+        var result = await step.Run(context);
 
         await result.IsSuccess();
     }
@@ -105,7 +105,7 @@ public class ForeachTests
         var dict = new Dictionary<string, object?> { ["greeting"] = "hello" };
         context.Variable.Set("dict", dict);
 
-        _app.Goal.Add(new Goal { Name = "Noop", Path = global::app.type.item.path.@this.Resolve("/Noop.goal", global::PLang.Tests.TestApp.SharedContext), Steps = new GoalSteps() });
+        _app.Goal.Add(new Goal { Name = "Noop", Path = global::app.type.item.path.@this.Resolve("/Noop.goal", global::PLang.Tests.TestApp.SharedContext), Step = new GoalSteps() });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("DictKeyRunner",
             Make.Step("foreach %dict%, call Noop",
@@ -113,9 +113,9 @@ public class ForeachTests
                     Make.Template("collection", "%dict%"), Make.Param("itemname", "%val%", "variable"), Make.Param("keyname", "%key%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "Noop" })))));
-        var step = goal.Steps.First();
+        var step = goal.Step.list.First();
 
-        var result = await step.RunAsync(context);
+        var result = await step.Run(context);
 
         await result.IsSuccess();
         // %key% should be the dictionary key (string "greeting"), not numeric index (0)
@@ -133,7 +133,7 @@ public class ForeachTests
 
         var action = TestAction.Create("loop", "foreach",
             ("collection", null), ("itemname", "%item%"));
-        var result = await action.RunAsync(context);
+        var result = await action.Run(context);
 
         await result.IsSuccess();
         var loopResult = Lower<Dictionary<string, object?>>(await result.Value());
@@ -153,7 +153,7 @@ public class ForeachTests
 
         var action = TestAction.Create("loop", "foreach",
             ("collection", "%items%"), ("itemname", "%item%"));
-        var result = await action.RunAsync(context);
+        var result = await action.Run(context);
 
         await result.IsSuccess();
         var loopResult = Lower<Dictionary<string, object?>>(await result.Value());
@@ -180,11 +180,11 @@ public class ForeachTests
         // (set %plan.system% = ..., etc.). Replicate one such write onto the clr(json).
         var setChild = TestAction.Create("variable", "set",
             ("name", "%plan.system%"), ("value", "sys-prompt"));
-        await (await setChild.RunAsync(context)).IsSuccess();
+        await (await setChild.Run(context)).IsSuccess();
 
         var action = TestAction.Create("loop", "foreach",
             ("collection", "%plan.steps%"), ("itemname", "%planStep%"));
-        var result = await action.RunAsync(context);
+        var result = await action.Run(context);
 
         await result.IsSuccess();
         var planStep = await context.Variable.Get("planStep");   // last step (index 1)

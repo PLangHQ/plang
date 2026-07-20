@@ -60,7 +60,7 @@ public class MissingVariableNameTests
         };
         var act = TestAction.Create(module, action, extras);
 
-        var result = await act.RunAsync(context);
+        var result = await act.Run(context);
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
