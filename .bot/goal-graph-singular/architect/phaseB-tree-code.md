@@ -2,7 +2,7 @@
 
 The actual C# for the settled design. This is the code layer under `phaseB-tree-design.md` + `phaseB-tree-resolutions.md` — read those for the *why*; this is the *what*. **Corrected after a flaw readover** — the five+one flaws found are called out inline (⚠) so they don't get lost.
 
-> **You own this.** Bodies are the shape, not holy writ; names use the target `Run` (the `RunAsync`→`Run` drop is part of this work). Aliases: `Step = app.goal.step.@this`, `Action = app.goal.step.action.@this`. Wire keys shown are pre-sweep (`steps`/`actions`/`action`); the singular sweep flips them with the writer.
+> **You own this.** Bodies are the shape, not holy writ; names use the target `Run` (the `RunAsync`→`Run` drop is part of this work). Aliases: `Step = app.goal.step.@this`, `Action = app.goal.step.action.@this`. **Wire keys are singular** throughout (`step`/`action`/`name`/`child`) — the rename runs first (§0), and the tree regenerates the `.pr` anyway, so the reader/writer read/write singular keys, never the old plural.
 
 ## 0. Namespaces are singular — the folder rename runs *first/with* the tree
 
@@ -166,7 +166,7 @@ public sealed record ReadContext(
 ```csharp
 // goal/serializer/Reader.cs — the goal exists before its steps; each step born with it
 var goal = new goal.@this { App = ctx.Context.App };   // scalars set as read (init→set, §note)
-case "steps":
+case "step":                                            // singular wire key ("steps" is gone)
     var steps = new List<Step>();
     reader.BeginArray();
     while (reader.NextElement())
@@ -174,10 +174,11 @@ case "steps":
     reader.EndArray();
     goal.Step = new goal.step.list.@this(steps);
     break;
+// (goal's sub-goals ride the singular "child" key → list<goal>, a separate case)
 
-// step/serializer/Reader.cs — born with the goal from ctx; threads itself to its actions
+// goal/step/serializer/Reader.cs — born with the goal from ctx; threads itself to its actions
 var step = new Step { Goal = ctx.Goal! };              // ← born with the goal, set once at birth
-case "actions":
+case "action":                                          // singular wire key ("actions" is gone)
     var actions = new List<Action>();
     reader.BeginArray();
     while (reader.NextElement())
@@ -186,7 +187,8 @@ case "actions":
     step.Action = new goal.step.action.list.@this(actions);
     break;
 
-// action/serializer/Reader.cs — born with the step; Child steps born with the goal (ctx.Goal rode down)
+// goal/step/action/serializer/Reader.cs — born with the step; Child steps born with the goal (ctx.Goal rode down)
+// the action's own name reads case "name" (was "action"); the branch body is case "child" below
 // B1: lazy the step reader to break the step→action→step ctor cycle
 private goal.step.serializer.Reader? _stepReader;
 private goal.step.serializer.Reader StepReader => _stepReader ??= new();
@@ -221,7 +223,7 @@ if (Child.Count > 0)
 // step/this.Item.cs — DELETE this line (indent is gone; display indent derives from tree depth, A3)
 writer.Name("indent"); writer.Int(Indent);
 ```
-The tree serializes recursively: `goal.Output` → `step.Output` (writes `actions`) → `action.Output` (writes `child`) → `step.Output` …
+The tree serializes recursively: `goal.Output` (writes `step`) → `step.Output` (writes `action`) → `action.Output` (writes `name` + `child`) → `step.Output` … — all singular keys. The action's own name field writes `name` (was `action`), the rest (`parameter`/`default`/`modifier`) singularize with the sweep.
 
 ## 8. Coverage — observer derives; keyed store stays for `Merge` (⚠ flaw-6)
 
