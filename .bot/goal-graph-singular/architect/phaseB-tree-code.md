@@ -17,20 +17,17 @@ goal/step/action/list/this.cs→ app.goal.step.action.list.@this (action.list)
 
 The plural *wrapper* folders (`steps/`, `actions/`) delete; the elements move up. **This restructure is the first move**, not an afterthought — the tree's whole payload is the `X.list` collections, and they must be born at singular paths (creating `goal.steps.step.actions.list` then renaming is churn). So: run the namespace rename (`goal.steps.step`→`goal.step`, `…actions.action`→`goal.step.action`, wire keys `steps`/`actions`→`step`/`action`) up front, then the tree code below lands entirely singular. (Refs to `steps/this.cs`, `steps.RunAsync`, etc. in this doc point at *current* HEAD — the demolition targets — and are correctly plural.)
 
-## 1. `step.list` — the step NODE (`.current` + `[i]` + `.list`, owns `Run`)
+## 1. `step.list` — the step NODE (`[i]` + `.list`, owns `Run`)
 
-`goal.step` is a **node, not "a list"** — a singular name that reads as a step. `.current` is the running step; `[i]`/`.list` reach the collection. **The node owns its `.current`: its own `Run` is the only writer, `AsyncLocal` makes it fork-safe** — no reach for the callstack, no `_app` (App isn't thread-safe; the node needs nothing external).
+`goal.step` is a **node, not "a list"** — a singular name that reads as a step: `[i]`/`.list` reach the collection, and `.current` (the running step) is a **nav derivation from the callstack**, not node state (see below). The node itself is minimal — no `.current`, no `AsyncLocal`.
 
 ```csharp
 // goal/step/list/this.cs
 public sealed class @this
 {
     private readonly List<Step> _steps;
-    private readonly AsyncLocal<Step?> _current = new();     // the running step — owned here, fork-safe
-
     public @this(List<Step> steps) => _steps = steps;
 
-    public Step? Current => _current.Value;                  // goal.step.current
     public Step this[int i] => _steps[i];                    // goal.step[0]
     public IReadOnlyList<Step> list => _steps;               // goal.step.list  (IEnumerable → list kind → navigable)
     public int Count => _steps.Count;
@@ -40,34 +37,38 @@ public sealed class @this
         data.@this result = context.Ok();
         foreach (var step in _steps)
         {
-            _current.Value = step;                           // Run is the ONLY writer of "current"
             if (context.CancellationToken.IsCancellationRequested)   // ⚠ flaw-2: was steps.RunAsync:139
                 return context.Error(new app.error.Error("Operation was cancelled", "Cancelled", 499));
             result = await step.Run(context);
             if (result.ShouldExit()) break;                  // ShouldExit folds Returned (A6)
         }
-        _current.Value = null;                               // done — nothing running in this flow
         return result;
     }
 }
 ```
 
-**Access lines up C# ⇄ PLang:** `Current`/`[i]`/`list` = `%goal.step.current%`/`%goal.step[0]%`/`%goal.step.list%`; **bare `%goal.step%` → `.current`** is the one nav-layer sugar (C# has no parameterless indexer / bare-value, confirmed). `%goal.step.list%` hands back `_steps` (`IEnumerable` → list kind claims it → `.list[0]`/`.where` work) — this is what replaces coder's A1 (`list` property, not `IReadOnlyList` on the class). Runtime-nav to confirm: `%goal.step[0]%` resolves the node's `this[int]` indexer — if the reflection nav can't invoke a C# indexer, the form is `%goal.step.list[0]%`.
+**`.current` is callstack-derived, not stored (coder pushback, accepted).** A node-held `AsyncLocal` cursor forks from `app.goal.current` (which reads the callstack) and disagrees under `Child` nesting — the outer list's cursor is the condition, while what's *running* is the deep action. So `%goal.step.current%` / `%step.action.current%` resolve at the **nav boundary** from `context.CallStack` (nav always has a context), exactly like `%goal.current%`:
+
+```
+current step   = context.CallStack.Current?.Action?.Step     // %goal.step.current% and bare %goal.step% sugar
+current action = context.CallStack.Current?.Action           // %step.action.current%
+current goal    = …Action.Step.Goal                          // = %goal.current%
+```
+Correct under nesting (actions push, so `Current.Action` is what's executing), zero per-node state. **For Phase B this nav is optional** — nothing in the tree reads `.current`; add the resolver when a real `%…current%` consumer arrives.
+
+**Access lines up C# ⇄ PLang:** `[i]`/`list` = `%goal.step[0]%`/`%goal.step.list%`. `%goal.step.list%` hands back `_steps` (`IEnumerable` → list kind claims it → `.list[0]`/`.where` work) — replaces coder's A1 (`list` property, not `IReadOnlyList` on the class). Runtime-nav to confirm: `%goal.step[0]%` resolves the node's `this[int]` indexer, else `%goal.step.list[0]%`.
 
 ## 2. `action.list` — the action NODE (the chain resolution; B2(a))
 
-Twin of `step.list` — same node shape, plus `IndexOf` for coverage (C1); its `Run` is the chain resolution.
+Twin of `step.list` — minimal node (no `.current`; that's the callstack derivation from §1), plus `IndexOf` for coverage (C1); its `Run` is the chain resolution.
 
 ```csharp
 // goal/step/action/list/this.cs
 public sealed class @this
 {
     private readonly List<Action> _actions;
-    private readonly AsyncLocal<Action?> _current = new();
-
     public @this(List<Action> actions) => _actions = actions;
 
-    public Action? Current => _current.Value;                // step.action.current
     public Action this[int i] => _actions[i];                // step.action[0]
     public IReadOnlyList<Action> list => _actions;           // step.action.list
     public int Count => _actions.Count;
@@ -78,7 +79,6 @@ public sealed class @this
         data.@this result = context.Ok();
         foreach (var action in _actions)
         {
-            _current.Value = action;
             context.CancellationToken.ThrowIfCancellationRequested();   // ⚠ flaw-2: was step.RunAsync:162
             result = await action.Run(context);                        // setup (file.exists/compare) & non-cond dispatch
             if (result.ShouldExit() || result.Handled) break;          // ⚠ flaw-3: keep Handled (legit event-handled stop)
@@ -88,7 +88,6 @@ public sealed class @this
                 break;                                                 // skip the rest of the chain
             }
         }
-        _current.Value = null;
         return result;
     }
 }
