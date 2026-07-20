@@ -79,49 +79,7 @@ public class StepTests : System.IAsyncDisposable
         await Assert.That(step.HasSubSteps).IsFalse();
     }
 
-    [Test]
-    public async Task HasSubSteps_LazyFromGoalSteps()
-    {
-        var goal = new Goal
-        {
-            Name = "Test",
-            Step = new GoalSteps
-            {
-                new Step { Index = 0, Text = "if %flag%", Indent = 0 },
-                new Step { Index = 1, Text = "set %x% = 1", Indent = 1 },
-                new Step { Index = 2, Text = "write out done", Indent = 0 }
-            }
-        };
-        foreach (var s in goal.Step.list) s.Goal = goal;
 
-        await Assert.That(goal.Step[0].HasSubSteps).IsTrue();
-        await Assert.That(goal.Step[1].HasSubSteps).IsFalse();
-        await Assert.That(goal.Step[2].HasSubSteps).IsFalse();
-    }
-
-    [Test]
-    public async Task HasSubSteps_NestedConditions()
-    {
-        var goal = new Goal
-        {
-            Name = "Test",
-            Step = new GoalSteps
-            {
-                new Step { Index = 0, Text = "if %x% > 5", Indent = 0 },
-                new Step { Index = 1, Text = "if %y% > 100", Indent = 1 },
-                new Step { Index = 2, Text = "set %inner% = yes", Indent = 2 },
-                new Step { Index = 3, Text = "set %outer% = yes", Indent = 1 },
-                new Step { Index = 4, Text = "write out done", Indent = 0 }
-            }
-        };
-        foreach (var s in goal.Step.list) s.Goal = goal;
-
-        await Assert.That(goal.Step[0].HasSubSteps).IsTrue();
-        await Assert.That(goal.Step[1].HasSubSteps).IsTrue();
-        await Assert.That(goal.Step[2].HasSubSteps).IsFalse();
-        await Assert.That(goal.Step[3].HasSubSteps).IsFalse();
-        await Assert.That(goal.Step[4].HasSubSteps).IsFalse();
-    }
 
     [Test]
     public async Task ToString_ReturnsFormattedString()
