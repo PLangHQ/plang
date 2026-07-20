@@ -259,9 +259,9 @@ public void Cover(Action a)
 - **Dies:** the `branchIndex`/`branchLabel`/`branchChain` stamping (`if.cs`); the `Properties["branch*"]` reads (`run.cs:109-128`); `RecordBranch(site,int)`/`RecordBranchLabel`/`RecordBranchChain` + `_branches`/`_branchLabels`/`_branchChains` → collapse to the single `_covered` (+ declared). `Merge` narrows to unioning `_covered`.
 - **Stays:** a keyed, mergeable store (not a tree-walk) — corrected from the earlier "no registry" claim.
 
-## 9. The builder — GOAL level (settled) + PR level (coder later)
+## 9. The builder — the compiler emits the tree directly (NO fold)
 
-`%goal%` is the **source-parsed** goal (`build.goals` reads the `.goal` files → `%goals%` → `BuildGoal goal=%item%`). It starts as parsed steps (text + indent, **no actions**); `BuildStep` attaches compiled actions, the fold restructures it, `goalsSave` writes it.
+`%goal%` is the **source-parsed** goal (`build.goals` reads the `.goal` files → `%goals%` → `BuildGoal goal=%item%`). It starts as parsed steps (text + indent, **no actions**); `BuildStep` attaches compiled actions; `goalsSave` writes it. **The tree is born from the parser + LLM — there is NO post-compile fold** (Ingi: *"change the compiler to give us the correct structure … i don't want to see any fold, shouldn't be necessary"*). `Child : step.list` (ruling A — a branch body is always a sequence of steps).
 
 **Access — `goal.step` is a node (§1):** bare `%goal.step%` → `.current`, `%goal.step[i]%` → item i (indexed, what the builder uses), `%goal.step.list%` → the collection. C# `goal.Step[i]` ⇄ PLang `%goal.step[i]%`, 100% aligned. The builder is written **in PLang**, so the singular sweep renames its accessors too (`os/system/builder/**/*.goal` + templates):
 
@@ -275,32 +275,30 @@ public void Cover(Action a)
 
 `BuildStep/Start.goal` and `BuildGoal/Start.goal` are full of these — the sweep must cover the builder `.goal` files, not just the C# and `.pr` keys.
 
-### The one goal-level structural change — the fold, after compile, before save
+### The two producers — structure is born, not folded
 
+Both forms land on `action.Child : step.list`; the tree comes from two sources, neither of which re-nests a flat list:
+
+**1. Parser (C#, `goal/this.cs`) — substeps by `Indent`, at parse time.** The parser already reads `Indent`. Instead of a flat list + indent, a deeper-indented `- ` line nests under its preceding condition step — into that step's **gate action's `Child`** (the `IsCondition` action; A4: `[file.exists, condition.if]` → the `condition.if`). So `%goal.step%` / `%plan.steps%` is a tree from the start; `BuildStep` recurses. Substep bodies are **real steps** (they were `- ` lines). Indented under a **non**-condition → build error (A4), never dropped.
+
+**2. LLM Compile (`Compile.llm` + `BuildResponse`) — inline bodies as `child`.** Today inline `if %x%, call Y` compiles to two flat peer actions in one step (`[condition.if, goal.call]`, `Compile.llm:22,31`). The change: the LLM emits each branch *body* as the condition action's **`child`** — a step with **LLM-authored `text`** + its action(s) — leaving *setup* actions (`file.exists`, the compound `condition.compare`+`set`) as leading siblings (A4). `Synthetic=true` marks the inline-born step (it wasn't a `- ` line). This is the eval-risk surface (schema + prompt + goldens).
+
+`BuildGoal/Start.goal` flow — **no fold step**:
 ```
-- foreach %plan.steps%, call BuildStep/Start     (compile — flat, indexed by goal.step[i]; unchanged)
-- foreach %parentGoal.child%, call BuildSubGoal  (sub-goals — unchanged bar the accessor)
-- <NEW> build.<fold> Goal=%goal%                 ← fold flat+indent → tree
-- build.goalsSave Goal=%goal%
+- foreach %plan.steps%, call BuildStep/Start     (compile per step; the tree already exists — parser nested substeps, LLM emits child)
+- foreach %parentGoal.child%, call BuildSubGoal
+- build.goalsSave Goal=%goal%                     (writes the tree via item Output)
 ```
 
-`build.<fold>` is **deterministic, no LLM** (name is coder's, Q4 — not `TreeBuilder`):
-- walk `%goal.step%` by `Indent`; a step at indent N+1 moves into the preceding indent-N step's **gate action's `Child`** — the gate is that step's `IsCondition` action (A4: exactly one; `[file.exists, condition.if]` → the `condition.if`).
-- recurse (children can nest) **and** recurse sub-goals (`%goal.child%`), since they save with the parent.
-- indented step with **no** gate → build error (A4), never dropped.
-- **does NOT re-index — `Index` stays the parse-order flat value** (children keep e.g. `3,4`, not `0,1`), so `step.Index` is globally unique in the goal (coverage C2 depends on it). Number any synthesized inline-body steps continuing the sequence.
-- `Indent` is consumed here, not persisted. `goal.step` goes flat+indent → nested tree.
+### Index uniqueness (coverage C2)
 
-Compile stays flat; the tree is assembled by this one deterministic pass right before save.
+`step.Index` must be **globally unique within the goal** (the coverage key relies on it, §8). Parser numbers parsed steps in flat parse order (unique, no re-index per level); the LLM/compiler numbers synthesized inline-body steps continuing the sequence.
 
-### PR level — coder later (the eval-risk surface)
+### Other builder touches
 
-- **Inline `if/elseif/else` emission:** `QueryAndVerify`'s LLM returns `compileResult.actions` (today a *flat* array). The schema/prompt change: emit each branch *body* as `child` steps with per-branch `text`, leaving *setup* actions (`file.exists`, `condition.compare`+`set`) as leading siblings (A4).
-- The fold's internal mechanics, the `stepForLlm.template` `HasSubSteps` hint (its one consumer), `build.validate`/`goalsSave` following the tree.
-
-### A3 display indent
-
-`goal.ToText`/`ToString` (`goal/this.cs:68,211`) render from `step.Indent` — with the field gone, compute indent from tree depth at render.
+- **`stepForLlm.template` `HasSubSteps` hint** (its one consumer, `:4` "runtime handles branching via indent") — obsolete under the tree; the template now teaches the child-emission shape instead.
+- `build.validate`/`goalsSave` follow the tree (`Output` recurses `child`).
+- **A3 display indent:** `goal.ToText`/`ToString` (`goal/this.cs:68,211`) render from `step.Indent` — with the field gone, derive indent from tree depth at render.
 
 ## Demolition (net)
 
