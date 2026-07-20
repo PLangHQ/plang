@@ -203,7 +203,9 @@ private goal.step.serializer.Reader? _stepReader;
 private goal.step.serializer.Reader StepReader => _stepReader ??= new();
 
 var action = new Action { Step = ctx.Step! };          // ← born with the step
-case "child":
+case "child":                                          // action's "child" = branch body → list<step>
+    // ⚠ the `child` wire key is level-scoped: a GOAL's "child" is sub-goals (list<goal>); an
+    //   ACTION's "child" (here) is its branch body (list<step>). Same key, different type — do NOT unify.
     var child = new List<Step>();
     reader.BeginArray();
     while (reader.NextElement())
@@ -253,6 +255,7 @@ public void Cover(Action a)
     _covered.GetOrAdd(site, 0);
 }
 ```
+- **⚠ C2 — `step.Index` MUST be globally unique within the goal** (the key relies on it; coder C2). The fold does **NOT** re-index children per level — a step keeps its parse-order flat index (`step[2](if){child:[step[3], step[4]]}`, never `[0,1]`), and the builder numbers synthesized inline-body steps continuing the sequence. So the key is unique for every condition (same-step if/elseif/else differ by `IndexOf`, everything else by `Index`). Chosen over stamping a tree-path on the step — a coverage-only field on a runtime object is the `Hits` smell we killed. **Invariant the builder upholds: every step, parsed and synthesized, gets a unique `Index` in the goal.**
 - **Declared** branches (for "which weren't covered") still come from `test.discover` walking the tree's condition actions — same derived key, no `Decision`, no seeded chain.
 - **Dies:** the `branchIndex`/`branchLabel`/`branchChain` stamping (`if.cs`); the `Properties["branch*"]` reads (`run.cs:109-128`); `RecordBranch(site,int)`/`RecordBranchLabel`/`RecordBranchChain` + `_branches`/`_branchLabels`/`_branchChains` → collapse to the single `_covered` (+ declared). `Merge` narrows to unioning `_covered`.
 - **Stays:** a keyed, mergeable store (not a tree-walk) — corrected from the earlier "no registry" claim.
@@ -286,6 +289,7 @@ public void Cover(Action a)
 - walk `%goal.step%` by `Indent`; a step at indent N+1 moves into the preceding indent-N step's **gate action's `Child`** — the gate is that step's `IsCondition` action (A4: exactly one; `[file.exists, condition.if]` → the `condition.if`).
 - recurse (children can nest) **and** recurse sub-goals (`%goal.child%`), since they save with the parent.
 - indented step with **no** gate → build error (A4), never dropped.
+- **does NOT re-index — `Index` stays the parse-order flat value** (children keep e.g. `3,4`, not `0,1`), so `step.Index` is globally unique in the goal (coverage C2 depends on it). Number any synthesized inline-body steps continuing the sequence.
 - `Indent` is consumed here, not persisted. `goal.step` goes flat+indent → nested tree.
 
 Compile stays flat; the tree is assembled by this one deterministic pass right before save.
