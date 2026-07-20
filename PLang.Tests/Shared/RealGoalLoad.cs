@@ -30,7 +30,7 @@ public static class RealGoalLoad
         var serializer = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetOrDefault("application/plang");
         using var outMs = new System.IO.MemoryStream();
-        await serializer.SerializeItemAsync(outMs, new global::app.type.clr.@this<global::app.goal.@this>(goal, app.User.Context), global::app.View.Store);
+        await serializer.SerializeItemAsync(outMs, goal, global::app.View.Store);
         var prJson = System.Text.Encoding.UTF8.GetString(outMs.ToArray());
 
         var ms = new System.IO.MemoryStream(System.Text.Encoding.UTF8.GetBytes(prJson));

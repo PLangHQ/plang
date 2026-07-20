@@ -9,7 +9,7 @@ namespace app.goal.step.list;
 /// iteration). `[i]`/`list` reach the collection; `.current` (the running step) is a nav derivation
 /// from the callstack, not node state, so it lives at the nav boundary, not here.
 /// </summary>
-public sealed class @this
+public sealed class @this : IReadOnlyList<Step>
 {
     // Storage is a List reused-not-copied when the caller already has one (the reader/parser build a
     // List then wrap; the parser mutates it after wrapping — the node must see those adds). A genuine
@@ -22,6 +22,8 @@ public sealed class @this
     public IReadOnlyList<Step> list => _steps;                 // goal.step.list  (IEnumerable → list kind → navigable)
     public int Count => _steps.Count;
     public void Add(Step step) => _steps.Add(step);            // construction only
+    public System.Collections.Generic.IEnumerator<Step> GetEnumerator() => _steps.GetEnumerator();
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <summary>Runs the steps in sequence. A return / exit propagates up (ShouldExit folds Returned).
     /// No indent skip-state — a fired control-flow action runs its own Child, so nesting is structural.</summary>

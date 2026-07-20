@@ -11,7 +11,7 @@ namespace app.goal.step.action.list;
 /// own <c>Child</c> and stops the chain — no cross-object sibling reach, no <c>Handled</c> signal for the
 /// branch (`Handled` stays only as the event-handled stop).
 /// </summary>
-public sealed class @this
+public sealed class @this : IReadOnlyList<Action>
 {
     // See step.list — a List reused when the caller has one, wrapped once otherwise; Add is a
     // construction affordance only (the graph is read-only after load).
@@ -23,6 +23,8 @@ public sealed class @this
     public int Count => _actions.Count;
     public void Add(Action action) => _actions.Add(action);   // construction only
     public int IndexOf(Action a) => _actions.IndexOf(a);      // coverage key
+    public System.Collections.Generic.IEnumerator<Action> GetEnumerator() => _actions.GetEnumerator();
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <summary>Runs the chain: setup / non-condition actions dispatch in order; a condition evaluates,
     /// and if truthy runs its <c>Child</c> branch and stops (the rest of the chain — elseif/else — is
