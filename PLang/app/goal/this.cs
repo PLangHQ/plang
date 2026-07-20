@@ -345,46 +345,6 @@ public sealed partial class @this
             subGoal.NestRecursive(modules);
     }
 
-    /// <summary>
-    /// Restructures the flat, indent-carrying step sequence into the tree: a deeper-indented block
-    /// following a CONDITION step (a step with an <c>IsCondition</c> action) becomes that condition
-    /// action's <c>Child</c>, recursively. Non-condition nesting stays flat — it runs unconditionally
-    /// as it always did. Deterministic; runs post-compile before the <c>.pr</c> write, so the saved tree
-    /// replaces the flat+indent shape. Recurses into sub-goals.
-    /// </summary>
-    public void Fold()
-    {
-        _step = new global::app.goal.step.list.@this(FoldBlock(Step.list));
-        foreach (var subGoal in Goals) subGoal.Fold();
-    }
-
-    private static List<global::app.goal.step.@this> FoldBlock(IReadOnlyList<global::app.goal.step.@this> steps)
-    {
-        var result = new List<global::app.goal.step.@this>();
-        int i = 0;
-        while (i < steps.Count)
-        {
-            var step = steps[i];
-            int j = i + 1;
-            var block = new List<global::app.goal.step.@this>();
-            while (j < steps.Count && steps[j].Indent > step.Indent) { block.Add(steps[j]); j++; }
-
-            var gate = System.Linq.Enumerable.FirstOrDefault(step.Action.list, a => a.IsCondition);
-            if (block.Count > 0 && gate != null)
-            {
-                gate.Child = new global::app.goal.step.list.@this(FoldBlock(block));
-                result.Add(step);
-                i = j;                          // the block moved into Child — skip it at this level
-            }
-            else
-            {
-                result.Add(step);
-                i += 1;                          // no gate → any deeper steps stay flat siblings
-            }
-        }
-        return result;
-    }
-
     public static @this NotFound(string name) => new()
     {
         Name = name,

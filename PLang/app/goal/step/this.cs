@@ -183,6 +183,7 @@ public sealed partial class @this
         return result;
     }
 
+
     /// <summary>
     /// Merges LLM-derived fields from another step onto this step.
     /// Structural fields (Text, Index, Indent, LineNumber) are untouched.

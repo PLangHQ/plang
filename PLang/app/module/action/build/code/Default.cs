@@ -285,9 +285,6 @@ public class Default : IBuilder
         var validation = await BuildResponse.FromGoalState(goal).Validate(goal, targetApp);
         if (!validation.Success) return validation;
 
-        // Fold indented blocks into their condition's Child (the flat+indent shape → the tree) AFTER
-        // validation, which checks the flat step structure the LLM returned.
-        goal.Fold();
 
         // The goal writes its OWN .pr through Output (the value-owns-serialization path), Store view,
         // structural (no @schema — a param is a Data by its List<Data> position). Symmetric with the
