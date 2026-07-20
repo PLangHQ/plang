@@ -31,8 +31,8 @@ public sealed class @this
     // index and living as long as this element (the registry drops it on its own mutation). One
     // walk, two homes: [Modifier] routes each name to its role. The list wrappers mint fresh per
     // ask over the same cached elements.
-    private System.Collections.Generic.List<global::app.goal.steps.step.actions.action.@this>? _actions;
-    private System.Collections.Generic.List<global::app.goal.steps.step.actions.action.modifier.@this>? _modifiers;
+    private System.Collections.Generic.List<global::app.goal.step.action.@this>? _actions;
+    private System.Collections.Generic.List<global::app.goal.step.action.modifier.@this>? _modifiers;
 
     private void Mint()
     {
@@ -45,10 +45,10 @@ public sealed class @this
             // [no-cache] — read off the registry (its single source), not defaulted.
             var cacheable = _list.IsCacheable(Name, name);
             if (order != null)
-                _modifiers.Add(new global::app.goal.steps.step.actions.action.modifier.@this
+                _modifiers.Add(new global::app.goal.step.action.modifier.@this
                     { Module = Name, ActionName = name, Position = order.Value, Cacheable = cacheable, Context = ctx });
             else
-                _actions.Add(new global::app.goal.steps.step.actions.action.@this
+                _actions.Add(new global::app.goal.step.action.@this
                     { Module = Name, ActionName = name, Cacheable = cacheable, Context = ctx });
         }
     }
@@ -69,13 +69,13 @@ public sealed class @this
 
     /// <summary>Select one catalog element by action name — action OR modifier; the type answers
     /// the role. Null when the name isn't in this module.</summary>
-    public global::app.goal.steps.step.actions.action.@this? this[string actionName]
+    public global::app.goal.step.action.@this? this[string actionName]
     {
         get
         {
             if (_actions == null) Mint();
             return _actions!.FirstOrDefault(a => string.Equals(a.ActionName, actionName, System.StringComparison.OrdinalIgnoreCase))
-                ?? (global::app.goal.steps.step.actions.action.@this?)_modifiers!.FirstOrDefault(m => string.Equals(m.ActionName, actionName, System.StringComparison.OrdinalIgnoreCase));
+                ?? (global::app.goal.step.action.@this?)_modifiers!.FirstOrDefault(m => string.Equals(m.ActionName, actionName, System.StringComparison.OrdinalIgnoreCase));
         }
     }
 

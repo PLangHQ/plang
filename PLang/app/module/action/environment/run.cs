@@ -12,7 +12,7 @@ public partial class run : IContext
 {
     public partial data.@this<GoalCall>? GoalName { get; init; }
     public partial data.@this<global::app.type.clr.@this<Step>>? Step { get; init; }
-    public partial data.@this<global::app.type.clr.@this<global::app.goal.steps.step.actions.action.@this>>? Action { get; init; }
+    public partial data.@this<global::app.type.clr.@this<global::app.goal.step.action.@this>>? Action { get; init; }
     public partial data.@this<actor.@this>? Actor { get; init; }
 
     public async Task<data.@this> Run()
@@ -26,7 +26,7 @@ public partial class run : IContext
         if (step != null)
             return await step.RunAsync(Context);
 
-        var action = Action?.Clr<global::app.goal.steps.step.actions.action.@this>();
+        var action = Action?.Clr<global::app.goal.step.action.@this>();
         if (action != null)
             return await action.RunAsync(Context);
 

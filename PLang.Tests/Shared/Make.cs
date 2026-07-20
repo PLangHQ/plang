@@ -21,14 +21,14 @@ public static class Make
 {
     /// <summary>A step spec — text + indent + actions. Indexed when the goal is built.</summary>
     public readonly record struct StepDef(
-        string Text, int Indent, global::app.goal.steps.step.actions.action.@this[] Actions);
+        string Text, int Indent, global::app.goal.step.action.@this[] Actions);
 
-    public static StepDef Step(string text, params global::app.goal.steps.step.actions.action.@this[] actions)
+    public static StepDef Step(string text, params global::app.goal.step.action.@this[] actions)
         => new(text, 0, actions);
 
     /// <summary>A nested step — <paramref name="indent"/> &gt; 0 makes it a child of the
     /// preceding shallower step (orchestration / branch bodies depend on indent).</summary>
-    public static StepDef Step(string text, int indent, params global::app.goal.steps.step.actions.action.@this[] actions)
+    public static StepDef Step(string text, int indent, params global::app.goal.step.action.@this[] actions)
         => new(text, indent, actions);
 
     /// <summary>
@@ -39,10 +39,10 @@ public static class Make
     /// written as a string, etc. — use <see cref="Param"/>: <c>Make.Param("Name",
     /// "relative", "variable")</c>.
     /// </summary>
-    public static global::app.goal.steps.step.actions.action.@this Action(
+    public static global::app.goal.step.action.@this Action(
         string module, string actionName, params (string name, object? value)[] parameters)
     {
-        var action = new global::app.goal.steps.step.actions.action.@this
+        var action = new global::app.goal.step.action.@this
         {
             Module = module,
             ActionName = actionName,
@@ -100,13 +100,13 @@ public static class Make
     /// each fires its own lifecycle events. Returns the same inner action for nesting
     /// inside <see cref="Step"/>.
     /// </summary>
-    public static global::app.goal.steps.step.actions.action.@this Modified(
-        global::app.goal.steps.step.actions.action.@this inner,
-        params global::app.goal.steps.step.actions.action.@this[] modifiers)
+    public static global::app.goal.step.action.@this Modified(
+        global::app.goal.step.action.@this inner,
+        params global::app.goal.step.action.@this[] modifiers)
     {
         foreach (var m in modifiers)
-            inner.Modifiers.Add(m as global::app.goal.steps.step.actions.action.modifier.@this
-                ?? new global::app.goal.steps.step.actions.action.modifier.@this
+            inner.Modifiers.Add(m as global::app.goal.step.action.modifier.@this
+                ?? new global::app.goal.step.action.modifier.@this
                 { Module = m.Module, ActionName = m.ActionName, Parameters = m.Parameters });
         return inner;
     }
@@ -118,8 +118,8 @@ public static class Make
     /// an explicit parameter wins. Born-typed like any param. Returns the same action
     /// for nesting inside <see cref="Step"/>.
     /// </summary>
-    public static global::app.goal.steps.step.actions.action.@this WithDefaults(
-        global::app.goal.steps.step.actions.action.@this action,
+    public static global::app.goal.step.action.@this WithDefaults(
+        global::app.goal.step.action.@this action,
         params (string name, object? value)[] defaults)
     {
         action.Defaults ??= new List<global::app.data.@this>();
@@ -153,11 +153,11 @@ public static class Make
 
         for (int i = 0; i < steps.Length; i++)
         {
-            var actions = new System.Collections.Generic.List<global::app.goal.steps.step.actions.action.@this>();
+            var actions = new System.Collections.Generic.List<global::app.goal.step.action.@this>();
             foreach (var action in steps[i].Actions)
                 actions.Add(action);
 
-            goal.Steps.Add(new global::app.goal.steps.step.@this
+            goal.Steps.Add(new global::app.goal.step.@this
             {
                 Index = i,
                 Indent = steps[i].Indent,

@@ -238,7 +238,7 @@ internal static class ValidateResponseHelpers
     /// false: without the schema we can't make the call, fall through to the convertibility error.
     /// </summary>
     public static bool IsNullableSchemaProp(
-        System.Collections.Generic.IReadOnlyList<global::app.goal.steps.step.actions.action.property.@this>? rows,
+        System.Collections.Generic.IReadOnlyList<global::app.goal.step.action.property.@this>? rows,
         string paramName)
         => rows?.FirstOrDefault(r => string.Equals(r.Name, paramName, System.StringComparison.OrdinalIgnoreCase))?.Nullable ?? false;
 }

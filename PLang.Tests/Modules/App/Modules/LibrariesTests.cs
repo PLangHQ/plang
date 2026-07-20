@@ -393,7 +393,7 @@ public class LibrariesTests
     /// </summary>
     private class MockHandler : IAction
     {
-        public global::app.goal.steps.step.actions.action.@this Action { get; set; } = null!;
+        public global::app.goal.step.action.@this Action { get; set; } = null!;
         public global::app.@this App { get; private set; } = null!;
         public global::app.actor.context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
@@ -406,13 +406,13 @@ public class LibrariesTests
     /// </summary>
     private class MockCodeGenHandler : IAction, ICodeGenerated
     {
-        public global::app.goal.steps.step.actions.action.@this Action { get; set; } = null!;
+        public global::app.goal.step.action.@this Action { get; set; } = null!;
         public string Tag { get; set; } = "";
         public global::app.@this App { get; private set; } = null!;
         public global::app.actor.context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
         public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
-        public Task<global::app.error.IError?> Attach(global::app.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
+        public Task<global::app.error.IError?> Attach(global::app.goal.step.action.@this action, global::app.actor.context.@this context)
         { Action = action; Initialize(context.App!, context); return Task.FromResult<global::app.error.IError?>(null); }
         public Task<Data> Execute() => Task.FromResult(Data.Ok());
     }

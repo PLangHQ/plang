@@ -1,9 +1,9 @@
 using System.Text.Json;
 using app.goal;
 using app.goal.steps;
-using app.goal.steps.step;
-using app.goal.steps.step.actions;
-using PLangAction = app.goal.steps.step.actions.action.@this;
+using app.goal.step;
+using app.goal.step.action;
+using PLangAction = app.goal.step.action.@this;
 using PLangGoal = app.goal.@this;
 using PLangEngine = global::app.@this;
 

@@ -31,7 +31,7 @@ public class ActionRunAsyncTests
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance,
             null,
             new[] {
-                typeof(global::app.goal.steps.step.actions.action.@this),
+                typeof(global::app.goal.step.action.@this),
                 typeof(global::app.actor.context.@this),
             },
             null);

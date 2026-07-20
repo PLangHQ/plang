@@ -275,7 +275,7 @@ public partial class discover : IContext
             ExtractAutoTags(sub, file, visited, depth + 1);
     }
 
-    private static string? ResolveStaticGoalName(app.goal.steps.step.actions.action.@this action)
+    private static string? ResolveStaticGoalName(app.goal.step.action.@this action)
     {
         var nameParam = action.Parameters.FirstOrDefault(p =>
             string.Equals(p.Name, "GoalName", StringComparison.OrdinalIgnoreCase));

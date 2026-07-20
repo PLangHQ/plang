@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace app.goal.steps.step.actions.action.property;
+namespace app.goal.step.action.property;
 
 /// <summary>
 /// One declared parameter slot — the class-zoom row. A row is more than a type: the type ENTITY

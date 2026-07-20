@@ -4,7 +4,7 @@ using System.Text.Json;
 using app.goal;
 using app.variable;
 using Goal = app.goal.@this;
-using Actions = System.Collections.Generic.List<app.goal.steps.step.actions.action.@this>;
+using Actions = System.Collections.Generic.List<app.goal.step.action.@this>;
 
 namespace app.module.action.build.code;
 
@@ -31,16 +31,16 @@ public class Default : IBuilder
         if (filter is { Count: > 0 })
         {
             var wanted = new HashSet<string>(filter, StringComparer.OrdinalIgnoreCase);
-            var subset = new List<global::app.goal.steps.step.actions.action.@this>();
+            var subset = new List<global::app.goal.step.action.@this>();
             foreach (var a in catalog)
                 if (wanted.Contains($"{a.Module}.{a.ActionName}"))
                     subset.Add(a);
-            return action.Context.Ok(new global::app.type.clr.@this<List<global::app.goal.steps.step.actions.action.@this>>(subset, action.Context));
+            return action.Context.Ok(new global::app.type.clr.@this<List<global::app.goal.step.action.@this>>(subset, action.Context));
         }
 
         // The catalog rides as clr<List<action>> (the Run signature carries that), so the consumer
         // unwraps one shape, matching the goal/step/action graph.
-        return action.Context.Ok(new global::app.type.clr.@this<List<global::app.goal.steps.step.actions.action.@this>>(catalog, action.Context));
+        return action.Context.Ok(new global::app.type.clr.@this<List<global::app.goal.step.action.@this>>(catalog, action.Context));
     }
 
     // --- Types ---
@@ -313,7 +313,7 @@ public class Default : IBuilder
 
     public async System.Threading.Tasks.Task<data.@this> ValidateStepActions(validateStepActions action)
     {
-        var step = action.Step.Clr<global::app.goal.steps.step.@this>();
+        var step = action.Step.Clr<global::app.goal.step.@this>();
         if (step == null)
         {
             // Dump what the planner actually returned so the user can see the
@@ -410,7 +410,7 @@ public class Default : IBuilder
         if ((action.Actions == null ? null : await action.Actions.Value()) == null)
             return context.Ok(true);
 
-        var actions = action.Actions.Clr<List<global::app.goal.steps.step.actions.action.@this>>()!;
+        var actions = action.Actions.Clr<List<global::app.goal.step.action.@this>>()!;
         var notFound = new List<string>();
         foreach (var a in actions)
         {
@@ -655,13 +655,13 @@ public class Default : IBuilder
         // Diagnostic — gated by app.Debug presence (null = off), drops on the floor in production.
         // The merge handoff was the spot a Boolean-vs-Step type mismatch surfaced during
         // the builder rebuild; leaving the line in earns its keep next time it drifts.
-        var step = action.Step.Clr<global::app.goal.steps.step.@this>();
-        var from = action.StepFromLlm.Clr<global::app.goal.steps.step.@this>();
+        var step = action.Step.Clr<global::app.goal.step.@this>();
+        var from = action.StepFromLlm.Clr<global::app.goal.step.@this>();
         _ = action.Context.App.Debug?.Write(
             $"builder.merge: step.Index={step?.Index} step.Actions={step?.Actions.Count} " +
             $"from.Index={from?.Index} from.Keep={from?.Keep} from.Actions={from?.Actions.Count}");
 
-        action.Step.Clr<global::app.goal.steps.step.@this>()!.Merge(action.StepFromLlm.Clr<global::app.goal.steps.step.@this>()!);
+        action.Step.Clr<global::app.goal.step.@this>()!.Merge(action.StepFromLlm.Clr<global::app.goal.step.@this>()!);
         return action.Context.Ok(action.Step.Peek());
     }
 
@@ -733,7 +733,7 @@ public class Default : IBuilder
     }
 
     // An action (or modifier — a modifier IS an action) as a navigable dict the template loops.
-    private global::app.type.item.dict.@this ActionModel(app.goal.steps.step.actions.action.@this a, global::app.actor.context.@this ctx)
+    private global::app.type.item.dict.@this ActionModel(app.goal.step.action.@this a, global::app.actor.context.@this ctx)
     {
         var d = new global::app.type.item.dict.@this(ctx);
         d.Set("Module", a.Module);
@@ -1147,7 +1147,7 @@ public class Default : IBuilder
     }
 
     private static async Task ResolveGoalCallsInAction(
-        global::app.goal.steps.step.actions.action.@this action,
+        global::app.goal.step.action.@this action,
         app.@this app, actor.context.@this context)
     {
         if (action.Parameters == null) return;

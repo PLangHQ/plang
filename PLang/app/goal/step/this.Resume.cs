@@ -1,6 +1,6 @@
 using app.data;
 
-namespace app.goal.steps.step;
+namespace app.goal.step;
 
 /// <summary>
 /// Continuation entry for resume — runs actions starting at <paramref name="fromActionIdx"/>.

@@ -1,4 +1,4 @@
-using ActionEntity = app.goal.steps.step.actions.action.@this;
+using ActionEntity = app.goal.step.action.@this;
 
 namespace PLang.Tests.App.CallStackTests;
 

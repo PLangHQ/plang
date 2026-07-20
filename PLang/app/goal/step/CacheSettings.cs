@@ -1,4 +1,4 @@
-namespace app.goal.steps.step;
+namespace app.goal.step;
 
 /// <summary>
 /// Cache settings for a step result.

@@ -1,16 +1,16 @@
-namespace app.goal.steps.step.serializer;
+namespace app.goal.step.serializer;
 
 /// <summary>
 /// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for <c>step</c> — the read-side
-/// mirror of <see cref="app.goal.steps.step.@this.Output"/>. Walks the handed
+/// mirror of <see cref="app.goal.step.@this.Output"/>. Walks the handed
 /// <see cref="app.channel.serializer.IReader"/> in place: the step's bare <c>[Store]</c> shape, each
-/// action via the sibling <see cref="app.goal.steps.step.actions.action.serializer.Reader"/>. Fields
+/// action via the sibling <see cref="app.goal.step.action.serializer.Reader"/>. Fields
 /// land in locals first so the step's <c>init</c> props construct once. The Goal backref + Synthetic
 /// are stamped by the caller (goal.list load).
 /// </summary>
 public sealed class Reader : global::app.type.reader.ITypeReader
 {
-    private readonly global::app.goal.steps.step.actions.action.serializer.Reader _action = new();
+    private readonly global::app.goal.step.action.serializer.Reader _action = new();
 
     public string Kind => global::app.type.reader.@this.AnyKind;
 
@@ -24,7 +24,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         string text = "";
         string? comment = null, intent = null, formal = null, source = null;
         bool waitForExecution = true;
-        var actions = new System.Collections.Generic.List<global::app.goal.steps.step.actions.action.@this>();
+        var actions = new System.Collections.Generic.List<global::app.goal.step.action.@this>();
 
         reader.BeginObject();
         while (reader.NextName(out var name))
@@ -39,7 +39,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "actions":
                     reader.BeginArray();
                     while (reader.NextElement())
-                        actions.Add((global::app.goal.steps.step.actions.action.@this)_action.Read(ref reader, kind, ctx));
+                        actions.Add((global::app.goal.step.action.@this)_action.Read(ref reader, kind, ctx));
                     reader.EndArray();
                     break;
                 case "intent": intent = reader.String(); break;
@@ -51,7 +51,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         }
         reader.EndObject();
 
-        return new global::app.goal.steps.step.@this
+        return new global::app.goal.step.@this
         {
             Index = index,
             Text = text,

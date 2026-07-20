@@ -2,7 +2,7 @@ using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using app.module.action.callback;
-using ActionEntity = global::app.goal.steps.step.actions.action.@this;
+using ActionEntity = global::app.goal.step.action.@this;
 
 namespace PLang.Tests.App.CallbackTests;
 

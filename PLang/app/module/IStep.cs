@@ -7,5 +7,5 @@ namespace app.module;
 /// </summary>
 public interface IStep
 {
-    app.goal.steps.step.@this Step { get; set; }
+    app.goal.step.@this Step { get; set; }
 }

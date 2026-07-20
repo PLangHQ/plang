@@ -1,6 +1,6 @@
 using app.error;
 using app.variable;
-using ActionEntity = app.goal.steps.step.actions.action.@this;
+using ActionEntity = app.goal.step.action.@this;
 using Call = app.callstack.call.@this;
 using ExampleSpec = app.type.spec.Example;
 using ActionSpec = app.type.spec.Action;
@@ -71,7 +71,7 @@ public partial class Handle : IContext, IModifier
     /// wrapping it in a goal. Actions execute in order; %!data% flows between
     /// them just like the main step chain.
     /// </summary>
-    public partial global::app.data.@this<global::app.type.clr.@this<System.Collections.Generic.List<global::app.goal.steps.step.actions.action.@this>>>? Actions { get; init; }
+    public partial global::app.data.@this<global::app.type.clr.@this<System.Collections.Generic.List<global::app.goal.step.action.@this>>>? Actions { get; init; }
     public partial global::app.data.@this<global::app.type.item.number.@this>? RetryCount { get; init; }
     public partial global::app.data.@this<global::app.type.item.number.@this>? RetryOverMs { get; init; }
     public partial global::app.data.@this<global::app.type.item.choice.@this<ErrorOrder>>? Order { get; init; }
@@ -97,7 +97,7 @@ public partial class Handle : IContext, IModifier
                 : null;
 
             var order = (Order == null ? null : await Order.Value()) ?? ErrorOrder.RetryFirst;
-            var actions = Actions?.Clr<System.Collections.Generic.List<global::app.goal.steps.step.actions.action.@this>>();
+            var actions = Actions?.Clr<System.Collections.Generic.List<global::app.goal.step.action.@this>>();
             bool hasRecovery = actions != null && actions.Count > 0;
 
             if (order == ErrorOrder.GoalFirst)

@@ -44,7 +44,7 @@ public class AppRunTests
     [Test]
     public async Task Run_Step_ExecutesStep()
     {
-        var step = new global::app.goal.steps.step.@this
+        var step = new global::app.goal.step.@this
         {
             Text = "test step",
             Index = 0

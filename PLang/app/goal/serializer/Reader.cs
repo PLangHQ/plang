@@ -9,13 +9,13 @@ namespace app.goal.serializer;
 /// (a scalar <c>value.Reader</c> over the file bytes — <c>binary/pr</c>), not a pre-tokenized wire
 /// reader. The goal owns the fact that "a .pr is json", so it parses its own content into a json
 /// reader ONCE here, then <see cref="Walk"/> walks it in place — each step via the sibling
-/// <see cref="app.goal.steps.step.serializer.Reader"/>, each sub-goal via <see cref="Walk"/>'s own
+/// <see cref="app.goal.step.serializer.Reader"/>, each sub-goal via <see cref="Walk"/>'s own
 /// recursion (no per-level re-parse). The Goal backref + Synthetic are stamped by the caller
 /// (goal.list load).</para>
 /// </summary>
 public sealed class Reader : global::app.type.reader.ITypeReader
 {
-    private readonly global::app.goal.steps.step.serializer.Reader _step = new();
+    private readonly global::app.goal.step.serializer.Reader _step = new();
 
     public string Kind => global::app.type.reader.@this.AnyKind;
 
@@ -56,7 +56,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "steps":
                     reader.BeginArray();
                     while (reader.NextElement())
-                        steps.Add((global::app.goal.steps.step.@this)_step.Read(ref reader, null, ctx));
+                        steps.Add((global::app.goal.step.@this)_step.Read(ref reader, null, ctx));
                     reader.EndArray();
                     break;
                 case "goals":

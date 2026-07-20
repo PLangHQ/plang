@@ -1,4 +1,4 @@
-namespace app.goal.steps.step.actions.action;
+namespace app.goal.step.action;
 
 // The action IS a plang value (item) — Ingi's 2026-07-17 ruling reversed the hosts-stay-hosts
 // model: goal/step/action/modifier are items, holding their C# internals behind faces. This is

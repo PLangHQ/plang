@@ -3,9 +3,9 @@ using app.actor.context;
 using app.data;
 using app.variable;
 using app.module;
-using Action = app.goal.steps.step.actions.action.@this;
+using Action = app.goal.step.action.@this;
 
-namespace app.goal.steps.step;
+namespace app.goal.step;
 
 /// <summary>
 /// Represents a step within a goal for App.
@@ -74,7 +74,7 @@ public sealed partial class @this
         foreach (var a in flat)
         {
             if (modules.Contains(a.Module)
-                && modules[a.Module][a.ActionName] is actions.action.modifier.@this catalog)
+                && modules[a.Module][a.ActionName] is action.modifier.@this catalog)
             {
                 if (current == null)
                 {
@@ -85,7 +85,7 @@ public sealed partial class @this
                     });
                     continue;
                 }
-                current.Modifiers.Add(new actions.action.modifier.@this
+                current.Modifiers.Add(new action.modifier.@this
                     { Module = a.Module, ActionName = a.ActionName, Parameters = a.Parameters, Position = catalog.Position });
             }
             else

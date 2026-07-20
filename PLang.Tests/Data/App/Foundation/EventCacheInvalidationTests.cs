@@ -77,7 +77,7 @@ public class EventCacheInvalidationTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
         using var context = new global::app.actor.context.@this(engine, engine.User);
-        var action = new global::app.goal.steps.step.actions.action.@this
+        var action = new global::app.goal.step.action.@this
         {
             Module = "variable",
             ActionName = "set"

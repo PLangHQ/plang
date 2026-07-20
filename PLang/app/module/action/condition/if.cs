@@ -1,7 +1,7 @@
 using app;
 using app.variable;
 using app.module.action.condition.code;
-using Action = app.goal.steps.step.actions.action.@this;
+using Action = app.goal.step.action.@this;
 using Decision = app.module.action.condition.decision.@this;
 
 namespace app.module.action.condition;
@@ -69,7 +69,7 @@ public partial class If : IContext, IStep
     /// Then evaluates conditions in order and runs the first matching branch.
     /// </summary>
     private async Task<data.@this> Orchestrate(
-        System.Collections.Generic.List<app.goal.steps.step.actions.action.@this> actions, bool firstConditionResult)
+        System.Collections.Generic.List<app.goal.step.action.@this> actions, bool firstConditionResult)
     {
         // Decision owns the branch structure (condition.if owns running it). A condition fired to
         // reach here, so the head exists — but guard the null for safety.

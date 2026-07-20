@@ -269,7 +269,7 @@ public sealed partial class @this
         // frame, not "step 0 running" — observers reading goalCall.Action.Step should treat
         // it as the goal anchor, not the currently-executing step (which is whatever the
         // child stepCall.Action.Step points at).
-        var goalEntryAction = new global::app.goal.steps.step.actions.action.@this { Module = "goal", ActionName = "enter" };
+        var goalEntryAction = new global::app.goal.step.action.@this { Module = "goal", ActionName = "enter" };
         if (Steps.Count > 0) goalEntryAction.Step = Steps[0];
 
         try
@@ -336,7 +336,7 @@ public sealed partial class @this
     /// Moves the "foreach step, foreach action" skeleton onto Goal so handlers can
     /// query the shape of a built goal without reaching through its children.
     /// </summary>
-    public void ForEachAction(System.Action<Step, global::app.goal.steps.step.actions.action.@this> visitor)
+    public void ForEachAction(System.Action<Step, global::app.goal.step.action.@this> visitor)
     {
         foreach (var step in Steps)
             foreach (var action in step.Actions)

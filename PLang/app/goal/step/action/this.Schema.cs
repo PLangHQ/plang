@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Text.Json.Serialization;
 
-namespace app.goal.steps.step.actions.action;
+namespace app.goal.step.action;
 
 // The class-zoom face of the action host — the catalog view. A .pr action carries its steps;
 // the same host at class zoom answers its declared parameter slots (the reflection leaf) for

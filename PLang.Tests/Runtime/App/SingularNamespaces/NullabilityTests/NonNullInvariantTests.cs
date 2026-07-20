@@ -128,7 +128,7 @@ public class NonNullInvariantTests
 
     [Test] public async Task StepGoal_OnOwnedStep_IsNonNull_AfterBackRefFlip()
     {
-        var stepGoalProp = typeof(global::app.goal.steps.step.@this).GetProperty("Goal");
+        var stepGoalProp = typeof(global::app.goal.step.@this).GetProperty("Goal");
         await Assert.That(stepGoalProp).IsNotNull();
         var nullable = new System.Reflection.NullabilityInfoContext()
             .Create(stepGoalProp!).WriteState;

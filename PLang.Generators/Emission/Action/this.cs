@@ -75,12 +75,12 @@ public static class @this
                 """);
         if (info.ImplementsIAction)
             sb.Append("""
-                    public global::app.goal.steps.step.actions.action.@this Action { get; set; } = null!;
+                    public global::app.goal.step.action.@this Action { get; set; } = null!;
 
                 """);
         if (info.ImplementsIStep)
             sb.Append("""
-                    public global::app.goal.steps.step.@this Step { get; set; } = null!;
+                    public global::app.goal.step.@this Step { get; set; } = null!;
 
                 """);
         if (info.ImplementsIStatic)
@@ -95,7 +95,7 @@ public static class @this
         // The action is held only so __SnapshotParams can read the .pr-side values on
         // the failure path. Set in Attach.
         sb.Append("""
-                private global::app.goal.steps.step.actions.action.@this? __action;
+                private global::app.goal.step.action.@this? __action;
 
             """);
     }
@@ -157,7 +157,7 @@ public static class @this
     {
         sb.Append("""
                 public async System.Threading.Tasks.Task<(global::app.module.ICodeGenerated?, global::app.error.IError?)> Resolve(
-                    global::app.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
+                    global::app.goal.step.action.@this action, global::app.actor.context.@this context)
                 {
                     var app = context.App!;
                     var __step = action?.Step;
@@ -258,7 +258,7 @@ public static class @this
     {
         sb.Append("""
                 public async System.Threading.Tasks.Task<global::app.error.IError?> Attach(
-                    global::app.goal.steps.step.actions.action.@this? action, global::app.actor.context.@this context)
+                    global::app.goal.step.action.@this? action, global::app.actor.context.@this context)
                 {
                     var app = context.App!;
                     __action = action;
@@ -350,7 +350,7 @@ public static class @this
     {
         sb.Append("""
                 private static global::app.data.@this __ResolveData(
-                    global::app.goal.steps.step.actions.action.@this? action, string name, global::app.actor.context.@this context)
+                    global::app.goal.step.action.@this? action, string name, global::app.actor.context.@this context)
                 {
                     var data = action?.GetParameter(name, context);
                     if (data == null) return global::app.data.@this.NotFound(name);
@@ -362,7 +362,7 @@ public static class @this
                 // reader can locate the failing call site. The raw error from Data<T>.As<T>
                 // only carries source/target type names — useless without the action name.
                 private static global::app.error.IError __PrefixActionContext(
-                    global::app.error.IError err, global::app.goal.steps.step.actions.action.@this? action)
+                    global::app.error.IError err, global::app.goal.step.action.@this? action)
                 {
                     if (action == null) return err;
                     var msg = $"{action.Module}.{action.ActionName}: {err.Message}";

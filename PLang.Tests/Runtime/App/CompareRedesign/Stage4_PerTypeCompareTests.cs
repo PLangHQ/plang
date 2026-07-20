@@ -136,9 +136,9 @@ public class Stage4_PerTypeCompareTests
         await Assert.That(await Cmp(app, new byte[]{1,2,3}, new byte[]{1,2,4}, "binary", "binary")).IsEqualTo(Comparison.NotEqual); }
 
     [Test]
-    public async Task ChoiceEquality_SameChoice_Equal() { var a = new global::app.type.item.choice.@this<global::app.goal.steps.step.ErrorOrder>(global::app.goal.steps.step.ErrorOrder.RetryFirst);
-        var b = new global::app.type.item.choice.@this<global::app.goal.steps.step.ErrorOrder>(global::app.goal.steps.step.ErrorOrder.RetryFirst);
-        var c = new global::app.type.item.choice.@this<global::app.goal.steps.step.ErrorOrder>(global::app.goal.steps.step.ErrorOrder.GoalFirst);
+    public async Task ChoiceEquality_SameChoice_Equal() { var a = new global::app.type.item.choice.@this<global::app.goal.step.ErrorOrder>(global::app.goal.step.ErrorOrder.RetryFirst);
+        var b = new global::app.type.item.choice.@this<global::app.goal.step.ErrorOrder>(global::app.goal.step.ErrorOrder.RetryFirst);
+        var c = new global::app.type.item.choice.@this<global::app.goal.step.ErrorOrder>(global::app.goal.step.ErrorOrder.GoalFirst);
         await Assert.That(await a.Compare(b)).IsEqualTo(Comparison.Equal);
         await Assert.That(await a.Compare(c)).IsEqualTo(Comparison.NotEqual);
         await Assert.That(await a.Compare(new global::app.type.item.text.@this("RetryFirst"))).IsEqualTo(Comparison.Equal); // by name

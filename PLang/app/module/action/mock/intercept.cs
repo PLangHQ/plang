@@ -32,7 +32,7 @@ public partial class intercept : IContext
         var paramMatchers = Parameters == null || await Parameters.IsEmpty() ? null
             : (await Parameters.Value()).Clr<Dictionary<string, object?>>();
 
-        Func<actor.context.@this, app.goal.steps.step.actions.action.@this?, data.@this?, Task<data.@this>> handler = async (context, _, _) =>
+        Func<actor.context.@this, app.goal.step.action.@this?, data.@this?, Task<data.@this>> handler = async (context, _, _) =>
         {
             // Find the current action being executed from the step
             var currentAction = FindCurrentAction(context);
@@ -78,7 +78,7 @@ public partial class intercept : IContext
         return Context.Ok<global::app.mock.@this>(handle);
     }
 
-    private static app.goal.steps.step.actions.action.@this? FindCurrentAction(actor.context.@this context)
+    private static app.goal.step.action.@this? FindCurrentAction(actor.context.@this context)
     {
         var step = context.Step;
         if (step == null) return null;
@@ -93,7 +93,7 @@ public partial class intercept : IContext
         return null;
     }
 
-    private static Dictionary<string, object?> CaptureParameters(app.goal.steps.step.actions.action.@this? action, global::app.variable.list.@this variables)
+    private static Dictionary<string, object?> CaptureParameters(app.goal.step.action.@this? action, global::app.variable.list.@this variables)
     {
         var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         if (action == null) return result;
@@ -107,7 +107,7 @@ public partial class intercept : IContext
     }
 
     private static bool ParametersMatch(
-        app.goal.steps.step.actions.action.@this action, global::app.variable.list.@this variables, Dictionary<string, object?> matchers)
+        app.goal.step.action.@this action, global::app.variable.list.@this variables, Dictionary<string, object?> matchers)
     {
         foreach (var (name, expected) in matchers)
         {

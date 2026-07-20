@@ -384,7 +384,7 @@ public class SetupTests
     {
         return new StepActions
         {
-            new global::app.goal.steps.step.actions.action.@this
+            new global::app.goal.step.action.@this
             {
                 Module = "nonexistent",
                 ActionName = "doesnotexist",

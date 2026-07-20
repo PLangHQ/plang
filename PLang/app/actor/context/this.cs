@@ -3,7 +3,7 @@ using app;
 using app.variable;
 using app.@event;
 using Goal = app.goal.@this;
-using Action = app.goal.steps.step.actions.action.@this;
+using Action = app.goal.step.action.@this;
 using Setup = app.goal.setup.@this;
 using TraceContext = app.actor.context.trace.@this;
 using app.error;

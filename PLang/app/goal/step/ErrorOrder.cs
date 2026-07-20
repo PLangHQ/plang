@@ -1,4 +1,4 @@
-namespace app.goal.steps.step;
+namespace app.goal.step;
 
 /// <summary>
 /// Order of error handling for the error.handle modifier:

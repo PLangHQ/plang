@@ -1,4 +1,4 @@
-using ActionEl = global::app.goal.steps.step.actions.action.@this;
+using ActionEl = global::app.goal.step.action.@this;
 
 namespace PLang.Tests.App.Modules.Stage4Spike;
 

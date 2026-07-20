@@ -51,11 +51,11 @@
     <Using Include="app.@this" Alias="App" />
     <Using Include="app.goal.GoalCall" Alias="GoalCall" />
     <Using Include="app.goal.steps.@this" Alias="GoalSteps" />
-    <Using Include="app.goal.steps.step.@this" Alias="Step" />
-    <Using Include="app.goal.steps.step.ErrorOrder" Alias="ErrorOrder" />
-    <Using Include="app.goal.steps.step.CacheSettings" Alias="CacheSettings" />
-    <Using Include="System.Collections.Generic.List&lt;app.goal.steps.step.actions.action.@this&gt;" Alias="StepActions" />
-    <Using Include="app.goal.steps.step.actions.action.@this" Alias="PrAction" />
+    <Using Include="app.goal.step.@this" Alias="Step" />
+    <Using Include="app.goal.step.ErrorOrder" Alias="ErrorOrder" />
+    <Using Include="app.goal.step.CacheSettings" Alias="CacheSettings" />
+    <Using Include="System.Collections.Generic.List&lt;app.goal.step.action.@this&gt;" Alias="StepActions" />
+    <Using Include="app.goal.step.action.@this" Alias="PrAction" />
     <Using Include="app.goal.@this" Alias="Goal" />
     <Using Include="app.goal.Visibility" Alias="Visibility" />
     <Using Include="app.@event.Trigger" Alias="Trigger" />

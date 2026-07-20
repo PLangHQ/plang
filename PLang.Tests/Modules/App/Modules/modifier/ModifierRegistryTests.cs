@@ -1,4 +1,4 @@
-using Modifier = global::app.goal.steps.step.actions.action.modifier.@this;
+using Modifier = global::app.goal.step.action.modifier.@this;
 
 namespace PLang.Tests.App.Modules.modifier;
 

@@ -904,13 +904,13 @@ public class VariablesAccessorTests : System.IAsyncDisposable
         var stack = new Variables(_app.User.Context);
         var goal = new global::app.goal.@this { Name = "BuildGoal" };
         goal.Goals.Add(new global::app.goal.@this { Name = "SubGoal" });
-        var step = new global::app.goal.steps.step.@this { Index = 0, Text = "original" };
+        var step = new global::app.goal.step.@this { Index = 0, Text = "original" };
         goal.Steps.Add(step);
         goal.Steps.Context = _app.User.Context;
         stack.Set("goal", goal);
 
         // Simulate what builder.merge does: set %goal.Steps[0]% = newStep
-        var newStep = new global::app.goal.steps.step.@this { Index = 0, Text = "updated" };
+        var newStep = new global::app.goal.step.@this { Index = 0, Text = "updated" };
         stack.Set("goal.Steps[0]", newStep);
 
         // Goal should still be a Goal, not a dictionary — it is a plang item now (the

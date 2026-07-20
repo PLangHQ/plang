@@ -1,5 +1,5 @@
 using System.Collections;
-using Action = global::app.goal.steps.step.actions.action.@this;
+using Action = global::app.goal.step.action.@this;
 
 namespace app.module.action.condition.decision;
 

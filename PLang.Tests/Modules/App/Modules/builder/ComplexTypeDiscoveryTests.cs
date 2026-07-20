@@ -96,7 +96,7 @@ public class ComplexTypeDiscoveryTests
     public async Task Enums_ReturnValidValues()
     {
         // Enums should return their names as valid values
-        var values = TypeMapping.GetValidValues(typeof(global::app.goal.steps.step.ErrorOrder));
+        var values = TypeMapping.GetValidValues(typeof(global::app.goal.step.ErrorOrder));
 
         await Assert.That(values).IsNotNull();
         await Assert.That(values!).Contains("GoalFirst");
@@ -107,7 +107,7 @@ public class ComplexTypeDiscoveryTests
     public async Task NullableEnums_ReturnValidValues()
     {
         // Nullable enums should unwrap and return valid values
-        var values = TypeMapping.GetValidValues(typeof(global::app.goal.steps.step.ErrorOrder?));
+        var values = TypeMapping.GetValidValues(typeof(global::app.goal.step.ErrorOrder?));
 
         await Assert.That(values).IsNotNull();
         await Assert.That(values!).Contains("GoalFirst");

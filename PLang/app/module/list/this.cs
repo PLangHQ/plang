@@ -111,7 +111,7 @@ public sealed class @this : IAsyncDisposable
     /// Resolves a handler for a .pr action. Navigates the action for module/actionName.
     /// </summary>
     public (ICodeGenerated? Handler, IError? Error) GetCodeGenerated(
-        global::app.goal.steps.step.actions.action.@this action, actor.context.@this context)
+        global::app.goal.step.action.@this action, actor.context.@this context)
     {
         if (!_modules.TryGetValue(action.Module, out var actions) ||
             !actions.TryGetValue(action.ActionName, out var entry))
@@ -282,9 +282,9 @@ public sealed class @this : IAsyncDisposable
     }
 
     [System.Obsolete("Module discovery moves to app.module.action.list (list<module>) + a Fluid render — do not add new callers.")]
-    public async Task<List<global::app.goal.steps.step.actions.action.@this>> Describe()
+    public async Task<List<global::app.goal.step.action.@this>> Describe()
     {
-        var result = new List<global::app.goal.steps.step.actions.action.@this>();
+        var result = new List<global::app.goal.step.action.@this>();
         var nCtx = new NullabilityInfoContext();
         // Cache module descriptions by namespace — populated on first encounter per namespace
 
@@ -359,7 +359,7 @@ public sealed class @this : IAsyncDisposable
                 // rides as lazy `file` handles on the action/module elements (the class-zoom prose
                 // doors over os/system/modules/{module}/{...}.md). Describe now carries only the
                 // structural facts the param-desc parity still compares (params, return, cacheable).
-                result.Add(new global::app.goal.steps.step.actions.action.@this
+                result.Add(new global::app.goal.step.action.@this
                 {
                     Module = ns,
                     ActionName = actionName,

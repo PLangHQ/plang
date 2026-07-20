@@ -1,4 +1,4 @@
-namespace app.goal.steps.step.actions.action.modifier;
+namespace app.goal.step.action.modifier;
 
 /// <summary>
 /// A modifier — an action whose ROLE is to wrap the preceding action (cache.wrap,
@@ -6,7 +6,7 @@ namespace app.goal.steps.step.actions.action.modifier;
 /// dispatch, .pr reading); the type IS the role. It exists only inside a target's
 /// Modifiers slot — never standalone — enforced by where it is born, not by a check.
 /// </summary>
-public class @this : global::app.goal.steps.step.actions.action.@this
+public class @this : global::app.goal.step.action.@this
 {
     /// <summary>Linear wrap precedence (lower = outermost wrapper) — from [Modifier(Order = N)] at
     /// catalog mint. Not stored in the .pr: position in the Modifiers slot carries it at runtime. Named

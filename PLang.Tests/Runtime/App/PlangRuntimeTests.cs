@@ -45,7 +45,7 @@ public class PlangRuntimeTests : IDisposable
             Text = "write hello",
             Actions = new StepActions
             {
-                new global::app.goal.steps.step.actions.action.@this
+                new global::app.goal.step.action.@this
                 {
                     Module = "output",
                     ActionName = "write",

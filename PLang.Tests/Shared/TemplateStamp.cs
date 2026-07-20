@@ -10,7 +10,7 @@ namespace PLang.Tests;
 /// </summary>
 public static class TemplateStamp
 {
-    public static void Apply(global::app.goal.steps.step.actions.action.@this action)
+    public static void Apply(global::app.goal.step.action.@this action)
     {
         Stamp(action.Parameters);
         if (action.Defaults != null) Stamp(action.Defaults);

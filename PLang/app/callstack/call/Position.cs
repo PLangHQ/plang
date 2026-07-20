@@ -1,4 +1,4 @@
-using ActionEntity = app.goal.steps.step.actions.action.@this;
+using ActionEntity = app.goal.step.action.@this;
 using GoalEntity = app.goal.@this;
 
 namespace app.callstack.call;

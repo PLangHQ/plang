@@ -620,7 +620,7 @@ public class RenderTests : IDisposable
 
     private static Step MakeStep(string actionClass, string method, object? parameters = null, int index = 0, string text = "")
     {
-        var action = new global::app.goal.steps.step.actions.action.@this
+        var action = new global::app.goal.step.action.@this
         {
             Module = actionClass,
             ActionName = method,

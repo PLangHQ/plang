@@ -45,7 +45,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
 
     /// <summary>The action this GoalCall originated from. Set during parameter resolution.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
-    public steps.step.actions.action.@this? Action { get; set; }
+    public step.action.@this? Action { get; set; }
 
     /// <summary>
     /// OBP: <c>GoalCall</c> owns how a goal-call value is assembled from raw input —

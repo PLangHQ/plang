@@ -250,12 +250,12 @@ public class StartGoalTests
     {
         public List<string> Lines { get; } = new();
 
-        public global::app.goal.steps.step.actions.action.@this Action { get; set; } = null!;
+        public global::app.goal.step.action.@this Action { get; set; } = null!;
         public global::app.@this App { get; private set; } = null!;
         public global::app.actor.context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
 
-        public Task<global::app.error.IError?> Attach(global::app.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
+        public Task<global::app.error.IError?> Attach(global::app.goal.step.action.@this action, global::app.actor.context.@this context)
         { Action = action; App = context.App!; Context = context; return Task.FromResult<global::app.error.IError?>(null); }
 
         public async Task<Data> Execute()

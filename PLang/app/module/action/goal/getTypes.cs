@@ -73,7 +73,7 @@ public partial class getTypes : IContext
     }
 
     private static void ProcessAction(
-        global::app.goal.steps.step.actions.action.@this action,
+        global::app.goal.step.action.@this action,
         Dictionary<string, string> working,
         Dictionary<string, string> currentStepSnapshot,
         ref string? chainReturnType,
@@ -152,7 +152,7 @@ public partial class getTypes : IContext
     }
 
     private static global::app.data.@this? ParamByName(
-        global::app.goal.steps.step.actions.action.@this action,
+        global::app.goal.step.action.@this action,
         string name)
         => action.Parameters?.FirstOrDefault(p =>
             string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
@@ -192,7 +192,7 @@ public partial class getTypes : IContext
     }
 
     private static string DetermineReturnType(
-        global::app.goal.steps.step.actions.action.@this action,
+        global::app.goal.step.action.@this action,
         global::app.module.list.@this modules)
     {
         var type = modules.GetActionType(action.Module, action.ActionName);

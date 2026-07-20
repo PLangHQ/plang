@@ -2,9 +2,9 @@
 // Goals subsystem
 global using GoalCall = app.goal.GoalCall;
 global using GoalSteps = app.goal.steps.@this;
-global using Step = app.goal.steps.step.@this;
-global using ErrorOrder = app.goal.steps.step.ErrorOrder;
-global using CacheSettings = app.goal.steps.step.CacheSettings;
+global using Step = app.goal.step.@this;
+global using ErrorOrder = app.goal.step.ErrorOrder;
+global using CacheSettings = app.goal.step.CacheSettings;
 
 // Event types
 global using Lifecycle = app.@event.lifecycle.@this;

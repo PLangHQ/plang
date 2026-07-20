@@ -51,7 +51,7 @@ public class Stage2_MechanicalTypings_Part2Tests
     public async Task BuilderActions_Run_ReturnsTaskDataOfBuilderActionsRecord()
     {
         var ret = RunReturnType<global::app.module.action.build.GetActions>();
-        var expected = typeof(Task<global::app.data.@this<global::app.type.clr.@this<System.Collections.Generic.List<global::app.goal.steps.step.actions.action.@this>>>>);
+        var expected = typeof(Task<global::app.data.@this<global::app.type.clr.@this<System.Collections.Generic.List<global::app.goal.step.action.@this>>>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
 

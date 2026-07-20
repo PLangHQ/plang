@@ -20,7 +20,7 @@ public class TimeoutAfterTests
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();
 
-    private static global::app.goal.steps.step.actions.action.modifier.@this TimeoutModifier(int ms) => new()
+    private static global::app.goal.step.action.modifier.@this TimeoutModifier(int ms) => new()
     {
         Module = "timeout",
         ActionName = "after",
@@ -38,7 +38,7 @@ public class TimeoutAfterTests
             {
                 new("name", "%fast%", new global::app.type.@this("variable"), context: Ctx), new("value", "done", context: Ctx)
             },
-            Modifiers = new List<global::app.goal.steps.step.actions.action.modifier.@this> { TimeoutModifier(5000) }
+            Modifiers = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(5000) }
         };
 
         var result = await action.RunAsync(Ctx);
@@ -55,7 +55,7 @@ public class TimeoutAfterTests
             Module = "timer",
             ActionName = "sleep",
             Parameters = new List<global::app.data.@this> { new("ms", 5000, context: Ctx) },
-            Modifiers = new List<global::app.goal.steps.step.actions.action.modifier.@this> { TimeoutModifier(50) }
+            Modifiers = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(50) }
         };
 
         var result = await action.RunAsync(Ctx);
@@ -74,7 +74,7 @@ public class TimeoutAfterTests
             Module = "timer",
             ActionName = "sleep",
             Parameters = new List<global::app.data.@this> { new("ms", 10_000, context: Ctx) },
-            Modifiers = new List<global::app.goal.steps.step.actions.action.modifier.@this> { TimeoutModifier(30) }
+            Modifiers = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(30) }
         };
 
         var start = DateTimeOffset.UtcNow;
@@ -99,7 +99,7 @@ public class TimeoutAfterTests
             Module = "timer",
             ActionName = "sleep",
             Parameters = new List<global::app.data.@this> { new("ms", 10_000, context: Ctx) },
-            Modifiers = new List<global::app.goal.steps.step.actions.action.modifier.@this> { TimeoutModifier(5000) }
+            Modifiers = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(5000) }
         };
 
         await Assert.That(async () => await action.RunAsync(Ctx))
@@ -116,7 +116,7 @@ public class TimeoutAfterTests
             Module = "timer",
             ActionName = "sleep",
             Parameters = new List<global::app.data.@this> { new("ms", 1000, context: Ctx) },
-            Modifiers = new List<global::app.goal.steps.step.actions.action.modifier.@this> { TimeoutModifier(0) }
+            Modifiers = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(0) }
         };
 
         var result = await action.RunAsync(Ctx);
@@ -130,9 +130,9 @@ public class TimeoutAfterTests
     {
         // Triggers the catch(OperationCanceledException) fallback path (after.cs:45-51).
         // Inner func throws OCE directly instead of returning a failed Data result.
-        var modifiers = new List<global::app.goal.steps.step.actions.action.modifier.@this>
+        var modifiers = new List<global::app.goal.step.action.modifier.@this>
         {
-            new global::app.goal.steps.step.actions.action.modifier.@this
+            new global::app.goal.step.action.modifier.@this
             {
                 Module = "timeout", ActionName = "after",
                 Parameters = new List<global::app.data.@this> { new("ms", 1, context: Ctx) }
@@ -164,10 +164,10 @@ public class TimeoutAfterTests
             Module = "timer",
             ActionName = "sleep",
             Parameters = new List<global::app.data.@this> { new("ms", 5000, context: Ctx) },
-            Modifiers = new List<global::app.goal.steps.step.actions.action.modifier.@this>
+            Modifiers = new List<global::app.goal.step.action.modifier.@this>
             {
                 TimeoutModifier(50),
-                new global::app.goal.steps.step.actions.action.modifier.@this
+                new global::app.goal.step.action.modifier.@this
                 {
                     Module = "error", ActionName = "handle",
                     Parameters = new List<global::app.data.@this> { new("ignoreError", true, context: Ctx) }

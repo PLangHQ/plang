@@ -17,9 +17,9 @@ public partial class GetActions : IContext
     [Code]
     public partial IBuilder Builder { get; }
 
-    public async Task<data.@this<global::app.type.clr.@this<System.Collections.Generic.List<global::app.goal.steps.step.actions.action.@this>>>> Run()
+    public async Task<data.@this<global::app.type.clr.@this<System.Collections.Generic.List<global::app.goal.step.action.@this>>>> Run()
     {
         var result = await Builder.Actions(this);
-        return data.@this<global::app.type.clr.@this<System.Collections.Generic.List<global::app.goal.steps.step.actions.action.@this>>>.From(result);
+        return data.@this<global::app.type.clr.@this<System.Collections.Generic.List<global::app.goal.step.action.@this>>>.From(result);
     }
 }

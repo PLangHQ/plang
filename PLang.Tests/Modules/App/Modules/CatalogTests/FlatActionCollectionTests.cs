@@ -1,4 +1,4 @@
-using Action = global::app.goal.steps.step.actions.action.@this;
+using Action = global::app.goal.step.action.@this;
 
 namespace PLang.Tests.App.Modules.CatalogTests;
 

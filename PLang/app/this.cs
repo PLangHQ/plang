@@ -458,7 +458,7 @@ public sealed partial class @this : IAsyncDisposable
     public Task<data.@this> Run<TAction>(TAction handler, actor.context.@this context)
         where TAction : module.ICodeGenerated
     {
-        var entity = new global::app.goal.steps.step.actions.action.@this
+        var entity = new global::app.goal.step.action.@this
         {
             Module = ResolveModuleName(typeof(TAction)),
             ActionName = ResolveActionName(typeof(TAction)),

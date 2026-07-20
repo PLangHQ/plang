@@ -1,4 +1,4 @@
-using Property = global::app.goal.steps.step.actions.action.property.@this;
+using Property = global::app.goal.step.action.property.@this;
 
 namespace PLang.Tests.App.Modules.CatalogTests;
 

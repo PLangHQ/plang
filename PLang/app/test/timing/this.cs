@@ -10,7 +10,7 @@ namespace app.test.timing;
 /// </summary>
 public sealed class @this : global::app.type.item.@this
 {
-    [Out] public required global::app.goal.steps.step.@this Step { get; init; }
+    [Out] public required global::app.goal.step.@this Step { get; init; }
     [Out] public required global::app.type.item.duration.@this Elapsed { get; init; }
 
     /// <summary>Self-write: a structural item — its tagged [Out] fields ride the wire.</summary>

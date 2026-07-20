@@ -20,7 +20,7 @@ public class StepTests : System.IAsyncDisposable
             Comment = "This makes an HTTP call",
             Actions = new StepActions
             {
-                new global::app.goal.steps.step.actions.action.@this
+                new global::app.goal.step.action.@this
                 {
                     Module = "http",
                     ActionName = "get",

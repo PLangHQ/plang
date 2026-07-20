@@ -108,7 +108,7 @@ public class GetGoalsTests
                     Text = "write out 'hello'",
                     Actions = new StepActions(new[]
                     {
-                        new global::app.goal.steps.step.actions.action.@this
+                        new global::app.goal.step.action.@this
                         {
                             Module = "output",
                             ActionName = "write",

@@ -9,7 +9,7 @@ namespace app.module.action.http;
 internal static class HttpBuildHelpers
 {
     public static Task<data.@this> InferTypeFromUrl(
-        global::app.goal.steps.step.actions.action.@this? action,
+        global::app.goal.step.action.@this? action,
         global::app.@this? app,
         string paramName)
     {

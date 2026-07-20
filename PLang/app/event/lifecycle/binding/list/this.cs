@@ -1,7 +1,7 @@
 using app.actor.context;
 using app.@event;
 using app.variable;
-using Action = app.goal.steps.step.actions.action.@this;
+using Action = app.goal.step.action.@this;
 using EventBinding = app.@event.lifecycle.binding.@this;
 
 namespace app.@event.lifecycle.binding.list;

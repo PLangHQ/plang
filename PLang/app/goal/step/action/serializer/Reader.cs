@@ -1,8 +1,8 @@
-namespace app.goal.steps.step.actions.action.serializer;
+namespace app.goal.step.action.serializer;
 
 /// <summary>
 /// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for <c>action</c> — the read-side
-/// mirror of <see cref="app.goal.steps.step.actions.action.@this.Output"/>. Walks the handed
+/// mirror of <see cref="app.goal.step.action.@this.Output"/>. Walks the handed
 /// <see cref="app.channel.serializer.IReader"/> in place (the channel already made the one reader and
 /// positioned it): the action's bare <c>[Store]</c> shape <c>{module, action, parameters[],
 /// defaults?[], modifiers[]}</c>. Parameter/default rows ride the existing <c>@schema:data</c> reader.
@@ -19,7 +19,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
         if (reader.Null()) return new global::app.type.item.@null.@this("action", kind);
-        var action = new global::app.goal.steps.step.actions.action.@this();
+        var action = new global::app.goal.step.action.@this();
         Populate(ref reader, action, ctx);
         return action;
     }
@@ -27,7 +27,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     // Fills a fresh action (or its modifier subtype) off the handed reader — the shared walk, so a
     // modifier element (same wire as an action) populates the subtype instance without re-parsing.
     private void Populate<TReader>(ref TReader reader,
-        global::app.goal.steps.step.actions.action.@this action, global::app.type.reader.ReadContext ctx)
+        global::app.goal.step.action.@this action, global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
         var dataReader = new global::app.data.reader.@this();
@@ -55,7 +55,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                     reader.BeginArray();
                     while (reader.NextElement())
                     {
-                        var modifier = new global::app.goal.steps.step.actions.action.modifier.@this();
+                        var modifier = new global::app.goal.step.action.modifier.@this();
                         Populate(ref reader, modifier, ctx);
                         action.Modifiers.Add(modifier);
                     }

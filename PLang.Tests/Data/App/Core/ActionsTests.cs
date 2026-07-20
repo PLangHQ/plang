@@ -17,7 +17,7 @@ public class ActionsTests
     [Test]
     public async Task Constructor_WithEnumerable_PopulatesList()
     {
-        var list = new List<global::app.goal.steps.step.actions.action.@this>
+        var list = new List<global::app.goal.step.action.@this>
         {
             new() { Module = "variable", ActionName = "set" },
             new() { Module = "file", ActionName = "save" }
@@ -116,8 +116,8 @@ public class ActionsTests
     {
         var actions = new StepActions
         {
-            new global::app.goal.steps.step.actions.action.@this { Module = "variable", ActionName = "set" },
-            new global::app.goal.steps.step.actions.action.@this { Module = "file", ActionName = "save" }
+            new global::app.goal.step.action.@this { Module = "variable", ActionName = "set" },
+            new global::app.goal.step.action.@this { Module = "file", ActionName = "save" }
         };
 
         var (isValid, error) = ValidateActions(actions);
@@ -131,7 +131,7 @@ public class ActionsTests
     {
         var actions = new StepActions
         {
-            new global::app.goal.steps.step.actions.action.@this { Module = "bogus", ActionName = "nope" }
+            new global::app.goal.step.action.@this { Module = "bogus", ActionName = "nope" }
         };
 
         var (isValid, error) = ValidateActions(actions);
@@ -146,9 +146,9 @@ public class ActionsTests
     {
         var actions = new StepActions
         {
-            new global::app.goal.steps.step.actions.action.@this { Module = "variable", ActionName = "set" },
-            new global::app.goal.steps.step.actions.action.@this { Module = "bogus", ActionName = "nope" },
-            new global::app.goal.steps.step.actions.action.@this { Module = "fake", ActionName = "missing" }
+            new global::app.goal.step.action.@this { Module = "variable", ActionName = "set" },
+            new global::app.goal.step.action.@this { Module = "bogus", ActionName = "nope" },
+            new global::app.goal.step.action.@this { Module = "fake", ActionName = "missing" }
         };
 
         var (isValid, error) = ValidateActions(actions);
@@ -194,7 +194,7 @@ public class ActionsTests
         {
             Actions = new StepActions
             {
-                new global::app.goal.steps.step.actions.action.@this { Module = "variable", ActionName = "set" }
+                new global::app.goal.step.action.@this { Module = "variable", ActionName = "set" }
             }
         };
 
@@ -215,7 +215,7 @@ public class ActionsTests
         {
             Actions = new StepActions
             {
-                new global::app.goal.steps.step.actions.action.@this { Module = "output", ActionName = "write" }
+                new global::app.goal.step.action.@this { Module = "output", ActionName = "write" }
             }
         };
 
@@ -256,7 +256,7 @@ public class ActionsTests
             Text = "test",
             Actions = new StepActions
             {
-                new global::app.goal.steps.step.actions.action.@this { Module = "old", ActionName = "action" }
+                new global::app.goal.step.action.@this { Module = "old", ActionName = "action" }
             }
         };
         var stepFromLlm = new Step { Actions = new StepActions() };
@@ -331,7 +331,7 @@ public class ActionsTests
         {
             foreach (var actionName in modules.GetActions(ns))
             {
-                actions.Add(new global::app.goal.steps.step.actions.action.@this
+                actions.Add(new global::app.goal.step.action.@this
                 {
                     Module = ns,
                     ActionName = actionName,

@@ -77,9 +77,9 @@ public class ModifierFoldTests
             {
                 new("name", "%y%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "wrapped", context: global::PLang.Tests.TestApp.SharedContext)
             },
-            Modifiers = new List<global::app.goal.steps.step.actions.action.modifier.@this>
+            Modifiers = new List<global::app.goal.step.action.modifier.@this>
             {
-                new global::app.goal.steps.step.actions.action.modifier.@this
+                new global::app.goal.step.action.modifier.@this
                 {
                     Module = "timeout", ActionName = "after",
                     Parameters = new List<global::app.data.@this> { new("ms", 5000, context: global::PLang.Tests.TestApp.SharedContext) }
@@ -106,14 +106,14 @@ public class ModifierFoldTests
             {
                 new("name", "%z%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "nested", context: global::PLang.Tests.TestApp.SharedContext)
             },
-            Modifiers = new List<global::app.goal.steps.step.actions.action.modifier.@this>
+            Modifiers = new List<global::app.goal.step.action.modifier.@this>
             {
-                new global::app.goal.steps.step.actions.action.modifier.@this
+                new global::app.goal.step.action.modifier.@this
                 {
                     Module = "timeout", ActionName = "after",
                     Parameters = new List<global::app.data.@this> { new("ms", 5000, context: global::PLang.Tests.TestApp.SharedContext) }
                 },
-                new global::app.goal.steps.step.actions.action.modifier.@this
+                new global::app.goal.step.action.modifier.@this
                 {
                     Module = "error", ActionName = "handle",
                     Parameters = new List<global::app.data.@this> { new("ignoreError", true, context: global::PLang.Tests.TestApp.SharedContext) }
@@ -139,14 +139,14 @@ public class ModifierFoldTests
             {
                 new("name", "%q%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "full", context: global::PLang.Tests.TestApp.SharedContext)
             },
-            Modifiers = new List<global::app.goal.steps.step.actions.action.modifier.@this>
+            Modifiers = new List<global::app.goal.step.action.modifier.@this>
             {
-                new global::app.goal.steps.step.actions.action.modifier.@this
+                new global::app.goal.step.action.modifier.@this
                 {
                     Module = "timeout", ActionName = "after",
                     Parameters = new List<global::app.data.@this> { new("ms", 5000, context: global::PLang.Tests.TestApp.SharedContext) }
                 },
-                new global::app.goal.steps.step.actions.action.modifier.@this
+                new global::app.goal.step.action.modifier.@this
                 {
                     Module = "cache", ActionName = "wrap",
                     Parameters = new List<global::app.data.@this>
@@ -155,7 +155,7 @@ public class ModifierFoldTests
                         new("key", "fold-test-key", context: global::PLang.Tests.TestApp.SharedContext)
                     }
                 },
-                new global::app.goal.steps.step.actions.action.modifier.@this
+                new global::app.goal.step.action.modifier.@this
                 {
                     Module = "error", ActionName = "handle",
                     Parameters = new List<global::app.data.@this> { new("ignoreError", true, context: global::PLang.Tests.TestApp.SharedContext) }
@@ -181,10 +181,10 @@ public class ModifierFoldTests
             {
                 new("name", "%nope%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "x", context: global::PLang.Tests.TestApp.SharedContext)
             },
-            Modifiers = new List<global::app.goal.steps.step.actions.action.modifier.@this>
+            Modifiers = new List<global::app.goal.step.action.modifier.@this>
             {
                 // variable.set as a modifier is invalid
-                new global::app.goal.steps.step.actions.action.modifier.@this
+                new global::app.goal.step.action.modifier.@this
                 {
                     Module = "variable", ActionName = "set",
                     Parameters = new List<global::app.data.@this>

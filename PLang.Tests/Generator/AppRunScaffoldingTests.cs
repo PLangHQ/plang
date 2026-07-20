@@ -206,7 +206,7 @@ public class AppRunScaffoldingTests
 // Hand-written handler that throws — used to exercise App.Run's catch path.
 internal class ThrowingMatrixHandler : global::app.module.IAction, global::app.module.ICodeGenerated
 {
-    public global::app.goal.steps.step.actions.action.@this Action { get; set; } = null!;
+    public global::app.goal.step.action.@this Action { get; set; } = null!;
     public global::app.@this App { get; private set; } = null!;
     public global::app.actor.context.@this Context { get; private set; } = null!;
     public System.Type? ParameterType => null;
@@ -223,7 +223,7 @@ internal class ThrowingMatrixHandler : global::app.module.IAction, global::app.m
 // Hand-written handler that throws OperationCanceledException — pins the timeout.after contract.
 internal class OceThrowingHandler : global::app.module.IAction, global::app.module.ICodeGenerated
 {
-    public global::app.goal.steps.step.actions.action.@this Action { get; set; } = null!;
+    public global::app.goal.step.action.@this Action { get; set; } = null!;
     public global::app.@this App { get; private set; } = null!;
     public global::app.actor.context.@this Context { get; private set; } = null!;
     public System.Type? ParameterType => null;

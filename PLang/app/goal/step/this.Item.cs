@@ -1,4 +1,4 @@
-namespace app.goal.steps.step;
+namespace app.goal.step;
 
 // The step IS a plang value (item) — see action/this.Item.cs for the ruling. The engine reads the
 // typed internals (Index, Text, Actions, …) directly; the item faces are the boundary only. The step
