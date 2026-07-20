@@ -248,11 +248,47 @@ public void Cover(Action a)
 - **Dies:** the `branchIndex`/`branchLabel`/`branchChain` stamping (`if.cs`); the `Properties["branch*"]` reads (`run.cs:109-128`); `RecordBranch(site,int)`/`RecordBranchLabel`/`RecordBranchChain` + `_branches`/`_branchLabels`/`_branchChains` → collapse to the single `_covered` (+ declared). `Merge` narrows to unioning `_covered`.
 - **Stays:** a keyed, mergeable store (not a tree-walk) — corrected from the earlier "no registry" claim.
 
-## 9. The builder (coder-owned) + display indent
+## 9. The builder — GOAL level (settled) + PR level (coder later)
 
-- **Indented block → deterministic fold**, post-compile: fold a deeper-indented step into the preceding step's **gate** action (`IsCondition`, not `Actions[0]` — A4) `Child`. `indent` becomes transient parse state. Name the pass without a verb+noun `TreeBuilder`.
-- **Inline `if/elseif/else` → LLM**: emit each branch *body* as `Child` steps (with per-branch `text`); leave *setup* actions (`file.exists`, the compound `condition.compare`+`set`) as leading siblings (A4).
-- **A3 display indent**: `goal.ToText`/`ToString` (`goal/this.cs:68,211`) render from `step.Indent` — with the field gone, compute indent from tree depth at render.
+`%goal%` is the **source-parsed** goal (`build.goals` reads the `.goal` files → `%goals%` → `BuildGoal goal=%item%`). It starts as parsed steps (text + indent, **no actions**); `BuildStep` attaches compiled actions, the fold restructures it, `goalsSave` writes it.
+
+**Access is `goal.step[i]` — C# `goal.Step[0]` ⇄ PLang `%goal.step[0]%`, 100% aligned** (the `.list` form works too but we use the direct index — nicer). The builder is written **in PLang**, so the singular sweep renames its accessors too (`os/system/builder/**/*.goal` + templates):
+
+| plural (today) | singular |
+|---|---|
+| `%goal.Steps[planStep.index]%` | `%goal.step[planStep.index]%` |
+| `set %goal.Steps[step.Index].Actions% = %compileResult.actions%` | `set %goal.step[step.Index].action% = %compileResult.actions%` |
+| `set %goal.Steps[step.Index].Formal% = …` | `set %goal.step[step.Index].Formal% = …` |
+| `foreach %parentGoal.Goals%` | `foreach %parentGoal.child%` |
+| `build.validate actions=%goal.Steps[step.Index].Actions%` | `… actions=%goal.step[step.Index].action%` |
+
+`BuildStep/Start.goal` and `BuildGoal/Start.goal` are full of these — the sweep must cover the builder `.goal` files, not just the C# and `.pr` keys.
+
+### The one goal-level structural change — the fold, after compile, before save
+
+```
+- foreach %plan.steps%, call BuildStep/Start     (compile — flat, indexed by goal.step[i]; unchanged)
+- foreach %parentGoal.child%, call BuildSubGoal  (sub-goals — unchanged bar the accessor)
+- <NEW> build.<fold> Goal=%goal%                 ← fold flat+indent → tree
+- build.goalsSave Goal=%goal%
+```
+
+`build.<fold>` is **deterministic, no LLM** (name is coder's, Q4 — not `TreeBuilder`):
+- walk `%goal.step%` by `Indent`; a step at indent N+1 moves into the preceding indent-N step's **gate action's `Child`** — the gate is that step's `IsCondition` action (A4: exactly one; `[file.exists, condition.if]` → the `condition.if`).
+- recurse (children can nest) **and** recurse sub-goals (`%goal.child%`), since they save with the parent.
+- indented step with **no** gate → build error (A4), never dropped.
+- `Indent` is consumed here, not persisted. `goal.step` goes flat+indent → nested tree.
+
+Compile stays flat; the tree is assembled by this one deterministic pass right before save.
+
+### PR level — coder later (the eval-risk surface)
+
+- **Inline `if/elseif/else` emission:** `QueryAndVerify`'s LLM returns `compileResult.actions` (today a *flat* array). The schema/prompt change: emit each branch *body* as `child` steps with per-branch `text`, leaving *setup* actions (`file.exists`, `condition.compare`+`set`) as leading siblings (A4).
+- The fold's internal mechanics, the `stepForLlm.template` `HasSubSteps` hint (its one consumer), `build.validate`/`goalsSave` following the tree.
+
+### A3 display indent
+
+`goal.ToText`/`ToString` (`goal/this.cs:68,211`) render from `step.Indent` — with the field gone, compute indent from tree depth at render.
 
 ## Demolition (net)
 
