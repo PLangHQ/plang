@@ -210,7 +210,7 @@ public partial class discover : IContext
 
     private static bool HasSkipTag(Goal goal)
     {
-        foreach (var step in goal.Steps)
+        foreach (var step in goal.Step.list)
             if (IsSkipTagStep(step.Text)) return true;
         return false;
     }
@@ -308,10 +308,17 @@ public partial class discover : IContext
 
         goal.ForEachAction((step, action) =>
         {
-            if (seededSteps.Add(step.Index)
-                && global::app.module.action.condition.decision.@this.Of(step.Actions) is { } decision)
+            if (seededSteps.Add(step.Index))
             {
-                coverage.RecordBranchChain($"{goalId}:{step.Index}", decision.Chain);
+                // Declared chain = the step's condition actions walked in order (no Decision type).
+                var conds = step.Action.list.Where(a => a.IsCondition).ToList();
+                if (conds.Count > 0)
+                {
+                    var chain = new List<string>();
+                    if (conds.Count == 1) { chain.Add("true"); chain.Add("false"); }
+                    else foreach (var c in conds) chain.Add(c.ActionName);
+                    coverage.RecordBranchChain($"{goalId}:{step.Index}", chain);
+                }
             }
 
             if (string.Equals(action.Module, "goal", StringComparison.OrdinalIgnoreCase) &&

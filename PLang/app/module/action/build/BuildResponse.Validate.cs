@@ -17,7 +17,7 @@ public sealed partial class BuildResponse
     /// </summary>
     public static BuildResponse FromGoalState(Goal goal) => new()
     {
-        Steps = goal.Steps.Select(s => new Step
+        Steps = goal.Step.list.Select(s => new Step
         {
             Index = s.Index,
             Text = s.Text,
@@ -29,7 +29,7 @@ public sealed partial class BuildResponse
     {
         // CopyActionsIfAny lets the SaveGoal safety net see the same Actions the
         // store would persist — without mutating the source step's ownership.
-        foreach (var a in from.Actions) to.Actions.Add(a);
+        to.Action = new global::app.goal.step.action.list.@this(from.Action.list);
         return to;
     }
 
@@ -45,18 +45,18 @@ public sealed partial class BuildResponse
         // "reuse what you had". We synthesize the placeholder so validation passes
         // and enrichResponse copies actions from the prior in-memory step.
         var presentIndexes = new HashSet<int>(Steps.Select(s => s.Index));
-        for (int i = 0; i < goal.Steps.Count; i++)
+        for (int i = 0; i < goal.Step.Count; i++)
         {
             if (presentIndexes.Contains(i)) continue;
-            if (goal.Steps[i].Actions.Count == 0) continue;  // nothing to carry forward
+            if (goal.Step[i].Action.Count == 0) continue;  // nothing to carry forward
             Steps.Add(new Step { Index = i, Keep = true });
         }
         Steps.Sort((a, b) => a.Index.CompareTo(b.Index));
 
         var errors = new List<string>();
 
-        if (Steps.Count != goal.Steps.Count)
-            errors.Add($"Step count: returned {Steps.Count}, expected {goal.Steps.Count}. " +
+        if (Steps.Count != goal.Step.Count)
+            errors.Add($"Step count: returned {Steps.Count}, expected {goal.Step.Count}. " +
                 "Steps are lines starting with '- '. Return exactly one result per goal step, with one or more actions per step.");
 
         var indexes = new List<int>();
@@ -69,13 +69,13 @@ public sealed partial class BuildResponse
             // to keep; otherwise there's nothing to carry forward.
             if (step.Keep)
             {
-                if (step.Index >= 0 && step.Index < goal.Steps.Count
-                        && goal.Steps[step.Index].Actions.Count == 0)
+                if (step.Index >= 0 && step.Index < goal.Step.Count
+                        && goal.Step[step.Index].Action.Count == 0)
                     errors.Add($"Step[{step.Index}]: has keep:true but the prior .pr has no actions to keep. Emit a full mapping instead.");
                 continue;
             }
 
-            if (step.Actions.Count == 0)
+            if (step.Action.Count == 0)
                 errors.Add($"Step[{step.Index}]: no actions. Every step must have at least one action with module and action.");
         }
 
@@ -108,7 +108,7 @@ public sealed partial class BuildResponse
         foreach (var step in Steps)
         {
             if (step.Keep) continue;
-            foreach (var a in step.Actions)
+            foreach (var a in step.Action.list)
             {
                 if (a.Parameters == null) continue;
 

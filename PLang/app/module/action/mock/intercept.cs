@@ -86,7 +86,7 @@ public partial class intercept : IContext
         // Return the first action (or find the one currently executing)
         // In the BeforeAction event, we're being called for a specific action
         // The event binding was matched by pattern, so all actions in the step match
-        foreach (var action in step.Actions)
+        foreach (var action in step.Action.list)
         {
             return action;
         }

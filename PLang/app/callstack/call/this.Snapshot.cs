@@ -23,7 +23,7 @@ public sealed partial class @this
     {
         var step = Action.Step;
         var goal = step?.Goal;
-        var actionIndex = step?.Actions != null ? IndexOfAction(step.Actions, this.Action) : -1;
+        var actionIndex = step != null ? step.Action.IndexOf(this.Action) : -1;
         // Name is the goal's identity for Restore: a v0.2 .pr holds many goals
         // sharing one PrPath (the file), so PrPath alone can't pick the right one.
         s.Write("goalName",    goal?.Name   ?? "");

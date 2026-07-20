@@ -328,17 +328,14 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
         // %ref% holes stamp as live templates here — same rule as goal.list.Add.
         goal.App = app;
         // Born-with-context: the deserialized goal tree carries the load context onto its
-        // step collections (the Steps enumerator reads it for per-execution Disabled state).
         // Wired here at the .pr-load seam, like App — never left null.
-        goal.Steps.Context = context;
-        foreach (var step in goal.Steps)
+        foreach (var step in goal.Step.list)
             step.Goal = goal;
         foreach (var subGoal in goal.Goals)
         {
             subGoal.App = app;
             subGoal.Parent = goal;
-            subGoal.Steps.Context = context;
-            foreach (var step in subGoal.Steps)
+            foreach (var step in subGoal.Step.list)
                 step.Goal = subGoal;
         }
 

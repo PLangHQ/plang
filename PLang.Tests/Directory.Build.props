@@ -50,7 +50,6 @@
   <ItemGroup>
     <Using Include="app.@this" Alias="App" />
     <Using Include="app.goal.GoalCall" Alias="GoalCall" />
-    <Using Include="app.goal.steps.@this" Alias="GoalSteps" />
     <Using Include="app.goal.step.@this" Alias="Step" />
     <Using Include="app.goal.step.ErrorOrder" Alias="ErrorOrder" />
     <Using Include="app.goal.step.CacheSettings" Alias="CacheSettings" />

@@ -14,14 +14,14 @@ public partial class @this
         context.Step = this;
 
         data.@this result = context.Ok();
-        if (fromActionIdx < 0 || fromActionIdx >= Actions.Count) return result;
+        if (fromActionIdx < 0 || fromActionIdx >= Action.Count) return result;
 
         try
         {
-            for (int i = fromActionIdx; i < Actions.Count; i++)
+            for (int i = fromActionIdx; i < Action.Count; i++)
             {
                 context.CancellationToken.ThrowIfCancellationRequested();
-                result = await Actions[i].RunAsync(context);
+                result = await Action[i].Run(context);
                 if (result.ShouldExit() || result.Handled) break;
             }
         }

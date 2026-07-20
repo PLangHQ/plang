@@ -24,11 +24,11 @@ public partial class run : IContext
 
         var step = Step?.Clr<Step>();
         if (step != null)
-            return await step.RunAsync(Context);
+            return await step.Run(Context);
 
         var action = Action?.Clr<global::app.goal.step.action.@this>();
         if (action != null)
-            return await action.RunAsync(Context);
+            return await action.Run(Context);
 
         return Context.Error(new ActionError(
             "run requires a GoalCall, Step, or Action", "MissingInput", 400));

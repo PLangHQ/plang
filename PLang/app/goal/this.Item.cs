@@ -32,8 +32,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (Description != null) { writer.Name("description"); writer.String(Description); }
         if (Comment != null) { writer.Name("comment"); writer.String(Comment); }
         writer.Name("steps");
-        writer.BeginArray(Steps.Count);
-        foreach (var s in Steps) await s.Output(writer, mode, context);
+        writer.BeginArray(Step.Count);
+        foreach (var s in Step.list) await s.Output(writer, mode, context);
         writer.EndArray();
         writer.Name("goals");
         writer.BeginArray(Goals.Count);

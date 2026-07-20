@@ -40,12 +40,13 @@ public sealed partial class @this
     [Store, LlmBuilder, Debug, Default]
     public string? Comment { get; init; }
 
-    private steps.@this _steps = new();
+    private global::app.goal.step.list.@this _step = new(new List<global::app.goal.step.@this>());
     [Store, Debug, Default]
-    public steps.@this Steps
+    public global::app.goal.step.list.@this Step
     {
-        get { _steps.Goal = this; return _steps; }
-        init => _steps = value;
+        // The goal owns its steps (a step.list node). The getter stamps the back-ref.
+        get { foreach (var s in _step.list) s.Goal ??= this; return _step; }
+        set => _step = value ?? new(new List<global::app.goal.step.@this>());
     }
 
     private List<@this> _goals = new();
@@ -62,7 +63,7 @@ public sealed partial class @this
     public override string ToString()
     {
         var sb = new StringBuilder(Name);
-        foreach (var step in Steps)
+        foreach (var step in Step.list)
         {
             sb.AppendLine();
             sb.Append(new string(' ', step.Indent * 4));
@@ -126,11 +127,11 @@ public sealed partial class @this
         get
         {
             if (_hash != null) return _hash;
-            if (Steps.Count == 0) return null;
+            if (Step.Count == 0) return null;
 
             var sb = new StringBuilder();
             sb.Append(Name);
-            foreach (var step in Steps)
+            foreach (var step in Step.list)
                 sb.Append(step.Text);
 
             _hash = Convert.ToHexString(
@@ -203,7 +204,7 @@ public sealed partial class @this
 
         lines.Add(Name);
 
-        foreach (var step in Steps)
+        foreach (var step in Step.list)
         {
             if (!string.IsNullOrEmpty(step.Comment))
                 lines.Add($"/ {step.Comment}");
@@ -225,7 +226,26 @@ public sealed partial class @this
     public void Merge(@this? existing)
     {
         if (existing == null) return;
-        Steps.Merge(existing.Steps);
+
+        // Exact-text match only — robust to reorder/insert/delete; a text change drops the prior
+        // mapping and the LLM rebuilds that step fresh. Sets PriorText so the builder can emit @known.
+        var prior = existing.Step.list;
+        if (prior.Count > 0)
+        {
+            var consumed = new HashSet<int>();
+            foreach (var step in Step.list)
+                for (int i = 0; i < prior.Count; i++)
+                {
+                    if (consumed.Contains(i)) continue;
+                    if (prior[i].Text == step.Text)
+                    {
+                        step.Merge(prior[i]);
+                        step.PriorText = prior[i].Text;
+                        consumed.Add(i);
+                        break;
+                    }
+                }
+        }
 
         if (existing.Goals.Count == 0) return;
         foreach (var subGoal in Goals)
@@ -241,7 +261,7 @@ public sealed partial class @this
     /// Runs this goal: lifecycle events → Steps.RunAsync → return handling.
     /// Context travels as parameter — goals may be cached/shared.
     /// </summary>
-    public async Task<data.@this> RunAsync(actor.context.@this context)
+    public async Task<data.@this> Run(actor.context.@this context)
     {
         var previousGoal = context.Goal;
         context.Goal = this;
@@ -270,13 +290,13 @@ public sealed partial class @this
         // it as the goal anchor, not the currently-executing step (which is whatever the
         // child stepCall.Action.Step points at).
         var goalEntryAction = new global::app.goal.step.action.@this { Module = "goal", ActionName = "enter" };
-        if (Steps.Count > 0) goalEntryAction.Step = Steps[0];
+        if (Step.Count > 0) goalEntryAction.Step = Step[0];
 
         try
         {
             await using var goalCall = context.CallStack.Push(goalEntryAction);
 
-            var result = await Steps.RunAsync(context);
+            var result = await Step.Run(context);
 
             // Handle return depth
             if (result.Returned)
@@ -320,7 +340,7 @@ public sealed partial class @this
     /// </summary>
     public void NestRecursive(app.module.list.@this modules)
     {
-        Steps.Nest(modules);
+        foreach (var step in Step.list) step.Nest(modules);
         foreach (var subGoal in Goals)
             subGoal.NestRecursive(modules);
     }
@@ -338,8 +358,8 @@ public sealed partial class @this
     /// </summary>
     public void ForEachAction(System.Action<Step, global::app.goal.step.action.@this> visitor)
     {
-        foreach (var step in Steps)
-            foreach (var action in step.Actions)
+        foreach (var step in Step.list)
+            foreach (var action in step.Action.list)
                 visitor(step, action);
     }
 
@@ -358,6 +378,7 @@ public sealed partial class @this
         var lines = text.Split('\n');
         var goals = new List<@this>();
         var currentGoal = (@this?)null;
+        var currentSteps = new List<Step>();
         var currentStep = (Step?)null;
         var pendingComment = new StringBuilder();
         var inBlockComment = false;
@@ -440,6 +461,8 @@ public sealed partial class @this
                         Path = path
                     };
                     goals.Add(currentGoal);
+                    currentSteps = new List<Step>();
+                    currentGoal.Step = new global::app.goal.step.list.@this(currentSteps);
                     stepIndex = 0;
                 }
 
@@ -459,7 +482,7 @@ public sealed partial class @this
                 };
 
                 currentStep.Goal = currentGoal;
-                currentGoal.Steps.Add(currentStep);
+                currentSteps.Add(currentStep);
                 stepIndex++;
                 continue;
             }
@@ -475,7 +498,7 @@ public sealed partial class @this
                     Indent = currentStep.Indent,
                     Comment = currentStep.Comment
                 };
-                currentGoal!.Steps[currentGoal.Steps.Count - 1] = currentStep;
+                currentSteps[currentSteps.Count - 1] = currentStep;
                 continue;
             }
 
@@ -491,7 +514,7 @@ public sealed partial class @this
                     Indent = currentStep.Indent,
                     Comment = currentStep.Comment
                 };
-                currentGoal!.Steps[currentGoal.Steps.Count - 1] = currentStep;
+                currentSteps[currentSteps.Count - 1] = currentStep;
                 continue;
             }
 
@@ -517,6 +540,8 @@ public sealed partial class @this
                 IsTest = isTest
             };
             goals.Add(currentGoal);
+            currentSteps = new List<Step>();
+            currentGoal.Step = new global::app.goal.step.list.@this(currentSteps);
             stepIndex = 0;
             currentStep = null;
         }

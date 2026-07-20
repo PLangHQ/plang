@@ -37,6 +37,13 @@ public partial class @this
     [Store, Debug, Default]
     public List<modifier.@this> Modifiers { get; init; } = new();
 
+    /// <summary>The branch body of a control-flow action (the steps that run when this condition fires).
+    /// Empty on every non-control-flow action — the fire gate is <c>Child.Count &gt; 0 &amp;&amp; truthy</c>.
+    /// Both nesting forms land here: inline <c>if/elseif/else</c> (each condition action carries its body)
+    /// and indented sub-step blocks (folded onto the gate action). A <c>step.list</c>, so it runs itself.</summary>
+    [Store, Debug, Default]
+    public global::app.goal.step.list.@this Child { get; init; } = new(new List<global::app.goal.step.@this>());
+
     [Debug]
     public List<Info> Errors { get; init; } = new();
 
@@ -86,24 +93,6 @@ public partial class @this
       || string.Equals(ActionName, "elseif", StringComparison.OrdinalIgnoreCase)
       || string.Equals(ActionName, "else", StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>
-    /// True only for the head of a condition chain (condition.if). Coverage records sites
-    /// against the head — elseif/else participate in the chain but don't own the site.
-    /// </summary>
-    [JsonIgnore]
-    public bool IsIfHead =>
-        string.Equals(Module, "condition", StringComparison.OrdinalIgnoreCase) &&
-        string.Equals(ActionName, "if", StringComparison.OrdinalIgnoreCase);
-
-    /// <summary>
-    /// True when this is the head condition.if action in its step. Used by coverage
-    /// to ignore inner-elseif simple-path firings that would otherwise mix
-    /// true/false labels into the orchestrator's declared chain.
-    /// </summary>
-    [JsonIgnore]
-    public bool IsFirst =>
-        Step?.Actions is { } acts && global::app.module.action.condition.decision.@this.IsHead(acts, this);
-
     [JsonIgnore]
     public Step? Step { get; set; }
 
@@ -144,7 +133,7 @@ public partial class @this
     /// (formerly App.Run's body — collapsed in stage 2a.5 since "action owns its
     /// execution").
     /// </summary>
-    public async Task<global::app.data.@this> RunAsync(actor.context.@this context)
+    public async Task<global::app.data.@this> Run(actor.context.@this context)
     {
         var lifecycle = context.LifecycleFor(this);
 

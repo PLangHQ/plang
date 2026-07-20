@@ -658,8 +658,8 @@ public class Default : IBuilder
         var step = action.Step.Clr<global::app.goal.step.@this>();
         var from = action.StepFromLlm.Clr<global::app.goal.step.@this>();
         _ = action.Context.App.Debug?.Write(
-            $"builder.merge: step.Index={step?.Index} step.Actions={step?.Actions.Count} " +
-            $"from.Index={from?.Index} from.Keep={from?.Keep} from.Actions={from?.Actions.Count}");
+            $"builder.merge: step.Index={step?.Index} step.Action={step?.Action.Count} " +
+            $"from.Index={from?.Index} from.Keep={from?.Keep} from.Action={from?.Action.Count}");
 
         action.Step.Clr<global::app.goal.step.@this>()!.Merge(action.StepFromLlm.Clr<global::app.goal.step.@this>()!);
         return action.Context.Ok(action.Step.Peek());
@@ -677,20 +677,19 @@ public class Default : IBuilder
 
         foreach (var step in response.Steps)
         {
-            if (step.Index < 0 || step.Index >= goal.Steps.Count) continue;
-            var prior = goal.Steps[step.Index];
+            if (step.Index < 0 || step.Index >= goal.Step.Count) continue;
+            var prior = goal.Step[step.Index];
 
             if (step.Keep)
             {
                 // Copy the prior's actions onto the response step so the
                 // downstream merge sees a fully populated Step.
-                step.Actions.Clear();
-                foreach (var a in prior.Actions) step.Actions.Add(a);
+                step.Action = new global::app.goal.step.action.list.@this(prior.Action.list);
                 if (string.IsNullOrEmpty(step.Formal))
-                    step.Formal = await RenderFormal(prior.Actions, action.Context);
+                    step.Formal = await RenderFormal(prior.Action.list, action.Context);
                 step.Source = "known";
             }
-            else if (prior.Actions.Count == 0)
+            else if (prior.Action.Count == 0)
             {
                 step.Source = "new";
             }
@@ -711,7 +710,7 @@ public class Default : IBuilder
     // actionFormal template, not C#: the actions become a self-describing plang value model, each
     // param value writes ITSELF via the template's `| formal` filter (the value's own text.Writer —
     // no STJ, no [JsonConverter]). This is the backfill for a reused step whose LLM `formal` is empty.
-    private async Task<string> RenderFormal(Actions actions, global::app.actor.context.@this ctx)
+    private async Task<string> RenderFormal(System.Collections.Generic.IReadOnlyList<global::app.goal.step.action.@this> actions, global::app.actor.context.@this ctx)
     {
         var model = new global::app.type.item.list.@this(ctx);
         foreach (var a in actions) model.Add(ActionModel(a, ctx));

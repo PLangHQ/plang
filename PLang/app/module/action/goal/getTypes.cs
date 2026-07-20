@@ -22,10 +22,10 @@ namespace app.module.action.goal;
 ///      (strip outer "list&lt;…&gt;" from the known type of %xs%, falling back to "object").
 ///
 /// Returned shape: `list&lt;dict&lt;string,string&gt;&gt;` — outer index is the step index
-/// (positional, same as `goal.Steps`), inner key is the variable name (without leading
+/// (positional, same as `goal.Step`), inner key is the variable name (without leading
 /// %, lowercased), value is the PLang type name (string, int, list&lt;goal&gt;, path, etc.).
 /// List-shape instead of dict&lt;int, ...&gt; so PLang's `%xs[stepResult.index]%`
-/// indexing syntax (which works for List&lt;T&gt; the same way `goal.Steps[N]` does) resolves
+/// indexing syntax (which works for List&lt;T&gt; the same way `goal.Step[N]` does) resolves
 /// cleanly without needing a key-type coercion.
 /// </summary>
 [Action("getTypes")]
@@ -39,7 +39,7 @@ public partial class getTypes : IContext
         var goal = Goal.Clr<global::app.goal.@this>()!;
         var modules = Context.App.Module;
 
-        var perStep = new List<Dictionary<string, string>>(goal.Steps.Count);
+        var perStep = new List<Dictionary<string, string>>(goal.Step.Count);
         var working = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         // Tracks the return type of the most recent producing action in the current step's
@@ -47,13 +47,13 @@ public partial class getTypes : IContext
         // action's type. Reset at the start of every step (no cross-step %!data%).
         string? chainReturnType = null;
 
-        for (int i = 0; i < goal.Steps.Count; i++)
+        for (int i = 0; i < goal.Step.Count; i++)
         {
             var snapshot = new Dictionary<string, string>(working, StringComparer.OrdinalIgnoreCase);
             perStep.Add(snapshot);
             chainReturnType = null;
 
-            foreach (var action in goal.Steps[i].Actions ?? new())
+            foreach (var action in goal.Step[i].Action.list)
             {
                 ProcessAction(action, working, snapshot, ref chainReturnType, modules, Context.App);
             }

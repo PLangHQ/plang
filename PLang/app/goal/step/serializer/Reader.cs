@@ -58,7 +58,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             LineNumber = lineNumber,
             Indent = indent,
             Comment = comment,
-            Actions = actions,
+            Action = new global::app.goal.step.action.list.@this(actions),
             Intent = intent,
             Formal = formal,
             Source = source,

@@ -105,28 +105,18 @@ public partial class run : IContext
                 {
                     childApp.Test.Coverage.RecordModuleAction(action.Module, action.ActionName);
 
-                    if (action.IsIfHead
-                        && result != null && result.Properties.Contains("branchIndex"))
+                    // Coverage DERIVES from the natural facts — the runtime stamps nothing. A condition
+                    // that fired (its own result is truthy) records the branch it took, keyed by its
+                    // position in the step's action chain (survives Merge — no object refs).
+                    if (action.IsCondition && result != null && await result.ToBooleanAsync())
                     {
-                        // Site key carries the goal's source file so sites from
-                        // different files don't collide on shared names like "Start".
                         var goal = action.Step?.Goal;
                         var goalId = goal?.Path?.ToString() ?? goal?.Name ?? "?";
                         var stepIndex = action.Step?.Index.ToString() ?? "?";
                         var site = $"{goalId}:{stepIndex}";
-                        childApp.Test.Coverage.RecordBranch(site, await result.Properties.Get<int>("branchIndex"));
-                        if (result.Properties.Contains("branchLabel"))
-                        {
-                            var label = await result.Properties.Get<string>("branchLabel");
-                            if (!string.IsNullOrEmpty(label))
-                                childApp.Test.Coverage.RecordBranchLabel(site, label);
-                        }
-                        if (result.Properties.Contains("branchChain"))
-                        {
-                            var chain = await result.Properties.Get<List<string>>("branchChain");
-                            if (chain != null)
-                                childApp.Test.Coverage.RecordBranchChain(site, chain);
-                        }
+                        var branchIdx = action.Step != null ? action.Step.Action.IndexOf(action) : -1;
+                        childApp.Test.Coverage.RecordBranch(site, branchIdx);
+                        childApp.Test.Coverage.RecordBranchLabel(site, action.ActionName);
                     }
                 }
                 return context.Ok();

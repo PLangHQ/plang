@@ -154,13 +154,13 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
             if (!string.Equals(liveHash, goalHash, StringComparison.OrdinalIgnoreCase))
                 throw new CallbackGoalHashMismatch(goalPrPath, goalHash, liveHash);
 
-            if (stepIndex < 0 || stepIndex >= liveGoal.Steps.Count)
+            if (stepIndex < 0 || stepIndex >= liveGoal.Step.Count)
                 throw new CallbackGoalNotFound($"{goalPrPath} (stepIndex {stepIndex} out of range)");
-            var liveStep = liveGoal.Steps[stepIndex];
+            var liveStep = liveGoal.Step[stepIndex];
 
-            if (actionIndex < 0 || actionIndex >= liveStep.Actions.Count)
+            if (actionIndex < 0 || actionIndex >= liveStep.Action.Count)
                 throw new CallbackGoalNotFound($"{goalPrPath} (actionIndex {actionIndex} out of range at step {stepIndex})");
-            var liveAction = liveStep.Actions[actionIndex];
+            var liveAction = liveStep.Action[actionIndex];
 
             restored.Add(new call.Position(liveAction, liveGoal, stepIndex, actionIndex, id));
         }
@@ -219,10 +219,10 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
         var goal = step?.Goal;
         var stepIndex = step?.Index ?? -1;
         var actionIndex = -1;
-        if (step?.Actions != null)
+        if (step != null)
         {
-            for (int i = 0; i < step.Actions.Count; i++)
-                if (ReferenceEquals(step.Actions[i], call.Action))
+            for (int i = 0; i < step.Action.Count; i++)
+                if (ReferenceEquals(step.Action[i], call.Action))
                 {
                     actionIndex = i;
                     break;

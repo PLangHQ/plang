@@ -31,8 +31,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         writer.Name("indent"); writer.Int(Indent);
         if (Comment != null) { writer.Name("comment"); writer.String(Comment); }
         writer.Name("actions");
-        writer.BeginArray(Actions.Count);
-        foreach (var a in Actions) await a.Output(writer, mode, context);
+        writer.BeginArray(Action.Count);
+        foreach (var a in Action.list) await a.Output(writer, mode, context);
         writer.EndArray();
         if (Intent != null) { writer.Name("intent"); writer.String(Intent); }
         if (Formal != null) { writer.Name("formal"); writer.String(Formal); }

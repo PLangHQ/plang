@@ -283,7 +283,7 @@ public sealed class @this
         sb.AppendLine($"=== DEBUG [BEFORE]: Step [{step.Index}] of {goalName} ===");
         sb.AppendLine($"  Text: {step.Text}");
 
-        foreach (var action in step.Actions)
+        foreach (var action in step.Action.list)
         {
             sb.AppendLine($"  Action: {action.Module}.{action.ActionName}");
             foreach (var p in action.Parameters)
@@ -543,7 +543,7 @@ public sealed class @this
 
         var varNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var action in step.Actions)
+        foreach (var action in step.Action.list)
         {
             foreach (var p in action.Parameters)
             {

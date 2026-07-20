@@ -53,7 +53,7 @@ public partial class Foreach : IContext, IStep
 
             foreach (var action in bodyActions)
             {
-                var result = await action.RunAsync(Context);
+                var result = await action.Run(Context);
                 if (result.Returned) return result;
                 if (!result.Success) return result;
             }
@@ -86,7 +86,7 @@ public partial class Foreach : IContext, IStep
     /// </summary>
     private List<Action> GetBodyActions()
     {
-        var actions = Step?.Actions;
+        var actions = Step?.Action;
         if (actions == null || __action == null) return new List<Action>();
 
         int myIndex = -1;
@@ -101,6 +101,6 @@ public partial class Foreach : IContext, IStep
 
         if (myIndex < 0 || myIndex + 1 >= actions.Count) return new List<Action>();
 
-        return actions.Skip(myIndex + 1).ToList();
+        return actions.list.Skip(myIndex + 1).ToList();
     }
 }

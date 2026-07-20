@@ -1,8 +1,6 @@
 using app;
 using app.variable;
 using app.module.action.condition.code;
-using Action = app.goal.step.action.@this;
-using Decision = app.module.action.condition.decision.@this;
 
 namespace app.module.action.condition;
 
@@ -18,120 +16,17 @@ public partial class If : IContext, IStep
     [Code]
     public partial IEvaluator Evaluator { get; }
 
+    /// <summary>Evaluate-only: the condition answers its own truthiness (with Negate). The chain — which
+    /// branch fires, running its Child, skipping the rest — is owned by <c>action.list.Run</c>; a condition
+    /// no longer reaches its siblings or its Step.</summary>
     public async Task<data.@this> Run()
     {
         var evalResult = await Evaluator.Evaluate(this);
-        // Evaluation errored → leave branchIndex unpublished (architect §5.7 / Batch 7 #6).
         if (!evalResult.Success) return evalResult;
 
-        // Both reads go through the truthiness door — the value answers for
-        // itself (bool.@this bottoms out at its backing; an absent Negate is falsy).
+        // The truthiness door — the value answers for itself (an absent Negate is falsy).
         var conditionResult = await evalResult.ToBooleanAsync();
         if (await Negate.ToBooleanAsync()) conditionResult = !conditionResult;
-
-        var userStep = Step;
-
-        // Orchestrate if/elseif/else when there are multiple actions in this step.
-        // Guard is step-scoped on Context._data (not Variables) so:
-        //   1. PLang developers can't accidentally override it
-        //   2. Inner goals called from branches get their own guard keys
-        var actions = userStep?.Actions;
-        var guardKey = $"__condition_orchestrating_{userStep?.GetHashCode()}__";
-        var alreadyOrchestrating = Context.Get<bool>(guardKey);
-
-        if (!alreadyOrchestrating && actions != null && actions.Count > 1)
-        {
-            Context.Set(guardKey, true);
-            try
-            {
-                var result = await Orchestrate(actions, conditionResult);
-                result.Handled = true;
-                return result;
-            }
-            finally
-            {
-                Context[guardKey] = null;
-            }
-        }
-
-        // Simple non-orchestrating form: 0/true for the truthy path, 1/false for the
-        // skipped path. Paired label stays readable in coverage output ({true,false}).
-        // Publish the full declared chain too so the report can show the untested half.
-        var simple = Data(conditionResult);
-        simple.Properties.Set("branchIndex", conditionResult ? 0 : 1);
-        simple.Properties.Set("branchLabel", conditionResult ? "true" : "false");
-        simple.Properties.Set("branchChain", new List<string> { "true", "false" });
-        return simple;
-    }
-
-    /// <summary>
-    /// Groups the step's actions into branches: [condition, actions...], [condition, actions...], [else actions...]
-    /// Then evaluates conditions in order and runs the first matching branch.
-    /// </summary>
-    private async Task<data.@this> Orchestrate(
-        System.Collections.Generic.List<app.goal.step.action.@this> actions, bool firstConditionResult)
-    {
-        // Decision owns the branch structure (condition.if owns running it). A condition fired to
-        // reach here, so the head exists — but guard the null for safety.
-        var decision = Decision.Of(actions);
-        if (decision == null) return Data(false);
-
-        // Execute: first branch uses our already-evaluated result
-        for (int b = 0; b < decision.Count; b++)
-        {
-            var (condition, body) = decision[b];
-            bool branchResult;
-
-            if (b == 0)
-            {
-                // First branch — head condition.if, already evaluated
-                branchResult = firstConditionResult;
-            }
-            else if (condition != null
-                && string.Equals(condition.ActionName, "else", StringComparison.OrdinalIgnoreCase))
-            {
-                // condition.else — no condition, always runs if we get here
-                branchResult = true;
-            }
-            else if (condition != null)
-            {
-                // condition.elseif — dispatch the handler so its Evaluate + lifecycle fire.
-                // The verdict reads through the truthiness door (the value answers).
-                var elseIfResult = await condition.RunAsync(Context);
-                if (!elseIfResult.Success) return elseIfResult;
-                branchResult = await elseIfResult.ToBooleanAsync();
-            }
-            else
-            {
-                // No explicit condition (trailing body-only tail) — treat as taken
-                branchResult = true;
-            }
-
-            if (branchResult)
-            {
-                data.@this lastResult = Context.Ok<global::app.type.item.@bool.@this>(true);
-                foreach (var action in body)
-                {
-                    lastResult = await action.RunAsync(Context);
-                    if (!lastResult.Success) return lastResult;
-                }
-                // Record which branch fired. branchIndex is the position in the chain;
-                // branchLabel mirrors the action name; branchChain is the full declared
-                // shape so the report can show which other branches were never tested.
-                var label = b == 0
-                    ? "if"
-                    : (condition != null && string.Equals(condition.ActionName, "else", StringComparison.OrdinalIgnoreCase))
-                        ? "else"
-                        : $"elseif[{b}]";
-                lastResult.Properties.Set("branchIndex", b);
-                lastResult.Properties.Set("branchLabel", label);
-                lastResult.Properties.Set("branchChain", decision.Chain);
-                return lastResult;
-            }
-        }
-
-        // No branch matched — only possible when there is no condition.else tail.
-        // Leave branchIndex unset so coverage doesn't claim a branch fired.
-        return Data(false);
+        return Data(conditionResult);
     }
 }

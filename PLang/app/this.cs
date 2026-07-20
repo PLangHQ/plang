@@ -464,7 +464,7 @@ public sealed partial class @this : IAsyncDisposable
             ActionName = ResolveActionName(typeof(TAction)),
             Seed = handler,
         };
-        return entity.RunAsync(context);
+        return entity.Run(context);
     }
 
     /// <summary>
@@ -530,7 +530,7 @@ public sealed partial class @this : IAsyncDisposable
         var goal = ((await goalResult.Value()) as Goal)!;
 
         // User code executes under the User actor's context.
-        return await goal.RunAsync(User.Context);
+        return await goal.Run(User.Context);
     }
 
     /// <summary>
@@ -563,7 +563,7 @@ public sealed partial class @this : IAsyncDisposable
                 await context.Variable.Set(param.Name, param);
             }
 
-        return await ((await goalResult.Value()) as Goal)!.RunAsync(context);
+        return await ((await goalResult.Value()) as Goal)!.Run(context);
     }
 
     /// <summary>
@@ -571,7 +571,7 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public async Task<data.@this> RunGoalAsync(Goal goal, actor.context.@this context, CancellationToken ct = default)
     {
-        return await goal.RunAsync(context);
+        return await goal.Run(context);
     }
 
     private async Task<global::app.module.action.setting.IStore> CreateSettingsStoreAsync()

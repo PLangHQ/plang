@@ -3,7 +3,7 @@ using app.actor.context;
 using app.data;
 using app.variable;
 using app.module;
-using Action = app.goal.step.action.@this;
+using ActionEl = app.goal.step.action.@this;
 
 namespace app.goal.step;
 
@@ -46,30 +46,30 @@ public sealed partial class @this
     [Store, LlmBuilder, Debug, Default]
     public string? Comment { get; init; }
 
-    private List<Action> _actions = new();
+    private global::app.goal.step.action.list.@this _action = new(new List<ActionEl>());
     [Store, Debug, Default]
-    public List<Action> Actions
+    public global::app.goal.step.action.list.@this Action
     {
-        // The step owns its actions natively; the getter stamps the back-ref so a navigated /
-        // executed action reaches its step (the collection class that used to do this is gone).
-        get { foreach (var a in _actions) a.Step ??= this; return _actions; }
-        set => _actions = value ?? new();
+        // The step owns its action chain (an action.list node). The getter stamps the back-ref so a
+        // navigated / executed action reaches its step.
+        get { foreach (var a in _action.list) a.Step ??= this; return _action; }
+        set => _action = value ?? new(new List<ActionEl>());
     }
 
     /// <summary>
     /// Nests each modifier onto the preceding action's Modifiers slot — the flat LLM order becomes
     /// the .pr shape. A modifier is a TYPE in the catalog (not a flag): the flat item, read as a plain
     /// action, becomes the modifier it IS, with Position from the catalog. A leading modifier with no
-    /// preceding action is dropped with a warning. Mutates in place. (Carried only until the builder
-    /// emits nested — then it is a no-op.)
+    /// preceding action is dropped with a warning. Rebuilds the action node. (Carried only until the
+    /// builder emits nested — then it is a no-op.)
     /// </summary>
     public void Nest(global::app.module.list.@this modules)
     {
-        if (_actions.Count == 0) return;
+        var flat = _action.list.ToList();
+        if (flat.Count == 0) return;
 
-        var flat = _actions.ToList();
-        _actions.Clear();
-        Action? current = null;
+        var nested = new List<ActionEl>();
+        ActionEl? current = null;
 
         foreach (var a in flat)
         {
@@ -91,12 +91,14 @@ public sealed partial class @this
             else
             {
                 current = a;
-                _actions.Add(a);
+                nested.Add(a);
             }
         }
 
-        foreach (var a in _actions)
+        foreach (var a in nested)
             a.Modifiers.Sort((x, y) => x.Position.CompareTo(y.Position));   // outermost wrapper (lowest Position) first
+
+        _action = new global::app.goal.step.action.list.@this(nested);
     }
 
     /// <summary>
@@ -132,11 +134,11 @@ public sealed partial class @this
 
     /// <summary>
     /// True when the next step has higher indent (sub-steps).
-    /// Lazy — navigates to parent Goal.Steps on access.
+    /// Lazy — navigates to parent Goal.Step on access.
     /// Used by the builder to omit GoalIfTrue/GoalIfFalse when sub-steps handle branching.
     /// </summary>
     [JsonIgnore]
-    public bool HasSubSteps => Goal?.Steps.HasIndentedChildren(Index) ?? false;
+    public bool HasSubSteps => System.Linq.Enumerable.Any(_action.list, a => a.Child.Count > 0);
 
     [JsonIgnore]
     public global::app.goal.@this Goal { get; set; } = null!;
@@ -145,7 +147,7 @@ public sealed partial class @this
     /// Runs this step: lifecycle events → actions.
     /// Error handling, caching, and timeouts are per-action modifiers, not step-level.
     /// </summary>
-    public async Task<data.@this> RunAsync(actor.context.@this context)
+    public async Task<data.@this> Run(actor.context.@this context)
     {
         context.Step = this;
         var lifecycle = context.LifecycleFor(this);
@@ -154,15 +156,10 @@ public sealed partial class @this
         if (!beforeResult.Success) return beforeResult;
         if (beforeResult.Handled) return beforeResult;
 
-        data.@this result = context.Ok();
+        data.@this result;
         try
         {
-            foreach (var action in Actions)
-            {
-                context.CancellationToken.ThrowIfCancellationRequested();
-                result = await action.RunAsync(context);
-                if (result.ShouldExit() || result.Handled) break;
-            }
+            result = await Action.Run(context);   // action.list owns the chain loop + fire
         }
         catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException or OperationCanceledException))
         {
@@ -192,11 +189,8 @@ public sealed partial class @this
     /// </summary>
     public void Merge(Step from)
     {
-        if (from.Actions.Count > 0)
-        {
-            Actions.Clear();
-            Actions.AddRange(from.Actions);
-        }
+        if (from.Action.Count > 0)
+            _action = new global::app.goal.step.action.list.@this(from.Action.list);
 
         if (from.Errors.Count > 0)
         {

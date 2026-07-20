@@ -370,10 +370,10 @@ public sealed class @this
                 return app.System.Context.Error(readResult.Error ?? new Error(
                     $"Failed to parse goal file: {prPath} — read produced {materialized.GetType().Name}, not a goal"));
 
-            foreach (var step in primary.Steps)
+            foreach (var step in primary.Step.list)
             {
                 step.Goal = primary;
-                foreach (var action in step.Actions)
+                foreach (var action in step.Action.list)
                     action.Synthetic = false;
             }
             Add(primary);

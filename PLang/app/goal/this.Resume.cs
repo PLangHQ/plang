@@ -12,26 +12,26 @@ public partial class @this
 {
     public async Task<data.@this> Resume(actor.context.@this context, int stepIdx, int actionIdx)
     {
-        if (stepIdx < 0 || stepIdx >= Steps.Count)
+        if (stepIdx < 0 || stepIdx >= Step.Count)
             return context.Error(new error.ServiceError(
-                $"Resume: stepIdx {stepIdx} out of range [0, {Steps.Count})",
+                $"Resume: stepIdx {stepIdx} out of range [0, {Step.Count})",
                 "InvalidPosition", 400));
 
-        var step = Steps[stepIdx];
+        var step = Step[stepIdx];
         step.Goal ??= this;
 
         var result = await step.Resume(context, actionIdx);
         if (result.ShouldExit()) return result;
 
-        for (int i = stepIdx + 1; i < Steps.Count; i++)
+        for (int i = stepIdx + 1; i < Step.Count; i++)
         {
-            var s = Steps[i];
+            var s = Step[i];
             s.Goal ??= this;
 
             if (context.CancellationToken.IsCancellationRequested)
                 return context.Error(new error.Error("Operation was cancelled", "Cancelled", 499));
 
-            result = await s.RunAsync(context);
+            result = await s.Run(context);
             if (result.ShouldExit()) return result;
         }
 
