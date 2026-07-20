@@ -17,61 +17,69 @@ goal/step/action/list/this.cs→ app.goal.step.action.list.@this (action.list)
 
 The plural *wrapper* folders (`steps/`, `actions/`) delete; the elements move up. **This restructure is the first move**, not an afterthought — the tree's whole payload is the `X.list` collections, and they must be born at singular paths (creating `goal.steps.step.actions.list` then renaming is churn). So: run the namespace rename (`goal.steps.step`→`goal.step`, `…actions.action`→`goal.step.action`, wire keys `steps`/`actions`→`step`/`action`) up front, then the tree code below lands entirely singular. (Refs to `steps/this.cs`, `steps.RunAsync`, etc. in this doc point at *current* HEAD — the demolition targets — and are correctly plural.)
 
-## 1. `step.list` — NEW (typed storage, navigable, owns `Run`)
+## 1. `step.list` — the step NODE (`.current` + `[i]` + `.list`, owns `Run`)
+
+`goal.step` is a **node, not "a list"** — a singular name that reads as a step. `.current` is the running step; `[i]`/`.list` reach the collection. **The node owns its `.current`: its own `Run` is the only writer, `AsyncLocal` makes it fork-safe** — no reach for the callstack, no `_app` (App isn't thread-safe; the node needs nothing external).
 
 ```csharp
 // goal/step/list/this.cs
-using System.Collections;
-
-public sealed class @this : IReadOnlyList<Step>              // IReadOnlyList → the list kind claims it (A1)
+public sealed class @this
 {
     private readonly List<Step> _steps;
+    private readonly AsyncLocal<Step?> _current = new();     // the running step — owned here, fork-safe
+
     public @this(List<Step> steps) => _steps = steps;
 
+    public Step? Current => _current.Value;                  // goal.step.current
+    public Step this[int i] => _steps[i];                    // goal.step[0]
+    public IReadOnlyList<Step> list => _steps;               // goal.step.list  (IEnumerable → list kind → navigable)
     public int Count => _steps.Count;
-    public Step this[int i] => _steps[i];
-    public IEnumerator<Step> GetEnumerator() => _steps.GetEnumerator();
-    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     public async Task<data.@this> Run(actor.context.@this context)
     {
         data.@this result = context.Ok();
         foreach (var step in _steps)
         {
-            // ⚠ flaw-2: cancellation was in steps.RunAsync:139 (return the error at step level)
-            if (context.CancellationToken.IsCancellationRequested)
+            _current.Value = step;                           // Run is the ONLY writer of "current"
+            if (context.CancellationToken.IsCancellationRequested)   // ⚠ flaw-2: was steps.RunAsync:139
                 return context.Error(new app.error.Error("Operation was cancelled", "Cancelled", 499));
             result = await step.Run(context);
-            if (result.ShouldExit()) break;                 // ShouldExit already folds Returned (A6)
+            if (result.ShouldExit()) break;                  // ShouldExit folds Returned (A6)
         }
+        _current.Value = null;                               // done — nothing running in this flow
         return result;
     }
 }
 ```
 
-## 2. `action.list` — NEW (the chain resolution; B2(a))
+**Access lines up C# ⇄ PLang:** `Current`/`[i]`/`list` = `%goal.step.current%`/`%goal.step[0]%`/`%goal.step.list%`; **bare `%goal.step%` → `.current`** is the one nav-layer sugar (C# has no parameterless indexer / bare-value, confirmed). `%goal.step.list%` hands back `_steps` (`IEnumerable` → list kind claims it → `.list[0]`/`.where` work) — this is what replaces coder's A1 (`list` property, not `IReadOnlyList` on the class). Runtime-nav to confirm: `%goal.step[0]%` resolves the node's `this[int]` indexer — if the reflection nav can't invoke a C# indexer, the form is `%goal.step.list[0]%`.
+
+## 2. `action.list` — the action NODE (the chain resolution; B2(a))
+
+Twin of `step.list` — same node shape, plus `IndexOf` for coverage (C1); its `Run` is the chain resolution.
 
 ```csharp
 // goal/step/action/list/this.cs
-using System.Collections;
-
-public sealed class @this : IReadOnlyList<Action>
+public sealed class @this
 {
     private readonly List<Action> _actions;
+    private readonly AsyncLocal<Action?> _current = new();
+
     public @this(List<Action> actions) => _actions = actions;
 
+    public Action? Current => _current.Value;                // step.action.current
+    public Action this[int i] => _actions[i];                // step.action[0]
+    public IReadOnlyList<Action> list => _actions;           // step.action.list
     public int Count => _actions.Count;
-    public Action this[int i] => _actions[i];
-    public IEnumerator<Action> GetEnumerator() => _actions.GetEnumerator();
-    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    public int IndexOf(Action a) => _actions.IndexOf(a);     // coverage key (C1)
 
     public async Task<data.@this> Run(actor.context.@this context)
     {
         data.@this result = context.Ok();
-        for (int i = 0; i < _actions.Count; i++)
+        foreach (var action in _actions)
         {
+            _current.Value = action;
             context.CancellationToken.ThrowIfCancellationRequested();   // ⚠ flaw-2: was step.RunAsync:162
-            var action = _actions[i];
             result = await action.Run(context);                        // setup (file.exists/compare) & non-cond dispatch
             if (result.ShouldExit() || result.Handled) break;          // ⚠ flaw-3: keep Handled (legit event-handled stop)
             if (action.IsCondition && await result.ToBooleanAsync())
@@ -80,6 +88,7 @@ public sealed class @this : IReadOnlyList<Action>
                 break;                                                 // skip the rest of the chain
             }
         }
+        _current.Value = null;
         return result;
     }
 }
@@ -252,7 +261,7 @@ public void Cover(Action a)
 
 `%goal%` is the **source-parsed** goal (`build.goals` reads the `.goal` files → `%goals%` → `BuildGoal goal=%item%`). It starts as parsed steps (text + indent, **no actions**); `BuildStep` attaches compiled actions, the fold restructures it, `goalsSave` writes it.
 
-**Access is `goal.step[i]` — C# `goal.Step[0]` ⇄ PLang `%goal.step[0]%`, 100% aligned** (the `.list` form works too but we use the direct index — nicer). The builder is written **in PLang**, so the singular sweep renames its accessors too (`os/system/builder/**/*.goal` + templates):
+**Access — `goal.step` is a node (§1):** bare `%goal.step%` → `.current`, `%goal.step[i]%` → item i (indexed, what the builder uses), `%goal.step.list%` → the collection. C# `goal.Step[i]` ⇄ PLang `%goal.step[i]%`, 100% aligned. The builder is written **in PLang**, so the singular sweep renames its accessors too (`os/system/builder/**/*.goal` + templates):
 
 | plural (today) | singular |
 |---|---|
