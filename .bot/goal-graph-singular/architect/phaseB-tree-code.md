@@ -136,52 +136,60 @@ if (Step.Count > 0) goalEntryAction.Step = Step[0];    // ⚠ flaw-5: Steps[0]/S
 var result = await Step.Run(context);                  // was: await Steps.RunAsync(context)
 ```
 
-## 5. Backref wire — ⚠ flaw-1 (the standalone lists stamp nothing)
+## 5. Backrefs are born-with — ⚠ flaw-1 (NO stamping, NO `Wire`)
 
-The old collections stamped `step.Goal`/`action.Step` (`goal/this.cs:47`, `steps/this.cs:24,47,113`, `step/this.cs:55`). The standalone lists don't, and cycle-detection (`goalEntryAction.Step`, `ContainsGoal` → `action.Step?.Goal?.PrPath`) + coverage need them. Getter-stamp can't reach nested `Child` steps (built bottom-up, before the goal exists). So a **post-build top-down wire** after the goal reader constructs the tree:
+`step.Goal ??= Goal` and a post-build wire are the **late-stamp** smell (Ingi). The step is *born with* its goal; the action *born with* its step. The parent rides the `ReadContext` (built to grow — see its doc-comment), and each child sets its backref in its own initializer, at creation. So **`Wire` never exists**, and every `??=` deletes (`goal/this.cs:47`, `steps/this.cs:24,47,113`, the `Actions` getter `step/this.cs:55` — the collections that did it are gone anyway).
 
 ```csharp
-// naming/home to settle (verb+noun placeholders); MUST run once after the goal is built
-static void Wire(goal.@this g) { foreach (var s in g.Step) { s.Goal = g; Wire(s, g); } }
-static void Wire(Step s, goal.@this g)
-{
-    foreach (var a in s.Action) { a.Step = s; foreach (var cs in a.Child) { cs.Goal = g; Wire(cs, g); } }
-}
+// type/reader/ReadContext.cs — grow it (the intended extension)
+public sealed record ReadContext(
+    actor.context.@this Context, string? Template = null, /* … existing … */,
+    goal.@this? Goal = null,        // the goal being read — a step is born with it
+    Step? Step = null);             // the step being read — an action is born with it
 ```
-Open: whether this lives in the goal reader (post-build) or as a getter-stamp chain that threads the goal down. Construction-time is cleaner (one pass, no per-access cost) — pick the home, kill the verb+noun name.
 
-## 6. The three readers + B1 lazy fix
+## 6. The three readers — thread the parent (born-with) + B1 lazy fix
 
 ```csharp
-// goal/serializer/Reader.cs
+// goal/serializer/Reader.cs — the goal exists before its steps; each step born with it
+var goal = new goal.@this { App = ctx.Context.App };   // scalars set as read (init→set, §note)
 case "steps":
     var steps = new List<Step>();
     reader.BeginArray();
-    while (reader.NextElement()) steps.Add((Step)_step.Read(ref reader, kind, ctx));
+    while (reader.NextElement())
+        steps.Add((Step)_step.Read(ref reader, kind, ctx with { Goal = goal }));   // born with goal
     reader.EndArray();
-    goalStep = new goal.step.list.@this(steps);
+    goal.Step = new goal.step.list.@this(steps);
     break;
 
-// step/serializer/Reader.cs
+// step/serializer/Reader.cs — born with the goal from ctx; threads itself to its actions
+var step = new Step { Goal = ctx.Goal! };              // ← born with the goal, set once at birth
 case "actions":
     var actions = new List<Action>();
     reader.BeginArray();
-    while (reader.NextElement()) actions.Add((Action)_action.Read(ref reader, kind, ctx));
+    while (reader.NextElement())
+        actions.Add((Action)_action.Read(ref reader, kind, ctx with { Step = step }));   // action born with step
     reader.EndArray();
-    stepAction = new goal.steps.step.actions.list.@this(actions);
+    step.Action = new goal.steps.step.actions.list.@this(actions);
     break;
 
-// action/serializer/Reader.cs — B1: lazy the step reader to break the step→action→step ctor cycle
+// action/serializer/Reader.cs — born with the step; Child steps born with the goal (ctx.Goal rode down)
+// B1: lazy the step reader to break the step→action→step ctor cycle
 private goal.step.serializer.Reader? _stepReader;
 private goal.step.serializer.Reader StepReader => _stepReader ??= new();
 
+var action = new Action { Step = ctx.Step! };          // ← born with the step
 case "child":
     var child = new List<Step>();
     reader.BeginArray();
-    while (reader.NextElement()) child.Add((Step)StepReader.Read(ref reader, kind, ctx));
+    while (reader.NextElement())
+        child.Add((Step)StepReader.Read(ref reader, kind, ctx));   // ctx.Goal still set → child born with goal
     reader.EndArray();
-    actionChild = new goal.step.list.@this(child);
+    action.Child = new goal.step.list.@this(child);
     break;
+```
+
+**Note (the one consequence):** the goal is created before its scalars finish reading (steps come mid-object in the `.pr`), so the graph items' scalar props flip `init` → `set` — the reader populates a created-first object. That's ordinary deserialization (the reader *is* the construction), not post-hoc stamping; the backref is born-with. Pure-`init` immutability would instead need the ctor to build children from buffered raw (a raw-parse layer) — same born-with, more code. Lean: `set` + born-with via the context (the graph is read-only after load either way).
 ```
 
 ## 7. `Output` — action gains `child`; step drops `indent`
@@ -239,7 +247,7 @@ public void Cover(Action a)
 
 ## Flaw readover — the six caught writing this up
 
-1. **backref stamping** gone from the standalone lists → §5 post-build wire.
+1. **backref stamping** gone from the standalone lists → §5 born-with via `ReadContext` (NO `Wire`, NO `??=` — Ingi: any after-stamping is the late-stamp smell).
 2. **cancellation** dropped → restored in §1/§2 (return at step level, throw at action level).
 3. **`|| Handled`** dropped from `action.list.Run` → restored (legit event-handled stop).
 4. **bare-if empty `Child`** returns `Ok` not the bool → verify (§3).
