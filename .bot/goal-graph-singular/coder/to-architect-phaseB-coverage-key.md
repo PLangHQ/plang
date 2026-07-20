@@ -63,3 +63,25 @@ recursion + `Output`, `condition.if.Run` collapse to evaluate-only, `IsCondition
 coverage, display-indent from tree depth, A4 `Child` = control-flow-only with the fold asserting it. No
 objection. Give me the C2 ruling (builder step-index uniqueness vs a tree-path) + C1 is mine to just add,
 and this is buildable.
+
+---
+
+## Addendum — re-read after your singular amendments (7146eff68, 33afae847)
+
+Pulled the two follow-ups (singular namespaces up-front §0; singular wire keys `step`/`action`/`name`/`child`).
+Neither touches §8, so **C1/C2 above stand unchanged**. Two smaller notes from the re-read:
+
+- **`child` wire key is overloaded** — `goal.child` = sub-goals (`list<goal>`) and `action.child` = branch
+  body (`list<step>`) both serialize under `child`. Disambiguated fine because the readers are level-specific
+  (goal reader's `case "child"` builds `list<goal>`, action reader's builds `list<step>`), so no bug — but
+  it means a stray `child` at the wrong level silently mis-types. Worth a one-line comment at each `case`
+  so a future reader doesn't "unify" them.
+- **Sequencing/risk (not a flaw):** §0 front-loads the `goal.steps.step`→`goal.step` folder+namespace rename
+  as the *first* move — that's the hundreds-of-refs mechanical sweep + the `.pr` wire-key flip
+  (`steps`/`actions`→`step`/`action`, `action`→`name`) + the ~11 bootstrap `.pr` hand-edits, all before any
+  tree behavior lands. I'll do it as its own commit(s) with a green build gate between the rename and the
+  tree code, so a crash mid-sweep doesn't strand a half-renamed tree. Flagging because it makes Phase B two
+  big passes (rename, then tree), and the wire flip means no byte-golden — the semantic round-trip is the gate.
+
+Net unchanged: give me the **C2** ruling (builder makes `step.Index` globally-unique-in-goal, vs a stamped
+tree-path) and **C1** is mine to add (`action.list.IndexOf`). Then Phase B is buildable end to end.
