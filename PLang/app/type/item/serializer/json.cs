@@ -59,6 +59,19 @@ public partial class json
             ? new text.@this(s, ctx.Template)
             : s;
 
+    // A typed value WITHOUT the @schema layer marker — a dict/list entry's {type:{name,…}, value:…}
+    // shape (an action's parameter row, a config entry). The container knows its entries are typed
+    // values, so this rides as a Data (the data reader reads type+value), no @schema needed.
+    // Distinguished from a plain object by a structured `type` + a `value` sibling — a user object
+    // literally shaped {type:{name:…}, value:…} is the accepted rare collision (entries carry type,
+    // not @schema, by design). Both the eager (Parse) and lazy (RawSlot) paths honour it — a nested
+    // typed value materialises as a Data either way.
+    private static bool IsTypedEntry(System.Text.Json.JsonElement element)
+        => element.TryGetProperty("type", out var t)
+           && t.ValueKind == System.Text.Json.JsonValueKind.Object
+           && t.TryGetProperty("name", out _)
+           && element.TryGetProperty("value", out _);
+
     private object? ParseRaw(byte[] utf8, global::app.type.reader.ReadContext? ctx)
     {
         using var doc = System.Text.Json.JsonDocument.Parse(utf8);
@@ -91,17 +104,6 @@ public partial class json
             };
         }
 
-        // A typed value WITHOUT the @schema layer marker — a dict/list entry's
-        // {type:{name,…}, value:…} shape. The container knows its entries are typed
-        // values, so this rides as a Data (Wire.ReadBody reads type+value), no @schema
-        // needed. Distinguished from a plain object by a structured `type` + a `value`
-        // sibling — a user object literally shaped {type:{name:…}, value:…} is the
-        // accepted rare collision (entries carry type, not @schema, by design).
-        static bool IsTypedEntry(System.Text.Json.JsonElement element)
-            => element.TryGetProperty("type", out var t)
-               && t.ValueKind == System.Text.Json.JsonValueKind.Object
-               && t.TryGetProperty("name", out _)
-               && element.TryGetProperty("value", out _);
 
         // System.Text.Json.Nodes DOM types (JsonObject/JsonArray/JsonValue)
         // round-trip through the JsonElement path so numeric/null/bool
@@ -157,7 +159,7 @@ public partial class json
             System.Text.Json.JsonValueKind.False => false,
             System.Text.Json.JsonValueKind.Null => null,
             System.Text.Json.JsonValueKind.Undefined => null,
-            System.Text.Json.JsonValueKind.Object => global::app.data.@this.IsDataMarked(element)
+            System.Text.Json.JsonValueKind.Object => global::app.data.@this.IsDataMarked(element) || IsTypedEntry(element)
                 ? new global::app.data.reader.@this().Read(System.Text.Encoding.UTF8.GetBytes(element.GetRawText()), new global::app.type.reader.ReadContext(_context, Verify: false))
                 : ObjectLeaf(element, ctx, depth),
             System.Text.Json.JsonValueKind.Array => ArrayLeaf(element, ctx, depth),

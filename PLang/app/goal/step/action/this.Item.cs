@@ -17,6 +17,52 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>The action's own type entity — an item names its own type (no namespace reflection).</summary>
     protected internal override global::app.type.@this Type => new("action", typeof(@this));
 
+    /// <summary>The action builds ITSELF from a dict — the read-side twin of <see cref="Output"/>,
+    /// the same <c>{module, name, parameter, default?, modifier, child?}</c> shape. A nested action
+    /// (a modifier's on-error recovery chain, a compiled step's action set) arrives as a materialised
+    /// dict, so the action owns that construction instead of falling to the generic reflection lower
+    /// door (which can't rebuild the <c>Data</c> parameter rows). Parameter/default rows already rode
+    /// in as <c>Data</c> (the json reader's typed-entry path). A non-dict, non-action raw is a real
+    /// problem — surfaced as a keyed error, never swallowed to null. The <c>action</c>/<c>parameters</c>
+    /// aliases are accepted while old <c>.pr</c> shapes migrate to <c>name</c>/<c>parameter</c>.</summary>
+    public static @this? Create(object? raw, global::app.data.@this data)
+    {
+        if (raw is @this a) return a;
+        if (raw is global::app.type.item.dict.@this d) return Populate(d, new @this(), data);
+        data.Fail(new global::app.error.Error(
+            $"cannot build an action from a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name ?? "null"} — " +
+            $"an action reads from a dict of {{module, name, parameter}}.", "ActionShape", 400));
+        return null;
+    }
+
+    // The populate walk — shared by the action itself and its modifiers (a modifier IS an action +
+    // Position, so the same fields fill it). Child steps read through their own door (threading the
+    // binding so a malformed child surfaces there, not here).
+    private static @this Populate(global::app.type.item.dict.@this d, @this act, global::app.data.@this data)
+    {
+        act.Module = d.Get("module")?.Peek()?.ToString() ?? "";
+        act.ActionName = (d.Get("name") ?? d.Get("action"))?.Peek()?.ToString() ?? "";
+        if ((d.Get("parameter") ?? d.Get("parameters"))?.Peek() is global::app.type.item.list.@this ps)
+            foreach (var row in ps.Items) act.Parameter.Add(row);
+        if (d.Get("default")?.Peek() is global::app.type.item.list.@this ds)
+        {
+            act.Default = new();
+            foreach (var row in ds.Items) act.Default.Add(row);
+        }
+        if ((d.Get("modifier") ?? d.Get("modifiers"))?.Peek() is global::app.type.item.list.@this ms)
+            foreach (var row in ms.Items)
+                if (row.Peek() is global::app.type.item.dict.@this md)
+                    act.Modifiers.Add((modifier.@this)Populate(md, new modifier.@this(), data));
+        if (d.Get("child")?.Peek() is global::app.type.item.list.@this cs)
+        {
+            var steps = new System.Collections.Generic.List<global::app.goal.step.@this>();
+            foreach (var row in cs.Items)
+                if (Made<global::app.goal.step.@this>(row.Peek(), data) is { } s) steps.Add(s);
+            act.Child = new(steps);
+        }
+        return act;
+    }
+
     /// <summary>A structure, never a single-token leaf — drives the serializer's structure branch.</summary>
     public override bool IsLeaf => false;
 

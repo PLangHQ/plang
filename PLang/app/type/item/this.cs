@@ -317,6 +317,15 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
             return tail.TrimStart('@');
         });
 
+    /// <summary>Build a <typeparamref name="T"/> from a raw structured value through <c>T</c>'s OWN
+    /// <see cref="ICreate{T}.Create(object, global::app.data.@this)"/> courier — a domain item building
+    /// a nested item (an action its child steps, a step its actions). A shape error lands on
+    /// <paramref name="data"/>, never swallowed. This is the generic dispatch the non-generic
+    /// <c>T.Create(…)</c> call can't express (that binds the apex lift, not the <c>ICreate</c> member).</summary>
+    internal static T? Made<T>(object? raw, global::app.data.@this data)
+        where T : @this, ICreate<T>
+        => T.Create(raw, data);
+
     /// <summary>A human-readable name for a type in an error — a plang <c>@this</c> type reads as its
     /// last one/two namespace segments (<c>parameter.list</c>, <c>action</c>, <c>item</c>), a CLR type
     /// drops the generic-arity backtick and spells its element (<c>List&lt;Data&gt;</c>). Diagnostics
