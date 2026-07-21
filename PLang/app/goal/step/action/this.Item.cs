@@ -22,34 +22,47 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// (a modifier's on-error recovery chain, a compiled step's action set) arrives as a materialised
     /// dict, so the action owns that construction instead of falling to the generic reflection lower
     /// door (which can't rebuild the <c>Data</c> parameter rows). Parameter/default rows already rode
-    /// in as <c>Data</c> (the json reader's typed-entry path). A non-dict, non-action raw is a real
-    /// problem — surfaced as a keyed error, never swallowed to null. The <c>action</c>/<c>parameters</c>
-    /// aliases are accepted while old <c>.pr</c> shapes migrate to <c>name</c>/<c>parameter</c>.</summary>
+    /// in as <c>Data</c> (the json reader's typed-entry path). A non-dict, or a dict without the
+    /// canonical <c>module</c>/<c>name</c> keys (an old <c>{action, parameters}</c> .pr), fails LOUD —
+    /// wrong shape is a rebuild signal, never silently coerced to an empty action.</summary>
     public static @this? Create(object? raw, global::app.data.@this data)
     {
         if (raw is @this a) return a;
-        if (raw is global::app.type.item.dict.@this d) return Populate(d, new @this(), data);
-        data.Fail(new global::app.error.Error(
-            $"cannot build an action from a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name ?? "null"} — " +
-            $"an action reads from a dict of {{module, name, parameter}}.", "ActionShape", 400));
-        return null;
+        if (raw is not global::app.type.item.dict.@this d)
+        {
+            data.Fail(new global::app.error.Error(
+                $"cannot build an action from a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name ?? "null"} — " +
+                $"an action reads from a dict of {{module, name, parameter}}.", "ActionShape", 400));
+            return null;
+        }
+        var module = d.Get("module")?.Peek()?.ToString();
+        var name = d.Get("name")?.Peek()?.ToString();
+        if (string.IsNullOrEmpty(module) || string.IsNullOrEmpty(name))
+        {
+            data.Fail(new global::app.error.Error(
+                $"an action needs 'module' and 'name' — got keys [{string.Join(", ", d.KeyNames)}]. " +
+                $"An old {{action, parameters}} .pr must be rebuilt.", "ActionShape", 400));
+            return null;
+        }
+        return Populate(d, new @this { Module = module, ActionName = name }, data);
     }
 
     // The populate walk — shared by the action itself and its modifiers (a modifier IS an action +
-    // Position, so the same fields fill it). Child steps read through their own door (threading the
-    // binding so a malformed child surfaces there, not here).
+    // Position, so the same fields fill it). Module/name are already set by the caller (it validated
+    // them); this fills the rest. Child steps read through their own door (threading the binding so a
+    // malformed child surfaces there, not here).
     private static @this Populate(global::app.type.item.dict.@this d, @this act, global::app.data.@this data)
     {
-        act.Module = d.Get("module")?.Peek()?.ToString() ?? "";
-        act.ActionName = (d.Get("name") ?? d.Get("action"))?.Peek()?.ToString() ?? "";
-        if ((d.Get("parameter") ?? d.Get("parameters"))?.Peek() is global::app.type.item.list.@this ps)
+        if (act.Module.Length == 0) act.Module = d.Get("module")?.Peek()?.ToString() ?? "";
+        if (act.ActionName.Length == 0) act.ActionName = d.Get("name")?.Peek()?.ToString() ?? "";
+        if (d.Get("parameter")?.Peek() is global::app.type.item.list.@this ps)
             foreach (var row in ps.Items) act.Parameter.Add(row);
         if (d.Get("default")?.Peek() is global::app.type.item.list.@this ds)
         {
             act.Default = new();
             foreach (var row in ds.Items) act.Default.Add(row);
         }
-        if ((d.Get("modifier") ?? d.Get("modifiers"))?.Peek() is global::app.type.item.list.@this ms)
+        if (d.Get("modifier")?.Peek() is global::app.type.item.list.@this ms)
             foreach (var row in ms.Items)
                 if (row.Peek() is global::app.type.item.dict.@this md)
                     act.Modifiers.Add((modifier.@this)Populate(md, new modifier.@this(), data));
