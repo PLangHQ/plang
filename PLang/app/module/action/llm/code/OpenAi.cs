@@ -167,7 +167,7 @@ public sealed class OpenAi : ILlm
             // which is a real instance — test .IsNull, not a C# != null reference check.
             if (cached.Success && cached.Peek() is { IsNull: false })
             {
-                return RestoreFromCache(cached);
+                return await RestoreFromCache(cached);
             }
         }
 
@@ -1007,9 +1007,13 @@ public sealed class OpenAi : ILlm
     /// Restores a cached result from the SettingsStore.
     /// The cache stores metadata as a dictionary since Data.Properties is [JsonIgnore].
     /// </summary>
-    private static data.@this RestoreFromCache(data.@this cached)
+    private static async Task<data.@this> RestoreFromCache(data.@this cached)
     {
-        var cachedValue = cached.Peek();
+        // Materialize the stored entry — a settings-stored dict round-trips as a lazy wire, so
+        // Peek() alone would hand back the still-encoded slice (neither dict nor clr), and the
+        // Value-unwrap below would silently miss, riding the whole {Value, RawResponse, …} cache
+        // entry back as the result. Value() decodes the wire to its native dict first.
+        var cachedValue = await cached.Value();
         object? resultValue = cachedValue;   // non-container fallback; overridden below by RawResponse
         var props = new Dictionary<string, object?>();
 
