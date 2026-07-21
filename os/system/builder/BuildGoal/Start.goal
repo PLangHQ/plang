@@ -24,6 +24,8 @@ Start
 
 - save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
 - add %goal.Name% to %traceGoals%
+/ Re-parent indented sub-steps into the preceding condition's gate-action Child (recurses sub-goals). Post-compile, pre-save.
+- build.fold Goal=%goal%, on error call HandleBuildFailure
 - build.goalsSave Goal=%goal%, App=%app%
 
 
