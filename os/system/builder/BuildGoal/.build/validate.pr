@@ -2,18 +2,75 @@
   "name": "Validate",
   "description": null,
   "comment": null,
-  "steps": [
+  "visibility": 1,
+  "path": "/system/builder/BuildGoal/Validate.goal",
+  "prPath": "/system/builder/BuildGoal/.build/validate.pr",
+  "hash": "c38419b7d8530cca4b68e2f03d122c8295a476fccaa9ac720184de9e58ac4112",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": true,
+  "isTest": false,
+  "inputParameters": null,
+  "step": [
     {
       "index": 0,
-      "text": "if %plan.steps.Count% is not %goal.Steps.Count%, throw error 'Planner returned %plan.steps.Count% step plans but goal has %goal.Steps.Count% steps.' key=\"LlmTransient\"",
+      "text": "if %plan.steps.Count% is not %goal.step.Count%, throw error 'Planner returned %plan.steps.Count% step plans but goal has %goal.step.Count% steps.' key=\"LlmTransient\"",
       "lineNumber": 4,
-      "indent": 0,
       "comment": null,
-      "actions": [
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "condition",
-          "action": "if",
-          "parameters": [
+          "child": [
+            {
+              "index": 1,
+              "text": "throw error 'Planner returned %plan.steps.Count% step plans but goal has %goal.step.Count% steps.' key=\"LlmTransient\"",
+              "lineNumber": 4,
+              "waitForExecution": true,
+              "action": [
+                {
+                  "module": "error",
+                  "name": "throw",
+                  "parameter": [
+                    {
+                      "name": "Message",
+                      "type": {
+                        "name": "text",
+                        "template": "plang"
+                      },
+                      "value": "Planner returned %plan.steps.Count% step plans but goal has %goal.step.Count% steps."
+                    },
+                    {
+                      "name": "StatusCode",
+                      "type": {
+                        "name": "number",
+                        "kind": "int"
+                      },
+                      "value": 500
+                    },
+                    {
+                      "name": "Key",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "LlmTransient"
+                    }
+                  ],
+                  "default": null,
+                  "modifier": []
+                }
+              ]
+            }
+          ],
+          "name": "if",
+          "parameter": [
             {
               "name": "Left",
               "type": {
@@ -36,10 +93,10 @@
                 "name": "object",
                 "template": "plang"
               },
-              "value": "%goal.Steps.Count%"
+              "value": "%goal.step.Count%"
             }
           ],
-          "defaults": [
+          "default": [
             {
               "name": "negate",
               "type": {
@@ -48,58 +105,10 @@
               "value": false
             }
           ],
-          "modifiers": []
-        },
-        {
-          "module": "error",
-          "action": "throw",
-          "parameters": [
-            {
-              "name": "Message",
-              "type": {
-                "name": "text",
-                "template": "plang"
-              },
-              "value": "Planner returned %plan.steps.Count% step plans but goal has %goal.Steps.Count% steps."
-            },
-            {
-              "name": "StatusCode",
-              "type": {
-                "name": "number",
-                "kind": "int"
-              },
-              "value": 500
-            },
-            {
-              "name": "Key",
-              "type": {
-                "name": "text"
-              },
-              "value": "LlmTransient"
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
+          "modifier": []
         }
-      ],
-      "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
-      "source": null,
-      "waitForExecution": true
+      ]
     }
   ],
-  "goals": [],
-  "visibility": 1,
-  "path": "/system/builder/BuildGoal/Validate.goal",
-  "prPath": "/system/builder/BuildGoal/.build/validate.pr",
-  "hash": "c38419b7d8530cca4b68e2f03d122c8295a476fccaa9ac720184de9e58ac4112",
-  "builderVersion": null,
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": true,
-  "isTest": false,
-  "inputParameters": null
+  "child": []
 }

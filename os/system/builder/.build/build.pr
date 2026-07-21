@@ -2,18 +2,31 @@
   "name": "Build",
   "description": null,
   "comment": null,
-  "steps": [
+  "visibility": 1,
+  "path": "/system/builder/Build.goal",
+  "prPath": "/system/builder/.build/build.pr",
+  "hash": "483f3bbb51832f3fbbe4ae152e1f0ccfc163a386a87a97d666d79543953a2dfe",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": true,
+  "isTest": false,
+  "inputParameters": null,
+  "step": [
     {
       "index": 0,
       "text": "set default %path% = \"/\"",
       "lineNumber": 6,
-      "indent": 0,
       "comment": null,
-      "actions": [
+      "intent": null,
+      "formal": "variable.set(Name=%path%, Value=\"/\", AsDefault=true, Type=string)",
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "parameter": [
             {
               "name": "Name",
               "type": {
@@ -44,26 +57,25 @@
               "value": "string"
             }
           ],
-          "defaults": null,
-          "modifiers": []
+          "default": null,
+          "modifier": []
         }
-      ],
-      "intent": null,
-      "formal": "variable.set(Name=%path%, Value=\"/\", AsDefault=true, Type=string)",
-      "source": null,
-      "waitForExecution": true
+      ]
     },
     {
       "index": 1,
       "text": "set default %!build.cache% = true",
       "lineNumber": 7,
-      "indent": 0,
       "comment": null,
-      "actions": [
+      "intent": null,
+      "formal": "variable.set(Name=%!build.cache%, Value=true, AsDefault=true, Type=string)",
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "parameter": [
             {
               "name": "Name",
               "type": {
@@ -87,26 +99,25 @@
               "value": true
             }
           ],
-          "defaults": null,
-          "modifiers": []
+          "default": null,
+          "modifier": []
         }
-      ],
-      "intent": null,
-      "formal": "variable.set(Name=%!build.cache%, Value=true, AsDefault=true, Type=string)",
-      "source": null,
-      "waitForExecution": true
+      ]
     },
     {
       "index": 2,
       "text": "set default %!build.summary% = true",
       "lineNumber": 8,
-      "indent": 0,
       "comment": null,
-      "actions": [
+      "intent": null,
+      "formal": "variable.set(Name=%!build.summary%, Value=true, Type=bool, AsDefault=true)",
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "parameter": [
             {
               "name": "Name",
               "type": {
@@ -137,26 +148,25 @@
               "value": true
             }
           ],
-          "defaults": null,
-          "modifiers": []
+          "default": null,
+          "modifier": []
         }
-      ],
-      "intent": null,
-      "formal": "variable.set(Name=%!build.summary%, Value=true, Type=bool, AsDefault=true)",
-      "source": null,
-      "waitForExecution": true
+      ]
     },
     {
       "index": 3,
       "text": "set channel \"builder\" call BuilderChannel",
       "lineNumber": 10,
-      "indent": 0,
       "comment": null,
-      "actions": [
+      "intent": null,
+      "formal": "channel.set(Name=\"builder\", Goal={name:\"BuilderChannel\"})",
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "channel",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "parameter": [
             {
               "name": "Name",
               "type": {
@@ -177,26 +187,25 @@
               }
             }
           ],
-          "defaults": null,
-          "modifiers": []
+          "default": null,
+          "modifier": []
         }
-      ],
-      "intent": null,
-      "formal": "channel.set(Name=\"builder\", Goal={name:\"BuilderChannel\"})",
-      "source": null,
-      "waitForExecution": true
+      ]
     },
     {
       "index": 4,
       "text": "call EmitBuildEvent kind=\"build-path\", path=%path%",
       "lineNumber": 11,
-      "indent": 0,
       "comment": null,
-      "actions": [
+      "intent": null,
+      "formal": "goal.call(GoalName={name:\"EmitBuildEvent\", parameters:[{name:\"kind\", value:\"build-path\", type:\"string\"}, {name:\"path\", value\":\"%path%\", type:\"string\"}]})",
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "goal",
-          "action": "call",
-          "parameters": [
+          "name": "call",
+          "parameter": [
             {
               "name": "GoalName",
               "type": {
@@ -218,26 +227,25 @@
               }
             }
           ],
-          "defaults": null,
-          "modifiers": []
+          "default": null,
+          "modifier": []
         }
-      ],
-      "intent": null,
-      "formal": "goal.call(GoalName={name:\"EmitBuildEvent\", parameters:[{name:\"kind\", value:\"build-path\", type:\"string\"}, {name:\"path\", value\":\"%path%\", type:\"string\"}]})",
-      "source": null,
-      "waitForExecution": true
+      ]
     },
     {
       "index": 5,
       "text": "build.load, write to %app%",
       "lineNumber": 12,
-      "indent": 0,
       "comment": null,
-      "actions": [
+      "intent": null,
+      "formal": "build.load(Path=%path%) , variable.set(Name=%app%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "build",
-          "action": "load",
-          "parameters": [
+          "name": "load",
+          "parameter": [
             {
               "name": "Path",
               "type": {
@@ -247,13 +255,13 @@
               "value": "%path%"
             }
           ],
-          "defaults": null,
-          "modifiers": []
+          "default": null,
+          "modifier": []
         },
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "parameter": [
             {
               "name": "Name",
               "type": {
@@ -271,7 +279,7 @@
               "value": "%!data%"
             }
           ],
-          "defaults": [
+          "default": [
             {
               "name": "asdefault",
               "type": {
@@ -280,25 +288,24 @@
               "value": false
             }
           ],
-          "modifiers": []
+          "modifier": []
         }
-      ],
-      "intent": null,
-      "formal": "build.load(Path=%path%) , variable.set(Name=%app%, Value=%!data%)",
-      "source": null,
-      "waitForExecution": true
+      ]
     },
     {
       "index": 6,
       "text": "build.goals path=%path%, write to %goals%",
       "lineNumber": 13,
-      "indent": 0,
       "comment": null,
-      "actions": [
+      "intent": null,
+      "formal": "build.goals(Path=%path%) , variable.set(Name=%goals%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "build",
-          "action": "goals",
-          "parameters": [
+          "name": "goals",
+          "parameter": [
             {
               "name": "Path",
               "type": {
@@ -308,13 +315,13 @@
               "value": "%path%"
             }
           ],
-          "defaults": null,
-          "modifiers": []
+          "default": null,
+          "modifier": []
         },
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "parameter": [
             {
               "name": "Name",
               "type": {
@@ -332,7 +339,7 @@
               "value": "%!data%"
             }
           ],
-          "defaults": [
+          "default": [
             {
               "name": "asdefault",
               "type": {
@@ -341,25 +348,24 @@
               "value": false
             }
           ],
-          "modifiers": []
+          "modifier": []
         }
-      ],
-      "intent": null,
-      "formal": "build.goals(Path=%path%) , variable.set(Name=%goals%, Value=%!data%)",
-      "source": null,
-      "waitForExecution": true
+      ]
     },
     {
       "index": 7,
       "text": "call EmitBuildEvent kind=\"goals-found\", goals=%goals%",
       "lineNumber": 14,
-      "indent": 0,
       "comment": null,
-      "actions": [
+      "intent": null,
+      "formal": "goal.call(GoalName={name:\"EmitBuildEvent\", parameters:[{name:\"kind\", value:\"goals-found\", type:\"string\"}, {name:\"goals\", value:\"%goals%\", type:\"list<goal>\"}]})",
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "goal",
-          "action": "call",
-          "parameters": [
+          "name": "call",
+          "parameter": [
             {
               "name": "GoalName",
               "type": {
@@ -381,26 +387,25 @@
               }
             }
           ],
-          "defaults": null,
-          "modifiers": []
+          "default": null,
+          "modifier": []
         }
-      ],
-      "intent": null,
-      "formal": "goal.call(GoalName={name:\"EmitBuildEvent\", parameters:[{name:\"kind\", value:\"goals-found\", type:\"string\"}, {name:\"goals\", value:\"%goals%\", type:\"list<goal>\"}]})",
-      "source": null,
-      "waitForExecution": true
+      ]
     },
     {
       "index": 8,
       "text": "foreach %goals%, call BuildGoal goal=%item%",
       "lineNumber": 15,
-      "indent": 0,
       "comment": null,
-      "actions": [
+      "intent": null,
+      "formal": "loop.foreach(Collection=%goals%), goal.call(GoalName={name:\"BuildGoal\", parameters:[{name:\"goal\", value:%item%, type:\"string\"}]})",
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "loop",
-          "action": "foreach",
-          "parameters": [
+          "name": "foreach",
+          "parameter": [
             {
               "name": "Collection",
               "type": {
@@ -410,13 +415,13 @@
               "value": "%goals%"
             }
           ],
-          "defaults": null,
-          "modifiers": []
+          "default": null,
+          "modifier": []
         },
         {
           "module": "goal",
-          "action": "call",
-          "parameters": [
+          "name": "call",
+          "parameter": [
             {
               "name": "GoalName",
               "type": {
@@ -439,26 +444,25 @@
               }
             }
           ],
-          "defaults": null,
-          "modifiers": []
+          "default": null,
+          "modifier": []
         }
-      ],
-      "intent": null,
-      "formal": "loop.foreach(Collection=%goals%), goal.call(GoalName={name:\"BuildGoal\", parameters:[{name:\"goal\", value:%item%, type:\"string\"}]})",
-      "source": null,
-      "waitForExecution": true
+      ]
     },
     {
       "index": 9,
       "text": "save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'",
       "lineNumber": 16,
-      "indent": 0,
       "comment": null,
-      "actions": [
+      "intent": null,
+      "formal": "file.save(Path=\"/.build/traces/%!trace.id%/manifest.json\", Value=%traceGoals%)",
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "file",
-          "action": "save",
-          "parameters": [
+          "name": "save",
+          "parameter": [
             {
               "name": "Path",
               "type": {
@@ -476,45 +480,30 @@
               "value": "%traceGoals%"
             }
           ],
-          "defaults": null,
-          "modifiers": []
+          "default": null,
+          "modifier": []
         }
-      ],
-      "intent": null,
-      "formal": "file.save(Path=\"/.build/traces/%!trace.id%/manifest.json\", Value=%traceGoals%)",
-      "source": null,
-      "waitForExecution": true
+      ]
     },
     {
       "index": 10,
       "text": "build.appSave",
       "lineNumber": 17,
-      "indent": 0,
       "comment": null,
-      "actions": [
-        {
-          "module": "build",
-          "action": "appSave",
-          "parameters": [],
-          "defaults": null,
-          "modifiers": []
-        }
-      ],
       "intent": null,
       "formal": "build.appSave()",
       "source": null,
-      "waitForExecution": true
+      "waitForExecution": true,
+      "action": [
+        {
+          "module": "build",
+          "name": "appSave",
+          "parameter": [],
+          "default": null,
+          "modifier": []
+        }
+      ]
     }
   ],
-  "goals": [],
-  "visibility": 1,
-  "path": "/system/builder/Build.goal",
-  "prPath": "/system/builder/.build/build.pr",
-  "hash": "483f3bbb51832f3fbbe4ae152e1f0ccfc163a386a87a97d666d79543953a2dfe",
-  "builderVersion": null,
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": true,
-  "isTest": false,
-  "inputParameters": null
+  "child": []
 }

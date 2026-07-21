@@ -2,18 +2,75 @@
   "name": "Validate",
   "description": null,
   "comment": null,
-  "steps": [
+  "visibility": 1,
+  "path": "/system/builder/BuildStep/Validate.goal",
+  "prPath": "/system/builder/BuildStep/.build/validate.pr",
+  "hash": "b7a5024f0b9742b5180c4760826a7d0c5398880aac431629f2a7b8f8e2d6c672",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": true,
+  "isTest": false,
+  "inputParameters": null,
+  "step": [
     {
       "index": 0,
       "text": "if %compileResult.errors% is not empty, throw error 'Step %step.Index% (%step.Text%): %compileResult.errors%' key=\"GoalBug\"",
       "lineNumber": 4,
-      "indent": 0,
       "comment": null,
-      "actions": [
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "condition",
-          "action": "if",
-          "parameters": [
+          "child": [
+            {
+              "index": 1,
+              "text": "throw error 'Step %step.Index% (%step.Text%): %compileResult.errors%' key=\"GoalBug\"",
+              "lineNumber": 4,
+              "waitForExecution": true,
+              "action": [
+                {
+                  "module": "error",
+                  "name": "throw",
+                  "parameter": [
+                    {
+                      "name": "Message",
+                      "type": {
+                        "name": "text",
+                        "template": "plang"
+                      },
+                      "value": "Step %step.Index% (%step.Text%): %compileResult.errors%"
+                    },
+                    {
+                      "name": "StatusCode",
+                      "type": {
+                        "name": "number",
+                        "kind": "int"
+                      },
+                      "value": 500
+                    },
+                    {
+                      "name": "Key",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "GoalBug"
+                    }
+                  ],
+                  "default": null,
+                  "modifier": []
+                }
+              ]
+            }
+          ],
+          "name": "if",
+          "parameter": [
             {
               "name": "Left",
               "type": {
@@ -38,7 +95,7 @@
               "value": false
             }
           ],
-          "defaults": [
+          "default": [
             {
               "name": "negate",
               "type": {
@@ -47,59 +104,68 @@
               "value": false
             }
           ],
-          "modifiers": []
-        },
-        {
-          "module": "error",
-          "action": "throw",
-          "parameters": [
-            {
-              "name": "Message",
-              "type": {
-                "name": "text",
-                "template": "plang"
-              },
-              "value": "Step %step.Index% (%step.Text%): %compileResult.errors%"
-            },
-            {
-              "name": "StatusCode",
-              "type": {
-                "name": "number",
-                "kind": "int"
-              },
-              "value": 500
-            },
-            {
-              "name": "Key",
-              "type": {
-                "name": "text"
-              },
-              "value": "GoalBug"
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
+          "modifier": []
         }
-      ],
+      ]
+    },
+    {
+      "index": 1,
+      "text": "if %compileResult.actions% is empty, throw error 'Step %step.Index% (%step.Text%) has no actions.' key=\"GoalBug\"",
+      "lineNumber": 5,
+      "comment": null,
       "intent": null,
       "guidance": null,
       "level": null,
       "confidence": null,
       "formal": null,
       "source": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 1,
-      "text": "if %compileResult.actions% is empty, throw error 'Step %step.Index% (%step.Text%) has no actions.' key=\"GoalBug\"",
-      "lineNumber": 5,
-      "indent": 0,
-      "comment": null,
-      "actions": [
+      "waitForExecution": true,
+      "action": [
         {
           "module": "condition",
-          "action": "if",
-          "parameters": [
+          "child": [
+            {
+              "index": 101,
+              "text": "throw error 'Step %step.Index% (%step.Text%) has no actions.' key=\"GoalBug\"",
+              "lineNumber": 5,
+              "waitForExecution": true,
+              "action": [
+                {
+                  "module": "error",
+                  "name": "throw",
+                  "parameter": [
+                    {
+                      "name": "Message",
+                      "type": {
+                        "name": "text",
+                        "template": "plang"
+                      },
+                      "value": "Step %step.Index% (%step.Text%) has no actions."
+                    },
+                    {
+                      "name": "StatusCode",
+                      "type": {
+                        "name": "number",
+                        "kind": "int"
+                      },
+                      "value": 500
+                    },
+                    {
+                      "name": "Key",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "GoalBug"
+                    }
+                  ],
+                  "default": null,
+                  "modifier": []
+                }
+              ]
+            }
+          ],
+          "name": "if",
+          "parameter": [
             {
               "name": "Left",
               "type": {
@@ -124,7 +190,7 @@
               "value": null
             }
           ],
-          "defaults": [
+          "default": [
             {
               "name": "negate",
               "type": {
@@ -133,59 +199,27 @@
               "value": false
             }
           ],
-          "modifiers": []
-        },
-        {
-          "module": "error",
-          "action": "throw",
-          "parameters": [
-            {
-              "name": "Message",
-              "type": {
-                "name": "text",
-                "template": "plang"
-              },
-              "value": "Step %step.Index% (%step.Text%) has no actions."
-            },
-            {
-              "name": "StatusCode",
-              "type": {
-                "name": "number",
-                "kind": "int"
-              },
-              "value": 500
-            },
-            {
-              "name": "Key",
-              "type": {
-                "name": "text"
-              },
-              "value": "GoalBug"
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
+          "modifier": []
         }
-      ],
+      ]
+    },
+    {
+      "index": 2,
+      "text": "foreach %compileResult.actions%, call ValidateAction __vAct__=%item%",
+      "lineNumber": 6,
+      "comment": null,
       "intent": null,
       "guidance": null,
       "level": null,
       "confidence": null,
       "formal": null,
       "source": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 2,
-      "text": "foreach %compileResult.actions%, call ValidateAction __vAct__=%item%",
-      "lineNumber": 6,
-      "indent": 0,
-      "comment": null,
-      "actions": [
+      "waitForExecution": true,
+      "action": [
         {
           "module": "loop",
-          "action": "foreach",
-          "parameters": [
+          "name": "foreach",
+          "parameter": [
             {
               "name": "Collection",
               "type": {
@@ -195,13 +229,13 @@
               "value": "%compileResult.actions%"
             }
           ],
-          "defaults": null,
-          "modifiers": []
+          "default": null,
+          "modifier": []
         },
         {
           "module": "goal",
-          "action": "call",
-          "parameters": [
+          "name": "call",
+          "parameter": [
             {
               "name": "GoalName",
               "type": {
@@ -224,36 +258,86 @@
               }
             }
           ],
-          "defaults": null,
-          "modifiers": []
+          "default": null,
+          "modifier": []
         }
-      ],
-      "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
-      "source": null,
-      "waitForExecution": true
+      ]
     }
   ],
-  "goals": [
+  "child": [
     {
       "name": "ValidateAction",
       "description": null,
       "comment": null,
-      "steps": [
+      "visibility": 0,
+      "path": "/system/builder/BuildStep/Validate.goal",
+      "prPath": "/system/builder/BuildStep/.build/validate.pr",
+      "hash": "5af414658718072be3b593226d6656fd875199970fe6549978bf0caa30dbbb09",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": true,
+      "isTest": false,
+      "inputParameters": null,
+      "step": [
         {
           "index": 0,
           "text": "if %__vAct__.errors% is not empty, throw error 'Action %__vAct__.module%.%__vAct__.action% failed for step %step.Index% (%step.Text%): %__vAct__.errors%' key=\"GoalBug\"",
           "lineNumber": 10,
-          "indent": 0,
           "comment": null,
-          "actions": [
+          "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true,
+          "action": [
             {
               "module": "condition",
-              "action": "if",
-              "parameters": [
+              "child": [
+                {
+                  "index": 1,
+                  "text": "throw error 'Action %__vAct__.module%.%__vAct__.action% failed for step %step.Index% (%step.Text%): %__vAct__.errors%' key=\"GoalBug\"",
+                  "lineNumber": 10,
+                  "waitForExecution": true,
+                  "action": [
+                    {
+                      "module": "error",
+                      "name": "throw",
+                      "parameter": [
+                        {
+                          "name": "Message",
+                          "type": {
+                            "name": "text",
+                            "template": "plang"
+                          },
+                          "value": "Action %__vAct__.module%.%__vAct__.action% failed for step %step.Index% (%step.Text%): %__vAct__.errors%"
+                        },
+                        {
+                          "name": "StatusCode",
+                          "type": {
+                            "name": "number",
+                            "kind": "int"
+                          },
+                          "value": 500
+                        },
+                        {
+                          "name": "Key",
+                          "type": {
+                            "name": "text"
+                          },
+                          "value": "GoalBug"
+                        }
+                      ],
+                      "default": null,
+                      "modifier": []
+                    }
+                  ]
+                }
+              ],
+              "name": "if",
+              "parameter": [
                 {
                   "name": "Left",
                   "type": {
@@ -266,7 +350,7 @@
                   "name": "Operator",
                   "type": {
                     "name": "choice",
-                "kind": "operator"
+                    "kind": "operator"
                   },
                   "value": "isempty"
                 },
@@ -278,7 +362,7 @@
                   "value": false
                 }
               ],
-              "defaults": [
+              "default": [
                 {
                   "name": "negate",
                   "type": {
@@ -287,70 +371,12 @@
                   "value": false
                 }
               ],
-              "modifiers": []
-            },
-            {
-              "module": "error",
-              "action": "throw",
-              "parameters": [
-                {
-                  "name": "Message",
-                  "type": {
-                    "name": "text",
-                    "template": "plang"
-                  },
-                  "value": "Action %__vAct__.module%.%__vAct__.action% failed for step %step.Index% (%step.Text%): %__vAct__.errors%"
-                },
-                {
-                  "name": "StatusCode",
-                  "type": {
-                    "name": "number",
-                    "kind": "int"
-                  },
-                  "value": 500
-                },
-                {
-                  "name": "Key",
-                  "type": {
-                    "name": "text"
-                  },
-                  "value": "GoalBug"
-                }
-              ],
-              "defaults": null,
-              "modifiers": []
+              "modifier": []
             }
-          ],
-          "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
-          "formal": null,
-          "source": null,
-          "waitForExecution": true
+          ]
         }
       ],
-      "goals": [],
-      "visibility": 0,
-      "path": "/system/builder/BuildStep/Validate.goal",
-      "prPath": "/system/builder/BuildStep/.build/validate.pr",
-      "hash": "5af414658718072be3b593226d6656fd875199970fe6549978bf0caa30dbbb09",
-      "builderVersion": null,
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": true,
-      "isTest": false,
-      "inputParameters": null
+      "child": []
     }
-  ],
-  "visibility": 1,
-  "path": "/system/builder/BuildStep/Validate.goal",
-  "prPath": "/system/builder/BuildStep/.build/validate.pr",
-  "hash": "b7a5024f0b9742b5180c4760826a7d0c5398880aac431629f2a7b8f8e2d6c672",
-  "builderVersion": null,
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": true,
-  "isTest": false,
-  "inputParameters": null
+  ]
 }

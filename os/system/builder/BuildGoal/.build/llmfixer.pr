@@ -2,18 +2,31 @@
   "name": "LlmFixer",
   "description": null,
   "comment": null,
-  "steps": [
+  "visibility": 1,
+  "path": "/system/builder/BuildGoal/LlmFixer.goal",
+  "prPath": "/system/builder/BuildGoal/.build/llmfixer.pr",
+  "hash": "f408dd456b1b3f65881750c7174103d26d600818e318b7ea09e1e2eb1f84df37",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": true,
+  "isTest": false,
+  "inputParameters": null,
+  "step": [
     {
       "index": 0,
       "text": "call /system/builder/EmitBuildEvent kind=\"planner-validation-failed\", errorMessage=%!error.Message%",
       "lineNumber": 6,
-      "indent": 0,
       "comment": null,
-      "actions": [
+      "intent": null,
+      "formal": "goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[{name:\"kind\", value:\"planner-validation-failed\", type:{name:\"text\"}}, {name:\"errorMessage\", value:\"%!error.Message%\", type:{name:\"text\"}}]})",
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "goal",
-          "action": "call",
-          "parameters": [
+          "name": "call",
+          "parameter": [
             {
               "name": "GoalName",
               "type": {
@@ -43,26 +56,25 @@
               }
             }
           ],
-          "defaults": null,
-          "modifiers": []
+          "default": null,
+          "modifier": []
         }
-      ],
-      "intent": null,
-      "formal": "goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[{name:\"kind\", value:\"planner-validation-failed\", type:{name:\"text\"}}, {name:\"errorMessage\", value:\"%!error.Message%\", type:{name:\"text\"}}]})",
-      "source": null,
-      "waitForExecution": true
+      ]
     },
     {
       "index": 1,
       "text": "set %fixerMessages% = [{\"Role\":\"user\", \"Content\":\"Your previous response was rejected: %!error.Message%\\n\\nReturn the corrected plan. Each step's `actions` MUST be a non-empty array of `\\\"module.action\\\"` strings from the catalog (e.g. `\\\"variable.set\\\"`, `\\\"file.read\\\"`). `index` is 0-based.\"}]",
       "lineNumber": 7,
-      "indent": 0,
       "comment": null,
-      "actions": [
+      "intent": null,
+      "formal": "variable.set(Name=%fixerMessages%, Value=[{\"Role\":\"user\",\"Content\":\"Your previous response was rejected: %!error.Message%\\n\\nReturn the corrected plan. Each step's `actions` MUST be a non-empty array of \\\"module.action\\\" strings from the catalog (e.g. \\\"variable.set\\\", \\\"file.read\\\"). `index` is 0-based.\"}])",
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "parameter": [
             {
               "name": "Name",
               "type": {
@@ -84,7 +96,7 @@
               ]
             }
           ],
-          "defaults": [
+          "default": [
             {
               "name": "asdefault",
               "type": {
@@ -93,25 +105,24 @@
               "value": false
             }
           ],
-          "modifiers": []
+          "modifier": []
         }
-      ],
-      "intent": null,
-      "formal": "variable.set(Name=%fixerMessages%, Value=[{\"Role\":\"user\",\"Content\":\"Your previous response was rejected: %!error.Message%\\n\\nReturn the corrected plan. Each step's `actions` MUST be a non-empty array of \\\"module.action\\\" strings from the catalog (e.g. \\\"variable.set\\\", \\\"file.read\\\"). `index` is 0-based.\"}])",
-      "source": null,
-      "waitForExecution": true
+      ]
     },
     {
       "index": 2,
       "text": "llm.query Messages=%fixerMessages%, Schema={description: string, steps: list<{index: int, actions: list<string>, confidence: string, explanation?: string}>}, cache=%!build.cache%, previousConversation=%plan%, write to %plan%",
       "lineNumber": 8,
-      "indent": 0,
       "comment": null,
-      "actions": [
+      "intent": null,
+      "formal": "llm.query(Messages=%fixerMessages%, Schema={description: string, steps: list<{index: int, actions: list<string>, confidence: string, explanation?: string}>}, Cache=%!build.cache%, ContinuePreviousConversation=%plan%) | variable.set(Name=%plan%, Value=%!data%, Type=object)",
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "llm",
-          "action": "query",
-          "parameters": [
+          "name": "query",
+          "parameter": [
             {
               "name": "Messages",
               "type": {
@@ -154,7 +165,7 @@
               "value": "gpt-5.4-nano"
             }
           ],
-          "defaults": [
+          "default": [
             {
               "name": "temperature",
               "type": {
@@ -188,12 +199,12 @@
               "value": 0
             }
           ],
-          "modifiers": []
+          "modifier": []
         },
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "parameter": [
             {
               "name": "Name",
               "type": {
@@ -211,7 +222,7 @@
               "value": "%!data%"
             }
           ],
-          "defaults": [
+          "default": [
             {
               "name": "asdefault",
               "type": {
@@ -220,24 +231,10 @@
               "value": false
             }
           ],
-          "modifiers": []
+          "modifier": []
         }
-      ],
-      "intent": null,
-      "formal": "llm.query(Messages=%fixerMessages%, Schema={description: string, steps: list<{index: int, actions: list<string>, confidence: string, explanation?: string}>}, Cache=%!build.cache%, ContinuePreviousConversation=%plan%) | variable.set(Name=%plan%, Value=%!data%, Type=object)",
-      "source": null,
-      "waitForExecution": true
+      ]
     }
   ],
-  "goals": [],
-  "visibility": 1,
-  "path": "/system/builder/BuildGoal/LlmFixer.goal",
-  "prPath": "/system/builder/BuildGoal/.build/llmfixer.pr",
-  "hash": "f408dd456b1b3f65881750c7174103d26d600818e318b7ea09e1e2eb1f84df37",
-  "builderVersion": null,
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": true,
-  "isTest": false,
-  "inputParameters": null
+  "child": []
 }

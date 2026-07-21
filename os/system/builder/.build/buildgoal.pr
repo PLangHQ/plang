@@ -2,18 +2,34 @@
   "name": "BuildGoal",
   "description": null,
   "comment": null,
-  "steps": [
+  "visibility": 1,
+  "path": "/system/builder/BuildGoal.goal",
+  "prPath": "/system/builder/.build/buildgoal.pr",
+  "hash": "bc83d1783dcac14d9afd312e91b7d2153e865e23a38ecbf26af6198e1ae16fd7",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": true,
+  "isTest": false,
+  "inputParameters": null,
+  "step": [
     {
       "index": 0,
       "text": "call BuildGoal/Start goal=%goal%",
       "lineNumber": 4,
-      "indent": 0,
       "comment": null,
-      "actions": [
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "goal",
-          "action": "call",
-          "parameters": [
+          "name": "call",
+          "parameter": [
             {
               "name": "GoalName",
               "type": {
@@ -27,28 +43,11 @@
               }
             }
           ],
-          "defaults": null,
-          "modifiers": []
+          "default": null,
+          "modifier": []
         }
-      ],
-      "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
-      "source": null,
-      "waitForExecution": true
+      ]
     }
   ],
-  "goals": [],
-  "visibility": 1,
-  "path": "/system/builder/BuildGoal.goal",
-  "prPath": "/system/builder/.build/buildgoal.pr",
-  "hash": "bc83d1783dcac14d9afd312e91b7d2153e865e23a38ecbf26af6198e1ae16fd7",
-  "builderVersion": null,
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": true,
-  "isTest": false,
-  "inputParameters": null
+  "child": []
 }

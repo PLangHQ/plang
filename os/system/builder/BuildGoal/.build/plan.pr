@@ -2,25 +2,38 @@
   "name": "Plan",
   "description": null,
   "comment": null,
-  "steps": [
+  "visibility": 1,
+  "path": "/system/builder/BuildGoal/Plan.goal",
+  "prPath": "/system/builder/BuildGoal/.build/plan.pr",
+  "hash": "d0a0114f61ac57a74a4b39b5b16ff50f862f0ef873ab6cadcff6492457d14024",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": true,
+  "isTest": false,
+  "inputParameters": null,
+  "step": [
     {
       "index": 0,
       "text": "build.actions, write to %actions%",
       "lineNumber": 6,
-      "indent": 0,
       "comment": null,
-      "actions": [
+      "intent": null,
+      "formal": "build.actions(Actions=%!data%) | variable.set(Name=%actions%, Value=%!data%, Type=object)",
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "build",
-          "action": "actions",
-          "parameters": [],
-          "defaults": null,
-          "modifiers": []
+          "name": "actions",
+          "parameter": [],
+          "default": null,
+          "modifier": []
         },
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "parameter": [
             {
               "name": "Name",
               "type": {
@@ -38,7 +51,7 @@
               "value": "%!data%"
             }
           ],
-          "defaults": [
+          "default": [
             {
               "name": "asdefault",
               "type": {
@@ -47,25 +60,24 @@
               "value": false
             }
           ],
-          "modifiers": []
+          "modifier": []
         }
-      ],
-      "intent": null,
-      "formal": "build.actions(Actions=%!data%) | variable.set(Name=%actions%, Value=%!data%, Type=object)",
-      "source": null,
-      "waitForExecution": true
+      ]
     },
     {
       "index": 1,
       "text": "render template \"/system/actions/v2/summary.planner.md\", write to %actionSummary%",
       "lineNumber": 7,
-      "indent": 0,
       "comment": null,
-      "actions": [
+      "intent": null,
+      "formal": "ui.render(Template=\"/system/actions/v2/summary.planner.md\") | variable.set(Name=%actionSummary%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "ui",
-          "action": "render",
-          "parameters": [
+          "name": "render",
+          "parameter": [
             {
               "name": "Template",
               "type": {
@@ -74,13 +86,13 @@
               "value": "/system/actions/v2/summary.planner.md"
             }
           ],
-          "defaults": null,
-          "modifiers": []
+          "default": null,
+          "modifier": []
         },
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "parameter": [
             {
               "name": "Name",
               "type": {
@@ -98,7 +110,7 @@
               "value": "%!data%"
             }
           ],
-          "defaults": [
+          "default": [
             {
               "name": "asdefault",
               "type": {
@@ -107,25 +119,24 @@
               "value": false
             }
           ],
-          "modifiers": []
+          "modifier": []
         }
-      ],
-      "intent": null,
-      "formal": "ui.render(Template=\"/system/actions/v2/summary.planner.md\") | variable.set(Name=%actionSummary%, Value=%!data%)",
-      "source": null,
-      "waitForExecution": true
+      ]
     },
     {
       "index": 2,
       "text": "render template \"/system/builder/llm/templates/goalFormat.template\", write to %goalForLlm%",
       "lineNumber": 8,
-      "indent": 0,
       "comment": null,
-      "actions": [
+      "intent": null,
+      "formal": "ui.render(Template=\"/system/builder/llm/templates/goalFormat.template\") | variable.set(Name=%goalForLlm%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "ui",
-          "action": "render",
-          "parameters": [
+          "name": "render",
+          "parameter": [
             {
               "name": "Template",
               "type": {
@@ -134,13 +145,13 @@
               "value": "/system/builder/llm/templates/goalFormat.template"
             }
           ],
-          "defaults": null,
-          "modifiers": []
+          "default": null,
+          "modifier": []
         },
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "parameter": [
             {
               "name": "Name",
               "type": {
@@ -158,7 +169,7 @@
               "value": "%!data%"
             }
           ],
-          "defaults": [
+          "default": [
             {
               "name": "asdefault",
               "type": {
@@ -167,25 +178,24 @@
               "value": false
             }
           ],
-          "modifiers": []
+          "modifier": []
         }
-      ],
-      "intent": null,
-      "formal": "ui.render(Template=\"/system/builder/llm/templates/goalFormat.template\") | variable.set(Name=%goalForLlm%, Value=%!data%)",
-      "source": null,
-      "waitForExecution": true
+      ]
     },
     {
       "index": 3,
       "text": "render template \"/system/builder/llm/Plan.llm\", write to %planPrompt%",
       "lineNumber": 9,
-      "indent": 0,
       "comment": null,
-      "actions": [
+      "intent": null,
+      "formal": "ui.render(Template=\"/system/builder/llm/Plan.llm\") | variable.set(Name=%planPrompt%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "ui",
-          "action": "render",
-          "parameters": [
+          "name": "render",
+          "parameter": [
             {
               "name": "Template",
               "type": {
@@ -194,13 +204,13 @@
               "value": "/system/builder/llm/Plan.llm"
             }
           ],
-          "defaults": null,
-          "modifiers": []
+          "default": null,
+          "modifier": []
         },
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "parameter": [
             {
               "name": "Name",
               "type": {
@@ -218,7 +228,7 @@
               "value": "%!data%"
             }
           ],
-          "defaults": [
+          "default": [
             {
               "name": "asdefault",
               "type": {
@@ -227,25 +237,24 @@
               "value": false
             }
           ],
-          "modifiers": []
+          "modifier": []
         }
-      ],
-      "intent": null,
-      "formal": "ui.render(Template=\"/system/builder/llm/Plan.llm\") | variable.set(Name=%planPrompt%, Value=%!data%)",
-      "source": null,
-      "waitForExecution": true
+      ]
     },
     {
       "index": 4,
       "text": "set %messages% = [{\"Role\":\"system\", \"Content\":\"%planPrompt%\"}, {\"Role\":\"user\", \"Content\":\"%goalForLlm%\"}]",
       "lineNumber": 10,
-      "indent": 0,
       "comment": null,
-      "actions": [
+      "intent": null,
+      "formal": "variable.set(Name=%messages%, Value=[{\"Role\":\"system\",\"Content\":\"%planPrompt%\"},{\"Role\":\"user\",\"Content\":\"%goalForLlm%\"}])",
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "parameter": [
             {
               "name": "Name",
               "type": {
@@ -271,7 +280,7 @@
               ]
             }
           ],
-          "defaults": [
+          "default": [
             {
               "name": "asdefault",
               "type": {
@@ -280,25 +289,24 @@
               "value": false
             }
           ],
-          "modifiers": []
+          "modifier": []
         }
-      ],
-      "intent": null,
-      "formal": "variable.set(Name=%messages%, Value=[{\"Role\":\"system\",\"Content\":\"%planPrompt%\"},{\"Role\":\"user\",\"Content\":\"%goalForLlm%\"}])",
-      "source": null,
-      "waitForExecution": true
+      ]
     },
     {
       "index": 5,
       "text": "call QueryAndValidatePlan, on error call LlmFixer, then retry 2 times",
       "lineNumber": 16,
-      "indent": 0,
       "comment": "Wrap llm.query + Validate together so the retry surface catches BOTH\nmalformed-JSON (llm.query throws) and structural validation failures\n(Validate throws step-count-mismatch, etc.). RetryCount=2 is the runtime's\njob. LlmFixer re-prompts with previousConversation=%plan%.",
-      "actions": [
+      "intent": null,
+      "formal": "goal.call(GoalName={name:\"QueryAndValidatePlan\"}) | error.handle(Actions=[goal.call(GoalName={name:\"LlmFixer\"})], RetryCount=2)",
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "goal",
-          "action": "call",
-          "parameters": [
+          "name": "call",
+          "parameter": [
             {
               "name": "GoalName",
               "type": {
@@ -312,12 +320,12 @@
               }
             }
           ],
-          "defaults": null,
-          "modifiers": [
+          "default": null,
+          "modifier": [
             {
               "module": "error",
-              "action": "handle",
-              "parameters": [
+              "name": "handle",
+              "parameter": [
                 {
                   "name": "Actions",
                   "type": {
@@ -351,28 +359,27 @@
                   "value": 2
                 }
               ],
-              "defaults": null,
-              "modifiers": []
+              "default": null,
+              "modifier": []
             }
           ]
         }
-      ],
-      "intent": null,
-      "formal": "goal.call(GoalName={name:\"QueryAndValidatePlan\"}) | error.handle(Actions=[goal.call(GoalName={name:\"LlmFixer\"})], RetryCount=2)",
-      "source": null,
-      "waitForExecution": true
+      ]
     },
     {
       "index": 6,
       "text": "set %plan.system% = %planPrompt%",
       "lineNumber": 20,
-      "indent": 0,
       "comment": "Stamp the planner's prompts onto %plan% so the parent's set %trace.plan% = %plan%\ncarries them into the trace for the viewer.",
-      "actions": [
+      "intent": null,
+      "formal": "variable.set(Name=%plan.system%, Value=%planPrompt%, Type=object)",
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "parameter": [
             {
               "name": "Name",
               "type": {
@@ -390,7 +397,7 @@
               "value": "%planPrompt%"
             }
           ],
-          "defaults": [
+          "default": [
             {
               "name": "asdefault",
               "type": {
@@ -399,25 +406,24 @@
               "value": false
             }
           ],
-          "modifiers": []
+          "modifier": []
         }
-      ],
-      "intent": null,
-      "formal": "variable.set(Name=%plan.system%, Value=%planPrompt%, Type=object)",
-      "source": null,
-      "waitForExecution": true
+      ]
     },
     {
       "index": 7,
       "text": "set %plan.user% = %goalForLlm%",
       "lineNumber": 21,
-      "indent": 0,
       "comment": null,
-      "actions": [
+      "intent": null,
+      "formal": "variable.set(Name=%plan.user%, Value=%goalForLlm%, Type=string)",
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "parameter": [
             {
               "name": "Name",
               "type": {
@@ -442,7 +448,7 @@
               "value": "string"
             }
           ],
-          "defaults": [
+          "default": [
             {
               "name": "asdefault",
               "type": {
@@ -451,25 +457,24 @@
               "value": false
             }
           ],
-          "modifiers": []
+          "modifier": []
         }
-      ],
-      "intent": null,
-      "formal": "variable.set(Name=%plan.user%, Value=%goalForLlm%, Type=string)",
-      "source": null,
-      "waitForExecution": true
+      ]
     },
     {
       "index": 8,
       "text": "set %plan.usage% = {model: %plan.Model%, promptTokens: %plan.PromptTokens%, cachedTokens: %plan.CachedTokens%, completionTokens: %plan.CompletionTokens%, totalTokens: %plan.TotalTokens%, cost: %plan.Cost%, cached: %plan.Cached%}",
       "lineNumber": 22,
-      "indent": 0,
       "comment": null,
-      "actions": [
+      "intent": null,
+      "formal": "variable.set(Name=%plan.usage%, Value={model:%plan.Model%, promptTokens:%plan.PromptTokens%, cachedTokens:%plan.CachedTokens%, completionTokens:%plan.CompletionTokens%, totalTokens:%plan.TotalTokens%, cost:%plan.Cost%, cached:%plan.Cached%})",
+      "source": null,
+      "waitForExecution": true,
+      "action": [
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "parameter": [
             {
               "name": "Name",
               "type": {
@@ -494,7 +499,7 @@
               }
             }
           ],
-          "defaults": [
+          "default": [
             {
               "name": "asdefault",
               "type": {
@@ -503,32 +508,41 @@
               "value": false
             }
           ],
-          "modifiers": []
+          "modifier": []
         }
-      ],
-      "intent": null,
-      "formal": "variable.set(Name=%plan.usage%, Value={model:%plan.Model%, promptTokens:%plan.PromptTokens%, cachedTokens:%plan.CachedTokens%, completionTokens:%plan.CompletionTokens%, totalTokens:%plan.TotalTokens%, cost:%plan.Cost%, cached:%plan.Cached%})",
-      "source": null,
-      "waitForExecution": true
+      ]
     }
   ],
-  "goals": [
+  "child": [
     {
       "name": "QueryAndValidatePlan",
       "description": null,
       "comment": null,
-      "steps": [
+      "visibility": 0,
+      "path": "/system/builder/BuildGoal/Plan.goal",
+      "prPath": "/system/builder/BuildGoal/.build/plan.pr",
+      "hash": "3bd23e4eb5a596fd3deb81193045518b0ed2078a560b5f18fb0d4c5a79a09aad",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": true,
+      "isTest": false,
+      "inputParameters": null,
+      "step": [
         {
           "index": 0,
           "text": "llm.query Messages=%messages%, Schema={description: string, steps: [{index: int, actions: [string], confidence: string, explanation?: string}]}, cache=%!build.cache%, write to %plan%",
           "lineNumber": 26,
-          "indent": 0,
           "comment": null,
-          "actions": [
+          "intent": null,
+          "formal": "llm.query(Messages=%messages%, Schema={description: string, steps: [{index: int, actions: [string], confidence: string, explanation?: string}]}, Cache=%!build.cache%) | variable.set(Name=%plan%, Value=%!data%, Type=object)",
+          "source": null,
+          "waitForExecution": true,
+          "action": [
             {
               "module": "llm",
-              "action": "query",
-              "parameters": [
+              "name": "query",
+              "parameter": [
                 {
                   "name": "Messages",
                   "type": {
@@ -572,7 +586,7 @@
                   "value": "gpt-5.4-nano"
                 }
               ],
-              "defaults": [
+              "default": [
                 {
                   "name": "continuepreviousconversation",
                   "type": {
@@ -613,12 +627,12 @@
                   "value": 0
                 }
               ],
-              "modifiers": []
+              "modifier": []
             },
             {
               "module": "variable",
-              "action": "set",
-              "parameters": [
+              "name": "set",
+              "parameter": [
                 {
                   "name": "Name",
                   "type": {
@@ -636,7 +650,7 @@
                   "value": "%!data%"
                 }
               ],
-              "defaults": [
+              "default": [
                 {
                   "name": "asdefault",
                   "type": {
@@ -645,25 +659,24 @@
                   "value": false
                 }
               ],
-              "modifiers": []
+              "modifier": []
             }
-          ],
-          "intent": null,
-          "formal": "llm.query(Messages=%messages%, Schema={description: string, steps: [{index: int, actions: [string], confidence: string, explanation?: string}]}, Cache=%!build.cache%) | variable.set(Name=%plan%, Value=%!data%, Type=object)",
-          "source": null,
-          "waitForExecution": true
+          ]
         },
         {
           "index": 1,
           "text": "call Validate",
           "lineNumber": 27,
-          "indent": 0,
           "comment": null,
-          "actions": [
+          "intent": null,
+          "formal": "goal.call(GoalName={name:\"Validate\"})",
+          "source": null,
+          "waitForExecution": true,
+          "action": [
             {
               "module": "goal",
-              "action": "call",
-              "parameters": [
+              "name": "call",
+              "parameter": [
                 {
                   "name": "GoalName",
                   "type": {
@@ -677,37 +690,13 @@
                   }
                 }
               ],
-              "defaults": null,
-              "modifiers": []
+              "default": null,
+              "modifier": []
             }
-          ],
-          "intent": null,
-          "formal": "goal.call(GoalName={name:\"Validate\"})",
-          "source": null,
-          "waitForExecution": true
+          ]
         }
       ],
-      "goals": [],
-      "visibility": 0,
-      "path": "/system/builder/BuildGoal/Plan.goal",
-      "prPath": "/system/builder/BuildGoal/.build/plan.pr",
-      "hash": "3bd23e4eb5a596fd3deb81193045518b0ed2078a560b5f18fb0d4c5a79a09aad",
-      "builderVersion": null,
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": true,
-      "isTest": false,
-      "inputParameters": null
+      "child": []
     }
-  ],
-  "visibility": 1,
-  "path": "/system/builder/BuildGoal/Plan.goal",
-  "prPath": "/system/builder/BuildGoal/.build/plan.pr",
-  "hash": "d0a0114f61ac57a74a4b39b5b16ff50f862f0ef873ab6cadcff6492457d14024",
-  "builderVersion": null,
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": true,
-  "isTest": false,
-  "inputParameters": null
+  ]
 }

@@ -2,38 +2,6 @@
   "name": "BuilderChannel",
   "description": null,
   "comment": null,
-  "steps": [
-    {
-      "index": 0,
-      "text": "write out %!data%",
-      "lineNumber": 7,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "output",
-          "action": "write",
-          "parameters": [
-            {
-              "name": "Data",
-              "type": {
-                "name": "object",
-                "template": "plang"
-              },
-              "value": "%!data%"
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
-        }
-      ],
-      "intent": null,
-      "formal": "output.write(Data=%!data%)",
-      "source": null,
-      "waitForExecution": true
-    }
-  ],
-  "goals": [],
   "visibility": 1,
   "path": "/system/builder/BuilderChannel.goal",
   "prPath": "/system/builder/.build/builderchannel.pr",
@@ -43,5 +11,36 @@
   "isEvent": false,
   "isSystem": true,
   "isTest": false,
-  "inputParameters": null
+  "inputParameters": null,
+  "step": [
+    {
+      "index": 0,
+      "text": "write out %!data%",
+      "lineNumber": 7,
+      "comment": null,
+      "intent": null,
+      "formal": "output.write(Data=%!data%)",
+      "source": null,
+      "waitForExecution": true,
+      "action": [
+        {
+          "module": "output",
+          "name": "write",
+          "parameter": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "object",
+                "template": "plang"
+              },
+              "value": "%!data%"
+            }
+          ],
+          "default": null,
+          "modifier": []
+        }
+      ]
+    }
+  ],
+  "child": []
 }
