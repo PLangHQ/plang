@@ -53,13 +53,13 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "name": name = reader.String(); break;
                 case "description": description = reader.String(); break;
                 case "comment": comment = reader.String(); break;
-                case "steps":
+                case "step":
                     reader.BeginArray();
                     while (reader.NextElement())
                         steps.Add((global::app.goal.step.@this)_step.Read(ref reader, null, ctx));
                     reader.EndArray();
                     break;
-                case "goals":
+                case "child":
                     reader.BeginArray();
                     while (reader.NextElement())
                         goals.Add(Walk(ref reader, ctx));

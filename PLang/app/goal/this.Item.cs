@@ -31,11 +31,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         writer.Name("name"); writer.String(Name);
         if (Description != null) { writer.Name("description"); writer.String(Description); }
         if (Comment != null) { writer.Name("comment"); writer.String(Comment); }
-        writer.Name("steps");
+        writer.Name("step");
         writer.BeginArray(Step.Count);
         foreach (var s in Step.list) await s.Output(writer, mode, context);
         writer.EndArray();
-        writer.Name("goals");
+        writer.Name("child");
         writer.BeginArray(Goals.Count);
         foreach (var g in Goals) await g.Output(writer, mode, context);
         writer.EndArray();

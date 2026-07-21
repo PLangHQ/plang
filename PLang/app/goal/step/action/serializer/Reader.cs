@@ -42,21 +42,21 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             switch (name)
             {
                 case "module": action.Module = reader.String(); break;
-                case "action": action.ActionName = reader.String(); break;
-                case "parameters":
+                case "name": action.ActionName = reader.String(); break;
+                case "parameter":
                     reader.BeginArray();
                     while (reader.NextElement())
                         action.Parameters.Add(dataReader.Read(reader.RawValue(), ctx));
                     reader.EndArray();
                     break;
-                case "defaults":
+                case "default":
                     action.Defaults = new();
                     reader.BeginArray();
                     while (reader.NextElement())
                         action.Defaults.Add(dataReader.Read(reader.RawValue(), ctx));
                     reader.EndArray();
                     break;
-                case "modifiers":
+                case "modifier":
                     reader.BeginArray();
                     while (reader.NextElement())
                     {

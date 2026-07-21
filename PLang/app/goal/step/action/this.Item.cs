@@ -36,19 +36,19 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         }
         writer.BeginObject();
         writer.Name("module"); writer.String(Module);
-        writer.Name("action"); writer.String(ActionName);
-        writer.Name("parameters");
+        writer.Name("name"); writer.String(ActionName);
+        writer.Name("parameter");
         writer.BeginArray(Parameters.Count);
         foreach (var p in Parameters) await p.Output(writer, mode, context);
         writer.EndArray();
         if (Defaults != null)
         {
-            writer.Name("defaults");
+            writer.Name("default");
             writer.BeginArray(Defaults.Count);
             foreach (var d in Defaults) await d.Output(writer, mode, context);
             writer.EndArray();
         }
-        writer.Name("modifiers");
+        writer.Name("modifier");
         writer.BeginArray(Modifiers.Count);
         foreach (var m in Modifiers) await m.Output(writer, mode, context);
         writer.EndArray();

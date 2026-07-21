@@ -28,9 +28,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         writer.Name("index"); writer.Int(Index);
         writer.Name("text"); writer.String(Text);
         writer.Name("lineNumber"); writer.Int(LineNumber);
-        writer.Name("indent"); writer.Int(Indent);
         if (Comment != null) { writer.Name("comment"); writer.String(Comment); }
-        writer.Name("actions");
+        writer.Name("action");
         writer.BeginArray(Action.Count);
         foreach (var a in Action.list) await a.Output(writer, mode, context);
         writer.EndArray();

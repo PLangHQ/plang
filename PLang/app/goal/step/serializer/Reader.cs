@@ -36,7 +36,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "lineNumber": lineNumber = (int)reader.Long(); break;
                 case "indent": indent = (int)reader.Long(); break;
                 case "comment": comment = reader.String(); break;
-                case "actions":
+                case "action":
                     reader.BeginArray();
                     while (reader.NextElement())
                         actions.Add((global::app.goal.step.action.@this)_action.Read(ref reader, kind, ctx));
