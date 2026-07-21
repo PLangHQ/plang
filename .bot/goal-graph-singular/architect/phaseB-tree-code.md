@@ -319,9 +319,11 @@ public void Cover(Action a)
 - **Dies:** the `branchIndex`/`branchLabel`/`branchChain` stamping (`if.cs`); the `Properties["branch*"]` reads (`run.cs:109-128`); `RecordBranch(site,int)`/`RecordBranchLabel`/`RecordBranchChain` + `_branches`/`_branchLabels`/`_branchChains` → collapse to the single `_covered` (+ declared). `Merge` narrows to unioning `_covered`.
 - **Stays:** a keyed, mergeable store (not a tree-walk) — corrected from the earlier "no registry" claim.
 
-## 9. The builder — the compiler emits the tree directly (NO fold)
+## 9. The builder — LLM inline + a deterministic Fold for substeps; both land on `action.Child`
 
-`%goal%` is the **source-parsed** goal (`build.goals` reads the `.goal` files → `%goals%` → `BuildGoal goal=%item%`). It starts as parsed steps (text + indent, **no actions**); `BuildStep` attaches compiled actions; `goalsSave` writes it. **The tree is born from the parser + LLM — there is NO post-compile fold** (Ingi: *"change the compiler to give us the correct structure … i don't want to see any fold, shouldn't be necessary"*). `Child : step.list` (ruling A — a branch body is always a sequence of steps).
+`%goal%` is the **source-parsed** goal (`build.goals` reads the `.goal` files → `%goals%` → `BuildGoal goal=%item%`). Parsed steps (text + indent, **no actions**); `BuildStep` attaches compiled actions; a deterministic **Fold** re-parents substeps; `goalsSave` writes the tree. **Both condition forms land on `action.Child`** — one holder, one fire (`action.list.Run`), substep and inline byte-identical in shape.
+
+Why a Fold (settled with Ingi, reversing the earlier "no fold"): substep structure is known at **parse** (indent), but the gate **action** it must attach to doesn't exist until **compile** (the LLM fills it). So there is no fold-free way to land substeps on `action.Child` — the parser can't reach the action, and asking the LLM to swallow real neighbour steps is the smell. The Fold bridges that gap; crucially it **moves real steps, never synthesizes** (the `FoldChain synthesized steps = obpv` objection doesn't apply — those steps have their own `BuildStep`, `Text`, `LineNumber`). It runs at **build time**, produces the `.pr`; the runtime just reads the finished tree.
 
 **Access — `goal.step` is a node (§1):** bare `%goal.step%` → `.current`, `%goal.step[i]%` → item i (indexed, what the builder uses), `%goal.step.list%` → the collection. C# `goal.Step[i]` ⇄ PLang `%goal.step[i]%`, 100% aligned. The builder is written **in PLang**, so the singular sweep renames its accessors too (`os/system/builder/**/*.goal` + templates):
 
@@ -335,20 +337,65 @@ public void Cover(Action a)
 
 `BuildStep/Start.goal` and `BuildGoal/Start.goal` are full of these — the sweep must cover the builder `.goal` files, not just the C# and `.pr` keys.
 
-### The two producers — structure is born, not folded
+### The two producers — LLM (inline) + Fold (substeps)
 
-Both forms land on `action.Child : step.list`; the tree comes from two sources, neither of which re-nests a flat list:
+**1. LLM Compile (`Compile.llm` + `BuildResponse`) — inline bodies as `child`.** Today inline `if %x%, call Y` compiles to two flat peer actions in one step (`[condition.if, goal.call]`, `Compile.llm:22,31`). The change: the LLM emits each branch *body* as the condition action's **`child`** — a step with **LLM-authored `text`** + its action(s) — leaving *setup* actions (`file.exists`, the compound `condition.compare`+`set`) as leading siblings (A4). `Synthetic=true` marks the inline-born step. This is the **only** thing the LLM nests, and the eval-risk surface (schema + prompt + goldens).
 
-**1. Parser (C#, `goal/this.cs`) — substeps by `Indent`, at parse time.** The parser already reads `Indent`. Instead of a flat list + indent, a deeper-indented `- ` line nests under its preceding condition step — into that step's **gate action's `Child`** (the `IsCondition` action; A4: `[file.exists, condition.if]` → the `condition.if`). So `%goal.step%` / `%plan.steps%` is a tree from the start; `BuildStep` recurses. Substep bodies are **real steps** (they were `- ` lines). Indented under a **non**-condition → build error (A4), never dropped.
+**2. Parser (flat) + deterministic Fold — substeps.** The parser keeps substeps **flat, carrying `Indent`** (real steps, own `BuildStep`). After compile, the Fold re-parents a step's deeper-indented followers into its **gate action's `Child`** (the `IsCondition` action; A4: `[file.exists, condition.if]` → the `condition.if`; indented under a non-condition → build error, never dropped).
 
-**2. LLM Compile (`Compile.llm` + `BuildResponse`) — inline bodies as `child`.** Today inline `if %x%, call Y` compiles to two flat peer actions in one step (`[condition.if, goal.call]`, `Compile.llm:22,31`). The change: the LLM emits each branch *body* as the condition action's **`child`** — a step with **LLM-authored `text`** + its action(s) — leaving *setup* actions (`file.exists`, the compound `condition.compare`+`set`) as leading siblings (A4). `Synthetic=true` marks the inline-born step (it wasn't a `- ` line). This is the eval-risk surface (schema + prompt + goldens).
-
-`BuildGoal/Start.goal` flow — **no fold step**:
+```csharp
+// goal.Fold — deterministic, post-compile, pre-save. Flat+indent → tree; MOVES real steps, no synthesis.
+static app.goal.step.list.@this Fold(IReadOnlyList<Step> flat)
+{
+    var top = new List<Step>();
+    for (int i = 0; i < flat.Count; )
+    {
+        var step = flat[i];
+        int j = i + 1;
+        while (j < flat.Count && flat[j].Indent > step.Indent) j++;   // gather the deeper block
+        var block = flat.Skip(i + 1).Take(j - i - 1).ToList();        // its substeps (real steps)
+        if (block.Count > 0)
+        {
+            var gate = step.Action.list.FirstOrDefault(a => a.IsCondition)
+                ?? throw context.BuildError($"indented steps under non-condition '{step.Text}'");   // A4
+            gate.Child = Fold(block);                                  // recurse — nesting composes
+        }
+        top.Add(step);                                                // real step keeps its identity
+        i = j;
+    }
+    return new app.goal.step.list.@this(top);
+}
 ```
-- foreach %plan.steps%, call BuildStep/Start     (compile per step; the tree already exists — parser nested substeps, LLM emits child)
+Coder already built + tested this (`goal.Fold`, `FoldTests 3/3`, commit `5ea5ba9bc`) — reverted only because "no fold" was absolute; **un-revert it**. Home is coder's: `goal.Fold` method or a `build.fold` action — it's a build-time transform, not a runtime method (name it a single verb, not `FoldChain`/`FoldBlock`).
+
+`BuildGoal/Start.goal` flow:
+```
+- foreach %plan.steps%, call BuildStep/Start     (compile per step — flat, %goal.step[i]% indexed; pre-fold)
 - foreach %parentGoal.child%, call BuildSubGoal
+- <Fold> goal.Fold / build.fold Goal=%goal%      ← re-parent substeps into gate-action Child (post-compile, pre-save)
 - build.goalsSave Goal=%goal%                     (writes the tree via item Output)
 ```
+
+### Step identity — `Index` is an ID, `LineNumber` is the source key, `AllSteps` for lookup
+
+The tree nests steps and synthetic inline bodies consume indices, so a step is no longer at `goal.step[Index]`. Three rules keep this sane:
+
+- **`Index` = stable global ID** — unique across the goal incl. synthetic bodies (pre-order). Coverage keys on it (C2). **NOT the source position.**
+- **`LineNumber` = the source line** — real steps only. **All source-facing tooling** (IDE cursor, `--debug={"step":…}`, "error at line X") keys on `LineNumber`, never `Index`. Synthetic inline bodies share the `if`'s `LineNumber` (line fragments, not independently addressable — correct: cursor on that line lands on the `if` step).
+- **`goal.AllSteps()` = pre-order flat projection** (computed off the tree, not stored) — recovers the flat list the IDE/debug want:
+  ```csharp
+  IEnumerable<Step> AllSteps()             // pre-order == Index order
+  {
+      foreach (var step in Step.list) {
+          yield return step;
+          foreach (var a in step.Action.list)
+              foreach (var s in a.Child.AllSteps()) yield return s;   // one child source (Fold) → single recursion
+      }
+  }
+  // IDE cursor:  AllSteps().First(s => s.LineNumber == cursorLine)
+  // debug/ref:   AllSteps().First(s => s.Index == n)
+  ```
+  The tree is the execution structure; `AllSteps` is the flat lookup view. `%goal.step[i]%` (top-level position) is a different thing from `Index` — the builder's `%goal.step[planStep.index]%` still works because compile runs **pre-Fold** (flat).
 
 ### Index uniqueness (coverage C2)
 
@@ -365,6 +412,7 @@ Both forms land on `action.Child : step.list`; the tree comes from two sources, 
 **Delete:** `steps.@this` (whole); `Decision` (whole); `condition.if.Orchestrate` + simple-form block; `step.Indent` + wire `indent`; `GoalSteps` alias; branch stamping in `if.cs`; `Properties["branch*"]` reads in `run.cs`; `Coverage`'s `_branches`/`_branchLabels`/`_branchChains` + `RecordBranch*`; `discover.SeedBranchChains`'s `Decision` use; `skipBelowIndent`/`HasIndentedChildren`.
 **Change:** `goal.Steps→Step` (`step.list`); `step.Actions→Action` (`action.list`); `action.Modifiers→Modifier` (`modifier.list`, §2b — naked `List` gone); the modifier `AfterAction` loop leaves `action.RunAsync` → each `modifier.Wrap` fires its own (§2b); `action` gains `Child`; `RunAsync→Run`; backref wire (§5); coverage observer (§8); `goal/this.cs` `Steps[]→Step[]`; `step.HasSubSteps` → `Action.Any(a => a.Child.Count > 0)`.
 **Stays:** `goal.Run`/`step.Run` lifecycle; `condition.if`/`elseif`/`else` evaluation; `IsCondition`; `Coverage.RecordModuleAction`/`Merge` (narrowed); the item `Output`/`Reader` (extended); `goal.Child` (sub-goals).
+**Builder adds (§9):** `goal.Fold` **un-reverted** (deterministic post-compile substep re-parent, moves real steps); LLM inline-`child` emission (`Compile.llm`/`BuildResponse`); `goal.AllSteps()` pre-order flat view (`Index`=stable ID, `LineNumber`=source key for IDE/debug).
 
 ## Flaw readover — the six caught writing this up
 
