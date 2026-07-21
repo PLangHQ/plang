@@ -367,6 +367,12 @@ public sealed partial class @this
     /// Parses .goal file text into a list of Goals.
     /// All goals share the same Path. First goal is Public, rest are Private.
     /// Inverse of ToText().
+    ///
+    /// Stays <c>static</c> by Ingi's ruling: relocating this onto <c>path</c>
+    /// (<c>path.ReadAsGoal</c>) or <c>text</c> (<c>text.AsGoal</c>) would put a
+    /// Goal-specific method on a general-purpose value type — too specific for
+    /// that general object. A source-text → Goal factory is the sanctioned
+    /// exception to the no-static rule.
     /// </summary>
     public static @this? Parse(string text, global::app.type.item.path.@this? path)
     {
