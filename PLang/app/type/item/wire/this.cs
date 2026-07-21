@@ -37,6 +37,21 @@ public sealed class @this : global::app.type.item.source
         decoded.Write(w);
     }
 
+    // Output is the SHAPE-AWARE door. Write (above) assumes a leaf — fine when the decoded value IS
+    // a leaf, but a wire wrapping a STRUCTURE (dict/list/object) reports IsLeaf=true yet decodes to a
+    // non-leaf, so `decoded.Write` throws. Output materializes and lets the decoded value render
+    // itself through its OWN shape (a leaf via Write, a structure structurally). Own format still
+    // rides raw — byte-identical relay, signatures hold. This is the foreign-format half of the
+    // "materialize-on-foreign-output for sources" rule.
+    public override async System.Threading.Tasks.ValueTask Output(
+        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context)
+    {
+        if (_reader.Owns(writer)) { writer.Raw((string)Raw); return; }
+        var decoded = (Type.Kind is { } k ? Context.App.Type.Kind[k.Name].Parse(Raw, Context) : null) ?? Read();
+        await decoded.Output(writer, mode, context ?? Context);
+    }
+
     // Lowering an undecoded wire to CLR is a USE: graduate to the decoded value first (never hand
     // the ENCODED slice to a converter — the bug the inherited source.Clr would commit), then that
     // value lowers itself (a clr(json) → its kind's reflection read).
