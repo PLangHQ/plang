@@ -247,17 +247,20 @@ public class Default : IBuilder
     {
         var context = action.Context;
         var goal = action.Goal.Clr<Goal>()!;
-        var errors = new List<string>();
+        var errors = new List<global::app.error.IError>();
         Fold(goal, errors);
-        if (errors.Count > 0)
-            return Task.FromResult(context.Error(new global::app.error.ActionError(
-                string.Join("; ", errors), "IndentUnderNonCondition", 400)));
-        return Task.FromResult(context.Ok(true));
+        if (errors.Count == 0) return Task.FromResult(context.Ok(true));
+
+        // Surface every A4 violation: the first is the root, the rest ride its ErrorChain —
+        // each error carries its own offending step (location), not a flattened string.
+        var root = errors[0];
+        for (int e = 1; e < errors.Count; e++) root.ErrorChain.Add(errors[e]);
+        return Task.FromResult(context.Error(root));
     }
 
     // Folds a goal's own steps, then recurses its sub-goals. Sets each goal's Step to the
     // nested projection — the goal owns its (now-tree) step collection.
-    private void Fold(Goal goal, List<string> errors)
+    private void Fold(Goal goal, List<global::app.error.IError> errors)
     {
         goal.Step = new global::app.goal.step.list.@this(Fold(goal.Step.list, errors));
         foreach (var subGoal in goal.Goals) Fold(subGoal, errors);
@@ -265,10 +268,10 @@ public class Default : IBuilder
 
     // Flat + Indent → tree: a step's deeper-indented followers move into that step's gate
     // action (the IsCondition action) Child; recursion composes nested blocks. A block under
-    // a non-condition step is an authoring error (A4) — recorded, never silently dropped or
-    // kept flat. Real steps only; nothing is synthesized here.
+    // a non-condition step is an authoring error (A4) — recorded against the offending step,
+    // never silently dropped or kept flat. Real steps only; nothing is synthesized here.
     private List<global::app.goal.step.@this> Fold(
-        IReadOnlyList<global::app.goal.step.@this> flat, List<string> errors)
+        IReadOnlyList<global::app.goal.step.@this> flat, List<global::app.error.IError> errors)
     {
         var top = new List<global::app.goal.step.@this>();
         int i = 0;
@@ -285,7 +288,9 @@ public class Default : IBuilder
 
                 var gate = System.Linq.Enumerable.FirstOrDefault(step.Action.list, a => a.IsCondition);
                 if (gate == null)
-                    errors.Add($"indented steps under non-condition step '{step.Text}' (line {step.LineNumber})");
+                    errors.Add(new global::app.error.StepError(
+                        $"indented steps under non-condition step '{step.Text}'",
+                        step, "IndentUnderNonCondition", 400));
                 else
                     gate.Child = new global::app.goal.step.list.@this(Fold(block, errors));
             }
