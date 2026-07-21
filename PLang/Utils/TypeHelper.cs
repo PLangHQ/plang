@@ -832,6 +832,12 @@ public class TypeHelper : ITypeHelper
 
 		if (item1 == null || item2 == null) return (item1, item2);
 
+		// Two strings already match; converting them to JTokens breaks string
+		// operators like contains/startswith/endswith (a JValue is not handled as
+		// a string), so a guard such as `%html% does not contain "<"` wrongly
+		// evaluates true. Keep strings as strings.
+		if (item1 is string && item2 is string) return (item1, item2);
+
 		var type1 = item1.GetType();
 		var type2 = item2.GetType();
 
