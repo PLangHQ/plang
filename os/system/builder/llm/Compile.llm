@@ -19,7 +19,8 @@ A one-line render of the chain; `actions[]` then mirrors it exactly.
 
 `module.action(ParamName=value, ...)` — real schema param names. Quote strings; keep `%vars%` verbatim; numbers/bools unquoted; lists `[...]`; objects `{k:v}`.
 - Modifier follows its host with ` | ` : `host(...) | error.handle(Actions=[recovery(...)])`
-- Peer follows with ` , ` : `condition.if(...) , goal.call(...)`
+- Peer follows with ` , ` : `output.write(...) , goal.call(...)`
+- A condition's guarded body is nested in braces: `condition.if(...) { goal.call(...) }`
 - Nested action values use `[...]` with the same syntax.
 
 `formal` and `actions[]` MUST match exactly — every `Param=value` in one appears in the other, no extras either way.
@@ -28,7 +29,19 @@ A one-line render of the chain; `actions[]` then mirrors it exactly.
 
 Only THREE actions are modifiers — `error.handle`, `cache.wrap`, `timeout.after` — and they go in the host action's `modifiers[]`. Use one only when the step has a clause like `on error …`, `cache for …`, `timeout after …`. A `cache=` *parameter* on `llm.query` is NOT cache.wrap.
 
-Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `output.write`, `file.*`, `error.throw`, …) is a **peer** in the top-level `actions[]`, never in `modifiers[]`. `if X, call Y` and `foreach X, call Y` are two peers.
+Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `output.write`, `file.*`, `error.throw`, …) is a **peer** in the top-level `actions[]`, never in `modifiers[]`. `foreach X, call Y` is two peers.
+
+## Conditions carry their body in `child`
+
+A condition — `condition.if`, `condition.elseif`, `condition.else` — OWNS the clause it guards. That body is **not** a peer; it rides the condition action's **`child`**: a list of steps, each `{"text": "<clause>", "actions": [ ... ]}`.
+
+- `if %x% > 2, call DoStuff` → ONE action, its body in `child`:
+  `{"module":"condition","action":"if","parameters":[...],"child":[{"text":"call DoStuff","actions":[{"module":"goal","action":"call","parameters":[{"name":"GoalName","value":"DoStuff"}]}]}]}`
+- `if %x% then call A, else call B` → TWO peer actions: `condition.if` with `child:[call A]`, then `condition.else` with `child:[call B]`.
+- `if/elseif/else` chains: each condition is its own peer action, each carrying its own `child` body.
+- The child step's `text` is the guarded clause verbatim (`"call DoStuff"`); its `actions` compile that clause exactly as a normal step would (recursively — a body can itself hold a condition with its own `child`).
+- **Setup actions that PRECEDE the condition** (a `file.exists`, a compound `condition.compare`) stay as leading peers in `actions[]`; only the guarded body goes in `child`.
+- `formal` renders the body in braces after the condition: `condition.if(Left=%x%, Operator=>, Right=2) { goal.call(GoalName="DoStuff") }`.
 
 ## `write to %x%` and `%!data%`
 
@@ -42,7 +55,7 @@ Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `o
 {"formal":"...","actions":[...],"confidence":"VeryHigh|High|Medium|Low|VeryLow","explanation":"...","errors":[],"warnings":[]}
 ```
 
-Each action: `{module, action, parameters:[{name, value, type}], modifiers?:[...]}`. `module` is a single identifier: `ui.render` → `{"module":"ui","action":"render"}`, never `{"module":"ui.render",...}`. Omit `explanation` at High/VeryHigh; otherwise one sentence on the uncertainty. Drop confidence to Low/VeryLow when the verb doesn't really match any action you were given.
+Each action: `{module, action, parameters:[{name, value, type}], modifiers?:[...], child?:[{text, actions:[...]}]}` (`child` only on a condition — its guarded body). `module` is a single identifier: `ui.render` → `{"module":"ui","action":"render"}`, never `{"module":"ui.render",...}`. Omit `explanation` at High/VeryHigh; otherwise one sentence on the uncertainty. Drop confidence to Low/VeryLow when the verb doesn't really match any action you were given.
 
 ## Parameters & types
 
@@ -53,7 +66,7 @@ Each action: `{module, action, parameters:[{name, value, type}], modifiers?:[...
 ## Intermediates & compound conditions
 
 - To branch on a producer's property, capture into a temp `__conditionReturn__` and reference `%__conditionReturn__.X%`.
-- `if A and B, call C` → two `condition.if` peers + the `goal.call`; add `warnings:[{"key":"expanded-condition","message":"..."}]`.
+- `if A and B, call C` → nest: `condition.if(A)` whose `child` is a single step `if B, call C` — itself a `condition.if(B)` with `child:[call C]`; add `warnings:[{"key":"expanded-condition","message":"..."}]`.
 
 ## Errors
 
