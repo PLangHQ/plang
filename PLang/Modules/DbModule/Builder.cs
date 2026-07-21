@@ -470,11 +470,23 @@ When table name is unknown at built time because it is created with variable, us
 		methodsAndTables.ClassDescription = classDescResult.ClassDescription;
 
 		var stepDataSource = context.DataSource;
-		if (stepDataSource == null && step.Goal.IsSetup && step.Goal.GoalName.Equals("setup", StringComparison.OrdinalIgnoreCase))
+		if (stepDataSource == null && step.Goal.IsSetup)
 		{
-			var dataSourceResult = await dbSettings.GetDataSourceForBuilder("data", step, false);
+			// In an incremental build the goal's 'create data source' step may not have run
+			// this session, so context.DataSource is null. Recover the goal's datasource from
+			// its known name (Goal.DataSourceName, carried over from the previous build by
+			// GoalParser). The top-level 'setup' goal has no such step and defaults to 'data'.
+			// Without this, create/alter-table steps in setup goals that use a non-default
+			// datasource (e.g. Analytics -> 'analytics', Crawler -> 'crawler') fail to resolve.
+			var dsName = !string.IsNullOrEmpty(step.Goal.DataSourceName) ? step.Goal.DataSourceName : "data";
+			var dataSourceResult = await dbSettings.GetDataSourceForBuilder(dsName, step, false);
 			if (dataSourceResult.Error != null && dataSourceResult.Error.StatusCode != 404) return (null, dataSourceResult.Error);
-			if (dataSourceResult.DataSource == null)
+			if (dataSourceResult.DataSource != null)
+			{
+				stepDataSource = dataSourceResult.DataSource;
+				context.DataSource = stepDataSource;
+			}
+			else if (dsName.Equals("data", StringComparison.OrdinalIgnoreCase))
 			{
 				var createDataSourceResult = await dbSettings.CreateDataSource("data", "sqlite", true, true);
 				if (createDataSourceResult.Error != null) return (null, new BuilderError(createDataSourceResult.Error));
@@ -598,11 +610,30 @@ When table name is unknown at built time because it is created with variable, us
 			var tablesWithMissingDataSource = methodsAndTables.Tables.Where(p => p.DataSource == null).ToList();
 			if (tablesWithMissingDataSource.Count > 0)
 			{
-				(var tableSuggestions, error) = await GetTableSuggestions(tablesWithMissingDataSource);
-				if (error != null) return (null, error);
+				// A table couldn't be located by scanning existing datasources. For a
+				// create/alter-table step the table does not exist yet, so scanning can never
+				// find it — fall back to the current context datasource (e.g. the one set by
+				// this setup goal's 'create data source' step). This makes incremental builds
+				// resolve create-table steps in goals using a non-default datasource, which
+				// previously only worked in a full build (where earlier steps had populated it).
+				// Gated to CreateTable so a genuine typo in a select/insert/update still errors.
+				if (stepDataSource != null && methodsAndTables.ContainsMethod("CreateTable"))
+				{
+					foreach (var t in tablesWithMissingDataSource)
+					{
+						t.DataSource = stepDataSource;
+						t.DataSourceName = stepDataSource.NameInStep;
+					}
+					if (methodsAndTables.DataSource == null) methodsAndTables.DataSource = stepDataSource;
+				}
+				else
+				{
+					(var tableSuggestions, error) = await GetTableSuggestions(tablesWithMissingDataSource);
+					if (error != null) return (null, error);
 
-				return (null, new StepBuilderError($"Could not find datasource for table(s): {string.Join(",", tablesWithMissingDataSource.Select(p => p.Name))}. Is there a typo in the sql?"
-					, step, FixSuggestion: tableSuggestions, Retry: false));
+					return (null, new StepBuilderError($"Could not find datasource for table(s): {string.Join(",", tablesWithMissingDataSource.Select(p => p.Name))}. Is there a typo in the sql?"
+						, step, FixSuggestion: tableSuggestions, Retry: false));
+				}
 			}
 		}
 		return (methodsAndTables, null);
@@ -1339,7 +1370,7 @@ Reason:{error.Message}", step,
 			var cmd = connection.CreateCommand();
 
 			cmd.CommandText = sql;
-			cmd.Prepare();				
+			cmd.Prepare();
 
 			return (true, anchor.Key, null);
 		}
