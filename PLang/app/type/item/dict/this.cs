@@ -67,6 +67,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         if (value is @this self) return self;
         if ((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s) && string.IsNullOrWhiteSpace(s)) return new @this(data.Context);
+        // The dict converts a json source (a clr(json) object) into ITSELF — the same DOM narrower
+        // the dict kind's Convert uses. Never route a dict.@this through reflection (no parameterless
+        // ctor); the item owns its own conversion. Other sources re-tag via Clr.
+        if (value is global::app.type.clr.@this { Value: System.Text.Json.JsonElement { ValueKind: System.Text.Json.JsonValueKind.Object } je })
+            return new global::app.type.item.serializer.json(data.Context).Parse(je) as @this;
         return (value as global::app.type.item.@this)?.Clr(typeof(@this)) as @this;
     }
 

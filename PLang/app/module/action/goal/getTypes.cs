@@ -36,7 +36,7 @@ public partial class getTypes : IContext
 
     public async Task<data.@this<global::app.type.item.list.@this<global::app.type.item.dict.@this>>> Run()
     {
-        var goal = Goal.Clr<global::app.goal.@this>()!;
+        var goal = (await Goal.Value())!;
         var modules = Context.App.Module;
 
         var perStep = new List<Dictionary<string, string>>(goal.Step.Count);

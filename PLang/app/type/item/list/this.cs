@@ -75,6 +75,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     {
         if (value is @this self) return self;
         if ((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s) && string.IsNullOrWhiteSpace(s)) return new @this(data.Context);
+        // The list converts a json source (a clr(json) array) into ITSELF — the same DOM narrower
+        // the list kind's Convert uses. Never route a list.@this through reflection (it has no
+        // parameterless ctor); the item owns its own conversion. Other sources re-tag via Clr.
+        if (value is global::app.type.clr.@this { Value: System.Text.Json.JsonElement { ValueKind: System.Text.Json.JsonValueKind.Array } je })
+            return new global::app.type.item.serializer.json(data.Context).Parse(je) as @this;
         return (value as global::app.type.item.@this)?.Clr(typeof(@this)) as @this;
     }
 

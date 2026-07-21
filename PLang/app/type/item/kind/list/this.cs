@@ -72,4 +72,26 @@ public sealed class @this : global::app.type.kind.@this
         foreach (var el in (System.Collections.IEnumerable)obj) if (el != null) await WriteReflected(writer, el, mode, ctx!);
         writer.EndArray();
     }
+
+    // The OUTBOUND convert: list knows how to build itself FROM a json source (a clr(json) array →
+    // native list), reusing the universal DOM narrower (item.serializer.json.Parse) — mirrors the
+    // dict kind. A non-json source can't become a list here (the caller's Clr handles a native
+    // sequence re-tag). A structured element stays native; a typed list re-tags per element on read.
+    public override async global::System.Threading.Tasks.ValueTask<global::app.data.@this> Convert(
+        global::app.data.@this source, global::app.actor.context.@this ctx)
+    {
+        object? value = await source.Value();
+        System.Text.Json.JsonElement element = value switch
+        {
+            global::app.type.clr.@this c when c.Value is System.Text.Json.JsonElement je => je,
+            System.Text.Json.JsonElement je2 => je2,
+            _ => default,
+        };
+        if (element.ValueKind is System.Text.Json.JsonValueKind.Undefined)
+            return ctx.Error(new global::app.error.ServiceError(
+                $"cannot convert {source.Type?.Name} into list — source is not json", "ConvertFailed", 400));
+
+        object? parsed = new global::app.type.item.serializer.json(ctx).Parse(element);
+        return ctx.Ok(parsed);
+    }
 }

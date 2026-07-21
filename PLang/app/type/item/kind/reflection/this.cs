@@ -61,16 +61,29 @@ public sealed class @this : global::app.type.kind.@this
     {
         if (reader.Null()) return null;
 
-        // Collection host — an array of its element type (GoalSteps→step).
-        // These are IList<T> (generic only), so add through ICollection<T>.Add by interface.
+        // Collection host — an array of its element type (GoalSteps→step, step.Action→action).
+        // Build the elements into a List<element>, then materialize the target: a List<T>/IList<T>
+        // IS that list; a read-only domain wrapper (action.list, step.list — IReadOnlyList<T>, no
+        // parameterless ctor) takes the sequence through its ctor; a mutable ICollection<T> fills
+        // via Add. The target owns HOW it holds the sequence — reflection just supplies it.
         var element = ElementTypeOf(target);
         if (element != null)
         {
-            var coll = global::System.Activator.CreateInstance(target)!;
-            var add = typeof(global::System.Collections.Generic.ICollection<>).MakeGenericType(element).GetMethod("Add")!;
+            var listType = typeof(global::System.Collections.Generic.List<>).MakeGenericType(element);
+            var inner = (global::System.Collections.IList)global::System.Activator.CreateInstance(listType)!;
             reader.BeginArray();
-            while (reader.NextElement()) add.Invoke(coll, new[] { ReadValue(ref reader, element, ctx) });
+            while (reader.NextElement()) inner.Add(ReadValue(ref reader, element, ctx));
             reader.EndArray();
+
+            if (target.IsInstanceOfType(inner)) return inner;   // List<T> / IList<T> / IReadOnlyList<T> target — the list IS it
+            var seqCtor = target.GetConstructor(new[] { typeof(global::System.Collections.Generic.IReadOnlyList<>).MakeGenericType(element) })
+                       ?? target.GetConstructor(new[] { typeof(global::System.Collections.Generic.IEnumerable<>).MakeGenericType(element) })
+                       ?? target.GetConstructor(new[] { listType });
+            if (seqCtor != null) return seqCtor.Invoke(new object[] { inner });
+
+            var coll = global::System.Activator.CreateInstance(target)!;   // mutable collection with a parameterless ctor
+            var add = typeof(global::System.Collections.Generic.ICollection<>).MakeGenericType(element).GetMethod("Add")!;
+            foreach (var el in inner) add.Invoke(coll, new[] { el });
             return coll;
         }
 
@@ -168,14 +181,23 @@ public sealed class @this : global::app.type.kind.@this
         return list;
     }
 
-    // The element type of a collection host (IList<T>, not string, not List<Data>).
+    // The element type of a collection host — a mutable IList<T>, or a read-only domain wrapper
+    // (IReadOnlyList<T>/ICollection<T>: action.list, step.list). Not string, not List<Data>, and
+    // never a plang item.@this (those own their own conversion, never reflect-as-collection).
     private global::System.Type? ElementTypeOf(global::System.Type t)
     {
         if (t == typeof(string) || IsListOfData(t)) return null;
+        if (typeof(global::app.type.item.@this).IsAssignableFrom(t)) return null;
+        global::System.Type? readOnly = null, collection = null;
         foreach (var i in t.GetInterfaces())
-            if (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::System.Collections.Generic.IList<>))
-                return i.GetGenericArguments()[0];
-        return null;
+        {
+            if (!i.IsGenericType) continue;
+            var g = i.GetGenericTypeDefinition();
+            if (g == typeof(global::System.Collections.Generic.IList<>)) return i.GetGenericArguments()[0];
+            if (g == typeof(global::System.Collections.Generic.IReadOnlyList<>)) readOnly = i.GetGenericArguments()[0];
+            else if (g == typeof(global::System.Collections.Generic.ICollection<>)) collection = i.GetGenericArguments()[0];
+        }
+        return readOnly ?? collection;
     }
 
     private bool IsListOfData(global::System.Type t)
