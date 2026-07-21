@@ -317,6 +317,27 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
             return tail.TrimStart('@');
         });
 
+    /// <summary>A human-readable name for a type in an error — a plang <c>@this</c> type reads as its
+    /// last one/two namespace segments (<c>parameter.list</c>, <c>action</c>, <c>item</c>), a CLR type
+    /// drops the generic-arity backtick and spells its element (<c>List&lt;Data&gt;</c>). Diagnostics
+    /// only; never a stable identity.</summary>
+    private protected static string Readable(System.Type t)
+    {
+        if (t.Name.TrimStart('@') == "this")
+        {
+            var parts = (t.Namespace ?? "item").Split('.');
+            return parts.Length >= 2 && parts[^2] is not ("item" or "type")
+                ? $"{parts[^2]}.{parts[^1]}".TrimStart('@')
+                : parts[^1].TrimStart('@');
+        }
+        var name = t.Name;
+        var tick = name.IndexOf('`');
+        if (tick >= 0) name = name[..tick];
+        if (t.IsGenericType)
+            name += "<" + string.Join(",", System.Linq.Enumerable.Select(t.GetGenericArguments(), Readable)) + ">";
+        return name;
+    }
+
     /// <summary>
     /// Membership — each type owns its own answer: text by substring (ordinal,
     /// case-insensitive), list by element equality through THE comparison
@@ -400,8 +421,10 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         // Clr (dict→record, list→collection, choice→enum). Reaching here means the caller
         // asked Clr to do a CONVERT (raw→plang, cross-family) — that's the type system's
         // job (type.Create / the target family), not the lower door's.
+        var from = backing is @this bi ? $"{Readable(backing.GetType())}(plang {bi.Type?.Name ?? "?"})" : Readable(backing.GetType());
         throw new System.InvalidCastException(
-            $"{backing.GetType().Name} cannot lower to {target.Name} — the type must own this Clr projection.");
+            $"cannot lower a {from} into {Readable(target)}: the target owns no Clr projection for this shape. " +
+            $"A cross-shape convert (list→{Readable(target)}, dict→record, raw→plang) belongs on the TARGET's own Clr or its type family, not this lower door.");
     }
 
     /// <summary>

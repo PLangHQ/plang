@@ -546,18 +546,32 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
         // A CLR collection target: each row lowers ITSELF to the element type (terminal —
         // a scalar row hits ChangeType, a nested container its own Clr), assembled into
-        // the target's shape. Only a list/array/enumerable target qualifies.
+        // the target's shape. A mutable list/array/IList fills directly; a read-only domain
+        // collection (IReadOnlyList<T>: parameter.list, action.list, step.list — no Add) takes
+        // the built sequence through its ctor.
         var elem = target.IsArray ? target.GetElementType()
                  : target.IsGenericType && typeof(System.Collections.IEnumerable).IsAssignableFrom(target)
                      ? target.GetGenericArguments()[0]
-                 : typeof(System.Collections.IList).IsAssignableFrom(target) ? typeof(object) : null;
+                 : typeof(System.Collections.IList).IsAssignableFrom(target) ? typeof(object)
+                 : ReadOnlyElement(target);
         if (elem != null)
         {
+            var listType = typeof(List<>).MakeGenericType(elem);
             var built = (System.Collections.IList)System.Activator.CreateInstance(
-                target.IsArray || target.IsInterface ? typeof(List<>).MakeGenericType(elem) : target)!;
+                target.IsArray || target.IsInterface || !typeof(System.Collections.IList).IsAssignableFrom(target)
+                    ? listType : target)!;
             foreach (var row in Items) built.Add(row.Peek().Clr(elem));
-            if (!target.IsArray) return built;
-            var arr = System.Array.CreateInstance(elem, built.Count); built.CopyTo(arr, 0); return arr;
+            if (target.IsArray)
+            {
+                var arr = System.Array.CreateInstance(elem, built.Count); built.CopyTo(arr, 0); return arr;
+            }
+            if (target.IsInstanceOfType(built)) return built;   // List<T>/IList<T>/IReadOnlyList<T> target — the list IS it
+            // read-only domain wrapper — hand the sequence to its ctor
+            var seqCtor = target.GetConstructor(new[] { typeof(IReadOnlyList<>).MakeGenericType(elem) })
+                       ?? target.GetConstructor(new[] { typeof(IEnumerable<>).MakeGenericType(elem) })
+                       ?? target.GetConstructor(new[] { listType });
+            if (seqCtor != null) return seqCtor.Invoke(new object[] { built });
+            return built;
         }
 
         // Non-collection target (a string, a record built off the wire, …) — fall back to
@@ -566,6 +580,23 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         foreach (var item in Items)
             raw.Add(string.IsNullOrEmpty(item.Name) ? Unwrap(item.Peek()) : item);
         return ClrConvert(raw, target);
+    }
+
+    // Element type of a read-only domain collection (IReadOnlyList<T>/ICollection<T> — parameter.list,
+    // action.list, step.list) that isn't itself a plang item (those own their own conversion). Null
+    // when the target isn't such a collection.
+    private static System.Type? ReadOnlyElement(System.Type target)
+    {
+        if (typeof(global::app.type.item.@this).IsAssignableFrom(target)) return null;
+        System.Type? readOnly = null, collection = null;
+        foreach (var i in target.GetInterfaces())
+        {
+            if (!i.IsGenericType) continue;
+            var g = i.GetGenericTypeDefinition();
+            if (g == typeof(IReadOnlyList<>)) readOnly = i.GetGenericArguments()[0];
+            else if (g == typeof(System.Collections.Generic.ICollection<>)) collection = i.GetGenericArguments()[0];
+        }
+        return readOnly ?? collection;
     }
 
     // A template=plang list is a USE boundary when materialized (`.Value()`): each element answers
