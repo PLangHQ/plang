@@ -16,6 +16,7 @@ public interface IBuilder : ICode
     Task<data.@this> Types(types action);
     Task<data.@this> Goals(goals action);
     Task<data.@this> GoalsSave(goalsSave action);
+    Task<data.@this> Fold(fold action);
     Task<data.@this> Validate(validate action);
     Task<data.@this> ValidateStepActions(validateStepActions action);
     data.@this Merge(merge action);

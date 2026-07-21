@@ -241,6 +241,60 @@ public class Default : IBuilder
         return result;
     }
 
+    // --- Fold: indent-authored sub-steps → gate-action Child ---
+
+    public Task<data.@this> Fold(fold action)
+    {
+        var context = action.Context;
+        var goal = action.Goal.Clr<Goal>()!;
+        var errors = new List<string>();
+        Fold(goal, errors);
+        if (errors.Count > 0)
+            return Task.FromResult(context.Error(new global::app.error.ActionError(
+                string.Join("; ", errors), "IndentUnderNonCondition", 400)));
+        return Task.FromResult(context.Ok(true));
+    }
+
+    // Folds a goal's own steps, then recurses its sub-goals. Sets each goal's Step to the
+    // nested projection — the goal owns its (now-tree) step collection.
+    private void Fold(Goal goal, List<string> errors)
+    {
+        goal.Step = new global::app.goal.step.list.@this(Fold(goal.Step.list, errors));
+        foreach (var subGoal in goal.Goals) Fold(subGoal, errors);
+    }
+
+    // Flat + Indent → tree: a step's deeper-indented followers move into that step's gate
+    // action (the IsCondition action) Child; recursion composes nested blocks. A block under
+    // a non-condition step is an authoring error (A4) — recorded, never silently dropped or
+    // kept flat. Real steps only; nothing is synthesized here.
+    private List<global::app.goal.step.@this> Fold(
+        IReadOnlyList<global::app.goal.step.@this> flat, List<string> errors)
+    {
+        var top = new List<global::app.goal.step.@this>();
+        int i = 0;
+        while (i < flat.Count)
+        {
+            var step = flat[i];
+            int j = i + 1;
+            while (j < flat.Count && flat[j].Indent > step.Indent) j++;   // gather the deeper block
+
+            if (j > i + 1)
+            {
+                var block = new List<global::app.goal.step.@this>();
+                for (int k = i + 1; k < j; k++) block.Add(flat[k]);
+
+                var gate = System.Linq.Enumerable.FirstOrDefault(step.Action.list, a => a.IsCondition);
+                if (gate == null)
+                    errors.Add($"indented steps under non-condition step '{step.Text}' (line {step.LineNumber})");
+                else
+                    gate.Child = new global::app.goal.step.list.@this(Fold(block, errors));
+            }
+            top.Add(step);   // the real step keeps its identity at this level
+            i = j;
+        }
+        return top;
+    }
+
     public async Task<data.@this> GoalsSave(goalsSave action)
     {
 
