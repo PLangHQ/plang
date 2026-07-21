@@ -1,646 +1,631 @@
 {
-  "name": "Plan",
-  "visibility": "Public",
-  "path": "/system/builder/BuildGoal/Plan.goal",
-  "prPath": "/system/builder/BuildGoal/.build/plan.pr",
-  "hash": "d0a0114f61ac57a74a4b39b5b16ff50f862f0ef873ab6cadcff6492457d14024",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": true,
-  "isTest": false,
-  "step": [
+ "name": "Plan",
+ "visibility": "Public",
+ "path": "/system/builder/BuildGoal/Plan.goal",
+ "prPath": "/system/builder/BuildGoal/.build/plan.pr",
+ "hash": "d0a0114f61ac57a74a4b39b5b16ff50f862f0ef873ab6cadcff6492457d14024",
+ "isSetup": false,
+ "isEvent": false,
+ "isSystem": true,
+ "isTest": false,
+ "step": [
+  {
+   "index": 0,
+   "text": "set %modules% = %!app.module.list%",
+   "lineNumber": 6,
+   "formal": "variable.set(Name=%modules%, Value=%!app.module.list%)",
+   "waitForExecution": true,
+   "action": [
     {
-      "index": 0,
-      "text": "build.actions, write to %actions%",
-      "lineNumber": 6,
-      "formal": "build.actions(Actions=%!data%) | variable.set(Name=%actions%, Value=%!data%, Type=object)",
-      "waitForExecution": true,
-      "action": [
-        {
-          "module": "build",
-          "name": "actions",
-          "parameter": [],
-          "modifier": []
-        },
-        {
-          "module": "variable",
-          "name": "set",
-          "parameter": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "variable",
-                "template": "plang"
-              },
-              "value": "%actions%"
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "object",
-                "template": "plang"
-              },
-              "value": "%!data%"
-            }
-          ],
-          "default": [
-            {
-              "name": "asdefault",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ],
-          "modifier": []
-        }
-      ]
-    },
-    {
-      "index": 1,
-      "text": "render template \"/system/actions/v2/summary.planner.md\", write to %actionSummary%",
-      "lineNumber": 7,
-      "formal": "ui.render(Template=\"/system/actions/v2/summary.planner.md\") | variable.set(Name=%actionSummary%, Value=%!data%)",
-      "waitForExecution": true,
-      "action": [
-        {
-          "module": "ui",
-          "name": "render",
-          "parameter": [
-            {
-              "name": "Template",
-              "type": {
-                "name": "text"
-              },
-              "value": "/system/actions/v2/summary.planner.md"
-            }
-          ],
-          "modifier": []
-        },
-        {
-          "module": "variable",
-          "name": "set",
-          "parameter": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "variable",
-                "template": "plang"
-              },
-              "value": "%actionSummary%"
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "text",
-                "template": "plang"
-              },
-              "value": "%!data%"
-            }
-          ],
-          "default": [
-            {
-              "name": "asdefault",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ],
-          "modifier": []
-        }
-      ]
-    },
-    {
-      "index": 2,
-      "text": "render template \"/system/builder/llm/templates/goalFormat.template\", write to %goalForLlm%",
-      "lineNumber": 8,
-      "formal": "ui.render(Template=\"/system/builder/llm/templates/goalFormat.template\") | variable.set(Name=%goalForLlm%, Value=%!data%)",
-      "waitForExecution": true,
-      "action": [
-        {
-          "module": "ui",
-          "name": "render",
-          "parameter": [
-            {
-              "name": "Template",
-              "type": {
-                "name": "text"
-              },
-              "value": "/system/builder/llm/templates/goalFormat.template"
-            }
-          ],
-          "modifier": []
-        },
-        {
-          "module": "variable",
-          "name": "set",
-          "parameter": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "variable",
-                "template": "plang"
-              },
-              "value": "%goalForLlm%"
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "text",
-                "template": "plang"
-              },
-              "value": "%!data%"
-            }
-          ],
-          "default": [
-            {
-              "name": "asdefault",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ],
-          "modifier": []
-        }
-      ]
-    },
-    {
-      "index": 3,
-      "text": "render template \"/system/builder/llm/Plan.llm\", write to %planPrompt%",
-      "lineNumber": 9,
-      "formal": "ui.render(Template=\"/system/builder/llm/Plan.llm\") | variable.set(Name=%planPrompt%, Value=%!data%)",
-      "waitForExecution": true,
-      "action": [
-        {
-          "module": "ui",
-          "name": "render",
-          "parameter": [
-            {
-              "name": "Template",
-              "type": {
-                "name": "text"
-              },
-              "value": "/system/builder/llm/Plan.llm"
-            }
-          ],
-          "modifier": []
-        },
-        {
-          "module": "variable",
-          "name": "set",
-          "parameter": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "variable",
-                "template": "plang"
-              },
-              "value": "%planPrompt%"
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "text",
-                "template": "plang"
-              },
-              "value": "%!data%"
-            }
-          ],
-          "default": [
-            {
-              "name": "asdefault",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ],
-          "modifier": []
-        }
-      ]
-    },
-    {
-      "index": 4,
-      "text": "set %messages% = [{\"Role\":\"system\", \"Content\":\"%planPrompt%\"}, {\"Role\":\"user\", \"Content\":\"%goalForLlm%\"}]",
-      "lineNumber": 10,
-      "formal": "variable.set(Name=%messages%, Value=[{\"Role\":\"system\",\"Content\":\"%planPrompt%\"},{\"Role\":\"user\",\"Content\":\"%goalForLlm%\"}])",
-      "waitForExecution": true,
-      "action": [
-        {
-          "module": "variable",
-          "name": "set",
-          "parameter": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "variable",
-                "template": "plang"
-              },
-              "value": "%messages%"
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "list",
-                "template": "plang"
-              },
-              "value": [
-                {
-                  "Role": "system",
-                  "Content": "%planPrompt%"
-                },
-                {
-                  "Role": "user",
-                  "Content": "%goalForLlm%"
-                }
-              ]
-            }
-          ],
-          "default": [
-            {
-              "name": "asdefault",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ],
-          "modifier": []
-        }
-      ]
-    },
-    {
-      "index": 5,
-      "text": "call QueryAndValidatePlan, on error call LlmFixer, then retry 2 times",
-      "lineNumber": 16,
-      "comment": "Wrap llm.query + Validate together so the retry surface catches BOTH\nmalformed-JSON (llm.query throws) and structural validation failures\n(Validate throws step-count-mismatch, etc.). RetryCount=2 is the runtime's\njob. LlmFixer re-prompts with previousConversation=%plan%.",
-      "formal": "goal.call(GoalName={name:\"QueryAndValidatePlan\"}) | error.handle(Actions=[goal.call(GoalName={name:\"LlmFixer\"})], RetryCount=2)",
-      "waitForExecution": true,
-      "action": [
-        {
-          "module": "goal",
-          "name": "call",
-          "parameter": [
-            {
-              "name": "GoalName",
-              "type": {
-                "name": "goal.call"
-              },
-              "value": {
-                "name": "QueryAndValidatePlan",
-                "parallel": false,
-                "parameters": [],
-                "prPath": "/system/builder/BuildGoal/.build/plan.pr"
-              }
-            }
-          ],
-          "modifier": [
-            {
-              "module": "error",
-              "name": "handle",
-              "parameter": [
-                {
-                  "name": "Actions",
-                  "type": {
-                    "name": "list"
-                  },
-                  "value": [
-                    {
-                      "module": "goal",
-                      "action": "call",
-                      "parameters": [
-                        {
-                          "name": "GoalName",
-                          "type": {
-                            "name": "goal.call"
-                          },
-                          "value": {
-                            "name": "LlmFixer",
-                            "parameters": []
-                          }
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "name": "RetryCount",
-                  "type": {
-                    "name": "number",
-                    "kind": "int"
-                  },
-                  "value": 2
-                }
-              ],
-              "modifier": []
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "index": 6,
-      "text": "set %plan.system% = %planPrompt%",
-      "lineNumber": 20,
-      "comment": "Stamp the planner's prompts onto %plan% so the parent's set %trace.plan% = %plan%\ncarries them into the trace for the viewer.",
-      "formal": "variable.set(Name=%plan.system%, Value=%planPrompt%, Type=object)",
-      "waitForExecution": true,
-      "action": [
-        {
-          "module": "variable",
-          "name": "set",
-          "parameter": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "variable",
-                "template": "plang"
-              },
-              "value": "%plan.system%"
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "object",
-                "template": "plang"
-              },
-              "value": "%planPrompt%"
-            }
-          ],
-          "default": [
-            {
-              "name": "asdefault",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ],
-          "modifier": []
-        }
-      ]
-    },
-    {
-      "index": 7,
-      "text": "set %plan.user% = %goalForLlm%",
-      "lineNumber": 21,
-      "formal": "variable.set(Name=%plan.user%, Value=%goalForLlm%, Type=string)",
-      "waitForExecution": true,
-      "action": [
-        {
-          "module": "variable",
-          "name": "set",
-          "parameter": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "variable",
-                "template": "plang"
-              },
-              "value": "%plan.user%"
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "object",
-                "template": "plang"
-              },
-              "value": "%goalForLlm%"
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "text"
-              },
-              "value": "string"
-            }
-          ],
-          "default": [
-            {
-              "name": "asdefault",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ],
-          "modifier": []
-        }
-      ]
-    },
-    {
-      "index": 8,
-      "text": "set %plan.usage% = {model: %plan.Model%, promptTokens: %plan.PromptTokens%, cachedTokens: %plan.CachedTokens%, completionTokens: %plan.CompletionTokens%, totalTokens: %plan.TotalTokens%, cost: %plan.Cost%, cached: %plan.Cached%}",
-      "lineNumber": 22,
-      "formal": "variable.set(Name=%plan.usage%, Value={model:%plan.Model%, promptTokens:%plan.PromptTokens%, cachedTokens:%plan.CachedTokens%, completionTokens:%plan.CompletionTokens%, totalTokens:%plan.TotalTokens%, cost:%plan.Cost%, cached:%plan.Cached%})",
-      "waitForExecution": true,
-      "action": [
-        {
-          "module": "variable",
-          "name": "set",
-          "parameter": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "variable",
-                "template": "plang"
-              },
-              "value": "%plan.usage%"
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "dict",
-                "template": "plang"
-              },
-              "value": {
-                "model": "%plan.Model%",
-                "promptTokens": "%plan.PromptTokens%",
-                "cachedTokens": "%plan.CachedTokens%",
-                "completionTokens": "%plan.CompletionTokens%",
-                "totalTokens": "%plan.TotalTokens%",
-                "cost": "%plan.Cost%",
-                "cached": "%plan.Cached%"
-              }
-            }
-          ],
-          "default": [
-            {
-              "name": "asdefault",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ],
-          "modifier": []
-        }
-      ]
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable",
+        "template": "plang"
+       },
+       "value": "%modules%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "object",
+        "template": "plang"
+       },
+       "value": "%!app.module.list%"
+      }
+     ],
+     "modifier": []
     }
-  ],
-  "child": [
+   ]
+  },
+  {
+   "index": 1,
+   "text": "render template \"/system/actions/v2/summary.planner.md\", write to %actionSummary%",
+   "lineNumber": 7,
+   "formal": "ui.render(Template=\"/system/actions/v2/summary.planner.md\") | variable.set(Name=%actionSummary%, Value=%!data%)",
+   "waitForExecution": true,
+   "action": [
     {
-      "name": "QueryAndValidatePlan",
-      "visibility": "Private",
-      "path": "/system/builder/BuildGoal/Plan.goal",
-      "prPath": "/system/builder/BuildGoal/.build/plan.pr",
-      "hash": "3bd23e4eb5a596fd3deb81193045518b0ed2078a560b5f18fb0d4c5a79a09aad",
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": true,
-      "isTest": false,
-      "step": [
+     "module": "ui",
+     "name": "render",
+     "parameter": [
+      {
+       "name": "Template",
+       "type": {
+        "name": "text"
+       },
+       "value": "/system/actions/v2/summary.planner.md"
+      }
+     ],
+     "modifier": []
+    },
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable",
+        "template": "plang"
+       },
+       "value": "%actionSummary%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "text",
+        "template": "plang"
+       },
+       "value": "%!data%"
+      }
+     ],
+     "default": [
+      {
+       "name": "asdefault",
+       "type": {
+        "name": "bool"
+       },
+       "value": false
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 2,
+   "text": "render template \"/system/builder/llm/templates/goalFormat.template\", write to %goalForLlm%",
+   "lineNumber": 8,
+   "formal": "ui.render(Template=\"/system/builder/llm/templates/goalFormat.template\") | variable.set(Name=%goalForLlm%, Value=%!data%)",
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "ui",
+     "name": "render",
+     "parameter": [
+      {
+       "name": "Template",
+       "type": {
+        "name": "text"
+       },
+       "value": "/system/builder/llm/templates/goalFormat.template"
+      }
+     ],
+     "modifier": []
+    },
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable",
+        "template": "plang"
+       },
+       "value": "%goalForLlm%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "text",
+        "template": "plang"
+       },
+       "value": "%!data%"
+      }
+     ],
+     "default": [
+      {
+       "name": "asdefault",
+       "type": {
+        "name": "bool"
+       },
+       "value": false
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 3,
+   "text": "render template \"/system/builder/llm/Plan.llm\", write to %planPrompt%",
+   "lineNumber": 9,
+   "formal": "ui.render(Template=\"/system/builder/llm/Plan.llm\") | variable.set(Name=%planPrompt%, Value=%!data%)",
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "ui",
+     "name": "render",
+     "parameter": [
+      {
+       "name": "Template",
+       "type": {
+        "name": "text"
+       },
+       "value": "/system/builder/llm/Plan.llm"
+      }
+     ],
+     "modifier": []
+    },
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable",
+        "template": "plang"
+       },
+       "value": "%planPrompt%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "text",
+        "template": "plang"
+       },
+       "value": "%!data%"
+      }
+     ],
+     "default": [
+      {
+       "name": "asdefault",
+       "type": {
+        "name": "bool"
+       },
+       "value": false
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 4,
+   "text": "set %messages% = [{\"Role\":\"system\", \"Content\":\"%planPrompt%\"}, {\"Role\":\"user\", \"Content\":\"%goalForLlm%\"}]",
+   "lineNumber": 10,
+   "formal": "variable.set(Name=%messages%, Value=[{\"Role\":\"system\",\"Content\":\"%planPrompt%\"},{\"Role\":\"user\",\"Content\":\"%goalForLlm%\"}])",
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable",
+        "template": "plang"
+       },
+       "value": "%messages%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "list",
+        "template": "plang"
+       },
+       "value": [
         {
-          "index": 0,
-          "text": "llm.query Messages=%messages%, Schema={description: string, steps: [{index: int, actions: [string], confidence: string, explanation?: string}]}, cache=%!build.cache%, write to %plan%",
-          "lineNumber": 26,
-          "formal": "llm.query(Messages=%messages%, Schema={description: string, steps: [{index: int, actions: [string], confidence: string, explanation?: string}]}, Cache=%!build.cache%) | variable.set(Name=%plan%, Value=%!data%, Type=object)",
-          "waitForExecution": true,
-          "action": [
-            {
-              "module": "llm",
-              "name": "query",
-              "parameter": [
-                {
-                  "name": "Messages",
-                  "type": {
-                    "name": "list",
-                    "template": "plang"
-                  },
-                  "value": "%messages%"
-                },
-                {
-                  "name": "Schema",
-                  "type": {
-                    "name": "text"
-                  },
-                  "value": "{description: string, steps: list<{index: int, actions: list<string>, confidence: string, error?: string, warning?: string}>}"
-                },
-                {
-                  "name": "Cache",
-                  "type": {
-                    "name": "bool",
-                    "template": "plang"
-                  },
-                  "value": "%!build.cache%"
-                },
-                {
-                  "name": "Model",
-                  "type": {
-                    "name": "text"
-                  },
-                  "value": "gpt-5.4-nano"
-                }
-              ],
-              "default": [
-                {
-                  "name": "continuepreviousconversation",
-                  "type": {
-                    "name": "bool"
-                  },
-                  "value": false
-                },
-                {
-                  "name": "temperature",
-                  "type": {
-                    "name": "number",
-                    "kind": "double"
-                  },
-                  "value": 0
-                },
-                {
-                  "name": "maxtokens",
-                  "type": {
-                    "name": "number",
-                    "kind": "int"
-                  },
-                  "value": 16000
-                },
-                {
-                  "name": "maxtoolcalls",
-                  "type": {
-                    "name": "number",
-                    "kind": "int"
-                  },
-                  "value": 10
-                },
-                {
-                  "name": "maxvalidationretries",
-                  "type": {
-                    "name": "number",
-                    "kind": "int"
-                  },
-                  "value": 0
-                }
-              ],
-              "modifier": []
-            },
-            {
-              "module": "variable",
-              "name": "set",
-              "parameter": [
-                {
-                  "name": "Name",
-                  "type": {
-                    "name": "variable",
-                    "template": "plang"
-                  },
-                  "value": "%plan%"
-                },
-                {
-                  "name": "Value",
-                  "type": {
-                    "name": "object",
-                    "template": "plang"
-                  },
-                  "value": "%!data%"
-                }
-              ],
-              "default": [
-                {
-                  "name": "asdefault",
-                  "type": {
-                    "name": "bool"
-                  },
-                  "value": false
-                }
-              ],
-              "modifier": []
-            }
-          ]
+         "Role": "system",
+         "Content": "%planPrompt%"
         },
         {
-          "index": 1,
-          "text": "call Validate",
-          "lineNumber": 27,
-          "formal": "goal.call(GoalName={name:\"Validate\"})",
-          "waitForExecution": true,
-          "action": [
-            {
-              "module": "goal",
-              "name": "call",
-              "parameter": [
-                {
-                  "name": "GoalName",
-                  "type": {
-                    "name": "goal.call"
-                  },
-                  "value": {
-                    "name": "Validate",
-                    "parallel": false,
-                    "parameters": [],
-                    "prPath": "/system/builder/BuildGoal/.build/validate.pr"
-                  }
-                }
-              ],
-              "modifier": []
-            }
-          ]
+         "Role": "user",
+         "Content": "%goalForLlm%"
         }
-      ],
-      "child": []
+       ]
+      }
+     ],
+     "default": [
+      {
+       "name": "asdefault",
+       "type": {
+        "name": "bool"
+       },
+       "value": false
+      }
+     ],
+     "modifier": []
     }
-  ]
+   ]
+  },
+  {
+   "index": 5,
+   "text": "call QueryAndValidatePlan, on error call LlmFixer, then retry 2 times",
+   "lineNumber": 16,
+   "comment": "Wrap llm.query + Validate together so the retry surface catches BOTH\nmalformed-JSON (llm.query throws) and structural validation failures\n(Validate throws step-count-mismatch, etc.). RetryCount=2 is the runtime's\njob. LlmFixer re-prompts with previousConversation=%plan%.",
+   "formal": "goal.call(GoalName={name:\"QueryAndValidatePlan\"}) | error.handle(Actions=[goal.call(GoalName={name:\"LlmFixer\"})], RetryCount=2)",
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "goal",
+     "name": "call",
+     "parameter": [
+      {
+       "name": "GoalName",
+       "type": {
+        "name": "goal.call"
+       },
+       "value": {
+        "name": "QueryAndValidatePlan",
+        "parallel": false,
+        "parameters": [],
+        "prPath": "/system/builder/BuildGoal/.build/plan.pr"
+       }
+      }
+     ],
+     "modifier": [
+      {
+       "module": "error",
+       "name": "handle",
+       "parameter": [
+        {
+         "name": "Actions",
+         "type": {
+          "name": "list"
+         },
+         "value": [
+          {
+           "module": "goal",
+           "action": "call",
+           "parameters": [
+            {
+             "name": "GoalName",
+             "type": {
+              "name": "goal.call"
+             },
+             "value": {
+              "name": "LlmFixer",
+              "parameters": []
+             }
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "name": "RetryCount",
+         "type": {
+          "name": "number",
+          "kind": "int"
+         },
+         "value": 2
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "index": 6,
+   "text": "set %plan.system% = %planPrompt%",
+   "lineNumber": 20,
+   "comment": "Stamp the planner's prompts onto %plan% so the parent's set %trace.plan% = %plan%\ncarries them into the trace for the viewer.",
+   "formal": "variable.set(Name=%plan.system%, Value=%planPrompt%, Type=object)",
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable",
+        "template": "plang"
+       },
+       "value": "%plan.system%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "object",
+        "template": "plang"
+       },
+       "value": "%planPrompt%"
+      }
+     ],
+     "default": [
+      {
+       "name": "asdefault",
+       "type": {
+        "name": "bool"
+       },
+       "value": false
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 7,
+   "text": "set %plan.user% = %goalForLlm%",
+   "lineNumber": 21,
+   "formal": "variable.set(Name=%plan.user%, Value=%goalForLlm%, Type=string)",
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable",
+        "template": "plang"
+       },
+       "value": "%plan.user%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "object",
+        "template": "plang"
+       },
+       "value": "%goalForLlm%"
+      },
+      {
+       "name": "Type",
+       "type": {
+        "name": "text"
+       },
+       "value": "string"
+      }
+     ],
+     "default": [
+      {
+       "name": "asdefault",
+       "type": {
+        "name": "bool"
+       },
+       "value": false
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  },
+  {
+   "index": 8,
+   "text": "set %plan.usage% = {model: %plan.Model%, promptTokens: %plan.PromptTokens%, cachedTokens: %plan.CachedTokens%, completionTokens: %plan.CompletionTokens%, totalTokens: %plan.TotalTokens%, cost: %plan.Cost%, cached: %plan.Cached%}",
+   "lineNumber": 22,
+   "formal": "variable.set(Name=%plan.usage%, Value={model:%plan.Model%, promptTokens:%plan.PromptTokens%, cachedTokens:%plan.CachedTokens%, completionTokens:%plan.CompletionTokens%, totalTokens:%plan.TotalTokens%, cost:%plan.Cost%, cached:%plan.Cached%})",
+   "waitForExecution": true,
+   "action": [
+    {
+     "module": "variable",
+     "name": "set",
+     "parameter": [
+      {
+       "name": "Name",
+       "type": {
+        "name": "variable",
+        "template": "plang"
+       },
+       "value": "%plan.usage%"
+      },
+      {
+       "name": "Value",
+       "type": {
+        "name": "dict",
+        "template": "plang"
+       },
+       "value": {
+        "model": "%plan.Model%",
+        "promptTokens": "%plan.PromptTokens%",
+        "cachedTokens": "%plan.CachedTokens%",
+        "completionTokens": "%plan.CompletionTokens%",
+        "totalTokens": "%plan.TotalTokens%",
+        "cost": "%plan.Cost%",
+        "cached": "%plan.Cached%"
+       }
+      }
+     ],
+     "default": [
+      {
+       "name": "asdefault",
+       "type": {
+        "name": "bool"
+       },
+       "value": false
+      }
+     ],
+     "modifier": []
+    }
+   ]
+  }
+ ],
+ "child": [
+  {
+   "name": "QueryAndValidatePlan",
+   "visibility": "Private",
+   "path": "/system/builder/BuildGoal/Plan.goal",
+   "prPath": "/system/builder/BuildGoal/.build/plan.pr",
+   "hash": "3bd23e4eb5a596fd3deb81193045518b0ed2078a560b5f18fb0d4c5a79a09aad",
+   "isSetup": false,
+   "isEvent": false,
+   "isSystem": true,
+   "isTest": false,
+   "step": [
+    {
+     "index": 0,
+     "text": "llm.query Messages=%messages%, Schema={description: string, steps: [{index: int, actions: [string], confidence: string, explanation?: string}]}, cache=%!build.cache%, write to %plan%",
+     "lineNumber": 26,
+     "formal": "llm.query(Messages=%messages%, Schema={description: string, steps: [{index: int, actions: [string], confidence: string, explanation?: string}]}, Cache=%!build.cache%) | variable.set(Name=%plan%, Value=%!data%, Type=object)",
+     "waitForExecution": true,
+     "action": [
+      {
+       "module": "llm",
+       "name": "query",
+       "parameter": [
+        {
+         "name": "Messages",
+         "type": {
+          "name": "list",
+          "template": "plang"
+         },
+         "value": "%messages%"
+        },
+        {
+         "name": "Schema",
+         "type": {
+          "name": "text"
+         },
+         "value": "{description: string, steps: list<{index: int, actions: list<string>, confidence: string, error?: string, warning?: string}>}"
+        },
+        {
+         "name": "Cache",
+         "type": {
+          "name": "bool",
+          "template": "plang"
+         },
+         "value": "%!build.cache%"
+        },
+        {
+         "name": "Model",
+         "type": {
+          "name": "text"
+         },
+         "value": "gpt-5.4-nano"
+        }
+       ],
+       "default": [
+        {
+         "name": "continuepreviousconversation",
+         "type": {
+          "name": "bool"
+         },
+         "value": false
+        },
+        {
+         "name": "temperature",
+         "type": {
+          "name": "number",
+          "kind": "double"
+         },
+         "value": 0
+        },
+        {
+         "name": "maxtokens",
+         "type": {
+          "name": "number",
+          "kind": "int"
+         },
+         "value": 16000
+        },
+        {
+         "name": "maxtoolcalls",
+         "type": {
+          "name": "number",
+          "kind": "int"
+         },
+         "value": 10
+        },
+        {
+         "name": "maxvalidationretries",
+         "type": {
+          "name": "number",
+          "kind": "int"
+         },
+         "value": 0
+        }
+       ],
+       "modifier": []
+      },
+      {
+       "module": "variable",
+       "name": "set",
+       "parameter": [
+        {
+         "name": "Name",
+         "type": {
+          "name": "variable",
+          "template": "plang"
+         },
+         "value": "%plan%"
+        },
+        {
+         "name": "Value",
+         "type": {
+          "name": "object",
+          "template": "plang"
+         },
+         "value": "%!data%"
+        }
+       ],
+       "default": [
+        {
+         "name": "asdefault",
+         "type": {
+          "name": "bool"
+         },
+         "value": false
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    },
+    {
+     "index": 1,
+     "text": "call Validate",
+     "lineNumber": 27,
+     "formal": "goal.call(GoalName={name:\"Validate\"})",
+     "waitForExecution": true,
+     "action": [
+      {
+       "module": "goal",
+       "name": "call",
+       "parameter": [
+        {
+         "name": "GoalName",
+         "type": {
+          "name": "goal.call"
+         },
+         "value": {
+          "name": "Validate",
+          "parallel": false,
+          "parameters": [],
+          "prPath": "/system/builder/BuildGoal/.build/validate.pr"
+         }
+        }
+       ],
+       "modifier": []
+      }
+     ]
+    }
+   ],
+   "child": []
+  }
+ ]
 }
