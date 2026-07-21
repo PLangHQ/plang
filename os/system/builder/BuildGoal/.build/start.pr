@@ -171,8 +171,8 @@
                   "value": [
                     {
                       "module": "goal",
-                      "action": "call",
-                      "parameters": [
+                      "name": "call",
+                      "parameter": [
                         {
                           "name": "GoalName",
                           "type": {
@@ -407,8 +407,8 @@
                   "value": [
                     {
                       "module": "goal",
-                      "action": "call",
-                      "parameters": [
+                      "name": "call",
+                      "parameter": [
                         {
                           "name": "GoalName",
                           "type": {
@@ -1027,8 +1027,8 @@
                       "value": [
                         {
                           "module": "goal",
-                          "action": "call",
-                          "parameters": [
+                          "name": "call",
+                          "parameter": [
                             {
                               "name": "GoalName",
                               "type": {
@@ -1111,8 +1111,8 @@
                       "value": [
                         {
                           "module": "goal",
-                          "action": "call",
-                          "parameters": [
+                          "name": "call",
+                          "parameter": [
                             {
                               "name": "GoalName",
                               "type": {
