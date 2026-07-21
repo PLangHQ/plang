@@ -95,6 +95,66 @@ public sealed class @this
 
 `IsCondition` matches only `if`/`elseif`/`else`, so a step's leading `file.exists` / `condition.compare` / `variable.set` (A4 — verified in 1663 `.pr`) just run in order; only the gate fires a `Child`. This also **fixes the latent `skipBelowIndent` bug** (`steps/this.cs:132` checks `Actions[0].Module=="condition"`, which is false for `[file.exists, condition.if]`).
 
+## 2b. `modifier.list` — the third node (fixes the naked `List`, pulls lifecycle out of `action`)
+
+**Today:** `action.Modifiers` is a **public bare `List<modifier.@this>`** (`action/this.cs:38`) — the naked-collection smell the whole `X.list` pattern kills. The wrap-fold is **inlined on `action.RunAsync`** (`:164-183`), and — the part Ingi flagged — `action` loops over the modifiers firing *their* `AfterAction` (`:180-182`), acting as a middleman for their lifecycles. (`modifiers.@this` the collection was deleted in the earlier modifier-wrap-ownership pass, which is *why* the fold got inlined — it had no home.)
+
+**Change:** make `action.Modifier : modifier.list` — the third `X.list` node. Modifiers **wrap** (not sequence-run), so its owned operation is `Wrap`, not `Run`:
+
+```csharp
+// goal/step/action/modifier/list/this.cs — node; owns the compose fold, NOT the lifecycle
+public sealed class @this
+{
+    private readonly List<Modifier> _modifiers;
+    public @this(List<Modifier> modifiers) => _modifiers = modifiers;
+
+    public Modifier this[int i] => _modifiers[i];               // action.modifier[0]
+    public IReadOnlyList<Modifier> list => _modifiers;          // action.modifier.list
+    public int Count => _modifiers.Count;
+
+    public async Task<(Func<Task<data.@this>>? Wrapped, IError? Error)> Wrap(Func<Task<data.@this>> inner, actor.context.@this ctx)
+    {
+        var execute = inner;
+        for (int i = _modifiers.Count - 1; i >= 0; i--)         // compose right-to-left; no lifecycle loop
+        {
+            var (wrapped, err) = await _modifiers[i].Wrap(execute, ctx);
+            if (err != null) return (null, err);
+            execute = wrapped!;
+        }
+        return (execute, null);
+    }
+}
+```
+
+**Each modifier fires its OWN lifecycle** — the `foreach … After.Run` loop leaves `action` and moves into the modifier's `Wrap` (Ingi: a modifier should own its lifecycle, not have `action` fire it):
+
+```csharp
+// modifier/this.cs — the wrapper it returns fires this modifier's AfterAction as it unwinds
+public async Task<(Func<Task<data.@this>>? Wrapped, IError? Error)> Wrap(Func<Task<data.@this>> inner, actor.context.@this ctx)
+{
+    // …Resolve params → IModifier (as today)…
+    var innerWrapped = mod.Wrap(inner, ctx);
+    Func<Task<data.@this>> wrapped = async () =>
+    {
+        var result = await innerWrapped();
+        await ctx.LifecycleFor(this).After.Run(ctx, AfterAction, this, result);   // ← this modifier, its own result
+        return result;
+    };
+    return (wrapped, null);
+}
+```
+
+```csharp
+// action/this.cs RunAsync — the modifier branch collapses; the AfterAction loop is DELETED
+var (composed, err) = await Modifier.Wrap(() => DispatchAsync(context), context);
+if (err != null) return context.Error(err);
+data = await composed!();       // each modifier fires its own AfterAction as the chain unwinds
+```
+
+Result: all three collections own their operation — **`step.list.Run` · `action.list.Run` · `modifier.list.Wrap`** — the naked `List` is gone, and the stray lifecycle loop leaves `action`. Bonus correctness: each modifier's `AfterAction` now fires with **its own layer's result** (not the old loop's shared final `data`); coverage still sees one fire per modifier, so nothing regresses.
+
+**Flag:** this **un-does** the modifier-wrap-ownership inline (which existed only because the collection was deleted) — a conscious reversal, consistent with the tree bringing collections back as owning nodes. Wire (`modifiers`→`modifier` key), reader (born-with the action), and `modifier : action` subtype are unchanged.
+
 ## 3. `action.Child` + `condition.if.Run` collapse
 
 ```csharp
@@ -303,7 +363,7 @@ Both forms land on `action.Child : step.list`; the tree comes from two sources, 
 ## Demolition (net)
 
 **Delete:** `steps.@this` (whole); `Decision` (whole); `condition.if.Orchestrate` + simple-form block; `step.Indent` + wire `indent`; `GoalSteps` alias; branch stamping in `if.cs`; `Properties["branch*"]` reads in `run.cs`; `Coverage`'s `_branches`/`_branchLabels`/`_branchChains` + `RecordBranch*`; `discover.SeedBranchChains`'s `Decision` use; `skipBelowIndent`/`HasIndentedChildren`.
-**Change:** `goal.Steps→Step` (`step.list`); `step.Actions→Action` (`action.list`); `action` gains `Child`; `RunAsync→Run`; backref wire (§5); coverage observer (§8); `goal/this.cs` `Steps[]→Step[]`; `step.HasSubSteps` → `Action.Any(a => a.Child.Count > 0)`.
+**Change:** `goal.Steps→Step` (`step.list`); `step.Actions→Action` (`action.list`); `action.Modifiers→Modifier` (`modifier.list`, §2b — naked `List` gone); the modifier `AfterAction` loop leaves `action.RunAsync` → each `modifier.Wrap` fires its own (§2b); `action` gains `Child`; `RunAsync→Run`; backref wire (§5); coverage observer (§8); `goal/this.cs` `Steps[]→Step[]`; `step.HasSubSteps` → `Action.Any(a => a.Child.Count > 0)`.
 **Stays:** `goal.Run`/`step.Run` lifecycle; `condition.if`/`elseif`/`else` evaluation; `IsCondition`; `Coverage.RecordModuleAction`/`Merge` (narrowed); the item `Output`/`Reader` (extended); `goal.Child` (sub-goals).
 
 ## Flaw readover — the six caught writing this up
