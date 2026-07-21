@@ -1478,3 +1478,20 @@ Ingi, during build.fold review: `ActionError` currently carries a `Step` (`Actio
 ## 2026-07-21 — recovery-action conversion goes through the wrong path (root of the recovery cascade)
 - **error.handle recovery actions can't round-trip because they're materialized via reflection, not the action wire reader.** The recovery Actions live in the .pr as raw param-value dicts. At runtime error.handle.Actions is list<action> and RunRecovery does `row.Value<action>()`, which routes dict -> action.Create -> dict.Clr(action) -> reflection.Read (Activator + [Store] reflection). That path CANNOT build an action's Parameter rows: each param is a `Data` (no parameterless ctor) that must be read via the @schema:data dataReader, exactly what the action WIRE reader (goal/step/action/serializer/Reader.cs) does and reflection.Read does not. Symptom cascade after normalizing the .pr shape to {name,parameter}: list->parameter.list gap (fixed in list.Clr), then Activator(Data) MissingMethodException. Proper fix: recovery/modifier actions should serialize as real action.@this items (read via the action reader), OR the dict->action conversion must use the action reader for params — a builder-serialization/design decision, not a one-line gap. Until then the error.handle recovery chain (RefineActions/FixValidation/HandleBuildFailure) can't run.
 - Also: the .pr files are systematically stale vs the goal sources (old build.actions/%actions%, {action,parameters} recovery shape). Hand-normalizing via json.dump reformats the WHOLE file (2800-line diffs) — don't; regenerate via the builder once it self-builds, or write a minimal in-place patcher that preserves formatting.
+
+## 2026-07-21 — MILESTONE: self-hosted builder builds BuilderSanity green
+BuilderSanity (test + AddItem/MarkBig/Finalize) all build with correct actions after: per-module
+catalog, item-owned type conversion, action/step/goal Create-from-dict, recovery-action normalize,
+build.validate empty-actions rejection, FixValidation continuePreviousConversation. Remaining to
+run the full --test suite / rebuild all system .pr:
+- **build.validate doesn't check required-param completeness.** The compiler can emit an action
+  missing a required param (e.g. `set default %path% = '.'` -> variable.set with no Name); validate
+  passes it (catalog exists), it saves, and RUNTIME fails MissingRequiredParameter. validate should
+  check each action's required params against the catalog so FixValidation retries. (Compile-prompt
+  robustness for set-default and similar patterns is the paired LLM-quality half.)
+- **os/system/.build/*.pr are stale (old {steps, action, parameters} format).** The --test runner
+  goal (os/system/.build/test.pr) can't be parsed by the current reader, blocking --test. Rebuilding
+  system goals with the now-working builder is the path (hit the validate gap above on test.goal).
+- **%!data% cosmetic output** (~18 literal lines) during a build — a builder output line not resolving.
+- **action.Create migration alias** (accepts action/parameters as well as name/parameter) — drop once
+  all .pr regenerate canonical.
