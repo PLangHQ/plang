@@ -23,9 +23,20 @@ public sealed class @this : global::app.type.kind.@this
         var e = (JsonElement)obj;
         if (e.ValueKind == JsonValueKind.Object && e.TryGetProperty(key, out var byName))
             return (true, byName);
-        if (e.ValueKind == JsonValueKind.Array
-            && int.TryParse(key, out var n) && n >= 0 && n < e.GetArrayLength())
-            return (true, e[n]);
+        if (e.ValueKind == JsonValueKind.Array)
+        {
+            if (int.TryParse(key, out var n) && n >= 0 && n < e.GetArrayLength())
+                return (true, e[n]);
+            // Synthetic collection navigations — mirror the plang list kind so a clr(json) array
+            // reads like a list: .count/.length/.size (size for Fluid), .first/.last. A count rides
+            // out as a bare int (kind re-derives to number); first/last stay JsonElements.
+            switch (key.ToLowerInvariant())
+            {
+                case "count": case "length": case "size": return (true, e.GetArrayLength());
+                case "first": return e.GetArrayLength() > 0 ? (true, e[0]) : (false, null);
+                case "last": return e.GetArrayLength() > 0 ? (true, e[e.GetArrayLength() - 1]) : (false, null);
+            }
+        }
         return (false, null);
     }
 
