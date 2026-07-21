@@ -356,10 +356,13 @@ namespace PLang.Container
 			// These are injectable by user
 			var context = container.GetInstance<PLangAppContext>();
 			string llmService = AppContext.GetData("llmservice") as string ?? "plang";
-			var defaultLlmService = (llmService == "openai") ? typeof(OpenAiService) : typeof(PLangLlmService);
+			var defaultLlmService = (llmService == "openai") ? typeof(OpenAiService)
+				: (llmService == "poolside") ? typeof(PLang.Services.Poolside.PoolsideService)
+				: typeof(PLangLlmService);
 
 			container.RegisterSingleton<ILlmService, PLangLlmService>(typeof(PLangLlmService).FullName);
 			container.RegisterSingleton<ILlmService, OpenAiService>(typeof(OpenAiService).FullName);
+			container.RegisterSingleton<ILlmService, PLang.Services.Poolside.PoolsideService>(typeof(PLang.Services.Poolside.PoolsideService).FullName);
 			container.RegisterSingleton(factory =>
 			{
 				var type = GetImplementation(context, ReservedKeywords.Inject_LLMService, defaultLlmService);

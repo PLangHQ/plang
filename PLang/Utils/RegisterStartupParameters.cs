@@ -73,9 +73,9 @@ namespace PLang.Utils
 					serviceName = llmservice.Substring(llmservice.IndexOf("=") + 1).ToLower();
 				}
 
-				if (serviceName != "plang" && serviceName != "openai")
+				if (serviceName != "plang" && serviceName != "openai" && serviceName != "poolside")
 				{
-					throw new RuntimeException("Parameter --llmservice can only be 'plang' or 'openai'. For example --llmservice=openai");
+					throw new RuntimeException("Parameter --llmservice can only be 'plang', 'openai' or 'poolside'. For example --llmservice=openai");
 				}
 				AppContext.SetData("llmservice", serviceName);
 			}

@@ -42,6 +42,20 @@ namespace PLang.Services.OpenAi
 		}
 
 
+		// Overridable so subclasses (e.g. PoolsideService) can change model/params without duplicating Query.
+		protected virtual string BuildRequestBody(LlmRequest question)
+		{
+			return $@"{{
+		""model"":""{question.model}"",
+		""temperature"":{question.temperature.ToString(CultureInfo.InvariantCulture)},
+		""max_tokens"":{question.maxLength},
+		""top_p"":{question.top_p.ToString(CultureInfo.InvariantCulture)},
+		""frequency_penalty"":{question.frequencyPenalty.ToString(CultureInfo.InvariantCulture)},
+		""presence_penalty"":{question.presencePenalty.ToString(CultureInfo.InvariantCulture)},
+		""messages"":{JsonConvert.SerializeObject(question.promptMessage)}
+			}}";
+		}
+
 		public virtual async Task<(T? Response, IError? Error)> Query<T>(LlmRequest question) where T : class
 		{
 			var result = await Query(question, typeof(T));
@@ -82,15 +96,7 @@ namespace PLang.Services.OpenAi
 				settings.SetSharedSettings(null);
 			}
 			
-			string data = $@"{{
-		""model"":""{question.model}"",
-		""temperature"":{question.temperature.ToString(CultureInfo.InvariantCulture)},
-		""max_tokens"":{question.maxLength},
-		""top_p"":{question.top_p.ToString(CultureInfo.InvariantCulture)},
-		""frequency_penalty"":{question.frequencyPenalty.ToString(CultureInfo.InvariantCulture)},
-		""presence_penalty"":{question.presencePenalty.ToString(CultureInfo.InvariantCulture)},
-		""messages"":{JsonConvert.SerializeObject(question.promptMessage)}
-			}}";
+			string data = BuildRequestBody(question);
 			request.Headers.UserAgent.ParseAdd("plang v0.1");
 			request.Headers.Add("Authorization", $"Bearer {bearer}");
 			request.Content = new StringContent(data, Encoding.GetEncoding("UTF-8"), "application/json");
