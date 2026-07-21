@@ -1,61 +1,29 @@
 {
   "name": "MarkBig",
-  "description": null,
-  "comment": null,
-  "steps": [
+  "step": [
     {
       "index": 0,
       "text": "set %label% = \u0027big\u0027",
       "lineNumber": 2,
-      "indent": 0,
-      "comment": null,
-      "actions": [
+      "action": [
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%label%",
-              "type": {
-                "name": "variable"
-              }
-            },
-            {
-              "name": "Value",
-              "value": "big",
-              "type": {
-                "name": "text"
-              }
-            }
-          ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": {
-                "name": "bool"
-              }
-            }
-          ],
-          "modifiers": []
+          "name": "set",
+          "parameter": [],
+          "modifier": []
         }
       ],
-      "intent": null,
-      "formal": "variable.set(Name=%label%, Value=\u0022big\u0022)",
-      "source": null,
+      "formal": "variable.set(Name=%label%, Value={text big})",
       "waitForExecution": true
     }
   ],
-  "goals": [],
-  "visibility": 1,
+  "child": [],
+  "visibility": "Public",
   "path": "/BuilderSanity/MarkBig.goal",
   "prPath": "/BuilderSanity/.build/markbig.pr",
   "hash": "c4554670009c0dff2d422fd18275afbd6a08b431e9b994497987169f3152d981",
-  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,
-  "isTest": false,
-  "inputParameters": null
+  "isTest": false
 }

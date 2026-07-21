@@ -1628,15 +1628,7 @@
                   "type": {
                     "name": "bool"
                   },
-                  "value": false
-                },
-                {
-                  "name": "previousConversation",
-                  "type": {
-                    "name": "object",
-                    "template": "plang"
-                  },
-                  "value": "%compileResult%"
+                  "value": true
                 }
               ],
               "default": [

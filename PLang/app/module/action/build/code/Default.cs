@@ -468,8 +468,14 @@ public class Default : IBuilder
         var modules = app.Module;
 
         var actionList = action.Actions == null ? null : await action.Actions.Value() as global::app.type.item.list.@this;
-        if (actionList == null)
-            return context.Ok(true);
+        if (actionList == null || actionList.Count == 0)
+            // An empty action set is a compile failure, not a pass: a step maps to at least one
+            // action. Surfacing it here (keyed for the FixValidation retry) instead of letting it
+            // slip through to goalsSave — where the LLM's "I will correct…" no-op response would
+            // otherwise land as a late, un-retryable "Step[N]: no actions".
+            return context.Error(new global::app.error.ActionError(
+                "the compiled step has no actions — every step maps to at least one action.",
+                "EmptyActions", 400));
 
         // Each row opens through its own action door — params intact, no CLR peel.
         var actions = new List<global::app.goal.step.action.@this>();
