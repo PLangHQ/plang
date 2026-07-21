@@ -100,9 +100,9 @@
     },
     {
       "index": 2,
-      "text": "llm.query Messages=%fixerMessages%, Schema={description: string, steps: list<{index: int, actions: list<string>, confidence: string, explanation?: string}>}, cache=%!build.cache%, previousConversation=%plan%, write to %plan%",
+      "text": "llm.query Messages=%fixerMessages%, Schema={description: string, steps: list<{index: int, actions: list<string>, confidence: string, error?: string, warning?: string}>}, cache=%!build.cache%, previousConversation=%plan%, write to %plan%",
       "lineNumber": 8,
-      "formal": "llm.query(Messages=%fixerMessages%, Schema={description: string, steps: list<{index: int, actions: list<string>, confidence: string, explanation?: string}>}, Cache=%!build.cache%, ContinuePreviousConversation=%plan%) | variable.set(Name=%plan%, Value=%!data%, Type=object)",
+      "formal": "llm.query(Messages=%fixerMessages%, Schema={description: string, steps: list<{index: int, actions: list<string>, confidence: string, error?: string, warning?: string}>}, Cache=%!build.cache%, ContinuePreviousConversation=%plan%) | variable.set(Name=%plan%, Value=%!data%, Type=object)",
       "waitForExecution": true,
       "action": [
         {
@@ -120,12 +120,9 @@
             {
               "name": "Schema",
               "type": {
-                "name": "dict"
+                "name": "text"
               },
-              "value": {
-                "description": "string",
-                "steps": "list<{index: int, actions: list<string>, confidence: string, explanation?: string}>"
-              }
+              "value": "{description: string, steps: list<{index: int, actions: list<string>, confidence: string, error?: string, warning?: string}>}"
             },
             {
               "name": "Cache",

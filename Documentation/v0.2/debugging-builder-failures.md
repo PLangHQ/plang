@@ -45,13 +45,22 @@ BIN=../PlangConsole/bin/Debug/net10.0/plang
 
 ```bash
 $BIN build --build='{"files":["<goal>"],"cache":false}' \
-  '--debug={"llmTrace":true,"maxLength":8000,"goal":"QueryAndValidatePlan"}' > /tmp/plan.txt 2>&1
+  '--debug={"goal":"QueryAndValidatePlan","llm":{"system":true,"user":true,"schema":true,"response":true}}' > /tmp/plan.txt 2>&1
 cp /tmp/good.pr <restore the .pr>
 ```
 
+> **`llmTrace` is gone** — replaced by the granular **`llm`** object. Only the flags
+> you set to `true` are emitted, each as its own `=== LLM SYSTEM/USER/SCHEMA/RESPONSE ===`
+> block: `system` (system prompt), `user` (user message — the single most useful one),
+> `schema` (the schema string sent), `response` (the raw model reply). Add
+> `"output":"file"` to write each block to a file instead of stderr. All-off / no `llm`
+> object means no tracing.
+
 The `llm.query` lives in the `QueryAndValidatePlan` **sub-goal**, not in `Plan` —
-trace the sub-goal or you'll only see the orchestration. Find `%plan%` in the AFTER
-dump; its `RawResponse` property is the literal planner JSON:
+trace the sub-goal or you'll only see the orchestration. The `LLM USER` block is the
+literal user message **as sent** — if it shows an unresolved `%var%` (e.g. `%goalForLlm%`
+instead of the rendered goal), the bug is message-content resolution, not the model.
+The `LLM RESPONSE` block is the raw planner JSON:
 
 ```
 %plan% = {description:…, steps:[{index:0, actions:[error.throw, error.handle, variable.set]},
@@ -66,7 +75,7 @@ dump; its `RawResponse` property is the literal planner JSON:
 
 ```bash
 $BIN build --build='{"files":["<goal>"],"cache":false}' \
-  '--debug={"llmTrace":true,"maxLength":20000,"goal":"Compile"}' > /tmp/compile.txt 2>&1
+  '--debug={"goal":"Compile","llm":{"user":true,"schema":true,"response":true}}' > /tmp/compile.txt 2>&1
 cp /tmp/good.pr <restore the .pr>
 ```
 

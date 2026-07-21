@@ -512,21 +512,9 @@
                 {
                   "name": "Schema",
                   "type": {
-                    "name": "dict"
+                    "name": "text"
                   },
-                  "value": {
-                    "description": "string",
-                    "steps": [
-                      {
-                        "index": "int",
-                        "actions": [
-                          "string"
-                        ],
-                        "confidence": "string",
-                        "explanation?": "string"
-                      }
-                    ]
-                  }
+                  "value": "{description: string, steps: list<{index: int, actions: list<string>, confidence: string, error?: string, warning?: string}>}"
                 },
                 {
                   "name": "Cache",

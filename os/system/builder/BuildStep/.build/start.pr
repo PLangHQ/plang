@@ -1295,14 +1295,9 @@
                 {
                   "name": "Schema",
                   "type": {
-                    "name": "dict"
+                    "name": "text"
                   },
-                  "value": {
-                    "index": "int",
-                    "actions": "list<string>",
-                    "confidence": "string",
-                    "explanation?": "string"
-                  }
+                  "value": "{index: int, actions: list<string>, confidence: string, explanation?: string}"
                 },
                 {
                   "name": "Cache",
