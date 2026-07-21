@@ -223,7 +223,7 @@ namespace PLang.Utils
 		{
 			if (string.IsNullOrEmpty(text)) return text;
 
-			text = Regex.Replace(text, "<.*?>", " ");
+			text = Regex.Replace(text, "<.*?>", " ", RegexOptions.Singleline);
 			text = Regex.Replace(text, @"\s{2,}", " ").Trim();
 			return text;
 		}
