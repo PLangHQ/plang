@@ -305,7 +305,7 @@ public class Default : IBuilder
 
         var app = action.Context.App;
         var context = action.Context;
-        var goal = action.Goal.Clr<Goal>()!;
+        var goal = (await action.Goal.Value())!;
 
         // Apply LLM-generated description if available in Variables
         var stepResults = await context.Variable.Get("stepResults");
