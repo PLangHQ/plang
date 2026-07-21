@@ -51,8 +51,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public @this(actor.context.@this context)
         : this(new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase), context) { }
 
-    /// <summary>A dict's own type entity — the type owns its name (no namespace reflection).</summary>
-    protected internal override global::app.type.@this Type => new("dict", typeof(@this));
+    /// <summary>A dict's own type entity — the type owns its name (no namespace reflection). Carries
+    /// the template flag so a template=plang dict resolves its %var% leaves at .Value().</summary>
+    protected internal override global::app.type.@this Type => new("dict", typeof(@this)) { Template = Template };
 
     /// <summary>THE PURE CORE — a container coerces INTO nothing (highest rank), so the core only
     /// passes a <c>dict</c> through; any other value declines (<c>null</c>). Real construction
@@ -360,6 +361,22 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         // (each value lowers itself via its own Clr). No STJ, no self-serialize round-trip — the
         // firing site for dict.Json dies here.
         return new global::app.type.item.kind.reflection.@this().Read(this, target, Context);
+    }
+
+    // A template=plang dict is a USE boundary when materialized (`.Value()`): each entry answers
+    // through its OWN value door ONE level — a `%ref%` text leaf resolves itself (full-match →
+    // the referenced value whole, even structured; partial → interpolated), a nested container
+    // recurses via its own Value, a plain scalar answers itself. The referenced value's own
+    // `%vars%` stay literal (the resolved value is not re-scanned). Not cached (Cacheable=false),
+    // so it re-resolves against live variables every read — the resolution lives on the value, not
+    // on the consumer or a sync Clr.
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
+    {
+        if (Template == null) return this;
+        var result = new @this(data.Context);
+        foreach (var key in _value.Keys)
+            result.Set(key, await Slot(key).Value());
+        return result;
     }
 
 

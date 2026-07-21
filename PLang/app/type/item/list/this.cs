@@ -59,8 +59,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public @this(actor.context.@this context) : this(new List<object?>(), context) { }
     public @this(IEnumerable<Data> items, actor.context.@this context) : this(new List<object?>(items), context) { _hasWrapped = true; }
 
-    /// <summary>A list's own type entity — the type owns its name (no namespace reflection).</summary>
-    protected internal override global::app.type.@this Type => new("list", typeof(@this));
+    /// <summary>A list's own type entity — the type owns its name (no namespace reflection). Carries
+    /// the template flag so a template=plang list resolves its %var% leaves at .Value().</summary>
+    protected internal override global::app.type.@this Type => new("list", typeof(@this)) { Template = Template };
 
     /// <summary>THE PURE CORE — a container coerces INTO nothing (highest rank), so the core only
     /// passes a <c>list</c> through; any other value declines (<c>null</c>). Real construction
@@ -560,6 +561,18 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         foreach (var item in Items)
             raw.Add(string.IsNullOrEmpty(item.Name) ? Unwrap(item.Peek()) : item);
         return ClrConvert(raw, target);
+    }
+
+    // A template=plang list is a USE boundary when materialized (`.Value()`): each element answers
+    // through its OWN value door ONE level (a `%ref%` text leaf resolves itself, a nested container
+    // recurses, a scalar answers itself). See dict.@this.Value — same rule, mirrored for a list.
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
+    {
+        if (Template == null) return this;
+        var result = new @this(data.Context);
+        foreach (var row in Items)
+            result.AddRaw(await row.Value());
+        return result;
     }
 
     private static object? Unwrap(object? value) => value switch

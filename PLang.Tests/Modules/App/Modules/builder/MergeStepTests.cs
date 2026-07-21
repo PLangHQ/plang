@@ -49,11 +49,11 @@ public class MergeStepTests
             })
         };
 
-        var action = new merge(_app.User.Context) { Step = new("", new global::app.type.clr.@this<Step>(target, _app.User.Context)), StepFromLlm = new("", new global::app.type.clr.@this<Step>(source, _app.User.Context)) };
+        var action = new merge(_app.User.Context) { Step = new("", target, context: _app.User.Context), StepFromLlm = new("", source, context: _app.User.Context) };
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
-        var merged = ((await result.Value()) as global::app.type.clr.@this<Step>)?.Value;
+        var merged = (await result.Value()) as Step;
         await Assert.That(merged).IsNotNull();
         await Assert.That(merged!.Action.Count).IsEqualTo(1);
         await Assert.That(merged.Action[0].Module).IsEqualTo("output");

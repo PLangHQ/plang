@@ -124,9 +124,14 @@ public partial class @this
         var parent = await Get(path.Parent);
         if (!parent.IsInitialized) return parent;          // parent absent → surface it, don't invent
 
-        // Materialise a source-backed parent (a `%cfg%` still raw json) so the write lands on the
-        // parsed value, not the raw form — the door parses + rebinds, idempotent for a live value.
-        _ = await parent.Value();
+        // Materialise a source-backed parent (a `%cfg%` still raw json, a template container still a
+        // wire) so the write lands on the PARSED value, not the raw form. The write target is the
+        // materialized value itself — a cacheable source rebinds through the door, but a
+        // re-resolving template container (Cacheable=false) never rebinds, so relying on Peek() would
+        // land the write on the stale wire. Use the materialized value directly and rebind the parent
+        // to the written result, which snapshots a template container into its plain resolved form on
+        // first write (correct for a dict built up across several sets).
+        var target = await parent.Value();
         if (parent.Error?.Key == "MaterializeFailed") return _context?.Error(parent.Error) ?? parent;
 
         // Resolve the leaf key here (the walk owns key resolution, mirroring the read side) — a
@@ -139,11 +144,11 @@ public partial class @this
         else
             key = ((global::app.variable.path.Segment.Member)leaf).Name;
 
-        if (parent.Peek() is not global::app.type.item.@this target)
+        if (target is null)
             return _context?.NotFound(key) ?? parent;
 
         var written = await target.Set(key, isIndex, value);
-        if (!ReferenceEquals(written, target)) parent.SetValue(written);
+        if (!ReferenceEquals(written, parent.Peek())) parent.SetValue(written);
         return parent;
     }
 

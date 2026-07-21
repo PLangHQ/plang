@@ -20,6 +20,9 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         reader.BeginArray();
         var parser = new global::app.type.item.serializer.json(ctx.Context);
         var list = new global::app.type.item.list.@this(ctx.Context);
+        // An authored list (ctx carries "plang") re-resolves its `%ref%` string leaves on read —
+        // list.@this.Value → Resolve. A runtime-ingest read (ctx.Template null) stays literal.
+        if (ctx.Template != null) list.Template = ctx.Template;
         while (reader.NextElement())
             list.AddRaw(parser.ReadSlot(ref reader, ctx));
         reader.EndArray();

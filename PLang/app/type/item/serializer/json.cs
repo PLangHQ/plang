@@ -46,7 +46,7 @@ public partial class json
             global::app.channel.serializer.TokenKind.String => StringSlot(reader.String(), ctx),
             // Array / Object — a nested container or a @schema:data Data. Capture the
             // encoded value and narrow through the same parser the eager path uses.
-            _ => ParseRaw(reader.RawValue()),
+            _ => ParseRaw(reader.RawValue(), ctx),
         };
 
     // A %ref% string slot in an authored container rides as a stamped text item (so the
@@ -54,18 +54,18 @@ public partial class json
     // (flagging it would change its canonicalization/signing). A runtime-ingest slot is
     // never a template (injection-safe). The per-slot HasVariable here goes once the builder
     // stamps inside containers — Documentation/v0.2/todos.md 2026-07-01.
-    private static object? StringSlot(string s, global::app.type.reader.ReadContext ctx)
-        => ctx.Template != null && global::app.type.item.text.@this.HasVariable(s)
+    private static object? StringSlot(string s, global::app.type.reader.ReadContext? ctx)
+        => ctx?.Template != null && global::app.type.item.text.@this.HasVariable(s)
             ? new text.@this(s, ctx.Template)
             : s;
 
-    private object? ParseRaw(byte[] utf8)
+    private object? ParseRaw(byte[] utf8, global::app.type.reader.ReadContext? ctx)
     {
         using var doc = System.Text.Json.JsonDocument.Parse(utf8);
-        return Parse(doc.RootElement);
+        return Parse(doc.RootElement, ctx);
     }
 
-    internal object? Parse(object? value, int depth = 0)
+    internal object? Parse(object? value, global::app.type.reader.ReadContext? ctx = null, int depth = 0)
     {
         if (depth > MaxDepth)
             throw new System.InvalidOperationException($"JSON nesting exceeds maximum depth ({MaxDepth})");
@@ -74,7 +74,7 @@ public partial class json
         {
             return element.ValueKind switch
             {
-                System.Text.Json.JsonValueKind.String => TextLeaf(element.GetString() ?? ""),
+                System.Text.Json.JsonValueKind.String => TextLeaf(element.GetString() ?? "", ctx),
                 System.Text.Json.JsonValueKind.Number => NumberLeaf(element),
                 System.Text.Json.JsonValueKind.True => new @bool.@this(true),
                 System.Text.Json.JsonValueKind.False => new @bool.@this(false),
@@ -85,8 +85,8 @@ public partial class json
                     // its context) — never the bare [JsonConverter] default, which is a
                     // context-less Wire and leaves the nested read unable to reach App.
                     ? new global::app.data.reader.@this().Read(System.Text.Encoding.UTF8.GetBytes(element.GetRawText()), new global::app.type.reader.ReadContext(_context, Verify: false))
-                    : ObjectLeaf(element, depth),
-                System.Text.Json.JsonValueKind.Array => ArrayLeaf(element, depth),
+                    : ObjectLeaf(element, ctx, depth),
+                System.Text.Json.JsonValueKind.Array => ArrayLeaf(element, ctx, depth),
                 _ => element,
             };
         }
@@ -109,7 +109,7 @@ public partial class json
         if (value is System.Text.Json.Nodes.JsonNode jsonNode)
         {
             using var doc = System.Text.Json.JsonDocument.Parse(jsonNode.ToJsonString());
-            return Parse(doc.RootElement, depth);
+            return Parse(doc.RootElement, ctx, depth);
         }
 
         return value;
@@ -120,31 +120,35 @@ public partial class json
     // types itself when something reads it (the container's normalize-on-read).
     // A `@schema:data`-marked element is the one place a Data rides — it carries
     // its own type/signature, so it reconstructs as a Data straight into the slot.
-    private dict.@this ObjectLeaf(System.Text.Json.JsonElement element, int depth)
+    private dict.@this ObjectLeaf(System.Text.Json.JsonElement element, global::app.type.reader.ReadContext? ctx, int depth)
     {
         var d = new dict.@this(_context);
+        // An authored container carries its template mode so its `%ref%` leaves re-resolve
+        // on read (dict.@this.Value → Resolve); a runtime-ingest read (ctx null) stays literal.
+        if (ctx?.Template != null) d.Template = ctx.Template;
         foreach (var prop in element.EnumerateObject())
-            d.Set(prop.Name, RawSlot(prop.Value, depth + 1));
+            d.Set(prop.Name, RawSlot(prop.Value, ctx, depth + 1));
         return d;
     }
 
-    private list.@this ArrayLeaf(System.Text.Json.JsonElement element, int depth)
+    private list.@this ArrayLeaf(System.Text.Json.JsonElement element, global::app.type.reader.ReadContext? ctx, int depth)
     {
         var l = new list.@this(_context);
+        if (ctx?.Template != null) l.Template = ctx.Template;
         foreach (var item in element.EnumerateArray())
-            l.AddRaw(RawSlot(item, depth + 1));
+            l.AddRaw(RawSlot(item, ctx, depth + 1));
         return l;
     }
 
     // One container slot from a json token — raw scalar, native sub-container
     // (itself lazy), or a reconstructed Data for a marked element.
-    private object? RawSlot(System.Text.Json.JsonElement element, int depth)
+    private object? RawSlot(System.Text.Json.JsonElement element, global::app.type.reader.ReadContext? ctx, int depth)
     {
         if (depth > MaxDepth)
             throw new System.InvalidOperationException($"JSON nesting exceeds maximum depth ({MaxDepth})");
         return element.ValueKind switch
         {
-            System.Text.Json.JsonValueKind.String => element.GetString(),
+            System.Text.Json.JsonValueKind.String => StringSlot(element.GetString() ?? "", ctx),
             // Cast to object so the ?: does NOT unify long and double to double
             // (a bare `long : double` ternary widens the integer to a float).
             System.Text.Json.JsonValueKind.Number =>
@@ -155,20 +159,22 @@ public partial class json
             System.Text.Json.JsonValueKind.Undefined => null,
             System.Text.Json.JsonValueKind.Object => global::app.data.@this.IsDataMarked(element)
                 ? new global::app.data.reader.@this().Read(System.Text.Encoding.UTF8.GetBytes(element.GetRawText()), new global::app.type.reader.ReadContext(_context, Verify: false))
-                : ObjectLeaf(element, depth),
-            System.Text.Json.JsonValueKind.Array => ArrayLeaf(element, depth),
+                : ObjectLeaf(element, ctx, depth),
+            System.Text.Json.JsonValueKind.Array => ArrayLeaf(element, ctx, depth),
             _ => element.GetRawText(),
         };
     }
 
-    // A %var% reference is an UNRESOLVED reference, not yet a typed value —
-    // it stays a raw string for the resolution path. Only a literal with no
-    // %ref% pattern is born native as text.
-    private static object TextLeaf(string s)
+    // A %var% reference is an UNRESOLVED reference, not yet a typed value. In an authored
+    // container (ctx.Template set) it rides as a STAMPED text template so it re-resolves on
+    // read; a runtime-ingest slot (ctx null) stays a raw string (injection-safe, and a bare
+    // literal keeps its canonicalization). Only a plain literal with no %ref% is born native text.
+    private static object TextLeaf(string s, global::app.type.reader.ReadContext? ctx)
     {
         // if/return, NOT a ternary: the common type of (string, text.@this)
         // would silently convert the wrapper back via text's implicit operator.
-        if (global::app.type.item.text.@this.HasVariable(s)) return s;
+        if (global::app.type.item.text.@this.HasVariable(s))
+            return ctx?.Template != null ? new text.@this(s, ctx.Template) : (object)s;
         return new text.@this(s);
     }
 

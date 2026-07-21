@@ -266,8 +266,14 @@ public sealed class @this : item.@this
         if (raw is string or byte[])
             return new item.source(raw, this, context);
 
-        // A container / domain value is already native (dict, list, path, image, …) — hold it.
-        if (raw is item.@this { IsLeaf: false } native) return native;
+        // A container / domain value is already native (dict, list, path, image, …) — hold it. A
+        // template=plang declaration stamps the container so its .Value() resolves nested %var% leaves
+        // (mirrors how a text carries the template) — the source path below already carries it.
+        if (raw is item.@this { IsLeaf: false } native)
+        {
+            if (Template != null && native.Template == null) native.Template = Template;
+            return native;
+        }
 
         // A source (declared, unparsed) re-declared → the source RE-BIRTHS itself over the same
         // unread raw with THIS declaration (which carries the build's stamped kind/template). The

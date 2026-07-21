@@ -373,7 +373,7 @@ public class Default : IBuilder
 
     public async System.Threading.Tasks.Task<data.@this> ValidateStepActions(validateStepActions action)
     {
-        var step = action.Step.Clr<global::app.goal.step.@this>();
+        var step = await action.Step.Value();
         if (step == null)
         {
             // Dump what the planner actually returned so the user can see the
@@ -710,20 +710,20 @@ public class Default : IBuilder
 
     // --- Merge ---
 
-    public data.@this Merge(merge action)
+    public async Task<data.@this> Merge(merge action)
     {
 
         // Diagnostic — gated by app.Debug presence (null = off), drops on the floor in production.
         // The merge handoff was the spot a Boolean-vs-Step type mismatch surfaced during
         // the builder rebuild; leaving the line in earns its keep next time it drifts.
-        var step = action.Step.Clr<global::app.goal.step.@this>();
-        var from = action.StepFromLlm.Clr<global::app.goal.step.@this>();
+        var step = await action.Step.Value();
+        var from = await action.StepFromLlm.Value();
         _ = action.Context.App.Debug?.Write(
             $"builder.merge: step.Index={step?.Index} step.Action={step?.Action.Count} " +
             $"from.Index={from?.Index} from.Keep={from?.Keep} from.Action={from?.Action.Count}");
 
-        action.Step.Clr<global::app.goal.step.@this>()!.Merge(action.StepFromLlm.Clr<global::app.goal.step.@this>()!);
-        return action.Context.Ok(action.Step.Peek());
+        step!.Merge(from!);
+        return action.Context.Ok(step);
     }
 
     // --- Enrich Response ---

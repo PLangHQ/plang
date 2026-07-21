@@ -89,6 +89,8 @@ public sealed class OpenAi : ILlm
             return context.Error(new ActionError("Messages list is empty or null", "ValidationError", 400));
 
         // --- Build messages ---
+        // %vars% in the message content (e.g. %goalForLlm%) are resolved when Messages materializes —
+        // a template=plang container resolves its string leaves at .Value() (dict/list.Value).
         var messages = CloneMessages(rawMessages);
         string? schema;
 

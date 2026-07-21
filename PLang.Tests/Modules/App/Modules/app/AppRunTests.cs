@@ -49,7 +49,7 @@ public class AppRunTests
             Text = "test step",
             Index = 0
         };
-        var action = new run(_app.User.Context) { Step = new("", new global::app.type.clr.@this<Step>(step, _app.User.Context))
+        var action = new run(_app.User.Context) { Step = new("", step, context: _app.User.Context)
         };
         var result = await action.Run();
 

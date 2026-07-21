@@ -19,7 +19,7 @@ public interface IBuilder : ICode
     Task<data.@this> Fold(fold action);
     Task<data.@this> Validate(validate action);
     Task<data.@this> ValidateStepActions(validateStepActions action);
-    data.@this Merge(merge action);
+    Task<data.@this> Merge(merge action);
     Task<data.@this> PromoteGroups(promoteGroups action);
     Task<data.@this> EnrichResponse(enrichResponse action);
     Task<data.@this> Load(load action);
