@@ -75,7 +75,7 @@ public class ParamDescParityTests
             var element = app.Module[da.Module]?[da.ActionName];
             var rows = element == null
                 ? new Dictionary<string, Property>()
-                : element.Properties.Rows.ToDictionary(r => r.Name, StringComparer.OrdinalIgnoreCase);
+                : element.Property.Rows.ToDictionary(r => r.Name, StringComparer.OrdinalIgnoreCase);
 
             foreach (var p in da.Parameter ?? new())
             {

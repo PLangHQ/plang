@@ -28,13 +28,13 @@ public partial class @this
     /// catalog context (to resolve the handler) — a .pr-zoom action navigates via the clr carrier and
     /// has none. Cached per element.</summary>
     [JsonIgnore]
-    public global::app.goal.step.action.property.list.@this Properties
+    public global::app.goal.step.action.property.list.@this Property
     {
         get
         {
             if (Context == null)
                 throw new System.InvalidOperationException(
-                    "action.Properties needs the catalog context — stamp it at mint; a .pr-zoom action navigates via the clr carrier.");
+                    "action.Property needs the catalog context — stamp it at mint; a .pr-zoom action navigates via the clr carrier.");
             return _properties ??= new global::app.goal.step.action.property.list.@this(Handler, Context.App.Type, Context);
         }
     }
@@ -45,7 +45,7 @@ public partial class @this
     /// <summary>The action's declared return type as an ENTITY — read off <c>Run()</c>'s
     /// <c>Task&lt;Data&lt;T&gt;&gt;</c> signature (compounds ride the kind axis). Null when the
     /// return is polymorphic: a bare <c>Task&lt;Data&gt;</c> or <c>Data&lt;object&gt;</c> declares
-    /// no concrete type. Cached; the twin of <see cref="Properties"/>, feeding goal.variables.</summary>
+    /// no concrete type. Cached; the twin of <see cref="Property"/>, feeding goal.variables.</summary>
     [JsonIgnore]
     public global::app.type.@this? Return
     {

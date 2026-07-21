@@ -7,7 +7,7 @@ Description:
 {% if a.ModuleDescription %}{{ a.ModuleDescription }}
 {% endif %}{% if a.Description %}{{ a.Description }}
 {% endif %}{% endif %}Parameters:
-{% if a.Properties.size > 0 %}{% for p in a.Properties %}  - {{ p.Name }}: {% if p.IsVariable %}%var%{% else %}{{ p.Type }}{% if p.Nullable %}?{% endif %}{% if p.Default %} = {{ p.Default }}{% endif %}{% endif %}
+{% if a.Property.size > 0 %}{% for p in a.Property %}  - {{ p.Name }}: {% if p.IsVariable %}%var%{% else %}{{ p.Type }}{% if p.Nullable %}?{% endif %}{% if p.Default %} = {{ p.Default }}{% endif %}{% endif %}
 {% endfor %}{% else %}  (no parameters)
 {% endif %}{% if a.Return %}→ returns {{ a.Return }}
 {% endif %}{% if a.ModuleNotes or a.Notes %}
