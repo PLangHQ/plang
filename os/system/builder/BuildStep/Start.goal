@@ -3,7 +3,7 @@ Start
 / the compiler decides chain order, fills parameters, and emits the .pr actions array.
 / Retry semantics are delegated to error.handle (built-in RetryCount, GoalFirst order).
 
-- set %step% = %goal.Steps[planStep.index]%
+- set %step% = %goal.step[planStep.index]%
 - call Compile
 
 
@@ -32,13 +32,13 @@ Compile
 / system prompt is stashed once at goal level (%trace.compileSystem%) — do not duplicate it here.
 - add {goal: %goal.Name%, index: %step.Index%, stepText: %step.Text%, actions: %planStep.actions%, user: %buildStepUserMsg%, response: %compileResult%, rawResponse: %compileResult!RawResponse%, usage: {model: %compileResult.Model%, promptTokens: %compileResult.PromptTokens%, cachedTokens: %compileResult.CachedTokens%, completionTokens: %compileResult.CompletionTokens%, totalTokens: %compileResult.TotalTokens%, cost: %compileResult.Cost%, cached: %compileResult.Cached%}} to %trace.stepPasses%
 
-- set %goal.Steps[step.Index].Actions% = %compileResult.actions%
-- set %goal.Steps[step.Index].Formal% = %compileResult.formal%
+- set %goal.step[step.Index].action% = %compileResult.actions%
+- set %goal.step[step.Index].Formal% = %compileResult.formal%
 
 / Validation retry: FixValidation re-queries the LLM with the validator's complaint as
-/ previousConversation context, writes the corrected compileResult, updates goal.Steps.
+/ previousConversation context, writes the corrected compileResult, updates goal.step.
 / Then retry build.validate against the corrected actions.
-- build.validate actions=%goal.Steps[step.Index].Actions%, on error call FixValidation, then retry 2 times
+- build.validate actions=%goal.step[step.Index].action%, on error call FixValidation, then retry 2 times
 
 - call EmitSummary
 
@@ -59,11 +59,11 @@ RefineActions
 
 FixValidation
 / Validator rejected the compiled actions. Re-prompt the LLM with the validator's
-/ complaint, write corrected compileResult, update goal.Steps so the subsequent retry
+/ complaint, write corrected compileResult, update goal.step so the subsequent retry
 / of build.validate sees the corrected actions.
 - set %fixMessages% = [{"Role":"user", "Content":"Your previous response was rejected by the validator: %!error.Message%\n\nReturn the corrected response in the same Output Shape (formal, actions, confidence, explanation, errors, warnings) for this step only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) — recovery confidence matters because it tells the dev whether even the correction is a guess."}]- llm.query Messages=%fixMessages%, Schema={formal: string, actions: list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>, modifiers?: list<{module: string, action: string, parameters?: list<{name: string, value?: object, type?: string}>}>, errors?: list<{key: string, message: string}>}>, confidence: string, explanation?: string, errors?: list<{key: string, message: string}>}, cache=%!build.cache%, previousConversation=%compileResult%, write to %compileResult%
-- set %goal.Steps[step.Index].Actions% = %compileResult.actions%
-- set %goal.Steps[step.Index].Formal% = %compileResult.formal%
+- set %goal.step[step.Index].action% = %compileResult.actions%
+- set %goal.step[step.Index].Formal% = %compileResult.formal%
 - call /system/builder/EmitBuildEvent kind="step-validation-error", step=%step%, errorMessage=%!error.Message%
 
 

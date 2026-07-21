@@ -1,4 +1,4 @@
 Validate
 / Validate planner response — one entry per step.
 
-- if %plan.steps.Count% is not %goal.Steps.Count%, throw error 'Planner returned %plan.steps.Count% step plans but goal has %goal.Steps.Count% steps.' key="LlmTransient"
+- if %plan.steps.Count% is not %goal.step.Count%, throw error 'Planner returned %plan.steps.Count% step plans but goal has %goal.step.Count% steps.' key="LlmTransient"

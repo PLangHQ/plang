@@ -1,5 +1,5 @@
 {{ goal.Name }}
-{% for step in goal.Steps %}- {{ step.Text }}
+{% for step in goal.Step %}- {{ step.Text }}
 {% endfor %}{% if goal.Errors.size > 0 %}
 errors:
 {% for e in goal.Errors %}- {key: "{{ e.Key }}", message: "{{ e.Message }}"}
