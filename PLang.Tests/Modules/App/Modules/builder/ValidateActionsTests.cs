@@ -42,7 +42,7 @@ public class ValidateActionsTests
     {
         var actions = new StepActions
         {
-            new Action { Module = "file", ActionName = "read", Parameters = new List<Data> { new("Path", "test.txt", context: _app.User.Context) } }
+            new Action { Module = "file", ActionName = "read", Parameter = new List<Data> { new("Path", "test.txt", context: _app.User.Context) } }
         };
 
         var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.clr.@this<System.Collections.Generic.List<global::app.goal.step.action.@this>>(actions, _app.User.Context)) };
@@ -92,7 +92,7 @@ public class ValidateActionsTests
             {
                 Module = "goal",
                 ActionName = "call",
-                Parameters = new List<Data> { goalCallData }
+                Parameter = new List<Data> { goalCallData }
             }
         };
 
@@ -101,7 +101,7 @@ public class ValidateActionsTests
 
         await result.IsSuccess();
         // Verify PrPath was actually resolved
-        var resolvedCall = (await actions[0].Parameters[0].Value()) as global::app.goal.GoalCall;
+        var resolvedCall = (await actions[0].Parameter[0].Value()) as global::app.goal.GoalCall;
         await Assert.That(resolvedCall).IsNotNull();
         await Assert.That(resolvedCall!.PrPath?.ToString().Replace('\\', '/').TrimStart('/'))
             .IsEqualTo(".build/dosomething.pr");
@@ -118,7 +118,7 @@ public class ValidateActionsTests
             {
                 Module = "goal",
                 ActionName = "call",
-                Parameters = new List<Data> { goalCallData }
+                Parameter = new List<Data> { goalCallData }
             }
         };
 
@@ -138,7 +138,7 @@ public class ValidateActionsTests
             {
                 Module = "file",
                 ActionName = "list",
-                Parameters = new List<Data> { new("Path", "docs/", context: _app.User.Context) }
+                Parameter = new List<Data> { new("Path", "docs/", context: _app.User.Context) }
             }
         };
 
@@ -148,9 +148,9 @@ public class ValidateActionsTests
         await result.IsSuccess();
         // Defaults should be filled for missing params
         var fileList = actions[0];
-        await Assert.That(fileList.Defaults).IsNotNull();
-        await Assert.That(fileList.Defaults!.Count).IsGreaterThan(0);
-        var patternDefault = fileList.Defaults.FirstOrDefault(d =>
+        await Assert.That(fileList.Default).IsNotNull();
+        await Assert.That(fileList.Default!.Count).IsGreaterThan(0);
+        var patternDefault = fileList.Default.FirstOrDefault(d =>
             d.Name.Equals("pattern", StringComparison.OrdinalIgnoreCase));
         await Assert.That(patternDefault).IsNotNull();
     }
@@ -166,7 +166,7 @@ public class ValidateActionsTests
             {
                 Module = "condition",
                 ActionName = "if",
-                Parameters = new List<Data>
+                Parameter = new List<Data>
                 {
                     new("Left", "%flag%", context: _app.User.Context),
                     new("Operator", "==", new global::app.type.@this("string"), context: _app.User.Context),
@@ -179,7 +179,7 @@ public class ValidateActionsTests
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
-        var rightParam = actions[0].Parameters.First(p => p.Name == "Right");
+        var rightParam = actions[0].Parameter.First(p => p.Name == "Right");
         await Assert.That((await rightParam.Value())?.ToString()).IsEqualTo("false");
         await Assert.That((await rightParam.Value()) is global::app.type.item.@bool.@this).IsTrue();
     }
@@ -197,7 +197,7 @@ public class ValidateActionsTests
             {
                 Module = "condition",
                 ActionName = "if",
-                Parameters = new List<Data>
+                Parameter = new List<Data>
                 {
                     new("Left", "%count%", context: _app.User.Context),
                     new("Operator", ">", new global::app.type.@this("string"), context: _app.User.Context),
@@ -210,7 +210,7 @@ public class ValidateActionsTests
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsSuccess();
-        var rightParam = actions[0].Parameters.First(p => p.Name == "Right");
+        var rightParam = actions[0].Parameter.First(p => p.Name == "Right");
         // The kind="int" carries the precision intent; the value either gets
         // coerced to a number primitive at validate-time OR stays as a string
         // for the runtime to coerce. Either is acceptable post-Stage-2.
@@ -226,7 +226,7 @@ public class ValidateActionsTests
             {
                 Module = "condition",
                 ActionName = "if",
-                Parameters = new List<Data>
+                Parameter = new List<Data>
                 {
                     new("Left", "%flag%", new global::app.type.@this("bool"), context: _app.User.Context),
                     new("Operator", "==", context: _app.User.Context),
@@ -240,7 +240,7 @@ public class ValidateActionsTests
 
         await result.IsSuccess();
         // %flag% should NOT be converted — it's a variable reference
-        var leftParam = actions[0].Parameters.First(p => p.Name == "Left");
+        var leftParam = actions[0].Parameter.First(p => p.Name == "Left");
         await Assert.That((await leftParam.Value())?.ToString()).IsEqualTo("%flag%");
     }
 

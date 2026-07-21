@@ -59,7 +59,7 @@ public class GetActionsTests
         var fileRead = actions.FirstOrDefault(a => a.Module == "file" && a.ActionName == "read");
         await Assert.That(fileRead).IsNotNull();
         // At minimum, there should be parameters
-        await Assert.That(fileRead!.Parameters.Count).IsGreaterThan(0);
+        await Assert.That(fileRead!.Parameter.Count).IsGreaterThan(0);
     }
 
     [Test]
@@ -73,7 +73,7 @@ public class GetActionsTests
         // (no trailing type token; the marker alone tells the LLM this slot names a variable).
         var varSet = actions.FirstOrDefault(a => a.Module == "variable" && a.ActionName == "set");
         await Assert.That(varSet).IsNotNull();
-        var nameParam = varSet!.Parameters.FirstOrDefault(p =>
+        var nameParam = varSet!.Parameter.FirstOrDefault(p =>
             p.Name.Equals("Name", StringComparison.OrdinalIgnoreCase));
         await Assert.That(nameParam).IsNotNull();
         await Assert.That((await nameParam!.Value())!.ToString()).IsEqualTo("%var%");
@@ -89,7 +89,7 @@ public class GetActionsTests
         // file.list has Pattern with [Default("*")]
         var fileList = actions.FirstOrDefault(a => a.Module == "file" && a.ActionName == "list");
         await Assert.That(fileList).IsNotNull();
-        var patternParam = fileList!.Parameters.FirstOrDefault(p =>
+        var patternParam = fileList!.Parameter.FirstOrDefault(p =>
             p.Name.Equals("Pattern", StringComparison.OrdinalIgnoreCase));
         await Assert.That(patternParam).IsNotNull();
         await Assert.That((await patternParam!.Value())!.ToString()).Contains("\"*\"");
@@ -125,7 +125,7 @@ public class GetActionsTests
         // Note: string params named "Provider" (like identity.create) are legitimate
         foreach (var a in actions)
         {
-            var providerParam = a.Parameters.FirstOrDefault(p =>
+            var providerParam = a.Parameter.FirstOrDefault(p =>
                 (p.Peek())?.ToString()?.StartsWith("i", StringComparison.OrdinalIgnoreCase) == true &&
                 (p.Peek())?.ToString()!.Contains("Provider") == true);
             await Assert.That(providerParam)

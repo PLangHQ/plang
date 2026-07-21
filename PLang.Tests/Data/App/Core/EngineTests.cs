@@ -18,7 +18,7 @@ public class EngineTests
                 {
                     Module = actionClass,
                     ActionName = method,
-                    Parameters = parameters is IDictionary<string, object?> dict
+                    Parameter = parameters is IDictionary<string, object?> dict
                         ? PrParam.List(actionClass, method, dict)
                         : new List<Data>()
                 }
@@ -38,7 +38,7 @@ public class EngineTests
                 {
                     Module = actionClass,
                     ActionName = method,
-                    Parameters = parameters is IDictionary<string, object?> dict
+                    Parameter = parameters is IDictionary<string, object?> dict
                         ? PrParam.List(actionClass, method, dict)
                         : new List<Data>(),
                 },
@@ -46,7 +46,7 @@ public class EngineTests
                 {
                     Module = "variable",
                     ActionName = "set",
-                    Parameters = new List<Data>
+                    Parameter = new List<Data>
                     {
                         new Data("Name", returnVarName),
                         new Data("Value", "%!data%")

@@ -81,7 +81,7 @@ public class ParamDescParityTests
                     .Where(r => r != null).Select(r => r!)
                     .ToDictionary(r => r.Name, StringComparer.OrdinalIgnoreCase);
 
-            foreach (var p in da.Parameters ?? new())
+            foreach (var p in da.Parameter ?? new())
             {
                 var key = $"{da.Module}.{da.ActionName}.{p.Name}";
                 var oldDesc = p.Peek()?.ToString() ?? "";

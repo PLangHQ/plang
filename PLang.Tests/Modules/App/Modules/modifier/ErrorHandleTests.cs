@@ -27,7 +27,7 @@ public class ErrorHandleTests
         return new PrAction
         {
             Module = "error", ActionName = "throw",
-            Parameters = parameters,
+            Parameter = parameters,
             Modifiers = modifiers ?? new List<global::app.goal.step.action.modifier.@this>()
         };
     }
@@ -39,7 +39,7 @@ public class ErrorHandleTests
         return new global::app.goal.step.action.modifier.@this
         {
             Module = "error", ActionName = "handle",
-            Parameters = list
+            Parameter = list
         };
     }
 
@@ -49,7 +49,7 @@ public class ErrorHandleTests
         new PrAction
         {
             Module = "goal", ActionName = "call",
-            Parameters = new List<global::app.data.@this>
+            Parameter = new List<global::app.data.@this>
             {
                 new("goalname", new Dictionary<string, object?> { ["name"] = goalName }, context: global::PLang.Tests.TestApp.SharedContext)
             }
@@ -62,7 +62,7 @@ public class ErrorHandleTests
         var action = new PrAction
         {
             Module = "variable", ActionName = "set",
-            Parameters = new List<global::app.data.@this>
+            Parameter = new List<global::app.data.@this>
             {
                 new("name", "%ok%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "v", context: global::PLang.Tests.TestApp.SharedContext)
             },
@@ -293,7 +293,7 @@ public class ErrorHandleTests
         var prAction = new PrAction
         {
             Module = module, ActionName = actionName,
-            Parameters = parameters.Select(p => new global::app.data.@this(p.name, p.value,
+            Parameter = parameters.Select(p => new global::app.data.@this(p.name, p.value,
                 PrParam.IsVarNameSlot(module, actionName, p.name) ? new global::app.type.@this("variable") : null, context: global::PLang.Tests.TestApp.SharedContext)).ToList()
         };
         var step = new Step { Text = $"test step for {name}" };

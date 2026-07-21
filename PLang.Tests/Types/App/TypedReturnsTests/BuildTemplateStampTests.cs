@@ -23,7 +23,7 @@ public class BuildTemplateStampTests
         var actions = goal.Step[0].Action.list;
         global::app.module.action.build.code.Default.NormalizeParameterTypes(actions, app.Module, ctx);
 
-        var msg = actions.First().Parameters.First(p => p.Name == "Message");
+        var msg = actions.First().Parameter.First(p => p.Name == "Message");
         await Assert.That(msg.Type?.Template).IsEqualTo("plang");
     }
 
@@ -39,7 +39,7 @@ public class BuildTemplateStampTests
         var actions = goal.Step[0].Action.list;
         global::app.module.action.build.code.Default.NormalizeParameterTypes(actions, app.Module, ctx);
 
-        var msg = actions.First().Parameters.First(p => p.Name == "Message");
+        var msg = actions.First().Parameter.First(p => p.Name == "Message");
         await Assert.That(msg.Type?.Template).IsNull();
     }
 
@@ -55,7 +55,7 @@ public class BuildTemplateStampTests
         var actions = goal.Step[0].Action.list;
         global::app.module.action.build.code.Default.NormalizeParameterTypes(actions, app.Module, ctx);
 
-        var msg = actions.First().Parameters.First(p => p.Name == "Message");
+        var msg = actions.First().Parameter.First(p => p.Name == "Message");
         await Assert.That(msg.Type?.Template).IsEqualTo("plang");
     }
 }

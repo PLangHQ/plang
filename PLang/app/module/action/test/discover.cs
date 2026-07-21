@@ -230,7 +230,7 @@ public partial class discover : IContext
         {
             if (!string.Equals(action.Module, "test", StringComparison.OrdinalIgnoreCase)) return;
             if (!string.Equals(action.ActionName, "tag", StringComparison.OrdinalIgnoreCase)) return;
-            var tagsParam = action.Parameters.FirstOrDefault(p =>
+            var tagsParam = action.Parameter.FirstOrDefault(p =>
                 string.Equals(p.Name, "Tags", StringComparison.OrdinalIgnoreCase));
             switch (tagsParam?.Peek())
             {
@@ -277,7 +277,7 @@ public partial class discover : IContext
 
     private static string? ResolveStaticGoalName(app.goal.step.action.@this action)
     {
-        var nameParam = action.Parameters.FirstOrDefault(p =>
+        var nameParam = action.Parameter.FirstOrDefault(p =>
             string.Equals(p.Name, "GoalName", StringComparison.OrdinalIgnoreCase));
         var value = nameParam?.Peek();
         var name = value switch

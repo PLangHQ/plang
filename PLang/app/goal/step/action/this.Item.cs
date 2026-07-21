@@ -38,14 +38,14 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         writer.Name("module"); writer.String(Module);
         writer.Name("name"); writer.String(ActionName);
         writer.Name("parameter");
-        writer.BeginArray(Parameters.Count);
-        foreach (var p in Parameters) await p.Output(writer, mode, context);
+        writer.BeginArray(Parameter.Count);
+        foreach (var p in Parameter) await p.Output(writer, mode, context);
         writer.EndArray();
-        if (Defaults != null)
+        if (Default != null)
         {
             writer.Name("default");
-            writer.BeginArray(Defaults.Count);
-            foreach (var d in Defaults) await d.Output(writer, mode, context);
+            writer.BeginArray(Default.Count);
+            foreach (var d in Default) await d.Output(writer, mode, context);
             writer.EndArray();
         }
         writer.Name("modifier");

@@ -86,7 +86,7 @@ public sealed partial class @this
                     continue;
                 }
                 current.Modifiers.Add(new action.modifier.@this
-                    { Module = a.Module, ActionName = a.ActionName, Parameters = a.Parameters, Position = catalog.Position });
+                    { Module = a.Module, ActionName = a.ActionName, Parameter = a.Parameter, Position = catalog.Position });
             }
             else
             {

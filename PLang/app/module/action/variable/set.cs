@@ -79,9 +79,9 @@ public partial class Set : IContext, IBuildValidatable
         // TAPER (see .bot/context-never-null/coder/builder-read-unification-plan.md): the
         // clean typed version (this.Type = …, one deserializer) pends the architect. For
         // now, adopt the type of what I capture (%!buildData%, published by the build pass
-        // from the preceding action) by writing my Type param via __action.Parameters.
+        // from the preceding action) by writing my Type param via __action.Parameter.
         // User hint wins — an authored Type param already present is left alone.
-        foreach (var p in __action.Parameters)
+        foreach (var p in __action.Parameter)
             if (string.Equals(p.Name, "Type", System.StringComparison.OrdinalIgnoreCase)) return Context.Ok();
 
         var source = (await Context.Variable.Get("!buildData")).Peek();
@@ -89,7 +89,7 @@ public partial class Set : IContext, IBuildValidatable
             ?? (source is global::app.type.item.text.@this t && t.ToString() is { Length: > 0 } n
                 ? global::app.type.@this.Create(n, context: Context) : null);
         if (inferred is { IsNull: false })
-            __action.Parameters.Add(new data.@this("Type", inferred, context: Context));
+            __action.Parameter.Add(new data.@this("Type", inferred, context: Context));
         return Context.Ok();
     }
 

@@ -174,14 +174,14 @@ public static class @this
         // [IsNotNull] validation
         if (info.HasAnyIsNotNull)
         {
-            sb.AppendLine("        if (action?.Parameters != null)");
+            sb.AppendLine("        if (action?.Parameter != null)");
             sb.AppendLine("        {");
             foreach (var name in info.IsNotNullProperties)
             {
                 var lower = name.ToLowerInvariant();
                 sb.Append($$"""
                                 if (__seed?.{{name}} is not { IsInitialized: true } &&
-                                    ((action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Peek().IsNull) ?? true))
+                                    ((action?.Parameter.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Peek().IsNull) ?? true))
                                     return (null, new global::app.error.ServiceError(
                                         "'{{lower}}' must have a value", __step, __callFrames, "ValueRequired", 400));
 
@@ -197,14 +197,14 @@ public static class @this
             .ToList();
         if (nameProps.Count > 0)
         {
-            sb.AppendLine("        if (action?.Parameters != null)");
+            sb.AppendLine("        if (action?.Parameter != null)");
             sb.AppendLine("        {");
             foreach (var prop in nameProps)
             {
                 var lower = prop.Name.ToLowerInvariant();
                 sb.Append($$"""
                                 if (__seed?.{{prop.Name}} is not { IsInitialized: true } &&
-                                    action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Peek() == null)
+                                    action?.Parameter.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Peek() == null)
                                     return (null, new global::app.error.ServiceError(
                                         "Required parameter '{{lower}}' is missing or null", __step, __callFrames, "MissingRequiredParameter", 400));
 
@@ -285,7 +285,7 @@ public static class @this
                             // Peek(): Peek() hands back the lazy source's RAW wire slice, which for a
                             // .pr text param is the JSON-quoted form (`"builder"`) and misses the
                             // channel registered under the clean name.
-                            var __channelParam = action?.Parameters?.FirstOrDefault(d => string.Equals(d.Name, "channel", System.StringComparison.OrdinalIgnoreCase));
+                            var __channelParam = action?.Parameter?.FirstOrDefault(d => string.Equals(d.Name, "channel", System.StringComparison.OrdinalIgnoreCase));
                             var __channelName = __channelParam == null ? null : (await __channelParam.Value())?.ToString();
                             Channel = (context.Actor ?? app.User).Channel.Resolve(__channelName);
                             if (Channel == null)

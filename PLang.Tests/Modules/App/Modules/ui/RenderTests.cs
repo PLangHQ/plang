@@ -624,7 +624,7 @@ public class RenderTests : IDisposable
         {
             Module = actionClass,
             ActionName = method,
-            Parameters = parameters is IDictionary<string, object?> dict
+            Parameter = parameters is IDictionary<string, object?> dict
                 ? PrParam.List(actionClass, method, dict)
                 : new List<Data>()
         };

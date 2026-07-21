@@ -30,7 +30,7 @@ public class CallBuildTests
         {
             Module = "goal",
             ActionName = "call",
-            Parameters = new List<Data> { new Data("GoalName", goalCall, context: ctx) }
+            Parameter = new List<Data> { new Data("GoalName", goalCall, context: ctx) }
         };
 
         var (handler, err) = await new global::app.module.action.goal.Call(ctx).Resolve(action, ctx);

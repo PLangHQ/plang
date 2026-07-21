@@ -110,7 +110,7 @@ public sealed partial class BuildResponse
             if (step.Keep) continue;
             foreach (var a in step.Action.list)
             {
-                if (a.Parameters == null) continue;
+                if (a.Parameter == null) continue;
 
                 // The catalog element's declared rows — the ONE reflection site, looked up once for
                 // the parameter loop and read for nullable-slot detection (no re-reflection here).
@@ -118,7 +118,7 @@ public sealed partial class BuildResponse
                     ? modules[a.Module][a.ActionName].ParameterRows
                     : null;
 
-                foreach (var p in a.Parameters)
+                foreach (var p in a.Parameter)
                 {
                     // A %ref% parameter resolves at RUNTIME in the caller's scope, not at
                     // build time — skip it WITHOUT opening the door. Resolving %x% here

@@ -24,7 +24,7 @@ public class StepTests : System.IAsyncDisposable
                 {
                     Module = "http",
                     ActionName = "get",
-                    Parameters = new List<Data> { app.Data("url", "https://api.example.com") },
+                    Parameter = new List<Data> { app.Data("url", "https://api.example.com") },
                 }
             },
             WaitForExecution = false

@@ -114,7 +114,7 @@ public class DataValueRawTests
         {
             Module = "test",
             ActionName = "fixture",
-            Parameters = new List<Data> { stored }
+            Parameter = new List<Data> { stored }
         };
 
         var found = action.GetParameter("greeting", _app.User.Context);

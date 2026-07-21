@@ -98,7 +98,7 @@ public partial class intercept : IContext
         var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         if (action == null) return result;
 
-        foreach (var param in action.Parameters)
+        foreach (var param in action.Parameter)
         {
             var value = ResolveParamValue(param, variables);
             result[param.Name] = value;
@@ -111,7 +111,7 @@ public partial class intercept : IContext
     {
         foreach (var (name, expected) in matchers)
         {
-            var param = action.Parameters.Find(p =>
+            var param = action.Parameter.FirstOrDefault(p =>
                 p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
             if (param == null) continue;
 

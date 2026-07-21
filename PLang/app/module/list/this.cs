@@ -363,7 +363,7 @@ public sealed class @this : IAsyncDisposable
                 {
                     Module = ns,
                     ActionName = actionName,
-                    Parameters = parameters,
+                    Parameter = new global::app.goal.step.action.parameter.list.@this(parameters),
                     Cacheable = cacheable,
                     ReturnType = returnType,
                     ReturnTypeName = returnTypeName,

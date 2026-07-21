@@ -64,7 +64,7 @@ public class ConditionHandlerTests : IDisposable
         var condAction = new Action
         {
             Module = "condition", ActionName = "if",
-            Parameters = new List<Data>
+            Parameter = new List<Data>
             {
                 new Data("Left", true, context: _app.User.Context), new Data("Operator", "==", context: _app.User.Context), new Data("Right", true, context: _app.User.Context)
             }
@@ -72,7 +72,7 @@ public class ConditionHandlerTests : IDisposable
         var thenAction = new Action
         {
             Module = "output", ActionName = "write",
-            Parameters = new List<Data> { new Data("Data", "true-branch", context: _app.User.Context) }
+            Parameter = new List<Data> { new Data("Data", "true-branch", context: _app.User.Context) }
         };
 
         var step = new Step
@@ -103,7 +103,7 @@ public class ConditionHandlerTests : IDisposable
         var condAction = new Action
         {
             Module = "condition", ActionName = "if",
-            Parameters = new List<Data>
+            Parameter = new List<Data>
             {
                 new Data("Left", false, context: _app.User.Context), new Data("Operator", "==", context: _app.User.Context), new Data("Right", true, context: _app.User.Context)
             }
@@ -111,12 +111,12 @@ public class ConditionHandlerTests : IDisposable
         var thenAction = new Action
         {
             Module = "output", ActionName = "write",
-            Parameters = new List<Data> { new Data("Data", "then-branch", context: _app.User.Context) }
+            Parameter = new List<Data> { new Data("Data", "then-branch", context: _app.User.Context) }
         };
         var elseCondAction = new Action
         {
             Module = "condition", ActionName = "if",
-            Parameters = new List<Data>
+            Parameter = new List<Data>
             {
                 new Data("Left", true, context: _app.User.Context), new Data("Operator", "==", context: _app.User.Context), new Data("Right", true, context: _app.User.Context)
             }
@@ -124,7 +124,7 @@ public class ConditionHandlerTests : IDisposable
         var elseAction = new Action
         {
             Module = "output", ActionName = "write",
-            Parameters = new List<Data> { new Data("Data", "else-branch", context: _app.User.Context) }
+            Parameter = new List<Data> { new Data("Data", "else-branch", context: _app.User.Context) }
         };
 
         var step = new Step

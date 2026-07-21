@@ -27,7 +27,7 @@ public class Stage4_TypeHintPrecedenceTests
         {
             Module = module,
             ActionName = action,
-            Parameters = parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList()
+            Parameter = parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList()
         };
 
     private static StepActions ActionsOf(params PrAction[] actions)
@@ -111,7 +111,7 @@ public class Stage4_TypeHintPrecedenceTests
         var errors = await RunBuildPass(actions, _app);
         await Assert.That(errors).IsEmpty();
 
-        var typeParam = setAction.Parameters.First(p =>
+        var typeParam = setAction.Parameter.First(p =>
             string.Equals(p.Name, "Type", System.StringComparison.OrdinalIgnoreCase));
         await Assert.That((await typeParam.Value())?.ToString()).IsEqualTo("json");
     }
@@ -126,7 +126,7 @@ public class Stage4_TypeHintPrecedenceTests
         var errors = await RunBuildPass(actions, _app);
         await Assert.That(errors).IsEmpty();
 
-        var typeParam = setAction.Parameters.FirstOrDefault(p =>
+        var typeParam = setAction.Parameter.FirstOrDefault(p =>
             string.Equals(p.Name, "Type", System.StringComparison.OrdinalIgnoreCase));
         await Assert.That(typeParam).IsNotNull();
         // Stage 3: foo.csv infers the file REFERENCE — {file, csv} — stamped on
@@ -147,7 +147,7 @@ public class Stage4_TypeHintPrecedenceTests
         var errors = await RunBuildPass(actions, _app);
         await Assert.That(errors).IsEmpty();
 
-        var typeParam = setAction.Parameters.First(p =>
+        var typeParam = setAction.Parameter.First(p =>
             string.Equals(p.Name, "Type", System.StringComparison.OrdinalIgnoreCase));
         await Assert.That((await typeParam.Value())?.ToString()).IsEqualTo("object");
     }

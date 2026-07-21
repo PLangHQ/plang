@@ -46,14 +46,14 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "parameter":
                     reader.BeginArray();
                     while (reader.NextElement())
-                        action.Parameters.Add(dataReader.Read(reader.RawValue(), ctx));
+                        action.Parameter.Add(dataReader.Read(reader.RawValue(), ctx));
                     reader.EndArray();
                     break;
                 case "default":
-                    action.Defaults = new();
+                    action.Default = new();
                     reader.BeginArray();
                     while (reader.NextElement())
-                        action.Defaults.Add(dataReader.Read(reader.RawValue(), ctx));
+                        action.Default.Add(dataReader.Read(reader.RawValue(), ctx));
                     reader.EndArray();
                     break;
                 case "modifier":

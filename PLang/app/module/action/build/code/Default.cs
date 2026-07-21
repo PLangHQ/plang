@@ -77,7 +77,7 @@ public class Default : IBuilder
             foreach (var a in await modules.Describe())
             {
                 if (!wantedActions.Contains($"{a.Module}.{a.ActionName}")) continue;
-                foreach (var p in a.Parameters ?? new())
+                foreach (var p in a.Parameter ?? new())
                 {
                     var desc = ((await p.Value()) as global::app.type.item.text.@this)?.Clr<string>() ?? string.Empty;
                     foreach (System.Text.RegularExpressions.Match m in tokenRx.Matches(desc))
@@ -538,18 +538,19 @@ public class Default : IBuilder
         foreach (var a in actions)
         {
             var paramNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            if (a.Parameters != null)
-                foreach (var p in a.Parameters) paramNames.Add(p.Name);
-            a.Defaults = modules.GetDefaults(a.Module, a.ActionName, paramNames);
+            if (a.Parameter != null)
+                foreach (var p in a.Parameter) paramNames.Add(p.Name);
+            a.Default = modules.GetDefaults(a.Module, a.ActionName, paramNames) is { } defs
+                ? new global::app.goal.step.action.parameter.list.@this(defs) : null;
 
             // goal.call sanity — goal names are simple identifiers (BuildGoalCore,
             // HandleValidationError) or slash-paths (Setup/Init). They never contain
             // dots. The LLM occasionally hallucinates a CLR type name into the slot
             // (Fluid.Values.ObjectDictionaryFluidIndexable, App.GoalCall);
             // catch those here so LlmFixer retries instead of writing a dead .pr.
-            if (a.Parameters != null)
+            if (a.Parameter != null)
             {
-                foreach (var p in a.Parameters)
+                foreach (var p in a.Parameter)
                 {
                     if (!string.Equals(p.Type?.Name, "goal.call", StringComparison.OrdinalIgnoreCase)) continue;
                     // Catalog descriptions (e.g. "goal.call", "goal.call?") aren't real values —
@@ -618,8 +619,8 @@ public class Default : IBuilder
                 if (element != null)
                 {
                     var emitted = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                    if (a.Parameters != null)
-                        foreach (var p in a.Parameters) emitted.Add(p.Name);
+                    if (a.Parameter != null)
+                        foreach (var p in a.Parameter) emitted.Add(p.Name);
 
                     foreach (var row in element.ParameterRows)
                     {
@@ -640,7 +641,7 @@ public class Default : IBuilder
                     System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
                 if (method != null)
                 {
-                    var error = (string?)method.Invoke(null, [a.Parameters]);
+                    var error = (string?)method.Invoke(null, [a.Parameter.ToList()]);
                     if (error != null)
                         validationErrors.Add($"{a.Module}.{a.ActionName}: {error}");
                 }
@@ -798,7 +799,7 @@ public class Default : IBuilder
         d.Set("Module", a.Module);
         d.Set("ActionName", a.ActionName);
         var ps = new global::app.type.item.list.@this(ctx);
-        foreach (var p in a.Parameters) ps.Add(ParamModel(p, ctx));
+        foreach (var p in a.Parameter) ps.Add(ParamModel(p, ctx));
         d.Set("Parameters", ps);
         var mods = new global::app.type.item.list.@this(ctx);
         foreach (var m in a.Modifiers) mods.Add(ActionModel(m, ctx));
@@ -953,7 +954,7 @@ public class Default : IBuilder
         var errors = new List<string>();
         foreach (var a in actions)
         {
-            if (a.Parameters == null) continue;
+            if (a.Parameter == null) continue;
 
             // Stamp types from the action schema, OVERRIDING any LLM-emitted type that
             // disagrees. The LLM tags the value's content shape (404 → "int"); the schema
@@ -967,7 +968,7 @@ public class Default : IBuilder
             if (actionType != null)
             {
                 var props = actionType.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                foreach (var p in a.Parameters)
+                foreach (var p in a.Parameter)
                 {
                     var schemaProp = props.FirstOrDefault(sp =>
                         string.Equals(sp.Name, p.Name, StringComparison.OrdinalIgnoreCase));
@@ -1007,7 +1008,7 @@ public class Default : IBuilder
                 }
             }
 
-            foreach (var p in a.Parameters)
+            foreach (var p in a.Parameter)
             {
                 if (p.Peek() is null) continue;
                 // An authored string rides as text — its string face carries
@@ -1071,7 +1072,7 @@ public class Default : IBuilder
             // .pr carries it and runtime read/render trust it (never re-scan content). Runs
             // LAST so type/kind normalization + conversion can't clobber the flag. The leaf
             // answers its own raw string face (text's chars, a source's raw).
-            foreach (var p in a.Parameters)
+            foreach (var p in a.Parameter)
             {
                 var raw = (p.Peek() as global::app.type.item.@this)?.RawText;
                 if (raw == null || !global::app.type.item.text.@this.HasVariable(raw)) continue;
@@ -1209,9 +1210,9 @@ public class Default : IBuilder
         global::app.goal.step.action.@this action,
         app.@this app, actor.context.@this context)
     {
-        if (action.Parameters == null) return;
+        if (action.Parameter == null) return;
 
-        foreach (var param in action.Parameters)
+        foreach (var param in action.Parameter)
         {
             if (!string.Equals(param.Type?.Name, "goal.call", StringComparison.OrdinalIgnoreCase))
                 continue;

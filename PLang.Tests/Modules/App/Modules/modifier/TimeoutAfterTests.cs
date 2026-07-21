@@ -24,7 +24,7 @@ public class TimeoutAfterTests
     {
         Module = "timeout",
         ActionName = "after",
-        Parameters = new List<global::app.data.@this> { new("ms", ms, context: global::PLang.Tests.TestApp.SharedContext) }
+        Parameter = new List<global::app.data.@this> { new("ms", ms, context: global::PLang.Tests.TestApp.SharedContext) }
     };
 
     [Test]
@@ -34,7 +34,7 @@ public class TimeoutAfterTests
         {
             Module = "variable",
             ActionName = "set",
-            Parameters = new List<global::app.data.@this>
+            Parameter = new List<global::app.data.@this>
             {
                 new("name", "%fast%", new global::app.type.@this("variable"), context: Ctx), new("value", "done", context: Ctx)
             },
@@ -54,7 +54,7 @@ public class TimeoutAfterTests
         {
             Module = "timer",
             ActionName = "sleep",
-            Parameters = new List<global::app.data.@this> { new("ms", 5000, context: Ctx) },
+            Parameter = new List<global::app.data.@this> { new("ms", 5000, context: Ctx) },
             Modifiers = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(50) }
         };
 
@@ -73,7 +73,7 @@ public class TimeoutAfterTests
         {
             Module = "timer",
             ActionName = "sleep",
-            Parameters = new List<global::app.data.@this> { new("ms", 10_000, context: Ctx) },
+            Parameter = new List<global::app.data.@this> { new("ms", 10_000, context: Ctx) },
             Modifiers = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(30) }
         };
 
@@ -98,7 +98,7 @@ public class TimeoutAfterTests
         {
             Module = "timer",
             ActionName = "sleep",
-            Parameters = new List<global::app.data.@this> { new("ms", 10_000, context: Ctx) },
+            Parameter = new List<global::app.data.@this> { new("ms", 10_000, context: Ctx) },
             Modifiers = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(5000) }
         };
 
@@ -115,7 +115,7 @@ public class TimeoutAfterTests
         {
             Module = "timer",
             ActionName = "sleep",
-            Parameters = new List<global::app.data.@this> { new("ms", 1000, context: Ctx) },
+            Parameter = new List<global::app.data.@this> { new("ms", 1000, context: Ctx) },
             Modifiers = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(0) }
         };
 
@@ -135,7 +135,7 @@ public class TimeoutAfterTests
             new global::app.goal.step.action.modifier.@this
             {
                 Module = "timeout", ActionName = "after",
-                Parameters = new List<global::app.data.@this> { new("ms", 1, context: Ctx) }
+                Parameter = new List<global::app.data.@this> { new("ms", 1, context: Ctx) }
             }
         };
 
@@ -163,14 +163,14 @@ public class TimeoutAfterTests
         {
             Module = "timer",
             ActionName = "sleep",
-            Parameters = new List<global::app.data.@this> { new("ms", 5000, context: Ctx) },
+            Parameter = new List<global::app.data.@this> { new("ms", 5000, context: Ctx) },
             Modifiers = new List<global::app.goal.step.action.modifier.@this>
             {
                 TimeoutModifier(50),
                 new global::app.goal.step.action.modifier.@this
                 {
                     Module = "error", ActionName = "handle",
-                    Parameters = new List<global::app.data.@this> { new("ignoreError", true, context: Ctx) }
+                    Parameter = new List<global::app.data.@this> { new("ignoreError", true, context: Ctx) }
                 }
             }
         };

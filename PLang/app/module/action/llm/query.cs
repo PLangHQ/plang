@@ -115,14 +115,14 @@ public partial class query : IContext, IBuildValidatable
     /// </summary>
     public Task<data.@this> Build()
     {
-        var schema = __action?.Parameters?.FirstOrDefault(p =>
+        var schema = __action?.Parameter?.FirstOrDefault(p =>
             string.Equals(p.Name, "Schema", System.StringComparison.OrdinalIgnoreCase))?.Peek();
         if (schema is not (null or global::app.type.item.@null.@this)
             && !(schema is global::app.type.item.text.@this st
                  && (st.Clr<string>() is "" or null || global::app.type.item.text.@this.HasVariable(st.ToString()))))
             return Task.FromResult(Context.Ok("json"));
 
-        var format = __action?.Parameters?.FirstOrDefault(p =>
+        var format = __action?.Parameter?.FirstOrDefault(p =>
             string.Equals(p.Name, "Format", System.StringComparison.OrdinalIgnoreCase))?.Peek()?.ToString();
         if (!string.IsNullOrEmpty(format) && !format.Contains('%'))
             return Task.FromResult(Context.Ok(format));

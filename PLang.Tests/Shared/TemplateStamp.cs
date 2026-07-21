@@ -12,8 +12,8 @@ public static class TemplateStamp
 {
     public static void Apply(global::app.goal.step.action.@this action)
     {
-        Stamp(action.Parameters);
-        if (action.Defaults != null) Stamp(action.Defaults);
+        Stamp(action.Parameter);
+        if (action.Default != null) Stamp(action.Default);
         foreach (var modifier in action.Modifiers) Apply(modifier);
     }
 

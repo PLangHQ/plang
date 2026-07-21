@@ -42,9 +42,9 @@ public static class MatrixRunner
         {
             Module = module,
             ActionName = actionName,
-            Parameters = (parameters ?? Array.Empty<(string, object?)>())
+            Parameter = (parameters ?? Array.Empty<(string, object?)>())
                 .Select(p => new Data(p.name, p.value, context: app.User.Context)).ToList(),
-            Defaults = defaults?.Select(d => new Data(d.name, d.value, context: app.User.Context)).ToList(),
+            Default = defaults?.Select(d => new Data(d.name, d.value, context: app.User.Context)).ToList(),
             Step = step
         };
         // Tests author actions the way the builder does — same template seam
@@ -81,9 +81,9 @@ public static class MatrixRunner
         {
             Module = module,
             ActionName = actionName,
-            Parameters = (parameters ?? Array.Empty<(string, object?)>())
+            Parameter = (parameters ?? Array.Empty<(string, object?)>())
                 .Select(p => new Data(p.name, p.value, context: app.User.Context)).ToList(),
-            Defaults = defaults?.Select(d => new Data(d.name, d.value, context: app.User.Context)).ToList(),
+            Default = defaults?.Select(d => new Data(d.name, d.value, context: app.User.Context)).ToList(),
             Step = step
         };
         // Tests author actions the way the builder does — same template seam

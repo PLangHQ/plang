@@ -117,7 +117,7 @@ public partial class Read : IContext
     {
         // Peek the raw .pr value first — Path.Value would trigger resolution on
         // a "%var%" reference that has no binding yet at build time.
-        var raw = __action?.Parameters?.FirstOrDefault(p =>
+        var raw = __action?.Parameter?.FirstOrDefault(p =>
             string.Equals(p.Name, "Path", System.StringComparison.OrdinalIgnoreCase))?.Peek()?.ToString();
         if (string.IsNullOrEmpty(raw) || raw.Contains('%')) return Context.Ok();
 

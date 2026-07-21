@@ -20,7 +20,7 @@ public class GetParameterTests
         {
             Module = "test",
             ActionName = "fixture",
-            Parameters = parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList()
+            Parameter = parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList()
         };
     }
 
@@ -32,8 +32,8 @@ public class GetParameterTests
         {
             Module = "test",
             ActionName = "fixture",
-            Parameters = parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList(),
-            Defaults = defaults.Select(d => new Data(d.name, d.value, context: _app.User.Context)).ToList()
+            Parameter = parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList(),
+            Default = defaults.Select(d => new Data(d.name, d.value, context: _app.User.Context)).ToList()
         };
     }
 
@@ -42,7 +42,7 @@ public class GetParameterTests
     public async Task GetParameter_FoundInParameters_ReturnsSameDataInstance()
     {
         var action = Action(("path", "hello"));
-        var stored = action.Parameters[0];
+        var stored = action.Parameter[0];
 
         var found = action.GetParameter("path", _app.User.Context);
 
@@ -56,7 +56,7 @@ public class GetParameterTests
         var action = ActionWithDefaults(
             parameters: new[] { ("a", (object?)"x") },
             defaults: new[] { ("b", (object?)"y") });
-        var defaultData = action.Defaults![0];
+        var defaultData = action.Default![0];
 
         var found = action.GetParameter("b", _app.User.Context);
 
@@ -111,7 +111,7 @@ public class GetParameterTests
         await Assert.That(found.IsInitialized).IsTrue();
         // We assert reference identity; whatever .Value returns is up to Data's contract,
         // but the lookup does not trigger any work itself.
-        await Assert.That(ReferenceEquals(found, action.Parameters[0])).IsTrue();
+        await Assert.That(ReferenceEquals(found, action.Parameter[0])).IsTrue();
     }
 
     // Empty Parameters list, empty Defaults → returns Data.NotFound, not null, not exception.

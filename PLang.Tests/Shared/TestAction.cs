@@ -13,7 +13,7 @@ public static class TestAction
         {
             Module = module,
             ActionName = action,
-            Parameters = parameters
+            Parameter = parameters
                 .Select(p => new global::app.data.@this(p.name, p.value,
                     PrParam.IsVarNameSlot(module, action, p.name)
                         ? new global::app.type.@this("variable") : null,

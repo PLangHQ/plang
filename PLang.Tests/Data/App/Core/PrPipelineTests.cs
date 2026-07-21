@@ -259,7 +259,7 @@ public class PrPipelineTests
         {
             var action = Action;
             var context = Context;
-            var contentData = action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "Data", StringComparison.OrdinalIgnoreCase));
+            var contentData = action?.Parameter.FirstOrDefault(d => string.Equals(d.Name, "Data", StringComparison.OrdinalIgnoreCase));
             object? raw = contentData.Peek();
             object? content = (raw as global::app.type.item.text.@this)?.Clr<string>() ?? raw;
             if (content is string str && str.Contains('%'))

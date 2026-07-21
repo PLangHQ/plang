@@ -26,10 +26,10 @@ public partial class @this
     public string Name => $"{Module}.{ActionName}";
 
     [Store, LlmBuilder, Debug, Default]
-    public List<global::app.data.@this> Parameters { get; init; } = new();
+    public global::app.goal.step.action.parameter.list.@this Parameter { get; init; } = new();
 
     [Store, Debug, Default]
-    public List<global::app.data.@this>? Defaults { get; set; }
+    public global::app.goal.step.action.parameter.list.@this? Default { get; set; }
 
     /// <summary>The modifiers wrapping this action (cache.wrap, error.handle, timeout.after) — an
     /// internal typed list; the action owns their right-to-left wrap fold (see RunAsync) and their
@@ -118,10 +118,10 @@ public partial class @this
     /// </summary>
     public global::app.data.@this GetParameter(string name, actor.context.@this context)
     {
-        var data = Parameters?.FirstOrDefault(p =>
+        var data = Parameter?.FirstOrDefault(p =>
             string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
         if (data != null) return data;
-        data = Defaults?.FirstOrDefault(p =>
+        data = Default?.FirstOrDefault(p =>
             string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
         return data ?? context.NotFound(name);
     }

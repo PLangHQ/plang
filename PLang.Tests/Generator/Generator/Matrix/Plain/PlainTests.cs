@@ -27,7 +27,7 @@ public class StringPlainTests
         {
             Module = "matrix.plain",
             ActionName = "stringplain",
-            Parameters = new List<Data> { new Data("path", "hello", context: app.User.Context) }
+            Parameter = new List<Data> { new Data("path", "hello", context: app.User.Context) }
         };
 
         // Touch property twice via the resolved instance — Resolve populates the

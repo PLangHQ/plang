@@ -388,7 +388,7 @@ public class SetupTests
             {
                 Module = "nonexistent",
                 ActionName = "doesnotexist",
-                Parameters = new List<Data>()
+                Parameter = new List<Data>()
             }
         };
     }

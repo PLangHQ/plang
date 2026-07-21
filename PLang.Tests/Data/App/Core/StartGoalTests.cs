@@ -251,7 +251,7 @@ public class StartGoalTests
 
         public async Task<Data> Execute()
         {
-            var contentData = Action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "Data", StringComparison.OrdinalIgnoreCase));
+            var contentData = Action?.Parameter.FirstOrDefault(d => string.Equals(d.Name, "Data", StringComparison.OrdinalIgnoreCase));
             if (contentData != null)
             {
                 // Resolve via the value's OWN door — a template (text- or source-born) fills

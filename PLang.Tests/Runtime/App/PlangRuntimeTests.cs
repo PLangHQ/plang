@@ -49,7 +49,7 @@ public class PlangRuntimeTests : IDisposable
                 {
                     Module = "output",
                     ActionName = "write",
-                    Parameters = new List<Data> { new Data("Data", "hello kernel", context: global::PLang.Tests.TestApp.SharedContext) }
+                    Parameter = new List<Data> { new Data("Data", "hello kernel", context: global::PLang.Tests.TestApp.SharedContext) }
                 }
             }
         };

@@ -154,7 +154,7 @@ public partial class getTypes : IContext
     private static global::app.data.@this? ParamByName(
         global::app.goal.step.action.@this action,
         string name)
-        => action.Parameters?.FirstOrDefault(p =>
+        => action.Parameter?.FirstOrDefault(p =>
             string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
 
     private static string Normalise(string raw)

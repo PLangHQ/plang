@@ -3,7 +3,7 @@ namespace PLang.Tests.Shared;
 /// <summary>
 /// Concise goal construction for tests — instead of the nested
 /// <c>new Goal { Step = new GoalSteps { new Step { Action = new StepActions {
-/// new PrAction { Parameters = ... } } } } }</c>, write:
+/// new PrAction { Parameter = ... } } } } }</c>, write:
 ///
 /// <code>
 /// var goal = Make.Goal("MyGoal",
@@ -53,7 +53,7 @@ public static class Make
             // borns as text/template="plang" (the builder stamps this on any %var% value, so the
             // read fills the holes against live variables — a plain `("Left", "%x%")` would otherwise
             // ride as literal text and never resolve at eval).
-            action.Parameters.Add(value is global::app.data.@this typed
+            action.Parameter.Add(value is global::app.data.@this typed
                 ? typed
                 : value is string s && System.Text.RegularExpressions.Regex.IsMatch(s, "%[A-Za-z_]")
                     ? new global::app.data.@this(name, s, new global::app.type.@this("text", template: "plang"), context: global::PLang.Tests.TestApp.SharedContext)
@@ -107,7 +107,7 @@ public static class Make
         foreach (var m in modifiers)
             inner.Modifiers.Add(m as global::app.goal.step.action.modifier.@this
                 ?? new global::app.goal.step.action.modifier.@this
-                { Module = m.Module, ActionName = m.ActionName, Parameters = m.Parameters });
+                { Module = m.Module, ActionName = m.ActionName, Parameter = m.Parameter });
         return inner;
     }
 
@@ -122,9 +122,9 @@ public static class Make
         global::app.goal.step.action.@this action,
         params (string name, object? value)[] defaults)
     {
-        action.Defaults ??= new List<global::app.data.@this>();
+        action.Default ??= new List<global::app.data.@this>();
         foreach (var (name, value) in defaults)
-            action.Defaults.Add(value is global::app.data.@this typed
+            action.Default.Add(value is global::app.data.@this typed
                 ? typed
                 : new global::app.data.@this(name, value, context: global::PLang.Tests.TestApp.SharedContext));
         return action;

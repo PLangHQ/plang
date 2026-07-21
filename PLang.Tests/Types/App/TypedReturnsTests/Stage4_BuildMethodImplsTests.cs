@@ -26,7 +26,7 @@ public class Stage4_BuildMethodImplsTests
         {
             Module = module,
             ActionName = action,
-            Parameters = parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList()
+            Parameter = parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList()
         };
 
     private async Task<Data> Build(string module, string action, params (string name, object? value)[] parameters)

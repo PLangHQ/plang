@@ -178,7 +178,7 @@ public class ConditionIfBranchIndexTests
         {
             Module = "condition",
             ActionName = "if",
-            Parameters = new List<Data>
+            Parameter = new List<Data>
             {
                 new("Left", "hello", context: _app.User.Context),
                 new("Operator", ">", context: _app.User.Context),

@@ -112,7 +112,7 @@ public class GetGoalsTests
                         {
                             Module = "output",
                             ActionName = "write",
-                            Parameters = new List<Data> { new("Message", "hello", context: _app.User.Context) }
+                            Parameter = new List<Data> { new("Message", "hello", context: _app.User.Context) }
                         }
                     })
                 }

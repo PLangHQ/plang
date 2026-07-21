@@ -51,7 +51,7 @@ public class BornTypedDeclineTests
         {
             Module = "variable",
             ActionName = "set",
-            Parameters = new List<Data>
+            Parameter = new List<Data>
             {
                 new Data("name", "%path%", global::PLang.Tests.TestApp.SharedContext.Type.Create("string"), context: ctx),
                 new Data("value", ".", context: ctx),
@@ -74,7 +74,7 @@ public class BornTypedDeclineTests
         {
             Module = "variable",
             ActionName = "set",
-            Parameters = new List<Data>
+            Parameter = new List<Data>
             {
                 new Data("name", "path", new global::app.type.@this("variable"), context: ctx),
                 new Data("value", ".", context: ctx),

@@ -47,7 +47,7 @@ public class DescribeTests
         var actions = await modules.Describe();
         var action = actions.First(a => a.Module == "testmod" && a.ActionName == "datapath");
 
-        var pathParam = action.Parameters!.FirstOrDefault(d => d.Name == "Path");
+        var pathParam = action.Parameter!.FirstOrDefault(d => d.Name == "Path");
         await Assert.That(pathParam).IsNotNull();
         await Assert.That((await pathParam!.Value())!.ToString()).Contains("path");
     }

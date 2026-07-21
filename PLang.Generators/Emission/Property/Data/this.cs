@@ -187,8 +187,8 @@ public sealed record @this(
             ? $"({Name}.Peek() != null ? (object?)\"******\" : null)"
             : $"(object?){Name}";
         sb.AppendLine($"        {{");
-        sb.AppendLine($"            var __pr = __action?.Parameters?.FirstOrDefault(p => string.Equals(p.Name, \"{Name}\", System.StringComparison.OrdinalIgnoreCase));");
-        sb.AppendLine($"            __pr ??= __action?.Defaults?.FirstOrDefault(p => string.Equals(p.Name, \"{Name}\", System.StringComparison.OrdinalIgnoreCase));");
+        sb.AppendLine($"            var __pr = __action?.Parameter?.FirstOrDefault(p => string.Equals(p.Name, \"{Name}\", System.StringComparison.OrdinalIgnoreCase));");
+        sb.AppendLine($"            __pr ??= __action?.Default?.FirstOrDefault(p => string.Equals(p.Name, \"{Name}\", System.StringComparison.OrdinalIgnoreCase));");
         sb.AppendLine($"            __list.Add(new global::app.error.ParamSnapshot {{");
         sb.AppendLine($"                Name = \"{Name}\",");
         sb.AppendLine($"                DeclaredType = \"{declaredType}\",");

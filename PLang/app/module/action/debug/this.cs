@@ -286,7 +286,7 @@ public sealed class @this
         foreach (var action in step.Action.list)
         {
             sb.AppendLine($"  Action: {action.Module}.{action.ActionName}");
-            foreach (var p in action.Parameters)
+            foreach (var p in action.Parameter)
             {
                 // PEEK, never resolve: a BEFORE-step display must not run param doors —
                 // resolving renders templates / hops refs (side-effecting, and NREs on a
@@ -545,7 +545,7 @@ public sealed class @this
 
         foreach (var action in step.Action.list)
         {
-            foreach (var p in action.Parameters)
+            foreach (var p in action.Parameter)
             {
                 if (p.Peek() is global::app.type.item.text.@this pt
                     && pt.Clr<string>() is { } s)

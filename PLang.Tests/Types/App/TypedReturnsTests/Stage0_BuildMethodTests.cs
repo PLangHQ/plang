@@ -40,7 +40,7 @@ public class Stage0_BuildMethodTests
         {
             Module = module,
             ActionName = actionName,
-            Parameters = parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList()
+            Parameter = parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList()
         };
 
     private static StepActions ActionsOf(params PrAction[] actions)
@@ -98,7 +98,7 @@ public class Stage0_BuildMethodTests
         var errors = await Default.RunBuildPass(actions, _app.Module, _app.User.Context);
 
         await Assert.That(errors).IsEmpty();
-        var typeParam = setAction.Parameters.FirstOrDefault(p =>
+        var typeParam = setAction.Parameter.FirstOrDefault(p =>
             string.Equals(p.Name, "Type", StringComparison.OrdinalIgnoreCase));
         await Assert.That(typeParam).IsNotNull();
         // The stamp is a structured type entity; a bare-string Build() return is
@@ -130,7 +130,7 @@ public class Stage0_BuildMethodTests
         var errors = await Default.RunBuildPass(actions, _app.Module, _app.User.Context);
 
         await Assert.That(errors).IsEmpty();
-        var typeParam = setAction.Parameters.FirstOrDefault(p =>
+        var typeParam = setAction.Parameter.FirstOrDefault(p =>
             string.Equals(p.Name, "Type", StringComparison.OrdinalIgnoreCase));
         await Assert.That(typeParam).IsNull();
     }
@@ -160,9 +160,9 @@ public class Stage0_BuildMethodTests
         var errors = await Default.RunBuildPass(actions, _app.Module, _app.User.Context);
 
         await Assert.That(errors).IsEmpty();
-        await Assert.That(firstSet.Parameters.Any(p =>
+        await Assert.That(firstSet.Parameter.Any(p =>
             string.Equals(p.Name, "Type", StringComparison.OrdinalIgnoreCase))).IsFalse();
-        var lastType = lastSet.Parameters.FirstOrDefault(p =>
+        var lastType = lastSet.Parameter.FirstOrDefault(p =>
             string.Equals(p.Name, "Type", StringComparison.OrdinalIgnoreCase));
         await Assert.That(lastType).IsNotNull();
         await Assert.That(((global::app.type.@this)(await lastType!.Value())!).Name).IsEqualTo("foo");

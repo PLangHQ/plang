@@ -22,14 +22,14 @@ public class Stage5_ChannelActionsBuilderCatalogTests
         await Assert.That(add).IsNull();
 
         // set: Name + Goal (+ optional Actor + config)
-        await Assert.That(set!.Parameters.Any(p => p.Name == "Name")).IsTrue();
-        await Assert.That(set.Parameters.Any(p => p.Name == "Goal")).IsTrue();
-        await Assert.That(set.Parameters.Any(p => p.Name == "Buffer")).IsTrue();
-        await Assert.That(set.Parameters.Any(p => p.Name == "Timeout")).IsTrue();
-        await Assert.That(set.Parameters.Any(p => p.Name == "Mime")).IsTrue();
-        await Assert.That(set.Parameters.Any(p => p.Name == "Encoding")).IsTrue();
+        await Assert.That(set!.Parameter.Any(p => p.Name == "Name")).IsTrue();
+        await Assert.That(set.Parameter.Any(p => p.Name == "Goal")).IsTrue();
+        await Assert.That(set.Parameter.Any(p => p.Name == "Buffer")).IsTrue();
+        await Assert.That(set.Parameter.Any(p => p.Name == "Timeout")).IsTrue();
+        await Assert.That(set.Parameter.Any(p => p.Name == "Mime")).IsTrue();
+        await Assert.That(set.Parameter.Any(p => p.Name == "Encoding")).IsTrue();
 
         // remove: Name (+ optional Actor)
-        await Assert.That(remove!.Parameters.Any(p => p.Name == "Name")).IsTrue();
+        await Assert.That(remove!.Parameter.Any(p => p.Name == "Name")).IsTrue();
     }
 }
