@@ -1484,11 +1484,13 @@ BuilderSanity (test + AddItem/MarkBig/Finalize) all build with correct actions a
 catalog, item-owned type conversion, action/step/goal Create-from-dict, recovery-action normalize,
 build.validate empty-actions rejection, FixValidation continuePreviousConversation. Remaining to
 run the full --test suite / rebuild all system .pr:
-- **build.validate doesn't check required-param completeness.** The compiler can emit an action
-  missing a required param (e.g. `set default %path% = '.'` -> variable.set with no Name); validate
-  passes it (catalog exists), it saves, and RUNTIME fails MissingRequiredParameter. validate should
-  check each action's required params against the catalog so FixValidation retries. (Compile-prompt
-  robustness for set-default and similar patterns is the paired LLM-quality half.)
+- **CORRECTION: build.validate DOES check required-param completeness** (Default.cs ~635: reads the
+  catalog element's ParameterRows, errors on any non-nullable/no-default param not emitted -> keyed
+  BuildValidation -> FixValidation retry). Earlier claim was wrong. The AddItem/test.goal failures are
+  LLM-quality in the FixValidation retry (the fix LLM sometimes returns empty/incomplete even with
+  continuePreviousConversation), NOT a missing validation check. One real gap: the check verifies a
+  required param NAME is emitted, not that its VALUE is non-null — a param emitted with a null value
+  passes validate but fails runtime (MissingRequiredParameter 'x' is missing OR NULL).
 - **os/system/.build/*.pr are stale (old {steps, action, parameters} format).** The --test runner
   goal (os/system/.build/test.pr) can't be parsed by the current reader, blocking --test. Rebuilding
   system goals with the now-working builder is the path (hit the validate gap above on test.goal).
