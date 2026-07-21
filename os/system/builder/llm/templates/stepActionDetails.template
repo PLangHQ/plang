@@ -1,13 +1,6 @@
-{% comment %}
-v5: renders from the module-discovery catalog surface. %actions% is the flat action list already
-filtered to the planner's set (`where %!app.module.action.list% Name in %planStep.actions%`), so this
-template just walks it — no dedup loop. Each action element answers its own Name, Properties (the
-declared parameter rows), Return, and prose through lazy `file` doors over
-os/system/modules/<module>/{module,<action>}.{description,notes,examples}.md. `{% if x.Notes %}` is an
-existence guard (an absent facet file is falsy); `{{ x.Notes }}` emits the md content. Module prose
-(x.ModuleX) reaches through the module element; the block concats module-first + action.
-{% endcomment %}
-{% for a in actions %}
+{% comment %}Detail for the planner's chosen actions this step: walk %modules%, keep names in %planStep.actions% (comma-fenced string match — fences stop `list` matching `list.add`).{% endcomment %}
+{% capture planSet %},{% for x in planStep.actions %}{{ x }},{% endfor %}{% endcapture %}
+{% for module in modules %}{% for a in module.Actions %}{% assign nameKey = a.Name | prepend: ',' | append: ',' %}{% if planSet contains nameKey %}
 ## {{ a.Name }}{% unless a.Cacheable %} [no-cache]{% endunless %}
 {% if a.ModuleDescription or a.Description %}
 Description:
@@ -26,4 +19,4 @@ Examples:
 {% if a.ModuleExamples %}{{ a.ModuleExamples }}
 {% endif %}{% if a.Examples %}{{ a.Examples }}
 {% endif %}{% endif %}
-{% endfor %}
+{% endif %}{% endfor %}{% endfor %}

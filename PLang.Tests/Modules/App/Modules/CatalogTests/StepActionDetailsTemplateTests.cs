@@ -3,11 +3,12 @@ using app.module.action.ui;
 namespace PLang.Tests.App.Modules.CatalogTests;
 
 /// <summary>
-/// The 4d stepActionDetails template renders from the module-discovery catalog surface — the flat
-/// action list (already filtered to the planner's set). Each action answers its Name, Properties
-/// (declared param rows composed into the desc: type face + <c>?</c> + <c>= default</c> + <c>%var%</c>),
-/// Return, and prose through the lazy file doors. Renders over the REAL catalog + real
-/// os/system/modules prose so the shape is pinned against reality.
+/// The stepActionDetails template renders from the module list (%!app.module.list%): it walks each
+/// module's Actions and keeps only those in the planner's set for the step
+/// (`planStep.actions contains a.Name`). Catalog actions carry their context, so each answers its
+/// Name, Properties (declared param rows composed into the desc: type face + <c>?</c> + <c>= default</c>
+/// + <c>%var%</c>), Return, and prose through the lazy file doors. Renders over the REAL catalog +
+/// real os/system/modules prose so the shape is pinned against reality.
 /// </summary>
 public class StepActionDetailsTemplateTests
 {
@@ -25,14 +26,13 @@ public class StepActionDetailsTemplateTests
         app.OsDirectory = Path.Combine(RepoRoot(), "os");
         var ctx = app.System.Context;
 
-        // %actions% = the flat action list, already filtered to the planner's set.
-        var items = new List<object?>();
-        foreach (var name in actionNames)
-        {
-            var parts = name.Split('.', 2);
-            items.Add(app.Module[parts[0]][parts[1]]);
-        }
-        ctx.Variable.Set(new Data("actions", new global::app.type.item.list.@this(items, ctx), context: ctx));
+        // %modules% = the module list (%!app.module.list%); %planStep.actions% = the planner's set
+        // for this step — the template walks modules and keeps `planStep.actions contains a.Name`.
+        ctx.Variable.Set(new Data("modules", app.Module.list, context: ctx));
+        ctx.Variable.Set(new Data("planStep",
+            new global::app.type.item.dict.@this(ctx).Set("actions",
+                new global::app.type.item.list.@this(new List<object?>(actionNames), ctx)),
+            context: ctx));
 
         var template = File.ReadAllText(Path.Combine(RepoRoot(),
             "os/system/builder/llm/templates/stepActionDetails.template"));

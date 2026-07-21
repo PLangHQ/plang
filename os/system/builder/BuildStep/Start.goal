@@ -13,8 +13,7 @@ Compile
 / literal `module.action` mention the planner missed. See building-the-build.md
 / "preventing self-rebuild corruption" for the rationale.
 - build.validateStepActions step=%step%, actions=%planStep.actions%, write to %planStep.actions%
-- set %actions% = %!app.module.action.list%
-- where %actions% Name in %planStep.actions%, write to %actions%
+- set %modules% = %!app.module.list%
 - build.types actions=%planStep.actions%, write to %typeInfo%
 / Per-step so the snapshot reflects the Actions just written by prior BuildSteps.
 - goal.getTypes Goal=%goal%, write to %varTypes%
