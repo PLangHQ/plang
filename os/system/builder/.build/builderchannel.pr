@@ -8,31 +8,6 @@
   "isEvent": false,
   "isSystem": true,
   "isTest": false,
-  "step": [
-    {
-      "index": 0,
-      "text": "write out %!data%",
-      "lineNumber": 7,
-      "formal": "output.write(Data=%!data%)",
-      "waitForExecution": true,
-      "action": [
-        {
-          "module": "output",
-          "name": "write",
-          "parameter": [
-            {
-              "name": "Data",
-              "type": {
-                "name": "object",
-                "template": "plang"
-              },
-              "value": "%!data%"
-            }
-          ],
-          "modifier": []
-        }
-      ]
-    }
-  ],
+  "step": [],
   "child": []
 }

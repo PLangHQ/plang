@@ -1495,3 +1495,13 @@ run the full --test suite / rebuild all system .pr:
 - **%!data% cosmetic output** (~18 literal lines) during a build — a builder output line not resolving.
 - **action.Create migration alias** (accepts action/parameters as well as name/parameter) — drop once
   all .pr regenerate canonical.
+
+## 2026-07-21 — %!data% build-output noise removed (channel-input propagation gap)
+Removed the `- write out %!data%` forward from BuilderChannel.goal (+ emptied builderchannel.pr): a
+goal-backed channel sets %!data% in the actor context (channel/type/goal/this.cs:70) but it isn't
+reaching the backing goal's body, so it printed the literal "%!data%" per build event instead of the
+message. Build-event chatter is now silent (the essential "Saved X" line comes from elsewhere and
+remains). Proper fix (restore the forward): make channel-input %!data% propagate into a goal-backed
+channel's execution scope, then re-add the forward. Also: AddItem's `%total% + %item%` compile is
+LLM-flaky (sometimes needs FixValidation, which now works but the fix LLM isn't 100%) — inherent
+compile-prompt quality, not a structural bug.
