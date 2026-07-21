@@ -1,6 +1,6 @@
 using app.error;
 using app.variable;
-using ActionEntity = app.goal.step.action.@this;
+using Action = app.goal.step.action.@this;
 using Call = app.callstack.call.@this;
 using ExampleSpec = app.type.spec.Example;
 using ActionSpec = app.type.spec.Action;
@@ -71,7 +71,7 @@ public partial class Handle : IContext, IModifier
     /// wrapping it in a goal. Actions execute in order; %!data% flows between
     /// them just like the main step chain.
     /// </summary>
-    public partial global::app.data.@this<global::app.type.clr.@this<System.Collections.Generic.List<global::app.goal.step.action.@this>>>? Actions { get; init; }
+    public partial global::app.data.@this<global::app.type.item.list.@this<global::app.goal.step.action.@this>>? Actions { get; init; }
     public partial global::app.data.@this<global::app.type.item.number.@this>? RetryCount { get; init; }
     public partial global::app.data.@this<global::app.type.item.number.@this>? RetryOverMs { get; init; }
     public partial global::app.data.@this<global::app.type.item.choice.@this<ErrorOrder>>? Order { get; init; }
@@ -97,14 +97,16 @@ public partial class Handle : IContext, IModifier
                 : null;
 
             var order = (Order == null ? null : await Order.Value()) ?? ErrorOrder.RetryFirst;
-            var actions = Actions?.Clr<System.Collections.Generic.List<global::app.goal.step.action.@this>>();
+            // The recovery chain is a plang list<action> — RunRecovery opens each row through its
+            // own action door (row.Value<action>()), so params survive; no CLR peel that drops them.
+            var actions = Actions == null ? null : await Actions.Value() as global::app.type.item.list.@this;
             bool hasRecovery = actions != null && actions.Count > 0;
 
             if (order == ErrorOrder.GoalFirst)
             {
                 if (hasRecovery)
                 {
-                    var recoveryResult = await RunRecoveryWithErrorScope(actions!.ToList(), context, result.Error!);
+                    var recoveryResult = await RunRecoveryWithErrorScope(actions!, context, result.Error!);
                     if (recoveryResult.Success)
                     {
                         if (erroredCall != null) erroredCall.Handled = true;
@@ -121,7 +123,7 @@ public partial class Handle : IContext, IModifier
                 if (retryResult?.Success == true) return retryResult;
                 if (hasRecovery)
                 {
-                    var recoveryResult = await RunRecoveryWithErrorScope(actions!.ToList(), context, result.Error!);
+                    var recoveryResult = await RunRecoveryWithErrorScope(actions!, context, result.Error!);
                     if (recoveryResult.Success)
                     {
                         if (erroredCall != null) erroredCall.Handled = true;
@@ -144,7 +146,7 @@ public partial class Handle : IContext, IModifier
     /// scope on dispose.
     /// </summary>
     private static async Task<global::app.data.@this> RunRecoveryWithErrorScope(
-        List<ActionEntity> actions,
+        global::app.type.item.list.@this actions,
         actor.context.@this context,
         app.error.IError caughtError)
     {
@@ -158,7 +160,7 @@ public partial class Handle : IContext, IModifier
     /// Runs the on-error recovery action chain.
     /// </summary>
     private static async Task<global::app.data.@this> RunRecovery(
-        List<ActionEntity> actions,
+        global::app.type.item.list.@this actions,
         actor.context.@this context)
     {
         // Nested actions live as parameter values with no Step reference of their own.
@@ -166,8 +168,12 @@ public partial class Handle : IContext, IModifier
         // sub-goals — works the same as for actions placed directly in a step.
         var enclosingStep = context.Step;
         global::app.data.@this last = context.Ok();
-        foreach (var action in actions)
+        foreach (var row in actions.Items)
         {
+            // Each row opens through its OWN action door — a raw pr row becomes a real action
+            // (params intact), not a CLR-peeled POCO.
+            var action = await row.Value<Action>();
+            if (action == null) continue;
             if (action.Step == null && enclosingStep != null)
                 action.Step = enclosingStep;
             last = await action.Run(context);

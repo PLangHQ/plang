@@ -22,7 +22,7 @@ public partial class validateResponse : IContext
     public async Task<app.data.@this> Run()
     {
         var response = (await StepResults.Value()) as BuildResponse;
-        var goal = Goal.Clr<Goal>();
+        var goal = await Goal.Value();
 
         // Identify which parameter is null and dump enough state for LlmFixer +
         // logs to see *why*. "StepResults or Goal is null" was actively misleading —

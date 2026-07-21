@@ -155,9 +155,7 @@ public sealed class OpenAi : ILlm
         // unthreaded action.Cache resolves to false without this layer knowing build mode exists
         // (build-mode-inversion §6.D, Case A). Gating cacheKey also skips the write below (guarded
         // by cacheKey != null), so cache:false is a full bypass: no read, no stale entry left behind.
-        // The .NET edge: the tool list lowers itself once; reused below.
-        List<GoalCall>? goalTools = action.Tools == null || await action.Tools.IsEmpty() ? null
-            : (await action.Tools.Value()).Clr<List<GoalCall>>();
+        List<GoalCall>? goalTools = await ToolsOf(action);
         string? cacheKey = null;
         if (await action.Cache.ToBooleanAsync() && goalTools == null)
         {
@@ -552,9 +550,7 @@ public sealed class OpenAi : ILlm
         }
 
         string result;
-        var goalCall = (action.Tools == null || await action.Tools.IsEmpty() ? null
-                : (await action.Tools.Value()).Clr<List<GoalCall>>())
-            ?.Find(t => t.Name == toolCall.Name);
+        var goalCall = (await ToolsOf(action))?.Find(t => t.Name == toolCall.Name);
         if (goalCall == null)
         {
             result = $"Error: unknown tool '{toolCall.Name}'";
@@ -1067,6 +1063,18 @@ public sealed class OpenAi : ILlm
     private static void SetProp(data.@this data, string name, object? value)
     {
         data.Properties[name] = value;
+    }
+
+    // The tools ride as a plang list<goalcall> — each row opens through its own goalcall door
+    // (params intact), never a CLR peel. Null when no tools were passed.
+    private static async Task<List<GoalCall>?> ToolsOf(query action)
+    {
+        if (action.Tools == null || await action.Tools.IsEmpty()) return null;
+        if (await action.Tools.Value() is not global::app.type.item.list.@this list) return null;
+        var tools = new List<GoalCall>();
+        foreach (var row in list.Items)
+            if (await row.Value<GoalCall>() is { } gc) tools.Add(gc);
+        return tools;
     }
 
     private static List<LlmMessage> CloneMessages(List<LlmMessage> messages)

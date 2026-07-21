@@ -14,13 +14,8 @@ public partial class goals : IContext
 
     public async Task<data.@this<global::app.type.item.list.@this<Goal>>> Run()
     {
+        // Builder.Goals hands back a plang list<goal> (warnings ride the Data) — forward it, no peel.
         var result = await Builder.Goals(this);
-        if (!result.Success) return data.@this<global::app.type.item.list.@this<Goal>>.From(result);
-        var goals = (await result.Value()).Clr<List<Goal>>() ?? new List<Goal>();
-        // goal is a plang item now — it rides the plang list directly (no clr<goal> carrier).
-        var typed = Context.Ok<global::app.type.item.list.@this<Goal>>(
-            new global::app.type.item.list.@this<Goal>(goals, Context));
-        typed.Warnings = result.Warnings;   // forward builder warnings (corrupt .pr, etc.)
-        return typed;
+        return data.@this<global::app.type.item.list.@this<Goal>>.From(result);
     }
 }

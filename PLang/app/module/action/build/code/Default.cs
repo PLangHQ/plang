@@ -35,12 +35,12 @@ public class Default : IBuilder
             foreach (var a in catalog)
                 if (wanted.Contains($"{a.Module}.{a.ActionName}"))
                     subset.Add(a);
-            return action.Context.Ok(new global::app.type.clr.@this<List<global::app.goal.step.action.@this>>(subset, action.Context));
+            return action.Context.Ok(new global::app.type.item.list.@this<global::app.goal.step.action.@this>(subset, action.Context));
         }
 
-        // The catalog rides as clr<List<action>> (the Run signature carries that), so the consumer
-        // unwraps one shape, matching the goal/step/action graph.
-        return action.Context.Ok(new global::app.type.clr.@this<List<global::app.goal.step.action.@this>>(catalog, action.Context));
+        // The catalog rides as a plang list<action> — action is an item, so it lives in the plang
+        // list directly (no clr<> carrier); the consumer reads action items, no CLR peel.
+        return action.Context.Ok(new global::app.type.item.list.@this<global::app.goal.step.action.@this>(catalog, action.Context));
     }
 
     // --- Types ---
@@ -169,7 +169,7 @@ public class Default : IBuilder
 
         var files = (await listResult.Value()).Clr<List<path>>();
         if (files == null || files.Count == 0)
-            return context.Ok(new List<Goal>());
+            return context.Ok(new global::app.type.item.list.@this<Goal>(context));
 
         // Filter by app.Build.Files if set (--build={"files":[...]})
         // Honor the user's specified order — building has bootstrapping concerns
@@ -201,7 +201,7 @@ public class Default : IBuilder
             }
             files = ordered;
             if (files.Count == 0)
-                return context.Ok(new List<Goal>());
+                return context.Ok(new global::app.type.item.list.@this<Goal>(context));
         }
 
         var allGoals = new List<Goal>();
@@ -235,7 +235,7 @@ public class Default : IBuilder
 
         _buildTimer.Restart();
 
-        var result = context.Ok(allGoals);
+        var result = context.Ok(new global::app.type.item.list.@this<Goal>(allGoals, context));
         if (allErrors.Count > 0)
             result.Warnings = allErrors;
         return result;
@@ -243,19 +243,19 @@ public class Default : IBuilder
 
     // --- Fold: indent-authored sub-steps → gate-action Child ---
 
-    public Task<data.@this> Fold(fold action)
+    public async Task<data.@this> Fold(fold action)
     {
         var context = action.Context;
-        var goal = action.Goal.Clr<Goal>()!;
+        var goal = (await action.Goal.Value())!;
         var errors = new List<global::app.error.IError>();
         Fold(goal, errors);
-        if (errors.Count == 0) return Task.FromResult(context.Ok(true));
+        if (errors.Count == 0) return context.Ok(true);
 
         // Surface every A4 violation: the first is the root, the rest ride its ErrorChain —
         // each error carries its own offending step (location), not a flattened string.
         var root = errors[0];
         for (int e = 1; e < errors.Count; e++) root.ErrorChain.Add(errors[e]);
-        return Task.FromResult(context.Error(root));
+        return context.Error(root);
     }
 
     // Folds a goal's own steps, then recurses its sub-goals. Sets each goal's Step to the
@@ -467,10 +467,14 @@ public class Default : IBuilder
         var context = action.Context;
         var modules = app.Module;
 
-        if ((action.Actions == null ? null : await action.Actions.Value()) == null)
+        var actionList = action.Actions == null ? null : await action.Actions.Value() as global::app.type.item.list.@this;
+        if (actionList == null)
             return context.Ok(true);
 
-        var actions = action.Actions.Clr<List<global::app.goal.step.action.@this>>()!;
+        // Each row opens through its own action door — params intact, no CLR peel.
+        var actions = new List<global::app.goal.step.action.@this>();
+        foreach (var row in actionList.Items)
+            if (await row.Value<global::app.goal.step.action.@this>() is { } ae) actions.Add(ae);
         var notFound = new List<string>();
         foreach (var a in actions)
         {
@@ -732,7 +736,7 @@ public class Default : IBuilder
     {
 
         var response = action.StepResults.Peek() as BuildResponse;
-        var goal = action.Goal.Clr<Goal>();
+        var goal = await action.Goal.Value();
         if (response == null || goal == null)
             return action.Context.Ok(response);
 

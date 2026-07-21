@@ -7,7 +7,7 @@ namespace app.module.action.build;
 [Action("validate")]
 public partial class validate : IContext
 {
-    public partial data.@this<global::app.type.clr.@this<System.Collections.Generic.List<global::app.goal.step.action.@this>>>? Actions { get; init; }
+    public partial data.@this<global::app.type.item.list.@this<global::app.goal.step.action.@this>>? Actions { get; init; }
 
     [Code]
     public partial IBuilder Builder { get; }

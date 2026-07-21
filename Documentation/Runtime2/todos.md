@@ -1466,3 +1466,8 @@ Ingi, during wire-source-split design: extend the wire write rule to CONTENT SOU
 
 ## 2026-07-21 — ActionError should take an action, not a step
 Ingi, during build.fold review: `ActionError` currently carries a `Step` (`ActionError(msg, Step step, …)`). An action-level error should carry the *action* it occurred on (which locates the code precisely — module.action + its step), not the step. Changing `ActionError`'s ctor + all call sites is a broad change, deferred. (In `build.fold` we sidestepped this by using `StepError` — correct there, since fold operates at the step level.) When picked up: give `ActionError` an action-carrying ctor and migrate call sites off the step-only form.
+
+## 2026-07-21 — clr-leak sweep follow-ups (branch goal-graph-singular)
+- **ResolveGoalCallPaths (build/code/Default.cs) is verb+noun — GoalCall should resolve its own PrPath.** On a build change, goal.call should own the path resolution (a `GoalCall.ResolvePath()`-style member on the type), not a builder free-method reaching into it. (Ingi, 2026-07-21)
+- **ActionEntity alias is stale (.NET "Entity" framing) — it's just `action`.** Remaining in callstack/this.cs, callstack/call/Position.cs, callstack/call/this.cs. Rename to `Action` alias (as in foreach.cs/handle.cs). (Ingi, 2026-07-21)
+- **Recovery-action pr-shape mismatch:** error.handle recovery actions in os/system/builder/*.pr are stored `{module, action, parameters}` (LLM compile shape) but action reads `{module, name, parameter}` — params lost on read. Needs the builder to normalize nested modifier actions to canonical shape (or a rebuild once the builder is green).
