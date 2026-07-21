@@ -186,8 +186,14 @@ public class Fluid : ITemplate
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
             var location = sourceFile != null ? $" in '{sourceFile}'" : "";
+            // Fluid wraps a member/converter fault as TargetInvocationException whose Message is the
+            // useless "Exception has been thrown by the target of an invocation" — dig to the real
+            // inner fault (and its type) so a bad navigation/coercion in the template is named.
+            var root = ex;
+            while (root.InnerException != null) root = root.InnerException;
+            var detail = ReferenceEquals(root, ex) ? ex.Message : $"{root.GetType().Name}: {root.Message}";
             return action.Context.Error<global::app.type.item.text.@this>(new ServiceError(
-                $"Template render error{location}: {ex.Message}", "RenderError", 500));
+                $"Template render error{location}: {detail}", "RenderError", 500) { Exception = ex });
         }
     }
 
