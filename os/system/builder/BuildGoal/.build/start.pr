@@ -108,7 +108,8 @@
             {
               "name": "Value",
               "type": {
-                "name": "dict"
+                "name": "dict",
+                "template": "plang"
               },
               "value": {
                 "id": "%!trace.id%",
@@ -1420,7 +1421,8 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "dict"
+                    "name": "dict",
+                    "template": "plang"
                   },
                   "value": {
                     "key": "%!error.Key%",
