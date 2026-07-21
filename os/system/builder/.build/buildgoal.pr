@@ -1,29 +1,18 @@
 {
   "name": "BuildGoal",
-  "description": null,
-  "comment": null,
-  "visibility": 1,
+  "visibility": "Public",
   "path": "/system/builder/BuildGoal.goal",
   "prPath": "/system/builder/.build/buildgoal.pr",
   "hash": "bc83d1783dcac14d9afd312e91b7d2153e865e23a38ecbf26af6198e1ae16fd7",
-  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,
   "isTest": false,
-  "inputParameters": null,
   "step": [
     {
       "index": 0,
       "text": "call BuildGoal/Start goal=%goal%",
       "lineNumber": 4,
-      "comment": null,
-      "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
-      "source": null,
       "waitForExecution": true,
       "action": [
         {
@@ -43,7 +32,6 @@
               }
             }
           ],
-          "default": null,
           "modifier": []
         }
       ]

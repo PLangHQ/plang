@@ -1,26 +1,19 @@
 {
   "name": "EmitBuildEvent",
-  "description": null,
-  "comment": null,
-  "visibility": 1,
+  "visibility": "Public",
   "path": "/system/builder/EmitBuildEvent.goal",
   "prPath": "/system/builder/.build/emitbuildevent.pr",
   "hash": "a202f14a1c677ab9b18d4032ffc771bd2832c31ec69feaa669dae86f35533532",
-  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,
   "isTest": false,
-  "inputParameters": null,
   "step": [
     {
       "index": 0,
       "text": "render template \"/system/builder/templates/output/build-output.template\", write to %msg%",
       "lineNumber": 11,
-      "comment": null,
-      "intent": null,
       "formal": "ui.render(Template=\"/system/builder/templates/output/build-output.template\") | variable.set(Name=%msg%, Value=%!data%, type=\"string\")",
-      "source": null,
       "waitForExecution": true,
       "action": [
         {
@@ -35,7 +28,6 @@
               "value": "/system/builder/templates/output/build-output.template"
             }
           ],
-          "default": null,
           "modifier": []
         },
         {
@@ -76,10 +68,7 @@
       "index": 1,
       "text": "write out %msg% channel: \"builder\"",
       "lineNumber": 12,
-      "comment": null,
-      "intent": null,
       "formal": "output.write(Data=%msg%, channel=\"builder\")",
-      "source": null,
       "waitForExecution": true,
       "action": [
         {
@@ -102,7 +91,6 @@
               "value": "builder"
             }
           ],
-          "default": null,
           "modifier": []
         }
       ]

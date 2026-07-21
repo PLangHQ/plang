@@ -1,29 +1,18 @@
 {
   "name": "Validate",
-  "description": null,
-  "comment": null,
-  "visibility": 1,
+  "visibility": "Public",
   "path": "/system/builder/BuildStep/Validate.goal",
   "prPath": "/system/builder/BuildStep/.build/validate.pr",
   "hash": "b7a5024f0b9742b5180c4760826a7d0c5398880aac431629f2a7b8f8e2d6c672",
-  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,
   "isTest": false,
-  "inputParameters": null,
   "step": [
     {
       "index": 0,
       "text": "if %compileResult.errors% is not empty, throw error 'Step %step.Index% (%step.Text%): %compileResult.errors%' key=\"GoalBug\"",
       "lineNumber": 4,
-      "comment": null,
-      "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
-      "source": null,
       "waitForExecution": true,
       "action": [
         {
@@ -63,7 +52,6 @@
                       "value": "GoalBug"
                     }
                   ],
-                  "default": null,
                   "modifier": []
                 }
               ]
@@ -112,13 +100,6 @@
       "index": 1,
       "text": "if %compileResult.actions% is empty, throw error 'Step %step.Index% (%step.Text%) has no actions.' key=\"GoalBug\"",
       "lineNumber": 5,
-      "comment": null,
-      "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
-      "source": null,
       "waitForExecution": true,
       "action": [
         {
@@ -158,7 +139,6 @@
                       "value": "GoalBug"
                     }
                   ],
-                  "default": null,
                   "modifier": []
                 }
               ]
@@ -186,8 +166,7 @@
               "name": "Right",
               "type": {
                 "name": "object"
-              },
-              "value": null
+              }
             }
           ],
           "default": [
@@ -207,13 +186,6 @@
       "index": 2,
       "text": "foreach %compileResult.actions%, call ValidateAction __vAct__=%item%",
       "lineNumber": 6,
-      "comment": null,
-      "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
-      "source": null,
       "waitForExecution": true,
       "action": [
         {
@@ -229,7 +201,6 @@
               "value": "%compileResult.actions%"
             }
           ],
-          "default": null,
           "modifier": []
         },
         {
@@ -258,7 +229,6 @@
               }
             }
           ],
-          "default": null,
           "modifier": []
         }
       ]
@@ -267,30 +237,19 @@
   "child": [
     {
       "name": "ValidateAction",
-      "description": null,
-      "comment": null,
-      "visibility": 0,
+      "visibility": "Private",
       "path": "/system/builder/BuildStep/Validate.goal",
       "prPath": "/system/builder/BuildStep/.build/validate.pr",
       "hash": "5af414658718072be3b593226d6656fd875199970fe6549978bf0caa30dbbb09",
-      "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
       "isSystem": true,
       "isTest": false,
-      "inputParameters": null,
       "step": [
         {
           "index": 0,
           "text": "if %__vAct__.errors% is not empty, throw error 'Action %__vAct__.module%.%__vAct__.action% failed for step %step.Index% (%step.Text%): %__vAct__.errors%' key=\"GoalBug\"",
           "lineNumber": 10,
-          "comment": null,
-          "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
-          "formal": null,
-          "source": null,
           "waitForExecution": true,
           "action": [
             {
@@ -330,7 +289,6 @@
                           "value": "GoalBug"
                         }
                       ],
-                      "default": null,
                       "modifier": []
                     }
                   ]

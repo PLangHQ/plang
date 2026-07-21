@@ -1,26 +1,19 @@
 {
   "name": "Build",
-  "description": null,
-  "comment": null,
-  "visibility": 1,
+  "visibility": "Public",
   "path": "/system/builder/Build.goal",
   "prPath": "/system/builder/.build/build.pr",
   "hash": "483f3bbb51832f3fbbe4ae152e1f0ccfc163a386a87a97d666d79543953a2dfe",
-  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,
   "isTest": false,
-  "inputParameters": null,
   "step": [
     {
       "index": 0,
       "text": "set default %path% = \"/\"",
       "lineNumber": 6,
-      "comment": null,
-      "intent": null,
       "formal": "variable.set(Name=%path%, Value=\"/\", AsDefault=true, Type=string)",
-      "source": null,
       "waitForExecution": true,
       "action": [
         {
@@ -57,7 +50,6 @@
               "value": "string"
             }
           ],
-          "default": null,
           "modifier": []
         }
       ]
@@ -66,10 +58,7 @@
       "index": 1,
       "text": "set default %!build.cache% = true",
       "lineNumber": 7,
-      "comment": null,
-      "intent": null,
       "formal": "variable.set(Name=%!build.cache%, Value=true, AsDefault=true, Type=string)",
-      "source": null,
       "waitForExecution": true,
       "action": [
         {
@@ -99,7 +88,6 @@
               "value": true
             }
           ],
-          "default": null,
           "modifier": []
         }
       ]
@@ -108,10 +96,7 @@
       "index": 2,
       "text": "set default %!build.summary% = true",
       "lineNumber": 8,
-      "comment": null,
-      "intent": null,
       "formal": "variable.set(Name=%!build.summary%, Value=true, Type=bool, AsDefault=true)",
-      "source": null,
       "waitForExecution": true,
       "action": [
         {
@@ -148,7 +133,6 @@
               "value": true
             }
           ],
-          "default": null,
           "modifier": []
         }
       ]
@@ -157,10 +141,7 @@
       "index": 3,
       "text": "set channel \"builder\" call BuilderChannel",
       "lineNumber": 10,
-      "comment": null,
-      "intent": null,
       "formal": "channel.set(Name=\"builder\", Goal={name:\"BuilderChannel\"})",
-      "source": null,
       "waitForExecution": true,
       "action": [
         {
@@ -182,12 +163,10 @@
               "value": {
                 "name": "BuilderChannel",
                 "parallel": false,
-                "parameters": null,
                 "prPath": "/system/builder/.build/builderchannel.pr"
               }
             }
           ],
-          "default": null,
           "modifier": []
         }
       ]
@@ -196,10 +175,7 @@
       "index": 4,
       "text": "call EmitBuildEvent kind=\"build-path\", path=%path%",
       "lineNumber": 11,
-      "comment": null,
-      "intent": null,
       "formal": "goal.call(GoalName={name:\"EmitBuildEvent\", parameters:[{name:\"kind\", value:\"build-path\", type:\"string\"}, {name:\"path\", value\":\"%path%\", type:\"string\"}]})",
-      "source": null,
       "waitForExecution": true,
       "action": [
         {
@@ -227,7 +203,6 @@
               }
             }
           ],
-          "default": null,
           "modifier": []
         }
       ]
@@ -236,10 +211,7 @@
       "index": 5,
       "text": "build.load, write to %app%",
       "lineNumber": 12,
-      "comment": null,
-      "intent": null,
       "formal": "build.load(Path=%path%) , variable.set(Name=%app%, Value=%!data%)",
-      "source": null,
       "waitForExecution": true,
       "action": [
         {
@@ -255,7 +227,6 @@
               "value": "%path%"
             }
           ],
-          "default": null,
           "modifier": []
         },
         {
@@ -296,10 +267,7 @@
       "index": 6,
       "text": "build.goals path=%path%, write to %goals%",
       "lineNumber": 13,
-      "comment": null,
-      "intent": null,
       "formal": "build.goals(Path=%path%) , variable.set(Name=%goals%, Value=%!data%)",
-      "source": null,
       "waitForExecution": true,
       "action": [
         {
@@ -315,7 +283,6 @@
               "value": "%path%"
             }
           ],
-          "default": null,
           "modifier": []
         },
         {
@@ -356,10 +323,7 @@
       "index": 7,
       "text": "call EmitBuildEvent kind=\"goals-found\", goals=%goals%",
       "lineNumber": 14,
-      "comment": null,
-      "intent": null,
       "formal": "goal.call(GoalName={name:\"EmitBuildEvent\", parameters:[{name:\"kind\", value:\"goals-found\", type:\"string\"}, {name:\"goals\", value:\"%goals%\", type:\"list<goal>\"}]})",
-      "source": null,
       "waitForExecution": true,
       "action": [
         {
@@ -387,7 +351,6 @@
               }
             }
           ],
-          "default": null,
           "modifier": []
         }
       ]
@@ -396,10 +359,7 @@
       "index": 8,
       "text": "foreach %goals%, call BuildGoal goal=%item%",
       "lineNumber": 15,
-      "comment": null,
-      "intent": null,
       "formal": "loop.foreach(Collection=%goals%), goal.call(GoalName={name:\"BuildGoal\", parameters:[{name:\"goal\", value:%item%, type:\"string\"}]})",
-      "source": null,
       "waitForExecution": true,
       "action": [
         {
@@ -415,7 +375,6 @@
               "value": "%goals%"
             }
           ],
-          "default": null,
           "modifier": []
         },
         {
@@ -444,7 +403,6 @@
               }
             }
           ],
-          "default": null,
           "modifier": []
         }
       ]
@@ -453,10 +411,7 @@
       "index": 9,
       "text": "save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'",
       "lineNumber": 16,
-      "comment": null,
-      "intent": null,
       "formal": "file.save(Path=\"/.build/traces/%!trace.id%/manifest.json\", Value=%traceGoals%)",
-      "source": null,
       "waitForExecution": true,
       "action": [
         {
@@ -480,7 +435,6 @@
               "value": "%traceGoals%"
             }
           ],
-          "default": null,
           "modifier": []
         }
       ]
@@ -489,17 +443,13 @@
       "index": 10,
       "text": "build.appSave",
       "lineNumber": 17,
-      "comment": null,
-      "intent": null,
       "formal": "build.appSave()",
-      "source": null,
       "waitForExecution": true,
       "action": [
         {
           "module": "build",
           "name": "appSave",
           "parameter": [],
-          "default": null,
           "modifier": []
         }
       ]

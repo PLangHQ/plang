@@ -1,29 +1,18 @@
 {
   "name": "Validate",
-  "description": null,
-  "comment": null,
-  "visibility": 1,
+  "visibility": "Public",
   "path": "/system/builder/BuildGoal/Validate.goal",
   "prPath": "/system/builder/BuildGoal/.build/validate.pr",
   "hash": "c38419b7d8530cca4b68e2f03d122c8295a476fccaa9ac720184de9e58ac4112",
-  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,
   "isTest": false,
-  "inputParameters": null,
   "step": [
     {
       "index": 0,
       "text": "if %plan.steps.Count% is not %goal.step.Count%, throw error 'Planner returned %plan.steps.Count% step plans but goal has %goal.step.Count% steps.' key=\"LlmTransient\"",
       "lineNumber": 4,
-      "comment": null,
-      "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
-      "source": null,
       "waitForExecution": true,
       "action": [
         {
@@ -63,7 +52,6 @@
                       "value": "LlmTransient"
                     }
                   ],
-                  "default": null,
                   "modifier": []
                 }
               ]

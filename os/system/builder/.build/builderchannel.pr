@@ -1,26 +1,19 @@
 {
   "name": "BuilderChannel",
-  "description": null,
-  "comment": null,
-  "visibility": 1,
+  "visibility": "Public",
   "path": "/system/builder/BuilderChannel.goal",
   "prPath": "/system/builder/.build/builderchannel.pr",
   "hash": "4e53f5e582fac73f9a3028429dd9ec46baa49fe3bb5d06be08aee972445ebeb3",
-  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,
   "isTest": false,
-  "inputParameters": null,
   "step": [
     {
       "index": 0,
       "text": "write out %!data%",
       "lineNumber": 7,
-      "comment": null,
-      "intent": null,
       "formal": "output.write(Data=%!data%)",
-      "source": null,
       "waitForExecution": true,
       "action": [
         {
@@ -36,7 +29,6 @@
               "value": "%!data%"
             }
           ],
-          "default": null,
           "modifier": []
         }
       ]
