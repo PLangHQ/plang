@@ -632,7 +632,7 @@ public class Default : IBuilder
                     if (a.Parameter != null)
                         foreach (var p in a.Parameter) emitted.Add(p.Name);
 
-                    foreach (var row in element.ParameterRows)
+                    foreach (var row in element.Properties.Rows)
                     {
                         if (row.Nullable || row.Default != null) continue;
                         if (!emitted.Contains(row.Name))
@@ -974,7 +974,7 @@ public class Default : IBuilder
             // The catalog element's declared rows — the ONE reflection site, read for nullable-slot
             // detection below instead of re-reflecting with a NullabilityInfoContext.
             var rows = modules.Contains(a.Module, a.ActionName)
-                ? modules[a.Module][a.ActionName].ParameterRows : null;
+                ? modules[a.Module][a.ActionName].Properties.Rows : null;
             if (actionType != null)
             {
                 var props = actionType.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);

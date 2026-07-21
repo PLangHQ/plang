@@ -115,7 +115,7 @@ public sealed partial class BuildResponse
                 // The catalog element's declared rows — the ONE reflection site, looked up once for
                 // the parameter loop and read for nullable-slot detection (no re-reflection here).
                 var rows = modules != null && modules.Contains(a.Module, a.ActionName)
-                    ? modules[a.Module][a.ActionName].ParameterRows
+                    ? modules[a.Module][a.ActionName].Properties.Rows
                     : null;
 
                 foreach (var p in a.Parameter)

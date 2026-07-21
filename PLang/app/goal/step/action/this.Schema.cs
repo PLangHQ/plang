@@ -20,24 +20,24 @@ public partial class @this
             ? Context.App.Module[Module].Handler(ActionName)
             : null;
 
-    private System.Collections.Generic.IReadOnlyList<property.@this>? _rows;
+    private global::app.goal.step.action.property.list.@this? _properties;
 
-    /// <summary>The declared parameter rows, TYPED — the ONE reflection site's output, cached per
-    /// element. Build validation reads Nullable / Default / Name here instead of re-reflecting the
-    /// handler (the four scattered NullabilityInfoContext probes collapse to this single crossing).
-    /// The plang-facing <see cref="Properties"/> wraps these same rows.</summary>
-    internal System.Collections.Generic.IReadOnlyList<property.@this> ParameterRows => _rows ??= Reflect();
-
-    /// <summary>The declared parameter slots as the NATIVE plang list — the plang face of
-    /// <see cref="ParameterRows"/>. Filters exactly as the catalog: capability-interface props, [Code],
-    /// EqualityContract, host (clr) params are dropped; Data&lt;T&gt;/Nullable&lt;T&gt; unwrap to the
-    /// type entity; Data&lt;variable&gt; → IsVariable; [Default] → Default; the IChannel synthetic
-    /// "channel" row rides along.</summary>
+    /// <summary>The action's declared parameter slots — its own <c>property.list</c> collection, the
+    /// ONE reflection site (the collection owns the reflect + catalog filter). Build validation reads
+    /// Nullable / Default / Name off the rows; the catalog templates render each row. Needs the
+    /// catalog context (to resolve the handler) — a .pr-zoom action navigates via the clr carrier and
+    /// has none. Cached per element.</summary>
     [JsonIgnore]
-    public global::app.type.item.list.@this Properties
-        => new(ParameterRows.Select(r => (object?)r).ToList(),
-               Context ?? throw new System.InvalidOperationException(
-                   "action.Properties needs the catalog context — stamp it at mint; a .pr-zoom action navigates via the clr carrier."));
+    public global::app.goal.step.action.property.list.@this Properties
+    {
+        get
+        {
+            if (Context == null)
+                throw new System.InvalidOperationException(
+                    "action.Properties needs the catalog context — stamp it at mint; a .pr-zoom action navigates via the clr carrier.");
+            return _properties ??= new global::app.goal.step.action.property.list.@this(Handler, Context.App.Type, Context);
+        }
+    }
 
     private global::app.type.@this? _return;
     private bool _returnComputed;
@@ -119,50 +119,5 @@ public partial class @this
                 "action prose needs the teaching root — the module collection resolves it from App.OsDirectory.");
         var path = root.Combine(Module).Combine($"{ActionName}.{facet}.md");
         return new global::app.type.item.file.@this(path);
-    }
-
-    // The execution-context slots the source generator wires (not user-supplied params) — filtered
-    // out of the catalog so the LLM never emits them.
-    private static readonly System.Type[] CapabilityInterfaces =
-    {
-        typeof(global::app.module.IContext), typeof(global::app.module.IStep),
-        typeof(global::app.module.IChannel), typeof(global::app.module.IEvent),
-        typeof(global::app.module.IStatic),
-    };
-
-    private System.Collections.Generic.List<property.@this> Reflect()
-    {
-        var rows = new System.Collections.Generic.List<property.@this>();
-        var handler = Handler;
-        if (handler == null) return rows;
-        var types = Context!.App.Type;
-
-        var capabilityProps = new System.Collections.Generic.HashSet<string>(
-            CapabilityInterfaces.Where(i => i.IsAssignableFrom(handler))
-                .SelectMany(i => i.GetProperties().Select(p => p.Name)),
-            System.StringComparer.OrdinalIgnoreCase);
-
-        foreach (var prop in handler.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-        {
-            if (prop.Name == "EqualityContract") continue;
-            if (capabilityProps.Contains(prop.Name)) continue;
-            if (prop.GetCustomAttribute<global::app.module.CodeAttribute>() != null) continue;
-
-            var row = new property.@this(prop, types);
-
-            // Slots the LLM must never author: host params lower to `clr` (naming one would leak the
-            // C# type); the graph-infra items (goal/step/action/modifier) are STRUCTURE the compiler
-            // injects, never LLM vocabulary. Drop both by the row's own type name.
-            if (row.Type.Name is "clr" or "goal" or "step" or "action" or "modifier") continue;
-
-            rows.Add(row);
-        }
-
-        // IChannel actions: source-gen resolves the Channel slot off a "channel" param — surface it
-        // so the LLM can emit a name from the actor's inventory.
-        if (typeof(global::app.module.IChannel).IsAssignableFrom(handler))
-            rows.Add(new property.@this { Name = "channel", Type = types["string"], Nullable = true });
-
-        return rows;
     }
 }

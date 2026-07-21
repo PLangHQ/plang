@@ -27,9 +27,8 @@ public class ParamDescParityTests
         "goal.getTypes.Goal",
         "http.request.SignOptions", "http.download.SignOptions", "http.upload.SignOptions",
         "environment.run.Step", "environment.run.Action",
-        "error.handle.Action",
-        "build.validate.Action",
         "build.goalsSave.Goal", "build.goalsSave.App",
+        "build.fold.Goal",
         "build.enrichResponse.StepResults", "build.enrichResponse.Goal",
         "build.validateStepActions.Step",
         "build.validateResponse.StepResults", "build.validateResponse.Goal",
@@ -76,10 +75,7 @@ public class ParamDescParityTests
             var element = app.Module[da.Module]?[da.ActionName];
             var rows = element == null
                 ? new Dictionary<string, Property>()
-                : element.Properties.Items
-                    .Select(d => d.Peek()?.Clr<Property>())
-                    .Where(r => r != null).Select(r => r!)
-                    .ToDictionary(r => r.Name, StringComparer.OrdinalIgnoreCase);
+                : element.Properties.Rows.ToDictionary(r => r.Name, StringComparer.OrdinalIgnoreCase);
 
             foreach (var p in da.Parameter ?? new())
             {
