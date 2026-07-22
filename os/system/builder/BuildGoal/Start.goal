@@ -15,7 +15,7 @@ Start
 - foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
 
 - set %parentGoal% = %goal%
-- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- foreach %parentGoal.Child%, call BuildSubGoal subGoal=%item%
 - set %goal% = %parentGoal%
 
 - math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
