@@ -41,6 +41,16 @@
           "category": "doc",
           "confidence": "high",
           "context": "Reply to coder's goalcall-one-structure note. Principle: one structure per type, parse at the boundary. Collapse widened with Ingi: Convert dies entirely (parallel ctor protocol beside ICreate), ToGoalCall dies (Default.cs asserts, ingest boundary materializes), CLR-name guards demoted to leak-patches for verified demolition, string arm is name-only by design. Sequencing: land now, tightly scoped, not with recovery pass."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/typed-value-set-reader-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Reply to coder's typed-value-set-reader note, settled with Ingi. Ownership chain: entity door resolves reader, item hands content, kind bridges format, type reader owns structure. No kind.Read(value,target) virtual, no Set edit, no ReadList. goal.call gets explicit reader. STJ attribute purge + Clr-callsite sweep queued. Prerequisite of module-owns-action."
         }
       ],
       "after": {
