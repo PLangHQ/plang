@@ -1,9 +1,6 @@
 {{ goal.Name }}
 {% for step in goal.Step %}- {{ step.Text }}
-{% endfor %}{% if goal.Errors.size > 0 %}
-errors:
-{% for e in goal.Errors %}- {key: "{{ e.Key }}", message: "{{ e.Message }}"}
-{% endfor %}{% endif %}{% if goal.Warnings.size > 0 %}
+{% endfor %}{% if goal.Warning.size > 0 %}
 warnings:
-{% for w in goal.Warnings %}- {key: "{{ w.Key }}", message: "{{ w.Message }}"}
+{% for w in goal.Warning %}- {key: "{{ w.Key }}", message: "{{ w.Message }}"}
 {% endfor %}{% endif %}

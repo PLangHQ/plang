@@ -33,7 +33,7 @@ public class ActionFormalTemplateTests : IDisposable
     }
 
     private const string Template =
-        "{% for a in actions %}{{ a.Module }}.{{ a.ActionName }}{% if a.Parameter.size > 0 %} {% for p in a.Parameter %}{{ p.Name }}({% if p.Type %}[{{ p.Type }}] {% endif %}{{ p.Value | formal }}){% unless forloop.last %}, {% endunless %}{% endfor %}{% endif %}{% for m in a.Modifiers %} | {{ m.Module }}.{{ m.ActionName }}{% if m.Parameter.size > 0 %} {% for p in m.Parameter %}{{ p.Name }}({% if p.Type %}[{{ p.Type }}] {% endif %}{{ p.Value | formal }}){% unless forloop.last %}, {% endunless %}{% endfor %}{% endif %}{% endfor %}{% unless forloop.last %} | {% endunless %}{% endfor %}";
+        "{% for a in actions %}{{ a.Module }}.{{ a.ActionName }}{% if a.Parameter.size > 0 %} {% for p in a.Parameter %}{{ p.Name }}({% if p.Type %}[{{ p.Type }}] {% endif %}{{ p.Value | formal }}){% unless forloop.last %}, {% endunless %}{% endfor %}{% endif %}{% for m in a.Modifier %} | {{ m.Module }}.{{ m.ActionName }}{% if m.Parameter.size > 0 %} {% for p in m.Parameter %}{{ p.Name }}({% if p.Type %}[{{ p.Type }}] {% endif %}{{ p.Value | formal }}){% unless forloop.last %}, {% endunless %}{% endfor %}{% endif %}{% endfor %}{% unless forloop.last %} | {% endunless %}{% endfor %}";
 
     private global::app.type.item.dict.@this Param(string name, string? type, object? value)
     {
@@ -51,8 +51,8 @@ public class ActionFormalTemplateTests : IDisposable
         a.Set("ActionName", actionName);
         var ps = new global::app.type.item.list.@this(_app.User.Context);
         foreach (var p in parameters) ps.Add(p);
-        a.Set("Parameters", ps);
-        a.Set("Modifiers", new global::app.type.item.list.@this(_app.User.Context));
+        a.Set("Parameter", ps);
+        a.Set("Modifier", new global::app.type.item.list.@this(_app.User.Context));
         return a;
     }
 
