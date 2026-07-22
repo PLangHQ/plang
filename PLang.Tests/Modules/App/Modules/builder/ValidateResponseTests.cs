@@ -40,13 +40,9 @@ public class ValidateResponseTests
         return s;
     }
 
-    private static validateResponse Make(BuildResponse response, Goal goal,
+    private static Task<global::app.data.@this> Validate(BuildResponse response, Goal goal,
         global::app.@this app)
-    {
-        return new validateResponse(app.User.Context) { StepResults = new global::app.data.@this<BuildResponse>("", response),
-            Goal = new global::app.data.@this<Goal>("", goal)
-        };
-    }
+        => response.Validate(goal, app);
 
     [Test]
     public async Task ValidResponse_TwoSteps_ReturnsOk()
@@ -59,7 +55,7 @@ public class ValidateResponseTests
                 BuildStep(1, ("variable", "set")),
             }
         };
-        var result = await Make(response, MakeGoal(2), _app).Run();
+        var result = await Validate(response, MakeGoal(2), _app);
 
         await result.IsSuccess();
     }
@@ -71,7 +67,7 @@ public class ValidateResponseTests
         {
             Steps = new() { BuildStep(0, ("output", "write")) }
         };
-        var result = await Make(response, MakeGoal(3), _app).Run();
+        var result = await Validate(response, MakeGoal(3), _app);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("Step count");
@@ -85,7 +81,7 @@ public class ValidateResponseTests
         {
             Steps = new() { new Step { Index = 0 } }
         };
-        var result = await Make(response, MakeGoal(1), _app).Run();
+        var result = await Validate(response, MakeGoal(1), _app);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("no actions");
@@ -102,28 +98,10 @@ public class ValidateResponseTests
                 BuildStep(2, ("output", "write")),
             }
         };
-        var result = await Make(response, MakeGoal(2), _app).Run();
+        var result = await Validate(response, MakeGoal(2), _app);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("indexes must be 0..1");
-    }
-
-    [Test]
-    public async Task NullInputs_ReturnsError()
-    {
-        var action = new validateResponse(_app.User.Context) { StepResults = new global::app.data.@this<BuildResponse>(),
-            Goal = new global::app.data.@this<Goal>(),
-        };
-        var result = await action.Run();
-
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
-        // Pin which validation fired — multiple ValidationError variants exist
-        // (null inputs, step-count mismatch, gap in indexes, Keep-without-prior).
-        // The empty Data<T>() ctor produces an initialized-but-null wrapper, so
-        // both branches of the null-input message report each parameter.
-        await Assert.That(result.Error!.Message).Contains("StepResults.Value is null");
-        await Assert.That(result.Error!.Message).Contains("Goal.Value is null");
     }
 
     [Test]
@@ -133,7 +111,7 @@ public class ValidateResponseTests
         {
             Steps = new() { new Step { Index = 0, Keep = true } }
         };
-        var result = await Make(response, MakeGoalWithPriorActions(1), _app).Run();
+        var result = await Validate(response, MakeGoalWithPriorActions(1), _app);
 
         await result.IsSuccess();
     }
@@ -145,7 +123,7 @@ public class ValidateResponseTests
         {
             Steps = new() { new Step { Index = 0, Keep = true } }
         };
-        var result = await Make(response, MakeGoal(1), _app).Run();
+        var result = await Validate(response, MakeGoal(1), _app);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("keep:true but the prior .pr has no actions");
