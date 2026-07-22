@@ -727,7 +727,7 @@ namespace PLang.Modules.WebserverModule
 			var m = route.PathRegex.Match(path);
 			if (!m.Success)
 			{
-				foreach (var paramInfo in routing.Route.ParamInfos)
+				foreach (var paramInfo in routing.Route.ParamInfos ?? new List<ParamInfo>())
 				{
 					if (paramInfo.DefaultValue != null && !string.IsNullOrEmpty(paramInfo.DefaultValue.ToString()))
 					{
