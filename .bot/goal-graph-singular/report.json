@@ -31,10 +31,20 @@
           "category": "doc",
           "confidence": "high",
           "context": "Reply to coder's area-1b note: D-A delete vestigial graph .Errors (errors=run, warnings=build principle), D-B app/warning at root, D-C graph-only. Corrects coder's CallChainRenderer claim (reads Call.Errors, not graph .Errors). Plus summary.md for the session."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/goalcall-one-structure-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Reply to coder's goalcall-one-structure note. Principle: one structure per type, parse at the boundary. Collapse widened with Ingi: Convert dies entirely (parallel ctor protocol beside ICreate), ToGoalCall dies (Default.cs asserts, ingest boundary materializes), CLR-name guards demoted to leak-patches for verified demolition, string arm is name-only by design. Sequencing: land now, tightly scoped, not with recovery pass."
         }
       ],
       "after": {
-        "status": "module-owns-action design doc written (discussion ongoing); area-1b rulings delivered to coder",
+        "status": "three coder rulings delivered (area-1b, goalcall-one-structure); module-owns-action doc still discussion-context",
         "health": "n/a (no code changed)",
         "notes": "session ongoing"
       }

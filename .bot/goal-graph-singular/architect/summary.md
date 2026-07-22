@@ -1,5 +1,9 @@
 # architect — goal-graph-singular
 
+## 2026-07-22 (later) — goal.call one-structure ruling
+
+**goalcall-one-structure** ([goalcall-one-structure-answer.md](goalcall-one-structure-answer.md)) — reply to coder's `to-architect-goalcall-one-structure.md`, settled with Ingi. Principle (general, branch law): **one structure per type; parse at the boundary** — `Output` writes it, the type's Reader reads it, the LLM emits it; interior code receives typed values or fails loud. Collapse went further than coder's note: `GoalCall.Convert` dies entirely (a parallel constructor protocol beside `ICreate` — the word joins Mint/Load/Populate → `Create`), `ToGoalCall` dies (`Default.cs` asserts `is GoalCall`; the build-ingest boundary materializes typed rows through the registered reader), `FromSlots` + all `IsClrTypeName` leak-guards die (with verification), null/dict/JsonElement all fail typed through the standard `ICreate` courier (GoalCall overrides the courier deliberately to block the base's dict-deserialize fallback). `Create(string)` is the name-only lift; `Parameter` rides only the structured reader form or the C# initializer. `BuildParamSchema` untouched (provider-boundary serializer of the one structure). Sequencing: lands now as its own tightly-scoped coordinated change, not with the recovery pass. Coder's validation redirected: find the boundary that dropped the type (first suspect: goal.call-typed row materialization in build ingest); teaching-layer sweep (`os/**`) rides the same commit.
+
 ## 2026-07-22 — module⇒action ownership design + area-1b Info/Warning rulings
 
 Two pieces this session:
