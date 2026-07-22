@@ -601,7 +601,7 @@ public class Default : IBuilder
                             p.SetValue(new GoalCall {
                                 Name = m.Groups[1].Value,
                                 Parallel = goalCall.Parallel,
-                                Parameters = goalCall.Parameters,
+                                Parameter = goalCall.Parameter,
                                 PrPath = goalCall.PrPath,
                             });
                         }
@@ -793,7 +793,7 @@ public class Default : IBuilder
         {
             Template = new data.@this<global::app.type.item.text.@this>("", "/system/builder/templates/actionFormal.template", context: ctx),
             IsFile = new data.@this<global::app.type.item.@bool.@this>("", true, context: ctx),
-            Parameters = ctx.Ok<global::app.type.item.list.@this>(parameters),
+            Parameter = ctx.Ok<global::app.type.item.list.@this>(parameters),
         };
         var result = await ctx.App.Run(render, ctx);
         if (!result.Success)

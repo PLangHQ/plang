@@ -552,8 +552,8 @@ public sealed partial class @this : IAsyncDisposable
         // sequential goal.call shares state with its caller (LoadUser leak still
         // works in plain top-of-flow code), and concurrent invocations are
         // isolated by whatever forked them.
-        if (goalCall.Parameters != null)
-            foreach (var param in goalCall.Parameters)
+        if (goalCall.Parameter != null)
+            foreach (var param in goalCall.Parameter)
             {
                 // Data just flows — bind each arg's Data under its name as-is, no inspection,
                 // no resolve. It resolves/renders on its own door when the callee reads it.

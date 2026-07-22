@@ -25,7 +25,7 @@ public partial class upload : IContext
     public partial data.@this<global::app.type.item.choice.@this<HttpMethod>> Method { get; init; }
 
     /// <summary>Per-request headers. Merged with Config.DefaultHeaders.</summary>
-    public partial data.@this<global::app.type.item.dict.@this>? Headers { get; init; }
+    public partial data.@this<global::app.type.item.dict.@this>? Header { get; init; }
 
     /// <summary>Character encoding. Default: "utf-8".</summary>
     [Default("utf-8")]
@@ -52,7 +52,7 @@ public partial class upload : IContext
     /// <summary>Base URL for resolving relative URLs. Unset = URLs must be absolute.</summary>
     public partial data.@this<global::app.type.item.text.@this>? BaseUrl { get; init; }
 
-    /// <summary>Headers merged into every request; per-request <see cref="Headers"/> win on conflict.</summary>
+    /// <summary>Header merged into every request; per-request <see cref="Header"/> win on conflict.</summary>
     public partial data.@this<global::app.type.item.dict.@this>? DefaultHeaders { get; init; }
 
     /// <summary>Whether to follow HTTP redirects. Default: true.</summary>

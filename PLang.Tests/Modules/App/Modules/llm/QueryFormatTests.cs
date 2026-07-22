@@ -54,7 +54,7 @@ public class QueryFormatTests
                 LlmTestHelper.MakeCompletionResponse("{\"sentiment\": \"positive\"}"));
         };
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "system", Content = "analyze" },
                 new LlmMessage { Role = "user", Content = "I love this" }
@@ -101,7 +101,7 @@ public class QueryFormatTests
             LlmTestHelper.JsonResponse(
                 LlmTestHelper.MakeCompletionResponse("{\"sentiment\": \"positive\", \"score\": 0.9}")));
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
@@ -125,7 +125,7 @@ public class QueryFormatTests
             LlmTestHelper.JsonResponse(
                 LlmTestHelper.MakeCompletionResponse("This is not JSON at all")));
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
@@ -145,7 +145,7 @@ public class QueryFormatTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse(wrappedJson)));
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
@@ -168,7 +168,7 @@ public class QueryFormatTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse(response)));
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "write hello world" }
             }.ToListData<LlmMessage>(),
@@ -188,7 +188,7 @@ public class QueryFormatTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse(response)));
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "write markdown" }
             }.ToListData<LlmMessage>(),
@@ -207,7 +207,7 @@ public class QueryFormatTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("Just plain text")));
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
@@ -234,7 +234,7 @@ public class QueryFormatTests
                 LlmTestHelper.MakeCompletionResponse("{\"ok\": true}"));
         };
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "system", Content = "You are a helpful assistant" },
                 new LlmMessage { Role = "user", Content = "test" }

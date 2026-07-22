@@ -87,7 +87,7 @@ public class QueryCacheTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("answer")));
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "same question" }
             }.ToListData<LlmMessage>(),
@@ -108,12 +108,12 @@ public class QueryCacheTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("tool result")));
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "use tools" }
             }.ToListData<LlmMessage>(),
             Cache = (global::app.type.item.@bool.@this)true,
-            Tools = new List<GoalCall>
+            Tool = new List<GoalCall>
             {
                 new GoalCall { Name = "TestTool" }
             }.ToListData<GoalCall>()
@@ -139,7 +139,7 @@ public class QueryCacheTests
         await action1.Run();
 
         // Same message but different model — should be cache miss
-        var action2 = new query(Ctx) { Messages = new List<LlmMessage>
+        var action2 = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "system", Content = "You are helpful" },
                 new LlmMessage { Role = "user", Content = "same" }

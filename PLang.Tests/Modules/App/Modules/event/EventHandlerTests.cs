@@ -213,7 +213,7 @@ public class EventHandlerTests
         var goalToCall = new GoalCall
         {
             Name = "AfterCallback",
-            Parameters = new List<Data> { new Data("callbackRan", true, context: context) }
+            Parameter = new List<Data> { new Data("callbackRan", true, context: context) }
         };
         var onAction = new On(context) { Trigger = (global::app.type.item.choice.@this<global::app.@event.Trigger>)global::app.@event.Trigger.AfterGoal,
             GoalToCall = goalToCall,

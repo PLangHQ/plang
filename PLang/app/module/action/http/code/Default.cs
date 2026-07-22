@@ -57,8 +57,8 @@ public sealed class Default : IHttp
 
         var defaultHeaders = action.DefaultHeaders == null || await action.DefaultHeaders.IsEmpty() ? null
             : (await action.DefaultHeaders.Value()).Clr<Dictionary<string, object>>();
-        var headers = MergeHeaders(action.Headers == null || await action.Headers.IsEmpty() ? null
-            : (await action.Headers.Value()).Clr<Dictionary<string, object>>(), defaultHeaders);
+        var headers = MergeHeaders(action.Header == null || await action.Header.IsEmpty() ? null
+            : (await action.Header.Value()).Clr<Dictionary<string, object>>(), defaultHeaders);
 
         // Build body
         HttpContent? httpContent = null;
@@ -142,8 +142,8 @@ public sealed class Default : IHttp
 
         var defaultHeaders = action.DefaultHeaders == null || await action.DefaultHeaders.IsEmpty() ? null
             : (await action.DefaultHeaders.Value()).Clr<Dictionary<string, object>>();
-        var headers = MergeHeaders(action.Headers == null || await action.Headers.IsEmpty() ? null
-            : (await action.Headers.Value()).Clr<Dictionary<string, object>>(), defaultHeaders);
+        var headers = MergeHeaders(action.Header == null || await action.Header.IsEmpty() ? null
+            : (await action.Header.Value()).Clr<Dictionary<string, object>>(), defaultHeaders);
         var requestMessage = new HttpRequestMessage(SysHttpMethod.Get, resolvedUrl);
         ApplyHeaders(requestMessage, headers);
 
@@ -187,8 +187,8 @@ public sealed class Default : IHttp
 
         var defaultHeaders = action.DefaultHeaders == null || await action.DefaultHeaders.IsEmpty() ? null
             : (await action.DefaultHeaders.Value()).Clr<Dictionary<string, object>>();
-        var headers = MergeHeaders(action.Headers == null || await action.Headers.IsEmpty() ? null
-            : (await action.Headers.Value()).Clr<Dictionary<string, object>>(), defaultHeaders);
+        var headers = MergeHeaders(action.Header == null || await action.Header.IsEmpty() ? null
+            : (await action.Header.Value()).Clr<Dictionary<string, object>>(), defaultHeaders);
 
         var (httpContent, contentErr) = await ResolveUploadContentAsync(action, app, encoding);
         if (contentErr != null) return action.Context.Error(contentErr);
@@ -687,7 +687,7 @@ public sealed class Default : IHttp
         GoalCall template, object? value, PlangType? type, string defaultName,
         AppType app, actor.context.@this context, CancellationToken ct)
     {
-        var paramName = template.Parameters?.Count > 0 ? template.Parameters[0].Name : defaultName;
+        var paramName = template.Parameter?.Count > 0 ? template.Parameter[0].Name : defaultName;
         // A Data payload rides AS the parameter (parameters are Data boxes) —
         // re-boxing would nest a bare Data, which the store seam rejects.
         data.@this param;
@@ -697,7 +697,7 @@ public sealed class Default : IHttp
         {
             Name = template.Name,
             PrPath = template.PrPath,
-            Parameters = new List<data.@this> { param }
+            Parameter = new List<data.@this> { param }
         };
         var result = await app.RunGoalAsync(call, context, ct);
         if (!result.Success)

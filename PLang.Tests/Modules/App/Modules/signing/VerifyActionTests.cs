@@ -48,7 +48,7 @@ public class VerifyActionTests
         var action = new sign(Ctx) { Data = new Data("", data, context: Ctx),
             Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.item.list.@this>("", global::PLang.Tests.Shared.Make.List(contracts, Ctx), context: Ctx),
             Expires = expires.HasValue ? (global::app.type.item.duration.@this)expires.Value : null,
-            Headers = headers?.ToDictData()
+            Header = headers?.ToDictData()
         };
         return await _app.Run<sign>(action, Ctx);
     }
@@ -58,7 +58,7 @@ public class VerifyActionTests
     {
         var action = new verify(Ctx) { Data = signedData,
             Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.item.list.@this>("", global::PLang.Tests.Shared.Make.List(contracts, Ctx), context: Ctx),
-            Headers = headers?.ToDictData(),
+            Header = headers?.ToDictData(),
             TimeoutMs = timeoutMs.HasValue ? (global::app.type.item.number.@this)timeoutMs.Value : null
         };
         return await _app.Run<verify>(action, Ctx);

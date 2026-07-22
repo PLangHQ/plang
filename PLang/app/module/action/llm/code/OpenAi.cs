@@ -84,7 +84,7 @@ public sealed class OpenAi : ILlm
         // a goal.call parameter to QueryAndValidatePlan so it re-binds each attempt). See
         // .bot/type-kind-strict/builder/v2/baseline-findings.md.
         // The .NET edge: the message list lowers ITSELF to the API's CLR shape.
-        var rawMessages = (await action.Messages.Value()).Clr<List<LlmMessage>>();
+        var rawMessages = (await action.Message.Value()).Clr<List<LlmMessage>>();
         if (rawMessages is not { Count: > 0 })
             return context.Error(new ActionError("Messages list is empty or null", "ValidationError", 400));
 
@@ -180,7 +180,7 @@ public sealed class OpenAi : ILlm
                 {
                     ["name"] = t.Name,
                     ["description"] = "",
-                    ["parameters"] = BuildParamSchema(t.Parameters)
+                    ["parameters"] = BuildParamSchema(t.Parameter)
                 }
             }).ToList();
         }
@@ -225,7 +225,7 @@ public sealed class OpenAi : ILlm
                 Url = new data.@this<global::app.type.item.text.@this>("", endpoint),
                 Method = new data.@this<global::app.type.item.choice.@this<PlangHttpMethod>>("", PlangHttpMethod.POST),
                 Body = new data.@this("", body, context: context),
-                Headers = new data.@this<global::app.type.item.dict.@this>("", (global::app.type.item.dict.@this)global::app.type.item.@this.Create(headers, context)),
+                Header = new data.@this<global::app.type.item.dict.@this>("", (global::app.type.item.dict.@this)global::app.type.item.@this.Create(headers, context)),
                 Unsigned = new data.@this<global::app.type.item.@bool.@this>("", true),
                 TimeoutInSec = new data.@this<global::app.type.item.number.@this>("", 120),
                 OnStream = action.OnStream,
@@ -419,7 +419,7 @@ public sealed class OpenAi : ILlm
                 {
                     Name = ((await action.OnValidateResponse.Value()) as global::app.goal.GoalCall)!.Name,
                     PrPath = ((await action.OnValidateResponse.Value()) as global::app.goal.GoalCall)!.PrPath,
-                    Parameters = new List<data.@this> { new data.@this("response", extracted, context: context) }
+                    Parameter = new List<data.@this> { new data.@this("response", extracted, context: context) }
                 };
                 var validationResult = await app.RunGoalAsync(validationCall, context);
 
@@ -539,7 +539,7 @@ public sealed class OpenAi : ILlm
             {
                 Name = ((await action.OnToolCall.Value()) as global::app.goal.GoalCall)!.Name,
                 PrPath = ((await action.OnToolCall.Value()) as global::app.goal.GoalCall)!.PrPath,
-                Parameters = new List<data.@this>
+                Parameter = new List<data.@this>
                 {
                     new data.@this("name", toolCall.Name, context: context),
                     new data.@this("arguments", toolCall.Arguments, context: context),
@@ -558,7 +558,7 @@ public sealed class OpenAi : ILlm
         else
         {
             // Parse arguments and build GoalCall
-            var parameters = ParseToolArguments(toolCall.Arguments, goalCall.Parameters, context);
+            var parameters = ParseToolArguments(toolCall.Arguments, goalCall.Parameter, context);
             var parseError = parameters.Find(p => !p.Success);
             if (parseError != null)
             {
@@ -570,7 +570,7 @@ public sealed class OpenAi : ILlm
                 {
                     Name = goalCall.Name,
                     PrPath = goalCall.PrPath,
-                    Parameters = parameters
+                    Parameter = parameters
                 };
                 var goalResult = await app.RunGoalAsync(execCall, context);
 
@@ -597,7 +597,7 @@ public sealed class OpenAi : ILlm
             {
                 Name = ((await action.OnToolCall.Value()) as global::app.goal.GoalCall)!.Name,
                 PrPath = ((await action.OnToolCall.Value()) as global::app.goal.GoalCall)!.PrPath,
-                Parameters = new List<data.@this>
+                Parameter = new List<data.@this>
                 {
                     new data.@this("name", toolCall.Name, context: context),
                     new data.@this("arguments", toolCall.Arguments, context: context),
@@ -1069,8 +1069,8 @@ public sealed class OpenAi : ILlm
     // (params intact), never a CLR peel. Null when no tools were passed.
     private static async Task<List<GoalCall>?> ToolsOf(query action)
     {
-        if (action.Tools == null || await action.Tools.IsEmpty()) return null;
-        if (await action.Tools.Value() is not global::app.type.item.list.@this list) return null;
+        if (action.Tool == null || await action.Tool.IsEmpty()) return null;
+        if (await action.Tool.Value() is not global::app.type.item.list.@this list) return null;
         var tools = new List<GoalCall>();
         foreach (var row in list.Items)
             if (await row.Value<GoalCall>() is { } gc) tools.Add(gc);

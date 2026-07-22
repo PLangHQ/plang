@@ -16,10 +16,10 @@ public partial class query : IContext, IBuildValidatable
     public static string? ValidateBuild(List<data.@this> parameters)
     {
         var messages = parameters.FirstOrDefault(p =>
-            string.Equals(p.Name, "Messages", StringComparison.OrdinalIgnoreCase));
+            string.Equals(p.Name, "Message", StringComparison.OrdinalIgnoreCase));
 
         if (messages == null)
-            return "Missing required parameter 'Messages'. Must be a list of {Role: string, Content: string} objects. Map system= to {Role: \"system\", Content: \"...\"} and user= to {Role: \"user\", Content: \"...\"}";
+            return "Missing required parameter 'Message'. Must be a list of {Role: string, Content: string} objects. Map system= to {Role: \"system\", Content: \"...\"} and user= to {Role: \"user\", Content: \"...\"}";
 
         var value = messages.Peek();
 
@@ -27,22 +27,22 @@ public partial class query : IContext, IBuildValidatable
         // text instance its own (sync) emptiness notion via truthiness.
         if (!messages.HasValue
             || (value is global::app.type.item.text.@this st && !st.IsTruthy()))
-            return "Parameter 'Messages' is empty. Must be a list of {Role: string, Content: string} objects. Map system= to {\"Role\": \"system\", \"Content\": \"...\"} and user= to {\"Role\": \"user\", \"Content\": \"...\"}";
+            return "Parameter 'Message' is empty. Must be a list of {Role: string, Content: string} objects. Map system= to {\"Role\": \"system\", \"Content\": \"...\"} and user= to {\"Role\": \"user\", \"Content\": \"...\"}";
 
         if (value is not global::app.type.item.list.@this
             && value is not Clr { Value: System.Collections.IList }
             && value is not global::app.type.item.text.@this) // text already handled above
-            return $"Parameter 'Messages' must be a list of {{Role, Content}} objects, got {value!.Type.Name}";
+            return $"Parameter 'Message' must be a list of {{Role, Content}} objects, got {value!.Type.Name}";
 
         return null;
     }
 
     /// <summary>Conversation messages (system, user, assistant).</summary>
     [IsNotNull]
-    public partial data.@this<global::app.type.item.list.@this<LlmMessage>> Messages { get; init; }
+    public partial data.@this<global::app.type.item.list.@this<LlmMessage>> Message { get; init; }
 
     /// <summary>Goals available as tools for the LLM to call.</summary>
-    public partial data.@this<global::app.type.item.list.@this<GoalCall>>? Tools { get; init; }
+    public partial data.@this<global::app.type.item.list.@this<GoalCall>>? Tool { get; init; }
 
     /// <summary>Callback fired before/after each tool execution. Receives: name, arguments, status, result.</summary>
     [GoalCallback("toolCallInfo")]
@@ -96,7 +96,7 @@ public partial class query : IContext, IBuildValidatable
     [Default(0)]
     public partial data.@this<global::app.type.item.number.@this> MaxValidationRetries { get; init; }
 
-    /// <summary>Whether to cache the response. Skipped when Tools is non-null.</summary>
+    /// <summary>Whether to cache the response. Skipped when Tool is non-null.</summary>
     [Default(true)]
     public partial data.@this<global::app.type.item.@bool.@this> Cache { get; init; }
 

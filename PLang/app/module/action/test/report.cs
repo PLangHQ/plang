@@ -18,7 +18,7 @@ namespace app.module.action.test;
 [Action("report", Cacheable = false)]
 public partial class report : IContext
 {
-    public partial data.@this<global::app.type.item.list.@this<global::app.test.@this>>? Results { get; init; }
+    public partial data.@this<global::app.type.item.list.@this<global::app.test.@this>>? Result { get; init; }
     public partial data.@this<global::app.type.item.text.@this>? Format { get; init; }
 
     public async Task<data.@this> Run()
@@ -80,7 +80,7 @@ public partial class report : IContext
     // unwrap once at the boundary) or the session's accumulated tests.
     private async Task<IReadOnlyList<global::app.test.@this>> ResolveTests()
     {
-        var passed = Results == null ? null : await Results.Value();
+        var passed = Result == null ? null : await Result.Value();
         if (passed == null) return Context.App.Test.Tests;
         var tests = new List<global::app.test.@this>();
         foreach (var row in passed)

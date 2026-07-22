@@ -62,11 +62,11 @@ public class QueryCallbackTests
                 LlmTestHelper.MakeCompletionResponse("done")));
         };
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "use tool" }
             }.ToListData<LlmMessage>(),
-            Tools = new List<GoalCall>
+            Tool = new List<GoalCall>
             {
                 new GoalCall { Name = "TestTool" }
             }.ToListData<GoalCall>(),
@@ -100,11 +100,11 @@ public class QueryCallbackTests
                 LlmTestHelper.MakeCompletionResponse("got data")));
         };
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "get data" }
             }.ToListData<LlmMessage>(),
-            Tools = new List<GoalCall>
+            Tool = new List<GoalCall>
             {
                 new GoalCall { Name = "GetData" }
             }.ToListData<GoalCall>(),
@@ -156,7 +156,7 @@ public class QueryCallbackTests
                 LlmTestHelper.MakeCompletionResponse($"attempt {callIndex}")));
         };
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "validate me" }
             }.ToListData<LlmMessage>(),
@@ -182,7 +182,7 @@ public class QueryCallbackTests
                 LlmTestHelper.MakeCompletionResponse($"attempt {callIndex}")));
         };
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "validate" }
             }.ToListData<LlmMessage>(),
@@ -213,11 +213,11 @@ public class QueryCallbackTests
                 LlmTestHelper.MakeCompletionResponse("final answer")));
         };
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "tools then validate" }
             }.ToListData<LlmMessage>(),
-            Tools = new List<GoalCall>
+            Tool = new List<GoalCall>
             {
                 new GoalCall { Name = "TestTool" }
             }.ToListData<GoalCall>(),
@@ -246,7 +246,7 @@ public class QueryCallbackTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("streamed")));
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "stream test" }
             }.ToListData<LlmMessage>(),
@@ -271,7 +271,7 @@ public class QueryCallbackTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("done streaming")));
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "stream" }
             }.ToListData<LlmMessage>(),

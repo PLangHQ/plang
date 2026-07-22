@@ -48,7 +48,7 @@ public class SignActionTests
         var action = new sign(Ctx) { Data = new Data("", data, context: Ctx),
             Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.item.list.@this>("", global::PLang.Tests.Shared.Make.List(contracts, Ctx), context: Ctx),
             Expires = expires.HasValue ? (global::app.type.item.duration.@this)expires.Value : null,
-            Headers = headers?.ToDictData()
+            Header = headers?.ToDictData()
         };
         return await _app.Run<sign>(action, Ctx);
     }

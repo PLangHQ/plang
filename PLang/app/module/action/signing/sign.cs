@@ -17,7 +17,7 @@ public partial class sign : global::app.type.item.@this, global::app.type.item.I
     public partial data.@this<global::app.type.item.list.@this>? Contracts { get; init; }
 
     /// <summary>Optional headers to include in the signature object.</summary>
-    public partial data.@this<global::app.type.item.dict.@this>? Headers { get; init; }
+    public partial data.@this<global::app.type.item.dict.@this>? Header { get; init; }
 
     /// <summary>Optional TTL. If set, signature.Expires = Created + this duration.
     /// Wire form is ISO 8601 (e.g. <c>"PT5M"</c>) via the global TimeSpan converter.</summary>

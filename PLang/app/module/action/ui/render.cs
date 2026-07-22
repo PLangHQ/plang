@@ -11,7 +11,7 @@ public partial class Render : IContext
     public partial data.@this<global::app.type.item.text.@this> Template { get; init; }
 
     /// <summary>Explicit parameters that override Variables in the template.</summary>
-    public partial data.@this<global::app.type.item.list.@this>? Parameters { get; init; }
+    public partial data.@this<global::app.type.item.list.@this>? Parameter { get; init; }
 
     /// <summary>
     /// Force file/inline interpretation.

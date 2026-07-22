@@ -62,13 +62,13 @@ public class QueryToolTests
                 LlmTestHelper.MakeCompletionResponse("The weather in London is sunny")));
         };
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "What's the weather?" }
             }.ToListData<LlmMessage>(),
-            Tools = new List<GoalCall>
+            Tool = new List<GoalCall>
             {
-                new GoalCall { Name = "GetWeather", Parameters = new List<Data> { new Data("city", null, global::app.type.@this.String, context: Ctx) } }
+                new GoalCall { Name = "GetWeather", Parameter = new List<Data> { new Data("city", null, global::app.type.@this.String, context: Ctx) } }
             }.ToListData<GoalCall>()
         };
         await action.Attach(null, Ctx);
@@ -99,11 +99,11 @@ public class QueryToolTests
                 LlmTestHelper.MakeCompletionResponse("done")));
         };
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "do both" }
             }.ToListData<LlmMessage>(),
-            Tools = new List<GoalCall>
+            Tool = new List<GoalCall>
             {
                 new GoalCall { Name = "ToolA", Parallel = false },
                 new GoalCall { Name = "ToolB", Parallel = false }
@@ -134,11 +134,11 @@ public class QueryToolTests
                 LlmTestHelper.MakeCompletionResponse("parallel done")));
         };
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "do both parallel" }
             }.ToListData<LlmMessage>(),
-            Tools = new List<GoalCall>
+            Tool = new List<GoalCall>
             {
                 new GoalCall { Name = "ToolA", Parallel = true },
                 new GoalCall { Name = "ToolB", Parallel = true }
@@ -169,11 +169,11 @@ public class QueryToolTests
                 LlmTestHelper.MakeCompletionResponse("mixed done")));
         };
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "mixed" }
             }.ToListData<LlmMessage>(),
-            Tools = new List<GoalCall>
+            Tool = new List<GoalCall>
             {
                 new GoalCall { Name = "ToolA", Parallel = true },
                 new GoalCall { Name = "ToolB", Parallel = false }
@@ -205,11 +205,11 @@ public class QueryToolTests
                 LlmTestHelper.MakeCompletionResponse("handled the error")));
         };
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "call failing tool" }
             }.ToListData<LlmMessage>(),
-            Tools = new List<GoalCall>
+            Tool = new List<GoalCall>
             {
                 new GoalCall { Name = "FailTool" }
             }.ToListData<GoalCall>()
@@ -239,11 +239,11 @@ public class QueryToolTests
                 LlmTestHelper.MakeCompletionResponse("no such tool")));
         };
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "call unknown" }
             }.ToListData<LlmMessage>(),
-            Tools = new List<GoalCall>
+            Tool = new List<GoalCall>
             {
                 new GoalCall { Name = "KnownTool" }
             }.ToListData<GoalCall>()
@@ -267,11 +267,11 @@ public class QueryToolTests
         _handler.Handler = _ => Task.FromResult(LlmTestHelper.JsonResponse(
             LlmTestHelper.MakeToolCallResponse(("call_x", "InfiniteTool", "{}"))));
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "loop forever" }
             }.ToListData<LlmMessage>(),
-            Tools = new List<GoalCall>
+            Tool = new List<GoalCall>
             {
                 new GoalCall { Name = "InfiniteTool" }
             }.ToListData<GoalCall>(),
@@ -305,16 +305,16 @@ public class QueryToolTests
             return LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("ok"));
         };
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
-            Tools = new List<GoalCall>
+            Tool = new List<GoalCall>
             {
                 new GoalCall
                 {
                     Name = "TestTool",
-                    Parameters = new List<Data>
+                    Parameter = new List<Data>
                     {
                         new Data("city", null, global::app.type.@this.String, context: Ctx),     // required (no default)
                         new Data("units", "metric", global::app.type.@this.String, context: Ctx) // optional (has default)
@@ -337,16 +337,16 @@ public class QueryToolTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("ok")));
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
-            Tools = new List<GoalCall>
+            Tool = new List<GoalCall>
             {
                 new GoalCall
                 {
                     Name = "TestTool",
-                    Parameters = new List<Data>
+                    Parameter = new List<Data>
                     {
                         new Data("query", null, global::app.type.@this.String, context: Ctx)
                     }
@@ -367,16 +367,16 @@ public class QueryToolTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("ok")));
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
-            Tools = new List<GoalCall>
+            Tool = new List<GoalCall>
             {
                 new GoalCall
                 {
                     Name = "NoParamTool",
-                    Parameters = new List<Data>()
+                    Parameter = new List<Data>()
                 }
             }.ToListData<GoalCall>()
         };
@@ -409,16 +409,16 @@ public class QueryToolTests
                 LlmTestHelper.MakeCompletionResponse("London is 20C")));
         };
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "Weather in London?" }
             }.ToListData<LlmMessage>(),
-            Tools = new List<GoalCall>
+            Tool = new List<GoalCall>
             {
                 new GoalCall
                 {
                     Name = "GetWeather",
-                    Parameters = new List<Data>
+                    Parameter = new List<Data>
                     {
                         new Data("city", null, global::app.type.@this.String, context: Ctx),       // required
                         new Data("units", "metric", global::app.type.@this.String, context: Ctx)   // optional, default "metric"
@@ -448,16 +448,16 @@ public class QueryToolTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("ok")));
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(),
-            Tools = new List<GoalCall>
+            Tool = new List<GoalCall>
             {
                 new GoalCall
                 {
                     Name = "TypedTool",
-                    Parameters = new List<Data>
+                    Parameter = new List<Data>
                     {
                         new Data("name", null, global::app.type.@this.String, context: Ctx),
                         new Data("count", null, new global::app.type.@this("int"), context: Ctx),
@@ -502,11 +502,11 @@ public class QueryToolTests
                 LlmTestHelper.MakeCompletionResponse("parsed all types")));
         };
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "mixed types" }
             }.ToListData<LlmMessage>(),
-            Tools = new List<GoalCall>
+            Tool = new List<GoalCall>
             {
                 new GoalCall { Name = "MixedTool" }
             }.ToListData<GoalCall>()
@@ -543,11 +543,11 @@ public class QueryToolTests
                 LlmTestHelper.MakeCompletionResponse("both done")));
         };
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "parallel" }
             }.ToListData<LlmMessage>(),
-            Tools = new List<GoalCall>
+            Tool = new List<GoalCall>
             {
                 new GoalCall { Name = "ToolA", Parallel = true },
                 new GoalCall { Name = "ToolB", Parallel = true }

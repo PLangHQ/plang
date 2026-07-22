@@ -83,6 +83,22 @@ LLM cache busts by content — expected, noted, not fought.
 - `llm.ToolCall.Arguments` (`string`) — JSON string mirroring OpenAI's `arguments`; internal LLM type.
 - `debug.Variables` (`List<DebugVariable>`) — internal debug type, not LLM vocabulary.
 
+## STATUS (updated as executed)
+
+- **§A DONE** — `Headers→Header` (http request/download/upload, signing sign/verify), `Messages→Message`
+  + `Tools→Tool` (llm.query), `Parameters→Parameter` (mock.intercept, ui.render), `Results→Result`
+  (test.report), `Variables→Variable` (output.ask), `error.handle.Actions→Action`. All green; zero new
+  test failures (baselined).
+  - **CARVE-OUT: `test.tag.Tags` STAYS plural** — the action class is `Tag`, so a `Tag` member hits
+    CS0542 (member name == enclosing type). Forced, like the documented `app.filesystem.Default`
+    keyword carve-out. `DefaultHeaders` (§G) left untouched by design.
+- **§C DONE** — `GoalCall.Parameters→Parameter` (consumers in this.cs / goal.call / http+llm providers).
+- **§B DEFERRED** — `build.validate/validateStepActions/types.Actions`, `promoteGroups.Steps`,
+  `build.Files`: all in build.code, entangled with the `using Actions = List<action>` alias, the generic
+  `action.Actions` reads spanning the D3-surviving `build.actions`, and the blocked recovery/build area.
+  Do as a group when that area is unblocked (the handoff's "leave role-2 alive until 6c").
+- **§D, §G** — pending (schema keys / your rulings).
+
 ## Proposed execution order (after §G answered)
 1. §E fix (the stepForLlm template bug) — independent, ship first.
 2. §A + §C (LLM vocabulary) — carries the catalog + wire; verify ParamDescParity + catalog templates.

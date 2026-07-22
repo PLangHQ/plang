@@ -13,7 +13,7 @@ namespace app.goal;
 public sealed class GoalCall : global::app.type.item.@this, global::app.type.item.ICreate<GoalCall>, module.IEvent
 {
     /// <summary>Self-write: a call descriptor is a structural item — its tagged fields (GoalName,
-    /// Parameters, …), the View selecting the set.</summary>
+    /// Parameter, …), the View selecting the set.</summary>
     public override System.Threading.Tasks.ValueTask Output(
         global::app.channel.serializer.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
@@ -36,9 +36,9 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
     [Store, LlmBuilder, Out]
     public bool Parallel { get; init; }
 
-    /// <summary>Parameters to pass to the goal, each as a named Data value.</summary>
+    /// <summary>Parameter to pass to the goal, each as a named Data value.</summary>
     [Store, LlmBuilder, Out]
-    public List<data.@this>? Parameters { get; set; }
+    public List<data.@this>? Parameter { get; set; }
     /// <summary>Pre-resolved .pr file path. Null when the goal name contains %variables%.</summary>
     [Store, Out]
     public global::app.type.item.path.@this? PrPath { get; set; }
@@ -150,7 +150,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
                 .ToList();
             if (entries.Count > 0) parameters = entries;
         }
-        return context.Ok(new GoalCall { Name = name, PrPath = prPath, Parameters = parameters });
+        return context.Ok(new GoalCall { Name = name, PrPath = prPath, Parameter = parameters });
     }
 
     // The prPath slot's relative form → a resolved path, or null when absent. (`relative` is

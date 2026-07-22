@@ -65,7 +65,7 @@ public partial class ask : IContext
     /// Names of variables whose current values survive into the suspend (per
     /// <c>vars:</c> annotation). Empty list = no extra state crosses the suspend.
     /// </summary>
-    public partial data.@this? Variables { get; init; }
+    public partial data.@this? Variable { get; init; }
 
     /// <summary>Resume sentinel — variable name used to inject the answer.</summary>
     public const string AnswerVariableName = "!ask.answer";
@@ -77,7 +77,7 @@ public partial class ask : IContext
         if (answer != null && answer.IsInitialized)
         {
             // The sentinel rides as the "answer" property of the infra root
-            // variable "!ask". Variables.Remove only takes flat keys; removing
+            // variable "!ask". Variable.Remove only takes flat keys; removing
             // the root consumes the marker. "!ask" is reserved for this use.
             Context.Variable.Remove("!ask");
             return Context.Ok<Ask>(new Ask { Answer = (await answer.Value())?.ToString() });

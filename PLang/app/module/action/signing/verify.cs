@@ -16,7 +16,7 @@ public partial class verify : IContext
     public partial data.@this<global::app.type.item.list.@this>? Contracts { get; init; }
 
     /// <summary>Expected headers to match against signed headers.</summary>
-    public partial data.@this<global::app.type.item.dict.@this>? Headers { get; init; }
+    public partial data.@this<global::app.type.item.dict.@this>? Header { get; init; }
 
     /// <summary>Freshness timeout in milliseconds. Default: 300000 (5 min).</summary>
     [Default(300_000)]

@@ -10,8 +10,8 @@ namespace app.module.action.error;
 /// <summary>
 /// Modifier: wraps an action with error matching, retry, and an on-error action chain.
 /// On success, passes through untouched. On failure, applies filters (StatusCode, Key,
-/// Message); if matched, either ignores, retries, or runs Actions — ordered by
-/// Order (RetryFirst default, GoalFirst runs Actions before retry).
+/// Message); if matched, either ignores, retries, or runs Action — ordered by
+/// Order (RetryFirst default, GoalFirst runs Action before retry).
 /// </summary>
 [Action("handle", Cacheable = false)]
 [Modifier(Order = 3)]
@@ -32,7 +32,7 @@ public partial class Handle : IContext, IModifier
                         new ActionSpec("error", "handle", new()
                         {
                             ["StatusCode"] = 404,
-                            ["Actions"] = new[]
+                            ["Action"] = new[]
                             {
                                 new ActionSpec("output",   "write", new() { ["Data"] = "missing" }),
                                 new ActionSpec("file",     "read",  new() { ["Path"] = "fallback.txt" }),
@@ -53,7 +53,7 @@ public partial class Handle : IContext, IModifier
                         new ActionSpec("error", "handle", new()
                         {
                             ["Key"] = "Conflict",
-                            ["Actions"] = new[]
+                            ["Action"] = new[]
                             {
                                 new ActionSpec("output", "write", new() { ["Data"] = "already exists" }),
                             }
@@ -68,10 +68,10 @@ public partial class Handle : IContext, IModifier
     /// <summary>
     /// Action chain to run when the error matches. Preferred over Goal — lets a
     /// developer express "on error, log + fall back + notify" inline without
-    /// wrapping it in a goal. Actions execute in order; %!data% flows between
+    /// wrapping it in a goal. Action execute in order; %!data% flows between
     /// them just like the main step chain.
     /// </summary>
-    public partial global::app.data.@this<global::app.type.item.list.@this<global::app.goal.step.action.@this>>? Actions { get; init; }
+    public partial global::app.data.@this<global::app.type.item.list.@this<global::app.goal.step.action.@this>>? Action { get; init; }
     public partial global::app.data.@this<global::app.type.item.number.@this>? RetryCount { get; init; }
     public partial global::app.data.@this<global::app.type.item.number.@this>? RetryOverMs { get; init; }
     public partial global::app.data.@this<global::app.type.item.choice.@this<ErrorOrder>>? Order { get; init; }
@@ -99,7 +99,7 @@ public partial class Handle : IContext, IModifier
             var order = (Order == null ? null : await Order.Value()) ?? ErrorOrder.RetryFirst;
             // The recovery chain is a plang list<action> — RunRecovery opens each row through its
             // own action door (row.Value<action>()), so params survive; no CLR peel that drops them.
-            var actions = Actions == null ? null : await Actions.Value() as global::app.type.item.list.@this;
+            var actions = Action == null ? null : await Action.Value() as global::app.type.item.list.@this;
             bool hasRecovery = actions != null && actions.Count > 0;
 
             if (order == ErrorOrder.GoalFirst)

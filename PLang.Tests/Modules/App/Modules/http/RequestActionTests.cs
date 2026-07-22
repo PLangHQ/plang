@@ -159,7 +159,7 @@ public class RequestActionTests
     public async Task Get_CustomHeaders_AppliedToRequest()
     {
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/data",
-            Headers = new Dictionary<string, object> { ["X-Custom"] = "test-value" }.ToDictData(),
+            Header = new Dictionary<string, object> { ["X-Custom"] = "test-value" }.ToDictData(),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await _app.Run(action, Ctx);
@@ -594,7 +594,7 @@ public class RequestActionTests
             OnStream = new global::app.goal.GoalCall
             {
                 Name = "HandleChunk",
-                Parameters = new List<Data> { new Data("myChunk", context: Ctx) }
+                Parameter = new List<Data> { new Data("myChunk", context: Ctx) }
             },
             Unsigned = (global::app.type.item.@bool.@this)true
         };
@@ -631,7 +631,7 @@ public class RequestActionTests
         await _app.Setting.Set(global::app.setting.Storage.InMemory, "http.DefaultHeaders", Ctx.Ok(defaults));
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/merged",
-            Headers = new Dictionary<string, object> { ["X-Custom"] = "step-value", ["X-Shared"] = "overridden" }.ToDictData(),
+            Header = new Dictionary<string, object> { ["X-Custom"] = "step-value", ["X-Shared"] = "overridden" }.ToDictData(),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await _app.Run(action, Ctx);
@@ -651,7 +651,7 @@ public class RequestActionTests
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/content",
             Method = (global::app.type.item.choice.@this<global::app.module.action.http.HttpMethod>)HttpMethod.POST,
             Body = new global::app.data.@this("", "test body", context: Ctx),
-            Headers = new Dictionary<string, object> { ["Content-Encoding"] = "gzip", ["X-Custom"] = "req-header" }.ToDictData(),
+            Header = new Dictionary<string, object> { ["Content-Encoding"] = "gzip", ["X-Custom"] = "req-header" }.ToDictData(),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await _app.Run(action, Ctx);

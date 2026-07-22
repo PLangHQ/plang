@@ -168,9 +168,9 @@ public class Fluid : ITemplate
         }
 
         // Override with explicit parameters
-        if ((action.Parameters == null ? null : await action.Parameters.Value()) != null)
+        if ((action.Parameter == null ? null : await action.Parameter.Value()) != null)
         {
-            foreach (var param in (await action.Parameters.Value())!.Items)
+            foreach (var param in (await action.Parameter.Value())!.Items)
             {
                 fluidContext.SetValue(param.Name, FluidValue.Create(await param.Value(), options));
             }

@@ -49,7 +49,7 @@ public class QueryImageTests
             return LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("I see an image"));
         };
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage
                 {
@@ -80,7 +80,7 @@ public class QueryImageTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("I see pixels")));
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage
                 {
@@ -110,7 +110,7 @@ public class QueryImageTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("jpeg")));
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage
                 {
@@ -137,7 +137,7 @@ public class QueryImageTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("base64")));
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage
                 {
@@ -162,7 +162,7 @@ public class QueryImageTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("I see both")));
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage
                 {

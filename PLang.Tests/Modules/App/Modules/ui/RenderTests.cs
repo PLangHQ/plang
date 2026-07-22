@@ -139,7 +139,7 @@ public class RenderTests : IDisposable
         var overrideParam = new Data("name", "ParamValue", context: context);
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"Hello {{ name }}",
             IsFile = (global::app.type.item.@bool.@this)false,
-            Parameters = new List<Data> { overrideParam }.ToListData()
+            Parameter = new List<Data> { overrideParam }.ToListData()
         };
 
         var result = await _provider.Render(action);
@@ -155,7 +155,7 @@ public class RenderTests : IDisposable
         var aliasParam = new Data("title", "My Page", context: context);
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"Title: {{ title }}",
             IsFile = (global::app.type.item.@bool.@this)false,
-            Parameters = new List<Data> { aliasParam }.ToListData()
+            Parameter = new List<Data> { aliasParam }.ToListData()
         };
 
         var result = await _provider.Render(action);

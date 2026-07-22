@@ -44,7 +44,7 @@ public class QueryEdgeCaseTests
     [Test]
     public async Task Query_EmptyMessages_ReturnsError()
     {
-        var action = new query(Ctx) { Messages = new List<LlmMessage>().ToListData<LlmMessage>()
+        var action = new query(Ctx) { Message = new List<LlmMessage>().ToListData<LlmMessage>()
         };
         await action.Attach(null, Ctx);
         var result = await action.Run();
@@ -72,11 +72,11 @@ public class QueryEdgeCaseTests
                 LlmTestHelper.MakeCompletionResponse("done")));
         };
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "multi tools" }
             }.ToListData<LlmMessage>(),
-            Tools = new List<GoalCall>
+            Tool = new List<GoalCall>
             {
                 new GoalCall { Name = "ToolA" },
                 new GoalCall { Name = "ToolB" },
@@ -115,11 +115,11 @@ public class QueryEdgeCaseTests
                 LlmTestHelper.MakeCompletionResponse("handled")));
         };
 
-        var action = new query(Ctx) { Messages = new List<LlmMessage>
+        var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "null args" }
             }.ToListData<LlmMessage>(),
-            Tools = new List<GoalCall>
+            Tool = new List<GoalCall>
             {
                 new GoalCall { Name = "NoArgTool" }
             }.ToListData<GoalCall>()

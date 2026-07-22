@@ -88,7 +88,7 @@ public class LlmTypeTests
         {
             Name = "MyGoal",
             Parallel = true,
-            Parameters = new List<Data> { new Data("param1", "value1", context: context) },
+            Parameter = new List<Data> { new Data("param1", "value1", context: context) },
             PrPath = global::app.type.item.path.@this.Resolve("/test/.build/mygoal.pr", context)
         };
 
@@ -99,8 +99,8 @@ public class LlmTypeTests
         await Assert.That(deserialized.Name).IsEqualTo("MyGoal");
         await Assert.That(deserialized.Parallel).IsTrue();
         await Assert.That(deserialized.PrPath?.ToString().Replace('\\', '/')).Contains(".build/mygoal.pr");
-        await Assert.That(deserialized.Parameters).IsNotNull();
-        await Assert.That(deserialized.Parameters!.Count).IsEqualTo(1);
+        await Assert.That(deserialized.Parameter).IsNotNull();
+        await Assert.That(deserialized.Parameter!.Count).IsEqualTo(1);
     }
 
     #endregion

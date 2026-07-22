@@ -6,7 +6,7 @@ namespace app.module.action.goal;
 
 /// <summary>
 /// Calls a named goal, optionally on a different actor.
-/// Parameters are injected into the target goal's context by the GoalCall resolver.
+/// Parameter are injected into the target goal's context by the GoalCall resolver.
 /// </summary>
 [Action("call")]
 public partial class Call : IContext
@@ -27,15 +27,15 @@ public partial class Call : IContext
     public async Task<data.@this> Build()
     {
         var goalCall = await GoalName.Value();
-        if (goalCall?.Parameters == null) return Context.Ok();
-        for (int i = goalCall.Parameters.Count - 1; i >= 0; i--)
+        if (goalCall?.Parameter == null) return Context.Ok();
+        for (int i = goalCall.Parameter.Count - 1; i >= 0; i--)
         {
-            var p = goalCall.Parameters[i];
+            var p = goalCall.Parameter[i];
             if (!string.Equals(p.Peek()?.ToString(), $"%{p.Name}%", System.StringComparison.OrdinalIgnoreCase))
                 continue;
             await (Context.App.Debug?.Write(
                 $"build: dropped redundant self-reference '{p.Name}=%{p.Name}%' in call to {goalCall.Name}") ?? Task.CompletedTask);
-            goalCall.Parameters.RemoveAt(i);
+            goalCall.Parameter.RemoveAt(i);
         }
         return Context.Ok();
     }

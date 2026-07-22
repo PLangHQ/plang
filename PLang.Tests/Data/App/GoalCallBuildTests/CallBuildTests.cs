@@ -19,7 +19,7 @@ public class CallBuildTests
         var goalCall = new GoalCall
         {
             Name = "Sub",
-            Parameters = new List<Data>
+            Parameter = new List<Data>
             {
                 new Data("path", "%path%", context: ctx),    // self-ref → dropped
                 new Data("kind", "build", context: ctx),      // literal → kept
@@ -37,7 +37,7 @@ public class CallBuildTests
         await Assert.That(err).IsNull();
         await ((global::app.module.IClass)handler!).Build();
 
-        var names = goalCall.Parameters.Select(p => p.Name).ToList();
+        var names = goalCall.Parameter.Select(p => p.Name).ToList();
         await Assert.That(names).DoesNotContain("path");   // self-ref dropped
         await Assert.That(names).Contains("kind");
         await Assert.That(names).Contains("target");        // %path% but name != ref → kept

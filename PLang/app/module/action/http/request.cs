@@ -26,7 +26,7 @@ public partial class request : IContext
     public partial data.@this? Body { get; init; }
 
     /// <summary>Per-request headers. Merged with Config.DefaultHeaders (step-level wins on conflict).</summary>
-    public partial data.@this<global::app.type.item.dict.@this>? Headers { get; init; }
+    public partial data.@this<global::app.type.item.dict.@this>? Header { get; init; }
 
     /// <summary>Content-Type for the request body. Default: "application/json".</summary>
     [Default("application/json")]
@@ -57,7 +57,7 @@ public partial class request : IContext
     /// <summary>Base URL for resolving relative request URLs. Unset = URLs must be absolute.</summary>
     public partial data.@this<global::app.type.item.text.@this>? BaseUrl { get; init; }
 
-    /// <summary>Headers merged into every request; per-request <see cref="Headers"/> win on conflict.</summary>
+    /// <summary>Header merged into every request; per-request <see cref="Header"/> win on conflict.</summary>
     public partial data.@this<global::app.type.item.dict.@this>? DefaultHeaders { get; init; }
 
     /// <summary>Whether to follow HTTP redirects. Default: true.</summary>
