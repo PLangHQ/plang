@@ -1,0 +1,33 @@
+{
+  "branch": "goal-graph-singular",
+  "sessions": [
+    {
+      "id": "beb259d0-526e-460c-ae42-d8a453e68104",
+      "bot": "architect",
+      "timestamp_start": "2026-07-21T00:00:00",
+      "timestamp_end": null,
+      "intent": "Rule on coder's module-owns-action note: action.Module string -> module.@this element, Create-everywhere construction chain",
+      "before": {
+        "assumptions": "action.Module is a naked string re-resolved at dispatch; module element already owns catalog actions",
+        "risk": "wire reader restructure (key-order contract), ActionName->Name rename ripples into templates"
+      },
+      "plan": ".bot/goal-graph-singular/architect/module-owns-action.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/module-owns-action.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Design context doc (not yet coder handoff): module=>action=>parameter ownership, Create vocabulary (Mint/Load/Populate die), no Handler property, pr reader order contract, site sweep + demolition list"
+        }
+      ],
+      "after": {
+        "status": "design settled in discussion, doc written; Ingi has more to discuss before coder handoff",
+        "health": "n/a (no code changed)",
+        "notes": "session ongoing"
+      }
+    }
+  ]
+}
