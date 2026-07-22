@@ -28,7 +28,7 @@ public class ErrorHandleTests
         {
             Module = "error", ActionName = "throw",
             Parameter = parameters,
-            Modifiers = modifiers ?? new List<global::app.goal.step.action.modifier.@this>()
+            Modifier = modifiers ?? new List<global::app.goal.step.action.modifier.@this>()
         };
     }
 
@@ -66,7 +66,7 @@ public class ErrorHandleTests
             {
                 new("name", "%ok%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "v", context: global::PLang.Tests.TestApp.SharedContext)
             },
-            Modifiers = new List<global::app.goal.step.action.modifier.@this> { ErrorHandler(("ignoreError", true)) }
+            Modifier = new List<global::app.goal.step.action.modifier.@this> { ErrorHandler(("ignoreError", true)) }
         };
 
         var result = await action.Run(Ctx);

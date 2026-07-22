@@ -44,7 +44,7 @@ public class CacheWrapTests
             {
                 new("name", "%x%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "first", context: global::PLang.Tests.TestApp.SharedContext)
             },
-            Modifiers = new List<global::app.goal.step.action.modifier.@this> { CacheModifier(60_000, "miss-key") }
+            Modifier = new List<global::app.goal.step.action.modifier.@this> { CacheModifier(60_000, "miss-key") }
         };
 
         var result = await action.Run(Ctx);
@@ -73,7 +73,7 @@ public class CacheWrapTests
             {
                 new("name", "%y%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "fresh-value", context: global::PLang.Tests.TestApp.SharedContext)
             },
-            Modifiers = new List<global::app.goal.step.action.modifier.@this> { CacheModifier(60_000, "hit-key") }
+            Modifier = new List<global::app.goal.step.action.modifier.@this> { CacheModifier(60_000, "hit-key") }
         };
 
         var result = await action.Run(Ctx);
@@ -91,7 +91,7 @@ public class CacheWrapTests
         {
             Module = "error", ActionName = "throw",
             Parameter = new List<global::app.data.@this> { new("message", "boom", context: global::PLang.Tests.TestApp.SharedContext) },
-            Modifiers = new List<global::app.goal.step.action.modifier.@this> { CacheModifier(60_000, "fail-key") }
+            Modifier = new List<global::app.goal.step.action.modifier.@this> { CacheModifier(60_000, "fail-key") }
         };
 
         var result = await action.Run(Ctx);
@@ -113,7 +113,7 @@ public class CacheWrapTests
             {
                 new("name", "%a%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "v", context: global::PLang.Tests.TestApp.SharedContext)
             },
-            Modifiers = new List<global::app.goal.step.action.modifier.@this> { CacheModifier(60_000, "my-custom-key") }
+            Modifier = new List<global::app.goal.step.action.modifier.@this> { CacheModifier(60_000, "my-custom-key") }
         };
 
         await action.Run(Ctx);
@@ -137,7 +137,7 @@ public class CacheWrapTests
             {
                 new("name", "%b%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "v", context: global::PLang.Tests.TestApp.SharedContext)
             },
-            Modifiers = new List<global::app.goal.step.action.modifier.@this> { CacheModifier(60_000) } // no Key
+            Modifier = new List<global::app.goal.step.action.modifier.@this> { CacheModifier(60_000) } // no Key
         };
 
         await action.Run(Ctx);
@@ -160,7 +160,7 @@ public class CacheWrapTests
             {
                 new("name", "%c%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "slide", context: global::PLang.Tests.TestApp.SharedContext)
             },
-            Modifiers = new List<global::app.goal.step.action.modifier.@this> { CacheModifier(60_000, "slide-key", sliding: true) }
+            Modifier = new List<global::app.goal.step.action.modifier.@this> { CacheModifier(60_000, "slide-key", sliding: true) }
         };
 
         await action.Run(Ctx);
@@ -184,7 +184,7 @@ public class CacheWrapTests
             {
                 new("name", "%d%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "fresh", context: global::PLang.Tests.TestApp.SharedContext)
             },
-            Modifiers = new List<global::app.goal.step.action.modifier.@this> { CacheModifier(60_000, "restore-key") }
+            Modifier = new List<global::app.goal.step.action.modifier.@this> { CacheModifier(60_000, "restore-key") }
         };
 
         await action.Run(Ctx);

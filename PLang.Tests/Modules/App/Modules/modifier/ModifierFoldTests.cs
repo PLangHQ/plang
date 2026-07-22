@@ -5,7 +5,7 @@ namespace PLang.Tests.App.Modules.modifier;
 
 /// <summary>
 /// Tests for the core modifier infrastructure: ModifierAttribute, IModifier contract,
-/// Action.Modifiers property, and the right-to-left fold in Action.RunAsync.
+/// Action.Modifier property, and the right-to-left fold in Action.RunAsync.
 /// </summary>
 public class ModifierFoldTests
 {
@@ -37,15 +37,15 @@ public class ModifierFoldTests
 
     #endregion
 
-    #region Action.Modifiers Property
+    #region Action.Modifier Property
 
     [Test]
     public async Task Action_Modifiers_DefaultsToEmptyList()
     {
         var action = new PrAction { Module = "file", ActionName = "read" };
 
-        await Assert.That(action.Modifiers).IsNotNull();
-        await Assert.That(action.Modifiers.Count).IsEqualTo(0);
+        await Assert.That(action.Modifier).IsNotNull();
+        await Assert.That(action.Modifier.Count).IsEqualTo(0);
     }
 
     #endregion
@@ -77,7 +77,7 @@ public class ModifierFoldTests
             {
                 new("name", "%y%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "wrapped", context: global::PLang.Tests.TestApp.SharedContext)
             },
-            Modifiers = new List<global::app.goal.step.action.modifier.@this>
+            Modifier = new List<global::app.goal.step.action.modifier.@this>
             {
                 new global::app.goal.step.action.modifier.@this
                 {
@@ -106,7 +106,7 @@ public class ModifierFoldTests
             {
                 new("name", "%z%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "nested", context: global::PLang.Tests.TestApp.SharedContext)
             },
-            Modifiers = new List<global::app.goal.step.action.modifier.@this>
+            Modifier = new List<global::app.goal.step.action.modifier.@this>
             {
                 new global::app.goal.step.action.modifier.@this
                 {
@@ -139,7 +139,7 @@ public class ModifierFoldTests
             {
                 new("name", "%q%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "full", context: global::PLang.Tests.TestApp.SharedContext)
             },
-            Modifiers = new List<global::app.goal.step.action.modifier.@this>
+            Modifier = new List<global::app.goal.step.action.modifier.@this>
             {
                 new global::app.goal.step.action.modifier.@this
                 {
@@ -181,7 +181,7 @@ public class ModifierFoldTests
             {
                 new("name", "%nope%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "x", context: global::PLang.Tests.TestApp.SharedContext)
             },
-            Modifiers = new List<global::app.goal.step.action.modifier.@this>
+            Modifier = new List<global::app.goal.step.action.modifier.@this>
             {
                 // variable.set as a modifier is invalid
                 new global::app.goal.step.action.modifier.@this

@@ -22,7 +22,7 @@ public class GoalTests : System.IAsyncDisposable
             Hash = "abc123",
             IsSetup = true,
             IsEvent = false,
-            Goals = new List<global::app.goal.@this> { new() { Name = "SubGoal1" }, new() { Name = "SubGoal2" } },
+            Child = new List<global::app.goal.@this> { new() { Name = "SubGoal1" }, new() { Name = "SubGoal2" } },
             Step = new GoalSteps
             {
                 new Step { Index = 0, Text = "first step" },
@@ -39,7 +39,7 @@ public class GoalTests : System.IAsyncDisposable
         await Assert.That(goal.Hash).IsEqualTo("abc123");
         await Assert.That(goal.IsSetup).IsTrue();
         await Assert.That(goal.IsEvent).IsFalse();
-        await Assert.That(goal.Goals.Count).IsEqualTo(2);
+        await Assert.That(goal.Child.Count).IsEqualTo(2);
         await Assert.That(goal.Step.Count).IsEqualTo(2);
     }
 
@@ -89,8 +89,8 @@ public class GoalTests : System.IAsyncDisposable
     {
         var goal = new Goal();
 
-        await Assert.That(goal.Goals).IsNotNull();
-        await Assert.That(goal.Goals.Count).IsEqualTo(0);
+        await Assert.That(goal.Child).IsNotNull();
+        await Assert.That(goal.Child.Count).IsEqualTo(0);
     }
 
     [Test]

@@ -263,7 +263,7 @@ public class Default : IBuilder
     private void Fold(Goal goal, List<global::app.error.IError> errors)
     {
         goal.Step = new global::app.goal.step.list.@this(Fold(goal.Step.list, errors));
-        foreach (var subGoal in goal.Goals) Fold(subGoal, errors);
+        foreach (var subGoal in goal.Child) Fold(subGoal, errors);
     }
 
     // Flat + Indent → tree: a step's deeper-indented followers move into that step's gate
@@ -812,7 +812,7 @@ public class Default : IBuilder
         foreach (var p in a.Parameter) ps.Add(ParamModel(p, ctx));
         d.Set("Parameters", ps);
         var mods = new global::app.type.item.list.@this(ctx);
-        foreach (var m in a.Modifiers) mods.Add(ActionModel(m, ctx));
+        foreach (var m in a.Modifier) mods.Add(ActionModel(m, ctx));
         d.Set("Modifiers", mods);
         return d;
     }
@@ -1208,9 +1208,9 @@ public class Default : IBuilder
 
             // Modifiers (e.g. error.handle's `then call LogRetryError`) hold their own
             // goal.call parameters — same resolution rule applies.
-            if (action.Modifiers != null)
+            if (action.Modifier != null)
             {
-                foreach (var mod in action.Modifiers)
+                foreach (var mod in action.Modifier)
                     await ResolveGoalCallsInAction(mod, app, context);
             }
         }

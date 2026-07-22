@@ -26,8 +26,8 @@ public class GroupModifiersTests
         await Assert.That(step.Action.Count).IsEqualTo(2);
         await Assert.That(step.Action[0].Module).IsEqualTo("file");
         await Assert.That(step.Action[1].Module).IsEqualTo("variable");
-        await Assert.That(step.Action[0].Modifiers.Count).IsEqualTo(0);
-        await Assert.That(step.Action[1].Modifiers.Count).IsEqualTo(0);
+        await Assert.That(step.Action[0].Modifier.Count).IsEqualTo(0);
+        await Assert.That(step.Action[1].Modifier.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -40,8 +40,8 @@ public class GroupModifiersTests
 
         await Assert.That(step.Action.Count).IsEqualTo(1);
         await Assert.That(step.Action[0].Module).IsEqualTo("file");
-        await Assert.That(step.Action[0].Modifiers.Count).IsEqualTo(1);
-        await Assert.That(step.Action[0].Modifiers[0].Module).IsEqualTo("cache");
+        await Assert.That(step.Action[0].Modifier.Count).IsEqualTo(1);
+        await Assert.That(step.Action[0].Modifier[0].Module).IsEqualTo("cache");
     }
 
     [Test]
@@ -58,7 +58,7 @@ public class GroupModifiersTests
         var step = new Step { Action = actions }; step.Nest(modules);
 
         await Assert.That(step.Action.Count).IsEqualTo(1);
-        var mods = step.Action[0].Modifiers;
+        var mods = step.Action[0].Modifier;
         await Assert.That(mods.Count).IsEqualTo(3);
         await Assert.That(mods[0].Module).IsEqualTo("timeout");
         await Assert.That(mods[1].Module).IsEqualTo("cache");
@@ -75,10 +75,10 @@ public class GroupModifiersTests
 
         await Assert.That(step.Action.Count).IsEqualTo(2);
         await Assert.That(step.Action[0].Module).IsEqualTo("file");
-        await Assert.That(step.Action[0].Modifiers.Count).IsEqualTo(1);
-        await Assert.That(step.Action[0].Modifiers[0].Module).IsEqualTo("cache");
+        await Assert.That(step.Action[0].Modifier.Count).IsEqualTo(1);
+        await Assert.That(step.Action[0].Modifier[0].Module).IsEqualTo("cache");
         await Assert.That(step.Action[1].Module).IsEqualTo("variable");
-        await Assert.That(step.Action[1].Modifiers.Count).IsEqualTo(0);
+        await Assert.That(step.Action[1].Modifier.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -92,7 +92,7 @@ public class GroupModifiersTests
 
         await Assert.That(step.Action.Count).IsEqualTo(1);
         await Assert.That(step.Action[0].Module).IsEqualTo("file");
-        await Assert.That(step.Action[0].Modifiers.Count).IsEqualTo(0);
+        await Assert.That(step.Action[0].Modifier.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -112,11 +112,11 @@ public class GroupModifiersTests
 
         await Assert.That(step.Action.Count).IsEqualTo(2);
         await Assert.That(step.Action[0].Module).IsEqualTo("file");
-        await Assert.That(step.Action[0].Modifiers.Count).IsEqualTo(2);
-        await Assert.That(step.Action[0].Modifiers[0].Module).IsEqualTo("cache");
-        await Assert.That(step.Action[0].Modifiers[1].Module).IsEqualTo("error");
+        await Assert.That(step.Action[0].Modifier.Count).IsEqualTo(2);
+        await Assert.That(step.Action[0].Modifier[0].Module).IsEqualTo("cache");
+        await Assert.That(step.Action[0].Modifier[1].Module).IsEqualTo("error");
         await Assert.That(step.Action[1].Module).IsEqualTo("variable");
-        await Assert.That(step.Action[1].Modifiers.Count).IsEqualTo(1);
-        await Assert.That(step.Action[1].Modifiers[0].Module).IsEqualTo("timeout");
+        await Assert.That(step.Action[1].Modifier.Count).IsEqualTo(1);
+        await Assert.That(step.Action[1].Modifier[0].Module).IsEqualTo("timeout");
     }
 }

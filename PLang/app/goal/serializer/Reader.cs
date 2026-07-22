@@ -88,7 +88,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             Description = description,
             Comment = comment,
             Step = new global::app.goal.step.list.@this(steps),
-            Goals = goals,
+            Child = goals,
             Visibility = visibility,
             Path = path,
             Hash = hash,

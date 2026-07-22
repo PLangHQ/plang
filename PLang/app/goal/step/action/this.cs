@@ -35,7 +35,7 @@ public partial class @this
     /// internal typed list; the action owns their right-to-left wrap fold (see RunAsync) and their
     /// sort (actions.Nest). Position within the slot carries the nesting order at runtime.</summary>
     [Store, Debug, Default]
-    public List<modifier.@this> Modifiers { get; init; } = new();
+    public List<modifier.@this> Modifier { get; init; } = new();
 
     /// <summary>The branch body of a control-flow action (the steps that run when this condition fires).
     /// Empty on every non-control-flow action — the fire gate is <c>Child.Count &gt; 0 &amp;&amp; truthy</c>.
@@ -150,7 +150,7 @@ public partial class @this
             data = beforeResult;
             data.Handled = false;
         }
-        else if (Modifiers.Count == 0)
+        else if (Modifier.Count == 0)
             data = await DispatchAsync(context);
         else
         {
@@ -159,14 +159,14 @@ public partial class @this
             // ITSELF (modifier.Wrap); then AfterAction fires once per modifier so coverage tracks
             // presence (a modifier wraps, it never runs the standalone path).
             Func<Task<global::app.data.@this>> execute = () => DispatchAsync(context);
-            for (int i = Modifiers.Count - 1; i >= 0; i--)
+            for (int i = Modifier.Count - 1; i >= 0; i--)
             {
-                var (wrapped, wrapError) = await Modifiers[i].Wrap(execute, context);
+                var (wrapped, wrapError) = await Modifier[i].Wrap(execute, context);
                 if (wrapError != null) return context.Error(wrapError);
                 execute = wrapped!;
             }
             data = await execute();
-            foreach (var modifier in Modifiers)
+            foreach (var modifier in Modifier)
                 await context.LifecycleFor(modifier).After.Run(
                     context, app.@event.Trigger.AfterAction, modifier, data);
         }

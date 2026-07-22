@@ -49,12 +49,12 @@ public sealed partial class @this
         set => _step = value ?? new(new List<global::app.goal.step.@this>());
     }
 
-    private List<@this> _goals = new();
+    private List<@this> _child = new();
     [Store, Debug, Default]
-    public List<@this> Goals
+    public List<@this> Child
     {
-        get { foreach (var g in _goals) g.Parent ??= this; return _goals; }
-        set => _goals = value;
+        get { foreach (var g in _child) g.Parent ??= this; return _child; }
+        set => _child = value;
     }
 
     [Store, LlmBuilder, Debug, Default]
@@ -247,10 +247,10 @@ public sealed partial class @this
                 }
         }
 
-        if (existing.Goals.Count == 0) return;
-        foreach (var subGoal in Goals)
+        if (existing.Child.Count == 0) return;
+        foreach (var subGoal in Child)
         {
-            var priorSub = existing.Goals.FirstOrDefault(g =>
+            var priorSub = existing.Child.FirstOrDefault(g =>
                 string.Equals(g.Name, subGoal.Name, StringComparison.OrdinalIgnoreCase));
             if (priorSub != null) subGoal.Merge(priorSub);
         }
@@ -341,7 +341,7 @@ public sealed partial class @this
     public void NestRecursive(app.module.list.@this modules)
     {
         foreach (var step in Step.list) step.Nest(modules);
-        foreach (var subGoal in Goals)
+        foreach (var subGoal in Child)
             subGoal.NestRecursive(modules);
     }
 
@@ -364,7 +364,7 @@ public sealed partial class @this
     }
 
     /// <summary>
-    /// Parses .goal file text into a list of Goals.
+    /// Parses .goal file text into a list of Child.
     /// All goals share the same Path. First goal is Public, rest are Private.
     /// Inverse of ToText().
     ///
@@ -556,7 +556,7 @@ public sealed partial class @this
         if (goals.Count > 1)
         {
             for (int i = 1; i < goals.Count; i++)
-                goals[0].Goals.Add(goals[i]);
+                goals[0].Child.Add(goals[i]);
         }
 
         return goals[0];

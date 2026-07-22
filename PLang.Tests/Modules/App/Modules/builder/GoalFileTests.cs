@@ -28,8 +28,8 @@ public class GoalFileTests
 
         await Assert.That(goal).IsNotNull();
         await Assert.That(goal!.Visibility).IsEqualTo(Visibility.Public);
-        await Assert.That(goal.Goals[0].Visibility).IsEqualTo(Visibility.Private);
-        await Assert.That(goal.Goals[1].Visibility).IsEqualTo(Visibility.Private);
+        await Assert.That(goal.Child[0].Visibility).IsEqualTo(Visibility.Private);
+        await Assert.That(goal.Child[1].Visibility).IsEqualTo(Visibility.Private);
     }
 
     [Test]
@@ -82,7 +82,7 @@ public class GoalFileTests
         var goal = Goal.Parse("First\n- step\n\nSecond\n- step", global::app.type.item.path.@this.Resolve("/folder/MyGoal.goal", global::PLang.Tests.TestApp.SharedContext));
 
         await Assert.That(goal!.Path).IsEqualTo("/folder/MyGoal.goal");
-        await Assert.That(goal.Goals[0].Path).IsEqualTo("/folder/MyGoal.goal");
+        await Assert.That(goal.Child[0].Path).IsEqualTo("/folder/MyGoal.goal");
     }
 
     [Test]
@@ -108,9 +108,9 @@ public class GoalFileTests
     {
         var goal = Goal.Parse("Public\n- step\n\nPrivateA\n- step\n\nPrivateB\n- step", global::app.type.item.path.@this.Resolve("/Sub.goal", global::PLang.Tests.TestApp.SharedContext));
 
-        await Assert.That(goal!.Goals.Count).IsEqualTo(2);
-        await Assert.That(goal.Goals[0].Name).IsEqualTo("PrivateA");
-        await Assert.That(goal.Goals[1].Name).IsEqualTo("PrivateB");
+        await Assert.That(goal!.Child.Count).IsEqualTo(2);
+        await Assert.That(goal.Child[0].Name).IsEqualTo("PrivateA");
+        await Assert.That(goal.Child[1].Name).IsEqualTo("PrivateB");
     }
 
     [Test]
@@ -119,7 +119,7 @@ public class GoalFileTests
         var goal = Goal.Parse("First\n- step a\n\n\n\nSecond\n- step b", global::app.type.item.path.@this.Resolve("/Blank.goal", global::PLang.Tests.TestApp.SharedContext));
 
         await Assert.That(goal!.Step.Count).IsEqualTo(1);
-        await Assert.That(goal.Goals[0].Step.Count).IsEqualTo(1);
+        await Assert.That(goal.Child[0].Step.Count).IsEqualTo(1);
     }
 
     [Test]

@@ -57,7 +57,7 @@ public sealed partial class @this
     }
 
     /// <summary>
-    /// Nests each modifier onto the preceding action's Modifiers slot — the flat LLM order becomes
+    /// Nests each modifier onto the preceding action's Modifier slot — the flat LLM order becomes
     /// the .pr shape. A modifier is a TYPE in the catalog (not a flag): the flat item, read as a plain
     /// action, becomes the modifier it IS, with Position from the catalog. A leading modifier with no
     /// preceding action is dropped with a warning. Rebuilds the action node. (Carried only until the
@@ -85,7 +85,7 @@ public sealed partial class @this
                     });
                     continue;
                 }
-                current.Modifiers.Add(new action.modifier.@this
+                current.Modifier.Add(new action.modifier.@this
                     { Module = a.Module, ActionName = a.ActionName, Parameter = a.Parameter, Position = catalog.Position });
             }
             else
@@ -96,7 +96,7 @@ public sealed partial class @this
         }
 
         foreach (var a in nested)
-            a.Modifiers.Sort((x, y) => x.Position.CompareTo(y.Position));   // outermost wrapper (lowest Position) first
+            a.Modifier.Sort((x, y) => x.Position.CompareTo(y.Position));   // outermost wrapper (lowest Position) first
 
         _action = new global::app.goal.step.action.list.@this(nested);
     }

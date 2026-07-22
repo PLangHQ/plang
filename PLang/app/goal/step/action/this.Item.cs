@@ -65,7 +65,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         if (d.Get("modifier")?.Peek() is global::app.type.item.list.@this ms)
             foreach (var row in ms.Items)
                 if (row.Peek() is global::app.type.item.dict.@this md)
-                    act.Modifiers.Add((modifier.@this)Populate(md, new modifier.@this(), data));
+                    act.Modifier.Add((modifier.@this)Populate(md, new modifier.@this(), data));
         if (d.Get("child")?.Peek() is global::app.type.item.list.@this cs)
         {
             var steps = new System.Collections.Generic.List<global::app.goal.step.@this>();
@@ -108,8 +108,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             writer.EndArray();
         }
         writer.Name("modifier");
-        writer.BeginArray(Modifiers.Count);
-        foreach (var m in Modifiers) await m.Output(writer, mode, context);
+        writer.BeginArray(Modifier.Count);
+        foreach (var m in Modifier) await m.Output(writer, mode, context);
         writer.EndArray();
         // The branch body of a control-flow action — omitted on ordinary actions (empty Child).
         // Each child step writes itself; the tree serializes recursively.

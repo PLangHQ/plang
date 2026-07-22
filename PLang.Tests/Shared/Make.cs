@@ -105,7 +105,7 @@ public static class Make
         params global::app.goal.step.action.@this[] modifiers)
     {
         foreach (var m in modifiers)
-            inner.Modifiers.Add(m as global::app.goal.step.action.modifier.@this
+            inner.Modifier.Add(m as global::app.goal.step.action.modifier.@this
                 ?? new global::app.goal.step.action.modifier.@this
                 { Module = m.Module, ActionName = m.ActionName, Parameter = m.Parameter });
         return inner;

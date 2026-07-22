@@ -62,7 +62,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                     {
                         var modifier = new global::app.goal.step.action.modifier.@this();
                         Populate(ref reader, modifier, ctx);
-                        action.Modifiers.Add(modifier);
+                        action.Modifier.Add(modifier);
                     }
                     reader.EndArray();
                     break;

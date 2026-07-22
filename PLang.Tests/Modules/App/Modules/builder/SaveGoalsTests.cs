@@ -8,7 +8,7 @@ namespace PLang.Tests.App.Modules.builder;
 
 /// <summary>
 /// Tests for builder.saveGoals — serializes a goal to a v0.2 .pr file.
-/// One .goal file → one .pr file containing a single Goal (with optional sub-goals in .Goals).
+/// One .goal file → one .pr file containing a single Goal (with optional sub-goals in .Child).
 /// </summary>
 public class SaveGoalsTests
 {
@@ -102,7 +102,7 @@ public class SaveGoalsTests
         {
             Name = "Public",
             Path = global::app.type.item.path.@this.Resolve("/Multi.goal", _app.User.Context),
-            Goals = new List<Goal>
+            Child = new List<Goal>
             {
                 new Goal { Name = "Private" }
             }
@@ -120,8 +120,8 @@ public class SaveGoalsTests
 
         await Assert.That(saved).IsNotNull();
         await Assert.That(saved!.Name).IsEqualTo("Public");
-        await Assert.That(saved.Goals.Count).IsEqualTo(1);
-        await Assert.That(saved.Goals[0].Name).IsEqualTo("Private");
+        await Assert.That(saved.Child.Count).IsEqualTo(1);
+        await Assert.That(saved.Child[0].Name).IsEqualTo("Private");
     }
 
     [Test]

@@ -231,7 +231,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
             if (string.Equals(currentGoal.Name, resolvedName, StringComparison.OrdinalIgnoreCase))
                 return Found(currentGoal);
 
-            var subGoal = currentGoal.Goals.FirstOrDefault(g =>
+            var subGoal = currentGoal.Child.FirstOrDefault(g =>
                 string.Equals(g.Name, resolvedName, StringComparison.OrdinalIgnoreCase));
             if (subGoal != null) return Found(subGoal);
 
@@ -331,7 +331,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
         // Wired here at the .pr-load seam, like App — never left null.
         foreach (var step in goal.Step.list)
             step.Goal = goal;
-        foreach (var subGoal in goal.Goals)
+        foreach (var subGoal in goal.Child)
         {
             subGoal.App = app;
             subGoal.Parent = goal;
@@ -345,7 +345,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
         // different root and would otherwise mis-resolve).
         var prPathResolved = global::app.type.item.path.@this.Resolve(prPath, context);
         goal.LoadedFromPrPath = prPathResolved;
-        foreach (var subGoal in goal.Goals)
+        foreach (var subGoal in goal.Child)
             subGoal.LoadedFromPrPath = prPathResolved;
 
         // Match by name — the loaded goal or one of its sub-goals. A slash-
@@ -359,7 +359,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
         if (string.IsNullOrEmpty(matchName) || string.Equals(goal.Name, matchName, StringComparison.OrdinalIgnoreCase))
             found = goal;
         else
-            found = goal.Goals.FirstOrDefault(g => string.Equals(g.Name, matchName, StringComparison.OrdinalIgnoreCase));
+            found = goal.Child.FirstOrDefault(g => string.Equals(g.Name, matchName, StringComparison.OrdinalIgnoreCase));
 
         if (found == null)
             return context.Error(new global::app.error.ActionError(

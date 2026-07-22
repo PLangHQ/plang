@@ -848,21 +848,21 @@ public class VariablesAccessorTests : System.IAsyncDisposable
     }
 
     // --- Goal sub-goal navigation tests ---
-    // These validate that --debug variable watches and __Resolve can navigate Goal.Goals[0].Name
+    // These validate that --debug variable watches and __Resolve can navigate Goal.Child[0].Name
 
     [Test]
     public async Task Get_GoalSubGoalName_NavigatesCorrectly()
     {
         var stack = new Variables(_app.User.Context);
         var goal = new global::app.goal.@this { Name = "BuildGoal" };
-        goal.Goals.Add(new global::app.goal.@this { Name = "ProcessGroup" });
-        goal.Goals.Add(new global::app.goal.@this { Name = "LlmFixer" });
-        goal.Goals.Add(new global::app.goal.@this { Name = "HandleFailure" });
+        goal.Child.Add(new global::app.goal.@this { Name = "ProcessGroup" });
+        goal.Child.Add(new global::app.goal.@this { Name = "LlmFixer" });
+        goal.Child.Add(new global::app.goal.@this { Name = "HandleFailure" });
         stack.Set("goal", goal);
 
-        var name0 = await stack.Get("goal.Goals[0].Name");
-        var name1 = await stack.Get("goal.Goals[1].Name");
-        var name2 = await stack.Get("goal.Goals[2].Name");
+        var name0 = await stack.Get("goal.Child[0].Name");
+        var name1 = await stack.Get("goal.Child[1].Name");
+        var name2 = await stack.Get("goal.Child[2].Name");
 
         await Assert.That(name0.IsInitialized).IsTrue();
         await Assert.That((await name0.Value())?.ToString()).IsEqualTo("ProcessGroup");
@@ -888,11 +888,11 @@ public class VariablesAccessorTests : System.IAsyncDisposable
     {
         var stack = new Variables(_app.User.Context);
         var goal = new global::app.goal.@this { Name = "BuildGoal" };
-        goal.Goals.Add(new global::app.goal.@this { Name = "Sub1" });
-        goal.Goals.Add(new global::app.goal.@this { Name = "Sub2" });
+        goal.Child.Add(new global::app.goal.@this { Name = "Sub1" });
+        goal.Child.Add(new global::app.goal.@this { Name = "Sub2" });
         stack.Set("goal", goal);
 
-        var count = await stack.Get("goal.Goals.Count");
+        var count = await stack.Get("goal.Child.Count");
 
         await Assert.That(count.IsInitialized).IsTrue();
         await Assert.That((await count.Value())?.ToString()).IsEqualTo("2");
@@ -903,7 +903,7 @@ public class VariablesAccessorTests : System.IAsyncDisposable
     {
         var stack = new Variables(_app.User.Context);
         var goal = new global::app.goal.@this { Name = "BuildGoal" };
-        goal.Goals.Add(new global::app.goal.@this { Name = "SubGoal" });
+        goal.Child.Add(new global::app.goal.@this { Name = "SubGoal" });
         var step = new global::app.goal.step.@this { Index = 0, Text = "original" };
         goal.Step.Add(step);
         stack.Set("goal", goal);
@@ -918,7 +918,7 @@ public class VariablesAccessorTests : System.IAsyncDisposable
         await Assert.That((await retrieved.Value())).IsTypeOf<global::app.goal.@this>();
 
         // Sub-goal names should survive
-        var subName = await stack.Get("goal.Goals[0].Name");
+        var subName = await stack.Get("goal.Child[0].Name");
         await Assert.That(subName.IsInitialized).IsTrue();
         await Assert.That((await subName.Value())?.ToString()).IsEqualTo("SubGoal");
 

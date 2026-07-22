@@ -1,7 +1,7 @@
 namespace app.goal;
 
 // The goal IS a plang value (item) — see step/actions/action/this.Item.cs for the ruling. The engine
-// reads the typed internals (Name, Steps, Goals, …) directly; the item faces are the boundary only.
+// reads the typed internals (Name, Steps, Child, …) directly; the item faces are the boundary only.
 // The goal owns its wire: Output writes itself token by token (each field a plang type that writes
 // itself — path, choice, the step/goal children), its serializer/Reader.cs reads itself back.
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
@@ -53,7 +53,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             var list = new System.Collections.Generic.List<@this>();
             foreach (var row in subs.Items)
                 if (Made<@this>(row.Peek(), data) is { } sg) list.Add(sg);
-            goal.Goals = list;
+            goal.Child = list;
         }
         return goal;
     }
@@ -83,8 +83,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         foreach (var s in Step.list) await s.Output(writer, mode, context);
         writer.EndArray();
         writer.Name("child");
-        writer.BeginArray(Goals.Count);
-        foreach (var g in Goals) await g.Output(writer, mode, context);
+        writer.BeginArray(Child.Count);
+        foreach (var g in Child) await g.Output(writer, mode, context);
         writer.EndArray();
         writer.Name("visibility"); await Visibility.Output(writer, mode, context);
         if (Path != null) { writer.Name("path"); await Path.Output(writer, mode, context); }

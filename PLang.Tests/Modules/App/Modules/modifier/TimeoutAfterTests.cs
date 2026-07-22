@@ -38,7 +38,7 @@ public class TimeoutAfterTests
             {
                 new("name", "%fast%", new global::app.type.@this("variable"), context: Ctx), new("value", "done", context: Ctx)
             },
-            Modifiers = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(5000) }
+            Modifier = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(5000) }
         };
 
         var result = await action.Run(Ctx);
@@ -55,7 +55,7 @@ public class TimeoutAfterTests
             Module = "timer",
             ActionName = "sleep",
             Parameter = new List<global::app.data.@this> { new("ms", 5000, context: Ctx) },
-            Modifiers = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(50) }
+            Modifier = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(50) }
         };
 
         var result = await action.Run(Ctx);
@@ -74,7 +74,7 @@ public class TimeoutAfterTests
             Module = "timer",
             ActionName = "sleep",
             Parameter = new List<global::app.data.@this> { new("ms", 10_000, context: Ctx) },
-            Modifiers = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(30) }
+            Modifier = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(30) }
         };
 
         var start = DateTimeOffset.UtcNow;
@@ -99,7 +99,7 @@ public class TimeoutAfterTests
             Module = "timer",
             ActionName = "sleep",
             Parameter = new List<global::app.data.@this> { new("ms", 10_000, context: Ctx) },
-            Modifiers = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(5000) }
+            Modifier = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(5000) }
         };
 
         await Assert.That(async () => await action.Run(Ctx))
@@ -116,7 +116,7 @@ public class TimeoutAfterTests
             Module = "timer",
             ActionName = "sleep",
             Parameter = new List<global::app.data.@this> { new("ms", 1000, context: Ctx) },
-            Modifiers = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(0) }
+            Modifier = new List<global::app.goal.step.action.modifier.@this> { TimeoutModifier(0) }
         };
 
         var result = await action.Run(Ctx);
@@ -164,7 +164,7 @@ public class TimeoutAfterTests
             Module = "timer",
             ActionName = "sleep",
             Parameter = new List<global::app.data.@this> { new("ms", 5000, context: Ctx) },
-            Modifiers = new List<global::app.goal.step.action.modifier.@this>
+            Modifier = new List<global::app.goal.step.action.modifier.@this>
             {
                 TimeoutModifier(50),
                 new global::app.goal.step.action.modifier.@this

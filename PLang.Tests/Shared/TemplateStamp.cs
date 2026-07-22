@@ -14,7 +14,7 @@ public static class TemplateStamp
     {
         Stamp(action.Parameter);
         if (action.Default != null) Stamp(action.Default);
-        foreach (var modifier in action.Modifiers) Apply(modifier);
+        foreach (var modifier in action.Modifier) Apply(modifier);
     }
 
     private static void Stamp(IEnumerable<global::app.data.@this> parameters)
