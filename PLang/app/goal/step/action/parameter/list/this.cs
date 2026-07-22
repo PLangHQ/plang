@@ -1,5 +1,6 @@
 using Data = global::app.data.@this;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace app.goal.step.action.parameter.list;
 
@@ -18,6 +19,40 @@ public sealed class @this : IReadOnlyList<Data>
     private readonly List<Data> _rows;
     public @this(IReadOnlyList<Data> rows) => _rows = rows as List<Data> ?? new List<Data>(rows);
     public @this() => _rows = new List<Data>();
+
+    /// <summary>Reads the node from a raw wire "parameters" slot — a native <c>list</c> of
+    /// <c>Data</c>-wrapped <c>{name, value}</c> dict entries (collections-are-data), or the CLR
+    /// <c>IEnumerable</c> of <c>IDictionary</c> shape. Each entry becomes a named Data row still
+    /// holding its <c>%var%</c>/literal/container form — a goal call shares the caller's scope, so
+    /// resolution happens when the step reads the name, not here. An entry that is neither dict shape
+    /// is skipped so a malformed slot never silently drops the whole set.</summary>
+    public @this(object? slot, global::app.actor.context.@this context)
+    {
+        _rows = new List<Data>();
+        IEnumerable<object?> elements = slot switch
+        {
+            global::app.type.item.list.@this nativeList => nativeList.Items,
+            string => System.Array.Empty<object?>(),
+            System.Collections.IEnumerable seq => seq.Cast<object?>(),
+            _ => System.Array.Empty<object?>(),
+        };
+        foreach (var element in elements)
+        {
+            var entry = element is Data d ? d.Peek() : element;
+            switch (entry)
+            {
+                case global::app.type.item.dict.@this nd:
+                    _rows.Add(new Data(nd.Get("name")?.Peek()?.ToString() ?? "",
+                                       nd.Get("value")?.Peek(), context: context));
+                    break;
+                case IDictionary<string, object?> id:
+                    _rows.Add(new Data(
+                        id.TryGetValue("name", out var en) ? en?.ToString() ?? "" : "",
+                        id.TryGetValue("value", out var ev) ? ev : null, context: context));
+                    break;
+            }
+        }
+    }
 
     // Construction sugar — a raw row list becomes the node (inline C#, builder assembly, tests).
     public static implicit operator @this(List<Data> rows) => new(rows);

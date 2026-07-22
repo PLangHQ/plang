@@ -10,8 +10,8 @@ namespace app.module.action.error;
 /// <summary>
 /// Modifier: wraps an action with error matching, retry, and an on-error action chain.
 /// On success, passes through untouched. On failure, applies filters (StatusCode, Key,
-/// Message); if matched, either ignores, retries, or runs Action — ordered by
-/// Order (RetryFirst default, GoalFirst runs Action before retry).
+/// Message); if matched, either ignores, retries, or runs its actions — ordered by
+/// Order (RetryFirst default, GoalFirst runs the actions before retry).
 /// </summary>
 [Action("handle", Cacheable = false)]
 [Modifier(Order = 3)]
@@ -66,9 +66,9 @@ public partial class Handle : IContext, IModifier
     public partial global::app.data.@this<global::app.type.item.text.@this>? Key { get; init; }
     public partial global::app.data.@this<global::app.type.item.text.@this>? Message { get; init; }
     /// <summary>
-    /// Action chain to run when the error matches. Preferred over Goal — lets a
+    /// The action chain to run when the error matches. Preferred over Goal — lets a
     /// developer express "on error, log + fall back + notify" inline without
-    /// wrapping it in a goal. Action execute in order; %!data% flows between
+    /// wrapping it in a goal. The actions execute in order; %!data% flows between
     /// them just like the main step chain.
     /// </summary>
     public partial global::app.data.@this<global::app.type.item.list.@this<global::app.goal.step.action.@this>>? Action { get; init; }

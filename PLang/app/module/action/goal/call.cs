@@ -6,7 +6,7 @@ namespace app.module.action.goal;
 
 /// <summary>
 /// Calls a named goal, optionally on a different actor.
-/// Parameter are injected into the target goal's context by the GoalCall resolver.
+/// Parameters are injected into the target goal's context by the GoalCall resolver.
 /// </summary>
 [Action("call")]
 public partial class Call : IContext
@@ -28,15 +28,22 @@ public partial class Call : IContext
     {
         var goalCall = await GoalName.Value();
         if (goalCall?.Parameter == null) return Context.Ok();
-        for (int i = goalCall.Parameter.Count - 1; i >= 0; i--)
+
+        // Drop redundant self-references (`x=%x%`) — the parameter node is read-only, so keep the
+        // survivors in a fresh list and rebind rather than mutating in place.
+        var kept = new List<data.@this>();
+        foreach (var p in goalCall.Parameter)
         {
-            var p = goalCall.Parameter[i];
-            if (!string.Equals(p.Peek()?.ToString(), $"%{p.Name}%", System.StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(p.Peek()?.ToString(), $"%{p.Name}%", System.StringComparison.OrdinalIgnoreCase))
+            {
+                await (Context.App.Debug?.Write(
+                    $"build: dropped redundant self-reference '{p.Name}=%{p.Name}%' in call to {goalCall.Name}") ?? Task.CompletedTask);
                 continue;
-            await (Context.App.Debug?.Write(
-                $"build: dropped redundant self-reference '{p.Name}=%{p.Name}%' in call to {goalCall.Name}") ?? Task.CompletedTask);
-            goalCall.Parameter.RemoveAt(i);
+            }
+            kept.Add(p);
         }
+        if (kept.Count != goalCall.Parameter.Count)
+            goalCall.Parameter = kept;   // implicit List<Data> -> parameter.list
         return Context.Ok();
     }
 

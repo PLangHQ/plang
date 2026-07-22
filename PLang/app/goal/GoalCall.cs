@@ -13,7 +13,7 @@ namespace app.goal;
 public sealed class GoalCall : global::app.type.item.@this, global::app.type.item.ICreate<GoalCall>, module.IEvent
 {
     /// <summary>Self-write: a call descriptor is a structural item — its tagged fields (GoalName,
-    /// Parameter, …), the View selecting the set.</summary>
+    /// Parameters, …), the View selecting the set.</summary>
     public override System.Threading.Tasks.ValueTask Output(
         global::app.channel.serializer.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
@@ -36,9 +36,10 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
     [Store, LlmBuilder, Out]
     public bool Parallel { get; init; }
 
-    /// <summary>Parameter to pass to the goal, each as a named Data value.</summary>
+    /// <summary>Parameters to pass to the goal — its own <c>parameter.list</c> collection (the same
+    /// node <c>action.Parameter</c> uses), each row a named Data value.</summary>
     [Store, LlmBuilder, Out]
-    public List<data.@this>? Parameter { get; set; }
+    public global::app.goal.step.action.parameter.list.@this? Parameter { get; set; }
     /// <summary>Pre-resolved .pr file path. Null when the goal name contains %variables%.</summary>
     [Store, Out]
     public global::app.type.item.path.@this? PrPath { get; set; }
@@ -139,17 +140,12 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
                 d2.TryGetValue("relative", out var rel) ? rel?.ToString() : null, context),
             _ => ResolveRelative(prRaw.ToString(), context),
         };
-        List<data.@this>? parameters = null;
-        if (slot("parameters") is { } p)
-        {
-            // Params ride raw into the call — each is a Data still holding its
-            // %var%/literal/container form. Goal-call shares the caller's scope, so the
-            // step that reads %name% resolves it through the door then; no eager pass.
-            var entries = ParamEntries(p)
-                .Select(e => new data.@this(e.name, e.value, context: context))
-                .ToList();
-            if (entries.Count > 0) parameters = entries;
-        }
+        // The parameters slot builds its own node (parameter.list reads the wire shape); an empty
+        // set collapses to null so the call carries no parameter node at all.
+        var parameters = slot("parameters") is { } p
+            ? new global::app.goal.step.action.parameter.list.@this(p, context)
+            : null;
+        if (parameters is { Count: 0 }) parameters = null;
         return context.Ok(new GoalCall { Name = name, PrPath = prPath, Parameter = parameters });
     }
 
@@ -157,48 +153,6 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
     // the path's own relative member; born-native serializes it inside the {scheme, relative} object.)
     private static path? ResolveRelative(string? relative, actor.context.@this context)
         => string.IsNullOrEmpty(relative) ? null : path.Resolve(relative, context);
-
-    /// <summary>
-    /// Normalises the <c>parameters</c> slot to a flat (name, value) sequence,
-    /// independent of the container/element CLR shape. The collections-are-data
-    /// world hands this slot as a native <c>list.@this</c> of <c>Data</c>-wrapped
-    /// <c>dict.@this</c> entries; the legacy/CLR path hands an
-    /// <c>IList&lt;object?&gt;</c> of <c>IDictionary&lt;string,object?&gt;</c>. Both
-    /// (and a Data-wrapped element of either) collapse here so a goal-call's
-    /// <c>goal=%item%</c> parameter is never silently dropped.
-    /// </summary>
-    private static IEnumerable<(string name, object? value)> ParamEntries(object? p)
-    {
-        IEnumerable<object?> Elements()
-        {
-            switch (p)
-            {
-                case app.type.item.list.@this nativeList:
-                    foreach (var item in nativeList.Items) yield return item;
-                    break;
-                case System.Collections.IEnumerable seq when p is not string:
-                    foreach (var item in seq) yield return item;
-                    break;
-            }
-        }
-
-        foreach (var element in Elements())
-        {
-            // A native list element is a Data wrapping the entry dict; unwrap it.
-            var entry = element is data.@this d ? d.Peek() : element;
-            switch (entry)
-            {
-                case app.type.item.dict.@this nd:
-                    yield return (nd.Get("name")?.Peek()?.ToString() ?? "", nd.Get("value")?.Peek());
-                    break;
-                case IDictionary<string, object?> id:
-                    yield return (
-                        id.TryGetValue("name", out var en) ? en?.ToString() ?? "" : "",
-                        id.TryGetValue("value", out var ev) ? ev : null);
-                    break;
-            }
-        }
-    }
 
     /// <summary>
     /// Resolves the Goal. PrPath is authoritative when set — file.read only.

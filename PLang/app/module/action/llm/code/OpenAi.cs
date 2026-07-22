@@ -614,7 +614,7 @@ public sealed class OpenAi : ILlm
     /// <summary>
     /// Parses the LLM's JSON arguments string into List&lt;Data&gt; matching the GoalCall's parameter definitions.
     /// </summary>
-    private static List<data.@this> ParseToolArguments(string argumentsJson, List<data.@this>? parameterDefs, actor.context.@this context)
+    private static List<data.@this> ParseToolArguments(string argumentsJson, IReadOnlyList<data.@this>? parameterDefs, actor.context.@this context)
     {
         var result = new List<data.@this>();
 
@@ -626,7 +626,7 @@ public sealed class OpenAi : ILlm
             using var doc = JsonDocument.Parse(argumentsJson);
             foreach (var prop in doc.RootElement.EnumerateObject())
             {
-                var paramDef = parameterDefs?.Find(p => p.Name == prop.Name);
+                var paramDef = parameterDefs?.FirstOrDefault(p => p.Name == prop.Name);
                 object? value = prop.Value.ValueKind switch
                 {
                     JsonValueKind.String => prop.Value.GetString(),
@@ -863,7 +863,7 @@ public sealed class OpenAi : ILlm
 
     // --- Parameter schema ---
 
-    private static Dictionary<string, object> BuildParamSchema(List<data.@this>? parameters)
+    private static Dictionary<string, object> BuildParamSchema(IReadOnlyList<data.@this>? parameters)
     {
         if (parameters == null || parameters.Count == 0)
             return new Dictionary<string, object>
