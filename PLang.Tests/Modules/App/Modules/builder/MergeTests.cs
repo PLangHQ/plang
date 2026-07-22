@@ -78,29 +78,29 @@ public class MergeTests
     }
 
     [Test]
-    public async Task StepMerge_ErrorsReplacedOnlyWhenSourceHasEntries()
+    public async Task StepMerge_WarningsReplacedOnlyWhenSourceHasEntries()
     {
         var target = new Step
         {
             Text = "step",
-            Errors = { new Info { Key = "E1", Message = "original error" } }
+            Warning = { new global::app.warning.@this { Key = "W1", Message = "original warning" } }
         };
 
-        // Source with no errors — target keeps its errors
+        // Source with no warnings — target keeps its warnings
         var emptySource = new Step { Text = "step" };
         target.Merge(emptySource);
-        await Assert.That(target.Errors.Count).IsEqualTo(1);
-        await Assert.That(target.Errors[0].Key).IsEqualTo("E1");
+        await Assert.That(target.Warning.Count).IsEqualTo(1);
+        await Assert.That(target.Warning[0].Key).IsEqualTo("W1");
 
-        // Source with errors — target errors replaced
-        var sourceWithErrors = new Step
+        // Source with warnings — target warnings replaced
+        var sourceWithWarnings = new Step
         {
             Text = "step",
-            Errors = { new Info { Key = "E2", Message = "new error" } }
+            Warning = { new global::app.warning.@this { Key = "W2", Message = "new warning" } }
         };
-        target.Merge(sourceWithErrors);
-        await Assert.That(target.Errors.Count).IsEqualTo(1);
-        await Assert.That(target.Errors[0].Key).IsEqualTo("E2");
+        target.Merge(sourceWithWarnings);
+        await Assert.That(target.Warning.Count).IsEqualTo(1);
+        await Assert.That(target.Warning[0].Key).IsEqualTo("W2");
     }
 
     #endregion

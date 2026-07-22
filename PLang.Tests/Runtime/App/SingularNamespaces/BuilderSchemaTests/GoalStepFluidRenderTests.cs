@@ -40,8 +40,7 @@ public class GoalStepFluidRenderTests
         await using var app = global::PLang.Tests.TestApp.Create("/test");
         var r = await Render(app,
             "{{ goal.Name }}\n{% for step in goal.Step %}- {{ step.Text }}\n{% endfor %}"
-            + "{% if goal.Errors.size > 0 %}\nerrors:\n{% endif %}"
-            + "{% if goal.Warnings.size > 0 %}\nwarnings:\n{% endif %}");
+            + "{% if goal.Warning.size > 0 %}\nwarnings:\n{% endif %}");
         await Assert.That(r).Contains("first thing");
     }
 }

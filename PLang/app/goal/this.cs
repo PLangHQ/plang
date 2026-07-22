@@ -179,10 +179,7 @@ public sealed partial class @this
     public app.@this App { get; set; } = null!;
 
     [Debug]
-    public List<Info> Errors { get; init; } = new();
-
-    [Debug]
-    public List<Info> Warnings { get; init; } = new();
+    public global::app.warning.list.@this Warning { get; init; } = new();
 
     [Debug, Default]
     public string FullPath

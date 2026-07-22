@@ -78,7 +78,7 @@ public sealed partial class @this
             {
                 if (current == null)
                 {
-                    Warnings.Add(new Info
+                    Warning.Add(new global::app.warning.@this
                     {
                         Key = "DroppedLeadingModifier",
                         Message = $"Modifier '{a.Module}.{a.ActionName}' has no preceding action and was dropped"
@@ -124,10 +124,7 @@ public sealed partial class @this
     public bool Keep { get; set; }
 
     [Debug]
-    public List<Info> Errors { get; init; } = new();
-
-    [Debug]
-    public List<Info> Warnings { get; init; } = new();
+    public global::app.warning.list.@this Warning { get; init; } = new();
 
     [Store, Debug, Default]
     public bool WaitForExecution { get; init; } = true;
@@ -193,16 +190,10 @@ public sealed partial class @this
         if (from.Action.Count > 0)
             _action = new global::app.goal.step.action.list.@this(from.Action.list);
 
-        if (from.Errors.Count > 0)
+        if (from.Warning.Count > 0)
         {
-            Errors.Clear();
-            Errors.AddRange(from.Errors);
-        }
-
-        if (from.Warnings.Count > 0)
-        {
-            Warnings.Clear();
-            Warnings.AddRange(from.Warnings);
+            Warning.Clear();
+            Warning.AddRange(from.Warning);
         }
     }
 

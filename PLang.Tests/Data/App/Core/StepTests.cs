@@ -118,20 +118,11 @@ public class StepTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task Errors_DefaultsToEmptyList()
+    public async Task Warning_DefaultsToEmptyList()
     {
         var step = new Step();
 
-        await Assert.That(step.Errors).IsNotNull();
-        await Assert.That(step.Errors.Count).IsEqualTo(0);
-    }
-
-    [Test]
-    public async Task Warnings_DefaultsToEmptyList()
-    {
-        var step = new Step();
-
-        await Assert.That(step.Warnings).IsNotNull();
-        await Assert.That(step.Warnings.Count).IsEqualTo(0);
+        await Assert.That(step.Warning).IsNotNull();
+        await Assert.That(step.Warning.Count).IsEqualTo(0);
     }
 }

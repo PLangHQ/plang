@@ -228,23 +228,20 @@ public class ActionsTests
     }
 
     [Test]
-    public async Task MergeStep_CopiesErrorsAndWarnings()
+    public async Task MergeStep_CopiesWarnings()
     {
         var step = new Step { Index = 0, Text = "test" };
         var stepFromLlm = new Step
         {
             Action = new StepActions(),
-            Errors = new List<Info> { new() { Key = "E1", Message = "Some error" } },
-            Warnings = new List<Info> { new() { Key = "W1", Message = "Some warning" } }
+            Warning = { new global::app.warning.@this { Key = "W1", Message = "Some warning" } }
         };
 
         var (result, error) = MergeStep(step, stepFromLlm);
 
         await Assert.That(error).IsNull();
-        await Assert.That(result!.Errors.Count).IsEqualTo(1);
-        await Assert.That(result.Errors[0].Key).IsEqualTo("E1");
-        await Assert.That(result.Warnings.Count).IsEqualTo(1);
-        await Assert.That(result.Warnings[0].Key).IsEqualTo("W1");
+        await Assert.That(result!.Warning.Count).IsEqualTo(1);
+        await Assert.That(result.Warning[0].Key).IsEqualTo("W1");
     }
 
     [Test]
@@ -279,15 +276,10 @@ public class ActionsTests
 
         step.Action = new global::app.goal.step.action.list.@this(stepFromLlm.Action.list);
 
-        if (stepFromLlm.Errors.Count > 0)
+        if (stepFromLlm.Warning.Count > 0)
         {
-            step.Errors.Clear();
-            step.Errors.AddRange(stepFromLlm.Errors);
-        }
-        if (stepFromLlm.Warnings.Count > 0)
-        {
-            step.Warnings.Clear();
-            step.Warnings.AddRange(stepFromLlm.Warnings);
+            step.Warning.Clear();
+            step.Warning.AddRange(stepFromLlm.Warning);
         }
 
         return (step, null);

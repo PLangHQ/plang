@@ -500,7 +500,7 @@ public class Default : IBuilder
                 var tail = parts[1];
                 if (modules.Contains(head, tail))
                 {
-                    a.Warnings.Add(new Info {
+                    a.Warning.Add(new global::app.warning.@this {
                         Key = "ModuleNameRepaired",
                         Message = $"Module name '{a.Module}' contained the action separator; repaired to module='{head}', action='{tail}' (was action='{a.ActionName}')."
                     });
@@ -509,7 +509,7 @@ public class Default : IBuilder
                 }
                 else if (modules.Contains(head, a.ActionName))
                 {
-                    a.Warnings.Add(new Info {
+                    a.Warning.Add(new global::app.warning.@this {
                         Key = "ModuleNameRepaired",
                         Message = $"Module name '{a.Module}' contained the action separator; repaired to module='{head}' (action='{a.ActionName}' kept)."
                     });
@@ -593,7 +593,7 @@ public class Default : IBuilder
                             System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                         if (m.Success)
                         {
-                            a.Warnings.Add(new Info {
+                            a.Warning.Add(new global::app.warning.@this {
                                 Key = "GoalCallNameRepaired",
                                 Message = $"goal.call.Name '{goalCall.Name}' carried the formal goal.call notation; repaired to '{m.Groups[1].Value}'."
                             });
