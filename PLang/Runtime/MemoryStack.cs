@@ -159,6 +159,9 @@ namespace PLang.Runtime
 
 				// javascript cannot handle long variables, so we convert it to string
 				customSettings.Converters.Add(new LongAsStringConverter());
+				// goals/steps carry the whole goal graph (steps, llm requests, back-refs);
+				// stub them so %!memoryStack% stays small on error.
+				customSettings.Converters.Add(new PLang.Utils.JsonConverters.GoalStubConverter());
 
 				var copyMs = ms.Where(p => !p.Name.StartsWith("!")).ToList();
 
@@ -171,7 +174,15 @@ namespace PLang.Runtime
 
 				for (int i = 0; i < newMs.Count; i++)
 				{
-					if (newMs[i].Value is IList list && list.Count > 50)
+					// newMs is the deserialized COPY (values are JTokens), never the live
+					// variables, so capping here can't affect runtime data. Cap nested arrays
+					// so one huge value (e.g. a VitalSource product with ~2000 prices) can't
+					// bloat the error-log memoryStack to megabytes.
+					if (newMs[i].Value is JToken token)
+					{
+						CapArrayItems(token, 50);
+					}
+					else if (newMs[i].Value is IList list && list.Count > 50)
 					{
 						newMs[i].Value = list.Cast<object>().Take(50).ToList();
 					}
@@ -219,6 +230,28 @@ namespace PLang.Runtime
 				ovs.Add(ov);
 
 				return JsonConvert.SerializeObject(ovs);
+			}
+		}
+
+		// Recursively cap arrays in a deserialized (copy) JToken so the error-log
+		// memoryStack stays small. Operates only on the copy passed in — never on the
+		// live variables — so runtime data access is unaffected. Each trimmed array keeps
+		// its first `max` items plus a marker noting how many were dropped.
+		private static void CapArrayItems(JToken token, int max)
+		{
+			if (token is JArray arr)
+			{
+				if (arr.Count > max)
+				{
+					int removed = arr.Count - max;
+					while (arr.Count > max) arr.RemoveAt(arr.Count - 1);
+					arr.Add(new JValue($"…({removed} more items)"));
+				}
+				foreach (var child in arr) CapArrayItems(child, max);
+			}
+			else if (token is JObject obj)
+			{
+				foreach (var prop in obj.Properties()) CapArrayItems(prop.Value, max);
 			}
 		}
 
