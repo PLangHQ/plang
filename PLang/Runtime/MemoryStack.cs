@@ -170,7 +170,16 @@ namespace PLang.Runtime
 				// This modifies the memory stack, so we need a new instance of it
 				// "simples" way to close it to serialize to json and back, not the fastest.
 				var json = JsonConvert.SerializeObject(copyMs, customSettings);
-				var newMs = JsonConvert.DeserializeObject<List<ObjectValue>>(json);
+				// Tolerate members that can't be reconstructed (e.g. ObjectValue.Type is a
+				// System.Type whose name won't resolve for anonymous / dynamic [code] types).
+				// Without this the whole deserialize throws and the entire memoryStack is lost.
+				var deserializeSettings = new JsonSerializerSettings
+				{
+					Error = HandleSerializationError,
+					MaxDepth = 64,
+					Converters = new List<JsonConverter> { new PLang.Utils.JsonConverters.SafeTypeJsonConverter() }
+				};
+				var newMs = JsonConvert.DeserializeObject<List<ObjectValue>>(json, deserializeSettings);
 
 				for (int i = 0; i < newMs.Count; i++)
 				{
