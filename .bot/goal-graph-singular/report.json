@@ -89,6 +89,15 @@
           "category": "doc",
           "confidence": "high",
           "context": "Reply to coder's wiring snag: back-ref IS the defect (4th appearance of program/run law); no Wire(), no Walk (ForEachAction deleted); back-ref deletion is its own pass with CONDEMNED bridge; Synthetic stamped by reader now; Before-lifecycle symmetry kills FindCurrentAction; setup walk evaporates (IsSetup at read). Render/analysis + build-validation dispositions + internal-face extent held OPEN pending discussion with Ingi. Not pushed."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/node-list-wiring-snag-answer.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "#3 settled with Ingi and folded into the wiring-snag answer: birth facts + registry filters (goal.list.Test one-liner mirroring :255; Tag stamped at parse; step.Variable build fact replacing getTypes which dies per its own [Obsolete]; discover's HasSkipTag/ExtractUserTags deleted; debug render via templates). #4 (build-validation iteration + internal-face extent) remains open."
         }
       ],
       "after": {
