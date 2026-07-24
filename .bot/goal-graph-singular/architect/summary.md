@@ -1,5 +1,9 @@
 # architect — goal-graph-singular
 
+## 2026-07-24 (evening) — goal.Tag node; parser stays generic; walkers dissolve into test.Create
+
+**goal-tag-and-walker-rehoming** ([goal-tag-and-walker-rehoming-answer.md](goal-tag-and-walker-rehoming-answer.md)) — reply to coder. Q1: `goal.Tag` typed as `tag.list.@this` program node (context-free sibling of action/step/parameter lists; coder rightly caught my `list.@this` sketch re-hitting the `:103` throw). Q3: the parser never learns test semantics — `test.tag`'s `IClass.Build()` hook stamps `goal.Tag` at build (birth facts are LOCAL; cross-goal aggregate stamps rejected as staleness-by-design). Q2 + Ingi's obpv call: `ExtractAutoTags`/`SeedBranchChains` are fragments of a leaked construction — they dissolve into `test.@this.Create(goal, context)` (Create-everywhere; coverage nests its own construction); discover collapses to load + `Goal.Test` + `test.Create`. `step.Variable` withdrawn — coder's `%!app.type.list%` route (Ingi-ruled) supersedes it. Coder unblocked on 6d (debug→templates) and 7 (Validate trilogy).
+
 ## 2026-07-24 (latest) — back-ref pass plan written; canonical-law proposals filed
 
 **backref-pass** ([backref-pass.md](backref-pass.md)) — the execution plan for the pass ruled in the wiring-snag answer, from a full verified consumer sweep: 11 writer sites die, ~14 readers reroute (9 to `context.Goal`/`context.Step`, 5 to the Call's captured refs), `Error` keeps its captured refs but loses the fallback chains, and three finds beyond coder's table: the **source generator** wires `IStep` from `action.Step` (emission change, do first), **`GoalCall.Action` dies entirely** (all consumers are chain-walks or stamps), and two doc comments teach the deleted pattern. Stays-list, order of operations, verify gates (incl. the modifier/event-handler divergence case and end-state greps). Runs after node-lists lands.

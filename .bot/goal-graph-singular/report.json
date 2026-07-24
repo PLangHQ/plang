@@ -120,6 +120,16 @@
           "category": "doc",
           "confidence": "high",
           "context": "Back-ref pass execution plan from full verified sweep (11 writers die, ~14 reroutes, generator IStep emission change first, GoalCall.Action deleted, stays-list, order, verify gates). claude-md-proposals entry for the two session laws. Summary + wiring-snag pointer updated."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/goal-tag-and-walker-rehoming-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Reply to coder's goal-tag/walker note: goal.Tag = tag.list program node (sibling of the three); parser stays generic \u2014 test.tag's IClass.Build() hook stamps goal.Tag at build (birth facts are LOCAL, no cross-goal aggregate stamps); ExtractAutoTags/SeedBranchChains obpv per Ingi \u2014 dissolve into test.Create(goal, context) (Create-everywhere; coverage nests its own Create); discover collapses to load + Goal.Test filter + test.Create. step.Variable withdrawn (superseded by %!app.type.list%)."
         }
       ],
       "after": {
