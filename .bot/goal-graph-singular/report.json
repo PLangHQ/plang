@@ -71,6 +71,15 @@
           "category": "doc",
           "confidence": "high",
           "context": "Consumer trace folded into node-list-values ruling, settled with Ingi: no public typed-element face (typed face internal; only Data value face public), .list escape hatch dies with zero survivors, ~16 loops become graph members (goal wires itself \u2014 the twice-written wiring loop collapses) + walk-door migrations (ForEachAction needs single-verb rename), nine signature retypes incl. BuildResponse.Steps/Describe/implicit-operator (former flagged-not-fixed now fixed), construction via node Add, property.list precedent caveat (Clr-per-read is the disease), coder's Elements accessor goes internal."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/node-list-values-answer.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Completing sweep after Ingi asked if the map was complete (it was not): direct enumeration/indexer sites (Parameter enumeration is shape-stable Data-rows before+after ~14 sites no-change; snapshot-restore/Validate index sites use the INTERNAL typed face), template language boundary (goalFormat/stepForLlm/actionFormal render-diff verification), scope hole flagged for Ingi (goal.Child + action.Modifiers are [Store] sequences neither in nor out \u2014 lean: explicitly OUT this pass), ~19 test sites."
         }
       ],
       "after": {

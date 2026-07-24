@@ -101,6 +101,31 @@ A caller that thinks it needs the raw collection is a member that hasn't been wr
 | `goal/call.cs:46` | `goalCall.Parameter = kept` via implicit `List<Data>` operator | build the node honestly; drop the implicit-operator reliance |
 | `call/this.Snapshot.cs:40` | `IndexOfAction(List<action>, …)` | **dead — zero callers** (Capture uses the node's own `IndexOf` at `:26`). Delete. |
 
+### E — direct enumeration and indexers (the sweep the `.list` grep missed)
+
+Sites that enumerate/index the nodes WITHOUT the `.list` face. Three classes:
+
+1. **Shape-stable — no change needed (~14 sites).** Every direct `Parameter`/`Default` enumeration and LINQ (`foreach (var p in a.Parameter)` — `app/this.cs:556`, `goal/call.cs:35`, `Default.cs:552,563,633,891`, `BuildResponse.Validate:121`, `intercept:101`; `Parameter?.FirstOrDefault(p => p.Name…)` — `action/this.cs:118`, `HttpBuildHelpers:16`, `getTypes:157`, `discover:233,280`, `file/read:120`, `llm/query:118,125`; `template.Parameter[0].Name` — `http/Default:690`). `parameter.list` yields Data rows today AND after (the base's value face IS Data rows) — same shape, these compile and mean the same. This is the payoff of rows-are-Data.
+2. **Engine sites that need typed-by-index → the INTERNAL typed face.** Snapshot restore (`callstack/this.Snapshot.cs:159,163,225` — `liveGoal.Step[stepIndex]`, `liveStep.Action[actionIndex]`, positional resume), `BuildResponse.Validate:51,73` (`goal.Step[i].Action.Count`). All same-assembly — the internal typed face serves them with zero public exposure. Public = Data face (plang navigation); internal = typed (engine).
+3. **Owner access** — a node's holder walking its own child node (`this.Item.cs` Output loops `in Parameter/:101`, `in Default/:107`, `in Child/:120`; `goal.Run`'s `Step.Run`) — internal face, fine.
+
+### F — the language boundary (templates ARE consumers)
+
+`os/system/builder/llm/templates/goalFormat.template` (`{% for step in goal.Step %}`), `stepForLlm.template` (`{% for a in step.Action %}` + `a.Parameter.size`), `templates/actionFormal.template` (`a.Parameter`/`a.Modifier` loops). Post-change Fluid iterates the node's VALUE face (Data rows) and member-accesses through navigation. This should work by design — it is the face navigation is for — but it must be **verified by rendering**, not assumed: build the builder (BuilderSanity) and diff the three templates' output against pre-change. A silent change here corrupts the compile prompts, the most expensive kind of quiet break.
+
+### G — scope hole: two [Store] sequences are neither in nor out — Ingi to rule
+
+The settled scope (in: `action.list`, `step.list`, `parameter.list`) is silent on two more `[Store]` sequences that ride readers:
+
+- **`goal.Child`** (sub-goals — enumerated at `GoalCall:188,288,302,316`, `goal/this:248,250,341`, `goal/this.Item.cs:87`, `Default.cs:266`, and from plang at `BuildGoal/Start.goal:18` `foreach %parentGoal.Child%`)
+- **`action.Modifiers`** (`List<modifier.@this>` — naked, `action/this.cs:38`)
+
+Architect lean: explicitly OUT of this pass (same pattern, later conversion) — but it must be SAID, or the next session improvises. Do not convert them here; do not add glue to them either.
+
+### H — tests
+
+~19 sites in PLang.Tests reach `.list`/enumerate the nodes — mechanical updates, same rules as production (no `.list`, no `.ToList()` glue).
+
 ### C — construction sites: build-then-wrap dies, construct the node and `Add` into it
 
 Readers (`step/serializer/Reader.cs:27`, `goal/serializer/Reader.cs:45`, `action/serializer/Reader.cs:70`), the Item.cs Creates (`step:38`, `action:71`, `goal:46`), the `.goal` text parser (`goal/this.cs:384,467,546` — note `step/list:14-17` documents the mutate-after-wrap trick; `Add`-into-node makes both the trick and the raw list unnecessary), copy-construction via node copy-ctor (`new(from.Action)` — `Merge` `step/this.cs:191`, `BuildResponse.Validate:32`), empty defaults via the context-free ctor. `Nest` (`step/this.cs:68,71,101`) is the owner mutating its own node — stays.
