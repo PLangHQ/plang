@@ -157,6 +157,11 @@ public sealed partial class @this
     [Store, Debug, Default]
     public bool IsTest { get; set; }
 
+    /// <summary>The goal's tags — a build-birth fact stamped by <c>test.tag</c>'s Build hook (skip,
+    /// user tags). A <c>list&lt;tag&gt;</c> program node; each tag owns its case-insensitive equality.</summary>
+    [Store, Debug]
+    public global::app.goal.tag.list.@this Tag { get; init; } = new();
+
 
     /// <summary>
     /// Folder path of this goal, derived from Path.

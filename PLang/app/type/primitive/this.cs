@@ -50,6 +50,8 @@ public static class @this
             // typed lists still surface as the generic `list<t>` shape via GetTypeName.
             ["list"] = typeof(app.type.item.list.@this),
             ["array"] = typeof(app.type.item.list.@this),
+            // tag → the native tag value type (a normalized, case-insensitive label).
+            ["tag"] = typeof(app.type.item.tag.@this),
             // dict/dictionary/map → the native object value type (collections
             // hold Data). The raw Dictionary<string,object> entry that used to
             // back these is retired; typed dictionaries still surface as the
@@ -110,6 +112,7 @@ public static class @this
             [typeof(app.type.item.dict.@this)] = "dict",
             // Native list value type → "list" (same no-context derivation reason).
             [typeof(app.type.item.list.@this)] = "list",
+            [typeof(app.type.item.tag.@this)] = "tag",
         };
 
     /// <summary>
