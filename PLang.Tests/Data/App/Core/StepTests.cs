@@ -69,18 +69,6 @@ public class StepTests : System.IAsyncDisposable
         await Assert.That(step.Goal).IsEqualTo(goal);
     }
 
-    // --- HasSubSteps ---
-
-    [Test]
-    public async Task HasSubSteps_NoGoal_DefaultsFalse()
-    {
-        var step = new Step { Index = 0, Indent = 0 };
-
-        await Assert.That(step.HasSubSteps).IsFalse();
-    }
-
-
-
     [Test]
     public async Task ToString_ReturnsFormattedString()
     {

@@ -43,10 +43,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             goal.Path = global::app.type.item.path.@this.Resolve(p, data.Context);
         if (d.Get("step")?.Peek() is global::app.type.item.list.@this steps)
         {
-            var list = new System.Collections.Generic.List<global::app.goal.step.@this>();
+            var node = new global::app.goal.step.list.@this();
             foreach (var row in steps.Items)
-                if (Made<global::app.goal.step.@this>(row.Peek(), data) is { } s) list.Add(s);
-            goal.Step = new(list);
+                if (Made<global::app.goal.step.@this>(row.Peek(), data) is { } s) node.Add(s);
+            goal.Step = node;
         }
         if (d.Get("child")?.Peek() is global::app.type.item.list.@this subs)
         {
@@ -79,9 +79,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (Description != null) { writer.Name("description"); writer.String(Description); }
         if (Comment != null) { writer.Name("comment"); writer.String(Comment); }
         writer.Name("step");
-        writer.BeginArray(Step.CountRaw);
-        foreach (var s in Step.Elements) await s.Output(writer, mode, context);
-        writer.EndArray();
+        await Step.Output(writer, mode, context);   // the step.list writes its own bare array
         writer.Name("child");
         writer.BeginArray(Child.Count);
         foreach (var g in Child) await g.Output(writer, mode, context);

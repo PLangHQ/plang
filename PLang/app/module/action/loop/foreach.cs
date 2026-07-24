@@ -56,7 +56,7 @@ public partial class Foreach : IContext, IStep
             if (KeyName is { IsInitialized: true })
                 await Context.Variable.Set(await KeyName.Value(), key);
 
-            foreach (var action in bodyActions.Elements)
+            foreach (var action in bodyActions)
             {
                 var result = await action.Run(Context);
                 if (result.Returned) return result;
@@ -95,8 +95,10 @@ public partial class Foreach : IContext, IStep
         if (actions == null || __action == null) return new();
 
         int myIndex = actions.IndexOf(__action);
-        if (myIndex < 0 || myIndex + 1 >= actions.CountRaw) return new();
+        if (myIndex < 0 || myIndex + 1 >= actions.Count) return new();
 
-        return new(actions.Elements.Skip(myIndex + 1));
+        var body = new global::app.goal.step.action.list.@this();
+        foreach (var a in actions.Elements.Skip(myIndex + 1)) body.Add(a);
+        return body;
     }
 }

@@ -77,6 +77,7 @@ public sealed partial class @this
         _ => throw new System.ArgumentException($"Cannot compare number to {obj.GetType()}"),
     };
 
+
     public bool ExactEquals(@this? other)
     {
         if (other is null) return false;

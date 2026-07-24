@@ -274,7 +274,7 @@ public class ActionsTests
         if (stepFromLlm == null)
             return (null, new global::app.error.ProgramError("Step result from LLM cannot be null", key: "MergeError"));
 
-        step.Action = new global::app.goal.step.action.list.@this(stepFromLlm.Action.list);
+        step.Action = stepFromLlm.Action;   // take the node (mirrors step.Merge)
 
         if (stepFromLlm.Warning.Count > 0)
         {

@@ -25,6 +25,9 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     {
         if (reader.Null()) return new global::app.type.item.@null.@this("action", kind);
         var action = new global::app.goal.step.action.@this();
+        // Provenance at birth: an action READ from a .pr is authored, not injected — so it is
+        // non-synthetic. Stamped here (the reader knows authored mode), never in a post-load loop.
+        action.Synthetic = false;
         Populate(ref reader, action, ctx);
         return action;
     }
@@ -67,12 +70,12 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                     reader.EndArray();
                     break;
                 case "child":
-                    var childSteps = new System.Collections.Generic.List<global::app.goal.step.@this>();
+                    var childSteps = new global::app.goal.step.list.@this();   // Add each step into the node
                     reader.BeginArray();
                     while (reader.NextElement())
                         childSteps.Add((global::app.goal.step.@this)StepReader.Read(ref reader, null, ctx));
                     reader.EndArray();
-                    action.Child = new global::app.goal.step.list.@this(childSteps);
+                    action.Child = childSteps;
                     break;
                 default: reader.Skip(); break;
             }

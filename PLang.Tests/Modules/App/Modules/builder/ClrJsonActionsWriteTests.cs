@@ -48,11 +48,11 @@ public class ClrJsonActionsWriteTests : System.IAsyncDisposable
         // @schema:data reader materializes (a bare {name,value} has no declared type).
         const string actionsJson = """
         [
-          { "module": "variable", "action": "set",
+          { "module": "variable", "name": "set",
             "parameters": [
               { "name": "Name",  "type": { "name": "text" }, "value": "x" },
               { "name": "Value", "type": { "name": "text" }, "value": "1" } ] },
-          { "module": "output", "action": "write",
+          { "module": "output", "name": "write",
             "parameters": [
               { "name": "content", "type": { "name": "text" }, "value": "%x%" } ] }
         ]

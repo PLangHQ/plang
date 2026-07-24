@@ -35,10 +35,10 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         step.Source = d.Get("source")?.Peek()?.ToString();
         if (d.Get("action")?.Peek() is global::app.type.item.list.@this acts)
         {
-            var list = new System.Collections.Generic.List<global::app.goal.step.action.@this>();
+            var node = new global::app.goal.step.action.list.@this();
             foreach (var row in acts.Items)
-                if (Made<global::app.goal.step.action.@this>(row.Peek(), data) is { } a) list.Add(a);
-            step.Action = new(list);
+                if (Made<global::app.goal.step.action.@this>(row.Peek(), data) is { } a) node.Add(a);
+            step.Action = node;
         }
         return step;
     }
@@ -65,9 +65,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         writer.Name("lineNumber"); writer.Int(LineNumber);
         if (Comment != null) { writer.Name("comment"); writer.String(Comment); }
         writer.Name("action");
-        writer.BeginArray(Action.CountRaw);
-        foreach (var a in Action.Elements) await a.Output(writer, mode, context);
-        writer.EndArray();
+        await Action.Output(writer, mode, context);   // the action.list writes its own bare array
         if (Intent != null) { writer.Name("intent"); writer.String(Intent); }
         if (Formal != null) { writer.Name("formal"); writer.String(Formal); }
         if (Source != null) { writer.Name("source"); writer.String(Source); }

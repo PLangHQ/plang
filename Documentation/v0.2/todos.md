@@ -1968,3 +1968,9 @@ data-url → `(mime, bytes)` → `Format.TypeFromMime(mime)` → build that type
 so the kind falls out of the built value (image/gif→image kind gif, application/pdf→…,
 text/plain→text). Ingi wants this done as its own piece AND as a "how hard is it to add a
 new plang type" exercise (a `base64` type). Plan to be shown before building.
+
+## 2026-07-24 — loop/foreach: bodyActions → actions rename check
+Follow-up (node-list pass, from Ingi): in `app/module/action/loop/foreach.cs`, after the
+node-list changes land, check whether the local `bodyActions` (the loop-body slice) can just
+be named `actions` / simplified — `foreach (var action in bodyActions)`. Small cleanup;
+verify no shadow/clash with the step's action chain naming first.

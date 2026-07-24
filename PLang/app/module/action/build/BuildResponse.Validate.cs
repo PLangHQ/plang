@@ -27,9 +27,9 @@ public sealed partial class BuildResponse
 
     private static Step CopyActionsIfAny(Step from, Step to)
     {
-        // CopyActionsIfAny lets the SaveGoal safety net see the same Actions the
-        // store would persist — without mutating the source step's ownership.
-        to.Action = new global::app.goal.step.action.list.@this(from.Action.Elements);
+        // Lets the SaveGoal safety net see the same Actions the store would persist. The graph is
+        // read-only after load, so sharing the node (not a fresh wrapper) can't mutate the source.
+        to.Action = from.Action;
         return to;
     }
 

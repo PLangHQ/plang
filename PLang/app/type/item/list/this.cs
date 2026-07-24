@@ -112,6 +112,13 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// between the actors sharing the graph.</summary>
     protected @this(List<object?> backing) => _items = backing;
 
+    /// <summary>Adopt another list's rows into a fresh instance of THIS (sub)type — the value→slot
+    /// materialization when a typed node slot (<c>list&lt;action&gt;</c>) is set from a value the
+    /// generic list reader produced as a base <c>list</c>. The rows are already the right elements
+    /// (the element reader ran); only the container wrapper needs to be the declared type.
+    /// Context-free (a program node adopts nothing run-scoped).</summary>
+    protected @this(@this source) : this(new List<object?>(source._items)) { }
+
     // Type-on-read: the row at `i` as a FRESH Data wrapping the raw slot — never
     // cached back. Leaving the slot raw keeps the backing pristine (enumeration-safe,
     // and it stays the same instance the source handed over). An already-Data slot

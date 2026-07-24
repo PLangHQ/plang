@@ -44,6 +44,9 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
     /// shared across runs, so it stores no context. The elements ride as typed items in the backing.</summary>
     protected @this(System.Collections.Generic.List<object?> backing) : base(backing) { }
 
+    /// <summary>Adopt another list's rows — the value→slot materialization (see the base overload).</summary>
+    protected @this(global::app.type.item.list.@this source) : base(source) { }
+
     /// <summary>Render/clone preserve the element-type tag — a list&lt;T&gt; stays
     /// a list&lt;T&gt; instead of degrading to the non-generic base.</summary>
     protected override global::app.type.item.list.@this Empty() => new @this<T>(Context);

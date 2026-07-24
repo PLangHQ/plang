@@ -865,7 +865,7 @@ public sealed class OpenAi : ILlm
 
     private static Dictionary<string, object> BuildParamSchema(global::app.goal.step.action.parameter.list.@this? parameters)
     {
-        if (parameters == null || parameters.CountRaw == 0)
+        if (parameters == null || parameters.Count == 0)
             return new Dictionary<string, object>
             {
                 ["type"] = "object",

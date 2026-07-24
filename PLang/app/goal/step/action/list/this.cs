@@ -15,10 +15,10 @@ namespace app.goal.step.action.list;
 /// </summary>
 public sealed class @this : global::app.type.item.list.@this<Action>
 {
-    // Empty program node (field defaults / an emptied chain) — context-free, filled by the reader.
+    // Two ways to be born: EMPTY (callers Add each action in — the reader, Nest), or ADOPT a list
+    // value's rows (the value→slot materialization, set %step.action% = %json%).
     public @this() : base(new List<object?>()) { }
-    // The elements ride as typed items in the backing (store raw, type on read); no context stamped.
-    public @this(IEnumerable<Action> actions) : base(new List<object?>(actions.Cast<object?>())) { }
+    public @this(global::app.type.item.list.@this source) : base(source) { }
 
     /// <summary>Clone/render keep this concrete node type, context-free.</summary>
     protected override global::app.type.item.list.@this Empty() => new @this();
@@ -26,12 +26,14 @@ public sealed class @this : global::app.type.item.list.@this<Action>
     /// <summary>Runs the chain: setup / non-condition actions dispatch in order; a condition evaluates,
     /// and if truthy runs its <c>Child</c> branch and stops (the rest of the chain — elseif/else — is
     /// skipped). An ordinary action has an empty Child so never enters. Context is the ASK's, handed to
-    /// each action's own Run.</summary>
+    /// each action's own Run. The node iterates ITSELF (the typed positional face), never a harvested
+    /// element list.</summary>
     public async System.Threading.Tasks.Task<data.@this> Run(actor.context.@this context)
     {
         data.@this result = context.Ok();
-        foreach (var action in Elements)
+        for (int i = 0; i < Count; i++)
         {
+            var action = this[i];
             context.CancellationToken.ThrowIfCancellationRequested();
             result = await action.Run(context);
             if (result.ShouldExit() || result.Handled) break;         // return/exit, or a legit event-handled stop
@@ -44,13 +46,24 @@ public sealed class @this : global::app.type.item.list.@this<Action>
         return result;
     }
 
+    /// <summary>Writes itself to the wire as the bare <c>.pr</c> action array — each element writes its
+    /// own action shape (NOT the base list's self-describing Data-envelope value face). The holder just
+    /// says <c>Action.Output(...)</c>; the node is the iterator of itself, like <see cref="Run"/>.</summary>
+    public override async System.Threading.Tasks.ValueTask Output(
+        global::app.channel.serializer.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context)
+    {
+        writer.BeginArray((int)Count);
+        for (int i = 0; i < Count; i++) await this[i].Output(writer, mode, context);
+        writer.EndArray();
+    }
+
     /// <summary>The coverage key — an action's index by reference identity (the same instance the
     /// chain ran), or -1 when absent.</summary>
     public int IndexOf(Action a)
     {
-        var els = Elements;
-        for (int i = 0; i < els.Count; i++)
-            if (ReferenceEquals(els[i], a)) return i;
+        for (int i = 0; i < Count; i++)
+            if (ReferenceEquals(this[i], a)) return i;
         return -1;
     }
 }

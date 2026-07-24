@@ -183,8 +183,15 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
             var context = binding?.Context;
             var entity = context?.App.Type[prop.PropertyType];
             var reader = entity != null ? context!.App.Type.Reader.Typed(entity.Name, null) : null;
-            value = (reader != null ? iv.Read(reader, entity!.Kind?.Name, context!) : null)
-                    ?? iv.Clr(prop.PropertyType);
+            var read = reader != null ? iv.Read(reader, entity!.Kind?.Name, context!) : null;
+            // The generic "list" reader produces a base list (its elements already read through their
+            // own reader — a goal.call param is a typed GoalCall). A typed node slot (list<action>)
+            // adopts those rows into ITS type: same rows, the declared container. No type-switch — any
+            // list<T> slot materializes the same way.
+            if (read is global::app.type.item.list.@this made && !prop.PropertyType.IsInstanceOfType(made)
+                && typeof(global::app.type.item.list.@this).IsAssignableFrom(prop.PropertyType))
+                read = (@this?)System.Activator.CreateInstance(prop.PropertyType, made);
+            value = read ?? iv.Clr(prop.PropertyType);
         }
         prop.SetValue(this, value);
         return this;

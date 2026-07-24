@@ -370,12 +370,9 @@ public sealed class @this
                 return app.System.Context.Error(readResult.Error ?? new Error(
                     $"Failed to parse goal file: {prPath} — read produced {materialized.GetType().Name}, not a goal"));
 
+            // CONDEMNED: dies with step.Goal — see back-ref pass. Synthetic is now stamped at read.
             foreach (var step in primary.Step.Elements)
-            {
                 step.Goal = primary;
-                foreach (var action in step.Action.Elements)
-                    action.Synthetic = false;
-            }
             Add(primary);
 
             // Answer the clr<goal> shape the read produced — callers unwrap `as clr<goal>`

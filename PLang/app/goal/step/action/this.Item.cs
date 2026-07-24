@@ -68,10 +68,10 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
                     act.Modifier.Add((modifier.@this)Populate(md, new modifier.@this(), data));
         if (d.Get("child")?.Peek() is global::app.type.item.list.@this cs)
         {
-            var steps = new System.Collections.Generic.List<global::app.goal.step.@this>();
+            var node = new global::app.goal.step.list.@this();
             foreach (var row in cs.Items)
-                if (Made<global::app.goal.step.@this>(row.Peek(), data) is { } s) steps.Add(s);
-            act.Child = new(steps);
+                if (Made<global::app.goal.step.@this>(row.Peek(), data) is { } s) node.Add(s);
+            act.Child = node;
         }
         return act;
     }
@@ -97,15 +97,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         writer.Name("module"); writer.String(Module);
         writer.Name("name"); writer.String(ActionName);
         writer.Name("parameter");
-        writer.BeginArray(Parameter.CountRaw);
-        foreach (var p in Parameter) await p.Output(writer, mode, context);
-        writer.EndArray();
+        await Parameter.Output(writer, mode, context);   // params ride the base value face (Data envelopes)
         if (Default != null)
         {
             writer.Name("default");
-            writer.BeginArray(Default.CountRaw);
-            foreach (var d in Default) await d.Output(writer, mode, context);
-            writer.EndArray();
+            await Default.Output(writer, mode, context);
         }
         writer.Name("modifier");
         writer.BeginArray(Modifier.Count);
@@ -113,12 +109,10 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         writer.EndArray();
         // The branch body of a control-flow action — omitted on ordinary actions (empty Child).
         // Each child step writes itself; the tree serializes recursively.
-        if (Child.CountRaw > 0)
+        if (Child.Count > 0)
         {
             writer.Name("child");
-            writer.BeginArray(Child.CountRaw);
-            foreach (var s in Child.Elements) await s.Output(writer, mode, context);
-            writer.EndArray();
+            await Child.Output(writer, mode, context);   // step.list writes its own bare array
         }
         writer.EndObject();
     }

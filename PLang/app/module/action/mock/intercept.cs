@@ -32,10 +32,10 @@ public partial class intercept : IContext
         var paramMatchers = Parameter == null || await Parameter.IsEmpty() ? null
             : (await Parameter.Value()).Clr<Dictionary<string, object?>>();
 
-        Func<actor.context.@this, app.goal.step.action.@this?, data.@this?, Task<data.@this>> handler = async (context, _, _) =>
+        Func<actor.context.@this, app.goal.step.action.@this?, data.@this?, Task<data.@this>> handler = async (context, currentAction, _) =>
         {
-            // Find the current action being executed from the step
-            var currentAction = FindCurrentAction(context);
+            // The action being intercepted is handed to the handler by the BeforeAction lifecycle
+            // (symmetry with the AfterAction side) — no guessing from the step.
 
             // Check parameter matching if specified
             if (paramMatchers != null && currentAction != null)
@@ -76,21 +76,6 @@ public partial class intercept : IContext
         Context.Events.Register(binding);
 
         return Context.Ok<global::app.mock.@this>(handle);
-    }
-
-    private static app.goal.step.action.@this? FindCurrentAction(actor.context.@this context)
-    {
-        var step = context.Step;
-        if (step == null) return null;
-
-        // Return the first action (or find the one currently executing)
-        // In the BeforeAction event, we're being called for a specific action
-        // The event binding was matched by pattern, so all actions in the step match
-        foreach (var action in step.Action.Elements)
-        {
-            return action;
-        }
-        return null;
     }
 
     private static Dictionary<string, object?> CaptureParameters(app.goal.step.action.@this? action, global::app.variable.list.@this variables)

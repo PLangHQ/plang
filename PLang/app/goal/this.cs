@@ -40,13 +40,13 @@ public sealed partial class @this
     [Store, LlmBuilder, Debug, Default]
     public string? Comment { get; init; }
 
-    private global::app.goal.step.list.@this _step = new(new List<global::app.goal.step.@this>());
+    private global::app.goal.step.list.@this _step = new();
     [Store, Debug, Default]
     public global::app.goal.step.list.@this Step
     {
         // The goal owns its steps (a step.list node). The getter stamps the back-ref.
         get { foreach (var s in _step.Elements) s.Goal ??= this; return _step; }
-        set => _step = value ?? new(new List<global::app.goal.step.@this>());
+        set => _step = value ?? new();
     }
 
     private List<@this> _child = new();
@@ -381,7 +381,9 @@ public sealed partial class @this
         var lines = text.Split('\n');
         var goals = new List<@this>();
         var currentGoal = (@this?)null;
-        var currentSteps = new List<Step>();
+        // The current goal's step node — steps Add straight into it. currentStep accumulates
+        // (continuation lines rebuild it) and is Added at each boundary (next step / blank / goal / EOF).
+        global::app.goal.step.list.@this? stepNode = null;
         var currentStep = (Step?)null;
         var pendingComment = new StringBuilder();
         var inBlockComment = false;
@@ -439,7 +441,7 @@ public sealed partial class @this
             if (string.IsNullOrWhiteSpace(raw))
             {
                 pendingComment.Clear();
-                currentStep = null;
+                if (currentStep != null) { stepNode!.Add(currentStep); currentStep = null; }
                 continue;
             }
 
@@ -464,10 +466,13 @@ public sealed partial class @this
                         Path = path
                     };
                     goals.Add(currentGoal);
-                    currentSteps = new List<Step>();
-                    currentGoal.Step = new global::app.goal.step.list.@this(currentSteps);
+                    stepNode = new global::app.goal.step.list.@this();
+                    currentGoal.Step = stepNode;
                     stepIndex = 0;
                 }
+
+                // Finalize the previous step before starting this one (continuations are done).
+                if (currentStep != null) stepNode!.Add(currentStep);
 
                 var leadingSpaces = raw.Length - raw.TrimStart().Length;
                 var indent = leadingSpaces / 4;
@@ -485,7 +490,6 @@ public sealed partial class @this
                 };
 
                 currentStep.Goal = currentGoal;
-                currentSteps.Add(currentStep);
                 stepIndex++;
                 continue;
             }
@@ -500,9 +504,7 @@ public sealed partial class @this
                     LineNumber = currentStep.LineNumber,
                     Indent = currentStep.Indent,
                     Comment = currentStep.Comment
-                };
-                currentSteps[currentSteps.Count - 1] = currentStep;
-                continue;
+                };                continue;
             }
 
             // Escape character — \ at start of line continues previous step text
@@ -516,15 +518,16 @@ public sealed partial class @this
                     LineNumber = currentStep.LineNumber,
                     Indent = currentStep.Indent,
                     Comment = currentStep.Comment
-                };
-                currentSteps[currentSteps.Count - 1] = currentStep;
-                continue;
+                };                continue;
             }
 
             // Goal header
             var goalName = trimmed;
             var goalComment = pendingComment.Length > 0 ? pendingComment.ToString() : null;
             pendingComment.Clear();
+
+            // Finalize the previous goal's last step before starting the new goal.
+            if (currentStep != null) { stepNode?.Add(currentStep); currentStep = null; }
 
             var normalizedPath = path?.ToString().Replace('\\', '/').TrimStart('/') ?? "";
             var isSetup = goalName.Equals("Setup", StringComparison.OrdinalIgnoreCase)
@@ -543,11 +546,14 @@ public sealed partial class @this
                 IsTest = isTest
             };
             goals.Add(currentGoal);
-            currentSteps = new List<Step>();
-            currentGoal.Step = new global::app.goal.step.list.@this(currentSteps);
+            stepNode = new global::app.goal.step.list.@this();
+            currentGoal.Step = stepNode;
             stepIndex = 0;
             currentStep = null;
         }
+
+        // Finalize the last step at EOF.
+        if (currentStep != null) stepNode?.Add(currentStep);
 
         // Sub-goals nest under the root (public) goal
         if (goals.Count > 1)

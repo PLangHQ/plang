@@ -166,17 +166,25 @@ public sealed class @this : global::app.type.kind.@this
         return raw is global::app.type.item.@this iv ? iv.Clr(t) : raw;
     }
 
-    private global::System.Collections.IList ReadDataList<TReader>(ref TReader reader,
+    private object? ReadDataList<TReader>(ref TReader reader,
         global::System.Type listType, global::app.type.reader.ReadContext ctx)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
-        var list = (global::System.Collections.IList)global::System.Activator.CreateInstance(listType)!;
         var dataReader = new global::app.data.reader.@this();
+        // Build the declared List-of-Data type ONCE, adding each param's own verbatim bytes (→ the
+        // @schema:data reader, which owns its format) straight into it — no intermediate list copied
+        // through a ctor. A plang list node (parameter.list) adds via AddRaw; a mutable IList directly.
+        if (typeof(global::app.type.item.list.@this).IsAssignableFrom(listType))
+        {
+            var node = (global::app.type.item.list.@this)global::System.Activator.CreateInstance(listType)!;
+            reader.BeginArray();
+            while (reader.NextElement()) node.AddRaw(dataReader.Read(reader.RawValue(), ctx));
+            reader.EndArray();
+            return node;
+        }
+        var list = (global::System.Collections.IList)global::System.Activator.CreateInstance(listType)!;
         reader.BeginArray();
-        // Each param's own verbatim bytes → the @schema:data reader (it owns its format). The
-        // shape walk stays format-agnostic: RawValue is IReader surface, no json named here.
-        while (reader.NextElement())
-            list.Add(dataReader.Read(reader.RawValue(), ctx));
+        while (reader.NextElement()) list.Add(dataReader.Read(reader.RawValue(), ctx));
         reader.EndArray();
         return list;
     }

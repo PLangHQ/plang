@@ -40,7 +40,7 @@ public class ForeachErrorPropagationTests
                     ("collection", "%items%"), Make.Param("itemname", "%item%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "NonExistentGoal" })))));
-        var step = goal.Step.list.First();
+        var step = goal.Step[0];
 
         var result = await step.Run(context);
 
@@ -107,7 +107,7 @@ public class ForeachErrorPropagationTests
                     ("collection", "%items%"), Make.Param("itemname", "%item%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "Inner" })))));
-        var outerStep = outerGoal.Step.list.First();
+        var outerStep = outerGoal.Step[0];
 
         var result = await outerStep.Run(context);
 
@@ -138,7 +138,7 @@ public class ForeachErrorPropagationTests
                     ("collection", "%items%"), Make.Param("itemname", "%item%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "Noop" })))));
-        var step = goal.Step.list.First();
+        var step = goal.Step[0];
 
         var result = await step.Run(context);
 

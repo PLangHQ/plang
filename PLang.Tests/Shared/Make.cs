@@ -146,22 +146,22 @@ public static class Make
             Path = global::app.type.item.path.@this.Resolve(path, global::PLang.Tests.TestApp.SharedContext),
         };
 
-        var stepList = new System.Collections.Generic.List<global::app.goal.step.@this>();
+        var stepNode = new global::app.goal.step.list.@this();
         for (int i = 0; i < steps.Length; i++)
         {
-            var actions = new System.Collections.Generic.List<global::app.goal.step.action.@this>();
+            var actionNode = new global::app.goal.step.action.list.@this();
             foreach (var action in steps[i].Actions)
-                actions.Add(action);
+                actionNode.Add(action);
 
-            stepList.Add(new global::app.goal.step.@this
+            stepNode.Add(new global::app.goal.step.@this
             {
                 Index = i,
                 Indent = steps[i].Indent,
                 Text = steps[i].Text,
-                Action = new global::app.goal.step.action.list.@this(actions),
+                Action = actionNode,
             });
         }
-        goal.Step = new global::app.goal.step.list.@this(stepList);
+        goal.Step = stepNode;
 
         return goal;
     }

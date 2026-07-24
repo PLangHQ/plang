@@ -262,7 +262,7 @@ public class Default : IBuilder
     // nested projection — the goal owns its (now-tree) step collection.
     private void Fold(Goal goal, List<global::app.error.IError> errors)
     {
-        goal.Step = new global::app.goal.step.list.@this(Fold(goal.Step.Elements, errors));
+        goal.Step = Fold(goal.Step.Elements, errors);
         foreach (var subGoal in goal.Child) Fold(subGoal, errors);
     }
 
@@ -270,10 +270,10 @@ public class Default : IBuilder
     // action (the IsCondition action) Child; recursion composes nested blocks. A block under
     // a non-condition step is an authoring error (A4) — recorded against the offending step,
     // never silently dropped or kept flat. Real steps only; nothing is synthesized here.
-    private List<global::app.goal.step.@this> Fold(
+    private global::app.goal.step.list.@this Fold(
         IReadOnlyList<global::app.goal.step.@this> flat, List<global::app.error.IError> errors)
     {
-        var top = new List<global::app.goal.step.@this>();
+        var top = new global::app.goal.step.list.@this();   // Add each real step into the node
         int i = 0;
         while (i < flat.Count)
         {
@@ -292,7 +292,7 @@ public class Default : IBuilder
                         $"indented steps under non-condition step '{step.Text}'",
                         step, "IndentUnderNonCondition", 400));
                 else
-                    gate.Child = new global::app.goal.step.list.@this(Fold(block, errors));
+                    gate.Child = Fold(block, errors);
             }
             top.Add(step);   // the real step keeps its identity at this level
             i = j;

@@ -42,7 +42,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.item.choice.@this<global::app.goal.Visibility> visibility = global::app.goal.Visibility.Private;
         global::app.type.item.path.@this? path = null;
         bool isSetup = false, isEvent = false, isSystem = false, isTest = false;
-        var steps = new System.Collections.Generic.List<global::app.goal.step.@this>();
+        var steps = new global::app.goal.step.list.@this();   // Add each step into the node
         var goals = new System.Collections.Generic.List<global::app.goal.@this>();
 
         reader.BeginObject();
@@ -87,7 +87,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             Name = name,
             Description = description,
             Comment = comment,
-            Step = new global::app.goal.step.list.@this(steps),
+            Step = steps,
             Child = goals,
             Visibility = visibility,
             Path = path,

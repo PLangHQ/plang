@@ -42,7 +42,7 @@ public partial class @this
     /// Both nesting forms land here: inline <c>if/elseif/else</c> (each condition action carries its body)
     /// and indented sub-step blocks (folded onto the gate action). A <c>step.list</c>, so it runs itself.</summary>
     [Store, Debug, Default]
-    public global::app.goal.step.list.@this Child { get; set; } = new(new List<global::app.goal.step.@this>());
+    public global::app.goal.step.list.@this Child { get; set; } = new();
 
     [Debug]
     public global::app.warning.list.@this Warning { get; init; } = new();
@@ -134,7 +134,7 @@ public partial class @this
     {
         var lifecycle = context.LifecycleFor(this);
 
-        var beforeResult = await lifecycle.Before.Run(context, app.@event.Trigger.BeforeAction);
+        var beforeResult = await lifecycle.Before.Run(context, app.@event.Trigger.BeforeAction, this);
         if (!beforeResult.Success) return beforeResult;
 
         global::app.data.@this data;

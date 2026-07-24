@@ -38,7 +38,7 @@ public class ForeachStringNotIterableTests
                     ("collection", "%s%"), Make.Param("itemname", "%item%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "DoNothing" })))));
-        var step = goal.Step.list.First();
+        var step = goal.Step[0];
 
         var result = await step.Run(context);
 
@@ -62,7 +62,7 @@ public class ForeachStringNotIterableTests
                     ("collection", "%s%"), Make.Param("itemname", "%item%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "DoNothing" })))));
-        var step = goal.Step.list.First();
+        var step = goal.Step[0];
 
         await step.Run(context);
 
@@ -84,7 +84,7 @@ public class ForeachStringNotIterableTests
                     ("collection", "%n%"), Make.Param("itemname", "%item%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "DoNothing" })))));
-        var step = goal.Step.list.First();
+        var step = goal.Step[0];
 
         var result = await step.Run(context);
 

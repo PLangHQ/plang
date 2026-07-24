@@ -46,14 +46,14 @@ public sealed partial class @this
     [Store, LlmBuilder, Debug, Default]
     public string? Comment { get; init; }
 
-    private global::app.goal.step.action.list.@this _action = new(new List<ActionEl>());
+    private global::app.goal.step.action.list.@this _action = new();
     [Store, Debug, Default]
     public global::app.goal.step.action.list.@this Action
     {
         // The step owns its action chain (an action.list node). The getter stamps the back-ref so a
         // navigated / executed action reaches its step.
         get { foreach (var a in _action.Elements) a.Step ??= this; return _action; }
-        set => _action = value ?? new(new List<ActionEl>());
+        set => _action = value ?? new();
     }
 
     /// <summary>
@@ -68,7 +68,7 @@ public sealed partial class @this
         var flat = _action.Elements.ToList();
         if (flat.Count == 0) return;
 
-        var nested = new List<ActionEl>();
+        var node = new global::app.goal.step.action.list.@this();   // Add non-modifier actions into the node
         ActionEl? current = null;
 
         foreach (var a in flat)
@@ -91,14 +91,14 @@ public sealed partial class @this
             else
             {
                 current = a;
-                nested.Add(a);
+                node.Add(a);
             }
         }
 
-        foreach (var a in nested)
+        foreach (var a in node.Elements)
             a.Modifier.Sort((x, y) => x.Position.CompareTo(y.Position));   // outermost wrapper (lowest Position) first
 
-        _action = new global::app.goal.step.action.list.@this(nested);
+        _action = node;
     }
 
     /// <summary>
@@ -128,14 +128,6 @@ public sealed partial class @this
 
     [Store, Debug, Default]
     public bool WaitForExecution { get; init; } = true;
-
-    /// <summary>
-    /// True when the next step has higher indent (sub-steps).
-    /// Lazy — navigates to parent Goal.Step on access.
-    /// Used by the builder to omit GoalIfTrue/GoalIfFalse when sub-steps handle branching.
-    /// </summary>
-    [JsonIgnore]
-    public bool HasSubSteps => System.Linq.Enumerable.Any(_action.Elements, a => a.Child.CountRaw > 0);
 
     [JsonIgnore]
     public global::app.goal.@this Goal { get; set; } = null!;
@@ -188,7 +180,7 @@ public sealed partial class @this
     public void Merge(Step from)
     {
         if (from.Action.Count > 0)
-            _action = new global::app.goal.step.action.list.@this(from.Action.Elements);
+            _action = from.Action;   // take the node — from is discarded; the graph is read-only after load
 
         if (from.Warning.Count > 0)
         {

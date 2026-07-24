@@ -16,6 +16,8 @@ public sealed class @this : global::app.type.item.list.@this
 {
     public @this() : base(new List<object?>()) { }
     public @this(IReadOnlyList<Data> rows) : base(new List<object?>(rows.Cast<object?>())) { }
+    // Value→slot materialization: adopt the rows a generic list reader produced.
+    public @this(global::app.type.item.list.@this source) : base(source) { }
 
     /// <summary>Reads the node from a raw wire "parameters" slot — a native <c>list</c> of
     /// <c>Data</c>-wrapped <c>{name, value}</c> dict entries (collections-are-data), or the CLR

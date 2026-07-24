@@ -145,7 +145,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
         var parameters = slot("parameters") is { } p
             ? new global::app.goal.step.action.parameter.list.@this(p, context)
             : null;
-        if (parameters is { CountRaw: 0 }) parameters = null;
+        if (parameters != null && parameters.Count == 0) parameters = null;
         return context.Ok(new GoalCall { Name = name, PrPath = prPath, Parameter = parameters });
     }
 
@@ -283,6 +283,7 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
         goal.App = app;
         // Born-with-context: the deserialized goal tree carries the load context onto its
         // Wired here at the .pr-load seam, like App — never left null.
+        // CONDEMNED: the step.Goal stamps die with step.Goal — see back-ref pass. (subGoal.App/Parent stay.)
         foreach (var step in goal.Step.Elements)
             step.Goal = goal;
         foreach (var subGoal in goal.Child)

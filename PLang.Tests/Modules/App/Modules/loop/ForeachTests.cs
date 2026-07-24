@@ -29,7 +29,7 @@ public class ForeachTests
                     Make.Template("collection", "%items%"), Make.Param("itemname", "%item%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "ProcessItem" })))));
-        var step = goal.Step.list.First();
+        var step = goal.Step[0];
 
         var result = await step.Run(context);
 
@@ -67,7 +67,7 @@ public class ForeachTests
                     Make.Template("collection", "%items%"), Make.Param("itemname", "%myItem%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "DoNothing" })))));
-        var step = goal.Step.list.First();
+        var step = goal.Step[0];
 
         var result = await step.Run(context);
 
@@ -90,7 +90,7 @@ public class ForeachTests
                     Make.Template("collection", "%dict%"), Make.Param("itemname", "%val%", "variable"), Make.Param("keyname", "%key%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "DictGoal" })))));
-        var step = goal.Step.list.First();
+        var step = goal.Step[0];
 
         var result = await step.Run(context);
 
@@ -113,7 +113,7 @@ public class ForeachTests
                     Make.Template("collection", "%dict%"), Make.Param("itemname", "%val%", "variable"), Make.Param("keyname", "%key%", "variable")),
                 Make.Action("goal", "call",
                     ("goalname", new Dictionary<string, object?> { ["name"] = "Noop" })))));
-        var step = goal.Step.list.First();
+        var step = goal.Step[0];
 
         var result = await step.Run(context);
 

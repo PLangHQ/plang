@@ -281,6 +281,14 @@ public sealed partial class @this
         get
         {
             EnsureInitialized();
+            // A plang list<T> NODE (action.list : list<action>, step.list : list<step>) IS
+            // {list, kind:element} — its element must ride as the kind, so resolve it BEFORE the
+            // name/conversion doors below (which would answer a plain "list" with no element, and the
+            // reader would then skip the element's own reader). Walk to the list<T> base for the element.
+            if (typeof(app.type.item.list.@this).IsAssignableFrom(clrType))
+                for (var t = clrType.BaseType; t != null; t = t.BaseType)
+                    if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(app.type.item.list.@this<>))
+                        return new app.type.@this("list", GetTypeName(t.GetGenericArguments()[0]));
             // ONE identity door — "what plang type IS this CLR type" — split on the model's axis
             // (is this CLR type a plang item?), never null and never leaking a System.Type back.
             if (_clr.TryGetValue(clrType, out var owner)) return this[owner];   // conversion owner: int → number, string → text
@@ -329,9 +337,13 @@ public sealed partial class @this
                 || (g.FullName?.StartsWith("System.Collections.Immutable.ImmutableDictionary`", StringComparison.Ordinal) ?? false))
                 return ("dict", args[^1]);
         }
-        // A concrete collection class (action.list : IReadOnlyList<action>, parameter.list :
-        // IReadOnlyList<Data>) IS a list<element> — recognize IReadOnlyList<T> alongside IList<T>
-        // so its element rides as the kind.
+        // A plang list<T> NODE (action.list : list<action>, step.list : list<step>) is a non-generic
+        // subclass of list.@this<T> — walk to that base and take its element as the kind, so the
+        // reader dispatches the element's own reader (a goal.call param stays a typed GoalCall).
+        for (var t = type.BaseType; t != null; t = t.BaseType)
+            if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(app.type.item.list.@this<>))
+                return ("list", t.GetGenericArguments()[0]);
+        // Any other concrete CLR collection (a third-party IList<T>/IReadOnlyList<T>) IS a list<element>.
         var listIface = type.GetInterfaces().FirstOrDefault(i =>
             i.IsGenericType && (i.GetGenericTypeDefinition() == typeof(IList<>)
                              || i.GetGenericTypeDefinition() == typeof(IReadOnlyList<>)));

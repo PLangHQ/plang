@@ -24,7 +24,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         string text = "";
         string? comment = null, intent = null, formal = null, source = null;
         bool waitForExecution = true;
-        var actions = new System.Collections.Generic.List<global::app.goal.step.action.@this>();
+        var actions = new global::app.goal.step.action.list.@this();   // Add each action straight into the node
 
         reader.BeginObject();
         while (reader.NextName(out var name))
@@ -58,7 +58,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             LineNumber = lineNumber,
             Indent = indent,
             Comment = comment,
-            Action = new global::app.goal.step.action.list.@this(actions),
+            Action = actions,
             Intent = intent,
             Formal = formal,
             Source = source,
