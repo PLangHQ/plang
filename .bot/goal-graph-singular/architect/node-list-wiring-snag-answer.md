@@ -1,6 +1,6 @@
-# architect → coder — wiring snag: the back-ref is the defect; no Wire(), no Walk; two dispositions still open
+# architect → coder — wiring snag: the back-ref is the defect; no Wire(), no Walk; Validate joins Run/Output
 
-Answers `to-architect-node-list-wiring-snag.md`. Settled with Ingi 2026-07-24 — EXCEPT dispositions for the render/analysis sites and the build-validation sites (§ open below), which Ingi and architect are still discussing. Do not convert those sites until ruled; everything else is settled.
+Answers `to-architect-node-list-wiring-snag.md`. FULLY settled with Ingi 2026-07-24 — including the render/analysis dispositions (birth facts + templates) and the build sites (fold holds its references; Validate is the third node-owned recursion).
 
 > **You own this.** Rulings and what-dies are settled; shapes and mechanics are yours.
 
@@ -19,7 +19,7 @@ Answers `to-architect-node-list-wiring-snag.md`. Settled with Ingi 2026-07-24 �
 - **Serialization — settled, and better than `.Elements`: the node writes itself.** `Output` goes on the node type; a holder says `Child.Output(writer, …)` and the node iterates its private backing. Same shape as `Run` — the node is always the iterator of itself. The Item.cs holder loops collapse into it. No `.Elements` at holders.
 - **Queries — settled: there is NO walk door.** `ForEachAction` is not renamed, it is deleted. Ingi's objection generalizes: a graph-wide visitor is the tool of code that missed its moment. Every walker re-homes to its correct moment (below). The doc's closing property gains the clause: *program structure has no traversal door — code meets the graph at the right moment (birth, execution) or reads it as data through the value face.*
 - **Render/analysis — settled with Ingi (see "The analysis sites" below): birth classification + registry filters + templates; `discover`'s walkers and `getTypes` die.**
-- **Build-validation iteration + the final extent of the internal typed face — OPEN**, under discussion with Ingi. Hold those sites; do not settle their shape yet.
+- **Build-validation — settled with Ingi (see "The build sites" below): the fold holds its own references; `Validate` becomes the third node-owned recursion; the internal typed face collapses to Add/IndexOf/indexer, with `Elements` surviving only inside the condemned bridge.**
 
 ## The walker sites — settled dispositions
 
@@ -77,6 +77,31 @@ public parameter.list.@this Variable { get; init; } = new();
 - **debug render**: presentation — os templates over the value face (the established rule; the C# loops are hand-rolled templates).
 
 Net: no C# analysis reader of the graph exists. Analysis questions are answered at birth and stored, presentation renders the graph as data, and a genuinely ad-hoc one-off read uses the public Data face.
+
+## The build sites — settled with Ingi (accepted 2026-07-24): two moments, no external iteration
+
+**Moment 1 — assembling (the fold).** While constructing the graph — folding steps, nesting modifiers, writing `step.Variable` rows — the builder holds typed references BECAUSE IT CREATED THEM. Constructor scope, not a face on the graph. `Fold` takes and produces nodes; its locals are the objects it is assembling. Where the WIP used `.Elements` at build sites, the builder was re-reading through a door what it should still be holding — the fix is holding on, not a better door.
+
+**Moment 2 — checking. `Validate` is the third node-owned recursion:**
+
+```csharp
+// the trilogy — the node is always the iterator of itself:
+goal.Run(context)       →  Step.Run       →  action.list.Run        // execution
+goal.Output(writer, …)  →  Step.Output    →  action.list.Output     // serialization
+goal.Validate(context)  →  Step.Validate  →  action.list.Validate   // build check — NEW
+
+// action.Validate — the checks Default.cs:552-656 performs externally today, as the action's own:
+//   required params    → its Handler rows (this.Schema ParameterRows — its knowledge)
+//   catalog existence  → its Module element (module-owns-action already routed this)
+//   IBuildValidatable  → its member (module-owns-action already ruled the reflection into it)
+//   diagnostics        → its own Warning (area-1b's warning.list — the node's channel)
+```
+
+The builder keeps only what is genuinely the builder's: **reacting to verdicts** — the FixValidation retry conversation, the LLM re-ask, aborting the build. Checking is the node's; reacting is the builder's.
+
+**The internal typed face — final extent:** `Add` (construction), `IndexOf` + the positional indexer (snapshot restore — an indexer is the node's own member, not a harvest). `Elements` is NOT blessed: it survives only inside the two CONDEMNED wiring loops and dies with them in the back-ref pass. Nothing else, ever — a new internal-face consumer is a design question, not a convenience.
+
+**`BuildResponse.Validate`** (`:20` projection, `:51,:73` index checks): the LLM-conversation wire model — the recovery redesign owns that file; it bridges as-is and recovery inherits it with one shape fewer to round-trip.
 
 ## The target picture (the settled parts)
 
@@ -146,4 +171,4 @@ The property the whole picture holds: **program structure has no setters that ru
 4. Mark the two load wiring loops CONDEMNED (bridge); no `Wire()`, no new back-ref call sites.
 5. Before-lifecycle symmetry + delete `FindCurrentAction`.
 6. Analysis sites per "The analysis sites" section: `Goal.Test` filter, `Tag` at parse, `step.Variable` at fold, delete `getTypes`/`HasSkipTag`/`ExtractUserTags`; debug render → templates.
-7. HOLD: build-validation iteration + the final extent of the internal typed face — awaiting the open ruling (#4).
+7. Build sites per "The build sites" section: fold holds its own references (no .Elements re-reads); Validate trilogy (goal→step→action.list→action, warnings onto node.Warning); builder keeps only the reaction (FixValidation/abort). Internal face final extent: Add/IndexOf/indexer; Elements dies with the condemned bridge.

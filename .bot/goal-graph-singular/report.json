@@ -98,10 +98,20 @@
           "category": "doc",
           "confidence": "high",
           "context": "#3 settled with Ingi and folded into the wiring-snag answer: birth facts + registry filters (goal.list.Test one-liner mirroring :255; Tag stamped at parse; step.Variable build fact replacing getTypes which dies per its own [Obsolete]; discover's HasSkipTag/ExtractUserTags deleted; debug render via templates). #4 (build-validation iteration + internal-face extent) remains open."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/node-list-wiring-snag-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "#4 settled and accepted by Ingi: two build moments (fold = constructor scope holding its own references; checking = Validate as third node-owned recursion goal->step->action.list->action with warnings on node.Warning); builder keeps only reaction (FixValidation/abort); internal typed face final extent Add/IndexOf/indexer, Elements dies with the condemned bridge; BuildResponse bridges to recovery. Wiring-snag answer now FULLY settled."
         }
       ],
       "after": {
-        "status": "three coder rulings delivered (area-1b, goalcall-one-structure); module-owns-action doc still discussion-context",
+        "status": "wiring-snag answer fully settled (back-ref pass queued, Validate trilogy accepted); awaiting push signal",
         "health": "n/a (no code changed)",
         "notes": "session ongoing"
       }
