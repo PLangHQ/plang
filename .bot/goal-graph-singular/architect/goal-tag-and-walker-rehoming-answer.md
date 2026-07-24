@@ -4,25 +4,43 @@ Answers `to-architect-goal-tag-and-walker-rehoming.md`. Settled with Ingi 2026-0
 
 > **You own this.** Rulings settled; shapes, signatures, and mechanics yours.
 
-## Q1 — `goal.Tag` type: your (a), as a sibling program node
+## Q1 — `goal.Tag` type: your (a), as a sibling program node — and `tag` becomes a plang TYPE (Ingi): `list<tag>`, not `list<text>`
 
-You caught my sketch breaking my own ruling — `list.@this` on a context-free POCO re-hits the `:103` throw. Tags are program structure, so they get the same shape as the three converted nodes:
+You caught my sketch breaking my own ruling — `list.@this` on a context-free POCO re-hits the `:103` throw. Tags are program structure, so the node gets the same shape as the three converted nodes. And the element is not text: **`tag` is its own plang value type**, because it owns behavior nobody else should — tag comparison is case-insensitive-normalized everywhere it appears today (the skip regex tolerates any casing/quoting; user tags compare loosely). As `list<text>` that discipline would scatter `.ToLowerInvariant()` across consumers — the raw hand-off smell verbatim. The tag owns it once. It is also a recurring concept, not test-local: test tags, discover's capability tags (today minted as bare `text` items), `debug.tag`'s frame tags.
 
 ```csharp
-// app/goal/tag/list/this.cs — NEW: a list<text> program node, sibling of action.list/step.list/parameter.list
+// app/type/item/tag/this.cs — NEW: a general value type (item ⟺ ICreate — authored from values)
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
+{
+    // owns: its normalized form (Create trims/normalizes ONCE) and its equality
+    // (case-insensitive — the discipline lives here, never at consumers)
+    public static @this? Create(object? raw) => raw switch
+    {
+        @this t => t,
+        string s when !string.IsNullOrWhiteSpace(s) => new @this(Normalize(s)),
+        global::app.type.item.text.@this t => Create(t.ToString()),
+        _ => null
+    };
+    // leaf on the wire — writes as its text; serializer/Reader.cs per the value-type rule
+}
+
+// app/goal/tag/list/this.cs — NEW: a list<tag> program node, sibling of action.list/step.list/parameter.list
 public sealed class @this : global::app.type.item.list.@this
 {
     internal @this() : base() { }          // context-free program birth
     internal void Add(...) { ... }         // construction affordance
-    // elements: text items; serialization/value face ride the list value machinery
 }
 
 // goal/this.cs:
 [Store]
 public tag.list.@this Tag { get; init; } = new();
+
+// consumers stop hand-normalizing:
+//   skip check:              goal.Tag holds tag.Create("skip") — equality is the tag's
+//   discover capability tags: tag.Create(cap) instead of new text.@this(cap)
 ```
 
-Not (b): a naked `List<string>` is the smell this branch exists to delete, plus a reflection special-case to serialize. The class is a ctor and an `Add` — the price of riding the one reader/Output/value-face system instead of being the one special slot.
+Not (b): a naked `List<string>` is the smell this branch exists to delete, plus a reflection special-case to serialize. Two small classes — the price of riding the one reader/Output/value-face system AND owning tag equality in one place.
 
 ## Q3 — the parser NEVER learns test semantics; `test.tag`'s Build hook stamps the fact
 
