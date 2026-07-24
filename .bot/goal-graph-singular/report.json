@@ -80,6 +80,15 @@
           "category": "doc",
           "confidence": "high",
           "context": "Completing sweep after Ingi asked if the map was complete (it was not): direct enumeration/indexer sites (Parameter enumeration is shape-stable Data-rows before+after ~14 sites no-change; snapshot-restore/Validate index sites use the INTERNAL typed face), template language boundary (goalFormat/stepForLlm/actionFormal render-diff verification), scope hole flagged for Ingi (goal.Child + action.Modifiers are [Store] sequences neither in nor out \u2014 lean: explicitly OUT this pass), ~19 test sites."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/node-list-wiring-snag-answer.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Reply to coder's wiring snag: back-ref IS the defect (4th appearance of program/run law); no Wire(), no Walk (ForEachAction deleted); back-ref deletion is its own pass with CONDEMNED bridge; Synthetic stamped by reader now; Before-lifecycle symmetry kills FindCurrentAction; setup walk evaporates (IsSetup at read). Render/analysis + build-validation dispositions + internal-face extent held OPEN pending discussion with Ingi. Not pushed."
         }
       ],
       "after": {
