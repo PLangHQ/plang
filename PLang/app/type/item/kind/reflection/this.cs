@@ -154,6 +154,21 @@ public sealed class @this : global::app.type.kind.@this
         if (t == typeof(global::app.type.item.path.@this))
             return global::app.type.item.path.@this.Resolve(reader.String(), ctx.Context);
 
+        // A choice<T> builds itself through the type system's OWN door — the choice entity (registered
+        // under its closed-set name, choice/list.cs) resolves the concrete choice<T> and parses the
+        // symbol. Never reflect-construct it as an object host below (no parameterless ctor).
+        if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(global::app.type.item.choice.@this<>))
+        {
+            var entity = ctx.Context.App.Type[t];
+            // The symbol rides as a string; a numeric ordinal (an enum member written by value) becomes
+            // its member first. choice.Create takes either the member or the symbol.
+            object member = reader.Peek() == global::app.channel.serializer.TokenKind.Number
+                ? global::System.Enum.ToObject(t.GetGenericArguments()[0], reader.Long())
+                : reader.String();
+            return entity.Create(member,
+                new global::app.data.@this("", new global::app.type.item.@null.@this(entity.Name, entity.Kind?.Name), context: ctx.Context));
+        }
+
         // List<Data> (Parameters / Defaults) — each element a {name,type,value} through the
         // @schema:data reader over its own verbatim bytes (sign-identical to the byte path).
         if (IsListOfData(t)) return ReadDataList(ref reader, t, ctx);
