@@ -17,7 +17,7 @@ public sealed partial class BuildResponse
     /// </summary>
     public static BuildResponse FromGoalState(Goal goal) => new()
     {
-        Steps = goal.Step.list.Select(s => new Step
+        Steps = goal.Step.Elements.Select(s => new Step
         {
             Index = s.Index,
             Text = s.Text,
@@ -29,7 +29,7 @@ public sealed partial class BuildResponse
     {
         // CopyActionsIfAny lets the SaveGoal safety net see the same Actions the
         // store would persist — without mutating the source step's ownership.
-        to.Action = new global::app.goal.step.action.list.@this(from.Action.list);
+        to.Action = new global::app.goal.step.action.list.@this(from.Action.Elements);
         return to;
     }
 
@@ -108,7 +108,7 @@ public sealed partial class BuildResponse
         foreach (var step in Steps)
         {
             if (step.Keep) continue;
-            foreach (var a in step.Action.list)
+            foreach (var a in step.Action.Elements)
             {
                 if (a.Parameter == null) continue;
 

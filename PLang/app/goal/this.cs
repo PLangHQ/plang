@@ -45,7 +45,7 @@ public sealed partial class @this
     public global::app.goal.step.list.@this Step
     {
         // The goal owns its steps (a step.list node). The getter stamps the back-ref.
-        get { foreach (var s in _step.list) s.Goal ??= this; return _step; }
+        get { foreach (var s in _step.Elements) s.Goal ??= this; return _step; }
         set => _step = value ?? new(new List<global::app.goal.step.@this>());
     }
 
@@ -63,7 +63,7 @@ public sealed partial class @this
     public override string ToString()
     {
         var sb = new StringBuilder(Name);
-        foreach (var step in Step.list)
+        foreach (var step in Step.Elements)
         {
             sb.AppendLine();
             sb.Append(new string(' ', step.Indent * 4));
@@ -131,7 +131,7 @@ public sealed partial class @this
 
             var sb = new StringBuilder();
             sb.Append(Name);
-            foreach (var step in Step.list)
+            foreach (var step in Step.Elements)
                 sb.Append(step.Text);
 
             _hash = Convert.ToHexString(
@@ -201,7 +201,7 @@ public sealed partial class @this
 
         lines.Add(Name);
 
-        foreach (var step in Step.list)
+        foreach (var step in Step.Elements)
         {
             if (!string.IsNullOrEmpty(step.Comment))
                 lines.Add($"/ {step.Comment}");
@@ -226,11 +226,11 @@ public sealed partial class @this
 
         // Exact-text match only — robust to reorder/insert/delete; a text change drops the prior
         // mapping and the LLM rebuilds that step fresh. Sets PriorText so the builder can emit @known.
-        var prior = existing.Step.list;
+        var prior = existing.Step.Elements;
         if (prior.Count > 0)
         {
             var consumed = new HashSet<int>();
-            foreach (var step in Step.list)
+            foreach (var step in Step.Elements)
                 for (int i = 0; i < prior.Count; i++)
                 {
                     if (consumed.Contains(i)) continue;
@@ -337,7 +337,7 @@ public sealed partial class @this
     /// </summary>
     public void NestRecursive(app.module.list.@this modules)
     {
-        foreach (var step in Step.list) step.Nest(modules);
+        foreach (var step in Step.Elements) step.Nest(modules);
         foreach (var subGoal in Child)
             subGoal.NestRecursive(modules);
     }
@@ -355,8 +355,8 @@ public sealed partial class @this
     /// </summary>
     public void ForEachAction(System.Action<Step, global::app.goal.step.action.@this> visitor)
     {
-        foreach (var step in Step.list)
-            foreach (var action in step.Action.list)
+        foreach (var step in Step.Elements)
+            foreach (var action in step.Action.Elements)
                 visitor(step, action);
     }
 

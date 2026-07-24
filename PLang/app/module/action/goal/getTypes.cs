@@ -39,7 +39,7 @@ public partial class getTypes : IContext
         var goal = (await Goal.Value())!;
         var modules = Context.App.Module;
 
-        var perStep = new List<Dictionary<string, string>>(goal.Step.Count);
+        var perStep = new List<Dictionary<string, string>>(goal.Step.CountRaw);
         var working = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         // Tracks the return type of the most recent producing action in the current step's
@@ -47,13 +47,13 @@ public partial class getTypes : IContext
         // action's type. Reset at the start of every step (no cross-step %!data%).
         string? chainReturnType = null;
 
-        for (int i = 0; i < goal.Step.Count; i++)
+        for (int i = 0; i < goal.Step.CountRaw; i++)
         {
             var snapshot = new Dictionary<string, string>(working, StringComparer.OrdinalIgnoreCase);
             perStep.Add(snapshot);
             chainReturnType = null;
 
-            foreach (var action in goal.Step[i].Action.list)
+            foreach (var action in goal.Step[i].Action.Elements)
             {
                 ProcessAction(action, working, snapshot, ref chainReturnType, modules, Context.App);
             }

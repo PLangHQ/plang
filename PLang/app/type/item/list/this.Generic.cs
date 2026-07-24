@@ -18,11 +18,12 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
     public @this(System.Collections.Generic.IEnumerable<global::app.data.@this> items, global::app.actor.context.@this context) : base(items, context) { }
     public @this(System.Collections.Generic.IEnumerable<global::app.type.item.@this> values, global::app.actor.context.@this context) : base(values, context) { }
 
-    /// <summary>The typed rows, each materialised through its own value door — a
-    /// <c>list&lt;action&gt;</c> reads its <c>action</c> elements, a <c>list&lt;step&gt;</c> its
-    /// steps. A row already holding a <typeparamref name="T"/> answers directly (the read/parse
-    /// seam stores the item); anything else lowers through the row's <c>Value&lt;T&gt;</c>.</summary>
-    public System.Collections.Generic.IReadOnlyList<T> Elements
+    /// <summary>The typed elements — INTERNAL, the engine face a node subclass runs/walks (a
+    /// <c>list&lt;action&gt;</c>'s <c>Run</c>, a <c>list&lt;step&gt;</c>'s sequence). NOT public:
+    /// outside code tells the graph (run/wire/walk) or navigates it as values (the Data-row face),
+    /// it never harvests raw elements. Each row Peeks its stored item (the read/parse seam stores
+    /// the typed <typeparamref name="T"/> directly).</summary>
+    internal System.Collections.Generic.IReadOnlyList<T> Elements
     {
         get
         {
@@ -31,6 +32,17 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
             return built;
         }
     }
+
+    /// <summary>The typed element at a flattened index — INTERNAL, the engine positional face
+    /// (snapshot restore's <c>liveStep.Action[i]</c>, build validation's <c>goal.Step[i]</c>). Public
+    /// index navigation still rides the Data-row face (<c>At</c>); this is the same-assembly typed
+    /// door.</summary>
+    internal T this[int index] => (T)(At(index)?.Peek()
+        ?? throw new System.IndexOutOfRangeException($"index {index} is out of range for a list of {CountRaw}"));
+
+    /// <summary>Program-node birth — a graph node (action.list / step.list / parameter.list) is
+    /// shared across runs, so it stores no context. The elements ride as typed items in the backing.</summary>
+    protected @this(System.Collections.Generic.List<object?> backing) : base(backing) { }
 
     /// <summary>Render/clone preserve the element-type tag — a list&lt;T&gt; stays
     /// a list&lt;T&gt; instead of degrading to the non-generic base.</summary>

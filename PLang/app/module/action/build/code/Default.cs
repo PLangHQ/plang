@@ -262,7 +262,7 @@ public class Default : IBuilder
     // nested projection — the goal owns its (now-tree) step collection.
     private void Fold(Goal goal, List<global::app.error.IError> errors)
     {
-        goal.Step = new global::app.goal.step.list.@this(Fold(goal.Step.list, errors));
+        goal.Step = new global::app.goal.step.list.@this(Fold(goal.Step.Elements, errors));
         foreach (var subGoal in goal.Child) Fold(subGoal, errors);
     }
 
@@ -286,7 +286,7 @@ public class Default : IBuilder
                 var block = new List<global::app.goal.step.@this>();
                 for (int k = i + 1; k < j; k++) block.Add(flat[k]);
 
-                var gate = System.Linq.Enumerable.FirstOrDefault(step.Action.list, a => a.IsCondition);
+                var gate = System.Linq.Enumerable.FirstOrDefault(step.Action.Elements, a => a.IsCondition);
                 if (gate == null)
                     errors.Add(new global::app.error.StepError(
                         $"indented steps under non-condition step '{step.Text}'",

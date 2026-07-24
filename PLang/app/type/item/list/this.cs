@@ -103,6 +103,15 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         _context = context ?? throw new System.ArgumentNullException(nameof(context));
     }
 
+    /// <summary>Program-structure birth — a graph node (action.list / step.list / parameter.list) is
+    /// SHARED across concurrent runs, so it stores NO context: <see cref="_context"/> stays null, and
+    /// every context-needing door takes the ASK's context instead (the run, navigation's binding,
+    /// Output's param). Only the node subclasses reach this; a run-born value uses the public context
+    /// ctors above and keeps the null-context throw. Elements ride as typed items (filled via
+    /// <see cref="AddRaw"/> at read); the shared instance is never stamped, so no context leaks
+    /// between the actors sharing the graph.</summary>
+    protected @this(List<object?> backing) => _items = backing;
+
     // Type-on-read: the row at `i` as a FRESH Data wrapping the raw slot — never
     // cached back. Leaving the slot raw keeps the backing pristine (enumeration-safe,
     // and it stays the same instance the source handed over). An already-Data slot
@@ -134,7 +143,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// own raw slots; a Data carries its own type.</summary>
     internal @this AddRaw(object? raw)
     {
-        if (raw is Data d) d.Context = _context;
+        // A program node's _context is null — never stamp it onto an element (the element keeps the
+        // context it was read/born with; the shared node stays context-free).
+        if (raw is Data d && _context != null) d.Context = _context;
         if (IsWrapped(raw)) _hasWrapped = true;   // a Data / nested wrapper diverges the backing
         _items.Add(raw);
         return this;

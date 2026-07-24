@@ -59,10 +59,10 @@ public sealed class @this
                 var read = await file.ReadText();
                 if (!read.Success || (await read.Value()) as global::app.goal.@this is not { } goal || !goal.IsSetup) continue;
 
-                foreach (var step in goal.Step.list)
+                foreach (var step in goal.Step.Elements)
                 {
                     step.Goal = goal;
-                    foreach (var action in step.Action.list)
+                    foreach (var action in step.Action.Elements)
                         action.Synthetic = false;
                 }
 

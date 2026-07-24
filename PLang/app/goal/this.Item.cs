@@ -79,8 +79,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (Description != null) { writer.Name("description"); writer.String(Description); }
         if (Comment != null) { writer.Name("comment"); writer.String(Comment); }
         writer.Name("step");
-        writer.BeginArray(Step.Count);
-        foreach (var s in Step.list) await s.Output(writer, mode, context);
+        writer.BeginArray(Step.CountRaw);
+        foreach (var s in Step.Elements) await s.Output(writer, mode, context);
         writer.EndArray();
         writer.Name("child");
         writer.BeginArray(Child.Count);

@@ -36,8 +36,13 @@ public partial class Foreach : IContext, IStep
         var savedItem = await Context.Variable.Get(variableName);
         var savedKey = keyVariableName != null ? await Context.Variable.Get(keyVariableName) : null;
 
-        // Find remaining actions in this step (the loop body)
-        var bodyActions = GetBodyActions();
+        // The loop body — the actions after this foreach in the step's chain (v0.1 flat model).
+        // Materialized once; the Handled flag below stops the outer chain from re-running them.
+        var chain = Step?.Action;
+        int myIndex = chain?.IndexOf(__action) ?? -1;
+        var bodyActions = myIndex >= 0
+            ? chain!.Elements.Skip(myIndex + 1).ToList()
+            : new List<Action>();
 
         // Data owns enumeration: dicts yield (dictKey, value), lists yield (index, element)
         foreach (var (key, item) in await Collection.EnumerateItems())
@@ -51,7 +56,7 @@ public partial class Foreach : IContext, IStep
             if (KeyName is { IsInitialized: true })
                 await Context.Variable.Set(await KeyName.Value(), key);
 
-            foreach (var action in bodyActions)
+            foreach (var action in bodyActions.Elements)
             {
                 var result = await action.Run(Context);
                 if (result.Returned) return result;
@@ -84,23 +89,14 @@ public partial class Foreach : IContext, IStep
     /// <summary>
     /// Gets the actions after this foreach in the same step — they form the loop body.
     /// </summary>
-    private List<Action> GetBodyActions()
+    private global::app.goal.step.action.list.@this GetBodyActions()
     {
         var actions = Step?.Action;
-        if (actions == null || __action == null) return new List<Action>();
+        if (actions == null || __action == null) return new();
 
-        int myIndex = -1;
-        for (int i = 0; i < actions.Count; i++)
-        {
-            if (ReferenceEquals(actions[i], __action))
-            {
-                myIndex = i;
-                break;
-            }
-        }
+        int myIndex = actions.IndexOf(__action);
+        if (myIndex < 0 || myIndex + 1 >= actions.CountRaw) return new();
 
-        if (myIndex < 0 || myIndex + 1 >= actions.Count) return new List<Action>();
-
-        return actions.list.Skip(myIndex + 1).ToList();
+        return new(actions.Elements.Skip(myIndex + 1));
     }
 }

@@ -97,13 +97,13 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         writer.Name("module"); writer.String(Module);
         writer.Name("name"); writer.String(ActionName);
         writer.Name("parameter");
-        writer.BeginArray(Parameter.Count);
+        writer.BeginArray(Parameter.CountRaw);
         foreach (var p in Parameter) await p.Output(writer, mode, context);
         writer.EndArray();
         if (Default != null)
         {
             writer.Name("default");
-            writer.BeginArray(Default.Count);
+            writer.BeginArray(Default.CountRaw);
             foreach (var d in Default) await d.Output(writer, mode, context);
             writer.EndArray();
         }
@@ -113,11 +113,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         writer.EndArray();
         // The branch body of a control-flow action — omitted on ordinary actions (empty Child).
         // Each child step writes itself; the tree serializes recursively.
-        if (Child.Count > 0)
+        if (Child.CountRaw > 0)
         {
             writer.Name("child");
-            writer.BeginArray(Child.Count);
-            foreach (var s in Child) await s.Output(writer, mode, context);
+            writer.BeginArray(Child.CountRaw);
+            foreach (var s in Child.Elements) await s.Output(writer, mode, context);
             writer.EndArray();
         }
         writer.EndObject();

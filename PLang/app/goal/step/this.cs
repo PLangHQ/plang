@@ -52,7 +52,7 @@ public sealed partial class @this
     {
         // The step owns its action chain (an action.list node). The getter stamps the back-ref so a
         // navigated / executed action reaches its step.
-        get { foreach (var a in _action.list) a.Step ??= this; return _action; }
+        get { foreach (var a in _action.Elements) a.Step ??= this; return _action; }
         set => _action = value ?? new(new List<ActionEl>());
     }
 
@@ -65,7 +65,7 @@ public sealed partial class @this
     /// </summary>
     public void Nest(global::app.module.list.@this modules)
     {
-        var flat = _action.list.ToList();
+        var flat = _action.Elements.ToList();
         if (flat.Count == 0) return;
 
         var nested = new List<ActionEl>();
@@ -135,7 +135,7 @@ public sealed partial class @this
     /// Used by the builder to omit GoalIfTrue/GoalIfFalse when sub-steps handle branching.
     /// </summary>
     [JsonIgnore]
-    public bool HasSubSteps => System.Linq.Enumerable.Any(_action.list, a => a.Child.Count > 0);
+    public bool HasSubSteps => System.Linq.Enumerable.Any(_action.Elements, a => a.Child.CountRaw > 0);
 
     [JsonIgnore]
     public global::app.goal.@this Goal { get; set; } = null!;
@@ -188,7 +188,7 @@ public sealed partial class @this
     public void Merge(Step from)
     {
         if (from.Action.Count > 0)
-            _action = new global::app.goal.step.action.list.@this(from.Action.list);
+            _action = new global::app.goal.step.action.list.@this(from.Action.Elements);
 
         if (from.Warning.Count > 0)
         {

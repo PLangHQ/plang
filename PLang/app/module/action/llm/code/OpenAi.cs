@@ -614,7 +614,7 @@ public sealed class OpenAi : ILlm
     /// <summary>
     /// Parses the LLM's JSON arguments string into List&lt;Data&gt; matching the GoalCall's parameter definitions.
     /// </summary>
-    private static List<data.@this> ParseToolArguments(string argumentsJson, IReadOnlyList<data.@this>? parameterDefs, actor.context.@this context)
+    private static List<data.@this> ParseToolArguments(string argumentsJson, global::app.goal.step.action.parameter.list.@this? parameterDefs, actor.context.@this context)
     {
         var result = new List<data.@this>();
 
@@ -863,9 +863,9 @@ public sealed class OpenAi : ILlm
 
     // --- Parameter schema ---
 
-    private static Dictionary<string, object> BuildParamSchema(IReadOnlyList<data.@this>? parameters)
+    private static Dictionary<string, object> BuildParamSchema(global::app.goal.step.action.parameter.list.@this? parameters)
     {
-        if (parameters == null || parameters.Count == 0)
+        if (parameters == null || parameters.CountRaw == 0)
             return new Dictionary<string, object>
             {
                 ["type"] = "object",

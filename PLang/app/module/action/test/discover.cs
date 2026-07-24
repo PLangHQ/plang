@@ -210,7 +210,7 @@ public partial class discover : IContext
 
     private static bool HasSkipTag(Goal goal)
     {
-        foreach (var step in goal.Step.list)
+        foreach (var step in goal.Step.Elements)
             if (IsSkipTagStep(step.Text)) return true;
         return false;
     }
@@ -311,7 +311,7 @@ public partial class discover : IContext
             if (seededSteps.Add(step.Index))
             {
                 // Declared chain = the step's condition actions walked in order (no Decision type).
-                var conds = step.Action.list.Where(a => a.IsCondition).ToList();
+                var conds = step.Action.Elements.Where(a => a.IsCondition).ToList();
                 if (conds.Count > 0)
                 {
                     var chain = new List<string>();
