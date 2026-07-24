@@ -5,7 +5,7 @@
       "id": "beb259d0-526e-460c-ae42-d8a453e68104",
       "bot": "architect",
       "timestamp_start": "2026-07-21T00:00:00",
-      "timestamp_end": null,
+      "timestamp_end": "2026-07-24T11:26:49.042354",
       "intent": "Rule on coder's module-owns-action note: action.Module string -> module.@this element, Create-everywhere construction chain",
       "before": {
         "assumptions": "action.Module is a naked string re-resolved at dispatch; module element already owns catalog actions",
@@ -108,12 +108,24 @@
           "category": "doc",
           "confidence": "high",
           "context": "#4 settled and accepted by Ingi: two build moments (fold = constructor scope holding its own references; checking = Validate as third node-owned recursion goal->step->action.list->action with warnings on node.Warning); builder keeps only reaction (FixValidation/abort); internal typed face final extent Add/IndexOf/indexer, Elements dies with the condemned bridge; BuildResponse bridges to recovery. Wiring-snag answer now FULLY settled."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/backref-pass.md",
+            ".bot/goal-graph-singular/claude-md-proposals.md",
+            ".bot/goal-graph-singular/architect/summary.md",
+            ".bot/goal-graph-singular/architect/node-list-wiring-snag-answer.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Back-ref pass execution plan from full verified sweep (11 writers die, ~14 reroutes, generator IStep emission change first, GoalCall.Action deleted, stays-list, order, verify gates). claude-md-proposals entry for the two session laws. Summary + wiring-snag pointer updated."
         }
       ],
       "after": {
-        "status": "wiring-snag answer fully settled (back-ref pass queued, Validate trilogy accepted); awaiting push signal",
-        "health": "n/a (no code changed)",
-        "notes": "session ongoing"
+        "status": "all coder questions answered; node-lists fully specified; back-ref pass planned; two canonical-law proposals filed",
+        "health": "no production code changed by architect",
+        "notes": "pipeline: node-lists -> back-ref pass -> module-owns-action -> recovery"
       }
     }
   ]
