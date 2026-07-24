@@ -11,12 +11,26 @@ namespace app.type.item.list;
 /// a <c>list&lt;T&gt;</c> from raw and converts each element to T. Everything else — serializer,
 /// navigators, comparison, <c>is app.type.item.list.@this</c> checks — sees the non-generic base.
 /// </summary>
-public sealed class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
+public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
     where T : global::app.type.item.@this
 {
     public @this(global::app.actor.context.@this context) : base(context) { }
     public @this(System.Collections.Generic.IEnumerable<global::app.data.@this> items, global::app.actor.context.@this context) : base(items, context) { }
     public @this(System.Collections.Generic.IEnumerable<global::app.type.item.@this> values, global::app.actor.context.@this context) : base(values, context) { }
+
+    /// <summary>The typed rows, each materialised through its own value door — a
+    /// <c>list&lt;action&gt;</c> reads its <c>action</c> elements, a <c>list&lt;step&gt;</c> its
+    /// steps. A row already holding a <typeparamref name="T"/> answers directly (the read/parse
+    /// seam stores the item); anything else lowers through the row's <c>Value&lt;T&gt;</c>.</summary>
+    public System.Collections.Generic.IReadOnlyList<T> Elements
+    {
+        get
+        {
+            var built = new System.Collections.Generic.List<T>(CountRaw);
+            foreach (var row in Items) built.Add((T)row.Peek());
+            return built;
+        }
+    }
 
     /// <summary>Render/clone preserve the element-type tag — a list&lt;T&gt; stays
     /// a list&lt;T&gt; instead of degrading to the non-generic base.</summary>

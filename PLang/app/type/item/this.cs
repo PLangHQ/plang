@@ -167,14 +167,25 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     public virtual async System.Threading.Tasks.ValueTask<@this> Set(string key, bool isIndex, object? value)
     {
-        // A Data opens its door to the concrete value first (a host takes a typed child, never a lazy Data).
-        if (value is global::app.data.@this dv) value = await dv.Value();
+        // Keep the Data binding — it carries the born-with Context (and the format value's kind).
+        var binding = value as global::app.data.@this;
+        if (binding != null) value = await binding.Value();
         var prop = GetType().GetProperty(key, System.Reflection.BindingFlags.Public
             | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
         if (prop == null || !prop.CanWrite)
             throw new System.NotSupportedException($"%…% ({Type.Name}) cannot take a child '{key}'");
         if (value is @this iv && !prop.PropertyType.IsInstanceOfType(value))
-            value = iv.Clr(prop.PropertyType);
+        {
+            // The declared type reads ITSELF from the value's kind — the same reader a .pr uses. The
+            // entity names WHICH reader (list<action> → the "list" reader) and the element kind
+            // ("action") so a list reader loops the element's reader (goal.call rides @schema:data).
+            // A value with no format to bridge (item.Read → null) keeps the Clr path.
+            var context = binding?.Context;
+            var entity = context?.App.Type[prop.PropertyType];
+            var reader = entity != null ? context!.App.Type.Reader.Typed(entity.Name, null) : null;
+            value = (reader != null ? iv.Read(reader, entity!.Kind?.Name, context!) : null)
+                    ?? iv.Clr(prop.PropertyType);
+        }
         prop.SetValue(this, value);
         return this;
     }
@@ -394,6 +405,18 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// <summary>Generic sugar over <see cref="Clr(System.Type)"/> — the
     /// compile-time-known-target form.</summary>
     internal T? Clr<T>() => (T?)Clr(typeof(T));
+
+    /// <summary>
+    /// A value that arrived in a FORMAT (a <c>clr</c> carrier holding json/md/…) reads ITSELF into
+    /// the declared type through <paramref name="reader"/> — the same reader a <c>.pr</c> uses. The
+    /// value's kind owns the format→stream bridge; the type reads its own structure (so a nested
+    /// <c>goal.call</c> param rides <c>@schema:data</c> and dispatches). <paramref name="kind"/> is the
+    /// declared type's element kind (<c>list&lt;action&gt;</c> → <c>action</c>) so a list reader loops
+    /// the element's reader. Most items carry no format to bridge and decline (null → the caller's
+    /// <c>Clr</c> path).
+    /// </summary>
+    internal virtual object? Read(global::app.type.reader.ITypeReader reader, string? kind,
+                                  global::app.actor.context.@this context) => null;
 
     /// <summary>
     /// The typed source-face seam for CLR-facing machinery (ctor matching,

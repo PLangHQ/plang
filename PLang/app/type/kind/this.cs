@@ -152,6 +152,14 @@ public class @this
         => throw new System.InvalidCastException(
             $"a '{Name}' value cannot lower to {target.Name} — the kind cannot build that shape.");
 
+    /// <summary>Bridge this kind's raw <paramref name="obj"/> content into a stream and drive
+    /// <paramref name="reader"/> (the declared type's own reader), handing it the element
+    /// <paramref name="kind"/> (list&lt;action&gt; → action) so a list reader loops the element's
+    /// reader. This is the ONLY place a format is named — a format kind (json/…) overrides; a kind
+    /// that is not a format has nothing to bridge and declines (null → the caller's Clr path).</summary>
+    public virtual object? Read(object obj, global::app.type.reader.ITypeReader reader, string? kind,
+                                global::app.actor.context.@this context) => null;
+
     // OBPV — carry marked, collapse after the restructure compiles: this is a verb+noun name
     // AND a type-switch fork standing in for a value's own self-write. Fix: a reflected value
     // writes itself via `new Data(name, value, ctx).Output(...)` — Data.Output already emits bare

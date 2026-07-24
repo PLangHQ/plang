@@ -104,6 +104,14 @@ public class @this : global::app.type.item.@this, global::app.module.IContext, g
         global::app.data.@this parent, global::app.variable.path.@this path)
         => Kind.Get(Value, path, parent, Context);
 
+    /// <summary>The format→type read door — the carrier hands its <see cref="Kind"/> its own content,
+    /// the declared type's reader, and the element kind. The kind bridges the format (json → a json
+    /// reader); the type reads its own structure. Born-with-context, so the carrier's own
+    /// <see cref="Context"/> drives.</summary>
+    internal override object? Read(global::app.type.reader.ITypeReader reader, string? kind,
+                                   global::app.actor.context.@this context)
+        => Kind.Read(Value, reader, kind, Context);
+
     /// <summary>The child-write door — the carrier routes to its <see cref="Kind"/> (the * kind
     /// reflects a settable property, the list kind writes an index). The kind returns the value
     /// carried back as an item; a host mutates in place, so identity holds.</summary>

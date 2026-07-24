@@ -107,6 +107,20 @@ public sealed class @this : global::app.type.kind.@this
         return new global::app.type.item.kind.reflection.@this().Read(ref reader, target, new global::app.type.reader.ReadContext(ctx));
     }
 
+    // The format→type read: json bridges its content into a json stream and drives the declared
+    // type's OWN reader (the same reader a .pr uses — so a nested goal.call param rides @schema:data
+    // and dispatches), handing it the element kind. Verify:false — ingested content is unsigned, like
+    // every nested/ingest read.
+    public override object? Read(object obj, global::app.type.reader.ITypeReader reader, string? kind,
+                                 global::app.actor.context.@this context)
+    {
+        var utf8 = new Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(((JsonElement)obj).GetRawText()));
+        utf8.Read();
+        var stream = new global::app.channel.serializer.json.Reader(utf8);
+        return reader.Read(ref stream, kind,
+            new global::app.type.reader.ReadContext(context, Verify: false));
+    }
+
     // A json value writes its own raw json inline — NEVER reflecting the JsonElement's BCL props.
     public override global::System.Threading.Tasks.ValueTask Output(
         object obj, global::app.channel.serializer.IWriter writer, global::app.View mode,

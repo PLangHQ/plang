@@ -329,8 +329,12 @@ public sealed partial class @this
                 || (g.FullName?.StartsWith("System.Collections.Immutable.ImmutableDictionary`", StringComparison.Ordinal) ?? false))
                 return ("dict", args[^1]);
         }
+        // A concrete collection class (action.list : IReadOnlyList<action>, parameter.list :
+        // IReadOnlyList<Data>) IS a list<element> — recognize IReadOnlyList<T> alongside IList<T>
+        // so its element rides as the kind.
         var listIface = type.GetInterfaces().FirstOrDefault(i =>
-            i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
+            i.IsGenericType && (i.GetGenericTypeDefinition() == typeof(IList<>)
+                             || i.GetGenericTypeDefinition() == typeof(IReadOnlyList<>)));
         return listIface != null ? ("list", listIface.GetGenericArguments()[0]) : null;
     }
 
