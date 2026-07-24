@@ -21,10 +21,9 @@ namespace PLang.Tests.App.Modules.CatalogTests;
 public class ParamDescParityTests
 {
     // Host params intentionally HIDDEN — the LLM never supplies a host object (Goal/Step/SignOptions/
-    // BuildResponse/StepActions/App). Keyed "module.action.Param". (goal.getTypes dies at 4e.)
+    // BuildResponse/StepActions/App). Keyed "module.action.Param".
     private static readonly HashSet<string> HostDropped = new(StringComparer.Ordinal)
     {
-        "goal.getTypes.Goal",
         "http.request.SignOptions", "http.download.SignOptions", "http.upload.SignOptions",
         "environment.run.Step", "environment.run.Action",
         "build.goalsSave.Goal", "build.goalsSave.App",

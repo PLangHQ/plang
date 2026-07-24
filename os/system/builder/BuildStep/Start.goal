@@ -15,9 +15,7 @@ Compile
 - build.validateStepActions step=%step%, actions=%planStep.actions%, write to %planStep.actions%
 - set %modules% = %!app.module.list%
 - build.types actions=%planStep.actions%, write to %typeInfo%
-/ Per-step so the snapshot reflects the Actions just written by prior BuildSteps.
-- goal.getTypes Goal=%goal%, write to %varTypes%
-- set %stepVarTypes% = %varTypes[step.Index]%
+- set %stepVarTypes% = %!app.type.list%
 - render template "/system/builder/llm/templates/stepForLlm.template", write to %stepForLlm%
 - render template "/system/builder/llm/templates/stepActionDetails.template", write to %actionDetails%
 - render template "/system/builder/llm/Compile.llm", write to %buildStepPrompt%

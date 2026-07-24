@@ -246,66 +246,9 @@
         },
         {
           "index": 3,
-          "text": "goal.getTypes Goal=%goal%, write to %varTypes%",
-          "lineNumber": 19,
-          "comment": "Per-step so the snapshot reflects the Actions just written by prior BuildSteps.",
-          "formal": "goal.getTypes(Goal=%goal%) , variable.set(Name=%varTypes%, Value=%!data%, type=list<dict<text,text>>)",
-          "waitForExecution": true,
-          "action": [
-            {
-              "module": "goal",
-              "name": "getTypes",
-              "parameter": [
-                {
-                  "name": "Goal",
-                  "type": {
-                    "name": "goal",
-                    "template": "plang"
-                  },
-                  "value": "%goal%"
-                }
-              ],
-              "modifier": []
-            },
-            {
-              "module": "variable",
-              "name": "set",
-              "parameter": [
-                {
-                  "name": "Name",
-                  "type": {
-                    "name": "variable",
-                    "template": "plang"
-                  },
-                  "value": "%varTypes%"
-                },
-                {
-                  "name": "Value",
-                  "type": {
-                    "name": "list",
-                    "template": "plang"
-                  },
-                  "value": "%!data%"
-                }
-              ],
-              "default": [
-                {
-                  "name": "asdefault",
-                  "type": {
-                    "name": "bool"
-                  },
-                  "value": false
-                }
-              ],
-              "modifier": []
-            }
-          ]
-        },
-        {
-          "index": 4,
-          "text": "set %stepVarTypes% = %varTypes[step.Index]%",
-          "lineNumber": 20,
-          "formal": "variable.set(Name=%stepVarTypes%, Value=%varTypes[step.Index]%)",
+          "text": "set %stepVarTypes% = %!app.type.list%",
+          "lineNumber": 18,
+          "formal": "variable.set(Name=%stepVarTypes%, Value=%!app.type.list%)",
           "waitForExecution": true,
           "action": [
             {
@@ -323,10 +266,10 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "object",
+                    "name": "list",
                     "template": "plang"
                   },
-                  "value": "%varTypes[step.Index]%"
+                  "value": "%!app.type.list%"
                 }
               ],
               "default": [

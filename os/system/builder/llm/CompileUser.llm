@@ -12,9 +12,9 @@
 
 {{ actionDetails }}
 
-## Variables in scope (from prior steps)
+## Available types
 
-{% if stepVarTypes %}{% for kv in stepVarTypes %}`%{{ kv[0] }}%` ({{ kv[1] }}){% unless forloop.last %}, {% endunless %}{% endfor %}{% else %}(none — this is the first step or no variables introduced yet){% endif %}
+{% if stepVarTypes %}{% for t in stepVarTypes %}{{ t.Name }}{% unless forloop.last %}, {% endunless %}{% endfor %}{% endif %}
 
 ## Type reference
 
