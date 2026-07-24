@@ -283,8 +283,9 @@ public sealed class @this
         sb.AppendLine($"=== DEBUG [BEFORE]: Step [{step.Index}] of {goalName} ===");
         sb.AppendLine($"  Text: {step.Text}");
 
-        foreach (var action in step.Action.Elements)
+        foreach (var row in step.Action)   // value face (Data rows); sync display Peeks, never resolves
         {
+            var action = (global::app.goal.step.action.@this)row.Peek();
             sb.AppendLine($"  Action: {action.Module}.{action.ActionName}");
             foreach (var p in action.Parameter)
             {
@@ -543,8 +544,9 @@ public sealed class @this
 
         var varNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var action in step.Action.Elements)
+        foreach (var row in step.Action)   // value face (Data rows)
         {
+            var action = (global::app.goal.step.action.@this)row.Peek();
             foreach (var p in action.Parameter)
             {
                 if (p.Peek() is global::app.type.item.text.@this pt
