@@ -61,6 +61,16 @@
           "category": "doc",
           "confidence": "high",
           "context": "Reply to coder's node-list-values note. Ruling: program structure is context-free, context travels with the ask (rejects both A stamp-at-load and B late-stamp \u2014 shared-graph contamination). Context-never-null restated as a use rule, not storage. Two-lifecycle list.@this base (run-born keeps :103 throw; node lists get protected context-free ctor), seven _context-site audit, never-stamp-shared rule with fresh-view precedent, concurrency smoke test."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/node-list-values-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Consumer trace folded into node-list-values ruling, settled with Ingi: no public typed-element face (typed face internal; only Data value face public), .list escape hatch dies with zero survivors, ~16 loops become graph members (goal wires itself \u2014 the twice-written wiring loop collapses) + walk-door migrations (ForEachAction needs single-verb rename), nine signature retypes incl. BuildResponse.Steps/Describe/implicit-operator (former flagged-not-fixed now fixed), construction via node Add, property.list precedent caveat (Clr-per-read is the disease), coder's Elements accessor goes internal."
         }
       ],
       "after": {
