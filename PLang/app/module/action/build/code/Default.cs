@@ -262,7 +262,7 @@ public class Default : IBuilder
     // nested projection — the goal owns its (now-tree) step collection.
     private void Fold(Goal goal, List<global::app.error.IError> errors)
     {
-        goal.Step = Fold(goal.Step.Elements, errors);
+        goal.Step = Fold(goal.Step, errors);
         foreach (var subGoal in goal.Child) Fold(subGoal, errors);
     }
 
@@ -270,8 +270,10 @@ public class Default : IBuilder
     // action (the IsCondition action) Child; recursion composes nested blocks. A block under
     // a non-condition step is an authoring error (A4) — recorded against the offending step,
     // never silently dropped or kept flat. Real steps only; nothing is synthesized here.
+    // The fold holds the step/action nodes it is assembling (its own typed positional face), never
+    // a harvested element list.
     private global::app.goal.step.list.@this Fold(
-        IReadOnlyList<global::app.goal.step.@this> flat, List<global::app.error.IError> errors)
+        global::app.goal.step.list.@this flat, List<global::app.error.IError> errors)
     {
         var top = new global::app.goal.step.list.@this();   // Add each real step into the node
         int i = 0;
@@ -283,10 +285,12 @@ public class Default : IBuilder
 
             if (j > i + 1)
             {
-                var block = new List<global::app.goal.step.@this>();
+                var block = new global::app.goal.step.list.@this();
                 for (int k = i + 1; k < j; k++) block.Add(flat[k]);
 
-                var gate = System.Linq.Enumerable.FirstOrDefault(step.Action.Elements, a => a.IsCondition);
+                global::app.goal.step.action.@this? gate = null;
+                for (int k = 0; k < step.Action.Count && gate == null; k++)
+                    if (step.Action[k].IsCondition) gate = step.Action[k];
                 if (gate == null)
                     errors.Add(new global::app.error.StepError(
                         $"indented steps under non-condition step '{step.Text}'",
