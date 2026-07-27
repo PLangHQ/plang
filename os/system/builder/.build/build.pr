@@ -190,7 +190,7 @@
               "value": {
                 "name": "EmitBuildEvent",
                 "parallel": false,
-                "parameters": [
+                "parameter": [
                   {
                     "name": "kind",
                     "type": {
@@ -338,7 +338,7 @@
               "value": {
                 "name": "EmitBuildEvent",
                 "parallel": false,
-                "parameters": [
+                "parameter": [
                   {
                     "name": "kind",
                     "type": {
@@ -389,7 +389,7 @@
               "value": {
                 "name": "BuildGoal",
                 "parallel": false,
-                "parameters": [
+                "parameter": [
                   {
                     "name": "goal",
                     "type": {

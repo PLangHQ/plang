@@ -454,12 +454,35 @@ public partial class @this
             if (dataVar == null || !dataVar.IsInitialized)
             {
                 if (varName.StartsWith('!')) { w.String(m.Value); continue; }
-                throw new global::app.error.VariableNotFoundException(varName);
+                throw await Unreachable(varName);
             }
             await dataVar.Output(w, global::app.View.Out, _context);   // the reference, in place
         }
         w.String(input[pos..]);                       // trailing literal
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
+    }
+
+    // Diagnose an unresolved reference by walking its path prefix-by-prefix: the deepest
+    // prefix that resolves, and the next segment that returned nothing on it. A bare root
+    // (no dots) gets the plain "not set" form.
+    private async System.Threading.Tasks.ValueTask<global::app.error.VariableNotFoundException> Unreachable(string name)
+    {
+        var segments = global::app.variable.path.@this.Parse(name).Segments;
+        if (segments.Count <= 1) return new global::app.error.VariableNotFoundException(name);
+
+        string reachedPrefix = "(root)", reachedType = "nothing";
+        var prefix = new System.Text.StringBuilder();
+        for (int i = 0; i < segments.Count; i++)
+        {
+            var seg = segments[i];
+            prefix.Append(i > 0 && seg is global::app.variable.path.Segment.Member ? "." + seg.Raw : seg.Raw);
+            var hop = await Get(prefix.ToString());
+            if (hop == null || !hop.IsInitialized)
+                return new global::app.error.VariableNotFoundException(name, reachedPrefix, reachedType, seg.Raw);
+            reachedPrefix = prefix.ToString();
+            reachedType = hop.Peek()?.GetType().Name ?? "null";
+        }
+        return new global::app.error.VariableNotFoundException(name);
     }
 
     /// <summary>

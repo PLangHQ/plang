@@ -99,6 +99,18 @@ public class VariableNotFoundException : AppException
     {
         VariableName = variableName;
     }
+
+    // Dotted-path failure: name WHERE the walk broke — the deepest prefix that resolved, its
+    // runtime type, and the next segment that returned nothing. Turns an opaque "not reachable"
+    // into "goal resolved to X, but .step was not found on it".
+    public VariableNotFoundException(string variableName, string reachedPrefix, string reachedType, string failedSegment)
+        : base($"Variable %{variableName}% is not reachable: navigated as far as '{reachedPrefix}' "
+             + $"(a {reachedType}), but '.{failedSegment}' resolved to nothing on it. "
+             + "Check the dot-path matches the value's actual shape.",
+               "VariableNotFound", 404)
+    {
+        VariableName = variableName;
+    }
 }
 
 /// <summary>

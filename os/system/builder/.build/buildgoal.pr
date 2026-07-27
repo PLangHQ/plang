@@ -27,7 +27,7 @@
               "value": {
                 "name": "BuildGoal/Start",
                 "parallel": false,
-                "parameters": [],
+                "parameter": [],
                 "prPath": "/system/builder/BuildGoal/.build/start.pr"
               }
             }

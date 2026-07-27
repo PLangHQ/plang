@@ -28,7 +28,7 @@
               "value": {
                 "name": "/system/builder/EmitBuildEvent",
                 "parallel": false,
-                "parameters": [
+                "parameter": [
                   {
                     "name": "kind",
                     "type": {
@@ -153,7 +153,7 @@
               "value": {
                 "name": "Plan",
                 "parallel": false,
-                "parameters": [],
+                "parameter": [],
                 "prPath": "/system/builder/BuildGoal/.build/plan.pr"
               }
             }
@@ -180,7 +180,7 @@
                           },
                           "value": {
                             "name": "HandleBuildFailure",
-                            "parameters": []
+                            "parameter": []
                           }
                         }
                       ]
@@ -380,7 +380,7 @@
               "value": {
                 "name": "BuildStep/Start",
                 "parallel": false,
-                "parameters": [
+                "parameter": [
                   {
                     "name": "planStep",
                     "type": {
@@ -416,7 +416,7 @@
                           },
                           "value": {
                             "name": "HandleBuildFailure",
-                            "parameters": []
+                            "parameter": []
                           }
                         }
                       ]
@@ -512,7 +512,7 @@
               "value": {
                 "name": "BuildSubGoal",
                 "parallel": false,
-                "parameters": [
+                "parameter": [
                   {
                     "name": "subGoal",
                     "type": {
@@ -932,7 +932,7 @@
                   "value": {
                     "name": "/system/builder/EmitBuildEvent",
                     "parallel": false,
-                    "parameters": [
+                    "parameter": [
                       {
                         "name": "kind",
                         "type": {
@@ -1009,7 +1009,7 @@
                   "value": {
                     "name": "Plan",
                     "parallel": false,
-                    "parameters": [],
+                    "parameter": [],
                     "prPath": "/system/builder/BuildGoal/.build/plan.pr"
                   }
                 }
@@ -1036,7 +1036,7 @@
                               },
                               "value": {
                                 "name": "HandleBuildFailure",
-                                "parameters": []
+                                "parameter": []
                               }
                             }
                           ]
@@ -1084,7 +1084,7 @@
                   "value": {
                     "name": "BuildStep/Start",
                     "parallel": false,
-                    "parameters": [
+                    "parameter": [
                       {
                         "name": "planStep",
                         "type": {
@@ -1120,7 +1120,7 @@
                               },
                               "value": {
                                 "name": "HandleBuildFailure",
-                                "parameters": []
+                                "parameter": []
                               }
                             }
                           ]
@@ -1324,7 +1324,7 @@
                   "value": {
                     "name": "/system/builder/EmitBuildEvent",
                     "parallel": false,
-                    "parameters": [
+                    "parameter": [
                       {
                         "name": "kind",
                         "type": {
@@ -1374,7 +1374,7 @@
                   "value": {
                     "name": "/system/builder/EmitBuildEvent",
                     "parallel": false,
-                    "parameters": [
+                    "parameter": [
                       {
                         "name": "kind",
                         "type": {

@@ -28,7 +28,7 @@
               "value": {
                 "name": "/system/builder/EmitBuildEvent",
                 "parallel": false,
-                "parameters": [
+                "parameter": [
                   {
                     "name": "kind",
                     "type": {

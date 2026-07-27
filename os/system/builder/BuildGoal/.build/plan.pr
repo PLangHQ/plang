@@ -276,7 +276,7 @@
               "value": {
                 "name": "QueryAndValidatePlan",
                 "parallel": false,
-                "parameters": [],
+                "parameter": [],
                 "prPath": "/system/builder/BuildGoal/.build/plan.pr"
               }
             }
@@ -303,7 +303,7 @@
                           },
                           "value": {
                             "name": "LlmFixer",
-                            "parameters": []
+                            "parameter": []
                           }
                         }
                       ]
@@ -615,7 +615,7 @@
                   "value": {
                     "name": "Validate",
                     "parallel": false,
-                    "parameters": [],
+                    "parameter": [],
                     "prPath": "/system/builder/BuildGoal/.build/validate.pr"
                   }
                 }

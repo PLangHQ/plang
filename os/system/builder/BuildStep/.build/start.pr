@@ -69,7 +69,7 @@
               "value": {
                 "name": "Compile",
                 "parallel": false,
-                "parameters": [],
+                "parameter": [],
                 "prPath": "/system/builder/BuildStep/.build/start.pr"
               }
             }
@@ -575,7 +575,7 @@
                   "value": {
                     "name": "QueryAndVerify",
                     "parallel": false,
-                    "parameters": [],
+                    "parameter": [],
                     "prPath": "/system/builder/BuildStep/.build/start.pr"
                   }
                 }
@@ -609,7 +609,7 @@
                               },
                               "value": {
                                 "name": "RefineActions",
-                                "parameters": []
+                                "parameter": []
                               }
                             }
                           ]
@@ -854,7 +854,7 @@
                   "value": {
                     "name": "EmitSummary",
                     "parallel": false,
-                    "parameters": [],
+                    "parameter": [],
                     "prPath": "/system/builder/BuildStep/.build/start.pr"
                   }
                 }
@@ -1448,7 +1448,7 @@
                   "value": {
                     "name": "/system/builder/EmitBuildEvent",
                     "parallel": false,
-                    "parameters": [
+                    "parameter": [
                       {
                         "name": "kind",
                         "type": {
@@ -1745,7 +1745,7 @@
                   "value": {
                     "name": "/system/builder/EmitBuildEvent",
                     "parallel": false,
-                    "parameters": [
+                    "parameter": [
                       {
                         "name": "kind",
                         "type": {
@@ -1803,7 +1803,7 @@
                   "value": {
                     "name": "/system/builder/EmitBuildEvent",
                     "parallel": false,
-                    "parameters": [
+                    "parameter": [
                       {
                         "name": "kind",
                         "type": {
@@ -1902,7 +1902,7 @@
                           "value": {
                             "name": "/system/builder/EmitBuildEvent",
                             "parallel": false,
-                            "parameters": [
+                            "parameter": [
                               {
                                 "name": "kind",
                                 "type": {
@@ -1987,7 +1987,7 @@
                           "value": {
                             "name": "/system/builder/EmitBuildEvent",
                             "parallel": false,
-                            "parameters": [
+                            "parameter": [
                               {
                                 "name": "kind",
                                 "type": {
@@ -2072,7 +2072,7 @@
                           "value": {
                             "name": "/system/builder/EmitBuildEvent",
                             "parallel": false,
-                            "parameters": [
+                            "parameter": [
                               {
                                 "name": "kind",
                                 "type": {
@@ -2157,7 +2157,7 @@
                           "value": {
                             "name": "/system/builder/EmitBuildEvent",
                             "parallel": false,
-                            "parameters": [
+                            "parameter": [
                               {
                                 "name": "kind",
                                 "type": {
@@ -2242,7 +2242,7 @@
                           "value": {
                             "name": "/system/builder/EmitBuildEvent",
                             "parallel": false,
-                            "parameters": [
+                            "parameter": [
                               {
                                 "name": "kind",
                                 "type": {
@@ -2327,7 +2327,7 @@
                           "value": {
                             "name": "/system/builder/EmitBuildEvent",
                             "parallel": false,
-                            "parameters": [
+                            "parameter": [
                               {
                                 "name": "kind",
                                 "type": {

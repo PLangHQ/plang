@@ -215,7 +215,7 @@
               "value": {
                 "name": "ValidateAction",
                 "parallel": false,
-                "parameters": [
+                "parameter": [
                   {
                     "name": "__vAct__",
                     "type": {
