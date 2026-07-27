@@ -65,10 +65,15 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
                 d[e.Key?.ToString() ?? ""] = e.Value;
             return new global::app.type.item.dict.@this(d, context!);
         }
-        if (raw is System.Collections.IList ilist && raw is not byte[])
+        // Any remaining enumerable — an IList, an IReadOnlyList<T> (a domain X.list like warning.list),
+        // an array, a HashSet<T> — narrows to a native plang list (store raw, type on read). string is
+        // IEnumerable<char> but a scalar; byte[] is bytes; a dict / Data-or-item sequence was handled
+        // above. Without this a read-only domain collection would slip past narrowing to the entity
+        // dispatch below, whose identity door answers "list" but can't build it — an infinite rebuild.
+        if (raw is System.Collections.IEnumerable seq && raw is not string && raw is not byte[])
         {
             var l = new System.Collections.Generic.List<object?>();
-            foreach (var e in ilist) l.Add(e);
+            foreach (var e in seq) l.Add(e);
             return new global::app.type.item.list.@this(l, context!);
         }
 
