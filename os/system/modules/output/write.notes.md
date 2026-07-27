@@ -17,6 +17,6 @@ Correct (`write out "hi" to logger channel`):
 
 **DO NOT** emit a peer `channel.set` action when the user names a routing channel — `channel.set` is for *registering* a channel handler, never for routing on `output.write`.
 
-## tstring vs string for `Data`
+## `Data` type for `output.write`
 
-`write out "Hello %name%"` → ONE `output.write` with `Data` as a tstring (the template gets interpolated at runtime): `{"name":"Data","value":"Hello %name%","type":"tstring"}`. Plain literal strings without `%var%` interpolations use `type:"string"`; a bare `%var%` reference uses `type:"object"` (runtime resolves the actual type).
+`write out "Hello %name%"` → ONE `output.write`, `Data` is `text` (the template interpolates at runtime): `{"name":"Data","type":{"name":"text"},"value":"Hello %name%"}`. A plain literal string (no `%var%`) is also `text`. A bare `%var%` reference uses `{"name":"object"}` (runtime resolves the actual type).

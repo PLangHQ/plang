@@ -27,16 +27,16 @@ A one-line render of the chain; `actions[]` then mirrors it exactly.
 
 ## Modifiers vs peers
 
-Only THREE actions are modifiers — `error.handle`, `cache.wrap`, `timeout.after` — and they go in the host action's `modifiers[]`. Use one only when the step has a clause like `on error …`, `cache for …`, `timeout after …`. A `cache=` *parameter* on `llm.query` is NOT cache.wrap.
+Only THREE actions are modifiers — `error.handle`, `cache.wrap`, `timeout.after` — and they go in the host action's `modifier[]`. Use one only when the step has a clause like `on error …`, `cache for …`, `timeout after …`. A `cache=` *parameter* on `llm.query` is NOT cache.wrap.
 
-Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `output.write`, `file.*`, `error.throw`, …) is a **peer** in the top-level `actions[]`, never in `modifiers[]`. `foreach X, call Y` is two peers.
+Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `output.write`, `file.*`, `error.throw`, …) is a **peer** in the top-level `actions[]`, never in `modifier[]`. `foreach X, call Y` is two peers.
 
 ## Conditions carry their body in `child`
 
 A condition — `condition.if`, `condition.elseif`, `condition.else` — OWNS the clause it guards. That body is **not** a peer; it rides the condition action's **`child`**: a list of steps, each `{"text": "<clause>", "actions": [ ... ]}`.
 
 - `if %x% > 2, call DoStuff` → ONE action, its body in `child`:
-  `{"module":"condition","action":"if","parameters":[...],"child":[{"text":"call DoStuff","actions":[{"module":"goal","action":"call","parameters":[{"name":"GoalName","value":"DoStuff"}]}]}]}`
+  `{"module":"condition","action":"if","parameter":[...],"child":[{"text":"call DoStuff","actions":[{"module":"goal","action":"call","parameter":[{"name":"GoalName","type":{"name":"text"},"value":"DoStuff"}]}]}]}`
 - `if %x% then call A, else call B` → TWO peer actions: `condition.if` with `child:[call A]`, then `condition.else` with `child:[call B]`.
 - `if/elseif/else` chains: each condition is its own peer action, each carrying its own `child` body.
 - The child step's `text` is the guarded clause verbatim (`"call DoStuff"`); its `actions` compile that clause exactly as a normal step would (recursively — a body can itself hold a condition with its own `child`).
@@ -55,7 +55,7 @@ A condition — `condition.if`, `condition.elseif`, `condition.else` — OWNS th
 {"formal":"...","actions":[...],"confidence":"VeryHigh|High|Medium|Low|VeryLow","explanation":"...","errors":[],"warnings":[]}
 ```
 
-Each action: `{module, action, parameters:[{name, value, type}], modifiers?:[...], child?:[{text, actions:[...]}]}` (`child` only on a condition — its guarded body). `module` is a single identifier: `ui.render` → `{"module":"ui","action":"render"}`, never `{"module":"ui.render",...}`. Omit `explanation` at High/VeryHigh; otherwise one sentence on the uncertainty. Drop confidence to Low/VeryLow when the verb doesn't really match any action you were given.
+Each action: `{module, action, parameter:[{name, type, value}], modifier?:[...], child?:[{text, actions:[...]}]}` (`child` only on a condition — its guarded body). `module` is a single identifier: `ui.render` → `{"module":"ui","action":"render"}`, never `{"module":"ui.render",...}`. Omit `explanation` at High/VeryHigh; otherwise one sentence on the uncertainty. Drop confidence to Low/VeryLow when the verb doesn't really match any action you were given.
 
 ## Parameters & types
 

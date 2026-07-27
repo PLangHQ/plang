@@ -36,7 +36,9 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "lineNumber": lineNumber = (int)reader.Long(); break;
                 case "indent": indent = (int)reader.Long(); break;
                 case "comment": comment = reader.String(); break;
-                case "action":
+                // `action` is canonical (Output writes it); `actions` is the LLM's natural plural for
+                // the list (same tolerance as parameter/parameters on the action reader).
+                case "action": case "actions":
                     reader.BeginArray();
                     while (reader.NextElement())
                         actions.Add((global::app.goal.step.action.@this)_action.Read(ref reader, kind, ctx));

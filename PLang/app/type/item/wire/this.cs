@@ -62,5 +62,7 @@ public sealed class @this : global::app.type.item.source
     }
 
     internal override global::app.type.item.source Declared(global::app.type.@this type)
-        => new @this((string)Raw, type, Context, _reader);
+        // The declaration carries the build's context (a context-free program-structure value has
+        // none of its own) — prefer the declaring type's, fall back to the value's own.
+        => new @this((string)Raw, type, type.Context ?? Context, _reader);
 }

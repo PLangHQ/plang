@@ -194,7 +194,7 @@ public class source : @this, module.IContext
     /// <summary>Re-birth under a new declaration — the source owns its own re-typing (kills the
     /// type entity reaching into a source's raw/format). The wire override carries its captured
     /// serializer across, so a re-declared wire still decodes through its capturer.</summary>
-    internal virtual source Declared(global::app.type.@this type) => new source(_value, type, Context);
+    internal virtual source Declared(global::app.type.@this type) => new source(_value, type, type.Context ?? Context);
 
     /// <summary>
     /// Navigation is first-touch: a source is still its raw form (bytes / json text),

@@ -899,7 +899,7 @@ public class Default : IBuilder
                     if (schemaProp == null) continue;
                     var typeName = context.App.Type.GetTypeName(schemaProp.PropertyType);
                     if (typeName != "object")
-                        p.Declare(new app.type.@this(typeName));
+                        p.Declare(app.type.@this.Create(typeName, context: context), context);
 
                     // plang-types: stamp kind alongside type when the declared
                     // type carries a static Build(value) hook. Separate field
@@ -927,7 +927,7 @@ public class Default : IBuilder
                         var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(entity.Name), context: context);
                         if (entity.Create(p.Peek(), carrier) is { Type.Kind: not null } built
                             && built is not global::app.type.clr.@this)
-                            p.Declare(built.Type);
+                            p.Declare(built.Type, context);
                     }
                 }
             }
@@ -1001,7 +1001,7 @@ public class Default : IBuilder
                 var raw = (p.Peek() as global::app.type.item.@this)?.RawText;
                 if (raw == null || !global::app.type.item.text.@this.HasVariable(raw)) continue;
                 var t = p.Type;
-                p.Declare(new app.type.@this(t?.Name ?? "object", t?.Kind?.Name, t?.Strict ?? false, "plang"));
+                p.Declare(app.type.@this.Create(t?.Name ?? "object", t?.Kind?.Name, t?.Strict ?? false, context, "plang"), context);
             }
         }
         return errors;

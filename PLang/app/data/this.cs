@@ -290,14 +290,17 @@ public partial class @this
     /// an LLM-emitted shape; a kind hook refines an authored literal). Same
     /// rules as the entry lift's judgement fold (<see cref="type.Judge"/>).
     /// </summary>
-    internal void Declare(type declared)
+    internal void Declare(type declared, global::app.actor.context.@this? ctx = null)
     {
         if (declared is not { IsNull: false } || declared.Polymorphic) return;
         // The after-the-fact stamp routes through the SAME door as the ctor: the type
         // builds from the current (already-built) value — a value already of the type
         // holds (re-kind if needed), a different built type re-types, a %ref%/variable
         // leaf is left for its own resolution. No Build/Judge context fork.
-        _item = declared.Create(_item, _context);
+        // A program-structure Data (an action's param, read context-free) carries no context of
+        // its own — the ASK supplies it (the build normalization is the ask). Context travels with
+        // the ask: prefer the Data's own, else the caller's.
+        _item = declared.Create(_item, _context ?? ctx);
     }
 
     /// <summary>
