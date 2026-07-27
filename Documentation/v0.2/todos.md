@@ -2001,16 +2001,20 @@ already fixed on goal-graph-singular.
 Context: the builder now compiles a simple goal end-to-end on a clean LLM pass
 (goal-graph-singular). Two known issues remain:
 
-1. **stepForLlm.template resolves an authored %ref% on retry — build is flaky.**
-   `os/system/builder/llm/templates/stepForLlm.template:3` renders a re-compiled step's
-   param value with `{{ p.Value | jsonval }}`. Fluid's `PlangDoorAccessor.GetAsync`
-   (Fluid.cs:241) resolves via `.Value()`, so an authored template value like
-   `"Hello %name%"` tries to resolve `%name%` (unset at build) → VariableNotFoundException.
-   Only triggers when the step already has actions (a retry re-render); a clean first pass
-   skips it (`step.Action.size > 0` guard is false). Ingi said leave PlangDoorAccessor as-is
-   — so the fix is on the template/value side: the feedback must show the RAW authored value
-   (Store view), never resolve it. Also note: `jsonval` filter is NOT registered (only
-   `formal` is) — a latent second bug on that same line.
+1. **stepForLlm.template hand-rolls action JSON — the ROOT cause of the retry flake.**
+   `os/system/builder/llm/templates/stepForLlm.template:3` manually rebuilds each compiled
+   action as `{"name":"{{ p.Name }}","value":{{ p.Value | jsonval }}}`. That RE-DERIVES what
+   the action already serializes itself: `action.Output` (Store view) IS the .pr JSON and
+   already writes `"value":"Hello %name%"` RAW (%refs% preserved — verified in a built test.pr).
+   Hand-rolling forces `{{ p.Value }}` through Fluid's resolving door (PlangDoorAccessor.Value()),
+   which resolves the authored `%name%` (unset at build) → VariableNotFound. Only fires on a
+   retry re-render (`step.Action.size > 0`), so the build is flaky, not always-broken.
+   NOT the fix: making the value preserve unset refs (a `preserveUnset` flag on Resolve/text.Value)
+   — that makes the value lie to cover the template. The fix: the feedback renders each action via
+   its OWN Store serialization (the .pr shape), so %refs% ride raw and nothing resolves — the value
+   owns its render (OBP). Design choice: (a) serialize step.Action to a JSON string in a builder
+   .goal step and emit that string, or (b) a value-serialization seam the template calls (NOT a
+   `jsonval` filter — Ingi rejected that name/shape). `jsonval` is also currently unregistered.
 
 2. **goal.Child should be a list<goal> node, not a naked List<@this>** (Ingi flagged).
    `goal/this.cs:54` `public List<@this> Child` is a naked collection — its sibling
