@@ -489,7 +489,7 @@
               "name": "query",
               "parameter": [
                 {
-                  "name": "Messages",
+                  "name": "Message",
                   "type": {
                     "name": "list",
                     "template": "plang"
