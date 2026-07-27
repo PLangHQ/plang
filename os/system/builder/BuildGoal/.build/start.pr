@@ -480,9 +480,9 @@
     },
     {
       "index": 9,
-      "text": "foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%",
+      "text": "foreach %parentGoal.Child%, call BuildSubGoal subGoal=%item%",
       "lineNumber": 19,
-      "formal": "loop.foreach(Collection=%parentGoal.Goals%), goal.call(GoalName={name:\"BuildSubGoal\", parameters:[subGoal=%item%]})",
+      "formal": "loop.foreach(Collection=%parentGoal.Child%), goal.call(GoalName={name:\"BuildSubGoal\", parameters:[subGoal=%item%]})",
       "waitForExecution": true,
       "action": [
         {
@@ -495,7 +495,7 @@
                 "name": "object",
                 "template": "plang"
               },
-              "value": "%parentGoal.Goals%"
+              "value": "%parentGoal.Child%"
             }
           ],
           "modifier": []
