@@ -45,8 +45,16 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             switch (name)
             {
                 case "module": action.Module = reader.String(); break;
-                case "name": action.ActionName = reader.String(); break;
-                case "parameter":
+                // `name` is the canonical wire key (what Output writes and every .pr carries).
+                // `action` is the LLM's clearer alias — the compile schema asks the model for
+                // `action`, so the compile-response read accepts it here. One read door, both keys;
+                // the persisted wire stays `name` (no .pr migration).
+                case "name": case "action": action.ActionName = reader.String(); break;
+                // `parameter` is canonical (Output writes it, the schema teaches it). `parameters` is
+                // accepted too: the schema rides as a prompt hint, and the LLM naturally pluralizes an
+                // array field name regardless — so the read tolerates the plural. Persisted wire stays
+                // singular. Same for modifier/modifiers below.
+                case "parameter": case "parameters":
                     reader.BeginArray();
                     while (reader.NextElement())
                         action.Parameter.Add(dataReader.Read(reader.RawValue(), ctx));
@@ -59,7 +67,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                         action.Default.Add(dataReader.Read(reader.RawValue(), ctx));
                     reader.EndArray();
                     break;
-                case "modifier":
+                case "modifier": case "modifiers":
                     reader.BeginArray();
                     while (reader.NextElement())
                     {

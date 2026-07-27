@@ -1974,3 +1974,25 @@ Follow-up (node-list pass, from Ingi): in `app/module/action/loop/foreach.cs`, a
 node-list changes land, check whether the local `bodyActions` (the loop-body slice) can just
 be named `actions` / simplified — `foreach (var action in bodyActions)`. Small cleanup;
 verify no shadow/clash with the step's action chain naming first.
+
+## 2026-07-27 — action.Module should be a module instance, not a string (decomposition/flat-copy)
+From Ingi: `app.goal.step.action.@this` stores `Module` as a **string** (the module's name)
+plus `ActionName` as a string, with a computed `Name => $"{Module}.{ActionName}"`. That
+decomposes the object — the action copies the module's NAME instead of holding the module and
+asking it (`Module.Name`). The per-module element already exists (`app.module.@this`, has
+`.Name`, selected from `app.module.list.@this` at `app.Module`), so the target shape is:
+`module.@this Module { get; }` + `string Name { get; }` (the action's own name), with
+`Qualified => $"{Module.Name}.{Name}"`.
+
+Also folds in the `ActionName` → `Name` rename (ActionName is obpv; ~78 usages / 20 files;
+collides with the current computed `Name`, which becomes `Qualified`).
+
+**The wrinkle that makes it a design pass, not a mechanical rename** — the BUILD path. The LLM
+hallucinates module names ("outputt"); validation's job is to report "module 'outputt' not
+found". At that point NO module element exists to reference, so the action can't always hold a
+resolved `module.@this` — during compile/validate it may carry only an unresolved name (the
+flat-copy "one summary field for the null-reference failure path"). Needs an architect ruling on
+how the action carries module across build (unresolved name) → runtime (resolved element).
+
+Not blocking: the functional bug (LLM `action` wire key dropped by hardcoded-`name` readers) is
+already fixed on goal-graph-singular.
