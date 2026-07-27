@@ -1996,3 +1996,25 @@ how the action carries module across build (unresolved name) → runtime (resolv
 
 Not blocking: the functional bug (LLM `action` wire key dropped by hardcoded-`name` readers) is
 already fixed on goal-graph-singular.
+
+## 2026-07-27 — builder: two follow-ups after end-to-end build landed
+Context: the builder now compiles a simple goal end-to-end on a clean LLM pass
+(goal-graph-singular). Two known issues remain:
+
+1. **stepForLlm.template resolves an authored %ref% on retry — build is flaky.**
+   `os/system/builder/llm/templates/stepForLlm.template:3` renders a re-compiled step's
+   param value with `{{ p.Value | jsonval }}`. Fluid's `PlangDoorAccessor.GetAsync`
+   (Fluid.cs:241) resolves via `.Value()`, so an authored template value like
+   `"Hello %name%"` tries to resolve `%name%` (unset at build) → VariableNotFoundException.
+   Only triggers when the step already has actions (a retry re-render); a clean first pass
+   skips it (`step.Action.size > 0` guard is false). Ingi said leave PlangDoorAccessor as-is
+   — so the fix is on the template/value side: the feedback must show the RAW authored value
+   (Store view), never resolve it. Also note: `jsonval` filter is NOT registered (only
+   `formal` is) — a latent second bug on that same line.
+
+2. **goal.Child should be a list<goal> node, not a naked List<@this>** (Ingi flagged).
+   `goal/this.cs:54` `public List<@this> Child` is a naked collection — its sibling
+   `goal.Step` is a proper `step.list` node, and `%goals%` is a `list<goal>` node (both
+   foreach correctly). On-theme for goal-graph-singular. Not the blocker for the stale-Goals
+   bug (correct property name navigates fine), but the right cleanup. The getter side-effect
+   (`g.Parent ??= this`) + parser line 567 + Merge/NestRecursive + serialization all move with it.
