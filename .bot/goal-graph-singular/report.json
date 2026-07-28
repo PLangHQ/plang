@@ -140,6 +140,15 @@
           "category": "doc",
           "confidence": "high",
           "context": "Reply to coder's template-value-view problem: none of (a)/(b)/(c) \u2014 the template hand-rolled the action wire (second writer). Ruling: {{ step.Action | store }} \u2014 the node writes itself via Output(View.Store); no leaf member-access, resolve door untouched, no accessor fork, Value() unchanged. Template law: {{x}} = resolve door; authored program values embed via the value's own writer with explicit view. render View input likely reverts; parameter-type idea not needed here."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/build-hook-goal-access-answer.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Ratified coder's (b): Build() hooks reach the target goal via the build-scoped %goal% variable (established Build() idiom; the goal is data the build transforms). Standing answer for all build-birth-fact hooks; backref-pass note that build-hook reaches reroute to %goal%, not context.Goal."
         }
       ],
       "after": {
