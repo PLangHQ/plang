@@ -8,10 +8,12 @@ namespace app.goal.step.action;
 // the builder catalog. Reflection happens ONCE here, cached on the element.
 public partial class @this
 {
-    /// <summary>Catalog-zoom context — stamped when the module element mints this action for the
-    /// catalog; null on a .pr-loaded action (which navigates via the clr carrier, not this list).</summary>
+    // The catalog faces reach App by NAVIGATION — this action → its module → the module collection
+    // → App — live, at ask time. Nothing is stamped: registration runs inside the collection's
+    // constructor, before App exists, so a birth-time context could not be honest. An action built
+    // outside a construction door has no module, and these faces say so rather than guessing.
     [JsonIgnore]
-    internal global::app.actor.context.@this? Context { get; init; }
+    private global::app.@this? App => _module?.App;
 
     // The handler CLR type — reached TRANSIENTLY through the module element's own door (the owner),
     // never stored on this action. Reads the backing field: an action built outside a construction
@@ -30,10 +32,10 @@ public partial class @this
     {
         get
         {
-            if (Context == null)
-                throw new System.InvalidOperationException(
-                    "action.Property needs the catalog context — stamp it at mint; a .pr-zoom action navigates via the clr carrier.");
-            return _properties ??= new global::app.goal.step.action.property.list.@this(Handler, Context.App.Type, Context);
+            var app = App ?? throw new System.InvalidOperationException(
+                "action.Property needs the catalog — this action has no module, so it was built outside a construction door.");
+            return _properties ??= new global::app.goal.step.action.property.list.@this(
+                Handler, app.Type, app.System.Context);
         }
     }
 
@@ -53,7 +55,7 @@ public partial class @this
             _returnComputed = true;
 
             var handler = Handler;
-            if (handler == null || Context == null) return _return = null;
+            if (handler == null || App == null) return _return = null;
             var run = handler.GetMethod("Run", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes);
             if (run == null) return _return = null;
 
@@ -65,7 +67,7 @@ public partial class @this
             if (!ret.IsGenericType || ret.GetGenericTypeDefinition() != typeof(global::app.data.@this<>))
                 return _return = null;
             var t = ret.GetGenericArguments()[0];
-            return _return = t == typeof(object) ? null : Context.App.Type[t];   // entity (compounds ride kind)
+            return _return = t == typeof(object) ? null : App!.Type[t];   // entity (compounds ride kind)
         }
     }
 
@@ -107,9 +109,9 @@ public partial class @this
 
     private global::app.type.item.file.@this Prose(string facet)
     {
-        var ctx = Context ?? throw new System.InvalidOperationException(
-            "action prose needs the catalog context — a .pr-zoom action navigates via the clr carrier, not the prose doors.");
-        var root = ctx.App.Module.ResolveMarkdownTeachingRoot()
+        var app = App ?? throw new System.InvalidOperationException(
+            "action prose needs the catalog — this action has no module, so it was built outside a construction door.");
+        var root = app.Module.ResolveMarkdownTeachingRoot()
             ?? throw new System.InvalidOperationException(
                 "action prose needs the teaching root — the module collection resolves it from App.OsDirectory.");
         var path = root.Combine(Module.Name).Combine($"{Name}.{facet}.md");

@@ -112,7 +112,7 @@ public static class MatrixRunner
         where TAction : class, ICodeGenerated
     {
         var (module, actionName) = ModuleAndAction<TAction>();
-        if (app.Module.Contains(module, actionName)) return;
+        if (app.Module.Contains(module) && app.Module[module][actionName] != null) return;
         app.Module.RegisterType(module, actionName, typeof(TAction));
     }
 
@@ -135,7 +135,7 @@ public static class MatrixRunner
             var actionName = attr.Name ?? type.Name.ToLowerInvariant();
             var moduleNs = type.Namespace!;
             var module = moduleNs.Substring("app.module.".Length);
-            if (!app.Module.Contains(module, actionName))
+            if (!app.Module.Contains(module) || app.Module[module][actionName] == null)
                 app.Module.RegisterType(module, actionName, type);
         }
     }

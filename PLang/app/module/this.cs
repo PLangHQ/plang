@@ -22,72 +22,100 @@ public sealed class @this
     /// naturally without reaching for <c>.Name</c>.</summary>
     public override string ToString() => Name;
 
+    // The module's actions — ITS OWN storage, filled as each one registers. One map, because the
+    // ROLE is decided once, here: an action carrying [Modifier] is minted as the modifier subtype
+    // at registration, so "the type IS the role" needs no second home and no flag. Actions and
+    // Modifiers are filtered views over this one map.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, Row> _action
+        = new(System.StringComparer.OrdinalIgnoreCase);
+
+    // The lifecycle record (per-call Type vs shared Instance) beside the catalog element it describes.
+    private sealed record Row(global::app.module.list.ActionEntry Entry, global::app.goal.step.action.@this Element);
+
     internal @this(string name, list.@this list)
     {
         Name = name;
         _list = list;
     }
 
-    /// <summary>The handler CLR type for one of this module's actions — the owner's answer, handed
-    /// TRANSIENTLY to the reflection leaf. The type lives in the registry index (keyed by the
-    /// identity the action carries); it never rides on the action itself.</summary>
-    internal System.Type? Handler(string actionName) => _list.GetActionType(Name, actionName);
+    /// <summary>The App this module belongs to — reached by NAVIGATION (module → its collection →
+    /// App), never stamped. Registration runs inside the collection's constructor, before App is
+    /// attached, so nothing here can be born holding one; every reader asks later, when it exists.</summary>
+    internal global::app.@this App => _list.App;
 
-    // Elements cached — the class-zoom face on the .pr action host, minted ONCE off the registry
-    // index and living as long as this element (the registry drops it on its own mutation). One
-    // walk, two homes: [Modifier] routes each name to its role. The list wrappers mint fresh per
-    // ask over the same cached elements.
-    private System.Collections.Generic.List<global::app.goal.step.action.@this>? _actions;
-    private System.Collections.Generic.List<global::app.goal.step.action.modifier.@this>? _modifiers;
-
-    // Built into locals and PUBLISHED last: `_actions` is the guard the readers test, so assigning
-    // it before the walk would let a concurrent reader see a non-null but still-empty catalog and
-    // conclude the action does not exist. Two threads may both walk; both produce the same catalog.
-    private void Mint()
+    /// <summary>Takes ownership of one action: its lifecycle entry AND its catalog element, born
+    /// as the subtype its <c>[Modifier]</c> attribute says it is. The module is the only thing that
+    /// ever adds to its own contents.</summary>
+    internal void Add(string actionName, System.Type? type, IAction? instance)
     {
-        var actions = new System.Collections.Generic.List<global::app.goal.step.action.@this>();
-        var modifiers = new System.Collections.Generic.List<global::app.goal.step.action.modifier.@this>();
-        var ctx = _list.App.System.Context;
-        foreach (var name in _list.GetActions(Name))
-        {
-            var order = Handler(name)?.GetCustomAttribute<global::app.module.ModifierAttribute>()?.Order;
-            // The catalog element carries the [Action] cache flag so the teaching template can tag
-            // [no-cache] — read off the registry (its single source), not defaulted.
-            var cacheable = _list.IsCacheable(Name, name);
-            if (order != null)
-                modifiers.Add(new global::app.goal.step.action.modifier.@this
-                    { Module = this, Name = name, Position = order.Value, Cacheable = cacheable, Context = ctx });
-            else
-                actions.Add(new global::app.goal.step.action.@this
-                    { Module = this, Name = name, Cacheable = cacheable, Context = ctx });
-        }
-        _modifiers = modifiers;
-        _actions = actions;
+        var clr = type ?? instance?.GetType();
+        var order = clr?.GetCustomAttribute<global::app.module.ModifierAttribute>()?.Order;
+        // The catalog element carries the [Action] cache flag so the teaching template can tag
+        // [no-cache] — read off the attribute, its single source, not defaulted.
+        var cacheable = clr?.GetCustomAttribute<global::app.module.ActionAttribute>()?.Cacheable ?? true;
+        global::app.goal.step.action.@this element = order != null
+            ? new global::app.goal.step.action.modifier.@this
+                { Module = this, Name = actionName, Position = order.Value, Cacheable = cacheable }
+            : new global::app.goal.step.action.@this
+                { Module = this, Name = actionName, Cacheable = cacheable };
+        _action[actionName] = new Row(new global::app.module.list.ActionEntry(type, instance), element);
     }
 
-    /// <summary>The module's standalone actions as the NATIVE plang list — modifiers are a separate
-    /// home (structural, not a flag). Filterable by the list module, renderable by templates.</summary>
-    public global::app.type.item.list.@this Actions
-    {
-        get { if (_actions == null) Mint(); return new(_actions!.Select(a => (object?)a).ToList(), _list.App.System.Context); }
-    }
+    /// <summary>The module's standalone actions as the NATIVE plang list — a view over the one map;
+    /// the type IS the role. Filterable by the list module, renderable by templates.</summary>
+    public global::app.type.item.list.@this Actions => View(modifiers: false);
 
     /// <summary>The module's modifiers as the NATIVE plang list — the catalog's "# Modifiers"
-    /// section renders from here; the type IS the role, no boolean.</summary>
-    public global::app.type.item.list.@this Modifiers
-    {
-        get { if (_modifiers == null) Mint(); return new(_modifiers!.Select(m => (object?)m).ToList(), _list.App.System.Context); }
-    }
+    /// section renders from here.</summary>
+    public global::app.type.item.list.@this Modifiers => View(modifiers: true);
+
+    private global::app.type.item.list.@this View(bool modifiers)
+        => new(_action.Values.Select(r => r.Element)
+                 .Where(e => e is global::app.goal.step.action.modifier.@this == modifiers)
+                 .Select(e => (object?)e).ToList(),
+               App.System.Context);
 
     /// <summary>Select one catalog element by action name — action OR modifier; the type answers
     /// the role. Null when the name isn't in this module.</summary>
     public global::app.goal.step.action.@this? this[string actionName]
+        => _action.TryGetValue(actionName, out var row) ? row.Element : null;
+
+    /// <summary>The handler CLR type for one of this module's actions — the owner's answer, read
+    /// off its OWN entry and handed TRANSIENTLY to the reflection leaf. It never rides on the action.</summary>
+    internal System.Type? Handler(string actionName)
+        => _action.TryGetValue(actionName, out var row) ? row.Entry.Type ?? row.Entry.Instance?.GetType() : null;
+
+    /// <summary>The runnable shell for one of this module's actions — the module reads its own entry.</summary>
+    internal ICodeGenerated? Create(string actionName, actor.context.@this context)
+        => _action.TryGetValue(actionName, out var row) ? row.Entry.Create(context) : null;
+
+    internal bool Contains(string actionName) => _action.ContainsKey(actionName);
+
+    /// <summary>The names this module answers to — its own keys.</summary>
+    internal IEnumerable<string> ActionNames => _action.Keys;
+
+    internal int Count => _action.Count;
+
+    /// <summary>The shared instances this module holds (per-call Type registrations have none).</summary>
+    internal IEnumerable<IAction> Instances
+        => _action.Values.Where(r => r.Entry.Instance != null).Select(r => r.Entry.Instance!);
+
+    /// <summary>The handler CLR types this module holds — the reflection leaf's source.</summary>
+    internal IEnumerable<System.Type> HandlerTypes
+        => _action.Values.Select(r => r.Entry.Type ?? r.Entry.Instance?.GetType()).Where(t => t != null)!;
+
+    /// <summary>Sheds every action this module owns. Unregistering a module must be authoritative
+    /// even for code already holding the element (a revoked DLL's actions must stop resolving), and
+    /// only the module can empty itself.</summary>
+    internal void Clear() => _action.Clear();
+
+    /// <summary>Disposes the shared instances this module owns — lifecycle follows ownership.</summary>
+    internal async System.Threading.Tasks.ValueTask DisposeAsync()
     {
-        get
+        foreach (var row in _action.Values)
         {
-            if (_actions == null) Mint();
-            return _actions!.FirstOrDefault(a => string.Equals(a.Name, actionName, System.StringComparison.OrdinalIgnoreCase))
-                ?? (global::app.goal.step.action.@this?)_modifiers!.FirstOrDefault(m => string.Equals(m.Name, actionName, System.StringComparison.OrdinalIgnoreCase));
+            if (row.Entry.Instance is IAsyncDisposable async) await async.DisposeAsync();
+            else if (row.Entry.Instance is IDisposable sync) sync.Dispose();
         }
     }
 

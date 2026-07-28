@@ -47,10 +47,13 @@ public class ModuleRemoveTests
     [Test]
     public async Task Remove_ThenActions_NotResolvable()
     {
+        // Hold the element from THIS app's registry, taken before removal — an action that was
+        // already built still carries its module, so this asks the question removal must answer.
+        var held = _app.Module["variable"];
         var action = new Remove(_app.User.Context) { Name = (global::app.type.item.text.@this)"variable" };
         await action.Run();
 
-        var (resolved, error) = _app.Module.GetCodeGenerated(new PrAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set" }, global::PLang.Tests.TestApp.SharedContext);
+        var (resolved, error) = _app.Module.GetCodeGenerated(new PrAction { Module = held, Name = "set" }, _app.User.Context);
         await Assert.That(resolved).IsNull();
         await Assert.That(error).IsNotNull();
     }

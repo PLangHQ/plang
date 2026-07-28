@@ -298,7 +298,7 @@ public class ActionsTests
         var notFound = new List<string>();
         foreach (var action in actions)
         {
-            if (!modules.Contains(action.Module.Name, action.Name))
+            if (!(modules.Contains(action.Module.Name) && modules[action.Module.Name][action.Name] != null))
                 notFound.Add($"{action.Module}.{action.Name}");
         }
 

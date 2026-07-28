@@ -12,8 +12,8 @@ public class LibrariesTests
         var modules = new global::app.module.list.@this();
 
         // global::app.module.list.@this constructor auto-discovers built-in handlers
-        await Assert.That(modules.Contains("variable", "set")).IsTrue();
-        await Assert.That(modules.Contains("output", "write")).IsTrue();
+        await Assert.That((modules.Contains("variable") && modules["variable"]["set"] != null)).IsTrue();
+        await Assert.That((modules.Contains("output") && modules["output"]["write"] != null)).IsTrue();
     }
 
     [Test]
@@ -24,7 +24,7 @@ public class LibrariesTests
 
         modules.Register("test", "do", handler);
 
-        await Assert.That(modules.Contains("test", "do")).IsTrue();
+        await Assert.That((modules.Contains("test") && modules["test"]["do"] != null)).IsTrue();
     }
 
     [Test]
@@ -34,8 +34,8 @@ public class LibrariesTests
         var handler = new MockHandler();
         modules.Register("Test", "Do", handler);
 
-        await Assert.That(modules.Contains("test", "do")).IsTrue();
-        await Assert.That(modules.Contains("TEST", "DO")).IsTrue();
+        await Assert.That((modules.Contains("test") && modules["test"]["do"] != null)).IsTrue();
+        await Assert.That((modules.Contains("TEST") && modules["TEST"]["DO"] != null)).IsTrue();
     }
 
     [Test]
@@ -44,7 +44,7 @@ public class LibrariesTests
         var modules = new global::app.module.list.@this();
         modules.Register("test", "do", new MockHandler());
 
-        await Assert.That(modules.Contains("test", "do")).IsTrue();
+        await Assert.That((modules.Contains("test") && modules["test"]["do"] != null)).IsTrue();
     }
 
     [Test]
@@ -133,18 +133,18 @@ public class LibrariesTests
         var modules = new global::app.module.list.@this();
 
         // Should discover variable.set, variable.get, etc.
-        await Assert.That(modules.Contains("variable", "set")).IsTrue();
-        await Assert.That(modules.Contains("variable", "get")).IsTrue();
-        await Assert.That(modules.Contains("variable", "remove")).IsTrue();
-        await Assert.That(modules.Contains("variable", "exists")).IsTrue();
-        await Assert.That(modules.Contains("variable", "clear")).IsTrue();
-        await Assert.That(modules.Contains("output", "write")).IsTrue();
-        await Assert.That(modules.Contains("file", "save")).IsTrue();
-        await Assert.That(modules.Contains("file", "read")).IsTrue();
-        await Assert.That(modules.Contains("file", "delete")).IsTrue();
-        await Assert.That(modules.Contains("file", "exists")).IsTrue();
-        await Assert.That(modules.Contains("file", "copy")).IsTrue();
-        await Assert.That(modules.Contains("file", "move")).IsTrue();
+        await Assert.That((modules.Contains("variable") && modules["variable"]["set"] != null)).IsTrue();
+        await Assert.That((modules.Contains("variable") && modules["variable"]["get"] != null)).IsTrue();
+        await Assert.That((modules.Contains("variable") && modules["variable"]["remove"] != null)).IsTrue();
+        await Assert.That((modules.Contains("variable") && modules["variable"]["exists"] != null)).IsTrue();
+        await Assert.That((modules.Contains("variable") && modules["variable"]["clear"] != null)).IsTrue();
+        await Assert.That((modules.Contains("output") && modules["output"]["write"] != null)).IsTrue();
+        await Assert.That((modules.Contains("file") && modules["file"]["save"] != null)).IsTrue();
+        await Assert.That((modules.Contains("file") && modules["file"]["read"] != null)).IsTrue();
+        await Assert.That((modules.Contains("file") && modules["file"]["delete"] != null)).IsTrue();
+        await Assert.That((modules.Contains("file") && modules["file"]["exists"] != null)).IsTrue();
+        await Assert.That((modules.Contains("file") && modules["file"]["copy"] != null)).IsTrue();
+        await Assert.That((modules.Contains("file") && modules["file"]["move"] != null)).IsTrue();
     }
 
     [Test]
@@ -168,7 +168,7 @@ public class LibrariesTests
         var modules = new global::app.module.list.@this();
         modules.Register("custom", "magic", new MockHandler());
 
-        await Assert.That(modules.Contains("custom", "magic")).IsTrue();
+        await Assert.That((modules.Contains("custom") && modules["custom"]["magic"] != null)).IsTrue();
     }
 
     #region global::app.module.list.@this.GetCodeGenerated
@@ -288,8 +288,8 @@ public class LibrariesTests
 
         var count = modules.Discover(typeof(global::app.@this).Assembly, "app.module.action");
 
-        await Assert.That(modules.Contains("variable", "set")).IsTrue();
-        await Assert.That(modules.Contains("output", "write")).IsTrue();
+        await Assert.That((modules.Contains("variable") && modules["variable"]["set"] != null)).IsTrue();
+        await Assert.That((modules.Contains("output") && modules["output"]["write"] != null)).IsTrue();
         await Assert.That(count).IsGreaterThan(0);
     }
 
@@ -347,7 +347,7 @@ public class LibrariesTests
         var modules = new global::app.module.list.@this();
         modules.RegisterType("custom", "run", typeof(MockCodeGenHandler));
 
-        await Assert.That(modules.Contains("custom", "run")).IsTrue();
+        await Assert.That((modules.Contains("custom") && modules["custom"]["run"] != null)).IsTrue();
         await Assert.That(modules.GetActionType("custom", "run")).IsEqualTo(typeof(MockCodeGenHandler));
     }
 

@@ -69,7 +69,7 @@ public class ModuleAddTests
             await result.IsSuccess();
 
             // After adding, actions should be discoverable via the flat registry
-            await Assert.That(app.Module.Contains("variable", "set")).IsTrue();
+            await Assert.That((app.Module.Contains("variable") && app.Module["variable"]["set"] != null)).IsTrue();
         }
     }
 
@@ -122,7 +122,7 @@ public class ModuleAddTests
             await result.IsSuccess();
 
             // With null namespace, Discover defaults to App.modules
-            await Assert.That(app.Module.Contains("variable", "set")).IsTrue();
+            await Assert.That((app.Module.Contains("variable") && app.Module["variable"]["set"] != null)).IsTrue();
         }
     }
 

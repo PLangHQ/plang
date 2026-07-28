@@ -213,8 +213,8 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
-        await Assert.That(engine.Module.Contains("variable", "set")).IsTrue();
-        await Assert.That(engine.Module.Contains("variable", "get")).IsTrue();
+        await Assert.That((engine.Module.Contains("variable") && engine.Module["variable"]["set"] != null)).IsTrue();
+        await Assert.That((engine.Module.Contains("variable") && engine.Module["variable"]["get"] != null)).IsTrue();
     }
 
     [Test]
@@ -222,7 +222,7 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
-        await Assert.That(engine.Module.Contains("output", "write")).IsTrue();
+        await Assert.That((engine.Module.Contains("output") && engine.Module["output"]["write"] != null)).IsTrue();
     }
 
     [Test]

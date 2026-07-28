@@ -436,7 +436,7 @@ public class Default : IBuilder
             if (string.IsNullOrWhiteSpace(entry)) continue;
             var parts = entry.Split('.', 2);
             if (parts.Length != 2) continue;
-            if (!modules.Contains(parts[0], parts[1])) continue;
+            if (!modules.Contains(parts[0]) || modules[parts[0]][parts[1]] == null) continue;
             result.Add(entry);
         }
 
@@ -452,7 +452,7 @@ public class Default : IBuilder
         {
             var mod = m.Groups[1].Value;
             var act = m.Groups[2].Value;
-            if (!modules.Contains(mod, act)) continue;
+            if (!modules.Contains(mod) || modules[mod][act] == null) continue;
 
             var key = $"{mod}.{act}";
             if (result.Any(s => s.Equals(key, StringComparison.OrdinalIgnoreCase))) continue;

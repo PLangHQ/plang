@@ -13,7 +13,9 @@ namespace app.module.list;
 /// </summary>
 public sealed class @this : IAsyncDisposable
 {
-    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, ActionEntry>> _modules = new(StringComparer.OrdinalIgnoreCase);
+    // The collection owns MODULES — selection and lifecycle. Each module owns its own actions;
+    // there is no module→action index here to keep in step with them.
+    private readonly ConcurrentDictionary<string, global::app.module.@this> _modules = new(StringComparer.OrdinalIgnoreCase);
     private bool _disposed;
 
     /// <summary>Owning App, set by App constructor after Modules construction.</summary>
@@ -40,16 +42,7 @@ public sealed class @this : IAsyncDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        foreach (var entry in _modules.Values
-                                      .SelectMany(a => a.Values)
-                                      .Where(e => e.Instance != null))
-        {
-            var handler = entry.Instance!;
-            if (handler is IAsyncDisposable asyncDisposable)
-                await asyncDisposable.DisposeAsync();
-            else if (handler is IDisposable disposable)
-                disposable.Dispose();
-        }
+        foreach (var module in _modules.Values) await module.DisposeAsync();
     }
 
     /// <summary>
@@ -91,10 +84,12 @@ public sealed class @this : IAsyncDisposable
     /// Registers an action type for per-call instantiation (stateless, normal path).
     /// </summary>
     public void RegisterType(string module, string actionName, Type type)
-    {
-        var actions = _modules.GetOrAdd(module, _ => new ConcurrentDictionary<string, ActionEntry>(StringComparer.OrdinalIgnoreCase));
-        actions[actionName] = new ActionEntry(type, null);
-    }
+        => Element(module).Add(actionName, type, null);
+
+    // Get-or-create the module, then the MODULE takes the action. Registration never reaches two
+    // levels deep into someone else's contents.
+    private global::app.module.@this Element(string name)
+        => _modules.GetOrAdd(name, n => new global::app.module.@this(n, this));
 
 
     /// <summary>
@@ -102,10 +97,7 @@ public sealed class @this : IAsyncDisposable
     /// Instance takes priority over type during resolution.
     /// </summary>
     public void Register(string module, string actionName, IAction instance)
-    {
-        var actions = _modules.GetOrAdd(module, _ => new ConcurrentDictionary<string, ActionEntry>(StringComparer.OrdinalIgnoreCase));
-        actions[actionName] = new ActionEntry(null, instance);
-    }
+        => Element(module).Add(actionName, null, instance);
 
     /// <summary>
     /// Resolves a handler for a .pr action. Navigates the action for module/actionName.
@@ -113,11 +105,10 @@ public sealed class @this : IAsyncDisposable
     public (ICodeGenerated? Handler, IError? Error) GetCodeGenerated(
         global::app.goal.step.action.@this action, actor.context.@this context)
     {
-        if (!_modules.TryGetValue(action.Module.Name, out var actions) ||
-            !actions.TryGetValue(action.Name, out var entry))
+        if (!action.Module.Contains(action.Name))
             return (null, ActionError.NotFound($"Action '{action.Module}.{action.Name}'"));
 
-        var handler = entry.Create(context);
+        var handler = action.Module.Create(action.Name, context);
         if (handler == null)
             return (null, new ActionError(
                 $"Action '{action.Module}.{action.Name}' does not implement ICodeGenerated",
@@ -128,9 +119,8 @@ public sealed class @this : IAsyncDisposable
 
     // --- Queries ---
 
-    public bool Contains(string module, string actionName)
-        => _modules.TryGetValue(module, out var actions) && actions.ContainsKey(actionName);
-
+    /// <summary>Does this module exist? Whether it HAS an action is the module's own question:
+    /// <c>list[module][action] != null</c>.</summary>
     public bool Contains(string module)
         => _modules.ContainsKey(module);
 
@@ -139,16 +129,11 @@ public sealed class @this : IAsyncDisposable
 
     // --- Selection + enumeration: the concept's element surface ---
 
-    // Module elements cached — a fresh element mints on first selection and lives as long as
-    // the registry entry (invalidated by the registry's own mutations: RegisterType/Register/
-    // Remove/Clear each drop the element).
-    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, global::app.module.@this> _elements
-        = new(StringComparer.OrdinalIgnoreCase);
-
-    /// <summary>Select a module element by name. Throws on miss (names are authored).</summary>
+    /// <summary>Select a module by name. Throws on miss (names are authored). There is no second
+    /// cache to invalidate — the module IS the entry.</summary>
     public global::app.module.@this this[string name]
-        => _modules.ContainsKey(name)
-            ? _elements.GetOrAdd(name, n => new global::app.module.@this(n, this))
+        => _modules.TryGetValue(name, out var module)
+            ? module
             : throw new KeyNotFoundException($"No module named '{name}'.");
 
     /// <summary>The modules as the NATIVE plang list — filterable by the list module,
@@ -156,48 +141,38 @@ public sealed class @this : IAsyncDisposable
     public global::app.type.item.list.@this list
         => new(Names.Select(n => (object?)this[n]).ToList(), App.System.Context);
 
+    /// <summary>The names a module answers to — asked OF the module, tolerating an unknown one so
+    /// callers probing an arbitrary name need no pre-check.</summary>
     public IEnumerable<string> GetActions(string module)
-        => _modules.TryGetValue(module, out var actions) ? actions.Keys : Enumerable.Empty<string>();
+        => _modules.TryGetValue(module, out var m) ? m.ActionNames : Enumerable.Empty<string>();
 
     public Type? GetActionType(string module, string actionName)
-    {
-        if (!_modules.TryGetValue(module, out var actions) ||
-            !actions.TryGetValue(actionName, out var entry))
-            return null;
+        => _modules.TryGetValue(module, out var m) ? m.Handler(actionName) : null;
 
-        return entry.Type ?? entry.Instance?.GetType();
-    }
-
-    /// <summary>
-    /// Returns whether an action is cacheable (from its [Action] attribute).
-    /// Defaults to true if the action/attribute isn't found.
-    /// </summary>
-    public bool IsCacheable(string module, string actionName)
-    {
-        var type = GetActionType(module, actionName);
-        if (type == null) return true;
-        var attr = type.GetCustomAttribute<ActionAttribute>();
-        return attr?.Cacheable ?? true;
-    }
-
-    public int Count => _modules.Values.Sum(a => a.Count);
+    public int Count => _modules.Values.Sum(m => m.Count);
 
     /// <summary>
     /// All registered instances (for disposal on app shutdown).
     /// Type-registered actions are per-call — no disposal tracking needed.
     /// </summary>
     public IEnumerable<IAction> All
-        => _modules.Values.SelectMany(a => a.Values)
-            .Where(e => e.Instance != null)
-            .Select(e => e.Instance!);
+        => _modules.Values.SelectMany(m => m.Instances);
 
     /// <summary>
     /// Removes all actions for a module. Returns true if the module existed.
     /// </summary>
     public bool Remove(string module)
-        => _modules.TryRemove(module, out _);
+    {
+        if (!_modules.TryRemove(module, out var removed)) return false;
+        removed.Clear();   // authoritative: anyone still holding the element finds it empty
+        return true;
+    }
 
-    public void Clear() => _modules.Clear();
+    public void Clear()
+    {
+        foreach (var module in _modules.Values) module.Clear();
+        _modules.Clear();
+    }
 
     /// <summary>
     /// Describes all registered actions with parameter metadata for the LLM builder prompt.
@@ -261,8 +236,8 @@ public sealed class @this : IAsyncDisposable
     {
         var root = ResolveMarkdownTeachingRoot();
         var orphans = await MarkdownTeaching.ScanOrphans(root,
-            moduleName => _modules.TryGetValue(moduleName, out var actions)
-                ? actions.Keys
+            moduleName => _modules.TryGetValue(moduleName, out var m)
+                ? m.ActionNames
                 : Array.Empty<string>());
 
         foreach (var o in orphans)
@@ -373,14 +348,10 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     private IEnumerable<System.Type> GetAllTypesInNamespace(string ns)
     {
-        if (!_modules.TryGetValue(ns, out var actions))
+        if (!_modules.TryGetValue(ns, out var module))
             yield break;
-        foreach (var entry in actions.Values)
-        {
-            var t = entry.Type ?? entry.Instance?.GetType();
-            if (t != null)
-                yield return t;
-        }
+        foreach (var t in module.HandlerTypes)
+            yield return t;
     }
 
     /// <summary>

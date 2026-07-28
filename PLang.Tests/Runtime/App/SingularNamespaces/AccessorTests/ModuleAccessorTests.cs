@@ -31,7 +31,7 @@ public class ModuleAccessorTests
     [Test] public async Task AppModule_ResolvesAndDispatchesAction_UnderTheNewShape()
     {
         await using var app = TestApp.Create("/test");
-        await Assert.That(app.Module.Contains("file", "read")).IsTrue();
+        await Assert.That((app.Module.Contains("file") && app.Module["file"]["read"] != null)).IsTrue();
     }
 
     [Test] public async Task AppModule_HasNoCurrentMember_ReflectionGuard()
