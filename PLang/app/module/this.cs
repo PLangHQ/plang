@@ -100,10 +100,6 @@ public sealed class @this
     internal IEnumerable<IAction> Instances
         => _action.Values.Where(r => r.Entry.Instance != null).Select(r => r.Entry.Instance!);
 
-    /// <summary>The handler CLR types this module holds — the reflection leaf's source.</summary>
-    internal IEnumerable<System.Type> HandlerTypes
-        => _action.Values.Select(r => r.Entry.Type ?? r.Entry.Instance?.GetType()).Where(t => t != null)!;
-
     /// <summary>Sheds every action this module owns. Unregistering a module must be authoritative
     /// even for code already holding the element (a revoked DLL's actions must stop resolving), and
     /// only the module can empty itself.</summary>

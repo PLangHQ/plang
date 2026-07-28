@@ -345,18 +345,6 @@ public sealed class @this : IAsyncDisposable
     }
 
     /// <summary>
-    /// Returns all registered action types within a given module namespace.
-    /// Used to search for [ModuleDescription] on any type in the namespace.
-    /// </summary>
-    private IEnumerable<System.Type> GetAllTypesInNamespace(string ns)
-    {
-        if (!_modules.TryGetValue(ns, out var module))
-            yield break;
-        foreach (var t in module.HandlerTypes)
-            yield return t;
-    }
-
-    /// <summary>
     /// Reads the PLang name of T from <c>Run()</c>'s declared return type
     /// <c>Task&lt;Data&lt;T&gt;&gt;</c>. Bare <c>Task&lt;Data&gt;</c> renders as <c>data</c>
     /// — the polymorphic default (everything is a Data, value type unknown statically).
