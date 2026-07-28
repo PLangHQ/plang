@@ -150,6 +150,32 @@ public class Fluid : ITemplate
             return new StringValue(System.Text.Encoding.UTF8.GetString(ms.ToArray()));
         });
 
+        // `store` filter: embed a compiled program value (a step's actions, a goal) as its
+        // EXACT .pr wire — the value drives its OWN writer in Store view, %refs% kept literal.
+        // The build feedback render shows the LLM the real compiled shape without executing it;
+        // printing a leaf through the resolve door ({{ p.Value }}) would throw on an unset runtime
+        // %var%, and a hand-rolled JSON walk would drift from the .pr reader. Byte-identical to the
+        // .pr for the same value — the same serializer.SerializeItemAsync path that writes it.
+        options.Filters.AddFilter("store", async (input, args, context) =>
+        {
+            var serializer = (global::app.channel.serializer.plang.@this)
+                action.Context.Actor.Channel.Serializers.GetOrDefault("application/plang");
+            using var ms = new System.IO.MemoryStream();
+            switch (input.ToObjectValue())
+            {
+                case NativeDictView dv: await serializer.SerializeItemAsync(ms, dv.Native, global::app.View.Store); break;
+                case NativeListView lv: await serializer.SerializeItemAsync(ms, lv.Native, global::app.View.Store); break;
+                case global::app.type.item.@this it: await serializer.SerializeItemAsync(ms, it, global::app.View.Store); break;
+                // Fluid flattens a collection to its elements before a filter runs — the container
+                // identity is gone, but each surviving element is still a plang item and writes its
+                // own Store wire (the array framing is byte-identical to the container's own Output).
+                case System.Collections.IEnumerable seq when seq.Cast<object?>().All(e => e is global::app.type.item.@this):
+                    await serializer.SerializeItemsAsync(ms, seq.Cast<global::app.type.item.@this>(), global::app.View.Store); break;
+                default: return input;   // not a plang value — leave for the resolve door
+            }
+            return new StringValue(System.Text.Encoding.UTF8.GetString(ms.ToArray()));
+        });
+
         // Configure file provider for {% include %} / {% render %} tags
         var basePath = GetTemplateBaseDir(action);
         options.FileProvider = new PlangFileProvider(action.Context.App, basePath, action.Context);
@@ -237,7 +263,9 @@ public class Fluid : ITemplate
             // Resolve through the Value door (references/computed/prose resolve), then lower a LEAF
             // to its raw backing so Fluid sees a real bool/string/number (truthiness, comparison,
             // `where:`); a container or host passes through as its item — the converters wrap a
-            // dict/list into a view, a host re-enters this door on its next member.
+            // dict/list into a view, a host re-enters this door on its next member. A value wanted in
+            // its AUTHORED form is never member-accessed here — it's embedded via the `store` filter,
+            // which drives the value's own Store writer (%refs% literal) instead of this resolve door.
             var resolved = await (await new global::app.data.@this("", obj, context: context).Get(name)).Value();
             return global::app.type.item.@this.Backing(resolved)!;
         }

@@ -1,5 +1,31 @@
 # Coder summary — branch `goal-graph-singular`
 
+## Retry-flake fix — `store` Fluid filter (DONE, green)
+The builder's compile-feedback render (`stepForLlm.template`) threw `VariableNotFoundException`
+on an authored runtime `%ref%` (e.g. `output.write Data="Hello %name%"`). Root cause: the template
+**hand-rolled** the action JSON and printed each value through `{{ p.Value }}` — the *resolve door* —
+executing an unset build-time `%var%`. Architect ruling (`template-value-view-answer.md`): the node
+writes itself; embed via `{{ step.Action | store }}`, no accessor fork / no render `View` input / no
+`.Value()` split.
+
+- **`store` Fluid filter** (`PLang/app/module/action/ui/code/Fluid.cs`) — serializes the navigated
+  container in **Store view** via the value's own writer. Fluid *flattens* a collection to its
+  elements before a filter runs (`object[]` of `item.@this`), so the filter handles the container
+  (`SerializeItemAsync`) **and** the flattened-elements case (`SerializeItemsAsync`).
+- **`SerializeItemsAsync`** (`PLang/app/channel/serializer/plang/this.cs`) — new array counterpart to
+  `SerializeItemAsync`: `BeginArray` + each element's `Output(Store)` + `EndArray`, byte-identical to
+  `action.list.Output`. The serializer owns the framing, not the filter.
+- **`stepForLlm.template:3`** — hand-rolled `{% for a %}…{{ p.Value | jsonval }}…` block replaced by
+  `{{ step.Action | store }}`. Embed verified = the real `.pr` action wire with `"value":"Hello %name%"`
+  literal + `type:{name:text,template:plang}`.
+- Reverted the earlier scaffolding: `render.cs` `View` input + `Fluid.cs` accessor/strategy view
+  plumbing (architect: view rides the filter, not the accessor).
+- Tests: `PLang.Tests/Runtime/App/SingularNamespaces/BuilderSchemaTests/RenderStoreViewTests.cs` — 2
+  green (`| store` embeds raw / no throw; `{{ p.Value }}` still throws on unset ref — doors stay
+  distinct). Full C# suites: **zero new failures** vs a stash+rebuild baseline (branch is broadly red
+  pre-existing, mid-refactor). Other catalog-walking templates (`stepActionDetails`, `actionFormal`)
+  are presentational — left as-is per the ruling.
+
 ## Landed (all pushed, `847e9b11f`)
 
 ### Increment 3 + Gate-2 Phase A + §0 rename — DONE (green)

@@ -121,6 +121,27 @@ public sealed class @this : ITransport
         await utf8.FlushAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Write a bare SEQUENCE of items as a Store array — the array counterpart to
+    /// <see cref="SerializeItemAsync"/>. A template that embeds a collection reaches the filter
+    /// AFTER the template engine has flattened the container to its elements (the container
+    /// identity is gone, the elements survive): each element writes its OWN wire between
+    /// <c>BeginArray</c>/<c>EndArray</c> — byte-identical to what the owning node's own
+    /// <c>Output</c> emits (e.g. <c>action.list</c> is exactly this framing).
+    /// </summary>
+    public async Task SerializeItemsAsync(Stream stream, IEnumerable<global::app.type.item.@this> items,
+        global::app.View view = global::app.View.Store, CancellationToken cancellationToken = default)
+    {
+        await using var utf8 = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true });
+        var writer = new global::app.channel.serializer.json.Writer(
+            utf8, view, _context.App.Type.Renderer, emitsSchema: true);
+        var list = items as IReadOnlyList<global::app.type.item.@this> ?? items.ToList();
+        writer.BeginArray(list.Count);
+        foreach (var item in list) await item.Output(writer, view, _context);
+        writer.EndArray();
+        await utf8.FlushAsync(cancellationToken);
+    }
+
     public async Task<global::app.data.@this> DeserializeAsync(Stream stream, global::app.View view = global::app.View.Out, CancellationToken cancellationToken = default)
     {
         try
