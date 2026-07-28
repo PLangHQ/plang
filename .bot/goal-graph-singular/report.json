@@ -232,6 +232,17 @@
           "category": "doc",
           "confidence": "high",
           "context": "Reverted the born-complete-in-ctor attempt (uncommitted; still fetched from the parent, and perturbed a shared-state race in scheme registration). Wrote up the real target: module owns its actions; registry owns modules only; Mint disappears rather than being fixed."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/module-owns-its-actions-answer.md",
+            ".bot/goal-graph-singular/architect/module-owns-action.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "module-owns-its-actions ruling: registry index dissolves into modules (completion of module-owns-action); Q1 registry-local entry map not action.list (catalog must not carry Run/Output/Validate); Q2 one storage two filtered faces, role minted at registration; Q3 ActionEntry module-owned, dispose follows ownership; Q4 ToString overrule accepted + doc patched; born-complete kills the stamped catalog Context (Schema reaches App via Module navigation). Same release as module-owns-action core."
         }
       ],
       "after": {
