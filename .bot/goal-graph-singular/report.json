@@ -149,6 +149,17 @@
           "category": "doc",
           "confidence": "high",
           "context": "Ratified coder's (b): Build() hooks reach the target goal via the build-scoped %goal% variable (established Build() idiom; the goal is data the build transforms). Standing answer for all build-birth-fact hooks; backref-pass note that build-hook reaches reroute to %goal%, not context.Goal."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/validate-trilogy-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md",
+            ".bot/goal-graph-singular/architect/module-owns-action.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Validate trilogy rulings: Q1 \u2014 module-owns-action RELEASED from discussion-context (Ingi agreed); Validate must not be built on registry strings; pipeline node-lists -> module-owns-action core -> Validate -> backref-pass; later rulings win where the older doc conflicts. Q2 \u2014 changes stay builder (Default population, goal.call name-repair), verdicts move to action.Validate; Validate judges the completed action."
         }
       ],
       "after": {

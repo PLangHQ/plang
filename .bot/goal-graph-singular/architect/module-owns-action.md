@@ -1,6 +1,6 @@
 # module ⇒ action ⇒ parameter — the module owns action construction
 
-**Status:** design context from the 2026-07-21/22 discussion with Ingi. NOT a coder handoff yet — Ingi has more to discuss. Answers coder's `to-architect-module-owns-action.md`.
+**Status:** RELEASED to coder 2026-07-28 (via `validate-trilogy-answer.md` Q1 — implement the core before the Validate trilogy). Where this doc conflicts with later rulings (wiring-snag CONDEMNED bridges, attribute vocabulary, the landed LLM-wire reader work), the LATER ruling wins — reconcile, don't redo. Answers coder's `to-architect-module-owns-action.md`.
 
 ## Why
 
