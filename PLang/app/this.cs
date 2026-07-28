@@ -265,7 +265,7 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public keepalive.@this KeepAlive { get; } = new();
 
-    public @this(string absolutePath, global::app.module.list.@this? modules = null,
+    public @this(string absolutePath,
         string? environment = null,
         bool autoWireConsoleChannels = true)
     {
@@ -293,8 +293,7 @@ public sealed partial class @this : IAsyncDisposable
         Code = new AppCode(System.Context);
         _settingsStore = new Lazy<Task<global::app.module.action.setting.IStore>>(CreateSettingsStoreAsync);
         Setting = new global::app.setting.@this(System.Context);
-        _modules = modules ?? new global::app.module.list.@this();
-        _modules.App = this;
+        _modules = new global::app.module.list.@this(this);
         _goals = new global::app.goal.list.@this { App = this };
 
         Error = new global::app.error.list.@this(this);

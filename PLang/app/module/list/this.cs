@@ -18,8 +18,9 @@ public sealed class @this : IAsyncDisposable
     private readonly ConcurrentDictionary<string, global::app.module.@this> _modules = new(StringComparer.OrdinalIgnoreCase);
     private bool _disposed;
 
-    /// <summary>Owning App, set by App constructor after Modules construction.</summary>
-    public global::app.@this App { get; internal set; } = null!;
+    /// <summary>The App this registry serves — handed at construction, like every other collection
+    /// App builds (<c>Type</c> takes its context the same way). Never assigned afterwards.</summary>
+    public global::app.@this App { get; }
 
     /// <summary>
     /// The type-catalog's LLM view — PrimitiveNames / Types / Kinds, "what the type vocabulary
@@ -28,8 +29,9 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     public global::app.type.list.view.@this Schema { get; }
 
-    public @this()
+    public @this(global::app.@this app)
     {
+        App = app;
         Schema = new global::app.type.list.view.@this(this);
         Discover(typeof(@this).Assembly, "app.module.action");
     }

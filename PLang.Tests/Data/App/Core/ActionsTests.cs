@@ -293,7 +293,7 @@ public class ActionsTests
         if (actions == null || actions.Count == 0)
             return (false, new global::app.error.ProgramError("No actions provided", key: "NoActionsProvided"));
 
-        var modules = new global::app.module.list.@this();
+        var modules = TestApp.Create("/app").Module;
 
         var notFound = new List<string>();
         foreach (var action in actions)
@@ -314,7 +314,7 @@ public class ActionsTests
     /// </summary>
     private static StepActions DiscoverActions()
     {
-        var modules = new global::app.module.list.@this();
+        var modules = TestApp.Create("/app").Module;
 
         var actions = new StepActions();
 

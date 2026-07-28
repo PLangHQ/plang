@@ -12,11 +12,10 @@ public static class TestApp
 {
     public static global::app.@this Create(
         string absolutePath,
-        global::app.module.list.@this? modules = null,
         string? environment = null,
         bool autoWireConsoleChannels = true)
     {
-        var app = new global::app.@this(absolutePath, modules, environment, autoWireConsoleChannels);
+        var app = new global::app.@this(absolutePath, environment, autoWireConsoleChannels);
         // Presence = test mode: in-memory settings store, no on-disk pollution.
         app.Test = new global::app.test.list.@this(app.System.Context);
         // Swap in the no-crypto signing mock so tests don't pay ed25519 keygen +
