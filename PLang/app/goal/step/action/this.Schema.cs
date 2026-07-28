@@ -9,9 +9,10 @@ namespace app.goal.step.action;
 public partial class @this
 {
     // The catalog faces reach App by NAVIGATION — this action → its module → the module collection
-    // → App — live, at ask time. Nothing is stamped: registration runs inside the collection's
-    // constructor, before App exists, so a birth-time context could not be honest. An action built
-    // outside a construction door has no module, and these faces say so rather than guessing.
+    // → App — live, at ask time. A catalog element owns a MODULE, not a context: it is one entry in
+    // a registry, and the App it should answer for is whichever one that registry serves. Holding a
+    // context would be holding something it does not own, and would go stale against its module.
+    // An action built outside a construction door has no module, and these faces say so.
     [JsonIgnore]
     private global::app.@this? App => _module?.App;
 

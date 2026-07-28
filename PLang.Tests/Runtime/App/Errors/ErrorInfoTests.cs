@@ -286,25 +286,6 @@ public class ActionErrorTests
         await Assert.That(error.StatusCode).IsEqualTo(404);
     }
 
-    [Test]
-    public async Task ActionModule_CanBeSet()
-    {
-        var error = new ActionError("Error") { ActionModule = "variable", ActionName = "set" };
-
-        await Assert.That(error.ActionModule).IsEqualTo("variable");
-        await Assert.That(error.ActionName).IsEqualTo("set");
-    }
-
-    [Test]
-    public async Task FormatExtra_IncludesAction()
-    {
-        var step = new Step { Index = 1, Text = "set name to John" };
-        var error = new ActionError("Missing param", step) { ActionModule = "variable", ActionName = "set" };
-
-        var formatted = error.Format();
-
-        await Assert.That(formatted).Contains("variable.set");
-    }
 }
 
 public class ServiceErrorTests

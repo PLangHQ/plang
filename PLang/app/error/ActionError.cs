@@ -1,4 +1,3 @@
-using System.Text;
 using app.actor.context;
 
 namespace app.error;
@@ -6,13 +5,9 @@ namespace app.error;
 /// <summary>
 /// Error that occurred inside an action execution.
 /// Example: file.read finds file does not exist, variable.get with missing name.
-/// Captures the action class and method that failed.
 /// </summary>
 public class ActionError : Error
 {
-    public string? ActionModule { get; init; }
-    public string? ActionName { get; init; }
-
     public ActionError(string message, string key = "ActionError", int statusCode = 400)
         : base(message, key, statusCode) { }
 
@@ -40,14 +35,4 @@ public class ActionError : Error
 
     public static ActionError NotFound(string what) => new($"{what} not found", "ActionNotFound", 404);
     public static ActionError NotFound(string what, actor.context.@this context) => new($"{what} not found", context, "ActionNotFound", 404);
-
-    protected override void FormatExtra(StringBuilder sb, string indent)
-    {
-        if (ActionModule != null || ActionName != null)
-        {
-            sb.AppendLine();
-            sb.AppendLine($"{indent}\ud83d\udce6 Error Source:");
-            sb.AppendLine($"{indent}    - The error occurred in the module: `{ActionModule}.{ActionName}`");
-        }
-    }
 }

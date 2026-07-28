@@ -72,20 +72,6 @@ public class ModuleNotFoundException : AppException
 }
 
 /// <summary>
-/// Exception thrown when an action is not found.
-/// </summary>
-public class ActionNotFoundException : AppException
-{
-    public string ActionName { get; }
-
-    public ActionNotFoundException(string actionName)
-        : base($"Action '{actionName}' not found", "ActionNotFound", 404)
-    {
-        ActionName = actionName;
-    }
-}
-
-/// <summary>
 /// Exception thrown when a variable is not found in memory.
 /// </summary>
 public class VariableNotFoundException : AppException
