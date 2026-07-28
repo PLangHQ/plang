@@ -31,13 +31,12 @@ public class ProseDoorFluidTests
 
     private static global::app.@this Stage(string tempDir, params (string file, string body)[] prose)
     {
-        var mdRoot = System.IO.Path.Combine(tempDir, "mdroot");
+        var mdRoot = System.IO.Path.Combine(tempDir, "system", "modules");
         System.IO.Directory.CreateDirectory(System.IO.Path.Combine(mdRoot, FixtureModule));
         foreach (var (file, body) in prose)
             System.IO.File.WriteAllText(System.IO.Path.Combine(mdRoot, FixtureModule, file), body);
 
         var app = global::PLang.Tests.TestApp.Create(tempDir);
-        app.Module.MarkdownTeachingRoot = mdRoot;
         app.Module.RegisterType(FixtureModule, "setvalue", typeof(FixtureAction));
         return app;
     }

@@ -136,7 +136,7 @@ public sealed class @this
     // owns the prose: root (the collection's teaching root) + module folder + module.{facet}.md.
     private global::app.type.item.file.@this Prose(string facet)
     {
-        var root = _list.ResolveMarkdownTeachingRoot()
+        var root = _list.Teaching
             ?? throw new System.InvalidOperationException(
                 "module prose needs the teaching root — the collection resolves it from App.OsDirectory; " +
                 "a module element minted without a live System context can't reach it.");

@@ -198,33 +198,16 @@ public sealed class @this : IAsyncDisposable
         typeof(IStatic),
     };
 
-    /// <summary>
-    /// Filesystem root for per-action LLM teaching markdown.
-    /// Defaults to <c>{App.OsDirectory}/system/modules</c>; tests stage fixtures
-    /// in a temp folder and assign this directly. Null disables markdown teaching
-    /// (catalog still assembles — fields just stay null/empty).
-    /// </summary>
-    public string? MarkdownTeachingRoot { get; set; }
+    /// <summary>Where per-action LLM teaching markdown lives — <c>/system/modules</c>, resolved
+    /// through <c>path.Resolve</c> so every downstream read passes <c>AuthGate</c>. FilePath's
+    /// ValidatePath redirects <c>/system/*</c> to <c>&lt;OsDirectory&gt;/system/*</c> when the path
+    /// isn't present under the App root. Null only before the System context exists.</summary>
+    public global::app.type.item.path.@this? Teaching
+        => App?.System?.Context == null ? null
+            : global::app.type.item.path.@this.Resolve("/system/modules", App.System.Context);
 
     /// <summary>
-    /// Resolves the markdown root: explicit override wins, else derives from
-    /// <c>App.OsDirectory</c>. Returns null when neither is available. The
-    /// string is routed through <c>path.@this.Resolve</c> (System actor's
-    /// Context) so every downstream read goes through <c>AuthGate</c>, even
-    /// when the override points outside the app root.
-    /// </summary>
-    public global::app.type.item.path.@this? ResolveMarkdownTeachingRoot()
-    {
-        if (App?.System?.Context == null) return null;
-        if (!string.IsNullOrEmpty(MarkdownTeachingRoot))
-            return global::app.type.item.path.@this.Resolve(MarkdownTeachingRoot!, App.System.Context);
-        // FilePath's ValidatePath redirects /system/* to <OsDirectory>/system/*
-        // when the path isn't present under the App root.
-        return global::app.type.item.path.@this.Resolve("/system/modules", App.System.Context);
-    }
-
-    /// <summary>
-    /// Scans <see cref="ResolveMarkdownTeachingRoot"/> for orphan teaching files
+    /// Scans <see cref="Teaching"/> for orphan teaching files
     /// (stem is not <c>module</c> and not a registered action in its module folder).
     /// Writes one line per orphan to the supplied actor's <c>Output</c> channel —
     /// CLAUDE.md "No Console.* writes in production C#" applies, and architect's
@@ -236,7 +219,7 @@ public sealed class @this : IAsyncDisposable
         global::app.actor.@this actor,
         CancellationToken cancellationToken = default)
     {
-        var root = ResolveMarkdownTeachingRoot();
+        var root = Teaching;
         var orphans = await MarkdownTeaching.ScanOrphans(root,
             moduleName => _modules.TryGetValue(moduleName, out var m)
                 ? m.ActionNames

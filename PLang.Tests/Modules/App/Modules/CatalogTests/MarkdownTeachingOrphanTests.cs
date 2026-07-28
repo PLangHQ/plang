@@ -28,11 +28,10 @@ public class MarkdownTeachingOrphanTests
     {
         _tempDir = Path.Combine(Path.GetTempPath(), "plang_orphan_" + Guid.NewGuid().ToString("N")[..8]);
         Directory.CreateDirectory(_tempDir);
-        _mdRoot = Path.Combine(_tempDir, "mdroot");
+        _mdRoot = Path.Combine(_tempDir, "system", "modules");
         Directory.CreateDirectory(Path.Combine(_mdRoot, "fixturemod"));
 
         _app = TestApp.Create(_tempDir);
-        _app.Module.MarkdownTeachingRoot = _mdRoot;
         _app.Module.RegisterType("fixturemod", "setvalue", typeof(FixtureAction));
 
         _capture = new MemoryStream();

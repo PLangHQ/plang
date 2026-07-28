@@ -27,11 +27,10 @@ public class ModuleProseDoorTests
     {
         _tempDir = Path.Combine(Path.GetTempPath(), "plang_prosedoor_" + Guid.NewGuid().ToString("N")[..8]);
         Directory.CreateDirectory(_tempDir);
-        _mdRoot = Path.Combine(_tempDir, "mdroot");
+        _mdRoot = Path.Combine(_tempDir, "system", "modules");
         Directory.CreateDirectory(Path.Combine(_mdRoot, FixtureModule));
 
         _app = TestApp.Create(_tempDir);
-        _app.Module.MarkdownTeachingRoot = _mdRoot;
         _app.Module.RegisterType(FixtureModule, FixtureAction1, typeof(FixtureAction));
     }
 

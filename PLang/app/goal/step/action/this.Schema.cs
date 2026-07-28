@@ -100,6 +100,36 @@ public partial class @this
         }
     }
 
+    /// <summary>Judges this action and reports what is wrong with it — the build-time verdicts that
+    /// are the ACTION's to give: it exists in its module, it emitted every required parameter, and
+    /// its own handler accepts the combination. Pure judgement: it changes nothing, so it runs after
+    /// construction and never re-flags a default the builder filled or a name it repaired. The
+    /// builder reacts to what comes back (re-prompt, abort); deciding is not its job.</summary>
+    public IEnumerable<global::app.error.IError> Validate()
+    {
+        var element = _module?[Name];
+        if (element == null)
+        {
+            yield return new global::app.error.ActionError(
+                $"{Module}.{Name}: action not found in module '{Module}'.", "ActionNotFound", 400);
+            yield break;
+        }
+
+        // A required slot is a declared row that is non-nullable with no [Default] — read off the
+        // catalog element's rows, the one reflection site, never a fresh reflect here.
+        var emitted = new HashSet<string>(Parameter.Select(p => p.Name), StringComparer.OrdinalIgnoreCase);
+        foreach (var row in element.Property.Rows)
+        {
+            if (row.Nullable || row.Default != null || emitted.Contains(row.Name)) continue;
+            yield return new global::app.error.ActionError(
+                $"{Module}.{Name}: required parameter '{row.Name}' is missing. " +
+                "Every action must emit all non-nullable, non-default parameters.",
+                "MissingRequiredParameter", 400);
+        }
+
+        if (BuildError is { } complaint) yield return complaint;
+    }
+
     // Action-level teaching prose — file handles over os/system/modules/{Module}/{Name}.{facet}.md,
     // the twins of the module element's module.{facet}.md doors. Lazy references: born unread, content
     // materializes at the Value door, an absent file is falsy (existence truthiness) so
@@ -140,7 +170,7 @@ public partial class @this
     {
         var app = App ?? throw new System.InvalidOperationException(
             "action prose needs the catalog — this action has no module, so it was built outside a construction door.");
-        var root = app.Module.ResolveMarkdownTeachingRoot()
+        var root = app.Module.Teaching
             ?? throw new System.InvalidOperationException(
                 "action prose needs the teaching root — the module collection resolves it from App.OsDirectory.");
         var path = root.Combine(Module.Name).Combine($"{Name}.{facet}.md");
