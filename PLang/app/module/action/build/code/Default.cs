@@ -606,19 +606,9 @@ public class Default : IBuilder
                 }
             }
 
-            // Action-level build validation
-            var actionType = modules.GetActionType(a.Module.Name, a.Name);
-            if (actionType != null && typeof(IBuildValidatable).IsAssignableFrom(actionType))
-            {
-                var method = actionType.GetMethod("ValidateBuild",
-                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-                if (method != null)
-                {
-                    var error = (string?)method.Invoke(null, [a.Parameter.ToList()]);
-                    if (error != null)
-                        validationErrors.Add($"{a.Module}.{a.Name}: {error}");
-                }
-            }
+            // Action-level build validation — the action asks its own handler; the builder reacts.
+            if (a.BuildError is { } buildError)
+                validationErrors.Add($"{a.Module}.{a.Name}: {buildError}");
         }
 
         if (validationErrors.Count > 0)

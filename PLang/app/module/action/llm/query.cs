@@ -13,13 +13,13 @@ namespace app.module.action.llm;
 [RequiresCapability("llm")]
 public partial class query : IContext, IBuildValidatable
 {
-    public static string? ValidateBuild(List<data.@this> parameters)
+    public static global::app.error.IError? ValidateBuild(List<data.@this> parameters)
     {
         var messages = parameters.FirstOrDefault(p =>
             string.Equals(p.Name, "Message", StringComparison.OrdinalIgnoreCase));
 
         if (messages == null)
-            return "Missing required parameter 'Message'. Must be a list of {Role: string, Content: string} objects. Map system= to {Role: \"system\", Content: \"...\"} and user= to {Role: \"user\", Content: \"...\"}";
+            return new global::app.error.ProgramError("Missing required parameter 'Message'. Must be a list of {Role: string, Content: string} objects. Map system= to {Role: \"system\", Content: \"...\"} and user= to {Role: \"user\", Content: \"...\"}", key: "MissingParameter");
 
         var value = messages.Peek();
 
@@ -27,12 +27,12 @@ public partial class query : IContext, IBuildValidatable
         // text instance its own (sync) emptiness notion via truthiness.
         if (!messages.HasValue
             || (value is global::app.type.item.text.@this st && !st.IsTruthy()))
-            return "Parameter 'Message' is empty. Must be a list of {Role: string, Content: string} objects. Map system= to {\"Role\": \"system\", \"Content\": \"...\"} and user= to {\"Role\": \"user\", \"Content\": \"...\"}";
+            return new global::app.error.ProgramError("Parameter 'Message' is empty. Must be a list of {Role: string, Content: string} objects. Map system= to {\"Role\": \"system\", \"Content\": \"...\"} and user= to {\"Role\": \"user\", \"Content\": \"...\"}", key: "EmptyParameter");
 
         if (value is not global::app.type.item.list.@this
             && value is not Clr { Value: System.Collections.IList }
             && value is not global::app.type.item.text.@this) // text already handled above
-            return $"Parameter 'Message' must be a list of {{Role, Content}} objects, got {value!.Type.Name}";
+            return new global::app.error.ProgramError($"Parameter 'Message' must be a list of {{Role, Content}} objects, got {value!.Type.Name}", key: "WrongParameterType");
 
         return null;
     }

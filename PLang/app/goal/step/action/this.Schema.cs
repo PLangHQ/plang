@@ -32,6 +32,22 @@ public partial class @this
                ?.Capabilities.Select(c => new global::app.type.item.text.@this(c))
            ?? Enumerable.Empty<global::app.type.item.text.@this>();
 
+    /// <summary>The handler's own complaint about this action's parameters, or null when it has
+    /// none — a handler opts in by implementing <c>IBuildValidatable</c>. Only the handler knows
+    /// which parameter COMBINATIONS are legal (the catalog rows describe slots one at a time), so
+    /// it is asked rather than re-derived. Read at build time; the builder reacts to the answer.</summary>
+    [JsonIgnore]
+    public global::app.error.IError? BuildError
+    {
+        get
+        {
+            if (Handler is not { } handler
+                || !typeof(global::app.module.IBuildValidatable).IsAssignableFrom(handler)) return null;
+            var validate = handler.GetMethod("ValidateBuild", BindingFlags.Public | BindingFlags.Static);
+            return validate == null ? null : (global::app.error.IError?)validate.Invoke(null, [Parameter.ToList()]);
+        }
+    }
+
     private global::app.goal.step.action.property.list.@this? _properties;
 
     /// <summary>The action's declared parameter slots — its own <c>property.list</c> collection, the

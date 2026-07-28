@@ -42,7 +42,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
         var parameters = new List<global::app.data.@this> { nameData, valueData, typeData };
         var error = global::app.module.action.variable.Set.ValidateBuild(parameters);
         await Assert.That(error).IsNotNull();
-        await Assert.That(error!).Contains("gif");
+        await Assert.That(error!.Message).Contains("gif");
     }
 
     [Test] public async Task VarAsImageGifStrict_BuildsClean_FailsAtRuntime()

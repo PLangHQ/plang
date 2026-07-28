@@ -69,10 +69,11 @@ public sealed class IsNotNullAttribute : Attribute { }
 public interface IBuildValidatable
 {
     /// <summary>
-    /// Validates LLM-generated parameters. Returns null if valid,
-    /// or an error message describing what's wrong so the LLM can fix it.
+    /// Validates LLM-generated parameters. Returns null if valid, or the error describing what is
+    /// wrong so the LLM can fix it — a real <see cref="global::app.error.IError"/> (key, status,
+    /// message), not a bare string: the build reacts to it like any other error.
     /// </summary>
-    static abstract string? ValidateBuild(List<data.@this> parameters);
+    static abstract global::app.error.IError? ValidateBuild(List<data.@this> parameters);
 }
 
 /// <summary>

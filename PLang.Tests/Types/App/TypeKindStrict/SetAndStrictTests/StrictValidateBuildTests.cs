@@ -55,8 +55,8 @@ public class StrictValidateBuildTests
         var result = global::app.module.action.variable.Set.ValidateBuild(
             Params(PngBytes, Type("image", "gif", true)));
         await Assert.That(result).IsNotNull();
-        await Assert.That(result!).Contains("gif");
-        await Assert.That(result!.ToLowerInvariant()).Contains("png");
+        await Assert.That(result!.Message).Contains("gif");
+        await Assert.That(result!.Message.ToLowerInvariant()).Contains("png");
     }
 
     [Test] public async Task ValidateBuild_StrictImageGifWithVarRef_ReturnsNull_DefersToRuntime()

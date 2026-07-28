@@ -16,7 +16,7 @@ namespace app.module.action.variable;
 [Action("set", Cacheable = false)]
 public partial class Set : IContext, IBuildValidatable
 {
-    public static string? ValidateBuild(List<data.@this> parameters)
+    public static global::app.error.IError? ValidateBuild(List<data.@this> parameters)
     {
         var value = parameters.FirstOrDefault(p =>
             string.Equals(p.Name, "Value", StringComparison.OrdinalIgnoreCase));
@@ -42,8 +42,10 @@ public partial class Set : IContext, IBuildValidatable
                 {
                     var (ok, actual) = v.ValidateKind(valueBacking, t.Kind?.Name);
                     if (!ok)
-                        return $"Strict kind mismatch: declared {t.Name}/{t.Kind}"
-                            + (actual != null ? $" but content is {actual}." : ".");
+                        return new global::app.error.ProgramError(
+                            $"Strict kind mismatch: declared {t.Name}/{t.Kind}"
+                            + (actual != null ? $" but content is {actual}." : "."),
+                            key: "StrictKindMismatch");
                 }
             }
         }
