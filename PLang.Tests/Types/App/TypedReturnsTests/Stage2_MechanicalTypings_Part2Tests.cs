@@ -91,7 +91,7 @@ public class Stage2_MechanicalTypings_Part2Tests
     public async Task ModulesDescribe_MockIntercept_AdvertisesMockReturnType()
     {
         var rendered = await _app.Module.Describe();
-        var row = rendered.FirstOrDefault(a => a.Module == "mock" && a.Name == "intercept");
+        var row = rendered.FirstOrDefault(a => a.Module.Name == "mock" && a.Name == "intercept");
         await Assert.That(row).IsNotNull();
         await Assert.That(row!.ReturnTypeName).IsEqualTo("mock");
     }
@@ -100,9 +100,9 @@ public class Stage2_MechanicalTypings_Part2Tests
     public async Task ModulesDescribe_BuilderRecordHandlers_AdvertiseConcreteReturnTypes()
     {
         var rendered = await _app.Module.Describe();
-        var types  = rendered.FirstOrDefault(a => a.Module == "builder" && a.Name == "types");
-        var goals  = rendered.FirstOrDefault(a => a.Module == "builder" && a.Name == "goals");
-        var acts   = rendered.FirstOrDefault(a => a.Module == "builder" && a.Name == "actions");
+        var types  = rendered.FirstOrDefault(a => a.Module.Name == "builder" && a.Name == "types");
+        var goals  = rendered.FirstOrDefault(a => a.Module.Name == "builder" && a.Name == "goals");
+        var acts   = rendered.FirstOrDefault(a => a.Module.Name == "builder" && a.Name == "actions");
 
         await Assert.That(types!.ReturnTypeName).IsEqualTo("type");
         // goals/actions render as collection shapes — PLang's foreach over

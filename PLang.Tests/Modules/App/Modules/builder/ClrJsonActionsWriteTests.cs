@@ -68,9 +68,9 @@ public class ClrJsonActionsWriteTests : System.IAsyncDisposable
         await context.Variable.Set("goal.Step[0].Action", clrJsonActions);
 
         await Assert.That(goal.Step[0].Action.Count).IsEqualTo(2);
-        await Assert.That(goal.Step[0].Action[0].Module).IsEqualTo("variable");
+        await Assert.That(goal.Step[0].Action[0].Module.Name).IsEqualTo("variable");
         await Assert.That(goal.Step[0].Action[0].Name).IsEqualTo("set");
-        await Assert.That(goal.Step[0].Action[1].Module).IsEqualTo("output");
+        await Assert.That(goal.Step[0].Action[1].Module.Name).IsEqualTo("output");
         await Assert.That(goal.Step[0].Action[1].Name).IsEqualTo("write");
     }
 

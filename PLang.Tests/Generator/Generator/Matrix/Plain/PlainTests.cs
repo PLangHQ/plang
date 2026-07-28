@@ -25,7 +25,7 @@ public class StringPlainTests
         var handler = new StringPlain(app.User.Context);
         var action = new PrAction
         {
-            Module = "matrix.plain",
+            Module = app.Module["matrix.plain"],
             Name = "stringplain",
             Parameter = new List<Data> { new Data("path", "hello", context: app.User.Context) }
         };

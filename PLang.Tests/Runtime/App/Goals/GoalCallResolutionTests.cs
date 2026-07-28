@@ -67,7 +67,7 @@ public class GoalCallResolutionTests
         var goal = new PLangGoal { Name = "Caller", Path = global::app.type.item.path.@this.Resolve(callerGoalPath, global::PLang.Tests.TestApp.SharedContext), Step = new GoalSteps() };
         var step = new Step { Index = 0, Text = "call something", Goal = goal };
         goal.Step.Add(step);
-        var action = new PLangAction { Module = "goal", Name = "call", Step = step };
+        var action = new PLangAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["goal"], Name = "call", Step = step };
         step.Action.Add(action);
         return action;
     }

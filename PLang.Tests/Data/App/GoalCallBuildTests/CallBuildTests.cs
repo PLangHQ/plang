@@ -28,7 +28,7 @@ public class CallBuildTests
         };
         var action = new PrAction
         {
-            Module = "goal",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["goal"],
             Name = "call",
             Parameter = new List<Data> { new Data("GoalName", goalCall, context: ctx) }
         };

@@ -291,7 +291,7 @@ public sealed partial class @this
         // frame, not "step 0 running" — observers reading goalCall.Action.Step should treat
         // it as the goal anchor, not the currently-executing step (which is whatever the
         // child stepCall.Action.Step points at).
-        var goalEntryAction = new global::app.goal.step.action.@this { Module = "goal", Name = "enter" };
+        var goalEntryAction = new global::app.goal.step.action.@this { Module = context.App.Module["goal"], Name = "enter" };
         if (Step.Count > 0) goalEntryAction.Step = Step[0];
 
         try

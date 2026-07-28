@@ -228,7 +228,7 @@ public partial class discover : IContext
     {
         goal.ForEachAction((step, action) =>
         {
-            if (!string.Equals(action.Module, "test", StringComparison.OrdinalIgnoreCase)) return;
+            if (!string.Equals(action.Module.Name, "test", StringComparison.OrdinalIgnoreCase)) return;
             if (!string.Equals(action.Name, "tag", StringComparison.OrdinalIgnoreCase)) return;
             var tagsParam = action.Parameter.FirstOrDefault(p =>
                 string.Equals(p.Name, "Tags", StringComparison.OrdinalIgnoreCase));
@@ -254,13 +254,13 @@ public partial class discover : IContext
         var subGoals = new List<Goal>();
         goal.ForEachAction((step, action) =>
         {
-            var type = modules.GetActionType(action.Module, action.Name);
+            var type = modules.GetActionType(action.Module.Name, action.Name);
             var attr = type?.GetCustomAttribute<RequiresCapabilityAttribute>();
             if (attr != null)
                 foreach (var cap in attr.Capabilities)
                     file.Tags.Add(new global::app.type.item.text.@this(cap));
 
-            if (string.Equals(action.Module, "goal", StringComparison.OrdinalIgnoreCase) &&
+            if (string.Equals(action.Module.Name, "goal", StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(action.Name, "call", StringComparison.OrdinalIgnoreCase))
             {
                 var targetName = ResolveStaticGoalName(action);
@@ -321,7 +321,7 @@ public partial class discover : IContext
                 }
             }
 
-            if (string.Equals(action.Module, "goal", StringComparison.OrdinalIgnoreCase) &&
+            if (string.Equals(action.Module.Name, "goal", StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(action.Name, "call", StringComparison.OrdinalIgnoreCase))
             {
                 var targetName = ResolveStaticGoalName(action);

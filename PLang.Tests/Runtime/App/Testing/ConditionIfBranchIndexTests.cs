@@ -42,7 +42,7 @@ public class ConditionIfBranchIndexTests
             Trigger.AfterAction,
             (context, action, result) =>
             {
-                if (action?.Module == "condition" && action.Name == "if")
+                if (action?.Module.Name == "condition" && action.Name == "if")
                     captured = result;
                 return Task.FromResult(Data.Ok());
             },
@@ -176,7 +176,7 @@ public class ConditionIfBranchIndexTests
         // raises an evaluation error.
         var action = new PrAction
         {
-            Module = "condition",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["condition"],
             Name = "if",
             Parameter = new List<Data>
             {

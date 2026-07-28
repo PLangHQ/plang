@@ -64,7 +64,7 @@ public class RunActionTests
             var step = new Step { Index = i, Text = $"action {i}" };
             step.Action.Add(new PrAction
             {
-                Module = actions[i].module,
+                Module = global::PLang.Tests.TestApp.SharedContext.App.Module[actions[i].module],
                 Name = actions[i].actionName,
                 Parameter = actions[i].parameters
             });
@@ -538,12 +538,12 @@ public class RunActionTests
             {
                 new Step { Index = 0, Text = "h0", Action = new StepActions
                 {
-                    new PrAction { Module = "variable", Name = "set",
+                    new PrAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set",
                         Parameter = new List<Data> { new("Name", new global::app.variable.@this("h0"), context: _app.User.Context), new("Value", 0, context: _app.User.Context) } }
                 }},
                 new Step { Index = 1, Text = "h1", Action = new StepActions
                 {
-                    new PrAction { Module = "variable", Name = "set",
+                    new PrAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set",
                         Parameter = new List<Data> { new("Name", new global::app.variable.@this("h1"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) } }
                 }}
             }

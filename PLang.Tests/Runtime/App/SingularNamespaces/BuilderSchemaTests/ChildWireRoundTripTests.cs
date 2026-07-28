@@ -32,11 +32,11 @@ public class ChildWireRoundTripTests
         // Top level: only the condition step; the body rode into the gate action's Child.
         await Assert.That(loaded.Step.Count).IsEqualTo(1);
         var cond = loaded.Step[0].Action[0];
-        await Assert.That(cond.Module).IsEqualTo("condition");
+        await Assert.That(cond.Module.Name).IsEqualTo("condition");
         await Assert.That(cond.Name).IsEqualTo("if");
         await Assert.That(cond.Child.Count).IsEqualTo(1);
         await Assert.That(cond.Child[0].Text).IsEqualTo("write out inside");
-        await Assert.That(cond.Child[0].Action[0].Module).IsEqualTo("output");
+        await Assert.That(cond.Child[0].Action[0].Module.Name).IsEqualTo("output");
         await Assert.That(cond.Child[0].Action[0].Name).IsEqualTo("write");
     }
 }

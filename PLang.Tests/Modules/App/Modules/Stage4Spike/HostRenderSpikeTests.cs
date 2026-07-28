@@ -154,7 +154,7 @@ public class HostRenderSpikeTests
         // Real catalog action elements ride as raw POCOs (clr) in a native list —
         // the shape 4a's app.module surface will answer.
         var catalog = await app.Module.Describe();
-        var subset = catalog.Where(a => a.Module == "file" || a.Module == "variable").ToList();
+        var subset = catalog.Where(a => a.Module.Name == "file" || a.Module.Name == "variable").ToList();
         var actions = new ItemList(new List<object?>(subset.Cast<object?>()), ctx);
         ctx.Variable.Set(new Data("actions", actions, context: ctx));
 

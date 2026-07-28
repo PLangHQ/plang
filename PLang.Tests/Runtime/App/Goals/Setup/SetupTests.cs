@@ -386,7 +386,7 @@ public class SetupTests
         {
             new global::app.goal.step.action.@this
             {
-                Module = "nonexistent",
+                Module = global::PLang.Tests.TestApp.SharedContext.App.Module["nonexistent"],
                 Name = "doesnotexist",
                 Parameter = new List<Data>()
             }

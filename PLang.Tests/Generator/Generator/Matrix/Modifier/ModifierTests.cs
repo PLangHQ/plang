@@ -17,7 +17,7 @@ public class ModifierActionTests
 
         var action = new PrAction
         {
-            Module = "matrix.modifier",
+            Module = app.Module["matrix.modifier"],
             Name = "modifieraction",
             Parameter = new List<Data> { new Data("tag", "X", context: app.User.Context) }
         };
@@ -35,7 +35,7 @@ public class ModifierActionTests
 
         var action = new PrAction
         {
-            Module = "matrix.plain",
+            Module = app.Module["matrix.plain"],
             Name = "stringplain",
             Parameter = new List<Data> { new Data("path", "x", context: app.User.Context) }
         };
@@ -57,7 +57,7 @@ public class ModifierActionTests
 
         var action = new PrAction
         {
-            Module = "matrix.plain",
+            Module = app.Module["matrix.plain"],
             Name = "stringplain",
             Parameter = new List<Data> { new Data("path", "x", context: app.User.Context) }
         };
@@ -81,7 +81,7 @@ public class ModifierActionTests
 
         var action = new PrAction
         {
-            Module = "matrix.plain",
+            Module = app.Module["matrix.plain"],
             Name = "stringplain",
             Parameter = new List<Data> { new Data("path", "x", context: app.User.Context) }
         };

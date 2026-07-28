@@ -329,7 +329,7 @@ public static class @this
                         // Bare exceptions from Run() (NRE, InvalidCast, etc.) reach the user
                         // as "Object reference not set" with no module.action context. Wrap
                         // here so the message tells the reader which action's Run() threw.
-                        var __mod = __action?.Module ?? "?";
+                        var __mod = __action?.Module.Name ?? "?";
                         var __act = __action?.Name ?? "?";
                         var __step = __action?.Step;
                         var __callFrames = Context?.CallStack?.Current?.SnapshotChain() ?? (System.Collections.Generic.IReadOnlyList<global::app.callstack.call.@this>)System.Array.Empty<global::app.callstack.call.@this>();

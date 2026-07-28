@@ -10,10 +10,19 @@ public partial class @this
 {
     // An action is a plain C# host — carried as clr<action>, reflected off its [Store] props.
 
-    [Store, LlmBuilder, Debug, Default]
-    [JsonPropertyName("module")]
-    [Newtonsoft.Json.JsonProperty("module")]
-    public string Module { get; set; } = "";
+    private global::app.module.@this? _module;
+
+    /// <summary>The module this action belongs to — the element itself, not its name. Every
+    /// construction door sets it; reading it unset means the action was built outside a door,
+    /// which is a bug, so it throws rather than answering a half-built identity. Carries [Debug]
+    /// only — the wire form is written explicitly by <c>Output</c>.</summary>
+    [Debug]
+    public global::app.module.@this Module
+    {
+        get => _module ?? throw new System.InvalidOperationException(
+            $"action '{Name}' has no module — it was constructed outside a construction door.");
+        set => _module = value;
+    }
 
     [Store, LlmBuilder, Debug, Default]
     [JsonPropertyName("action")]
@@ -84,7 +93,7 @@ public partial class @this
     /// </summary>
     [JsonIgnore]
     public bool IsCondition =>
-        string.Equals(Module, "condition", StringComparison.OrdinalIgnoreCase) &&
+        string.Equals(Module.Name, "condition", StringComparison.OrdinalIgnoreCase) &&
         (string.Equals(Name, "if", StringComparison.OrdinalIgnoreCase)
       || string.Equals(Name, "elseif", StringComparison.OrdinalIgnoreCase)
       || string.Equals(Name, "else", StringComparison.OrdinalIgnoreCase));

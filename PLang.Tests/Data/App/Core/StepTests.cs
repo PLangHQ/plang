@@ -22,7 +22,7 @@ public class StepTests : System.IAsyncDisposable
             {
                 new global::app.goal.step.action.@this
                 {
-                    Module = "http",
+                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module["http"],
                     Name = "get",
                     Parameter = new List<Data> { app.Data("url", "https://api.example.com") },
                 }
@@ -36,7 +36,7 @@ public class StepTests : System.IAsyncDisposable
         await Assert.That(step.Indent).IsEqualTo(2);
         await Assert.That(step.Comment).IsEqualTo("This makes an HTTP call");
         await Assert.That(step.Action.Count).IsEqualTo(1);
-        await Assert.That(step.Action[0].Module).IsEqualTo("http");
+        await Assert.That(step.Action[0].Module.Name).IsEqualTo("http");
         await Assert.That(step.Action[0].Name).IsEqualTo("get");
         await Assert.That(step.WaitForExecution).IsFalse();
     }

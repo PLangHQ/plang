@@ -38,7 +38,7 @@ public class Stage0_BuildMethodTests
         params (string name, object? value)[] parameters)
         => new PrAction
         {
-            Module = module,
+            Module = _app.Module[module],
             Name = actionName,
             Parameter = parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList()
         };

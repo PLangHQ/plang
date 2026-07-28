@@ -48,7 +48,7 @@ public class ModulesDescribeReturnTypeTests
     private async Task<global::app.goal.step.action.@this> Find(string module, string action)
     {
         var catalog = await _app.Module.Describe();
-        var row = catalog.FirstOrDefault(a => a.Module == module && a.Name == action);
+        var row = catalog.FirstOrDefault(a => a.Module.Name == module && a.Name == action);
         if (row == null)
             throw new InvalidOperationException($"catalog missing {module}.{action} — fixture stale");
         return row;

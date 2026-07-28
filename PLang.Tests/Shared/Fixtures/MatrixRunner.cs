@@ -40,7 +40,7 @@ public static class MatrixRunner
         var (module, actionName) = ModuleAndAction<TAction>();
         var action = new PrAction
         {
-            Module = module,
+            Module = app.Module[module],
             Name = actionName,
             Parameter = (parameters ?? Array.Empty<(string, object?)>())
                 .Select(p => new Data(p.name, p.value, context: app.User.Context)).ToList(),
@@ -79,7 +79,7 @@ public static class MatrixRunner
         var (module, actionName) = ModuleAndAction<TAction>();
         var action = new PrAction
         {
-            Module = module,
+            Module = app.Module[module],
             Name = actionName,
             Parameter = (parameters ?? Array.Empty<(string, object?)>())
                 .Select(p => new Data(p.name, p.value, context: app.User.Context)).ToList(),

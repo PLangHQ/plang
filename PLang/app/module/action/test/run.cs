@@ -103,7 +103,7 @@ public partial class run : IContext
             {
                 if (action != null)
                 {
-                    childApp.Test.Coverage.RecordModuleAction(action.Module, action.Name);
+                    childApp.Test.Coverage.RecordModuleAction(action.Module.Name, action.Name);
 
                     // Coverage DERIVES from the natural facts — the runtime stamps nothing. A condition
                     // that fired (its own result is truthy) records the branch it took, keyed by its

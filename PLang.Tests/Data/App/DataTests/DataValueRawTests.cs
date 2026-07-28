@@ -112,7 +112,7 @@ public class DataValueRawTests
         var stored = _app.Data("greeting", "Hello %name%");
         var action = new PrAction
         {
-            Module = "test",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["test"],
             Name = "fixture",
             Parameter = new List<Data> { stored }
         };

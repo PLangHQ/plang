@@ -63,7 +63,7 @@ public class ConditionHandlerTests : IDisposable
 
         var condAction = new Action
         {
-            Module = "condition", Name = "if",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["condition"], Name = "if",
             Parameter = new List<Data>
             {
                 new Data("Left", true, context: _app.User.Context), new Data("Operator", "==", context: _app.User.Context), new Data("Right", true, context: _app.User.Context)
@@ -71,7 +71,7 @@ public class ConditionHandlerTests : IDisposable
         };
         var thenAction = new Action
         {
-            Module = "output", Name = "write",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"], Name = "write",
             Parameter = new List<Data> { new Data("Data", "true-branch", context: _app.User.Context) }
         };
 
@@ -102,7 +102,7 @@ public class ConditionHandlerTests : IDisposable
 
         var condAction = new Action
         {
-            Module = "condition", Name = "if",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["condition"], Name = "if",
             Parameter = new List<Data>
             {
                 new Data("Left", false, context: _app.User.Context), new Data("Operator", "==", context: _app.User.Context), new Data("Right", true, context: _app.User.Context)
@@ -110,12 +110,12 @@ public class ConditionHandlerTests : IDisposable
         };
         var thenAction = new Action
         {
-            Module = "output", Name = "write",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"], Name = "write",
             Parameter = new List<Data> { new Data("Data", "then-branch", context: _app.User.Context) }
         };
         var elseCondAction = new Action
         {
-            Module = "condition", Name = "if",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["condition"], Name = "if",
             Parameter = new List<Data>
             {
                 new Data("Left", true, context: _app.User.Context), new Data("Operator", "==", context: _app.User.Context), new Data("Right", true, context: _app.User.Context)
@@ -123,7 +123,7 @@ public class ConditionHandlerTests : IDisposable
         };
         var elseAction = new Action
         {
-            Module = "output", Name = "write",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"], Name = "write",
             Parameter = new List<Data> { new Data("Data", "else-branch", context: _app.User.Context) }
         };
 

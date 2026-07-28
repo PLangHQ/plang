@@ -50,7 +50,7 @@ public class ModuleRemoveTests
         var action = new Remove(_app.User.Context) { Name = (global::app.type.item.text.@this)"variable" };
         await action.Run();
 
-        var (resolved, error) = _app.Module.GetCodeGenerated(new PrAction { Module = "variable", Name = "set" }, global::PLang.Tests.TestApp.SharedContext);
+        var (resolved, error) = _app.Module.GetCodeGenerated(new PrAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set" }, global::PLang.Tests.TestApp.SharedContext);
         await Assert.That(resolved).IsNull();
         await Assert.That(error).IsNotNull();
     }

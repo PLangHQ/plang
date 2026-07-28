@@ -18,7 +18,7 @@ public class ChannelStreamLoadTests
         var loaded = await RealGoalLoad.ViaChannel(app, SampleGoal());
 
         var action = loaded.Step[0].Action[0];
-        await Assert.That(action.Module).IsEqualTo("output");
+        await Assert.That(action.Module.Name).IsEqualTo("output");
         await Assert.That(action.Name).IsEqualTo("write");
 
         var param = action.Parameter.First(p => p.Name == "Content");

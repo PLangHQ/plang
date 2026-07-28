@@ -110,7 +110,7 @@ public class GetGoalsTests
                     {
                         new global::app.goal.step.action.@this
                         {
-                            Module = "output",
+                            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"],
                             Name = "write",
                             Parameter = new List<Data> { new("Message", "hello", context: _app.User.Context) }
                         }
@@ -136,7 +136,7 @@ public class GetGoalsTests
         await Assert.That(startGoal).IsNotNull();
         // Merged actions from .pr data
         await Assert.That(startGoal!.Step[0].Action.Count).IsEqualTo(1);
-        await Assert.That(startGoal.Step[0].Action[0].Module).IsEqualTo("output");
+        await Assert.That(startGoal.Step[0].Action[0].Module.Name).IsEqualTo("output");
     }
 
     [Test]

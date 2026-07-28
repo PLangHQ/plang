@@ -71,7 +71,7 @@ public class ParamDescParityTests
 
         foreach (var da in catalog)
         {
-            var element = app.Module[da.Module]?[da.Name];
+            var element = app.Module[da.Module.Name]?[da.Name];
             var rows = element == null
                 ? new Dictionary<string, Property>()
                 : element.Property.Rows.ToDictionary(r => r.Name, StringComparer.OrdinalIgnoreCase);

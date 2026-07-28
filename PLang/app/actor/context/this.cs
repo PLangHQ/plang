@@ -489,9 +489,9 @@ public sealed class @this : IDisposable
             var lifecycle = new Lifecycle();
             var events = Events;
 
-            foreach (var b in events.GetMatchingBindings(Trigger.BeforeAction, module: action.Module, actionName: action.Name))
+            foreach (var b in events.GetMatchingBindings(Trigger.BeforeAction, module: action.Module.Name, actionName: action.Name))
                 lifecycle.Before.Add(b);
-            foreach (var b in events.GetMatchingBindings(Trigger.AfterAction, module: action.Module, actionName: action.Name))
+            foreach (var b in events.GetMatchingBindings(Trigger.AfterAction, module: action.Module.Name, actionName: action.Name))
                 lifecycle.After.Add(b);
 
             return lifecycle;
@@ -524,7 +524,7 @@ public sealed class @this : IDisposable
             _ => null
         };
         string? stepText = owner is Step s ? s.Text : null;
-        string? moduleName = owner is Action a ? a.Module : null;
+        string? moduleName = owner is Action a ? a.Module.Name : null;
         string? actionName = owner is Action a2 ? a2.Name : null;
 
         var bindings = events.GetMatchingBindings(eventType, goalName: goalName, stepText: stepText, module: moduleName, actionName: actionName);

@@ -460,7 +460,7 @@ public sealed partial class @this : IAsyncDisposable
     {
         var entity = new global::app.goal.step.action.@this
         {
-            Module = ResolveModuleName(typeof(TAction)),
+            Module = Module[ResolveModuleName(typeof(TAction))],
             Name = ResolveActionName(typeof(TAction)),
             Seed = handler,
         };

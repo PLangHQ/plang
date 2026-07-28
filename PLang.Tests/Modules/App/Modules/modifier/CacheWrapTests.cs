@@ -28,7 +28,7 @@ public class CacheWrapTests
         if (key != null) parameters.Add(new("key", key, context: global::PLang.Tests.TestApp.SharedContext));
         return new global::app.goal.step.action.modifier.@this
         {
-            Module = "cache",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["cache"],
             Name = "wrap",
             Parameter = parameters
         };
@@ -39,7 +39,7 @@ public class CacheWrapTests
     {
         var action = new PrAction
         {
-            Module = "variable", Name = "set",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set",
             Parameter = new List<global::app.data.@this>
             {
                 new("name", "%x%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "first", context: global::PLang.Tests.TestApp.SharedContext)
@@ -68,7 +68,7 @@ public class CacheWrapTests
         // variable.set would put "fresh-value" but the cache hit bypasses dispatch.
         var action = new PrAction
         {
-            Module = "variable", Name = "set",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set",
             Parameter = new List<global::app.data.@this>
             {
                 new("name", "%y%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "fresh-value", context: global::PLang.Tests.TestApp.SharedContext)
@@ -89,7 +89,7 @@ public class CacheWrapTests
     {
         var action = new PrAction
         {
-            Module = "error", Name = "throw",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["error"], Name = "throw",
             Parameter = new List<global::app.data.@this> { new("message", "boom", context: global::PLang.Tests.TestApp.SharedContext) },
             Modifier = new List<global::app.goal.step.action.modifier.@this> { CacheModifier(60_000, "fail-key") }
         };
@@ -108,7 +108,7 @@ public class CacheWrapTests
     {
         var action = new PrAction
         {
-            Module = "variable", Name = "set",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set",
             Parameter = new List<global::app.data.@this>
             {
                 new("name", "%a%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "v", context: global::PLang.Tests.TestApp.SharedContext)
@@ -132,7 +132,7 @@ public class CacheWrapTests
 
         var action = new PrAction
         {
-            Module = "variable", Name = "set",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set",
             Parameter = new List<global::app.data.@this>
             {
                 new("name", "%b%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "v", context: global::PLang.Tests.TestApp.SharedContext)
@@ -155,7 +155,7 @@ public class CacheWrapTests
         // to CacheSettings; if it didn't, this entry wouldn't be stored at all.
         var action = new PrAction
         {
-            Module = "variable", Name = "set",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set",
             Parameter = new List<global::app.data.@this>
             {
                 new("name", "%c%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "slide", context: global::PLang.Tests.TestApp.SharedContext)
@@ -179,7 +179,7 @@ public class CacheWrapTests
 
         var action = new PrAction
         {
-            Module = "variable", Name = "set",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "set",
             Parameter = new List<global::app.data.@this>
             {
                 new("name", "%d%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "fresh", context: global::PLang.Tests.TestApp.SharedContext)

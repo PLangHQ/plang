@@ -16,7 +16,7 @@ public class EngineTests
             {
                 new global::app.goal.step.action.@this
                 {
-                    Module = actionClass,
+                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module[actionClass],
                     Name = method,
                     Parameter = parameters is IDictionary<string, object?> dict
                         ? PrParam.List(actionClass, method, dict)
@@ -36,7 +36,7 @@ public class EngineTests
             {
                 new global::app.goal.step.action.@this
                 {
-                    Module = actionClass,
+                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module[actionClass],
                     Name = method,
                     Parameter = parameters is IDictionary<string, object?> dict
                         ? PrParam.List(actionClass, method, dict)
@@ -44,7 +44,7 @@ public class EngineTests
                 },
                 new global::app.goal.step.action.@this
                 {
-                    Module = "variable",
+                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"],
                     Name = "set",
                     Parameter = new List<Data>
                     {

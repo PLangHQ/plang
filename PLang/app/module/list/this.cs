@@ -113,7 +113,7 @@ public sealed class @this : IAsyncDisposable
     public (ICodeGenerated? Handler, IError? Error) GetCodeGenerated(
         global::app.goal.step.action.@this action, actor.context.@this context)
     {
-        if (!_modules.TryGetValue(action.Module, out var actions) ||
+        if (!_modules.TryGetValue(action.Module.Name, out var actions) ||
             !actions.TryGetValue(action.Name, out var entry))
             return (null, ActionError.NotFound($"Action '{action.Module}.{action.Name}'"));
 
@@ -354,7 +354,7 @@ public sealed class @this : IAsyncDisposable
                 // structural facts the param-desc parity still compares (params, return, cacheable).
                 result.Add(new global::app.goal.step.action.@this
                 {
-                    Module = ns,
+                    Module = this[ns],
                     Name = actionName,
                     Parameter = new global::app.goal.step.action.parameter.list.@this(parameters),
                     Cacheable = cacheable,

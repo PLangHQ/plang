@@ -18,7 +18,7 @@ public class GetParameterTests
     {
         return new PrAction
         {
-            Module = "test",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["test"],
             Name = "fixture",
             Parameter = parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList()
         };
@@ -30,7 +30,7 @@ public class GetParameterTests
     {
         return new PrAction
         {
-            Module = "test",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["test"],
             Name = "fixture",
             Parameter = parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList(),
             Default = defaults.Select(d => new Data(d.name, d.value, context: _app.User.Context)).ToList()
@@ -118,7 +118,7 @@ public class GetParameterTests
     [Test]
     public async Task GetParameter_EmptyLists_ReturnsNotFound()
     {
-        var action = new PrAction { Module = "test", Name = "fixture" };
+        var action = new PrAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["test"], Name = "fixture" };
 
         var result = action.GetParameter("anything", _app.User.Context);
 

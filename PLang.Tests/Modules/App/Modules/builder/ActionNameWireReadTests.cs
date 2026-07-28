@@ -38,7 +38,7 @@ public class ActionNameWireReadTests : System.IAsyncDisposable
     {
         var goal = await ReadOneAction("""[ { "module": "output", "action": "write" } ]""");
         await Assert.That(goal.Step[0].Action.Count).IsEqualTo(1);
-        await Assert.That(goal.Step[0].Action[0].Module).IsEqualTo("output");
+        await Assert.That(goal.Step[0].Action[0].Module.Name).IsEqualTo("output");
         await Assert.That(goal.Step[0].Action[0].Name).IsEqualTo("write");
     }
 

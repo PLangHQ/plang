@@ -14,7 +14,13 @@ public sealed class @this
     private readonly list.@this _list;
 
     /// <summary>The module name — "file", "variable", "list".</summary>
+    [Debug, Out]
     public string Name { get; }
+
+    /// <summary>The module IS its name in text — so a site composing the qualified form
+    /// (<c>$"{action.Module}.{action.Name}"</c>, <c>{{ a.Module }}.{{ a.Name }}</c>) reads
+    /// naturally without reaching for <c>.Name</c>.</summary>
+    public override string ToString() => Name;
 
     internal @this(string name, list.@this list)
     {
@@ -34,9 +40,13 @@ public sealed class @this
     private System.Collections.Generic.List<global::app.goal.step.action.@this>? _actions;
     private System.Collections.Generic.List<global::app.goal.step.action.modifier.@this>? _modifiers;
 
+    // Built into locals and PUBLISHED last: `_actions` is the guard the readers test, so assigning
+    // it before the walk would let a concurrent reader see a non-null but still-empty catalog and
+    // conclude the action does not exist. Two threads may both walk; both produce the same catalog.
     private void Mint()
     {
-        _actions = new(); _modifiers = new();
+        var actions = new System.Collections.Generic.List<global::app.goal.step.action.@this>();
+        var modifiers = new System.Collections.Generic.List<global::app.goal.step.action.modifier.@this>();
         var ctx = _list.App.System.Context;
         foreach (var name in _list.GetActions(Name))
         {
@@ -45,12 +55,14 @@ public sealed class @this
             // [no-cache] — read off the registry (its single source), not defaulted.
             var cacheable = _list.IsCacheable(Name, name);
             if (order != null)
-                _modifiers.Add(new global::app.goal.step.action.modifier.@this
-                    { Module = Name, Name = name, Position = order.Value, Cacheable = cacheable, Context = ctx });
+                modifiers.Add(new global::app.goal.step.action.modifier.@this
+                    { Module = this, Name = name, Position = order.Value, Cacheable = cacheable, Context = ctx });
             else
-                _actions.Add(new global::app.goal.step.action.@this
-                    { Module = Name, Name = name, Cacheable = cacheable, Context = ctx });
+                actions.Add(new global::app.goal.step.action.@this
+                    { Module = this, Name = name, Cacheable = cacheable, Context = ctx });
         }
+        _modifiers = modifiers;
+        _actions = actions;
     }
 
     /// <summary>The module's standalone actions as the NATIVE plang list — modifiers are a separate

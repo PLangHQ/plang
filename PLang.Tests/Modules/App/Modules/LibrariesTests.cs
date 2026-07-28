@@ -180,7 +180,7 @@ public class LibrariesTests
         await using var engine = TestApp.Create("/app", modules);
         var context = engine.User.Context;
 
-        var (action, error) = modules.GetCodeGenerated(new PrAction { Module = "variable", Name = "set" }, global::PLang.Tests.TestApp.SharedContext);
+        var (action, error) = modules.GetCodeGenerated(new PrAction { Module = modules["variable"], Name = "set" }, global::PLang.Tests.TestApp.SharedContext);
 
         await Assert.That(action).IsNotNull();
         await Assert.That(error).IsNull();
@@ -195,7 +195,7 @@ public class LibrariesTests
         await using var engine = TestApp.Create("/app", modules);
         var context = engine.User.Context;
 
-        var (result, error) = modules.GetCodeGenerated(new PrAction { Module = "custom", Name = "run" }, global::PLang.Tests.TestApp.SharedContext);
+        var (result, error) = modules.GetCodeGenerated(new PrAction { Module = modules["custom"], Name = "run" }, global::PLang.Tests.TestApp.SharedContext);
 
         await Assert.That(result).IsEqualTo(action);
         await Assert.That(error).IsNull();
@@ -209,7 +209,7 @@ public class LibrariesTests
         await using var engine = TestApp.Create("/app", modules);
         var context = engine.User.Context;
 
-        var (action, error) = modules.GetCodeGenerated(new PrAction { Module = "legacy", Name = "do" }, global::PLang.Tests.TestApp.SharedContext);
+        var (action, error) = modules.GetCodeGenerated(new PrAction { Module = modules["legacy"], Name = "do" }, global::PLang.Tests.TestApp.SharedContext);
 
         await Assert.That(action).IsNull();
         await Assert.That(error).IsNotNull();
@@ -223,7 +223,7 @@ public class LibrariesTests
         await using var engine = TestApp.Create("/app", modules);
         var context = engine.User.Context;
 
-        var (action, error) = modules.GetCodeGenerated(new PrAction { Module = "nonexistent_xyz", Name = "nope" }, global::PLang.Tests.TestApp.SharedContext);
+        var (action, error) = modules.GetCodeGenerated(new PrAction { Module = modules["variable"], Name = "nope" }, global::PLang.Tests.TestApp.SharedContext);
 
         await Assert.That(action).IsNull();
         await Assert.That(error).IsNotNull();
@@ -242,7 +242,7 @@ public class LibrariesTests
         await using var engine = TestApp.Create("/app", modules);
         var context = engine.User.Context;
 
-        var (result, error) = modules.GetCodeGenerated(new PrAction { Module = "custom", Name = "run" }, global::PLang.Tests.TestApp.SharedContext);
+        var (result, error) = modules.GetCodeGenerated(new PrAction { Module = modules["custom"], Name = "run" }, global::PLang.Tests.TestApp.SharedContext);
 
         await Assert.That(error).IsNull();
         await Assert.That(((MockCodeGenHandler)result!).Tag).IsEqualTo("second");
@@ -256,8 +256,8 @@ public class LibrariesTests
         var context = engine.User.Context;
 
         // variable.set is type-registered (discovered via [Action] attribute)
-        var (action1, _) = modules.GetCodeGenerated(new PrAction { Module = "variable", Name = "set" }, global::PLang.Tests.TestApp.SharedContext);
-        var (action2, _) = modules.GetCodeGenerated(new PrAction { Module = "variable", Name = "set" }, global::PLang.Tests.TestApp.SharedContext);
+        var (action1, _) = modules.GetCodeGenerated(new PrAction { Module = modules["variable"], Name = "set" }, global::PLang.Tests.TestApp.SharedContext);
+        var (action2, _) = modules.GetCodeGenerated(new PrAction { Module = modules["variable"], Name = "set" }, global::PLang.Tests.TestApp.SharedContext);
 
         // Per-call instantiation — different instances each time
         await Assert.That(action1).IsNotNull();

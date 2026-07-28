@@ -44,7 +44,10 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         {
             switch (name)
             {
-                case "module": action.Module = reader.String(); break;
+                // The wire carries the module NAME; the action holds the element. Resolving here
+                // means a .pr naming a module that no longer exists fails at LOAD (the registry
+                // indexer throws) instead of mid-execution.
+                case "module": action.Module = ctx.Context.App.Module[reader.String()]; break;
                 // `name` is the canonical wire key (what Output writes and every .pr carries).
                 // `action` is the LLM's clearer alias — the compile schema asks the model for
                 // `action`, so the compile-response read accepts it here. One read door, both keys;

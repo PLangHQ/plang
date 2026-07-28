@@ -104,7 +104,7 @@ public class HashActionTests
     {
         var action = new PrAction
         {
-            Module = "crypto", Name = "hash",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["crypto"], Name = "hash",
             Parameter = new List<Data> { new Data("data", null, context: Ctx), new Data("algorithm", "keccak256", context: Ctx) }
         };
         var result = await action.Run(Ctx);
@@ -194,7 +194,7 @@ public class HashActionTests
     {
         var action = new PrAction
         {
-            Module = "crypto", Name = "verify",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["crypto"], Name = "verify",
             Parameter = new List<Data> { new Data("data", "hello", context: Ctx), new Data("hash", null, context: Ctx), new Data("algorithm", "keccak256", context: Ctx) }
         };
         var (h, err) = await new Verify(Ctx).Resolve(action, Ctx);
@@ -211,7 +211,7 @@ public class HashActionTests
     {
         var action = new PrAction
         {
-            Module = "crypto", Name = "verify",
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module["crypto"], Name = "verify",
             Parameter = new List<Data> { new Data("data", null, context: Ctx), new Data("hash", "abc123", context: Ctx), new Data("algorithm", "keccak256", context: Ctx) }
         };
         var result = await action.Run(Ctx);

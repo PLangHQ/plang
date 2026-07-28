@@ -13,12 +13,10 @@ public partial class @this
     [JsonIgnore]
     internal global::app.actor.context.@this? Context { get; init; }
 
-    // The handler CLR type — reached TRANSIENTLY through the module element's door (the owner),
-    // never stored on this action. Null when there's no catalog Context or the identity is unknown.
-    private System.Type? Handler
-        => Context != null && Context.App.Module.Contains(Module)
-            ? Context.App.Module[Module].Handler(Name)
-            : null;
+    // The handler CLR type — reached TRANSIENTLY through the module element's own door (the owner),
+    // never stored on this action. Reads the backing field: an action built outside a construction
+    // door has no module, and that answers "unknown handler" rather than throwing.
+    private System.Type? Handler => _module?.Handler(Name);
 
     private global::app.goal.step.action.property.list.@this? _properties;
 
@@ -91,24 +89,21 @@ public partial class @this
     [JsonIgnore]
     public global::app.type.item.file.@this Examples => _examples ??= Prose("examples");
 
-    // The module's teaching prose, reached THROUGH the module element (module.{facet}.md) — navigation,
-    // not copy. The per-action detail template concats module-first + action for a full teaching block.
-    private global::app.module.@this ModuleElement
-        => (Context ?? throw new System.InvalidOperationException(
-                "action module prose needs the catalog context — a .pr-zoom action navigates via the clr carrier."))
-            .App.Module[Module];
+    // The module's teaching prose, reached THROUGH the module element the action already holds
+    // (module.{facet}.md) — navigation, not copy. The per-action detail template concats
+    // module-first + action for a full teaching block.
 
     /// <summary>The module's description prose (module.description.md), through the module element.</summary>
     [JsonIgnore]
-    public global::app.type.item.file.@this ModuleDescription => ModuleElement.Description;
+    public global::app.type.item.file.@this ModuleDescription => Module.Description;
 
     /// <summary>The module's notes prose (module.notes.md), through the module element.</summary>
     [JsonIgnore]
-    public global::app.type.item.file.@this ModuleNotes => ModuleElement.Notes;
+    public global::app.type.item.file.@this ModuleNotes => Module.Notes;
 
     /// <summary>The module's examples prose (module.examples.md), through the module element.</summary>
     [JsonIgnore]
-    public global::app.type.item.file.@this ModuleExamples => ModuleElement.Examples;
+    public global::app.type.item.file.@this ModuleExamples => Module.Examples;
 
     private global::app.type.item.file.@this Prose(string facet)
     {
@@ -117,7 +112,7 @@ public partial class @this
         var root = ctx.App.Module.ResolveMarkdownTeachingRoot()
             ?? throw new System.InvalidOperationException(
                 "action prose needs the teaching root — the module collection resolves it from App.OsDirectory.");
-        var path = root.Combine(Module).Combine($"{Name}.{facet}.md");
+        var path = root.Combine(Module.Name).Combine($"{Name}.{facet}.md");
         return new global::app.type.item.file.@this(path);
     }
 }

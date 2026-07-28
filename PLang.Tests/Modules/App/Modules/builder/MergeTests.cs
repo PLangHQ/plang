@@ -23,14 +23,14 @@ public class MergeTests
             Text = "do something",
             Action = new StepActions(new[]
             {
-                new Action { Module = "output", Name = "write", Parameter = new List<Data> { new("Message", "hello", context: global::PLang.Tests.TestApp.SharedContext) } }
+                new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"], Name = "write", Parameter = new List<Data> { new("Message", "hello", context: global::PLang.Tests.TestApp.SharedContext) } }
             })
         };
 
         target.Merge(source);
 
         await Assert.That(target.Action.Count).IsEqualTo(1);
-        await Assert.That(target.Action[0].Module).IsEqualTo("output");
+        await Assert.That(target.Action[0].Module.Name).IsEqualTo("output");
     }
 
     [Test]
@@ -45,7 +45,7 @@ public class MergeTests
             LineNumber = 1,
             Action = new StepActions(new[]
             {
-                new Action { Module = "file", Name = "read" }
+                new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["file"], Name = "read" }
             })
         };
 
@@ -63,7 +63,7 @@ public class MergeTests
     [Test]
     public async Task StepMerge_EmptySource_LeavesTargetUnchanged()
     {
-        var originalAction = new Action { Module = "output", Name = "write" };
+        var originalAction = new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"], Name = "write" };
         var target = new Step
         {
             Text = "step",
@@ -130,7 +130,7 @@ public class MergeTests
                     Text = "do something",
                     Action = new StepActions(new[]
                     {
-                        new Action { Module = "output", Name = "write" }
+                        new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"], Name = "write" }
                     })
                 }
             }
@@ -166,7 +166,7 @@ public class MergeTests
                     Text = "old step text",
                     Action = new StepActions(new[]
                     {
-                        new Action { Module = "file", Name = "read" }
+                        new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["file"], Name = "read" }
                     })
                 }
             }
@@ -217,7 +217,7 @@ public class MergeTests
                     Text = "do something",
                     Action = new StepActions(new[]
                     {
-                        new Action { Module = "output", Name = "write" }
+                        new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"], Name = "write" }
                     })
                 }
             }

@@ -622,7 +622,7 @@ public class RenderTests : IDisposable
     {
         var action = new global::app.goal.step.action.@this
         {
-            Module = actionClass,
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module[actionClass],
             Name = method,
             Parameter = parameters is IDictionary<string, object?> dict
                 ? PrParam.List(actionClass, method, dict)

@@ -44,7 +44,7 @@ public static class Make
     {
         var action = new global::app.goal.step.action.@this
         {
-            Module = module,
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module[module],
             Name = actionName,
         };
         foreach (var (name, value) in parameters)

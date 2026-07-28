@@ -9,7 +9,7 @@ public class CallChainRendererTests
     {
         var goal = new Goal { Name = goalName, Path = global::app.type.item.path.@this.Resolve($"/{goalName}.goal", global::PLang.Tests.TestApp.SharedContext) };
         var step = new Step { Index = stepIndex, LineNumber = line, Text = "step", Goal = goal };
-        var action = new ActionEntity { Module = module, Name = "act" };
+        var action = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module[module], Name = "act" };
         action.Step = step;
         return action;
     }

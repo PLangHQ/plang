@@ -73,8 +73,7 @@ public sealed partial class @this
 
         foreach (var a in flat)
         {
-            if (modules.Contains(a.Module)
-                && modules[a.Module][a.Name] is action.modifier.@this catalog)
+            if (a.Module[a.Name] is action.modifier.@this catalog)
             {
                 if (current == null)
                 {

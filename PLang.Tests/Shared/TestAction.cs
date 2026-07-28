@@ -11,7 +11,7 @@ public static class TestAction
     {
         var act = new global::app.goal.step.action.@this
         {
-            Module = module,
+            Module = global::PLang.Tests.TestApp.SharedContext.App.Module[module],
             Name = action,
             Parameter = parameters
                 .Select(p => new global::app.data.@this(p.name, p.value,

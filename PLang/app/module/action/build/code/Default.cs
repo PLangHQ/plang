@@ -488,53 +488,14 @@ public class Default : IBuilder
         var notFound = new List<string>();
         foreach (var a in actions)
         {
-            // Cheap repair for the recurring LLM hallucination of stuffing the
-            // module/action separator into the module name:
-            //   {"module": "ui.render",     "action": "render"} → module="ui",        action="render"
-            //   {"module": "goal.call",     "action": "call"}   → module="goal",      action="call"
-            //   {"module": "condition.if",  "action": "if"}     → module="condition", action="if"
-            //   {"module": "loop.foreach",  "action": "foreach"} → module="loop",     action="foreach"
-            // Both shapes appear: head.tail with action duplicating tail, and head.tail
-            // with action being the genuine tail. Try both before reporting "not found"
-            // so the fixer doesn't have to round-trip a deterministic mistake.
-            if (!modules.Contains(a.Module, a.Name) && a.Module.Contains('.'))
+            // The module is resolved at read — an action that exists carries a real module element,
+            // so only the action name can be wrong here. A bad module name never reaches this loop:
+            // it throws at read, which is what tells the LLM it named something that isn't there.
+            if (a.Module[a.Name] == null)
             {
-                var parts = a.Module.Split('.', 2);
-                var head = parts[0];
-                var tail = parts[1];
-                if (modules.Contains(head, tail))
-                {
-                    a.Warning.Add(new global::app.warning.@this {
-                        Key = "ModuleNameRepaired",
-                        Message = $"Module name '{a.Module}' contained the action separator; repaired to module='{head}', action='{tail}' (was action='{a.Name}')."
-                    });
-                    a.Module = head;
-                    a.Name = tail;
-                }
-                else if (modules.Contains(head, a.Name))
-                {
-                    a.Warning.Add(new global::app.warning.@this {
-                        Key = "ModuleNameRepaired",
-                        Message = $"Module name '{a.Module}' contained the action separator; repaired to module='{head}' (action='{a.Name}' kept)."
-                    });
-                    a.Module = head;
-                }
-            }
-            if (!modules.Contains(a.Module, a.Name))
-            {
-                var available = modules.GetActions(a.Module);
-                string suggestion;
-                if (available.Any())
-                {
-                    var sorted = Utils.StringDistance.OrderBySimilarity(a.Name, available);
-                    suggestion = $"Module '{a.Module}' exists but action '{a.Name}' not found. Did you mean: {string.Join(", ", sorted.Take(5))}?";
-                }
-                else
-                {
-                    var sorted = Utils.StringDistance.OrderBySimilarity(a.Module, modules.Names);
-                    suggestion = $"Module '{a.Module}' not found. Did you mean: {string.Join(", ", sorted.Take(5))}?";
-                }
-                notFound.Add($"{a.Module}.{a.Name}: {suggestion}");
+                var sorted = Utils.StringDistance.OrderBySimilarity(a.Name, modules.GetActions(a.Module.Name));
+                notFound.Add($"{a.Module}.{a.Name}: module '{a.Module}' exists but action '{a.Name}' not found. " +
+                             $"Did you mean: {string.Join(", ", sorted.Take(5))}?");
             }
         }
 
@@ -554,7 +515,7 @@ public class Default : IBuilder
             var paramNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             if (a.Parameter != null)
                 foreach (var p in a.Parameter) paramNames.Add(p.Name);
-            a.Default = modules.GetDefaults(a.Module, a.Name, paramNames) is { } defs
+            a.Default = modules.GetDefaults(a.Module.Name, a.Name, paramNames) is { } defs
                 ? new global::app.goal.step.action.parameter.list.@this(defs) : null;
 
             // goal.call sanity — goal names are simple identifiers (BuildGoalCore,
@@ -627,9 +588,7 @@ public class Default : IBuilder
                 // instead of re-reflecting the handler with a fresh NullabilityInfoContext. The rows
                 // already drop [Code] / capability / EqualityContract / host params; a required slot
                 // is a row that's non-nullable with no [Default].
-                var element = modules.Contains(a.Module, a.Name)
-                    ? modules[a.Module][a.Name]
-                    : null;
+                var element = a.Module[a.Name];
                 if (element != null)
                 {
                     var emitted = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -648,7 +607,7 @@ public class Default : IBuilder
             }
 
             // Action-level build validation
-            var actionType = modules.GetActionType(a.Module, a.Name);
+            var actionType = modules.GetActionType(a.Module.Name, a.Name);
             if (actionType != null && typeof(IBuildValidatable).IsAssignableFrom(actionType))
             {
                 var method = actionType.GetMethod("ValidateBuild",
@@ -884,11 +843,10 @@ public class Default : IBuilder
             // disagrees. The LLM tags the value's content shape (404 → "int"); the schema
             // tags the parameter's declared CLR type (Key → "string"). The schema wins —
             // it's the contract, not the LLM's view of the value.
-            var actionType = modules.GetActionType(a.Module, a.Name);
+            var actionType = modules.GetActionType(a.Module.Name, a.Name);
             // The catalog element's declared rows — the ONE reflection site, read for nullable-slot
             // detection below instead of re-reflecting with a NullabilityInfoContext.
-            var rows = modules.Contains(a.Module, a.Name)
-                ? modules[a.Module][a.Name].Property.Rows : null;
+            var rows = a.Module[a.Name]?.Property.Rows;
             if (actionType != null)
             {
                 var props = actionType.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);

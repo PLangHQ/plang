@@ -49,7 +49,7 @@ public class AfterActionPayloadTests
         await RunSimpleGoal();
 
         await Assert.That(captured).IsNotNull();
-        await Assert.That(captured!.Module).IsEqualTo("variable");
+        await Assert.That(captured!.Module.Name).IsEqualTo("variable");
         await Assert.That(captured.Name).IsEqualTo("set");
     }
 
@@ -92,7 +92,7 @@ public class AfterActionPayloadTests
             Trigger.AfterAction,
             (context, action, result) =>
             {
-                if (action != null) observed.Add((action.Module, action.Name));
+                if (action != null) observed.Add((action.Module.Name, action.Name));
                 return Task.FromResult(Data.Ok());
             },
             priority: int.MaxValue,

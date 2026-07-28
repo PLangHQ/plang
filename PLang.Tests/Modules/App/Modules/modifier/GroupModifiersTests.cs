@@ -11,7 +11,7 @@ public class GroupModifiersTests
     {
         var result = new StepActions();
         foreach (var (m, a) in items)
-            result.Add(new PrAction { Module = m, Name = a });
+            result.Add(new PrAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module[m], Name = a });
         return result;
     }
 
@@ -24,8 +24,8 @@ public class GroupModifiersTests
         var step = new Step { Action = actions }; step.Nest(modules);
 
         await Assert.That(step.Action.Count).IsEqualTo(2);
-        await Assert.That(step.Action[0].Module).IsEqualTo("file");
-        await Assert.That(step.Action[1].Module).IsEqualTo("variable");
+        await Assert.That(step.Action[0].Module.Name).IsEqualTo("file");
+        await Assert.That(step.Action[1].Module.Name).IsEqualTo("variable");
         await Assert.That(step.Action[0].Modifier.Count).IsEqualTo(0);
         await Assert.That(step.Action[1].Modifier.Count).IsEqualTo(0);
     }
@@ -39,9 +39,9 @@ public class GroupModifiersTests
         var step = new Step { Action = actions }; step.Nest(modules);
 
         await Assert.That(step.Action.Count).IsEqualTo(1);
-        await Assert.That(step.Action[0].Module).IsEqualTo("file");
+        await Assert.That(step.Action[0].Module.Name).IsEqualTo("file");
         await Assert.That(step.Action[0].Modifier.Count).IsEqualTo(1);
-        await Assert.That(step.Action[0].Modifier[0].Module).IsEqualTo("cache");
+        await Assert.That(step.Action[0].Modifier[0].Module.Name).IsEqualTo("cache");
     }
 
     [Test]
@@ -60,9 +60,9 @@ public class GroupModifiersTests
         await Assert.That(step.Action.Count).IsEqualTo(1);
         var mods = step.Action[0].Modifier;
         await Assert.That(mods.Count).IsEqualTo(3);
-        await Assert.That(mods[0].Module).IsEqualTo("timeout");
-        await Assert.That(mods[1].Module).IsEqualTo("cache");
-        await Assert.That(mods[2].Module).IsEqualTo("error");
+        await Assert.That(mods[0].Module.Name).IsEqualTo("timeout");
+        await Assert.That(mods[1].Module.Name).IsEqualTo("cache");
+        await Assert.That(mods[2].Module.Name).IsEqualTo("error");
     }
 
     [Test]
@@ -74,10 +74,10 @@ public class GroupModifiersTests
         var step = new Step { Action = actions }; step.Nest(modules);
 
         await Assert.That(step.Action.Count).IsEqualTo(2);
-        await Assert.That(step.Action[0].Module).IsEqualTo("file");
+        await Assert.That(step.Action[0].Module.Name).IsEqualTo("file");
         await Assert.That(step.Action[0].Modifier.Count).IsEqualTo(1);
-        await Assert.That(step.Action[0].Modifier[0].Module).IsEqualTo("cache");
-        await Assert.That(step.Action[1].Module).IsEqualTo("variable");
+        await Assert.That(step.Action[0].Modifier[0].Module.Name).IsEqualTo("cache");
+        await Assert.That(step.Action[1].Module.Name).IsEqualTo("variable");
         await Assert.That(step.Action[1].Modifier.Count).IsEqualTo(0);
     }
 
@@ -91,7 +91,7 @@ public class GroupModifiersTests
         var step = new Step { Action = actions }; step.Nest(modules);
 
         await Assert.That(step.Action.Count).IsEqualTo(1);
-        await Assert.That(step.Action[0].Module).IsEqualTo("file");
+        await Assert.That(step.Action[0].Module.Name).IsEqualTo("file");
         await Assert.That(step.Action[0].Modifier.Count).IsEqualTo(0);
     }
 
@@ -111,12 +111,12 @@ public class GroupModifiersTests
         var step = new Step { Action = actions }; step.Nest(modules);
 
         await Assert.That(step.Action.Count).IsEqualTo(2);
-        await Assert.That(step.Action[0].Module).IsEqualTo("file");
+        await Assert.That(step.Action[0].Module.Name).IsEqualTo("file");
         await Assert.That(step.Action[0].Modifier.Count).IsEqualTo(2);
-        await Assert.That(step.Action[0].Modifier[0].Module).IsEqualTo("cache");
-        await Assert.That(step.Action[0].Modifier[1].Module).IsEqualTo("error");
-        await Assert.That(step.Action[1].Module).IsEqualTo("variable");
+        await Assert.That(step.Action[0].Modifier[0].Module.Name).IsEqualTo("cache");
+        await Assert.That(step.Action[0].Modifier[1].Module.Name).IsEqualTo("error");
+        await Assert.That(step.Action[1].Module.Name).IsEqualTo("variable");
         await Assert.That(step.Action[1].Modifier.Count).IsEqualTo(1);
-        await Assert.That(step.Action[1].Modifier[0].Module).IsEqualTo("timeout");
+        await Assert.That(step.Action[1].Modifier[0].Module.Name).IsEqualTo("timeout");
     }
 }

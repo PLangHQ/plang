@@ -26,7 +26,7 @@ public class ValidateResponseTests
         for (int i = 0; i < stepCount; i++)
         {
             var step = new Step { Index = i, Text = $"step {i}" };
-            step.Action.Add(new PrAction { Module = "output", Name = "write" });
+            step.Action.Add(new PrAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["output"], Name = "write" });
             goal.Step.Add(step);
         }
         return goal;
@@ -36,7 +36,7 @@ public class ValidateResponseTests
     {
         var s = new Step { Index = index };
         foreach (var (m, a) in actions)
-            s.Action.Add(new PrAction { Module = m, Name = a });
+            s.Action.Add(new PrAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module[m], Name = a });
         return s;
     }
 

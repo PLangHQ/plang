@@ -42,7 +42,7 @@ public class ValidateActionsTests
     {
         var actions = new StepActions
         {
-            new Action { Module = "file", Name = "read", Parameter = new List<Data> { new("Path", "test.txt", context: _app.User.Context) } }
+            new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["file"], Name = "read", Parameter = new List<Data> { new("Path", "test.txt", context: _app.User.Context) } }
         };
 
         var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.item.list.@this<global::app.goal.step.action.@this>(actions, _app.User.Context)) };
@@ -57,14 +57,14 @@ public class ValidateActionsTests
     {
         var actions = new StepActions
         {
-            new Action { Module = "nonexistent", Name = "fake" }
+            new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module["variable"], Name = "fake" }
         };
 
         var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.item.list.@this<global::app.goal.step.action.@this>(actions, _app.User.Context)) };
         var result = await _app.Run(action, _app.User.Context);
 
         await result.IsFailure();
-        await Assert.That(result.Error!.Message).Contains("nonexistent.fake");
+        await Assert.That(result.Error!.Message).Contains("variable.fake");
     }
 
     [Test]
@@ -90,7 +90,7 @@ public class ValidateActionsTests
             // goal.call.call carries the GoalCall directly — no condition wrapper noise.
             new Action
             {
-                Module = "goal",
+                Module = global::PLang.Tests.TestApp.SharedContext.App.Module["goal"],
                 Name = "call",
                 Parameter = new List<Data> { goalCallData }
             }
@@ -116,7 +116,7 @@ public class ValidateActionsTests
         {
             new Action
             {
-                Module = "goal",
+                Module = global::PLang.Tests.TestApp.SharedContext.App.Module["goal"],
                 Name = "call",
                 Parameter = new List<Data> { goalCallData }
             }
@@ -136,7 +136,7 @@ public class ValidateActionsTests
         {
             new Action
             {
-                Module = "file",
+                Module = global::PLang.Tests.TestApp.SharedContext.App.Module["file"],
                 Name = "list",
                 Parameter = new List<Data> { new("Path", "docs/", context: _app.User.Context) }
             }
@@ -164,7 +164,7 @@ public class ValidateActionsTests
         {
             new Action
             {
-                Module = "condition",
+                Module = global::PLang.Tests.TestApp.SharedContext.App.Module["condition"],
                 Name = "if",
                 Parameter = new List<Data>
                 {
@@ -195,7 +195,7 @@ public class ValidateActionsTests
         {
             new Action
             {
-                Module = "condition",
+                Module = global::PLang.Tests.TestApp.SharedContext.App.Module["condition"],
                 Name = "if",
                 Parameter = new List<Data>
                 {
@@ -224,7 +224,7 @@ public class ValidateActionsTests
         {
             new Action
             {
-                Module = "condition",
+                Module = global::PLang.Tests.TestApp.SharedContext.App.Module["condition"],
                 Name = "if",
                 Parameter = new List<Data>
                 {
