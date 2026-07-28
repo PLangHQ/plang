@@ -59,7 +59,7 @@ public class Stage2_MechanicalTypings_Part1Tests
         var rendered = await _app.Module.Describe();
         var row = rendered.FirstOrDefault(a => a.Module.Name == "test" && a.Name == "discover");
         await Assert.That(row).IsNotNull();
-        await Assert.That(row!.ReturnTypeName).IsEqualTo("list<test>");
+        await Assert.That(row!.Return).IsEqualTo("list<test>");
     }
 
     [Test]
@@ -68,7 +68,7 @@ public class Stage2_MechanicalTypings_Part1Tests
         var rendered = await _app.Module.Describe();
         var row = rendered.FirstOrDefault(a => a.Module.Name == "test" && a.Name == "run");
         await Assert.That(row).IsNotNull();
-        await Assert.That(row!.ReturnTypeName).IsEqualTo("list<test>");
+        await Assert.That(row!.Return).IsEqualTo("list<test>");
     }
 
     // Catalog renders output.ask's return as "ask" — the runtime return type
@@ -79,7 +79,7 @@ public class Stage2_MechanicalTypings_Part1Tests
         var rendered = await _app.Module.Describe();
         var row = rendered.FirstOrDefault(a => a.Module.Name == "output" && a.Name == "ask");
         await Assert.That(row).IsNotNull();
-        await Assert.That(row!.ReturnTypeName).IsEqualTo("ask");
+        await Assert.That(row!.Return).IsEqualTo("ask");
     }
 
     [Test]
@@ -88,8 +88,8 @@ public class Stage2_MechanicalTypings_Part1Tests
         var rendered = await _app.Module.Describe();
         var row = rendered.FirstOrDefault(a => a.Module.Name == "channel" && a.Name == "set");
         await Assert.That(row).IsNotNull();
-        await Assert.That(row!.ReturnTypeName).IsEqualTo("data")
-            .Because("Bare Task<Data> renders as 'data' — the Compile.llm template treats that as the polymorphic-default sentinel.");
+        await Assert.That(row!.Return).IsEqualTo("item")
+            .Because("An undefined T is the unconstrained plang type item, C#'s object.");
     }
 
     // Footgun guard: a typed handler's T inside Data<T> must not itself be a

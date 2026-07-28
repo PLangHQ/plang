@@ -2,7 +2,7 @@ using ActionEl = global::app.goal.step.action.@this;
 
 namespace PLang.Tests.App.Modules.Stage4Spike;
 
-// action.Return parity — the leaf's return entity must agree with Describe()'s ReturnTypeName on
+// action.Return parity — the leaf's return entity must agree with Describe()'s Return on
 // polymorphic-vs-concrete. (Per-param desc parity moved to CatalogTests/ParamDescParityTests, the
 // 4d enforced gate: full desc reconstruction + the host-drop / text-binary named-exception list.)
 public class PropertyLeafParityTests
@@ -21,12 +21,10 @@ public class PropertyLeafParityTests
             {
                 Module = described.Module, Name = described.Name,
             };
-            // Describe's ReturnTypeName is null (no value) or "data" (polymorphic) or a concrete
-            // name; the entity is null for both null/"data"/object, non-null for a concrete type.
-            bool describePolymorphic = described.ReturnTypeName is null or "data";
-            bool entityPolymorphic = element.Return is null;
-            if (describePolymorphic != entityPolymorphic)
-                mismatches.Add($"{described.Module}.{described.Name}: Return {(entityPolymorphic ? "null" : element.Return!.ToString())} vs ReturnTypeName '{described.ReturnTypeName}'");
+            // Describe and the element now read the SAME member off the same handler, so this
+            // asserts the catalog walk and a freshly-built element agree — not two rival sources.
+            if (!string.Equals(described.Return, element.Return, System.StringComparison.Ordinal))
+                mismatches.Add($"{described.Module}.{described.Name}: element '{element.Return}' vs describe '{described.Return}'");
         }
         await Assert.That(mismatches).IsEmpty()
             .Because("action.Return polymorphic/concrete must agree with Describe: " + string.Join(" | ", mismatches.Take(20)));

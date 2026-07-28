@@ -93,7 +93,7 @@ public class Stage2_MechanicalTypings_Part2Tests
         var rendered = await _app.Module.Describe();
         var row = rendered.FirstOrDefault(a => a.Module.Name == "mock" && a.Name == "intercept");
         await Assert.That(row).IsNotNull();
-        await Assert.That(row!.ReturnTypeName).IsEqualTo("mock");
+        await Assert.That(row!.Return).IsEqualTo("mock");
     }
 
     [Test]
@@ -104,10 +104,10 @@ public class Stage2_MechanicalTypings_Part2Tests
         var goals  = rendered.FirstOrDefault(a => a.Module.Name == "builder" && a.Name == "goals");
         var acts   = rendered.FirstOrDefault(a => a.Module.Name == "builder" && a.Name == "actions");
 
-        await Assert.That(types!.ReturnTypeName).IsEqualTo("type");
+        await Assert.That(types!.Return).IsEqualTo("type");
         // goals/actions render as collection shapes — PLang's foreach over
         // them needs the list semantics, hence no wrapper record.
-        await Assert.That(goals!.ReturnTypeName).IsEqualTo("list<goal>");
-        await Assert.That(acts!.ReturnTypeName).Contains("action");
+        await Assert.That(goals!.Return).IsEqualTo("list<goal>");
+        await Assert.That(acts!.Return).Contains("action");
     }
 }

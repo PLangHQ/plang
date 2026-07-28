@@ -83,9 +83,9 @@ public class Default : IBuilder
                     foreach (System.Text.RegularExpressions.Match m in tokenRx.Matches(desc))
                         if (allTypeNames.Contains(m.Value)) refs.Add(m.Value);
                 }
-                if (!string.IsNullOrEmpty(a.ReturnTypeName)
-                    && allTypeNames.Contains(a.ReturnTypeName))
-                    refs.Add(a.ReturnTypeName);
+                if (!string.IsNullOrEmpty(a.Return)
+                    && allTypeNames.Contains(a.Return))
+                    refs.Add(a.Return);
             }
 
             // Transitive closure: types referenced by kept types should also be

@@ -67,27 +67,16 @@ public partial class @this
         }
     }
 
-    private global::app.type.@this? _return;
-    private string? _returnTypeName;
+    private string? _return;
     private bool _returnComputed;
 
-    /// <summary>The PLang name of what this action returns — the concrete type for
-    /// <c>Task&lt;Data&lt;T&gt;&gt;</c>, <c>data</c> when the return is polymorphic (bare
-    /// <c>Data</c> or <c>Data&lt;object&gt;</c> — everything is a Data, the value type just isn't
-    /// known statically), null when <c>Run</c> returns no Data at all. Computed in the SAME pass as
-    /// <see cref="Return"/>: the entity and its name are one fact read once, not two walks.</summary>
+    /// <summary>The PLang type this action returns, read off <c>Run()</c>'s signature. Every Run
+    /// returns a Data, so there is always a type: <c>Task&lt;Data&lt;T&gt;&gt;</c> names T, and an
+    /// undefined T (bare <c>Task&lt;Data&gt;</c> or <c>Data&lt;object&gt;</c>) is <c>item</c> — the
+    /// unconstrained plang type, C#'s <c>object</c>. Null only when <c>Run</c> isn't Data-shaped
+    /// at all, which no real action is.</summary>
     [JsonIgnore]
-    public string? ReturnTypeName
-    {
-        get { _ = Return; return _returnTypeName; }
-    }
-
-    /// <summary>The action's declared return type as an ENTITY — read off <c>Run()</c>'s
-    /// <c>Task&lt;Data&lt;T&gt;&gt;</c> signature (compounds ride the kind axis). Null when the
-    /// return is polymorphic: a bare <c>Task&lt;Data&gt;</c> or <c>Data&lt;object&gt;</c> declares
-    /// no concrete type. Cached; the twin of <see cref="Property"/>, feeding goal.variables.</summary>
-    [JsonIgnore]
-    public global::app.type.@this? Return
+    public string? Return
     {
         get
         {
@@ -95,23 +84,19 @@ public partial class @this
             _returnComputed = true;
 
             var handler = Handler;
-            if (handler == null || App == null) return _return = null;
+            if (handler == null || App == null) return null;
             var run = handler.GetMethod("Run", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes);
-            if (run == null) return _return = null;
+            if (run == null) return null;
 
             var ret = run.ReturnType;
             if (ret.IsGenericType && ret.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.Task<>))
                 ret = ret.GetGenericArguments()[0];
 
-            // Bare Data is polymorphic — it still RETURNS something, so its name is "data"; only a
-            // non-Data return names nothing.
-            if (ret == typeof(global::app.data.@this)) { _returnTypeName = "data"; return _return = null; }
+            if (ret == typeof(global::app.data.@this)) return _return = "item";
             if (!ret.IsGenericType || ret.GetGenericTypeDefinition() != typeof(global::app.data.@this<>))
-                return _return = null;
+                return null;
             var t = ret.GetGenericArguments()[0];
-            if (t == typeof(object)) { _returnTypeName = "data"; return _return = null; }
-            _returnTypeName = App!.Type.GetTypeName(t);
-            return _return = App!.Type[t];   // entity (compounds ride kind)
+            return _return = t == typeof(object) ? "item" : App!.Type.GetTypeName(t);
         }
     }
 
