@@ -172,15 +172,73 @@
       "id": "36a1b6e9-573c-47ff-af4d-a04626bfd0fd",
       "bot": "coder",
       "timestamp_start": "2026-07-28T09:44:49.307939",
-      "timestamp_end": null,
+      "timestamp_end": "2026-07-28T10:48:03.099969",
       "intent": "Implement module-owns-action core (element-typed action.Module, ActionName->Name, Create chain, reader contract), then the Validate trilogy on top.",
       "before": {
         "assumptions": "Architect released module-owns-action as prerequisite for the Validate trilogy (Q1); Q2 settled the split - changes stay builder, verdicts move to nodes. Wire key already 'name'; item base does not claim Name.",
         "risk": "Large mechanical sweep (~76 prod + ~214 test ActionName sites, 123 test Module= sites, 3 templates) plus a semantic change (Module string -> element, throwing getter) and a reader wire-order contract. Branch is broadly red pre-existing, so regressions must be identified by failure-NAME diff vs a captured baseline, not counts."
       },
       "plan": ".bot/goal-graph-singular/coder/v1/plan.md",
-      "actions": [],
-      "after": {}
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/goal/step/action/this.cs",
+            "PLang/app/goal/step/action/this.Schema.cs",
+            "PLang.Generators/Emission/Action/this.cs",
+            "os/system/builder/templates/actionFormal.template",
+            "os/system/actions/v2/summary.planner.md"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage A: ActionName->Name. Deleted the computed qualified Name FIRST so every qualified consumer surfaced as a compile error instead of silently flipping meaning. Per Ingi, ToString() is the object's own name; qualified form composed from both objects at use sites (overrides module-owns-action.md)."
+        },
+        {
+          "paths": [
+            "os/system/actions/summary.md",
+            "os/system/actions/v2/summary.md"
+          ],
+          "type": "delete",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Dead templates: referenced nowhere live, and both read a.Parameters (plural) which does not exist so the block always rendered empty. Ingi confirmed deletion."
+        },
+        {
+          "paths": [
+            "PLang/app/goal/step/action/this.cs",
+            "PLang/app/module/this.cs",
+            "PLang/app/goal/step/action/serializer/Reader.cs",
+            "PLang/app/module/action/build/code/Default.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage B: action.Module is the module element (throwing getter). Reader resolves the wire name -> element, so an unknown module fails at READ (Ingi: the LLM should be told). Deleted the legacy module-name-separator repair. Schema partial's double string re-resolve collapsed."
+        },
+        {
+          "paths": [
+            "PLang/app/module/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Mint() published _actions=new() before filling it while _actions is the guard readers test -> concurrent reader saw an empty catalog. Fixed publish-order. Ingi then named the deeper defect: Mint itself is a hack; the registry owning each module's action map is the obpv."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/coder/to-architect-module-owns-its-actions.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Reverted the born-complete-in-ctor attempt (uncommitted; still fetched from the parent, and perturbed a shared-state race in scheme registration). Wrote up the real target: module owns its actions; registry owns modules only; Mint disappears rather than being fixed."
+        }
+      ],
+      "after": {
+        "status": "Stage A + B landed green and pushed (c15662280, 05f55661a). Stage C blocked on naming discussion (Capabilities). Restructure (module owns its actions) scoped, not started.",
+        "health": "green \u2014 zero new test failures vs baseline for both stages; builder builds, rebuilds and runs end-to-end.",
+        "notes": "Open: %!app.type.list% render still unverified (branch debug-arg binding is broken three ways). 4 Render_Include_* failures proven pre-existing by running them on the stashed tree."
+      }
     }
   ]
 }
