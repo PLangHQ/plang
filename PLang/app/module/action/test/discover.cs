@@ -250,15 +250,12 @@ public partial class discover : IContext
         if (depth > 50) return;
         if (!visited.Add(goal.Name)) return;
 
-        var modules = Context.App.Module;
         var subGoals = new List<Goal>();
         goal.ForEachAction((step, action) =>
         {
-            var type = modules.GetActionType(action.Module.Name, action.Name);
-            var attr = type?.GetCustomAttribute<RequiresCapabilityAttribute>();
-            if (attr != null)
-                foreach (var cap in attr.Capabilities)
-                    file.Tags.Add(new global::app.type.item.text.@this(cap));
+            // The action answers what it reaches; discovery just collects it.
+            foreach (var required in action.Requires)
+                file.Tags.Add(required);
 
             if (string.Equals(action.Module.Name, "goal", StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(action.Name, "call", StringComparison.OrdinalIgnoreCase))

@@ -21,6 +21,17 @@ public partial class @this
     // door has no module, and that answers "unknown handler" rather than throwing.
     private System.Type? Handler => _module?.Handler(Name);
 
+    /// <summary>What this action reaches outside the process — <c>network</c>, <c>llm</c>. The
+    /// handler declares it with <c>[RequiresCapability]</c>; test discovery unions these into a
+    /// test's auto-tags so a run can skip them (<c>--test={"exclude":["network"]}</c>). It is a
+    /// DECLARATION, not a gate: nothing consults it before Run. Empty when the action declares
+    /// nothing, so callers never null-check.</summary>
+    [JsonIgnore]
+    public IEnumerable<global::app.type.item.text.@this> Requires
+        => Handler?.GetCustomAttribute<global::app.Attributes.RequiresCapabilityAttribute>()
+               ?.Capabilities.Select(c => new global::app.type.item.text.@this(c))
+           ?? Enumerable.Empty<global::app.type.item.text.@this>();
+
     private global::app.goal.step.action.property.list.@this? _properties;
 
     /// <summary>The action's declared parameter slots — its own <c>property.list</c> collection, the
