@@ -226,7 +226,7 @@ public class ReResolveAcrossCallsTests
         var action1 = new PrAction
         {
             Module = "matrix.resolution",
-            ActionName = "reresolveacrosscalls",
+            Name = "reresolveacrosscalls",
             Parameter = new List<Data> { sharedData }
         };
         MatrixRunner.EnsureRegistered<ReResolveAcrossCalls>(app);
@@ -240,7 +240,7 @@ public class ReResolveAcrossCallsTests
         var action2 = new PrAction
         {
             Module = "matrix.resolution",
-            ActionName = "reresolveacrosscalls",
+            Name = "reresolveacrosscalls",
             Parameter = new List<Data> { sharedData }
         };
         await action2.Run(app.User.Context);
@@ -286,7 +286,7 @@ public class ConcurrentHandlersTests
             var action = new PrAction
             {
                 Module = "matrix.resolution",
-                ActionName = "concurrenthandlers",
+                Name = "concurrenthandlers",
                 Parameter = new List<Data> { sharedData }
             };
             var data = await action.Run(app.User.Context);

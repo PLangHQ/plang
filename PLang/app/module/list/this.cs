@@ -114,13 +114,13 @@ public sealed class @this : IAsyncDisposable
         global::app.goal.step.action.@this action, actor.context.@this context)
     {
         if (!_modules.TryGetValue(action.Module, out var actions) ||
-            !actions.TryGetValue(action.ActionName, out var entry))
-            return (null, ActionError.NotFound($"Action '{action.Module}.{action.ActionName}'"));
+            !actions.TryGetValue(action.Name, out var entry))
+            return (null, ActionError.NotFound($"Action '{action.Module}.{action.Name}'"));
 
         var handler = entry.Create(context);
         if (handler == null)
             return (null, new ActionError(
-                $"Action '{action.Module}.{action.ActionName}' does not implement ICodeGenerated",
+                $"Action '{action.Module}.{action.Name}' does not implement ICodeGenerated",
                 "ActionError", 500));
 
         return (handler, null);
@@ -355,7 +355,7 @@ public sealed class @this : IAsyncDisposable
                 result.Add(new global::app.goal.step.action.@this
                 {
                     Module = ns,
-                    ActionName = actionName,
+                    Name = actionName,
                     Parameter = new global::app.goal.step.action.parameter.list.@this(parameters),
                     Cacheable = cacheable,
                     ReturnType = returnType,

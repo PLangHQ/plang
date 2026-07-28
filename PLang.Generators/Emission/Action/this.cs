@@ -330,7 +330,7 @@ public static class @this
                         // as "Object reference not set" with no module.action context. Wrap
                         // here so the message tells the reader which action's Run() threw.
                         var __mod = __action?.Module ?? "?";
-                        var __act = __action?.ActionName ?? "?";
+                        var __act = __action?.Name ?? "?";
                         var __step = __action?.Step;
                         var __callFrames = Context?.CallStack?.Current?.SnapshotChain() ?? (System.Collections.Generic.IReadOnlyList<global::app.callstack.call.@this>)System.Array.Empty<global::app.callstack.call.@this>();
                         // A typed AppException carries a domain Key (VariableNotFound, …) — preserve
@@ -365,7 +365,7 @@ public static class @this
                     global::app.error.IError err, global::app.goal.step.action.@this? action)
                 {
                     if (action == null) return err;
-                    var msg = $"{action.Module}.{action.ActionName}: {err.Message}";
+                    var msg = $"{action.Module}.{action.Name}: {err.Message}";
                     return new global::app.error.ActionError(msg, err.Key ?? "ActionError", err.StatusCode);
                 }
 

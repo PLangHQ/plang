@@ -29,7 +29,7 @@ public class CallBuildTests
         var action = new PrAction
         {
             Module = "goal",
-            ActionName = "call",
+            Name = "call",
             Parameter = new List<Data> { new Data("GoalName", goalCall, context: ctx) }
         };
 

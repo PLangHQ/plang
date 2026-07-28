@@ -19,14 +19,14 @@ public class PropertyLeafParityTests
         {
             var element = new ActionEl
             {
-                Module = described.Module, ActionName = described.ActionName, Context = ctx,
+                Module = described.Module, Name = described.Name, Context = ctx,
             };
             // Describe's ReturnTypeName is null (no value) or "data" (polymorphic) or a concrete
             // name; the entity is null for both null/"data"/object, non-null for a concrete type.
             bool describePolymorphic = described.ReturnTypeName is null or "data";
             bool entityPolymorphic = element.Return is null;
             if (describePolymorphic != entityPolymorphic)
-                mismatches.Add($"{described.Module}.{described.ActionName}: Return {(entityPolymorphic ? "null" : element.Return!.ToString())} vs ReturnTypeName '{described.ReturnTypeName}'");
+                mismatches.Add($"{described.Module}.{described.Name}: Return {(entityPolymorphic ? "null" : element.Return!.ToString())} vs ReturnTypeName '{described.ReturnTypeName}'");
         }
         await Assert.That(mismatches).IsEmpty()
             .Because("action.Return polymorphic/concrete must agree with Describe: " + string.Join(" | ", mismatches.Take(20)));

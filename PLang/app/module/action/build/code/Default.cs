@@ -33,7 +33,7 @@ public class Default : IBuilder
             var wanted = new HashSet<string>(filter, StringComparer.OrdinalIgnoreCase);
             var subset = new List<global::app.goal.step.action.@this>();
             foreach (var a in catalog)
-                if (wanted.Contains($"{a.Module}.{a.ActionName}"))
+                if (wanted.Contains($"{a.Module}.{a.Name}"))
                     subset.Add(a);
             return action.Context.Ok(new global::app.type.item.list.@this<global::app.goal.step.action.@this>(subset, action.Context));
         }
@@ -76,7 +76,7 @@ public class Default : IBuilder
             // tokenize on word boundaries and intersect with the type catalog.
             foreach (var a in await modules.Describe())
             {
-                if (!wantedActions.Contains($"{a.Module}.{a.ActionName}")) continue;
+                if (!wantedActions.Contains($"{a.Module}.{a.Name}")) continue;
                 foreach (var p in a.Parameter ?? new())
                 {
                     var desc = ((await p.Value()) as global::app.type.item.text.@this)?.Clr<string>() ?? string.Empty;
@@ -497,7 +497,7 @@ public class Default : IBuilder
             // Both shapes appear: head.tail with action duplicating tail, and head.tail
             // with action being the genuine tail. Try both before reporting "not found"
             // so the fixer doesn't have to round-trip a deterministic mistake.
-            if (!modules.Contains(a.Module, a.ActionName) && a.Module.Contains('.'))
+            if (!modules.Contains(a.Module, a.Name) && a.Module.Contains('.'))
             {
                 var parts = a.Module.Split('.', 2);
                 var head = parts[0];
@@ -506,35 +506,35 @@ public class Default : IBuilder
                 {
                     a.Warning.Add(new global::app.warning.@this {
                         Key = "ModuleNameRepaired",
-                        Message = $"Module name '{a.Module}' contained the action separator; repaired to module='{head}', action='{tail}' (was action='{a.ActionName}')."
+                        Message = $"Module name '{a.Module}' contained the action separator; repaired to module='{head}', action='{tail}' (was action='{a.Name}')."
                     });
                     a.Module = head;
-                    a.ActionName = tail;
+                    a.Name = tail;
                 }
-                else if (modules.Contains(head, a.ActionName))
+                else if (modules.Contains(head, a.Name))
                 {
                     a.Warning.Add(new global::app.warning.@this {
                         Key = "ModuleNameRepaired",
-                        Message = $"Module name '{a.Module}' contained the action separator; repaired to module='{head}' (action='{a.ActionName}' kept)."
+                        Message = $"Module name '{a.Module}' contained the action separator; repaired to module='{head}' (action='{a.Name}' kept)."
                     });
                     a.Module = head;
                 }
             }
-            if (!modules.Contains(a.Module, a.ActionName))
+            if (!modules.Contains(a.Module, a.Name))
             {
                 var available = modules.GetActions(a.Module);
                 string suggestion;
                 if (available.Any())
                 {
-                    var sorted = Utils.StringDistance.OrderBySimilarity(a.ActionName, available);
-                    suggestion = $"Module '{a.Module}' exists but action '{a.ActionName}' not found. Did you mean: {string.Join(", ", sorted.Take(5))}?";
+                    var sorted = Utils.StringDistance.OrderBySimilarity(a.Name, available);
+                    suggestion = $"Module '{a.Module}' exists but action '{a.Name}' not found. Did you mean: {string.Join(", ", sorted.Take(5))}?";
                 }
                 else
                 {
                     var sorted = Utils.StringDistance.OrderBySimilarity(a.Module, modules.Names);
                     suggestion = $"Module '{a.Module}' not found. Did you mean: {string.Join(", ", sorted.Take(5))}?";
                 }
-                notFound.Add($"{a.Module}.{a.ActionName}: {suggestion}");
+                notFound.Add($"{a.Module}.{a.Name}: {suggestion}");
             }
         }
 
@@ -554,7 +554,7 @@ public class Default : IBuilder
             var paramNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             if (a.Parameter != null)
                 foreach (var p in a.Parameter) paramNames.Add(p.Name);
-            a.Default = modules.GetDefaults(a.Module, a.ActionName, paramNames) is { } defs
+            a.Default = modules.GetDefaults(a.Module, a.Name, paramNames) is { } defs
                 ? new global::app.goal.step.action.parameter.list.@this(defs) : null;
 
             // goal.call sanity — goal names are simple identifiers (BuildGoalCore,
@@ -581,7 +581,7 @@ public class Default : IBuilder
                     // (Fluid template rendering a typed object via ToString()). A goal
                     // Name can never legitimately match a loaded CLR type's FullName.
                     if (app.Type.IsClrTypeName(goalCall.Name))
-                        validationErrors.Add($"{a.Module}.{a.ActionName}: goal.call.Name '{goalCall.Name}' is a CLR type name. This is a build pipeline leak (likely a template rendering an object via ToString() instead of .Name). Use the actual goal name from the step text.");
+                        validationErrors.Add($"{a.Module}.{a.Name}: goal.call.Name '{goalCall.Name}' is a CLR type name. This is a build pipeline leak (likely a template rendering an object via ToString() instead of .Name). Use the actual goal name from the step text.");
                     else if (goalCall.Name.Contains('.'))
                     {
                         // Repair the recurring LLM leak of stuffing the formal goal.call
@@ -610,7 +610,7 @@ public class Default : IBuilder
                             });
                         }
                         else
-                            validationErrors.Add($"{a.Module}.{a.ActionName}: goal.call.Name '{goalCall.Name}' looks like a type name. Goal names are simple identifiers (e.g. 'BuildGoalCore', 'HandleValidationError'). Use the actual goal name from the @known mapping or the step text.");
+                            validationErrors.Add($"{a.Module}.{a.Name}: goal.call.Name '{goalCall.Name}' looks like a type name. Goal names are simple identifiers (e.g. 'BuildGoalCore', 'HandleValidationError'). Use the actual goal name from the @known mapping or the step text.");
                     }
                 }
             }
@@ -627,8 +627,8 @@ public class Default : IBuilder
                 // instead of re-reflecting the handler with a fresh NullabilityInfoContext. The rows
                 // already drop [Code] / capability / EqualityContract / host params; a required slot
                 // is a row that's non-nullable with no [Default].
-                var element = modules.Contains(a.Module, a.ActionName)
-                    ? modules[a.Module][a.ActionName]
+                var element = modules.Contains(a.Module, a.Name)
+                    ? modules[a.Module][a.Name]
                     : null;
                 if (element != null)
                 {
@@ -641,14 +641,14 @@ public class Default : IBuilder
                         if (row.Nullable || row.Default != null) continue;
                         if (!emitted.Contains(row.Name))
                             validationErrors.Add(
-                                $"{a.Module}.{a.ActionName}: required parameter '{row.Name}' is missing. " +
+                                $"{a.Module}.{a.Name}: required parameter '{row.Name}' is missing. " +
                                 $"Every action must emit all non-nullable, non-default parameters.");
                     }
                 }
             }
 
             // Action-level build validation
-            var actionType = modules.GetActionType(a.Module, a.ActionName);
+            var actionType = modules.GetActionType(a.Module, a.Name);
             if (actionType != null && typeof(IBuildValidatable).IsAssignableFrom(actionType))
             {
                 var method = actionType.GetMethod("ValidateBuild",
@@ -657,7 +657,7 @@ public class Default : IBuilder
                 {
                     var error = (string?)method.Invoke(null, [a.Parameter.ToList()]);
                     if (error != null)
-                        validationErrors.Add($"{a.Module}.{a.ActionName}: {error}");
+                        validationErrors.Add($"{a.Module}.{a.Name}: {error}");
                 }
             }
         }
@@ -701,14 +701,14 @@ public class Default : IBuilder
             var (handler, resolveErr) = await shell.Resolve(a, context);
             if (resolveErr != null)
             {
-                errors.Add($"{a.Module}.{a.ActionName}: {resolveErr.Message}");
+                errors.Add($"{a.Module}.{a.Name}: {resolveErr.Message}");
                 break;
             }
             if (handler is not global::app.module.IClass classified) continue;
             var buildResult = await classified.Build();
             if (!buildResult.Success)
             {
-                errors.Add($"{a.Module}.{a.ActionName}: {buildResult.Error?.Message ?? "Build() failed"}");
+                errors.Add($"{a.Module}.{a.Name}: {buildResult.Error?.Message ?? "Build() failed"}");
                 break;
             }
             // Publish this action's Build() result as %!buildData% — the handle the
@@ -884,11 +884,11 @@ public class Default : IBuilder
             // disagrees. The LLM tags the value's content shape (404 → "int"); the schema
             // tags the parameter's declared CLR type (Key → "string"). The schema wins —
             // it's the contract, not the LLM's view of the value.
-            var actionType = modules.GetActionType(a.Module, a.ActionName);
+            var actionType = modules.GetActionType(a.Module, a.Name);
             // The catalog element's declared rows — the ONE reflection site, read for nullable-slot
             // detection below instead of re-reflecting with a NullabilityInfoContext.
-            var rows = modules.Contains(a.Module, a.ActionName)
-                ? modules[a.Module][a.ActionName].Property.Rows : null;
+            var rows = modules.Contains(a.Module, a.Name)
+                ? modules[a.Module][a.Name].Property.Rows : null;
             if (actionType != null)
             {
                 var props = actionType.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
@@ -988,7 +988,7 @@ public class Default : IBuilder
                 // collects into errors for LlmFixer to retry.
                 try { p.SetValue(p.Type.Create(p.Peek(), context)); }
                 catch (System.InvalidOperationException ex)
-                { errors.Add($"{a.Module}.{a.ActionName}.{p.Name}: {ex.Message}"); }
+                { errors.Add($"{a.Module}.{a.Name}.{p.Name}: {ex.Message}"); }
             }
 
             // Template flag — the ONE %var% detection, done at build. A param whose value

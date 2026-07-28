@@ -33,10 +33,10 @@ public class ChildWireRoundTripTests
         await Assert.That(loaded.Step.Count).IsEqualTo(1);
         var cond = loaded.Step[0].Action[0];
         await Assert.That(cond.Module).IsEqualTo("condition");
-        await Assert.That(cond.ActionName).IsEqualTo("if");
+        await Assert.That(cond.Name).IsEqualTo("if");
         await Assert.That(cond.Child.Count).IsEqualTo(1);
         await Assert.That(cond.Child[0].Text).IsEqualTo("write out inside");
         await Assert.That(cond.Child[0].Action[0].Module).IsEqualTo("output");
-        await Assert.That(cond.Child[0].Action[0].ActionName).IsEqualTo("write");
+        await Assert.That(cond.Child[0].Action[0].Name).IsEqualTo("write");
     }
 }

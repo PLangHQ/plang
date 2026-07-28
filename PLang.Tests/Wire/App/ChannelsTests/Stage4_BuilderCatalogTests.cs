@@ -11,7 +11,7 @@ public class Stage4_BuilderCatalogTests
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/s4cat-a");
         var actions = await app.Module.Describe();
-        var write = actions.FirstOrDefault(a => a.Module == "output" && a.ActionName == "write");
+        var write = actions.FirstOrDefault(a => a.Module == "output" && a.Name == "write");
         await Assert.That(write).IsNotNull();
         var channelParam = write!.Parameter.FirstOrDefault(p => p.Name == "channel");
         await Assert.That(channelParam).IsNotNull();
@@ -41,7 +41,7 @@ public class Stage4_BuilderCatalogTests
         // hint appears in the channel parameter description.
         var app = global::PLang.Tests.TestApp.Create("/tmp/s4cat-c");
         var actions = await app.Module.Describe();
-        var write = actions.First(a => a.Module == "output" && a.ActionName == "write");
+        var write = actions.First(a => a.Module == "output" && a.Name == "write");
         var channelParam = write.Parameter.First(p => p.Name == "channel");
         var desc = (await channelParam.Value())?.ToString() ?? "";
         await Assert.That(desc.Contains("to ")).IsFalse();

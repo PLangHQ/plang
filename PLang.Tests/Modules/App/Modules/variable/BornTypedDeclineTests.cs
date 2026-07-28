@@ -50,7 +50,7 @@ public class BornTypedDeclineTests
         var act = new global::app.goal.step.action.@this
         {
             Module = "variable",
-            ActionName = "set",
+            Name = "set",
             Parameter = new List<Data>
             {
                 new Data("name", "%path%", global::PLang.Tests.TestApp.SharedContext.Type.Create("string"), context: ctx),
@@ -73,7 +73,7 @@ public class BornTypedDeclineTests
         var act = new global::app.goal.step.action.@this
         {
             Module = "variable",
-            ActionName = "set",
+            Name = "set",
             Parameter = new List<Data>
             {
                 new Data("name", "path", new global::app.type.@this("variable"), context: ctx),

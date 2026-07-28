@@ -57,7 +57,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     public async Task ModulesDescribe_TestDiscover_AdvertisesListOfTestReturnType()
     {
         var rendered = await _app.Module.Describe();
-        var row = rendered.FirstOrDefault(a => a.Module == "test" && a.ActionName == "discover");
+        var row = rendered.FirstOrDefault(a => a.Module == "test" && a.Name == "discover");
         await Assert.That(row).IsNotNull();
         await Assert.That(row!.ReturnTypeName).IsEqualTo("list<test>");
     }
@@ -66,7 +66,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     public async Task ModulesDescribe_TestRun_AdvertisesListOfTestReturnType()
     {
         var rendered = await _app.Module.Describe();
-        var row = rendered.FirstOrDefault(a => a.Module == "test" && a.ActionName == "run");
+        var row = rendered.FirstOrDefault(a => a.Module == "test" && a.Name == "run");
         await Assert.That(row).IsNotNull();
         await Assert.That(row!.ReturnTypeName).IsEqualTo("list<test>");
     }
@@ -77,7 +77,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     public async Task ModulesDescribe_OutputAsk_AdvertisesAskReturnType()
     {
         var rendered = await _app.Module.Describe();
-        var row = rendered.FirstOrDefault(a => a.Module == "output" && a.ActionName == "ask");
+        var row = rendered.FirstOrDefault(a => a.Module == "output" && a.Name == "ask");
         await Assert.That(row).IsNotNull();
         await Assert.That(row!.ReturnTypeName).IsEqualTo("ask");
     }
@@ -86,7 +86,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     public async Task ModulesDescribe_ChannelSet_OmitsReturnsLine()
     {
         var rendered = await _app.Module.Describe();
-        var row = rendered.FirstOrDefault(a => a.Module == "channel" && a.ActionName == "set");
+        var row = rendered.FirstOrDefault(a => a.Module == "channel" && a.Name == "set");
         await Assert.That(row).IsNotNull();
         await Assert.That(row!.ReturnTypeName).IsEqualTo("data")
             .Because("Bare Task<Data> renders as 'data' — the Compile.llm template treats that as the polymorphic-default sentinel.");

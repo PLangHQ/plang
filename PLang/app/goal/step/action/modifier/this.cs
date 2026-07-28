@@ -45,7 +45,7 @@ public class @this : global::app.goal.step.action.@this
                 _ => ""
             };
             return (null, new global::app.error.ActionError(
-                $"{Module}.{ActionName} is not a modifier (it was placed in a modifiers array but isn't one). " +
+                $"{Module}.{Name} is not a modifier (it was placed in a modifiers array but isn't one). " +
                 $"Move it out as a peer action in the step's top-level actions array.{loc}",
                 "ModifierError", 400));
         }

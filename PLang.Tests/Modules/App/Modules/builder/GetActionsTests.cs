@@ -56,7 +56,7 @@ public class GetActionsTests
         var actions = ((await result.Value()) as global::app.type.clr.@this<StepActions>)!.Value;
 
         // Find an action with nullable parameters (e.g., file.read has optional properties)
-        var fileRead = actions.FirstOrDefault(a => a.Module == "file" && a.ActionName == "read");
+        var fileRead = actions.FirstOrDefault(a => a.Module == "file" && a.Name == "read");
         await Assert.That(fileRead).IsNotNull();
         // At minimum, there should be parameters
         await Assert.That(fileRead!.Parameter.Count).IsGreaterThan(0);
@@ -71,7 +71,7 @@ public class GetActionsTests
 
         // variable.set has a Name property with Data<Variable> — renders as exactly "%var%"
         // (no trailing type token; the marker alone tells the LLM this slot names a variable).
-        var varSet = actions.FirstOrDefault(a => a.Module == "variable" && a.ActionName == "set");
+        var varSet = actions.FirstOrDefault(a => a.Module == "variable" && a.Name == "set");
         await Assert.That(varSet).IsNotNull();
         var nameParam = varSet!.Parameter.FirstOrDefault(p =>
             p.Name.Equals("Name", StringComparison.OrdinalIgnoreCase));
@@ -87,7 +87,7 @@ public class GetActionsTests
         var actions = ((await result.Value()) as global::app.type.clr.@this<StepActions>)!.Value;
 
         // file.list has Pattern with [Default("*")]
-        var fileList = actions.FirstOrDefault(a => a.Module == "file" && a.ActionName == "list");
+        var fileList = actions.FirstOrDefault(a => a.Module == "file" && a.Name == "list");
         await Assert.That(fileList).IsNotNull();
         var patternParam = fileList!.Parameter.FirstOrDefault(p =>
             p.Name.Equals("Pattern", StringComparison.OrdinalIgnoreCase));
@@ -103,12 +103,12 @@ public class GetActionsTests
         var actions = ((await result.Value()) as global::app.type.clr.@this<StepActions>)!.Value;
 
         // file.save has [Action("save", Cacheable = false)]
-        var fileSave = actions.FirstOrDefault(a => a.Module == "file" && a.ActionName == "save");
+        var fileSave = actions.FirstOrDefault(a => a.Module == "file" && a.Name == "save");
         await Assert.That(fileSave).IsNotNull();
         await Assert.That(fileSave!.Cacheable).IsFalse();
 
         // file.read has default Cacheable = true
-        var fileRead = actions.FirstOrDefault(a => a.Module == "file" && a.ActionName == "read");
+        var fileRead = actions.FirstOrDefault(a => a.Module == "file" && a.Name == "read");
         await Assert.That(fileRead).IsNotNull();
         await Assert.That(fileRead!.Cacheable).IsTrue();
     }
@@ -130,7 +130,7 @@ public class GetActionsTests
                 (p.Peek())?.ToString()!.Contains("Provider") == true);
             await Assert.That(providerParam)
                 .IsNull()
-                .Because($"{a.Module}.{a.ActionName} should not expose [Code] interface properties");
+                .Because($"{a.Module}.{a.Name} should not expose [Code] interface properties");
         }
     }
 
@@ -153,8 +153,8 @@ public class GetActionsTests
         var actions = ((await result.Value()) as global::app.type.clr.@this<StepActions>)?.Value;
         await Assert.That(actions).IsNotNull();
         await Assert.That(actions!.Count).IsEqualTo(2);
-        await Assert.That(actions.Any(a => a.Module == "file" && a.ActionName == "read")).IsTrue();
-        await Assert.That(actions.Any(a => a.Module == "file" && a.ActionName == "save")).IsTrue();
+        await Assert.That(actions.Any(a => a.Module == "file" && a.Name == "read")).IsTrue();
+        await Assert.That(actions.Any(a => a.Module == "file" && a.Name == "save")).IsTrue();
     }
 
     [Test]
@@ -199,7 +199,7 @@ public class GetActionsTests
 
         var actions = ((await result.Value()) as global::app.type.clr.@this<StepActions>)!.Value;
         await Assert.That(actions.Count).IsEqualTo(2);
-        await Assert.That(actions.Any(a => a.Module == "file" && a.ActionName == "read")).IsTrue();
-        await Assert.That(actions.Any(a => a.Module == "file" && a.ActionName == "save")).IsTrue();
+        await Assert.That(actions.Any(a => a.Module == "file" && a.Name == "read")).IsTrue();
+        await Assert.That(actions.Any(a => a.Module == "file" && a.Name == "save")).IsTrue();
     }
 }

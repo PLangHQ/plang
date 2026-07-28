@@ -18,7 +18,7 @@ public class ModifierActionTests
         var action = new PrAction
         {
             Module = "matrix.modifier",
-            ActionName = "modifieraction",
+            Name = "modifieraction",
             Parameter = new List<Data> { new Data("tag", "X", context: app.User.Context) }
         };
         await action.Run(app.User.Context);
@@ -36,7 +36,7 @@ public class ModifierActionTests
         var action = new PrAction
         {
             Module = "matrix.plain",
-            ActionName = "stringplain",
+            Name = "stringplain",
             Parameter = new List<Data> { new Data("path", "x", context: app.User.Context) }
         };
         // Two dispatches simulate a retry-modifier wrapping the same action twice.
@@ -58,7 +58,7 @@ public class ModifierActionTests
         var action = new PrAction
         {
             Module = "matrix.plain",
-            ActionName = "stringplain",
+            Name = "stringplain",
             Parameter = new List<Data> { new Data("path", "x", context: app.User.Context) }
         };
 
@@ -82,7 +82,7 @@ public class ModifierActionTests
         var action = new PrAction
         {
             Module = "matrix.plain",
-            ActionName = "stringplain",
+            Name = "stringplain",
             Parameter = new List<Data> { new Data("path", "x", context: app.User.Context) }
         };
         var result = await action.Run(app.User.Context);

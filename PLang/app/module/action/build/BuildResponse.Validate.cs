@@ -114,8 +114,8 @@ public sealed partial class BuildResponse
 
                 // The catalog element's declared rows — the ONE reflection site, looked up once for
                 // the parameter loop and read for nullable-slot detection (no re-reflection here).
-                var rows = modules != null && modules.Contains(a.Module, a.ActionName)
-                    ? modules[a.Module][a.ActionName].Property.Rows
+                var rows = modules != null && modules.Contains(a.Module, a.Name)
+                    ? modules[a.Module][a.Name].Property.Rows
                     : null;
 
                 foreach (var p in a.Parameter)
@@ -167,7 +167,7 @@ public sealed partial class BuildResponse
                         if (sval != null && choices.Any(c => sval.AreEqual(c)))
                             continue;
                         errors.Add(
-                            $"Step[{step.Index}] {a.Module}.{a.ActionName}: parameter '{p.Name}' = {ValidateResponseHelpers.FormatValueForError(resolved)} is not a valid {p.Type.Name}. Valid values: {string.Join(", ", choices)}.");
+                            $"Step[{step.Index}] {a.Module}.{a.Name}: parameter '{p.Name}' = {ValidateResponseHelpers.FormatValueForError(resolved)} is not a valid {p.Type.Name}. Valid values: {string.Join(", ", choices)}.");
                         continue;
                     }
 
@@ -185,7 +185,7 @@ public sealed partial class BuildResponse
                         ? $" Valid values: {string.Join(", ", validValues)}."
                         : "";
                     errors.Add(
-                        $"Step[{step.Index}] {a.Module}.{a.ActionName}: parameter '{p.Name}' = {ValidateResponseHelpers.FormatValueForError(resolved)} cannot be converted to type '{p.Type.Name}'.{hint} If the parameter is optional and you don't have a value, omit it from the parameters list — never emit \"\" as a placeholder.");
+                        $"Step[{step.Index}] {a.Module}.{a.Name}: parameter '{p.Name}' = {ValidateResponseHelpers.FormatValueForError(resolved)} cannot be converted to type '{p.Type.Name}'.{hint} If the parameter is optional and you don't have a value, omit it from the parameters list — never emit \"\" as a placeholder.");
                 }
             }
         }

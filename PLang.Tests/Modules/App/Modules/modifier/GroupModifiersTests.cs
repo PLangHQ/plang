@@ -11,7 +11,7 @@ public class GroupModifiersTests
     {
         var result = new StepActions();
         foreach (var (m, a) in items)
-            result.Add(new PrAction { Module = m, ActionName = a });
+            result.Add(new PrAction { Module = m, Name = a });
         return result;
     }
 

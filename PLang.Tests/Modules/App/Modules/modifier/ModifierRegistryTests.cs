@@ -54,7 +54,7 @@ public class ModifierRegistryTests
         await using var app = TestApp.Create("/app");
         var described = await app.Module.Describe();
 
-        var names = described.Select(a => $"{a.Module}.{a.ActionName}").ToHashSet();
+        var names = described.Select(a => $"{a.Module}.{a.Name}").ToHashSet();
         await Assert.That(names).Contains("timeout.after");
         await Assert.That(names).Contains("cache.wrap");
         await Assert.That(names).Contains("error.handle");

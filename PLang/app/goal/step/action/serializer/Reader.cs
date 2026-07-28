@@ -49,7 +49,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 // `action` is the LLM's clearer alias — the compile schema asks the model for
                 // `action`, so the compile-response read accepts it here. One read door, both keys;
                 // the persisted wire stays `name` (no .pr migration).
-                case "name": case "action": action.ActionName = reader.String(); break;
+                case "name": case "action": action.Name = reader.String(); break;
                 // `parameter` is canonical (Output writes it, the schema teaches it). `parameters` is
                 // accepted too: the schema rides as a prompt hint, and the LLM naturally pluralizes an
                 // array field name regardless — so the read tolerates the plural. Persisted wire stays

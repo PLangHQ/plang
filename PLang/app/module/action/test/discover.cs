@@ -229,7 +229,7 @@ public partial class discover : IContext
         goal.ForEachAction((step, action) =>
         {
             if (!string.Equals(action.Module, "test", StringComparison.OrdinalIgnoreCase)) return;
-            if (!string.Equals(action.ActionName, "tag", StringComparison.OrdinalIgnoreCase)) return;
+            if (!string.Equals(action.Name, "tag", StringComparison.OrdinalIgnoreCase)) return;
             var tagsParam = action.Parameter.FirstOrDefault(p =>
                 string.Equals(p.Name, "Tags", StringComparison.OrdinalIgnoreCase));
             switch (tagsParam?.Peek())
@@ -254,14 +254,14 @@ public partial class discover : IContext
         var subGoals = new List<Goal>();
         goal.ForEachAction((step, action) =>
         {
-            var type = modules.GetActionType(action.Module, action.ActionName);
+            var type = modules.GetActionType(action.Module, action.Name);
             var attr = type?.GetCustomAttribute<RequiresCapabilityAttribute>();
             if (attr != null)
                 foreach (var cap in attr.Capabilities)
                     file.Tags.Add(new global::app.type.item.text.@this(cap));
 
             if (string.Equals(action.Module, "goal", StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(action.ActionName, "call", StringComparison.OrdinalIgnoreCase))
+                string.Equals(action.Name, "call", StringComparison.OrdinalIgnoreCase))
             {
                 var targetName = ResolveStaticGoalName(action);
                 if (targetName != null)
@@ -316,13 +316,13 @@ public partial class discover : IContext
                 {
                     var chain = new List<string>();
                     if (conds.Count == 1) { chain.Add("true"); chain.Add("false"); }
-                    else foreach (var c in conds) chain.Add(c.ActionName);
+                    else foreach (var c in conds) chain.Add(c.Name);
                     coverage.RecordBranchChain($"{goalId}:{step.Index}", chain);
                 }
             }
 
             if (string.Equals(action.Module, "goal", StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(action.ActionName, "call", StringComparison.OrdinalIgnoreCase))
+                string.Equals(action.Name, "call", StringComparison.OrdinalIgnoreCase))
             {
                 var targetName = ResolveStaticGoalName(action);
                 if (targetName != null)

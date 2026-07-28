@@ -80,7 +80,7 @@ public class EventCacheInvalidationTests
         var action = new global::app.goal.step.action.@this
         {
             Module = "variable",
-            ActionName = "set"
+            Name = "set"
         };
 
         // Register first action event

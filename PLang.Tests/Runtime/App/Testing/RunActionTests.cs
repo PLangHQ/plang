@@ -65,7 +65,7 @@ public class RunActionTests
             step.Action.Add(new PrAction
             {
                 Module = actions[i].module,
-                ActionName = actions[i].actionName,
+                Name = actions[i].actionName,
                 Parameter = actions[i].parameters
             });
             goal.Step.Add(step);
@@ -538,12 +538,12 @@ public class RunActionTests
             {
                 new Step { Index = 0, Text = "h0", Action = new StepActions
                 {
-                    new PrAction { Module = "variable", ActionName = "set",
+                    new PrAction { Module = "variable", Name = "set",
                         Parameter = new List<Data> { new("Name", new global::app.variable.@this("h0"), context: _app.User.Context), new("Value", 0, context: _app.User.Context) } }
                 }},
                 new Step { Index = 1, Text = "h1", Action = new StepActions
                 {
-                    new PrAction { Module = "variable", ActionName = "set",
+                    new PrAction { Module = "variable", Name = "set",
                         Parameter = new List<Data> { new("Name", new global::app.variable.@this("h1"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) } }
                 }}
             }

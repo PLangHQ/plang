@@ -42,7 +42,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         }
         writer.BeginObject();
         writer.Name("module"); writer.String(Module);
-        writer.Name("name"); writer.String(ActionName);
+        writer.Name("name"); writer.String(Name);
         writer.Name("parameter");
         await Parameter.Output(writer, mode, context);   // params ride the base value face (Data envelopes)
         if (Default != null)

@@ -18,12 +18,11 @@ public partial class @this
     [Store, LlmBuilder, Debug, Default]
     [JsonPropertyName("action")]
     [Newtonsoft.Json.JsonProperty("action")]
-    public string ActionName { get; set; } = "";
+    public string Name { get; set; } = "";
 
-    /// <summary>The qualified action name — "file.read". The class-zoom face templates read
-    /// as one token instead of composing module + action.</summary>
-    [JsonIgnore]
-    public string Name => $"{Module}.{ActionName}";
+    /// <summary>The action's own name — "read". It never borrows the module's identity; a site that
+    /// wants the qualified form composes the two objects (<c>$"{a.Module}.{a.Name}"</c>).</summary>
+    public override string ToString() => Name;
 
     [Store, LlmBuilder, Debug, Default]
     public global::app.goal.step.action.parameter.list.@this Parameter { get; init; } = new();
@@ -86,9 +85,9 @@ public partial class @this
     [JsonIgnore]
     public bool IsCondition =>
         string.Equals(Module, "condition", StringComparison.OrdinalIgnoreCase) &&
-        (string.Equals(ActionName, "if", StringComparison.OrdinalIgnoreCase)
-      || string.Equals(ActionName, "elseif", StringComparison.OrdinalIgnoreCase)
-      || string.Equals(ActionName, "else", StringComparison.OrdinalIgnoreCase));
+        (string.Equals(Name, "if", StringComparison.OrdinalIgnoreCase)
+      || string.Equals(Name, "elseif", StringComparison.OrdinalIgnoreCase)
+      || string.Equals(Name, "else", StringComparison.OrdinalIgnoreCase));
 
     [JsonIgnore]
     public Step? Step { get; set; }
@@ -102,7 +101,7 @@ public partial class @this
 
     // Teaching prose (Description / Notes / Examples) is no longer stored on the action host — it lives
     // as lazy `file` handles on the class-zoom partial (this.Schema.cs), over
-    // os/system/modules/{Module}/{ActionName}.{facet}.md. Templates read module-first + action through
+    // os/system/modules/{Module}/{Name}.{facet}.md. Templates read module-first + action through
     // those doors; the old string fields + MergeLayers `*Rendered` cousins are retired.
 
 

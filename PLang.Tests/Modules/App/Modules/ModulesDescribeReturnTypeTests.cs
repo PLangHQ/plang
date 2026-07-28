@@ -48,7 +48,7 @@ public class ModulesDescribeReturnTypeTests
     private async Task<global::app.goal.step.action.@this> Find(string module, string action)
     {
         var catalog = await _app.Module.Describe();
-        var row = catalog.FirstOrDefault(a => a.Module == module && a.ActionName == action);
+        var row = catalog.FirstOrDefault(a => a.Module == module && a.Name == action);
         if (row == null)
             throw new InvalidOperationException($"catalog missing {module}.{action} — fixture stale");
         return row;
@@ -118,7 +118,7 @@ public class ModulesDescribeReturnTypeTests
     {
         var catalog = await _app.Module.Describe();
         var missing = catalog.Where(a => string.IsNullOrEmpty(a.ReturnTypeName))
-                             .Select(a => $"{a.Module}.{a.ActionName}")
+                             .Select(a => $"{a.Module}.{a.Name}")
                              .ToList();
 
         await Assert.That(missing.Count)

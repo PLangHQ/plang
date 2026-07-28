@@ -42,7 +42,7 @@ public class ConditionIfBranchIndexTests
             Trigger.AfterAction,
             (context, action, result) =>
             {
-                if (action?.Module == "condition" && action.ActionName == "if")
+                if (action?.Module == "condition" && action.Name == "if")
                     captured = result;
                 return Task.FromResult(Data.Ok());
             },
@@ -177,7 +177,7 @@ public class ConditionIfBranchIndexTests
         var action = new PrAction
         {
             Module = "condition",
-            ActionName = "if",
+            Name = "if",
             Parameter = new List<Data>
             {
                 new("Left", "hello", context: _app.User.Context),

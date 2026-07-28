@@ -42,7 +42,7 @@ public class ValidateActionsTests
     {
         var actions = new StepActions
         {
-            new Action { Module = "file", ActionName = "read", Parameter = new List<Data> { new("Path", "test.txt", context: _app.User.Context) } }
+            new Action { Module = "file", Name = "read", Parameter = new List<Data> { new("Path", "test.txt", context: _app.User.Context) } }
         };
 
         var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.item.list.@this<global::app.goal.step.action.@this>(actions, _app.User.Context)) };
@@ -57,7 +57,7 @@ public class ValidateActionsTests
     {
         var actions = new StepActions
         {
-            new Action { Module = "nonexistent", ActionName = "fake" }
+            new Action { Module = "nonexistent", Name = "fake" }
         };
 
         var action = new validate(_app.User.Context) { Actions = new("", new global::app.type.item.list.@this<global::app.goal.step.action.@this>(actions, _app.User.Context)) };
@@ -91,7 +91,7 @@ public class ValidateActionsTests
             new Action
             {
                 Module = "goal",
-                ActionName = "call",
+                Name = "call",
                 Parameter = new List<Data> { goalCallData }
             }
         };
@@ -117,7 +117,7 @@ public class ValidateActionsTests
             new Action
             {
                 Module = "goal",
-                ActionName = "call",
+                Name = "call",
                 Parameter = new List<Data> { goalCallData }
             }
         };
@@ -137,7 +137,7 @@ public class ValidateActionsTests
             new Action
             {
                 Module = "file",
-                ActionName = "list",
+                Name = "list",
                 Parameter = new List<Data> { new("Path", "docs/", context: _app.User.Context) }
             }
         };
@@ -165,7 +165,7 @@ public class ValidateActionsTests
             new Action
             {
                 Module = "condition",
-                ActionName = "if",
+                Name = "if",
                 Parameter = new List<Data>
                 {
                     new("Left", "%flag%", context: _app.User.Context),
@@ -196,7 +196,7 @@ public class ValidateActionsTests
             new Action
             {
                 Module = "condition",
-                ActionName = "if",
+                Name = "if",
                 Parameter = new List<Data>
                 {
                     new("Left", "%count%", context: _app.User.Context),
@@ -225,7 +225,7 @@ public class ValidateActionsTests
             new Action
             {
                 Module = "condition",
-                ActionName = "if",
+                Name = "if",
                 Parameter = new List<Data>
                 {
                     new("Left", "%flag%", new global::app.type.@this("bool"), context: _app.User.Context),

@@ -71,14 +71,14 @@ public class ParamDescParityTests
 
         foreach (var da in catalog)
         {
-            var element = app.Module[da.Module]?[da.ActionName];
+            var element = app.Module[da.Module]?[da.Name];
             var rows = element == null
                 ? new Dictionary<string, Property>()
                 : element.Property.Rows.ToDictionary(r => r.Name, StringComparer.OrdinalIgnoreCase);
 
             foreach (var p in da.Parameter ?? new())
             {
-                var key = $"{da.Module}.{da.ActionName}.{p.Name}";
+                var key = $"{da.Module}.{da.Name}.{p.Name}";
                 var oldDesc = p.Peek()?.ToString() ?? "";
 
                 if (!rows.TryGetValue(p.Name, out var row))

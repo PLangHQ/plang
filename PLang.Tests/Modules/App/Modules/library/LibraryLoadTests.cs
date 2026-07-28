@@ -140,7 +140,7 @@ public class ModuleAddTests
             await result.IsSuccess();
 
             // Actions registered via Discover should be resolvable
-            var (action, error) = app.Module.GetCodeGenerated(new PrAction { Module = "variable", ActionName = "set" }, global::PLang.Tests.TestApp.SharedContext);
+            var (action, error) = app.Module.GetCodeGenerated(new PrAction { Module = "variable", Name = "set" }, global::PLang.Tests.TestApp.SharedContext);
             await Assert.That(action).IsNotNull();
             await Assert.That(error).IsNull();
         }

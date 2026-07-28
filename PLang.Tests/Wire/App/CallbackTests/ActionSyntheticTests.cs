@@ -12,7 +12,7 @@ public class ActionSyntheticTests
 {
     [Test] public async Task Synthetic_DefaultsToTrue_OnInlineCSharpConstruction()
     {
-        var a = new ActionEntity { Module = "variable", ActionName = "set" };
+        var a = new ActionEntity { Module = "variable", Name = "set" };
         await Assert.That(a.Synthetic).IsTrue();
     }
     [Test] public async Task Synthetic_SourceGenEmits_FalseFor_PrBuiltAction()
@@ -21,7 +21,7 @@ public class ActionSyntheticTests
         // / Setup.LoadFile (post-deserialization sweep). No fixture .pr handy
         // here — pin the contract that Synthetic is `set`-able (init would
         // make the post-load sweep impossible).
-        var a = new ActionEntity { Module = "variable", ActionName = "set" };
+        var a = new ActionEntity { Module = "variable", Name = "set" };
         a.Synthetic = false;
         await Assert.That(a.Synthetic).IsFalse();
     }
@@ -30,8 +30,8 @@ public class ActionSyntheticTests
     {
         var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cs-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var synthetic = new ActionEntity { Module = "x", ActionName = "y" };
-        var prLoaded = new ActionEntity { Module = "x", ActionName = "y" }; prLoaded.Synthetic = false;
+        var synthetic = new ActionEntity { Module = "x", Name = "y" };
+        var prLoaded = new ActionEntity { Module = "x", Name = "y" }; prLoaded.Synthetic = false;
 
         await using var s1 = app.User.CallStack.Push(synthetic);
         await Assert.That(s1.Synthetic).IsTrue();
@@ -49,7 +49,7 @@ public class ActionSyntheticTests
         // shape deferred). Pin the contract that the flag is readable.
         var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cs2-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var prLoaded = new ActionEntity { Module = "x", ActionName = "y" }; prLoaded.Synthetic = false;
+        var prLoaded = new ActionEntity { Module = "x", Name = "y" }; prLoaded.Synthetic = false;
         await using var call = app.User.CallStack.Push(prLoaded);
         await Assert.That(call.Synthetic).IsFalse();
     }
@@ -60,7 +60,7 @@ public class ActionSyntheticTests
         // Pin: a synthetic frame appears in the snapshot section.
         var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cs3-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var synthetic = new ActionEntity { Module = "x", ActionName = "y" };
+        var synthetic = new ActionEntity { Module = "x", Name = "y" };
         await using var call = app.User.CallStack.Push(synthetic);
         var snap = app.Snapshot(app.User.Context);
         await Assert.That(snap).IsNotNull();

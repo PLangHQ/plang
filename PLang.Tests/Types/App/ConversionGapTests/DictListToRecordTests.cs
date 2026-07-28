@@ -81,8 +81,8 @@ public class DictListToRecordTests
         var target = D(
             ("Text", "test step"),
             ("Actions", L(
-                D(("Module", "file"), ("ActionName", "read")),
-                D(("Module", "output"), ("ActionName", "write")))))
+                D(("Module", "file"), ("Name", "read")),
+                D(("Module", "output"), ("Name", "write")))))
             .Clr(typeof(StepLike)) as StepLike;
 
         await Assert.That(target!.Actions).IsNotNull();
@@ -143,5 +143,5 @@ public class GoalRefLike
 public class ActionLike
 {
     public string Module { get; set; } = "";
-    public string ActionName { get; set; } = "";
+    public string Name { get; set; } = "";
 }

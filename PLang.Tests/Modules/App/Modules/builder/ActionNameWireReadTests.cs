@@ -3,7 +3,7 @@ using Type = global::app.type.@this;
 
 namespace PLang.Tests.App.Modules.builder;
 
-// Which wire key populates action.ActionName when reading a clr(json) action host onto a
+// Which wire key populates action.Name when reading a clr(json) action host onto a
 // list<action> slot — the builder's `set %goal.step[i].action% = %compileResult.actions%` path.
 // The LLM returns {"module":..,"action":..}; the proof test used {"module":..,"name":..}.
 public class ActionNameWireReadTests : System.IAsyncDisposable
@@ -39,14 +39,14 @@ public class ActionNameWireReadTests : System.IAsyncDisposable
         var goal = await ReadOneAction("""[ { "module": "output", "action": "write" } ]""");
         await Assert.That(goal.Step[0].Action.Count).IsEqualTo(1);
         await Assert.That(goal.Step[0].Action[0].Module).IsEqualTo("output");
-        await Assert.That(goal.Step[0].Action[0].ActionName).IsEqualTo("write");
+        await Assert.That(goal.Step[0].Action[0].Name).IsEqualTo("write");
     }
 
     [Test]
     public async Task WireKey_name_PopulatesActionName()
     {
         var goal = await ReadOneAction("""[ { "module": "output", "name": "write" } ]""");
-        await Assert.That(goal.Step[0].Action[0].ActionName).IsEqualTo("write");
+        await Assert.That(goal.Step[0].Action[0].Name).IsEqualTo("write");
     }
 
     // The LLM pluralizes an array field name (`parameters`) regardless of the schema hint; the

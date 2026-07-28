@@ -26,7 +26,7 @@ public class Stage4_TypeHintPrecedenceTests
         => new PrAction
         {
             Module = module,
-            ActionName = action,
+            Name = action,
             Parameter = parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList()
         };
 

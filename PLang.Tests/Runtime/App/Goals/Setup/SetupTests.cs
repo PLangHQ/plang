@@ -387,7 +387,7 @@ public class SetupTests
             new global::app.goal.step.action.@this
             {
                 Module = "nonexistent",
-                ActionName = "doesnotexist",
+                Name = "doesnotexist",
                 Parameter = new List<Data>()
             }
         };

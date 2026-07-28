@@ -39,7 +39,7 @@ public class Stage0_BuildMethodTests
         => new PrAction
         {
             Module = module,
-            ActionName = actionName,
+            Name = actionName,
             Parameter = parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList()
         };
 

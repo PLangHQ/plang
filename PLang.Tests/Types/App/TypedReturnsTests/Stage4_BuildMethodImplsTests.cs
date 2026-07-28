@@ -25,7 +25,7 @@ public class Stage4_BuildMethodImplsTests
         => new PrAction
         {
             Module = module,
-            ActionName = action,
+            Name = action,
             Parameter = parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList()
         };
 

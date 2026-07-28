@@ -286,7 +286,7 @@ public sealed class @this
         foreach (var row in step.Action)   // value face (Data rows); sync display Peeks, never resolves
         {
             var action = (global::app.goal.step.action.@this)row.Peek();
-            sb.AppendLine($"  Action: {action.Module}.{action.ActionName}");
+            sb.AppendLine($"  Action: {action.Module}.{action.Name}");
             foreach (var p in action.Parameter)
             {
                 // PEEK, never resolve: a BEFORE-step display must not run param doors —
@@ -308,7 +308,7 @@ public sealed class @this
                 var name = goal?.Name ?? call.Action.Module;
                 var stepInfo = stepIdx >= 0 ? $" (step {stepIdx + 1})" : "";
                 var pathInfo = goal?.Path != null ? $" in {goal.Path}" : "";
-                sb.AppendLine($"    at {name}.{call.Action.ActionName}{stepInfo}{pathInfo}");
+                sb.AppendLine($"    at {name}.{call.Action.Name}{stepInfo}{pathInfo}");
             }
         }
 

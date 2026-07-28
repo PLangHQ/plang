@@ -1,7 +1,7 @@
 {% comment %}Detail for the planner's chosen actions this step: walk %modules%, keep names in %planStep.actions% (comma-fenced string match — fences stop `list` matching `list.add`).{% endcomment %}
 {% capture planSet %},{% for x in planStep.actions %}{{ x }},{% endfor %}{% endcapture %}
-{% for module in modules %}{% for a in module.Actions %}{% assign nameKey = a.Name | prepend: ',' | append: ',' %}{% if planSet contains nameKey %}
-## {{ a.Name }}{% unless a.Cacheable %} [no-cache]{% endunless %}
+{% for module in modules %}{% for a in module.Actions %}{% assign qualified = a.Module | append: '.' | append: a.Name %}{% assign nameKey = qualified | prepend: ',' | append: ',' %}{% if planSet contains nameKey %}
+## {{ qualified }}{% unless a.Cacheable %} [no-cache]{% endunless %}
 {% if a.ModuleDescription or a.Description %}
 Description:
 {% if a.ModuleDescription %}{{ a.ModuleDescription }}

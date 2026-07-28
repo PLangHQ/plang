@@ -146,7 +146,7 @@ public partial class Read : IContext
                 // Advisory build warning as a native dict {action, message} —
                 // `action` is the source attribution (the handler reduces to its
                 // own identity; a live handler has no wire form).
-                string source = __action == null ? "" : $"{__action.Module}.{__action.ActionName}";
+                string source = __action == null ? "" : $"{__action.Module}.{__action.Name}";
                 var warning = new global::app.type.item.dict.@this(Context)
                     .Set("action", source)
                     .Set("message", $"file.read: literal path '{raw}' does not exist on disk");

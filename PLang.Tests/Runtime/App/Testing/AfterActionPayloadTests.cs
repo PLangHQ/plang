@@ -35,7 +35,7 @@ public class AfterActionPayloadTests
     }
 
     // Subscribers to AfterAction receive the Action that just ran — Action.Module,
-    // .ActionName, .Step, .Goal all accessible from the payload.
+    // .Name, .Step, .Goal all accessible from the payload.
     [Test]
     public async Task AfterAction_Fires_PassesActionInstanceInPayload()
     {
@@ -50,7 +50,7 @@ public class AfterActionPayloadTests
 
         await Assert.That(captured).IsNotNull();
         await Assert.That(captured!.Module).IsEqualTo("variable");
-        await Assert.That(captured.ActionName).IsEqualTo("set");
+        await Assert.That(captured.Name).IsEqualTo("set");
     }
 
     // Subscribers receive the Data the action returned — Data.Value, .Properties,
@@ -87,12 +87,12 @@ public class AfterActionPayloadTests
             Make.Step("mod set", inner)));
         _app.Goal.Add(goal);
 
-        var observed = new List<(string Module, string ActionName)>();
+        var observed = new List<(string Module, string Name)>();
         _app.User.Context.Events.Register(new EventBinding(
             Trigger.AfterAction,
             (context, action, result) =>
             {
-                if (action != null) observed.Add((action.Module, action.ActionName));
+                if (action != null) observed.Add((action.Module, action.Name));
                 return Task.FromResult(Data.Ok());
             },
             priority: int.MaxValue,

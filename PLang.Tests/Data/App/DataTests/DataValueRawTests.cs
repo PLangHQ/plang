@@ -113,7 +113,7 @@ public class DataValueRawTests
         var action = new PrAction
         {
             Module = "test",
-            ActionName = "fixture",
+            Name = "fixture",
             Parameter = new List<Data> { stored }
         };
 

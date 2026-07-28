@@ -234,7 +234,7 @@ public class DiscoverActionTests
                     {
                         new PrAction
                         {
-                            Module = "http", ActionName = "request",
+                            Module = "http", Name = "request",
                             Parameter = new List<Data> { new("Url", "https://example.com", context: _app.User.Context) }
                         }
                     }

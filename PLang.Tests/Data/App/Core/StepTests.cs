@@ -23,7 +23,7 @@ public class StepTests : System.IAsyncDisposable
                 new global::app.goal.step.action.@this
                 {
                     Module = "http",
-                    ActionName = "get",
+                    Name = "get",
                     Parameter = new List<Data> { app.Data("url", "https://api.example.com") },
                 }
             },
@@ -37,7 +37,7 @@ public class StepTests : System.IAsyncDisposable
         await Assert.That(step.Comment).IsEqualTo("This makes an HTTP call");
         await Assert.That(step.Action.Count).IsEqualTo(1);
         await Assert.That(step.Action[0].Module).IsEqualTo("http");
-        await Assert.That(step.Action[0].ActionName).IsEqualTo("get");
+        await Assert.That(step.Action[0].Name).IsEqualTo("get");
         await Assert.That(step.WaitForExecution).IsFalse();
     }
 

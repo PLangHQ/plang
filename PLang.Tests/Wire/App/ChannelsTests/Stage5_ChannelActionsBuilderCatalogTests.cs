@@ -12,9 +12,9 @@ public class Stage5_ChannelActionsBuilderCatalogTests
         var app = global::PLang.Tests.TestApp.Create("/tmp/s5cat");
         var actions = await app.Module.Describe();
 
-        var set = actions.FirstOrDefault(a => a.Module == "channel" && a.ActionName == "set");
-        var remove = actions.FirstOrDefault(a => a.Module == "channel" && a.ActionName == "remove");
-        var add = actions.FirstOrDefault(a => a.Module == "channel" && a.ActionName == "add");
+        var set = actions.FirstOrDefault(a => a.Module == "channel" && a.Name == "set");
+        var remove = actions.FirstOrDefault(a => a.Module == "channel" && a.Name == "remove");
+        var add = actions.FirstOrDefault(a => a.Module == "channel" && a.Name == "add");
 
         await Assert.That(set).IsNotNull();
         await Assert.That(remove).IsNotNull();

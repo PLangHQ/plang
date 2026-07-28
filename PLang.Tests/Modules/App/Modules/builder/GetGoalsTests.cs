@@ -111,7 +111,7 @@ public class GetGoalsTests
                         new global::app.goal.step.action.@this
                         {
                             Module = "output",
-                            ActionName = "write",
+                            Name = "write",
                             Parameter = new List<Data> { new("Message", "hello", context: _app.User.Context) }
                         }
                     })

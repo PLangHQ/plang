@@ -32,7 +32,7 @@ public sealed partial class @this
         s.Write("stepIndex",   step?.Index  ?? -1);
         s.Write("actionIndex", actionIndex);
         s.Write("actionModule", Action.Module);
-        s.Write("actionName",   Action.ActionName);
+        s.Write("actionName",   Action.Name);
         s.Write("id",           Id);
         return actionIndex >= 0;
     }

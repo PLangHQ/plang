@@ -19,8 +19,8 @@ public class ActionsTests
     {
         var list = new List<global::app.goal.step.action.@this>
         {
-            new() { Module = "variable", ActionName = "set" },
-            new() { Module = "file", ActionName = "save" }
+            new() { Module = "variable", Name = "set" },
+            new() { Module = "file", Name = "save" }
         };
 
         var actions = new StepActions(list);
@@ -43,7 +43,7 @@ public class ActionsTests
     public async Task GetActions_ContainsVariableSet()
     {
         var actions = DiscoverActions();
-        var variableSet = actions.FirstOrDefault(a => a.Module == "variable" && a.ActionName == "set");
+        var variableSet = actions.FirstOrDefault(a => a.Module == "variable" && a.Name == "set");
 
         await Assert.That(variableSet).IsNotNull();
     }
@@ -52,7 +52,7 @@ public class ActionsTests
     public async Task GetActions_ContainsFileSave()
     {
         var actions = DiscoverActions();
-        var fileSave = actions.FirstOrDefault(a => a.Module == "file" && a.ActionName == "save");
+        var fileSave = actions.FirstOrDefault(a => a.Module == "file" && a.Name == "save");
 
         await Assert.That(fileSave).IsNotNull();
     }
@@ -61,7 +61,7 @@ public class ActionsTests
     public async Task GetActions_ContainsOutputWrite()
     {
         var actions = DiscoverActions();
-        var outputWrite = actions.FirstOrDefault(a => a.Module == "output" && a.ActionName == "write");
+        var outputWrite = actions.FirstOrDefault(a => a.Module == "output" && a.Name == "write");
 
         await Assert.That(outputWrite).IsNotNull();
     }
@@ -84,7 +84,7 @@ public class ActionsTests
 
         foreach (var action in actions)
         {
-            await Assert.That(action.ActionName).IsNotEqualTo("");
+            await Assert.That(action.Name).IsNotEqualTo("");
         }
     }
 
@@ -116,8 +116,8 @@ public class ActionsTests
     {
         var actions = new StepActions
         {
-            new global::app.goal.step.action.@this { Module = "variable", ActionName = "set" },
-            new global::app.goal.step.action.@this { Module = "file", ActionName = "save" }
+            new global::app.goal.step.action.@this { Module = "variable", Name = "set" },
+            new global::app.goal.step.action.@this { Module = "file", Name = "save" }
         };
 
         var (isValid, error) = ValidateActions(actions);
@@ -131,7 +131,7 @@ public class ActionsTests
     {
         var actions = new StepActions
         {
-            new global::app.goal.step.action.@this { Module = "bogus", ActionName = "nope" }
+            new global::app.goal.step.action.@this { Module = "bogus", Name = "nope" }
         };
 
         var (isValid, error) = ValidateActions(actions);
@@ -146,9 +146,9 @@ public class ActionsTests
     {
         var actions = new StepActions
         {
-            new global::app.goal.step.action.@this { Module = "variable", ActionName = "set" },
-            new global::app.goal.step.action.@this { Module = "bogus", ActionName = "nope" },
-            new global::app.goal.step.action.@this { Module = "fake", ActionName = "missing" }
+            new global::app.goal.step.action.@this { Module = "variable", Name = "set" },
+            new global::app.goal.step.action.@this { Module = "bogus", Name = "nope" },
+            new global::app.goal.step.action.@this { Module = "fake", Name = "missing" }
         };
 
         var (isValid, error) = ValidateActions(actions);
@@ -194,7 +194,7 @@ public class ActionsTests
         {
             Action = new StepActions
             {
-                new global::app.goal.step.action.@this { Module = "variable", ActionName = "set" }
+                new global::app.goal.step.action.@this { Module = "variable", Name = "set" }
             }
         };
 
@@ -204,7 +204,7 @@ public class ActionsTests
         await Assert.That(result).IsNotNull();
         await Assert.That(result!.Action.Count).IsEqualTo(1);
         await Assert.That(result.Action[0].Module).IsEqualTo("variable");
-        await Assert.That(result.Action[0].ActionName).IsEqualTo("set");
+        await Assert.That(result.Action[0].Name).IsEqualTo("set");
     }
 
     [Test]
@@ -215,7 +215,7 @@ public class ActionsTests
         {
             Action = new StepActions
             {
-                new global::app.goal.step.action.@this { Module = "output", ActionName = "write" }
+                new global::app.goal.step.action.@this { Module = "output", Name = "write" }
             }
         };
 
@@ -253,7 +253,7 @@ public class ActionsTests
             Text = "test",
             Action = new StepActions
             {
-                new global::app.goal.step.action.@this { Module = "old", ActionName = "action" }
+                new global::app.goal.step.action.@this { Module = "old", Name = "action" }
             }
         };
         var stepFromLlm = new Step { Action = new StepActions() };
@@ -298,8 +298,8 @@ public class ActionsTests
         var notFound = new List<string>();
         foreach (var action in actions)
         {
-            if (!modules.Contains(action.Module, action.ActionName))
-                notFound.Add($"{action.Module}.{action.ActionName}");
+            if (!modules.Contains(action.Module, action.Name))
+                notFound.Add($"{action.Module}.{action.Name}");
         }
 
         if (notFound.Count > 0)
@@ -325,7 +325,7 @@ public class ActionsTests
                 actions.Add(new global::app.goal.step.action.@this
                 {
                     Module = ns,
-                    ActionName = actionName,
+                    Name = actionName,
                 });
             }
         }

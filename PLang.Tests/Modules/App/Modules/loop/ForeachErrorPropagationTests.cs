@@ -68,7 +68,7 @@ public class ForeachErrorPropagationTests
         // Inner goal with a single step: [condition.if(true), goal.call Missing]
         var innerCondAction = new Action
         {
-            Module = "condition", ActionName = "if",
+            Module = "condition", Name = "if",
             Parameter = new List<Data>
             {
                 new Data("Left", true, context: context), new Data("Operator", "==", context: context), new Data("Right", true, context: context)
@@ -76,7 +76,7 @@ public class ForeachErrorPropagationTests
         };
         var innerGoalCall = new Action
         {
-            Module = "goal", ActionName = "call",
+            Module = "goal", Name = "call",
             Parameter = new List<Data>
             {
                 new Data("goalname", new Dictionary<string, object?> { ["name"] = "MissingGoal" }, context: context)

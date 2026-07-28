@@ -17,7 +17,7 @@ public partial class @this
     // never stored on this action. Null when there's no catalog Context or the identity is unknown.
     private System.Type? Handler
         => Context != null && Context.App.Module.Contains(Module)
-            ? Context.App.Module[Module].Handler(ActionName)
+            ? Context.App.Module[Module].Handler(Name)
             : null;
 
     private global::app.goal.step.action.property.list.@this? _properties;
@@ -71,7 +71,7 @@ public partial class @this
         }
     }
 
-    // Action-level teaching prose — file handles over os/system/modules/{Module}/{ActionName}.{facet}.md,
+    // Action-level teaching prose — file handles over os/system/modules/{Module}/{Name}.{facet}.md,
     // the twins of the module element's module.{facet}.md doors. Lazy references: born unread, content
     // materializes at the Value door, an absent file is falsy (existence truthiness) so
     // `{% if action.Notes %}` guards presence without reading. The template concats module-first + action.
@@ -79,15 +79,15 @@ public partial class @this
     private global::app.type.item.file.@this? _notes;
     private global::app.type.item.file.@this? _examples;
 
-    /// <summary>The action's description prose — {ActionName}.description.md as a lazy file handle.</summary>
+    /// <summary>The action's description prose — {Name}.description.md as a lazy file handle.</summary>
     [JsonIgnore]
     public global::app.type.item.file.@this Description => _description ??= Prose("description");
 
-    /// <summary>The action's notes prose — {ActionName}.notes.md as a lazy file handle.</summary>
+    /// <summary>The action's notes prose — {Name}.notes.md as a lazy file handle.</summary>
     [JsonIgnore]
     public global::app.type.item.file.@this Notes => _notes ??= Prose("notes");
 
-    /// <summary>The action's examples prose — {ActionName}.examples.md as a lazy file handle.</summary>
+    /// <summary>The action's examples prose — {Name}.examples.md as a lazy file handle.</summary>
     [JsonIgnore]
     public global::app.type.item.file.@this Examples => _examples ??= Prose("examples");
 
@@ -117,7 +117,7 @@ public partial class @this
         var root = ctx.App.Module.ResolveMarkdownTeachingRoot()
             ?? throw new System.InvalidOperationException(
                 "action prose needs the teaching root — the module collection resolves it from App.OsDirectory.");
-        var path = root.Combine(Module).Combine($"{ActionName}.{facet}.md");
+        var path = root.Combine(Module).Combine($"{Name}.{facet}.md");
         return new global::app.type.item.file.@this(path);
     }
 }

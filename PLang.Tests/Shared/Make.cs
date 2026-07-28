@@ -45,7 +45,7 @@ public static class Make
         var action = new global::app.goal.step.action.@this
         {
             Module = module,
-            ActionName = actionName,
+            Name = actionName,
         };
         foreach (var (name, value) in parameters)
             // Param(...) hands back a ready Data carrying an explicit type; a plain tuple value
@@ -107,7 +107,7 @@ public static class Make
         foreach (var m in modifiers)
             inner.Modifier.Add(m as global::app.goal.step.action.modifier.@this
                 ?? new global::app.goal.step.action.modifier.@this
-                { Module = m.Module, ActionName = m.ActionName, Parameter = m.Parameter });
+                { Module = m.Module, Name = m.Name, Parameter = m.Parameter });
         return inner;
     }
 

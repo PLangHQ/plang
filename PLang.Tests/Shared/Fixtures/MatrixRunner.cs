@@ -41,7 +41,7 @@ public static class MatrixRunner
         var action = new PrAction
         {
             Module = module,
-            ActionName = actionName,
+            Name = actionName,
             Parameter = (parameters ?? Array.Empty<(string, object?)>())
                 .Select(p => new Data(p.name, p.value, context: app.User.Context)).ToList(),
             Default = defaults == null ? null : new(defaults.Select(d => new Data(d.name, d.value, context: app.User.Context)).ToList()),
@@ -80,7 +80,7 @@ public static class MatrixRunner
         var action = new PrAction
         {
             Module = module,
-            ActionName = actionName,
+            Name = actionName,
             Parameter = (parameters ?? Array.Empty<(string, object?)>())
                 .Select(p => new Data(p.name, p.value, context: app.User.Context)).ToList(),
             Default = defaults == null ? null : new(defaults.Select(d => new Data(d.name, d.value, context: app.User.Context)).ToList()),

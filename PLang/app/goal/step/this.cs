@@ -74,19 +74,19 @@ public sealed partial class @this
         foreach (var a in flat)
         {
             if (modules.Contains(a.Module)
-                && modules[a.Module][a.ActionName] is action.modifier.@this catalog)
+                && modules[a.Module][a.Name] is action.modifier.@this catalog)
             {
                 if (current == null)
                 {
                     Warning.Add(new global::app.warning.@this
                     {
                         Key = "DroppedLeadingModifier",
-                        Message = $"Modifier '{a.Module}.{a.ActionName}' has no preceding action and was dropped"
+                        Message = $"Modifier '{a.Module}.{a.Name}' has no preceding action and was dropped"
                     });
                     continue;
                 }
                 current.Modifier.Add(new action.modifier.@this
-                    { Module = a.Module, ActionName = a.ActionName, Parameter = a.Parameter, Position = catalog.Position });
+                    { Module = a.Module, Name = a.Name, Parameter = a.Parameter, Position = catalog.Position });
             }
             else
             {

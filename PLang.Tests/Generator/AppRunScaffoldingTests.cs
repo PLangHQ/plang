@@ -26,7 +26,7 @@ public class AppRunScaffoldingTests
         return new PrAction
         {
             Module = module,
-            ActionName = actionName,
+            Name = actionName,
             Parameter = parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList()
         };
     }

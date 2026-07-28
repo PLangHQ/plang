@@ -2,7 +2,7 @@ Available actions, grouped by module. The planner emits the `module.action` stri
 {% for module in modules %}{% if module.Actions.size > 0 %}
 ## {{ module.Name }}{% if module.Description %} — {{ module.Description }}{% endif %}
 
-{% for a in module.Actions %}- `{{ a.Name }}`{% if a.Description %} — {{ a.Description }}{% endif %}
+{% for a in module.Actions %}- `{{ a.Module }}.{{ a.Name }}`{% if a.Description %} — {{ a.Description }}{% endif %}
 {% endfor %}{% endif %}{% endfor %}
 
 # Modifiers
@@ -11,5 +11,5 @@ Modifiers wrap the preceding action in the same step. They never stand alone. Pi
 {% for module in modules %}{% if module.Modifiers.size > 0 %}
 ## {{ module.Name }}
 
-{% for a in module.Modifiers %}- `{{ a.Name }}`{% if a.Description %} — {{ a.Description }}{% endif %}
+{% for a in module.Modifiers %}- `{{ a.Module }}.{{ a.Name }}`{% if a.Description %} — {{ a.Description }}{% endif %}
 {% endfor %}{% endif %}{% endfor %}

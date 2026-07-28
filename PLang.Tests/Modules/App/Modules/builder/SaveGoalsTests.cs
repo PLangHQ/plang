@@ -47,7 +47,7 @@ public class SaveGoalsTests
     public async Task SaveGoal_SerializesToPrPath()
     {
         var step = new Step { Text = "write hello", Index = 0 };
-        step.Action.Add(new PrAction { Module = "output", ActionName = "write" });
+        step.Action.Add(new PrAction { Module = "output", Name = "write" });
         var goal = new Goal
         {
             Name = "Start",

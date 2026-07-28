@@ -23,7 +23,7 @@ public class MergeTests
             Text = "do something",
             Action = new StepActions(new[]
             {
-                new Action { Module = "output", ActionName = "write", Parameter = new List<Data> { new("Message", "hello", context: global::PLang.Tests.TestApp.SharedContext) } }
+                new Action { Module = "output", Name = "write", Parameter = new List<Data> { new("Message", "hello", context: global::PLang.Tests.TestApp.SharedContext) } }
             })
         };
 
@@ -45,7 +45,7 @@ public class MergeTests
             LineNumber = 1,
             Action = new StepActions(new[]
             {
-                new Action { Module = "file", ActionName = "read" }
+                new Action { Module = "file", Name = "read" }
             })
         };
 
@@ -63,7 +63,7 @@ public class MergeTests
     [Test]
     public async Task StepMerge_EmptySource_LeavesTargetUnchanged()
     {
-        var originalAction = new Action { Module = "output", ActionName = "write" };
+        var originalAction = new Action { Module = "output", Name = "write" };
         var target = new Step
         {
             Text = "step",
@@ -130,7 +130,7 @@ public class MergeTests
                     Text = "do something",
                     Action = new StepActions(new[]
                     {
-                        new Action { Module = "output", ActionName = "write" }
+                        new Action { Module = "output", Name = "write" }
                     })
                 }
             }
@@ -166,7 +166,7 @@ public class MergeTests
                     Text = "old step text",
                     Action = new StepActions(new[]
                     {
-                        new Action { Module = "file", ActionName = "read" }
+                        new Action { Module = "file", Name = "read" }
                     })
                 }
             }
@@ -217,7 +217,7 @@ public class MergeTests
                     Text = "do something",
                     Action = new StepActions(new[]
                     {
-                        new Action { Module = "output", ActionName = "write" }
+                        new Action { Module = "output", Name = "write" }
                     })
                 }
             }

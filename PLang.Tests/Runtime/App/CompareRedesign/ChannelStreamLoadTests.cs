@@ -19,7 +19,7 @@ public class ChannelStreamLoadTests
 
         var action = loaded.Step[0].Action[0];
         await Assert.That(action.Module).IsEqualTo("output");
-        await Assert.That(action.ActionName).IsEqualTo("write");
+        await Assert.That(action.Name).IsEqualTo("write");
 
         var param = action.Parameter.First(p => p.Name == "Content");
         // The type survives the read — self-describing, no Judge needed.

@@ -103,7 +103,7 @@ public partial class run : IContext
             {
                 if (action != null)
                 {
-                    childApp.Test.Coverage.RecordModuleAction(action.Module, action.ActionName);
+                    childApp.Test.Coverage.RecordModuleAction(action.Module, action.Name);
 
                     // Coverage DERIVES from the natural facts — the runtime stamps nothing. A condition
                     // that fired (its own result is truthy) records the branch it took, keyed by its
@@ -116,7 +116,7 @@ public partial class run : IContext
                         var site = $"{goalId}:{stepIndex}";
                         var branchIdx = action.Step != null ? action.Step.Action.IndexOf(action) : -1;
                         childApp.Test.Coverage.RecordBranch(site, branchIdx);
-                        childApp.Test.Coverage.RecordBranchLabel(site, action.ActionName);
+                        childApp.Test.Coverage.RecordBranchLabel(site, action.Name);
                     }
                 }
                 return context.Ok();

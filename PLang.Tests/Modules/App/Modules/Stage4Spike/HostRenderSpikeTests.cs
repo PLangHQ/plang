@@ -33,8 +33,7 @@ public class HostRenderSpikeTests
 
     private sealed class SpikeAction
     {
-        public required string Name { get; init; }          // "file.read"
-        public required string ActionName { get; init; }
+        public required string Name { get; init; }          // "read" — its own name; the module owns "file"
         public required ItemList Properties { get; init; }
     }
 
@@ -62,12 +61,12 @@ public class HostRenderSpikeTests
 
         var fileRead = new SpikeAction
         {
-            Name = "file.read", ActionName = "read",
+            Name = "read",
             Properties = NativeList(ctx, P("Path", "path"), P("Encoding", "string", nul: true, def: "utf-8")),
         };
         var varSet = new SpikeAction
         {
-            Name = "variable.set", ActionName = "set",
+            Name = "set",
             Properties = NativeList(ctx, P("Name", "string", v: true), P("Value", "object")),
         };
         var fileMod = new SpikeModule("Read and write files.") { Name = "file", Actions = NativeList(ctx, fileRead) };
@@ -159,13 +158,13 @@ public class HostRenderSpikeTests
         var actions = new ItemList(new List<object?>(subset.Cast<object?>()), ctx);
         ctx.Variable.Set(new Data("actions", actions, context: ctx));
 
-        // where %actions% ActionName in ["read","set"]  — proves Get(field) over clr(action)
+        // where %actions% Name in ["read","set"]  — proves Get(field) over clr(action)
         // + the "in" operator, the exact mechanic behind `where %actions% Name in %planStep.actions%`.
         var wanted = new ItemList(new List<object?> { "read", "set" }, ctx);
         var where = new Where(ctx)
         {
             ListName = new global::app.variable.@this("actions"),
-            Field = new global::app.data.@this<global::app.type.item.text.@this>("", "ActionName", context: ctx),
+            Field = new global::app.data.@this<global::app.type.item.text.@this>("", "Name", context: ctx),
             Operator = new global::app.data.@this<global::app.type.item.choice.@this<Op>>("", new Op("in"), context: ctx),
             Value = new Data("", wanted, context: ctx),
         };
@@ -175,11 +174,11 @@ public class HostRenderSpikeTests
         var kept = (await result.Value()) as ItemList;
         await Assert.That(kept).IsNotNull();
 
-        // Read each kept element's ActionName through the SAME value door `where` used
+        // Read each kept element's Name through the SAME value door `where` used
         // (`d.Get(field)`) — dogfoods the navigation under test, no reflecting helper.
         var names = new List<string>();
         foreach (var d in kept!.Items)
-            names.Add((await d.Get("ActionName"))?.Peek()?.ToString() ?? "");
+            names.Add((await d.Get("Name"))?.Peek()?.ToString() ?? "");
 
         foreach (var n in names)
             await Assert.That(new[] { "read", "set" }).Contains(n);

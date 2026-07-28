@@ -46,10 +46,10 @@ public sealed class @this
             var cacheable = _list.IsCacheable(Name, name);
             if (order != null)
                 _modifiers.Add(new global::app.goal.step.action.modifier.@this
-                    { Module = Name, ActionName = name, Position = order.Value, Cacheable = cacheable, Context = ctx });
+                    { Module = Name, Name = name, Position = order.Value, Cacheable = cacheable, Context = ctx });
             else
                 _actions.Add(new global::app.goal.step.action.@this
-                    { Module = Name, ActionName = name, Cacheable = cacheable, Context = ctx });
+                    { Module = Name, Name = name, Cacheable = cacheable, Context = ctx });
         }
     }
 
@@ -74,8 +74,8 @@ public sealed class @this
         get
         {
             if (_actions == null) Mint();
-            return _actions!.FirstOrDefault(a => string.Equals(a.ActionName, actionName, System.StringComparison.OrdinalIgnoreCase))
-                ?? (global::app.goal.step.action.@this?)_modifiers!.FirstOrDefault(m => string.Equals(m.ActionName, actionName, System.StringComparison.OrdinalIgnoreCase));
+            return _actions!.FirstOrDefault(a => string.Equals(a.Name, actionName, System.StringComparison.OrdinalIgnoreCase))
+                ?? (global::app.goal.step.action.@this?)_modifiers!.FirstOrDefault(m => string.Equals(m.Name, actionName, System.StringComparison.OrdinalIgnoreCase));
         }
     }
 

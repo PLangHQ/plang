@@ -26,7 +26,7 @@ public class ErrorHandleTests
         if (key != null) parameters.Add(new("key", key, context: global::PLang.Tests.TestApp.SharedContext));
         return new PrAction
         {
-            Module = "error", ActionName = "throw",
+            Module = "error", Name = "throw",
             Parameter = parameters,
             Modifier = modifiers ?? new List<global::app.goal.step.action.modifier.@this>()
         };
@@ -38,7 +38,7 @@ public class ErrorHandleTests
         foreach (var p in parameters) list.Add(new(p.name, p.value, context: global::PLang.Tests.TestApp.SharedContext));
         return new global::app.goal.step.action.modifier.@this
         {
-            Module = "error", ActionName = "handle",
+            Module = "error", Name = "handle",
             Parameter = list
         };
     }
@@ -48,7 +48,7 @@ public class ErrorHandleTests
     {
         new PrAction
         {
-            Module = "goal", ActionName = "call",
+            Module = "goal", Name = "call",
             Parameter = new List<global::app.data.@this>
             {
                 new("goalname", new Dictionary<string, object?> { ["name"] = goalName }, context: global::PLang.Tests.TestApp.SharedContext)
@@ -61,7 +61,7 @@ public class ErrorHandleTests
     {
         var action = new PrAction
         {
-            Module = "variable", ActionName = "set",
+            Module = "variable", Name = "set",
             Parameter = new List<global::app.data.@this>
             {
                 new("name", "%ok%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "v", context: global::PLang.Tests.TestApp.SharedContext)
@@ -292,7 +292,7 @@ public class ErrorHandleTests
     {
         var prAction = new PrAction
         {
-            Module = module, ActionName = actionName,
+            Module = module, Name = actionName,
             Parameter = parameters.Select(p => new global::app.data.@this(p.name, p.value,
                 PrParam.IsVarNameSlot(module, actionName, p.name) ? new global::app.type.@this("variable") : null, context: global::PLang.Tests.TestApp.SharedContext)).ToList()
         };
