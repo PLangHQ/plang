@@ -240,5 +240,5 @@ public partial class @this
     /// meaningful value to write to a variable. Compile.llm uses this to choose the Type
     /// for a trailing <c>variable.set</c> after a <c>write to %x%</c>.
     /// </summary>
-    public string? ReturnTypeName { get; init; }
+
 }

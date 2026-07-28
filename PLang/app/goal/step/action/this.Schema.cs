@@ -68,7 +68,19 @@ public partial class @this
     }
 
     private global::app.type.@this? _return;
+    private string? _returnTypeName;
     private bool _returnComputed;
+
+    /// <summary>The PLang name of what this action returns — the concrete type for
+    /// <c>Task&lt;Data&lt;T&gt;&gt;</c>, <c>data</c> when the return is polymorphic (bare
+    /// <c>Data</c> or <c>Data&lt;object&gt;</c> — everything is a Data, the value type just isn't
+    /// known statically), null when <c>Run</c> returns no Data at all. Computed in the SAME pass as
+    /// <see cref="Return"/>: the entity and its name are one fact read once, not two walks.</summary>
+    [JsonIgnore]
+    public string? ReturnTypeName
+    {
+        get { _ = Return; return _returnTypeName; }
+    }
 
     /// <summary>The action's declared return type as an ENTITY — read off <c>Run()</c>'s
     /// <c>Task&lt;Data&lt;T&gt;&gt;</c> signature (compounds ride the kind axis). Null when the
@@ -91,11 +103,15 @@ public partial class @this
             if (ret.IsGenericType && ret.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.Task<>))
                 ret = ret.GetGenericArguments()[0];
 
-            // Only Data<T> declares a concrete return; bare Data (or Data<object>) is polymorphic → null.
+            // Bare Data is polymorphic — it still RETURNS something, so its name is "data"; only a
+            // non-Data return names nothing.
+            if (ret == typeof(global::app.data.@this)) { _returnTypeName = "data"; return _return = null; }
             if (!ret.IsGenericType || ret.GetGenericTypeDefinition() != typeof(global::app.data.@this<>))
                 return _return = null;
             var t = ret.GetGenericArguments()[0];
-            return _return = t == typeof(object) ? null : App!.Type[t];   // entity (compounds ride kind)
+            if (t == typeof(object)) { _returnTypeName = "data"; return _return = null; }
+            _returnTypeName = App!.Type.GetTypeName(t);
+            return _return = App!.Type[t];   // entity (compounds ride kind)
         }
     }
 

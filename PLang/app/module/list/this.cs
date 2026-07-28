@@ -323,7 +323,6 @@ public sealed class @this : IAsyncDisposable
 
 
                 var returnType = DescribeReturnType(parameterType);
-                var returnTypeName = DescribeReturnTypeName(parameterType);
 
                 // Teaching prose (Description / Notes / Examples) is no longer assembled here — it
                 // rides as lazy `file` handles on the action/module elements (the class-zoom prose
@@ -336,7 +335,6 @@ public sealed class @this : IAsyncDisposable
                     Parameter = new global::app.goal.step.action.parameter.list.@this(parameters),
                     Cacheable = cacheable,
                     ReturnType = returnType,
-                    ReturnTypeName = returnTypeName,
                 });
             }
         }
@@ -344,38 +342,6 @@ public sealed class @this : IAsyncDisposable
         return result;
     }
 
-    /// <summary>
-    /// Reads the PLang name of T from <c>Run()</c>'s declared return type
-    /// <c>Task&lt;Data&lt;T&gt;&gt;</c>. Bare <c>Task&lt;Data&gt;</c> renders as <c>data</c>
-    /// — the polymorphic default (everything is a Data, value type unknown statically).
-    /// <c>Task&lt;Data&lt;object&gt;&gt;</c> renders the same — same intent, redundant T.
-    /// Real types surface their PLang name. Source of truth = the method signature.
-    /// </summary>
-    private string? DescribeReturnTypeName(System.Type actionType)
-    {
-        var runMethod = actionType.GetMethod("Run", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes);
-        if (runMethod == null) return null;
-
-        var returnType = runMethod.ReturnType;
-        if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
-            returnType = returnType.GetGenericArguments()[0];
-
-        // Bare Data → "data" (polymorphic by default). An action that genuinely
-        // never produces a value still returns *some* Data — empty Properties,
-        // null Value — so "data" is honest. Saves declaring Data<object> everywhere.
-        if (returnType == typeof(data.@this)) return "data";
-
-        // Data<T>
-        if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(data.@this<>))
-        {
-            var t = returnType.GetGenericArguments()[0];
-            if (t == typeof(object)) return "data";
-            return (App?.Type?.GetTypeName(t) ?? global::app.type.list.@this.GetTypeNameStatic(t));
-        }
-
-        // Something else — not a Data variant; surface nothing.
-        return null;
-    }
 
     private List<data.@this>? DescribeReturnType(System.Type actionType)
     {
