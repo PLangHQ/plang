@@ -89,21 +89,29 @@ public abstract class VariableContainer
 	{
 		if (string.IsNullOrEmpty(variableName)) return null;
 
-		if (_variables.TryGetValue(variableName, out var variable))
+		// Walk the parent (call-stack) chain iteratively, not recursively. Recursion here added up to
+		// ~1000 stack frames per not-found lookup; on a request that already arrived with a deep stack
+		// (search's FTS path) that tipped the thread into a hard StackOverflow - crashing the whole
+		// process ~7x/day on prod. An iterative walk resolves the same variable using O(1) stack.
+		VariableContainer? container = this;
+		while (container != null)
 		{
-			return variable.Value;
-		}
+			if (container._variables.TryGetValue(variableName, out var variable))
+			{
+				return variable.Value;
+			}
 
-		if (level > 1000)
-		{
-			Console.ForegroundColor = ConsoleColor.Red;
-			Console.WriteLine($"Too deep GetVariable. variableName:{variableName}");
-			Console.ResetColor();
-			return null;
-		}
+			if (level++ > 1000)
+			{
+				Console.ForegroundColor = ConsoleColor.Red;
+				Console.WriteLine($"Too deep GetVariable. variableName:{variableName}");
+				Console.ResetColor();
+				return null;
+			}
 
-		var parent = GetParent();
-		return parent?.GetVariable(variableName, level + 1);
+			container = container.GetParent();
+		}
+		return null;
 	}
 
 	public T? GetVariable<T>(string? variableName = null, int level = 0)
