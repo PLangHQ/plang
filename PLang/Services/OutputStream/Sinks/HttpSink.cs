@@ -105,17 +105,23 @@ public sealed class HttpSink : IOutputSink
 
 	static ITransformer ChooseTransformer(WebserverProperties props, HttpContext ctx)
 	{
-		var accept = ctx.Request.Headers.Accept.FirstOrDefault();
-		// No specific preference (missing Accept, or wildcard "*/*") uses the configured default
-		// content type (text/html), so fetchers/proxies/link-previewers that send "Accept: */*"
-		// don't get HTML pages mislabeled as text and rejected as binary.
-		if (string.IsNullOrEmpty(accept) || accept.StartsWith("*/*")) accept = props.DefaultResponseProperties!.ContentType;
+		var accept = ctx.Request.Headers.Accept.FirstOrDefault() ?? "";
 		var enc = Encoding.GetEncoding(props.DefaultResponseProperties!.ResponseEncoding);
 
+		// Content type the client explicitly asked for.
 		if (accept.StartsWith("application/plang", StringComparison.OrdinalIgnoreCase)) return new PlangTransformer(enc);
 		if (accept.StartsWith("application/json", StringComparison.OrdinalIgnoreCase)) return new JsonTransformer(enc);
 		if (accept.StartsWith("text/html", StringComparison.OrdinalIgnoreCase)) return new HtmlTransformer(enc);
-		return new TextTransformer(enc);
+		if (accept.StartsWith("text/plain", StringComparison.OrdinalIgnoreCase)) return new TextTransformer(enc);
+
+		// No explicit match (text/*, application/xhtml+xml, */*, empty, unknown clients) -> use the
+		// configured default content type (text/html by default), so fetchers/proxies/link-previewers
+		// don't get HTML pages mislabeled as text/plain and reject them as an opaque blob.
+		var def = props.DefaultResponseProperties!.ContentType ?? "";
+		if (def.StartsWith("application/plang", StringComparison.OrdinalIgnoreCase)) return new PlangTransformer(enc);
+		if (def.StartsWith("application/json", StringComparison.OrdinalIgnoreCase)) return new JsonTransformer(enc);
+		if (def.StartsWith("text/plain", StringComparison.OrdinalIgnoreCase)) return new TextTransformer(enc);
+		return new HtmlTransformer(enc);
 	}
 
 	OutMessage BuildResponseProperties(OutMessage m)
