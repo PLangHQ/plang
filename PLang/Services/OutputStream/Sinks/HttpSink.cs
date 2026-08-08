@@ -105,8 +105,11 @@ public sealed class HttpSink : IOutputSink
 
 	static ITransformer ChooseTransformer(WebserverProperties props, HttpContext ctx)
 	{
-		var accept = ctx.Request.Headers.Accept.FirstOrDefault()
-					 ?? props.DefaultResponseProperties!.ContentType;
+		var accept = ctx.Request.Headers.Accept.FirstOrDefault();
+		// No specific preference (missing Accept, or wildcard "*/*") uses the configured default
+		// content type (text/html), so fetchers/proxies/link-previewers that send "Accept: */*"
+		// don't get HTML pages mislabeled as text and rejected as binary.
+		if (string.IsNullOrEmpty(accept) || accept.StartsWith("*/*")) accept = props.DefaultResponseProperties!.ContentType;
 		var enc = Encoding.GetEncoding(props.DefaultResponseProperties!.ResponseEncoding);
 
 		if (accept.StartsWith("application/plang", StringComparison.OrdinalIgnoreCase)) return new PlangTransformer(enc);

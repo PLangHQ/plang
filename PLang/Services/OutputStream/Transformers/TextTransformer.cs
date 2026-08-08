@@ -23,7 +23,7 @@ public class TextTransformer : ITransformer
 	}
 	public Encoding Encoding { get { return encoding; } }
 
-	public virtual string ContentType { get { return "plain/text"; } }
+	public virtual string ContentType { get { return "text/plain"; } }
 
 	public async Task<(long, IError?)> Transform(PLangContext context, PipeWriter writer, OutMessage obj, CancellationToken ct = default)
 	{
