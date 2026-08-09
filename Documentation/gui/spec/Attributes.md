@@ -29,10 +29,11 @@ This will render the product.html straight to the default output stream, display
 when interacting with the backend you can instruct it to render content in specific places on the page. You use attributes to do this.
 
 attributes available to use in ui is following
-attributes are prefixed with p-, e.g. p-target, p-action
+attributes are prefixed with p-, e.g. p-target, p-actions
 
 p-target => where should the content rendered when response comes back from backend
-p-action => what action should be executed when response comes from backend, this can be list of actions. 
+p-actions => what action should be executed when response comes from backend, this can be a space
+    separated list of actions.
     replace (same as innerHTML in html)
     replaceSelf (same as outerHTML in html)
     append
@@ -46,9 +47,19 @@ p-action => what action should be executed when response comes from backend, thi
     alert => alert box shown to user
     navigate => tells the browser to change the navigation history
     reload => reload the page
-p-before-request => allows user to manipulate the request before it is sent to server
-p-before-action => allows user to manipulate response before the action is called 
-p-after-action or p-execute => executes after action is applied
+p-before-actions => name of a javascript function on window, called with (message, ctx) after the
+    response arrives but before any action is applied, so the response can be inspected or changed
+p-after-actions => name of a javascript function on window, called with (message, ctx) after the
+    actions have been applied to the dom
+
+p-target and p-actions are sent to the server as request headers and are readable there as
+%request!p-target% and %request!p-actions%. p-before-actions and p-after-actions are handled on the
+client only and are never sent.
+
+Any other p-* attribute is passed through to the server as a request header of the same name.
+Because of that a misspelled attribute does not fail, it just silently does nothing on the client -
+so the names above have to match exactly. In particular the actions attributes are plural:
+p-actions, p-before-actions, p-after-actions.
 
 Here is an example of loading a page
 
@@ -95,6 +106,25 @@ We can overwrite the target on the server side, or as in this case, we use the t
 
 
 ```html
-<a href="notification" p-target="#notification" p-action="show focus" p-execute="afterAction">Show notification</a>
+<a href="notification" p-target="#notification" p-actions="show focus" p-after-actions="afterAction">Show notification</a>
 ```
 
+afterAction is a function on window, it runs once the response has been rendered into #notification
+
+```html
+<script>
+function afterAction(message, ctx) {
+    // the dom has been updated at this point
+}
+</script>
+```
+
+A form works the same way, plang intercepts the submit, posts the form data in the background and
+applies the response to the target
+
+```html
+<form action="/teacher/Add" method="post" p-target="#result" p-actions="replace" p-after-actions="afterAdd">
+    <input type="text" name="name">
+    <button type="submit">Add</button>
+</form>
+```
