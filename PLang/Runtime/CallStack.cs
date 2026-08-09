@@ -1,6 +1,7 @@
 ﻿using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Events;
+using PLang.Exceptions;
 using PLang.Events.Types;
 using PLang.Models;
 using PLang.Modules;
@@ -44,20 +45,42 @@ public class CallStack
 	public int Depth => _frames.Count;
 	public bool HasFrames => !_frames.IsEmpty;
 
+	public const int MaxDepth = 1000;
+
 	public CallStackFrame EnterGoal(Goal goal, RuntimeEvent? eventBinding = null)
 	{
+		// Check before pushing: pushing first left the stack one frame over the limit, and that
+		// frame was never exited (the throw escapes before the caller's try/finally is entered),
+		// so every later ExitGoal popped somebody else's frame.
+		if (_frames.Count >= MaxDepth)
+		{
+			throw new CallStackOverflowException(
+				$"Goal call stack exceeded {MaxDepth} frames entering '{goal.GoalName}'. " +
+				$"A goal is recursing without a terminating condition. Most repeated goals: {GetRecursionChain()}",
+				goal, _frames.Count, GetRecursionChain());
+		}
+
 		var parentFrame = CurrentFrameOrNull;
 		var frame = new CallStackFrame(goal, parentFrame, eventBinding);
 
 		_frames.Push(frame);
 		SetPhase(ExecutionPhase.ExecutingGoal);
 
-		if (_frames.Count > 1000)
-		{
-			throw new Exception("1000 frames");
-		}
-
 		return frame;
+	}
+
+	/// <summary>
+	/// The goals appearing most often on the stack, which is what identifies the runaway recursion.
+	/// </summary>
+	private string GetRecursionChain(int take = 5)
+	{
+		var counts = _frames.ToArray()
+			.GroupBy(f => f.Goal?.RelativeGoalPath ?? f.Goal?.GoalName ?? "?")
+			.OrderByDescending(g => g.Count())
+			.Take(take)
+			.Select(g => $"{g.Key} x{g.Count()}");
+
+		return string.Join(", ", counts);
 	}
 
 	public CallStackFrame ExitGoal()

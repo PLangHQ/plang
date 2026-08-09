@@ -522,7 +522,28 @@ namespace PLang.Runtime
 		}
 		public async Task<(object? Variables, IError? Error)> RunGoal(Goal goal, Dictionary<string, object?> Parameters, PLangContext context, uint waitForXMillisecondsBeforeRunningGoal = 0)
 		{
-			context.CallStack.EnterGoal(goal, context.Event);
+			try
+			{
+				context.CallStack.EnterGoal(goal, context.Event);
+			}
+			catch (CallStackOverflowException ex)
+			{
+				// Return as a normal error instead of letting it escape. It used to be thrown before
+				// the try/finally below, so it bypassed the goal error handling entirely and surfaced
+				// as an opaque "UnhandledError: One or more errors occurred. (1000 frames)".
+				// No frame was pushed, so there is nothing to unwind here.
+				logger.LogError(ex, "Call stack overflow entering goal {0}", goal.GoalName);
+				return (null, new GoalError(ex.Message, goal, "CallStackOverflow", 500, ex,
+					FixSuggestion: "A goal is calling itself (or a cycle of goals) with no terminating condition. Check the condition that guards the recursive 'call goal' step."));
+			}
+
+			// Deep goal nesting otherwise grows the *native* stack. RunGoal is async, but when every
+			// await inside completes synchronously the state machine never suspends, so nested goals
+			// pile up real stack frames and the process dies with a StackOverflowException (~460 goals
+			// deep) - which .NET cannot catch, taking the whole runtime down with it. Forcing a yield
+			// every so often moves the continuation to the thread pool and resets the stack, so
+			// MaxDepth stays a logical limit instead of a race against the physical stack.
+			if (context.CallStack.Depth % 32 == 0) await Task.Yield();
 
 			if (waitForXMillisecondsBeforeRunningGoal > 0) await Task.Delay((int)waitForXMillisecondsBeforeRunningGoal);
 			
