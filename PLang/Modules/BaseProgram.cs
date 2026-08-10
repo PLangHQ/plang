@@ -527,6 +527,24 @@ namespace PLang.Modules
 			return (value, error, properties);
 		}
 
+		/// <summary>
+		/// Writes one 'write to %x%' target. When the target is a path (%user.id%, %a.b[0]%) it has to
+		/// go through the string overload, which resolves the path. The ObjectValue overload stores it
+		/// as a flat variable literally named "user.id", which %user.id% can never read because reading
+		/// walks user -> id. That is why 'write to %user.id%' silently did nothing while
+		/// 'set %user.id%' worked. Names without a path keep the previous behaviour exactly.
+		/// </summary>
+		private void PutReturnValue(string variableName, object? value, Properties? properties)
+		{
+			var name = VariableHelper.Clean(variableName);
+			if (name.Contains(".") || name.Contains("["))
+			{
+				memoryStack.Put(variableName, value, properties: properties, goalStep: goalStep);
+				return;
+			}
+			memoryStack.Put(new ObjectValue(variableName, value, properties: properties), goalStep);
+		}
+
 		private void SetReturnValue(IGenericFunction function, object? result, Properties? properties)
 		{
 			//if (function.ReturnValues == null || function.ReturnValues.Count == 0) return;
@@ -555,7 +573,7 @@ namespace PLang.Modules
 					{
 						var objectValue = objectValues[0];
 
-						memoryStack.Put(new ObjectValue(returnValues[0].VariableName, objectValue.Value, properties: properties), goalStep);
+						PutReturnValue(returnValues[0].VariableName, objectValue.Value, properties);
 					}
 					else if (returnValues.Count == 1 && objectValues.Count > 1)
 					{
@@ -564,8 +582,7 @@ namespace PLang.Modules
 						{
 							dict.AddOrReplace(ov.Name, ov.Value);
 						}
-						var objectValue = new ObjectValue(returnValues[0].VariableName, dict);
-						memoryStack.Put(objectValue, goalStep);
+						PutReturnValue(returnValues[0].VariableName, dict, properties);
 					}
 					else
 					{
@@ -580,8 +597,7 @@ namespace PLang.Modules
 							}
 							else
 							{
-								var objectValue = new ObjectValue(returnValue.VariableName, value);
-								memoryStack.Put(objectValue, goalStep);
+								PutReturnValue(returnValue.VariableName, value, properties);
 							}
 						}
 					}
@@ -598,9 +614,7 @@ namespace PLang.Modules
 				{
 					foreach (var returnValue in returnValues)
 					{
-						var ov = new ObjectValue(returnValue.VariableName, objectValue.Value, properties: objectValue.Properties);
-
-						memoryStack.Put(ov, goalStep);
+						PutReturnValue(returnValue.VariableName, objectValue.Value, objectValue.Properties);
 					}
 
 				}
