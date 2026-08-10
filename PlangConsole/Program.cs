@@ -8,14 +8,26 @@ using PLang.Runtime;
 using PLang.Utils;
 using System.Collections;
 using System.ComponentModel;
+using System.Runtime.InteropServices;
 using static PLang.Executor;
 
 
 (var builder, var runtime) = RegisterStartupParameters.Register(args);
 
+// Set by the runtime block below. Clearing KeepAlive lets Engine.KeepAlive() unwind so
+// Execute returns and container.Dispose() closes the db connections. Killing the process
+// outright (Environment.Exit / SIGKILL) can leave the sqlite files corrupted.
+Action? gracefulShutdown = null;
+
 Console.CancelKeyPress += (_, e) =>
 {
 	e.Cancel = true;
+
+	if (gracefulShutdown != null)
+	{
+		gracefulShutdown();
+		return;
+	}
 
 	Environment.Exit(0);
 };
@@ -53,7 +65,37 @@ if (runtime)
 	fileAccessHandler.GiveAccess(Environment.CurrentDirectory, Path.Join(AppContext.BaseDirectory, "os"));
 	var engine = container.GetInstance<IEngine>();
 	engine.Name = "Console";
-	
+
+	// Ctrl+C only reaches Console.CancelKeyPress when a terminal is attached, and SIGTERM
+	// (kill, systemctl stop, container stop) was not handled at all - so a running webserver
+	// could not be stopped without SIGKILL.
+	int shuttingDown = 0;
+	gracefulShutdown = () =>
+	{
+		if (Interlocked.Exchange(ref shuttingDown, 1) == 1) return;
+
+		Console.WriteLine("Shutdown signal received, stopping...");
+		context.Remove("KeepAlive");
+
+		Task.Run(async () =>
+		{
+			await Task.Delay(TimeSpan.FromSeconds(20));
+			Console.WriteLine("Shutdown did not complete in 20s, exiting.");
+			Environment.Exit(0);
+		});
+	};
+
+	using var sigTerm = PosixSignalRegistration.Create(PosixSignal.SIGTERM, ctx =>
+	{
+		ctx.Cancel = true;
+		gracefulShutdown();
+	});
+	using var sigInt = PosixSignalRegistration.Create(PosixSignal.SIGINT, ctx =>
+	{
+		ctx.Cancel = true;
+		gracefulShutdown();
+	});
+
 	var pLanguage = new Executor(container);
 	var result = pLanguage.Execute(args, ExecuteType.Runtime).GetAwaiter().GetResult();
 	if (result.Error != null)

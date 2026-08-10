@@ -246,6 +246,37 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 			return (null, new ProgramError($"object is type of '{item?.GetType()}'. Not sure how I should find {contains} in it.{ErrorReporting.CreateIssueNotImplemented}"));
 		}
 
+		[Description("isNot property reverse true to false, example: `if %name% starts with \"john\" then`, `if %source% starts with \"t\" then call goal Track`, `if %name% does not start with \"bill\"` (isNot=true). Use ignoreCase=true to compare case insensitive.")]
+		public async Task<(object?, IError?)> StartsWith(object? item, string startsWith, bool isNot = false, bool ignoreCase = false,
+			GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+		{
+			bool? result = null;
+			var comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+
+			if (item == null) result = false;
+
+			if (item is ObjectValue ov) item = ov.Value;
+
+			if (item is string str)
+			{
+				result = str.StartsWith(startsWith, comparison);
+			}
+			else if (item is JValue jValue)
+			{
+				result = jValue.ToString().StartsWith(startsWith, comparison);
+			}
+
+			if (result == null)
+			{
+				return (null, new ProgramError($"object is type of '{item?.GetType()}'. Not sure how I should check if it starts with {startsWith}.{ErrorReporting.CreateIssueNotImplemented}"));
+			}
+
+			if (isNot) result = !result;
+
+			return await ExecuteResult(result.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+		}
+
 		private bool IsEmptyCheck(object? item)
 		{
 			if (item == null) return true;
