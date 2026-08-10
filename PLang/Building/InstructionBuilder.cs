@@ -1,5 +1,4 @@
-﻿
-using Jil;
+﻿using Jil;
 using Microsoft.Extensions.Logging;
 using Namotion.Reflection;
 using NBitcoin;
@@ -26,6 +25,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using static PLang.Modules.BaseBuilder;
 
 
@@ -269,7 +269,7 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 			logger.LogDebug($"    - Running 'Builder{gf.Name}' - {stopwatch.ElapsedMilliseconds}");
 
 			var runtime = typeHelper.GetRuntimeType(goalStep.ModuleType);
-			var error = ValidateRuntimeAttributes(runtime, gf);
+			var error = ValidateRuntimeAttributes(runtime, gf, goalStep);
 			if (error != null) return (instruction, error);
 
 			var builder = typeHelper.GetBuilderType(goalStep.ModuleType);
@@ -360,21 +360,54 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 				return (instruction, null);
 		}
 
-		private IBuilderError? ValidateRuntimeAttributes(Type runtime, IGenericFunction gf)
+		private IBuilderError? ValidateRuntimeAttributes(Type runtime, IGenericFunction gf, GoalStep? goalStep = null)
 		{
 			if (string.IsNullOrEmpty(gf.Name) || gf.Name.Equals("n/a", StringComparison.OrdinalIgnoreCase)) return null;
 			var runtimeMethods = runtime.GetMethods().Where(p => p.Name.Equals(gf.Name));
 			var runtimeMethod = runtimeMethods.FirstOrDefault();
 
 			if (runtimeMethod == null) return new BuilderError($"Method {gf.Name} could not be found in {runtime.FullName}");
+
+			var missingReturn = ValidateWriteToHasReturnValue(gf, goalStep);
+			if (missingReturn != null) return missingReturn;
+
 			if (!runtimeMethod.CustomAttributes.Any()) return null;
-			 
+
 			var returnRequired = runtimeMethod.CustomAttributes.FirstOrDefault(p => p.AttributeType == typeof(ReturnRequired)) != null;
 			if (returnRequired && (gf.ReturnValues == null || gf.ReturnValues.Count == 0))
 			{
 				return new BuilderError("This step must have ReturnValues");
 			}
 			return null;
+		}
+
+		// "write to %var%" in the step text means the value must be assigned to that variable. When
+		// ReturnValues comes back empty the step still runs and computes the right value, but stores
+		// it nowhere - the variable stays empty and the goal silently takes the wrong branch. Nothing
+		// fails, so the broken .pr gets committed and runs forever. Catch it at build time instead.
+		private IBuilderError? ValidateWriteToHasReturnValue(IGenericFunction gf, GoalStep? goalStep)
+		{
+			if (gf.ReturnValues != null && gf.ReturnValues.Count > 0) return null;
+
+			var text = goalStep?.Text;
+			if (string.IsNullOrEmpty(text)) return null;
+
+			// "write %list% to file.csv" / "write out to system" write somewhere else, not to a variable
+			if (Regex.IsMatch(text, @"write\s+(out\s+)?%", RegexOptions.IgnoreCase)) return null;
+
+			// "on error write to %error%" captures an error, it is not the function's return value
+			if (Regex.IsMatch(text, @"on\s+error\s+write\s+to\s+%", RegexOptions.IgnoreCase)) return null;
+
+			var match = Regex.Match(text, @"write\s+to\s+(%[a-zA-Z0-9_\.\[\]]+%)", RegexOptions.IgnoreCase);
+			if (!match.Success) return null;
+
+			var variable = match.Groups[1].Value;
+			return new BuilderError(
+				$"The step says \"write to {variable}\", so the result of {gf.Name} must be assigned to that variable, " +
+				$"but you returned no ReturnValues. Rebuild the function with ReturnValues set, e.g. " +
+				$"\"ReturnValues\": [{{ \"Type\": \"object\", \"VariableName\": \"{variable.Trim('%')}\" }}]. " +
+				$"Do not drop it: without ReturnValues the step runs and throws the value away, leaving {variable} empty.",
+				FixSuggestion: $"Set ReturnValues to the variable {variable} named in the step text.");
 		}
 
 		public async Task<(Instruction Instruction, IBuilderError? Error)> ValidateGoalToCall(GoalStep goalStep, Instruction instruction)
