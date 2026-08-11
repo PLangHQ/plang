@@ -637,6 +637,17 @@ Be concise"));
 				var setupCache = await appCache.Get(setupHashKey);
 				if (value.ToString() != setupCache?.ToString())
 				{
+					// Foreign keys OFF before the transaction opens. A setup file that rebuilds a table has
+					// to drop the old one, and every table pointing at it blocks that - in rafbokin orders
+					// is referenced by orderItems, which is referenced by codes. SQLite's own recipe for
+					// rebuilding a table is to disable foreign keys around the work, and the pragma is
+					// ignored while a transaction is open, so it has to happen here. This connection is
+					// used for setup only and is closed right after, so nothing else sees it.
+					using (var fkOff = connection.CreateCommand())
+					{
+						fkOff.CommandText = "PRAGMA foreign_keys = OFF;";
+						fkOff.ExecuteNonQuery();
+					}
 					var transaction = await connection.BeginTransactionAsync();
 					try
 					{
