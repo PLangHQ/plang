@@ -767,25 +767,27 @@ Be concise"));
 					List<string> ignoreErrorMessages = ["already exists", "duplicate column name"];
 					if (!ignoreErrorMessages.Any(p => ex.Message.Contains(p)))
 					{
-						// Log as well as return. A setup step that fails rolls the whole migration back and
-						// leaves the database silently on an older schema, and callers of GetDataSource are
-						// several layers up - in rafbokin a migration failed on every user database for nine
-						// months without producing a single entry anywhere. Whatever the caller does with the
-						// error, the operator gets to see this one.
+						// Throw, do not return. A setup step that fails rolls the whole migration back and
+						// leaves the database on an older schema, and returning an IError here put the
+						// decision in the hands of callers several layers up - in rafbokin a migration
+						// failed on every user database for nine months without producing a single entry
+						// anywhere, and the first sign of it was a customer's invoice printing a refund as
+						// a charge. A schema that did not migrate is not something an app may continue on.
 						logger.LogError(ex, "Setup step failed for datasource {DataSource} in {Step}: {Message}. SQL: {Sql}",
 							name, step.RelativePrPath, ex.Message, sql.ReplaceLineEndings(" ").MaxLength(300));
-						return new StepError(ex.Message + @$" while running {sql.ReplaceLineEndings(" ").MaxLength(150)}", step, Exception: ex);
+						throw new Exception($"Setup failed for datasource '{name}' in {step.RelativePrPath}: {ex.Message}"
+							+ $" while running {sql.ReplaceLineEndings(" ").MaxLength(150)}", ex);
 					}
 
 					int i = 0;
 					// Error code 1 = "table already exists" in most cases
 					// Ignore and continue
 				}
-				catch (Exception ex)
+				catch (Exception ex) when (ex is not Microsoft.Data.Sqlite.SqliteException)
 				{
 					logger.LogError(ex, "Setup step failed for datasource {DataSource} in {Step}: {Message}",
 						name, step.RelativePrPath, ex.Message);
-					return new StepError(ex.Message, step, Exception: ex);
+					throw new Exception($"Setup failed for datasource '{name}' in {step.RelativePrPath}: {ex.Message}", ex);
 				}
 			}
 
