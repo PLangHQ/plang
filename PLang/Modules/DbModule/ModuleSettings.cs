@@ -724,7 +724,11 @@ Be concise"));
 		private async Task<IError?> ExecuteSetup(DbTransaction transaction, string name)
 		{
 			var setupGoal = prParser.GetAllGoals().FirstOrDefault(p => p.DataSourceName != null && p.DataSourceName.Equals(name));
-			if (setupGoal == null) return new Error($"Could not find setup file matching datasource {name}"); ;
+			if (setupGoal == null)
+			{
+				logger.LogError("No setup goal matches datasource {DataSource}, so its schema is never migrated", name);
+				return new Error($"Could not find setup file matching datasource {name}");
+			}
 
 
 			foreach (var step in setupGoal.GoalSteps)
@@ -763,6 +767,13 @@ Be concise"));
 					List<string> ignoreErrorMessages = ["already exists", "duplicate column name"];
 					if (!ignoreErrorMessages.Any(p => ex.Message.Contains(p)))
 					{
+						// Log as well as return. A setup step that fails rolls the whole migration back and
+						// leaves the database silently on an older schema, and callers of GetDataSource are
+						// several layers up - in rafbokin a migration failed on every user database for nine
+						// months without producing a single entry anywhere. Whatever the caller does with the
+						// error, the operator gets to see this one.
+						logger.LogError(ex, "Setup step failed for datasource {DataSource} in {Step}: {Message}. SQL: {Sql}",
+							name, step.RelativePrPath, ex.Message, sql.ReplaceLineEndings(" ").MaxLength(300));
 						return new StepError(ex.Message + @$" while running {sql.ReplaceLineEndings(" ").MaxLength(150)}", step, Exception: ex);
 					}
 
@@ -772,6 +783,8 @@ Be concise"));
 				}
 				catch (Exception ex)
 				{
+					logger.LogError(ex, "Setup step failed for datasource {DataSource} in {Step}: {Message}",
+						name, step.RelativePrPath, ex.Message);
 					return new StepError(ex.Message, step, Exception: ex);
 				}
 			}
