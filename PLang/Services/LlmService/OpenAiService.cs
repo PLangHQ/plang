@@ -42,9 +42,38 @@ namespace PLang.Services.OpenAi
 		}
 
 
+		// gpt-5.x and the o-series take a different request shape. Checked against the api rather
+		// than assumed - LlmRequest defaults temperature, top_p and the penalties to 0, and of those:
+		//   max_tokens          -> rejected, wants max_completion_tokens
+		//   temperature 0       -> rejected, "only the default (1) value is supported"
+		//   top_p 0             -> rejected
+		//   penalties 0         -> accepted
+		// so temperature and top_p are left out entirely and the model uses its own defaults.
+		// PLangLlmService already switched the token parameter for o-models; this is the same rule
+		// for the openai service, extended to gpt-5. gpt-4o accepts max_completion_tokens as well,
+		// so nothing in use today changes shape unnecessarily.
+		protected static bool UsesCompletionTokenSchema(string? model)
+		{
+			if (string.IsNullOrEmpty(model)) return false;
+
+			return model.StartsWith("gpt-5", StringComparison.OrdinalIgnoreCase)
+				|| model.StartsWith("o", StringComparison.OrdinalIgnoreCase);
+		}
+
 		// Overridable so subclasses (e.g. PoolsideService) can change model/params without duplicating Query.
 		protected virtual string BuildRequestBody(LlmRequest question)
 		{
+			if (UsesCompletionTokenSchema(question.model))
+			{
+				return $@"{{
+		""model"":""{question.model}"",
+		""max_completion_tokens"":{question.maxLength},
+		""frequency_penalty"":{question.frequencyPenalty.ToString(CultureInfo.InvariantCulture)},
+		""presence_penalty"":{question.presencePenalty.ToString(CultureInfo.InvariantCulture)},
+		""messages"":{JsonConvert.SerializeObject(question.promptMessage)}
+			}}";
+			}
+
 			return $@"{{
 		""model"":""{question.model}"",
 		""temperature"":{question.temperature.ToString(CultureInfo.InvariantCulture)},

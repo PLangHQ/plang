@@ -863,7 +863,15 @@ namespace PLang.Modules.DbModule
 					foreach (var prop in sqlParameters)
 					{
 
-						if (prop.TypeFullName == typeof(System.Array).FullName)
+						// Expand a list into one parameter per item, so "where id in %list%" works.
+						// This used to key only on the declared TypeFullName, which the builder has to
+						// guess: it wrote System.Object for "where vbid in %siblings.vbid%", the whole
+						// list was then bound as a single value and the query silently matched nothing.
+						// Trust what the value actually is at runtime instead. byte[] is an IList but is
+						// a single binary value, not a list of parameters.
+						bool isListValue = prop.VariableNameOrValue is IList && prop.VariableNameOrValue is not byte[];
+
+						if (prop.TypeFullName == typeof(System.Array).FullName || isListValue)
 						{
 							if (prop.VariableNameOrValue == null || string.IsNullOrEmpty(prop.VariableNameOrValue.ToString()))
 							{
