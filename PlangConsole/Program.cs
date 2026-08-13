@@ -47,6 +47,10 @@ if (builder)
 	{
 		var logger = container.GetInstance<ILogger>();
 		logger.LogError(result.Error.ToString());
+
+		// A failed build used to exit 0, so `plang build && deploy` deployed a broken app and CI
+		// stayed green. The build summary is printed by the builder; this makes it machine readable.
+		Environment.ExitCode = 1;
 	}
 
 	container.Dispose();

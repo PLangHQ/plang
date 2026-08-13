@@ -133,13 +133,15 @@ namespace PLang
 			if (executeType == ExecuteType.Builder)
 			{
 				AppContext.SetSwitch(ReservedKeywords.DetailedError, true);
-				await Build(args);
+				var buildError = await Build(args);
 				if (watch)
 				{
 					WatchFolder(fileSystem.GoalsPath, "*.goal");
 					Console.Read();
 				}
-				return (null, null);
+				// Was `return (null, null)` - the build errors were discarded here, so the console
+				// exited 0 on a failed build and CI or a deploy script had no way to notice.
+				return (null, buildError);
 			}
 
 			if (watch)
@@ -259,7 +261,7 @@ namespace PLang
 
 		}
 
-		public async Task Build(string[]? args)
+		public async Task<IError?> Build(string[]? args)
 		{
 
 			PLangContext context = null;
@@ -287,18 +289,26 @@ namespace PLang
 					{
 						await this.engine.GetEventRuntime().AppErrorEvents(error);
 					}
+
+					// Handed back so the caller can exit non-zero. The events above only notify;
+					// they do not tell the process that the build did not succeed.
+					if (errors.Count == 1) return errors[0];
+
+					var multiple = new MultipleError(errors[0], $"{errors.Count} steps did not build");
+					for (int i = 1; i < errors.Count; i++) multiple.Add(errors[i]);
+					return multiple;
 				}
-				else
-				{
-					prParser.LoadAllGoals(true);
-				}
+
+				prParser.LoadAllGoals(true);
 			}
 			catch (Exception ex)
 			{
 				var error = new ExceptionError(ex);
 
 				await this.engine.GetEventRuntime().AppErrorEvents(error);
+				return error;
 			}
+			return null;
 		}
 		public async Task<(IEngine? Engine, object? Variables, IError? Error)> Build2(string[] args)
 		{

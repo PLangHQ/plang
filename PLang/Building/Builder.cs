@@ -159,6 +159,7 @@ namespace PLang.Building
 				}
 
 				ReleaseDatabase();
+				AddErrorsForStepsWithoutPr(goals);
 				ShowBuilderErrors(goals, stopwatch);
 				
 
@@ -231,6 +232,30 @@ namespace PLang.Building
 
 		}
 
+		// A step can end up without a .pr without anything being added to BuildErrors - the build is
+		// abandoned part way through a goal, and what is left on disk is a Goal.pr whose steps point at
+		// files that were never written. Nothing complained, and the goal only broke when it was run.
+		// So the state on disk is checked directly rather than trusting that every failure reported itself.
+		private void AddErrorsForStepsWithoutPr(List<Goal> goals)
+		{
+			foreach (var goal in goals)
+			{
+				foreach (var step in goal.GoalSteps)
+				{
+					if (!string.IsNullOrEmpty(step.PrFileName)) continue;
+					if (goalBuilder.BuildErrors.Any(p => p.Step == step)) continue;
+
+					goalBuilder.AddToBuildErrors(new BuilderError(
+						"Step has no .pr file - it was never built. Run the build again; if it keeps happening the step text is what the builder could not map to a module.",
+						Key: "StepNotBuilt")
+					{
+						Step = step,
+						Goal = goal
+					});
+				}
+			}
+		}
+
 		private void ShowBuilderErrors(List<Goal> goals, Stopwatch stopwatch)
 		{
 			if (goalBuilder.BuildErrors.Count > 0)
@@ -240,8 +265,32 @@ namespace PLang.Building
 					logger.LogWarning(buildError.ToFormat().ToString());
 				}
 
-				logger.LogError($"\n\n❌ Failed to build {goalBuilder.BuildErrors.Count} steps");
+				// The detail above scrolls away in a build of any size, and the exit code used to be 0
+				// either way - so a step that never built looked exactly like a clean build until it
+				// failed at runtime with "Instruction file could not be loaded". This summary is the
+				// last thing printed: which step, in which file, and why.
+				var summary = new System.Text.StringBuilder();
+				summary.AppendLine($"\n\n❌ BUILD FAILED - {goalBuilder.BuildErrors.Count} step(s) did not build");
+				summary.AppendLine("   These steps have no .pr file and WILL fail at runtime.\n");
 
+				foreach (var buildError in goalBuilder.BuildErrors)
+				{
+					var step = buildError.Step;
+					var where = step != null
+						? $"{step.RelativeGoalPath}:{step.LineNumber}"
+						: buildError.Goal?.RelativeGoalPath ?? "(unknown goal)";
+
+					summary.AppendLine($"   {where}");
+					if (step != null && !string.IsNullOrEmpty(step.Text))
+					{
+						var stepText = step.Text.ReplaceLineEndings(" ").Trim();
+						if (stepText.Length > 120) stepText = stepText.Substring(0, 120) + "...";
+						summary.AppendLine($"       {stepText}");
+					}
+					summary.AppendLine($"       → {buildError.Message?.ReplaceLineEndings(" ").Trim()}\n");
+				}
+
+				logger.LogError(summary.ToString());
 			}
 			else
 			{
