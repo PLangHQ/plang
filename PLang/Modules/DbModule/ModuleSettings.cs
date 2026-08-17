@@ -625,6 +625,9 @@ Be concise"));
 
 				var connection = new SqliteConnection(connectionString);
 				await connection.OpenAsync();
+
+				SqliteJournalMode.EnableWal(connection);
+
 				var result = await connection.QueryFirstOrDefaultAsync("SELECT value FROM __Variables__ WHERE variable='SetupHash'");
 				if (result == null)
 				{
@@ -713,6 +716,10 @@ Be concise"));
 
 			var connection = new SqliteConnection(connectionString);
 			await connection.OpenAsync();
+
+			// Nyr grunnur faedist i "delete"; setjum haminn adur en fyrsta faerslan hefst.
+			SqliteJournalMode.EnableWal(connection);
+
 			var transaction = await connection.BeginTransactionAsync();
 			await connection.ExecuteAsync(sql, transaction: transaction);
 

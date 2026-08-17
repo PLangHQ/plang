@@ -204,6 +204,8 @@ namespace PLang.Modules.DbModule
 				dbConnection.Open();
 			}
 
+			SqliteJournalMode.EnableWal(dbConnection);
+
 			var transaction = dbConnection.BeginTransaction();
 
 			if (dbConnection is SqliteConnection)
@@ -507,6 +509,9 @@ namespace PLang.Modules.DbModule
 			}
 
 			connection.Open();
+
+			SqliteJournalMode.EnableWal(connection);
+
 			if (connection is SqliteConnection sqliteConnection)
 			{
 
