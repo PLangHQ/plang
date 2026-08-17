@@ -661,9 +661,6 @@ OnStartingWebserver
 					var sink = context.GetSink(executeMessage.Actor);
 					error = await sink.SendAsync(executeMessage);
 					if (error != null) return error;
-
-					return new EndGoal(true, goal, goalStep, "Redirect", (permanent) ? 301 : 302);
-
 				}
 				else if (!isFlushed && !response.HasStarted)
 				{
@@ -671,8 +668,6 @@ OnStartingWebserver
 					await response.Body.FlushAsync();
 					await response.CompleteAsync();
 					hos.IsComplete = true;
-
-					return new EndGoal(true, goal, goalStep, "Redirect", (permanent) ? 301 : 302);
 				}
 			}
 		}
