@@ -11,7 +11,9 @@ using PLang.Runtime;
 using PLang.Services.OutputStream.Messages;
 using PLang.Services.OutputStream.Sinks;
 using PLang.Utils;
+using Microsoft.Net.Http.Headers;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using UAParser;
@@ -440,6 +442,39 @@ namespace PLang.Modules.WebserverModule
 
 
 
+		/// <summary>
+		/// Does the client already hold this exact version of the file?
+		/// </summary>
+		/// <remarks>
+		/// If-None-Match wins outright when present, per RFC 9110: it is an exact comparison,
+		/// where If-Modified-Since is only a timestamp and cannot see two edits in one second.
+		/// Both are checked because a browser sends whichever validator it was given.
+		/// </remarks>
+		private static bool IsNotModified(HttpRequest request, string etag, DateTimeOffset lastModified)
+		{
+			var ifNoneMatch = request.Headers[HeaderNames.IfNoneMatch].ToString();
+			if (!string.IsNullOrEmpty(ifNoneMatch))
+			{
+				// A client may send several, and "*" means any representation.
+				foreach (var candidate in ifNoneMatch.Split(','))
+				{
+					var value = candidate.Trim();
+					if (value == "*" || value == etag) return true;
+				}
+				return false;
+			}
+
+			var ifModifiedSince = request.Headers[HeaderNames.IfModifiedSince].ToString();
+			if (!string.IsNullOrEmpty(ifModifiedSince)
+				&& DateTimeOffset.TryParse(ifModifiedSince, CultureInfo.InvariantCulture,
+					DateTimeStyles.AdjustToUniversal, out var since))
+			{
+				return lastModified <= since;
+			}
+
+			return false;
+		}
+
 		private async Task<IError?> ProcessGeneralRequest(HttpContext httpContext)
 		{
 			var requestedFile = httpContext.Request.Path.Value;
@@ -459,6 +494,42 @@ namespace PLang.Modules.WebserverModule
 			if (!fileSystem.File.Exists(filePath))
 			{
 				httpContext.Response.StatusCode = 404;
+				return null;
+			}
+
+			// Static files went out with no Last-Modified, no ETag and no Cache-Control, so a
+			// browser had nothing to validate against and fell back to its own heuristic. Each
+			// file then aged independently, which is how a page ends up running a fresh module
+			// against a stale one it imports. Seen in production on rafbokin.is: a new Plang.js
+			// calling storeTier() on a cached ECDSASigner.js that predated the method.
+			//
+			// "no-cache" does not mean do not cache, it means cache but revalidate. With a
+			// validator present the repeat cost is a 304 with no body, so this is cheaper than
+			// today for unchanged files and, unlike today, never serves a stale mix.
+			var fileInfo = fileSystem.FileInfo.New(filePath);
+			var lastModified = new DateTimeOffset(fileInfo.LastWriteTimeUtc).ToUniversalTime();
+			// Truncate to whole seconds: HTTP dates have no sub-second precision, so comparing
+			// an untruncated timestamp against the header the browser echoes back never matches
+			// and every request would be a miss.
+			lastModified = lastModified.AddTicks(-(lastModified.Ticks % TimeSpan.TicksPerSecond));
+			var etag = $"W/\"{lastModified.ToUnixTimeSeconds():x}-{fileInfo.Length:x}\"";
+
+			if (!httpContext.Response.HasStarted)
+			{
+				httpContext.Response.Headers[HeaderNames.ETag] = etag;
+				httpContext.Response.Headers[HeaderNames.LastModified] = lastModified.ToString("R");
+				httpContext.Response.Headers[HeaderNames.CacheControl] = "no-cache";
+			}
+
+			if (IsNotModified(httpContext.Request, etag, lastModified))
+			{
+				// A 304 must not carry a body, and must not claim a length it will not send.
+				httpContext.Response.StatusCode = StatusCodes.Status304NotModified;
+				httpContext.Response.Headers.Remove(HeaderNames.ContentLength);
+				// Complete it here. The caller sets 200 on any response that has not started
+				// yet, and a bodyless reply never starts on its own, so without this the 304
+				// is silently rewritten to 200 and the file is sent after all.
+				await httpContext.Response.CompleteAsync();
 				return null;
 			}
 
