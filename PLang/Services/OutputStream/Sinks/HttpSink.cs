@@ -67,12 +67,20 @@ public sealed class HttpSink : IOutputSink
 			response.StatusCode = m.StatusCode == 0 ? 200 : m.StatusCode;
 			response.ContentType = $"{_transformer.ContentType}; charset={_transformer.Encoding.WebName}";
 
+			// One URL, two bodies (HTML or plang stream) chosen by Accept.
+			response.Headers.Vary = "Accept";
+
 			if (_transformer is PlangTransformer)
 			{
 				response.Headers.CacheControl = "no-cache, no-store, must-revalidate";
 				response.Headers.Pragma = "no-cache";
 				response.Headers.Expires = "0";
 				response.Headers["X-Accel-Buffering"] = "no";
+			}
+			else
+			{
+				// A rendered page is per visitor: identity, cart, role.
+				response.Headers.CacheControl = "no-cache";
 			}
 		}
 
