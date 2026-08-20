@@ -14,6 +14,7 @@ using PLang.Utils;
 using Microsoft.Net.Http.Headers;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using UAParser;
@@ -475,6 +476,22 @@ namespace PLang.Modules.WebserverModule
 			return false;
 		}
 
+		/// <summary>Removes one `vN` path segment, or null if there is none.</summary>
+		private static string? StripVersionSegment(string path)
+		{
+			var sep = System.IO.Path.DirectorySeparatorChar;
+			var parts = path.Split(sep, '/');
+			for (int i = 0; i < parts.Length - 1; i++)
+			{
+				var p = parts[i];
+				if (p.Length < 2 || (p[0] != 'v' && p[0] != 'V')) continue;
+				if (!p.Skip(1).All(char.IsLetterOrDigit)) continue;
+				if (!p.Skip(1).Any(char.IsDigit)) continue;
+				return string.Join(sep, parts.Where((_, j) => j != i));
+			}
+			return null;
+		}
+
 		private async Task<IError?> ProcessGeneralRequest(HttpContext httpContext)
 		{
 			var requestedFile = httpContext.Request.Path.Value;
@@ -491,9 +508,23 @@ namespace PLang.Modules.WebserverModule
 				return new Error($"Unsupported Media Type - {httpContext.Request.Path.ToString()} | {httpContext.Request.Method} - {httpContext.Request.Headers.UserAgent}", StatusCode: 415);
 			}
 
+			// /js/app/v7/main.js -> /js/app/main.js. A version segment in the PATH (not the query)
+			// is inherited by relative imports, so one bump breaks every cached module together.
 			if (!fileSystem.File.Exists(filePath))
 			{
+				var unversioned = StripVersionSegment(requestedFile);
+				if (unversioned != null)
+				{
+					var candidate = fileSystem.Path.Join(fileSystem.GoalsPath!, unversioned);
+					if (fileSystem.File.Exists(candidate)) filePath = candidate;
+				}
+			}
+
+			if (!fileSystem.File.Exists(filePath))
+			{
+				// Complete it, or the caller's "no error means 200" turns this into an empty 200.
 				httpContext.Response.StatusCode = 404;
+				await httpContext.Response.CompleteAsync();
 				return null;
 			}
 
