@@ -28,6 +28,7 @@ using PLang.Services.OutputStream.Sinks;
 using PLang.Utils;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO.Abstractions;
 using System.IO.Compression;
 using System.Net;
@@ -207,6 +208,12 @@ public class Program : BaseProgram, IDisposable
 		}
 
 
+		// Pin the culture the webserver started with and set it on every request. `set culture` has to
+		// write CultureInfo.DefaultThreadCurrentCulture to survive from one goal step to the next, and
+		// that is process wide, so without this a scheduled goal changes number and date formatting for
+		// every visitor until the next restart.
+		var webserverCulture = CultureInfo.CurrentCulture;
+
 		var builder = Host.CreateDefaultBuilder()
 			.ConfigureLogging(l => l.ClearProviders())
 			.ConfigureWebHostDefaults(web =>
@@ -283,6 +290,9 @@ public class Program : BaseProgram, IDisposable
 					app.UseResponseCompression();
 					app.Run(async httpContext =>
 					{
+						CultureInfo.CurrentCulture = webserverCulture;
+						CultureInfo.CurrentUICulture = webserverCulture;
+
 						IEngine? requestEngine = null;
 						IError? error = null;
 						bool poll = false;
