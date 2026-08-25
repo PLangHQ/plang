@@ -62,47 +62,56 @@ public sealed class HttpSink : IOutputSink
 		if (error != null) return error;
 		if (response is null || !response.Body.CanWrite || IsComplete) return null;
 
-		if (!wasFlushed && !response.HasStarted && response.StatusCode == 200)
-		{
-			response.StatusCode = m.StatusCode == 0 ? 200 : m.StatusCode;
-			response.ContentType = $"{_transformer.ContentType}; charset={_transformer.Encoding.WebName}";
-
-			// One URL, two bodies (HTML or plang stream) chosen by Accept.
-			response.Headers.Vary = "Accept";
-
-			if (_transformer is PlangTransformer)
-			{
-				response.Headers.CacheControl = "no-cache, no-store, must-revalidate";
-				response.Headers.Pragma = "no-cache";
-				response.Headers.Expires = "0";
-				response.Headers["X-Accel-Buffering"] = "no";
-			}
-			else
-			{
-				// A rendered page is per visitor: identity, cart, role.
-				response.Headers.CacheControl = "no-cache";
-			}
-		}
-
-		m = BuildResponseProperties(m);
-
-		var writer = response.BodyWriter;
-
-		(var length, error) = await _transformer.Transform(context, writer, m);
-		if (error != null) return error;
+		var gate = ResponseWriteLock.For(response);
+		await gate.WaitAsync(ct);
 		try
 		{
-			if (writer.UnflushedBytes > 0)
+			if (!wasFlushed && !response.HasStarted && response.StatusCode == 200)
 			{
-				await writer.FlushAsync(ct);
-			}
-		} catch (Exception ex)
-		{
-			Console.WriteLine(ex.ToString());
-		}
-		
+				response.StatusCode = m.StatusCode == 0 ? 200 : m.StatusCode;
+				response.ContentType = $"{_transformer.ContentType}; charset={_transformer.Encoding.WebName}";
 
-		return null;
+				// One URL, two bodies (HTML or plang stream) chosen by Accept.
+				response.Headers.Vary = "Accept";
+
+				if (_transformer is PlangTransformer)
+				{
+					response.Headers.CacheControl = "no-cache, no-store, must-revalidate";
+					response.Headers.Pragma = "no-cache";
+					response.Headers.Expires = "0";
+					response.Headers["X-Accel-Buffering"] = "no";
+				}
+				else
+				{
+					// A rendered page is per visitor: identity, cart, role.
+					response.Headers.CacheControl = "no-cache";
+				}
+			}
+
+			m = BuildResponseProperties(m);
+
+			var writer = response.BodyWriter;
+
+			(var length, error) = await _transformer.Transform(context, writer, m);
+			if (error != null) return error;
+			try
+			{
+				if (writer.UnflushedBytes > 0)
+				{
+					await writer.FlushAsync(ct);
+				}
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex.ToString());
+			}
+
+			return null;
+		}
+		finally
+		{
+			gate.Release();
+		}
 	}
 
 	public async Task<(object? result, IError? error)> AskAsync(AskMessage m, CancellationToken ct = default)

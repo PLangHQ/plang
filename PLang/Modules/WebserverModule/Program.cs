@@ -452,10 +452,19 @@ public class Program : BaseProgram, IDisposable
 			var ct = context.RequestAborted;
 			await response.StartAsync(ct);
 
+			var gate = ResponseWriteLock.For(response);
 			while (!ct.IsCancellationRequested)
 			{
-				await response.Body.WriteAsync(buffer, 0, buffer.Length, ct);
-				await response.Body.FlushAsync(ct);
+				await gate.WaitAsync(ct);
+				try
+				{
+					await response.Body.WriteAsync(buffer, 0, buffer.Length, ct);
+					await response.Body.FlushAsync(ct);
+				}
+				finally
+				{
+					gate.Release();
+				}
 				await Task.Delay(TimeSpan.FromSeconds(20), ct);
 			}
 
