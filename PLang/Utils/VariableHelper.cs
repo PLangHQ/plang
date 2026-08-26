@@ -295,7 +295,7 @@ namespace PLang.Utils
 						var valueToSet = (variable != null) ? variable.Value : memoryStack.LoadVariables(str);
 						if (convertValueTo != null)
 						{
-							values[i] = TypeHelper.ConvertToType(valueToSet, convertValueTo);
+							values[i] = ToRecordValue(valueToSet, convertValueTo);
 						}
 						else
 						{
@@ -320,6 +320,19 @@ namespace PLang.Utils
 
 			var ctor = type.GetConstructors().First();
 			return ctor.Invoke(values);
+		}
+
+		// A record that asks for a date as text gets it in iso, not in the culture of the moment.
+		// A sql parameter takes this route, and 08/01/2026 compares against nothing in a column
+		// that holds 2026-08-01.
+		private static object? ToRecordValue(object? value, Type convertValueTo)
+		{
+			if (convertValueTo == typeof(string))
+			{
+				if (value is DateTime date) return date.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+				if (value is DateTimeOffset offset) return offset.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+			}
+			return TypeHelper.ConvertToType(value, convertValueTo);
 		}
 
 		private void LoadVariableInTextValue(JToken jobject, ObjectValue variable, MemoryStack memoryStack, object? defaultValue = null)
