@@ -295,7 +295,7 @@ namespace PLang.Utils
 						var valueToSet = (variable != null) ? variable.Value : memoryStack.LoadVariables(str);
 						if (convertValueTo != null)
 						{
-							values[i] = ToRecordValue(valueToSet, convertValueTo);
+							values[i] = ToRecordValue(valueToSet, convertValueTo, type);
 						}
 						else
 						{
@@ -322,12 +322,13 @@ namespace PLang.Utils
 			return ctor.Invoke(values);
 		}
 
-		// A record that asks for a date as text gets it in iso, not in the culture of the moment.
-		// A sql parameter takes this route, and 08/01/2026 compares against nothing in a column
-		// that holds 2026-08-01.
-		private static object? ToRecordValue(object? value, Type convertValueTo)
+		// A sql parameter that the builder declared as text gets the date in iso, not in the culture
+		// of the moment. Sqlite holds 2026-08-01 00:00:00 and compares it as text, so 08/01/2026
+		// matches nothing. Only sql parameters take this branch, every other record keeps the
+		// conversion it had.
+		private static object? ToRecordValue(object? value, Type convertValueTo, Type recordType)
 		{
-			if (convertValueTo == typeof(string))
+			if (convertValueTo == typeof(string) && recordType == typeof(Modules.DbModule.Program.ParameterInfo))
 			{
 				if (value is DateTime date) return date.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
 				if (value is DateTimeOffset offset) return offset.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
