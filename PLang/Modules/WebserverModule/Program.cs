@@ -142,7 +142,8 @@ public class Program : BaseProgram, IDisposable
 		GoalToCallInfo? OnStart = null, GoalToCallInfo? OnShutdown = null,
 		GoalToCallInfo? OnRequestBegin = null, GoalToCallInfo? OnRequestEnd = null,
 		GoalToCallInfo? OnGoalRequestBegin = null, GoalToCallInfo? OnGoalRequestEnd = null,
-		GoalToCallInfo? OnPollStart = null, GoalToCallInfo? OnPollRefresh = null, GoalToCallInfo? OnPollEnd = null
+		GoalToCallInfo? OnPollStart = null, GoalToCallInfo? OnPollRefresh = null, GoalToCallInfo? OnPollEnd = null,
+		bool RedirectWwwToApex = false
 		)
 		: IDisposable
 	{
@@ -283,6 +284,26 @@ public class Program : BaseProgram, IDisposable
 						await next();
 					});
 					app.UseForwardedHeaders();
+					if (webserverProperties.RedirectWwwToApex)
+					{
+						// Two hostnames are two origins, so localStorage, IndexedDB and therefore the
+						// plang identity do not follow the visitor from www to the apex. A user who
+						// browsed on www and came back from a payment gateway on the apex arrived as a
+						// stranger with a second identity. Canonicalise before any goal runs.
+						app.Use(async (ctx, next) =>
+						{
+							var host = ctx.Request.Host;
+							if (host.HasValue && host.Host.StartsWith("www.", StringComparison.OrdinalIgnoreCase))
+							{
+								var apex = host.Host.Substring(4);
+								var authority = host.Port.HasValue ? $"{apex}:{host.Port.Value}" : apex;
+								var target = $"{ctx.Request.Scheme}://{authority}{ctx.Request.PathBase}{ctx.Request.Path}{ctx.Request.QueryString}";
+								ctx.Response.Redirect(target, permanent: true);
+								return;
+							}
+							await next();
+						});
+					}
 					if (webserverProperties.Certificate != null)
 					{
 						app.UseHttpsRedirection();
