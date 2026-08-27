@@ -905,7 +905,7 @@ namespace PLang.Modules.WebserverModule
 			if (!string.IsNullOrEmpty(request.Headers.UserAgent))
 			{
 				properties.Add(new ObjectValue("UserAgent", request.Headers.UserAgent.ToString()));
-				var clientInfo = parser.Parse(request.Headers.UserAgent, true);
+				var clientInfo = ParseUserAgent(request.Headers.UserAgent.ToString());
 
 				properties.Add(new ObjectValue("ClientInfo", clientInfo));
 			}
@@ -913,7 +913,73 @@ namespace PLang.Modules.WebserverModule
 			return properties;
 		}
 
-		static Parser parser = Parser.GetDefault();
+		// uap-core's catch all spider rule is anchored to the first 100 characters of the user
+		// agent: "^.{0,100}(bot|BUbiNG|...)". Crawlers that disguise themselves as a browser push
+		// their marker past that limit and are read as an ordinary visitor. Applebot is the one
+		// that matters to us, it sits at character 119 behind "Version/17.4 Safari/605.1.15", so
+		// Device.Family came back as "Mac" and IsSpider as false. Remove the Safari token by hand
+		// and the same ruleset detects it, which is how the limit was found.
+		//
+		// These rules are prepended to the embedded ruleset, so upstream is untouched and the
+		// package can be updated without losing them. Unanchored on purpose: that is the whole
+		// point, the marker is allowed to sit anywhere in the string.
+		static readonly string[] extraSpiderRegexes = new[]
+		{
+			"(Applebot|AppleNewsBot)",
+			"(GPTBot|OAI-SearchBot|ChatGPT-User|ClaudeBot|Claude-Web|anthropic-ai|PerplexityBot|Bytespider|Amazonbot|meta-externalagent)",
+		};
+
+		static Parser parser = BuildParser();
+
+		static Parser BuildParser()
+		{
+			// A user agent parser that throws takes every request with it, so a failure here has
+			// to fall back rather than propagate. The embedded ruleset is what GetDefault uses.
+			try
+			{
+				using var stream = typeof(Parser).Assembly.GetManifestResourceStream("UAParser.regexes.json");
+				if (stream == null) return Parser.GetDefault();
+
+				using var reader = new StreamReader(stream);
+				var root = System.Text.Json.Nodes.JsonNode.Parse(reader.ReadToEnd())?.AsObject();
+				var devices = root?["device_parsers"]?.AsArray();
+				if (root == null || devices == null) return Parser.GetDefault();
+
+				for (int i = extraSpiderRegexes.Length - 1; i >= 0; i--)
+				{
+					devices.Insert(0, new System.Text.Json.Nodes.JsonObject
+					{
+						["regex"] = extraSpiderRegexes[i],
+						["regex_flag"] = "i",
+						["device_replacement"] = "Spider",
+						["brand_replacement"] = "Spider",
+						["model_replacement"] = "Desktop",
+					});
+				}
+
+				return Parser.FromJson(root.ToJsonString(), null);
+			}
+			catch
+			{
+				return Parser.GetDefault();
+			}
+		}
+
+		// Parser.FromJson has no overload that takes an IMemoryCache, only GetDefault does, so
+		// Parse must be called with useCache false or it dereferences a null cache and throws on
+		// every request. Parsing runs 633 device rules, so it is worth caching, and this keeps
+		// that without depending on the library's own cache.
+		static readonly System.Collections.Concurrent.ConcurrentDictionary<string, UAParser.Objects.ClientInfo> uaCache = new();
+
+		static UAParser.Objects.ClientInfo ParseUserAgent(string userAgent)
+		{
+			if (uaCache.TryGetValue(userAgent, out var cached)) return cached;
+
+			var info = parser.Parse(userAgent, false);
+			// Bounded so a stream of junk user agents cannot grow it without limit.
+			if (uaCache.Count < 5000) uaCache.TryAdd(userAgent, info);
+			return info;
+		}
 
 	}
 }
