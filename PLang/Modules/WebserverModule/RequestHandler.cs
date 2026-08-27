@@ -895,7 +895,7 @@ namespace PLang.Modules.WebserverModule
 
 			foreach (var item in request.Headers)
 			{
-				properties.Add(new ObjectValue(item.Key, item.Value));
+				properties.Add(new ObjectValue(item.Key, item.Value.ToString()));
 			}
 
 			request.Headers.TryGetValue("X-Requested-With", out var ajax);
@@ -904,7 +904,7 @@ namespace PLang.Modules.WebserverModule
 
 			if (!string.IsNullOrEmpty(request.Headers.UserAgent))
 			{
-				properties.Add(new ObjectValue("UserAgent", request.Headers.UserAgent));
+				properties.Add(new ObjectValue("UserAgent", request.Headers.UserAgent.ToString()));
 				var clientInfo = parser.Parse(request.Headers.UserAgent, true);
 
 				properties.Add(new ObjectValue("ClientInfo", clientInfo));
