@@ -80,6 +80,23 @@ namespace PLang.Building.Parsers
 			return eventGoals;
 		}
 
+		/// <summary>
+		/// Whether a path sits inside a directory, comparing path segments and not raw text.
+		///
+		/// StartsWith on its own reads "/x/plang-ref/..." as being inside "/x/plang", because
+		/// "plang-ref" begins with "plang". That made every system goal look like an app goal
+		/// whenever the app folder name was a text prefix of the runtime folder name, so the
+		/// system goal's .pr was then looked for under the app and never found.
+		/// </summary>
+		private bool IsInside(string path, string directory)
+		{
+			if (string.IsNullOrEmpty(directory)) return false;
+
+			var separator = fileSystem.Path.DirectorySeparatorChar;
+			var dir = directory.TrimEnd(separator) + separator;
+			return path.StartsWith(dir, StringComparison.Ordinal);
+		}
+
 		public virtual Goal? ParsePrFile(string absolutePrFilePath)
 		{
 			if (!absolutePrFilePath.Contains(".pr"))
@@ -93,7 +110,7 @@ namespace PLang.Building.Parsers
 				return null;
 			}
 			var appAbsoluteStartupPath = fileSystem.RootDirectory;
-			if (!absolutePrFilePath.StartsWith(fileSystem.RootDirectory))
+			if (!IsInside(absolutePrFilePath, fileSystem.RootDirectory))
 			{
 				appAbsoluteStartupPath = absolutePrFilePath.Substring(0, absolutePrFilePath.IndexOf(".build"));
 			}
@@ -143,7 +160,7 @@ namespace PLang.Building.Parsers
 			goal.AbsolutePrFolderPath = fileSystem.Path.GetFullPath(fileSystem.Path.Join(appAbsoluteStartupPath, goal.RelativePrFolderPath));
 
 			AdjustPathsToOS(goal);
-			goal.IsSystem = absolutePrFilePath.Contains(fileSystem.SystemDirectory);
+			goal.IsSystem = IsInside(absolutePrFilePath, fileSystem.SystemDirectory);
 
 			/* save memory */
 			goal.Description = null;
