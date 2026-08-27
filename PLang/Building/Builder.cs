@@ -331,6 +331,12 @@ namespace PLang.Building
 			List<Goal> goalsToRemove = new List<Goal>();
 			foreach (var goal in goals)
 			{
+				// ForceLoadAllGoals returns the runtime's own system goals as well as the app's.
+				// Those live under SystemDirectory, not under the app being built, so their .goal
+				// file is never found here and the orphan sweep below deleted them: building any
+				// app wiped the installed runtime's event handlers, OnAppError and the rest.
+				if (goal.IsSystem) continue;
+
 				if (!fileSystem.File.Exists(goal.AbsoluteGoalPath))
 				{
 					goalsToRemove.Add(goal);
