@@ -208,12 +208,35 @@ namespace PLang.Runtime
 							var (variables, error) = await runtimeEngine.RunGoal(goalToRun, newContext, waitForXMillisecondsBeforeRunningGoal);
 							if (error != null && error is not EndGoal)
 							{
-								(_, error) = await runtimeEngine.GetEventRuntime().AppErrorEvents(error);
-
-								if (error != null)
+								// RunGoal has returned, so the goal's own frame is already popped and this
+								// context's CallStack is empty. The error events then run with no frame, and
+								// the first thing an error handler usually does is call a goal, which reads
+								// CallStack.CurrentFrame and throws "No frame on CallStack". The original
+								// error was chained to that and only ever printed, so EVERY error inside a
+								// "dont wait" goal was invisible in the error log. Measured in production:
+								// 200 to 600 an hour from one step, zero rows recorded.
+								// Cloned contexts get their own CallStack, so entering a frame here cannot
+								// touch the caller's stack.
+								var frameGoal = error.Goal ?? goalToRun;
+								var enteredFrame = false;
+								if (!newContext.CallStack.HasFrames && frameGoal != null)
 								{
-									Console.WriteLine("Error running async goal:" + error.ToString());					
-									
+									newContext.CallStack.EnterGoal(frameGoal);
+									enteredFrame = true;
+								}
+								try
+								{
+									(_, error) = await runtimeEngine.GetEventRuntime().AppErrorEvents(error);
+
+									if (error != null)
+									{
+										Console.WriteLine("Error running async goal:" + error.ToString());
+
+									}
+								}
+								finally
+								{
+									if (enteredFrame) newContext.CallStack.ExitGoal();
 								}
 
 							}
