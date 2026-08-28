@@ -177,6 +177,13 @@ Attribute: Member is the key in the SetAttribute js method, make sure to convert
 			return await sink.SendAsync(executeMessage);
 		}
 
+		[Description(@"Change the url in the address bar without loading it and without adding a history entry, e.g. ""navigate to %url%, replace state"" or ""replace state with %url%"". Set function=""replaceState"", data=""%url%""")]
+		public async Task<IError?> ReplaceState(ExecuteMessage executeMessage)
+		{
+			var sink = context.GetSink(executeMessage.Actor);
+			return await sink.SendAsync(executeMessage);
+		}
+
 		[Description(@"Set ExecuteMessage.Actions=""show""")]
 		public async Task<IError?> ShowElement(ExecuteMessage executeMessage)
 		{
