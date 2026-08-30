@@ -874,7 +874,14 @@ namespace PLang.Modules.DbModule
 						// list was then bound as a single value and the query silently matched nothing.
 						// Trust what the value actually is at runtime instead. byte[] is an IList but is
 						// a single binary value, not a list of parameters.
-						bool isListValue = prop.VariableNameOrValue is IList && prop.VariableNameOrValue is not byte[];
+						// A JSON object is the same trap: Newtonsoft JObject inherits JContainer, which
+						// implements IList, so a map read out of a query looked like a parameter list and
+						// was expanded into one parameter per value. That turned json_each(@map) into
+						// json_each(@a, @b, @c, ...) and the query failed at prepare time. Only a JSON
+						// array is a list of values; an object and a scalar are single values.
+						bool isJsonObjectOrScalar = prop.VariableNameOrValue is JObject || prop.VariableNameOrValue is JValue;
+						bool isListValue = prop.VariableNameOrValue is IList && prop.VariableNameOrValue is not byte[]
+							&& !isJsonObjectOrScalar;
 
 						if (prop.TypeFullName == typeof(System.Array).FullName || isListValue)
 						{
