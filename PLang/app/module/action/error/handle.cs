@@ -112,7 +112,7 @@ public partial class Handle : IContext, IModifier
                         if (erroredCall != null) erroredCall.Handled = true;
                         return recoveryResult;
                     }
-                    result.Error!.ErrorChain.Add(recoveryResult.Error!);
+                    result.Error!.list.Add(recoveryResult.Error!);
                 }
                 var retryResult = await Retry(next, context);
                 if (retryResult?.Success == true) return retryResult;
@@ -129,7 +129,7 @@ public partial class Handle : IContext, IModifier
                         if (erroredCall != null) erroredCall.Handled = true;
                         return recoveryResult;
                     }
-                    result.Error!.ErrorChain.Add(recoveryResult.Error!);
+                    result.Error!.list.Add(recoveryResult.Error!);
                 }
             }
 

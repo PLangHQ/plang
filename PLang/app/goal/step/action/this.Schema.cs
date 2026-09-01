@@ -27,7 +27,7 @@ public partial class @this
     /// DECLARATION, not a gate: nothing consults it before Run. Empty when the action declares
     /// nothing, so callers never null-check.</summary>
     [JsonIgnore]
-    public IEnumerable<global::app.type.item.text.@this> Requires
+    public IEnumerable<global::app.type.item.text.@this> Requirement
         => Handler?.GetCustomAttribute<global::app.Attributes.RequiresCapabilityAttribute>()
                ?.Capabilities.Select(c => new global::app.type.item.text.@this(c))
            ?? Enumerable.Empty<global::app.type.item.text.@this>();

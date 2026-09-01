@@ -1,6 +1,8 @@
 using Goal = app.goal.@this;
 using Call = app.callstack.call.@this;
 
+using Action = app.goal.step.action.@this;
+
 namespace app.error;
 
 /// <summary>
@@ -19,10 +21,16 @@ public interface IError
     Exception? Exception { get; }
 
     /// <summary>
-    /// Chain of errors that occurred during error handling.
-    /// Original error stays as root, subsequent errors are appended.
+    /// The errors that CAUSED this one — empty when nothing did. "file.read is not valid" holds
+    /// the missing parameters that made it so; an error raised while handling another holds that
+    /// one. Never null, so a reader never guards before walking it.
     /// </summary>
-    List<IError> ErrorChain { get; }
+    List<IError> list { get; }
+
+    /// <summary>
+    /// The action the error is about.
+    /// </summary>
+    Action? Action { get; set; }
 
     /// <summary>
     /// The step where the error occurred.
