@@ -111,3 +111,33 @@ Also confirmed in the write-out: the chain self-feeds (an action's `child` steps
 **For every action in a program: yes, by construction** — every door sets it at birth, all legacy stepless synthetics (goalEntry anchor, Events placeholder) are on kill lists. **For the C# property: not yet** — the blocker is the CATALOG elements: `action.@this` serves two trees (program node with a step; module-minted catalog descriptor with no program and no step). Ruling:
 - **Now:** the `Module` pattern — nullable backing, throwing getter, `init`. Reading `Step` on a catalog element throws as the bug it is; nothing reads it there today (catalog consumers read rows/prose/Return), so it is a tripwire, not a landmine.
 - **Queued as its own design question:** split the catalog element out of `action.@this` into its own descriptor type — the Schema partial is already that type riding as a partial, and the straddle keeps costing (the killed catalog `Context`, `Cacheable`, `Position`, now `Step`). When that split lands, `Step` goes truly non-null. Not this pass.
+
+
+---
+
+## ADDENDUM 3 (2026-09-01, after `to-architect-action-step-nullable.md`) — nullable accepted; the seam fix; recovery gets its OWN slot
+
+### Q1 — nullable `Step?` ACCEPTED as shipped
+Your razor is correct: `Module`'s throwing getter enforces a true invariant; `Step` has legitimate null states, so the same shape would crash on states the design allows. The enforcement was always the construction doors + deleted repair sites + `internal set` — all landed. Your doc comment naming the stepless kinds is right. Addendum 2 §3's throwing getter is WITHDRAWN. (The 466-failure count was frequency, not variety: sign-if-missing rides every `Wire.Write`, so one seam × every wire-crossing test.)
+
+### The seam fix (Ingi): an `app.Run` invocation is born knowing its CALLER
+```csharp
+// app/this.cs App.Run<TAction> — one line added to the composition:
+Step = context.CallStack.Current?.Action.Step,     // the calling action's step → its goal
+```
+Why this is NOT the rejected `context.Step` move: the rejection was about PROGRAM actions (created now, run later — displacement makes the cursor a lie). An `app.Run` invocation is **compose-and-run fused** — no displacement window, so the calling frame's chain is definitionally its provenance, same legitimacy as `Call.Push` capturing at push. Two questions, two answers: "which step do I BELONG to" = program fact, birth only; "which step INVOKED me" = run fact, cursor at the fused moment. Keep compose+run fused inside `App.Run` — the fusion is what keeps this honest; never split it into compose-here-run-later.
+- Cycle check improves: sign invocations now carry the caller's goal identity; equal paths → the boundary check correctly stays quiet.
+- Your Q2 (kill the seam / handlers run themselves) drops from necessary to QUEUED cleanup — it no longer feeds the nullable population. Do not start it.
+- `Step?` stays nullable: boot-edge invocations (no caller frame yet) and the description role (below) remain legitimately stepless.
+
+### The three-role taxonomy (Ingi's framing) — the queued split, reframed
+One class plays three roles today: (1) **program action** — in a goal, has a step, runs; (2) **description** — the module-minted catalog entry (the Schema partial is already its body, riding as a partial); (3) **invocation** — the C#-composed infra call. Ingi: the description deserves its own type — **DEFERRED, his call, do not start**. When descriptions split out and the seam cleanup lands, role 1's `Step` tightens to non-null `init` honestly.
+
+### Q3(a) — my "rule it into Child" was WRONG; recovery gets its OWN structural action-list slot
+`Child` holds AUTHORED sub-steps (condition bodies). Recovery is an action chain with no authored step — inventing a wrapper step to satisfy `Child`'s type is the manufacturing we condemned three times. The right shape: a structural **action-list slot on the action**, precedent `Modifier` (already a structural slot of actions on the wire). Payoffs intact: read at load through `Populate` with `step` in hand — recovery actions born with the ENCLOSING step (real, not invented — this also answers "what step do they have"); `action.list.Run` runs the chain (`%!data%` flow + condition support); door 2 still loses its last customer. Slot name: single word, Ingi + you settle; do NOT overload `child` to mean two shapes.
+
+### Q3(b) — no contradiction, my wording was sloppy
+`Create(step)` does not give the catalog element a step. The catalog element is the FACTORY; `step` is the PRODUCT's birth fact — "mint a program action of my kind, born into this step." The factory stays stepless.
+
+### Backlog
+The Wire-suite stack overflow (`snapshot.serializer.Default.Render` ↔ `data..ctor → type.Create`, pre-existing, aborts the suite) → `open-items.md`. Every Wire number on this branch is from a truncated run — treat Wire results as unknown until fixed.

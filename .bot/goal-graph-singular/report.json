@@ -293,6 +293,16 @@
           "category": "doc",
           "confidence": "high",
           "context": "Code write-out pass (Ingi's request) caught 4 corrections: init->internal set IS needed (addendum 1 overclaimed; shell-first readers); goal.Parent ??= is a 5th repair site; graft dict-door chain takes the parent (Create(row,data,step)); recovery-as-Child needs zero reader work (Populate already reads child on modifiers). Plus Step nullability ruling: non-null by construction for program actions; property keeps Module pattern (throwing getter) because CATALOG elements share the class; catalog/program type split queued as its own design question."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/error-model-and-backref-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Addendum 3: nullable Step? accepted (throwing getter withdrawn \u2014 coder's invariant razor + the missed compose-and-run seam); Ingi's seam fix (App.Run invocation born knowing its CALLER \u2014 compose-and-run fused makes cursor-at-composition honest, distinct from the rejected program-action cursor move); three-role taxonomy (program/description/invocation \u2014 description split deferred by Ingi); recovery gets its OWN structural action-list slot (Child ruling withdrawn \u2014 Child holds authored sub-steps); Create(step) wording clarified (factory stepless, product born with step); Wire-suite stack overflow to backlog."
         }
       ],
       "after": {
