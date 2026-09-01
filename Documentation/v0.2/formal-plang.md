@@ -39,7 +39,8 @@ body        = " { " chain " } " ;               (* the actions this call owns *)
 args        = arg { ", " arg } ;                (* the ONLY use of , *)
 arg         = ParamName "=" value ;
 
-value       = string | number | bool | variable | list | object | null ;
+value       = string | number | bool | variable | call | list | object | null ;
+                                              (* a call here is an EXPRESSION — see below *)
 string      = '"' … '"' ;                        (* quoted *)
 number      = digits [ "." digits ] ;            (* unquoted *)
 bool        = "true" | "false" ;                 (* unquoted *)
@@ -52,24 +53,34 @@ object      = "{" [ name ":" value { ", " name ":" value } ] "}" ;
 
 ### The one rule that matters
 
-> **`value` never produces a `call`.** An action is not data. It appears only where the grammar
-> puts a `call`.
+> **Every call is CONSTRUCTED at load. Only its EVALUATION is deferred.**
 
-That is the whole answer to "where can an action be inserted".
+That is the whole answer to "where can an action be inserted": anywhere the grammar puts a `call`,
+including inside a value — what may never happen is building the action lazily, at the moment it is
+first touched. A `%var%` is the model: constructed at load (a Data holding a name), evaluated on
+read. A nested call is the same — a real action, born holding its step, run when its slot is read.
 
-## Three symbols, three relationships
+Confusing the two is the live bug in `error.handle`: its recovery actions are constructed lazily,
+so nobody holds a step when they appear, so a step has to be stamped on afterwards.
 
-Each symbol means exactly one thing, and each relationship has exactly one symbol.
+## Four relationships between calls
 
-| symbol | relationship | slot on the wire |
-|---|---|---|
-| ` \| ` | **sequence** — runs next; the left's result is the right's `%!data%` | `step.action[]` |
-| ` @` | **wrap** — runs the call to its left, inside itself | `action.modifier[]` |
-| `{ … }` | **own** — the call runs these when it decides to | the call's body slot |
-| `, ` | *(not a relationship)* — next argument, inside parens only | `action.parameter[]` |
+Each has one symbol, and each symbol means one thing.
 
-Those are the only three positions an action can appear in. There is no fourth position "inside a
-parameter value", and the grammar cannot express one.
+| symbol | relationship | when the nested call runs | slot on the wire |
+|---|---|---|---|
+| ` \| ` | **pipe** — runs next; the left's result is the right's `%!data%` | in sequence | `step.action[]` |
+| ` @` | **wrap** — runs the call to its left, inside itself | around its host | `action.modifier[]` |
+| `{ … }` | **body** — the call runs these when it decides to | when the owner decides | the call's body slot |
+| `P=call(…)` | **expression** — its result IS the parameter's value | when the owner reads `P` | `action.parameter[]` |
+
+A **reference** is not on this list and is not a call: `channel.set(Name="audit", Goal=…)` stores a
+goal to be invoked later on an event. It is neither evaluated on read nor run by its owner, so it
+rides as a value of the `goal.call` TYPE (`{name:"AuditLog"}`), never as a nested call.
+
+Picking the wrong relationship is the failure mode. `error.handle`'s recovery is a **body** — it
+runs when the handler decides, not when a parameter is read — but it is currently written as an
+expression, which is why it needs a stamp.
 
 ### Pipe — ` | `
 
@@ -116,12 +127,35 @@ Note what a body does **not** carry: the guarded clause's source text. `formal` 
 an action chain, full stop. (On the wire `child` currently wraps that chain in a step record with a
 `text` field; that wrapper has no representation here.)
 
+### Expression — `P=call(…)`
+
+A call in a value slot produces that parameter's value when the owner reads it:
+
+```
+condition.if(Left=file.exists(Path="file.txt"), Operator="isTrue") { goal.call(GoalName="xxx") }
+```
+
+The flat equivalent already works today and is the same computation written left to right:
+
+```
+file.exists(Path="file.txt") | condition.if(Left=%!data%, Operator="isTrue") { goal.call(GoalName="xxx") }
+```
+
+They are genuinely different trees — one action with a sub-expression, versus two piped calls — so
+both are legal programs and `formal` renders whichever the builder produced. Which one the builder
+should PREFER for a given step text is a teaching decision, still open.
+
+**Not implemented.** The grammar admits expressions; the runtime does not yet evaluate one. Reading
+a parameter would have to run an action and take its result. Sized separately — this is a feature,
+not a correction.
+
 ### Parens vs braces
 
-> **Parens carry parameters — data the call reads.**
-> **Braces carry a body — actions the call runs.**
+> **Parens carry values the call reads** — a literal, a `%var%`, or an expression evaluated on read.
+> **Braces carry a body the call runs** — actions, on the call's own condition.
 
-This is the pair of rules to teach, and everything else follows from it.
+Both hold calls. The difference is *who decides when it runs*: for an expression, whoever reads the
+parameter; for a body, the owning call.
 
 ## What the grammar says about the recovery slot
 
@@ -131,17 +165,17 @@ This is the pair of rules to teach, and everything else follows from it.
 error.handle(Actions=[variable.set(Name=%content%, Value="from-recovery")], Order=GoalFirst)
 ```
 
-The grammar above cannot produce that — `value` does not produce `call`. So either the grammar is
-wrong, or the current shape is. It is the current shape: the recovery actions are a body, and
-`error.handle` is a call that owns one. Rendering them as a body is the change:
+The grammar CAN produce that — a value may hold a call. What it cannot produce is that *meaning*:
+an expression is evaluated when its parameter is read, and nobody reads `Actions` to obtain a
+value. The handler runs those actions on its own condition, which is a body.
 
 ```
 error.handle(Order=GoalFirst) { variable.set(Name=%content%, Value="from-recovery") }
 ```
 
-The runtime consequence is covered elsewhere (a value is lazy — materialised on first touch, long
-after load — so an action inside one cannot be born knowing its step, and has to be stamped). The
-grammar reaches the same conclusion from the language side alone.
+The runtime says the same thing from the other side: recovery actions are built lazily today, so
+nothing holds a step when they appear, and `handle.cs` has to stamp one on — the last stamp left on
+the graph. Both readings land on the same fix, which is a good sign the category is the real error.
 
 ## Migration
 
