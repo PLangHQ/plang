@@ -13,7 +13,7 @@ The July back-ref ruling cut the references; the defect was never the references
 Why the July concurrency argument doesn't apply: what contaminates a shared graph is ACTOR state stamped onto it. A parent reference is structure — immutable, identical for every actor.
 
 Consequences:
-- Your §7.6 hand-off is the shape — and it runs at BOTH levels: goal reader creates the goal shell first and hands it to each step; step reader creates the step first and hands it to each action. `init` → `internal set` on the read-time fields as you noted.
+- ~~Your §7.6 hand-off is the shape~~ **SUPERSEDED same day — see the Addendum below: the readers deregister from `ITypeReader` instead; no hand-off parameter, no `init` → `internal set`.**
 - `GoalCall.cs:182,207` and the generator's `IStep` wiring: untouched, they keep reading what is now always-born.
 - **`backref-pass.md` is superseded** — rewritten as the "birth-fact pass": delete the four stamp sites (`GoalCall:287,293`, `goal/list:375`, `setup:64`, parser `:487`, `error/handle:177-178`) and the `??=` getters (`goal/this.cs:48`, `step/this.cs:55`, `Resume.cs:21,29`); readers/parser hand parents down instead. The reroute tables and the generator emission change are VOID. Still dying: the goalEntry anchor (`ContainsGoal(this)` — the goal hands itself), the Events placeholder (rides the Events legacy todo), and the doc comments teaching chain-walking as the pattern.
 
@@ -57,3 +57,37 @@ Keep: `ErrorChain → list`, `Error.Action`, `Requires → Requirement`. Drop: t
 3. Recovery → `Child` + door-2 deletion (wire change + teaching sweep + rebuild).
 4. Error model (§7): walk + `%!error%` + deletions, gated by the two Q3 tests.
 5. Validate trilogy (Stage D) on top.
+
+
+---
+
+## ADDENDUM (2026-09-01, later) — the final construction design: step/action leave `ITypeReader`
+
+Working through the hand-off mechanics with Ingi exposed that every variant was fighting the same wall (a concrete `Read` overload beside the interface; an adoption walk in the setter — **rejected, double processing**; owner-born nodes adopting at `Add` — rejected, leaves `Step` nullable until attachment). Three fights against one interface means the interface is wrong for these types. Ingi: "I feel like we are fighting TypeReader" — correct. The ruling:
+
+> **`ITypeReader` is for VALUES (and file roots). Program structure is constructed by its parents.** The same law as `module ⇒ action`: children are constructed by their owners.
+
+### What changes
+
+1. **`step.serializer.Reader` and `action.serializer.Reader` stop implementing `ITypeReader` and are DEREGISTERED from the reader registry.** They become plain concrete construction classes with the signatures construction actually needs:
+
+```csharp
+public step.@this Read<TReader>(ref TReader reader, ReadContext readContext, goal.@this goal)
+    => new step.@this { Goal = goal, ... };     // non-nullable, born, nothing fought
+
+public action.@this Read<TReader>(ref TReader reader, ReadContext readContext, step.@this step)
+    => new action.@this { Step = step, ... };
+```
+
+2. **The `goal` reader stays registered** — a `.pr` FILE is legitimately a value at the file boundary (Format maps `.pr` → goal); the root goal has no parent in the file. The one graph type with a genuine registry door. Sub-goals are read by the goal reader concretely with the parent handed down.
+
+3. **`action.Step` and `step.Goal` are non-nullable.** Every action in existence is parent-constructed: .pr load (goal→step→action), recovery (`Child`, structural per Q2), and the graft (below). A "free action" is not a state that exists — before program-birth it is json/Data. Property pattern: match `action.Module` (module-owns-action) — non-nullable with throwing getter; backing null only for the legacy synthetics (goalEntry anchor, Events placeholder), both already on kill lists and neither reads it.
+
+4. **The graft reroutes to host-construction — same change, not later.** `set %goal.step[i].action% = %compileResult.actions%`: the write site HOLDS the step, so a graph-slot write becomes the host constructing its children from the incoming value (the step reads its actions from the json) — parent-constructs-child, uniform with everything else. This MUST land together with the deregistration: today's typed-value-set dispatch (reflection `ReadValue` consulting `Typed(name)`) routes graft elements through the registry; with `action` deregistered, that dispatch would miss and fall through to reflection, silently rebuilding the old world. Reroute and deregister atomically.
+
+5. **`ReadContext` untouched, `ITypeReader` untouched** — not dodged: the interface correctly no longer applies.
+
+### What this supersedes
+
+- §7.6 (the hand-off parameter + `init` → `internal set`) — unnecessary; readers construct with the parent in the signature because they are no longer interface-bound.
+- The adoption-setter and owner-born-node variants discussed in console — rejected (double processing; nullable window).

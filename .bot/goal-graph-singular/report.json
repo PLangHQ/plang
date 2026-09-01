@@ -273,6 +273,16 @@
           "category": "doc",
           "confidence": "high",
           "context": "Back-ref REVERSAL settled with Ingi: both parent refs survive as birth facts (defect was stamping, not references; cursor-as-identity forbidden); backref-pass superseded -> birth-fact pass. Recovery chain -> Child, door 2 deleted (Ingi agreed). %!error% frame walk confirmed, gated by two timing tests. Call.Errors vs Error.list stay distinct. CallStack.Error name confirmed. Split-commit instruction for the 17 files. Order: split-commit -> birth-fact -> Child/door-2 -> error model -> Stage D."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/error-model-and-backref-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Addendum settled with Ingi: step/action readers DEREGISTER from ITypeReader (values-and-file-roots only; program structure is constructed by its parents) \u2014 concrete readers with (reader, readContext, parent) signatures; goal reader stays (file boundary); action.Step/step.Goal non-nullable; graft reroutes to host-construction atomically with deregistration. Rejected en route: adoption-setter walk (Ingi: double processing), owner-born-node Add (nullable window). Supersedes coder's \u00a77.6 hand-off."
         }
       ],
       "after": {
