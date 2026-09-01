@@ -181,12 +181,6 @@ public sealed partial class @this : IAsyncDisposable
     public Debug? Debug { get; set; }
 
     /// <summary>
-    /// Run-wide error scope. AsyncLocal-flowed current error (PLang <c>%!error%</c>) +
-    /// audit list of every error pushed. Populated by error.handle.Wrap during recovery.
-    /// </summary>
-    public global::app.error.list.@this Error { get; }
-
-    /// <summary>
     /// Test session — the collection of discovered/run *.test.goal tests plus
     /// run-wide state. null = not testing; non-null = a live session (born under --test).
     /// </summary>
@@ -295,8 +289,6 @@ public sealed partial class @this : IAsyncDisposable
         Setting = new global::app.setting.@this(System.Context);
         _modules = new global::app.module.list.@this(this);
         _goals = new global::app.goal.list.@this { App = this };
-
-        Error = new global::app.error.list.@this(this);
 
         Code.RegisterDefaults();
         Type.RegisterDomainTypes();
@@ -462,6 +454,14 @@ public sealed partial class @this : IAsyncDisposable
             Module = Module[ResolveModuleName(typeof(TAction))],
             Name = ResolveActionName(typeof(TAction)),
             Seed = handler,
+            // Born knowing the step that INVOKED it. That is a different question from "which
+            // step do I belong to" — a program action answers the second at birth and must never
+            // read the cursor, because it is created now and run later. Here compose and run are
+            // FUSED in this method: there is no window in which the cursor could drift, so the
+            // calling frame IS this invocation's provenance. Null at the boot edge (a wire write
+            // before any goal runs), which is why Step stays nullable.
+            // Never split compose from run here — the fusion is what makes this honest.
+            Step = context.CallStack.Current?.Action.Step,
         };
         return entity.Run(context);
     }

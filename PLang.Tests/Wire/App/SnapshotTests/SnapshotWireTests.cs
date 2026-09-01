@@ -44,29 +44,10 @@ public class SnapshotWireTests
         await Assert.That(dst.Test != null).IsTrue();
     }
 
-    [Test]
-    [Skip("Deferred to the snapshot-wire redesign. The snapshot's Data-normalization serializes each IError as an empty [Out] property bag instead of deferring to ErrorWire, so Message is dropped on round-trip. Re-asserted against the new snapshot model.")]
-    public async Task ErrorsTrail_SurvivesWireRoundTrip_WithContentAndId()
-    {
-        var src = global::PLang.Tests.TestApp.Create("/src");
-        var e1 = new ServiceError("first", "TestErr", 400);
-        var e2 = new ServiceError("second", "TestErr", 500);
-        using (src.Error.Push(e1, src.User.Context)) { }
-        using (src.Error.Push(e2, src.User.Context)) { }
-
-        var wired = await RoundTrip(src, src.Snapshot(src.User.Context));
-
-        var dst = global::PLang.Tests.TestApp.Create("/dst");
-        dst.Restore(wired, dst.User.Context);
-
-        await Assert.That(dst.Error.Trail.Count).IsEqualTo(2);
-        await Assert.That(dst.Error.Trail[0].Message).IsEqualTo("first");
-        await Assert.That(dst.Error.Trail[0].StatusCode).IsEqualTo(400);
-        await Assert.That(dst.Error.Trail[1].Message).IsEqualTo("second");
-        await Assert.That(dst.Error.Trail[1].StatusCode).IsEqualTo(500);
-        // Id is preserved across the wire (the base-Error restore ctor carries it).
-        await Assert.That(dst.Error.Trail[0].Id).IsEqualTo(e1.Id);
-    }
+    // The errors-trail wire test is gone with the trail itself: the run-wide error log is
+    // CallStack.Audit, which rides the CallStack section, and the error in play lives on the
+    // frame that failed. It was skipped from the day it was written (the snapshot serialized
+    // each IError as an empty [Out] bag), so nothing is losing coverage here.
 
     [Test]
     public async Task CallStackFrames_Scalars_RoundTripWithIntTyping()

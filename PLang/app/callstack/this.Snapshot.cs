@@ -40,6 +40,45 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
         vars.OnCreate += _streamCreateHandler;
     }
 
+    /// <summary>
+    /// Opens a diff-capture scope. For as long as it is open <see cref="Diff"/> is on and every
+    /// variable mutation lands on the CallStack's own stream, so <c>Variables.SnapshotAt</c> can
+    /// reverse-apply post-throw mutations to project back to throw-time state. Disposing restores
+    /// the prior <see cref="Diff"/> setting and tears the subscriptions down.
+    ///
+    /// The stream, the flag and the subscriptions are all CallStack state, so the scope over them
+    /// is CallStack's to hand out — error handling opens one, it does not run one. Pay-per-error:
+    /// nothing outside such a scope pays for the capture.
+    /// </summary>
+    public IDisposable DiffScope(global::app.variable.list.@this? variables)
+    {
+        var prior = Diff;
+        Diff = global::app.type.item.@bool.@this.True;
+        EnableDiffStream(variables);
+        return new Diffing(this, prior);
+    }
+
+    private sealed class Diffing : IDisposable
+    {
+        private readonly @this _stack;
+        private readonly global::app.type.item.@bool.@this _prior;
+        private bool _disposed;
+
+        public Diffing(@this stack, global::app.type.item.@bool.@this prior)
+        {
+            _stack = stack;
+            _prior = prior;
+        }
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+            _stack.DisableDiffStream();
+            _stack.Diff = _prior;
+        }
+    }
+
     /// <summary>Tears down subscriptions wired by <see cref="EnableDiffStream"/>.</summary>
     internal void DisableDiffStream()
     {

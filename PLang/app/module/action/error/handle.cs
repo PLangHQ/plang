@@ -104,7 +104,7 @@ public partial class Handle : IContext, IModifier
             {
                 if (hasRecovery)
                 {
-                    var recoveryResult = await RunRecoveryWithErrorScope(actions!, context, result.Error!);
+                    var recoveryResult = await RunRecoveryWithErrorScope(actions!, context);
                     if (recoveryResult.Success)
                     {
                         if (erroredCall != null) erroredCall.Handled = true;
@@ -121,7 +121,7 @@ public partial class Handle : IContext, IModifier
                 if (retryResult?.Success == true) return retryResult;
                 if (hasRecovery)
                 {
-                    var recoveryResult = await RunRecoveryWithErrorScope(actions!, context, result.Error!);
+                    var recoveryResult = await RunRecoveryWithErrorScope(actions!, context);
                     if (recoveryResult.Success)
                     {
                         if (erroredCall != null) erroredCall.Handled = true;
@@ -139,16 +139,16 @@ public partial class Handle : IContext, IModifier
     }
 
     /// <summary>
-    /// Runs recovery with <c>%!error%</c> populated to the caught error for the
-    /// duration of the recovery chain, restoring the previous value via AsyncLocal LIFO
-    /// scope on dispose.
+    /// Runs recovery under a diff-capture scope, so handler-time mutations land on the
+    /// CallStack's diff stream and <c>Variables.SnapshotAt</c> can project back to throw-time
+    /// state. <c>%!error%</c> needs nothing here — the error is on the frame we are standing
+    /// in, and <c>CallStack.Error</c> reads it there.
     /// </summary>
     private static async Task<global::app.data.@this> RunRecoveryWithErrorScope(
         global::app.type.item.list.@this actions,
-        actor.context.@this context,
-        app.error.IError caughtError)
+        actor.context.@this context)
     {
-        using (context.App.Error.Push(caughtError, context))
+        using (context.CallStack.DiffScope(context.Variable))
         {
             return await RunRecovery(actions, context);
         }

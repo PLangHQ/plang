@@ -28,7 +28,7 @@ public class SnapshotAtErrorTests
         // Establish %x%=1 *before* the error fires.
         vars.Set("x", 1);
         var error = new ServiceError("boom", "TestErr", 400);
-        using (app.Error.Push(error, app.User.Context))
+        using (app.User.CallStack.DiffScope(app.User.Context.Variable))
         {
             // Handler-time mutation post-throw.
             vars.Set("x", 2);
@@ -50,7 +50,7 @@ public class SnapshotAtErrorTests
 
         vars.Set("a", "before");
         var error = new ServiceError("boom", "TestErr", 400);
-        using (app.Error.Push(error, app.User.Context))
+        using (app.User.CallStack.DiffScope(app.User.Context.Variable))
         {
             vars.Set("a", "after");
             vars.Set("b", "added");
@@ -71,7 +71,7 @@ public class SnapshotAtErrorTests
 
         vars.Set("x", 1);
         var error = new ServiceError("boom", "TestErr", 400);
-        using (app.Error.Push(error, app.User.Context))
+        using (app.User.CallStack.DiffScope(app.User.Context.Variable))
         {
             vars.Set("x", 2); // handler mutation
             var projection = vars.SnapshotAt(error);
@@ -90,7 +90,7 @@ public class SnapshotAtErrorTests
 
         vars.Set("x", "stable");
         var error = new ServiceError("boom", "TestErr", 400);
-        using (app.Error.Push(error, app.User.Context))
+        using (app.User.CallStack.DiffScope(app.User.Context.Variable))
         {
             // No post-throw mutations.
             var projection = vars.SnapshotAt(error);
@@ -109,7 +109,7 @@ public class SnapshotAtErrorTests
 
         vars.Set("v", 10);
         var error = new ServiceError("boom", "TestErr", 400);
-        using (app.Error.Push(error, app.User.Context))
+        using (app.User.CallStack.DiffScope(app.User.Context.Variable))
         {
             vars.Set("v", 20);
             var p1 = vars.SnapshotAt(error);

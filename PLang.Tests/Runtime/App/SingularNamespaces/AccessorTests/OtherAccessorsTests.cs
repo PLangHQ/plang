@@ -54,26 +54,9 @@ public class OtherAccessorsTests
         await Assert.That(indexer).IsNull();
     }
 
-    [Test] public async Task AppError_PushAndCount_RoundTripsThroughTheRegistry()
-    {
-        await using var app = TestApp.Create("/test");
-        var err = new global::app.error.Error("boom");
-        using (app.Error.Push(err, app.User.Context))
-        {
-            await Assert.That(app.Error.Error).IsEqualTo(err);
-        }
-        await Assert.That(app.Error.Count).IsGreaterThanOrEqualTo(1);
-    }
-
-    [Test] public async Task AppError_Trail_RestoreTrail_ReplaysTheErrorChain()
-    {
-        await using var app = TestApp.Create("/test");
-        var a = new global::app.error.Error("A");
-        var b = new global::app.error.Error("B");
-        using (app.Error.Push(a, app.User.Context)) { using (app.Error.Push(b, app.User.Context)) { } }
-        await Assert.That(app.Error.Trail.Count).IsEqualTo(2);
-        await Assert.That(app.Error.list.Count()).IsEqualTo(2);
-    }
+    // The error in play lives on the call stack (the frame that failed still holds it) and the
+    // run-wide log is CallStack.Audit. There is no app.Error registry to accessor-test — the
+    // behaviour is pinned by ErrorInPlayTests.
 
     // Minimal Stage 3: singular accessors (app.Goal, app.Channel, app.Event, app.Module) are
     // present alongside the originals.  Deletion of the App* aliases is deferred to the
