@@ -251,10 +251,10 @@ public class Default : IBuilder
         Fold(goal, errors);
         if (errors.Count == 0) return context.Ok(true);
 
-        // Surface every A4 violation: the first is the root, the rest ride its ErrorChain —
+        // Surface every A4 violation: the first is the root, the rest are its causes —
         // each error carries its own offending step (location), not a flattened string.
         var root = errors[0];
-        for (int e = 1; e < errors.Count; e++) root.ErrorChain.Add(errors[e]);
+        for (int e = 1; e < errors.Count; e++) root.list.Add(errors[e]);
         return context.Error(root);
     }
 

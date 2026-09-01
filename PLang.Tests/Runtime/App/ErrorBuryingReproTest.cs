@@ -4,7 +4,7 @@ namespace PLang.Tests.App;
 // (e.g. error.throw Message=%!error% on a build pipeline that just
 // captured a NullReferenceException), the conversion-failure wrapper
 // must NOT become the primary displayed error. The original IError
-// stays as primary; the conversion failure rides on its ErrorChain.
+// stays as primary; the conversion failure rides on its causing list.
 public class ErrorBuryingReproTest
 {
     private static System.NullReferenceException ThrownNRE()
@@ -29,8 +29,8 @@ public class ErrorBuryingReproTest
         await Assert.That(resolved.Error!.Key).IsEqualTo("NullReferenceException");
         // The conversion failure rides on the chain — visible but demoted. (Born-native: text
         // is a wrapper type, not a CLR primitive, so the failure surfaces as TypeMismatch.)
-        await Assert.That(resolved.Error.ErrorChain.Count).IsEqualTo(1);
-        await Assert.That(resolved.Error.ErrorChain[0].Key).IsEqualTo("TypeMismatch");
+        await Assert.That(resolved.Error.list.Count).IsEqualTo(1);
+        await Assert.That(resolved.Error.list[0].Key).IsEqualTo("TypeMismatch");
 
         // Format() puts the NullReferenceException header at the very top,
         // before any "Error during error handling" footer. If this ever
