@@ -89,17 +89,17 @@ public class SetupTests
     public async Task RunAsync_SkipsAlreadyExecutedSteps()
     {
         // Create a setup goal with two steps
-        var step1 = new Step { Index = 0, Text = "step one",
-            Action = CreateNoOpActions() };
-        var step2 = new Step { Index = 1, Text = "step two",
-            Action = CreateNoOpActions() };
+        // Goal first, then its steps — a step is born knowing its goal (Goal is init).
         var goal = new Goal
         {
             Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
-            Step = new GoalSteps(new[] { step1, step2 })
         };
-        step1.Goal = goal;
-        step2.Goal = goal;
+        var step1 = new Step { Goal = goal, Index = 0, Text = "step one",
+            Action = CreateNoOpActions() };
+        var step2 = new Step { Goal = goal, Index = 1, Text = "step two",
+            Action = CreateNoOpActions() };
+        goal.Step.Add(step1);
+        goal.Step.Add(step2);
 
         _app.Goal.Add(goal);
 
@@ -126,14 +126,13 @@ public class SetupTests
     [Test]
     public async Task RunAsync_RerunsStepWithChangedHash()
     {
-        var step = new Step { Index = 0, Text = "create table",
-            Action = CreateNoOpActions() };
         var goal = new Goal
         {
             Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
-            Step = new GoalSteps(new[] { step })
         };
-        step.Goal = goal;
+        var step = new Step { Goal = goal, Index = 0, Text = "create table",
+            Action = CreateNoOpActions() };
+        goal.Step.Add(step);
         _app.Goal.Add(goal);
 
         // Record with original hash
@@ -141,9 +140,8 @@ public class SetupTests
         await Assert.That(await _app.Goal.Setup.IsExecuted(step, _app)).IsTrue();
 
         // Simulate changed step (different hash) — new step object with different hash
-        var changedStep = new Step { Index = 0, Text = "create table v2",
+        var changedStep = new Step { Goal = goal, Index = 0, Text = "create table v2",
             Action = CreateNoOpActions() };
-        changedStep.Goal = goal;
 
         // The changed step should NOT be found as executed
         await Assert.That(await _app.Goal.Setup.IsExecuted(changedStep, _app)).IsFalse();
@@ -184,17 +182,16 @@ public class SetupTests
     public async Task RunAsync_FailedStepNotRecorded()
     {
         // A step that fails (unknown module) and does NOT have IgnoreError
-        var step = new Step
-        {
-            Index = 0, Text = "failing step",
-            Action = CreateFailingActions()
-        };
         var goal = new Goal
         {
             Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
-            Step = new GoalSteps(new[] { step })
         };
-        step.Goal = goal;
+        var step = new Step
+        {
+            Goal = goal, Index = 0, Text = "failing step",
+            Action = CreateFailingActions()
+        };
+        goal.Step.Add(step);
         _app.Goal.Add(goal);
 
         var result = await _app.Goal.Setup.RunAsync(_app, _app.User.Context);
@@ -208,17 +205,17 @@ public class SetupTests
     [Test]
     public async Task RunAsync_CancellationAborts()
     {
-        var step1 = new Step { Index = 0, Text = "step one",
-            Action = CreateNoOpActions() };
-        var step2 = new Step { Index = 1, Text = "step two",
-            Action = CreateNoOpActions() };
+        // Goal first, then its steps — a step is born knowing its goal (Goal is init).
         var goal = new Goal
         {
             Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
-            Step = new GoalSteps(new[] { step1, step2 })
         };
-        step1.Goal = goal;
-        step2.Goal = goal;
+        var step1 = new Step { Goal = goal, Index = 0, Text = "step one",
+            Action = CreateNoOpActions() };
+        var step2 = new Step { Goal = goal, Index = 1, Text = "step two",
+            Action = CreateNoOpActions() };
+        goal.Step.Add(step1);
+        goal.Step.Add(step2);
         _app.Goal.Add(goal);
 
         // Cancel via engine shutdown — Goal.RunAsync checks context.CancellationToken

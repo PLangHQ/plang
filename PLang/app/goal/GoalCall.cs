@@ -283,16 +283,10 @@ public sealed class GoalCall : global::app.type.item.@this, global::app.type.ite
         goal.App = app;
         // Born-with-context: the deserialized goal tree carries the load context onto its
         // Wired here at the .pr-load seam, like App — never left null.
-        // CONDEMNED: the step.Goal stamps die with step.Goal — see back-ref pass. (subGoal.App/Parent stay.)
-        foreach (var step in goal.Step.Elements)
-            step.Goal = goal;
+        // step.Goal and subGoal.Parent are birth facts now — the reader hands each parent down at
+        // construction, so nothing is repaired here. App is not structure; it still rides down.
         foreach (var subGoal in goal.Child)
-        {
             subGoal.App = app;
-            subGoal.Parent = goal;
-            foreach (var step in subGoal.Step.Elements)
-                step.Goal = subGoal;
-        }
 
         // Stash where the .pr was loaded from — Goal.GetRuntimeDirectory uses this
         // so file.read with a relative path resolves against the goal's actual

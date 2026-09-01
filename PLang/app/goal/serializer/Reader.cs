@@ -34,69 +34,51 @@ public sealed class Reader : global::app.type.reader.ITypeReader
 
     // Walks a goal object off the parsed json reader in place; sub-goals recurse through the SAME
     // reader (no re-parse). Steps ride the sibling step reader.
+    // SHELL-FIRST: the goal is constructed empty so its steps and sub-goals can be born holding it,
+    // then its own scalars are filled as they arrive. `parent` is null for the root goal in a .pr
+    // file (it has none) and the enclosing goal for every sub-goal — a birth fact either way, so
+    // nothing repairs Parent afterwards.
     private global::app.goal.@this Walk(ref global::app.channel.serializer.json.Reader reader,
-        global::app.type.reader.ReadContext ctx)
+        global::app.type.reader.ReadContext ctx, global::app.goal.@this? parent = null)
     {
-        string name = "";
-        string? description = null, comment = null, hash = null, builderVersion = null;
-        global::app.type.item.choice.@this<global::app.goal.Visibility> visibility = global::app.goal.Visibility.Private;
-        global::app.type.item.path.@this? path = null;
-        bool isSetup = false, isEvent = false, isSystem = false, isTest = false;
-        var steps = new global::app.goal.step.list.@this();   // Add each step into the node
-        var goals = new System.Collections.Generic.List<global::app.goal.@this>();
+        var goal = new global::app.goal.@this { Parent = parent };
 
         reader.BeginObject();
         while (reader.NextName(out var field))
         {
             switch (field)
             {
-                case "name": name = reader.String(); break;
-                case "description": description = reader.String(); break;
-                case "comment": comment = reader.String(); break;
+                case "name": goal.Name = reader.String(); break;
+                case "description": goal.Description = reader.String(); break;
+                case "comment": goal.Comment = reader.String(); break;
                 case "step":
                     reader.BeginArray();
                     while (reader.NextElement())
-                        steps.Add((global::app.goal.step.@this)_step.Read(ref reader, null, ctx));
+                        goal.Step.Add(_step.Read(ref reader, ctx, goal));   // born knowing its goal
                     reader.EndArray();
                     break;
                 case "child":
                     reader.BeginArray();
                     while (reader.NextElement())
-                        goals.Add(Walk(ref reader, ctx));
+                        goal.Child.Add(Walk(ref reader, ctx, goal));        // born knowing its parent
                     reader.EndArray();
                     break;
                 case "visibility":
-                    visibility = global::app.type.item.choice.@this<global::app.goal.Visibility>.Parse(reader.String());
+                    goal.Visibility = global::app.type.item.choice.@this<global::app.goal.Visibility>.Parse(reader.String());
                     break;
-                case "path": path = global::app.type.item.path.@this.Resolve(reader.String(), ctx.Context); break;
-                // prPath is DERIVED from Path (its init is a no-op) — consume and discard.
+                case "path": goal.Path = global::app.type.item.path.@this.Resolve(reader.String(), ctx.Context); break;
+                // prPath is DERIVED from Path — consume and discard.
                 case "prPath": reader.Skip(); break;
-                case "hash": hash = reader.String(); break;
-                case "builderVersion": builderVersion = reader.String(); break;
-                case "isSetup": isSetup = reader.Bool(); break;
-                case "isEvent": isEvent = reader.Bool(); break;
-                case "isSystem": isSystem = reader.Bool(); break;
-                case "isTest": isTest = reader.Bool(); break;
+                case "hash": goal.Hash = reader.String(); break;
+                case "builderVersion": goal.BuilderVersion = reader.String(); break;
+                case "isSetup": goal.IsSetup = reader.Bool(); break;
+                case "isEvent": goal.IsEvent = reader.Bool(); break;
+                case "isSystem": goal.IsSystem = reader.Bool(); break;
+                case "isTest": goal.IsTest = reader.Bool(); break;
                 default: reader.Skip(); break;
             }
         }
         reader.EndObject();
-
-        return new global::app.goal.@this
-        {
-            Name = name,
-            Description = description,
-            Comment = comment,
-            Step = steps,
-            Child = goals,
-            Visibility = visibility,
-            Path = path,
-            Hash = hash,
-            BuilderVersion = builderVersion,
-            IsSetup = isSetup,
-            IsEvent = isEvent,
-            IsSystem = isSystem,
-            IsTest = isTest,
-        };
+        return goal;
     }
 }

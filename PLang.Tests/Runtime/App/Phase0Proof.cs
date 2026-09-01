@@ -101,9 +101,8 @@ public class Phase0Proof
     public async Task Phase02_ApplicationFormat_IsConcise()
     {
         // INPUT: Application error (400)
-        var step = new Step { Index = 0, Text = "validate %email% is not empty" };
         var goal = new Goal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("Start.goal", global::PLang.Tests.TestApp.SharedContext) };
-        step.Goal = goal;
+        var step = new Step { Goal = goal, Index = 0, Text = "validate %email% is not empty" };
         var error = new ValidationError("Email address is required", step);
 
         // OUTPUT: unified format — full detail for all errors
@@ -119,9 +118,8 @@ public class Phase0Proof
     public async Task Phase02_RuntimeFormat_HasFullDetail()
     {
         // INPUT: Runtime error (500) with exception
-        var step = new Step { Index = 0, Text = "read file data.txt" };
         var goal = new Goal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("Start.goal", global::PLang.Tests.TestApp.SharedContext) };
-        step.Goal = goal;
+        var step = new Step { Goal = goal, Index = 0, Text = "read file data.txt" };
         var ex = new InvalidOperationException("Access denied");
         var error = new Error("Failed to read file", step, "FileError", 500)
         {

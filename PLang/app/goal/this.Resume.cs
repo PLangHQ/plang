@@ -18,7 +18,6 @@ public partial class @this
                 "InvalidPosition", 400));
 
         var step = Step[stepIdx];
-        step.Goal ??= this;
 
         var result = await step.Resume(context, actionIdx);
         if (result.ShouldExit()) return result;
@@ -26,7 +25,6 @@ public partial class @this
         for (int i = stepIdx + 1; i < Step.Count; i++)
         {
             var s = Step[i];
-            s.Goal ??= this;
 
             if (context.CancellationToken.IsCancellationRequested)
                 return context.Error(new error.Error("Operation was cancelled", "Cancelled", 499));

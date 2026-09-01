@@ -59,10 +59,6 @@ public sealed class @this
                 var read = await file.ReadText();
                 if (!read.Success || (await read.Value()) as global::app.goal.@this is not { } goal || !goal.IsSetup) continue;
 
-                // CONDEMNED: dies with step.Goal — see back-ref pass. Synthetic is now stamped at read.
-                foreach (var step in goal.Step.Elements)
-                    step.Goal = goal;
-
                 _goals.Add(goal);
             }
             catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))

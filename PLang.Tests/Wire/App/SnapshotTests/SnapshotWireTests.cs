@@ -100,12 +100,14 @@ public class SnapshotWireTests
         await Assert.That(rf[0].Read<string>("actionName")).IsEqualTo("query");
     }
 
-    private static Step SetStep(int index, string varName, object value)
+    // A step is born knowing its goal, and the goal is born knowing the step.
+    private static Step SetStep(Goal goal, int index, string varName, object value)
     {
         var action = TestAction.Create("variable", "set", ("name", "%" + varName + "%"), ("value", value));
-        var step = new Step { Index = index, Text = $"set %{varName}% = {value}" };
+        var step = new Step { Goal = goal, Index = index, Text = $"set %{varName}% = {value}" };
         action.Step = step;
         step.Action.Add(action);
+        goal.Step.Add(step);
         return step;
     }
 
@@ -120,9 +122,8 @@ public class SnapshotWireTests
         var context = app.User.Context;
 
         var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
-        var step0 = SetStep(0, "s0", "first"); step0.Goal = goal;
-        var step1 = SetStep(1, "s1", "second"); step1.Goal = goal;
-        goal.Step.Add(step0); goal.Step.Add(step1);
+        SetStep(goal, 0, "s0", "first");
+        var step1 = SetStep(goal, 1, "s1", "second");
         app.Goal.Add(goal);
 
         // Suspend at step1/action0 (what the throw-time snapshot captures).
@@ -154,9 +155,8 @@ public class SnapshotWireTests
         var context = app.User.Context;
 
         var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
-        var step0 = SetStep(0, "s0", "first"); step0.Goal = goal;
-        var step1 = SetStep(1, "s1", "second"); step1.Goal = goal;
-        goal.Step.Add(step0); goal.Step.Add(step1);
+        SetStep(goal, 0, "s0", "first");
+        var step1 = SetStep(goal, 1, "s1", "second");
         app.Goal.Add(goal);
 
         string json;
@@ -177,12 +177,13 @@ public class SnapshotWireTests
         await Assert.That((await context.Variable.GetValue("s1"))).IsEqualTo("second");
     }
 
-    private static Step SetStepRef(int index, string varName, string expr)
+    private static Step SetStepRef(Goal goal, int index, string varName, string expr)
     {
         var action = TestAction.Create("variable", "set", ("name", "%" + varName + "%"), ("value", expr));
-        var step = new Step { Index = index, Text = $"set %{varName}% = {expr}" };
+        var step = new Step { Goal = goal, Index = index, Text = $"set %{varName}% = {expr}" };
         action.Step = step;
         step.Action.Add(action);
+        goal.Step.Add(step);
         return step;
     }
 
@@ -205,17 +206,15 @@ public class SnapshotWireTests
 
         // Start: [0] set a, [1] the call to Sub, [2] post-call marker (the unwind proof).
         var start = new Goal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/Start.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/Start.pr", global::PLang.Tests.TestApp.SharedContext) };
-        var st0 = SetStep(0, "a", "A");                 st0.Goal = start;
-        var st1 = SetStep(1, "calledSub", "yes");       st1.Goal = start;   // stands in for `call Sub`
-        var st2 = SetStepRef(2, "entryReached", "END"); st2.Goal = start;   // post-call: only runs on unwind
-        start.Step.Add(st0); start.Step.Add(st1); start.Step.Add(st2);
+        SetStep(start, 0, "a", "A");
+        SetStep(start, 1, "calledSub", "yes");          // stands in for `call Sub`
+        SetStepRef(start, 2, "entryReached", "END");    // post-call: only runs on unwind
 
         // Sub: [0] set b, [1] the throw point (suspended here), [2] continuation reading %i%.
         var sub = new Goal { Name = "Sub", Path = global::app.type.item.path.@this.Resolve("/Sub.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/Sub.pr", global::PLang.Tests.TestApp.SharedContext) };
-        var sb0 = SetStep(0, "b", "B");                  sb0.Goal = sub;
-        var sb1 = SetStep(1, "passedThrow", "ok");       sb1.Goal = sub;    // the `throw if i==1` step
-        var sb2 = SetStepRef(2, "seenI", "%i%");         sb2.Goal = sub;    // reads the patched value
-        sub.Step.Add(sb0); sub.Step.Add(sb1); sub.Step.Add(sb2);
+        SetStep(sub, 0, "b", "B");
+        SetStep(sub, 1, "passedThrow", "ok");           // the `throw if i==1` step
+        SetStepRef(sub, 2, "seenI", "%i%");             // reads the patched value
 
         app.Goal.Add(start); app.Goal.Add(sub);
 
@@ -258,9 +257,8 @@ public class SnapshotWireTests
         var context = app.User.Context;
 
         var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
-        var step0 = SetStep(0, "x", "1");          step0.Goal = goal;
-        var step1 = SetStepRef(1, "seen", "%x%");  step1.Goal = goal;
-        goal.Step.Add(step0); goal.Step.Add(step1);
+        var step0 = SetStep(goal, 0, "x", "1");
+        var step1 = SetStepRef(goal, 1, "seen", "%x%");
         app.Goal.Add(goal);
 
         context.Variable.Set("x", 1L);
@@ -329,9 +327,8 @@ public class SnapshotWireTests
         var context = app.User.Context;
 
         var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
-        var step0 = SetStep(0, "x", "1");          step0.Goal = goal;
-        var step1 = SetStepRef(1, "seen", "%x%");  step1.Goal = goal;
-        goal.Step.Add(step0); goal.Step.Add(step1);
+        var step0 = SetStep(goal, 0, "x", "1");
+        var step1 = SetStepRef(goal, 1, "seen", "%x%");
         app.Goal.Add(goal);
 
         context.Variable.Set("x", 1L);
@@ -371,9 +368,8 @@ public class SnapshotWireTests
         var context = app.User.Context;
 
         var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
-        var step0 = SetStep(0, "x", "1");          step0.Goal = goal;
-        var step1 = SetStepRef(1, "seen", "%x%");  step1.Goal = goal;
-        goal.Step.Add(step0); goal.Step.Add(step1);
+        var step0 = SetStep(goal, 0, "x", "1");
+        var step1 = SetStepRef(goal, 1, "seen", "%x%");
         app.Goal.Add(goal);
 
         context.Variable.Set("x", 1L);
@@ -405,9 +401,8 @@ public class SnapshotWireTests
         var context = app.User.Context;
 
         var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
-        var step0 = SetStep(0, "x", "1");                step0.Goal = goal;
-        var step1 = SetStepRef(1, "seen", "%x%");        step1.Goal = goal;   // reads the edited value
-        goal.Step.Add(step0); goal.Step.Add(step1);
+        var step0 = SetStep(goal, 0, "x", "1");
+        var step1 = SetStepRef(goal, 1, "seen", "%x%");   // reads the edited value
         app.Goal.Add(goal);
 
         // Suspend at step1 with %x% = 1 captured.

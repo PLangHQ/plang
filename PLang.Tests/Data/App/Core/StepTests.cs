@@ -61,10 +61,8 @@ public class StepTests : System.IAsyncDisposable
     [Test]
     public async Task Goal_CanBeSet()
     {
-        var step = new Step();
         var goal = new Goal { Name = "TestGoal" };
-
-        step.Goal = goal;
+        var step = new Step { Goal = goal };   // born with it — Goal is init
 
         await Assert.That(step.Goal).IsEqualTo(goal);
     }

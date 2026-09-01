@@ -155,9 +155,8 @@ public class ErrorTests
     [Test]
     public async Task Step_CanBeSet()
     {
-        var step = new Step { Index = 0, Text = "do something" };
         var goal = new Goal { Name = "TestGoal" };
-        step.Goal = goal;
+        var step = new Step { Goal = goal, Index = 0, Text = "do something" };
         var error = new Error("Error", step);
 
         await Assert.That(error.Step).IsNotNull();
@@ -180,8 +179,7 @@ public class ErrorTests
     public async Task Format_IncludesGoalAndStep()
     {
         var goal = new Goal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("Start.goal", global::PLang.Tests.TestApp.SharedContext) };
-        var step = new Step { Index = 2, Text = "write to file", LineNumber = 5 };
-        step.Goal = goal;
+        var step = new Step { Goal = goal, Index = 2, Text = "write to file", LineNumber = 5 };
         var error = new Error("File not found", step);
 
         var formatted = error.Format();

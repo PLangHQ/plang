@@ -98,8 +98,18 @@ public partial class @this
       || string.Equals(Name, "elseif", StringComparison.OrdinalIgnoreCase)
       || string.Equals(Name, "else", StringComparison.OrdinalIgnoreCase));
 
+    /// <summary>The step this action belongs to — a BIRTH FACT for every action that is part of a
+    /// PROGRAM: the reader builds the step shell first and hands it down at construction, so it is
+    /// never stamped in afterwards. Null is not a repair hole, it is a real state: three kinds of
+    /// action exist outside any program and therefore have no step — a catalog element (a
+    /// module-minted descriptor), a synthetic action composed in C# (<c>app.Run(new sign{...})</c>,
+    /// the signing/verify/ask seam), and — until recovery moves into <c>Child</c> — a recovery
+    /// action materialised from a parameter value.</summary>
+    /// <remarks><c>internal set</c>, not <c>init</c>, for exactly one more step: <c>error.handle</c>
+    /// must hand recovery actions the enclosing step. When recovery is read at load like every
+    /// other action, that last stamp goes and this tightens to <c>init</c>.</remarks>
     [JsonIgnore]
-    public Step? Step { get; set; }
+    public Step? Step { get; internal set; }
 
     private module.Events? _events;
     [JsonIgnore]

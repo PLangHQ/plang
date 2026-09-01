@@ -18,21 +18,20 @@ public class GoalResumeTests
         TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-rf-" + System.Guid.NewGuid().ToString("N")[..8]));
 
-    private static Step SetStep(int index, string varName, object value)
+    // The goal comes first — a step is born knowing it, so it cannot be built loose
+    // and grafted on afterwards.
+    private static Step SetStep(Goal goal, int index, string varName, object value)
     {
         var action = TestAction.Create("variable", "set", ("name", "%" + varName + "%"), ("value", value));
-        var step = new Step { Index = index, Text = $"set %{varName}% = {value}" };
+        var step = new Step { Goal = goal, Index = index, Text = $"set %{varName}% = {value}" };
         action.Step = step;
         step.Action.Add(action);
+        goal.Step.Add(step);
         return step;
     }
 
-    private static Goal Build(string name, params Step[] steps)
-    {
-        var goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", global::PLang.Tests.TestApp.SharedContext) };
-        foreach (var s in steps) { s.Goal = goal; goal.Step.Add(s); }
-        return goal;
-    }
+    private static Goal Build(string name) =>
+        new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", global::PLang.Tests.TestApp.SharedContext) };
 
     [Test]
     public async Task StepRunFrom_Zero_RunsAllActions()
@@ -73,10 +72,10 @@ public class GoalResumeTests
     {
         var app = NewApp();
         var context = app.User.Context;
-        var goal = Build("G",
-            SetStep(0, "s0", "skip"),
-            SetStep(1, "s1", "from-here"),
-            SetStep(2, "s2", "and-after"));
+        var goal = Build("G");
+        SetStep(goal, 0, "s0", "skip");
+        SetStep(goal, 1, "s1", "from-here");
+        SetStep(goal, 2, "s2", "and-after");
 
         var result = await goal.Resume(context, stepIdx: 1, actionIdx: 0);
         await result.IsSuccess();
@@ -109,9 +108,9 @@ public class GoalResumeTests
         // pins the contract that earlier steps are not re-run.
         var app = NewApp();
         var context = app.User.Context;
-        var goal = Build("G",
-            SetStep(0, "first", "should-not-run"),
-            SetStep(1, "second", "runs"));
+        var goal = Build("G");
+        SetStep(goal, 0, "first", "should-not-run");
+        SetStep(goal, 1, "second", "runs");
 
         await goal.Resume(context, stepIdx: 1, actionIdx: 0);
         await Assert.That((await context.Variable.Get("first")).IsInitialized).IsFalse();

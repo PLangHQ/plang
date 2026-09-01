@@ -15,14 +15,14 @@ public class ActionNameWireReadTests : System.IAsyncDisposable
     private async System.Threading.Tasks.Task<Goal> ReadOneAction(string actionsJson)
     {
         var context = _app.User.Context;
+        // Goal first, then its step — a step is born knowing its goal (Goal is init).
         var goal = new Goal
         {
             Name = "G",
             Path = global::app.type.item.path.@this.Resolve("/G.goal", context),
             PrPath = global::app.type.item.path.@this.Resolve("/G.pr", context),
-            Step = new GoalSteps { new Step { Index = 0, Text = "do stuff" } },
         };
-        goal.Step[0].Goal = goal;
+        goal.Step.Add(new Step { Goal = goal, Index = 0, Text = "do stuff" });
         _app.Goal.Add(goal);
         await context.Variable.Set("goal", goal);
 

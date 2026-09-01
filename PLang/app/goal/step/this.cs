@@ -23,10 +23,10 @@ public sealed partial class @this
         set => _events = value;
     }
     [Store, LlmBuilder, Debug, Default]
-    public int Index { get; init; }
+    public int Index { get; internal set; }
 
     [Store, LlmBuilder, Debug, Default]
-    public string Text { get; init; } = "";
+    public string Text { get; internal set; } = "";
 
     /// <summary>
     /// Text of the prior-build step that produced this step's Actions. Set by
@@ -38,21 +38,21 @@ public sealed partial class @this
     public string? PriorText { get; set; }
 
     [Store, Debug, Default]
-    public int LineNumber { get; init; }
+    public int LineNumber { get; internal set; }
 
     [Store, LlmBuilder, Debug, Default]
-    public int Indent { get; init; }
+    public int Indent { get; internal set; }
 
     [Store, LlmBuilder, Debug, Default]
-    public string? Comment { get; init; }
+    public string? Comment { get; internal set; }
 
     private global::app.goal.step.action.list.@this _action = new();
     [Store, Debug, Default]
     public global::app.goal.step.action.list.@this Action
     {
-        // The step owns its action chain (an action.list node). The getter stamps the back-ref so a
-        // navigated / executed action reaches its step.
-        get { foreach (var a in _action.Elements) a.Step ??= this; return _action; }
+        // A plain slot. Every action in it was born knowing this step — the reader constructs the
+        // step shell first and hands it down, so there is nothing to repair on read.
+        get => _action;
         set => _action = value ?? new();
     }
 
@@ -109,7 +109,7 @@ public sealed partial class @this
             System.Text.Encoding.UTF8.GetBytes(Text))).ToLowerInvariant();
 
     [Store, LlmBuilder, Debug, Default]
-    public string? Intent { get; init; }
+    public string? Intent { get; internal set; }
 
     /// <summary>LLM's formalized rendering of this step (action.module Param=value | …). Stored for traces.</summary>
     [Store, Debug, Default]
@@ -126,10 +126,13 @@ public sealed partial class @this
     public global::app.warning.list.@this Warning { get; init; } = new();
 
     [Store, Debug, Default]
-    public bool WaitForExecution { get; init; } = true;
+    public bool WaitForExecution { get; internal set; } = true;
 
+    /// <summary>The goal this step belongs to — a BIRTH FACT. The reader constructs the goal shell
+    /// first and hands it to each step at construction, so this is set once and never reassigned.
+    /// <c>init</c> is the enforcement: there is no stamping it in afterwards, and no repair getter.</summary>
     [JsonIgnore]
-    public global::app.goal.@this Goal { get; set; } = null!;
+    public global::app.goal.@this Goal { get; init; } = null!;
 
     /// <summary>
     /// Runs this step: lifecycle events → actions.

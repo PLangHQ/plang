@@ -31,21 +31,25 @@ public sealed partial class @this
         get => _events ??= new module.Events(this);
         set => _events = value;
     }
+    // Read-time scalars are `internal set`, not `init`: the reader constructs the goal SHELL first
+    // (so its steps and sub-goals can be born holding it) and fills these as they arrive off the
+    // stream. Immutable to everything outside the assembly.
     [Store, LlmBuilder, Debug, Default]
-    public string Name { get; init; } = "";
+    public string Name { get; internal set; } = "";
 
     [Store, LlmBuilder, Debug, Default]
     public string? Description { get; set; }
 
     [Store, LlmBuilder, Debug, Default]
-    public string? Comment { get; init; }
+    public string? Comment { get; internal set; }
 
     private global::app.goal.step.list.@this _step = new();
     [Store, Debug, Default]
     public global::app.goal.step.list.@this Step
     {
-        // The goal owns its steps (a step.list node). The getter stamps the back-ref.
-        get { foreach (var s in _step.Elements) s.Goal ??= this; return _step; }
+        // A plain slot. Every step in it was born knowing this goal — the reader constructs the
+        // goal shell first and hands it down, so there is nothing to repair on read.
+        get => _step;
         set => _step = value ?? new();
     }
 
@@ -53,12 +57,12 @@ public sealed partial class @this
     [Store, Debug, Default]
     public List<@this> Child
     {
-        get { foreach (var g in _child) g.Parent ??= this; return _child; }
+        get => _child;
         set => _child = value;
     }
 
     [Store, LlmBuilder, Debug, Default]
-    public global::app.type.item.choice.@this<Visibility> Visibility { get; init; } = global::app.goal.Visibility.Private;
+    public global::app.type.item.choice.@this<Visibility> Visibility { get; internal set; } = global::app.goal.Visibility.Private;
 
     public override string ToString()
     {
@@ -138,7 +142,7 @@ public sealed partial class @this
                 SHA256.HashData(Encoding.UTF8.GetBytes(sb.ToString()))).ToLowerInvariant();
             return _hash;
         }
-        init => _hash = value;
+        internal set => _hash = value;
     }
     private string? _hash;
 
@@ -146,13 +150,13 @@ public sealed partial class @this
     public string? BuilderVersion { get; set; }
 
     [Store, Debug, Default]
-    public bool IsSetup { get; init; }
+    public bool IsSetup { get; internal set; }
 
     [Store, Debug, Default]
-    public bool IsEvent { get; init; }
+    public bool IsEvent { get; internal set; }
 
     [Store, Debug, Default]
-    public bool IsSystem { get; init; }
+    public bool IsSystem { get; internal set; }
 
     [Store, Debug, Default]
     public bool IsTest { get; set; }
@@ -291,8 +295,12 @@ public sealed partial class @this
         // frame, not "step 0 running" — observers reading goalCall.Action.Step should treat
         // it as the goal anchor, not the currently-executing step (which is whatever the
         // child stepCall.Action.Step points at).
-        var goalEntryAction = new global::app.goal.step.action.@this { Module = context.App.Module["goal"], Name = "enter" };
-        if (Step.Count > 0) goalEntryAction.Step = Step[0];
+        var goalEntryAction = new global::app.goal.step.action.@this
+        {
+            Module = context.App.Module["goal"],
+            Name = "enter",
+            Step = Step.Count > 0 ? Step[0] : null,
+        };
 
         try
         {
@@ -487,6 +495,7 @@ public sealed partial class @this
 
                 currentStep = new Step
                 {
+                    Goal = currentGoal,   // birth fact — the parser holds the goal, so it hands it over
                     Index = stepIndex,
                     Text = stepText,
                     LineNumber = lineNumber,
@@ -494,7 +503,6 @@ public sealed partial class @this
                     Comment = comment
                 };
 
-                currentStep.Goal = currentGoal;
                 stepIndex++;
                 continue;
             }

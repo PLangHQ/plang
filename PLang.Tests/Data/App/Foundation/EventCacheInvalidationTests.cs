@@ -46,8 +46,7 @@ public class EventCacheInvalidationTests
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
         using var context = new global::app.actor.context.@this(engine, engine.User);
         var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("\\TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
-        var step = new Step { Text = "do something" };
-        step.Goal = goal;
+        var step = new Step { Goal = goal, Text = "do something" };
 
         // Register first step event
         context.Events.Register(new EventBinding(

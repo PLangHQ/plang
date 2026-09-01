@@ -82,22 +82,22 @@ public class ForeachErrorPropagationTests
                 new Data("goalname", new Dictionary<string, object?> { ["name"] = "MissingGoal" }, context: context)
             }
         };
+        // Goal first, then its step — a step is born knowing its goal (Goal is init).
+        var innerGoal = new Goal
+        {
+            Name = "Inner",
+            Path = global::app.type.item.path.@this.Resolve("/Inner.goal", global::PLang.Tests.TestApp.SharedContext),
+        };
         var innerStep = new Step
         {
+            Goal = innerGoal,
             Index = 0,
             Text = "if true, call MissingGoal",
             Action = new StepActions { innerCondAction, innerGoalCall }
         };
         innerCondAction.Step = innerStep;
         innerGoalCall.Step = innerStep;
-
-        var innerGoal = new Goal
-        {
-            Name = "Inner",
-            Path = global::app.type.item.path.@this.Resolve("/Inner.goal", global::PLang.Tests.TestApp.SharedContext),
-            Step = new GoalSteps { innerStep }
-        };
-        innerStep.Goal = innerGoal;
+        innerGoal.Step.Add(innerStep);
         _app.Goal.Add(innerGoal);
 
         // Outer step: foreach over items, body is goal.call Inner
