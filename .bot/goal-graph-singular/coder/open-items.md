@@ -5,6 +5,18 @@ Everything below is on top of a clean, pushed tree (`16bbc24c4`).
 
 ## The work itself
 
+**0. Error model redesign — DESIGN SETTLED, ONE BLOCKER, no green light.** Full record in
+`error-model-decisions.md` (same folder). Summary: `ErrorChain`→`list` (caused-by), `Error.Action`
+added, `Validate` returns `IError?` with causes underneath, no error state on the node, `app.Error`
+and the run-wide audit deleted, `trail`/`scope` both gone. **Blocked on:** `context.Error` cannot be
+a property — `context.Error(IError)` (the failed-Data factory every handler uses) already owns that
+name. Also unresolved: where the recovery scope (`Push`) lives once `app.Error` is gone.
+
+**0b. Ignored errors are silently swallowed.** `error/handle.cs`:
+`if (await IgnoreError.ToBooleanAsync()) return context.Ok();` — no push, no log. The empty
+try/catch, present today. Emitting them on a redirectable channel was discussed and explicitly
+deferred by Ingi ("thinking out loud… swallowed for now").
+
 **1. Finish Stage D — the Validate trilogy.** `action.Validate` is landed but has **no callers**
 (an incomplete rung is its own small liability). Remaining: `action.list.Validate`, then point
 `build.validate` at it so the builder only *reacts* (re-prompt / abort). `build.validate` receives
