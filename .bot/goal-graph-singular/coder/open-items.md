@@ -29,15 +29,20 @@ rows (`IEnumerable<Property>`) so it reads `foreach (var row in element.Property
 
 ## Risk carried into main
 
-**5. `→ returns item` is unverified in a real prompt.** Undefined `T` now renders as `item` in the
-builder's action catalog (was `data`). Nothing in the templates keys off the old value — checked —
-but I never confirmed `item` appears in the type list the LLM is shown. A token the model doesn't
-recognise degrades every build silently. Cheap to settle: one `cache:false` build, read the rendered
-compile prompt.
+**5 + 6 — CLOSED (`4deaa8921`).** Both were prompt-level and both were real. Read the rendered
+prompt from a `cache:false` build: `## Available types` rendered EMPTY always (`%!app.type.list%`
+navigates to nothing — `module.list` has a native `list` member, `type.list` has none), dead since
+`92f846d09`; and `→ returns item` reached the LLM with `item` defined nowhere in the prompt. Section
+and its feeding step deleted (primitives + catalog types already render elsewhere); `item` now
+explained once. **Lesson worth keeping: neither was visible from code or tests — only from the bytes
+the model receives.**
 
-**6. `%!app.type.list%` render still unverified.** Same class of risk, older. A debug watch showed
-`(undefined)`, but this branch's debug-arg binding is broken three separate ways, so the watcher
-lies. Needs checking via the rendered `CompileUser` output, not the watcher.
+**5b. The builder's `.pr` hashes are stale.** `goal.Hash` is `SHA256(Name + concat(step.Text))`,
+computed AND stored in the `.pr`. In `BuildStep/.build/start.pr` the stored hash disagrees with the
+steps for ROOT, `Compile`, `QueryAndVerify`, `RefineActions`, `FixValidation` — **verified stale at
+`HEAD~1`, i.e. before my edit**, from earlier hand-edits. `HandleStepFailure` and `EmitSummary` match.
+Impact looks nil for building (builds pass), but anything using hash for staleness sees a lie.
+Recomputing is a few lines; deliberately NOT done unilaterally on a bootstrap artifact.
 
 ## Test-infrastructure problems (these are why the above stayed hidden)
 
@@ -53,6 +58,15 @@ coverage.
 
 **9. `PathSerializerMigrationTests` alternates 0-then-2 failures** across consecutive isolated runs
 of identical code. Real shared-state race in scheme registration, not caused by this work.
+
+## Process gap
+
+**12. The builder has never built itself on this branch.** Every commit touching
+`os/system/builder/*/.build/*.pr` is a hand-edit ("bootstrap builder .pr", "fix param wire shape",
+"fix stale visibility"). There is no forcing function that the builder's own goals still compile —
+which is exactly how items 5 and 6 survived across many commits, and how five stored hashes drifted.
+Ingi (2026-09): worth recording, but we are deep in refactoring and this branch merges up into
+another that may be where this belongs — decide when we get there, do not chase it now.
 
 ## Small cleanups
 
