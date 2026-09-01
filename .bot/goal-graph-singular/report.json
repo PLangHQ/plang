@@ -303,6 +303,15 @@
           "category": "doc",
           "confidence": "high",
           "context": "Addendum 3: nullable Step? accepted (throwing getter withdrawn \u2014 coder's invariant razor + the missed compose-and-run seam); Ingi's seam fix (App.Run invocation born knowing its CALLER \u2014 compose-and-run fused makes cursor-at-composition honest, distinct from the rejected program-action cursor move); three-role taxonomy (program/description/invocation \u2014 description split deferred by Ingi); recovery gets its OWN structural action-list slot (Child ruling withdrawn \u2014 Child holds authored sub-steps); Create(step) wording clarified (factory stepless, product born with step); Wire-suite stack overflow to backlog."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/error-model-and-backref-answer.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Addendum 3 extended with the worked App.Run seam-fix code (one line in App.Run, four call sites byte-identical, worked trace, boot-edge note, --debug bonus) and Ingi's taxonomy refinement: role 3 is a C#-authored program action, not a fake \u2014 one action/two objects; Q2 cleanup reframed as one-object (generated run surface on the record)."
         }
       ],
       "after": {

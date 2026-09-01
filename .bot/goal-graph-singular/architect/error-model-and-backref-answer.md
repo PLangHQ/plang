@@ -121,10 +121,39 @@ Also confirmed in the write-out: the chain self-feeds (an action's `child` steps
 Your razor is correct: `Module`'s throwing getter enforces a true invariant; `Step` has legitimate null states, so the same shape would crash on states the design allows. The enforcement was always the construction doors + deleted repair sites + `internal set` — all landed. Your doc comment naming the stepless kinds is right. Addendum 2 §3's throwing getter is WITHDRAWN. (The 466-failure count was frequency, not variety: sign-if-missing rides every `Wire.Write`, so one seam × every wire-crossing test.)
 
 ### The seam fix (Ingi): an `app.Run` invocation is born knowing its CALLER
+
+One line, inside `App.Run`, nowhere else — **all four call sites stay byte-identical**:
+
 ```csharp
-// app/this.cs App.Run<TAction> — one line added to the composition:
-Step = context.CallStack.Current?.Action.Step,     // the calling action's step → its goal
+// app/this.cs
+public Task<data.@this> Run<TAction>(TAction handler, actor.context.@this context)
+    where TAction : module.ICodeGenerated
+{
+    var entity = new global::app.goal.step.action.@this
+    {
+        Module = Module[ResolveModuleName(typeof(TAction))],
+        Name   = ResolveActionName(typeof(TAction)),
+        Seed   = handler,
+        Step   = context.CallStack.Current?.Action.Step,   // ← NEW: born knowing its caller's step
+    };
+    return entity.Run(context);
+    // compose-and-run stays FUSED in this method — the fusion is what makes reading the
+    // cursor here honest (no created-now-run-later window). Never split it.
+}
 ```
+
+Worked trace (the sign case):
+
+```
+- read file.txt, write to %x%          ← the plang step executing
+    └─ file.read dispatches; frame pushed (Call.Action.Step = this step)
+        └─ result serializes → serializer calls App.Run(new sign { … })
+             Current.Action.Step = the "read file.txt" step   ← sign born with THIS
+             └─ sign's frame pushes; cycle check: goalPath == callerGoalPath → correctly quiet
+```
+
+- Boot edge: wire write before any goal runs → `Current == null` → `Step` stays null → `Push`'s `?.` answers "no goal boundary", as today. This is why `Step?` stays nullable and stays honest.
+- `--debug` bonus: sign/ask frames now render INSIDE their calling step instead of floating stepless.
 Why this is NOT the rejected `context.Step` move: the rejection was about PROGRAM actions (created now, run later — displacement makes the cursor a lie). An `app.Run` invocation is **compose-and-run fused** — no displacement window, so the calling frame's chain is definitionally its provenance, same legitimacy as `Call.Push` capturing at push. Two questions, two answers: "which step do I BELONG to" = program fact, birth only; "which step INVOKED me" = run fact, cursor at the fused moment. Keep compose+run fused inside `App.Run` — the fusion is what keeps this honest; never split it into compose-here-run-later.
 - Cycle check improves: sign invocations now carry the caller's goal identity; equal paths → the boundary check correctly stays quiet.
 - Your Q2 (kill the seam / handlers run themselves) drops from necessary to QUEUED cleanup — it no longer feeds the nullable population. Do not start it.
@@ -132,6 +161,8 @@ Why this is NOT the rejected `context.Step` move: the rejection was about PROGRA
 
 ### The three-role taxonomy (Ingi's framing) — the queued split, reframed
 One class plays three roles today: (1) **program action** — in a goal, has a step, runs; (2) **description** — the module-minted catalog entry (the Schema partial is already its body, riding as a partial); (3) **invocation** — the C#-composed infra call. Ingi: the description deserves its own type — **DEFERRED, his call, do not start**. When descriptions split out and the seam cleanup lands, role 1's `Step` tightens to non-null `init` honestly.
+
+Refinement (Ingi, examining the signature): role 3 is not a FAKE action — `new sign(_context) { Data = data, StoreView = … }` IS a fully authored action (module via the type's namespace, name via the type, params via the initializer) — a **C#-authored program action** whose authored position is its caller's step. The awkwardness is **one action, two objects**: the record that IS it, plus the `action.@this` entity that re-describes it for the dispatcher (`ResolveModuleName` reflecting a namespace to re-derive a string the caller expressed by naming the type). The queued Q2 cleanup is therefore "one object instead of two" — the source generator already emits a partial on every action record; the run surface (Push/lifecycle with itself) generates onto the record, and `App.Run<TAction>` + its namespace reflection dissolve. Better description, same queued status.
 
 ### Q3(a) — my "rule it into Child" was WRONG; recovery gets its OWN structural action-list slot
 `Child` holds AUTHORED sub-steps (condition bodies). Recovery is an action chain with no authored step — inventing a wrapper step to satisfy `Child`'s type is the manufacturing we condemned three times. The right shape: a structural **action-list slot on the action**, precedent `Modifier` (already a structural slot of actions on the wire). Payoffs intact: read at load through `Populate` with `step` in hand — recovery actions born with the ENCLOSING step (real, not invented — this also answers "what step do they have"); `action.list.Run` runs the chain (`%!data%` flow + condition support); door 2 still loses its last customer. Slot name: single word, Ingi + you settle; do NOT overload `child` to mean two shapes.
