@@ -1,4 +1,7 @@
-# Back-ref pass — delete `step.Goal` / `action.Step` / `GoalCall.Action`; the run carries parentage
+# Back-ref pass — SUPERSEDED 2026-09-01 → the BIRTH-FACT pass
+
+> **SUPERSEDED** by `error-model-and-backref-answer.md` (settled with Ingi 2026-09-01): `step.Goal` and `action.Step` BOTH SURVIVE as birth facts — a graph node is born knowing its parent (the parent exists first and hands itself down at read/parse). The defect was the STAMPING, not the references. What remains of this pass: delete the four stamp sites and the `??=` getters (the demolition table below still lists them correctly), readers/parser hand parents down, the goalEntry anchor and Events placeholder still die, the doc comments still get rewritten. VOID: the reader reroute tables (context/frame), the generator `IStep` emission change, the `GoalCall.Action`-via-context reroute reasoning (the property deletion itself was executed separately and stands). Do not implement the sections below as written — they are kept for the site inventory only.
+
 
 The execution plan for the pass ruled in `node-list-wiring-snag-answer.md` (Q2). Runs AFTER node-lists lands. Full consumer sweep done by architect 2026-07-24; every site verified by grep, dispositions below.
 
