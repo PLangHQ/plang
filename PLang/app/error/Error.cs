@@ -1,7 +1,6 @@
 using System.Text;
 using app.actor.context;
 using Goal = app.goal.@this;
-using Action = app.goal.step.action.@this;
 using Call = app.callstack.call.@this;
 
 namespace app.error;
@@ -14,7 +13,7 @@ namespace app.error;
 /// <c>%!error%</c> view, the errors-trail, a re-raised <c>throw %!error%</c>, a
 /// snapshot capturing an error — it renders and navigates itself, with no
 /// wrapper and no <c>clr</c>/<c>TypedValueNode</c> carrier. Its members
-/// (<c>Message</c>, <c>Key</c>, <c>Details</c>, the <c>list</c>) navigate
+/// (<c>Message</c>, <c>Key</c>, <c>Details</c>, the <c>ErrorChain</c>) navigate
 /// directly. The value-face is independent of <c>Data.Error</c>, the sidecar
 /// failure channel on the envelope.</para>
 /// </summary>
@@ -55,12 +54,11 @@ public class Error : global::app.type.item.@this, IError
     /// </summary>
     public global::app.data.@this<global::app.type.item.list.@this>? Data { get; init; }
 
-    /// <summary>The errors that CAUSED this one — see <see cref="IError.list"/>.</summary>
-    public List<IError> list { get; init; } = new();
+    public List<IError> ErrorChain { get; } = new();
 
     /// <summary>The error renders itself — its flattened wire shape, written straight
     /// to the wire (no intermediate value). $type discriminates the subtype; the
-    /// recursive list lets each nested error write itself. The live
+    /// recursive ErrorChain lets each nested error write itself. The live
     /// back-references that can't round-trip (Exception, Step, Goal, CallFrames) are
     /// dropped — the snapshot's CallStack section carries the chain. Symmetric with the
     /// read side (<c>ErrorWire</c>).</summary>
@@ -77,11 +75,11 @@ public class Error : global::app.type.item.@this, IError
         if (FixSuggestion != null) { writer.Name("fixSuggestion"); writer.String(FixSuggestion); }
         if (HelpfulLinks != null)  { writer.Name("helpfulLinks");  writer.String(HelpfulLinks); }
         WriteSpecific(writer);
-        if (list is { Count: > 0 })
+        if (ErrorChain is { Count: > 0 })
         {
             writer.Name("errorChain");
-            writer.BeginArray(list.Count);
-            foreach (var c in list)
+            writer.BeginArray(ErrorChain.Count);
+            foreach (var c in ErrorChain)
                 ((global::app.type.item.@this)c).Write(writer); // each error is an item — it writes itself
             writer.EndArray();
         }
@@ -126,7 +124,6 @@ public class Error : global::app.type.item.@this, IError
             return _callback;
         }
     }
-    public Action? Action { get; set; }
     public Step? Step { get; set; }
     public Goal? Goal { get; set; }
     public IReadOnlyList<Call> CallFrames { get; set; } = Array.Empty<Call>();
@@ -238,11 +235,11 @@ public class Error : global::app.type.item.@this, IError
         var sb = new StringBuilder();
         FormatError(this, sb, "");
 
-        for (int i = 0; i < list.Count; i++)
+        for (int i = 0; i < ErrorChain.Count; i++)
         {
             sb.AppendLine();
             sb.AppendLine($"--- Error during error handling [{i + 1}] ---");
-            FormatError(list[i], sb, "\t");
+            FormatError(ErrorChain[i], sb, "\t");
         }
         return sb.ToString().TrimEnd();
     }

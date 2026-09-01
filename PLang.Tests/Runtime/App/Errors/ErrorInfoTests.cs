@@ -79,8 +79,8 @@ public class ErrorTests
     {
         var error = new Error("Error");
 
-        await Assert.That(error.list).IsNotNull();
-        await Assert.That(error.list.Count).IsEqualTo(0);
+        await Assert.That(error.ErrorChain).IsNotNull();
+        await Assert.That(error.ErrorChain.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -88,10 +88,10 @@ public class ErrorTests
     {
         var error1 = new Error("Original error");
         var error2 = new Error("Error during handling");
-        error1.list.Add(error2);
+        error1.ErrorChain.Add(error2);
 
-        await Assert.That(error1.list.Count).IsEqualTo(1);
-        await Assert.That(error1.list[0].Message).IsEqualTo("Error during handling");
+        await Assert.That(error1.ErrorChain.Count).IsEqualTo(1);
+        await Assert.That(error1.ErrorChain[0].Message).IsEqualTo("Error during handling");
     }
 
     [Test]
@@ -196,7 +196,7 @@ public class ErrorTests
         var step = new Step { Index = 0, Text = "do something" };
         var error1 = new Error("Original error", step);
         var error2 = new Error("Action error", step, "ActionError", 500);
-        error1.list.Add(error2);
+        error1.ErrorChain.Add(error2);
 
         var formatted = error1.Format();
 

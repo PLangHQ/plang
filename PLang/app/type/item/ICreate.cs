@@ -63,7 +63,7 @@ public interface ICreate<TSelf> where TSelf : @this, ICreate<TSelf>
         // An error value isn't a convertible payload — keep it primary, demote the failure.
         if (raw is @this ev && ev.Clr<object>() is global::app.error.Error errVal)
         {
-            errVal.list.Add(new global::app.error.Error(
+            errVal.ErrorChain.Add(new global::app.error.Error(
                 $"%{data.Name}% holds an error — '{@this.NameOf(typeof(TSelf))}' cannot be created from it.",
                 "TypeMismatch", 400));
             data.Fail(errVal);

@@ -254,7 +254,7 @@ public partial class discover : IContext
         goal.ForEachAction((step, action) =>
         {
             // The action answers what it reaches; discovery just collects it.
-            foreach (var required in action.Requirement)
+            foreach (var required in action.Requires)
                 file.Tags.Add(required);
 
             if (string.Equals(action.Module.Name, "goal", StringComparison.OrdinalIgnoreCase) &&

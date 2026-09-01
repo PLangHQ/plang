@@ -334,8 +334,8 @@ public class ErrorHandleTests
         var result = await action.Run(Ctx);
 
         await result.IsFailure();
-        await Assert.That(result.Error!.list.Count).IsGreaterThan(0);
-        await Assert.That(result.Error.list[0].Message).IsEqualTo("goal failed");
+        await Assert.That(result.Error!.ErrorChain.Count).IsGreaterThan(0);
+        await Assert.That(result.Error.ErrorChain[0].Message).IsEqualTo("goal failed");
     }
 
     [Test]
@@ -368,7 +368,7 @@ public class ErrorHandleTests
         var result = await action.Run(Ctx);
 
         await result.IsFailure();
-        await Assert.That(result.Error!.list.Count).IsGreaterThan(0);
-        await Assert.That(result.Error.list[0].Message).IsEqualTo("goal also failed");
+        await Assert.That(result.Error!.ErrorChain.Count).IsGreaterThan(0);
+        await Assert.That(result.Error.ErrorChain[0].Message).IsEqualTo("goal also failed");
     }
 }
