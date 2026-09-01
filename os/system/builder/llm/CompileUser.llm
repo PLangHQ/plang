@@ -12,13 +12,14 @@
 
 {{ actionDetails }}
 
-## Available types
-
-{% if stepVarTypes %}{% for t in stepVarTypes %}{{ t.Name }}{% unless forloop.last %}, {% endunless %}{% endfor %}{% endif %}
-
 ## Type reference
 
 **Primitive type names** (use these as the top-level `name` in a parameter `type` field): {% for n in typeInfo.PrimitiveNames %}{{ n }}{% unless forloop.last %}, {% endunless %}{% endfor %}
+
+`item` is the apex type — "any value", the one every other type satisfies. It appears in the action
+detail above as `→ returns item`, meaning that action produces a value whose type isn't known until it
+runs. Read it as "unknown, decided at runtime". Do NOT emit `item` as a parameter `type` name: always
+pick the specific type the value plainly is.
 
 **Every parameter wrapper has three fields, IN THIS ORDER**: `name` (the parameter name), `type` (the value's PLang type as a structured `{name, kind?, strict?}` dict), `value` (the actual value). Emit the keys in `name, type, value` order. `type` is ONE field — never split into sibling `type` + `kind` keys.
 
