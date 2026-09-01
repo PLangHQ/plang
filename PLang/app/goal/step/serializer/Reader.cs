@@ -18,10 +18,15 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     /// has already built. SHELL-FIRST: the step is constructed empty so its actions can be born
     /// holding it, then its own scalars are filled as they arrive off the stream. That ordering is
     /// the whole reason the step's read-time scalars are `internal set` rather than `init`.</summary>
-    public global::app.goal.step.@this Read<TReader>(ref TReader reader,
+    public global::app.goal.step.@this? Read<TReader>(ref TReader reader,
         global::app.type.reader.ReadContext ctx, global::app.goal.@this goal)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
+        // A null element still has to be CONSUMED or the reader desyncs and the goal's own
+        // scalars are read off the wrong tokens. There is no null step to construct, so the
+        // caller drops it.
+        if (reader.Null()) return null;
+
         var step = new global::app.goal.step.@this { Goal = goal };   // shell first — children can hold it
 
         reader.BeginObject();
@@ -37,7 +42,11 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "action": case "actions":
                     reader.BeginArray();
                     while (reader.NextElement())
-                        step.Action.Add(_action.Read(ref reader, ctx, step));   // born knowing its step
+                    {
+                        // born knowing its step; null elements are consumed and dropped
+                        var action = _action.Read(ref reader, ctx, step);
+                        if (action != null) step.Action.Add(action);
+                    }
                     reader.EndArray();
                     break;
                 case "intent": step.Intent = reader.String(); break;

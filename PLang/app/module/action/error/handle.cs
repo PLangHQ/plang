@@ -88,13 +88,11 @@ public partial class Handle : IContext, IModifier
             if (result.Success) return result;
             if (!MatchesError(result.Error)) return result;
 
-            // Failing Call comes from the error's CallFrames snapshot — App.Run pushed and
-            // popped the action's Call inside next(), so we can't read it from stack.Current
-            // anymore. CallFrames[0] is the failing Call itself (post-Push snapshot).
-            var erroredCall = result.Error is global::app.error.Error errWithFrames
-                && errWithFrames.CallFrames.Count > 0
-                ? errWithFrames.CallFrames[0]
-                : null;
+            // The failing Call is LIVE and it is the current one: an action owns one frame for
+            // its whole run, and this modifier is wrapped inside that frame, so the frame that
+            // recorded the error is still the frame we are standing in. Marking it Handled is
+            // what takes the error out of play for %!error%.
+            var erroredCall = context.CallStack.Current;
 
             var order = (Order == null ? null : await Order.Value()) ?? ErrorOrder.RetryFirst;
             // The recovery chain is a plang list<action> — RunRecovery opens each row through its

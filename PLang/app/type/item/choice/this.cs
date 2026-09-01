@@ -84,6 +84,16 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
     /// (an enum member's name, a named-set registry key like "=="). Shared by the ICreate core
     /// and the wire reader. THROWS FormatException on an unknown symbol (no data.Fail in scope;
     /// the born path turns it into MaterializeFailed named to the binding).</summary>
+    /// <summary>Reads one option off the wire. The written form is the option's SYMBOL, but a
+    /// NUMBER also appears on disk: every .pr built before this field became a choice carries the
+    /// enum's ordinal, and 790 of them still do. <see cref="Parse"/> accepts an ordinal in its
+    /// text form, so both land in one place — the type that owns the wire form.</summary>
+    public static @this<T> Read<TReader>(ref TReader reader)
+        where TReader : global::app.channel.serializer.IReader, allows ref struct
+        => Parse(reader.Peek() == global::app.channel.serializer.TokenKind.Number
+            ? reader.Number().ToString() ?? ""
+            : reader.String());
+
     public static @this<T> Parse(string symbol)
     {
         try

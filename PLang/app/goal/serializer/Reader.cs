@@ -54,7 +54,11 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "step":
                     reader.BeginArray();
                     while (reader.NextElement())
-                        goal.Step.Add(_step.Read(ref reader, ctx, goal));   // born knowing its goal
+                    {
+                        // born knowing its goal; null elements are consumed and dropped
+                        var step = _step.Read(ref reader, ctx, goal);
+                        if (step != null) goal.Step.Add(step);
+                    }
                     reader.EndArray();
                     break;
                 case "child":
@@ -64,7 +68,8 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                     reader.EndArray();
                     break;
                 case "visibility":
-                    goal.Visibility = global::app.type.item.choice.@this<global::app.goal.Visibility>.Parse(reader.String());
+                    // The choice reads its own wire form — symbol or legacy ordinal.
+                    goal.Visibility = global::app.type.item.choice.@this<global::app.goal.Visibility>.Read(ref reader);
                     break;
                 case "path": goal.Path = global::app.type.item.path.@this.Resolve(reader.String(), ctx.Context); break;
                 // prPath is DERIVED from Path — consume and discard.

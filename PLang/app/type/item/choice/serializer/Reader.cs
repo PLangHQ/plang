@@ -20,6 +20,6 @@ public sealed class Reader<T> : global::app.type.reader.ITypeReader where T : no
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
         if (reader.Null()) return new global::app.type.item.@null.@this("choice", kind);
-        return global::app.type.item.choice.@this<T>.Parse(reader.String());
+        return global::app.type.item.choice.@this<T>.Read(ref reader);
     }
 }

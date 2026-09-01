@@ -36,10 +36,14 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     /// has already built. The action is born knowing its step; nothing stamps it afterwards.
     /// The interface door above survives only until the graft and recovery stop routing actions
     /// through the type-reader registry, at which point this is the only way to make one.</summary>
-    public global::app.goal.step.action.@this Read<TReader>(ref TReader reader,
+    public global::app.goal.step.action.@this? Read<TReader>(ref TReader reader,
         global::app.type.reader.ReadContext ctx, global::app.goal.step.@this step)
         where TReader : global::app.channel.serializer.IReader, allows ref struct
     {
+        // A null element still has to be CONSUMED or the reader desyncs. There is no null
+        // action to construct, so the caller drops it.
+        if (reader.Null()) return null;
+
         var action = new global::app.goal.step.action.@this { Step = step, Synthetic = false };
         Populate(ref reader, action, ctx, step);
         return action;
@@ -103,9 +107,13 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                     var childSteps = new global::app.goal.step.list.@this();   // Add each step into the node
                     reader.BeginArray();
                     while (reader.NextElement())
-                        childSteps.Add(step != null
-                            ? StepReader.Read(ref reader, ctx, step.Goal)   // chain self-feeds: the step's goal
-                            : (global::app.goal.step.@this)StepReader.Read(ref reader, null, ctx));
+                    {
+                        // chain self-feeds: a child step's goal is this action's step's goal
+                        var child = step != null
+                            ? StepReader.Read(ref reader, ctx, step.Goal)
+                            : StepReader.Read(ref reader, null, ctx) as global::app.goal.step.@this;
+                        if (child != null) childSteps.Add(child);
+                    }
                     reader.EndArray();
                     action.Child = childSteps;
                     break;

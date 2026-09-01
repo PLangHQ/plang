@@ -185,16 +185,12 @@ public sealed class @this : IDisposable
         vars.Set(new data.DynamicData("!serializers", () => Actor.Channel.Serializers, this));
         vars.Set(new data.DynamicData("!goal", () => Goal, this));
         vars.Set(new data.DynamicData("!step", () => Step, this));
-        // %!error% reads from App.Errors.@this — an AsyncLocal scope managed by
-        // error.handle.Wrap via using(app.error.Push(caught)) { ... }. Null outside any
-        // active recovery scope; in nested handlers each scope sees its own caught error
-        // (LIFO restore on dispose). AsyncLocal is parallelism-safe by construction.
-        //
-        // The target is CallStack.Error — the error already lives on the frame that failed,
-        // so this slot is a second home for one fact. The reroute is BLOCKED: dispatch pops
-        // the failing frame before error.handle runs recovery, so the walk finds nothing at
-        // the moment %!error% is read. See ErrorInPlayTests for the two gates.
-        vars.Set(new data.DynamicData("!error", () => App.Error.Error, this));
+        // %!error% reads the CALL STACK. The error is already recorded on the frame that
+        // failed, and that frame is still live while its recovery runs (one frame per action,
+        // spanning its modifiers), so nothing stores the error a second time. CallStack.Error
+        // walks Caller outward for the first frame holding an unrecovered one — nesting
+        // shadows for free, and parallel branches don't cross (the stack is AsyncLocal).
+        vars.Set(new data.DynamicData("!error", () => CallStack.Error, this));
         vars.Set(new data.DynamicData("!data", () => App.System.Context.Variable.Peek("data")?.Peek(), this));
         vars.Set(new data.DynamicData("!event", () => Event ?? App.System?.Context?.Event, this));
         vars.Set(new data.DynamicData("!test", () => Test, this));

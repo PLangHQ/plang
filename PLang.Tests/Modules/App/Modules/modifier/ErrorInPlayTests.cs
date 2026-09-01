@@ -1,16 +1,14 @@
 namespace PLang.Tests.App.Modules.modifier;
 
 /// <summary>
-/// The gates on reading <c>%!error%</c> off the call stack instead of a side slot.
-/// The error is already recorded on the frame that failed; <c>CallStack.Error</c> walks
-/// <c>Caller</c> outward and answers with the first frame holding an unrecovered one.
+/// <c>%!error%</c> reads the call stack. The error is already recorded on the frame that
+/// failed; <c>CallStack.Error</c> walks <c>Caller</c> outward and answers with the first
+/// frame holding an unrecovered one. Nothing stores it a second time.
 ///
-/// The two RED tests below are the architect's gates on deleting <c>app.Error</c>. They fail
-/// for one reason: dispatch pops the failing action's frame before <c>error.handle</c> runs
-/// recovery, so at the moment <c>%!error%</c> is read the error is no longer reachable from
-/// any live frame. The fix belongs where the error is recorded at unwind — never in a new
-/// slot — and is a design decision, not a line edit. Until it lands, <c>%!error%</c> stays
-/// wired to <c>App.Error</c> and these stay red.
+/// This works because an action owns ONE frame for its whole run — its lifecycle events, its
+/// modifiers, and its dispatch. A modifier recovering from a failure runs inside the frame
+/// that failed, so the error is still on the live chain when the recovery body reads it, and
+/// <c>Handled</c> on that frame is what takes it out of play.
 /// </summary>
 public class ErrorInPlayTests
 {
@@ -147,34 +145,29 @@ public class ErrorInPlayTests
         await Assert.That(call.Errors.Count).IsEqualTo(1);   // still in the audit view
     }
 
-    // ── GATE 1 and GATE 2: RED. See the class comment. ────────────────────────────────
-
     /// <summary>
-    /// GATE 1 — the pop-timing gate. The failing action pushes its own Call inside
-    /// DispatchAsync, records the error there, and that frame is disposed on the way out.
-    /// error.handle then runs recovery, by which point the error is on a frame no longer
-    /// on the live chain — so the walk answers null and %!error% cannot be read off it.
+    /// A popped frame takes its error out of play. An action that has finished is not "where
+    /// we had the last error" — which is exactly why recovery has to run INSIDE the frame that
+    /// failed rather than after it, and why the frame spans the action's modifiers.
     /// </summary>
     [Test]
-    public async Task ErrorInPlay_SurvivesTheFailingFramesPop()
+    public async Task ErrorInPlay_PoppedFrame_NoLongerInPlay()
     {
-        var action = TestAction.Create("error", "throw", ("message", "the original failure"));
-        var seen = new List<global::app.error.IError?>();
+        var action = TestAction.Create("error", "throw", ("message", "already finished"));
 
         await using (var call = Ctx.CallStack.Push(action, Ctx.Variable))
-            call.Errors.Add(new global::app.error.Error("the original failure"));
+        {
+            call.Errors.Add(new global::app.error.Error("already finished"));
+            await Assert.That(Ctx.CallStack.Error).IsNotNull();
+        }
 
-        // The frame has popped — this is exactly the moment error.handle runs recovery.
-        seen.Add(Ctx.CallStack.Error);
-
-        await Assert.That(seen[0]).IsNotNull();
-        await Assert.That(seen[0]!.Message).IsEqualTo("the original failure");
+        await Assert.That(Ctx.CallStack.Error).IsNull();
     }
 
     /// <summary>
-    /// GATE 2 — the end-to-end shape: %!error% inside a recovery chain is the error being
-    /// recovered. Runs the real modifier fold, so it also pins that recovery gets the error
-    /// through whatever mechanism %!error% is wired to.
+    /// The end-to-end shape: %!error% inside a recovery chain is the error being recovered.
+    /// Runs the real modifier fold, so it pins that the failing action's frame is still live
+    /// while its error.handle runs — the whole reason the frame spans the modifiers.
     /// </summary>
     [Test]
     public async Task ErrorInPlay_DuringRecovery_IsTheErrorBeingRecovered()

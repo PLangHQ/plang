@@ -150,6 +150,26 @@ public partial class @this
     /// </summary>
     public async Task<global::app.data.@this> Run(actor.context.@this context)
     {
+        // ONE FRAME PER ACTION. The frame spans the action's whole run — its lifecycle events,
+        // its modifiers, and its dispatch — not just the dispatch. A modifier recovering from a
+        // failure (error.handle) therefore runs INSIDE the frame that failed, which is where the
+        // error already is: CallStack.Error / %!error% read it off the live chain, and marking it
+        // Handled on that frame is what takes it out of play. When the Push wrapped dispatch only,
+        // the frame died between the failure and the recovery that had to see it.
+        global::app.callstack.call.@this call;
+        try { call = context.CallStack.Push(this, context.Variable); }
+        catch (global::app.error.CallStackOverflowException ex)
+        {
+            // Depth limit or ContainsGoal cycle — trips at Push, before the frame is on the
+            // stack, so the contract (returns Data, never throws) is held here.
+            var caller = context.CallStack.Current;
+            var chain = caller != null ? caller.SnapshotChain() : Array.Empty<global::app.callstack.call.@this>();
+            var overflowErr = new global::app.error.ServiceError(ex.Message, this.Step!, chain, "CallStackOverflow", 500) { Exception = ex };
+            context.CallStack.Audit.Add(overflowErr);
+            return context.Error(overflowErr);
+        }
+        await using var _call = call;
+
         var lifecycle = context.LifecycleFor(this);
 
         var beforeResult = await lifecycle.Before.Run(context, app.@event.Trigger.BeforeAction, this);
@@ -166,14 +186,14 @@ public partial class @this
             data.Handled = false;
         }
         else if (Modifier.Count == 0)
-            data = await DispatchAsync(context);
+            data = await DispatchAsync(context, call);
         else
         {
             // The action composes its modifiers around its own dispatch — right-to-left, lowest
             // Position outermost (the slot is pre-sorted by Nest). Each modifier wraps the inner in
             // ITSELF (modifier.Wrap); then AfterAction fires once per modifier so coverage tracks
             // presence (a modifier wraps, it never runs the standalone path).
-            Func<Task<global::app.data.@this>> execute = () => DispatchAsync(context);
+            Func<Task<global::app.data.@this>> execute = () => DispatchAsync(context, call);
             for (int i = Modifier.Count - 1; i >= 0; i--)
             {
                 var (wrapped, wrapError) = await Modifier[i].Wrap(execute, context);
@@ -200,12 +220,13 @@ public partial class @this
     }
 
     /// <summary>
-    /// Dispatches this action through the production execution path: pushes a Call
-    /// onto the CallStack, saves/restores Context anchors, translates CLR exceptions
-    /// into ServiceError. Absorbed from the former <c>App.Run</c> in stage 2a.5 so
-    /// the action owns its own execution.
+    /// Dispatches this action inside the frame <see cref="Run"/> pushed for it: resolves the
+    /// handler, saves/restores Context anchors, and hands off to the Call, which owns the
+    /// exception translation. The frame is NOT created here — a retry dispatches again into
+    /// the same frame, and a modifier recovering from a failure is still inside it.
     /// </summary>
-    private async Task<global::app.data.@this> DispatchAsync(actor.context.@this context)
+    private async Task<global::app.data.@this> DispatchAsync(
+        actor.context.@this context, global::app.callstack.call.@this call)
     {
         var app = context.App!;
         // Uniform dispatch: always resolve the shell + run Resolve (the seam). A C#-composed
@@ -214,26 +235,6 @@ public partial class @this
         var (handler, error) = app.Module.GetCodeGenerated(this, context);
         if (error != null) return context.Error(error);
 
-        // CallStackOverflowException (depth limit or ContainsGoal cycle) trips at Push,
-        // before the call frame is on the stack — catch it here so the contract
-        // (returns Data, never throws) holds. Once Push succeeds the Call owns its
-        // own try/catch via ExecuteAsync.
-        global::app.callstack.call.@this call;
-        try { call = context.CallStack.Push(this, context.Variable); }
-        catch (global::app.error.CallStackOverflowException ex)
-        {
-            var caller = context.CallStack.Current;
-            var chain = caller != null ? caller.SnapshotChain() : Array.Empty<global::app.callstack.call.@this>();
-            var overflowErr = new global::app.error.ServiceError(ex.Message, this.Step!, chain, "CallStackOverflow", 500) { Exception = ex };
-            context.CallStack.Audit.Add(overflowErr);
-            return context.Error(overflowErr);
-        }
-
-        // Dispose order matters: anchor restore must run BEFORE Call's await-using
-        // dispose (AsyncLocal restore, Children removal, Variables.OnSet unsubscribe).
-        // C# disposes in reverse declaration order — declare `await using call` first
-        // so the inner `using anchor` disposes first.
-        await using var _ = call;
         using var _anchor = context.AnchorScope(this);
         return await call.ExecuteAsync(handler!, context);
     }
