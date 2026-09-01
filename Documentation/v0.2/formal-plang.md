@@ -1,283 +1,159 @@
-# Formal PLang — the builder's intermediate notation
+# Formal plang — the grammar of a compiled step
 
-`formal` is a one-line, canonical render of a step's action chain that the
-builder's **compiler** writes *before* it emits the `actions[]` JSON. It is the
-syntax the LLM "thinks in" to commit to module/action selection and chain shape;
-the JSON then just mirrors that decision. Every step in a `.pr` file carries its
-`formal` line, which makes it the most compact human-readable view of what the
-builder decided.
-
-This document is reverse-engineered from two sources: the rules in
-`os/system/builder/llm/Compile.llm` (the authority on what formal *should* be),
-and the ~600 distinct `formal` strings actually present across `Tests/**/.build`
-and `os/system/builder/**/.build`. Where the corpus diverges from the rules, that
-divergence is called out in [§7](#7-observed-variance--known-rough-edges) — it is
-itself a finding about builder reliability.
-
-See also: [`understanding-the-builder.md`](understanding-the-builder.md) (how the
-two-phase Plan→Compile pipeline works), [`build_process.md`](build_process.md)
-(the full `.pr` format).
-
-> ⚠️ **The `type` slot is mid-migration on this branch (`type-kind-strict`).**
-> The type model is becoming `{name, kind, strict}` (e.g. `{name:"number",
-> kind:"int"}`), but most `.pr` files in the corpus were built *before* that
-> change and still carry the older `{name:"..."}` / `Type=string` forms — they
-> have **not** been rebuilt. Treat every `type=`/`Type=`/`type:` you see below as
-> **illustrative of formal's *syntax*, not authoritative on the type vocabulary or
-> its encoding.** The kind-aware shape is what fresh builds emit; expect the
-> `type` examples here to change once the corpus is rebuilt.
-
----
-
-## 1. Why formal exists
-
-Three jobs:
-
-1. **A think-before-you-serialize scaffold.** Writing the chain on one line forces
-   the compiler to commit to *which* actions, in *what* order, with *which*
-   parameters — before producing the verbose nested JSON. The JSON can then
-   mirror a decision already made, rather than being where the decision happens.
-2. **A 1:1 contract with `actions[]`.** `formal` and `actions[]` must describe
-   exactly the same chain (see [§6](#6-the-two-hard-rules)). Because they're
-   redundant, the validator and a human reader can cross-check one against the
-   other.
-3. **An audit line.** In a `.pr`, the `formal` field is the at-a-glance answer to
-   "what did the builder map this step to?" — far easier to scan than the
-   `actions[]` tree.
-
----
-
-## 2. The shape of one action
+`formal` is the one-line render of what a step compiles to. Every step in a `.pr` carries one:
 
 ```
-module.action(ParamName=value, ParamName=value, ...)
+error.throw(Message="boom") | error.handle(Order=GoalFirst) { variable.set(Name=%content%, Value="from-recovery") }
 ```
 
-- **Module + action** are the catalog identifiers (`variable.set`, `goal.call`,
-  `output.write`, …). The module is always a single identifier (no dots inside).
-- **Parameter names** are the action's real schema names (`Name`, `Value`,
-  `Collection`, `GoalName`, `Path`, `Data`, …).
-- **Optional parameters the step text didn't supply are omitted entirely** — no
-  `Param=null`, no stub. If it's not in the step, it's not in `formal`.
+It is the human- and LLM-readable face of `step.action[]`. This document defines it.
 
-### Values (the right-hand side of `Param=`)
+## Status: today it is a convention, not a language
 
-| Kind | Form | Example |
-|---|---|---|
-| String literal | double-quoted | `Message="boom"` |
-| Variable | `%name%`, kept verbatim | `Value=%message%` |
-| System variable | `%!...%` | `Value=%!data%`, `Right=%!build.cache%` |
-| Number | unquoted | `Right=5`, `Value=3.5` |
-| Boolean | unquoted | `Right=true`, `Force=true` |
-| List | `[...]` | `Value=[1, 2, 3]` |
-| Nested object | `{key:value, ...}` | `GoalName={name:"Greet"}` |
-| Inline message list | `[{role:"system", content:"..."}]` | see `llm.query` below |
+Stating the gap first, because it shapes everything below.
 
-`%!data%` is special: it means **"the prior action's result"** — the value
-flowing out of the previous action in the chain. It is *not* a placeholder for
-"unfilled"; if the previous action didn't produce something meant for this slot,
-the parameter should be omitted, not set to `%!data%`.
+- **Nothing produces `formal` from the action tree.** The LLM emits it as a free string during
+  compile (`os/system/builder/llm/Compile.llm`, "Write `formal` first").
+- **Nothing parses it.** `step.Formal` is read off the wire into a `string?` and written back out.
+  Grep for consumers: the reader, the writer, and the item door. That is all.
+- **Nothing checks it against `action[]`.** The only rule is a prose line in the prompt —
+  *"`formal` and `actions[]` MUST match exactly — every `Param=value` in one appears in the other,
+  no extras either way"* — enforced by nobody.
+- **The grammar is five bullet points in a prompt**, plus per-module notes that restate parts of it
+  (`assert/module.notes.md`, `output/write.notes.md` both re-teach "formal mirrors parameters").
 
----
+So `formal` can drift from the actions it claims to describe, silently, and today sometimes does.
+The fix is at the end of this document; the grammar comes first because the fix needs it.
 
-## 3. Composing a chain
+## The grammar
 
-Three connectors join actions within one step:
+```ebnf
+formal      = chain ;
 
-### ` | ` — pipe / modifier attachment
+chain       = unit { " , " unit } ;             (* peers — run in order *)
+unit        = call { " | " call } ;             (* a host followed by its modifiers *)
 
-Attaches a **modifier** to its host, or pipes the host's result forward:
+call        = module "." action "(" [ args ] ")" [ body ] ;
+body        = " { " chain " } " ;               (* the actions this call owns *)
 
-```
-output.write(Data="hi", channel="logger") | error.handle(Actions=[variable.set(Name=%writeFailed%, Value=true)])
-error.throw(Message="temporary failure", StatusCode=500) | error.handle(RetryCount=2, IgnoreError=true)
-llm.query(...) | cache.wrap(DurationMs=0, Sliding=false) , variable.set(Name=%first%, Value=%!data%)
-math.add(A=%total%, B=%item%) | variable.set(Name=%total%, Value=%!data%)
-```
+args        = arg { ", " arg } ;
+arg         = ParamName "=" value ;
 
-The modifier families are `error.handle`, `cache.wrap`, `timeout.after`. In the
-JSON these go in the host action's `modifiers` array — **not** as peers in the
-top-level `actions`.
-
-### `, ` — peer action
-
-A second independent action in the same step's chain:
-
-```
-condition.if(Left=%total%, Operator=">", Right=5), goal.call(GoalName={name:"MarkBig"})
-file.read(Path="start-eq.txt") , variable.set(Name=%pr%, Value=%!data%, Type=object)
-loop.foreach(Collection=%items%), goal.call(GoalName={name:"AddItem", parameters:[{name:"item", value:%item%, type:"string"}]})
+value       = string | number | bool | variable | list | object | null ;
+string      = '"' … '"' ;                        (* quoted *)
+number      = digits [ "." digits ] ;            (* unquoted *)
+bool        = "true" | "false" ;                 (* unquoted *)
+variable    = "%" name { "." name | "[" index "]" } "%" ;   (* verbatim, unquoted *)
+list        = "[" [ value { ", " value } ] "]" ;
+object      = "{" [ name ":" value { ", " name ":" value } ] "}" ;
 ```
 
-### `[...]` — nested action list
+`ParamName` is the schema parameter name as declared on the action handler — not an invented alias.
 
-Action values that themselves contain actions (`error.handle.Actions`,
-`goal.call.GoalName.parameters`) use bracketed lists with the same sub-syntax:
+### The one rule that matters
 
-```
-goal.call(GoalName={name:"ChainOuter"}) | error.handle(Actions=[variable.set(Name=%caught%, Value=true)])
-error.throw(...) | error.handle(Actions=[goal.call(GoalName={name:"HandleRetryError"})])
-```
+> **`value` never produces a `call`.** An action is not data. It appears only where the grammar
+> puts a `call`.
 
----
+That is the whole answer to "where can an action be inserted".
 
-## 4. Pattern catalog (real `.pr` examples)
+## Where an action can appear — exactly three positions
 
-### Variable assignment
-```
-variable.set(Name=%greeting%, Value="hello", Type=string)
-variable.set(Name=%items%, Value=[1, 2, 3], Type=json)
-```
+| position | separator | slot on the wire | meaning |
+|---|---|---|---|
+| **peer** | ` , ` | `step.action[]` | runs next, unconditionally |
+| **modifier** | ` \| ` | `action.modifier[]` | wraps the preceding host |
+| **body** | `{ … }` | the owning call's body slot | runs when the owner decides |
 
-### Capture a result — `write to %x%` becomes a peer `variable.set`
-```
-file.read(Path="config.json") , variable.set(Name=%pr%, Value=%!data%, Type=object)
-math.add(A=%x%, B=%z%) | variable.set(Name=%b%, Value=%!data%)
-```
-(`write to` is a *peer* per the rules — see [§7](#7-observed-variance--known-rough-edges) on the `|` vs `,` inconsistency.)
+Nothing else. In particular there is no fourth position "inside a parameter value", and the
+grammar above cannot express one.
 
-### Output
-```
-output.write(Data=%message%)
-output.write(Data="hello from channel accessor", channel="log")
-```
-
-### Conditionals — `if` / `else` / `elseif` are each their own action
-```
-condition.if(Left=%flag%, Operator="==", Right=true) , condition.else() , goal.call(GoalName={name:"HandleTrue"}) , goal.call(GoalName={name:"HandleFalse"})
-condition.if(Left=%x%, Operator=">", Right=10) , condition.elseif(Left=%x%, Operator=">", Right=5) , variable.set(Name=%c%, Value=3, Type="int")
-```
-
-### foreach + call (the canonical loop shape)
-```
-loop.foreach(Collection=%items%), goal.call(GoalName={name:"AddItem", parameters:[{name:"item", value:%item%, type:"string"}]})
-loop.foreach(Collection=%dict%), goal.call(GoalName={name:"ProcessEntry", parameters:[{name:"item", value:%entry%, type:"string"}, {name:"key", value:%key%, type:"string"}]})
-```
-The named args (`item=%item%`) live **inside** `GoalName.parameters`, never as
-top-level `goal.call` params.
-
-### Goal call with error recovery
-```
-goal.call(GoalName={name:"Recurse"}) | error.handle(Actions=[goal.call(GoalName={name:"HandleRecursionError"})])
-error.throw(Message="boom", StatusCode=500) | error.handle(Actions=[variable.set(Name=%recovered%, Value=true)])
-```
-
-### Error-handle knobs (no recovery verb)
-```
-identity.archive(Name="roundtripSigner", Force=true) | error.handle(IgnoreError=true)
-error.throw(Message="temporary failure", StatusCode=500) | error.handle(RetryCount=2, IgnoreError=true)
-```
-
-### Cache wrap
-```
-llm.query(Messages=[...], Cache=true) | cache.wrap(DurationMs=0, Sliding=false) , variable.set(Name=%second%, Value=%!data%)
-```
-
-### LLM query with an inline message list
-```
-llm.query(Messages=[{role:"system", content:"You are a helpful assistant"},{role:"user", content:"My favorite color is blue."}]) | variable.set(Name=%first%, Value=%!data%)
-llm.query(Messages=[{role:"system",content:"..."},{role:"user",content:"What is my favorite color?"}], ContinuePreviousConversation=true) | variable.set(Name=%second%, Value=%!data%)
-```
-
-### Assertions
-```
-assert.equals(Expected=4.5, Actual=%b%)
-assert.equals(Expected="big-and-done", Actual=%label%)
-assert.isNotNull(Value=%result%)
-assert.isTrue(Value=%flag%)
-```
-
----
-
-## 5. An informal grammar
+### Peer — ` , `
 
 ```
-formal      := chain
-chain       := segment ( (" | " | " , ") segment )*
-segment     := module "." action "(" params? ")"
-params      := param ( ", " param )*
-param       := Name "=" value | value
-value       := text | number | bool | list | object | segment | ...
-text        := '"' chars '"'
-list        := "[" (value ("," value)*)? "]"
-object      := "{" (key ":" value ("," key ":" value)*)? "}"
+loop.foreach(Collection=%items%, ItemName=%item%) , goal.call(GoalName="DoProduct")
 ```
 
-Notes:
-- The `value` alternatives above are **not a closed set** — `text`, `number`,
-  `bool`, `list`, `object` are the common primitives, but the full value
-  vocabulary comes from the **PLang type system (the types list)**, and more are
-  added there as needed. The grammar's job is the *structure* (how values are
-  written and composed); *which* types exist is owned by the type list (currently
-  migrating to `{name, kind, strict}` — see the warning at the top).
-- A **variable reference** (`%name%`, member access `%name.x%`, or system
-  `%!data%`) appears anywhere a value does, written verbatim and resolved at
-  runtime. It is not a distinct grammar atom — it's just a value token.
-- A **nested action** is a value: `error.handle(Actions=[goal.call(...)])` is a
-  `list` whose elements are `segment`s. There is no separate "action-list"
-  production — a list of actions is just a `list` of `value`s.
-- Modifiers (`error.handle`, `cache.wrap`, `timeout.after`) are segments
-  introduced by ` | `; peers are segments introduced by ` , `.
+Order is the execution order. `foreach X, call Y` is two peers, not a nesting.
 
----
+### Modifier — ` | `
 
-## 6. The two hard rules
+Exactly three actions are modifiers: `error.handle`, `cache.wrap`, `timeout.after`. A modifier
+never stands alone and never appears as a peer; it wraps the call to its left.
 
-From `Compile.llm`, non-negotiable:
+```
+http.request(Url=%url%) | timeout.after(Ms=5000) | error.handle(IgnoreError=true)
+```
 
-1. **`formal` must mirror `actions[]` exactly.** Every `Param=value` in the formal
-   line corresponds to a real entry in that action's `parameters` array, and every
-   emitted parameter appears in formal. No extras in either direction. An optional
-   parameter the step text didn't name is omitted from **both**.
-2. **If you can't write a coherent `formal` line, the action set is wrong.** Don't
-   guess a partial chain — emit the `missing-actions` error so the planner expands
-   the set. A formal you can't complete is the signal that the planner under-picked.
+Right-to-left composition: the leftmost modifier is outermost.
 
----
+### Body — `{ … }`
 
-## 7. Observed variance — known rough edges
+A call that owns a body runs those actions itself, on its own condition:
 
-The corpus is *not* perfectly consistent. These variations appear across real
-`.pr` files and are worth knowing — both to read existing files and because the
-inconsistency is part of why self-rebuild is non-deterministic (the builder's own
-reliability problem). They are reported here, not endorsed.
+```
+condition.if(Left=%x%, Operator=>, Right=2) { goal.call(GoalName="DoStuff") }
+error.handle(Order=GoalFirst) { variable.set(Name=%failed%, Value=true) }
+```
 
-- **`|` vs `,` for a captured result.** `write to %x%` is documented as a *peer*
-  (`,`), and `file.read(...) , variable.set(...)` follows that — but
-  `math.add(...) | variable.set(...)` uses the pipe for the same capture. The
-  separator drifts between steps.
-- **Value quoting of variables.** Both `value:%item%` and `value:"%item%"` occur
-  inside `parameters` lists for the same construct.
-- **`type` key casing/quoting — and the slot itself is changing.** `Type=string`,
-  `type=string`, `Type="int"`, `type:"string"`, `type=object` all appear —
-  different case, different quoting, different key (`Type=` vs `type:`). On top of
-  that string-level drift, the **type model itself changed on this branch** to
-  `{name, kind, strict}` and the corpus mostly predates the rebuild (see the
-  warning at the top). So the `type` slot has two layers of churn right now —
-  don't treat any single form as the standard until the corpus is rebuilt and the
-  kind-aware shape is the only one present.
-- **Whitespace around connectors.** `...) , goal.call` vs `...), goal.call`.
-- **`goal.call` shorthand.** Mostly `goal.call(GoalName={name:"X"})`, but the
-  short `goal.call(HandleRetryError)` and `goal.call({name:"X"})` also occur.
-- **`Actor=%!data%` artifact.** Some `goal.call`s carry `Actor=%!data%` — a known
-  LLM mis-binding (it parks the foreach item or prior result in the `Actor` slot).
-  `Actor` should be **omitted** unless the step text explicitly names a
-  cross-actor delegation; see `os/system/modules/goal/call.notes.md`.
+A body is a full `chain`, so it recurses: a body can hold peers, modifiers, and further bodies.
 
-When tightening builder prompts or the validator, this list is the menu of
-compound-value ambiguities to nail down: pin the separator, the quoting, and the
-`type` spelling so the LLM stops extrapolating one example's convention onto
-another.
+Note what a body does **not** carry: the guarded clause's source text. `formal` renders
+`condition.if(…) { goal.call(…) }`, never the child step's `text`. At the `formal` level a body is
+an action chain, full stop. (On the wire `child` currently wraps that chain in a step record with a
+`text` field; that wrapper has no representation here.)
 
----
+### Parens vs braces
 
-## 8. How to read formal in practice
+> **Parens carry parameters — data the call reads.**
+> **Braces carry a body — actions the call runs.**
 
-- Pull every formal line from the corpus:
-  ```bash
-  python3 -c "import json,glob;[print(s.get('formal')) for fp in glob.glob('Tests/**/.build/*.pr',recursive=True) for d in [json.load(open(fp))] for s in d.get('steps',[]) if s.get('formal')]"
-  ```
-- Read it top-to-bottom: leading segment is the main action; ` | ` hangs a
-  modifier; ` , ` adds a peer; `[...]` opens a nested action (recovery body, call
-  parameters).
-- Cross-check against `actions[]` in the same step — they must say the same thing.
+This is the pair of rules to teach, and everything else follows from it.
+
+## What the grammar says about the recovery slot
+
+`error.handle`'s recovery actions are, today, a `[…]` inside a parameter value:
+
+```
+error.handle(Actions=[variable.set(Name=%content%, Value="from-recovery")], Order=GoalFirst)
+```
+
+The grammar above cannot produce that — `value` does not produce `call`. So either the grammar is
+wrong, or the current shape is. It is the current shape: the recovery actions are a body, and
+`error.handle` is a call that owns one. Rendering them as a body is the change:
+
+```
+error.handle(Order=GoalFirst) { variable.set(Name=%content%, Value="from-recovery") }
+```
+
+The runtime consequence is covered elsewhere (a value is lazy — materialised on first touch, long
+after load — so an action inside one cannot be born knowing its step, and has to be stamped). The
+grammar reaches the same conclusion from the language side alone.
+
+## Making it real — `formal` derived, not asserted
+
+The grammar is only worth writing down if something enforces it. The order of work:
+
+1. **A renderer.** `formal` is produced FROM `step.action[]` by walking the tree — one method,
+   defined by the grammar above. `formal` then has a single source of truth and cannot drift,
+   because it is not stored input, it is derived output.
+2. **The LLM still writes `formal` first.** That is not redundant — writing the one-liner before the
+   JSON is what makes the model commit to a shape. But its string stops being authoritative and
+   becomes a *claim*: render `formal` from the emitted `action[]`, compare to the claimed string,
+   and a mismatch is a build error the model is asked to fix. The prose rule
+   ("MUST match exactly") becomes a mechanical gate.
+3. **The per-module notes shrink.** `assert/module.notes.md` and `output/write.notes.md` each
+   re-teach "formal mirrors parameters" because nothing checks it. With a check they can drop that
+   and keep only what is actually module-specific.
+4. **A parser, if ever needed.** Not required for the above — rendering and comparing is enough.
+   A parser only becomes interesting if `formal` is ever to be authored by hand.
+
+Step 1 is the one that pays; steps 2–3 fall out of it.
+
+## Open
+
+- **`child`'s step wrapper.** On the wire a condition's body is `[{text, action[]}]` — a step record
+  — while `formal` renders only the action chain. Either the `text` matters (and `formal` should
+  carry it) or it does not (and the body is an action list, like every other body). Unresolved.
+- **The body slot's name on the wire.** `child` for conditions; recovery needs either its own slot
+  or to reuse `child`. Open with Ingi.
