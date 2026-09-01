@@ -91,3 +91,23 @@ public action.@this Read<TReader>(ref TReader reader, ReadContext readContext, s
 
 - §7.6 (the hand-off parameter + `init` → `internal set`) — unnecessary; readers construct with the parent in the signature because they are no longer interface-bound.
 - The adoption-setter and owner-born-node variants discussed in console — rejected (double processing; nullable window).
+
+
+---
+
+## ADDENDUM 2 (2026-09-01, code write-out) — four corrections + the Step nullability ruling
+
+Architect wrote the target code end-to-end against the CURRENT files (all three readers, the properties, the graft, recovery, the walk). Four corrections to the earlier text, one new ruling:
+
+1. **`init` → `internal set` IS needed — Addendum 1 overclaimed.** All three readers today buffer locals and construct the parent LAST; children born holding the parent require the parent to exist FIRST. Goal and step readers flip to shell-first; their scalar `init` props become `internal set`. Your §7.6 cost was real. (`step.Goal` and `action.Step` stay `init` — known at shell birth. The action reader is already shell-first; it only gains the `step` parameter.)
+2. **`goal.Parent` is a FIFTH repair site** — `g.Parent ??= this` in the Child getter (`goal/this.cs:56`), same family as the four stamp sites. Shell-first `Walk(ref reader, readContext, parent)` makes sub-goal `Parent` a birth fact; the getter dies.
+3. **The graft's dict door takes the parent.** `Step` as pure `init` conflicts with the dict-door chain creating the instance — resolved by the chain growing the parent parameter (`Create(row, data, step)`; the catalog blank-mint `Create()` becomes `Create(step)`), keeping parent-constructs-child uniform instead of weakening the property. The step's own `Set("action", …)` override is the graft door: host constructs children, `Step` in-hand at creation. Lands ATOMICALLY with deregistration (else `ReadValue`'s `Typed("action")` falls through to reflection — which can no longer even resolve `Module`).
+4. **Recovery-as-`Child` needs ZERO reader work** — `Populate` already reads `child` on modifiers. The change shrinks to: builder emits recovery under the modifier's `child` key (teaching sweep + rebuild) + `error.handle` runs `__action.Child.Run(context)`; `RunRecovery`/`RunRecoveryWithErrorScope`/the `row.Value<Action>()` door die; `erroredCall.Handled = true` (`handle.cs:112,:129`) stays — it is what the walk reads.
+
+Also confirmed in the write-out: the chain self-feeds (an action's `child` steps get the goal from `step.Goal`, non-null birth fact — no extra threading); and the DICT door's child-step fill (`Made<step>` in `this.Item.cs`) also reads through the registry today — it moves to the concrete reader with the deregistration (same atomic change).
+
+### Can `action.Step` be truly non-null? (Ingi's question)
+
+**For every action in a program: yes, by construction** — every door sets it at birth, all legacy stepless synthetics (goalEntry anchor, Events placeholder) are on kill lists. **For the C# property: not yet** — the blocker is the CATALOG elements: `action.@this` serves two trees (program node with a step; module-minted catalog descriptor with no program and no step). Ruling:
+- **Now:** the `Module` pattern — nullable backing, throwing getter, `init`. Reading `Step` on a catalog element throws as the bug it is; nothing reads it there today (catalog consumers read rows/prose/Return), so it is a tripwire, not a landmine.
+- **Queued as its own design question:** split the catalog element out of `action.@this` into its own descriptor type — the Schema partial is already that type riding as a partial, and the straddle keeps costing (the killed catalog `Context`, `Cacheable`, `Position`, now `Step`). When that split lands, `Step` goes truly non-null. Not this pass.

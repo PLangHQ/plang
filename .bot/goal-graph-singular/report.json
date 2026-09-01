@@ -283,6 +283,16 @@
           "category": "doc",
           "confidence": "high",
           "context": "Addendum settled with Ingi: step/action readers DEREGISTER from ITypeReader (values-and-file-roots only; program structure is constructed by its parents) \u2014 concrete readers with (reader, readContext, parent) signatures; goal reader stays (file boundary); action.Step/step.Goal non-nullable; graft reroutes to host-construction atomically with deregistration. Rejected en route: adoption-setter walk (Ingi: double processing), owner-born-node Add (nullable window). Supersedes coder's \u00a77.6 hand-off."
+        },
+        {
+          "paths": [
+            ".bot/goal-graph-singular/architect/error-model-and-backref-answer.md",
+            ".bot/goal-graph-singular/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Code write-out pass (Ingi's request) caught 4 corrections: init->internal set IS needed (addendum 1 overclaimed; shell-first readers); goal.Parent ??= is a 5th repair site; graft dict-door chain takes the parent (Create(row,data,step)); recovery-as-Child needs zero reader work (Populate already reads child on modifiers). Plus Step nullability ruling: non-null by construction for program actions; property keeps Module pattern (throwing getter) because CATALOG elements share the class; catalog/program type split queued as its own design question."
         }
       ],
       "after": {
