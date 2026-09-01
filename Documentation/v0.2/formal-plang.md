@@ -39,17 +39,33 @@ body        = " { " chain " } " ;               (* the actions this call owns *)
 args        = arg { ", " arg } ;                (* the ONLY use of , *)
 arg         = ParamName "=" value ;
 
-value       = string | number | bool | variable | call | list | object | null ;
+value       = item ;                             (* every value IS an item — that is the base type *)
+item        = text | number | bool | null | variable | call | list | dict ;
                                               (* a call here is an EXPRESSION — see below *)
-string      = '"' … '"' ;                        (* quoted *)
+text        = '"' … '"' ;                        (* quoted *)
 number      = digits [ "." digits ] ;            (* unquoted *)
 bool        = "true" | "false" ;                 (* unquoted *)
+null        = "null" ;
 variable    = "%" name { "." name | "[" index "]" } "%" ;   (* verbatim, unquoted *)
-list        = "[" [ value { ", " value } ] "]" ;
-object      = "{" [ name ":" value { ", " name ":" value } ] "}" ;
+list        = "[" [ item { ", " item } ] "]" ;
+dict        = "{" [ name ":" item { ", " name ":" item } ] "}" ;
 ```
 
 `ParamName` is the schema parameter name as declared on the action handler — not an invented alias.
+
+The value names are plang's own type names — `text`, `number`, `bool`, `null`, `list`, `dict` — and
+`item` is the base every value is one of (`app.type.item.@this`). **`string` and `object` are not
+plang words** and must not appear in `formal` or in a `type` slot. `text` is the type; `item` is the
+base. The grammar above enumerates only the literal forms; a value can carry any registered item
+type (`path`, `date`, `duration`, `url`, `image`, `guid`, …) — those arrive typed on the wire rather
+than through a distinct literal syntax.
+
+> **Leak, already on the wire.** `type/list/this.cs` answers `"object"` as a fallback whenever it
+> cannot name a CLR type (`if (type == null) return "object"`, `if (type == typeof(data.@this))
+> return "object"`). That fallback has reached disk: `"name": "object"` appears **353** times across
+> the `.pr` files, as often as `"name": "text"` (350), plus 82 `Type=object` inside `formal`
+> strings. It is not an edge case — it is roughly half the type annotations in the corpus, and every
+> one of them is a value whose real type was not determined.
 
 ### The one rule that matters
 
