@@ -3,7 +3,7 @@
 `formal` is the one-line render of what a step compiles to. Every step in a `.pr` carries one:
 
 ```
-error.throw(Message="boom") | error.handle(Order=GoalFirst) { variable.set(Name=%content%, Value="from-recovery") }
+error.throw(Message="boom") @error.handle(Order=GoalFirst) { variable.set(Name=%content%, Value="from-recovery") }
 ```
 
 It is the human- and LLM-readable face of `step.action[]`. This document defines it.
@@ -30,13 +30,13 @@ The fix is at the end of this document; the grammar comes first because the fix 
 ```ebnf
 formal      = chain ;
 
-chain       = unit { " , " unit } ;             (* peers — run in order *)
-unit        = call { " | " call } ;             (* a host followed by its modifiers *)
+chain       = unit { " | " unit } ;             (* pipe — the left's result is %!data% for the right *)
+unit        = call { " @" call } ;              (* a call and the modifiers wrapping it *)
 
 call        = module "." action "(" [ args ] ")" [ body ] ;
 body        = " { " chain " } " ;               (* the actions this call owns *)
 
-args        = arg { ", " arg } ;
+args        = arg { ", " arg } ;                (* the ONLY use of , *)
 arg         = ParamName "=" value ;
 
 value       = string | number | bool | variable | list | object | null ;
@@ -57,35 +57,48 @@ object      = "{" [ name ":" value { ", " name ":" value } ] "}" ;
 
 That is the whole answer to "where can an action be inserted".
 
-## Where an action can appear — exactly three positions
+## Three symbols, three relationships
 
-| position | separator | slot on the wire | meaning |
-|---|---|---|---|
-| **peer** | ` , ` | `step.action[]` | runs next, unconditionally |
-| **modifier** | ` \| ` | `action.modifier[]` | wraps the preceding host |
-| **body** | `{ … }` | the owning call's body slot | runs when the owner decides |
+Each symbol means exactly one thing, and each relationship has exactly one symbol.
 
-Nothing else. In particular there is no fourth position "inside a parameter value", and the
-grammar above cannot express one.
+| symbol | relationship | slot on the wire |
+|---|---|---|
+| ` \| ` | **sequence** — runs next; the left's result is the right's `%!data%` | `step.action[]` |
+| ` @` | **wrap** — runs the call to its left, inside itself | `action.modifier[]` |
+| `{ … }` | **own** — the call runs these when it decides to | the call's body slot |
+| `, ` | *(not a relationship)* — next argument, inside parens only | `action.parameter[]` |
 
-### Peer — ` , `
+Those are the only three positions an action can appear in. There is no fourth position "inside a
+parameter value", and the grammar cannot express one.
+
+### Pipe — ` | `
 
 ```
-loop.foreach(Collection=%items%, ItemName=%item%) , goal.call(GoalName="DoProduct")
+file.read(Path="file.txt") | variable.set(Name=%content%, Value=%!data%)
 ```
 
-Order is the execution order. `foreach X, call Y` is two peers, not a nesting.
+Order is execution order, and `%!data%` is the previous call's result — which is true of every
+adjacent pair, so the pipe is naming what already happens rather than adding a mechanism. Using it
+is optional: `loop.foreach(…) | goal.call(…)` sequences without the body reading `%!data%`.
 
-### Modifier — ` | `
+`,` is deliberately NOT this. It separates arguments and nothing else — one symbol, one job. (It
+previously did both, so its meaning depended on whether you were inside parens.)
+
+### Wrap — ` @`
 
 Exactly three actions are modifiers: `error.handle`, `cache.wrap`, `timeout.after`. A modifier
-never stands alone and never appears as a peer; it wraps the call to its left.
+never stands alone and never appears in a pipe; it wraps the call to its left, the way a decorator
+wraps the thing under it.
 
 ```
-http.request(Url=%url%) | timeout.after(Ms=5000) | error.handle(IgnoreError=true)
+http.request(Url=%url%) @timeout.after(Ms=5000) @error.handle(IgnoreError=true)
 ```
 
-Right-to-left composition: the leftmost modifier is outermost.
+Right-to-left composition: the rightmost modifier is outermost.
+
+A modifier is postfix rather than containing its host (`cache.wrap(…) { llm.query(…) }`) for one
+reason: `error.handle` needs a body of its own for its recovery actions, and a call has one body.
+Postfix keeps the modifier's braces free for what the modifier itself runs.
 
 ### Body — `{ … }`
 
@@ -129,6 +142,14 @@ error.handle(Order=GoalFirst) { variable.set(Name=%content%, Value="from-recover
 The runtime consequence is covered elsewhere (a value is lazy — materialised on first touch, long
 after load — so an action inside one cannot be born knowing its step, and has to be stamped). The
 grammar reaches the same conclusion from the language side alone.
+
+## Migration
+
+The separators change (`,` → ` | ` for sequence, ` | ` → ` @` for wrap). Cost is low precisely
+because of the status section above: `formal` is never parsed, so nothing breaks at runtime. What
+changes is the prompt (`Compile.llm`'s "Write `formal` first" section and the modifier/peer
+section), the per-module notes that quote `formal` examples, and the stored strings — which are
+regenerated on the next build anyway.
 
 ## Making it real — `formal` derived, not asserted
 
