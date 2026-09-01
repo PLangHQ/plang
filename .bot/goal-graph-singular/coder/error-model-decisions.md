@@ -119,3 +119,81 @@ was never approved.
 - `Requires` → `Requirement` ← keep
 - `IError`/`Error`: `ErrorChain` → `list`, `Action` added ← keep, but see issues 1 and 2
 - Last pushed commit: `340eb58cf`. Nothing above is committed.
+
+---
+
+# ADDENDUM — the current error is stored FOUR times (2026-09, later in the same session)
+
+Ingi, from memory: *"why isn't the error on the current call on the stack? then we reach for the
+error there?"* — chasing that changed the shape of this work. **It already is on the call.**
+
+## What is actually there
+
+Three separate collection types, all `IReadOnlyList<IError>`:
+
+| Type | Scope | Status |
+|---|---|---|
+| `app.callstack.call.error.@this` | **per Call frame** (`Call.Errors`) | live — populated by `App.Run` on failure |
+| `app.callstack.audit.@this` | run-wide | live — written in 3 production sites, **read from plang as `%!callStack.Audit%`** |
+| `app.error.trail.@this` | run-wide | **dead** — zero readers; the one we already decided to delete |
+
+On a single failure the same error is written to all of them, plus the AsyncLocal slot:
+
+```csharp
+// callstack/call/this.cs:221 — "this.Errors.Add and CallStack.Audit.Add on failure"
+this.Errors.Add(err);          // 1. the frame it happened in
+_stack.Audit.Add(err);         // 2. the run-wide accumulator
+…
+Push(caughtError, context);    // 3. the AsyncLocal slot, from error.handle
+```
+
+**So the slot we spent this session trying to name is the fourth home of the same fact.** That is
+why every candidate name felt wrong — the thing shouldn't exist.
+
+It also gives a better reason for a decision we had already made on weaker grounds: of the two
+run-wide accumulators, `CallStack.Audit` is the real one and `app.Error.Trail` is the duplicate.
+The trail's own doc admits it: *"Distinct from app.callstack.audit.@this which records errors
+observed at Call frames."* Deleting it is removing a **stored-twice**, not just dead code.
+
+## The rule Ingi gave
+
+> "which frame the `%!error%` should read is where we had the last error"
+
+So: from `CallStack.Current`, walk the caller chain outward to the nearest frame whose `Errors` is
+non-empty; `%!error%` is that frame's latest error.
+
+**Verified this is safe:** `app.callstack.@this` holds `private readonly AsyncLocal<call.@this?> _current`
+and documents itself as *"fork-safe by construction"*, instance-level. Flow-locality — the only thing
+the error slot's own AsyncLocal was buying — the callstack already has. Parallel `Task.WhenAll`
+branches each walk their own chain. `Current.Caller` navigation already exists and is used elsewhere
+(`goal/this.cs` relies on it).
+
+## What this collapses
+
+- **The slot disappears.** No AsyncLocal on context, no `Push`, no `Restorer`, no save/restore, and
+  **no name to choose** — which was the last open blocker of the session.
+- `%!error%` becomes a read over state that is already correct and already maintained.
+- `error.handle` stops needing any way to "set the current error" — it just runs the recovery; the
+  failed frame is already recorded.
+- The three collection types should collapse toward one (`error.list`), used by `Call.Errors` and
+  `Error.list`. `CallStack.Audit` stays as the run-wide accumulator (it is read from plang).
+
+## Still open / to verify before implementing
+
+1. **Nearest-errored-frame vs the recovery frame.** Inside a recovery body, `CallStack.Current` is the
+   *recovery action's own* frame. The walk must skip it and find the frame that failed. `handle.cs`
+   already identifies it (`erroredCall`, from `error.CallFrames[0]`), so the information exists — but
+   the rule needs stating in code rather than being implicit in an AsyncLocal.
+2. **Nested handlers.** Today LIFO restore gives an inner handler its own error and returns the outer
+   one afterwards. The frame walk should reproduce that naturally (inner frame is nearer), but it
+   must be tested, not assumed.
+3. **`Handled`.** `Call.Handled` is flipped on recovery success. Does the walk skip handled frames?
+   Probably yes — otherwise a recovered error stays visible as `%!error%` after recovery.
+4. Whether `Call.Errors` (`app.callstack.call.error.@this`) and `Error.list` should be the same type.
+
+## Consequence for the earlier plan
+
+The implementation order in the main document is unchanged for everything except the slot: items
+about `context.error`, the private AsyncLocal, and naming the scope call are **superseded** — there is
+nothing to name. The `%!error%` registration in `actor/context/this.cs:192` changes from reading
+`App.Error.Error` to walking the callstack.
