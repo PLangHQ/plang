@@ -55,6 +55,13 @@ public partial class @this
     [Debug]
     public global::app.warning.list.@this Warning { get; init; } = new();
 
+    /// <summary>What is wrong with this action — filled by <see cref="Validate"/>, the twin of
+    /// <see cref="Warning"/>. Diagnostics belong to the node that earned them, so the builder reads
+    /// a verdict off the action instead of being handed one. [Debug] like Warning: it never rides
+    /// the .pr, because a goal with errors is never saved.</summary>
+    [Debug]
+    public global::app.error.list.@this Error { get; init; } = new();
+
     // `new`: this is the ACTION-cache flag (may this action's run result be
     // cached), a distinct concept from the item base's answer-keep rule —
     // which never applies here (an action's Ready() answers itself).

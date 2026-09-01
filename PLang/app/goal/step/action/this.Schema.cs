@@ -27,17 +27,16 @@ public partial class @this
     /// DECLARATION, not a gate: nothing consults it before Run. Empty when the action declares
     /// nothing, so callers never null-check.</summary>
     [JsonIgnore]
-    public IEnumerable<global::app.type.item.text.@this> Requires
+    public IEnumerable<global::app.type.item.text.@this> Requirement
         => Handler?.GetCustomAttribute<global::app.Attributes.RequiresCapabilityAttribute>()
                ?.Capabilities.Select(c => new global::app.type.item.text.@this(c))
            ?? Enumerable.Empty<global::app.type.item.text.@this>();
 
-    /// <summary>The handler's own complaint about this action's parameters, or null when it has
-    /// none — a handler opts in by implementing <c>IBuildValidatable</c>. Only the handler knows
-    /// which parameter COMBINATIONS are legal (the catalog rows describe slots one at a time), so
-    /// it is asked rather than re-derived. Read at build time; the builder reacts to the answer.</summary>
-    [JsonIgnore]
-    public global::app.error.IError? BuildError
+    // The handler's own complaint about this action's parameters, or null when it has none — a
+    // handler opts in by implementing IBuildValidatable. Only the handler knows which parameter
+    // COMBINATIONS are legal (the catalog rows describe slots one at a time), so it is asked rather
+    // than re-derived. Private: it is one input to Validate's judgement, not a face of its own.
+    private global::app.error.IError? HandlerComplaint
     {
         get
         {
@@ -100,19 +99,20 @@ public partial class @this
         }
     }
 
-    /// <summary>Judges this action and reports what is wrong with it — the build-time verdicts that
-    /// are the ACTION's to give: it exists in its module, it emitted every required parameter, and
-    /// its own handler accepts the combination. Pure judgement: it changes nothing, so it runs after
-    /// construction and never re-flags a default the builder filled or a name it repaired. The
-    /// builder reacts to what comes back (re-prompt, abort); deciding is not its job.</summary>
-    public IEnumerable<global::app.error.IError> Validate()
+    /// <summary>Judges this action, recording what is wrong with it on its own <see cref="Error"/> —
+    /// the build-time verdicts that are the ACTION's to give: it exists in its module, it emitted
+    /// every required parameter, and its own handler accepts the combination. Pure judgement: it
+    /// changes nothing, so it runs after construction and never re-flags a default the builder
+    /// filled or a name it repaired. The builder reads the verdict and reacts (re-prompt, abort);
+    /// deciding what is wrong is not its job.</summary>
+    public void Validate()
     {
         var element = _module?[Name];
         if (element == null)
         {
-            yield return new global::app.error.ActionError(
-                $"{Module}.{Name}: action not found in module '{Module}'.", "ActionNotFound", 400);
-            yield break;
+            Error.Add(new global::app.error.ActionError(
+                $"{Module}.{Name}: action not found in module '{Module}'.", "ActionNotFound", 400));
+            return;
         }
 
         // A required slot is a declared row that is non-nullable with no [Default] — read off the
@@ -121,13 +121,13 @@ public partial class @this
         foreach (var row in element.Property.Rows)
         {
             if (row.Nullable || row.Default != null || emitted.Contains(row.Name)) continue;
-            yield return new global::app.error.ActionError(
+            Error.Add(new global::app.error.ActionError(
                 $"{Module}.{Name}: required parameter '{row.Name}' is missing. " +
                 "Every action must emit all non-nullable, non-default parameters.",
-                "MissingRequiredParameter", 400);
+                "MissingRequiredParameter", 400));
         }
 
-        if (BuildError is { } complaint) yield return complaint;
+        if (HandlerComplaint is { } complaint) Error.Add(complaint);
     }
 
     // Action-level teaching prose — file handles over os/system/modules/{Module}/{Name}.{facet}.md,

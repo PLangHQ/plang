@@ -184,7 +184,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Run-wide error scope. AsyncLocal-flowed current error (PLang <c>%!error%</c>) +
     /// audit list of every error pushed. Populated by error.handle.Wrap during recovery.
     /// </summary>
-    public global::app.error.list.@this Error { get; }
+    public global::app.error.scope.@this Error { get; }
 
     /// <summary>
     /// Test session — the collection of discovered/run *.test.goal tests plus
@@ -296,7 +296,7 @@ public sealed partial class @this : IAsyncDisposable
         _modules = new global::app.module.list.@this(this);
         _goals = new global::app.goal.list.@this { App = this };
 
-        Error = new global::app.error.list.@this(this);
+        Error = new global::app.error.scope.@this(this);
 
         Code.RegisterDefaults();
         Type.RegisterDomainTypes();

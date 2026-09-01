@@ -62,7 +62,7 @@ public sealed partial class @this
     {
         if (s.HasSection("Providers")) global::app.module.action.code.@this.Restore(s.Section("Providers"), context);
         if (s.HasSection("Variables")) global::app.variable.list.@this.Restore(s.Section("Variables"), context);
-        if (s.HasSection("Errors"))    global::app.error.list.@this.Restore(s.Section("Errors"), context);
+        if (s.HasSection("Errors"))    global::app.error.scope.@this.Restore(s.Section("Errors"), context);
         if (s.HasSection("Statics"))   global::app.Statics.@this.Restore(s.Section("Statics"), context);
         if (s.HasSection("Build"))     global::app.module.action.build.@this.Restore(s.Section("Build"), context);
         if (s.HasSection("Test"))   global::app.test.list.@this.Restore(s.Section("Test"), context);

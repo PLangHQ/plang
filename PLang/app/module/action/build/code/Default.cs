@@ -580,35 +580,12 @@ public class Default : IBuilder
             //   - non-nullable type (Data<T>, not Data<T>?, not <T?>)
             //   - has no [Default] attribute
             //   - is not a [Code], capability interface, or framework slot
-            // The LLM omitting a required param is a build-breaking mistake — without
-            // the param, the runtime can't construct the action's parameter record.
-            // Catch it at build time so LlmFixer / HandleValidationError can re-prompt.
-            {
-                // Read the ONE reflection site — the catalog element's declared parameter rows —
-                // instead of re-reflecting the handler with a fresh NullabilityInfoContext. The rows
-                // already drop [Code] / capability / EqualityContract / host params; a required slot
-                // is a row that's non-nullable with no [Default].
-                var element = a.Module[a.Name];
-                if (element != null)
-                {
-                    var emitted = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                    if (a.Parameter != null)
-                        foreach (var p in a.Parameter) emitted.Add(p.Name);
-
-                    foreach (var row in element.Property.Rows)
-                    {
-                        if (row.Nullable || row.Default != null) continue;
-                        if (!emitted.Contains(row.Name))
-                            validationErrors.Add(
-                                $"{a.Module}.{a.Name}: required parameter '{row.Name}' is missing. " +
-                                $"Every action must emit all non-nullable, non-default parameters.");
-                    }
-                }
-            }
-
-            // Action-level build validation — the action asks its own handler; the builder reacts.
-            if (a.BuildError is { } buildError)
-                validationErrors.Add($"{a.Module}.{a.Name}: {buildError}");
+            // The action judges itself — it exists in its module, it emitted every required
+            // parameter, its handler accepts the combination — and records the verdict on its own
+            // Error. Construction (defaults above, the goal.call repair) has already run, so it
+            // never re-flags something the builder just fixed. The builder only reacts.
+            a.Validate();
+            foreach (var verdict in a.Error) validationErrors.Add(verdict.Message);
         }
 
         if (validationErrors.Count > 0)
