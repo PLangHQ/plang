@@ -153,3 +153,135 @@ own step — still a stamp, though an ownership-based one.
   (to be replaced). Keep: `ErrorChain → list`, `Error.Action`, `Requires → Requirement`.
 - Full decision record with quotes: `error-model-decisions.md` (same folder), including the addendum on
   the four storage locations.
+
+---
+
+## 7. The code, as agreed with Ingi (reviewed line by line in console, not yet written)
+
+### 7.1 The walk — this is what replaces the slot
+
+```csharp
+// app/callstack/this.cs   (NEW)
+/// <summary>The error in play — the newest error on the nearest frame that failed and was not
+/// recovered, walking Caller outward from Current. This is what %!error% resolves to.
+/// Flow-local for free: Current is AsyncLocal, so parallel branches each walk their own chain.</summary>
+public IError? Error
+{
+    get
+    {
+        for (var frame = Current; frame != null; frame = frame.Caller)
+            if (!frame.Handled && frame.Errors.Count > 0) return frame.Errors[^1];
+        return null;
+    }
+}
+```
+
+`!frame.Handled` is what makes a recovered error stop being `%!error%`, and what skips the recovery
+action's own (successful) frame. **Question 3 in §5 is asking you to confirm exactly this rule.**
+
+### 7.2 `%!error%` reads it
+
+```csharp
+// actor/context/this.cs:192
+- vars.Set(new data.DynamicData("!error", () => App.Error.Error, this));
++ vars.Set(new data.DynamicData("!error", () => CallStack.Error, this));
+```
+
+### 7.3 `error.handle` stops setting anything, and stops re-implementing the chain
+
+```csharp
+// 3 call sites
+- var recoveryResult = await RunRecoveryWithErrorScope(actions!, context, result.Error!);
++ var recoveryResult = await RunRecovery(actions!, context);
+
+// the wrapper is deleted outright (also a verb+noun triple)
+- private static async Task<data.@this> RunRecoveryWithErrorScope(…)
+-     using (context.App.Error.Push(caughtError, context)) { return await RunRecovery(actions, context); }
+
+// and RunRecovery stops hand-rolling the loop — the node runs itself.
+// Verified equivalent: action.list.Run breaks on result.ShouldExit(), and
+// ShouldExit() is `if (!d.Success && !d.Handled) return true;` — i.e. it already
+// stops on failure exactly like RunRecovery's `if (!last.Success) return last;`.
+// It also GAINS condition support (if/elseif/else with Child), which the hand-loop lacks.
+private static async Task<data.@this> RunRecovery(list actions, context ctx)
+{
+    var chain = new action.list.@this(actions);      // existing adopt-ctor
+    foreach (var a in chain)
+        if (a.Step == null) a.Step = ctx.Step;       // ← ONLY IF the back-ref survives (§4/§5 Q1)
+    return await chain.Run(ctx);
+}
+```
+
+If `action.Step` dies, or the recovery chain becomes a structural slot (§5 Q2), the stamp loop goes and
+this is one line: `return await new action.list.@this(actions).Run(ctx);`
+
+### 7.4 Deletions
+
+- `app/error/scope/` — the fused class, `Push`, `Restorer`
+- `app.Error` property + construction + `this.Snapshot.cs:65` restore — **31 sites**
+- `app/error/list/this.Snapshot.cs`; and `IsFrozen` / `LoadAndFreeze` / `Restore` /
+  `[PlangType("trace")]` off `error/list/this.cs`, leaving a plain `IReadOnlyList<IError>` + `Add`
+- audit tests: `ErrorsTrailSnapshotTests`, `ErrorsScopeTests`, the `Trail` asserts in `OtherAccessorsTests`
+
+### 7.5 Validate, and the builder
+
+```csharp
+// action/this.Schema.cs
+public IError? Validate(context ctx)
+{
+    var causes = new error.list.@this();
+    if (_module?[Name] is not { } element)
+        causes.Add(new ActionError($"action '{Name}' not found in module '{Module}'"));
+    else {
+        foreach (var row in element.Property.Rows)
+            if (!row.Nullable && row.Default == null && !emitted.Contains(row.Name))
+                causes.Add(new ActionError($"required parameter '{row.Name}' is missing"));
+        if (HandlerComplaint is { } c) causes.Add(c);
+    }
+    return causes.Count == 0 ? null
+         : new ActionError($"{Module}.{Name} is not valid") { Action = this, list = causes };
+}
+
+// action/this.cs — delete the property I had added
+- public error.list.@this Error { get; init; } = new();
+
+// build/code/Default.cs — replaces `validationErrors` (List<string>) and the harvest loop
+var error = action.Validate(ctx);
+if (error != null) return context.Error(error);
+```
+
+`list` becomes `{ get; init; }` so the object initializer works — Ingi: *"why `foreach … list.Add(c)`?
+can't it be `{ Action = this, list = causes }`?"*
+
+### 7.6 Ingi's step hand-off (blocked on §5 Q1)
+
+```csharp
+// goal/step/serializer/Reader.cs — step exists FIRST (needs init → internal set on read-time fields)
+var step = new step.@this();
+var actions = new action.list.@this();
+step.Action = actions;
+…
+case "action": case "actions":
+    reader.BeginArray();
+    while (reader.NextElement())
+        actions.Add((action.@this)_action.Read(ref reader, kind, ctx, step));   // explicit hand-off
+    reader.EndArray();                                                          // NOT via ReadContext
+    break;
+
+// action/serializer/Reader.cs
+var action = new action.@this { Step = step };   // birth fact, not a stamp
+```
+
+`_action` is a **concrete** field on the step reader, so this needs no change to `ITypeReader`.
+Cost: the step's read-time fields go `init` → `internal set` (immutable outside the assembly, mutable
+during the read). Reaches every action read as part of a step; does **not** reach lazily materialised
+ones (finding 8).
+
+---
+
+## 8. Scope note
+
+This document covers the error model and the back-ref conflict only. The rest of the session's work and
+findings — builder prompt fixes (landed, `4deaa8921`), the builder never self-building, the stale `.pr`
+hashes, `Property.Rows` as a middleman, suite discovery flakiness, `DiscoverActionTests` 7/10 red — are
+in `open-items.md` in this folder. The full decision record with quotes is `error-model-decisions.md`.
