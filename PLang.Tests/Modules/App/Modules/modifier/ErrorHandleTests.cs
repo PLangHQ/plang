@@ -312,7 +312,7 @@ public class ErrorHandleTests
         var action = Throw("boom",
             modifiers: new List<global::app.goal.step.action.modifier.@this>
             {
-                ErrorHandler(("actions", CallGoal("SuccessGoal")), ("order", "GoalFirst"))
+                ErrorHandler(("action", CallGoal("SuccessGoal")), ("order", "GoalFirst"))
             });
 
         var result = await action.Run(Ctx);
@@ -328,7 +328,7 @@ public class ErrorHandleTests
         var action = Throw("original error",
             modifiers: new List<global::app.goal.step.action.modifier.@this>
             {
-                ErrorHandler(("actions", CallGoal("FailGoal")), ("order", "GoalFirst"))
+                ErrorHandler(("action", CallGoal("FailGoal")), ("order", "GoalFirst"))
             });
 
         var result = await action.Run(Ctx);
@@ -346,7 +346,7 @@ public class ErrorHandleTests
         var action = Throw("persistent",
             modifiers: new List<global::app.goal.step.action.modifier.@this>
             {
-                ErrorHandler(("actions", CallGoal("SuccessGoal2")), ("order", "RetryFirst"))
+                ErrorHandler(("action", CallGoal("SuccessGoal2")), ("order", "RetryFirst"))
             });
 
         var result = await action.Run(Ctx);
@@ -362,7 +362,7 @@ public class ErrorHandleTests
         var action = Throw("persistent",
             modifiers: new List<global::app.goal.step.action.modifier.@this>
             {
-                ErrorHandler(("actions", CallGoal("FailGoal2")), ("order", "RetryFirst"))
+                ErrorHandler(("action", CallGoal("FailGoal2")), ("order", "RetryFirst"))
             });
 
         var result = await action.Run(Ctx);

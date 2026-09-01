@@ -59,6 +59,22 @@ public sealed partial class @this
     public call.@this? Current => _current.Value;
 
     /// <summary>
+    /// The error in play — what PLang reads as <c>%!error%</c>. Walks <c>Caller</c> outward from
+    /// <see cref="Current"/> and answers with the first frame that holds an unrecovered error;
+    /// null when nothing on the live chain has failed. The stack is where the error already
+    /// lives, so nothing stores it a second time: the frame is the scope.
+    /// </summary>
+    public IError? Error
+    {
+        get
+        {
+            for (var node = _current.Value; node != null; node = node.Caller)
+                if (node.Error is { } error) return error;
+            return null;
+        }
+    }
+
+    /// <summary>
     /// First Call pushed in this run. Null until first Push.
     /// </summary>
     public call.@this? Root => _root;

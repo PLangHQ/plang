@@ -22,6 +22,13 @@ public sealed class @this : IReadOnlyList<IError>
         lock (_lock) _entries.Add(error);
     }
 
+    /// <summary>The most recent error observed at this frame — null when none. An observation
+    /// log answers with its newest entry; a frame that failed twice is in play on the second.</summary>
+    public IError? Newest
+    {
+        get { lock (_lock) return _entries.Count == 0 ? null : _entries[^1]; }
+    }
+
     public int Count
     {
         get { lock (_lock) return _entries.Count; }

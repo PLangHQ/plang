@@ -55,6 +55,12 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public bool Handled { get; set; }
 
+    /// <summary>The error in play AT THIS FRAME — its newest observation, unless recovery has
+    /// already succeeded here. <see cref="Handled"/> is what stops it: "recovered, stop being
+    /// <c>%!error%</c>". Null when this frame never failed, or failed and was recovered.
+    /// <see cref="app.callstack.@this.Error"/> walks <see cref="Caller"/> asking each frame this.</summary>
+    public IError? Error => Handled ? null : Errors.Newest;
+
     /// <summary>
     /// Mirror of <see cref="Action.@this.Synthetic"/> stamped at Push time. False
     /// for PR-built actions (the wire-restorable case); true for C#-composed
