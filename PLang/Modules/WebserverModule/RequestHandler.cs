@@ -927,6 +927,7 @@ namespace PLang.Modules.WebserverModule
 		{
 			"(Applebot|AppleNewsBot)",
 			"(GPTBot|OAI-SearchBot|ChatGPT-User|ClaudeBot|Claude-Web|anthropic-ai|PerplexityBot|Bytespider|Amazonbot|meta-externalagent)",
+			"(HeadlessChrome)",
 		};
 
 		static Parser parser = BuildParser();
