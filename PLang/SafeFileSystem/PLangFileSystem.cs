@@ -186,7 +186,7 @@ namespace PLang.SafeFileSystem
 			
 			if (IsPlangRooted(path))
 			{
-				if (!path.StartsWith(RootDirectory))
+				if (!path.StartsWith(RootDirectory) && !path.StartsWith(SystemDirectory, StringComparison.OrdinalIgnoreCase))
 				{
 					path = Path.GetFullPath(Path.Join(RootDirectory, path));
 				}
