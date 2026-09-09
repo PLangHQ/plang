@@ -1,4 +1,4 @@
-﻿using Castle.Core.Logging;
+using Castle.Core.Logging;
 using PLang.Exceptions;
 using System;
 using System.Diagnostics;
@@ -73,11 +73,22 @@ namespace PLang.Utils
 					serviceName = llmservice.Substring(llmservice.IndexOf("=") + 1).ToLower();
 				}
 
-				if (serviceName != "plang" && serviceName != "openai" && serviceName != "poolside")
+				if (serviceName != "plang" && serviceName != "openai" && serviceName != "poolside" && serviceName != "inception")
 				{
-					throw new RuntimeException("Parameter --llmservice can only be 'plang', 'openai' or 'poolside'. For example --llmservice=openai");
+					throw new RuntimeException("Parameter --llmservice can only be 'plang', 'openai', 'poolside' or 'inception'. For example --llmservice=openai");
 				}
 				AppContext.SetData("llmservice", serviceName);
+			}
+
+			var parallel = args.FirstOrDefault(p => p.StartsWith("--buildparallel", StringComparison.OrdinalIgnoreCase));
+			if (parallel != null)
+			{
+				var value = parallel.Contains("=") ? parallel.Substring(parallel.IndexOf("=") + 1) : "4";
+				if (!int.TryParse(value, out int degree) || degree < 1)
+				{
+					throw new RuntimeException("Parameter --buildparallel must be a number of 1 or more, e.g. --buildparallel=4");
+				}
+				AppContext.SetData("buildparallel", degree);
 			}
 
 			return (builder, runtime);

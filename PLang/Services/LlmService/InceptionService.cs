@@ -24,11 +24,15 @@ namespace PLang.Services.Inception
 
 		protected override string BuildRequestBody(LlmRequest question)
 		{
+			// Mercury spends most of a small budget on reasoning tokens (182 of 192 on a one word
+			// answer), and max_tokens covers reasoning plus content, so plang's own maxLength can
+			// leave nothing for the answer and the extractor gets an empty string.
+			var maxTokens = Math.Max(question.maxLength, 8000);
 			return $@"{{
 		""model"":""mercury-2.5"",
 		""reasoning_effort"":""low"",
 		""temperature"":{question.temperature.ToString(CultureInfo.InvariantCulture)},
-		""max_tokens"":{question.maxLength},
+		""max_tokens"":{maxTokens},
 		""messages"":{JsonConvert.SerializeObject(question.promptMessage)}
 			}}";
 		}

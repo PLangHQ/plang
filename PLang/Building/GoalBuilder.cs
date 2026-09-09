@@ -1,4 +1,4 @@
-﻿using LightInject;
+using LightInject;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using OpenAI.Audio;
@@ -111,19 +111,58 @@ namespace PLang.Building
 				return buildEventError;
 			}
 
+			// Building a step is two LLM round trips (pick the module, then fill the function), and
+			// the steps of a goal do not feed each other: each one gets its own builder instance.
+			// So they can go out at the same time. Opt in with --buildparallel=N, default stays 1.
+			var degreeOfParallelism = AppContext.GetData("buildparallel") as int? ?? 1;
+			var indexesToBuild = new List<int>();
 			for (int i = 0; i < goal.GoalSteps.Count; i++)
 			{
 				if (!goal.GoalSteps[i].HasChanged && goal.GoalSteps[i].IsValid) continue;
+				indexesToBuild.Add(i);
+			}
 
-				logger.LogDebug($" - Building step {goal.GoalSteps[i].Text.MaxLength(20)} - {stopwatch.ElapsedMilliseconds}");
-				var buildStepError = await BuildStep(goal, i);
-				logger.LogDebug($" - Done building step {goal.GoalSteps[i].Text.MaxLength(20)} - {stopwatch.ElapsedMilliseconds}");
-				if (buildStepError != null)
+			if (degreeOfParallelism > 1 && indexesToBuild.Count > 1)
+			{
+				var errorsByIndex = new System.Collections.Concurrent.ConcurrentDictionary<int, IBuilderError>();
+				using (var gate = new SemaphoreSlim(degreeOfParallelism))
 				{
-					if (!buildStepError.ContinueBuild) return buildStepError;
-					groupedBuildErrors.Add(buildStepError);
+					var tasks = indexesToBuild.Select(async index =>
+					{
+						await gate.WaitAsync();
+						try
+						{
+							var stepError = await BuildStep(goal, index);
+							if (stepError != null) errorsByIndex[index] = stepError;
+						}
+						finally
+						{
+							gate.Release();
+						}
+					});
+					await Task.WhenAll(tasks);
 				}
 
+				foreach (var index in indexesToBuild)
+				{
+					if (!errorsByIndex.TryGetValue(index, out var stepError)) continue;
+					if (!stepError.ContinueBuild) return stepError;
+					groupedBuildErrors.Add(stepError);
+				}
+			}
+			else
+			{
+				foreach (var i in indexesToBuild)
+				{
+					logger.LogDebug($" - Building step {goal.GoalSteps[i].Text.MaxLength(20)} - {stopwatch.ElapsedMilliseconds}");
+					var buildStepError = await BuildStep(goal, i);
+					logger.LogDebug($" - Done building step {goal.GoalSteps[i].Text.MaxLength(20)} - {stopwatch.ElapsedMilliseconds}");
+					if (buildStepError != null)
+					{
+						if (!buildStepError.ContinueBuild) return buildStepError;
+						groupedBuildErrors.Add(buildStepError);
+					}
+				}
 			}
 
 			logger.LogDebug($" - Cleanup and injections - {stopwatch.ElapsedMilliseconds}");
