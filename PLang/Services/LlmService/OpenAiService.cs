@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using OpenAI.Chat;
 using PLang.Errors;
@@ -60,6 +60,12 @@ namespace PLang.Services.OpenAi
 				|| model.StartsWith("o", StringComparison.OrdinalIgnoreCase);
 		}
 
+		// The model actually called. A subclass that talks to one fixed model returns it here so the
+		// llm cache can tell the services apart: the cache key includes question.model, and without
+		// this every service shared one key and a build could be served an answer from a different
+		// model than the one it asked for.
+		protected virtual string ModelName(LlmRequest question) => question.model;
+
 		// Overridable so subclasses (e.g. PoolsideService) can change model/params without duplicating Query.
 		protected virtual string BuildRequestBody(LlmRequest question)
 		{
@@ -97,6 +103,7 @@ namespace PLang.Services.OpenAi
 		public virtual async Task<(object? Response, IError? Error)> Query(LlmRequest question, Type responseType, int errorCount)
 		{
 			Extractor = ExtractorFactory.GetExtractor(question, responseType);
+			question.model = ModelName(question);
 
 			var q = llmCaching.GetCachedQuestion(appId, question);
 			if (!question.Reload && question.caching && q != null && q.RawResponse != null)

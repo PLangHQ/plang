@@ -23,12 +23,14 @@ namespace PLang.Services.Poolside
 			settingKey = "PoolsideKey";
 		}
 
+		protected override string ModelName(LlmRequest question) => "poolside/laguna-xs-2.1";
+
 		protected override string BuildRequestBody(LlmRequest question)
 		{
 			// poolside rejects top_p <= 0 (plang sends 0 for deterministic builds; temperature=0 keeps it greedy)
 			var topP = Math.Max(0.01, question.top_p);
 			return $@"{{
-		""model"":""poolside/laguna-xs-2.1"",
+		""model"":""{ModelName(question)}"",
 		""temperature"":{question.temperature.ToString(CultureInfo.InvariantCulture)},
 		""max_tokens"":{question.maxLength},
 		""top_p"":{topP.ToString(CultureInfo.InvariantCulture)},

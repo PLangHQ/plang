@@ -22,6 +22,8 @@ namespace PLang.Services.Inception
 			settingKey = "InceptionKey";
 		}
 
+		protected override string ModelName(LlmRequest question) => "mercury-2.5";
+
 		protected override string BuildRequestBody(LlmRequest question)
 		{
 			// Mercury spends most of a small budget on reasoning tokens (182 of 192 on a one word
@@ -29,7 +31,7 @@ namespace PLang.Services.Inception
 			// leave nothing for the answer and the extractor gets an empty string.
 			var maxTokens = Math.Max(question.maxLength, 8000);
 			return $@"{{
-		""model"":""mercury-2.5"",
+		""model"":""{ModelName(question)}"",
 		""reasoning_effort"":""low"",
 		""temperature"":{question.temperature.ToString(CultureInfo.InvariantCulture)},
 		""max_tokens"":{maxTokens},
