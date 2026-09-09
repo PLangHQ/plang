@@ -1,4 +1,4 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NBitcoin.Secp256k1;
 using Newtonsoft.Json;
 using PLang.Errors;
@@ -171,6 +171,21 @@ namespace PLang.SafeFileSystem
 			return false;
 		}
 
+
+		// True when the path points into the folders that belong to the plang installation itself
+		// (system, os), which every app is allowed to read no matter where the app lives.
+		private bool IsUnderPlangInstallation(string path)
+		{
+			var candidate = path.AdjustPathToOs();
+			foreach (var dir in new[] { SystemDirectory, OsDirectory })
+			{
+				var root = dir.AdjustPathToOs().TrimEnd(Path.DirectorySeparatorChar);
+				if (candidate.Equals(root, StringComparison.OrdinalIgnoreCase)) return true;
+				if (candidate.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) return true;
+			}
+			return false;
+		}
+
 		public string ValidatePath(string? path)
 		{
 			if (string.IsNullOrWhiteSpace(path))
@@ -183,7 +198,20 @@ namespace PLang.SafeFileSystem
 				throw new Exception("File access has not been initated. Call IPLangFileSystem.Init");
 			}
 			RootDirectory = RootDirectory.TrimEnd(Path.DirectorySeparatorChar);
-			
+
+			// The system and os folders ship with plang and sit next to the binary, not inside the
+			// app. The builder reads system/modules/*.llm for every app it builds, so these paths
+			// must be left alone instead of being rewritten into the app root below.
+			// Without this an app could only reach them when its own directory happened to be a
+			// string prefix of the binary directory: /workspace/plang could read
+			// /workspace/plang-ref/... purely because one name starts with the other, while any
+			// other project got its path rewritten and the build died on
+			// "StepInformationSystem.llm is missing from system".
+			if (IsUnderPlangInstallation(path))
+			{
+				return path.AdjustPathToOs();
+			}
+
 			if (IsPlangRooted(path))
 			{
 				if (!path.StartsWith(RootDirectory))

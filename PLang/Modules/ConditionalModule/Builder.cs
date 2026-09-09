@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Errors.Builder;
@@ -28,6 +28,26 @@ namespace PLang.Modules.ConditionalModule
 			if (step.NextStep?.Indent > step.Indent)
 			{
 				AppendToSystemCommand(@"This if statement has nested block.");
+			}
+			if (step.Text.Contains("end goal") || step.Text.Contains("throw"))
+			{
+				AppendToSystemCommand(@"The body of the condition may be an instruction to end the goal or to throw.
+Map it onto throwErrorOnTrue (or throwErrorOnFalse when the body belongs to the else side).
+NEVER return the function with every parameter null: a condition whose body does something must
+carry either goalToCallIfTrue/goalToCallIfFalse or throwErrorOnTrue/throwErrorOnFalse.
+
+`- if %imprint% is empty then end goal` =>
+    IsEmpty(item: ""%imprint%"", throwErrorOnTrue: { ""Message"": ""End goal"", ""Type"": ""EndGoal"", ""StatusCode"": 0, ""Key"": ""EndGoal"" })
+
+`- if %book.imprintId% == %imprint.vsImprintId% then end goal` =>
+    Equals(item1: ""%book.imprintId%"", item2: ""%imprint.vsImprintId%"", throwErrorOnTrue: { ""Message"": ""End goal"", ""Type"": ""EndGoal"", ""StatusCode"": 0, ""Key"": ""EndGoal"" })
+
+`- if %a% is not empty and %b% == %c% then end goal` is still ONE condition; combine it in the
+condition itself and keep the same throwErrorOnTrue shape.
+
+`- if %x% is not empty then throw ""Not found"", 404` =>
+    IsNotEmpty(item: ""%x%"", throwErrorOnTrue: { ""Message"": ""Not found"", ""Type"": ""Error"", ""StatusCode"": 404 })
+");
 			}
 			if (step.Text.Contains("%!"))
 			{

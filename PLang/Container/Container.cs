@@ -1,4 +1,4 @@
-﻿using AngleSharp.Dom;
+using AngleSharp.Dom;
 using Castle.DynamicProxy;
 using LightInject;
 using Microsoft.Data.Sqlite;
@@ -358,11 +358,13 @@ namespace PLang.Container
 			string llmService = AppContext.GetData("llmservice") as string ?? "plang";
 			var defaultLlmService = (llmService == "openai") ? typeof(OpenAiService)
 				: (llmService == "poolside") ? typeof(PLang.Services.Poolside.PoolsideService)
+				: (llmService == "inception") ? typeof(PLang.Services.Inception.InceptionService)
 				: typeof(PLangLlmService);
 
 			container.RegisterSingleton<ILlmService, PLangLlmService>(typeof(PLangLlmService).FullName);
 			container.RegisterSingleton<ILlmService, OpenAiService>(typeof(OpenAiService).FullName);
 			container.RegisterSingleton<ILlmService, PLang.Services.Poolside.PoolsideService>(typeof(PLang.Services.Poolside.PoolsideService).FullName);
+			container.RegisterSingleton<ILlmService, PLang.Services.Inception.InceptionService>(typeof(PLang.Services.Inception.InceptionService).FullName);
 			container.RegisterSingleton(factory =>
 			{
 				var type = GetImplementation(context, ReservedKeywords.Inject_LLMService, defaultLlmService);
