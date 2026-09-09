@@ -245,14 +245,19 @@ namespace PLang.Building
 			return buildStepError.ContinueBuild;
 		}
 
+		private readonly object buildErrorsLock = new();
+
 		public void AddToBuildErrors(IBuilderError buildStepError)
 		{
+			lock (buildErrorsLock)
+			{
 			if (BuildErrors.FirstOrDefault(p => p == buildStepError) == null && 
 				(BuildErrors.FirstOrDefault(p => p.Step?.AbsolutePrFilePath != buildStepError.Step?.AbsolutePrFilePath) == null && BuildErrors.FirstOrDefault(p => p.Step?.LineNumber == buildStepError.Step?.LineNumber) == null))
 			{
 				BuildErrors.Add(buildStepError);
 
 				logger.LogWarning($"  - ❌ Error building goal - {buildStepError.MessageOrDetail}");
+			}
 			}
 		}
 

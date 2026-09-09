@@ -1,4 +1,4 @@
-﻿using LightInject;
+using LightInject;
 using Microsoft.Extensions.Logging;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
@@ -124,6 +124,42 @@ namespace PLang.Building
 				{
 					goalsToBuild = goalsToBuild.Where(p => p.HasChanged);
 				}
+				// Goals do not feed each other either, so with --buildparallel they can go out together.
+				// Two exceptions stay sequential and are not a locking problem but a scoping one:
+				// RegisterForPLangUserInjections writes into the DI container, which is process wide
+				// while an injection is meant to apply to one goal, and the memory stack is shared.
+				// A goal that mentions inject is therefore never run beside another one. In this app
+				// that is 1 goal file out of 636.
+				var degreeOfParallelism = AppContext.GetData("buildparallel") as int? ?? 1;
+				var goalList = goalsToBuild.ToList();
+				var mayShareState = goalList.Where(g => g.GoalSteps.Any(s =>
+					s.Text.Contains("inject", StringComparison.OrdinalIgnoreCase))).ToList();
+				var standalone = goalList.Where(g => !mayShareState.Contains(g)).ToList();
+
+				if (degreeOfParallelism > 1 && standalone.Count > 1)
+				{
+					var goalErrors = new System.Collections.Concurrent.ConcurrentBag<IBuilderError>();
+					using (var gate = new SemaphoreSlim(degreeOfParallelism))
+					{
+						await Task.WhenAll(standalone.Select(async goalToBuild =>
+						{
+							await gate.WaitAsync();
+							try
+							{
+								var err = await goalBuilder.BuildGoal(container, goalToBuild, context);
+								if (err != null) goalErrors.Add(err);
+							}
+							finally { gate.Release(); }
+						}));
+					}
+					foreach (var err in goalErrors)
+					{
+						if (!err.ContinueBuild) return [err];
+						goalBuilder.AddToBuildErrors(err);
+					}
+					goalsToBuild = mayShareState;
+				}
+
 				foreach (var goalToBuild in goalsToBuild)
 				{
 					Stopwatch buildGoalTime = Stopwatch.StartNew();
