@@ -180,7 +180,8 @@ namespace PLang.Runtime
 							if (item.Name == "!Callstack") continue;
 
 							logger.LogDebug($"                 - Deep clone on {item.Name} {goalToRun.GoalName} - {stopwatch.ElapsedMilliseconds}");
-							newMemoryStack.Put(new ObjectValue(item.Name, item.Value.DeepClone()));
+							newMemoryStack.Put(new ObjectValue(item.Name, item.Value.DeepClone(),
+								properties: CloneProperties(item.Properties, item.Name)));
 
 							
 						}
@@ -339,6 +340,52 @@ namespace PLang.Runtime
 			if (string.IsNullOrEmpty(goalName)) goalName = "Start";
 
 			return (absolutePathToApp, goalName);
+		}
+
+		// A "dont wait" goal gets a copy of the memory stack, and that copy used to be made from the
+		// value alone. Everything reached with an exclamation mark, %request!Ip% and the rest, lives
+		// in ObjectValue.Properties, so every one of them was empty in a background goal.
+		//
+		// Lifetime is not part of a type, so there is no honest test for "this handle dies with the
+		// request". The rule is the other way round: only data goes on the memory stack, and whoever
+		// puts something live there takes a snapshot first, the way GetRequestProperties now does
+		// with the headers. What follows is the net for anything that slips through, so a value that
+		// belongs to the request pipeline is dropped loudly instead of being handed to a task that
+		// outlives it.
+		private Properties? CloneProperties(Properties? properties, string variableName)
+		{
+			if (properties == null || properties.Count == 0) return null;
+
+			Properties clone = new();
+			foreach (var property in properties)
+			{
+				if (IsRequestScoped(property.Value))
+				{
+					logger.LogWarning($"%{variableName}!{property.Name}% was left behind when calling a goal without waiting. {property.Value?.GetType().FullName} belongs to the request and does not outlive it, take a snapshot of it where it is created.");
+					continue;
+				}
+
+				try
+				{
+					clone.Add(new ObjectValue(property.Name, property.Value.DeepClone(),
+						properties: CloneProperties(property.Properties, $"{variableName}!{property.Name}")));
+				}
+				catch (Exception ex)
+				{
+					logger.LogWarning(ex, $"Could not copy %{variableName}!{property.Name}% into a goal called without waiting");
+				}
+			}
+
+			return clone;
+		}
+
+		private static bool IsRequestScoped(object? value)
+		{
+			if (value == null) return false;
+			if (value is IDisposable) return true;
+
+			string ns = value.GetType().Namespace ?? "";
+			return ns.StartsWith("Microsoft.AspNetCore") || ns.StartsWith("System.Net.Sockets") || ns.StartsWith("System.IO");
 		}
 
 		private bool CreateNewContainer(string absoluteGoalPath)

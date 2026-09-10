@@ -890,7 +890,9 @@ namespace PLang.Modules.WebserverModule
 
 			properties.Add(new ObjectValue("ContentLength", request.ContentLength));
 			properties.Add(new ObjectValue("ContentType", request.ContentType));
-			properties.Add(new ObjectValue("Headers", request.Headers));
+			// A snapshot, not the live IHeaderDictionary. Everything on the memory stack has to
+			// outlive the request, because a "dont wait" goal reads it after the response is gone.
+			properties.Add(new ObjectValue("Headers", request.Headers.ToDictionary(h => h.Key, h => h.Value.ToString())));
 			properties.Add(new ObjectValue("KeepAlive", request.Headers.KeepAlive.ToString()));
 
 			foreach (var item in request.Headers)
