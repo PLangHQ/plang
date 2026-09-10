@@ -146,13 +146,19 @@ This bites hardest with sql, because a `CASE WHEN ... THEN 1 ELSE 0 END` column 
 compare in the template, or return `NULL` from the query instead of `0` and `''` when you mean
 absent.
 
-`date.parse` is another one. A datetime that arrives as a string is already formatted by the time
-the template sees it, and piping it through `date.parse` first throws the time away:
+`date.parse` is the other one, and it cuts both ways. A datetime reaches the template either as a
+real DateTime or as a string, depending on how the goal produced it, and the same expression is
+right in one case and wrong in the other:
 
 ```
-{{ hold.slotStart | date.parse | date.to_string "%d.%m.%Y kl. %H:%M" }}   # 13.09.2026 kl. 00:00
-{{ hold.slotStart | date.to_string "%d.%m.%Y kl. %H:%M" }}                # 13.09.2026 kl. 09:15
+{{ x | date.to_string "%d.%m.%Y kl. %H:%M" }}                # needs a DateTime
+{{ x | date.parse | date.to_string "%d.%m.%Y kl. %H:%M" }}   # needs a string
 ```
+
+The two failures name themselves once you know them. A time that renders as `00:00` means you
+parsed something that was already a DateTime. `Unable to convert type string to DateTime` means you
+left the parse out and the value was a string. Two pages in the same app can need opposite
+answers, so fix the one in front of you rather than the whole app at once.
 
 Two more worth knowing:
 
