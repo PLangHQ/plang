@@ -44,6 +44,14 @@ Plang supports several optional parameters that enhance its functionality and de
 
 - **`--strictbuild`**: Ensures that every line number in goal files matches exactly. If they do not match, the step is rebuilt.
 
+- **`--buildparallel`**: Builds goals, and the steps inside a goal, at the same time instead of one after another. Takes a number, `--buildparallel=6`, and defaults to 4 if you pass the flag with no number. The default without the flag is 1, so the build stays sequential unless you ask for it.
+
+  Building a step is two LLM round trips, picking the module and then filling the function, and neither the steps of a goal nor the goals of a build feed each other, so they can go out together. The gain is wall clock on the LLM, not CPU.
+
+  Measured on a six step goal with a cold LLM cache: 35995 ms sequential against 8865 ms with `--buildparallel=6`, so 4.1x. On a whole app with several changed goal files the two levels multiply. Always measure with a cold cache, because a warm cache serves the sequential run from disk and the same change then looks like 2.8x.
+
+  One exception stays sequential: a goal whose text mentions `inject` is never built beside another goal. `RegisterForPLangUserInjections` writes into the DI container, which is process wide, while an injection is meant to apply to a single goal.
+
 ## Summary
 
 This guide provides you with the necessary commands and parameters to effectively run and build your Plang projects. Whether you are debugging, building, or running specific files, the above parameters will help you tailor the Plang environment to your needs.
