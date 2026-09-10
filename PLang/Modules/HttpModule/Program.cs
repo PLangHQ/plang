@@ -223,61 +223,24 @@ namespace PLang.Modules.HttpModule
 
 					using (var content = new MultipartFormDataContent())
 					{
-						Stream? fileStream = null;
+						List<Stream> fileStreams = new();
 						var properties = JObject.Parse(data.ToString()).Properties();
 						foreach (var property in properties)
 						{
 							if (property.Value == null) continue;
 
-							if (property.Value.ToString().StartsWith("@"))
+							if (property.Value is JArray array)
 							{
-								string fileName = property.Value.ToString().Substring(1);
-								string typeValue = null;
-								fileName = this.memoryStack.LoadVariables(fileName).ToString();
-
-								if (fileName != null && fileName.Contains(";"))
+								foreach (var item in array)
 								{
-									string type = fileName.Substring(fileName.IndexOf(";") + 1);
-									typeValue = type.Substring(type.IndexOf("=") + 1);
-
-									string newFileName = fileName.Substring(0, fileName.IndexOf(";"));
-									fileName = newFileName; //todo: some compile caching issue, fix, can be removed (I think)
+									var itemError = AddMultipartPart(content, fileStreams, property.Name, item?.ToString());
+									if (itemError != null) return (null, itemError, null);
 								}
-								if (!fileSystem.File.Exists(fileName))
-								{
-									if (IsBase64(fileName, out byte[]? bytes))
-									{
-										fileStream = new MemoryStream(bytes, 0, bytes.Length);
-										fileName = Guid.NewGuid().ToString();
-									}
-									else
-									{
-										return (null, new ProgramError($"{fileName} could not be found", goalStep, function, StatusCode: 404), null);
-									}
-								}
-								else
-								{
-
-									fileStream = fileSystem.FileStream.New(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-								}
-								var fileContent = new StreamContent(fileStream);
-								if (!string.IsNullOrEmpty(typeValue))
-								{
-									fileContent.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(typeValue);
-								}
-								else
-								{
-									var mediaTypeHeader = GetMimeTypeHeader(fileName);
-									fileContent.Headers.ContentType = mediaTypeHeader;
-								}
-								content.Add(fileContent, property.Name, Path.GetFileName(fileName));
-								fileStream?.Dispose();
-							}
-							else
-							{
-								content.Add(new StringContent(property.Value.ToString()), property.Name);
+								continue;
 							}
 
+							var error = AddMultipartPart(content, fileStreams, property.Name, property.Value.ToString());
+							if (error != null) return (null, error, null);
 						}
 						if (headers != null)
 						{
@@ -331,13 +294,72 @@ namespace PLang.Modules.HttpModule
 						}
 						finally
 						{
-							if (fileStream != null) fileStream.Dispose();
+							foreach (var stream in fileStreams) stream.Dispose();
 							if (httpClient != null) httpClient.Dispose();
 						}
 					}
 				}
 
 			}
+		}
+
+		private IError? AddMultipartPart(MultipartFormDataContent content, List<Stream> fileStreams, string name, string? value)
+		{
+			if (value == null) return null;
+
+			if (!value.StartsWith("@"))
+			{
+				content.Add(new StringContent(value), name);
+				return null;
+			}
+
+			string fileName = this.memoryStack.LoadVariables(value.Substring(1))?.ToString() ?? "";
+			string? typeValue = null;
+			string? partName = null;
+
+			while (fileName.Contains(";"))
+			{
+				string option = fileName.Substring(fileName.IndexOf(";") + 1);
+				fileName = fileName.Substring(0, fileName.IndexOf(";"));
+
+				if (option.StartsWith("type=", StringComparison.OrdinalIgnoreCase))
+				{
+					typeValue = option.Substring("type=".Length);
+				}
+				else if (option.StartsWith("name=", StringComparison.OrdinalIgnoreCase))
+				{
+					partName = option.Substring("name=".Length);
+				}
+			}
+
+			Stream fileStream;
+			if (fileSystem.File.Exists(fileName))
+			{
+				fileStream = fileSystem.FileStream.New(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+			}
+			else if (IsBase64(fileName, out byte[]? bytes))
+			{
+				fileStream = new MemoryStream(bytes, 0, bytes.Length);
+				fileName = partName ?? Guid.NewGuid().ToString();
+			}
+			else
+			{
+				return new ProgramError($"{fileName} could not be found", goalStep, function, StatusCode: 404);
+			}
+			fileStreams.Add(fileStream);
+
+			var fileContent = new StreamContent(fileStream);
+			if (!string.IsNullOrEmpty(typeValue))
+			{
+				fileContent.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(typeValue);
+			}
+			else
+			{
+				fileContent.Headers.ContentType = GetMimeTypeHeader(fileName);
+			}
+
+			content.Add(fileContent, name, partName ?? Path.GetFileName(fileName));
+			return null;
 		}
 
 		private bool IsBase64(string value, out byte[]? bytes)
