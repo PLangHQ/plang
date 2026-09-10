@@ -95,6 +95,7 @@ Explore plang's features and capabilities:
         - **[Identity in the browser](https://github.com/PLangHQ/plang/blob/main/Documentation/IdentityInTheBrowser.md)**: Where the identity comes from in a browser, which requests carry it, and what that decides about the first page load, sign in, images and webhooks.
         - **[Writing goals that behave](https://github.com/PLangHQ/plang/blob/main/Documentation/WritingGoals.md)**: One decision per goal, why `end goal` inside an `if` is a trap, and what a called goal hands back.
         - **[Talking to an api](https://github.com/PLangHQ/plang/blob/main/Documentation/TalkingToAnApi.md)**: Keys with a dash in them, form and multipart posts, webhooks, and the mock that quietly stops matching.
+        - **[Running on your own server](https://github.com/PLangHQ/plang/blob/main/Documentation/RunningOnAServer.md)**: Runtime and app on a linux box, systemd, TLS straight from plang with no proxy, deploys, a watchdog, and rollback.
         - **[Steps that build the first time](https://github.com/PLangHQ/plang/blob/main/Documentation/StepsThatBuild.md)**: Module hints, how short a step should be, `[code]` as a last resort, and what to verify after a build.
     - **Extending the language**
         - **[Modules](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/README.md)**: Learn how to extend the language. Discover the different modules available in plang and their capabilities. 
