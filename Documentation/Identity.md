@@ -4,6 +4,10 @@
 
 Identity in plang offers a secure and private way of handling user identification, replacing traditional methods like email and password with a unique digital key.
 
+> Building a web app? Read **[Identity in the browser](./IdentityInTheBrowser.md)** as well. The
+> browser holds the identity and only requests made by the plang js client carry it, which decides
+> how the first page load, sign in, images and webhooks have to work.
+
 ## Identity Explained
 In the world of web development, when a web service asks you to log in using your email and password, the main reason is to identify you in order to show you your data and not someone else's.
 
