@@ -124,6 +124,36 @@ symptom is a flow that runs to the end the moment the page appears.
 And because an `ask user` answer resumes the goal, everything above about `end goal` applies with
 full force to any goal that contains one.
 
+## What a goal hands to a template
+
+Templates are Scriban, and the one rule that catches everyone is what counts as false. **Only `null`
+and `false` are falsy.** An empty string is true. The number zero is true.
+
+```
+{{ if m.bodyHtml }}          # true for "", so an empty body renders as nothing at all
+{{ if day.past }}            # true for 0, so every day gets the past styling
+```
+
+Compare explicitly:
+
+```
+{{ if (m.bodyHtml | string.size) > 0 }}
+{{ if day.past == 1 }}
+```
+
+This bites hardest with sql, because a `CASE WHEN ... THEN 1 ELSE 0 END` column and a `COALESCE(x,
+'')` are exactly the two shapes that come back as a truthy zero and a truthy empty string. Either
+compare in the template, or return `NULL` from the query instead of `0` and `''` when you mean
+absent.
+
+Two more worth knowing:
+
+- Values are **not** html escaped for you. Anything that came from outside goes through
+  `| html.escape`, and anything that is meant to be html has to be sanitised before it is stored.
+- A goal renders by root path, `- [ui] render "/ui/admin/mail/thread.html"`, and the variables the
+  template sees are the ones in the goal at that moment. If a value is empty in the page, check the
+  step that was supposed to set it before you look at the template.
+
 ## Events are goals too
 
 Cross cutting things are bound once rather than called from every goal:
