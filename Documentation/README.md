@@ -91,6 +91,11 @@ Explore plang's features and capabilities:
     - **Builder**
         - **[Building your code](https://github.com/PLangHQ/plang/blob/main/Documentation/Builder.md)**: How does the builder take your intent and convert it to executable code.
         - **[Builder Lifecycle & Events](https://github.com/PLangHQ/plang/blob/main/Documentation/BuilderLifecycle.md)**: Sequence of operations when building plang and build events
+    - **Writing an app that works the first time**
+        - **[Identity in the browser](https://github.com/PLangHQ/plang/blob/main/Documentation/IdentityInTheBrowser.md)**: Where the identity comes from in a browser, which requests carry it, and what that decides about the first page load, sign in, images and webhooks.
+        - **[Writing goals that behave](https://github.com/PLangHQ/plang/blob/main/Documentation/WritingGoals.md)**: One decision per goal, why `end goal` inside an `if` is a trap, and what a called goal hands back.
+        - **[Talking to an api](https://github.com/PLangHQ/plang/blob/main/Documentation/TalkingToAnApi.md)**: Keys with a dash in them, form and multipart posts, webhooks, and the mock that quietly stops matching.
+        - **[Steps that build the first time](https://github.com/PLangHQ/plang/blob/main/Documentation/StepsThatBuild.md)**: Module hints, how short a step should be, `[code]` as a last resort, and what to verify after a build.
     - **Extending the language**
         - **[Modules](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/README.md)**: Learn how to extend the language. Discover the different modules available in plang and their capabilities. 
         - **[Services](https://github.com/PLangHQ/plang/blob/main/Documentation/Services.md)**: Learn how flexible the plang language is, e.g. using the db engine of your choice, your own caching service and more.
