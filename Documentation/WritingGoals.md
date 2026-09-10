@@ -146,6 +146,14 @@ This bites hardest with sql, because a `CASE WHEN ... THEN 1 ELSE 0 END` column 
 compare in the template, or return `NULL` from the query instead of `0` and `''` when you mean
 absent.
 
+`date.parse` is another one. A datetime that arrives as a string is already formatted by the time
+the template sees it, and piping it through `date.parse` first throws the time away:
+
+```
+{{ hold.slotStart | date.parse | date.to_string "%d.%m.%Y kl. %H:%M" }}   # 13.09.2026 kl. 00:00
+{{ hold.slotStart | date.to_string "%d.%m.%Y kl. %H:%M" }}                # 13.09.2026 kl. 09:15
+```
+
 Two more worth knowing:
 
 - Values are **not** html escaped for you. Anything that came from outside goes through
