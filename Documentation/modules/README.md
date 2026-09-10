@@ -8,6 +8,12 @@ Example:
 ```
 This step will map to [File](#file) module.
 
+The pages here are written by hand and explain how a module is meant to be used. When you need the
+other kind of answer, "what can this module actually do and what is the method called", use the
+**[generated module reference](./reference/README.md)**: every module, every method the builder can
+map a step onto, with signatures and defaults, produced from the code itself by
+`dotnet run --project Tools/ModuleDocGen`.
+
 Here, you'll find concise descriptions of each module's core functions along with practical examples to kickstart your programming tasks. Whether you're handling data, automating processes, securing information, or interacting with web services, these modules equip you with a broad range of tools to implement solutions efficiently. 
 
 You can also see [list of modules](https://github.com/PLangHQ/modules) that don't come built-in to extend the language even further or create your own [custom module](https://github.com/PLangHQ/modules/blob/main/README.md)
