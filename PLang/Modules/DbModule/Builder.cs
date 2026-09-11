@@ -394,6 +394,13 @@ DO NOT CHANGE main. prefix
 		return system;
 	}
 
+	private static bool StepQueriesSqlFile(GoalStep step)
+	{
+		var text = step.Text ?? "";
+		return text.TrimStart().StartsWith("query", StringComparison.OrdinalIgnoreCase)
+			&& System.Text.RegularExpressions.Regex.IsMatch(text, @"""[^""]+\.sql""", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+	}
+
 	[Description("DataSource Name can contain variables, e.g. /user/%user.id%, then IsDynamic=true or it can be something string such as 'data', 'analytics', etc. then IsDynamic=false")]
 	public record DataSourceName(string Name, bool IsDynamic);
 
@@ -461,6 +468,16 @@ When table name is unknown at built time because it is created with variable, us
 		}
 		(var methodsAndTables, error) = await LlmRequest<MethodsAndTables>(system, step);
 		if (error != null) return (null, error);
+
+		// A step that names a .sql file must read that file. The llm sometimes picks
+		// SelectOneRow for `query file "x.sql" ... return 1 row` and then writes its own
+		// sql in the next pass, silently ignoring the file.
+		if (StepQueriesSqlFile(step) && methodsAndTables.Methods.Keys.Any(p => p.StartsWith("Select", StringComparison.OrdinalIgnoreCase)))
+		{
+			var confidence = methodsAndTables.Methods.Values.FirstOrDefault() ?? "high";
+			methodsAndTables.Methods.Clear();
+			methodsAndTables.Methods.Add("QuerySqlFile", confidence);
+		}
 
 		// lets construction a new class description with only data that is needed
 		var classDescResult = GetNewClassDescription(step, classDescription, methodsAndTables);
