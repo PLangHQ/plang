@@ -755,11 +755,14 @@ namespace PLang.Modules.WebserverModule
 					try
 					{
 						var form = await req.ReadFormAsync();
+						// IFormCollection is case insensitive, so `From` and `from` (Mailgun posts both, same value)
+						// arrive as one field with two identical values. Identical repeats collapse to one value;
+						// different repeats (checkboxes) stay an array.
 						var fields = form.ToDictionary(
 							pair => pair.Key,
-							pair => pair.Value.Count > 1
+							pair => pair.Value.Count > 1 && pair.Value.Distinct().Count() > 1
 									 ? (object)pair.Value.ToArray()          // keep all repeated values
-									 : (object)pair.Value.ToString()!        // single value
+									 : (object)pair.Value.First()!           // single value
 						);
 
 						var payload = new Dictionary<string, object?>(fields, StringComparer.OrdinalIgnoreCase);
