@@ -250,13 +250,64 @@ namespace PLang.Modules.PlangModule
 			string scheme = TypeHelper.GetJsonSchema(typeof(MethodExecution));
 			return scheme;
 		}
-		/*
-		 * TODO: Dictionary<string, object?> Parameters should be Parameters class 
-		 * */
-		public async Task<(object obj, IError?)> RunModule(string @namespace, string @class, string method, Dictionary<string, object?>? Parameters)
+		public record ModuleInfo(string Name, string? Description);
+
+		[Description("Lists the runtime modules by full name with the module description")]
+		public async Task<(List<ModuleInfo>?, IError?)> ListModules()
 		{
-			var programType = typeHelper.Run(@namespace, @class, method, Parameters);
-			return (null, new Error(ErrorReporting.CreateIssueNotImplemented));
+			var list = new List<ModuleInfo>();
+			foreach (var module in typeHelper.GetRuntimeModules())
+			{
+				var classDescriptionHelper = new ClassDescriptionHelper();
+				var (classDescription, error) = classDescriptionHelper.GetClassDescription(module);
+				if (error != null) return (null, error);
+
+				list.Add(new ModuleInfo(module.FullName!.Replace(".Program", ""), classDescription?.Description));
+			}
+			return (list, null);
+		}
+
+		[Description("Runs a method on a runtime module by name at runtime, e.g. moduleName=PLang.Modules.FileModule, method=ReadTextFile, parameters={path:\"file.txt\"}. Parameter names must match the method's parameter names. Relative paths resolve from the app root when fromAppRoot is true, otherwise from the calling goal's folder. Returns what the method returns")]
+		public async Task<(object? Result, IError? Error)> RunModule(string moduleName, string method, Dictionary<string, object?>? parameters = null, bool fromAppRoot = false)
+		{
+			var programType = typeHelper.GetRuntimeType(moduleName);
+			if (programType == null)
+			{
+				return (null, new ProgramError($"Module {moduleName} not found", goalStep, Key: "ModuleNotFound", StatusCode: 404));
+			}
+
+			var program = container.GetInstance(programType) as BaseProgram;
+			if (program == null)
+			{
+				return (null, new ProgramError($"Could not create {moduleName}", goalStep, Key: "ModuleNotCreated", StatusCode: 500));
+			}
+
+			var goalToRunAs = goal;
+			if (fromAppRoot)
+			{
+				goalToRunAs = goal.ShallowClone();
+				goalToRunAs.AbsoluteGoalFolderPath = fileSystem.RootDirectory;
+				goalToRunAs.RelativeGoalFolderPath = fileSystem.Path.DirectorySeparatorChar.ToString();
+			}
+			program.Init(container, goalToRunAs, goalStep, instruction, contextAccessor);
+			if (program is IAsyncConstructor asyncConstructor)
+			{
+				var error = await asyncConstructor.AsyncConstructor();
+				if (error != null) return (null, error);
+			}
+
+			var functionParameters = new List<Parameter>();
+			if (parameters != null)
+			{
+				foreach (var parameter in parameters)
+				{
+					functionParameters.Add(new Parameter(parameter.Value?.GetType().FullName ?? "System.Object", parameter.Key, parameter.Value));
+				}
+			}
+			var genericFunction = new GenericFunction("", method, functionParameters, null);
+			genericFunction.Instruction = instruction;
+
+			return await program.RunFunction(genericFunction);
 		}
 
 		public async Task<(Dictionary<string, object>?, IError?)> GetStepProperties(string moduleName, string methodName)
