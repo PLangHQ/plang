@@ -126,7 +126,14 @@ full force to any goal that contains one.
 
 ## What a goal hands to a template
 
-Templates are Scriban, and the one rule that catches everyone is what counts as false. **Only `null`
+**Do not name a variable after a Scriban builtin.** `date` is the worst of them, because it is the
+name of Scriban's own date helper. A goal that sets `%date%` and a template that writes `{{ date }}`
+do not meet: the template prints the helper object, and `{{ if d.day == date }}` is never true. It
+renders as a wall of `<function>` text inside whatever attribute you put it in, which is how I found
+it. `string`, `array`, `math`, `object`, `regex`, `timespan` and `html` are taken as well. Name it
+`selectedDay` and move on.
+
+Then the rule that catches everyone: what counts as false. **Only `null`
 and `false` are falsy.** An empty string is true. The number zero is true.
 
 ```
