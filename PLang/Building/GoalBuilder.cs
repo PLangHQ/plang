@@ -95,6 +95,13 @@ namespace PLang.Building
 
 			logger.LogInformation($"\nStart to build {goal.GoalName} - {goal.RelativeGoalPath}:{goal.GoalSteps.FirstOrDefault()?.LineNumber}");
 
+			// context is shared by every goal in the build, and with --buildparallel by several at
+			// once, so a datasource set by one goal leaked into the next and got baked into its
+			// .pr. A goal that never named a datasource must resolve to the app default, not to
+			// whatever the previous goal happened to use. Setup goals keep it: there the
+			// 'create data source' step is meant to apply to the rest of that goal.
+			if (!goal.IsSetup) context.DataSource = null;
+
 			// Generate description and other properties for goal			
 			(goal, var error) = await LoadMethodAndDescription(goal);
 			if (error != null)
