@@ -34,41 +34,52 @@ Requests that **do not**:
 
 The html the browser gets on the first hit is the same for everyone, because at that moment the
 server has no idea who is asking. You cannot render a name, a cart count, a role or a private page
-into it. Anything personal has to arrive **after** the client connects, and the connection it makes
-is the poll.
+into it. Anything personal has to arrive **after** the client connects.
 
-So the landing route renders an empty shell, and the poll paints it:
+The clean way is to let **the page ask for itself again** once it has an identity. A `before each
+goal` event decides, and the shell it renders carries one line:
 
 ```plang
-Start
-- start webserver, port: %port%, host: %host%,
-    on poll start call OnPollStart
-    on poll refresh call OnPollRefresh
-
-OnPollStart
-- call goal LoadUser
-- if %request.query.landingPath% == "/" then call PaintLanding
-
-OnPollRefresh
-- call goal LoadUser
-- if %request.query.landingPath% == "/" then call PaintLanding
-
-PaintLanding
-- if %user.role% contains "admin" then call RenderSite, else call RenderInProgress
+Gate
+- if %Identity% is empty then
+    - [ui] set "/ui/layoutBare.html" as default layout, default render variable "main"
+    - [ui] render "/ui/pages/shell.html", navigate
+    - end goal, and previous
 ```
 
-Four things to get right here, each of which is a real bug I shipped:
+```html
+<!-- shell.html: whatever anonymous visitors should see, plus the re-request -->
+<script>
+addEventListener('plang:ready', function (e) {
+    e.detail.fetch(location.pathname + location.search, { method: 'GET', headers: [{ key: 'X-Plang-Layout', value: 'body' }] });
+}, { once: true });
+</script>
+```
 
-- **Render with `replace`, never `append`.** The poll reconnects, and every reconnect runs the hook
-  again. With `append` the same block is added over and over: fifty copies, a 22 KB document and
-  broken javascript. A render driven by the poll has to be idempotent.
-- **Handle `OnPollRefresh` as well as `OnPollStart`.** A tab that is already open reconnects with
-  `?plang.poll=1&refresh=1` and only fires the refresh hook. Paint in one and not the other and
-  that user sits and looks at an empty page.
-- **Check `landingPath` before painting.** The poll carries the path the client is on. Without the
-  check, a reconnect paints the landing page over whatever the user has since navigated to.
-- **Do not put the gate in an error handler.** Throwing an error and rendering a page from the
-  error event produces an empty response body.
+`plang:ready` fires when the client has its keys and has been answered once. The fetch is a signed
+request to the **same url**, so the goal runs again, now with `%Identity%` and `%user%` known. The
+header `X-Plang-Layout: body` asks the server to render the layout around the content as it would
+for a plain GET and to send it as a render message that replaces `body`. Header, footer, menus and
+the page arrive in one answer, drawn for the person who is actually there.
+
+A goal can ask for the same from its side, `- [ui] render "page.html", navigate, redraw the whole
+body inside the layout` (`LayoutTarget`). Use it when a goal switches layout, for instance a bare
+kiosk screen next to the normal site: in-app navigation only swaps `#main`, so the old header would
+stay unless the whole body is redrawn.
+
+What you get for free: the layout can hold the header, footer and role based menus **statically**,
+because only identified requests ever render it. No slots, no painting from the poll, no separate
+landing template.
+
+Three things to get right, each of which was a real bug:
+
+- **Do not bind the gate to the layout event's own folder.** If the goal that sets the layout is in
+  `/pages/` and the gate is bound to `/pages/.*`, the gate runs before the layout event as well and
+  the shell is rendered twice. Keep both in `events/`.
+- **`end goal, and previous`**, not `end goal`. The plain form ends only the event goal and the
+  route goal runs anyway.
+- **A route that shows an `ask user` form needs `get and post`.** The form posts back to the url it
+  was rendered from.
 
 ### 2. There is no sign in page
 
@@ -116,7 +127,7 @@ Two practical notes for automated browser tests:
 
 ## The mental model
 
-Think of the first request as fetching an empty stage, and the poll as the actor walking on. Every
+Think of the first request as fetching an empty stage, and the first signed request as the actor walking on. Every
 personal thing the user sees is put there by a request the client made. If you find yourself asking
 "why does the server not know who this is", the answer is nearly always that the browser, not the
 client, made the request.
