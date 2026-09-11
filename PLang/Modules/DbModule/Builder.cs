@@ -429,6 +429,7 @@ This is pre-processing to choose selection of possible <methods>, so you can sug
 For Select, Insert, Update, Delete, CreateTable and Execute methods, list out the table names that are affected
 When a you cannot determine method for the user intentented sql statement, use Execute(when sql is know) or ExecuteDynamicSql(when sql cannot be determined)
 When table name is unknown at built time because it is created with variable, use ExecuteDynamicSql, e.g. select * from %tableName%, or select * from %type%Options
+When the user points to a sql file (a path ending in .sql), the sql lives in that file and you MUST choose QuerySqlFile for reads or ExecuteSqlFile for writes, never Select, SelectOneRow or any method that takes a sql statement. This holds even when the user asks for one row, a row limit is a parameter of QuerySqlFile
 
 ## Scheme explained: 
 - Reasoning: explain why you chose method(s)
