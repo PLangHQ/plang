@@ -44,7 +44,7 @@ Plang supports several optional parameters that enhance its functionality and de
 
 - **`--strictbuild`**: Ensures that every line number in goal files matches exactly. If they do not match, the step is rebuilt.
 
-- **`--buildparallel`**: Builds goals, and the steps inside a goal, at the same time instead of one after another. Takes a number, `--buildparallel=6`, and defaults to 4 if you pass the flag with no number. The default without the flag is 1, so the build stays sequential unless you ask for it.
+- **`--buildparallel`**: Builds goals, and the steps inside a goal, at the same time instead of one after another. **This is on by default at 6**, so you do not need the flag. Pass a number to change it, `--buildparallel=10`, or `--buildparallel=1` to go back to building one step at a time, which is what an llm account with a tight rate limit wants.
 
   Building a step is two LLM round trips, picking the module and then filling the function, and neither the steps of a goal nor the goals of a build feed each other, so they can go out together. The gain is wall clock on the LLM, not CPU.
 

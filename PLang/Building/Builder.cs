@@ -130,7 +130,7 @@ namespace PLang.Building
 				// while an injection is meant to apply to one goal, and the memory stack is shared.
 				// A goal that mentions inject is therefore never run beside another one. In this app
 				// that is 1 goal file out of 636.
-				var degreeOfParallelism = AppContext.GetData("buildparallel") as int? ?? 1;
+				var degreeOfParallelism = AppContext.GetData("buildparallel") as int? ?? RegisterStartupParameters.DefaultBuildParallel;
 				var goalList = goalsToBuild.ToList();
 				var mayShareState = goalList.Where(g => g.GoalSteps.Any(s =>
 					s.Text.Contains("inject", StringComparison.OrdinalIgnoreCase))).ToList();
