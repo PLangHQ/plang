@@ -636,6 +636,24 @@ AddRoutes
 				var name = pathPart[(i + 1)..j].Replace(".", "__dot__");
 				regex.Append($"(?<{name}>[^/?&]+)");   // stop at / ? & or - (hyphen safe)
 				i = j + 1;
+
+				// the user writes the type inline, /user/%id%(number). the type belongs
+				// to the ParamInfo, it is not part of the path and must not be escaped
+				// into the regex, where it would never match.
+				if (i < pathPart.Length && pathPart[i] == '(')
+				{
+					var close = pathPart.IndexOf(')', i + 1);
+					if (close > i)
+					{
+						var type = pathPart[(i + 1)..close];
+						var param = paramInfos.FirstOrDefault(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+						if (param != null && string.IsNullOrEmpty(param.Type))
+						{
+							paramInfos[paramInfos.IndexOf(param)] = param with { Type = type };
+						}
+						i = close + 1;
+					}
+				}
 			}
 			else
 			{
