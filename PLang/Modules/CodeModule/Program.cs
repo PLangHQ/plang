@@ -111,7 +111,7 @@ namespace PLang.Modules.CodeModule
 
 		private object? MapReturn(object? result)
 		{
-			if (function.ReturnValues == null || function.ReturnValues.Count == 0) return result;
+			if (function.ReturnValues == null || function.ReturnValues.Count == 0 || result == null) return result;
 
 			Type resultType = result.GetType();
 
