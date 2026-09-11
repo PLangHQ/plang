@@ -25,7 +25,7 @@ using static PLang.Modules.DbModule.Program;
 
 namespace PLang.Modules.VariableModule
 {
-	[Description("Set, Get & Return variable(s). Set(NOT if statement) on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable. Trim variable for llm. Use this module on `- return %variable`. Modify datetime (%now%, etc.)")]
+	[Description("Set, Get & Return variable(s). Set(NOT if statement) on variable includes condition such as empty or null, and a fallback written as `, default is X`, `, or X if empty` or `?? X`. A step that starts with `set %variable% =` belongs here, never to the database module, even when the word default appears. Bind onCreate, onChange, onRemove events to variable. Trim variable for llm. Use this module on `- return %variable`. Modify datetime (%now%, etc.)")]
 	public class Program : BaseProgram
 	{
 		private readonly ISettings settings;
@@ -602,9 +602,12 @@ Bad (dont use for):
 		[Description("Type should be c# object type, e.g. System.String, System.DateTime, etc. When undefined, set to System.Object")]
 		public record VariableIfEmpty(string Name, object FirstValue, object ValueIfFirstIsEmpty, string Type);
 
-		[Description(@"Set value on variables or a default value is value is empty. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote("") by escaping it.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
+		[Description(@"Set value on variables or a default value is value is empty. The trailing clause may be written as `, default is X`, `, or X if empty` or `?? X`, they all mean the same. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote("") by escaping it.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
 		[Example(@"set %q% = %request.query.q%, or ""hello"" if empty", @"keyValues.key=""%q%"", value=[""%request.query.q%"", ""hello""]")]
 		[Example(@"set %q% = %request.query.page% ?? 1", @"keyValues.key=""%page%"", value=[""%request.query.page%"", 1, ""System.Int64""]")]
+		[Example(@"set %day% = %request.query.day%, default is """"", @"keyValues.key=""%day%"", value=[""%request.query.day%"", """"]")]
+		[Example(@"set %goals% = %q.goals%, default is []", @"keyValues.key=""%goals%"", value=[""%q.goals%"", []]")]
+		[Example(@"set %target% = %request.body.target%, default is ""#body""", @"keyValues.key=""%target%"", value=[""%request.body.target%"", ""#body""]")]
 		public async Task SetValueOnVariablesOrDefaultIfValueIsEmpty([HandlesVariableAttribute] List<VariableIfEmpty> variables, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
 		{
 			foreach (var variable in variables)
