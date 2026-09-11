@@ -341,7 +341,9 @@ namespace PLang.Events
 				var result = await Run(eve, eve.Goal, eve.GoalStep, isBuilder: isBuilder);
 				if (result.Error != null) return (Variables, result.Error);
 
-				if (result.Variables != null) return (result.Variables, null);
+				// Every binding that matches the goal must run. Returning on the first event that
+				// produced variables meant a second `before each goal` on the same goal never fired.
+				if (result.Variables is IEnumerable<ObjectValue> vars) Variables.AddRange(vars);
 			}
 			return (Variables, null);
 		}

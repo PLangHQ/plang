@@ -220,7 +220,9 @@ Attribute: Member is the key in the SetAttribute js method, make sure to convert
 		public record RenderTemplateOptions(RenderMessage RenderMessage, bool ReRender = true, string LayoutName = "default", 
 			bool RenderToOutputstream = false, bool DontRenderMainLayout = false,
 			[property: Description("set as true when RenderMessage.Content looks like a fileName, e.g. %fileName%, %template%, etc. If Content is clearly a text, set as false")]
-			bool? IsTemplateFile = null)
+			bool? IsTemplateFile = null,
+			[property: Description("css selector, normally body, when the user wants the whole page redrawn inside the layout, e.g. 'render whole page', 'replace whole body', 'redraw the page'")]
+			string? LayoutTarget = null)
 		{
 
 			[LlmIgnore]
@@ -318,8 +320,30 @@ IsTemplateFile: set as true when RenderMessage.Content looks like a fileName, e.
 				}
 			}
 
+			// A plang request may ask for the whole page: the client sends X-Plang-Layout with the
+			// selector it wants replaced (normally body). The layout is rendered around the content
+			// as on a plain GET and sent as a render message so the page redraws itself in one answer.
+			var layoutTarget = options.LayoutTarget ?? memoryStack.Get<string>("request!X-Plang-Layout");
+			if (sink is HttpSink && !string.IsNullOrEmpty(layoutTarget) && !options.DontRenderMainLayout)
+			{
+				var layoutOptions = GetLayoutOptions();
+				if (layoutOptions != null)
+				{
+					var parameters = new Dictionary<string, object?>();
+					parameters.Add(layoutOptions.DefaultRenderVariable, content);
+					(content, error) = await templateEngine.RenderFile(layoutOptions.TemplateFile, parameters, options.RenderToOutputstream);
+					if (error != null) return (content, error);
+					if (layoutTarget.Equals("body", StringComparison.OrdinalIgnoreCase))
+					{
+						var bodyMatch = System.Text.RegularExpressions.Regex.Match(content, @"<body[^>]*>(.*)</body>", System.Text.RegularExpressions.RegexOptions.Singleline | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+						if (bodyMatch.Success) content = bodyMatch.Groups[1].Value;
+					}
+					options = options with { RenderMessage = options.RenderMessage with { Target = layoutTarget } };
+				}
+			}
+
 			var rm = options.RenderMessage with { Content = content };
-			options = options with {  RenderMessage = rm };	
+			options = options with {  RenderMessage = rm };
 
 			Parameters.Add("reRender", options.ReRender);
 			logger.LogDebug($"           - Sending to sink - {stopwatch.ElapsedMilliseconds}");
