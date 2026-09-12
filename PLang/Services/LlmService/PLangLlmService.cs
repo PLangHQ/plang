@@ -86,7 +86,8 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 		}
 		public virtual async Task<(object? Response, IError? Error)> Query(LlmRequest question, Type responseType, int errorCount = 0)
 		{
-			Extractor = ExtractorFactory.GetExtractor(question, responseType);
+			var extractor = ExtractorFactory.GetExtractor(question, responseType);
+			Extractor = extractor;
 			AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool isDebug);
 
 			if (question.model.StartsWith("o"))
@@ -111,7 +112,7 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 					}
 					logger.LogTrace("Using cached response from LLM:" + cachedLlmQuestion.RawResponse);
 
-					var result2 = Extractor.Extract(cachedLlmQuestion.RawResponse, responseType, null);
+					var result2 = extractor.Extract(cachedLlmQuestion.RawResponse, responseType, null);
 					if (result2 != null && !string.IsNullOrEmpty(result2.ToString()))
 					{
 						question.RawResponse = cachedLlmQuestion.RawResponse;
@@ -182,7 +183,7 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 
 				ShowCosts(hr);
 
-				var obj = Extractor.Extract(rawResponse, responseType, question.Tools);
+				var obj = extractor.Extract(rawResponse, responseType, question.Tools);
 				if (obj == null)
 				{
 					return (null, new ServiceError(rawResponse, this.GetType()));

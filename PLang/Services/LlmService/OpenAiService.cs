@@ -102,7 +102,8 @@ namespace PLang.Services.OpenAi
 		}
 		public virtual async Task<(object? Response, IError? Error)> Query(LlmRequest question, Type responseType, int errorCount)
 		{
-			Extractor = ExtractorFactory.GetExtractor(question, responseType);
+			var extractor = ExtractorFactory.GetExtractor(question, responseType);
+			Extractor = extractor;
 			question.model = ModelName(question);
 
 			var q = llmCaching.GetCachedQuestion(appId, question);
@@ -111,7 +112,7 @@ namespace PLang.Services.OpenAi
 				try
 				{
 					question.RawResponse = q.RawResponse;
-					return (Extractor.Extract(q.RawResponse, responseType, null), null);
+					return (extractor.Extract(q.RawResponse, responseType, null), null);
 
 				}
 				catch { }
@@ -159,7 +160,7 @@ namespace PLang.Services.OpenAi
 
 					question.RawResponse = json.choices[0].message.content.ToString();
 
-					var obj = Extractor.Extract(question.RawResponse, responseType, question.Tools);
+					var obj = extractor.Extract(question.RawResponse, responseType, question.Tools);
 					if (question.caching)
 					{
 						llmCaching.SetCachedQuestion(appId, question);
