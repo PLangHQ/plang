@@ -267,6 +267,7 @@ namespace PLang.Container
 
 			container.Register<IMemoryStackAccessor, MemoryStackAccessor>();
 			container.RegisterSingleton<IPLangContextAccessor, ContextAccessor>();
+			container.RegisterInstance<IServiceContainer>(container);
 
 
 			container.RegisterSingleton<IFileAccessHandler, FileAccessHandler>();

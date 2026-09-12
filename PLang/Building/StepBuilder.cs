@@ -474,6 +474,8 @@ Builder will continue on other steps but not this one: ({step.Text}).
 		promptMessage.Add(new LlmMessage("user", step.Text));
 
 		var llmRequest = new LlmRequest("StepPropertiesBuilder", promptMessage);
+		llmRequest.Step = step;
+		llmRequest.Goal = goal;
 		llmRequest.scheme = stepPropertiesScheme;
 
 		if (step.PrFileName == null) llmRequest.Reload = true;
@@ -573,6 +575,8 @@ Builder will continue on other steps but not this one: ({step.Text}).
 		}
 
 		var llmRequest = new LlmRequest("StepInformationBuilder", promptMessage);
+		llmRequest.Step = step;
+		llmRequest.Goal = goal;
 		llmRequest.scheme = jsonScheme;
 		if (prevError != null)
 		{

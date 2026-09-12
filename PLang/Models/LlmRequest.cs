@@ -28,5 +28,14 @@ namespace PLang.Models
         public string? PreviousResult { get; internal set; }
         public string? RawResponse { get; set; }
 		public Tools Tools { get; internal set; }
+
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMember]
+		[System.Text.Json.Serialization.JsonIgnore]
+		public Building.Model.GoalStep? Step { get; set; }
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMember]
+		[System.Text.Json.Serialization.JsonIgnore]
+		public Building.Model.Goal? Goal { get; set; }
 	}
 }

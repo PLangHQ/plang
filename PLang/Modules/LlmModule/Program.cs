@@ -221,6 +221,8 @@ public class Program : BaseProgram
 		}
 
 		var llmQuestion = new LlmRequest("LlmModule", promptMessages, model, cacheResponse);
+		llmQuestion.Step = goalStep;
+		llmQuestion.Goal = goal;
 		llmQuestion.maxLength = maxLength;
 		llmQuestion.temperature = temperature;
 		llmQuestion.top_p = topP;

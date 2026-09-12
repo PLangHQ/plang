@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using LightInject;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Errors;
@@ -26,7 +27,9 @@ namespace PLang.Services.LlmService
 		private readonly MemoryStack memoryStack;
 		private readonly Modules.IdentityModule.Program signer; 
 		private readonly Modules.HttpModule.Program http;
-		
+		private readonly IServiceContainer container;
+		private readonly IPLangContextAccessor contextAccessor;
+
 		private string url = "https://llm.plang.is/api/Llm";
 		private string? modelOverwrite = null;
 		private readonly string appId = "206bb559-8c41-4c4a-b0b7-283ef73dc8ce";
@@ -37,7 +40,8 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 		public IContentExtractor Extractor { get; set; }
 
 		public PLangLlmService(LlmCaching llmCaching, Modules.IdentityModule.Program signer,
-			ILogger logger, PLangAppContext context, IPLangFileSystem fileSystem, IMemoryStackAccessor memoryStackAccessor, Modules.HttpModule.Program http)
+			ILogger logger, PLangAppContext context, IPLangFileSystem fileSystem, IMemoryStackAccessor memoryStackAccessor, Modules.HttpModule.Program http,
+			IServiceContainer container, IPLangContextAccessor contextAccessor)
 		{
 			this.llmCaching = llmCaching;
 			this.signer = signer;
@@ -46,6 +50,8 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 			this.fileSystem = fileSystem;
 			this.memoryStack = memoryStackAccessor.Current;
 			this.http = http;
+			this.container = container;
+			this.contextAccessor = contextAccessor;
 			
 			this.Extractor = new JsonExtractor();
 
@@ -149,10 +155,34 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 				parameters.Add("buildVersion", assembly.GetName().Version?.ToString());
 			}
 
-			var result = await http.Post(url, parameters);
-			if (result.Error != null) return (result.Data, result.Error);
+			var step = question.Step ?? contextAccessor.Current?.CallStack?.CurrentStep;
+			if (step == null)
+			{
+				return (null, new ServiceError("The llm request carries no step and no step is executing, so the http module cannot be initialized. Set LlmRequest.Step where the request is created.", this.GetType()));
+			}
+			http.Init(container, question.Goal ?? step.Goal, step, step.Instruction, contextAccessor);
 
-			string? responseContent = result.Data?.ToString();
+			string? responseContent;
+			Models.HttpResponse? hr = null;
+			using (var httpClient = new HttpClient())
+			using (var request = new HttpRequestMessage(HttpMethod.Post, url))
+			{
+				request.Headers.UserAgent.ParseAdd("plang llm v0.1");
+				request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
+				httpClient.Timeout = new TimeSpan(0, 5, 0);
+				await SignRequest(request);
+
+				using var response = await httpClient.SendAsync(request);
+				responseContent = await response.Content.ReadAsStringAsync();
+				hr = new Models.HttpResponse()
+				{
+					Headers = response.Headers.ToDictionary(h => h.Key, h => (object?)string.Join(",", h.Value)),
+					ContentHeaders = response.Content.Headers.ToDictionary(h => h.Key, h => (object?)string.Join(",", h.Value)),
+					IsSuccess = response.IsSuccessStatusCode,
+					ReasonPhrase = response.ReasonPhrase ?? "",
+					StatusCode = (int)response.StatusCode
+				};
+			}
 
 
 			if (string.IsNullOrWhiteSpace(responseContent))
@@ -176,11 +206,8 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 			{
 				context.AddOrReplace(ReservedKeywords.Llm, rawResponse);
 			}
-			Models.HttpResponse? hr = null;
-			if (result.Properties is IDictionary<string, object?> properties && properties.TryGetValue("Response", out object? resp)) 
+			if (hr != null && hr.IsSuccess)
 			{
-				hr = resp as HttpResponse;
-
 				ShowCosts(hr);
 
 				var obj = extractor.Extract(rawResponse, responseType, question.Tools);

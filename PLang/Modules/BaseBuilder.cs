@@ -104,6 +104,8 @@ namespace PLang.Modules
 				messages.Add(new LlmMessage("assistant", ErrorHelper.MakeForLlm(builderError)));
 			}
 			LlmRequest llmRequest = new LlmRequest(typeof(T).FullName, messages);
+			llmRequest.Step = step;
+			llmRequest.Goal = step.Goal;
 
 			(var result, var queryError) = await llmServiceFactory.CreateHandler().Query(llmRequest, typeof(T));
 			if (queryError != null)
@@ -359,6 +361,8 @@ Make sure to use the information in <error> to return valid JSON response"
 
 
 			var llmRequest = new LlmRequest(GetType().FullName, promptMessage);
+			llmRequest.Step = step;
+			llmRequest.Goal = step.Goal;
 
 			llmRequest.Reload = step.Reload;
 			if (contentExtractor != null)

@@ -500,6 +500,8 @@ Be concise
 			string model = "gpt-4o-mini";
 			promptMessage.Add(new LlmMessage("user", goal.GetGoalAsString()));
 			var llmRequest = new LlmRequest("GoalDescription", promptMessage, model);
+			llmRequest.Goal = goal;
+			llmRequest.Step = goal.GoalSteps.FirstOrDefault();
 
 			(var result, var queryError) = await llmServiceFactory.CreateHandler().Query(llmRequest, responseType);
 			if (queryError is IBuilderError builderError) return (goal, builderError);

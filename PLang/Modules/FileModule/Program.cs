@@ -1238,7 +1238,7 @@ namespace PLang.Modules.FileModule
 		{
 			return type switch
 			{
-				"text" => fileSystem.File.ReadAllText(fullName),
+				"text" or "plang" or "code" or "config" or "log" or "subtitle" or "calendar" or "checksum" or "vector" or "email" => fileSystem.File.ReadAllText(fullName),
 				"binary" => fileSystem.File.ReadAllBytes(fullName),
 				_ => fileSystem.File.ReadAllBytes(fullName)
 			};

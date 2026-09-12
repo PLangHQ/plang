@@ -87,6 +87,8 @@ namespace PLang.Events
                     promptMessage.Add(new LlmMessage("user", step.Text));
 
                     var llmRequest = new LlmRequest("Events", promptMessage);
+                    llmRequest.Step = step;
+                    llmRequest.Goal = goal;
                     (var eventBinding, var queryError) = await llmServiceFactory.CreateHandler().Query<EventBinding>(llmRequest);
                     if (queryError != null) return queryError;
                     if (eventBinding == null)
