@@ -130,6 +130,10 @@ namespace PLang.Services.CompilerService
 				strUsing += "using System;\n";
 			}
 			string namepaceCode = "";
+			if (string.IsNullOrEmpty(answer.Namespace))
+			{
+				answer.Namespace = "PLangGeneratedCode";
+			}
 			if (!answer.Implementation.Contains(answer.Namespace))
 			{
 				namepaceCode = $"namespace {answer.Namespace};\n\n";
