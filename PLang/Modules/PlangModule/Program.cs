@@ -296,12 +296,22 @@ namespace PLang.Modules.PlangModule
 				if (error != null) return (null, error);
 			}
 
+			var candidates = programType.GetMethods(BindingFlags.Public | BindingFlags.Instance).Where(m => m.Name == method).ToList();
+			if (candidates.Count == 0)
+			{
+				return (null, new ProgramError($"Method {method} not found in {moduleName}", goalStep, Key: "MethodNotFound", StatusCode: 404));
+			}
+			var parameterNames = parameters?.Keys.ToList() ?? new List<string>();
+			var chosen = candidates.FirstOrDefault(m => parameterNames.All(n => m.GetParameters().Any(p => p.Name == n))) ?? candidates[0];
+
 			var functionParameters = new List<Parameter>();
 			if (parameters != null)
 			{
 				foreach (var parameter in parameters)
 				{
-					functionParameters.Add(new Parameter(parameter.Value?.GetType().FullName ?? "System.Object", parameter.Key, parameter.Value));
+					var methodParameter = chosen.GetParameters().FirstOrDefault(p => p.Name == parameter.Key);
+					var type = methodParameter?.ParameterType.FullNameNormalized() ?? parameter.Value?.GetType().FullName ?? "System.Object";
+					functionParameters.Add(new Parameter(type, parameter.Key, parameter.Value));
 				}
 			}
 			var genericFunction = new GenericFunction("", method, functionParameters, null);
