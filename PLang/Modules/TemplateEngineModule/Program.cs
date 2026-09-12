@@ -219,6 +219,34 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 			}
 		}
 		ScriptObject globals = new ScriptObject(StringComparer.OrdinalIgnoreCase);
+		// Scriban can walk a JObject because it is an IDictionary, but every leaf is then a JValue and
+		// `>=`, `+` or `== 5` on it throws "Unable to convert type JValue to int". Values coming from
+		// JSON (http responses, db json columns, stored messages) are converted to plain .NET before
+		// the template sees them, so a number is a number.
+		private static object? ToPlain(object? value)
+		{
+			if (value is JValue jv) return jv.Value;
+			if (value is JObject jo)
+			{
+				var dict = new Dictionary<string, object?>();
+				foreach (var property in jo.Properties())
+				{
+					dict[property.Name] = ToPlain(property.Value);
+				}
+				return dict;
+			}
+			if (value is JArray ja)
+			{
+				var list = new List<object?>();
+				foreach (var item in ja)
+				{
+					list.Add(ToPlain(item));
+				}
+				return list;
+			}
+			return value;
+		}
+
 		private void AddVariable(string key, object value, TemplateContext templateContext)
 		{
 
@@ -226,6 +254,7 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 			{
 				value = ov.Value;
 			}
+			value = ToPlain(value);
 
 			if (key.StartsWith("!"))
 			{
@@ -478,12 +507,7 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 			var scriptObj = new Scriban.Runtime.ScriptObject();
 			foreach (var item in list)
 			{
-				object? value = item.Value;
-				if (value is JValue v)
-				{
-					value = v.ToString();
-				}
-				scriptObj[item.Name] = value;
+				scriptObj[item.Name] = ToPlain(item.Value);
 			}
 			return scriptObj;
 		}
