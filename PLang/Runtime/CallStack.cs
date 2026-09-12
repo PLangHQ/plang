@@ -280,6 +280,23 @@ public class CallStackFrame : VariableContainer
 	public ConcurrentBag<IDisposable> Disposables { get; } = new();
 	public ConcurrentBag<IError> Errors { get; } = new();
 
+	// Indented steps (the body of an if) run only when the condition in THIS invocation enabled
+	// them. The flag used to live on the shared GoalStep, so a goal that recursed into itself
+	// from inside an if body saw the outer invocation's flags and ran steps its own condition
+	// had rejected.
+	private readonly HashSet<int> _enabledSteps = new();
+
+	public void SetStepEnabled(int stepIndex, bool enabled)
+	{
+		if (enabled) _enabledSteps.Add(stepIndex);
+		else _enabledSteps.Remove(stepIndex);
+	}
+
+	public bool IsStepEnabled(int stepIndex)
+	{
+		return _enabledSteps.Contains(stepIndex);
+	}
+
 	private readonly ConcurrentQueue<ExecutedStep> _executedSteps = new();
 	private ExecutedStep? _currentExecutingStep;
 	private readonly Stopwatch _frameStopwatch;

@@ -524,8 +524,7 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 				var module = GetProgramModule<ThrowErrorModule.Program>();
 				return (returnVars, await module.Throw(throwErrorOnFalse.Message ?? "Is not empty", throwErrorOnFalse.Type, throwErrorOnFalse.StatusCode));
 			}
-			if (!result) return (returnVars, error);
-
+			var frame = context.CallStack.CurrentFrame;
 			var nextStep = goalStep.NextStep;
 			if (nextStep != null)
 			{
@@ -533,7 +532,9 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 
 				while (isIndent)
 				{
-					nextStep.Execute = result && (goalStep.Indent + 4 == nextStep.Indent);
+					bool enabled = result && (goalStep.Indent + 4 == nextStep.Indent);
+					nextStep.Execute = enabled;
+					frame.SetStepEnabled(nextStep.Index, enabled);
 
 					nextStep = nextStep.NextStep;
 					if (nextStep == null) break;

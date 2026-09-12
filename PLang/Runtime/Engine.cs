@@ -623,6 +623,7 @@ namespace PLang.Runtime
 					return (null, stepIndex, new Error("stepIndex is higher than steps in goal"));
 				}
 				goal.GoalSteps[stepIndex].Execute = true;
+				context.CallStack.CurrentFrame.SetStepEnabled(stepIndex, true);
 			}
 
 			for (; stepIndex < goal.GoalSteps.Count; stepIndex++)
@@ -723,7 +724,7 @@ namespace PLang.Runtime
 			{
 				
 				
-				if (HasExecuted(step)) return (null, null);
+				if (HasExecuted(step, context)) return (null, null);
 
 				step.UniqueId = Guid.NewGuid().ToString();
 				logger.LogTrace($"     - Load instruction for step: {step.Text.MaxLength(20)} - {step.Stopwatch.ElapsedMilliseconds}");
@@ -874,9 +875,15 @@ namespace PLang.Runtime
 					errorHandler.RetryHandler != null);
 		}
 
-		private bool HasExecuted(GoalStep step)
+		private bool ShouldExecute(GoalStep step, PLangContext context)
 		{
-			if (!step.Execute) return true;
+			if (step.Indent > 0) return context.CallStack.CurrentFrame.IsStepEnabled(step.Index);
+			return step.Execute;
+		}
+
+		private bool HasExecuted(GoalStep step, PLangContext context)
+		{
+			if (!ShouldExecute(step, context)) return true;
 			if (!step.RunOnce) return false;
 			if (step.Executed == DateTime.MinValue) return false;
 			if (settings.IsDefaultSystemDbPath && step.Executed != null && step.Executed != DateTime.MinValue) return true;
@@ -896,9 +903,9 @@ namespace PLang.Runtime
 
 		public async Task<(object? ReturnValue, IError? Error)> ProcessPrFile(Goal goal, GoalStep step, int stepIndex, PLangContext context)
 		{
-			if (stepIndex < goal.GoalSteps.Count && !goal.GoalSteps[stepIndex].Execute)
+			if (stepIndex < goal.GoalSteps.Count && !ShouldExecute(goal.GoalSteps[stepIndex], context))
 			{
-				logger.LogDebug($"Step is disabled: {goal.GoalSteps[stepIndex].Execute}");
+				logger.LogDebug($"Step is disabled: {goal.GoalSteps[stepIndex].Text}");
 				return (null, null);
 			}
 			if (step.Stopwatch == null) step.Stopwatch = Stopwatch.StartNew();
@@ -998,6 +1005,7 @@ namespace PLang.Runtime
 					if (step.Indent > 0)
 					{
 						step.Execute = false;
+						context.CallStack.CurrentFrame.SetStepEnabled(step.Index, false);
 					}
 				}
 			}
