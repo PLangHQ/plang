@@ -125,7 +125,7 @@ public class Program : BaseProgram
 					}
 					else
 					{
-						output = returned;
+						output = Unwrap(returned);
 					}
 				}
 
@@ -133,6 +133,7 @@ public class Program : BaseProgram
 				{
 					var (replaced, resultError) = await callGoal.RunGoal(new GoalToCallInfo(onToolResult.Name, new() { ["toolCall"] = callInfo, ["toolResult"] = output }) { Path = onToolResult.Path });
 					if (resultError != null) return (null, resultError);
+					replaced = Unwrap(replaced);
 					if (replaced != null) output = replaced;
 				}
 
@@ -153,6 +154,17 @@ public class Program : BaseProgram
 		var info = new GoalToCallInfo(eventGoal.Name, parameters) { Path = eventGoal.Path };
 		var (_, error) = await callGoal.RunGoal(info);
 		return error;
+	}
+
+	// A goal that returns hands back its return variables as ObjectValues; a goal that only
+	// runs to the end hands back nothing. The tool result is the value, not the wrapper.
+	private static object? Unwrap(object? returned)
+	{
+		if (returned is ObjectValue ov) return ov.Value;
+		if (returned is not List<ObjectValue> list) return returned;
+		if (list.Count == 0) return null;
+		if (list.Count == 1) return list[0].Value;
+		return list.ToDictionary(v => v.Name, v => v.Value);
 	}
 
 	private static Dictionary<string, object?> ToolOutput(string callId, string output)
