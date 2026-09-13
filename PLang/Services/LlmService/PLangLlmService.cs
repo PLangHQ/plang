@@ -70,6 +70,11 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 		}
 
 
+		public virtual async Task<(LlmChatResult? Result, IError? Error)> Chat(LlmChatRequest request)
+		{
+			return (null, new ServiceError("The plang llm service does not run agents with tools yet. Start with --llmservice=openai, or another service that implements Chat.", this.GetType(), StatusCode: 501));
+		}
+
 		public virtual async Task<(T? Response, IError? Error)> Query<T>(LlmRequest question) where T : class
 		{
 			var result = await Query(question, typeof(T));

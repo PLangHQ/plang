@@ -99,6 +99,7 @@ Explore plang's features and capabilities:
         - **[Talking to an api](https://github.com/PLangHQ/plang/blob/main/Documentation/TalkingToAnApi.md)**: Keys with a dash in them, form and multipart posts, webhooks, and the mock that quietly stops matching.
         - **[Running on your own server](https://github.com/PLangHQ/plang/blob/main/Documentation/RunningOnAServer.md)**: Runtime and app on a linux box, systemd, TLS straight from plang with no proxy, deploys, a watchdog, and rollback.
         - **[Steps that build the first time](https://github.com/PLangHQ/plang/blob/main/Documentation/StepsThatBuild.md)**: Module hints, how short a step should be, `[code]` as a last resort, and what to verify after a build.
+        - **[Agents](https://github.com/PLangHQ/plang/blob/main/Documentation/Agents.md)**: One step runs the loop, tools are goals, three events draw it; what to put in the prompt and what to attach to results.
     - **Extending the language**
         - **[Modules](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/README.md)**: Learn how to extend the language. Discover the different modules available in plang and their capabilities. 
         - **[Services](https://github.com/PLangHQ/plang/blob/main/Documentation/Services.md)**: Learn how flexible the plang language is, e.g. using the db engine of your choice, your own caching service and more.

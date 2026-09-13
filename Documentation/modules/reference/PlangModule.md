@@ -118,6 +118,15 @@ GetVariables(PLang.Building.Model.GoalStep step) : PLang.Runtime.ObjectValue
 
 - `step` *PLang.Building.Model.GoalStep* — (see Type information in SupportingObjects)
 
+### ListModules
+
+```
+ListModules() : List<ModuleInfo>
+```
+
+Lists the runtime modules by full name with the module description
+
+
 ### Run
 
 ```
@@ -145,8 +154,10 @@ RunFunction(PLang.Runtime.ObjectValue genericFunction) : Object
 ### RunModule
 
 ```
-RunModule(String namespace, String class, String method, Dictionary<String, Object> Parameters = null) : Object
+RunModule(String moduleName, String method, Dictionary<String, Object> parameters = null, Boolean fromAppRoot = False) : Object
 ```
+
+Runs a method on a runtime module by name at runtime, e.g. moduleName=PLang.Modules.FileModule, method=ReadTextFile, parameters={path:"file.txt"}. Parameter names must match the method's parameter names. Relative paths resolve from the app root when fromAppRoot is true, otherwise from the calling goal's folder. Returns what the method returns
 
 
 ### RunStep

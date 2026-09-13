@@ -35,6 +35,143 @@ public class Program : BaseProgram
 		this.appContext = appContext;
 	}
 
+	public record AgentRun(string? Answer, int Rounds, int ToolCalls, int ToolErrors, long InputTokens, long OutputTokens, bool StoppedAtMaxRounds);
+
+	[Description(@"Runs an agent: sends messages and tools to the llm, runs each tool the llm asks for by calling the tool's goal with the arguments as parameters, appends the results to messages and repeats until the llm answers with text. messages is the conversation and is updated in place. tools is a list of {name, description, parameters (json schema), call (goal path)}. Events: onToolCall runs before a tool with %toolCall%, onToolResult runs after it with %toolCall% and %toolResult% and may return a replacement result, onProgress runs with %text% when the llm writes text alongside tool calls. reasoning: none|low|medium|high. Returns {Answer, Rounds, ToolCalls, ToolErrors, InputTokens, OutputTokens, StoppedAtMaxRounds}")]
+	public async Task<(AgentRun? Run, IError? Error)> RunAgent([HandlesVariable] string messages, List<AgentTool>? tools = null,
+		string? model = null, string? reasoning = null, int maxRounds = 30,
+		GoalToCallInfo? onToolCall = null, GoalToCallInfo? onToolResult = null, GoalToCallInfo? onProgress = null,
+		int timeoutInSeconds = 600)
+	{
+		var messagesValue = memoryStack.GetObjectValue(messages);
+		if (messagesValue.Value is not IList history)
+		{
+			return (null, new ProgramError($"{messages} must be a list of messages", goalStep, function));
+		}
+		tools ??= new();
+		var llm = llmServiceFactory.CreateHandler();
+		var callGoal = GetProgramModule<CallGoalModule.Program>();
+
+		int toolCalls = 0, toolErrors = 0;
+		long inputTokens = 0, outputTokens = 0;
+		for (int round = 1; round <= maxRounds; round++)
+		{
+			var request = new LlmChatRequest()
+			{
+				Model = model,
+				Reasoning = reasoning,
+				Messages = history.Cast<object>().ToList(),
+				Tools = tools,
+				TimeoutInSeconds = timeoutInSeconds,
+				Step = goalStep
+			};
+			var (turn, error) = await llm.Chat(request);
+			if (error != null) return (null, error);
+			if (turn == null) return (null, new ProgramError("The llm service returned nothing", goalStep, function));
+
+			foreach (var item in turn.Items) AddToHistory(history, item);
+			inputTokens += turn.Usage.InputTokens;
+			outputTokens += turn.Usage.OutputTokens;
+
+			if (turn.ToolCalls.Count == 0)
+			{
+				return (new AgentRun(turn.Text, round, toolCalls, toolErrors, inputTokens, outputTokens, false), null);
+			}
+
+			if (!string.IsNullOrWhiteSpace(turn.Text) && onProgress != null)
+			{
+				var progressError = await RunEvent(callGoal, onProgress, new() { ["text"] = turn.Text });
+				if (progressError != null) return (null, progressError);
+			}
+
+			foreach (var call in turn.ToolCalls)
+			{
+				toolCalls++;
+				var tool = tools.FirstOrDefault(t => t.Name == call.Name);
+				Dictionary<string, object?> args;
+				try
+				{
+					args = JsonConvert.DeserializeObject<Dictionary<string, object?>>(call.Arguments) ?? new();
+				}
+				catch (Exception ex)
+				{
+					args = new();
+					toolErrors++;
+					AddToHistory(history, ToolOutput(call.Id, $"Error: the arguments were not valid json: {ex.Message}"));
+					continue;
+				}
+				var callInfo = new Dictionary<string, object?> { ["id"] = call.Id, ["name"] = call.Name, ["arguments"] = args };
+
+				if (onToolCall != null)
+				{
+					var startError = await RunEvent(callGoal, onToolCall, new() { ["toolCall"] = callInfo });
+					if (startError != null) return (null, startError);
+				}
+
+				object? output;
+				if (tool == null)
+				{
+					toolErrors++;
+					output = $"Error: there is no tool named {call.Name}";
+				}
+				else
+				{
+					var toolGoal = new GoalToCallInfo(tool.Call, args);
+					var (returned, toolError) = await callGoal.RunGoal(toolGoal);
+					if (toolError != null)
+					{
+						toolErrors++;
+						output = "Error: " + FirstLine(toolError.Message);
+					}
+					else
+					{
+						output = returned;
+					}
+				}
+
+				if (onToolResult != null)
+				{
+					var (replaced, resultError) = await callGoal.RunGoal(new GoalToCallInfo(onToolResult.Name, new() { ["toolCall"] = callInfo, ["toolResult"] = output }) { Path = onToolResult.Path });
+					if (resultError != null) return (null, resultError);
+					if (replaced != null) output = replaced;
+				}
+
+				AddToHistory(history, ToolOutput(call.Id, output is string s ? s : JsonConvert.SerializeObject(output, Formatting.Indented)));
+			}
+		}
+		return (new AgentRun($"Stopped after {maxRounds} rounds", maxRounds, toolCalls, toolErrors, inputTokens, outputTokens, true), null);
+	}
+
+	private async Task<IError?> RunEvent(CallGoalModule.Program callGoal, GoalToCallInfo eventGoal, Dictionary<string, object?> parameters)
+	{
+		var info = new GoalToCallInfo(eventGoal.Name, parameters) { Path = eventGoal.Path };
+		var (_, error) = await callGoal.RunGoal(info);
+		return error;
+	}
+
+	private static Dictionary<string, object?> ToolOutput(string callId, string output)
+	{
+		return new Dictionary<string, object?> { ["type"] = "function_call_output", ["call_id"] = callId, ["output"] = output };
+	}
+
+	private static void AddToHistory(IList history, object item)
+	{
+		if (history is JArray jArray)
+		{
+			jArray.Add(item is JToken token ? token : JToken.FromObject(item));
+			return;
+		}
+		history.Add(item);
+	}
+
+	private static string FirstLine(string? message)
+	{
+		if (string.IsNullOrEmpty(message)) return "unknown error";
+		var cut = message.IndexOf("🔴");
+		if (cut > 0) message = message.Substring(0, cut);
+		return message.Trim();
+	}
+
 	private readonly string PreviousConversationKey = "__LLM_PreviousConversation__";
 	private readonly string PreviousConversationSchemeKey = "__LLM_PreviousConversationScheme__";
 	private readonly string AppendToSystemKey = "__LLM_AppendToSystem__";

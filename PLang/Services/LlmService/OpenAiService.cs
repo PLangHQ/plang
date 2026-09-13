@@ -91,6 +91,98 @@ namespace PLang.Services.OpenAi
 			}}";
 		}
 
+		private string? GetBearer()
+		{
+			string? bearer = null;
+			try
+			{
+				bearer = settings.Get(this.GetType(), settingKey, "", "Type in API key for LLM service");
+			}
+			catch { }
+			if (string.IsNullOrEmpty(bearer))
+			{
+				settings.SetSharedSettings(appId);
+				bearer = settings.Get(this.GetType(), settingKey, "", "Type in API key for LLM service");
+				settings.SetSharedSettings(null);
+			}
+			return bearer;
+		}
+
+		// Tools with reasoning are only available on /v1/responses; chat completions refuses any
+		// reasoning_effort but none when function tools are present. The history is kept in the
+		// Responses item shape (message, function_call, function_call_output, reasoning) so a
+		// reasoning item can be sent back on the next turn and the model keeps its thread.
+		public virtual async Task<(LlmChatResult? Result, IError? Error)> Chat(LlmChatRequest request)
+		{
+			var body = new Dictionary<string, object?>();
+			body["model"] = request.Model ?? "gpt-5.4-mini";
+			body["input"] = request.Messages;
+			if (!string.IsNullOrEmpty(request.Reasoning))
+			{
+				body["reasoning"] = new Dictionary<string, object?> { ["effort"] = request.Reasoning };
+			}
+			if (request.Tools != null && request.Tools.Count > 0)
+			{
+				body["tools"] = request.Tools.Select(t => new Dictionary<string, object?>
+				{
+					["type"] = "function",
+					["name"] = t.Name,
+					["description"] = t.Description,
+					["parameters"] = t.Parameters
+				}).ToList();
+			}
+			if (request.TextFormat != null)
+			{
+				body["text"] = new Dictionary<string, object?> { ["format"] = request.TextFormat };
+			}
+
+			using var httpClient = new HttpClient();
+			httpClient.Timeout = TimeSpan.FromSeconds(request.TimeoutInSeconds);
+			using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/responses");
+			httpRequest.Headers.UserAgent.ParseAdd("plang v0.1");
+			httpRequest.Headers.Add("Authorization", $"Bearer {GetBearer()}");
+			httpRequest.Content = new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
+
+			string responseBody;
+			try
+			{
+				using var response = await httpClient.SendAsync(httpRequest);
+				responseBody = await response.Content.ReadAsStringAsync();
+				if (!response.IsSuccessStatusCode)
+				{
+					return (null, new ServiceError(responseBody, this.GetType(), StatusCode: (int)response.StatusCode));
+				}
+			}
+			catch (Exception ex)
+			{
+				return (null, new ServiceError(ex.Message, this.GetType(), Exception: ex));
+			}
+
+			var json = Newtonsoft.Json.Linq.JObject.Parse(responseBody);
+			var items = new List<object>();
+			var toolCalls = new List<LlmToolCall>();
+			string? text = null;
+			foreach (var item in json["output"] as Newtonsoft.Json.Linq.JArray ?? new Newtonsoft.Json.Linq.JArray())
+			{
+				items.Add(item);
+				var type = item["type"]?.ToString();
+				if (type == "function_call")
+				{
+					toolCalls.Add(new LlmToolCall(item["call_id"]?.ToString() ?? "", item["name"]?.ToString() ?? "", item["arguments"]?.ToString() ?? "{}"));
+				}
+				else if (type == "message")
+				{
+					var parts = item["content"] as Newtonsoft.Json.Linq.JArray;
+					if (parts != null)
+					{
+						text = string.Join("", parts.Where(p => p["type"]?.ToString() == "output_text").Select(p => p["text"]?.ToString()));
+					}
+				}
+			}
+			var usage = new LlmUsage(json["usage"]?["input_tokens"]?.ToObject<long>() ?? 0, json["usage"]?["output_tokens"]?.ToObject<long>() ?? 0);
+			return (new LlmChatResult(items, text, toolCalls, usage), null);
+		}
+
 		public virtual async Task<(T? Response, IError? Error)> Query<T>(LlmRequest question) where T : class
 		{
 			var result = await Query(question, typeof(T));
@@ -121,18 +213,8 @@ namespace PLang.Services.OpenAi
 			var httpClient = new HttpClient();
 			var httpMethod = new HttpMethod("POST");
 			var request = new HttpRequestMessage(httpMethod, url);
-			string? bearer = null;
-			try
-			{
-				bearer = settings.Get(this.GetType(), settingKey, "", "Type in API key for LLM service");
-			} catch { }
-			if (string.IsNullOrEmpty(bearer))
-			{
-				settings.SetSharedSettings(appId);
-				bearer = settings.Get(this.GetType(), settingKey, "", "Type in API key for LLM service");
-				settings.SetSharedSettings(null);
-			}
-			
+			string? bearer = GetBearer();
+
 			string data = BuildRequestBody(question);
 			request.Headers.UserAgent.ParseAdd("plang v0.1");
 			request.Headers.Add("Authorization", $"Bearer {bearer}");

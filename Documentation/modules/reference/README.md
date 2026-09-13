@@ -40,7 +40,7 @@ the column spells out the ambiguous ones.
 | [InjectModule](./InjectModule.md) | `[inject]` | 1 | Dependancy injection |
 | [InstallModule](./InstallModule.md) | `[install]` | 1 | Install external utility from url |
 | [ListDictionaryModule](./ListDictionaryModule.md) | `[listdictionary]` | 13 | get first\|last\|random\|position\| item from list or dictionary. Add, update, delete and retrieve list or dictionary. Group by key, merge two lists |
-| [LlmModule](./LlmModule.md) | `[llmmodule]` | 7 | Ask LLM a question and recieve and answer |
+| [LlmModule](./LlmModule.md) | `[llmmodule]` | 8 | Ask LLM a question and recieve and answer |
 | [LoggerModule](./LoggerModule.md) | `[logger]` | 1 |  |
 | [LoopModule](./LoopModule.md) | `[loop]` | 2 | While, for, foreach, loops, repeat, go through a list and call a goal |
 | [MathModule](./MathModule.md) | `[math]` | 3 | Solves math expressions |
@@ -48,7 +48,7 @@ the column spells out the ambiguous ones.
 | [MockModule](./MockModule.md) | `[mock]` | 1 | Mock other modules. Code should start with `mock XXX` where XXX would be the module, each mock needs to call a goal that will perform the mocking Example `mock ... |
 | [OptionsModule](./OptionsModule.md) | `[options]` | 1 | Set options for the code. Only set the options that are defined by user |
 | [OutputModule](./OutputModule.md) | `[output]` | 5 | Writes to the output stream. Ask a question with either text or template file. output stream can be to the user(default), system, to different channels such aud... |
-| [PlangModule](./PlangModule.md) | `[plang]` | 24 | get apps available, compiles plang code, gets goals and steps from .goal files, method descriptions and class scheme. Runtime Engine for plang, can run goal and... |
+| [PlangModule](./PlangModule.md) | `[plang]` | 25 | get apps available, compiles plang code, gets goals and steps from .goal files, method descriptions and class scheme. Runtime Engine for plang, can run goal and... |
 | [PythonModule](./PythonModule.md) | `[python]` | 1 | Runs python scripts. Parameters can be passed to the python process |
 | [ScheduleModule](./ScheduleModule.md) | `[schedule]` | 5 | Wait, Sleep and time delay. Cron scheduler |
 | [SerializerModule](./SerializerModule.md) | `[serializer]` | 5 |  |
@@ -58,7 +58,7 @@ the column spells out the ambiguous ones.
 | [UdpModule](./UdpModule.md) | `[udp]` | 1 |  |
 | [UiModule](./UiModule.md) | `[ui]` | 14 | Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. Set the (default) layout for the UI. Execute javascript. |
 | [ValidateModule](./ValidateModule.md) | `[validate]` | 9 | DO NOT USE for if statements. Validates a variable, make sure it's not empty, follows a pattern, is a number, etc. |
-| [VariableModule](./VariableModule.md) | `[variable]` | 38 | Set, Get & Return variable(s). Set(NOT if statement) on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.... |
+| [VariableModule](./VariableModule.md) | `[variable]` | 38 | Set, Get & Return variable(s). Set(NOT if statement) on variable includes condition such as empty or null, and a fallback written as `, default is X`, `, or X i... |
 | [WebCrawlerModule](./WebCrawlerModule.md) | `[webcrawler]` | 38 | Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content |
 | [WebserverModule](./WebserverModule.md) | `[webserver]` | 21 | Start webserver, add route, set certificate, read/write to Header, Cookie, send file to client |
 | [WebSocketModule](./WebSocketModule.md) | `[websocket]` | 2 |  |
@@ -317,6 +317,7 @@ the column spells out the ambiguous ones.
 | ListenToTransferEventOnSmartContract | [BlockchainModule](./BlockchainModule.md) | `ListenToTransferEventOnSmartContract(String contractAddressOrSymbol, PLang.Models.GoalToCallInfo goalToCall, String subscriptIdVariableName = subscriptionId) : object` |
 | ListenToTransferSingleEventOnSmartContract | [BlockchainModule](./BlockchainModule.md) | `ListenToTransferSingleEventOnSmartContract(String contractAddressOrSymbol, PLang.Models.GoalToCallInfo goalToCall, String subscriptIdVariableName = subscriptionId) : object` |
 | ListenToUriEventOnSmartContract | [BlockchainModule](./BlockchainModule.md) | `ListenToUriEventOnSmartContract(String contractAddressOrSymbol, PLang.Models.GoalToCallInfo goalToCall, String subscriptIdVariableName = subscriptionId) : object` |
+| ListModules | [PlangModule](./PlangModule.md) | `ListModules() : List<ModuleInfo>` |
 | Load | [VariableModule](./VariableModule.md) | `Load(List<String> variables = null, String dataSourceName = null) : Object` |
 | LoadExtension | [DbModule](./DbModule.md) | `LoadExtension(String dataSourceName, String fileName, String procName = null) : object` |
 | LoadVariables | [VariableModule](./VariableModule.md) | `LoadVariables(String key) : Object` |
@@ -377,6 +378,7 @@ the column spells out the ambiguous ones.
 | Return | [VariableModule](./VariableModule.md) | `Return(Dictionary<String, Object> variables = null) : object` |
 | Rollback | [DbModule](./DbModule.md) | `Rollback() : object` |
 | Run | [PlangModule](./PlangModule.md) | `Run(String namespace, String class, String method, Dictionary<String, Object> Parameters = null) : Object` |
+| RunAgent | [LlmModule](./LlmModule.md) | `RunAgent(String messages, List<PLang.Models.AgentTool> tools = null, String model = null, String reasoning = null, Int32 maxRounds = 30, PLang.Models.GoalToCallInfo onToolCall = null, PLang.Models.GoalToCallInfo onToolResult = null, PLang.Models.GoalToCallInfo onProgress = null, Int32 timeoutInSeconds = 600) : PLang.Modules.LlmModule.Program+AgentRun` |
 | RunAi | [AiModule](./AiModule.md) | `RunAi(PLang.Modules.AiModule.AiInfo aiInfo) : Object` |
 | RunApp | [AppModule](./AppModule.md) | `RunApp(PLang.Models.AppToCallInfo appToCall, Boolean waitForExecution = True, Int32 delayWhenNotWaitingInMilliseconds = 50, UInt32 waitForXMillisecondsBeforeRunningGoal = 0, Boolean keepMemoryStackOnAsync = False) : Object` |
 | RunFileCode | [CodeModule](./CodeModule.md) | `RunFileCode(PLang.Modules.CodeModule.Builder+FileCodeImplementationResponse implementation) : Object` |
@@ -386,7 +388,7 @@ the column spells out the ambiguous ones.
 | RunInlineCode | [CodeModule](./CodeModule.md) | `RunInlineCode(PLang.Services.CompilerService.CodeImplementationResponse implementation) : Object` |
 | RunInlineCode | [ConditionalModule](./ConditionalModule.md) | `RunInlineCode(PLang.Services.CompilerService.ConditionImplementationResponse implementation) : Object` |
 | RunLoop | [LoopModule](./LoopModule.md) | `RunLoop(String variableToLoopThrough, PLang.Models.GoalToCallInfo goalToCall, PLang.Modules.LoopModule.Program+MultiThreaded multiThreaded = null, PLang.Modules.LoopModule.Program+LinqOptions linqOptions = null) : object` |
-| RunModule | [PlangModule](./PlangModule.md) | `RunModule(String namespace, String class, String method, Dictionary<String, Object> Parameters = null) : Object` |
+| RunModule | [PlangModule](./PlangModule.md) | `RunModule(String moduleName, String method, Dictionary<String, Object> parameters = null, Boolean fromAppRoot = False) : Object` |
 | RunPythonScript | [PythonModule](./PythonModule.md) | `RunPythonScript(String fileName = main.py, String[] parameterValues = null, String[] parameterNames = null, String[] variablesToExtractFromPythonScript = null, Boolean useNamedArguments = False, String pythonPath = null, String stdOutVariableName = null, String stdErrorVariableName = null) : object` |
 | RunStep | [PlangModule](./PlangModule.md) | `RunStep(PLang.Building.Model.GoalStep step, Dictionary<String, Object> parameters = null) : Object` |
 | RunTerminal | [TerminalModule](./TerminalModule.md) | `RunTerminal(String appExecutableName, List<String> parameters = null, String pathToWorkingDirInTerminal = null, String variableNameForDeltaOnStandardStream = null, String variableNameForDeltaOnErrorStream = null, Boolean hideTerminal = False) : Object` |
@@ -535,7 +537,7 @@ the column spells out the ambiguous ones.
 
 ## Gaps
 
-7 modules and 265 of 460 methods carry no
+7 modules and 264 of 462 methods carry no
 `[Description]`, so the builder has nothing but the name to match a step against. Those are the
 ones the llm guesses at, and the ones worth writing first.
 
@@ -728,7 +730,6 @@ Modules: AiModule, LoggerModule, SerializerModule, UdpModule, WebSocketModule, W
 - PlangModule.GetVariables
 - PlangModule.Run
 - PlangModule.RunFunction
-- PlangModule.RunModule
 - PlangModule.SaveGoal
 - PlangModule.SaveMethod
 - PlangModule.StartCSharpDebugger
