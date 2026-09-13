@@ -8,9 +8,10 @@ is one step, the tools are goals, and the rendering is yours.
 Answer
 - [llm] run agent, messages: %messages%, tools: %tools%
     model: "gpt-5.4-mini", reasoning: medium, max rounds: 30
+    on progress, call RoundStarted
     on tool call, call ToolStarted
     on tool result, call ToolFinished
-    on progress, call Progress
+    on round end, call RoundEnded
     write to %run%
 - write out %run.Answer%
 ```
@@ -80,25 +81,32 @@ Keep the tool list in a json file when it grows: `read json file "tools.json", w
 
 ## Events
 
-Three goals let the app draw the run as it happens, without knowing anything about the
+Four goals let the app draw the run as it happens, without knowing anything about the
 provider.
 
 ```plang
+RoundStarted
+- [ui] render "round.html", append to #messages
+
 ToolStarted
-- [ui] render "tool.html", append to #messages
+- [ui] render "tool.html", append to "#round-%round%-body"
 
 ToolFinished
 - [ui] render "tool.html", replace self of "#tool-%toolCall.id%"
 
-Progress
-- [ui] render "status.html", append to #messages
+RoundEnded
+- [ui] render "roundHead.html", replace self of "#round-%round%-head"
 ```
 
 | Event | Variables | Runs |
 |---|---|---|
+| `on progress` | `%text%`, `%round%`, `%toolCallCount%` | once per round that has tool calls, before them. `%text%` is what the llm wrote alongside the calls, the "let me check…" line, or empty |
 | `on tool call` | `%toolCall%` with `id`, `name`, `arguments` (an object) | before the tool goal |
 | `on tool result` | `%toolCall%`, `%toolResult%` | after the tool goal. If the goal returns a value, that replaces the result the llm sees |
-| `on progress` | `%text%` | when the llm writes text in the same round as tool calls; the "let me check…" line |
+| `on round end` | `%round%` | after the round's tools, before the next llm call |
+
+A round is one llm reply with tool calls; `on progress` and `on round end` bracket it, which
+is enough to draw a collapsible block per round with the llm's line as its heading.
 
 `on tool result` is where knowledge rides along with data: a query on a table can return the
 table's documentation page in front of the rows, so the llm reads it whether it asked for it or

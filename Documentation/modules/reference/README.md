@@ -378,7 +378,7 @@ the column spells out the ambiguous ones.
 | Return | [VariableModule](./VariableModule.md) | `Return(Dictionary<String, Object> variables = null) : object` |
 | Rollback | [DbModule](./DbModule.md) | `Rollback() : object` |
 | Run | [PlangModule](./PlangModule.md) | `Run(String namespace, String class, String method, Dictionary<String, Object> Parameters = null) : Object` |
-| RunAgent | [LlmModule](./LlmModule.md) | `RunAgent(String messages, List<PLang.Models.AgentTool> tools = null, String model = null, String reasoning = null, Int32 maxRounds = 30, PLang.Models.GoalToCallInfo onToolCall = null, PLang.Models.GoalToCallInfo onToolResult = null, PLang.Models.GoalToCallInfo onProgress = null, Int32 timeoutInSeconds = 600) : PLang.Modules.LlmModule.Program+AgentRun` |
+| RunAgent | [LlmModule](./LlmModule.md) | `RunAgent(String messages, List<PLang.Models.AgentTool> tools = null, String model = null, String reasoning = null, Int32 maxRounds = 30, PLang.Models.GoalToCallInfo onToolCall = null, PLang.Models.GoalToCallInfo onToolResult = null, PLang.Models.GoalToCallInfo onProgress = null, PLang.Models.GoalToCallInfo onRoundEnd = null, Int32 timeoutInSeconds = 600) : PLang.Modules.LlmModule.Program+AgentRun` |
 | RunAi | [AiModule](./AiModule.md) | `RunAi(PLang.Modules.AiModule.AiInfo aiInfo) : Object` |
 | RunApp | [AppModule](./AppModule.md) | `RunApp(PLang.Models.AppToCallInfo appToCall, Boolean waitForExecution = True, Int32 delayWhenNotWaitingInMilliseconds = 50, UInt32 waitForXMillisecondsBeforeRunningGoal = 0, Boolean keepMemoryStackOnAsync = False) : Object` |
 | RunFileCode | [CodeModule](./CodeModule.md) | `RunFileCode(PLang.Modules.CodeModule.Builder+FileCodeImplementationResponse implementation) : Object` |

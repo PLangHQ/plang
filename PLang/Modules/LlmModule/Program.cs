@@ -37,10 +37,10 @@ public class Program : BaseProgram
 
 	public record AgentRun(string? Answer, int Rounds, int ToolCalls, int ToolErrors, long InputTokens, long OutputTokens, bool StoppedAtMaxRounds);
 
-	[Description(@"Runs an agent: sends messages and tools to the llm, runs each tool the llm asks for by calling the tool's goal with the arguments as parameters, appends the results to messages and repeats until the llm answers with text. messages is the conversation and is updated in place. tools is a list of {name, description, parameters (json schema), call (goal path)}. Events: onToolCall runs before a tool with %toolCall%, onToolResult runs after it with %toolCall% and %toolResult% and may return a replacement result, onProgress runs with %text% when the llm writes text alongside tool calls. reasoning: none|low|medium|high. Returns {Answer, Rounds, ToolCalls, ToolErrors, InputTokens, OutputTokens, StoppedAtMaxRounds}")]
+	[Description(@"Runs an agent: sends messages and tools to the llm, runs each tool the llm asks for by calling the tool's goal with the arguments as parameters, appends the results to messages and repeats until the llm answers with text. messages is the conversation and is updated in place. tools is a list of {name, description, parameters (json schema), call (goal path)}. Events: onProgress runs once per round that has tool calls, before them, with %text% (what the llm wrote alongside the calls, may be empty), %round% and %toolCallCount%; onToolCall runs before a tool with %toolCall%; onToolResult runs after it with %toolCall% and %toolResult% and may return a replacement result; onRoundEnd runs after the round's tools with %round%. reasoning: none|low|medium|high. Returns {Answer, Rounds, ToolCalls, ToolErrors, InputTokens, OutputTokens, StoppedAtMaxRounds}")]
 	public async Task<(AgentRun? Run, IError? Error)> RunAgent([HandlesVariable] string messages, List<AgentTool>? tools = null,
 		string? model = null, string? reasoning = null, int maxRounds = 30,
-		GoalToCallInfo? onToolCall = null, GoalToCallInfo? onToolResult = null, GoalToCallInfo? onProgress = null,
+		GoalToCallInfo? onToolCall = null, GoalToCallInfo? onToolResult = null, GoalToCallInfo? onProgress = null, GoalToCallInfo? onRoundEnd = null,
 		int timeoutInSeconds = 600)
 	{
 		var messagesValue = memoryStack.GetObjectValue(messages);
@@ -78,9 +78,9 @@ public class Program : BaseProgram
 				return (new AgentRun(turn.Text, round, toolCalls, toolErrors, inputTokens, outputTokens, false), null);
 			}
 
-			if (!string.IsNullOrWhiteSpace(turn.Text) && onProgress != null)
+			if (onProgress != null)
 			{
-				var progressError = await RunEvent(callGoal, onProgress, new() { ["text"] = turn.Text });
+				var progressError = await RunEvent(callGoal, onProgress, new() { ["text"] = turn.Text ?? "", ["round"] = round, ["toolCallCount"] = turn.ToolCalls.Count });
 				if (progressError != null) return (null, progressError);
 			}
 
@@ -137,6 +137,12 @@ public class Program : BaseProgram
 				}
 
 				AddToHistory(history, ToolOutput(call.Id, output is string s ? s : JsonConvert.SerializeObject(output, Formatting.Indented)));
+			}
+
+			if (onRoundEnd != null)
+			{
+				var endError = await RunEvent(callGoal, onRoundEnd, new() { ["round"] = round });
+				if (endError != null) return (null, endError);
 			}
 		}
 		return (new AgentRun($"Stopped after {maxRounds} rounds", maxRounds, toolCalls, toolErrors, inputTokens, outputTokens, true), null);
